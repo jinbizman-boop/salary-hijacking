@@ -15,8 +15,10 @@ const REQUIRED_FILES = [
   RELEASE_TARGETS_PATH,
   EXTERNAL_RELEASE_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
+  "release/screenshots/screenshot-plan.md",
   "release/store/google-play-metadata.md",
   "release/store/app-store-metadata.md",
+  "assets/store/screenshots-guideline.md",
   "infra/domain/dns-records.md",
   "infra/domain/certificates.md",
   "infra/github/secrets.md",
@@ -96,6 +98,16 @@ const REQUIRED_MOBILE_ASSETS = [
   "notification-icon.png",
   "favicon.png",
 ];
+
+const REQUIRED_STORE_SCREENSHOT_ASSETS = [
+  "01_home_salary.png",
+  "02_daily_budget.png",
+  "03_plan_setting.png",
+  "04_notifications.png",
+  "05_level_up.png",
+];
+
+const REQUIRED_STORE_FEATURE_GRAPHIC = "feature_graphic_google_play.png";
 
 const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
@@ -1196,6 +1208,114 @@ const checkStoreMetadata = (rootDir, checks, blockers) => {
   );
 };
 
+const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
+  for (const screenshotName of REQUIRED_STORE_SCREENSHOT_ASSETS) {
+    const screenshotPath = path.join(
+      rootDir,
+      "release",
+      "screenshots",
+      screenshotName,
+    );
+    if (hasPngSignature(screenshotPath)) {
+      addMobileCheck(
+        checks,
+        blockers,
+        "PASS",
+        `mobile:store-screenshot:${screenshotName}`,
+        "PNG store screenshot present",
+      );
+    } else {
+      addMobileCheck(
+        checks,
+        blockers,
+        "BLOCKED",
+        `mobile:store-screenshot:${screenshotName}`,
+        "missing or invalid PNG store screenshot",
+        `store screenshot is missing or invalid: release/screenshots/${screenshotName}`,
+      );
+    }
+  }
+
+  const featureGraphicPath = path.join(
+    rootDir,
+    "release",
+    "screenshots",
+    REQUIRED_STORE_FEATURE_GRAPHIC,
+  );
+  if (hasPngSignature(featureGraphicPath)) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "PASS",
+      "mobile:store-feature-graphic",
+      "Google Play feature graphic PNG present",
+    );
+  } else {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:store-feature-graphic",
+      "missing or invalid Google Play feature graphic PNG",
+      `Google Play feature graphic is missing or invalid: release/screenshots/${REQUIRED_STORE_FEATURE_GRAPHIC}`,
+    );
+  }
+
+  const screenshotPlanText = readTextIfPresent(
+    rootDir,
+    "release/screenshots/screenshot-plan.md",
+  );
+  const screenshotPlanOk =
+    typeof screenshotPlanText === "string" &&
+    isSubmissionTextClean(screenshotPlanText) &&
+    hasAllText(screenshotPlanText, [
+      "real app UI",
+      "masked sample data",
+      "Raw salary",
+      "profit guarantees",
+      ...REQUIRED_STORE_SCREENSHOT_ASSETS,
+      REQUIRED_STORE_FEATURE_GRAPHIC,
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    screenshotPlanOk ? "PASS" : "BLOCKED",
+    "mobile:screenshot-plan",
+    screenshotPlanOk
+      ? "screenshot plan names required files and review safety rules"
+      : "screenshot plan is missing required files or safety rules",
+    "release/screenshots/screenshot-plan.md must name required screenshot files and safety rules without placeholders or mojibake",
+  );
+
+  const screenshotGuidelineText = readTextIfPresent(
+    rootDir,
+    "assets/store/screenshots-guideline.md",
+  );
+  const screenshotGuidelineOk =
+    typeof screenshotGuidelineText === "string" &&
+    isSubmissionTextClean(screenshotGuidelineText) &&
+    hasAllText(screenshotGuidelineText, [
+      EXPECTED_MOBILE_APP.name,
+      "Finance app",
+      "Minimum phone screenshots: 5",
+      "Recommended phone screenshots: 8",
+      REQUIRED_STORE_FEATURE_GRAPHIC,
+      "sample data only",
+      "actual mobile screens",
+      "Export PNG images",
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    screenshotGuidelineOk ? "PASS" : "BLOCKED",
+    "mobile:screenshot-guideline",
+    screenshotGuidelineOk
+      ? "screenshot guideline has store count, feature graphic, privacy, and export rules"
+      : "screenshot guideline is missing store count, feature graphic, privacy, or export rules",
+    "assets/store/screenshots-guideline.md must define screenshot counts, feature graphic, sample-data-only, actual-screen, and PNG export rules",
+  );
+};
+
 const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
   const mobileRoot = path.join(rootDir, "apps", "mobile");
   for (const assetName of REQUIRED_MOBILE_ASSETS) {
@@ -1222,6 +1342,7 @@ const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
 
   checkMobileAppConfig(rootDir, checks, blockers);
   checkStoreMetadata(rootDir, checks, blockers);
+  checkStoreScreenshotMaterials(rootDir, checks, blockers);
 
   const easConfig = readJsonIfPresent(rootDir, "apps/mobile/eas.json");
   if (!easConfig) {

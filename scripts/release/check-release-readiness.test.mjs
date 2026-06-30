@@ -95,6 +95,49 @@ const validAppStoreMetadata = `# App Store Metadata
 - tracking policy: no App Tracking Transparency prompt is required unless a future verified ads policy introduces tracking.
 `;
 
+const requiredStoreImageNames = [
+  "01_home_salary.png",
+  "02_daily_budget.png",
+  "03_plan_setting.png",
+  "04_notifications.png",
+  "05_level_up.png",
+  "feature_graphic_google_play.png",
+];
+
+const validScreenshotPlan = `# Store Screenshot Plan
+
+The Salary Hijacking store screenshot set must use real app UI captures with masked sample data.
+
+Required files:
+- 01_home_salary.png
+- 02_daily_budget.png
+- 03_plan_setting.png
+- 04_notifications.png
+- 05_level_up.png
+- feature_graphic_google_play.png
+
+Review rules:
+- Screenshots must be based on real app UI.
+- Raw salary, expense, savings, account, phone, email, token, and device identifiers must not appear.
+- Copy must avoid profit guarantees, loan promises, health guarantees, exaggerated savings claims, and unsupported event claims.
+`;
+
+const validScreenshotGuideline = `# Store Screenshot Guideline
+
+Store images must present 급여납치 as a Finance app for Korean mobile users.
+
+Required set:
+- Minimum phone screenshots: 5
+- Recommended phone screenshots: 8
+- Google Play feature graphic: feature_graphic_google_play.png
+
+Quality gates:
+- Use Korean copy, ko-KR locale, and sample data only.
+- Match actual mobile screens and available features.
+- Keep ads or partner content labeled when visible.
+- Export PNG images suitable for store upload.
+`;
+
 const writeReleaseTargets = (rootDir, overrides = {}) => {
   const targets = {
     schemaVersion: 1,
@@ -209,12 +252,18 @@ const makeWorkspace = () => {
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
+  write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
     rootDir,
     "release/store/google-play-metadata.md",
     validGooglePlayMetadata,
   );
   write(rootDir, "release/store/app-store-metadata.md", validAppStoreMetadata);
+  write(
+    rootDir,
+    "assets/store/screenshots-guideline.md",
+    validScreenshotGuideline,
+  );
   write(rootDir, "infra/domain/dns-records.md", "# DNS\n");
   write(rootDir, "infra/domain/certificates.md", "# Certificates\n");
   write(rootDir, "infra/github/secrets.md", "# GitHub Secrets\n");
@@ -289,6 +338,9 @@ const makeWorkspace = () => {
     "favicon.png",
   ]) {
     write(rootDir, `apps/mobile/assets/${assetName}`, validPng);
+  }
+  for (const imageName of requiredStoreImageNames) {
+    write(rootDir, `release/screenshots/${imageName}`, validPng);
   }
 
   write(
@@ -514,6 +566,48 @@ const DEFAULT_ANDROID_PACKAGE = "com.example.paycheck";
   assert.match(report, /mobile:app-config:bundle-ids/);
   assert.match(report, /mobile:store:google-play/);
   assert.match(report, /mobile:store:app-store/);
+});
+
+test("blocks missing store screenshots and incomplete screenshot guidance", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(
+    path.join(rootDir, "release", "screenshots", "01_home_salary.png"),
+    { force: true },
+  );
+  fs.rmSync(
+    path.join(
+      rootDir,
+      "release",
+      "screenshots",
+      "feature_graphic_google_play.png",
+    ),
+    { force: true },
+  );
+  write(
+    rootDir,
+    "release/screenshots/screenshot-plan.md",
+    "# screenshot-plan\n\nTODO: add store screenshots later.\n",
+  );
+  write(
+    rootDir,
+    "assets/store/screenshots-guideline.md",
+    "# screenshots-guideline\n\nplaceholder\n",
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:store-screenshot:01_home_salary\.png/);
+  assert.match(report, /mobile:store-feature-graphic/);
+  assert.match(report, /mobile:screenshot-plan/);
+  assert.match(report, /mobile:screenshot-guideline/);
 });
 
 test("blocks when the GitHub repository policy file is missing", () => {
