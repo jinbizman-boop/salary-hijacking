@@ -34,8 +34,7 @@ GitHub:
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - After GitHub Desktop was installed, authenticated `git push -u origin main`
   succeeded.
-- `git ls-remote origin refs/heads/main` returned
-  `326f49eb6080b683897b8b315fadb1631673dbc4`, matching local `HEAD`.
+- `git ls-remote origin refs/heads/main` proves remote branch read access.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.

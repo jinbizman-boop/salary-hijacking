@@ -62,8 +62,7 @@ Verified on 2026-06-30 KST:
   `origin` points to the newly created Salary Hijacking repository
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - Authenticated `git push -u origin main` now succeeds, and
-  `git ls-remote origin refs/heads/main` matches local `HEAD`
-  `326f49eb6080b683897b8b315fadb1631673dbc4`.
+  `git ls-remote origin refs/heads/main` proves remote branch read access.
 - User reported GitHub, Cloudflare, and Neon plugins/connectors are linked. Read-only connector checks now prove GitHub app installation, Cloudflare account access, and Neon organization access.
 - The user provided the new Salary Hijacking GitHub repository URL and Quick
   setup screenshot. Connector checks do not yet prove Cloudflare Workers/Pages

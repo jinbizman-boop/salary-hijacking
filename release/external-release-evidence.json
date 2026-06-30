@@ -16,10 +16,9 @@
     "pushVerifiedAt": "2026-06-30T06:08:09Z",
     "pushCommand": "git push -u origin main",
     "pushedBranch": "main",
-    "localHead": "326f49eb6080b683897b8b315fadb1631673dbc4",
-    "remoteHead": "326f49eb6080b683897b8b315fadb1631673dbc4",
+    "pushProofCommit": "326f49eb6080b683897b8b315fadb1631673dbc4",
     "remoteVerificationCommand": "git ls-remote origin refs/heads/main",
-    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. After GitHub Desktop was installed, authenticated git push succeeded and origin/main matched local HEAD 326f49eb6080b683897b8b315fadb1631673dbc4. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
+    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. After GitHub Desktop was installed, authenticated git push succeeded and origin/main was readable through git ls-remote. pushProofCommit records the commit used to prove write access at verification time; rerun git ls-remote for the current HEAD before a final public release gate. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
   },
   "cloudflare": {
     "connectorReachable": true,

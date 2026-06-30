@@ -116,7 +116,7 @@ Commands run on 2026-06-30:
 - `corepack pnpm run test:root-scripts`: PASS, 37 tests
 - `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`; GitHub target evidence, local `origin`, and authenticated push evidence now match `jinbizman-boop/salary-hijacking`; GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access; EAS/Android CLI tools remain blockers.
 - GitHub release target policy: existing unrelated repositories, including `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused. Salary Hijacking uses the newly created repository `jinbizman-boop/salary-hijacking` as the canonical release target.
-- Local Git status: local commits exist, `origin` is configured to `https://github.com/jinbizman-boop/salary-hijacking.git`, `git push -u origin main` succeeds, and `git ls-remote origin refs/heads/main` matches local `HEAD` `326f49eb6080b683897b8b315fadb1631673dbc4`; no unrelated GitHub repository has been targeted from this workspace.
+- Local Git status: local commits exist, `origin` is configured to `https://github.com/jinbizman-boop/salary-hijacking.git`, `git push -u origin main` succeeds, and `git ls-remote origin refs/heads/main` proves remote branch read access; no unrelated GitHub repository has been targeted from this workspace.
 - `node --test scripts/dev/run-with-corepack-pnpm.test.mjs`: PASS
 - `node --test scripts/quality/check-package-manager-scripts.test.mjs`: PASS
 - `node --test scripts/quality/check-external-integrations.test.mjs`: PASS

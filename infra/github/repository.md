@@ -51,8 +51,7 @@ Latest repository target update on 2026-06-30:
   `salary-hijacking`.
 - Local Git `origin` is configured to the new Salary Hijacking repository.
 - Authenticated `git push -u origin main` succeeds.
-- `git ls-remote origin refs/heads/main` matches local `HEAD`
-  `326f49eb6080b683897b8b315fadb1631673dbc4`.
+- `git ls-remote origin refs/heads/main` proves remote branch read access.
 - `release/release-targets.json` is the canonical machine-readable release
   target manifest.
 
