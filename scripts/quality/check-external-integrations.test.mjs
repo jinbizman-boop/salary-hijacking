@@ -7,6 +7,11 @@ import test from "node:test";
 
 import { runExternalIntegrationPreflight } from "./check-external-integrations.mjs";
 
+const VALID_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l7mF4QAAAABJRU5ErkJggg==",
+  "base64",
+);
+
 async function writeFixture(rootDir, overrides = {}) {
   const files = {
     ".gitignore": `
@@ -260,7 +265,8 @@ Configure branch protection and GitHub Environments after the new repository exi
             env: {
               EXPO_PUBLIC_APP_NAME: "급여납치",
               EXPO_PUBLIC_API_BASE_URL:
-                "https://api-staging.salary-hijacking.example",
+                "https://api-staging.salaryhijacking.com",
+              EXPO_PUBLIC_DEEPLINK_HOST: "staging.salaryhijacking.com",
             },
             android: {
               buildType: "apk",
@@ -269,7 +275,8 @@ Configure branch protection and GitHub Environments after the new repository exi
           production: {
             env: {
               EXPO_PUBLIC_APP_NAME: "급여납치",
-              EXPO_PUBLIC_API_BASE_URL: "https://api.salary-hijacking.example",
+              EXPO_PUBLIC_API_BASE_URL: "https://api.salaryhijacking.com",
+              EXPO_PUBLIC_DEEPLINK_HOST: "salaryhijacking.com",
             },
             android: {
               buildType: "app-bundle",
@@ -280,6 +287,34 @@ Configure branch protection and GitHub Environments after the new repository exi
       null,
       2,
     ),
+    "apps/mobile/app.config.ts": `
+const SERVICE_NAME = "급여납치";
+const DEFAULT_API_BASE_URL = "https://api.salaryhijacking.com";
+const DEFAULT_DEEPLINK_HOST = "salaryhijacking.com";
+function assertNoServerSecretExposure() {}
+const privacy = { financialAmountBasedTargeting: false };
+`,
+    "apps/mobile/assets/icon.png": VALID_PNG,
+    "apps/mobile/assets/splash.png": VALID_PNG,
+    "apps/mobile/assets/adaptive-icon.png": VALID_PNG,
+    "apps/mobile/assets/notification-icon.png": VALID_PNG,
+    "apps/mobile/assets/favicon.png": VALID_PNG,
+    "release/store/google-play-metadata.md": `
+# Google Play Metadata
+
+- app name: 급여납치
+- short description: 월급을 지키는 서버 권위 예산 관리 앱
+- full description: 급여납치는 급여, 예산, 지출, 저축, 알림, LV UP, 커뮤니티를 한곳에서 관리하는 모바일 앱입니다.
+- privacy policy: https://salaryhijacking.com/privacy
+`,
+    "release/store/app-store-metadata.md": `
+# App Store Metadata
+
+- app name: 급여납치
+- subtitle: 월급을 지키는 예산 루틴
+- description: 급여납치는 급여, 예산, 지출, 저축, 알림, LV UP, 커뮤니티를 서버 권위 구조로 연결하는 모바일 앱입니다.
+- privacy policy: https://salaryhijacking.com/privacy
+`,
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",
@@ -302,7 +337,11 @@ Configure branch protection and GitHub Environments after the new repository exi
     const fullPath = path.join(rootDir, relativePath);
     await mkdir(path.dirname(fullPath), { recursive: true });
     if (content !== null) {
-      await writeFile(fullPath, content, "utf8");
+      await writeFile(
+        fullPath,
+        content,
+        typeof content === "string" ? "utf8" : undefined,
+      );
     }
   }
 }
@@ -511,6 +550,76 @@ test("fails when mobile release metadata contains mojibake", async () => {
     assert.match(result.failures.join("\n"), /apps\/mobile\/package\.json/);
     assert.match(result.failures.join("\n"), /apps\/mobile\/eas\.json/);
     assert.match(result.failures.join("\n"), /mojibake/i);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when mobile launch assets are missing", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/assets/icon.png": null,
+      "apps/mobile/assets/splash.png": null,
+      "apps/mobile/assets/adaptive-icon.png": null,
+      "apps/mobile/assets/notification-icon.png": null,
+      "apps/mobile/assets/favicon.png": null,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /apps\/mobile\/assets\/icon\.png/);
+    assert.match(
+      result.failures.join("\n"),
+      /apps\/mobile\/assets\/splash\.png/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when mobile release config keeps example domains", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/eas.json": JSON.stringify(
+        {
+          cli: {
+            version: ">= 12.0.0",
+          },
+          build: {
+            production: {
+              env: {
+                EXPO_PUBLIC_APP_NAME: "급여납치",
+                EXPO_PUBLIC_API_BASE_URL:
+                  "https://api.salary-hijacking.example",
+                EXPO_PUBLIC_DEEPLINK_HOST: "app.salary-hijacking.example",
+              },
+              android: {
+                buildType: "app-bundle",
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /salary-hijacking\.example/);
+    assert.match(result.failures.join("\n"), /apps\/mobile\/eas\.json/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

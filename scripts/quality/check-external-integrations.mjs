@@ -24,6 +24,14 @@ const REQUIRED_FILES = [
   "infra/github/repository.md",
   "apps/mobile/package.json",
   "apps/mobile/eas.json",
+  "apps/mobile/app.config.ts",
+  "apps/mobile/assets/icon.png",
+  "apps/mobile/assets/splash.png",
+  "apps/mobile/assets/adaptive-icon.png",
+  "apps/mobile/assets/notification-icon.png",
+  "apps/mobile/assets/favicon.png",
+  "release/store/google-play-metadata.md",
+  "release/store/app-store-metadata.md",
   "packages/db/src/client/neon.client.ts",
   "database/migrations/0001_init_users.sql",
   "database/migrations/0002_payroll_budget_expense.sql",
@@ -161,9 +169,33 @@ const REQUIRED_TOKENS_BY_FILE = {
     "EXPO_PUBLIC_APP_NAME",
     "급여납치",
     "EXPO_PUBLIC_API_BASE_URL",
+    "https://api-staging.salaryhijacking.com",
+    "https://api.salaryhijacking.com",
+    "salaryhijacking.com",
     "e2e",
     "production",
     "app-bundle",
+  ],
+  "apps/mobile/app.config.ts": [
+    "급여납치",
+    "https://api.salaryhijacking.com",
+    "salaryhijacking.com",
+    "assertNoServerSecretExposure",
+    "financialAmountBasedTargeting",
+  ],
+  "release/store/google-play-metadata.md": [
+    "급여납치",
+    "Google Play",
+    "short description",
+    "full description",
+    "privacy policy",
+  ],
+  "release/store/app-store-metadata.md": [
+    "급여납치",
+    "App Store",
+    "subtitle",
+    "description",
+    "privacy policy",
   ],
   "packages/db/src/client/neon.client.ts": [
     "@neondatabase/serverless",
@@ -195,6 +227,23 @@ const OPERATIONAL_DOC_FILES = [
 const RELEASE_METADATA_FILES = [
   "apps/mobile/package.json",
   "apps/mobile/eas.json",
+  "apps/mobile/app.config.ts",
+  "release/store/google-play-metadata.md",
+  "release/store/app-store-metadata.md",
+];
+
+const MOBILE_RELEASE_CONFIG_FILES = [
+  "apps/mobile/eas.json",
+  "apps/mobile/app.config.ts",
+  "apps/mobile/README.md",
+];
+
+const REQUIRED_MOBILE_ASSET_FILES = [
+  "apps/mobile/assets/icon.png",
+  "apps/mobile/assets/splash.png",
+  "apps/mobile/assets/adaptive-icon.png",
+  "apps/mobile/assets/notification-icon.png",
+  "apps/mobile/assets/favicon.png",
 ];
 
 const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
@@ -217,7 +266,14 @@ const UNSAFE_SENSITIVE_ASSIGNMENT = new RegExp(
 );
 
 const PLACEHOLDER_OR_MOJIBAKE_PATTERN =
-  /final script location|placeholder|not implemented|stub|coming soon|최종 기준 파일|湲|�/i;
+  /final script location|placeholder|not implemented|stub|coming soon|최종 파일 위치|최종 기준 파일|理|湲|�|疫/i;
+
+const FORBIDDEN_MOBILE_RELEASE_DOMAIN_PATTERN =
+  /salary-hijacking\.example|salary-hijacking\.app/i;
+
+const PNG_SIGNATURE = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+]);
 
 const EXISTING_REPOSITORY_REUSE_PATTERN =
   /\b(?:reuse|use|modify|push(?:\s+changes)?\s+to)\s+(?:an?\s+)?existing repository\b/i;
@@ -318,6 +374,36 @@ function checkReleaseMetadataText(rootDir, failures) {
       failures.push(
         `${relativePath}: contains placeholder, mojibake, or non-release metadata marker`,
       );
+    }
+  }
+}
+
+function checkMobileReleaseDomains(rootDir, failures) {
+  for (const relativePath of MOBILE_RELEASE_CONFIG_FILES) {
+    if (!fileExists(rootDir, relativePath)) continue;
+
+    const lines = readText(rootDir, relativePath).split(/\r?\n/);
+    for (const [index, line] of lines.entries()) {
+      if (!FORBIDDEN_MOBILE_RELEASE_DOMAIN_PATTERN.test(line)) continue;
+      failures.push(
+        `${relativePath}:${index + 1}: contains non-release mobile domain ${line.trim()}`,
+      );
+    }
+  }
+}
+
+function checkMobileLaunchAssets(rootDir, failures) {
+  for (const relativePath of REQUIRED_MOBILE_ASSET_FILES) {
+    if (!fileExists(rootDir, relativePath)) continue;
+
+    const buffer = fs.readFileSync(resolvePath(rootDir, relativePath));
+    if (buffer.length < 64) {
+      failures.push(`${relativePath}: PNG asset is too small for launch use`);
+      continue;
+    }
+
+    if (!buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+      failures.push(`${relativePath}: must be a PNG asset`);
     }
   }
 }
@@ -465,6 +551,8 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkOperationalDocs(rootDir, failures);
   checkGitHubRepositoryPolicy(rootDir, failures);
   checkReleaseMetadataText(rootDir, failures);
+  checkMobileReleaseDomains(rootDir, failures);
+  checkMobileLaunchAssets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);
   checkRequiredSourceFilesNotIgnored(rootDir, failures, warnings);
   checkLocalGeneratedOutputsIgnored(rootDir, failures, warnings);

@@ -40,7 +40,7 @@
       "env": {
         "APP_ENV": "development",
         "EXPO_PUBLIC_API_BASE_URL": "http://localhost:8787",
-        "EXPO_PUBLIC_DEEPLINK_HOST": "dev.salary-hijacking.example",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "dev.salaryhijacking.com",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "development",
         "EXPO_PUBLIC_E2E_BUILD": "false"
       },
@@ -57,8 +57,8 @@
       "channel": "preview",
       "env": {
         "APP_ENV": "staging",
-        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salary-hijacking.example",
-        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salary-hijacking.example",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salaryhijacking.com",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salaryhijacking.com",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "preview",
         "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "true"
       },
@@ -75,8 +75,8 @@
       "channel": "staging",
       "env": {
         "APP_ENV": "staging",
-        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salary-hijacking.example",
-        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salary-hijacking.example",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salaryhijacking.com",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salaryhijacking.com",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "staging",
         "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "true"
       },
@@ -94,8 +94,8 @@
       "channel": "e2e",
       "env": {
         "APP_ENV": "staging",
-        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salary-hijacking.example",
-        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salary-hijacking.example",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salaryhijacking.com",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salaryhijacking.com",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "e2e",
         "EXPO_PUBLIC_E2E_BUILD": "true",
         "EXPO_PUBLIC_ADS_ENABLED": "false",
@@ -116,8 +116,8 @@
       "autoIncrement": true,
       "env": {
         "APP_ENV": "production",
-        "EXPO_PUBLIC_API_BASE_URL": "https://api.salary-hijacking.example",
-        "EXPO_PUBLIC_DEEPLINK_HOST": "app.salary-hijacking.example",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.salaryhijacking.com",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "salaryhijacking.com",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "production",
         "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "true",
         "EXPO_PUBLIC_E2E_BUILD": "false"

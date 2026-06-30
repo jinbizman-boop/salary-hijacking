@@ -85,7 +85,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
   const apiBaseUrl = httpsUrlEnv(
     "EXPO_PUBLIC_API_BASE_URL",
     environment === "production"
-      ? "https://api.salary-hijacking.example"
+      ? "https://api.salaryhijacking.com"
       : "http://localhost:8787",
   );
   const updatesUrl = optionalHttpsUrlEnv("EXPO_UPDATES_URL");
@@ -225,10 +225,7 @@ function androidConfig(versionCode: number): JsonRecord {
         data: [
           {
             scheme: "https",
-            host: plainEnv(
-              "EXPO_PUBLIC_DEEPLINK_HOST",
-              "app.salary-hijacking.example",
-            ),
+            host: plainEnv("EXPO_PUBLIC_DEEPLINK_HOST", "salaryhijacking.com"),
             pathPrefix: "/",
           },
           { scheme: DEFAULT_SCHEME, host: "app", pathPrefix: "/" },
@@ -304,10 +301,7 @@ function updatesConfig(updatesUrl: string | null): JsonRecord {
 }
 
 function associatedDomains(): readonly string[] {
-  const host = plainEnv(
-    "EXPO_PUBLIC_DEEPLINK_HOST",
-    "app.salary-hijacking.example",
-  );
+  const host = plainEnv("EXPO_PUBLIC_DEEPLINK_HOST", "salaryhijacking.com");
   return [`applinks:${host}`, `webcredentials:${host}`];
 }
 

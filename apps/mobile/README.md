@@ -262,8 +262,8 @@ pnpm --filter @salary-hijacking/mobile build:production:ios
 허용 예시는 다음과 같다.
 
 ```text
-EXPO_PUBLIC_API_BASE_URL=https://api.salary-hijacking.example
-EXPO_PUBLIC_DEEPLINK_HOST=app.salary-hijacking.example
+EXPO_PUBLIC_API_BASE_URL=https://api.salaryhijacking.com
+EXPO_PUBLIC_DEEPLINK_HOST=salaryhijacking.com
 EXPO_PUBLIC_NOTIFICATIONS_ENABLED=true
 EXPO_PUBLIC_ADS_ENABLED=true
 EXPO_PUBLIC_PARTNER_ENABLED=true
