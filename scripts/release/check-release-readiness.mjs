@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const RELEASE_CHECK_VERSION = "1.0.0";
+const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
 
 const REQUIRED_FILES = [
@@ -11,6 +12,7 @@ const REQUIRED_FILES = [
   "docs/codex/08_FILE_COMPLETION_LOG.md",
   "docs/codex/09_VALIDATION_PROTOCOL.md",
   "release/README.md",
+  RELEASE_TARGETS_PATH,
   EXTERNAL_RELEASE_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/store/google-play-metadata.md",
@@ -214,6 +216,318 @@ const readExternalReleaseEvidence = (rootDir) => {
     return isPlainObject(evidence) ? evidence : null;
   } catch {
     return null;
+  }
+};
+
+const sortedStrings = (value) =>
+  stringArray(value)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right));
+
+const sameStringArray = (left, right) => {
+  const leftValues = sortedStrings(left);
+  const rightValues = sortedStrings(right);
+  return (
+    leftValues.length === rightValues.length &&
+    leftValues.every((value, index) => value === rightValues[index])
+  );
+};
+
+const checkReleaseTargets = (rootDir, checks, blockers) => {
+  const targetsPath = path.join(rootDir, RELEASE_TARGETS_PATH);
+  if (!fs.existsSync(targetsPath)) {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:file",
+      `${RELEASE_TARGETS_PATH} is missing`,
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} is missing`);
+    return null;
+  }
+
+  let targets;
+  try {
+    targets = readJson(targetsPath);
+  } catch {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:json",
+      `${RELEASE_TARGETS_PATH} is invalid JSON`,
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} must be valid JSON`);
+    return null;
+  }
+
+  if (!isPlainObject(targets)) {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:schema",
+      `${RELEASE_TARGETS_PATH} root must be an object`,
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} root must be an object`);
+    return null;
+  }
+
+  if (targets.schemaVersion === 1) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:schemaVersion",
+      "schema version 1",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:schemaVersion",
+      "schemaVersion must be 1",
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} schemaVersion must be 1`);
+  }
+
+  const github = isPlainObject(targets.github) ? targets.github : {};
+  const expectedRepository =
+    typeof github.expectedRepository === "string"
+      ? github.expectedRepository.trim()
+      : "";
+  const protectedSlugs = sortedStrings(
+    github.protectedExistingRepositories,
+  ).map(normalizeSlug);
+  const missingProtectedRepositories =
+    REQUIRED_PROTECTED_EXISTING_REPOSITORIES.filter(
+      (repository) => !protectedSlugs.includes(normalizeSlug(repository)),
+    );
+  const githubProblems = [];
+  if (!expectedRepository) githubProblems.push("expectedRepository missing");
+  if (github.repositoryCreationRequired !== true) {
+    githubProblems.push("repositoryCreationRequired must be true");
+  }
+  if (missingProtectedRepositories.length > 0) {
+    githubProblems.push(
+      `protectedExistingRepositories missing ${missingProtectedRepositories.join(", ")}`,
+    );
+  }
+
+  if (githubProblems.length === 0) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:github",
+      `expected repository ${expectedRepository}`,
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:github",
+      githubProblems.join("; "),
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} GitHub target is incomplete`);
+  }
+
+  const cloudflare = isPlainObject(targets.cloudflare)
+    ? targets.cloudflare
+    : {};
+  const expectedWorkers = sortedStrings(cloudflare.expectedWorkers);
+  const expectedPagesProject =
+    typeof cloudflare.expectedPagesProject === "string"
+      ? cloudflare.expectedPagesProject.trim()
+      : "";
+  const cloudflareProblems = [];
+  if (expectedWorkers.length === 0) {
+    cloudflareProblems.push("expectedWorkers missing");
+  }
+  if (!expectedPagesProject) {
+    cloudflareProblems.push("expectedPagesProject missing");
+  }
+
+  if (cloudflareProblems.length === 0) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:cloudflare",
+      `workers ${expectedWorkers.join(", ")}; pages ${expectedPagesProject}`,
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:cloudflare",
+      cloudflareProblems.join("; "),
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} Cloudflare target is incomplete`);
+  }
+
+  const neon = isPlainObject(targets.neon) ? targets.neon : {};
+  const expectedProjectHint =
+    typeof neon.expectedProjectHint === "string"
+      ? neon.expectedProjectHint.trim()
+      : "";
+
+  if (expectedProjectHint) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:neon",
+      `expected project hint ${expectedProjectHint}`,
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:neon",
+      "expectedProjectHint missing",
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} Neon target is incomplete`);
+  }
+
+  return targets;
+};
+
+const checkEvidenceMatchesReleaseTargets = (
+  releaseTargets,
+  externalEvidence,
+  checks,
+  blockers,
+) => {
+  if (!isPlainObject(releaseTargets) || !isPlainObject(externalEvidence)) {
+    return;
+  }
+
+  const targetGithub = isPlainObject(releaseTargets.github)
+    ? releaseTargets.github
+    : {};
+  const evidenceGithub = isPlainObject(externalEvidence.github)
+    ? externalEvidence.github
+    : {};
+  const targetRepository =
+    typeof targetGithub.expectedRepository === "string"
+      ? targetGithub.expectedRepository.trim()
+      : "";
+  const evidenceRepository =
+    typeof evidenceGithub.expectedRepository === "string"
+      ? evidenceGithub.expectedRepository.trim()
+      : "";
+  const githubMatches =
+    targetRepository === evidenceRepository &&
+    targetGithub.repositoryCreationRequired ===
+      evidenceGithub.repositoryCreationRequired &&
+    sameStringArray(
+      targetGithub.protectedExistingRepositories,
+      evidenceGithub.protectedExistingRepositories,
+    );
+
+  if (githubMatches) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:github-evidence",
+      "external evidence matches GitHub target",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:github",
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} does not match ${RELEASE_TARGETS_PATH}`,
+    );
+    blockers.push(
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} GitHub target must match ${RELEASE_TARGETS_PATH}`,
+    );
+  }
+
+  const targetCloudflare = isPlainObject(releaseTargets.cloudflare)
+    ? releaseTargets.cloudflare
+    : {};
+  const evidenceCloudflare = isPlainObject(externalEvidence.cloudflare)
+    ? externalEvidence.cloudflare
+    : {};
+  if (
+    sameStringArray(
+      targetCloudflare.expectedWorkers,
+      evidenceCloudflare.expectedWorkers,
+    )
+  ) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:cloudflare-workers",
+      "external evidence matches Worker targets",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:cloudflare-workers",
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Worker targets drifted`,
+    );
+    blockers.push(
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Cloudflare Worker targets must match ${RELEASE_TARGETS_PATH}`,
+    );
+  }
+
+  const targetPagesProject =
+    typeof targetCloudflare.expectedPagesProject === "string"
+      ? targetCloudflare.expectedPagesProject.trim()
+      : "";
+  const evidencePagesProject =
+    typeof evidenceCloudflare.expectedPagesProject === "string"
+      ? evidenceCloudflare.expectedPagesProject.trim()
+      : "";
+  if (targetPagesProject === evidencePagesProject) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:cloudflare-pages",
+      "external evidence matches Pages target",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:cloudflare-pages",
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Pages target drifted`,
+    );
+    blockers.push(
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Cloudflare Pages target must match ${RELEASE_TARGETS_PATH}`,
+    );
+  }
+
+  const targetNeon = isPlainObject(releaseTargets.neon)
+    ? releaseTargets.neon
+    : {};
+  const evidenceNeon = isPlainObject(externalEvidence.neon)
+    ? externalEvidence.neon
+    : {};
+  const targetProjectHint =
+    typeof targetNeon.expectedProjectHint === "string"
+      ? targetNeon.expectedProjectHint.trim()
+      : "";
+  const evidenceProjectHint =
+    typeof evidenceNeon.expectedProjectHint === "string"
+      ? evidenceNeon.expectedProjectHint.trim()
+      : "";
+  if (targetProjectHint === evidenceProjectHint) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:neon-evidence",
+      "external evidence matches Neon target",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:neon",
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Neon target drifted`,
+    );
+    blockers.push(
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Neon target must match ${RELEASE_TARGETS_PATH}`,
+    );
   }
 };
 
@@ -727,9 +1041,21 @@ export const analyzeReleaseReadiness = ({
     );
   }
 
+  const releaseTargets = checkReleaseTargets(rootDir, checks, blockers);
   checkExternalReleaseEvidence(rootDir, checks, blockers, warnings);
   const externalEvidence = readExternalReleaseEvidence(rootDir);
-  checkRuntimeTargetConsistency(externalEvidence, env, checks, blockers);
+  checkEvidenceMatchesReleaseTargets(
+    releaseTargets,
+    externalEvidence,
+    checks,
+    blockers,
+  );
+  checkRuntimeTargetConsistency(
+    releaseTargets ?? externalEvidence,
+    env,
+    checks,
+    blockers,
+  );
 
   for (const group of REQUIRED_CLI_GROUPS) {
     const found = group.commands.filter((command) => commandExists(command));
@@ -789,7 +1115,9 @@ export const analyzeReleaseReadiness = ({
     if (git.output.length > 0)
       warnings.push("git repository has local changes");
 
-    const expectedRepository = getExpectedGithubRepository(externalEvidence);
+    const expectedRepository = getExpectedGithubRepository(
+      releaseTargets ?? externalEvidence,
+    );
     if (expectedRepository) {
       const remote = gitRemote();
       if (!remote.ok || remote.output.length === 0) {

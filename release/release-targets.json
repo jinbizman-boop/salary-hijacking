@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "github": {
+    "expectedRepository": "jinbizman-boop/salary-hijacking",
+    "repositoryCreationRequired": true,
+    "protectedExistingRepositories": ["Retro Games", "RETRO-DB"]
+  },
+  "cloudflare": {
+    "expectedWorkers": [
+      "salary-hijacking-api",
+      "salary-hijacking-notifications",
+      "salary-hijacking-scheduler"
+    ],
+    "expectedPagesProject": "salary-hijacking-admin"
+  },
+  "neon": {
+    "expectedProjectHint": "salary-hijacking"
+  }
+}

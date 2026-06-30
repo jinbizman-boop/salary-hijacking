@@ -142,7 +142,7 @@ const REQUIRED_TOKENS_BY_FILE = {
   ],
   "infra/github/repository.md": [
     "new repository",
-    "salary-hijacking-platform",
+    "salary-hijacking",
     "jinbizman-boop",
     "Existing repositories must not be modified",
     "Retro Games",

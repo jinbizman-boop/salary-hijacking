@@ -13,6 +13,7 @@ account JSON, raw database URLs, or unrelated project details.
 
 Machine-readable evidence lives in:
 
+- `release/release-targets.json`
 - `release/external-release-evidence.json`
 
 ## 2026-06-30 Connector Snapshot
@@ -21,16 +22,16 @@ GitHub:
 
 - GitHub app installation is visible for the user account.
 - Salary Hijacking must use a newly created GitHub repository for this product.
-- Default new repository target: `jinbizman-boop/salary-hijacking-platform`.
+- Canonical repository target: `jinbizman-boop/salary-hijacking`.
+- HTTPS remote: `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - Existing repositories must not be modified or reused for this project.
 - The existing `Retro Games` repository is unrelated and must not be touched.
 - The observed `jinbizman-boop/RETRO-DB` repository is also unrelated and must
   not be touched.
-- The local folder now has Git metadata initialized, but no remote is configured.
-- A direct GitHub repository lookup for
-  `jinbizman-boop/salary-hijacking-platform` returned 404.
-- A GitHub repository search for `salary-hijacking-platform` scoped to
-  `jinbizman-boop` returned no repositories.
+- The user provided the new public GitHub repository URL and a GitHub Quick
+  setup screenshot on 2026-06-30.
+- The local folder now has Git metadata initialized and `origin` configured to
+  `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
@@ -65,14 +66,16 @@ readiness. Release readiness requires both:
 - connector or CLI access to the correct accounts, and
 - matching project resources for the Salary Hijacking platform.
 
-As of this snapshot, the release status remains blocked by external project
-matching, new GitHub repository creation/proof, runtime secrets, remote GitHub
-repository linkage, mobile native E2E setup, real DB migration/seed execution,
-deployment, certificates, store builds, and operating QA.
+As of this snapshot, the GitHub repository target and local `origin` are aligned.
+The release status remains blocked by runtime secrets, Cloudflare Workers/Pages
+project matching, Neon project matching, mobile native E2E setup, real DB
+migration/seed execution, deployment, certificates, store builds, and operating
+QA.
 
 ## Update Rule
 
-When external state changes, update `release/external-release-evidence.json`
+When external state changes, update `release/release-targets.json` only if the
+canonical target changes, then update `release/external-release-evidence.json`
 using read-only evidence first. Do not paste secrets. Then run:
 
 ```powershell

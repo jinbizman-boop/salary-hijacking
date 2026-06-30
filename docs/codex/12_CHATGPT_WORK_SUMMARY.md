@@ -112,17 +112,18 @@ Commands run on 2026-06-30:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 30 required files checked; GitHub repository policy, mobile release metadata, and source automation Git trackability are now included; local shell warns that `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `corepack pnpm run test:root-scripts`: PASS, 34 tests
-- `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`; GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access; EAS/Android CLI tools remain blockers.
-- GitHub release target policy: existing unrelated repositories, including `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused. Salary Hijacking requires a newly created repository, defaulting to `jinbizman-boop/salary-hijacking-platform`, before release readiness can pass.
-- Local Git status: local commits exist through `c47ddf7 test: guard release target evidence`, and `git status --short` is clean after commit. No GitHub remote is configured and no GitHub repository has been created or modified from this workspace.
+- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 14 tests
+- `corepack pnpm run test:root-scripts`: PASS, 36 tests
+- `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`; GitHub target evidence and local `origin` now match `jinbizman-boop/salary-hijacking`; GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access; EAS/Android CLI tools remain blockers.
+- GitHub release target policy: existing unrelated repositories, including `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused. Salary Hijacking uses the newly created repository `jinbizman-boop/salary-hijacking` as the canonical release target.
+- Local Git status: local commits exist and `origin` is configured to `https://github.com/jinbizman-boop/salary-hijacking.git`; no unrelated GitHub repository has been targeted from this workspace.
 - `node --test scripts/dev/run-with-corepack-pnpm.test.mjs`: PASS
 - `node --test scripts/quality/check-package-manager-scripts.test.mjs`: PASS
 - `node --test scripts/quality/check-external-integrations.test.mjs`: PASS
 - `node --test scripts/build/fix-esm-imports.test.mjs`: PASS
 - `node --test scripts/security/offline-package-security-scan.test.mjs`: PASS
 - `node --test scripts/release/check-release-readiness.test.mjs`: PASS
-- `corepack pnpm run test:root-scripts`: PASS, 34 tests
+- `corepack pnpm run test:root-scripts`: PASS, 36 tests
 - `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`
 - `corepack pnpm --filter @salary-hijacking/ui run quality`: PASS
 - `corepack pnpm --filter @salary-hijacking/utils run quality`: PASS
@@ -134,9 +135,9 @@ Commands run on 2026-06-30:
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
 - `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, the Detox E2E APK, `adb`, and `emulator` are unavailable on this PC
 
-Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking GitHub/Cloudflare/Neon resource matching, EAS/Android CLI availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. Local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
+Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking Cloudflare/Neon resource matching, EAS/Android CLI availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. Local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
 
-Cloudflare and GitHub infrastructure docs were replaced with operational release checklists. `check:external-integrations` now rejects placeholder/mojibake infrastructure docs, mobile release metadata, `.gitignore` rules that hide required source automation files such as `scripts/build/fix-esm-imports.mjs`, and local generated hosting/build metadata such as `.vercel` or `.open-next` if they are trackable. `check:release-readiness` now also blocks release evidence that omits explicit `RETRO-DB` protection, runtime targets where `GITHUB_REPOSITORY` or `CF_PAGES_PROJECT_NAME` do not match the verified Salary Hijacking release target, and missing/mismatched `git remote origin` linkage.
+Cloudflare and GitHub infrastructure docs were replaced with operational release checklists. `check:external-integrations` now rejects placeholder/mojibake infrastructure docs, mobile release metadata, `.gitignore` rules that hide required source automation files such as `scripts/build/fix-esm-imports.mjs`, and local generated hosting/build metadata such as `.vercel` or `.open-next` if they are trackable. `check:release-readiness` now also blocks missing `release/release-targets.json`, external evidence drift from the canonical target manifest, release evidence that omits explicit `RETRO-DB` protection, runtime targets where `GITHUB_REPOSITORY` or `CF_PAGES_PROJECT_NAME` do not match the verified Salary Hijacking release target, and missing/mismatched `git remote origin` linkage.
 
 `security:scan` for API/Admin/Notifications/Scheduler is now an offline source and metadata policy scan so local quality does not depend on npm registry access. Dependency vulnerability audit remains required through the added `security:audit` scripts before release.
 
@@ -149,7 +150,7 @@ Use:
 - "mobile package typecheck/lint/format/Jest tests passed"
 - "native mobile E2E blocked by missing Android SDK/emulator tools"
 - "project-wide production readiness remains blocked by deployment, DB, secrets, certificates, and operating QA"
-- "external connectors are reachable, but release-target resources are not yet proven"
+- "GitHub release target is aligned; Cloudflare/Neon release-target resources are not yet proven"
 
 Do not use:
 

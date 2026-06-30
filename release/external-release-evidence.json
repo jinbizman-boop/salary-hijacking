@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-06-30T03:05:54Z",
-  "source": "Codex read-only connector checks: GitHub repository get/search, Neon project list/search, Cloudflare Workers/Pages list",
+  "observedAt": "2026-06-30T07:10:00Z",
+  "source": "Codex read-only connector checks plus user-provided GitHub repository URL and screenshot on 2026-06-30",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
     "appInstalled": true,
-    "expectedRepository": "jinbizman-boop/salary-hijacking-platform",
+    "expectedRepository": "jinbizman-boop/salary-hijacking",
     "repositoryCreationRequired": true,
     "existingRepositoriesMustNotBeModified": true,
     "protectedExistingRepositories": ["Retro Games", "RETRO-DB"],
-    "repositoryMatched": false,
-    "note": "GitHub app installation was observed. A direct get for jinbizman-boop/salary-hijacking-platform returned 404, and repository search for salary-hijacking-platform under jinbizman-boop returned no repositories. The Salary Hijacking release must use a newly created repository. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets. Repository-level access for the new salary-hijacking-platform repository was not proven in this turn."
+    "repositoryMatched": true,
+    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets. Push access still requires a successful authenticated git push or connector write verification."
   },
   "cloudflare": {
     "connectorReachable": true,

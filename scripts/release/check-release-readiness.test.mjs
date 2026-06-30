@@ -15,6 +15,35 @@ const write = (rootDir, filePath, content = "") => {
   fs.writeFileSync(target, content, "utf8");
 };
 
+const writeReleaseTargets = (rootDir, overrides = {}) => {
+  const targets = {
+    schemaVersion: 1,
+    github: {
+      expectedRepository: "jinbizman-boop/salary-hijacking",
+      repositoryCreationRequired: true,
+      protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
+    },
+    cloudflare: {
+      expectedWorkers: [
+        "salary-hijacking-api",
+        "salary-hijacking-notifications",
+        "salary-hijacking-scheduler",
+      ],
+      expectedPagesProject: "salary-hijacking-admin",
+    },
+    neon: {
+      expectedProjectHint: "salary-hijacking",
+    },
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/release-targets.json",
+    JSON.stringify(targets, null, 2),
+  );
+};
+
 const writeExternalEvidence = (rootDir, overrides = {}) => {
   const evidence = {
     schemaVersion: 1,
@@ -24,7 +53,7 @@ const writeExternalEvidence = (rootDir, overrides = {}) => {
     github: {
       connectorReachable: true,
       appInstalled: true,
-      expectedRepository: "telos/salary-hijacking-platform",
+      expectedRepository: "jinbizman-boop/salary-hijacking",
       repositoryCreationRequired: true,
       existingRepositoriesMustNotBeModified: true,
       protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
@@ -96,6 +125,7 @@ const makeWorkspace = () => {
     "# Validation Protocol\n",
   );
   write(rootDir, "release/README.md", "# Release\n");
+  writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/store/google-play-metadata.md", "# Google Play\n");
@@ -138,7 +168,7 @@ const makeWorkspace = () => {
       "EXPO_TOKEN=replace-with-expo-token",
       "EAS_PROJECT_ID=replace-with-eas-project-id",
       "GITHUB_TOKEN=replace-with-github-token",
-      "GITHUB_REPOSITORY=owner/salary-hijacking-platform",
+      "GITHUB_REPOSITORY=owner/salary-hijacking",
       "SENTRY_DSN=replace-with-sentry-dsn",
       "SLACK_WEBHOOK_URL=replace-with-slack-webhook-url",
       "",
@@ -159,14 +189,14 @@ const completeEnv = Object.freeze({
   EXPO_TOKEN: "expo_real_value",
   EAS_PROJECT_ID: "eas-real",
   GITHUB_TOKEN: "ghp_real_value",
-  GITHUB_REPOSITORY: "telos/salary-hijacking-platform",
+  GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
   SENTRY_DSN: "https://public@sentry.example/1",
   SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/T000/B000/XXXX",
 });
 
 const matchingGitRemote = () => ({
   ok: true,
-  output: "https://github.com/telos/salary-hijacking-platform.git",
+  output: "https://github.com/jinbizman-boop/salary-hijacking.git",
 });
 
 test("passes when release files, scripts, env names, and tools are present", () => {
@@ -289,13 +319,76 @@ test("blocks when the GitHub repository policy file is missing", () => {
   );
 });
 
+test("blocks when the release target manifest is missing", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "release-targets.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /release-targets\.json/);
+});
+
+test("blocks external evidence that drifts from release target manifest", () => {
+  const rootDir = makeWorkspace();
+  writeExternalEvidence(rootDir, {
+    github: {
+      connectorReachable: true,
+      appInstalled: true,
+      expectedRepository: "telos/other-platform",
+      repositoryCreationRequired: true,
+      existingRepositoriesMustNotBeModified: true,
+      protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
+      repositoryMatched: true,
+    },
+    cloudflare: {
+      connectorReachable: true,
+      accountObserved: true,
+      expectedWorkers: ["other-api"],
+      missingWorkers: [],
+      expectedPagesProject: "other-admin",
+      pagesProjectMatched: true,
+    },
+    neon: {
+      connectorReachable: true,
+      organizationObserved: true,
+      expectedProjectHint: "other-project",
+      projectMatched: true,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /release-target-manifest:github/);
+  assert.match(report, /release-target-manifest:cloudflare-workers/);
+  assert.match(report, /release-target-manifest:cloudflare-pages/);
+  assert.match(report, /release-target-manifest:neon/);
+});
+
 test("blocks external connector evidence that does not match release targets", () => {
   const rootDir = makeWorkspace();
   writeExternalEvidence(rootDir, {
     github: {
       connectorReachable: true,
       appInstalled: true,
-      expectedRepository: "telos/salary-hijacking-platform",
+      expectedRepository: "jinbizman-boop/salary-hijacking",
       repositoryCreationRequired: true,
       existingRepositoriesMustNotBeModified: true,
       protectedExistingRepositories: ["Retro Games"],
@@ -346,7 +439,7 @@ test("blocks release evidence that does not prove the new GitHub repository poli
     github: {
       connectorReachable: true,
       appInstalled: true,
-      expectedRepository: "telos/salary-hijacking-platform",
+      expectedRepository: "jinbizman-boop/salary-hijacking",
       repositoryCreationRequired: true,
       existingRepositoriesMustNotBeModified: false,
       protectedExistingRepositories: ["Retro Games"],
@@ -375,7 +468,7 @@ test("blocks release evidence when RETRO-DB is not explicitly protected", () => 
     github: {
       connectorReachable: true,
       appInstalled: true,
-      expectedRepository: "telos/salary-hijacking-platform",
+      expectedRepository: "jinbizman-boop/salary-hijacking",
       repositoryCreationRequired: true,
       existingRepositoriesMustNotBeModified: true,
       protectedExistingRepositories: ["Retro Games"],
@@ -414,7 +507,7 @@ test("blocks when runtime GitHub repository does not match external evidence", (
   assert.equal(result.ok, false);
   assert.match(report, /GITHUB_REPOSITORY/);
   assert.match(report, /expected GitHub repository/i);
-  assert.match(report, /telos\/salary-hijacking-platform/);
+  assert.match(report, /jinbizman-boop\/salary-hijacking/);
 });
 
 test("blocks when runtime Cloudflare Pages project does not match external evidence", () => {
@@ -450,7 +543,7 @@ test("blocks when git remote origin is not configured", () => {
 
   assert.equal(result.ok, false);
   assert.match(report, /git remote origin/i);
-  assert.match(report, /telos\/salary-hijacking-platform/);
+  assert.match(report, /jinbizman-boop\/salary-hijacking/);
 });
 
 test("blocks when git remote origin points to a different repository", () => {
@@ -470,5 +563,5 @@ test("blocks when git remote origin points to a different repository", () => {
   assert.equal(result.ok, false);
   assert.match(report, /git remote origin/i);
   assert.match(report, /expected GitHub repository/i);
-  assert.match(report, /telos\/salary-hijacking-platform/);
+  assert.match(report, /jinbizman-boop\/salary-hijacking/);
 });

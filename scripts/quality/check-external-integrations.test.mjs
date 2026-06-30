@@ -226,7 +226,7 @@ Secret values must stay in GitHub Environments or provider secret stores.
     "infra/github/repository.md": `
 # GitHub Repository
 
-The Salary Hijacking release must use a new repository named salary-hijacking-platform under jinbizman-boop.
+The Salary Hijacking release must use a new repository named salary-hijacking under jinbizman-boop.
 Existing repositories must not be modified.
 The Retro Games repository is unrelated and must not be touched.
 The RETRO-DB repository is unrelated and must not be touched.
@@ -437,7 +437,7 @@ test("fails when GitHub repository policy omits the observed RETRO-DB protection
       "infra/github/repository.md": `
 # GitHub Repository
 
-The Salary Hijacking release must use a new repository named salary-hijacking-platform under jinbizman-boop.
+The Salary Hijacking release must use a new repository named salary-hijacking under jinbizman-boop.
 Existing repositories must not be modified.
 The Retro Games repository is unrelated and must not be touched.
 Configure branch protection and GitHub Environments after the new repository exists.

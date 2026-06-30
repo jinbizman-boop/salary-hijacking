@@ -59,15 +59,16 @@ Verified on 2026-06-30 KST:
 - Package-level `pnpm` warnings for Admin/API/Notifications/Scheduler were resolved by moving shared pnpm settings to the root `package.json`.
 - Local scripts under `scripts/*` now provide conservative helper automation and pass `pnpm run check:scripts`.
 - Current folder now has a local Git repository initialized and committed.
-  `git status --short` is clean, but no remote is configured. Release readiness
-  blocks until `origin` points to the expected new Salary Hijacking repository.
+  `origin` points to the newly created Salary Hijacking repository
+  `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - User reported GitHub, Cloudflare, and Neon plugins/connectors are linked. Read-only connector checks now prove GitHub app installation, Cloudflare account access, and Neon organization access.
-- Connector checks do not yet prove the newly required Salary Hijacking GitHub
-  repository, Cloudflare Workers/Pages resources, or Neon project. Existing
-  unrelated repositories, including `Retro Games` and `jinbizman-boop/RETRO-DB`,
-  must not be modified or reused. See
+- The user provided the new Salary Hijacking GitHub repository URL and Quick
+  setup screenshot. Connector checks do not yet prove Cloudflare Workers/Pages
+  resources or a Neon project. Existing unrelated repositories, including
+  `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused.
+  See
   `docs/codex/14_EXTERNAL_RELEASE_EVIDENCE.md` and
-  `release/external-release-evidence.json`.
+  `release/release-targets.json`.
 - Local CLI preflight finds `git` and `wrangler`. `gh` and Neon CLI are not
   available in this PowerShell PATH, but release readiness now treats them as
   WARN when connector evidence proves account access. EAS CLI, `adb`, and

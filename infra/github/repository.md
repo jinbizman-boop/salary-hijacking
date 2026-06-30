@@ -10,8 +10,9 @@ The Salary Hijacking platform must use a new repository for production release
 work. The default target is:
 
 - Owner: `jinbizman-boop`
-- Repository slug: `salary-hijacking-platform`
-- Full name: `jinbizman-boop/salary-hijacking-platform`
+- Repository slug: `salary-hijacking`
+- Full name: `jinbizman-boop/salary-hijacking`
+- HTTPS remote: `https://github.com/jinbizman-boop/salary-hijacking.git`
 
 Existing repositories must not be modified, renamed, pushed to, configured with
 secrets, connected to Cloudflare Pages, or used as deploy sources for Salary
@@ -37,18 +38,19 @@ Before public release, create the new repository and configure:
 
 ## Verification
 
-Release readiness remains blocked until read-only GitHub connector evidence or
-GitHub CLI evidence proves that the new Salary Hijacking repository exists and
-is the repository used by CI, deployment workflows, GitHub Environments, branch
-protection, and release artifacts.
+Release readiness requires read-only GitHub connector evidence, GitHub CLI
+evidence, or user-provided repository evidence proving that the new Salary
+Hijacking repository exists and is the repository used by CI, deployment
+workflows, GitHub Environments, branch protection, and release artifacts.
 
-Latest read-only check on 2026-06-30:
+Latest repository target update on 2026-06-30:
 
-- `jinbizman-boop/salary-hijacking-platform` returned 404 through the GitHub
-  repository metadata lookup.
-- GitHub repository search for `salary-hijacking-platform` under
-  `jinbizman-boop` returned no repositories.
-- The currently exposed GitHub connector actions do not include new repository
-  creation.
+- The user provided the newly created public repository URL:
+  `https://github.com/jinbizman-boop/salary-hijacking.git`.
+- The user also provided a GitHub Quick setup screenshot for
+  `salary-hijacking`.
+- Local Git `origin` is configured to the new Salary Hijacking repository.
+- `release/release-targets.json` is the canonical machine-readable release
+  target manifest.
 
 Do not use unrelated existing repositories as temporary launch targets.

@@ -91,8 +91,9 @@ Last checked by Codex on 2026-06-30 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 30 required files checked, including required source automation Git trackability; local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `corepack pnpm run test:root-scripts`: PASS, 34 tests
-- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, new GitHub repository proof, Cloudflare Workers/Pages proof, Neon project proof, and missing local EAS/Android CLI tools; local `gh` and Neon CLI absence is WARN because connector evidence proves account access; Git status is PASS because local repository metadata is visible
+- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 14 tests
+- `corepack pnpm run test:root-scripts`: PASS, 36 tests
+- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, Cloudflare Workers/Pages proof, Neon project proof, and missing local EAS/Android CLI tools; `release/release-targets.json`, external GitHub evidence, and local `origin` now target `jinbizman-boop/salary-hijacking`; local `gh` and Neon CLI absence is WARN because connector evidence proves account access
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -104,7 +105,7 @@ Last checked by Codex on 2026-06-30 KST:
 - `node --test scripts/security/offline-package-security-scan.test.mjs`: PASS
 - `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight; `ANDROID_SDK_ROOT`/`ANDROID_HOME`, E2E APK, `adb`, and `emulator` are unavailable on this PC
 - Dependency vulnerability audit is separated into `security:audit` and still requires registry/network access before release
-- `git status --short`: PASS, clean working tree after local baseline commit `37bde95 chore: establish salary hijacking baseline`; no remote is configured and no GitHub repository has been created from this workspace; release readiness now blocks until `origin` points to the expected new Salary Hijacking repository
+- `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
 
 ## Editing Rules
 
