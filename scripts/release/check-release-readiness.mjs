@@ -16,6 +16,10 @@ const REQUIRED_FILES = [
   EXTERNAL_RELEASE_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
+  "release/store/data-safety.md",
+  "release/store/app-privacy.md",
+  "release/store/review-notes.md",
+  "release/store/content-rating.md",
   "release/store/google-play-metadata.md",
   "release/store/app-store-metadata.md",
   "assets/store/screenshots-guideline.md",
@@ -137,6 +141,9 @@ const MOJIBAKE_PATTERN = /[�]|[湲吏理疫]/;
 
 const SUBMISSION_PLACEHOLDER_PATTERN =
   /\b(?:TODO|TBD|placeholder|coming soon|stub|not implemented|example\.com|salary-hijacking\.example)\b/i;
+
+const REVIEW_NOTE_SECRET_PATTERN =
+  /\b(?:password|secret|token|private key)\s*:\s*(?!(?:provide out-of-band|do not commit|not stored|redacted|<))\S/i;
 
 const pathExists = (rootDir, relativePath) =>
   fs.existsSync(path.join(rootDir, relativePath));
@@ -1208,6 +1215,120 @@ const checkStoreMetadata = (rootDir, checks, blockers) => {
   );
 };
 
+const checkStoreSubmissionCompliance = (rootDir, checks, blockers) => {
+  const dataSafetyText = readTextIfPresent(
+    rootDir,
+    "release/store/data-safety.md",
+  );
+  const dataSafetyOk =
+    typeof dataSafetyText === "string" &&
+    isSubmissionTextClean(dataSafetyText) &&
+    hasAllText(dataSafetyText, [
+      "Google Play Data safety",
+      "Data collected:",
+      "Data shared:",
+      "no raw salary",
+      "Encryption in transit:",
+      "Data deletion requests:",
+      "Third-party SDK review:",
+      EXPECTED_MOBILE_APP.privacyUrl,
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    dataSafetyOk ? "PASS" : "BLOCKED",
+    "mobile:store:data-safety",
+    dataSafetyOk
+      ? "Google Play data safety declaration is ready for console entry"
+      : "Google Play data safety declaration is missing required privacy facts",
+    "release/store/data-safety.md must define collected data, sharing limits, encryption, deletion, SDK review, and privacy URL without placeholders",
+  );
+
+  const appPrivacyText = readTextIfPresent(
+    rootDir,
+    "release/store/app-privacy.md",
+  );
+  const appPrivacyOk =
+    typeof appPrivacyText === "string" &&
+    isSubmissionTextClean(appPrivacyText) &&
+    hasAllText(appPrivacyText, [
+      "App Store Privacy",
+      "Data Used to Track You: None",
+      "Data Linked to You:",
+      "Data Not Linked to You:",
+      "Financial Data:",
+      "not used for advertising",
+      "Tracking:",
+      EXPECTED_MOBILE_APP.privacyUrl,
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    appPrivacyOk ? "PASS" : "BLOCKED",
+    "mobile:store:app-privacy",
+    appPrivacyOk
+      ? "App Store privacy nutrition label draft is ready for console entry"
+      : "App Store privacy nutrition label draft is missing required data disclosures",
+    "release/store/app-privacy.md must define tracking, linked data, unlinked data, financial data use, and privacy URL without placeholders",
+  );
+
+  const reviewNotesText = readTextIfPresent(
+    rootDir,
+    "release/store/review-notes.md",
+  );
+  const reviewNotesOk =
+    typeof reviewNotesText === "string" &&
+    isSubmissionTextClean(reviewNotesText) &&
+    !REVIEW_NOTE_SECRET_PATTERN.test(reviewNotesText) &&
+    hasAllText(reviewNotesText, [
+      "Reviewer account email: reviewer@salaryhijacking.com",
+      "Reviewer password: provide out-of-band",
+      "Test data:",
+      "salary home",
+      "daily budget",
+      "LV UP",
+      "All displayed financial values are sample data",
+      "Account deletion support",
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    reviewNotesOk ? "PASS" : "BLOCKED",
+    "mobile:store:review-notes",
+    reviewNotesOk
+      ? "store review notes describe safe reviewer access without committed secrets"
+      : "store review notes are missing reviewer path data or contain committed secret-like text",
+    "release/store/review-notes.md must include reviewer account, out-of-band password instruction, test path, sample-data note, and deletion support without secrets",
+  );
+
+  const contentRatingText = readTextIfPresent(
+    rootDir,
+    "release/store/content-rating.md",
+  );
+  const contentRatingOk =
+    typeof contentRatingText === "string" &&
+    isSubmissionTextClean(contentRatingText) &&
+    hasAllText(contentRatingText, [
+      "Category: Finance",
+      "not directed to children",
+      "User-generated content:",
+      "reporting/moderation",
+      "Ads:",
+      "not provided",
+      "Final age and content rating",
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    contentRatingOk ? "PASS" : "BLOCKED",
+    "mobile:store:content-rating",
+    contentRatingOk
+      ? "content rating notes disclose finance category, UGC, ads, and excluded content"
+      : "content rating notes are missing finance, UGC, ads, or excluded-content disclosures",
+    "release/store/content-rating.md must define category, audience, UGC moderation, ads, excluded risky content, and final console confirmation",
+  );
+};
+
 const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
   for (const screenshotName of REQUIRED_STORE_SCREENSHOT_ASSETS) {
     const screenshotPath = path.join(
@@ -1342,6 +1463,7 @@ const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
 
   checkMobileAppConfig(rootDir, checks, blockers);
   checkStoreMetadata(rootDir, checks, blockers);
+  checkStoreSubmissionCompliance(rootDir, checks, blockers);
   checkStoreScreenshotMaterials(rootDir, checks, blockers);
 
   const easConfig = readJsonIfPresent(rootDir, "apps/mobile/eas.json");

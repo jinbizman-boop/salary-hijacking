@@ -318,6 +318,44 @@ const privacy = { financialAmountBasedTargeting: false };
 - description: 급여납치는 급여, 예산, 지출, 저축, 알림, LV UP, 커뮤니티를 서버 권위 구조로 연결하는 모바일 앱입니다.
 - privacy policy: https://salaryhijacking.com/privacy
 `,
+    "release/store/data-safety.md": `
+# Google Play Data Safety Declaration
+
+- Google Play Data safety
+- Data collected: account email, user ID, payroll plan data, expense records, savings records, community content, notification preferences, crash logs, diagnostics, and app interactions.
+- Data shared: no raw salary, expense, savings, hijack amount, account, card, loan, email, phone, auth token, push token, or raw device identifier is shared with ads, partners, analytics, logs, or push payloads.
+- Encryption in transit: required for all API traffic.
+- Data deletion requests: available through profile withdrawal request and support flow.
+- Third-party SDK review: Expo, FCM, Sentry, analytics, and advertising/partner SDK usage must be reviewed before submission.
+`,
+    "release/store/app-privacy.md": `
+# App Store Privacy Nutrition Label
+
+- App Store Privacy
+- Data Used to Track You: None.
+- Data Linked to You: email address, user ID, payroll plan data, expense data, savings data, community content, and notification preferences.
+- Data Not Linked to You: crash logs, diagnostics, and aggregate app interactions where identifiers are removed.
+- Financial Data: collected for app functionality only.
+- Privacy policy: https://salaryhijacking.com/privacy
+`,
+    "release/store/review-notes.md": `
+# Store Review Notes
+
+- Reviewer account email: reviewer@salaryhijacking.com
+- Reviewer password: provide out-of-band through the store console only.
+- Test data: seeded demo payroll, budget, expense, savings, LV UP, notification, and community records only.
+- Review Path: log in and confirm salary home, daily budget, plan, notifications, LV UP, community, and profile tabs.
+- Account deletion support is available through profile withdrawal request and support contact.
+`,
+    "release/store/content-rating.md": `
+# Store Content Rating Notes
+
+- Category: Finance.
+- Target audience: adult and general Korean mobile users; not directed to children.
+- User-generated content: community posts and comments are supported and require reporting/moderation.
+- Ads: contextual ads or partner placements may appear and must be labeled.
+- Final age and content rating must be confirmed in Google Play Console and App Store Connect.
+`,
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",

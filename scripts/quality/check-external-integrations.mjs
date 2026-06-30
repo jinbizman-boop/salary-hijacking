@@ -32,6 +32,10 @@ const REQUIRED_FILES = [
   "apps/mobile/assets/favicon.png",
   "release/store/google-play-metadata.md",
   "release/store/app-store-metadata.md",
+  "release/store/data-safety.md",
+  "release/store/app-privacy.md",
+  "release/store/review-notes.md",
+  "release/store/content-rating.md",
   "packages/db/src/client/neon.client.ts",
   "database/migrations/0001_init_users.sql",
   "database/migrations/0002_payroll_budget_expense.sql",
@@ -200,6 +204,36 @@ const REQUIRED_TOKENS_BY_FILE = {
     "description",
     "privacy policy",
   ],
+  "release/store/data-safety.md": [
+    "Google Play Data safety",
+    "Data collected",
+    "Data shared",
+    "Encryption in transit",
+    "Data deletion requests",
+    "Third-party SDK review",
+  ],
+  "release/store/app-privacy.md": [
+    "App Store Privacy",
+    "Data Used to Track You: None",
+    "Data Linked to You",
+    "Data Not Linked to You",
+    "Financial Data",
+    "Privacy policy",
+  ],
+  "release/store/review-notes.md": [
+    "Reviewer account email",
+    "Reviewer password: provide out-of-band",
+    "Test data",
+    "Review Path",
+    "Account deletion support",
+  ],
+  "release/store/content-rating.md": [
+    "Category: Finance",
+    "not directed to children",
+    "User-generated content",
+    "Ads",
+    "Final age and content rating",
+  ],
   "packages/db/src/client/neon.client.ts": [
     "@neondatabase/serverless",
     "DATABASE_URL",
@@ -234,6 +268,10 @@ const RELEASE_METADATA_FILES = [
   ".github/workflows/mobile-build.yml",
   "release/store/google-play-metadata.md",
   "release/store/app-store-metadata.md",
+  "release/store/data-safety.md",
+  "release/store/app-privacy.md",
+  "release/store/review-notes.md",
+  "release/store/content-rating.md",
 ];
 
 const MOBILE_RELEASE_CONFIG_FILES = [

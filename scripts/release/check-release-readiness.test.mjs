@@ -95,6 +95,61 @@ const validAppStoreMetadata = `# App Store Metadata
 - tracking policy: no App Tracking Transparency prompt is required unless a future verified ads policy introduces tracking.
 `;
 
+const validDataSafety = `# Google Play Data Safety Declaration
+
+## Google Play Data safety
+
+- Data collected: account email, user ID, profile nickname, payroll plan inputs, expense records, savings records, community content, notification preferences, crash logs, diagnostics, and app interactions.
+- Data shared: no raw salary, expense, savings, hijack amount, account, card, loan, email, phone, auth token, push token, or raw device identifier is shared with ads, partners, analytics, logs, or push payloads.
+- Encryption in transit: required for all API traffic.
+- Data deletion requests: available through profile withdrawal request and privacy export/delete support flow.
+- Third-party SDK review: Expo, FCM, Sentry, and advertising/partner SDK usage must be reviewed before each submission.
+- Privacy policy: https://salaryhijacking.com/privacy
+`;
+
+const validAppPrivacy = `# App Store Privacy Nutrition Label
+
+## App Store Privacy
+
+- Data Used to Track You: None.
+- Data Linked to You: email address, user ID, payroll plan data, expense data, savings data, community content, and notification preferences when the user signs in.
+- Data Not Linked to You: crash logs, diagnostics, and aggregate app interactions where identifiers are removed.
+- Financial Data: collected for app functionality only and not used for advertising or third-party tracking.
+- Contact Info: email is used for account authentication and support.
+- User Content: community posts and comments are user-generated content.
+- Tracking: no App Tracking Transparency prompt is required unless a future verified ads policy introduces tracking.
+- Privacy policy: https://salaryhijacking.com/privacy
+`;
+
+const validReviewNotes = `# Store Review Notes
+
+## Reviewer Access
+
+- Reviewer account email: reviewer@salaryhijacking.com
+- Reviewer password: provide out-of-band through the store console only; do not commit it.
+- Test data: seeded demo payroll, budget, expense, savings, LV UP, notification, and community records only.
+
+## Review Path
+
+- Log in with the reviewer account.
+- Confirm salary home, daily budget, plan, notifications, LV UP, community, and profile tabs.
+- All displayed financial values are sample data.
+- Ads and partner content are contextual-only and clearly labeled when visible.
+- Account deletion support is available through profile withdrawal request and support contact.
+`;
+
+const validContentRating = `# Store Content Rating Notes
+
+## Rating Inputs
+
+- Category: Finance.
+- Target audience: adult and general Korean mobile users; not directed to children.
+- User-generated content: community posts and comments are supported and require reporting/moderation.
+- Ads: contextual ads or partner placements may appear and must be labeled.
+- Gambling, contests, real-money prizes, loan approval, investment returns, and health outcome guarantees: not provided.
+- Final age and content rating must be confirmed in Google Play Console and App Store Connect before public rollout.
+`;
+
 const requiredStoreImageNames = [
   "01_home_salary.png",
   "02_daily_budget.png",
@@ -259,6 +314,10 @@ const makeWorkspace = () => {
     validGooglePlayMetadata,
   );
   write(rootDir, "release/store/app-store-metadata.md", validAppStoreMetadata);
+  write(rootDir, "release/store/data-safety.md", validDataSafety);
+  write(rootDir, "release/store/app-privacy.md", validAppPrivacy);
+  write(rootDir, "release/store/review-notes.md", validReviewNotes);
+  write(rootDir, "release/store/content-rating.md", validContentRating);
   write(
     rootDir,
     "assets/store/screenshots-guideline.md",
@@ -608,6 +667,43 @@ test("blocks missing store screenshots and incomplete screenshot guidance", () =
   assert.match(report, /mobile:store-feature-graphic/);
   assert.match(report, /mobile:screenshot-plan/);
   assert.match(report, /mobile:screenshot-guideline/);
+});
+
+test("blocks missing store privacy, data safety, review, and content rating materials", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "store", "data-safety.md"), {
+    force: true,
+  });
+  write(
+    rootDir,
+    "release/store/app-privacy.md",
+    "# App Privacy\n\nTODO: fill App Store privacy nutrition label later.\n",
+  );
+  write(
+    rootDir,
+    "release/store/review-notes.md",
+    "# Review Notes\n\nReviewer password: hunter2\n",
+  );
+  write(
+    rootDir,
+    "release/store/content-rating.md",
+    "# Content Rating\n\nplaceholder\n",
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:store:data-safety/);
+  assert.match(report, /mobile:store:app-privacy/);
+  assert.match(report, /mobile:store:review-notes/);
+  assert.match(report, /mobile:store:content-rating/);
 });
 
 test("blocks when the GitHub repository policy file is missing", () => {
