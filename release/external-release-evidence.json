@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-06-30T07:10:00Z",
-  "source": "Codex read-only connector checks plus user-provided GitHub repository URL and screenshot on 2026-06-30",
+  "observedAt": "2026-06-30T06:08:09Z",
+  "source": "Codex read-only connector checks, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-06-30",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
@@ -11,7 +11,15 @@
     "existingRepositoriesMustNotBeModified": true,
     "protectedExistingRepositories": ["Retro Games", "RETRO-DB"],
     "repositoryMatched": true,
-    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets. Push access still requires a successful authenticated git push or connector write verification."
+    "writeAccessProven": true,
+    "pushProven": true,
+    "pushVerifiedAt": "2026-06-30T06:08:09Z",
+    "pushCommand": "git push -u origin main",
+    "pushedBranch": "main",
+    "localHead": "326f49eb6080b683897b8b315fadb1631673dbc4",
+    "remoteHead": "326f49eb6080b683897b8b315fadb1631673dbc4",
+    "remoteVerificationCommand": "git ls-remote origin refs/heads/main",
+    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. After GitHub Desktop was installed, authenticated git push succeeded and origin/main matched local HEAD 326f49eb6080b683897b8b315fadb1631673dbc4. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
   },
   "cloudflare": {
     "connectorReachable": true,

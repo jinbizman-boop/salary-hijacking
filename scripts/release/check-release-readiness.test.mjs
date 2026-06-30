@@ -58,6 +58,7 @@ const writeExternalEvidence = (rootDir, overrides = {}) => {
       existingRepositoriesMustNotBeModified: true,
       protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
       repositoryMatched: true,
+      writeAccessProven: true,
     },
     cloudflare: {
       connectorReachable: true,
@@ -431,6 +432,36 @@ test("blocks external connector evidence that does not match release targets", (
   assert.match(report, /Cloudflare Worker evidence/);
   assert.match(report, /Cloudflare Pages evidence/);
   assert.match(report, /Neon connector evidence/);
+});
+
+test("blocks GitHub repository evidence without write or push proof", () => {
+  const rootDir = makeWorkspace();
+  writeExternalEvidence(rootDir, {
+    github: {
+      connectorReachable: true,
+      appInstalled: true,
+      expectedRepository: "jinbizman-boop/salary-hijacking",
+      repositoryCreationRequired: true,
+      existingRepositoriesMustNotBeModified: true,
+      protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
+      repositoryMatched: true,
+      writeAccessProven: false,
+      pushProven: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /external-evidence:github-write-access/);
+  assert.match(report, /GitHub write or push access/);
 });
 
 test("blocks release evidence that does not prove the new GitHub repository policy", () => {

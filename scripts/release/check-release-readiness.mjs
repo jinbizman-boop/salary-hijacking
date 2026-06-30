@@ -706,6 +706,25 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
     );
   }
 
+  if (github.writeAccessProven === true || github.pushProven === true) {
+    addCheck(
+      checks,
+      "PASS",
+      "external-evidence:github-write-access",
+      github.pushProven === true
+        ? "authenticated git push is proven"
+        : "GitHub connector write access is proven",
+    );
+  } else {
+    addExternalEvidenceBlocker(
+      checks,
+      blockers,
+      "external-evidence:github-write-access",
+      "GitHub write or push access is not proven",
+      "GitHub write or push access must be proven before release automation can use the new repository",
+    );
+  }
+
   const cloudflare = isPlainObject(evidence.cloudflare)
     ? evidence.cloudflare
     : {};

@@ -32,6 +32,10 @@ GitHub:
   setup screenshot on 2026-06-30.
 - The local folder now has Git metadata initialized and `origin` configured to
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
+- After GitHub Desktop was installed, authenticated `git push -u origin main`
+  succeeded.
+- `git ls-remote origin refs/heads/main` returned
+  `326f49eb6080b683897b8b315fadb1631673dbc4`, matching local `HEAD`.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
@@ -66,11 +70,11 @@ readiness. Release readiness requires both:
 - connector or CLI access to the correct accounts, and
 - matching project resources for the Salary Hijacking platform.
 
-As of this snapshot, the GitHub repository target and local `origin` are aligned.
-The release status remains blocked by runtime secrets, Cloudflare Workers/Pages
-project matching, Neon project matching, mobile native E2E setup, real DB
-migration/seed execution, deployment, certificates, store builds, and operating
-QA.
+As of this snapshot, the GitHub repository target, local `origin`, and
+authenticated push access are aligned. The release status remains blocked by
+runtime secrets, Cloudflare Workers/Pages project matching, Neon project
+matching, mobile native E2E setup, real DB migration/seed execution, deployment,
+certificates, store builds, and operating QA.
 
 ## Update Rule
 

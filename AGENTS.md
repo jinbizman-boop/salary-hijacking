@@ -91,9 +91,9 @@ Last checked by Codex on 2026-06-30 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 30 required files checked, including required source automation Git trackability; local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 14 tests
-- `corepack pnpm run test:root-scripts`: PASS, 36 tests
-- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, Cloudflare Workers/Pages proof, Neon project proof, and missing local EAS/Android CLI tools; `release/release-targets.json`, external GitHub evidence, and local `origin` now target `jinbizman-boop/salary-hijacking`; local `gh` and Neon CLI absence is WARN because connector evidence proves account access
+- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 15 tests
+- `corepack pnpm run test:root-scripts`: PASS, 37 tests
+- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, Cloudflare Workers/Pages proof, Neon project proof, and missing local EAS/Android CLI tools; `release/release-targets.json`, external GitHub evidence, local `origin`, and authenticated push evidence now target `jinbizman-boop/salary-hijacking`; local `gh` and Neon CLI absence is WARN because connector evidence proves account access
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -106,6 +106,7 @@ Last checked by Codex on 2026-06-30 KST:
 - `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight; `ANDROID_SDK_ROOT`/`ANDROID_HOME`, E2E APK, `adb`, and `emulator` are unavailable on this PC
 - Dependency vulnerability audit is separated into `security:audit` and still requires registry/network access before release
 - `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
+- `git push -u origin main` and `git ls-remote origin refs/heads/main`: PASS, remote `main` matches local `HEAD` `326f49eb6080b683897b8b315fadb1631673dbc4`
 
 ## Editing Rules
 

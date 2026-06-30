@@ -61,6 +61,9 @@ Verified on 2026-06-30 KST:
 - Current folder now has a local Git repository initialized and committed.
   `origin` points to the newly created Salary Hijacking repository
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
+- Authenticated `git push -u origin main` now succeeds, and
+  `git ls-remote origin refs/heads/main` matches local `HEAD`
+  `326f49eb6080b683897b8b315fadb1631673dbc4`.
 - User reported GitHub, Cloudflare, and Neon plugins/connectors are linked. Read-only connector checks now prove GitHub app installation, Cloudflare account access, and Neon organization access.
 - The user provided the new Salary Hijacking GitHub repository URL and Quick
   setup screenshot. Connector checks do not yet prove Cloudflare Workers/Pages
@@ -95,5 +98,4 @@ The project still needs hardening in:
 - real mobile native E2E execution with Android SDK/emulator or iOS simulator,
 - production-like API/Admin/mobile smoke against deployed environments,
 - Bash/CI execution verification for the local operational scripts,
-- remote GitHub repository linkage for the new Salary Hijacking repository.
-- matching remote GitHub/Cloudflare/Neon resources for the Salary Hijacking release target.
+- matching remote Cloudflare/Neon resources for the Salary Hijacking release target.
