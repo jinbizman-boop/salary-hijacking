@@ -174,7 +174,7 @@ jobs:
             "lint",
             "typecheck",
             "test",
-            "build"
+            "export"
           ];
 
           const missingMobileScripts = requiredMobileScripts.filter((script) => !mobilePackage.scripts || !mobilePackage.scripts[script]);
@@ -186,8 +186,7 @@ jobs:
           const recommendedScripts = [
             "doctor",
             "test:e2e",
-            "export",
-            "prebuild:check"
+            "prebuild"
           ];
 
           const missingRecommendedScripts = recommendedScripts.filter((script) => !mobilePackage.scripts || !mobilePackage.scripts[script]);
@@ -249,20 +248,20 @@ jobs:
             echo "Mobile doctor script is not configured. Skipping."
           fi
 
-      - name: Run mobile E2E tests when configured
+      - name: Run mobile E2E tests when a native binary is available
         run: |
           set -euo pipefail
 
-          if node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:e2e'] ? 0 : 1)"; then
+          E2E_APK="$MOBILE_APP_DIR/build/e2e/android/salary-hijacking-e2e.apk"
+
+          if [ -f "$E2E_APK" ] && node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:e2e'] ? 0 : 1)"; then
             pnpm --dir "$MOBILE_APP_DIR" run test:e2e
           else
-            echo "Mobile test:e2e script is not configured. Skipping."
+            echo "Native mobile E2E skipped because no local E2E APK was found at $E2E_APK."
+            echo "Native E2E remains a release gate and must pass in an Android SDK/EAS binary environment before public release."
           fi
 
-      - name: Build mobile JavaScript bundle
-        run: pnpm --dir "$MOBILE_APP_DIR" build
-
-      - name: Run Expo export when configured
+      - name: Export mobile JavaScript bundle
         run: |
           set -euo pipefail
 

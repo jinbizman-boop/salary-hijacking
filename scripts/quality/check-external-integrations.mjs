@@ -70,6 +70,8 @@ const REQUIRED_TOKENS_BY_FILE = {
     "eas-cli@latest build",
     "--platform",
     "--profile",
+    'pnpm --dir "$MOBILE_APP_DIR" run export',
+    "Native mobile E2E skipped because no local E2E APK was found",
   ],
   ".github/workflows/release.yml": [
     "GH_TOKEN: ${{ github.token }}",
@@ -228,6 +230,7 @@ const RELEASE_METADATA_FILES = [
   "apps/mobile/package.json",
   "apps/mobile/eas.json",
   "apps/mobile/app.config.ts",
+  ".github/workflows/mobile-build.yml",
   "release/store/google-play-metadata.md",
   "release/store/app-store-metadata.md",
 ];

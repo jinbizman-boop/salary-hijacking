@@ -74,6 +74,8 @@ jobs:
     env:
       EXPO_TOKEN: \${{ secrets.EXPO_TOKEN }}
     steps:
+      - run: pnpm --dir "$MOBILE_APP_DIR" run export
+      - run: echo "Native mobile E2E skipped because no local E2E APK was found"
       - run: pnpm dlx eas-cli@latest build --profile preview --platform all
 `,
     ".github/workflows/release.yml": `
