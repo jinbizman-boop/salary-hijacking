@@ -1,0 +1,149 @@
+{
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "base": {
+      "env": {
+        "EXPO_PUBLIC_APP_NAME": "급여납치",
+        "EXPO_PUBLIC_APP_SLUG": "salary-hijacking",
+        "EXPO_PUBLIC_APP_SCHEME": "salaryhijacking",
+        "EXPO_PUBLIC_API_TIMEOUT_MS": "15000",
+        "EXPO_PUBLIC_API_RETRY_COUNT": "2",
+        "EXPO_PUBLIC_CACHE_TTL_SECONDS": "300",
+        "EXPO_PUBLIC_PERFORMANCE_BUDGET_MS": "2500",
+        "EXPO_PUBLIC_STARTUP_BUDGET_MS": "1800",
+        "EXPO_PUBLIC_NOTIFICATIONS_ENABLED": "true",
+        "EXPO_PUBLIC_ADS_ENABLED": "true",
+        "EXPO_PUBLIC_PARTNER_ENABLED": "true",
+        "EXPO_PUBLIC_E2E_BUILD": "false",
+        "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "false",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "base",
+        "EXPO_PUBLIC_APP_ICON": "./assets/icon.png",
+        "EXPO_PUBLIC_SPLASH_IMAGE": "./assets/splash.png",
+        "EXPO_PUBLIC_ANDROID_ADAPTIVE_ICON": "./assets/adaptive-icon.png",
+        "EXPO_PUBLIC_NOTIFICATION_ICON": "./assets/notification-icon.png",
+        "EXPO_PUBLIC_FAVICON": "./assets/favicon.png",
+        "APP_ENV": "development",
+        "APP_VERSION": "1.0.0",
+        "IOS_BUILD_NUMBER": "1",
+        "ANDROID_VERSION_CODE": "1"
+      }
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "env": {
+        "APP_ENV": "development",
+        "EXPO_PUBLIC_API_BASE_URL": "http://localhost:8787",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "dev.salary-hijacking.example",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "development",
+        "EXPO_PUBLIC_E2E_BUILD": "false"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "channel": "preview",
+      "env": {
+        "APP_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salary-hijacking.example",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salary-hijacking.example",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "preview",
+        "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "true"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "staging": {
+      "extends": "base",
+      "distribution": "internal",
+      "channel": "staging",
+      "env": {
+        "APP_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salary-hijacking.example",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salary-hijacking.example",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "staging",
+        "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "true"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "e2e": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "e2e",
+      "env": {
+        "APP_ENV": "staging",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salary-hijacking.example",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salary-hijacking.example",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "e2e",
+        "EXPO_PUBLIC_E2E_BUILD": "true",
+        "EXPO_PUBLIC_ADS_ENABLED": "false",
+        "EXPO_PUBLIC_PARTNER_ENABLED": "false",
+        "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "false"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production": {
+      "extends": "base",
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "APP_ENV": "production",
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.salary-hijacking.example",
+        "EXPO_PUBLIC_DEEPLINK_HOST": "app.salary-hijacking.example",
+        "EXPO_PUBLIC_RELEASE_CHANNEL": "production",
+        "EXPO_PUBLIC_CRASH_REPORTING_ENABLED": "true",
+        "EXPO_PUBLIC_E2E_BUILD": "false"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "staging": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      },
+      "ios": {}
+    },
+    "production": {
+      "android": {
+        "track": "production",
+        "releaseStatus": "draft"
+      },
+      "ios": {}
+    }
+  }
+}

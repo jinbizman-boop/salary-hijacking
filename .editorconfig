@@ -1,0 +1,245 @@
+# ==============================================================================
+# Salary Hijacking Platform · 급여납치
+# Root EditorConfig
+#
+# Purpose:
+# - Keep formatting consistent across mobile, admin, API, scheduler, packages,
+#   database, docs, infra, QA, ops, release, security and observability files.
+# - Standardize UTF-8, LF, final newline, whitespace trimming and indentation.
+# - Preserve Markdown hard line breaks while enforcing strict formatting for
+#   source code, SQL, YAML, JSON, shell scripts and configuration files.
+# ==============================================================================
+
+root = true
+
+# ------------------------------------------------------------------------------
+# 1. Default policy for all files
+# ------------------------------------------------------------------------------
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 2. JavaScript / TypeScript / React / Next / Expo
+# ------------------------------------------------------------------------------
+
+[*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 3. JSON / JSONC / package files
+# ------------------------------------------------------------------------------
+
+[*.{json,jsonc}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[package.json]
+indent_style = space
+indent_size = 2
+
+[MANIFEST.json]
+indent_style = space
+indent_size = 2
+
+# ------------------------------------------------------------------------------
+# 4. YAML / GitHub Actions / pnpm workspace / EAS
+# ------------------------------------------------------------------------------
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[.github/workflows/*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[.github/ISSUE_TEMPLATE/*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[pnpm-workspace.yaml]
+indent_style = space
+indent_size = 2
+
+[eas.json]
+indent_style = space
+indent_size = 2
+
+# ------------------------------------------------------------------------------
+# 5. Markdown documentation
+# ------------------------------------------------------------------------------
+
+[*.{md,mdx}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+max_line_length = off
+
+[README.md]
+trim_trailing_whitespace = false
+
+[CHANGELOG.md]
+trim_trailing_whitespace = false
+
+[CODE_OF_CONDUCT.md]
+trim_trailing_whitespace = false
+
+[SECURITY.md]
+trim_trailing_whitespace = false
+
+[LICENSE]
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 6. Database SQL / migrations / seeds
+# ------------------------------------------------------------------------------
+
+[*.sql]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[database/migrations/*.sql]
+indent_style = space
+indent_size = 2
+
+[database/seeds/*.sql]
+indent_style = space
+indent_size = 2
+
+# ------------------------------------------------------------------------------
+# 7. Shell scripts and CLI automation
+# ------------------------------------------------------------------------------
+
+[*.sh]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[scripts/**/*.sh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# ------------------------------------------------------------------------------
+# 8. TOML / Cloudflare Wrangler
+# ------------------------------------------------------------------------------
+
+[*.toml]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.wrangler.toml]
+indent_style = space
+indent_size = 2
+
+[infra/cloudflare/workers/*.toml]
+indent_style = space
+indent_size = 2
+
+# ------------------------------------------------------------------------------
+# 9. Environment examples and local configuration templates
+# ------------------------------------------------------------------------------
+
+[.env.example]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.env.example]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.sample]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 10. CSS / design tokens / web assets
+# ------------------------------------------------------------------------------
+
+[*.{css,scss,less}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 11. HTML references and prototypes
+# ------------------------------------------------------------------------------
+
+[*.html]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 12. XML / SVG
+# ------------------------------------------------------------------------------
+
+[*.{xml,svg}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 13. Git / ignore / root metadata files
+# ------------------------------------------------------------------------------
+
+[*.{gitignore,gitattributes}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[.gitignore]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[TREE.txt]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+
+# ------------------------------------------------------------------------------
+# 14. Lockfiles and generated package-manager metadata
+# ------------------------------------------------------------------------------
+
+[pnpm-lock.yaml]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[package-lock.json]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[yarn.lock]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# 15. Makefile compatibility
+# ------------------------------------------------------------------------------
+
+[Makefile]
+indent_style = tab
+trim_trailing_whitespace = true
+
+[*.mk]
+indent_style = tab
+trim_trailing_whitespace = true

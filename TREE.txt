@@ -1,0 +1,693 @@
+# salary-hijacking-platform TREE.txt
+
+문서 상태: 최종본
+파일 위치: TREE.txt
+프로젝트: 급여납치 Salary Hijacking Platform
+기준 구조: salary-hijacking-platform.zip
+기준 원칙: 루트 계약 → 문서/DB → 공통 패키지 → 서버 → 앱 → 인프라/자동화 → 보안/QA/운영/출시
+작성 목적: 프로젝트 전체 폴더·파일 구조, 최상위 작업 순서, 모듈 책임, 상용화 단계별 의존성을 한 파일에서 확인할 수 있도록 한다.
+
+===============================================================================
+1. 최상위 작업 순서
+===============================================================================
+
+00. 루트 계약 파일
+    - package.json, pnpm-workspace.yaml, turbo.json, .env.example, README.md, SECURITY.md, MANIFEST.json, TREE.txt
+    - 모노레포 실행 방식, workspace 범위, 환경변수, 보안 기준, 전체 구조를 확정한다.
+
+01. docs/
+    - 서비스 기획, PRD/BRD, UX/UI, 기능명세, 데이터, API, 기술설계, 보안, QA, 운영, 출시, 협업 문서를 확정한다.
+    - 이후 database, packages, services, apps 구현의 기준 문서가 된다.
+
+02. database/
+    - ERD, migrations, policies, seeds, 백업 기준을 확정한다.
+    - 급여·예산·지출·저축·알림·성장·커뮤니티·광고·관리자 운영 데이터의 서버 권위 원천이다.
+
+03. packages/
+    - api-contract, db, security, types, ui, utils, config 공통 모듈을 확정한다.
+    - apps와 services가 같은 타입/계약/보안/유틸을 사용하게 한다.
+
+04. services/
+    - api, notifications, scheduler를 구현한다.
+    - 서버 권위 계산, 인증/인가, 알림 발송, 월마감, 보존/삭제 cleanup을 담당한다.
+
+05. apps/
+    - mobile 앱과 admin 콘솔을 구현한다.
+    - 사용자 급여관리 UX와 관리자 운영 UX를 제공한다.
+
+06. assets/
+    - 브랜드, 디자인, 프로토타입, 스토어 스크린샷 기준을 정리한다.
+
+07. infra/
+    - Cloudflare, Neon, domain, env, GitHub environment/secrets를 구성한다.
+
+08. scripts/
+    - DB, 개발환경, 문서생성, 품질검사, 릴리즈 자동화를 담당한다.
+
+09. tools/
+    - API contract check, DB schema check, doc lint, security audit 도구를 둔다.
+
+10. .github/
+    - issue template, PR template, CODEOWNERS, CI/CD workflow를 운영한다.
+
+11. security/
+    - threat model, privacy impact assessment, security checklist, vulnerability response를 관리한다.
+
+12. observability/
+    - logs, metrics, dashboards, alerts 기준을 관리한다.
+
+13. qa/
+    - API, 성능, 보안, test cases, UAT 인수검증을 담당한다.
+
+14. ops/
+    - 관리자 운영, 커뮤니티 모더레이션, CS, incident, 운영 지표를 관리한다.
+
+15. release/
+    - release notes, rollback, screenshots, store metadata, versioning을 관리한다.
+
+===============================================================================
+2. 최상위 폴더 책임 요약
+===============================================================================
+
+.github/        GitHub 협업, CI/CD, 보안 스캔, 배포, 릴리즈 자동화
+apps/           사용자 모바일 앱과 관리자 콘솔
+assets/         브랜드·디자인·프로토타입·스토어 자산
+database/       PostgreSQL ERD, migration, policy, seed, 백업 기준
+docs/           제품·기능·UX·API·기술·보안·QA·운영·출시 최종 문서
+infra/          Cloudflare, Neon, domain, env, GitHub 인프라
+observability/  로그, 메트릭, 대시보드, 알림
+ops/            운영자 매뉴얼, CS, 모더레이션, 장애 대응
+packages/       공통 타입, API 계약, DB, 보안, UI, 유틸, 설정
+qa/             테스트 계획, 테스트 케이스, 성능/보안/UAT 검증
+release/        출시, 롤백, 스토어, 버전 정책
+scripts/        DB/dev/docs/quality/release 자동화
+security/       위협모델, 개인정보 영향평가, 취약점 대응
+services/       API, 알림 worker, scheduler
+tools/          내부 검증 도구
+
+===============================================================================
+3. 전체 파일 트리
+===============================================================================
+
+salary-hijacking-platform/
+├── .github/
+│   ├── ISSUE_TEMPLATE/
+│   │   ├── bug_report.yml
+│   │   ├── docs_task.yml
+│   │   └── feature_request.yml
+│   ├── workflows/
+│   │   ├── ci.yml
+│   │   ├── deploy-admin.yml
+│   │   ├── deploy-api.yml
+│   │   ├── mobile-build.yml
+│   │   ├── release.yml
+│   │   └── security-scan.yml
+│   ├── CODEOWNERS
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── README.md
+├── apps/
+│   ├── admin/
+│   │   ├── src/
+│   │   │   ├── app/
+│   │   │   │   ├── banners/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── dashboard/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── events/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── login/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── metrics/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── notices/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── posts/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── reports/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── users/
+│   │   │   │   │   └── page.tsx
+│   │   │   │   ├── layout.tsx
+│   │   │   │   └── page.tsx
+│   │   │   ├── components/
+│   │   │   │   └── README.md
+│   │   │   └── features/
+│   │   │       ├── banner-management/
+│   │   │       │   └── README.md
+│   │   │       ├── content-moderation/
+│   │   │       │   └── README.md
+│   │   │       ├── event-management/
+│   │   │       │   └── README.md
+│   │   │       ├── notice-management/
+│   │   │       │   └── README.md
+│   │   │       └── user-management/
+│   │   │           └── README.md
+│   │   ├── next.config.js
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── tsconfig.json
+│   ├── mobile/
+│   │   ├── app/
+│   │   │   ├── (auth)/
+│   │   │   │   ├── login.tsx
+│   │   │   │   └── signup.tsx
+│   │   │   ├── (tabs)/
+│   │   │   │   ├── community/
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── level/
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── plan/
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── profile/
+│   │   │   │   │   └── index.tsx
+│   │   │   │   ├── salary/
+│   │   │   │   │   └── index.tsx
+│   │   │   │   └── _layout.tsx
+│   │   │   ├── community/
+│   │   │   │   ├── [postId].tsx
+│   │   │   │   └── write.tsx
+│   │   │   ├── level/
+│   │   │   │   ├── english.tsx
+│   │   │   │   ├── health.tsx
+│   │   │   │   ├── news.tsx
+│   │   │   │   └── reading.tsx
+│   │   │   ├── notifications/
+│   │   │   │   └── index.tsx
+│   │   │   ├── _layout.tsx
+│   │   │   └── index.tsx
+│   │   ├── src/
+│   │   │   ├── features/
+│   │   │   │   ├── budget/
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── community/
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── expense/
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── level/
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── notifications/
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── plan/
+│   │   │   │   │   └── README.md
+│   │   │   │   ├── profile/
+│   │   │   │   │   └── README.md
+│   │   │   │   └── salary/
+│   │   │   │       └── README.md
+│   │   │   └── shared/
+│   │   │       ├── analytics/
+│   │   │       │   └── README.md
+│   │   │       ├── api/
+│   │   │       │   └── README.md
+│   │   │       ├── components/
+│   │   │       │   └── README.md
+│   │   │       ├── hooks/
+│   │   │       │   └── README.md
+│   │   │       ├── navigation/
+│   │   │       │   └── README.md
+│   │   │       ├── storage/
+│   │   │       │   └── README.md
+│   │   │       └── styles/
+│   │   │           └── README.md
+│   │   ├── app.config.ts
+│   │   ├── eas.json
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── tsconfig.json
+│   └── README.md
+├── assets/
+│   ├── brand/
+│   │   ├── color-system.md
+│   │   └── logo-guideline.md
+│   ├── design/
+│   │   └── design-reference.md
+│   ├── prototype/
+│   │   └── html-prototype-reference.md
+│   ├── store/
+│   │   └── screenshots-guideline.md
+│   └── README.md
+├── database/
+│   ├── erd/
+│   │   └── salary-hijacking-final-erd.md
+│   ├── migrations/
+│   │   ├── 0001_init_users.sql
+│   │   ├── 0002_payroll_budget_expense.sql
+│   │   ├── 0003_growth_community_notifications.sql
+│   │   └── 0004_admin_audit_ads.sql
+│   ├── policies/
+│   │   ├── index-policy.md
+│   │   └── retention-policy.md
+│   ├── seeds/
+│   │   ├── local.seed.sql
+│   │   ├── staging.seed.sql
+│   │   └── uat.seed.sql
+│   └── README.md
+├── docs/
+│   ├── final-documents/
+│   │   ├── 1. 최상위 기획 문서/
+│   │   │   ├── 01_서비스_개요서_최종본.md
+│   │   │   ├── 02_사업_기획서_최종본.md
+│   │   │   ├── 03_제품_요구사항_정의서_PRD_최종본.md
+│   │   │   ├── 04_비즈니스_요구사항_정의서_BRD_최종본.md
+│   │   │   ├── 05_MVP_범위_정의서_최종본.md
+│   │   │   ├── 06_프로젝트_범위_명세서_최종본.md
+│   │   │   └── 07_용어_정의서_최종본.md
+│   │   ├── 10. 운영·관리자 문서/
+│   │   │   ├── 00_운영_관리자_문서_10종_최종본_INDEX.md
+│   │   │   ├── 01_관리자_기능_기획서_최종본.md
+│   │   │   ├── 02_CS_운영_매뉴얼_최종본.md
+│   │   │   ├── 03_FAQ_문서_최종본.md
+│   │   │   ├── 04_공지사항_운영_가이드_최종본.md
+│   │   │   ├── 05_이벤트_운영_기획서_최종본.md
+│   │   │   ├── 06_광고_제휴_운영_문서_최종본.md
+│   │   │   ├── 07_콘텐츠_운영_가이드_최종본.md
+│   │   │   ├── 08_커뮤니티_모더레이션_가이드_최종본.md
+│   │   │   ├── 09_장애_대응_매뉴얼_최종본.md
+│   │   │   └── 10_운영_지표_대시보드_정의서_최종본.md
+│   │   ├── 11. 출시 문서/
+│   │   │   ├── 00_출시_문서_7종_최종본_INDEX.md
+│   │   │   ├── 01_출시_체크리스트_최종본.md
+│   │   │   ├── 02_스토어_등록_문서_최종본.md
+│   │   │   ├── 03_앱_소개_문구_문서_최종본.md
+│   │   │   ├── 04_스크린샷_기획서_최종본.md
+│   │   │   ├── 05_릴리즈_노트_문서_최종본.md
+│   │   │   ├── 06_버전_관리_정책서_최종본.md
+│   │   │   └── 07_롤백_계획서_최종본.md
+│   │   ├── 12. 개발 협업 문서/
+│   │   │   ├── 00_개발_협업_문서_9종_최종본_INDEX.md
+│   │   │   ├── 01_GitHub_이슈_템플릿_최종본.md
+│   │   │   ├── 02_작업_백로그_문서_최종본.md
+│   │   │   ├── 03_스프린트_계획서_최종본.md
+│   │   │   ├── 04_Definition_of_Done_최종본.md
+│   │   │   ├── 05_브랜치_전략_문서_최종본.md
+│   │   │   ├── 06_커밋_컨벤션_문서_최종본.md
+│   │   │   ├── 07_코딩_컨벤션_문서_최종본.md
+│   │   │   ├── 08_개발_환경_세팅_문서_최종본.md
+│   │   │   └── 09_README_문서_최종본.md
+│   │   ├── 2. 사용자·시장·전략 문서/
+│   │   │   ├── 00_사용자_시장_전략문서_7종_최종본_INDEX.md
+│   │   │   ├── 01_타깃_사용자_정의서_최종본.md
+│   │   │   ├── 02_페르소나_문서_최종본.md
+│   │   │   ├── 03_사용자_문제_정의서_최종본.md
+│   │   │   ├── 04_사용자_여정_지도_최종본.md
+│   │   │   ├── 05_경쟁_서비스_분석서_최종본.md
+│   │   │   ├── 06_포지셔닝_전략서_최종본.md
+│   │   │   └── 07_핵심_KPI_정의서_최종본.md
+│   │   ├── 3. UXUI 기획 문서/
+│   │   │   ├── 00_UX_UI_기획문서_13종_최종본_INDEX.md
+│   │   │   ├── 01_IA_정보구조도_최종본.md
+│   │   │   ├── 02_사이트맵_앱맵_최종본.md
+│   │   │   ├── 03_사용자_플로우_문서_최종본.md
+│   │   │   ├── 04_화면_목록표_최종본.md
+│   │   │   ├── 05_와이어프레임_문서_최종본.md
+│   │   │   ├── 06_화면_설계서_최종본.md
+│   │   │   ├── 07_인터랙션_명세서_최종본.md
+│   │   │   ├── 08_프로토타입_명세서_최종본.md
+│   │   │   ├── 09_디자인_시스템_문서_최종본.md
+│   │   │   ├── 10_컴포넌트_명세서_최종본.md
+│   │   │   ├── 11_반응형_디바이스_대응_문서_최종본.md
+│   │   │   ├── 12_마이크로카피_문서_최종본.md
+│   │   │   └── 13_접근성_체크리스트_최종본.md
+│   │   ├── 4. 기능 기획 문서/
+│   │   │   ├── 00_기능_기획문서_16종_최종본_INDEX.md
+│   │   │   ├── 01_기능_명세서_최종본.md
+│   │   │   ├── 02_사용자_스토리_문서_최종본.md
+│   │   │   ├── 03_유스케이스_명세서_최종본.md
+│   │   │   ├── 04_수락_기준_문서_최종본.md
+│   │   │   ├── 05_계산_정책_문서_최종본.md
+│   │   │   ├── 06_급여_관리_기능_명세서_최종본.md
+│   │   │   ├── 07_고정지출_관리_명세서_최종본.md
+│   │   │   ├── 08_고정저축_관리_명세서_최종본.md
+│   │   │   ├── 09_일일_예산_관리_명세서_최종본.md
+│   │   │   ├── 10_변동지출_기록_명세서_최종본.md
+│   │   │   ├── 11_알림_기능_명세서_최종본.md
+│   │   │   ├── 12_레벨업_기능_명세서_최종본.md
+│   │   │   ├── 13_커뮤니티_기능_명세서_최종본.md
+│   │   │   ├── 14_글쓰기_기능_명세서_최종본.md
+│   │   │   ├── 15_마이페이지_기능_명세서_최종본.md
+│   │   │   └── 16_광고_제휴_배너_기능_명세서_최종본.md
+│   │   ├── 5. 데이터·DB 문서/
+│   │   │   ├── 00_데이터_DB_문서_8종_최종본_INDEX.md
+│   │   │   ├── 01_데이터_모델_정의서_최종본.md
+│   │   │   ├── 02_ERD_최종본.md
+│   │   │   ├── 03_테이블_정의서_최종본.md
+│   │   │   ├── 04_데이터_사전_최종본.md
+│   │   │   ├── 05_상태값_정의서_최종본.md
+│   │   │   ├── 06_금액_데이터_처리_정책서_최종본.md
+│   │   │   ├── 07_데이터_보존_삭제_정책서_최종본.md
+│   │   │   └── 08_샘플_데이터_문서_최종본.md
+│   │   ├── 6. API·백엔드 문서/
+│   │   │   ├── 00_API_백엔드_문서_8종_최종본_INDEX.md
+│   │   │   ├── 01_API_명세서_최종본.md
+│   │   │   ├── 02_인증_인가_명세서_최종본.md
+│   │   │   ├── 03_소셜_로그인_연동_문서_최종본.md
+│   │   │   ├── 04_파일_업로드_명세서_최종본.md
+│   │   │   ├── 05_푸시_알림_API_명세서_최종본.md
+│   │   │   ├── 06_검색_필터_API_명세서_최종본.md
+│   │   │   ├── 07_관리자_API_명세서_최종본.md
+│   │   │   └── 08_배치_스케줄러_설계서_최종본.md
+│   │   ├── 7. 기술 설계 문서/
+│   │   │   ├── 00_기술_설계문서_10종_최종본_INDEX.md
+│   │   │   ├── 01_기술_아키텍처_설계서_최종본.md
+│   │   │   ├── 02_프론트엔드_아키텍처_문서_최종본.md
+│   │   │   ├── 03_백엔드_아키텍처_문서_최종본.md
+│   │   │   ├── 04_인프라_설계서_최종본.md
+│   │   │   ├── 05_확장성_설계서_최종본.md
+│   │   │   ├── 06_성능_요구사항_문서_최종본.md
+│   │   │   ├── 07_로깅_모니터링_설계서_최종본.md
+│   │   │   ├── 08_백업_복구_정책서_최종본.md
+│   │   │   ├── 09_환경변수_시크릿_관리_문서_최종본.md
+│   │   │   └── 10_CI_CD_문서_최종본.md
+│   │   ├── 8. 보안·개인정보·정책 문서/
+│   │   │   ├── 00_보안_개인정보_정책문서_10종_최종본_INDEX.md
+│   │   │   ├── 01_개인정보_처리_설계서_최종본.md
+│   │   │   ├── 02_민감정보_분류표_최종본.md
+│   │   │   ├── 03_동의_화면_명세서_최종본.md
+│   │   │   ├── 04_권한_정책서_최종본.md
+│   │   │   ├── 05_보안_요구사항_정의서_최종본.md
+│   │   │   ├── 06_광고_데이터_분리_정책서_최종본.md
+│   │   │   ├── 07_커뮤니티_운영_정책서_최종본.md
+│   │   │   ├── 08_콘텐츠_면책_안내_문서_최종본.md
+│   │   │   ├── 09_약관_초안_최종본.md
+│   │   │   └── 10_개인정보처리방침_초안_최종본.md
+│   │   └── 9. QA·테스트 문서/
+│   │       ├── 00_QA_테스트_문서_11종_최종본_INDEX.md
+│   │       ├── 01_QA_계획서_최종본.md
+│   │       ├── 02_테스트_케이스_문서_최종본.md
+│   │       ├── 03_시나리오_테스트_문서_최종본.md
+│   │       ├── 04_API_테스트_문서_최종본.md
+│   │       ├── 05_금액_계산_테스트_문서_최종본.md
+│   │       ├── 06_디바이스_테스트_매트릭스_최종본.md
+│   │       ├── 07_성능_테스트_계획서_최종본.md
+│   │       ├── 08_보안_테스트_체크리스트_최종본.md
+│   │       ├── 09_회귀_테스트_체크리스트_최종본.md
+│   │       ├── 10_버그_리포트_템플릿_최종본.md
+│   │       └── 11_UAT_사용자_인수_테스트_문서_최종본.md
+│   ├── governance/
+│   │   ├── decision-record-template.md
+│   │   ├── document-status-policy.md
+│   │   └── structure-change-policy.md
+│   ├── references/
+│   │   ├── README.md
+│   │   ├── 급여납치 어플리케이션 디자인.pdf
+│   │   └── 급여납치 화면 및 기능 설계 기획안.html
+│   ├── 01_통합_폴더_파일트리_최종본.md
+│   ├── 02_폴더별_역할_정의서_최종본.md
+│   ├── 03_파일_네이밍_규칙_최종본.md
+│   ├── 04_모듈_경계_및_의존성_정의서_최종본.md
+│   ├── 05_최종_구현_준비도_체크리스트.md
+│   └── README.md
+├── infra/
+│   ├── cloudflare/
+│   │   ├── cache/
+│   │   │   └── cache-policy.md
+│   │   ├── pages/
+│   │   │   └── admin-pages.md
+│   │   ├── queues/
+│   │   │   └── notification-queue.md
+│   │   ├── r2/
+│   │   │   └── uploads-bucket.md
+│   │   ├── workers/
+│   │   │   ├── api.wrangler.toml
+│   │   │   └── scheduler.wrangler.toml
+│   │   └── README.md
+│   ├── domain/
+│   │   ├── certificates.md
+│   │   └── dns-records.md
+│   ├── env/
+│   │   ├── env-matrix.md
+│   │   └── secret-rotation.md
+│   ├── github/
+│   │   ├── branch-protection.md
+│   │   ├── environments.md
+│   │   └── secrets.md
+│   ├── neon/
+│   │   ├── backup-restore.md
+│   │   ├── branching-strategy.md
+│   │   ├── connection-pooling.md
+│   │   └── README.md
+│   └── README.md
+├── observability/
+│   ├── alerts/
+│   │   └── alert-rules.md
+│   ├── dashboards/
+│   │   └── dashboard-spec.md
+│   ├── logging/
+│   │   └── log-schema.md
+│   ├── metrics/
+│   │   └── metrics-dictionary.md
+│   └── README.md
+├── ops/
+│   ├── admin/
+│   │   └── admin-operations.md
+│   ├── community/
+│   │   └── moderation-guide.md
+│   ├── content/
+│   │   └── content-operations.md
+│   ├── cs/
+│   │   └── cs-playbook.md
+│   ├── incident/
+│   │   └── incident-response.md
+│   ├── metrics/
+│   │   └── operation-dashboard.md
+│   └── README.md
+├── packages/
+│   ├── api-contract/
+│   │   ├── src/
+│   │   │   ├── auth/
+│   │   │   │   └── auth.schema.ts
+│   │   │   ├── common/
+│   │   │   │   ├── error-code.schema.ts
+│   │   │   │   └── response.schema.ts
+│   │   │   ├── community/
+│   │   │   │   └── community.schema.ts
+│   │   │   ├── payroll/
+│   │   │   │   └── payroll.schema.ts
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── README.md
+│   ├── config/
+│   │   ├── eslint/
+│   │   │   └── base.js
+│   │   ├── prettier/
+│   │   │   └── prettier.config.js
+│   │   ├── typescript/
+│   │   │   └── base.json
+│   │   ├── package.json
+│   │   └── README.md
+│   ├── db/
+│   │   ├── src/
+│   │   │   ├── client/
+│   │   │   │   └── neon.client.ts
+│   │   │   ├── migrations/
+│   │   │   │   └── README.md
+│   │   │   ├── schema/
+│   │   │   │   ├── community.schema.ts
+│   │   │   │   ├── expenses.schema.ts
+│   │   │   │   ├── growth.schema.ts
+│   │   │   │   ├── notifications.schema.ts
+│   │   │   │   ├── payroll.schema.ts
+│   │   │   │   └── users.schema.ts
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   └── README.md
+│   ├── security/
+│   │   ├── src/
+│   │   │   ├── encryption.ts
+│   │   │   ├── index.ts
+│   │   │   ├── masking.ts
+│   │   │   ├── permission.ts
+│   │   │   └── rate-limit.ts
+│   │   ├── package.json
+│   │   └── README.md
+│   ├── types/
+│   │   ├── src/
+│   │   │   ├── domain/
+│   │   │   │   ├── community.types.ts
+│   │   │   │   ├── expense.types.ts
+│   │   │   │   ├── growth.types.ts
+│   │   │   │   ├── notification.types.ts
+│   │   │   │   ├── payroll.types.ts
+│   │   │   │   └── user.types.ts
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── tsconfig.json
+│   ├── ui/
+│   │   ├── src/
+│   │   │   ├── components/
+│   │   │   │   ├── CommunityPostCard.tsx
+│   │   │   │   ├── DailyBudgetCard.tsx
+│   │   │   │   ├── ExpenseListItem.tsx
+│   │   │   │   ├── NotificationRow.tsx
+│   │   │   │   └── SalaryStatusCard.tsx
+│   │   │   └── tokens/
+│   │   │       ├── colors.ts
+│   │   │       ├── spacing.ts
+│   │   │       └── typography.ts
+│   │   ├── package.json
+│   │   └── README.md
+│   ├── utils/
+│   │   ├── src/
+│   │   │   ├── date.ts
+│   │   │   ├── money.ts
+│   │   │   ├── pagination.ts
+│   │   │   └── strings.ts
+│   │   ├── package.json
+│   │   └── README.md
+│   └── README.md
+├── qa/
+│   ├── api/
+│   │   └── api-test-matrix.md
+│   ├── performance/
+│   │   └── performance-test-plan.md
+│   ├── security/
+│   │   └── security-test-checklist.md
+│   ├── test-cases/
+│   │   ├── auth.test-cases.md
+│   │   ├── budget-expense.test-cases.md
+│   │   ├── community.test-cases.md
+│   │   └── payroll.test-cases.md
+│   ├── test-plan/
+│   │   └── qa-master-plan.md
+│   ├── uat/
+│   │   └── uat-approval-sheet.md
+│   └── README.md
+├── release/
+│   ├── notes/
+│   │   └── release-notes.md
+│   ├── rollback/
+│   │   └── rollback-plan.md
+│   ├── screenshots/
+│   │   └── screenshot-plan.md
+│   ├── store/
+│   │   ├── app-store-metadata.md
+│   │   └── google-play-metadata.md
+│   ├── versioning/
+│   │   └── version-policy.md
+│   └── README.md
+├── scripts/
+│   ├── db/
+│   │   ├── migrate.sh
+│   │   └── seed.sh
+│   ├── dev/
+│   │   ├── bootstrap.sh
+│   │   └── check-env.sh
+│   ├── docs/
+│   │   └── generate-tree.sh
+│   ├── quality/
+│   │   ├── lint-all.sh
+│   │   └── test-all.sh
+│   ├── release/
+│   │   └── build-release.sh
+│   └── README.md
+├── security/
+│   ├── privacy-impact-assessment.md
+│   ├── README.md
+│   ├── security-checklist.md
+│   ├── threat-model.md
+│   └── vulnerability-response.md
+├── services/
+│   ├── api/
+│   │   ├── src/
+│   │   │   ├── middlewares/
+│   │   │   │   ├── audit-log.middleware.ts
+│   │   │   │   ├── auth.middleware.ts
+│   │   │   │   ├── error.middleware.ts
+│   │   │   │   └── rate-limit.middleware.ts
+│   │   │   ├── repositories/
+│   │   │   │   └── README.md
+│   │   │   ├── routes/
+│   │   │   │   ├── admin.routes.ts
+│   │   │   │   ├── auth.routes.ts
+│   │   │   │   ├── community.routes.ts
+│   │   │   │   ├── daily-budgets.routes.ts
+│   │   │   │   ├── fixed-expenses.routes.ts
+│   │   │   │   ├── growth.routes.ts
+│   │   │   │   ├── notifications.routes.ts
+│   │   │   │   ├── payroll.routes.ts
+│   │   │   │   ├── savings.routes.ts
+│   │   │   │   ├── uploads.routes.ts
+│   │   │   │   ├── users.routes.ts
+│   │   │   │   └── variable-expenses.routes.ts
+│   │   │   ├── services/
+│   │   │   │   └── README.md
+│   │   │   ├── app.ts
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   ├── tsconfig.json
+│   │   └── wrangler.toml
+│   ├── notifications/
+│   │   ├── src/
+│   │   │   ├── fcm.client.ts
+│   │   │   ├── index.ts
+│   │   │   ├── push-token-cleanup.ts
+│   │   │   └── retry-queue.ts
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── wrangler.toml
+│   ├── scheduler/
+│   │   ├── src/
+│   │   │   ├── jobs/
+│   │   │   │   ├── data-retention-cleanup.job.ts
+│   │   │   │   ├── fixed-expense-reminder.job.ts
+│   │   │   │   ├── monthly-hijack-close.job.ts
+│   │   │   │   └── payday-reminder.job.ts
+│   │   │   └── index.ts
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── wrangler.toml
+│   └── README.md
+├── tools/
+│   ├── api-contract-check/
+│   │   └── README.md
+│   ├── db-schema-check/
+│   │   └── README.md
+│   ├── doc-lint/
+│   │   └── README.md
+│   ├── security-audit/
+│   │   └── README.md
+│   └── README.md
+├── .editorconfig
+├── .env.example
+├── .gitignore
+├── CHANGELOG.md
+├── CODE_OF_CONDUCT.md
+├── LICENSE
+├── MANIFEST.json
+├── package.json
+├── pnpm-workspace.yaml
+├── README.md
+├── SECURITY.md
+├── TREE.txt
+└── turbo.json
+
+===============================================================================
+4. 파일 단위 완료 기준
+===============================================================================
+
+이 TREE.txt는 다음 조건을 충족할 때 파일 단위 완료로 본다.
+
+1. 최상위 작업 순서가 명확하다.
+2. 루트 폴더와 루트 파일을 누락 없이 포함한다.
+3. .github, apps, assets, database, docs, infra, observability, ops, packages, qa, release, scripts, security, services, tools 구조를 포함한다.
+4. docs/final-documents 1~12번 최종 문서 세트를 포함한다.
+5. database의 ERD, migrations, policies, seeds 구조를 포함한다.
+6. services의 API, notifications, scheduler 구조를 포함한다.
+7. apps의 mobile, admin 구조를 포함한다.
+8. packages의 api-contract, config, db, security, types, ui, utils 구조를 포함한다.
+9. QA, 보안, 운영, 출시 폴더를 상용화 단계까지 추적 가능하게 포함한다.
+10. MANIFEST.json, TREE.txt, turbo.json 등 루트 계약 파일을 포함한다.
+11. 미완료 표식, TODO, TBD, placeholder를 포함하지 않는다.
+12. 실제 구현 순서와 폴더 책임이 서로 충돌하지 않는다.
+
+===============================================================================
+5. 최종 판정
+===============================================================================
+
+이 TREE.txt는 급여납치 플랫폼의 최상위 폴더 구조, 하위 파일 구조, 구현 순서, 모듈 책임, 상용화 준비 구조를 통합 정리한 최종 파일 트리 문서다.
+
+문서상·이론상 TREE.txt 파일 단위 기준으로 더 이상 추가 작성이 필요 없는 최종본으로 사용한다.
+
+단, 프로젝트 종합 완성도 100%는 이 파일의 구조와 실제 repository 파일, package scripts, CI/CD, DB migration, API/RBAC/E2E/QA, 배포/운영 검증이 모두 일치할 때 최종 확정한다.
+

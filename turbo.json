@@ -1,0 +1,633 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "globalDependencies": [
+    ".env",
+    ".env.*",
+    ".env.example",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "turbo.json",
+    "tsconfig.json",
+    "tsconfig.*.json",
+    "database/erd/**/*.md",
+    "database/policies/**/*.md",
+    "database/migrations/**/*.sql",
+    "database/seeds/**/*.sql",
+    "docs/**/*.md",
+    ".github/workflows/**/*.yml"
+  ],
+  "globalEnv": [
+    "NODE_ENV",
+    "APP_ENV",
+    "CI",
+    "TZ",
+    "NEXT_PUBLIC_APP_ENV",
+    "NEXT_PUBLIC_API_BASE_URL",
+    "EXPO_PUBLIC_APP_ENV",
+    "EXPO_PUBLIC_API_BASE_URL",
+    "EXPO_PUBLIC_PROJECT_ID",
+    "DATABASE_SSL_MODE",
+    "FEATURE_ADS_ENABLED",
+    "FEATURE_COMMUNITY_ENABLED",
+    "FEATURE_LEVEL_UP_ENABLED",
+    "FEATURE_NOTIFICATIONS_ENABLED",
+    "FEATURE_ADMIN_CONSOLE_ENABLED"
+  ],
+  "globalPassThroughEnv": [
+    "PATH",
+    "HOME",
+    "SHELL",
+    "PWD",
+    "TMPDIR",
+    "CI",
+    "GITHUB_ACTIONS",
+    "GITHUB_REF",
+    "GITHUB_SHA",
+    "GITHUB_RUN_ID",
+    "GITHUB_RUN_NUMBER",
+    "GITHUB_REPOSITORY",
+    "GITHUB_TOKEN",
+    "TURBO_TOKEN",
+    "TURBO_TEAM",
+    "TURBO_REMOTE_ONLY",
+    "DATABASE_URL",
+    "DIRECT_DATABASE_URL",
+    "STAGING_DATABASE_URL",
+    "UAT_DATABASE_URL",
+    "SHADOW_DATABASE_URL",
+    "NEON_API_KEY",
+    "CLOUDFLARE_API_TOKEN",
+    "CLOUDFLARE_ACCOUNT_ID",
+    "CF_PAGES_PROJECT_NAME",
+    "EXPO_TOKEN",
+    "EAS_PROJECT_ID",
+    "SENTRY_AUTH_TOKEN",
+    "SENTRY_DSN",
+    "SLACK_WEBHOOK_URL"
+  ],
+  "tasks": {
+    "clean": {
+      "cache": false
+    },
+    "format": {
+      "outputs": []
+    },
+    "format:check": {
+      "outputs": []
+    },
+    "lint": {
+      "dependsOn": ["^lint"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".eslintrc*",
+        "eslint.config.*",
+        "package.json",
+        "tsconfig.json",
+        "tsconfig.*.json"
+      ],
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^build", "^typecheck"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "package.json",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.d.ts"
+      ],
+      "outputs": ["tsconfig.tsbuildinfo", ".turbo/typecheck/**"]
+    },
+    "test": {
+      "dependsOn": ["^build", "^test"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "package.json",
+        "vitest.config.*",
+        "jest.config.*",
+        "playwright.config.*",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx",
+        "tests/**",
+        "__tests__/**"
+      ],
+      "outputs": [
+        "coverage/**",
+        ".coverage/**",
+        "test-results/**",
+        "junit.xml",
+        ".turbo/test/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "SHADOW_DATABASE_URL",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED"
+      ]
+    },
+    "test:unit": {
+      "dependsOn": ["^build", "^test:unit"],
+      "outputs": ["coverage/**", "test-results/unit/**", ".turbo/test-unit/**"],
+      "env": ["NODE_ENV", "APP_ENV", "TZ"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build", "^test:unit"],
+      "outputs": [
+        "coverage/**",
+        "test-results/integration/**",
+        ".turbo/test-integration/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "SHADOW_DATABASE_URL",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED"
+      ]
+    },
+    "test:e2e": {
+      "dependsOn": ["build", "db:validate", "test:integration"],
+      "outputs": [
+        "playwright-report/**",
+        "test-results/e2e/**",
+        ".turbo/e2e/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED",
+        "FEATURE_ADMIN_CONSOLE_ENABLED"
+      ]
+    },
+    "test:qa": {
+      "dependsOn": ["lint", "typecheck", "test", "test:e2e", "security:scan"],
+      "outputs": ["qa/reports/**", "test-results/qa/**", ".turbo/qa/**"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL"
+      ]
+    },
+    "build": {
+      "dependsOn": ["^build", "db:validate"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "package.json",
+        "tsconfig.json",
+        "tsconfig.*.json",
+        "next.config.*",
+        "app.config.*",
+        "eas.json",
+        "wrangler.toml",
+        "database/erd/**/*.md",
+        "database/policies/**/*.md"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**",
+        "!.next/cache/**",
+        "build/**",
+        "out/**",
+        "web-build/**",
+        ".expo/**",
+        "coverage/**",
+        ".turbo/build/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "NEXT_PUBLIC_APP_ENV",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_APP_ENV",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_PROJECT_ID",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED",
+        "FEATURE_ADMIN_CONSOLE_ENABLED"
+      ]
+    },
+    "build:admin": {
+      "dependsOn": ["^build", "db:validate"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "out/**",
+        ".turbo/build-admin/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "NEXT_PUBLIC_APP_ENV",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "FEATURE_ADMIN_CONSOLE_ENABLED",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED"
+      ]
+    },
+    "build:mobile": {
+      "dependsOn": ["^build", "db:validate"],
+      "outputs": [
+        ".expo/**",
+        "dist/**",
+        "web-build/**",
+        ".turbo/build-mobile/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "EXPO_PUBLIC_APP_ENV",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_PROJECT_ID",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED"
+      ]
+    },
+    "build:api": {
+      "dependsOn": ["^build", "db:validate", "api:contract"],
+      "outputs": ["dist/**", "build/**", ".turbo/build-api/**"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "DATABASE_SSL_MODE",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED"
+      ]
+    },
+    "api:contract": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "packages/api-contract/**",
+        "services/api/**",
+        "docs/**/*.md",
+        "database/erd/**/*.md"
+      ],
+      "outputs": [
+        "packages/api-contract/dist/**",
+        "packages/api-contract/openapi/**",
+        "docs/generated/api/**",
+        ".turbo/api-contract/**"
+      ]
+    },
+    "db:validate": {
+      "inputs": [
+        "database/README.md",
+        "database/erd/**/*.md",
+        "database/policies/**/*.md",
+        "database/migrations/**/*.sql",
+        "database/seeds/**/*.sql",
+        "packages/db/**",
+        "scripts/db/**",
+        "tools/db/**"
+      ],
+      "outputs": [".turbo/db-validate/**", "database/reports/**"],
+      "env": ["NODE_ENV", "APP_ENV", "TZ", "DATABASE_SSL_MODE"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "dependsOn": ["db:validate"],
+      "inputs": [
+        "database/migrations/**/*.sql",
+        "database/policies/**/*.md",
+        "database/erd/**/*.md",
+        "packages/db/**",
+        "scripts/db/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "SHADOW_DATABASE_URL",
+        "DATABASE_SSL_MODE",
+        "APP_ENV",
+        "TZ"
+      ]
+    },
+    "db:seed": {
+      "cache": false,
+      "dependsOn": ["db:migrate"],
+      "inputs": [
+        "database/seeds/**/*.sql",
+        "database/migrations/**/*.sql",
+        "packages/db/**",
+        "scripts/db/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "STAGING_DATABASE_URL",
+        "UAT_DATABASE_URL",
+        "DATABASE_SSL_MODE",
+        "APP_ENV",
+        "TZ"
+      ]
+    },
+    "db:reset": {
+      "cache": false,
+      "dependsOn": ["db:validate"],
+      "inputs": [
+        "database/migrations/**/*.sql",
+        "database/seeds/**/*.sql",
+        "scripts/db/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "DATABASE_SSL_MODE",
+        "APP_ENV",
+        "TZ"
+      ]
+    },
+    "db:backup": {
+      "cache": false,
+      "dependsOn": ["db:validate"],
+      "inputs": [
+        "database/README.md",
+        "database/policies/retention-policy.md",
+        "scripts/db/**",
+        "ops/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "NEON_API_KEY",
+        "APP_ENV",
+        "TZ"
+      ]
+    },
+    "db:restore:check": {
+      "cache": false,
+      "dependsOn": ["db:backup", "db:validate"],
+      "inputs": [
+        "database/README.md",
+        "database/policies/retention-policy.md",
+        "scripts/db/**",
+        "ops/**"
+      ],
+      "env": [
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "SHADOW_DATABASE_URL",
+        "NEON_API_KEY",
+        "APP_ENV",
+        "TZ"
+      ]
+    },
+    "security:scan": {
+      "dependsOn": ["^build", "db:validate"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".github/workflows/**/*.yml",
+        "database/**/*.sql",
+        "database/**/*.md",
+        "security/**",
+        "packages/security/**",
+        "scripts/**",
+        "tools/**"
+      ],
+      "outputs": ["security/reports/**", ".turbo/security/**"],
+      "env": ["NODE_ENV", "APP_ENV", "TZ"]
+    },
+    "privacy:check": {
+      "dependsOn": ["security:scan", "db:validate"],
+      "inputs": [
+        "database/**/*.sql",
+        "database/policies/**/*.md",
+        "docs/**/*.md",
+        "security/**",
+        "packages/security/**",
+        "apps/**",
+        "services/**"
+      ],
+      "outputs": ["security/privacy-reports/**", ".turbo/privacy/**"],
+      "env": ["NODE_ENV", "APP_ENV", "TZ"]
+    },
+    "docs:lint": {
+      "inputs": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/**/*.md",
+        "database/**/*.md",
+        "assets/**/*.md",
+        ".github/**/*.md"
+      ],
+      "outputs": [".turbo/docs-lint/**"]
+    },
+    "docs:build": {
+      "dependsOn": ["docs:lint", "api:contract", "db:validate"],
+      "inputs": [
+        "README.md",
+        "docs/**/*.md",
+        "database/**/*.md",
+        "assets/**/*.md",
+        "packages/api-contract/**"
+      ],
+      "outputs": ["docs/generated/**", "docs/site/**", ".turbo/docs-build/**"]
+    },
+    "quality": {
+      "dependsOn": [
+        "format:check",
+        "lint",
+        "typecheck",
+        "test",
+        "db:validate",
+        "api:contract",
+        "security:scan",
+        "privacy:check",
+        "docs:lint"
+      ],
+      "outputs": [
+        ".turbo/quality/**",
+        "test-results/**",
+        "security/reports/**",
+        "database/reports/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "SHADOW_DATABASE_URL"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "interruptible": true,
+      "dependsOn": ["^build", "db:validate"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "FEATURE_ADS_ENABLED",
+        "FEATURE_COMMUNITY_ENABLED",
+        "FEATURE_LEVEL_UP_ENABLED",
+        "FEATURE_NOTIFICATIONS_ENABLED",
+        "FEATURE_ADMIN_CONSOLE_ENABLED"
+      ]
+    },
+    "start": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["build"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL"
+      ]
+    },
+    "preview": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["build", "db:validate"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL"
+      ]
+    },
+    "deploy": {
+      "cache": false,
+      "dependsOn": ["quality", "build", "test:e2e"],
+      "outputs": [".turbo/deploy/**", "release/artifacts/**"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CF_PAGES_PROJECT_NAME",
+        "EXPO_TOKEN",
+        "EAS_PROJECT_ID",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SLACK_WEBHOOK_URL"
+      ]
+    },
+    "deploy:api": {
+      "cache": false,
+      "dependsOn": [
+        "build:api",
+        "test:integration",
+        "security:scan",
+        "db:migrate"
+      ],
+      "outputs": [".turbo/deploy-api/**", "release/artifacts/api/**"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SLACK_WEBHOOK_URL"
+      ]
+    },
+    "deploy:admin": {
+      "cache": false,
+      "dependsOn": ["build:admin", "test", "security:scan"],
+      "outputs": [".turbo/deploy-admin/**", "release/artifacts/admin/**"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "NEXT_PUBLIC_APP_ENV",
+        "NEXT_PUBLIC_API_BASE_URL",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CF_PAGES_PROJECT_NAME",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SLACK_WEBHOOK_URL"
+      ]
+    },
+    "deploy:mobile": {
+      "cache": false,
+      "dependsOn": ["build:mobile", "test:e2e", "security:scan"],
+      "outputs": [".turbo/deploy-mobile/**", "release/artifacts/mobile/**"],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "EXPO_TOKEN",
+        "EAS_PROJECT_ID",
+        "EXPO_PUBLIC_APP_ENV",
+        "EXPO_PUBLIC_API_BASE_URL",
+        "EXPO_PUBLIC_PROJECT_ID",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_DSN",
+        "SLACK_WEBHOOK_URL"
+      ]
+    },
+    "release": {
+      "cache": false,
+      "dependsOn": ["quality", "build", "test:e2e", "docs:build", "db:backup"],
+      "outputs": [
+        "release/artifacts/**",
+        "release/checksums/**",
+        "CHANGELOG.md",
+        ".turbo/release/**"
+      ],
+      "env": [
+        "NODE_ENV",
+        "APP_ENV",
+        "TZ",
+        "GITHUB_TOKEN",
+        "DATABASE_URL",
+        "DIRECT_DATABASE_URL",
+        "CLOUDFLARE_API_TOKEN",
+        "EXPO_TOKEN",
+        "EAS_PROJECT_ID",
+        "SENTRY_AUTH_TOKEN",
+        "SLACK_WEBHOOK_URL"
+      ]
+    }
+  }
+}

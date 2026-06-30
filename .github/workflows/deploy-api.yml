@@ -1,0 +1,432 @@
+name: deploy-api
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "services/api/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-api.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - "services/api/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-api.yml"
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "배포 대상 환경"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event.inputs.deploy_target || 'auto' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  API_SERVICE_DIR: ${{ vars.API_SERVICE_DIR || 'services/api' }}
+  API_HEALTHCHECK_URL_STAGING: ${{ vars.API_HEALTHCHECK_URL_STAGING }}
+  API_HEALTHCHECK_URL_PRODUCTION: ${{ vars.API_HEALTHCHECK_URL_PRODUCTION }}
+
+jobs:
+  verify-api:
+    name: Verify API quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify API deployment contract
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const apiServiceDir = process.env.API_SERVICE_DIR || "services/api";
+
+          const fail = (message) => {
+            console.error(`::error::${message}`);
+            process.exitCode = 1;
+          };
+
+          const warn = (message) => {
+            console.warn(`::warning::${message}`);
+          };
+
+          const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
+
+          const hasPackageDependency = (pkg, dependencyName) => {
+            const fields = [
+              "dependencies",
+              "devDependencies",
+              "optionalDependencies",
+              "peerDependencies"
+            ];
+
+            return fields.some((field) => pkg[field] && Object.prototype.hasOwnProperty.call(pkg[field], dependencyName));
+          };
+
+          const requiredRootFiles = [
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".github/workflows/deploy-api.yml"
+          ];
+
+          for (const file of requiredRootFiles) {
+            if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+              fail(`Required repository file is missing or empty: ${file}`);
+            }
+          }
+
+          if (!fs.existsSync(apiServiceDir) || !fs.statSync(apiServiceDir).isDirectory()) {
+            fail(`API service directory does not exist: ${apiServiceDir}`);
+          }
+
+          const apiPackagePath = path.join(apiServiceDir, "package.json");
+
+          if (!fs.existsSync(apiPackagePath)) {
+            fail(`API package.json does not exist: ${apiPackagePath}`);
+          }
+
+          const rootPackage = readJson("package.json");
+          const apiPackage = readJson(apiPackagePath);
+
+          if (!rootPackage.packageManager || !rootPackage.packageManager.startsWith("pnpm@")) {
+            fail('Root package.json must define "packageManager": "pnpm@<version>".');
+          }
+
+          const requiredApiScripts = [
+            "lint",
+            "typecheck",
+            "test",
+            "build"
+          ];
+
+          const missingApiScripts = requiredApiScripts.filter((script) => !apiPackage.scripts || !apiPackage.scripts[script]);
+
+          if (missingApiScripts.length > 0) {
+            fail(`API package.json is missing required scripts: ${missingApiScripts.join(", ")}`);
+          }
+
+          const rootHasWrangler = hasPackageDependency(rootPackage, "wrangler");
+          const apiHasWrangler = hasPackageDependency(apiPackage, "wrangler");
+
+          if (!rootHasWrangler && !apiHasWrangler) {
+            fail("Wrangler must be declared in root or API package dependencies/devDependencies for reproducible Workers deployment.");
+          }
+
+          const wranglerConfigCandidates = [
+            "wrangler.toml",
+            "wrangler.json",
+            "wrangler.jsonc"
+          ].map((file) => path.join(apiServiceDir, file));
+
+          if (!wranglerConfigCandidates.some((file) => fs.existsSync(file))) {
+            fail(`API service must contain a Wrangler config file: ${wranglerConfigCandidates.join(" or ")}`);
+          }
+
+          const optionalSafetyScripts = [
+            "db:check",
+            "db:migrate:check",
+            "test:contract",
+            "test:security",
+            "test:calc"
+          ];
+
+          const availableSafetyScripts = optionalSafetyScripts.filter((script) => apiPackage.scripts && apiPackage.scripts[script]);
+
+          if (availableSafetyScripts.length === 0) {
+            warn("No optional API safety scripts found. Recommended: db:check, db:migrate:check, test:contract, test:security, test:calc.");
+          }
+
+          if (process.exitCode) {
+            process.exit(process.exitCode);
+          }
+
+          console.log("API deployment contract verified.");
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm store integrity
+        run: pnpm store status
+
+      - name: Lint API
+        run: pnpm --dir "$API_SERVICE_DIR" lint
+
+      - name: Typecheck API
+        run: pnpm --dir "$API_SERVICE_DIR" typecheck
+
+      - name: Test API
+        run: pnpm --dir "$API_SERVICE_DIR" test
+
+      - name: Run API calculation tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${API_SERVICE_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:calc'] ? 0 : 1)"; then
+            pnpm --dir "$API_SERVICE_DIR" run test:calc
+          else
+            echo "API test:calc script is not configured. Skipping."
+          fi
+
+      - name: Run API contract tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${API_SERVICE_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:contract'] ? 0 : 1)"; then
+            pnpm --dir "$API_SERVICE_DIR" run test:contract
+          else
+            echo "API test:contract script is not configured. Skipping."
+          fi
+
+      - name: Run API security tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${API_SERVICE_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:security'] ? 0 : 1)"; then
+            pnpm --dir "$API_SERVICE_DIR" run test:security
+          else
+            echo "API test:security script is not configured. Skipping."
+          fi
+
+      - name: Validate DB and migration plan when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${API_SERVICE_DIR}/package.json'); process.exit(p.scripts && p.scripts['db:check'] ? 0 : 1)"; then
+            pnpm --dir "$API_SERVICE_DIR" run db:check
+          else
+            echo "API db:check script is not configured. Skipping."
+          fi
+
+          if node -e "const p=require('./${API_SERVICE_DIR}/package.json'); process.exit(p.scripts && p.scripts['db:migrate:check'] ? 0 : 1)"; then
+            pnpm --dir "$API_SERVICE_DIR" run db:migrate:check
+          else
+            echo "API db:migrate:check script is not configured. Skipping."
+          fi
+
+      - name: Build API Worker
+        run: pnpm --dir "$API_SERVICE_DIR" build
+
+      - name: Verify Wrangler configuration
+        run: |
+          set -euo pipefail
+
+          cd "$API_SERVICE_DIR"
+          pnpm exec wrangler --version
+          pnpm exec wrangler deploy --dry-run
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Upload API verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-verification-reports-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            services/api/coverage/**
+            services/api/test-results/**
+            services/api/reports/**
+            services/api/**/junit.xml
+            packages/**/coverage/**
+            packages/**/test-results/**
+            **/junit.xml
+
+  deploy-api:
+    name: Deploy API Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs:
+      - verify-api
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    environment:
+      name: ${{ (github.ref_name == 'main' || github.event.inputs.deploy_target == 'production') && 'api-production' || 'api-staging' }}
+
+    permissions:
+      contents: read
+      deployments: write
+
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Resolve API deployment target
+        id: deploy_context
+        run: |
+          set -euo pipefail
+
+          DEPLOY_TARGET="${{ github.event.inputs.deploy_target || '' }}"
+
+          if [ -z "$DEPLOY_TARGET" ]; then
+            case "${GITHUB_REF_NAME:-}" in
+              main)
+                DEPLOY_TARGET="production"
+                ;;
+              develop)
+                DEPLOY_TARGET="staging"
+                ;;
+              *)
+                DEPLOY_TARGET="staging"
+                ;;
+            esac
+          fi
+
+          if [ "$DEPLOY_TARGET" != "production" ] && [ "$DEPLOY_TARGET" != "staging" ]; then
+            echo "::error::Invalid deploy target: $DEPLOY_TARGET"
+            exit 1
+          fi
+
+          if [ "$DEPLOY_TARGET" = "production" ]; then
+            HEALTHCHECK_URL="${API_HEALTHCHECK_URL_PRODUCTION:-}"
+          else
+            HEALTHCHECK_URL="${API_HEALTHCHECK_URL_STAGING:-}"
+          fi
+
+          echo "target=$DEPLOY_TARGET" >> "$GITHUB_OUTPUT"
+          echo "healthcheck_url=$HEALTHCHECK_URL" >> "$GITHUB_OUTPUT"
+
+          echo "Resolved API deployment target: $DEPLOY_TARGET"
+
+      - name: Validate deployment secrets and variables
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing secret: CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing secret: CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+
+          if [ -z "${{ steps.deploy_context.outputs.healthcheck_url }}" ]; then
+            echo "::error::Missing API healthcheck URL. Set vars.API_HEALTHCHECK_URL_STAGING and vars.API_HEALTHCHECK_URL_PRODUCTION."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API Worker for deployment
+        run: pnpm --dir "$API_SERVICE_DIR" build
+
+      - name: Apply DB migration when configured
+        if: steps.deploy_context.outputs.target == 'production'
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${API_SERVICE_DIR}/package.json'); process.exit(p.scripts && p.scripts['db:migrate:deploy'] ? 0 : 1)"; then
+            pnpm --dir "$API_SERVICE_DIR" run db:migrate:deploy
+          else
+            echo "API db:migrate:deploy script is not configured. Skipping production migration."
+          fi
+
+      - name: Deploy API Worker to Cloudflare
+        run: |
+          set -euo pipefail
+
+          cd "$API_SERVICE_DIR"
+
+          pnpm exec wrangler deploy --env "${{ steps.deploy_context.outputs.target }}"
+
+      - name: Verify deployed API health
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error \
+            --retry 6 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --connect-timeout 5 \
+            --max-time 20 \
+            "${{ steps.deploy_context.outputs.healthcheck_url }}"
+
+      - name: Write deployment summary
+        if: always()
+        run: |
+          {
+            echo "## 급여납치 API 배포 결과"
+            echo ""
+            echo "- Workflow: $GITHUB_WORKFLOW"
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Ref: $GITHUB_REF"
+            echo "- Ref name: $GITHUB_REF_NAME"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- API service dir: $API_SERVICE_DIR"
+            echo "- Deploy target: ${{ steps.deploy_context.outputs.target }}"
+            echo "- Healthcheck URL configured: yes"
+          } >> "$GITHUB_STEP_SUMMARY"

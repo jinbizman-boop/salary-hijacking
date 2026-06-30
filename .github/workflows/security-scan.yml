@@ -1,0 +1,879 @@
+name: security-scan
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/**"
+      - "services/**"
+      - "packages/**"
+      - "db/**"
+      - "infra/**"
+      - "scripts/**"
+      - "docs/**"
+      - "qa/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/**"
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - "apps/**"
+      - "services/**"
+      - "packages/**"
+      - "db/**"
+      - "infra/**"
+      - "scripts/**"
+      - "docs/**"
+      - "qa/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/**"
+  merge_group:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 18 * * 0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  SECURITY_REPORT_DIR: security-reports
+
+jobs:
+  security-contract:
+    name: Security contract and repository policy scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify repository security contract
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$SECURITY_REPORT_DIR"
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const reportDir = process.env.SECURITY_REPORT_DIR || "security-reports";
+          const findings = [];
+          const warnings = [];
+
+          const fail = (message, file = "") => {
+            findings.push({ severity: "error", message, file });
+            console.error(`::error${file ? ` file=${file}` : ""}::${message}`);
+          };
+
+          const warn = (message, file = "") => {
+            warnings.push({ severity: "warning", message, file });
+            console.warn(`::warning${file ? ` file=${file}` : ""}::${message}`);
+          };
+
+          const exists = (file) => fs.existsSync(file) && fs.statSync(file).size > 0;
+
+          const requiredFiles = [
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".github/workflows/security-scan.yml",
+            ".github/ISSUE_TEMPLATE/bug_report.yml",
+            ".github/ISSUE_TEMPLATE/docs_task.yml",
+            ".github/ISSUE_TEMPLATE/feature_request.yml"
+          ];
+
+          for (const file of requiredFiles) {
+            if (!exists(file)) {
+              fail(`Required security contract file is missing or empty: ${file}`, file);
+            }
+          }
+
+          if (exists("package.json")) {
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+
+            if (!pkg.packageManager || !pkg.packageManager.startsWith("pnpm@")) {
+              fail('Root package.json must define "packageManager": "pnpm@<version>".', "package.json");
+            }
+
+            const requiredScripts = ["lint", "typecheck", "test", "build"];
+            const missingRequiredScripts = requiredScripts.filter((script) => !pkg.scripts || !pkg.scripts[script]);
+
+            if (missingRequiredScripts.length > 0) {
+              fail(`Root package.json is missing required security gate scripts: ${missingRequiredScripts.join(", ")}`, "package.json");
+            }
+
+            const recommendedScripts = ["test:security", "test:contract", "test:calc", "audit:security"];
+            const missingRecommendedScripts = recommendedScripts.filter((script) => !pkg.scripts || !pkg.scripts[script]);
+
+            if (missingRecommendedScripts.length > 0) {
+              warn(`Root package.json is missing recommended security scripts: ${missingRecommendedScripts.join(", ")}`, "package.json");
+            }
+          }
+
+          const issueTemplateFiles = [
+            ".github/ISSUE_TEMPLATE/bug_report.yml",
+            ".github/ISSUE_TEMPLATE/docs_task.yml",
+            ".github/ISSUE_TEMPLATE/feature_request.yml"
+          ];
+
+          for (const file of issueTemplateFiles) {
+            if (!exists(file)) {
+              continue;
+            }
+
+            const content = fs.readFileSync(file, "utf8");
+            const ids = [...content.matchAll(/^\s+id:\s*([A-Za-z0-9_-]+)\s*$/gm)].map((match) => match[1]);
+            const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+
+            if (duplicateIds.length > 0) {
+              fail(`${file} contains duplicated GitHub Issue Form ids: ${[...new Set(duplicateIds)].join(", ")}`, file);
+            }
+
+            let inTextarea = false;
+
+            for (const line of content.split(/\r?\n/)) {
+              if (/^  - type:\s+/.test(line)) {
+                inTextarea = line.trim() === "- type: textarea";
+              }
+
+              if (inTextarea && /^      value:\s*(\||>|.*)?$/.test(line)) {
+                fail(`${file} contains textarea attributes.value. Use placeholder instead to avoid pre-filled required fields.`, file);
+              }
+            }
+
+            for (const token of ["민감정보", "개인정보"]) {
+              if (!content.includes(token)) {
+                warn(`${file} does not mention ${token}.`, file);
+              }
+            }
+          }
+
+          const workflowDir = ".github/workflows";
+          const sensitiveWorkflowKeyPattern = /\b(CLOUDFLARE_API_TOKEN|EXPO_TOKEN|DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SENTRY_AUTH_TOKEN)\b/;
+          const unsafeWorkflowAssignmentPattern = /\b(CLOUDFLARE_API_TOKEN|EXPO_TOKEN|DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SENTRY_AUTH_TOKEN)\b\s*:\s*["']?(?!\$\{\{\s*secrets\.|REDACTED|""|''|\$\{)[A-Za-z0-9_+/@:.,=-]{12,}/;
+
+          if (fs.existsSync(workflowDir)) {
+            for (const file of fs.readdirSync(workflowDir)) {
+              if (!file.endsWith(".yml") && !file.endsWith(".yaml")) {
+                continue;
+              }
+
+              const workflowPath = path.join(workflowDir, file);
+              const content = fs.readFileSync(workflowPath, "utf8");
+              const lines = content.split(/\r?\n/);
+
+              if (!/permissions:\s*\n/.test(content)) {
+                fail(`Workflow must define explicit least-privilege permissions: ${workflowPath}`, workflowPath);
+              }
+
+              if (!/timeout-minutes:\s*\d+/.test(content)) {
+                warn(`Workflow should define timeout-minutes: ${workflowPath}`, workflowPath);
+              }
+
+              const hasUnsafePullRequestTarget = lines.some((line) =>
+                /^\s*pull_request_target\s*:/.test(line)
+              );
+
+              if (hasUnsafePullRequestTarget) {
+                fail(`pull_request_target is not allowed without explicit security review: ${workflowPath}`, workflowPath);
+              }
+
+              lines.forEach((line, index) => {
+                const trimmed = line.trim();
+
+                const scannerDefinitionLine =
+                  workflowPath.endsWith("security-scan.yml") &&
+                  (
+                    trimmed.startsWith("const sensitiveWorkflowKeyPattern") ||
+                    trimmed.startsWith("const unsafeWorkflowAssignmentPattern") ||
+                    trimmed.startsWith("const sensitiveAssignmentPatterns") ||
+                    trimmed.startsWith("const highConfidenceSecretPatterns") ||
+                    trimmed.includes("secret-like")
+                  );
+
+                if (scannerDefinitionLine) {
+                  return;
+                }
+
+                if (sensitiveWorkflowKeyPattern.test(line) && unsafeWorkflowAssignmentPattern.test(line)) {
+                  fail(
+                    `Workflow may contain a hard-coded sensitive value at ${workflowPath}:${index + 1}. Use secrets context instead.`,
+                    workflowPath
+                  );
+                }
+              });
+            }
+          }
+
+          for (const target of ["docs", "README.md"]) {
+            if (!fs.existsSync(target)) {
+              warn(`Recommended documentation target is missing: ${target}`);
+            }
+          }
+
+          fs.writeFileSync(
+            path.join(reportDir, "security-contract-report.json"),
+            JSON.stringify({ findings, warnings }, null, 2)
+          );
+
+          fs.writeFileSync(
+            path.join(reportDir, "security-contract-report.md"),
+            [
+              "# 급여납치 보안 계약 검증 보고서",
+              "",
+              `- 오류: ${findings.length}`,
+              `- 경고: ${warnings.length}`,
+              "",
+              "## 오류",
+              ...findings.map((item) => `- ${item.file ? `\`${item.file}\` ` : ""}${item.message}`),
+              "",
+              "## 경고",
+              ...warnings.map((item) => `- ${item.file ? `\`${item.file}\` ` : ""}${item.message}`),
+              ""
+            ].join("\n")
+          );
+
+          if (findings.length > 0) {
+            process.exit(1);
+          }
+
+          console.log("Security contract verified.");
+          NODE
+
+      - name: Secret-like pattern scan
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$SECURITY_REPORT_DIR"
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const reportDir = process.env.SECURITY_REPORT_DIR || "security-reports";
+          const findings = [];
+
+          const ignoredDirs = new Set([
+            ".git",
+            ".github",
+            "node_modules",
+            ".pnpm-store",
+            "dist",
+            "build",
+            "coverage",
+            ".next",
+            ".expo",
+            "playwright-report",
+            "test-results",
+            "security-reports"
+          ]);
+
+          const ignoredFiles = new Set([
+            "pnpm-lock.yaml",
+            "package-lock.json",
+            "yarn.lock"
+          ]);
+
+          const allowedExtensions = new Set([
+            ".env",
+            ".example",
+            ".local",
+            ".ts",
+            ".tsx",
+            ".js",
+            ".jsx",
+            ".mjs",
+            ".cjs",
+            ".json",
+            ".jsonc",
+            ".yaml",
+            ".yml",
+            ".toml",
+            ".sql",
+            ".md",
+            ".sh"
+          ]);
+
+          const highConfidenceSecretPatterns = [
+            {
+              name: "private-key-block",
+              pattern: /-----BEGIN (RSA |OPENSSH |EC |DSA |PRIVATE )?PRIVATE KEY-----/
+            },
+            {
+              name: "stripe-live-secret",
+              pattern: /\bsk_live_[A-Za-z0-9]{16,}\b/
+            },
+            {
+              name: "github-token",
+              pattern: /\bgh[pousr]_[A-Za-z0-9_]{20,}\b/
+            }
+          ];
+
+          const sensitiveAssignmentPatterns = [
+            /\b(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SECRET_ACCESS_KEY|CLOUDFLARE_API_TOKEN|EXPO_TOKEN|SENTRY_AUTH_TOKEN|R2_SECRET|AWS_SECRET|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST)\b\s*=\s*["']?(?!\$\{\{|process\.env|import\.meta\.env|REDACTED|redacted|<|>|example|changeme|change-me|your_|""|''|null|undefined)[^"'\s]{12,}/i,
+            /\b(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SECRET_ACCESS_KEY|CLOUDFLARE_API_TOKEN|EXPO_TOKEN|SENTRY_AUTH_TOKEN|R2_SECRET|AWS_SECRET|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST)\b\s*:\s*["'](?!\$\{\{|process\.env|import\.meta\.env|REDACTED|redacted|<|>|example|changeme|change-me|your_|""|''|null|undefined)[^"']{12,}["']/i
+          ];
+
+          function shouldScanFile(file) {
+            const base = path.basename(file);
+
+            if (ignoredFiles.has(base)) {
+              return false;
+            }
+
+            const ext = path.extname(file);
+
+            if (base.startsWith(".env")) {
+              return true;
+            }
+
+            return allowedExtensions.has(ext);
+          }
+
+          function walk(dir) {
+            if (!fs.existsSync(dir)) {
+              return;
+            }
+
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+            for (const entry of entries) {
+              const fullPath = path.join(dir, entry.name);
+
+              if (entry.isDirectory()) {
+                if (!ignoredDirs.has(entry.name)) {
+                  walk(fullPath);
+                }
+                continue;
+              }
+
+              if (!entry.isFile() || !shouldScanFile(fullPath)) {
+                continue;
+              }
+
+              const content = fs.readFileSync(fullPath, "utf8");
+              const lines = content.split(/\r?\n/);
+
+              lines.forEach((line, index) => {
+                const scannerRuleLine =
+                  fullPath.endsWith("security-scan.yml") ||
+                  line.includes("highConfidenceSecretPatterns") ||
+                  line.includes("sensitiveAssignmentPatterns");
+
+                if (scannerRuleLine) {
+                  return;
+                }
+
+                for (const rule of highConfidenceSecretPatterns) {
+                  if (rule.pattern.test(line)) {
+                    findings.push({
+                      file: fullPath,
+                      line: index + 1,
+                      type: rule.name,
+                      text: line.trim().slice(0, 240)
+                    });
+                  }
+                }
+
+                for (const pattern of sensitiveAssignmentPatterns) {
+                  if (pattern.test(line)) {
+                    findings.push({
+                      file: fullPath,
+                      line: index + 1,
+                      type: "sensitive-assignment",
+                      text: line.trim().slice(0, 240)
+                    });
+                  }
+                }
+              });
+            }
+          }
+
+          for (const root of ["."]) {
+            walk(root);
+          }
+
+          fs.writeFileSync(
+            path.join(reportDir, "secret-like-findings.json"),
+            JSON.stringify(findings, null, 2)
+          );
+
+          fs.writeFileSync(
+            path.join(reportDir, "secret-like-findings.md"),
+            [
+              "# 급여납치 Secret-like 문자열 스캔",
+              "",
+              `- 발견 건수: ${findings.length}`,
+              "",
+              ...findings.map((finding) => `- \`${finding.file}:${finding.line}\` [${finding.type}] ${finding.text}`)
+            ].join("\n")
+          );
+
+          if (findings.length > 0) {
+            for (const finding of findings) {
+              console.error(`::error file=${finding.file},line=${finding.line}::${finding.type}: ${finding.text}`);
+            }
+            process.exit(1);
+          }
+
+          console.log("No high-confidence secret-like values found.");
+          NODE
+
+      - name: Personal finance privacy policy scan
+        run: |
+          set -euo pipefail
+
+          mkdir -p "$SECURITY_REPORT_DIR"
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const reportDir = process.env.SECURITY_REPORT_DIR || "security-reports";
+          const findings = [];
+
+          const sourceRoots = [
+            "apps",
+            "services",
+            "packages"
+          ].filter((dir) => fs.existsSync(dir));
+
+          const ignoredDirs = new Set([
+            ".git",
+            "node_modules",
+            "dist",
+            "build",
+            "coverage",
+            ".next",
+            ".expo",
+            "playwright-report",
+            "test-results"
+          ]);
+
+          const codeExtensions = new Set([
+            ".ts",
+            ".tsx",
+            ".js",
+            ".jsx",
+            ".mjs",
+            ".cjs",
+            ".json",
+            ".sql",
+            ".md"
+          ]);
+
+          const sensitiveTerms = [
+            "salary",
+            "payroll",
+            "loan",
+            "saving",
+            "expense",
+            "budget",
+            "hijack",
+            "income",
+            "급여",
+            "대출",
+            "저축",
+            "소비",
+            "지출",
+            "예산",
+            "납치금액"
+          ];
+
+          const riskyLogPatterns = [
+            /\bconsole\.(log|debug|info|warn|error)\s*\(/,
+            /\blogger\.(debug|info|warn|error)\s*\(/,
+            /\bLog\.(d|i|w|e)\s*\(/
+          ];
+
+          const adMixingPatterns = [
+            /ad_.*(salary|payroll|expense|budget|loan|saving|income)/i,
+            /(salary|payroll|expense|budget|loan|saving|income).*ad_/i,
+            /advertis(e|ing|ement).*financial/i,
+            /financial.*advertis(e|ing|ement)/i
+          ];
+
+          function walk(dir) {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+            for (const entry of entries) {
+              const fullPath = path.join(dir, entry.name);
+
+              if (entry.isDirectory()) {
+                if (!ignoredDirs.has(entry.name)) {
+                  walk(fullPath);
+                }
+                continue;
+              }
+
+              if (!entry.isFile()) {
+                continue;
+              }
+
+              if (!codeExtensions.has(path.extname(entry.name))) {
+                continue;
+              }
+
+              const content = fs.readFileSync(fullPath, "utf8");
+              const lines = content.split(/\r?\n/);
+
+              lines.forEach((line, index) => {
+                const normalized = line.toLowerCase();
+                const hasSensitiveTerm = sensitiveTerms.some((term) => normalized.includes(term.toLowerCase()));
+
+                if (hasSensitiveTerm && riskyLogPatterns.some((pattern) => pattern.test(line))) {
+                  findings.push({
+                    file: fullPath,
+                    line: index + 1,
+                    type: "sensitive-finance-log-risk",
+                    text: line.trim().slice(0, 240)
+                  });
+                }
+
+                if (adMixingPatterns.some((pattern) => pattern.test(line))) {
+                  findings.push({
+                    file: fullPath,
+                    line: index + 1,
+                    type: "ad-finance-data-mixing-risk",
+                    text: line.trim().slice(0, 240)
+                  });
+                }
+              });
+            }
+          }
+
+          for (const root of sourceRoots) {
+            walk(root);
+          }
+
+          fs.writeFileSync(
+            path.join(reportDir, "privacy-policy-findings.json"),
+            JSON.stringify(findings, null, 2)
+          );
+
+          fs.writeFileSync(
+            path.join(reportDir, "privacy-policy-findings.md"),
+            [
+              "# 급여납치 개인정보·재무데이터 정책 스캔",
+              "",
+              `- 발견 건수: ${findings.length}`,
+              "",
+              ...findings.map((finding) => `- \`${finding.file}:${finding.line}\` [${finding.type}] ${finding.text}`)
+            ].join("\n")
+          );
+
+          if (findings.length > 0) {
+            for (const finding of findings) {
+              console.error(`::error file=${finding.file},line=${finding.line}::${finding.type}: ${finding.text}`);
+            }
+            process.exit(1);
+          }
+
+          console.log("No personal finance privacy policy regression found.");
+          NODE
+
+      - name: Upload security contract reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-contract-reports-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 30
+          path: ${{ env.SECURITY_REPORT_DIR }}/**
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm store integrity
+        run: pnpm store status
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Audit all dependencies
+        run: pnpm audit --audit-level critical
+
+      - name: Run custom security audit when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['audit:security'] ? 0 : 1)"; then
+            pnpm run audit:security
+          else
+            echo "Root audit:security script is not configured. Skipping."
+          fi
+
+  dependency-review:
+    name: Dependency review for pull requests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'pull_request'
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-2.0, GPL-3.0, AGPL-1.0, AGPL-3.0, LGPL-2.0, LGPL-2.1, LGPL-3.0
+          comment-summary-in-pr: always
+
+  codeql:
+    name: CodeQL static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    permissions:
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - javascript-typescript
+          - actions
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Setup pnpm for JavaScript and TypeScript analysis
+        if: matrix.language == 'javascript-typescript'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js for JavaScript and TypeScript analysis
+        if: matrix.language == 'javascript-typescript'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies for JavaScript and TypeScript analysis
+        if: matrix.language == 'javascript-typescript'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for CodeQL when configured
+        if: matrix.language == 'javascript-typescript'
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.build ? 0 : 1)"; then
+            pnpm build
+          else
+            echo "Root build script is not configured. CodeQL will analyze available source without build."
+          fi
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  security-tests:
+    name: Project security test hooks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run baseline tests
+        run: pnpm test
+
+      - name: Run security tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['test:security'] ? 0 : 1)"; then
+            pnpm run test:security
+          else
+            echo "Root test:security script is not configured. Skipping."
+          fi
+
+      - name: Run API contract tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['test:contract'] ? 0 : 1)"; then
+            pnpm run test:contract
+          else
+            echo "Root test:contract script is not configured. Skipping."
+          fi
+
+      - name: Run calculation integrity tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['test:calc'] ? 0 : 1)"; then
+            pnpm run test:calc
+          else
+            echo "Root test:calc script is not configured. Skipping."
+          fi
+
+      - name: Upload security test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-test-reports-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 30
+          path: |
+            coverage/**
+            test-results/**
+            security-reports/**
+            apps/**/coverage/**
+            apps/**/test-results/**
+            services/**/coverage/**
+            services/**/test-results/**
+            packages/**/coverage/**
+            packages/**/test-results/**
+            **/junit.xml
+
+  security-summary:
+    name: Security scan summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: always()
+    needs:
+      - security-contract
+      - dependency-audit
+      - dependency-review
+      - codeql
+      - security-tests
+
+    steps:
+      - name: Write security summary
+        run: |
+          {
+            echo "## 급여납치 보안 스캔 결과"
+            echo ""
+            echo "- security-contract: ${{ needs.security-contract.result }}"
+            echo "- dependency-audit: ${{ needs.dependency-audit.result }}"
+            echo "- dependency-review: ${{ needs.dependency-review.result }}"
+            echo "- codeql: ${{ needs.codeql.result }}"
+            echo "- security-tests: ${{ needs.security-tests.result }}"
+            echo ""
+            echo "### 검증 범위"
+            echo ""
+            echo "- 의존성 취약점"
+            echo "- PR 의존성 변경"
+            echo "- CodeQL 정적 분석"
+            echo "- GitHub Actions 권한/timeout/위험 이벤트"
+            echo "- secret-like 고확신 문자열"
+            echo "- 급여·예산·지출·저축·납치금액 로그 노출 위험"
+            echo "- 광고 데이터와 재무 원천 데이터 혼합 위험"
+            echo "- 보안/계약/계산 테스트 hook"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail when required security jobs failed
+        run: |
+          set -euo pipefail
+
+          REQUIRED_RESULTS=(
+            "${{ needs.security-contract.result }}"
+            "${{ needs.dependency-audit.result }}"
+            "${{ needs.codeql.result }}"
+            "${{ needs.security-tests.result }}"
+          )
+
+          for result in "${REQUIRED_RESULTS[@]}"; do
+            if [ "$result" != "success" ]; then
+              echo "::error::Required security job failed or was cancelled: $result"
+              exit 1
+            fi
+          done
+
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ "${{ needs.dependency-review.result }}" != "success" ]; then
+            echo "::error::Dependency review failed for pull request."
+            exit 1
+          fi
+
+          echo "Required security jobs passed."

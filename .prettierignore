@@ -1,0 +1,23 @@
+node_modules
+.turbo
+.cache
+coverage
+dist
+build
+
+# Framework and deployment outputs
+.next
+.open-next
+.vercel
+.wrangler
+.expo
+web-build
+
+# Native/mobile generated workspaces
+android
+ios
+
+# Local environment files
+.env
+.env.*
+!.env.example

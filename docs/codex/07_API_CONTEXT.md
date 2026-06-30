@@ -1,0 +1,141 @@
+---
+codex_context: true
+priority: P0
+scope: services packages/db database
+applies_to:
+  - services/**
+  - packages/db/**
+  - database/**
+last_verified: 2026-06-29
+---
+
+# API And Service Context
+
+## API Service
+
+Path: `services/api`
+
+Package: `@salary-hijacking/api`
+
+Entrypoints:
+
+- `src/app.ts`: route gateway and middleware chain.
+- `src/index.ts`: Cloudflare Worker default export and worker events.
+
+Current verification:
+
+- `pnpm.cmd --filter @salary-hijacking/api run typecheck`: PASS on 2026-06-29.
+- `pnpm.cmd --filter @salary-hijacking/api run lint`: PASS on 2026-06-29.
+- `pnpm.cmd --filter @salary-hijacking/api run format:check`: PASS on 2026-06-29.
+- `pnpm.cmd --filter @salary-hijacking/api run test`: PASS on 2026-06-29, 5 files and 10 tests.
+
+## API Prefixes
+
+- Auth: `/api/v1/auth`
+- Admin auth: `/admin/auth`
+- Admin API: `/admin/api/v1`
+- Users: `/api/v1/users`
+- Payroll: `/api/v1/payroll`
+- Daily budgets: `/api/v1/daily-budgets`
+- Fixed expenses: `/api/v1/fixed-expenses`
+- Variable expenses: `/api/v1/variable-expenses`
+- Savings: `/api/v1/savings`
+- Notifications: `/api/v1/notifications`
+- Growth: `/api/v1/growth`
+- Community: `/api/v1/community`
+- Uploads: `/api/v1/uploads`
+
+## Route Modules
+
+- `auth.routes.ts`
+- `admin.routes.ts`
+- `users.routes.ts`
+- `payroll.routes.ts`
+- `daily-budgets.routes.ts`
+- `fixed-expenses.routes.ts`
+- `variable-expenses.routes.ts`
+- `savings.routes.ts`
+- `notifications.routes.ts`
+- `growth.routes.ts`
+- `community.routes.ts`
+- `uploads.routes.ts`
+
+## Mobile API Compatibility Contracts
+
+Verified on 2026-06-29:
+
+- `GET /api/v1/mobile/bootstrap`: implemented in `services/api/src/app.ts` and covered by `services/api/tests/mobile-bootstrap.test.ts`.
+- `GET /api/v1/payroll/home`, `GET /api/v1/payroll/current`, `POST /api/v1/payroll/recalculate`: implemented in `services/api/src/routes/payroll.routes.ts` and aligned with the current mobile salary/plan screens.
+- `GET /api/v1/users/me/profile`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile screen payload alias. The response uses hash-only user identity and explicit false privacy flags.
+- `POST /api/v1/users/me/privacy-export`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile privacy action alias. The response returns mobile profile payload privacy state without exposing raw financial, personal, or token data.
+- `POST /api/v1/users/me/withdrawal-request`: implemented in `services/api/src/routes/users.routes.ts` as a request-only mobile profile action. It records/request-flags withdrawal intent without performing destructive final account withdrawal.
+- Contract test: `services/api/tests/mobile-profile-contract.test.ts`.
+- Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
+
+## Persistence Warning
+
+Many route modules and scheduler/notification helpers include `createInMemory...` repositories or defaults. Treat this as prototype/test/dry-run behavior unless a DB-backed repository is explicitly wired and verified.
+
+## Notifications Service
+
+Path: `services/notifications`
+
+Package: `@salary-hijacking/notifications`
+
+Files:
+
+- `tsconfig.json`
+- `src/index.ts`
+- `src/fcm.client.ts`
+- `src/retry-queue.ts`
+- `src/push-token-cleanup.ts`
+
+Manifest endpoints include health, ready, manifest, send, multicast, topic, condition, validate.
+
+Current verification:
+
+- `pnpm.cmd --filter @salary-hijacking/notifications typecheck`: PASS after adding `services/notifications/tsconfig.json`.
+
+## Scheduler Service
+
+Path: `services/scheduler`
+
+Package: `@salary-hijacking/scheduler`
+
+Files:
+
+- `tsconfig.json`
+- `src/index.ts`
+- `src/jobs/payday-reminder.job.ts`
+- `src/jobs/fixed-expense-reminder.job.ts`
+- `src/jobs/monthly-hijack-close.job.ts`
+- `src/jobs/data-retention-cleanup.job.ts`
+
+Manifest endpoints include health, ready, manifest, and scheduler job execution routes.
+
+Current verification:
+
+- `pnpm.cmd --filter @salary-hijacking/scheduler typecheck`: PASS after adding `services/scheduler/tsconfig.json`.
+
+## DB Context
+
+Path: `database`, `packages/db`
+
+Migrations:
+
+- `0001_init_users.sql`
+- `0002_payroll_budget_expense.sql`
+- `0003_growth_community_notifications.sql`
+- `0004_admin_audit_ads.sql`
+
+Seeds:
+
+- `local.seed.sql`
+- `staging.seed.sql`
+- `uat.seed.sql`
+
+DB client:
+
+- `packages/db/src/client/neon.client.ts`
+
+Before claiming DB readiness, run actual migration/seed validation against a safe local/staging DB.

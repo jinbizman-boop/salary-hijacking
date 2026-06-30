@@ -1,0 +1,227 @@
+Salary Hijacking Platform Proprietary License
+
+Copyright (c) 2026 Salary Hijacking. All rights reserved.
+
+This software, source code, documentation, database schema, migration files,
+seed data, user interface assets, design materials, operational materials,
+automation scripts, deployment configuration, and all related project files
+contained in or distributed with the Salary Hijacking Platform repository
+are proprietary and confidential unless a separate written agreement states
+otherwise.
+
+1. Ownership
+
+The Salary Hijacking Platform, including but not limited to the mobile
+application, admin console, API services, database design, payroll and budget
+calculation logic, notification system, level-up/self-development modules,
+community features, advertising and partnership operations, security policies,
+documentation, and all derivative works, is owned by Salary Hijacking or its
+authorized rights holder.
+
+No ownership interest, title, copyright, patent right, trademark right, trade
+secret right, database right, or any other intellectual property right is
+transferred by access to this repository or by possession of a copy of any file.
+
+2. Permitted Use
+
+Unless otherwise authorized in writing, the files in this repository may be
+used only for internal development, testing, review, maintenance, security
+assessment, deployment preparation, and operation of the Salary Hijacking
+Platform by authorized contributors, contractors, maintainers, employees, or
+service providers acting on behalf of the rights holder.
+
+Permitted internal use includes:
+
+- developing and maintaining the Salary Hijacking mobile application;
+- developing and maintaining the Salary Hijacking admin console;
+- developing and maintaining the Salary Hijacking API, notification, and
+  scheduler services;
+- applying and testing database migrations, policies, ERD, and seed files in
+  authorized non-production and production environments;
+- running CI/CD, security scans, QA, E2E tests, release automation, and
+  operational validation;
+- reviewing documentation, design references, release materials, and
+  operational runbooks for the Salary Hijacking Platform.
+
+3. Restrictions
+
+Without prior written permission from the rights holder, you may not:
+
+- copy, publish, sell, sublicense, lease, rent, distribute, transfer, or
+  otherwise make this software or any substantial part of it available to any
+  third party;
+- use this software to build, operate, or support a competing salary
+  management, payroll budgeting, household accounting, self-development,
+  community, advertising, or admin operations platform;
+- remove, obscure, or alter copyright notices, proprietary notices, security
+  notices, audit notices, or attribution notices;
+- reverse engineer, decompile, disassemble, extract, or reconstruct protected
+  business logic except where applicable law expressly prohibits this
+  restriction;
+- use the project documentation, database schema, UI/UX design, calculation
+  logic, seed data model, operational policy, or architecture as a template for
+  an unauthorized competing product;
+- expose, publish, or reuse any private environment variables, secrets,
+  credentials, tokens, keys, production configuration, audit data, or internal
+  operational information;
+- store or process real user salary, expense, saving, loan, budget, hijacked
+  amount, notification, community, advertising, or admin data outside approved
+  environments and approved policies;
+- combine advertising or partnership data with raw financial source data in a
+  manner that violates the Salary Hijacking security, privacy, or data
+  separation policies;
+- use the Salary Hijacking name, logo, brand identity, screenshots, product
+  design, or trademarks without written permission.
+
+4. Confidentiality
+
+All non-public files, source code, architecture, database models, migrations,
+security controls, policies, issue templates, CI/CD workflows, operational
+runbooks, business requirements, feature specifications, and release materials
+in this repository are confidential.
+
+You must protect this material with at least the same degree of care used to
+protect your own confidential information, and in no event less than reasonable
+care.
+
+Confidential information may be disclosed only to authorized persons who have a
+legitimate need to know for the purpose of developing, operating, securing, or
+maintaining the Salary Hijacking Platform.
+
+5. Financial Data and Privacy Requirements
+
+The Salary Hijacking Platform may handle sensitive financial and personal data,
+including salary amount, fixed expense amount, saving amount, daily budget,
+variable expense, hijacked amount, payroll calculation snapshots, user identity,
+device metadata, consent history, notification records, community activity,
+advertising events, and admin audit records.
+
+Any use of this software must comply with the platform's security, privacy,
+retention, deletion, logging, audit, and advertising data separation policies.
+
+The following are strictly prohibited unless explicitly approved by the rights
+holder and permitted by applicable law:
+
+- logging raw salary, expense, saving, budget, hijacked amount, token, secret,
+  phone number, IP address, user-agent, or authentication credential data;
+- using raw financial source data for advertising targeting without a valid
+  policy basis and user consent where required;
+- bypassing row-level security, admin RBAC, audit logging, or server-authority
+  calculation controls;
+- using real user data in local, staging, UAT, demo, issue, pull request,
+  screenshot, documentation, or public support contexts;
+- exporting production data to unmanaged or unauthorized environments.
+
+6. Third-Party and Open Source Software
+
+This repository may reference, depend on, or be distributed with third-party
+software, libraries, tools, SDKs, fonts, assets, APIs, or services.
+
+Third-party materials are licensed under their own respective licenses and are
+not relicensed by this proprietary license. You are responsible for complying
+with all applicable third-party license terms, including notices, attribution,
+source availability, redistribution restrictions, and usage limits.
+
+Nothing in this license is intended to limit rights that are granted directly by
+third-party open source licenses for third-party components.
+
+7. Contributions
+
+Unless a separate written contribution agreement states otherwise, any
+contribution, patch, pull request, suggestion, issue content, documentation
+change, design change, schema change, test case, workflow change, or other
+submission made to this repository may be used, modified, reproduced,
+distributed, sublicensed, commercialized, and incorporated into the Salary
+Hijacking Platform by the rights holder without restriction or obligation.
+
+By submitting a contribution, you represent that you have the right to make the
+submission and that it does not knowingly include unauthorized third-party
+confidential information, trade secrets, malicious code, personal data, secrets,
+tokens, or production financial data.
+
+8. No Public License Grant
+
+This repository is not open source.
+
+No license is granted for public redistribution, commercial reuse, SaaS reuse,
+white-label reuse, resale, training-data extraction, model fine-tuning,
+benchmark packaging, code marketplace publication, or derivative product
+development unless expressly authorized in a separate written agreement.
+
+Access to the repository does not imply permission to use it outside the
+authorized Salary Hijacking Platform project.
+
+9. Security and Responsible Disclosure
+
+If you discover a vulnerability, data exposure risk, authentication bypass,
+authorization bypass, row-level security issue, financial calculation error,
+privacy issue, secret exposure, dependency risk, or infrastructure weakness,
+you must report it through the approved Salary Hijacking security process.
+
+You may not exploit, persist, disclose, sell, publish, or weaponize the issue.
+Testing must be limited to authorized environments and must not affect real
+users, production data, production availability, or third-party systems.
+
+10. Trademarks and Brand Assets
+
+The names "Salary Hijacking", "급여납치", associated logos, marks, product
+names, slogans, UI identity, app store assets, screenshots, and brand materials
+are reserved by the rights holder.
+
+No trademark, service mark, trade name, brand asset, or goodwill license is
+granted by this license.
+
+11. No Warranty
+
+THE SOFTWARE AND ALL RELATED MATERIALS ARE PROVIDED "AS IS" AND "AS AVAILABLE"
+WITHOUT WARRANTIES OF ANY KIND, WHETHER EXPRESS, IMPLIED, STATUTORY, OR
+OTHERWISE.
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE RIGHTS HOLDER DISCLAIMS ALL
+WARRANTIES, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, TITLE, NON-INFRINGEMENT, SECURITY, ACCURACY,
+AVAILABILITY, ERROR-FREE OPERATION, DATA INTEGRITY, AND COMPLIANCE WITH ANY
+SPECIFIC LEGAL, FINANCIAL, TAX, ACCOUNTING, EMPLOYMENT, ADVERTISING, OR PRIVACY
+REQUIREMENT.
+
+12. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE RIGHTS HOLDER SHALL NOT BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY,
+PUNITIVE, OR OTHER DAMAGES ARISING FROM OR RELATED TO THIS SOFTWARE OR ANY
+RELATED MATERIALS, INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, LOSS OF
+REVENUE, LOSS OF DATA, BUSINESS INTERRUPTION, SECURITY INCIDENTS, PRIVACY
+CLAIMS, FINANCIAL CALCULATION ERRORS, ADVERTISING CLAIMS, OPERATIONAL FAILURES,
+OR UNAUTHORIZED USE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+13. Termination
+
+Any permission granted under this license terminates automatically if you breach
+this license or any applicable written agreement with the rights holder.
+
+Upon termination, you must immediately stop using the software and delete or
+return all copies, except where retention is required by law or by an approved
+security, audit, or backup policy.
+
+Sections relating to ownership, restrictions, confidentiality, privacy,
+third-party software, contributions, no warranty, limitation of liability,
+trademarks, audit, and enforcement survive termination.
+
+14. Governing Agreement
+
+If a separate written agreement, employment agreement, contractor agreement,
+vendor agreement, data processing agreement, non-disclosure agreement, or
+commercial license agreement applies to your access or use of the Salary
+Hijacking Platform, that agreement controls to the extent it conflicts with this
+license.
+
+15. Reservation of Rights
+
+All rights not expressly granted in this license are reserved.
+
+No implied license, waiver, estoppel, exhaustion, or other right is granted by
+making this repository available, by sharing a copy, by accepting a contribution,
+or by allowing access to any environment, document, issue, pull request, build,
+release, artifact, or deployment.
+
+End of License.

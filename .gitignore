@@ -1,0 +1,354 @@
+# ==============================================================================
+# Salary Hijacking Platform · 급여납치
+# Root .gitignore
+#
+# Purpose:
+# - Keep source code, docs, database migrations, policies, seeds, infra specs,
+#   and release/ops documentation trackable.
+# - Block dependency folders, build outputs, caches, logs, secrets, credentials,
+#   local DB dumps, mobile signing files, Cloudflare local vars, and generated
+#   runtime artifacts.
+# - Protect salary, expense, saving, budget, hijacked amount, token, secret,
+#   and operational data from accidental commits.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Dependencies
+# ------------------------------------------------------------------------------
+
+node_modules/
+**/node_modules/
+.pnpm-store/
+**/.pnpm-store/
+.npm/
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# ------------------------------------------------------------------------------
+# 2. Environment variables and secrets
+# ------------------------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+
+*.local
+*.secret
+*.secrets
+*.credentials
+*.credential
+*.token
+*.tokens
+
+# Cloudflare / Workers local secret files
+.dev.vars
+**/.dev.vars
+wrangler/.dev.vars
+**/wrangler/.dev.vars
+
+# Secret/key/certificate materials
+*.pem
+*.key
+*.crt
+*.cer
+*.csr
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.provisionprofile
+*.asc
+*.gpg
+*.age
+*.sops.yaml
+
+# Service account / vendor credentials
+service-account*.json
+firebase-service-account*.json
+google-service-account*.json
+GoogleService-Info.plist
+google-services.json
+credentials.json
+client_secret*.json
+
+# ------------------------------------------------------------------------------
+# 3. Build outputs
+# ------------------------------------------------------------------------------
+
+dist/
+**/dist/
+build/
+**/build/
+!scripts/build/
+!scripts/build/**
+out/
+**/out/
+web-build/
+**/web-build/
+public/build/
+storybook-static/
+
+# Next.js
+.next/
+**/.next/
+next-env.d.ts
+.open-next/
+**/.open-next/
+.vercel/
+**/.vercel/
+
+# Expo / React Native
+.expo/
+**/.expo/
+.expo-shared/
+**/.expo-shared/
+.expo/web/cache/
+android/
+ios/
+
+# React Native / Metro
+.metro-cache/
+**/.metro-cache/
+.bundle/
+**/.bundle/
+
+# Cloudflare / Wrangler
+.wrangler/
+**/.wrangler/
+.worker-build/
+**/.worker-build/
+
+# Turbo
+.turbo/
+**/.turbo/
+
+# TypeScript
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# ------------------------------------------------------------------------------
+# 4. Test, coverage, QA, and reports
+# ------------------------------------------------------------------------------
+
+coverage/
+**/coverage/
+.coverage/
+**/.coverage/
+.nyc_output/
+**/.nyc_output/
+
+test-results/
+**/test-results/
+playwright-report/
+**/playwright-report/
+playwright/.cache/
+**/playwright/.cache/
+
+junit.xml
+**/junit.xml
+lcov.info
+**/lcov.info
+
+qa/reports/
+database/reports/
+security/reports/
+security/privacy-reports/
+
+# ------------------------------------------------------------------------------
+# 5. Logs and runtime traces
+# ------------------------------------------------------------------------------
+
+*.log
+logs/
+**/logs/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+*.trace
+*.trace.json
+*.har
+
+# Do not commit files that may contain requestId/userId/salary/expense traces.
+debug-output/
+runtime-output/
+incident-dumps/
+trace-dumps/
+
+# ------------------------------------------------------------------------------
+# 6. Database dumps, backups, snapshots, and local persistence
+# ------------------------------------------------------------------------------
+
+*.sql.gz
+*.dump
+*.backup
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+*.psql
+*.pgdump
+
+database/backups/*
+!database/backups/.gitkeep
+
+tmp-db/
+local-db/
+.pgdata/
+postgres-data/
+neon-branch-dumps/
+
+# ------------------------------------------------------------------------------
+# 7. Generated docs, release artifacts, and archives
+# ------------------------------------------------------------------------------
+
+docs/generated/
+release/artifacts/
+release/checksums/
+
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ------------------------------------------------------------------------------
+# 8. Temporary files
+# ------------------------------------------------------------------------------
+
+tmp/
+temp/
+.tmp/
+.cache/
+**/.cache/
+
+*.tmp
+*.temp
+*.swp
+*.swo
+*.orig
+*.rej
+*.patch
+*.pid
+*.seed
+*.pid.lock
+
+# ------------------------------------------------------------------------------
+# 9. OS files
+# ------------------------------------------------------------------------------
+
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ------------------------------------------------------------------------------
+# 10. Editor and IDE files
+# ------------------------------------------------------------------------------
+
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------------------------------------------------------
+# 11. Mobile signing and store submission local files
+# ------------------------------------------------------------------------------
+
+*.ipa
+*.apk
+*.aab
+*.apks
+*.xcarchive
+*.dSYM
+*.dSYM.zip
+
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+
+# ------------------------------------------------------------------------------
+# 12. Security scan outputs and dependency audit artifacts
+# ------------------------------------------------------------------------------
+
+.audit/
+.audit-results/
+dependency-check-report.*
+dependency-review-report.*
+semgrep-output.*
+trivy-results.*
+codeql-results.*
+sbom.json
+sbom.spdx.json
+cyclonedx.json
+
+# ------------------------------------------------------------------------------
+# 13. Salary Hijacking project-specific protection
+# ------------------------------------------------------------------------------
+
+# Never commit production exports, real user data, or raw financial datasets.
+production-export/
+prod-export/
+prod-dump/
+real-user-data/
+customer-data/
+financial-data/
+salary-data/
+payroll-data/
+expense-data/
+saving-data/
+hijack-data/
+
+# Never commit unmanaged admin, ad, notification, or audit exports.
+admin-export/
+ad-event-export/
+notification-export/
+audit-log-export/
+community-report-export/
+
+# Keep canonical source files trackable.
+!database/migrations/**/*.sql
+!database/seeds/**/*.sql
+!database/policies/**/*.md
+!database/erd/**/*.md
+!docs/**/*.md
+!assets/**/*.md
+!infra/**/*.md
+!ops/**/*.md
+!qa/**/*.md
+!release/**/*.md
+!security/**/*.md
+!observability/**/*.md
+!scripts/**/*.sh
+!tools/**/README.md
+!README.md
+!SECURITY.md
+!CODE_OF_CONDUCT.md
+!LICENSE
+!CHANGELOG.md
+!TREE.txt
+!MANIFEST.json
+!package.json
+!pnpm-workspace.yaml
+!turbo.json

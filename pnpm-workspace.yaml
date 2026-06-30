@@ -1,0 +1,63 @@
+# pnpm-workspace.yaml
+# 급여납치 Salary Hijacking Platform 모노레포 workspace 최종본
+#
+# 목적:
+# - apps, services, packages, tools 하위의 package 단위를 pnpm workspace로 관리한다.
+# - 루트 문서/DB/인프라/운영/QA/릴리즈 폴더는 workspace package가 아니므로 의존성 설치 대상으로 만들지 않는다.
+# - generated output, build output, cache, coverage, node_modules, archive 폴더는 workspace 탐색에서 제외한다.
+# - 내부 패키지는 package.json에서 "workspace:*" 프로토콜을 사용해 외부 registry 오해석을 방지한다.
+#
+# 최상위 구조 기준:
+# - apps/*      : mobile 앱, admin 콘솔
+# - services/*  : api, notifications, scheduler
+# - packages/*  : api-contract, config, db, security, types, ui, utils
+# - tools/*     : api-contract-check, db-schema-check, doc-lint, security-audit
+#
+# 주의:
+# - docs, database, infra, qa, ops, release, security, observability, assets는 package.json을 둘 목적이 없는 문서/운영 자산 영역이다.
+# - 해당 영역을 workspace package로 편입하지 않는다.
+# - 운영 DB seed나 migration 실행은 pnpm workspace 탐색이 아니라 scripts/db 또는 turbo task에서 수행한다.
+
+packages:
+  - "apps/*"
+  - "services/*"
+  - "packages/*"
+  - "tools/*"
+
+  # dependency / package manager output
+  - "!**/node_modules/**"
+  - "!**/.pnpm-store/**"
+
+  # framework / bundler output
+  - "!**/.next/**"
+  - "!**/.expo/**"
+  - "!**/dist/**"
+  - "!**/build/**"
+  - "!**/out/**"
+  - "!**/web-build/**"
+
+  # test / coverage output
+  - "!**/coverage/**"
+  - "!**/.coverage/**"
+  - "!**/test-results/**"
+  - "!**/playwright-report/**"
+
+  # cache / temporary output
+  - "!**/.turbo/**"
+  - "!**/.cache/**"
+  - "!**/tmp/**"
+  - "!**/temp/**"
+
+  # release / generated artifacts
+  - "!**/release/artifacts/**"
+  - "!**/release/checksums/**"
+  - "!**/docs/generated/**"
+
+  # database runtime artifacts
+  - "!**/database/backups/**"
+  - "!**/database/reports/**"
+
+  # archives
+  - "!**/*.zip"
+  - "!**/*.tar"
+  - "!**/*.tar.gz"

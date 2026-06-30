@@ -1,0 +1,180 @@
+# services/api/wrangler.toml
+# 급여납치 Salary Hijacking Platform · API Cloudflare Workers 배포 설정 최종본
+#
+# 민감 secrets는 이 파일에 저장하지 않는다. 환경별로 아래 명령으로 등록한다.
+#   wrangler secret put JWT_SECRET
+#   wrangler secret put AUTH_JWT_SECRET
+#   wrangler secret put HASH_SECRET
+#   wrangler secret put RATE_LIMIT_HASH_SECRET
+#   wrangler secret put AUDIT_HASH_SECRET
+#   wrangler secret put OPERATION_WEBHOOK_TOKEN
+
+name = "salary-hijacking-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-15"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+minify = true
+upload_source_maps = true
+keep_vars = true
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
+
+[vars]
+APP_ENV = "development"
+ENVIRONMENT = "development"
+NODE_ENV = "development"
+APP_PUBLIC_BASE_URL = "http://localhost:8787"
+CORS_ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:8787"
+ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:8787"
+ENABLE_QUEUE_HANDLER = "true"
+INDEX_AUDIT_TO_CONSOLE = "true"
+AUTH_ISSUER = "salary-hijacking-api"
+AUTH_MOBILE_AUDIENCE = "salary-hijacking-mobile"
+AUTH_ADMIN_AUDIENCE = "salary-hijacking-admin"
+AUTH_SERVICE_AUDIENCE = "salary-hijacking-service"
+API_VERSION = "v1"
+SERVICE_NAME = "salary-hijacking-api"
+TIMEZONE = "Asia/Seoul"
+RAW_FINANCIAL_DATA_FOR_ADS = "false"
+AD_TARGETING_POLICY = "contextual_or_explicit_opt_in_only"
+ADMIN_REASON_REQUIRED = "true"
+SERVER_AUTHORITY_CALCULATION = "true"
+
+[triggers]
+crons = [
+  "*/30 * * * *",
+  "0 15 * * *"
+]
+
+[[r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-dev-uploads"
+preview_bucket_name = "salary-hijacking-dev-uploads-preview"
+
+[[queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-dev-operations"
+
+[[queues.consumers]]
+queue = "salary-hijacking-dev-operations"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "salary-hijacking-dev-operations-dlq"
+
+[env.staging]
+name = "salary-hijacking-api-staging"
+workers_dev = true
+minify = true
+upload_source_maps = true
+keep_vars = true
+
+[env.staging.observability]
+enabled = true
+
+[env.staging.placement]
+mode = "smart"
+
+[env.staging.vars]
+APP_ENV = "staging"
+ENVIRONMENT = "staging"
+NODE_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://salary-hijacking-api-staging.workers.dev"
+CORS_ALLOWED_ORIGINS = "https://staging.salary-hijacking.app,http://localhost:3000"
+ALLOWED_ORIGINS = "https://staging.salary-hijacking.app,http://localhost:3000"
+ENABLE_QUEUE_HANDLER = "true"
+INDEX_AUDIT_TO_CONSOLE = "true"
+AUTH_ISSUER = "salary-hijacking-api"
+AUTH_MOBILE_AUDIENCE = "salary-hijacking-mobile"
+AUTH_ADMIN_AUDIENCE = "salary-hijacking-admin"
+AUTH_SERVICE_AUDIENCE = "salary-hijacking-service"
+API_VERSION = "v1"
+SERVICE_NAME = "salary-hijacking-api"
+TIMEZONE = "Asia/Seoul"
+RAW_FINANCIAL_DATA_FOR_ADS = "false"
+AD_TARGETING_POLICY = "contextual_or_explicit_opt_in_only"
+ADMIN_REASON_REQUIRED = "true"
+SERVER_AUTHORITY_CALCULATION = "true"
+
+[env.staging.triggers]
+crons = [
+  "*/15 * * * *",
+  "0 15 * * *"
+]
+
+[[env.staging.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-staging-uploads"
+preview_bucket_name = "salary-hijacking-staging-uploads-preview"
+
+[[env.staging.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-staging-operations"
+
+[[env.staging.queues.consumers]]
+queue = "salary-hijacking-staging-operations"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "salary-hijacking-staging-operations-dlq"
+
+[env.production]
+name = "salary-hijacking-api-production"
+workers_dev = false
+minify = true
+upload_source_maps = true
+keep_vars = true
+
+[env.production.observability]
+enabled = true
+
+[env.production.placement]
+mode = "smart"
+
+[env.production.vars]
+APP_ENV = "production"
+ENVIRONMENT = "production"
+NODE_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://api.salary-hijacking.app"
+CORS_ALLOWED_ORIGINS = "https://salary-hijacking.app,https://www.salary-hijacking.app,https://admin.salary-hijacking.app"
+ALLOWED_ORIGINS = "https://salary-hijacking.app,https://www.salary-hijacking.app,https://admin.salary-hijacking.app"
+ENABLE_QUEUE_HANDLER = "true"
+INDEX_AUDIT_TO_CONSOLE = "false"
+AUTH_ISSUER = "salary-hijacking-api"
+AUTH_MOBILE_AUDIENCE = "salary-hijacking-mobile"
+AUTH_ADMIN_AUDIENCE = "salary-hijacking-admin"
+AUTH_SERVICE_AUDIENCE = "salary-hijacking-service"
+API_VERSION = "v1"
+SERVICE_NAME = "salary-hijacking-api"
+TIMEZONE = "Asia/Seoul"
+RAW_FINANCIAL_DATA_FOR_ADS = "false"
+AD_TARGETING_POLICY = "contextual_or_explicit_opt_in_only"
+ADMIN_REASON_REQUIRED = "true"
+SERVER_AUTHORITY_CALCULATION = "true"
+
+[env.production.triggers]
+crons = [
+  "*/10 * * * *",
+  "0 15 * * *"
+]
+
+[[env.production.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-production-uploads"
+preview_bucket_name = "salary-hijacking-production-uploads-preview"
+
+[[env.production.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-production-operations"
+
+[[env.production.queues.consumers]]
+queue = "salary-hijacking-production-operations"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "salary-hijacking-production-operations-dlq"

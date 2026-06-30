@@ -1,0 +1,113 @@
+---
+codex_context: true
+priority: P0
+scope: apps/mobile
+applies_to:
+  - apps/mobile/**
+last_verified: 2026-06-29
+---
+
+# Mobile App Context
+
+## Package
+
+Path: `apps/mobile`
+
+Package name: `@salary-hijacking/mobile`
+
+Current package/config files:
+
+- `package.json`
+- `tsconfig.json`
+- `eas.json`
+- `app.config.ts`
+- `.detoxrc.json`
+- `e2e/jest.config.cjs`
+- `e2e/smoke.e2e.js`
+
+`package.json`, `tsconfig.json`, `eas.json`, and `.detoxrc.json` parse as JSON when read with BOM handling where needed.
+
+## Screens
+
+Main route files:
+
+- `app/_layout.tsx`
+- `app/index.tsx`
+- `app/(auth)/login.tsx`
+- `app/(auth)/signup.tsx`
+- `app/(tabs)/salary/index.tsx`
+- `app/(tabs)/plan/index.tsx`
+- `app/(tabs)/level/index.tsx`
+- `app/(tabs)/community/index.tsx`
+- `app/(tabs)/profile/index.tsx`
+- `app/notifications/index.tsx`
+- `app/community/[postId].tsx`
+- `app/community/write.tsx`
+- `app/level/reading.tsx`
+- `app/level/news.tsx`
+- `app/level/english.tsx`
+- `app/level/health.tsx`
+
+## Implementation Pattern
+
+Many screens use:
+
+- runtime module loading,
+- `React.createElement`-style helpers,
+- local fallback seed data,
+- explicit privacy flags,
+- no raw financial data exposure claims.
+
+Do not convert large screen files to a new architecture without a scoped plan.
+
+## Current Verification
+
+Commands run on 2026-06-29:
+
+- `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
+- `pnpm.cmd --filter @salary-hijacking/mobile run test`: PASS, 24 suites and 77 tests
+- `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
+- `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
+- `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup
+
+Detox now has a repository-level execution contract:
+
+- `.detoxrc.json` defines `android.emu.debug` and `ios.sim.debug`.
+- `e2e/jest.config.cjs` uses Detox's Jest setup, teardown, reporter, test environment, and `jest-circus/runner`.
+- `e2e/smoke.e2e.js` launches the app and checks `salary-hijacking-mobile-root`.
+- `app/_layout.tsx` exposes `testID: "salary-hijacking-mobile-root"` on the root shell.
+- `scripts/check-detox-env.mjs` runs before Detox and fails fast with actionable Android/iOS native E2E prerequisites.
+
+The current E2E blocker is local environment, not missing Detox config:
+
+- `ANDROID_SDK_ROOT` is not set.
+- `ANDROID_HOME` is not set.
+- `adb` is not found in PATH.
+- `emulator` is not found in PATH.
+- No local Android E2E APK at `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` has been verified.
+
+## Feature File Status
+
+As of 2026-06-29, `apps/mobile/src/features/budget` and `apps/mobile/src/features/community` contain 51 non-empty files and no zero-byte source/test/component files were found in those two feature trees.
+
+## Endpoint Alignment Notes
+
+Previously observed high-priority mobile/API alignment gaps have been reduced:
+
+- `/api/v1/mobile/bootstrap` is implemented in the API worker app.
+- mobile auth stores bearer tokens and shared mobile API helpers attach them.
+- public Expo Router paths such as `/salary`, `/plan`, and `/level` are used for local smoke navigation.
+- local API plus Expo web smoke verified signup/login and `/salary`, `/level`, `/plan` navigation.
+
+Remaining endpoint work should still compare touched mobile calls against `services/api/src/routes` before claiming API/mobile coverage complete. Community bookmark-like actions and deeper write flows require route-level verification when those screens are next touched.
+
+## Mobile Work Checklist
+
+Before reporting mobile work complete:
+
+1. Confirm package dependencies are installed/resolved.
+2. Run mobile JSON checks.
+3. Run mobile typecheck.
+4. Run relevant tests or explain why tests are unavailable.
+5. Compare touched API calls against `services/api/src/routes`.
+6. Update `08_FILE_COMPLETION_LOG.md`.

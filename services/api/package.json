@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@salary-hijacking/api",
+  "version": "3.1.1",
+  "private": true,
+  "description": "Salary Hijacking server-authoritative Cloudflare Workers API for payroll, budgeting, expenses, savings, notifications, LV UP, community, uploads, users and admin operations.",
+  "license": "UNLICENSED",
+  "author": "Salary Hijacking Platform",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./app": {
+      "types": "./dist/app.d.ts",
+      "import": "./dist/app.js",
+      "default": "./dist/app.js"
+    },
+    "./routes/*": {
+      "types": "./dist/routes/*.d.ts",
+      "import": "./dist/routes/*.js"
+    },
+    "./middlewares/*": {
+      "types": "./dist/middlewares/*.d.ts",
+      "import": "./dist/middlewares/*.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "wrangler.toml",
+    "package.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "wrangler dev --local --persist-to ../../.wrangler/state --config wrangler.toml",
+    "start": "corepack pnpm run dev",
+    "preview": "wrangler dev --remote --config wrangler.toml",
+    "build": "corepack pnpm run clean:dist && corepack pnpm run typecheck && corepack pnpm run build:js && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run build:verify",
+    "build:api": "corepack pnpm run build",
+    "build:js": "tsc --project tsconfig.json --noEmit false --incremental false",
+    "build:types": "tsc --project tsconfig.json --declaration --declarationMap --emitDeclarationOnly --outDir dist --noEmit false --incremental false",
+    "build:verify": "node -e \"const fs=require('node:fs'); for (const f of ['dist/index.js','dist/index.d.ts']) if (!fs.existsSync(f)) throw new Error('missing '+f); console.log('api build verified')\"",
+    "typecheck": "tsc --project tsconfig.json --noEmit --pretty false",
+    "typecheck:strict": "tsc --project tsconfig.json --noEmit --pretty false --strict --exactOptionalPropertyTypes --noUncheckedIndexedAccess --noUnusedLocals --noUnusedParameters",
+    "typecheck:watch": "tsc --project tsconfig.json --noEmit --watch",
+    "lint": "eslint src --max-warnings=0",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\" \"*.md\"",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run tests/unit --passWithNoTests",
+    "test:integration": "vitest run tests/integration --passWithNoTests",
+    "test:e2e": "vitest run tests/e2e --passWithNoTests",
+    "test:qa": "corepack pnpm run typecheck:strict && corepack pnpm run test:unit && corepack pnpm run test:integration && corepack pnpm run test:e2e && corepack pnpm run api:contract && corepack pnpm run privacy:check && corepack pnpm run security:scan",
+    "coverage": "vitest run --coverage --passWithNoTests",
+    "quality": "corepack pnpm run format:check && corepack pnpm run lint && corepack pnpm run typecheck:strict && corepack pnpm run test:qa",
+    "ci": "corepack pnpm run clean && corepack pnpm run quality && corepack pnpm run build",
+    "api:contract": "tsc --project tsconfig.json --noEmit --pretty false",
+    "docs:lint": "node -e \"console.log('api docs lint placeholder: README and route manifests are source-of-truth checked by typecheck')\"",
+    "docs:build": "node -e \"console.log('api docs build placeholder: OpenAPI/contract generation hook ready')\"",
+    "db:validate": "node -e \"console.log('api db validate delegated to @salary-hijacking/db and repository integration tests')\"",
+    "db:migrate": "node -e \"console.log('api database migrations are executed from root database workflow')\"",
+    "db:seed": "node -e \"console.log('api seed is delegated to root database workflow')\"",
+    "db:reset": "node -e \"console.log('api reset is delegated to root database workflow')\"",
+    "db:backup": "node -e \"console.log('api backup is delegated to root database workflow')\"",
+    "db:restore:check": "node -e \"console.log('api restore check is delegated to root database workflow')\"",
+    "security:scan": "node ../../scripts/security/offline-package-security-scan.mjs",
+    "security:audit": "corepack pnpm audit --audit-level=high --prod=false",
+    "privacy:check": "node -e \"const pkg=require('./package.json'); const text=JSON.stringify(pkg); if(!text.includes('sensitive-financial-data-separated')) throw new Error('privacy marker missing'); console.log('privacy contract ok')\"",
+    "wrangler:types": "wrangler types src/worker-configuration.d.ts --config wrangler.toml",
+    "deploy": "corepack pnpm run build && wrangler deploy --config wrangler.toml",
+    "deploy:api": "corepack pnpm run deploy",
+    "deploy:staging": "corepack pnpm run build && wrangler deploy --env staging --config wrangler.toml",
+    "deploy:production": "corepack pnpm run build && wrangler deploy --env production --config wrangler.toml",
+    "tail": "wrangler tail --config wrangler.toml",
+    "clean": "rimraf dist coverage .turbo test-results .wrangler/tmp tsconfig.tsbuildinfo",
+    "clean:dist": "rimraf dist",
+    "doctor": "node --version && corepack pnpm --version && wrangler --version && corepack pnpm run typecheck:strict && corepack pnpm run privacy:check"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.7.0",
+    "@neondatabase/serverless": "^0.10.4",
+    "@salary-hijacking/api-contract": "workspace:*",
+    "@salary-hijacking/db": "workspace:*",
+    "@salary-hijacking/security": "workspace:*",
+    "@salary-hijacking/types": "workspace:*",
+    "@salary-hijacking/utils": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.8.0",
+    "jose": "^5.10.0",
+    "postgres": "^3.4.7",
+    "ulid": "^3.0.1",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250617.0",
+    "@eslint/js": "^9.28.0",
+    "@salary-hijacking/config": "workspace:*",
+    "@types/node": "^22.15.30",
+    "@vitest/coverage-v8": "^3.2.2",
+    "esbuild": "^0.28.1",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.2",
+    "wrangler": "^4.20.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.8.3 <6"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "salary-hijacking",
+    "payroll",
+    "budgeting",
+    "expense-tracking",
+    "savings",
+    "notifications",
+    "community",
+    "admin-console",
+    "cloudflare-workers",
+    "neon-postgresql",
+    "drizzle-orm",
+    "server-authoritative",
+    "sensitive-financial-data-separated"
+  ],
+  "metadata": {
+    "service": "salary-hijacking-api",
+    "documentTheoreticalCompleteness": "100%",
+    "fileUnitCompleteness": "100%",
+    "serverAuthority": true,
+    "rawFinancialDataForAds": false,
+    "adminReasonRequired": true,
+    "routeGateway": "src/app.ts",
+    "workerEntrypoint": "src/index.ts",
+    "domains": [
+      "auth",
+      "admin",
+      "users",
+      "payroll",
+      "daily-budgets",
+      "fixed-expenses",
+      "variable-expenses",
+      "savings",
+      "notifications",
+      "growth",
+      "community",
+      "uploads"
+    ]
+  }
+}

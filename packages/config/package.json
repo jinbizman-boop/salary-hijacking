@@ -1,0 +1,171 @@
+{
+  "name": "@salary-hijacking/config",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared ESLint, Prettier and TypeScript configuration package for the Salary Hijacking monorepo.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "eslint",
+    "prettier",
+    "typescript",
+    "package.json"
+  ],
+  "exports": {
+    "./eslint/base": {
+      "import": "./eslint/base.js",
+      "default": "./eslint/base.js"
+    },
+    "./prettier": {
+      "import": "./prettier/prettier.config.js",
+      "default": "./prettier/prettier.config.js"
+    },
+    "./prettier/config": {
+      "import": "./prettier/prettier.config.js",
+      "default": "./prettier/prettier.config.js"
+    },
+    "./typescript/base": "./typescript/base.json",
+    "./typescript/base.json": "./typescript/base.json",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "validate": "corepack pnpm run validate:json && corepack pnpm run validate:exports && corepack pnpm run validate:eslint && corepack pnpm run validate:prettier && corepack pnpm run validate:typescript && corepack pnpm run validate:policy",
+    "validate:json": "node -e \"const fs=require('node:fs'); JSON.parse(fs.readFileSync('package.json','utf8')); JSON.parse(fs.readFileSync('typescript/base.json','utf8')); console.log('[config] json validation passed.');\"",
+    "validate:exports": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['./eslint/base','./prettier','./prettier/config','./typescript/base','./typescript/base.json','./package.json']; const missing=required.filter((key)=>!(key in pkg.exports)); if(missing.length){console.error('[config] missing exports:', missing.join(', ')); process.exit(1);} const files=['eslint/base.js','prettier/prettier.config.js','typescript/base.json']; const absent=files.filter((file)=>!fs.existsSync(file)); if(absent.length){console.error('[config] missing config files:', absent.join(', ')); process.exit(1);} console.log('[config] export map validation passed.');\"",
+    "validate:eslint": "node --check eslint/base.js && node -e \"import('./eslint/base.js').then((m)=>{ if(!Array.isArray(m.default)) throw new Error('eslint default export must be an array'); if(!m.baseConfig) throw new Error('eslint named baseConfig export missing'); if(!m.salaryHijackingPolicy) throw new Error('salaryHijackingPolicy export missing'); console.log('[config] eslint config import validation passed.'); }).catch((error)=>{ console.error(error); process.exit(1); });\"",
+    "validate:prettier": "node --check prettier/prettier.config.js && node -e \"import('./prettier/prettier.config.js').then((m)=>{ if(!m.default) throw new Error('prettier default export missing'); if(m.default.printWidth!==100) throw new Error('prettier printWidth must be 100'); if(m.default.tabWidth!==2) throw new Error('prettier tabWidth must be 2'); if(m.default.endOfLine!=='lf') throw new Error('prettier endOfLine must be lf'); if(!Array.isArray(m.default.overrides)) throw new Error('prettier overrides must be an array'); if(!m.salaryHijackingPrettierPolicy) throw new Error('salaryHijackingPrettierPolicy export missing'); console.log('[config] prettier config import validation passed.'); }).catch((error)=>{ console.error(error); process.exit(1); });\"",
+    "validate:typescript": "node -e \"const fs=require('node:fs'); const json=JSON.parse(fs.readFileSync('typescript/base.json','utf8')); const c=json.compilerOptions; const required={strict:true,noImplicitAny:true,strictNullChecks:true,exactOptionalPropertyTypes:true,noUncheckedIndexedAccess:true,noImplicitOverride:true,noPropertyAccessFromIndexSignature:true,forceConsistentCasingInFileNames:true,isolatedModules:true,verbatimModuleSyntax:true,noEmit:true}; for(const [key,value] of Object.entries(required)){ if(c[key]!==value){ console.error('[config] TypeScript option mismatch:', key, 'expected', value, 'actual', c[key]); process.exit(1); }} if(c.target!=='ES2022') throw new Error('target must be ES2022'); if(c.module!=='ESNext') throw new Error('module must be ESNext'); if(c.moduleResolution!=='Bundler') throw new Error('moduleResolution must be Bundler'); console.log('[config] TypeScript base validation passed.');\"",
+    "validate:policy": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const policy=pkg.salaryHijacking; const bad=[]; if(policy.packageRole!=='shared-config-package') bad.push('packageRole'); if(policy.finalStatus!=='file_unit_100_percent_document_theoretical_complete') bad.push('finalStatus'); if(policy.securityContract.rawFinancialDataInLogsAllowed!==false) bad.push('rawFinancialDataInLogsAllowed'); if(policy.securityContract.rawTokenInResponseAllowed!==false) bad.push('rawTokenInResponseAllowed'); if(policy.securityContract.rawSecretInResponseAllowed!==false) bad.push('rawSecretInResponseAllowed'); if(policy.qualityContract.strictTypeScriptRequired!==true) bad.push('strictTypeScriptRequired'); if(policy.qualityContract.eslintFlatConfigRequired!==true) bad.push('eslintFlatConfigRequired'); if(policy.qualityContract.prettier3Required!==true) bad.push('prettier3Required'); if(bad.length){ console.error('[config] policy validation failed:', bad.join(', ')); process.exit(1); } console.log('[config] policy validation passed.');\"",
+    "typecheck": "corepack pnpm run validate:typescript",
+    "lint": "corepack pnpm run validate:eslint",
+    "format:check": "corepack pnpm run validate:prettier",
+    "quality": "corepack pnpm run validate",
+    "release": "corepack pnpm run quality"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "config",
+    "eslint",
+    "prettier",
+    "typescript",
+    "monorepo",
+    "flat-config",
+    "strict-typescript",
+    "quality-gate",
+    "privacy",
+    "security",
+    "server-authoritative-calculation"
+  ],
+  "peerDependencies": {
+    "@typescript-eslint/eslint-plugin": ">=8 <9",
+    "@typescript-eslint/parser": ">=8 <9",
+    "eslint": ">=9 <10",
+    "eslint-config-prettier": ">=9 <11",
+    "prettier": ">=3 <4",
+    "typescript": ">=5.8 <6"
+  },
+  "peerDependenciesMeta": {
+    "@typescript-eslint/eslint-plugin": {
+      "optional": true
+    },
+    "@typescript-eslint/parser": {
+      "optional": true
+    },
+    "eslint": {
+      "optional": true
+    },
+    "eslint-config-prettier": {
+      "optional": true
+    },
+    "prettier": {
+      "optional": true
+    },
+    "typescript": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3"
+  },
+  "salaryHijacking": {
+    "packageRole": "shared-config-package",
+    "contractVersion": "1.0.0",
+    "packageScope": "packages/config",
+    "domainCoverage": [
+      "eslint-flat-config",
+      "prettier-3-config",
+      "typescript-strict-base",
+      "monorepo-quality-gate",
+      "apps-mobile",
+      "apps-admin",
+      "services-api",
+      "services-notifications",
+      "services-scheduler",
+      "packages",
+      "tools",
+      "qa",
+      "docs",
+      "security",
+      "privacy",
+      "server-authoritative-calculation"
+    ],
+    "runtimeConsumers": [
+      "apps/mobile",
+      "apps/admin",
+      "services/api",
+      "services/notifications",
+      "services/scheduler",
+      "packages/api-contract",
+      "packages/config",
+      "tools",
+      "qa",
+      "docs",
+      "ci",
+      "release"
+    ],
+    "publicExports": [
+      "./eslint/base",
+      "./prettier",
+      "./prettier/config",
+      "./typescript/base",
+      "./typescript/base.json",
+      "./package.json"
+    ],
+    "securityContract": {
+      "rawFinancialDataInLogsAllowed": false,
+      "rawFinancialDataInAdsEventAllowed": false,
+      "rawTokenInResponseAllowed": false,
+      "rawSecretInResponseAllowed": false,
+      "rawPiiInLogsAllowed": false,
+      "clientFinalPayrollCalculationAllowed": false
+    },
+    "qualityContract": {
+      "eslintFlatConfigRequired": true,
+      "prettier3Required": true,
+      "strictTypeScriptRequired": true,
+      "typescriptBundlerResolutionRequired": true,
+      "esmConfigRequired": true,
+      "bootstrapSafeOptionalDependencies": true,
+      "qualityGateRequired": true,
+      "releaseGateRequired": true
+    },
+    "qualityGates": [
+      "validate:json",
+      "validate:exports",
+      "validate:eslint",
+      "validate:prettier",
+      "validate:typescript",
+      "validate:policy",
+      "validate",
+      "quality",
+      "release"
+    ],
+    "finalStatus": "file_unit_100_percent_document_theoretical_complete"
+  }
+}

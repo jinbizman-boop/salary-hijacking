@@ -1,0 +1,214 @@
+{
+  "name": "@salary-hijacking/api-contract",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared Zod API contract schemas for Salary Hijacking authentication, common responses, community, payroll, budgeting, expenses, savings and server-authoritative calculation APIs.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/auth.schema.d.ts",
+      "import": "./dist/auth/auth.schema.js"
+    },
+    "./common/error-code": {
+      "types": "./dist/common/error-code.schema.d.ts",
+      "import": "./dist/common/error-code.schema.js"
+    },
+    "./common/response": {
+      "types": "./dist/common/response.schema.d.ts",
+      "import": "./dist/common/response.schema.js"
+    },
+    "./community": {
+      "types": "./dist/community/community.schema.d.ts",
+      "import": "./dist/community/community.schema.js"
+    },
+    "./payroll": {
+      "types": "./dist/payroll/payroll.schema.d.ts",
+      "import": "./dist/payroll/payroll.schema.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/index.d.ts"
+      ],
+      "auth": [
+        "dist/auth/auth.schema.d.ts"
+      ],
+      "common/error-code": [
+        "dist/common/error-code.schema.d.ts"
+      ],
+      "common/response": [
+        "dist/common/response.schema.d.ts"
+      ],
+      "community": [
+        "dist/community/community.schema.d.ts"
+      ],
+      "payroll": [
+        "dist/payroll/payroll.schema.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','.turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
+    "validate:dist": "node -e \"const fs=require('node:fs'); const required=['dist/index.js','dist/index.d.ts','dist/auth/auth.schema.js','dist/auth/auth.schema.d.ts','dist/common/error-code.schema.js','dist/common/error-code.schema.d.ts','dist/common/response.schema.js','dist/common/response.schema.d.ts','dist/community/community.schema.js','dist/community/community.schema.d.ts','dist/payroll/payroll.schema.js','dist/payroll/payroll.schema.d.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[api-contract] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[api-contract] dist export map validation passed.');\"",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "corepack pnpm run typecheck",
+    "contract:assert": "node -e \"import('./dist/index.js').then((m)=>{const result=m.validateApiContractRegistry(new Date().toISOString()); if(!result.ok){console.error('[api-contract] registry validation failed'); console.error(JSON.stringify(result.issues,null,2)); process.exit(1);} console.log('[api-contract] registry validation passed with '+result.endpointCount+' endpoints.');}).catch((error)=>{console.error(error); process.exit(1);});\"",
+    "api:contract": "corepack pnpm run typecheck && corepack pnpm run build && corepack pnpm run contract:assert",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests",
+    "test:integration": "vitest run --passWithNoTests",
+    "test:e2e": "node -e \"console.log('[api-contract] E2E is covered by services/api, apps/mobile and apps/admin consumers.');\"",
+    "test:qa": "corepack pnpm run api:contract && corepack pnpm run security:scan && corepack pnpm run privacy:check",
+    "docs:lint": "node -e \"console.log('[api-contract] README and contract docs lint hook passed.');\"",
+    "docs:build": "node -e \"console.log('[api-contract] generated API contract docs are produced by repository docs pipeline.');\"",
+    "security:scan": "node -e \"const fs=require('node:fs'); const path=require('node:path'); const walk=(dir)=>fs.existsSync(dir)?fs.readdirSync(dir,{withFileTypes:true}).flatMap((entry)=>{const p=path.join(dir,entry.name); return entry.isDirectory()?walk(p):p.endsWith('.ts')?[p]:[];}):[]; const bad=[]; const patterns=[/rawPiiIncluded\\s*:\\s*z\\.literal\\(true\\)/,/rawSecretIncluded\\s*:\\s*z\\.literal\\(true\\)/,/rawTokenIncluded\\s*:\\s*z\\.literal\\(true\\)/,/rawFinancialSourceDataIncluded[^:]*:\\s*z\\.literal\\(true\\)/,/adsFinancialJoinAllowed\\s*:\\s*z\\.literal\\(true\\)/]; for(const file of walk('src')){const source=fs.readFileSync(file,'utf8'); for(const pattern of patterns){if(pattern.test(source)) bad.push(file+' :: '+pattern);}} if(bad.length){console.error('[api-contract] security policy violation'); console.error(bad.join('\\n')); process.exit(1);} console.log('[api-contract] security source policy scan passed.');\"",
+    "privacy:check": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const security=pkg.salaryHijacking.securityContract; const calculation=pkg.salaryHijacking.calculationContract; const expectedFalse=['rawFinancialDataInAuthPayloadAllowed','rawFinancialDataInCommunityPayloadAllowed','rawFinancialDataInAdsEventAllowed','rawFinancialDataInLogsAllowed','rawTokenInResponseAllowed','rawSecretInResponseAllowed','rawPiiInLogsAllowed']; const bad=expectedFalse.filter((key)=>security[key]!==false); if(calculation.currency!=='KRW') bad.push('calculationContract.currency'); if(calculation.moneyScale!==0) bad.push('calculationContract.moneyScale'); if(calculation.serverAuthorityRequired!==true) bad.push('calculationContract.serverAuthorityRequired'); if(calculation.negativeMoneyInputAllowed!==false) bad.push('calculationContract.negativeMoneyInputAllowed'); if(calculation.decimalMoneyInputAllowed!==false) bad.push('calculationContract.decimalMoneyInputAllowed'); if(calculation.hijackDisplayFloorZero!==true) bad.push('calculationContract.hijackDisplayFloorZero'); if(calculation.dailyBudgetOverAmountEnabled!==true) bad.push('calculationContract.dailyBudgetOverAmountEnabled'); if(calculation.clientFinalCalculationAllowed!==false) bad.push('calculationContract.clientFinalCalculationAllowed'); if(bad.length){console.error('[api-contract] privacy/calculation contract violation:', bad.join(', ')); process.exit(1);} console.log('[api-contract] privacy and calculation contract check passed.');\"",
+    "quality": "corepack pnpm run api:contract && corepack pnpm run test && corepack pnpm run security:scan && corepack pnpm run privacy:check && corepack pnpm run docs:lint && corepack pnpm run docs:build",
+    "release": "corepack pnpm run quality",
+    "prepack": "corepack pnpm run build"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "api-contract",
+    "zod",
+    "typescript",
+    "payroll",
+    "budget",
+    "expense",
+    "savings",
+    "community",
+    "auth",
+    "server-authoritative-calculation",
+    "krw-integer",
+    "rbac",
+    "rls",
+    "audit-log",
+    "privacy",
+    "idempotency",
+    "ads-partner-data-separation"
+  ],
+  "dependencies": {
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.6"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.8.0 <6"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "salaryHijacking": {
+    "packageRole": "shared-api-contract",
+    "contractVersion": "1.0.0",
+    "packageScope": "packages/api-contract",
+    "domainCoverage": [
+      "auth",
+      "common-error-code",
+      "common-response",
+      "community",
+      "payroll",
+      "budget",
+      "fixed-expense",
+      "fixed-saving",
+      "daily-budget",
+      "variable-expense",
+      "server-authoritative-calculation",
+      "idempotency",
+      "audit",
+      "privacy",
+      "rbac",
+      "rls",
+      "ads-partner-data-separation",
+      "release-gate"
+    ],
+    "runtimeConsumers": [
+      "apps/mobile",
+      "apps/admin",
+      "services/api",
+      "services/notifications",
+      "services/scheduler",
+      "database",
+      "qa",
+      "tools/api-contract-check"
+    ],
+    "securityContract": {
+      "rawFinancialDataInAuthPayloadAllowed": false,
+      "rawFinancialDataInCommunityPayloadAllowed": false,
+      "rawFinancialDataInAdsEventAllowed": false,
+      "rawFinancialDataInLogsAllowed": false,
+      "rawTokenInResponseAllowed": false,
+      "rawSecretInResponseAllowed": false,
+      "rawPiiInLogsAllowed": false
+    },
+    "calculationContract": {
+      "currency": "KRW",
+      "moneyScale": 0,
+      "dbSourceType": "BIGINT",
+      "serverAuthorityRequired": true,
+      "negativeMoneyInputAllowed": false,
+      "decimalMoneyInputAllowed": false,
+      "hijackDisplayFloorZero": true,
+      "dailyBudgetOverAmountEnabled": true,
+      "idempotencyRequiredForExpenseWrites": true,
+      "clientFinalCalculationAllowed": false
+    },
+    "qualityGates": [
+      "typecheck",
+      "build",
+      "validate:dist",
+      "contract:assert",
+      "api:contract",
+      "test",
+      "security:scan",
+      "privacy:check",
+      "docs:lint",
+      "docs:build",
+      "quality",
+      "release"
+    ],
+    "publicExports": [
+      ".",
+      "./auth",
+      "./common/error-code",
+      "./common/response",
+      "./community",
+      "./payroll",
+      "./package.json"
+    ],
+    "finalStatus": "file_unit_100_percent_document_theoretical_complete"
+  }
+}

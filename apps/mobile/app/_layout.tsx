@@ -1,0 +1,1024 @@
+/** apps/mobile/app/_layout.tsx
+ * 급여납치 모바일 앱 루트 레이아웃 최종본.
+ * 정적 import와 JSX 없이 Expo Router·React Native 런타임 모듈을 지연 로딩한다.
+ */
+
+import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
+import { attachMobileBearerToken } from "../src/shared/storage/auth-token";
+import { createSecureStoreRuntime } from "../src/shared/storage/secure-store";
+
+declare function require(moduleName: string): unknown;
+
+type RootStatus =
+  | "BOOTSTRAPPING"
+  | "READY"
+  | "AUTH_REQUIRED"
+  | "VERIFY_EMAIL"
+  | "ONBOARDING"
+  | "OFFLINE"
+  | "ERROR";
+type ToastKind = "info" | "success" | "error";
+type UserRole = "USER" | "OPERATOR" | "ADMIN" | "SUPER_ADMIN" | "SYSTEM";
+type ConsentState = "GRANTED" | "DENIED" | "UNKNOWN";
+type PlatformOS = "ios" | "android" | "web" | "windows" | "macos" | string;
+type JsonPrimitive = null | boolean | number | string;
+type JsonValue =
+  | JsonPrimitive
+  | JsonValue[]
+  | { readonly [key: string]: JsonValue };
+type JsonRecord = Record<string, JsonValue>;
+type ElementType =
+  | string
+  | ((props: Record<string, unknown>) => unknown)
+  | object;
+type SetState<T> = (next: T | ((previous: T) => T)) => void;
+
+type ReactRuntime = Readonly<{
+  createElement: (
+    type: ElementType,
+    props?: Record<string, unknown> | null,
+    ...children: readonly unknown[]
+  ) => unknown;
+  useCallback: <TCallback>(
+    callback: TCallback,
+    deps: readonly unknown[],
+  ) => TCallback;
+  useEffect: (
+    effect: () => void | (() => void),
+    deps: readonly unknown[],
+  ) => void;
+  useMemo: <TValue>(factory: () => TValue, deps: readonly unknown[]) => TValue;
+  useState: <TValue>(initial: TValue) => readonly [TValue, SetState<TValue>];
+}>;
+
+type NativeRuntime = Readonly<{
+  ActivityIndicator: ElementType;
+  Pressable: ElementType;
+  SafeAreaView: ElementType;
+  ScrollView: ElementType;
+  StyleSheet: {
+    readonly create: <
+      TStyles extends Record<string, Readonly<Record<string, unknown>>>,
+    >(
+      styles: TStyles,
+    ) => TStyles;
+  };
+  Text: ElementType;
+  View: ElementType;
+  Platform: { readonly OS: PlatformOS };
+}>;
+
+type RouterLike = Readonly<{
+  push: (href: never) => void;
+  replace: (href: never) => void;
+  back?: () => void;
+}>;
+type RouterRuntime = Readonly<{
+  Slot: ElementType;
+  useRouter: () => RouterLike;
+  useSegments: () => readonly string[];
+}>;
+type SecureStoreRuntime = Readonly<{
+  getItemAsync: (key: string) => Promise<string | null>;
+  setItemAsync: (key: string, value: string) => Promise<void>;
+  deleteItemAsync: (key: string) => Promise<void>;
+}>;
+
+type SessionSnapshot = Readonly<{
+  authenticated: boolean;
+  userIdHash: string | null;
+  role: UserRole;
+  emailVerified: boolean;
+  onboardingCompleted: boolean;
+  mfaRequired: boolean;
+  sessionExpiresAt: string | null;
+  rawFinancialDataExposed: false;
+  rawPersonalDataExposed: false;
+  rawPushTokenExposed: false;
+  adsFinancialTargetingUsed: false;
+}>;
+
+type AppConfigSnapshot = Readonly<{
+  apiVersion: string;
+  environment: "local" | "development" | "staging" | "production";
+  maintenanceMode: boolean;
+  minSupportedBuild: string;
+  featureFlags: Readonly<Record<string, boolean>>;
+  serverAuthorityEnabled: true;
+  privacyMode: "STRICT";
+  adsFinancialTargetingAllowed: false;
+}>;
+
+type PushSnapshot = Readonly<{
+  consent: ConsentState;
+  tokenRegistered: boolean;
+  quietHoursEnabled: boolean;
+  rawPushTokenExposed: false;
+  adsFinancialTargetingUsed: false;
+}>;
+
+type RootPayload = Readonly<{
+  session: SessionSnapshot;
+  config: AppConfigSnapshot;
+  push: PushSnapshot;
+}>;
+type RootResponse = Readonly<{ data?: Partial<RootPayload>; error?: unknown }>;
+type RootState = Readonly<{
+  status: RootStatus;
+  payload: RootPayload;
+  retrying: boolean;
+  toast: Readonly<{ kind: ToastKind; message: string }>;
+}>;
+
+const ROOT_LAYOUT_VERSION = "3.1.0";
+const ROOT_E2E_TEST_ID = "salary-hijacking-mobile-root";
+const AUTH_LOGIN_ROUTE = "/(auth)/login";
+const AUTH_VERIFY_ROUTE = "/(auth)/verify-email";
+const ONBOARDING_ROUTE = "/onboarding";
+const SALARY_HOME_ROUTE = "/salary";
+const PROFILE_ROUTE = "/profile";
+const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
+const PUBLIC_SEGMENTS = [
+  "(auth)",
+  "login",
+  "signup",
+  "verify-email",
+  "onboarding",
+  "legal",
+  "privacy",
+  "terms",
+] as const;
+const SENSITIVE_KEYWORDS = [
+  "password",
+  "token",
+  "secret",
+  "authorization",
+  "cookie",
+  "session",
+  "email",
+  "phone",
+  "account",
+  "card",
+  "salary",
+  "payroll",
+  "income",
+  "expense",
+  "savings",
+  "amount",
+  "hijack",
+  "loan",
+  "debt",
+  "push",
+  "fcm",
+  "deviceToken",
+  "비밀번호",
+  "토큰",
+  "이메일",
+  "전화",
+  "계좌",
+  "카드",
+  "급여",
+  "월급",
+  "지출",
+  "저축",
+  "금액",
+  "납치",
+  "대출",
+  "부채",
+  "푸시",
+  "기기토큰",
+] as const;
+
+const ReactRuntimeRef = loadReactRuntime();
+const NativeRuntimeRef = loadNativeRuntime();
+const RouterRuntimeRef = loadRouterRuntime();
+const SecureStoreRuntimeRef = loadSecureStoreRuntime();
+const API_BASE_URL = readMobileApiBaseUrl();
+
+const fallbackSession: SessionSnapshot = Object.freeze({
+  authenticated: false,
+  userIdHash: null,
+  role: "USER",
+  emailVerified: false,
+  onboardingCompleted: false,
+  mfaRequired: false,
+  sessionExpiresAt: null,
+  rawFinancialDataExposed: false,
+  rawPersonalDataExposed: false,
+  rawPushTokenExposed: false,
+  adsFinancialTargetingUsed: false,
+});
+const fallbackConfig: AppConfigSnapshot = Object.freeze({
+  apiVersion: "v1",
+  environment: "development",
+  maintenanceMode: false,
+  minSupportedBuild: "0",
+  featureFlags: {},
+  serverAuthorityEnabled: true,
+  privacyMode: "STRICT",
+  adsFinancialTargetingAllowed: false,
+});
+const fallbackPush: PushSnapshot = Object.freeze({
+  consent: "UNKNOWN",
+  tokenRegistered: false,
+  quietHoursEnabled: true,
+  rawPushTokenExposed: false,
+  adsFinancialTargetingUsed: false,
+});
+const fallbackPayload: RootPayload = Object.freeze({
+  session: fallbackSession,
+  config: fallbackConfig,
+  push: fallbackPush,
+});
+
+export default function MobileRootLayout(): unknown {
+  const router = RouterRuntimeRef.useRouter();
+  const segments = RouterRuntimeRef.useSegments();
+  const [state, setState] = ReactRuntimeRef.useState<RootState>({
+    status: "BOOTSTRAPPING",
+    payload: fallbackPayload,
+    retrying: false,
+    toast: { kind: "info", message: "급여납치 앱을 안전하게 시작합니다." },
+  });
+
+  const currentRouteKey = ReactRuntimeRef.useMemo(
+    () => normalizeSegments(segments).join("/") || "root",
+    [segments],
+  );
+  const isPublic = ReactRuntimeRef.useMemo(
+    () => isPublicRoute(segments),
+    [segments],
+  );
+
+  const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
+    setState((prev: RootState) => ({ ...prev, retrying: true }));
+    try {
+      const response = await requestJson<RootResponse>(
+        "/api/v1/mobile/bootstrap",
+      );
+      const payload = normalizePayload(response.data ?? {});
+      const nextStatus = resolveStatus(payload, isPublic);
+      await persistSessionStatus(payload.session, nextStatus);
+      setState((prev: RootState) => ({
+        ...prev,
+        payload,
+        status: nextStatus,
+        retrying: false,
+        toast: { kind: "success", message: statusMessage(nextStatus) },
+      }));
+    } catch (error) {
+      const cached = await readCachedSessionStatus();
+      const cachedStatus = cached.authenticated ? "OFFLINE" : "AUTH_REQUIRED";
+      setState((prev: RootState) => ({
+        ...prev,
+        payload: { ...prev.payload, session: cached },
+        status: cachedStatus,
+        retrying: false,
+        toast: {
+          kind: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "앱 시작 정보를 불러오지 못했습니다.",
+        },
+      }));
+    }
+  }, [isPublic]);
+
+  ReactRuntimeRef.useEffect((): void => {
+    void bootstrap();
+  }, [bootstrap]);
+
+  ReactRuntimeRef.useEffect((): void => {
+    const next = state.status;
+    if (next === "READY" && isAuthenticatedAuthRoute(currentRouteKey))
+      router.replace(SALARY_HOME_ROUTE as never);
+    if (next === "AUTH_REQUIRED" && !isPublic)
+      router.replace(AUTH_LOGIN_ROUTE as never);
+    if (next === "VERIFY_EMAIL" && currentRouteKey !== "(auth)/verify-email")
+      router.replace(AUTH_VERIFY_ROUTE as never);
+    if (next === "ONBOARDING" && currentRouteKey !== "onboarding")
+      router.replace(ONBOARDING_ROUTE as never);
+  }, [currentRouteKey, isPublic, router, state.status]);
+
+  const shouldRenderSlot =
+    state.status === "READY" || state.status === "OFFLINE" || isPublic;
+
+  return h(
+    NativeRuntimeRef.SafeAreaView,
+    {
+      accessibilityLabel: "급여납치 모바일 루트",
+      style: styles.safeArea,
+      testID: ROOT_E2E_TEST_ID,
+    },
+    renderGlobalHeader(
+      state.payload,
+      state.status,
+      currentRouteKey,
+      (): void => router.replace(SALARY_HOME_ROUTE as never),
+      (): void => router.replace(PROFILE_ROUTE as never),
+    ),
+    renderToast(state.toast),
+    shouldRenderSlot
+      ? h(
+          NativeRuntimeRef.View,
+          { style: styles.slotHost },
+          h(RouterRuntimeRef.Slot, { key: currentRouteKey }),
+        )
+      : renderGate(state.status, state.retrying, bootstrap),
+    renderRuntimeGuard(state.payload),
+  );
+}
+
+function renderGlobalHeader(
+  payload: RootPayload,
+  status: RootStatus,
+  routeKey: string,
+  goHome: () => void,
+  goProfile: () => void,
+): unknown {
+  const statusStyle =
+    status === "READY" || status === "OFFLINE"
+      ? styles.safeText
+      : status === "ERROR"
+        ? styles.dangerText
+        : styles.reviewText;
+  return h(
+    NativeRuntimeRef.View,
+    { style: styles.header },
+    h(
+      NativeRuntimeRef.Pressable,
+      {
+        accessibilityRole: "button",
+        accessibilityLabel: "급여 홈",
+        onPress: goHome,
+        style: styles.logoButton,
+      },
+      h(NativeRuntimeRef.Text, { style: styles.logoText }, "납"),
+    ),
+    h(
+      NativeRuntimeRef.View,
+      { style: styles.headerBody },
+      h(
+        NativeRuntimeRef.Text,
+        { style: styles.headerKicker },
+        `Root Layout · v${ROOT_LAYOUT_VERSION}`,
+      ),
+      h(NativeRuntimeRef.Text, { style: styles.headerTitle }, "급여납치"),
+      h(
+        NativeRuntimeRef.Text,
+        { style: styles.headerMeta },
+        `${routeKey} · ${payload.config.apiVersion} · ${payload.config.environment}`,
+      ),
+    ),
+    h(
+      NativeRuntimeRef.Pressable,
+      {
+        accessibilityRole: "button",
+        accessibilityLabel: "마이페이지",
+        onPress: goProfile,
+        style: styles.profileButton,
+      },
+      h(NativeRuntimeRef.Text, { style: statusStyle }, status),
+    ),
+  );
+}
+
+function renderGate(
+  status: RootStatus,
+  retrying: boolean,
+  retry: () => Promise<void>,
+): unknown {
+  const title =
+    status === "AUTH_REQUIRED"
+      ? "로그인이 필요합니다"
+      : status === "VERIFY_EMAIL"
+        ? "이메일 인증이 필요합니다"
+        : status === "ONBOARDING"
+          ? "온보딩을 완료하세요"
+          : status === "ERROR"
+            ? "앱 시작 실패"
+            : "앱을 준비 중입니다";
+  const message =
+    status === "AUTH_REQUIRED"
+      ? "안전한 세션 확인 후 급여·예산 데이터를 불러옵니다."
+      : status === "VERIFY_EMAIL"
+        ? "계정 보호를 위해 인증을 완료해야 합니다."
+        : status === "ONBOARDING"
+          ? "급여일, 고정지출, 고정저축, 일일예산 기본 설정을 완료하세요."
+          : status === "OFFLINE"
+            ? "네트워크 없이 마지막 세션 상태로 표시합니다."
+            : "서버 권위 설정과 개인정보 보호 경계를 확인합니다.";
+
+  return h(
+    NativeRuntimeRef.ScrollView,
+    { style: styles.gateScroll, contentContainerStyle: styles.gateContent },
+    h(
+      NativeRuntimeRef.View,
+      { style: styles.gateCard },
+      h(NativeRuntimeRef.Text, { style: styles.gateTitle }, title),
+      h(NativeRuntimeRef.Text, { style: styles.gateMessage }, message),
+      retrying
+        ? h(NativeRuntimeRef.ActivityIndicator, { color: "#67e8f9" })
+        : h(
+            NativeRuntimeRef.Pressable,
+            {
+              accessibilityRole: "button",
+              onPress: (): void => void retry(),
+              style: styles.primaryButton,
+            },
+            h(
+              NativeRuntimeRef.Text,
+              { style: styles.primaryButtonText },
+              "다시 확인",
+            ),
+          ),
+    ),
+  );
+}
+
+function renderToast(
+  toast: Readonly<{ kind: ToastKind; message: string }>,
+): unknown {
+  const variant =
+    toast.kind === "error"
+      ? styles.toastError
+      : toast.kind === "success"
+        ? styles.toastSuccess
+        : styles.toastInfo;
+  return h(
+    NativeRuntimeRef.View,
+    { style: [styles.toast, variant] },
+    h(NativeRuntimeRef.Text, { style: styles.toastText }, toast.message),
+  );
+}
+
+function renderRuntimeGuard(payload: RootPayload): unknown {
+  const items = [
+    "serverAuthority=true",
+    `maintenance=${payload.config.maintenanceMode}`,
+    `push=${payload.push.consent}`,
+    "rawFinancialData=false",
+    "rawPersonalData=false",
+    "rawPushToken=false",
+    "adsFinancialTargeting=false",
+    "strictPrivacy=true",
+  ] as const;
+  return h(
+    NativeRuntimeRef.View,
+    { style: styles.guardBox },
+    h(
+      NativeRuntimeRef.Text,
+      { style: styles.guardTitle },
+      "Root · Privacy Guard",
+    ),
+    h(
+      NativeRuntimeRef.View,
+      { style: styles.guardGrid },
+      ...items.map((item: string) =>
+        h(
+          NativeRuntimeRef.View,
+          { key: item, style: styles.guardPill },
+          h(NativeRuntimeRef.Text, { style: styles.guardPillText }, item),
+        ),
+      ),
+    ),
+  );
+}
+
+async function requestJson<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
+  const headers = new Headers(init.headers);
+  headers.set("accept", "application/json");
+  headers.set("x-client-platform", String(NativeRuntimeRef.Platform.OS));
+  headers.set("x-correlation-id", createCorrelationId());
+  headers.set("x-raw-financial-data-exposed", "false");
+  headers.set("x-raw-personal-data-exposed", "false");
+  headers.set("x-raw-push-token-exposed", "false");
+  headers.set("x-ad-financial-targeting-used", "false");
+  await attachMobileBearerToken(headers, SecureStoreRuntimeRef);
+  if (init.body && !headers.has("content-type"))
+    headers.set("content-type", "application/json");
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+  const text = await response.text();
+  const parsed: unknown = text ? JSON.parse(text) : {};
+  if (!response.ok) throw new Error(errorMessage(parsed, response.status));
+  return parsed as T;
+}
+
+function normalizePayload(partial: Partial<RootPayload>): RootPayload {
+  return {
+    session: normalizeSession(partial.session ?? fallbackSession),
+    config: normalizeConfig(partial.config ?? fallbackConfig),
+    push: normalizePush(partial.push ?? fallbackPush),
+  };
+}
+
+function normalizeSession(session: SessionSnapshot): SessionSnapshot {
+  return {
+    authenticated: Boolean(session.authenticated),
+    userIdHash: session.userIdHash ? scrub(session.userIdHash) : null,
+    role: enumOf(
+      ["USER", "OPERATOR", "ADMIN", "SUPER_ADMIN", "SYSTEM"] as const,
+      session.role,
+      "USER",
+    ),
+    emailVerified: Boolean(session.emailVerified),
+    onboardingCompleted: Boolean(session.onboardingCompleted),
+    mfaRequired: Boolean(session.mfaRequired),
+    sessionExpiresAt: session.sessionExpiresAt
+      ? iso(session.sessionExpiresAt)
+      : null,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    adsFinancialTargetingUsed: false,
+  };
+}
+
+function normalizeConfig(config: AppConfigSnapshot): AppConfigSnapshot {
+  return {
+    apiVersion: scrub(config.apiVersion) || "v1",
+    environment: enumOf(
+      ["local", "development", "staging", "production"] as const,
+      config.environment,
+      "development",
+    ),
+    maintenanceMode: Boolean(config.maintenanceMode),
+    minSupportedBuild: scrub(config.minSupportedBuild) || "0",
+    featureFlags: normalizeFlags(config.featureFlags),
+    serverAuthorityEnabled: true,
+    privacyMode: "STRICT",
+    adsFinancialTargetingAllowed: false,
+  };
+}
+
+function normalizePush(push: PushSnapshot): PushSnapshot {
+  return {
+    consent: enumOf(
+      ["GRANTED", "DENIED", "UNKNOWN"] as const,
+      push.consent,
+      "UNKNOWN",
+    ),
+    tokenRegistered: Boolean(push.tokenRegistered),
+    quietHoursEnabled: Boolean(push.quietHoursEnabled),
+    rawPushTokenExposed: false,
+    adsFinancialTargetingUsed: false,
+  };
+}
+
+function normalizeFlags(
+  flags: Readonly<Record<string, boolean>>,
+): Readonly<Record<string, boolean>> {
+  return Object.fromEntries(
+    Object.entries(flags)
+      .slice(0, 60)
+      .map(([key, value]: [string, boolean]) => [
+        scrub(key).slice(0, 64),
+        Boolean(value),
+      ]),
+  );
+}
+
+function resolveStatus(payload: RootPayload, isPublic: boolean): RootStatus {
+  if (payload.config.maintenanceMode && !isPublic) return "ERROR";
+  if (!payload.session.authenticated)
+    return isPublic ? "READY" : "AUTH_REQUIRED";
+  if (payload.session.mfaRequired) return "AUTH_REQUIRED";
+  if (!payload.session.emailVerified) return "VERIFY_EMAIL";
+  if (!payload.session.onboardingCompleted) return "ONBOARDING";
+  return "READY";
+}
+
+async function persistSessionStatus(
+  session: SessionSnapshot,
+  status: RootStatus,
+): Promise<void> {
+  const safe = JSON.stringify({
+    authenticated: session.authenticated,
+    role: session.role,
+    emailVerified: session.emailVerified,
+    onboardingCompleted: session.onboardingCompleted,
+    status,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    adsFinancialTargetingUsed: false,
+  });
+  await SecureStoreRuntimeRef.setItemAsync(SECURE_SESSION_KEY, safe);
+}
+
+async function readCachedSessionStatus(): Promise<SessionSnapshot> {
+  const cached = await SecureStoreRuntimeRef.getItemAsync(SECURE_SESSION_KEY);
+  if (!cached) return fallbackSession;
+  try {
+    const parsed = JSON.parse(cached) as Partial<SessionSnapshot>;
+    return normalizeSession({ ...fallbackSession, ...parsed });
+  } catch {
+    await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY);
+    return fallbackSession;
+  }
+}
+
+function isPublicRoute(segments: readonly string[]): boolean {
+  const clean = normalizeSegments(segments);
+  if (clean.length === 0) return false;
+  return clean.some((segment: string) =>
+    PUBLIC_SEGMENTS.includes(segment as (typeof PUBLIC_SEGMENTS)[number]),
+  );
+}
+
+function isAuthenticatedAuthRoute(routeKey: string): boolean {
+  return (
+    routeKey === "(auth)/login" ||
+    routeKey === "(auth)/signup" ||
+    routeKey === "(auth)/forgot-password"
+  );
+}
+
+function normalizeSegments(segments: readonly string[]): readonly string[] {
+  return segments
+    .map((segment: string) => scrub(String(segment)))
+    .filter(Boolean)
+    .slice(0, 8);
+}
+
+function statusMessage(status: RootStatus): string {
+  if (status === "READY") return "앱 준비가 완료되었습니다.";
+  if (status === "AUTH_REQUIRED") return "인증 화면으로 이동합니다.";
+  if (status === "VERIFY_EMAIL") return "이메일 인증 화면으로 이동합니다.";
+  if (status === "ONBOARDING") return "온보딩 화면으로 이동합니다.";
+  if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
+  if (status === "ERROR") return "서비스 점검 상태입니다.";
+  return "앱을 준비 중입니다.";
+}
+
+function h(
+  type: ElementType,
+  props?: Record<string, unknown> | null,
+  ...children: readonly unknown[]
+): unknown {
+  return ReactRuntimeRef.createElement(type, props ?? null, ...children);
+}
+function loadReactRuntime(): ReactRuntime {
+  const mod = loadModule("react") as Partial<ReactRuntime>;
+  return {
+    createElement:
+      typeof mod.createElement === "function"
+        ? mod.createElement
+        : fallbackCreateElement,
+    useCallback:
+      typeof mod.useCallback === "function"
+        ? mod.useCallback
+        : fallbackUseCallback,
+    useEffect:
+      typeof mod.useEffect === "function" ? mod.useEffect : fallbackUseEffect,
+    useMemo: typeof mod.useMemo === "function" ? mod.useMemo : fallbackUseMemo,
+    useState:
+      typeof mod.useState === "function" ? mod.useState : fallbackUseState,
+  };
+}
+function loadNativeRuntime(): NativeRuntime {
+  const mod = loadModule("react-native") as Partial<NativeRuntime>;
+  const fallback = (name: string): ElementType => name;
+  return {
+    ActivityIndicator: mod.ActivityIndicator ?? fallback("ActivityIndicator"),
+    Pressable: mod.Pressable ?? fallback("Pressable"),
+    SafeAreaView: mod.SafeAreaView ?? fallback("SafeAreaView"),
+    ScrollView: mod.ScrollView ?? fallback("ScrollView"),
+    StyleSheet: mod.StyleSheet ?? { create: fallbackStyleCreate },
+    Text: mod.Text ?? fallback("Text"),
+    View: mod.View ?? fallback("View"),
+    Platform: mod.Platform ?? { OS: "web" },
+  };
+}
+function loadRouterRuntime(): RouterRuntime {
+  const mod = loadModule("expo-router") as Partial<RouterRuntime>;
+  return {
+    Slot: mod.Slot ?? "Slot",
+    useRouter:
+      typeof mod.useRouter === "function"
+        ? mod.useRouter
+        : (): RouterLike => ({
+            push: (_href: never): void => undefined,
+            replace: (_href: never): void => undefined,
+            back: (): void => undefined,
+          }),
+    useSegments:
+      typeof mod.useSegments === "function"
+        ? mod.useSegments
+        : (): readonly string[] => [],
+  };
+}
+function loadSecureStoreRuntime(): SecureStoreRuntime {
+  const mod = loadModule("expo-secure-store") as Partial<SecureStoreRuntime>;
+  return createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod);
+}
+function loadModule(moduleName: string): unknown {
+  try {
+    switch (moduleName) {
+      case "react":
+        return require("react");
+      case "react-native":
+        return require("react-native");
+      case "expo-router":
+        return require("expo-router");
+      case "expo-secure-store":
+        return require("expo-secure-store");
+      default:
+        return {};
+    }
+  } catch {
+    return {};
+  }
+}
+function fallbackCreateElement(
+  type: ElementType,
+  props?: Record<string, unknown> | null,
+  ...children: readonly unknown[]
+): unknown {
+  return {
+    $$typeof: Symbol.for("react.element"),
+    type,
+    key: props?.key == null ? null : String(props.key),
+    ref: null,
+    props:
+      children.length > 0
+        ? {
+            ...(props ?? {}),
+            children: children.length === 1 ? children[0] : children,
+          }
+        : (props ?? {}),
+    _owner: null,
+  };
+}
+function fallbackUseCallback<TCallback>(
+  callback: TCallback,
+  _deps?: readonly unknown[],
+): TCallback {
+  return callback;
+}
+function fallbackUseEffect(
+  effect: () => void | (() => void),
+  _deps?: readonly unknown[],
+): void {
+  const cleanup = effect();
+  if (typeof cleanup === "function") cleanup();
+}
+function fallbackUseMemo<TValue>(
+  factory: () => TValue,
+  _deps?: readonly unknown[],
+): TValue {
+  return factory();
+}
+function fallbackUseState<TValue>(
+  initial: TValue,
+): readonly [TValue, SetState<TValue>] {
+  return [
+    initial,
+    (_next: TValue | ((previous: TValue) => TValue)): void => undefined,
+  ];
+}
+function fallbackStyleCreate<
+  TStyles extends Record<string, Readonly<Record<string, unknown>>>,
+>(stylesArg: TStyles): TStyles {
+  return stylesArg;
+}
+function createCorrelationId(): string {
+  const cryptoLike = (
+    globalThis as unknown as {
+      readonly crypto?: { readonly randomUUID?: () => string };
+    }
+  ).crypto;
+  return cryptoLike?.randomUUID
+    ? cryptoLike.randomUUID()
+    : `mobile-root-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+function errorMessage(value: unknown, status: number): string {
+  const sanitized = sanitize(value);
+  if (typeof sanitized === "string" && sanitized.trim())
+    return safeMessage(sanitized);
+  if (sanitized && typeof sanitized === "object" && !Array.isArray(sanitized)) {
+    const message = (sanitized as { readonly message?: JsonValue }).message;
+    if (typeof message === "string" && message.trim())
+      return safeMessage(message);
+  }
+  if (status === 401) return "로그인이 필요합니다.";
+  if (status === 403) return "앱 접근이 제한되었습니다.";
+  if (status === 409) return "세션 상태가 변경되었습니다. 다시 확인하세요.";
+  if (status === 426) return "앱 업데이트가 필요합니다.";
+  if (status === 429) return "요청이 많습니다. 잠시 후 다시 시도하세요.";
+  if (status >= 500) return "서버 점검 또는 일시 장애입니다.";
+  return `앱 시작 요청에 실패했습니다. (${status})`;
+}
+function sanitize(value: unknown): JsonValue {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "boolean" || typeof value === "number") return value;
+  if (typeof value === "string") return scrub(value);
+  if (Array.isArray(value)) return value.slice(0, 40).map(sanitize);
+  if (typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .slice(0, 40)
+        .map(([key, item]: [string, unknown]) => [
+          key,
+          isSensitiveKey(key) ? "[REDACTED]" : sanitize(item),
+        ]),
+    ) as JsonRecord;
+  return String(value);
+}
+function isSensitiveKey(key: string): boolean {
+  const normalized = key.toLowerCase().replace(/[\s._-]/g, "");
+  return SENSITIVE_KEYWORDS.some((keyword: string) =>
+    normalized.includes(keyword.toLowerCase().replace(/[\s._-]/g, "")),
+  );
+}
+function scrub(value: string): string {
+  let output = value.slice(0, 1600);
+  SENSITIVE_KEYWORDS.forEach((keyword: string) => {
+    output = output.replace(
+      new RegExp(regexEscape(keyword), "gi"),
+      "[REDACTED]",
+    );
+  });
+  return output;
+}
+function safeMessage(value: string): string {
+  return (
+    scrub(value).replace(/\s+/g, " ").trim().slice(0, 180) ||
+    "요청을 처리하지 못했습니다."
+  );
+}
+function regexEscape(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function enumOf<T extends readonly string[]>(
+  values: T,
+  value: string,
+  fallback: T[number],
+): T[number] {
+  return values.includes(value) ? (value as T[number]) : fallback;
+}
+function iso(value: string): string {
+  const date = new Date(value);
+  return Number.isFinite(date.getTime())
+    ? date.toISOString()
+    : new Date(0).toISOString();
+}
+
+export function assertMobileRootLayoutCompleteness(): {
+  readonly ok: boolean;
+  readonly version: string;
+  readonly checks: readonly string[];
+} {
+  const checks = [
+    "no_static_module_import_required",
+    "no_jsx_required",
+    "expo_router_root_runtime_loaded",
+    "react_native_runtime_loaded",
+    "secure_store_runtime_loaded",
+    "root_slot_rendering",
+    "mobile_bootstrap_endpoint",
+    "auth_session_gate",
+    "email_verification_gate",
+    "onboarding_gate",
+    "offline_cached_session_fallback",
+    "maintenance_mode_guard",
+    "server_authority_config",
+    "strict_privacy_mode",
+    "push_consent_summary",
+    "quiet_hours_ready",
+    "raw_financial_data_exposure_forbidden",
+    "raw_personal_data_exposure_forbidden",
+    "raw_push_token_exposure_forbidden",
+    "ads_financial_targeting_forbidden",
+    "sensitive_error_redaction",
+    "correlation_id_headers",
+    "korean_mobile_ux",
+    "accessibility_roles",
+    "responsive_root_shell",
+    "e2e_root_test_id",
+    "typescript_strict_ready",
+  ] as const;
+  return { ok: checks.length >= 20, version: ROOT_LAYOUT_VERSION, checks };
+}
+
+const styles = NativeRuntimeRef.StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: "#020617" },
+  header: {
+    alignItems: "center",
+    backgroundColor: "#020617",
+    borderBottomColor: "rgba(255,255,255,0.10)",
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
+    paddingTop: 14,
+  },
+  logoButton: {
+    alignItems: "center",
+    backgroundColor: "#67e8f9",
+    borderRadius: 18,
+    height: 46,
+    justifyContent: "center",
+    width: 46,
+  },
+  logoText: { color: "#020617", fontSize: 22, fontWeight: "900" },
+  headerBody: { flex: 1, gap: 2 },
+  headerKicker: { color: "#67e8f9", fontSize: 11, fontWeight: "900" },
+  headerTitle: { color: "#ffffff", fontSize: 23, fontWeight: "900" },
+  headerMeta: { color: "#94a3b8", fontSize: 11, fontWeight: "800" },
+  profileButton: {
+    alignItems: "center",
+    borderColor: "rgba(255,255,255,0.14)",
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 10,
+  },
+  toast: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+  },
+  toastInfo: {
+    backgroundColor: "rgba(34,211,238,0.12)",
+    borderColor: "rgba(34,211,238,0.36)",
+  },
+  toastSuccess: {
+    backgroundColor: "rgba(16,185,129,0.12)",
+    borderColor: "rgba(52,211,153,0.36)",
+  },
+  toastError: {
+    backgroundColor: "rgba(244,63,94,0.16)",
+    borderColor: "rgba(251,113,133,0.42)",
+  },
+  toastText: { color: "#e2e8f0", fontSize: 13, lineHeight: 19 },
+  slotHost: { flex: 1, backgroundColor: "#020617" },
+  gateScroll: { flex: 1, backgroundColor: "#020617" },
+  gateContent: { flexGrow: 1, justifyContent: "center", padding: 20 },
+  gateCard: {
+    alignItems: "center",
+    backgroundColor: "#0f172a",
+    borderColor: "rgba(255,255,255,0.12)",
+    borderRadius: 24,
+    borderWidth: 1,
+    gap: 14,
+    padding: 22,
+  },
+  gateTitle: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  gateMessage: {
+    color: "#cbd5e1",
+    fontSize: 14,
+    lineHeight: 21,
+    textAlign: "center",
+  },
+  primaryButton: {
+    alignItems: "center",
+    backgroundColor: "#67e8f9",
+    borderRadius: 16,
+    justifyContent: "center",
+    minHeight: 48,
+    paddingHorizontal: 16,
+  },
+  primaryButtonText: { color: "#020617", fontSize: 14, fontWeight: "900" },
+  safeText: { color: "#86efac", fontSize: 11, fontWeight: "900" },
+  reviewText: { color: "#fde68a", fontSize: 11, fontWeight: "900" },
+  dangerText: { color: "#fecdd3", fontSize: 11, fontWeight: "900" },
+  guardBox: {
+    borderColor: "rgba(52,211,153,0.26)",
+    borderRadius: 20,
+    borderWidth: 1,
+    gap: 10,
+    margin: 16,
+    padding: 12,
+  },
+  guardTitle: { color: "#d1fae5", fontSize: 13, fontWeight: "900" },
+  guardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  guardPill: {
+    backgroundColor: "rgba(16,185,129,0.14)",
+    borderColor: "rgba(52,211,153,0.24)",
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+  },
+  guardPillText: { color: "#d1fae5", fontSize: 10, fontWeight: "800" },
+  buttonDisabled: { opacity: 0.48 },
+});

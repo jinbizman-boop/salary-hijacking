@@ -1,0 +1,98 @@
+{
+  "name": "@salary-hijacking/utils",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Salary Hijacking platform shared utility package for date, money, pagination, and string processing across payroll, budget, expense, savings, notification, growth, community, ads, admin, API, worker, and E2E surfaces.",
+  "license": "UNLICENSED",
+  "author": "Salary Hijacking Platform",
+  "type": "module",
+  "sideEffects": false,
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "tsconfig.utils.json"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./date": {
+      "types": "./dist/date.d.ts",
+      "import": "./dist/date.js",
+      "default": "./dist/date.js"
+    },
+    "./money": {
+      "types": "./dist/money.d.ts",
+      "import": "./dist/money.js",
+      "default": "./dist/money.js"
+    },
+    "./pagination": {
+      "types": "./dist/pagination.d.ts",
+      "import": "./dist/pagination.js",
+      "default": "./dist/pagination.js"
+    },
+    "./strings": {
+      "types": "./dist/strings.d.ts",
+      "import": "./dist/strings.js",
+      "default": "./dist/strings.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "imports": {
+    "#utils/*": "./src/*.ts"
+  },
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','.turbo','coverage','tsconfig.utils.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "prepare:barrels": "node scripts/prepare-utils.mjs --barrels",
+    "prepare:tsconfig": "node scripts/prepare-utils.mjs --tsconfig",
+    "prepare:utils": "corepack pnpm run prepare:barrels && corepack pnpm run prepare:tsconfig",
+    "typecheck": "corepack pnpm run prepare:utils && tsc -p tsconfig.utils.json --noEmit --pretty false",
+    "build": "corepack pnpm run clean && corepack pnpm run prepare:utils && tsc -p tsconfig.utils.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
+    "validate:dist": "node -e \"const fs=require('node:fs'); const required='dist/index.js dist/index.d.ts dist/date.js dist/date.d.ts dist/money.js dist/money.d.ts dist/pagination.js dist/pagination.d.ts dist/strings.js dist/strings.d.ts'.split(' '); const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[utils] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[utils] dist export map validation passed.');\"",
+    "check:exports": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['.','./date','./money','./pagination','./strings','./package.json']; const missing=required.filter((key)=>!(key in pkg.exports)); if (missing.length) { console.error('Missing exports: '+missing.join(', ')); process.exit(1); } for (const [key,value] of Object.entries(pkg.exports)) { if (key==='./package.json') continue; for (const field of ['types','import','default']) { if (!value || typeof value !== 'object' || !(field in value)) { console.error('Invalid export '+key+' missing '+field); process.exit(1); } } }\"",
+    "check:source": "node -e \"const fs=require('node:fs'); const files=['src/date.ts','src/money.ts','src/pagination.ts','src/strings.ts']; const missing=files.filter((file)=>!fs.existsSync(file)); if (missing.length) { console.error('Missing utils source files: '+missing.join(', ')); process.exit(1); } for (const file of files) { const text=fs.readFileSync(file,'utf8'); if (/^\\s*export\\s*\\{\\s*\\}\\s*;?\\s*$/m.test(text)) { console.error(file+' still contains placeholder export.'); process.exit(1); } }\"",
+    "check:policy": "node -e \"const fs=require('node:fs'); const files=['src/date.ts','src/money.ts','src/pagination.ts','src/strings.ts']; const bannedRegex=[/from\\s+[\\\"']react[\\\"']/,/from\\s+[\\\"']react\\/jsx-runtime[\\\"']/,/declare\\s+global/,/namespace\\s+JSX/,/dangerouslySetInnerHTML\\s*:/,/process\\.env\\.[A-Z0-9_]+\\s*=/]; for (const file of files) { const text=fs.readFileSync(file,'utf8'); const hits=bannedRegex.filter((re)=>re.test(text)).map(String); if (hits.length) { console.error(file+' contains banned runtime/policy terms: '+hits.join(', ')); process.exit(1); } }\"",
+    "check:completeness": "corepack pnpm run prepare:utils && tsx -e \"import { getDateUtilsCompletenessReport, getMoneyUtilsCompletenessReport, getPaginationCompletenessReport, getStringsCompletenessReport, assertDateUtilsCompleteness, assertMoneyUtilsCompleteness, assertPaginationCompleteness, assertStringsCompleteness } from './src/index.ts'; assertDateUtilsCompleteness(); assertMoneyUtilsCompleteness(); assertPaginationCompleteness(); assertStringsCompleteness(); const reports=[getDateUtilsCompletenessReport(),getMoneyUtilsCompletenessReport(),getPaginationCompletenessReport(),getStringsCompletenessReport()]; const failed=reports.filter((r)=>r.ok!==true || (Array.isArray(r.missing) && r.missing.length>0)); if (failed.length) { console.error(JSON.stringify(failed,null,2)); process.exit(1); } console.log('Utils completeness OK: '+reports.length+' reports');\"",
+    "check:smoke": "corepack pnpm run prepare:utils && tsx -e \"import { calculateDailyBudget, calculatePayrollHijack, formatWon, getPaydayForYearMonth, createPayrollCycle, createPaydayReminderAt, paginateArrayOffset, createCursorPagination, createCursorPageResult, sanitizeCommunityTitle, redactSensitiveText, extractHashtags } from './src/index.ts'; const daily=calculateDailyBudget({dailyLimitAmount:10000,activeVariableExpenseAmounts:[4000,8000]}); if (daily.remainingAmount!==0 || daily.overAmount!==2000 || daily.status!=='OVER') throw new Error('money daily budget smoke failed'); const hijack=calculatePayrollHijack({expectedSalaryAmount:3000000,fixedExpenseTotal:900000,savingsTotal:500000,dailyBudgetTotal:600000,variableExpenseTotal:120000,targetHijackAmount:800000}); if (hijack.expectedHijackAmount!==1000000 || !formatWon(hijack.expectedHijackAmount).includes('1,000,000')) throw new Error('money hijack smoke failed'); const payday=getPaydayForYearMonth('2026-02',{type:'DAY_OF_MONTH',dayOfMonth:31}); if (payday!=='2026-02-28') throw new Error('date payday smoke failed'); const cycle=createPayrollCycle('2026-03',{type:'DAY_OF_MONTH',dayOfMonth:25}); if (cycle.daysInCycle<28 || !createPaydayReminderAt(cycle.payday).startsWith('2026-03-')) throw new Error('date cycle smoke failed'); const page=paginateArrayOffset([1,2,3,4,5],{page:2,pageSize:2}); if (page.items.length!==2 || page.page!==2) throw new Error('pagination offset smoke failed'); const state=createCursorPagination({domain:'community',pageSize:2}); const cursorPage=createCursorPageResult({state,rows:[{id:'a',publishedAt:'2026-01-01'},{id:'b',publishedAt:'2026-01-02'},{id:'c',publishedAt:'2026-01-03'}],getId:(x)=>x.id,getSortValue:(x)=>x.publishedAt}); if (!cursorPage.nextCursor) throw new Error('pagination cursor smoke failed'); if (sanitizeCommunityTitle('<script>x</script> 급여 인증').includes('<')) throw new Error('strings sanitize smoke failed'); if (!redactSensitiveText('test@salary.test').redacted) throw new Error('strings redaction smoke failed'); if (extractHashtags('오늘 #급여납치 #LVUP').tags.length!==2) throw new Error('strings hashtag smoke failed'); console.log('Utils smoke OK');\"",
+    "check:package": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['name','version','type','exports','files','scripts','devDependencies']; const missing=required.filter((key)=>!(key in pkg)); if (missing.length) { console.error('package.json missing '+missing.join(', ')); process.exit(1); } if (pkg.name !== '@salary-hijacking/utils') { console.error('Unexpected package name: '+pkg.name); process.exit(1); } if (pkg.sideEffects !== false) { console.error('sideEffects must be false'); process.exit(1); } const text=fs.readFileSync('package.json','utf8').toLowerCase(); const bad=['example'+'.com','your'+'-org','to'+'do','fix'+'me']; const hit=bad.filter((term)=>text.includes(term)); if (hit.length) { console.error('package.json contains invalid metadata: '+hit.join(', ')); process.exit(1); }\"",
+    "quality": "corepack pnpm run check:package && corepack pnpm run check:exports && corepack pnpm run check:source && corepack pnpm run typecheck && corepack pnpm run check:policy && corepack pnpm run check:completeness && corepack pnpm run check:smoke && corepack pnpm run build",
+    "verify": "corepack pnpm run quality",
+    "prepublishOnly": "corepack pnpm run quality"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "payroll",
+    "budget",
+    "expense",
+    "savings",
+    "notification",
+    "community",
+    "date-utils",
+    "money-utils",
+    "pagination",
+    "string-utils"
+  ],
+  "dependencies": {},
+  "peerDependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "restricted",
+    "provenance": false
+  }
+}

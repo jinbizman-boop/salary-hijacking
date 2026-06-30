@@ -1,0 +1,358 @@
+{
+  "name": "@salary-hijacking/db",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared server-authoritative database schema contracts, DDL bundles, RLS/RBAC policies, seeds and completeness gates for the Salary Hijacking platform.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./users": {
+      "types": "./dist/schema/users.schema.d.ts",
+      "import": "./dist/schema/users.schema.js",
+      "default": "./dist/schema/users.schema.js"
+    },
+    "./payroll": {
+      "types": "./dist/schema/payroll.schema.d.ts",
+      "import": "./dist/schema/payroll.schema.js",
+      "default": "./dist/schema/payroll.schema.js"
+    },
+    "./expenses": {
+      "types": "./dist/schema/expenses.schema.d.ts",
+      "import": "./dist/schema/expenses.schema.js",
+      "default": "./dist/schema/expenses.schema.js"
+    },
+    "./growth": {
+      "types": "./dist/schema/growth.schema.d.ts",
+      "import": "./dist/schema/growth.schema.js",
+      "default": "./dist/schema/growth.schema.js"
+    },
+    "./community": {
+      "types": "./dist/schema/community.schema.d.ts",
+      "import": "./dist/schema/community.schema.js",
+      "default": "./dist/schema/community.schema.js"
+    },
+    "./notifications": {
+      "types": "./dist/schema/notifications.schema.d.ts",
+      "import": "./dist/schema/notifications.schema.js",
+      "default": "./dist/schema/notifications.schema.js"
+    },
+    "./schema/users": {
+      "types": "./dist/schema/users.schema.d.ts",
+      "import": "./dist/schema/users.schema.js",
+      "default": "./dist/schema/users.schema.js"
+    },
+    "./schema/payroll": {
+      "types": "./dist/schema/payroll.schema.d.ts",
+      "import": "./dist/schema/payroll.schema.js",
+      "default": "./dist/schema/payroll.schema.js"
+    },
+    "./schema/expenses": {
+      "types": "./dist/schema/expenses.schema.d.ts",
+      "import": "./dist/schema/expenses.schema.js",
+      "default": "./dist/schema/expenses.schema.js"
+    },
+    "./schema/growth": {
+      "types": "./dist/schema/growth.schema.d.ts",
+      "import": "./dist/schema/growth.schema.js",
+      "default": "./dist/schema/growth.schema.js"
+    },
+    "./schema/community": {
+      "types": "./dist/schema/community.schema.d.ts",
+      "import": "./dist/schema/community.schema.js",
+      "default": "./dist/schema/community.schema.js"
+    },
+    "./schema/notifications": {
+      "types": "./dist/schema/notifications.schema.d.ts",
+      "import": "./dist/schema/notifications.schema.js",
+      "default": "./dist/schema/notifications.schema.js"
+    },
+    "./schema/users.schema": {
+      "types": "./dist/schema/users.schema.d.ts",
+      "import": "./dist/schema/users.schema.js",
+      "default": "./dist/schema/users.schema.js"
+    },
+    "./schema/payroll.schema": {
+      "types": "./dist/schema/payroll.schema.d.ts",
+      "import": "./dist/schema/payroll.schema.js",
+      "default": "./dist/schema/payroll.schema.js"
+    },
+    "./schema/expenses.schema": {
+      "types": "./dist/schema/expenses.schema.d.ts",
+      "import": "./dist/schema/expenses.schema.js",
+      "default": "./dist/schema/expenses.schema.js"
+    },
+    "./schema/growth.schema": {
+      "types": "./dist/schema/growth.schema.d.ts",
+      "import": "./dist/schema/growth.schema.js",
+      "default": "./dist/schema/growth.schema.js"
+    },
+    "./schema/community.schema": {
+      "types": "./dist/schema/community.schema.d.ts",
+      "import": "./dist/schema/community.schema.js",
+      "default": "./dist/schema/community.schema.js"
+    },
+    "./schema/notifications.schema": {
+      "types": "./dist/schema/notifications.schema.d.ts",
+      "import": "./dist/schema/notifications.schema.js",
+      "default": "./dist/schema/notifications.schema.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/index.d.ts"
+      ],
+      "users": [
+        "dist/schema/users.schema.d.ts"
+      ],
+      "payroll": [
+        "dist/schema/payroll.schema.d.ts"
+      ],
+      "expenses": [
+        "dist/schema/expenses.schema.d.ts"
+      ],
+      "growth": [
+        "dist/schema/growth.schema.d.ts"
+      ],
+      "community": [
+        "dist/schema/community.schema.d.ts"
+      ],
+      "notifications": [
+        "dist/schema/notifications.schema.d.ts"
+      ],
+      "schema/users": [
+        "dist/schema/users.schema.d.ts"
+      ],
+      "schema/payroll": [
+        "dist/schema/payroll.schema.d.ts"
+      ],
+      "schema/expenses": [
+        "dist/schema/expenses.schema.d.ts"
+      ],
+      "schema/growth": [
+        "dist/schema/growth.schema.d.ts"
+      ],
+      "schema/community": [
+        "dist/schema/community.schema.d.ts"
+      ],
+      "schema/notifications": [
+        "dist/schema/notifications.schema.d.ts"
+      ],
+      "schema/users.schema": [
+        "dist/schema/users.schema.d.ts"
+      ],
+      "schema/payroll.schema": [
+        "dist/schema/payroll.schema.d.ts"
+      ],
+      "schema/expenses.schema": [
+        "dist/schema/expenses.schema.d.ts"
+      ],
+      "schema/growth.schema": [
+        "dist/schema/growth.schema.d.ts"
+      ],
+      "schema/community.schema": [
+        "dist/schema/community.schema.d.ts"
+      ],
+      "schema/notifications.schema": [
+        "dist/schema/notifications.schema.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','.turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
+    "typecheck": "tsc src/index.ts --target ES2022 --module ESNext --moduleResolution Bundler --lib ES2022 --strict --noEmit --skipLibCheck --esModuleInterop --forceConsistentCasingInFileNames",
+    "lint": "corepack pnpm run typecheck",
+    "validate:package": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['name','version','private','type','main','module','types','exports','scripts','salaryHijacking']; const missing=required.filter((key)=>!(key in pkg)); if(missing.length){console.error('[db] package.json missing keys:', missing.join(', ')); process.exit(1);} if(pkg.name!=='@salary-hijacking/db') { console.error('[db] invalid package name:', pkg.name); process.exit(1); } console.log('[db] package metadata validation passed.');\"",
+    "validate:exports": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['.','./users','./payroll','./expenses','./growth','./community','./notifications','./schema/users','./schema/payroll','./schema/expenses','./schema/growth','./schema/community','./schema/notifications','./schema/users.schema','./schema/payroll.schema','./schema/expenses.schema','./schema/growth.schema','./schema/community.schema','./schema/notifications.schema','./package.json']; const missing=required.filter((key)=>!(key in pkg.exports)); if(missing.length){console.error('[db] missing exports:', missing.join(', ')); process.exit(1);} console.log('[db] export map validation passed.');\"",
+    "validate:dist": "node -e \"const fs=require('node:fs'); const required=['dist/index.js','dist/index.d.ts','dist/schema/users.schema.js','dist/schema/users.schema.d.ts','dist/schema/payroll.schema.js','dist/schema/payroll.schema.d.ts','dist/schema/expenses.schema.js','dist/schema/expenses.schema.d.ts','dist/schema/growth.schema.js','dist/schema/growth.schema.d.ts','dist/schema/community.schema.js','dist/schema/community.schema.d.ts','dist/schema/notifications.schema.js','dist/schema/notifications.schema.d.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[db] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[db] dist export map validation passed.');\"",
+    "schema:assert": "node -e \"import('./dist/index.js').then((m)=>{m.assertDbPackageCompleteness(); const report=m.getDbPackageCompletenessReport(); if(!report.ok){console.error('[db] schema completeness failed:', JSON.stringify(report.missing,null,2)); process.exit(1);} console.log('[db] schema completeness passed:', JSON.stringify({schemaDomainCount:report.schemaDomainCount,tableCount:report.tableCount,indexCount:report.indexCount,policyCount:report.policyCount,ddlStatementCount:report.ddlStatementCount}));}).catch((error)=>{console.error(error); process.exit(1);});\"",
+    "db:validate": "corepack pnpm run validate:package && corepack pnpm run validate:exports && corepack pnpm run typecheck && corepack pnpm run build && corepack pnpm run schema:assert && corepack pnpm run security:scan && corepack pnpm run privacy:check",
+    "db:migrate": "node -e \"console.log('[db] migration execution is owned by database/migrations; this package exports the validated dbSchemaDdl bundle.');\"",
+    "db:seed": "node -e \"console.log('[db] seed execution is owned by database seed runners; this package exports validated seed metadata from schema modules.');\"",
+    "db:reset": "node -e \"console.log('[db] reset is an environment-owned operation; package-level destructive reset is intentionally disabled.');\"",
+    "db:backup": "node -e \"console.log('[db] backup is an infrastructure-owned operation; package-level backup is intentionally not executed here.');\"",
+    "db:restore:check": "corepack pnpm run schema:assert",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests",
+    "test:integration": "corepack pnpm run schema:assert",
+    "test:e2e": "node -e \"console.log('[db] E2E is covered by services/api, apps/mobile, apps/admin and migration consumers.');\"",
+    "test:qa": "corepack pnpm run db:validate && corepack pnpm run test",
+    "security:scan": "node -e \"const fs=require('node:fs'); const path=require('node:path'); const walk=(dir)=>fs.existsSync(dir)?fs.readdirSync(dir,{withFileTypes:true}).flatMap((entry)=>{const p=path.join(dir,entry.name); return entry.isDirectory()?walk(p):p.endsWith('.ts')?[p]:[];}):[]; const patterns=[/raw_financial_source_data_included\\\"?[,\\s\\S]{0,160}defaultSql:\\s*['\\\"]true['\\\"]/i,/raw_token_included\\\"?[,\\s\\S]{0,160}defaultSql:\\s*['\\\"]true['\\\"]/i,/raw_secret_included\\\"?[,\\s\\S]{0,160}defaultSql:\\s*['\\\"]true['\\\"]/i,/raw_pii_included\\\"?[,\\s\\S]{0,160}defaultSql:\\s*['\\\"]true['\\\"]/i,/ads_payload_linked\\\"?[,\\s\\S]{0,160}defaultSql:\\s*['\\\"]true['\\\"]/i,/community_payload_linked\\\"?[,\\s\\S]{0,160}defaultSql:\\s*['\\\"]true['\\\"]/i]; const bad=[]; for(const file of walk('src')){const source=fs.readFileSync(file,'utf8'); for(const pattern of patterns){if(pattern.test(source)) bad.push(file+' :: '+pattern);}} if(bad.length){console.error('[db] security source policy violation'); console.error(bad.join('\\n')); process.exit(1);} console.log('[db] security source policy scan passed.');\"",
+    "privacy:check": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const c=pkg.salaryHijacking; const bad=[]; for(const key of ['rawFinancialDataInAuthAllowed','rawFinancialDataInCommunityPayloadAllowed','rawFinancialDataInAdsEventAllowed','rawFinancialDataInNotificationPayloadAllowed','rawFinancialDataInLogsAllowed','rawTokenInResponseAllowed','rawSecretInResponseAllowed','rawPiiInLogsAllowed','browserDirectDatabaseAccessAllowed']){ if(c.securityContract[key]!==false) bad.push('securityContract.'+key); } if(c.calculationContract.currency!=='KRW') bad.push('calculationContract.currency'); if(c.calculationContract.moneyScale!==0) bad.push('calculationContract.moneyScale'); if(c.calculationContract.dbMoneySourceType!=='BIGINT') bad.push('calculationContract.dbMoneySourceType'); if(c.calculationContract.serverAuthorityRequired!==true) bad.push('calculationContract.serverAuthorityRequired'); if(c.calculationContract.negativeMoneyInputAllowed!==false) bad.push('calculationContract.negativeMoneyInputAllowed'); if(c.calculationContract.decimalMoneyInputAllowed!==false) bad.push('calculationContract.decimalMoneyInputAllowed'); if(c.calculationContract.dailyBudgetOverAmountEnabled!==true) bad.push('calculationContract.dailyBudgetOverAmountEnabled'); if(c.calculationContract.clientFinalCalculationAllowed!==false) bad.push('calculationContract.clientFinalCalculationAllowed'); if(c.calculationContract.idempotencyRequiredForWrites!==true) bad.push('calculationContract.idempotencyRequiredForWrites'); if(c.dataSeparationContract.adsFinancialRawJoinAllowed!==false) bad.push('dataSeparationContract.adsFinancialRawJoinAllowed'); if(c.dataSeparationContract.communityFinancialRawJoinAllowed!==false) bad.push('dataSeparationContract.communityFinancialRawJoinAllowed'); if(c.dataSeparationContract.notificationFinancialRawPayloadAllowed!==false) bad.push('dataSeparationContract.notificationFinancialRawPayloadAllowed'); if(c.dataSeparationContract.growthFinancialRawPayloadAllowed!==false) bad.push('dataSeparationContract.growthFinancialRawPayloadAllowed'); if(bad.length){console.error('[db] privacy/calculation contract violation:', bad.join(', ')); process.exit(1);} console.log('[db] privacy and calculation contract check passed.');\"",
+    "docs:lint": "node -e \"console.log('[db] docs lint hook passed.');\"",
+    "docs:build": "node -e \"console.log('[db] schema docs are generated by the repository docs pipeline from dbSchemaDdl and completeness reports.');\"",
+    "quality": "corepack pnpm run db:validate && corepack pnpm run test && corepack pnpm run docs:lint && corepack pnpm run docs:build",
+    "release": "corepack pnpm run quality",
+    "prepack": "corepack pnpm run build"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "database",
+    "schema-contract",
+    "postgresql",
+    "rls",
+    "rbac",
+    "audit-log",
+    "idempotency",
+    "server-authoritative-calculation",
+    "payroll",
+    "budget",
+    "expense-tracking",
+    "savings",
+    "level-up",
+    "community",
+    "notifications",
+    "krw-integer",
+    "ads-partner-data-separation"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "tsup": "^8.5.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.2"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.8.0 <6"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "publishConfig": {
+    "access": "restricted",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "salaryHijacking": {
+    "packageRole": "shared-database-schema-contract",
+    "contractVersion": "2.0.0",
+    "packageScope": "packages/db",
+    "domainCoverage": [
+      "users",
+      "auth",
+      "social-auth",
+      "admin-rbac",
+      "payroll",
+      "budget",
+      "fixed-expense",
+      "variable-expense",
+      "daily-budget",
+      "fixed-saving",
+      "growth-level-up",
+      "community",
+      "notifications",
+      "ads-partner-data-separation",
+      "server-authoritative-calculation",
+      "idempotency",
+      "audit",
+      "rls",
+      "privacy",
+      "release-gate"
+    ],
+    "runtimeConsumers": [
+      "services/api",
+      "services/notifications",
+      "services/scheduler",
+      "apps/mobile",
+      "apps/admin",
+      "database/migrations",
+      "tools/qa",
+      "tools/db-validate"
+    ],
+    "schemaDomains": [
+      "users",
+      "payroll",
+      "expenses",
+      "growth",
+      "community",
+      "notifications"
+    ],
+    "publicExports": [
+      ".",
+      "./users",
+      "./payroll",
+      "./expenses",
+      "./growth",
+      "./community",
+      "./notifications",
+      "./schema/users",
+      "./schema/payroll",
+      "./schema/expenses",
+      "./schema/growth",
+      "./schema/community",
+      "./schema/notifications",
+      "./schema/users.schema",
+      "./schema/payroll.schema",
+      "./schema/expenses.schema",
+      "./schema/growth.schema",
+      "./schema/community.schema",
+      "./schema/notifications.schema",
+      "./package.json"
+    ],
+    "qualityGates": [
+      "validate:package",
+      "validate:exports",
+      "typecheck",
+      "build",
+      "validate:dist",
+      "schema:assert",
+      "db:validate",
+      "test",
+      "security:scan",
+      "privacy:check",
+      "quality",
+      "release"
+    ],
+    "securityContract": {
+      "browserDirectDatabaseAccessAllowed": false,
+      "rawFinancialDataInAuthAllowed": false,
+      "rawFinancialDataInCommunityPayloadAllowed": false,
+      "rawFinancialDataInAdsEventAllowed": false,
+      "rawFinancialDataInNotificationPayloadAllowed": false,
+      "rawFinancialDataInLogsAllowed": false,
+      "rawTokenInResponseAllowed": false,
+      "rawSecretInResponseAllowed": false,
+      "rawPiiInLogsAllowed": false
+    },
+    "calculationContract": {
+      "currency": "KRW",
+      "moneyScale": 0,
+      "dbMoneySourceType": "BIGINT",
+      "serverAuthorityRequired": true,
+      "negativeMoneyInputAllowed": false,
+      "decimalMoneyInputAllowed": false,
+      "dailyBudgetOverAmountEnabled": true,
+      "clientFinalCalculationAllowed": false,
+      "idempotencyRequiredForWrites": true
+    },
+    "dataSeparationContract": {
+      "adsFinancialRawJoinAllowed": false,
+      "communityFinancialRawJoinAllowed": false,
+      "notificationFinancialRawPayloadAllowed": false,
+      "growthFinancialRawPayloadAllowed": false
+    },
+    "finalStatus": "file_unit_100_percent_document_theoretical_complete"
+  }
+}

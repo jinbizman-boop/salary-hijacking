@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-06-30T03:05:54Z",
+  "source": "Codex read-only connector checks: GitHub repository get/search, Neon project list/search, Cloudflare Workers/Pages list",
+  "secretsRedacted": true,
+  "github": {
+    "connectorReachable": true,
+    "appInstalled": true,
+    "expectedRepository": "jinbizman-boop/salary-hijacking-platform",
+    "repositoryCreationRequired": true,
+    "existingRepositoriesMustNotBeModified": true,
+    "protectedExistingRepositories": ["Retro Games", "RETRO-DB"],
+    "repositoryMatched": false,
+    "note": "GitHub app installation was observed. A direct get for jinbizman-boop/salary-hijacking-platform returned 404, and repository search for salary-hijacking-platform under jinbizman-boop returned no repositories. The Salary Hijacking release must use a newly created repository. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets. Repository-level access for the new salary-hijacking-platform repository was not proven in this turn."
+  },
+  "cloudflare": {
+    "connectorReachable": true,
+    "accountObserved": true,
+    "expectedWorkers": [
+      "salary-hijacking-api",
+      "salary-hijacking-notifications",
+      "salary-hijacking-scheduler"
+    ],
+    "missingWorkers": [
+      "salary-hijacking-api",
+      "salary-hijacking-notifications",
+      "salary-hijacking-scheduler"
+    ],
+    "expectedPagesProject": "salary-hijacking-admin",
+    "pagesProjectMatched": false,
+    "observedWorkerNames": [],
+    "observedPagesProjectNames": ["retro-db"],
+    "note": "Cloudflare connector account access was observed. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed."
+  },
+  "neon": {
+    "connectorReachable": true,
+    "organizationObserved": true,
+    "expectedProjectHint": "salary-hijacking",
+    "projectMatched": false,
+    "observedProjectCount": 1,
+    "observedProjectNames": ["Retro Games"],
+    "salaryProjectSearchMatched": false,
+    "note": "Neon organization access was observed. The listed project is Retro Games, and read-only searches for salary and hijacking returned no matching projects. Existing Retro Games database resources must not be used for Salary Hijacking."
+  }
+}

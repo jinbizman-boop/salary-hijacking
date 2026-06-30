@@ -1,0 +1,28 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "salary-hijacking-admin",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-06-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "env": {
+    "staging": {
+      "name": "salary-hijacking-admin-staging",
+      "vars": {
+        "APP_ENV": "staging",
+      },
+    },
+    "production": {
+      "name": "salary-hijacking-admin",
+      "vars": {
+        "APP_ENV": "production",
+      },
+    },
+  },
+}

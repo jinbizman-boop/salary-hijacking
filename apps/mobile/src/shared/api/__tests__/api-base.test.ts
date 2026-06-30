@@ -1,0 +1,59 @@
+import { resolveMobileApiBaseUrl } from "../api-base";
+
+describe("resolveMobileApiBaseUrl", () => {
+  it("prefers an explicit public API URL", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        explicitUrl: "https://api.salary-hijacking.app/",
+        configuredUrl: "http://localhost:8787",
+        environment: "production",
+        platform: "web",
+      }),
+    ).toBe("https://api.salary-hijacking.app");
+  });
+
+  it("uses the configured development API URL on web", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        configuredUrl: "http://localhost:8787/",
+        environment: "development",
+        platform: "web",
+      }),
+    ).toBe("http://localhost:8787");
+  });
+
+  it("maps localhost to the Android emulator host bridge", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        configuredUrl: "http://localhost:8787",
+        environment: "development",
+        platform: "android",
+      }),
+    ).toBe("http://10.0.2.2:8787");
+  });
+
+  it("falls back to the local API only outside production", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        environment: "development",
+        platform: "ios",
+      }),
+    ).toBe("http://localhost:8787");
+    expect(
+      resolveMobileApiBaseUrl({
+        environment: "production",
+        platform: "ios",
+      }),
+    ).toBe("");
+  });
+
+  it("rejects insecure remote HTTP URLs", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        explicitUrl: "http://api.example.com",
+        environment: "development",
+        platform: "web",
+      }),
+    ).toBe("http://localhost:8787");
+  });
+});

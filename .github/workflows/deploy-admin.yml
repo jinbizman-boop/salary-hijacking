@@ -1,0 +1,357 @@
+name: deploy-admin
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/admin/**"
+      - "packages/**"
+      - "services/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-admin.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - "apps/admin/**"
+      - "packages/**"
+      - "services/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-admin.yml"
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "배포 대상 환경"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - preview
+          - production
+      deploy_branch:
+        description: "Cloudflare Pages 배포 브랜치명. 비우면 현재 Git 브랜치를 사용합니다."
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.deploy_target || 'auto' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  ADMIN_APP_DIR: ${{ vars.ADMIN_APP_DIR || 'apps/admin' }}
+  ADMIN_DIST_DIR: ${{ vars.ADMIN_DIST_DIR || 'apps/admin/dist' }}
+  CLOUDFLARE_PAGES_PROJECT_NAME: ${{ vars.CLOUDFLARE_ADMIN_PAGES_PROJECT_NAME || 'salary-hijacking-admin' }}
+
+jobs:
+  verify-admin:
+    name: Verify admin console
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify admin deployment contract
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const adminAppDir = process.env.ADMIN_APP_DIR || "apps/admin";
+          const adminDistDir = process.env.ADMIN_DIST_DIR || "apps/admin/dist";
+
+          const fail = (message) => {
+            console.error(`::error::${message}`);
+            process.exitCode = 1;
+          };
+
+          const requiredRootFiles = [
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".github/workflows/deploy-admin.yml"
+          ];
+
+          for (const file of requiredRootFiles) {
+            if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+              fail(`Required repository file is missing or empty: ${file}`);
+            }
+          }
+
+          if (!fs.existsSync(adminAppDir) || !fs.statSync(adminAppDir).isDirectory()) {
+            fail(`Admin app directory does not exist: ${adminAppDir}`);
+          }
+
+          const adminPackagePath = path.join(adminAppDir, "package.json");
+
+          if (!fs.existsSync(adminPackagePath)) {
+            fail(`Admin package.json does not exist: ${adminPackagePath}`);
+          }
+
+          const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
+          const adminPackage = JSON.parse(fs.readFileSync(adminPackagePath, "utf8"));
+
+          if (!rootPackage.packageManager || !rootPackage.packageManager.startsWith("pnpm@")) {
+            fail('Root package.json must define "packageManager": "pnpm@<version>".');
+          }
+
+          if (!adminPackage.scripts || !adminPackage.scripts.build) {
+            fail(`Admin package.json must define a build script: ${adminPackagePath}`);
+          }
+
+          const recommendedScripts = ["lint", "typecheck", "test"];
+          const missingRecommendedScripts = recommendedScripts.filter((script) => !adminPackage.scripts?.[script]);
+
+          if (missingRecommendedScripts.length > 0) {
+            console.warn(`::warning::Admin package.json is missing recommended scripts: ${missingRecommendedScripts.join(", ")}`);
+          }
+
+          if (adminDistDir === "." || adminDistDir === "/" || adminDistDir.trim() === "") {
+            fail(`ADMIN_DIST_DIR is unsafe: ${adminDistDir}`);
+          }
+
+          if (process.exitCode) {
+            process.exit(process.exitCode);
+          }
+
+          console.log("Admin deployment contract verified.");
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm store integrity
+        run: pnpm store status
+
+      - name: Lint admin when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${ADMIN_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)"; then
+            pnpm --dir "$ADMIN_APP_DIR" lint
+          else
+            echo "Admin lint script is not configured. Skipping."
+          fi
+
+      - name: Typecheck admin when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${ADMIN_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts.typecheck ? 0 : 1)"; then
+            pnpm --dir "$ADMIN_APP_DIR" typecheck
+          else
+            echo "Admin typecheck script is not configured. Skipping."
+          fi
+
+      - name: Test admin when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${ADMIN_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts.test ? 0 : 1)"; then
+            pnpm --dir "$ADMIN_APP_DIR" test
+          else
+            echo "Admin test script is not configured. Skipping."
+          fi
+
+      - name: Build admin console
+        run: pnpm --dir "$ADMIN_APP_DIR" build
+
+      - name: Verify admin build output
+        run: |
+          set -euo pipefail
+
+          if [ ! -d "$ADMIN_DIST_DIR" ]; then
+            echo "::error::Admin build output directory does not exist: $ADMIN_DIST_DIR"
+            exit 1
+          fi
+
+          if [ -z "$(find "$ADMIN_DIST_DIR" -type f | head -n 1)" ]; then
+            echo "::error::Admin build output directory is empty: $ADMIN_DIST_DIR"
+            exit 1
+          fi
+
+          echo "Admin build output verified: $ADMIN_DIST_DIR"
+
+      - name: Scan admin build for unsafe secret exposure
+        run: |
+          set -euo pipefail
+
+          if grep -RInE "(CLOUDFLARE_API_TOKEN|DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|NEON_|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY)" "$ADMIN_DIST_DIR"; then
+            echo "::error::Potential secret-like token found in admin build output."
+            exit 1
+          fi
+
+          echo "No known secret identifiers found in admin build output."
+
+      - name: Upload admin build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-build-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: ${{ env.ADMIN_DIST_DIR }}/**
+
+  deploy-admin:
+    name: Deploy admin console
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - verify-admin
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    environment:
+      name: ${{ (github.ref_name == 'main' || inputs.deploy_target == 'production') && 'admin-production' || 'admin-preview' }}
+
+    permissions:
+      contents: read
+      deployments: write
+
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Validate deployment secrets
+        run: |
+          set -euo pipefail
+
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing secret: CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing secret: CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_PAGES_PROJECT_NAME:-}" ]; then
+            echo "::error::Missing Cloudflare Pages project name. Set vars.CLOUDFLARE_ADMIN_PAGES_PROJECT_NAME or env CLOUDFLARE_PAGES_PROJECT_NAME."
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build admin console for deployment
+        run: pnpm --dir "$ADMIN_APP_DIR" build
+
+      - name: Verify deployment output
+        run: |
+          set -euo pipefail
+
+          if [ ! -d "$ADMIN_DIST_DIR" ]; then
+            echo "::error::Admin build output directory does not exist: $ADMIN_DIST_DIR"
+            exit 1
+          fi
+
+          if [ -z "$(find "$ADMIN_DIST_DIR" -type f | head -n 1)" ]; then
+            echo "::error::Admin build output directory is empty: $ADMIN_DIST_DIR"
+            exit 1
+          fi
+
+      - name: Resolve Cloudflare Pages branch
+        id: deploy_context
+        run: |
+          set -euo pipefail
+
+          DEPLOY_TARGET="${{ inputs.deploy_target || '' }}"
+          DEPLOY_BRANCH_INPUT="${{ inputs.deploy_branch || '' }}"
+
+          if [ -n "$DEPLOY_BRANCH_INPUT" ]; then
+            DEPLOY_BRANCH="$DEPLOY_BRANCH_INPUT"
+          elif [ "$DEPLOY_TARGET" = "production" ]; then
+            DEPLOY_BRANCH="main"
+          elif [ -n "${GITHUB_REF_NAME:-}" ]; then
+            DEPLOY_BRANCH="$GITHUB_REF_NAME"
+          else
+            DEPLOY_BRANCH="preview"
+          fi
+
+          if [ "${GITHUB_REF_NAME:-}" = "main" ]; then
+            DEPLOY_BRANCH="main"
+          fi
+
+          echo "branch=$DEPLOY_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "Resolved Cloudflare Pages branch: $DEPLOY_BRANCH"
+
+      - name: Deploy admin to Cloudflare Pages
+        id: cloudflare_deploy
+        run: |
+          set -euo pipefail
+
+          pnpm dlx wrangler@latest pages deploy "$ADMIN_DIST_DIR" \
+            --project-name "$CLOUDFLARE_PAGES_PROJECT_NAME" \
+            --branch "${{ steps.deploy_context.outputs.branch }}"
+
+      - name: Write deployment summary
+        if: always()
+        run: |
+          {
+            echo "## 급여납치 관리자 콘솔 배포 결과"
+            echo ""
+            echo "- Workflow: $GITHUB_WORKFLOW"
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Ref: $GITHUB_REF"
+            echo "- Ref name: $GITHUB_REF_NAME"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Admin app dir: $ADMIN_APP_DIR"
+            echo "- Admin dist dir: $ADMIN_DIST_DIR"
+            echo "- Cloudflare Pages project: $CLOUDFLARE_PAGES_PROJECT_NAME"
+            echo "- Cloudflare Pages branch: ${{ steps.deploy_context.outputs.branch }}"
+          } >> "$GITHUB_STEP_SUMMARY"

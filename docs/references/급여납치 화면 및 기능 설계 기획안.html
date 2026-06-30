@@ -1,0 +1,2416 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      급여납치 앱 기획서 · 화면/기능 설계 명세서 + 작동형 UI/UX 예시안
+    </title>
+    <style>
+      :root {
+        --green: #209252;
+        --green-2: #2fa86a;
+        --green-3: #eaf6ef;
+        --green-4: #d9f0e3;
+        --ink: #202327;
+        --muted: #6d737a;
+        --line: #e7ebef;
+        --soft: #f7f9fa;
+        --yellow: #f7d34d;
+        --red: #d74b4b;
+        --blue: #4285f4;
+        --purple: #7b3ff2;
+        --shadow: 0 16px 45px rgba(15, 35, 25, 0.1);
+        --radius: 22px;
+        --phone-w: 390px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR",
+          "Apple SD Gothic Neo", Arial, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #f7faf8 0%,
+          #ffffff 36%,
+          #eef8f2 100%
+        );
+        color: var(--ink);
+        line-height: 1.55;
+      }
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        backdrop-filter: blur(16px);
+        background: rgba(255, 255, 255, 0.88);
+        border-bottom: 1px solid rgba(231, 235, 239, 0.9);
+      }
+      .topbar-inner {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+      }
+      .mark {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 2px white,
+          0 6px 20px rgba(0, 0, 0, 0.08);
+      }
+      .mark span:nth-child(1),
+      .mark span:nth-child(4) {
+        background: var(--green);
+      }
+      .mark span:nth-child(2) {
+        background: #333;
+      }
+      .mark span:nth-child(3) {
+        background: #555;
+      }
+      .brand small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        margin-top: -4px;
+      }
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .chip,
+      .btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 10px 14px;
+        font-weight: 800;
+        font-size: 13px;
+        cursor: pointer;
+        transition: 0.18s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .chip:hover,
+      .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+      }
+      .btn.primary {
+        background: var(--green);
+        color: #fff;
+        border-color: var(--green);
+      }
+      .btn.ghost {
+        background: var(--green-3);
+        color: var(--green);
+        border-color: #caead8;
+      }
+      .layout {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 24px;
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        gap: 22px;
+      }
+      aside {
+        position: sticky;
+        top: 82px;
+        height: calc(100vh - 104px);
+        overflow: auto;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+      aside h3 {
+        margin: 0 0 12px;
+        font-size: 15px;
+        letter-spacing: -0.03em;
+      }
+      .toc {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .toc a {
+        color: #3c4349;
+        text-decoration: none;
+        border-radius: 12px;
+        padding: 10px 11px;
+        font-size: 14px;
+        font-weight: 750;
+      }
+      .toc a:hover,
+      .toc a.active {
+        background: var(--green-3);
+        color: var(--green);
+      }
+      main {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        min-width: 0;
+      }
+      section.card {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 26px;
+      }
+      .hero {
+        padding: 34px !important;
+        overflow: hidden;
+        position: relative;
+      }
+      .hero:before {
+        content: "";
+        position: absolute;
+        inset: auto -80px -130px auto;
+        width: 360px;
+        height: 360px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(32, 146, 82, 0.16),
+          rgba(32, 146, 82, 0) 68%
+        );
+      }
+      .eyebrow {
+        color: var(--green);
+        font-weight: 900;
+        font-size: 14px;
+        letter-spacing: 0.02em;
+        margin-bottom: 8px;
+      }
+      h1,
+      h2,
+      h3 {
+        letter-spacing: -0.055em;
+        line-height: 1.22;
+      }
+      h1 {
+        font-size: clamp(30px, 4.3vw, 58px);
+        margin: 0 0 12px;
+      }
+      h2 {
+        font-size: 30px;
+        margin: 0 0 18px;
+      }
+      h3 {
+        font-size: 20px;
+        margin: 22px 0 10px;
+      }
+      p {
+        margin: 0 0 12px;
+        color: #373d43;
+      }
+      .lead {
+        font-size: 18px;
+        color: #333;
+        max-width: 900px;
+      }
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+      .grid.cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid.cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .grid.cols-4 {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .mini-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #fff;
+        padding: 18px;
+        min-width: 0;
+      }
+      .mini-card strong {
+        display: block;
+        font-size: 17px;
+        margin-bottom: 6px;
+        letter-spacing: -0.04em;
+      }
+      .mini-card .num {
+        font-size: 28px;
+        font-weight: 950;
+        color: var(--green);
+        letter-spacing: -0.05em;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        background: var(--green-3);
+        color: var(--green);
+        font-weight: 900;
+        font-size: 12px;
+        padding: 5px 9px;
+        margin: 2px 4px 2px 0;
+      }
+      .tag.gray {
+        background: #f0f2f4;
+        color: #586069;
+      }
+      .tag.yellow {
+        background: #fff7d8;
+        color: #856600;
+      }
+      .tag.red {
+        background: #fff1f1;
+        color: #b03838;
+      }
+      .source-box {
+        background: #fbfdfb;
+        border: 1px dashed #b7dac7;
+        border-radius: 18px;
+        padding: 16px;
+        color: #46504b;
+        font-size: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #fff;
+        font-size: 14px;
+      }
+      th,
+      td {
+        padding: 13px 12px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+        text-align: left;
+      }
+      th {
+        background: var(--green);
+        color: #fff;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      td small {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .highlight {
+        background: linear-gradient(
+          180deg,
+          transparent 56%,
+          rgba(247, 211, 77, 0.34) 56%
+        );
+      }
+      .prototype-zone {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 430px;
+        gap: 22px;
+        align-items: start;
+      }
+      .spec-panel {
+        min-width: 0;
+      }
+      .phone-wrap {
+        position: sticky;
+        top: 90px;
+        display: flex;
+        justify-content: center;
+      }
+      .phone {
+        width: var(--phone-w);
+        height: 812px;
+        border: 12px solid #202327;
+        border-radius: 44px;
+        background: #fff;
+        box-shadow: 0 28px 75px rgba(0, 0, 0, 0.22);
+        overflow: hidden;
+        position: relative;
+      }
+      .phone .status {
+        height: 28px;
+        background: #f4f5f6;
+        color: #4b4f53;
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 18px;
+      }
+      .app-header {
+        height: 58px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        border-bottom: 1px solid #f0f1f2;
+        background: #fff;
+        position: relative;
+        z-index: 3;
+      }
+      .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+        color: #202327;
+      }
+      .app-logo .mini-mark {
+        width: 19px;
+        height: 19px;
+        border-radius: 50%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        overflow: hidden;
+      }
+      .mini-mark i:nth-child(1),
+      .mini-mark i:nth-child(4) {
+        background: var(--green);
+      }
+      .mini-mark i:nth-child(2) {
+        background: #333;
+      }
+      .mini-mark i:nth-child(3) {
+        background: #555;
+      }
+      .icon-btn {
+        border: none;
+        background: transparent;
+        font-size: 21px;
+        cursor: pointer;
+        color: #333;
+        line-height: 1;
+      }
+      .phone-content {
+        height: calc(812px - 28px - 58px - 74px);
+        overflow: auto;
+        background: #f7f8f9;
+        padding-bottom: 18px;
+        scrollbar-width: thin;
+      }
+      .phone-content.login-mode {
+        height: calc(812px - 28px);
+        background: #fff;
+        padding-bottom: 0;
+      }
+      .bottom-nav {
+        height: 74px;
+        border-top: 1px solid #eef0f1;
+        background: #fff;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        align-items: center;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 5;
+      }
+      .nav-item {
+        border: none;
+        background: #fff;
+        color: #a0a5aa;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 900;
+        cursor: pointer;
+        padding: 8px 0;
+      }
+      .nav-item .ico {
+        font-size: 24px;
+        filter: grayscale(1);
+        opacity: 0.65;
+      }
+      .nav-item.active {
+        color: #222;
+      }
+      .nav-item.active .ico {
+        filter: none;
+        opacity: 1;
+      }
+      .screen {
+        display: none;
+        animation: fadeIn 0.16s ease;
+      }
+      .screen.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0.6;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .p-section {
+        padding: 14px;
+      }
+      .p-card {
+        background: #fff;
+        border: 1px solid #edf0f1;
+        border-radius: 14px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.045);
+        overflow: hidden;
+      }
+      .p-card.pad {
+        padding: 14px;
+      }
+      .p-title {
+        font-size: 21px;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+        margin: 0 0 10px;
+      }
+      .p-sub {
+        font-size: 12px;
+        color: #6f7479;
+        font-weight: 700;
+      }
+      .green-hero {
+        background: var(--green);
+        color: #fff;
+        border-radius: 0 0 18px 18px;
+        padding: 18px 16px 14px;
+      }
+      .green-hero * {
+        color: #fff;
+      }
+      .salary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .metric {
+        background: #fff;
+        border-radius: 9px;
+        padding: 9px 10px;
+        color: #222;
+        text-align: center;
+      }
+      .metric small {
+        display: block;
+        color: #61666b;
+        font-weight: 900;
+      }
+      .metric strong {
+        font-size: 17px;
+      }
+      .metric.yellow {
+        border: 2px solid var(--yellow);
+      }
+      .metric.yellow strong {
+        color: #222;
+      }
+      .coins {
+        font-size: 44px;
+        line-height: 1;
+        margin: 8px 0;
+      }
+      .big-money {
+        font-size: 31px;
+        color: var(--yellow) !important;
+        font-weight: 950;
+        letter-spacing: -0.05em;
+      }
+      .ad {
+        height: 60px;
+        background: linear-gradient(90deg, #6b22b7, #a65bea 60%, #fff2cd);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        font-weight: 950;
+        letter-spacing: -0.04em;
+      }
+      .ad small {
+        display: block;
+        color: #fff8;
+      }
+      .list-row {
+        display: grid;
+        grid-template-columns: 34px 82px 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid #f0f1f2;
+      }
+      .list-row:last-child {
+        border-bottom: none;
+      }
+      .list-row .amount {
+        font-weight: 950;
+        font-size: 16px;
+      }
+      .pill {
+        border: none;
+        border-radius: 7px;
+        background: #b9bdc2;
+        color: #fff;
+        padding: 7px 9px;
+        font-size: 11px;
+        font-weight: 900;
+      }
+      .pill.ok {
+        background: var(--green);
+      }
+      .seg {
+        display: flex;
+        border-bottom: 1px solid #f2f3f4;
+        margin: 4px -14px 0;
+      }
+      .seg button {
+        flex: 1;
+        border: none;
+        background: #fff;
+        color: #a0a5aa;
+        font-weight: 900;
+        font-size: 11px;
+        padding: 9px 0;
+        cursor: pointer;
+      }
+      .seg button.active {
+        color: var(--green);
+        border-bottom: 2px solid var(--green);
+      }
+      .budget-head {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        margin-bottom: 9px;
+      }
+      .budget-head div {
+        background: #f1f4f2;
+        border-radius: 5px;
+        padding: 6px;
+        text-align: center;
+        font-size: 10px;
+        font-weight: 900;
+        color: #555;
+      }
+      .budget-head b {
+        display: block;
+        color: var(--green);
+        font-size: 12px;
+      }
+      .add-expense {
+        display: grid;
+        grid-template-columns: 1fr 92px;
+        gap: 7px;
+        margin-top: 10px;
+      }
+      .add-expense input,
+      .app-input,
+      .app-select,
+      .app-textarea {
+        border: 1px solid #dfe4e7;
+        border-radius: 9px;
+        padding: 10px;
+        background: #fff;
+        font: inherit;
+        font-size: 13px;
+      }
+      .add-expense button,
+      .app-button {
+        border: none;
+        border-radius: 9px;
+        background: var(--green);
+        color: #fff;
+        font-weight: 950;
+        padding: 10px 12px;
+        cursor: pointer;
+      }
+      .app-button.secondary {
+        background: #eef5f1;
+        color: var(--green);
+        border: 1px solid #cfe8da;
+      }
+      .progress {
+        height: 8px;
+        background: #e8ecef;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .bar {
+        height: 100%;
+        background: var(--green);
+        border-radius: 999px;
+        transition: 0.25s ease;
+      }
+      .plan-table {
+        width: 100%;
+        font-size: 10.5px;
+        border-radius: 7px;
+      }
+      .plan-table th,
+      .plan-table td {
+        padding: 6px 4px;
+        text-align: center;
+      }
+      .plan-table th {
+        background: var(--green);
+      }
+      .gear {
+        float: right;
+        color: #777;
+      }
+      .level-card {
+        padding: 14px;
+        background: #fff;
+      }
+      .level-action {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f2f3;
+      }
+      .level-action:last-child {
+        border-bottom: none;
+      }
+      .level-action .emoji {
+        font-size: 28px;
+      }
+      .level-action b {
+        font-size: 14px;
+      }
+      .banner-img {
+        height: 176px;
+        background: linear-gradient(120deg, #152b42, #397fb2 48%, #f2b35c);
+        color: #fff;
+        padding: 22px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        font-weight: 950;
+        font-size: 19px;
+      }
+      .radar {
+        height: 148px;
+        border-radius: 12px;
+        background: conic-gradient(
+          from 20deg,
+          #f28d35,
+          #2fb36d,
+          #36a3eb,
+          #b640e9,
+          #f28d35
+        );
+        opacity: 0.85;
+        clip-path: polygon(50% 0, 96% 35%, 80% 94%, 20% 94%, 4% 35%);
+        margin: 8px auto;
+        width: 150px;
+      }
+      .tabs {
+        display: flex;
+        gap: 7px;
+        overflow: auto;
+        padding: 0 14px 10px;
+      }
+      .tabs button {
+        border: 1px solid var(--green);
+        background: #fff;
+        color: var(--green);
+        border-radius: 999px;
+        padding: 7px 13px;
+        font-size: 12px;
+        font-weight: 950;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .tabs button.active {
+        background: var(--green);
+        color: #fff;
+      }
+      .content-card {
+        display: grid;
+        grid-template-columns: 1fr 76px;
+        gap: 10px;
+        align-items: center;
+        padding: 14px;
+        border-bottom: 1px solid #f1f2f3;
+      }
+      .content-card:last-child {
+        border-bottom: none;
+      }
+      .book-cover {
+        height: 92px;
+        border-radius: 4px;
+        background: linear-gradient(145deg, #fff, #d7d7d7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 950;
+        writing-mode: vertical-rl;
+        font-size: 12px;
+      }
+      .news-row {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 12px;
+        padding: 12px;
+        border-bottom: 1px solid #f0f1f2;
+      }
+      .thumb {
+        height: 62px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #cfd8dc, #90a4ae);
+      }
+      .news-row:nth-child(2n) .thumb {
+        background: linear-gradient(135deg, #b2dfdb, #64b5f6);
+      }
+      .news-row h4,
+      .post h4 {
+        margin: 0;
+        font-size: 13px;
+        line-height: 1.32;
+      }
+      .icons {
+        font-size: 10px;
+        color: #72777c;
+        display: flex;
+        gap: 12px;
+        margin-top: 7px;
+      }
+      .mission {
+        border: 1px dashed #b8d9c7;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 8px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+      }
+      .mission b {
+        font-size: 16px;
+      }
+      .community-tabs {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+        padding: 0 14px 12px;
+      }
+      .community-tabs button {
+        border: none;
+        background: #e7f5ec;
+        color: #222;
+        padding: 9px 4px;
+        font-weight: 950;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .community-tabs button.active {
+        background: var(--green);
+        color: #fff;
+      }
+      .post {
+        display: grid;
+        grid-template-columns: 82px 1fr;
+        gap: 10px;
+        padding: 12px;
+        border-bottom: 1px solid #f1f2f3;
+      }
+      .post .thumb {
+        height: 66px;
+      }
+      .fab {
+        position: absolute;
+        right: 16px;
+        bottom: 92px;
+        border: none;
+        background: var(--green);
+        color: #fff;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        font-size: 23px;
+        box-shadow: 0 10px 25px rgba(32, 146, 82, 0.35);
+        cursor: pointer;
+        z-index: 6;
+      }
+      .compose {
+        position: absolute;
+        inset: 28px 0 74px;
+        background: #fff;
+        z-index: 8;
+        display: none;
+        flex-direction: column;
+      }
+      .compose.active {
+        display: flex;
+      }
+      .compose-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px;
+        border-bottom: 1px solid #edf0f1;
+      }
+      .compose-body {
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 11px;
+      }
+      .checkboxes {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        font-size: 12px;
+      }
+      .login-screen {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 28px;
+        background: #fff;
+      }
+      .login-screen .login-mark {
+        width: 108px;
+        height: 108px;
+        margin-bottom: 18px;
+      }
+      .login-title {
+        font-size: 45px;
+        color: var(--green);
+        font-weight: 950;
+        letter-spacing: -0.09em;
+      }
+      .login-sub {
+        font-size: 17px;
+        letter-spacing: 0.02em;
+        color: #333;
+        font-weight: 800;
+        margin-bottom: 42px;
+      }
+      .login-field {
+        width: 100%;
+        border: 1px solid #e0e4e7;
+        height: 45px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        padding: 0 13px;
+        color: #777;
+      }
+      .social {
+        display: flex;
+        gap: 8px;
+        margin: 14px 0;
+      }
+      .social button {
+        width: 42px;
+        height: 42px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 950;
+        color: #fff;
+      }
+      .social .n {
+        background: #03c75a;
+      }
+      .social .k {
+        background: #fee500;
+        color: #222;
+      }
+      .social .f {
+        background: #4267b2;
+      }
+      .social .g {
+        background: #fff;
+        color: #444;
+        border: 1px solid #e4e4e4;
+      }
+      .profile-head {
+        text-align: center;
+        background: #fff;
+        padding: 18px;
+      }
+      .avatar {
+        width: 92px;
+        height: 92px;
+        border-radius: 50%;
+        background: #d6edff;
+        margin: 0 auto 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+      }
+      .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .profile-stats div {
+        background: var(--green);
+        color: #fff;
+        border-radius: 8px;
+        padding: 10px 4px;
+        font-size: 11px;
+        font-weight: 850;
+      }
+      .profile-stats b {
+        display: block;
+        color: #f8d957;
+        font-size: 15px;
+      }
+      .profile-menu {
+        border: 1px dashed #9cd0b3;
+        border-radius: 12px;
+        margin: 12px 14px;
+        background: #fff;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        padding: 18px;
+        color: var(--green);
+        font-weight: 950;
+        font-size: 21px;
+      }
+      .alert-row {
+        padding: 17px 14px;
+        border-bottom: 1px solid #f0f2f3;
+        display: grid;
+        grid-template-columns: 30px 1fr auto;
+        gap: 10px;
+        align-items: start;
+      }
+      .alert-row.highlighted {
+        background: #edf9f1;
+      }
+      .alert-row b {
+        font-size: 16px;
+      }
+      .toast {
+        position: absolute;
+        left: 20px;
+        right: 20px;
+        bottom: 88px;
+        background: #202327;
+        color: #fff;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-weight: 850;
+        font-size: 13px;
+        box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+        display: none;
+        z-index: 20;
+      }
+      .toast.show {
+        display: block;
+        animation: toast 0.25s ease;
+      }
+      @keyframes toast {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .flow .step {
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 14px;
+        padding: 12px 14px;
+        font-weight: 900;
+      }
+      .flow .arrow {
+        color: var(--green);
+        font-weight: 950;
+      }
+      .note {
+        font-size: 13px;
+        color: #5e666d;
+        background: #f8faf9;
+        border-left: 4px solid var(--green);
+        padding: 12px 14px;
+        border-radius: 10px;
+        margin-top: 10px;
+      }
+      .warning {
+        background: #fff8ec;
+        border-color: #f5c570;
+        color: #714d12;
+      }
+      .code-like {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        background: #f6f8fa;
+        border: 1px solid #e5e7ea;
+        border-radius: 12px;
+        padding: 12px;
+        overflow: auto;
+        font-size: 13px;
+      }
+      .two-pane {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 14px;
+      }
+      .screen-map {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .screen-map .mini-card {
+        padding: 14px;
+      }
+      .priority {
+        font-weight: 950;
+      }
+      .priority.p1 {
+        color: var(--green);
+      }
+      .priority.p2 {
+        color: #8a5a00;
+      }
+      .priority.p3 {
+        color: #5b6470;
+      }
+      .small {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      @media (max-width: 1100px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        aside {
+          position: static;
+          height: auto;
+        }
+        .prototype-zone {
+          grid-template-columns: 1fr;
+        }
+        .phone-wrap {
+          position: static;
+        }
+        .grid.cols-4 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 740px) {
+        .layout {
+          padding: 12px;
+        }
+        .topbar-inner {
+          padding: 12px;
+        }
+        .top-actions {
+          display: none;
+        }
+        section.card {
+          padding: 18px;
+        }
+        .grid.cols-2,
+        .grid.cols-3,
+        .grid.cols-4,
+        .two-pane {
+          grid-template-columns: 1fr;
+        }
+        .phone {
+          width: 360px;
+          height: 760px;
+          border-width: 9px;
+        }
+        .phone-content {
+          height: calc(760px - 28px - 58px - 74px);
+        }
+        .phone-content.login-mode {
+          height: calc(760px - 28px);
+        }
+        table {
+          font-size: 12px;
+          display: block;
+          overflow: auto;
+        }
+        .hero {
+          padding: 22px !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="mark" aria-label="급여납치 로고">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <div>
+            급여납치 앱 기획서<small
+              >SALARY HIJACKING · APP PLANNING SPEC</small
+            >
+          </div>
+        </div>
+        <div class="top-actions">
+          <a class="chip" href="#prototype">작동형 UI 보기</a>
+          <a class="chip" href="#screen-spec">화면 명세</a>
+          <a class="btn primary" href="#function-spec">기능 명세</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside>
+        <h3>목차</h3>
+        <nav class="toc" id="toc">
+          <a href="#overview">1. 서비스 개요</a>
+          <a href="#strategy">2. 기획 방향</a>
+          <a href="#ia">3. 정보구조/사용자 흐름</a>
+          <a href="#screen-spec">4. 화면 설계 명세서</a>
+          <a href="#function-spec">5. 기능 설계 명세서</a>
+          <a href="#data">6. 데이터/정책 설계</a>
+          <a href="#prototype">7. 작동형 UI/UX 예시안</a>
+          <a href="#mvp">8. MVP/개선 로드맵</a>
+        </nav>
+      </aside>
+
+      <main>
+        <section class="card hero" id="overview">
+          <div class="eyebrow">첨부 PDF 17개 화면 기반 통합 기획서</div>
+          <h1>
+            월급이 사라지기 전에<br /><span class="highlight"
+              >먼저 붙잡아두는</span
+            >
+            급여 자기관리 앱
+          </h1>
+          <p class="lead">
+            급여납치는 월급 수령 직후 고정지출·저축·생활비·일일 소비를 먼저
+            분리하고, 남은 금액을 “납치금액”으로 시각화해 사용자의 소비 통제와
+            자기계발 루틴을 함께 관리하는 모바일 앱이다.
+          </p>
+          <div class="grid cols-4" style="margin-top: 22px">
+            <div class="mini-card">
+              <strong>핵심 목적</strong>
+              <p>월급 흐름을 하루 단위로 가시화하고 계획 소비를 유도</p>
+            </div>
+            <div class="mini-card">
+              <strong>주 사용자</strong>
+              <p>사회초년생, 직장인, 소비 통제가 필요한 월급 생활자</p>
+            </div>
+            <div class="mini-card">
+              <strong>차별 포인트</strong>
+              <p>급여 관리 + 레벨업 + 인증 커뮤니티 결합</p>
+            </div>
+            <div class="mini-card">
+              <strong>기획 기준</strong>
+              <p>스플래시부터 마이페이지까지 총 17개 화면 반영</p>
+            </div>
+          </div>
+          <div class="source-box" style="margin-top: 18px">
+            <strong>출처 및 적용 기준</strong><br />
+            본 문서는 첨부 파일 「급여납치 어플리케이션 디자인.pdf」의
+            1~17페이지 화면을 기준으로 재구성했다. 주요 반영 화면은
+            스플래시/로그인, 급여 현황, 알림, 급여 계획, LV UP,
+            독서·뉴스·영어·건강 레벨업, 커뮤니티, 글쓰기, 마이페이지다.
+          </div>
+        </section>
+
+        <section class="card" id="strategy">
+          <h2>2. 기획 방향</h2>
+          <div class="grid cols-3">
+            <div class="mini-card">
+              <span class="tag">Core Value</span><strong>월급 선점 관리</strong>
+              <p>
+                월급을 받은 뒤 남는 돈을 보는 것이 아니라, 먼저 지킬 돈을 정하고
+                하루 소비를 통제한다.
+              </p>
+            </div>
+            <div class="mini-card">
+              <span class="tag">Behavior Design</span
+              ><strong>납치금액 성과화</strong>
+              <p>
+                저축·예산 잔여분·지출 통제를 “납치금액”으로 표현해 성취감을
+                만든다.
+              </p>
+            </div>
+            <div class="mini-card">
+              <span class="tag">Retention</span
+              ><strong>매일 레벨업 루틴</strong>
+              <p>
+                독서·뉴스·영어·운동 미션으로 앱 접속 빈도를 높이고 금융 관리의
+                습관화를 돕는다.
+              </p>
+            </div>
+          </div>
+          <h3>서비스 포지셔닝</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>구분</th>
+                <th>기존 가계부 앱</th>
+                <th>급여납치 앱</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>핵심 질문</td>
+                <td>얼마를 썼는가?</td>
+                <td>이번 월급에서 얼마를 지켜냈는가?</td>
+              </tr>
+              <tr>
+                <td>주요 지표</td>
+                <td>지출, 카테고리, 월간 합계</td>
+                <td>수령금액, 지출금액, 납치금액, 목표 달성률, 레벨</td>
+              </tr>
+              <tr>
+                <td>사용 방식</td>
+                <td>소비 후 기록</td>
+                <td>급여 수령 전후 계획 → 일일 예산 관리 → 성과 확인</td>
+              </tr>
+              <tr>
+                <td>확장 기능</td>
+                <td>통계, 카드 연동</td>
+                <td>
+                  자기계발 콘텐츠, 인증 커뮤니티, 포인트 이벤트, 광고/제휴
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="note warning">
+            서비스 이름의 “납치”는 강한 후킹 장점이 있지만 부정적 인상도 있을 수
+            있다. 온보딩에서는 “월급을 사라지기 전에 내가 먼저 확보한다”는
+            긍정적 의미를 반드시 설명해야 한다.
+          </div>
+        </section>
+
+        <section class="card" id="ia">
+          <h2>3. 정보구조 및 사용자 흐름</h2>
+          <h3>메인 IA</h3>
+          <div class="grid cols-5 screen-map">
+            <div class="mini-card">
+              <strong>급여 홈</strong>
+              <p>내 급여 납치 현황, 고정지출, 일일 사용 예산, 변동지출</p>
+            </div>
+            <div class="mini-card">
+              <strong>계획/설정</strong>
+              <p>급여일, 수령 예정 급여, 고정지출, 저축, 생활비</p>
+            </div>
+            <div class="mini-card">
+              <strong>LV UP</strong>
+              <p>독서, 뉴스, 영어, 홈트 미션 및 레벨 관리</p>
+            </div>
+            <div class="mini-card">
+              <strong>커뮤니티</strong>
+              <p>전체, 자유, 레벨업 인증, 취미 게시판</p>
+            </div>
+            <div class="mini-card">
+              <strong>마이페이지</strong>
+              <p>프로필, 누적 납치금액, 레벨, 자기관리 성과</p>
+            </div>
+          </div>
+          <h3>핵심 사용자 흐름</h3>
+          <div class="flow">
+            <div class="step">로그인</div>
+            <div class="arrow">→</div>
+            <div class="step">급여/급여일 입력</div>
+            <div class="arrow">→</div>
+            <div class="step">고정지출·저축 등록</div>
+            <div class="arrow">→</div>
+            <div class="step">일일 예산 설정</div>
+            <div class="arrow">→</div>
+            <div class="step">소비 기록</div>
+            <div class="arrow">→</div>
+            <div class="step">납치금액 확인</div>
+            <div class="arrow">→</div>
+            <div class="step">레벨업/커뮤니티 인증</div>
+          </div>
+          <h3>대표 계산 구조</h3>
+          <div class="code-like">
+            예상 납치금액 = 수령 예정 급여 - 지출 예정 금액<br />오늘 남은금액 =
+            일일 설정금액 - 오늘 사용금액<br />누적 납치금액 = 기존 누적
+            납치금액 + 월별 확정 납치금액<br />목표 달성률 = 총 누적 납치금액 ÷
+            이번 달 목표 납치금액 또는 설정 목표값 × 100
+          </div>
+        </section>
+
+        <section class="card" id="screen-spec">
+          <h2>4. 화면 설계 명세서</h2>
+          <div class="screen-map">
+            <div class="mini-card">
+              <span class="tag gray">P1</span><strong>스플래시</strong>
+              <p>
+                로고, 앱명, 영문명, 운영사 로고 노출. 앱 진입 전 브랜드 인지
+                화면.
+              </p>
+              <small>참조: PDF 1p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag gray">P2</span><strong>로그인</strong>
+              <p>
+                아이디/비밀번호, 네이버·카카오·페이스북·구글 로그인, 회원가입,
+                자동로그인.
+              </p>
+              <small>참조: PDF 2p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P3~4</span><strong>급여 현황 홈</strong>
+              <p>
+                수령금액, 지출금액, 납치금액, 누적 납치금액, 고정지출, 일일
+                예산, 변동지출.
+              </p>
+              <small>참조: PDF 3~4p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P5</span><strong>알림</strong>
+              <p>
+                성과 달성, 이벤트 보상, 오늘의 독서/뉴스/영어/건강/퀴즈 알림.
+              </p>
+              <small>참조: PDF 5p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P6</span><strong>계획/설정</strong>
+              <p>
+                목표 달성률, 급여 계획, 고정지출 계획, 고정저금 계획, 생활비
+                계획.
+              </p>
+              <small>참조: PDF 6p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P7</span><strong>LV UP 메인</strong>
+              <p>오늘의 독서, 소식, 영어, 홈트 진입 버튼과 현재 레벨 표시.</p>
+              <small>참조: PDF 7p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P8</span><strong>독서 레벨업</strong>
+              <p>
+                AI 추천, 소설, 경제/경영, 인문/철학, 기타 카테고리와 추천 도서.
+              </p>
+              <small>참조: PDF 8p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P9</span><strong>뉴스 레벨업</strong>
+              <p>경제, 산업, 사회, 기술, 전체 카테고리 뉴스 리스트.</p>
+              <small>참조: PDF 9p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P10</span><strong>영어 레벨업</strong>
+              <p>
+                Listening/Speaking/Reading/Writing 학습 현황과 일일 문장 학습.
+              </p>
+              <small>참조: PDF 10p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P11</span><strong>건강 레벨업</strong>
+              <p>요일별 홈트 미션과 신체·영양·회복·정신 레벨업 지표.</p>
+              <small>참조: PDF 11p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P12~15</span><strong>커뮤니티</strong>
+              <p>
+                인기 게시글, 전체/자유/레벨업 인증/취미 게시판,
+                조회·좋아요·댓글·공유.
+              </p>
+              <small>참조: PDF 12~15p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P16</span><strong>글쓰기</strong>
+              <p>제목, 본문, 첨부, 질문/익명 옵션, 게시판 유형 선택, 완료.</p>
+              <small>참조: PDF 16p</small>
+            </div>
+            <div class="mini-card">
+              <span class="tag">P17</span><strong>마이페이지</strong>
+              <p>
+                프로필, 누적 납치금액, 레벨, 자기관리 성과,
+                게시글/레벨업/문의/공지 관리.
+              </p>
+              <small>참조: PDF 17p</small>
+            </div>
+          </div>
+          <h3>화면별 상세 명세</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>화면 ID</th>
+                <th>화면명</th>
+                <th>핵심 UI</th>
+                <th>사용자 행동</th>
+                <th>시스템 반응</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SCR-001</td>
+                <td>스플래시</td>
+                <td>로고, 앱명, 영문명, 운영사 로고</td>
+                <td>앱 실행</td>
+                <td>자동으로 로그인 화면 또는 홈 화면 이동</td>
+              </tr>
+              <tr>
+                <td>SCR-002</td>
+                <td>로그인</td>
+                <td>입력창, SNS 버튼, 회원가입, 자동로그인</td>
+                <td>로그인 정보 입력 또는 간편 로그인 선택</td>
+                <td>인증 성공 시 홈 진입, 실패 시 오류 메시지</td>
+              </tr>
+              <tr>
+                <td>SCR-003</td>
+                <td>급여 홈</td>
+                <td>급여 현황 카드, 광고 배너, 고정지출 리스트, 일일 예산</td>
+                <td>지출 확인, 사용완료 처리, 변동지출 추가</td>
+                <td>오늘 사용금액/남은금액/납치금액 즉시 재계산</td>
+              </tr>
+              <tr>
+                <td>SCR-004</td>
+                <td>알림</td>
+                <td>성과 알림, 이벤트 알림, 콘텐츠 알림</td>
+                <td>알림 선택</td>
+                <td>관련 상세 화면으로 이동</td>
+              </tr>
+              <tr>
+                <td>SCR-005</td>
+                <td>계획/설정</td>
+                <td>달성률, 급여계획표, 고정지출표, 저축표, 생활비표</td>
+                <td>설정 버튼 또는 추가하기 선택</td>
+                <td>계획 추가/수정 모달 또는 입력 영역 제공</td>
+              </tr>
+              <tr>
+                <td>SCR-006</td>
+                <td>LV UP</td>
+                <td>레벨업 메뉴, 현재 레벨, 활동 기록</td>
+                <td>독서/뉴스/영어/운동 시작</td>
+                <td>해당 콘텐츠 화면 이동, 완료 시 경험치/레벨 반영</td>
+              </tr>
+              <tr>
+                <td>SCR-007</td>
+                <td>커뮤니티</td>
+                <td>게시판 탭, 인기글, 게시글 리스트, 글쓰기 버튼</td>
+                <td>탭 전환, 게시글 조회, 좋아요/댓글/공유</td>
+                <td>카테고리별 리스트 변경, 참여 데이터 업데이트</td>
+              </tr>
+              <tr>
+                <td>SCR-008</td>
+                <td>글쓰기</td>
+                <td>제목, 본문, 파일 첨부, 질문/익명, 게시판 유형</td>
+                <td>게시글 작성 후 완료</td>
+                <td>필수값 검증 후 게시글 등록</td>
+              </tr>
+              <tr>
+                <td>SCR-009</td>
+                <td>마이페이지</td>
+                <td>프로필, 성과 카드, 메뉴</td>
+                <td>프로필/계정/게시글/문의 관리</td>
+                <td>각 관리 화면으로 이동</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="card" id="function-spec">
+          <h2>5. 기능 설계 명세서</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>기능 ID</th>
+                <th>기능명</th>
+                <th>설명</th>
+                <th>입력값</th>
+                <th>출력/결과</th>
+                <th>우선순위</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>FUN-001</td>
+                <td>회원 로그인</td>
+                <td>일반 로그인 및 SNS 간편 로그인 제공</td>
+                <td>아이디, 비밀번호, SNS 토큰</td>
+                <td>로그인 세션, 홈 이동</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-002</td>
+                <td>급여 정보 등록</td>
+                <td>급여일, 수령 예정 급여, 지출 예정 금액 입력</td>
+                <td>급여일, 금액</td>
+                <td>예상 납치금액 계산</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-003</td>
+                <td>고정지출 관리</td>
+                <td>구독료, 대출, 자동결제 등 반복 지출 등록</td>
+                <td>지출일, 항목, 단가, 수량</td>
+                <td>월별 고정지출 합산</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-004</td>
+                <td>고정저축 관리</td>
+                <td>청약, 적금, 투자 등 고정 저축 계획 등록</td>
+                <td>저축일, 상품명, 금액</td>
+                <td>월별 저축 합산</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-005</td>
+                <td>일일 생활비 관리</td>
+                <td>하루 예산과 실제 소비를 비교</td>
+                <td>일일 설정금액, 소비 내역</td>
+                <td>사용금액, 남은금액</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-006</td>
+                <td>변동지출 기록</td>
+                <td>식사, 쇼핑, 교통 등 당일 소비 기록</td>
+                <td>항목, 세부내용, 사용금액</td>
+                <td>사용 내역 리스트, 잔여 예산 반영</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-007</td>
+                <td>납치금액 계산</td>
+                <td>수령금액에서 지출을 제외한 관리 가능 금액 계산</td>
+                <td>수령금액, 지출금액</td>
+                <td>납치금액, 누적 납치금액</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-008</td>
+                <td>목표 달성률 계산</td>
+                <td>목표 대비 누적 성과를 백분율로 표시</td>
+                <td>목표금액, 누적금액</td>
+                <td>달성률 %</td>
+                <td class="priority p1">P1</td>
+              </tr>
+              <tr>
+                <td>FUN-009</td>
+                <td>알림 발송</td>
+                <td>성과 달성, 결제 예정, 레벨업 미션, 이벤트 보상 알림</td>
+                <td>사용자 이벤트, 시간 조건</td>
+                <td>알림 리스트/푸시</td>
+                <td class="priority p2">P2</td>
+              </tr>
+              <tr>
+                <td>FUN-010</td>
+                <td>레벨업 콘텐츠</td>
+                <td>독서, 뉴스, 영어, 운동 미션 제공</td>
+                <td>카테고리, 완료 여부</td>
+                <td>경험치, 레벨, 활동 기록</td>
+                <td class="priority p2">P2</td>
+              </tr>
+              <tr>
+                <td>FUN-011</td>
+                <td>커뮤니티 게시글</td>
+                <td>게시글 목록, 상세, 작성, 좋아요, 댓글, 공유</td>
+                <td>게시글 제목/본문/첨부/옵션</td>
+                <td>게시글 등록 및 상호작용</td>
+                <td class="priority p2">P2</td>
+              </tr>
+              <tr>
+                <td>FUN-012</td>
+                <td>마이페이지 관리</td>
+                <td>프로필, 게시글, 레벨, 문의, 공지사항 관리</td>
+                <td>사용자 정보, 메뉴 선택</td>
+                <td>관리 화면 이동</td>
+                <td class="priority p2">P2</td>
+              </tr>
+              <tr>
+                <td>FUN-013</td>
+                <td>광고/제휴 배너</td>
+                <td>홈, LV UP, 마이페이지 광고 영역 운영</td>
+                <td>광고 소재, 랜딩 URL</td>
+                <td>배너 노출/클릭 로그</td>
+                <td class="priority p3">P3</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>필수 검증 규칙</h3>
+          <div class="grid cols-2">
+            <div class="mini-card">
+              <strong>금액 입력</strong>
+              <p>
+                0원 미만 입력 금지, 숫자만 허용, 원 단위 콤마 자동 표시,
+                급여보다 지출이 클 경우 경고.
+              </p>
+            </div>
+            <div class="mini-card">
+              <strong>게시글 작성</strong>
+              <p>
+                제목 필수, 본문 필수, 게시판 유형 필수, 익명 게시글은 작성자
+                식별정보 비노출.
+              </p>
+            </div>
+            <div class="mini-card">
+              <strong>예산 초과</strong>
+              <p>
+                일일 예산을 초과하면 남은 금액을 빨간색으로 표시하고 “초과 사용”
+                알림 제공.
+              </p>
+            </div>
+            <div class="mini-card">
+              <strong>개인정보 보호</strong>
+              <p>
+                급여·대출·저축 정보는 민감 데이터로 취급하며 광고 추천 데이터와
+                분리 저장 필요.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="data">
+          <h2>6. 데이터/정책 설계</h2>
+          <div class="two-pane">
+            <div>
+              <h3>주요 데이터 객체</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>객체</th>
+                    <th>주요 필드</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>User</td>
+                    <td>
+                      userId, nickname, jobTitle, profileImage, level, score,
+                      createdAt
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>PayrollPlan</td>
+                    <td>
+                      payday, expectedSalary, expectedExpense,
+                      expectedHijackAmount, targetAmount
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>FixedExpense</td>
+                    <td>
+                      expenseDate, category, name, unitPrice, quantity, amount,
+                      status
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>SavingsPlan</td>
+                    <td>savingDate, category, name, amount, recurrence</td>
+                  </tr>
+                  <tr>
+                    <td>DailyBudget</td>
+                    <td>date, dailyLimit, usedAmount, remainingAmount</td>
+                  </tr>
+                  <tr>
+                    <td>GrowthTask</td>
+                    <td>
+                      type, title, category, status, expReward, completedAt
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>CommunityPost</td>
+                    <td>
+                      boardType, title, body, isAnonymous, isQuestion, likes,
+                      comments
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h3>운영 정책</h3>
+              <div class="mini-card">
+                <strong>광고 정책</strong>
+                <p>
+                  금융성 정보와 광고 추천은 명확히 분리한다. 사용자의
+                  급여·대출·저축 데이터 기반 민감 타겟팅은 별도 동의가 필요하다.
+                </p>
+              </div>
+              <div class="mini-card" style="margin-top: 12px">
+                <strong>커뮤니티 정책</strong>
+                <p>
+                  월급, 부업, 투자, 건강 주제는 오정보 위험이 있으므로 신고,
+                  숨김, 운영자 검수 기준이 필요하다.
+                </p>
+              </div>
+              <div class="mini-card" style="margin-top: 12px">
+                <strong>알림 정책</strong>
+                <p>
+                  결제 예정/예산 초과/목표 달성 알림은 기본 제공하되, 콘텐츠
+                  추천 알림은 사용자가 끌 수 있어야 한다.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="prototype">
+          <h2>7. 작동형 UI/UX 예시안</h2>
+          <p>
+            오른쪽 모바일 프레임은 실제로 클릭·입력·전환이 가능한 HTML
+            프로토타입이다. 로그인, 하단 탭 이동, 지출 추가, 계획 수정, 레벨업
+            완료, 커뮤니티 글쓰기 등록이 작동한다.
+          </p>
+          <div class="prototype-zone">
+            <div class="spec-panel">
+              <h3>프로토타입 사용 방법</h3>
+              <div class="grid cols-2">
+                <div class="mini-card">
+                  <strong>1. 로그인</strong>
+                  <p>아무 소셜 버튼이나 누르면 홈 화면으로 이동한다.</p>
+                </div>
+                <div class="mini-card">
+                  <strong>2. 지출 추가</strong>
+                  <p>
+                    홈 화면에서 금액을 입력하고 “추가”를 누르면 오늘 사용금액과
+                    남은금액이 바뀐다.
+                  </p>
+                </div>
+                <div class="mini-card">
+                  <strong>3. 계획 변경</strong>
+                  <p>
+                    계획 탭에서 급여·지출·목표금액을 수정하면 달성률과
+                    납치금액이 재계산된다.
+                  </p>
+                </div>
+                <div class="mini-card">
+                  <strong>4. 커뮤니티 작성</strong>
+                  <p>
+                    커뮤니티 탭의 초록색 작성 버튼을 누르면 게시글 작성 화면이
+                    열리고 등록된다.
+                  </p>
+                </div>
+              </div>
+              <h3>화면 적용 원칙</h3>
+              <table>
+                <thead>
+                  <tr>
+                    <th>원칙</th>
+                    <th>반영 내용</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>첫 화면 집중</td>
+                    <td>
+                      홈에서 누적 납치금액, 수령/지출/납치금액, 일일 예산을 우선
+                      노출
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>수치 즉시성</td>
+                    <td>지출을 추가하면 사용금액과 잔액이 즉시 변경</td>
+                  </tr>
+                  <tr>
+                    <td>습관화</td>
+                    <td>
+                      LV UP 탭에서 독서·뉴스·영어·운동을 매일 수행 가능한
+                      버튼으로 구성
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>인증 확장</td>
+                    <td>커뮤니티는 레벨업 인증과 자유글을 동시에 수용</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="phone-wrap">
+              <div class="phone" id="phone">
+                <div class="status">
+                  <span>11:23</span><span>5G · 88%</span>
+                </div>
+                <div class="app-header" id="appHeader" style="display: none">
+                  <div class="app-logo">
+                    <span class="mini-mark"><i></i><i></i><i></i><i></i></span
+                    ><span>SALARY HIJACKING</span>
+                  </div>
+                  <button class="icon-btn" id="headerAction" title="알림">
+                    🔔
+                  </button>
+                </div>
+                <div class="phone-content login-mode" id="phoneContent">
+                  <div class="screen active" id="screen-login">
+                    <div class="login-screen">
+                      <div class="mark login-mark">
+                        <span></span><span></span><span></span><span></span>
+                      </div>
+                      <div class="login-title">급여납치</div>
+                      <div class="login-sub">SALARY HIJACKING</div>
+                      <input class="login-field" placeholder="아이디" />
+                      <input
+                        class="login-field"
+                        placeholder="비밀번호"
+                        type="password"
+                      />
+                      <div class="social">
+                        <button class="n" data-login>N</button>
+                        <button class="k" data-login>TALK</button>
+                        <button class="f" data-login>f</button>
+                        <button class="g" data-login>G</button>
+                      </div>
+                      <div class="small">회원가입 ㅣ □ 자동 로그인</div>
+                      <div
+                        style="margin-top: 64px; color: #333; font-size: 22px"
+                      >
+                        Eureka World
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="screen" id="screen-home"></div>
+                  <div class="screen" id="screen-plan"></div>
+                  <div class="screen" id="screen-level"></div>
+                  <div class="screen" id="screen-community"></div>
+                  <div class="screen" id="screen-profile"></div>
+                  <div class="screen" id="screen-alert"></div>
+                </div>
+                <button class="fab" id="writeFab" style="display: none">
+                  ✎
+                </button>
+                <div class="compose" id="composeLayer">
+                  <div class="compose-head">
+                    <button class="icon-btn" id="closeCompose">×</button
+                    ><b style="font-size: 22px">글쓰기</b
+                    ><button
+                      class="icon-btn"
+                      id="submitPost"
+                      style="
+                        color: var(--green);
+                        font-size: 15px;
+                        font-weight: 950;
+                      "
+                    >
+                      완료
+                    </button>
+                  </div>
+                  <div class="compose-body">
+                    <div
+                      style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                      "
+                    >
+                      <div>📷 🖼️ 📁</div>
+                      <div class="checkboxes">
+                        <label
+                          ><input type="checkbox" id="isQuestion" /> 질문</label
+                        ><label
+                          ><input type="checkbox" id="isAnon" /> 익명</label
+                        >
+                      </div>
+                    </div>
+                    <select class="app-select" id="postBoard">
+                      <option>자유 게시판</option>
+                      <option>레벨업 인증</option>
+                      <option>취미 게시판</option>
+                    </select>
+                    <input
+                      class="app-input"
+                      id="postTitle"
+                      placeholder="제목을 입력해주세요"
+                    />
+                    <textarea
+                      class="app-textarea"
+                      id="postBody"
+                      rows="9"
+                      placeholder="자유로운 주제로 소통해보세요.&#10;#자유게시판 #유머글"
+                    ></textarea>
+                  </div>
+                </div>
+                <div class="bottom-nav" id="bottomNav" style="display: none">
+                  <button class="nav-item active" data-screen="home">
+                    <span class="ico">💸</span><span>급여</span>
+                  </button>
+                  <button class="nav-item" data-screen="plan">
+                    <span class="ico">💼</span><span>계획</span>
+                  </button>
+                  <button class="nav-item" data-screen="level">
+                    <span class="ico">⬆️</span><span>LV</span>
+                  </button>
+                  <button class="nav-item" data-screen="community">
+                    <span class="ico">💬</span><span>커뮤니티</span>
+                  </button>
+                  <button class="nav-item" data-screen="profile">
+                    <span class="ico">👤</span><span>MY</span>
+                  </button>
+                </div>
+                <div class="toast" id="toast"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card" id="mvp">
+          <h2>8. MVP 및 개선 로드맵</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>단계</th>
+                <th>범위</th>
+                <th>핵심 산출물</th>
+                <th>성공 기준</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1차 MVP</td>
+                <td>로그인, 급여 홈, 계획 설정, 일일 예산, 지출 기록</td>
+                <td>월급 관리 핵심 루프</td>
+                <td>사용자가 3분 안에 급여 계획을 완성하고 오늘 예산을 확인</td>
+              </tr>
+              <tr>
+                <td>2차 고도화</td>
+                <td>알림, 목표 달성률, 레벨업 콘텐츠</td>
+                <td>습관 형성 루틴</td>
+                <td>주 3회 이상 재방문, 미션 완료율 측정</td>
+              </tr>
+              <tr>
+                <td>3차 커뮤니티</td>
+                <td>게시판, 인증, 좋아요/댓글/공유, 신고</td>
+                <td>직장인 자기관리 커뮤니티</td>
+                <td>사용자 생성 콘텐츠와 인증글 축적</td>
+              </tr>
+              <tr>
+                <td>4차 수익화</td>
+                <td>광고, 제휴, 포인트 이벤트, 추천 콘텐츠</td>
+                <td>광고/제휴 운영 구조</td>
+                <td>광고 피로도 관리와 클릭/전환 로그 확보</td>
+              </tr>
+            </tbody>
+          </table>
+          <h3>우선 개선 제안</h3>
+          <div class="grid cols-3">
+            <div class="mini-card">
+              <strong>기능 범위 정리</strong>
+              <p>
+                초기 버전은 급여 관리와 지출 통제에 집중하고, 레벨업은 보조
+                기능으로 배치한다.
+              </p>
+            </div>
+            <div class="mini-card">
+              <strong>입력 부담 축소</strong>
+              <p>
+                지난달 복사, 추천 템플릿, 빠른 지출 버튼을 제공해 사용자가 오래
+                입력하지 않게 한다.
+              </p>
+            </div>
+            <div class="mini-card">
+              <strong>신뢰 장치 강화</strong>
+              <p>
+                급여·대출·저축 정보 보호 안내, 광고 분리 원칙, 개인정보 처리
+                동의를 명확히 보여준다.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const state = {
+        loggedIn: false,
+        salary: 2700000,
+        fixedExpense: 60000,
+        dailyLimit: 20000,
+        dailyUsed: 13000,
+        variableExpenses: [
+          { icon: "☕", name: "빽다방 아이스 아메리카노", amount: 2000 },
+          { icon: "🍱", name: "KT전주지사 구내식당 점심식사", amount: 6500 },
+          { icon: "🚬", name: "GS25 에쎄 체인지 1mm 담배", amount: 4500 },
+        ],
+        totalHijack: 5780000,
+        target: 6600000,
+        level: 18,
+        exp: 38,
+        posts: [
+          {
+            board: "레벨업 인증",
+            title: "[LV.5] 주 6일 운동, 1년 차 마른 체형 탈출 후기",
+            desc: "벌크업 루틴(상체, 하체, 코어) 꾸준히 한 결과...",
+            img: "linear-gradient(135deg,#486b8a,#7fc4d4)",
+          },
+          {
+            board: "자유 게시판",
+            title: "회계팀 홍길동입니다. 연말정산 절세 팁 5가지 공유!",
+            desc: "연말정산 후 챙기는 것도 실력입니다.",
+            img: "linear-gradient(135deg,#d4d9dd,#b58a62)",
+          },
+          {
+            board: "취미 게시판",
+            title: "직장인 부업? 주식 말고 독서모임 운영 수익률 200% 달성",
+            desc: "퇴근 후 서로 토론하며 비판적 사고력을...",
+            img: "linear-gradient(135deg,#e3dac9,#bca987)",
+          },
+        ],
+        communityTab: "전체 게시판",
+        levelTab: "AI 추천",
+      };
+      const fmt = (n) => Number(n).toLocaleString("ko-KR") + "원";
+      const $ = (sel) => document.querySelector(sel);
+      const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+      const phoneContent = $("#phoneContent");
+      const bottomNav = $("#bottomNav");
+      const writeFab = $("#writeFab");
+      const appHeader = $("#appHeader");
+      const toast = $("#toast");
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 1800);
+      }
+      function hijackAmount() {
+        return Math.max(0, state.salary - state.fixedExpense - state.dailyUsed);
+      }
+      function remaining() {
+        return state.dailyLimit - state.dailyUsed;
+      }
+      function achievement() {
+        return Math.min(
+          100,
+          Math.round((state.totalHijack / state.target) * 100),
+        );
+      }
+      function activateScreen(name) {
+        $$(".screen").forEach((s) => s.classList.remove("active"));
+        $(`#screen-${name}`).classList.add("active");
+        $$(".nav-item").forEach((b) =>
+          b.classList.toggle("active", b.dataset.screen === name),
+        );
+        writeFab.style.display = name === "community" ? "block" : "none";
+        phoneContent.scrollTop = 0;
+        renderAll();
+      }
+      function login() {
+        state.loggedIn = true;
+        phoneContent.classList.remove("login-mode");
+        bottomNav.style.display = "grid";
+        appHeader.style.display = "flex";
+        activateScreen("home");
+        showToast("홍길동 기획자님, 오늘의 급여 납치를 시작합니다.");
+      }
+      function renderHome() {
+        $("#screen-home").innerHTML = `
+        <div class="green-hero">
+          <div style="display:flex;justify-content:space-between;gap:10px"><div><div>2025년 12월 10일</div><div class="p-title" style="margin:0">내 급여 납치 현황</div><div class="coins">🪙</div><div>전체 누적 납치 금액</div><div class="big-money">${fmt(state.totalHijack)}</div></div><div style="min-width:150px"><div class="salary-grid"><div class="metric"><small>이번 급여일</small><strong>11월 25일</strong></div><div class="metric"><small>다음 급여일</small><strong style="color:#c43d3d">12월 24일</strong></div><div class="metric"><small>수령 금액</small><strong>${fmt(state.salary)}</strong></div><div class="metric"><small>지출 금액</small><strong>${fmt(state.fixedExpense + state.dailyUsed)}</strong></div><div class="metric yellow" style="grid-column:1/3"><small>납치 금액</small><strong>${fmt(hijackAmount())}</strong></div></div></div></div>
+        </div>
+        <div class="ad"><div><small>Kurly N Mart</small>지금 강세일 특가!<br>짜장면 구매 타이밍</div><b>10%</b></div>
+        <div class="p-section">
+          <div class="p-card pad"><b>홍길동님이 설정한 금일 고정 지출</b>
+            <div class="list-row"><span>🤖</span><span class="amount">30,000원</span><span>ChatGPT 자동결제</span><button class="pill">납부완료</button></div>
+            <div class="list-row"><span>▶️</span><span class="amount">15,000원</span><span>넷플릭스 자동 결제</span><button class="pill">납부완료</button></div>
+            <div class="list-row"><span>🟥</span><span class="amount">15,000원</span><span>유튜브 프리미엄 자동 결제</span><button class="pill">납부완료</button></div>
+            <div class="seg"><button>전체</button><button class="active">구독료</button><button>대출금</button><button>적금</button><button>기타</button></div>
+          </div>
+          <div class="p-card pad"><b>홍길동님이 설정한 일일 사용 예산</b>
+            <div class="budget-head"><div>설정 금액<b>${fmt(state.dailyLimit)}</b></div><div>사용 금액<b>${fmt(state.dailyUsed)}</b></div><div>남은 금액<b style="color:${remaining() < 0 ? "#d74b4b" : "var(--green)"}">${fmt(remaining())}</b></div></div>
+            ${state.variableExpenses.map((e) => `<div class="list-row"><span>${e.icon}</span><span class="amount">${fmt(e.amount)}</span><span>${e.name}</span><button class="pill ok">사용완료</button></div>`).join("")}
+            <div class="add-expense"><input id="quickExpenseName" placeholder="예: 커피 2000" /><button id="quickAdd">추가</button></div>
+          </div>
+          <div class="p-card pad"><b>홍길동님이 사용한 금일 변동 지출</b><div style="display:flex;justify-content:space-between;margin:9px 0"><span class="tag">사용 총 금액</span><b>${fmt(state.dailyUsed)}</b></div><table class="plan-table"><tr><th>항목</th><th>세부 내용</th><th>사용 금액</th></tr><tr><td>게임 결제</td><td>롤토체스 패스권 구입</td><td>15,000원</td></tr></table><button class="app-button secondary" style="margin-top:8px;width:100%" id="addSampleExpense">+ 샘플 지출 추가하기</button></div>
+        </div>`;
+        $("#quickAdd").onclick = () => {
+          const v = $("#quickExpenseName").value.trim();
+          const amount = parseInt((v.match(/\d+/) || ["0"])[0], 10);
+          const name = v.replace(/\d+/g, "").trim() || "기타 지출";
+          if (!amount) {
+            showToast("금액을 숫자로 입력해주세요.");
+            return;
+          }
+          state.variableExpenses.unshift({ icon: "🧾", name, amount });
+          state.dailyUsed += amount;
+          renderHome();
+          showToast(`${fmt(amount)} 지출이 추가되었습니다.`);
+        };
+        $("#addSampleExpense").onclick = () => {
+          state.variableExpenses.unshift({
+            icon: "🎮",
+            name: "롤토체스 패스권 구입",
+            amount: 15000,
+          });
+          state.dailyUsed += 15000;
+          renderHome();
+          showToast("변동 지출 15,000원이 추가되었습니다.");
+        };
+      }
+      function renderPlan() {
+        $("#screen-plan").innerHTML = `
+        <div class="p-section">
+          <div class="p-card pad"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>홍길동님의 급여 납치 목표 달성률</b><div style="display:flex;gap:18px;margin-top:8px"><span>이번 달 목표 납치금액<br><b style="color:var(--green)">${fmt(500000)}</b></span><span>총 누적 납치금액<br><b style="color:#d74b4b">${fmt(state.totalHijack)}</b></span></div></div><div style="font-size:44px;font-weight:950;color:var(--green)">${achievement()}%</div></div><div class="progress"><div class="bar" style="width:${achievement()}%"></div></div></div>
+          <div class="p-card pad"><b>내 급여 납치 계획/설정</b><span class="gear">⚙️</span><div class="grid" style="grid-template-columns:1fr 1fr;margin-top:10px"><label class="small">수령 예정 급여<input class="app-input" id="salaryInput" value="${state.salary}" style="width:100%;margin-top:4px"></label><label class="small">지출 예정 금액<input class="app-input" id="expenseInput" value="${state.fixedExpense + state.dailyUsed}" style="width:100%;margin-top:4px"></label><label class="small">목표 누적 금액<input class="app-input" id="targetInput" value="${state.target}" style="width:100%;margin-top:4px"></label><label class="small">급여일<select class="app-select" style="width:100%;margin-top:4px"><option>매월 25일</option><option>매월 10일</option><option>매월 말일</option></select></label></div><button class="app-button" style="width:100%;margin-top:10px" id="savePlan">계획 저장 및 재계산</button></div>
+          <div class="p-card pad"><b>월별 고정 지출 계획/설정</b><span class="gear">⚙️</span><table class="plan-table" style="margin-top:10px"><tr><th>지출일</th><th>중분류</th><th>소분류</th><th>금액</th></tr><tr><td>10일</td><td>구독 납부</td><td>유튜브 프리미엄</td><td>14,900원</td></tr><tr><td>10일</td><td>구독 납부</td><td>ChatGPT</td><td>32,000원</td></tr><tr><td>25일</td><td>대출 상환</td><td>학자금 대출</td><td>200,000원</td></tr></table></div>
+          <div class="p-card pad"><b>월별 고정 저금 계획/설정</b><span class="gear">⚙️</span><table class="plan-table" style="margin-top:10px"><tr><th>적금일</th><th>중분류</th><th>소분류</th><th>금액</th></tr><tr><td>25일</td><td>NH농협</td><td>아파트 청약</td><td>200,000원</td></tr><tr><td>25일</td><td>NH투자증권</td><td>주식 투자</td><td>200,000원</td></tr></table></div>
+          <div class="p-card pad"><b>월별 생활비 계획/설정</b><span class="gear">⚙️</span><table class="plan-table" style="margin-top:10px"><tr><th>일일 금액</th><th>일수</th><th>월별 생활비</th></tr><tr><td>${fmt(state.dailyLimit)}</td><td>30</td><td>${fmt(state.dailyLimit * 30)}</td></tr></table></div>
+        </div>`;
+        $("#savePlan").onclick = () => {
+          const sal =
+            parseInt($("#salaryInput").value.replace(/,/g, ""), 10) ||
+            state.salary;
+          const exp =
+            parseInt($("#expenseInput").value.replace(/,/g, ""), 10) ||
+            state.fixedExpense;
+          const target =
+            parseInt($("#targetInput").value.replace(/,/g, ""), 10) ||
+            state.target;
+          state.salary = sal;
+          state.fixedExpense = Math.max(0, exp - state.dailyUsed);
+          state.target = target;
+          renderAll();
+          showToast("급여 계획이 저장되었습니다.");
+        };
+      }
+      function renderLevel() {
+        const tabs = ["AI 추천", "소설", "경제/경영", "인문/철학", "기타"];
+        $("#screen-level").innerHTML = `
+        <div class="banner-img"><span>BYD ATTO 3</span><span>구매 상담 신청해보세요!</span></div>
+        <div class="level-card"><div class="p-sub">당신의 일상이 프리미엄으로 성장하는 순간</div><div class="p-title">오늘의 레벨 업, 당신의 성장을 응원합니다!</div>${["📚 오늘의 독서, 역량 레벨업", "📰 오늘의 소식, 정보 레벨업", "🎧 오늘의 영어, 회화 레벨업", "🏃 오늘의 홈트, 건강 레벨업"].map((t, i) => `<div class="level-action"><div><span class="emoji">${t.split(" ")[0]}</span> <b>${t.substring(2)}</b></div><button class="app-button completeTask" data-exp="${i + 1}">${["독서하기", "뉴스보기", "연습하기", "운동하기"][i]}</button></div>`).join("")}</div>
+        <div class="ad"><div>지금 강세일 특가!<br>짜장면 구매 타이밍</div><b>10%</b></div>
+        <div class="p-section"><div class="p-card pad"><div style="display:flex;justify-content:space-between;align-items:end"><b>홍길동 기획자님의 현재 레벨은?</b><strong style="font-size:38px;color:var(--green)">${state.level}Lv</strong></div><div class="progress"><div class="bar" style="width:${state.exp}%"></div></div><div class="small">Lv1 <span style="float:right">Lv999</span></div></div></div>
+        <div class="p-title" style="padding:0 14px;margin-top:6px">오늘의 독서, 역량 레벨업</div><div class="tabs">${tabs.map((t) => `<button class="levelTab ${state.levelTab === t ? "active" : ""}" data-tab="${t}">${t}</button>`).join("")}</div>
+        <div class="p-section"><div class="p-card pad"><div class="p-sub">오늘의 역량레벨 업, 당신의 성장을 응원합니다.</div><b>홍길동 기획자님의 역량 밸런스 현황</b><div class="radar"></div></div><div class="p-card">${[
+          "기획의 정석|박신영|기획을 시작하는 사람들을 위한 10가지 습관",
+          "어떻게 원하는 것을 얻는가|스튜어트 다이아몬드|협상과 설득을 위한 추천 도서",
+        ]
+          .map((x) => {
+            const a = x.split("|");
+            return `<div class="content-card"><div><h3 style="margin:0 0 2px;font-size:19px">${a[0]}</h3><div>${a[1]}</div><p class="small">✨ 홍길동 기획자님을 위한 추천 도서<br>${a[2]}</p></div><div><div class="book-cover">${a[0]}</div><button class="app-button completeTask" style="margin-top:8px;width:100%" data-exp="3">도전</button></div></div>`;
+          })
+          .join("")}</div></div>`;
+        $$(".completeTask").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.exp += 18;
+              if (state.exp >= 100) {
+                state.level++;
+                state.exp -= 100;
+                showToast(`레벨업! 현재 ${state.level}Lv입니다.`);
+              } else showToast("오늘의 레벨업 활동이 완료되었습니다.");
+              renderLevel();
+            }),
+        );
+        $$(".levelTab").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.levelTab = b.dataset.tab;
+              renderLevel();
+            }),
+        );
+      }
+      function renderCommunity() {
+        const tabs = [
+          "전체 게시판",
+          "자유 게시판",
+          "레벨업 인증",
+          "취미 게시판",
+        ];
+        const list =
+          state.communityTab === "전체 게시판"
+            ? state.posts
+            : state.posts.filter((p) => p.board === state.communityTab);
+        $("#screen-community").innerHTML = `
+        <div class="p-section" style="padding-bottom:0"><div class="p-title">커뮤니티</div></div>
+        <div class="community-tabs">${tabs.map((t) => `<button class="commTab ${state.communityTab === t ? "active" : ""}" data-tab="${t}">${t}</button>`).join("")}</div>
+        <div class="p-section"><div class="p-card pad"><div style="display:flex;justify-content:space-between;align-items:center"><b>인기 게시글</b><span style="font-size:28px">→</span></div>${state.posts
+          .slice(0, 3)
+          .map(
+            (p) =>
+              `<div style="border-bottom:1px solid #f1f2f3;padding:8px 0"><b style="font-size:13px">${p.title}</b><span style="float:right;color:var(--green);font-size:11px;font-weight:950">${p.board}</span><div class="small">${p.desc}</div></div>`,
+          )
+          .join(
+            "",
+          )}</div><div class="p-card"><div style="display:flex;justify-content:space-between;align-items:center;padding:12px"><b>${state.communityTab}</b><span style="font-size:28px">→</span></div>${list.map((p) => `<div class="post"><div class="thumb" style="background:${p.img}"></div><div><h4>${p.title}</h4><div class="small">${p.desc}</div><div style="color:var(--green);font-size:11px;font-weight:950;margin-top:3px">${p.board}</div><div class="icons"><span>🔎 조회수</span><span>♡ 좋아요</span><span>💬 댓글</span><span>↗ 공유</span></div></div></div>`).join("") || '<div class="p-section small">해당 게시판의 게시글이 없습니다.</div>'}</div></div>`;
+        $$(".commTab").forEach(
+          (b) =>
+            (b.onclick = () => {
+              state.communityTab = b.dataset.tab;
+              renderCommunity();
+            }),
+        );
+      }
+      function renderProfile() {
+        $("#screen-profile").innerHTML = `
+        <div class="profile-head"><div class="avatar">👔</div><div class="small">오늘도 당신의 성장을 응원합니다.</div><div class="p-title">홍길동 기획자님</div><button class="app-button secondary">프로필 설정</button> <button class="app-button secondary">계정 설정</button><div class="profile-stats"><div>누적 납치금액<b>${fmt(state.totalHijack)}</b></div><div>레벨업 현황<b>${state.level}Lv</b></div><div>자기관리 성과<b>4.2점</b></div></div></div>
+        ${["내 게시글 관리", "내 레벨업 관리", "1:1 문의", "공지사항"].map((t) => `<div class="profile-menu"><span>${t}</span><button class="app-button">관리하기</button></div>`).join("")}
+        <div class="ad" style="margin:14px">지금 강세일 특가! 짜장면 구매 타이밍 <b>10%</b></div>`;
+      }
+      function renderAlert() {
+        $("#screen-alert").innerHTML = `
+        <div style="background:#fff;padding:14px;border-bottom:1px solid #f0f1f2"><button class="icon-btn" id="backFromAlert">←</button><b style="font-size:26px;margin-left:12px">알림</b><span style="float:right;color:var(--green);font-weight:900;margin-top:8px">새로운 알림이 있어요</span></div>
+        ${[
+          [
+            "🏅",
+            "누적납치 금액 신기록 달성",
+            "내 급여 납치 현황 5,780,000원 달성",
+            "1일전",
+            true,
+          ],
+          [
+            "🎁",
+            "납치액 달성 이벤트",
+            "내 급여 납치 5,500,000원 달성 시 포인트 500P 지급",
+            "1일전",
+            true,
+          ],
+          [
+            "📚",
+            "오늘의 레벨업, 오늘의 따뜻한 마음의 양식을 가져왔어요",
+            "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
+            "8시간전",
+            false,
+          ],
+          [
+            "📰",
+            "오늘의 레벨업, 오늘의 따끈한 소식을 가져왔어요",
+            "[매일경제] 국내 NPU 개발 가속화, AI 학습/추론에...",
+            "8시간전",
+            false,
+          ],
+          [
+            "🎧",
+            "오늘의 레벨업, 오늘의 영어회화를 가져왔어요",
+            "Today, Business Conversation",
+            "8시간전",
+            false,
+          ],
+          [
+            "🏃",
+            "오늘의 레벨업, 오늘의 건강한 홈트레이닝을 준비했어요",
+            "오늘은 상체를 부수는 날이에요! 파이팅!!",
+            "8시간전",
+            false,
+          ],
+          [
+            "🟡",
+            "오늘의 금융상식 퀴즈 도착",
+            "오늘도 퀴즈 풀고 포인트를 받을 수 있어요",
+            "8시간전",
+            false,
+          ],
+        ]
+          .map(
+            (a) =>
+              `<div class="alert-row ${a[4] ? "highlighted" : ""}"><span>${a[0]}</span><div><div class="small">${a[1]}</div><b>${a[2]}</b></div><span class="small">${a[3]}</span></div>`,
+          )
+          .join("")}`;
+        $("#backFromAlert").onclick = () => activateScreen("home");
+      }
+      function renderAll() {
+        if (!state.loggedIn) return;
+        renderHome();
+        renderPlan();
+        renderLevel();
+        renderCommunity();
+        renderProfile();
+        renderAlert();
+      }
+      $$("[data-login]").forEach((b) => b.addEventListener("click", login));
+      $$(".nav-item").forEach((b) =>
+        b.addEventListener("click", () => activateScreen(b.dataset.screen)),
+      );
+      $("#headerAction").onclick = () => {
+        if (state.loggedIn) activateScreen("alert");
+      };
+      writeFab.onclick = () => $("#composeLayer").classList.add("active");
+      $("#closeCompose").onclick = () =>
+        $("#composeLayer").classList.remove("active");
+      $("#submitPost").onclick = () => {
+        const title = $("#postTitle").value.trim();
+        const body = $("#postBody").value.trim();
+        const board = $("#postBoard").value;
+        if (!title || !body) {
+          showToast("제목과 본문을 입력해주세요.");
+          return;
+        }
+        state.posts.unshift({
+          board,
+          title: ($("#isQuestion").checked ? "[질문] " : "") + title,
+          desc: body.slice(0, 38) + "...",
+          img: "linear-gradient(135deg,#c8e6c9,#66bb6a)",
+        });
+        state.communityTab = "전체 게시판";
+        $("#postTitle").value = "";
+        $("#postBody").value = "";
+        $("#composeLayer").classList.remove("active");
+        renderCommunity();
+        showToast("게시글이 등록되었습니다.");
+      };
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              $$(".toc a").forEach((a) =>
+                a.classList.toggle(
+                  "active",
+                  a.getAttribute("href") === "#" + e.target.id,
+                ),
+              );
+            }
+          });
+        },
+        { rootMargin: "-40% 0px -55% 0px", threshold: 0 },
+      );
+      $$("section.card[id]").forEach((s) => observer.observe(s));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,248 @@
+# services/notifications/wrangler.toml
+# 급여납치 Salary Hijacking Platform · Notifications Cloudflare Workers 배포 설정 최종본
+#
+# 이 파일에는 secrets를 저장하지 않는다.
+# 환경별로 아래 secrets를 등록한다.
+#   wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON
+#   wrangler secret put FCM_PROJECT_ID
+#   wrangler secret put NOTIFICATIONS_SERVICE_TOKEN_SHA256
+#   wrangler secret put NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN
+#
+# 대체 service account 분리 등록 방식:
+#   wrangler secret put FCM_CLIENT_EMAIL
+#   wrangler secret put FCM_PRIVATE_KEY
+
+name = "salary-hijacking-notifications"
+main = "src/index.ts"
+compatibility_date = "2026-06-15"
+workers_dev = true
+minify = true
+upload_source_maps = true
+keep_vars = true
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
+
+[vars]
+APP_ENV = "development"
+ENVIRONMENT = "development"
+NODE_ENV = "development"
+SERVICE_NAME = "salary-hijacking-notifications"
+TIMEZONE = "Asia/Seoul"
+CORS_ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:8787"
+ALLOWED_ORIGINS = "http://localhost:3000,http://localhost:8787"
+FCM_PROJECT_ID = "salary-hijacking-dev"
+FCM_DRY_RUN = "true"
+FCM_DISABLE_NETWORK = "false"
+ENABLE_NOTIFICATION_QUEUE_HANDLER = "true"
+NOTIFICATIONS_AUDIT_TO_CONSOLE = "true"
+NOTIFICATIONS_DISABLE_HTTP_SEND = "false"
+NOTIFICATION_RETRY_MAX_ATTEMPTS = "5"
+NOTIFICATION_RETRY_BASE_DELAY_SECONDS = "30"
+NOTIFICATION_RETRY_MAX_DELAY_SECONDS = "21600"
+NOTIFICATION_RETRY_JITTER_RATIO = "0.2"
+NOTIFICATION_RETRY_BATCH_SIZE = "100"
+NOTIFICATION_RETRY_DRY_RUN = "false"
+NOTIFICATION_RETRY_AUDIT_TO_CONSOLE = "true"
+PUSH_TOKEN_STALE_AFTER_DAYS = "90"
+PUSH_TOKEN_EXPIRED_AFTER_DAYS = "365"
+PUSH_TOKEN_FAILURE_THRESHOLD = "5"
+PUSH_TOKEN_HARD_DELETE_AFTER_DAYS = "180"
+PUSH_TOKEN_CLEANUP_BATCH_SIZE = "500"
+PUSH_TOKEN_CLEANUP_DRY_RUN = "false"
+PUSH_TOKEN_CLEANUP_AUDIT_TO_CONSOLE = "true"
+RAW_PUSH_TOKEN_LOGGED = "false"
+RAW_FINANCIAL_DATA_LOGGED = "false"
+RAW_FINANCIAL_DATA_FOR_ADS = "false"
+ADS_FINANCIAL_TARGETING_FORBIDDEN = "true"
+MARKETING_CONSENT_GUARD = "true"
+TOKEN_HASH_ONLY = "true"
+SERVER_AUTHORITY_NOTIFICATION_DISPATCH = "true"
+
+[triggers]
+crons = [
+  "*/10 * * * *",
+  "0 18 * * *"
+]
+
+[[queues.producers]]
+binding = "NOTIFICATIONS_RETRY_QUEUE"
+queue = "salary-hijacking-dev-notifications-retry"
+
+[[queues.producers]]
+binding = "NOTIFICATIONS_OPERATION_QUEUE"
+queue = "salary-hijacking-dev-notifications-operations"
+
+[[queues.consumers]]
+queue = "salary-hijacking-dev-notifications-retry"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 5
+dead_letter_queue = "salary-hijacking-dev-notifications-dlq"
+
+[[queues.consumers]]
+queue = "salary-hijacking-dev-notifications-operations"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "salary-hijacking-dev-notifications-dlq"
+
+[env.staging]
+name = "salary-hijacking-notifications-staging"
+workers_dev = true
+minify = true
+upload_source_maps = true
+keep_vars = true
+
+[env.staging.observability]
+enabled = true
+
+[env.staging.placement]
+mode = "smart"
+
+[env.staging.vars]
+APP_ENV = "staging"
+ENVIRONMENT = "staging"
+NODE_ENV = "production"
+SERVICE_NAME = "salary-hijacking-notifications"
+TIMEZONE = "Asia/Seoul"
+CORS_ALLOWED_ORIGINS = "https://staging.salary-hijacking.app,http://localhost:3000"
+ALLOWED_ORIGINS = "https://staging.salary-hijacking.app,http://localhost:3000"
+FCM_PROJECT_ID = "salary-hijacking-staging"
+FCM_DRY_RUN = "false"
+FCM_DISABLE_NETWORK = "false"
+ENABLE_NOTIFICATION_QUEUE_HANDLER = "true"
+NOTIFICATIONS_AUDIT_TO_CONSOLE = "true"
+NOTIFICATIONS_DISABLE_HTTP_SEND = "false"
+NOTIFICATION_RETRY_MAX_ATTEMPTS = "5"
+NOTIFICATION_RETRY_BASE_DELAY_SECONDS = "30"
+NOTIFICATION_RETRY_MAX_DELAY_SECONDS = "21600"
+NOTIFICATION_RETRY_JITTER_RATIO = "0.2"
+NOTIFICATION_RETRY_BATCH_SIZE = "200"
+NOTIFICATION_RETRY_DRY_RUN = "false"
+NOTIFICATION_RETRY_AUDIT_TO_CONSOLE = "true"
+PUSH_TOKEN_STALE_AFTER_DAYS = "90"
+PUSH_TOKEN_EXPIRED_AFTER_DAYS = "365"
+PUSH_TOKEN_FAILURE_THRESHOLD = "5"
+PUSH_TOKEN_HARD_DELETE_AFTER_DAYS = "180"
+PUSH_TOKEN_CLEANUP_BATCH_SIZE = "500"
+PUSH_TOKEN_CLEANUP_DRY_RUN = "false"
+PUSH_TOKEN_CLEANUP_AUDIT_TO_CONSOLE = "true"
+RAW_PUSH_TOKEN_LOGGED = "false"
+RAW_FINANCIAL_DATA_LOGGED = "false"
+RAW_FINANCIAL_DATA_FOR_ADS = "false"
+ADS_FINANCIAL_TARGETING_FORBIDDEN = "true"
+MARKETING_CONSENT_GUARD = "true"
+TOKEN_HASH_ONLY = "true"
+SERVER_AUTHORITY_NOTIFICATION_DISPATCH = "true"
+
+[env.staging.triggers]
+crons = [
+  "*/10 * * * *",
+  "0 18 * * *"
+]
+
+[[env.staging.queues.producers]]
+binding = "NOTIFICATIONS_RETRY_QUEUE"
+queue = "salary-hijacking-staging-notifications-retry"
+
+[[env.staging.queues.producers]]
+binding = "NOTIFICATIONS_OPERATION_QUEUE"
+queue = "salary-hijacking-staging-notifications-operations"
+
+[[env.staging.queues.consumers]]
+queue = "salary-hijacking-staging-notifications-retry"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 5
+dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
+
+[[env.staging.queues.consumers]]
+queue = "salary-hijacking-staging-notifications-operations"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
+
+[env.production]
+name = "salary-hijacking-notifications-production"
+workers_dev = false
+minify = true
+upload_source_maps = true
+keep_vars = true
+routes = [
+  { pattern = "notifications.salary-hijacking.app/*", custom_domain = true }
+]
+
+[env.production.observability]
+enabled = true
+
+[env.production.placement]
+mode = "smart"
+
+[env.production.vars]
+APP_ENV = "production"
+ENVIRONMENT = "production"
+NODE_ENV = "production"
+SERVICE_NAME = "salary-hijacking-notifications"
+TIMEZONE = "Asia/Seoul"
+CORS_ALLOWED_ORIGINS = "https://salary-hijacking.app,https://www.salary-hijacking.app,https://admin.salary-hijacking.app,https://api.salary-hijacking.app"
+ALLOWED_ORIGINS = "https://salary-hijacking.app,https://www.salary-hijacking.app,https://admin.salary-hijacking.app,https://api.salary-hijacking.app"
+FCM_PROJECT_ID = "salary-hijacking-production"
+FCM_DRY_RUN = "false"
+FCM_DISABLE_NETWORK = "false"
+ENABLE_NOTIFICATION_QUEUE_HANDLER = "true"
+NOTIFICATIONS_AUDIT_TO_CONSOLE = "false"
+NOTIFICATIONS_DISABLE_HTTP_SEND = "false"
+NOTIFICATION_RETRY_MAX_ATTEMPTS = "5"
+NOTIFICATION_RETRY_BASE_DELAY_SECONDS = "30"
+NOTIFICATION_RETRY_MAX_DELAY_SECONDS = "21600"
+NOTIFICATION_RETRY_JITTER_RATIO = "0.2"
+NOTIFICATION_RETRY_BATCH_SIZE = "500"
+NOTIFICATION_RETRY_DRY_RUN = "false"
+NOTIFICATION_RETRY_AUDIT_TO_CONSOLE = "false"
+PUSH_TOKEN_STALE_AFTER_DAYS = "90"
+PUSH_TOKEN_EXPIRED_AFTER_DAYS = "365"
+PUSH_TOKEN_FAILURE_THRESHOLD = "5"
+PUSH_TOKEN_HARD_DELETE_AFTER_DAYS = "180"
+PUSH_TOKEN_CLEANUP_BATCH_SIZE = "1000"
+PUSH_TOKEN_CLEANUP_DRY_RUN = "false"
+PUSH_TOKEN_CLEANUP_AUDIT_TO_CONSOLE = "false"
+RAW_PUSH_TOKEN_LOGGED = "false"
+RAW_FINANCIAL_DATA_LOGGED = "false"
+RAW_FINANCIAL_DATA_FOR_ADS = "false"
+ADS_FINANCIAL_TARGETING_FORBIDDEN = "true"
+MARKETING_CONSENT_GUARD = "true"
+TOKEN_HASH_ONLY = "true"
+SERVER_AUTHORITY_NOTIFICATION_DISPATCH = "true"
+
+[env.production.triggers]
+crons = [
+  "*/5 * * * *",
+  "0 18 * * *"
+]
+
+[[env.production.queues.producers]]
+binding = "NOTIFICATIONS_RETRY_QUEUE"
+queue = "salary-hijacking-production-notifications-retry"
+
+[[env.production.queues.producers]]
+binding = "NOTIFICATIONS_OPERATION_QUEUE"
+queue = "salary-hijacking-production-notifications-operations"
+
+[[env.production.queues.consumers]]
+queue = "salary-hijacking-production-notifications-retry"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 5
+dead_letter_queue = "salary-hijacking-production-notifications-dlq"
+
+[[env.production.queues.consumers]]
+queue = "salary-hijacking-production-notifications-operations"
+max_batch_size = 10
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "salary-hijacking-production-notifications-dlq"

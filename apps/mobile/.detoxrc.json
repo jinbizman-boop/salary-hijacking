@@ -1,0 +1,45 @@
+{
+  "testRunner": {
+    "args": {
+      "$0": "jest",
+      "config": "e2e/jest.config.cjs"
+    },
+    "jest": {
+      "setupTimeout": 120000
+    }
+  },
+  "apps": {
+    "android.debug": {
+      "type": "android.apk",
+      "binaryPath": "build/e2e/android/salary-hijacking-e2e.apk"
+    },
+    "ios.debug": {
+      "type": "ios.app",
+      "binaryPath": "build/e2e/ios/salaryhijacking.app"
+    }
+  },
+  "devices": {
+    "android.emulator": {
+      "type": "android.emulator",
+      "device": {
+        "avdName": "Pixel_7_API_35"
+      }
+    },
+    "ios.simulator": {
+      "type": "ios.simulator",
+      "device": {
+        "type": "iPhone 15"
+      }
+    }
+  },
+  "configurations": {
+    "android.emu.debug": {
+      "app": "android.debug",
+      "device": "android.emulator"
+    },
+    "ios.sim.debug": {
+      "app": "ios.debug",
+      "device": "ios.simulator"
+    }
+  }
+}

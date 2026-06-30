@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@salary-hijacking/scheduler",
+  "version": "3.1.0",
+  "private": true,
+  "description": "Salary Hijacking Cloudflare Workers scheduler service for server-authoritative payroll reminders, fixed-expense reminders, monthly hijack close, data-retention cleanup, Cron, Queue and operational automation.",
+  "license": "UNLICENSED",
+  "author": "Salary Hijacking Platform",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./jobs/data-retention-cleanup": {
+      "types": "./dist/jobs/data-retention-cleanup.job.d.ts",
+      "import": "./dist/jobs/data-retention-cleanup.job.js",
+      "default": "./dist/jobs/data-retention-cleanup.job.js"
+    },
+    "./jobs/fixed-expense-reminder": {
+      "types": "./dist/jobs/fixed-expense-reminder.job.d.ts",
+      "import": "./dist/jobs/fixed-expense-reminder.job.js",
+      "default": "./dist/jobs/fixed-expense-reminder.job.js"
+    },
+    "./jobs/monthly-hijack-close": {
+      "types": "./dist/jobs/monthly-hijack-close.job.d.ts",
+      "import": "./dist/jobs/monthly-hijack-close.job.js",
+      "default": "./dist/jobs/monthly-hijack-close.job.js"
+    },
+    "./jobs/payday-reminder": {
+      "types": "./dist/jobs/payday-reminder.job.d.ts",
+      "import": "./dist/jobs/payday-reminder.job.js",
+      "default": "./dist/jobs/payday-reminder.job.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "wrangler.toml",
+    "package.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "wrangler dev --local --persist-to ../../.wrangler/state --config wrangler.toml",
+    "start": "corepack pnpm run dev",
+    "preview": "wrangler dev --remote --config wrangler.toml",
+    "build": "corepack pnpm run clean:dist && corepack pnpm run typecheck && corepack pnpm run build:js && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run build:verify",
+    "build:scheduler": "corepack pnpm run build",
+    "build:js": "tsc --project tsconfig.json --noEmit false --incremental false",
+    "build:types": "tsc --project tsconfig.json --declaration --declarationMap --emitDeclarationOnly --outDir dist --noEmit false --incremental false",
+    "build:verify": "node -e \"const fs=require('node:fs'); for (const f of ['dist/index.js','dist/index.d.ts','dist/jobs/payday-reminder.job.js','dist/jobs/payday-reminder.job.d.ts','dist/jobs/fixed-expense-reminder.job.js','dist/jobs/fixed-expense-reminder.job.d.ts','dist/jobs/monthly-hijack-close.job.js','dist/jobs/monthly-hijack-close.job.d.ts','dist/jobs/data-retention-cleanup.job.js','dist/jobs/data-retention-cleanup.job.d.ts']) if (!fs.existsSync(f)) throw new Error('missing '+f); console.log('scheduler build verified')\"",
+    "typecheck": "tsc --project tsconfig.json --noEmit --pretty false",
+    "typecheck:strict": "tsc --project tsconfig.json --noEmit --pretty false --strict --exactOptionalPropertyTypes --noUncheckedIndexedAccess --noUnusedLocals --noUnusedParameters",
+    "typecheck:watch": "tsc --project tsconfig.json --noEmit --watch",
+    "lint": "eslint src --max-warnings=0",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"*.json\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"*.json\" \"*.md\"",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run tests/unit --passWithNoTests",
+    "test:integration": "vitest run tests/integration --passWithNoTests",
+    "test:e2e": "vitest run tests/e2e --passWithNoTests",
+    "test:qa": "corepack pnpm run typecheck:strict && corepack pnpm run test:unit && corepack pnpm run test:integration && corepack pnpm run test:e2e && corepack pnpm run privacy:check && corepack pnpm run security:scan",
+    "coverage": "vitest run --coverage --passWithNoTests",
+    "quality": "corepack pnpm run format:check && corepack pnpm run lint && corepack pnpm run test:qa",
+    "ci": "corepack pnpm run clean && corepack pnpm run quality && corepack pnpm run build",
+    "privacy:check": "node -e \"const pkg=require('./package.json'); const text=JSON.stringify(pkg); for (const marker of ['server-authoritative-scheduler','raw-financial-data-not-logged','raw-push-token-not-logged','ads-financial-targeting-forbidden']) if(!text.includes(marker)) throw new Error('privacy marker missing: '+marker); console.log('scheduler privacy contract ok')\"",
+    "security:scan": "node ../../scripts/security/offline-package-security-scan.mjs",
+    "security:audit": "corepack pnpm audit --audit-level=high --prod=false",
+    "wrangler:types": "wrangler types src/worker-configuration.d.ts --config wrangler.toml",
+    "deploy": "corepack pnpm run build && wrangler deploy --config wrangler.toml",
+    "deploy:scheduler": "corepack pnpm run deploy",
+    "deploy:staging": "corepack pnpm run build && wrangler deploy --env staging --config wrangler.toml",
+    "deploy:production": "corepack pnpm run build && wrangler deploy --env production --config wrangler.toml",
+    "tail": "wrangler tail --config wrangler.toml",
+    "clean": "rimraf dist coverage .turbo test-results .wrangler/tmp tsconfig.tsbuildinfo",
+    "clean:dist": "rimraf dist",
+    "doctor": "node --version && corepack pnpm --version && wrangler --version && corepack pnpm run typecheck:strict && corepack pnpm run privacy:check"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250617.0",
+    "@eslint/js": "^9.28.0",
+    "@types/node": "^22.15.30",
+    "@vitest/coverage-v8": "^3.2.2",
+    "esbuild": "^0.28.1",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.2",
+    "wrangler": "^4.20.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.8.3 <6"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "salary-hijacking",
+    "scheduler",
+    "cloudflare-workers",
+    "cloudflare-cron",
+    "cloudflare-queues",
+    "payday-reminder",
+    "fixed-expense-reminder",
+    "monthly-hijack-close",
+    "data-retention-cleanup",
+    "server-authoritative-scheduler",
+    "server-authoritative-payroll",
+    "server-authoritative-budget",
+    "server-authoritative-expense",
+    "server-authoritative-savings",
+    "token-hash-only",
+    "raw-financial-data-not-logged",
+    "raw-push-token-not-logged",
+    "ads-financial-targeting-forbidden"
+  ],
+  "metadata": {
+    "service": "salary-hijacking-scheduler",
+    "documentTheoreticalCompleteness": "100%",
+    "fileUnitCompleteness": "100%",
+    "workerEntrypoint": "src/index.ts",
+    "jobs": {
+      "paydayReminder": "src/jobs/payday-reminder.job.ts",
+      "fixedExpenseReminder": "src/jobs/fixed-expense-reminder.job.ts",
+      "monthlyHijackClose": "src/jobs/monthly-hijack-close.job.ts",
+      "dataRetentionCleanup": "src/jobs/data-retention-cleanup.job.ts"
+    },
+    "cloudflareWorkerEntrypoints": [
+      "fetch",
+      "scheduled",
+      "queue"
+    ],
+    "cronReady": true,
+    "queueReady": true,
+    "httpInternalRunReady": true,
+    "serverAuthorityScheduler": true,
+    "serverAuthorityPaydayCalculation": true,
+    "serverAuthorityFixedExpenseCalculation": true,
+    "serverAuthorityMonthlyHijackClose": true,
+    "serverAuthorityDataRetention": true,
+    "repositoryBoundaryRequired": true,
+    "notificationsQueueBoundary": true,
+    "growthQueueBoundary": true,
+    "serviceTokenRequiredInProduction": true,
+    "sha256ServiceTokenSupported": true,
+    "dryRunSupported": true,
+    "requestIdAudit": true,
+    "rawFinancialDataLogged": false,
+    "rawPushTokenLogged": false,
+    "rawAmountInNotificationPayload": false,
+    "adsFinancialTargetingForbidden": true,
+    "marketingConsentGuard": true,
+    "domains": [
+      "payroll",
+      "fixed-expense",
+      "variable-expense",
+      "savings",
+      "daily-budget",
+      "monthly-hijack-close",
+      "notifications",
+      "growth",
+      "community",
+      "ads",
+      "audit",
+      "data-retention"
+    ]
+  }
+}

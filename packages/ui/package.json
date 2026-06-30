@@ -1,0 +1,125 @@
+{
+  "name": "@salary-hijacking/ui",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Salary Hijacking platform headless UI components and design tokens for payroll, budget, expense, savings, notification, growth, community, ads, and admin surfaces.",
+  "license": "UNLICENSED",
+  "author": "Salary Hijacking Platform",
+  "type": "module",
+  "sideEffects": false,
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json",
+    "tsconfig.ui.json"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./components": {
+      "types": "./dist/components/index.d.ts",
+      "import": "./dist/components/index.js",
+      "default": "./dist/components/index.js"
+    },
+    "./components/CommunityPostCard": {
+      "types": "./dist/components/CommunityPostCard.d.ts",
+      "import": "./dist/components/CommunityPostCard.js",
+      "default": "./dist/components/CommunityPostCard.js"
+    },
+    "./components/DailyBudgetCard": {
+      "types": "./dist/components/DailyBudgetCard.d.ts",
+      "import": "./dist/components/DailyBudgetCard.js",
+      "default": "./dist/components/DailyBudgetCard.js"
+    },
+    "./components/ExpenseListItem": {
+      "types": "./dist/components/ExpenseListItem.d.ts",
+      "import": "./dist/components/ExpenseListItem.js",
+      "default": "./dist/components/ExpenseListItem.js"
+    },
+    "./components/NotificationRow": {
+      "types": "./dist/components/NotificationRow.d.ts",
+      "import": "./dist/components/NotificationRow.js",
+      "default": "./dist/components/NotificationRow.js"
+    },
+    "./components/SalaryStatusCard": {
+      "types": "./dist/components/SalaryStatusCard.d.ts",
+      "import": "./dist/components/SalaryStatusCard.js",
+      "default": "./dist/components/SalaryStatusCard.js"
+    },
+    "./tokens": {
+      "types": "./dist/tokens/index.d.ts",
+      "import": "./dist/tokens/index.js",
+      "default": "./dist/tokens/index.js"
+    },
+    "./tokens/colors": {
+      "types": "./dist/tokens/colors.d.ts",
+      "import": "./dist/tokens/colors.js",
+      "default": "./dist/tokens/colors.js"
+    },
+    "./tokens/spacing": {
+      "types": "./dist/tokens/spacing.d.ts",
+      "import": "./dist/tokens/spacing.js",
+      "default": "./dist/tokens/spacing.js"
+    },
+    "./tokens/typography": {
+      "types": "./dist/tokens/typography.d.ts",
+      "import": "./dist/tokens/typography.js",
+      "default": "./dist/tokens/typography.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "imports": {
+    "#components/*": "./src/components/*.tsx",
+    "#tokens/*": "./src/tokens/*.ts"
+  },
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','.turbo','coverage','tsconfig.ui.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "prepare:barrels": "node scripts/prepare-ui.mjs --barrels",
+    "prepare:tsconfig": "node scripts/prepare-ui.mjs --tsconfig",
+    "prepare:ui": "corepack pnpm run prepare:barrels && corepack pnpm run prepare:tsconfig",
+    "typecheck": "corepack pnpm run prepare:ui && tsc -p tsconfig.ui.json --noEmit",
+    "build": "corepack pnpm run clean && corepack pnpm run prepare:ui && tsc -p tsconfig.ui.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
+    "validate:dist": "node -e \"const fs=require('node:fs'); const required='dist/index.js dist/index.d.ts dist/components/index.js dist/components/index.d.ts dist/components/CommunityPostCard.js dist/components/CommunityPostCard.d.ts dist/components/DailyBudgetCard.js dist/components/DailyBudgetCard.d.ts dist/components/ExpenseListItem.js dist/components/ExpenseListItem.d.ts dist/components/NotificationRow.js dist/components/NotificationRow.d.ts dist/components/SalaryStatusCard.js dist/components/SalaryStatusCard.d.ts dist/tokens/index.js dist/tokens/index.d.ts dist/tokens/colors.js dist/tokens/colors.d.ts dist/tokens/spacing.js dist/tokens/spacing.d.ts dist/tokens/typography.js dist/tokens/typography.d.ts'.split(' '); const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[ui] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[ui] dist export map validation passed.');\"",
+    "check:exports": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['.','./components','./components/CommunityPostCard','./components/DailyBudgetCard','./components/ExpenseListItem','./components/NotificationRow','./components/SalaryStatusCard','./tokens','./tokens/colors','./tokens/spacing','./tokens/typography','./package.json']; const missing=required.filter((key)=>!(key in pkg.exports)); if (missing.length) { console.error('Missing exports: '+missing.join(', ')); process.exit(1); } for (const [key,value] of Object.entries(pkg.exports)) { if (key==='./package.json') continue; for (const field of ['types','import','default']) { if (!value || typeof value !== 'object' || !(field in value)) { console.error('Invalid export '+key+' missing '+field); process.exit(1); } } }\"",
+    "check:policy": "node scripts/check-policy.mjs",
+    "check:completeness": "corepack pnpm run prepare:ui && tsx -e \"import { getCommunityPostCardCompletenessReport, getDailyBudgetCardCompletenessReport, getExpenseListItemCompletenessReport, getNotificationRowCompletenessReport, getSalaryStatusCardCompletenessReport, getColorsCompletenessReport, getSpacingCompletenessReport, getTypographyCompletenessReport } from './src/index.ts'; const reports=[getCommunityPostCardCompletenessReport(),getDailyBudgetCardCompletenessReport(),getExpenseListItemCompletenessReport(),getNotificationRowCompletenessReport(),getSalaryStatusCardCompletenessReport(),getColorsCompletenessReport(),getSpacingCompletenessReport(),getTypographyCompletenessReport()]; const failed=reports.filter((r)=>r.ok!==true || (Array.isArray(r.missing) && r.missing.length>0)); if (failed.length) { console.error(JSON.stringify(failed,null,2)); process.exit(1); } console.log('UI completeness OK: '+reports.length+' reports');\"",
+    "check:package": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['name','version','type','exports','files','scripts','devDependencies']; const missing=required.filter((key)=>!(key in pkg)); if (missing.length) { console.error('package.json missing '+missing.join(', ')); process.exit(1); } if (pkg.name !== '@salary-hijacking/ui') { console.error('Unexpected package name: '+pkg.name); process.exit(1); } if (pkg.sideEffects !== false) { console.error('sideEffects must be false'); process.exit(1); } const text=fs.readFileSync('package.json','utf8').toLowerCase(); const bad=['example'+'.com','your'+'-org']; const hit=bad.filter((term)=>text.includes(term)); if (hit.length) { console.error('package.json contains invalid metadata: '+hit.join(', ')); process.exit(1); }\"",
+    "quality": "corepack pnpm run check:package && corepack pnpm run check:exports && corepack pnpm run typecheck && corepack pnpm run check:policy && corepack pnpm run check:completeness && corepack pnpm run build",
+    "verify": "corepack pnpm run quality",
+    "prepublishOnly": "corepack pnpm run quality"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "payroll",
+    "budget",
+    "expense",
+    "savings",
+    "notification",
+    "community",
+    "headless-ui",
+    "design-tokens"
+  ],
+  "dependencies": {},
+  "peerDependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  },
+  "publishConfig": {
+    "access": "restricted",
+    "provenance": false
+  }
+}

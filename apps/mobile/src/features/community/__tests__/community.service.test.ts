@@ -1,0 +1,110 @@
+import { createCommunityService } from "../community.service";
+import type { CommunityApiTransport } from "../community.types";
+
+describe("community service", () => {
+  it("blocks unsafe content before it reaches the API", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.publishPost({
+        boardType: "FREE",
+        title: "연락 주세요",
+        content: "010-1234-5678로 연락 주세요.",
+        tags: [],
+        anonymous: true,
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_CONTENT_BLOCKED" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it("uses the API v1 community boundary and privacy-safe payloads", async () => {
+    const request = jest
+      .fn<
+        ReturnType<CommunityApiTransport["request"]>,
+        Parameters<CommunityApiTransport["request"]>
+      >()
+      .mockResolvedValue({
+        data: { postId: "post_1", status: "VISIBLE" },
+        meta: { requestId: "req_1" },
+      });
+    const service = createCommunityService({ request });
+
+    await service.publishPost({
+      boardType: "FREE",
+      title: "생활비 루틴",
+      content: "주간 단위로 나누니 계획을 지키기 쉬웠어요.",
+      tags: ["생활비"],
+      anonymous: true,
+    });
+
+    expect(request).toHaveBeenCalledWith("/api/v1/community/posts", {
+      method: "POST",
+      body: {
+        boardType: "FREE",
+        title: "생활비 루틴",
+        content: "주간 단위로 나누니 계획을 지키기 쉬웠어요.",
+        tags: ["생활비"],
+        anonymous: true,
+      },
+    });
+    expect(JSON.stringify(request.mock.calls[0])).not.toMatch(
+      /salaryAmount|accountNumber|token/i,
+    );
+  });
+
+  it("matches the implemented server routes for feed, reactions, comments, and reports", async () => {
+    const request = jest
+      .fn<
+        ReturnType<CommunityApiTransport["request"]>,
+        Parameters<CommunityApiTransport["request"]>
+      >()
+      .mockResolvedValue({ data: {} });
+    const service = createCommunityService({ request });
+
+    await service.listPosts({
+      boardType: "FREE",
+      sort: "LATEST",
+      page: 2,
+      pageSize: 20,
+      query: "루틴",
+    });
+    await service.setPostLiked("post_1", true);
+    await service.setPostLiked("post_1", false);
+    await service.listComments("post_1", 1, 20);
+    await service.updateComment("comment_1", {
+      content: "수정된 댓글",
+      anonymous: true,
+    });
+    await service.deleteComment("comment_1");
+    await service.reportComment("comment_1", "SPAM", "반복 홍보");
+
+    expect(request.mock.calls).toEqual([
+      [
+        "/api/v1/community/posts?boardType=FREE&sort=LATEST&page=2&pageSize=20&q=%EB%A3%A8%ED%8B%B4",
+      ],
+      ["/api/v1/community/posts/post_1/like", { method: "POST" }],
+      ["/api/v1/community/posts/post_1/like", { method: "DELETE" }],
+      ["/api/v1/community/posts/post_1/comments?page=1&pageSize=20"],
+      [
+        "/api/v1/community/comments/comment_1",
+        {
+          method: "PATCH",
+          body: { content: "수정된 댓글", anonymous: true },
+        },
+      ],
+      ["/api/v1/community/comments/comment_1", { method: "DELETE" }],
+      [
+        "/api/v1/community/comments/comment_1/report",
+        {
+          method: "POST",
+          body: { reasonType: "SPAM", reason: "반복 홍보" },
+        },
+      ],
+    ]);
+  });
+});

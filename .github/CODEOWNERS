@@ -1,0 +1,211 @@
+# 급여납치 CODEOWNERS
+# 목적:
+# - 급여납치 모노레포의 앱, API, DB, 인프라, 보안, 문서, QA, 릴리즈 변경에 대해
+#   책임 팀을 명확히 지정한다.
+# - GitHub Branch Protection 또는 Rulesets에서 "Require review from Code Owners"를 켜면
+#   아래 소유자가 PR 리뷰 게이트로 동작한다.
+# - 더 구체적인 패턴은 아래쪽에 배치한다. GitHub CODEOWNERS는 마지막 매칭 규칙이 우선한다.
+# - 공백이 포함된 문서 디렉터리는 GitHub 해석 오류를 피하기 위해 wildcard 패턴으로 보호한다.
+
+# -----------------------------------------------------------------------------
+# 기본 소유자
+# -----------------------------------------------------------------------------
+
+* @salary-hijacking/core-team
+
+# -----------------------------------------------------------------------------
+# GitHub 운영·협업·자동화
+# -----------------------------------------------------------------------------
+
+/.github/ @salary-hijacking/core-team @salary-hijacking/platform @salary-hijacking/security
+/.github/CODEOWNERS @salary-hijacking/core-team @salary-hijacking/security
+/.github/PULL_REQUEST_TEMPLATE.md @salary-hijacking/core-team @salary-hijacking/product
+/.github/README.md @salary-hijacking/core-team @salary-hijacking/product
+
+/.github/ISSUE_TEMPLATE/ @salary-hijacking/product @salary-hijacking/core-team
+/.github/ISSUE_TEMPLATE/bug_report.yml @salary-hijacking/core-team @salary-hijacking/security
+/.github/ISSUE_TEMPLATE/docs_task.yml @salary-hijacking/product @salary-hijacking/core-team
+/.github/ISSUE_TEMPLATE/feature_request.yml @salary-hijacking/product @salary-hijacking/core-team
+
+/.github/workflows/ @salary-hijacking/platform @salary-hijacking/security
+/.github/workflows/ci.yml @salary-hijacking/platform @salary-hijacking/security
+/.github/workflows/deploy-admin.yml @salary-hijacking/platform @salary-hijacking/admin @salary-hijacking/security
+/.github/workflows/deploy-api.yml @salary-hijacking/platform @salary-hijacking/backend @salary-hijacking/security
+/.github/workflows/mobile-build.yml @salary-hijacking/platform @salary-hijacking/mobile
+/.github/workflows/release.yml @salary-hijacking/platform @salary-hijacking/core-team @salary-hijacking/security
+/.github/workflows/security-scan.yml @salary-hijacking/security @salary-hijacking/platform
+
+# -----------------------------------------------------------------------------
+# 루트 모노레포 계약·패키지 매니저·품질 설정
+# -----------------------------------------------------------------------------
+
+/package.json @salary-hijacking/platform @salary-hijacking/core-team
+/pnpm-lock.yaml @salary-hijacking/platform @salary-hijacking/security
+/pnpm-workspace.yaml @salary-hijacking/platform @salary-hijacking/core-team
+/turbo.json @salary-hijacking/platform @salary-hijacking/core-team
+/tsconfig.json @salary-hijacking/platform @salary-hijacking/core-team
+/tsconfig*.json @salary-hijacking/platform @salary-hijacking/core-team
+/eslint.config.* @salary-hijacking/platform @salary-hijacking/core-team
+/prettier.config.* @salary-hijacking/platform @salary-hijacking/core-team
+/.editorconfig @salary-hijacking/platform @salary-hijacking/core-team
+/.gitignore @salary-hijacking/platform @salary-hijacking/core-team
+/README.md @salary-hijacking/product @salary-hijacking/core-team
+
+# -----------------------------------------------------------------------------
+# 사용자 앱·관리자 앱
+# -----------------------------------------------------------------------------
+
+/apps/ @salary-hijacking/core-team @salary-hijacking/platform
+
+/apps/mobile/ @salary-hijacking/mobile @salary-hijacking/core-team
+/apps/mobile/package.json @salary-hijacking/mobile @salary-hijacking/platform
+/apps/mobile/app.json @salary-hijacking/mobile
+/apps/mobile/app.config.* @salary-hijacking/mobile
+/apps/mobile/eas.json @salary-hijacking/mobile @salary-hijacking/platform
+/apps/mobile/src/ @salary-hijacking/mobile
+/apps/mobile/src/screens/ @salary-hijacking/mobile @salary-hijacking/product
+
+/apps/admin/ @salary-hijacking/admin @salary-hijacking/core-team
+/apps/admin/package.json @salary-hijacking/admin @salary-hijacking/platform
+/apps/admin/src/ @salary-hijacking/admin
+/apps/admin/src/routes/ @salary-hijacking/admin @salary-hijacking/product
+/apps/admin/src/security/ @salary-hijacking/admin @salary-hijacking/security
+
+# -----------------------------------------------------------------------------
+# 백엔드 서비스
+# -----------------------------------------------------------------------------
+
+/services/ @salary-hijacking/backend @salary-hijacking/platform
+
+/services/api/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/package.json @salary-hijacking/backend @salary-hijacking/platform
+/services/api/wrangler.toml @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/api/wrangler.json @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/api/wrangler.jsonc @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/api/src/ @salary-hijacking/backend
+/services/api/src/auth/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/src/payroll/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/src/budget/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/src/expenses/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/src/savings/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/src/ads/ @salary-hijacking/backend @salary-hijacking/security
+/services/api/src/admin/ @salary-hijacking/backend @salary-hijacking/admin @salary-hijacking/security
+
+/services/scheduler/ @salary-hijacking/backend @salary-hijacking/platform
+/services/scheduler/src/ @salary-hijacking/backend
+/services/scheduler/wrangler.toml @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/scheduler/wrangler.json @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/scheduler/wrangler.jsonc @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+
+/services/notifications/ @salary-hijacking/backend @salary-hijacking/platform
+/services/notifications/src/ @salary-hijacking/backend
+/services/notifications/wrangler.toml @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/notifications/wrangler.json @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+/services/notifications/wrangler.jsonc @salary-hijacking/backend @salary-hijacking/platform @salary-hijacking/security
+
+# -----------------------------------------------------------------------------
+# 공유 패키지
+# -----------------------------------------------------------------------------
+
+/packages/ @salary-hijacking/core-team @salary-hijacking/platform
+
+/packages/api-contract/ @salary-hijacking/backend @salary-hijacking/mobile @salary-hijacking/admin
+/packages/config/ @salary-hijacking/platform @salary-hijacking/core-team
+/packages/db/ @salary-hijacking/backend @salary-hijacking/security
+/packages/security/ @salary-hijacking/security @salary-hijacking/backend
+/packages/types/ @salary-hijacking/core-team @salary-hijacking/backend
+/packages/ui/ @salary-hijacking/mobile @salary-hijacking/admin @salary-hijacking/product
+/packages/utils/ @salary-hijacking/core-team @salary-hijacking/backend
+
+# -----------------------------------------------------------------------------
+# 데이터베이스·마이그레이션·정책
+# 실제 저장소 구조는 database/를 기준으로 하되, db/ 경로를 사용하는 경우도 보호한다.
+# -----------------------------------------------------------------------------
+
+/database/ @salary-hijacking/backend @salary-hijacking/security
+/database/migrations/ @salary-hijacking/backend @salary-hijacking/security
+/database/policies/ @salary-hijacking/backend @salary-hijacking/security
+/database/seeds/ @salary-hijacking/backend @salary-hijacking/security
+/database/erd/ @salary-hijacking/backend @salary-hijacking/product
+
+/db/ @salary-hijacking/backend @salary-hijacking/security
+/db/migrations/ @salary-hijacking/backend @salary-hijacking/security
+/db/policies/ @salary-hijacking/backend @salary-hijacking/security
+/db/seeds/ @salary-hijacking/backend @salary-hijacking/security
+
+# -----------------------------------------------------------------------------
+# 인프라·배포·환경변수
+# -----------------------------------------------------------------------------
+
+/infra/ @salary-hijacking/platform @salary-hijacking/security
+/infra/cloudflare/ @salary-hijacking/platform @salary-hijacking/security
+/infra/domain/ @salary-hijacking/platform
+/infra/env/ @salary-hijacking/platform @salary-hijacking/security
+/infra/github/ @salary-hijacking/platform @salary-hijacking/security
+/infra/neon/ @salary-hijacking/backend @salary-hijacking/security
+
+# -----------------------------------------------------------------------------
+# 스크립트·품질·릴리즈 자동화
+# -----------------------------------------------------------------------------
+
+/scripts/ @salary-hijacking/platform @salary-hijacking/core-team
+/scripts/db/ @salary-hijacking/backend @salary-hijacking/security
+/scripts/dev/ @salary-hijacking/platform @salary-hijacking/core-team
+/scripts/docs/ @salary-hijacking/product @salary-hijacking/core-team
+/scripts/quality/ @salary-hijacking/platform @salary-hijacking/security
+/scripts/release/ @salary-hijacking/platform @salary-hijacking/core-team @salary-hijacking/security
+
+# -----------------------------------------------------------------------------
+# QA·테스트·릴리즈 검증
+# -----------------------------------------------------------------------------
+
+/qa/ @salary-hijacking/core-team @salary-hijacking/product
+/qa/api/ @salary-hijacking/backend @salary-hijacking/product
+/qa/performance/ @salary-hijacking/platform @salary-hijacking/backend
+/qa/security/ @salary-hijacking/security
+/qa/test-cases/ @salary-hijacking/product @salary-hijacking/core-team
+/qa/test-plan/ @salary-hijacking/product @salary-hijacking/core-team
+/qa/uat/ @salary-hijacking/product @salary-hijacking/core-team
+
+# -----------------------------------------------------------------------------
+# 보안·개인정보·위협모델·취약점 대응
+# -----------------------------------------------------------------------------
+
+/security/ @salary-hijacking/security @salary-hijacking/core-team
+/security/privacy-impact-assessment.md @salary-hijacking/security @salary-hijacking/product
+/security/security-checklist.md @salary-hijacking/security @salary-hijacking/core-team
+/security/threat-model.md @salary-hijacking/security @salary-hijacking/backend
+/security/vulnerability-response.md @salary-hijacking/security @salary-hijacking/core-team
+
+# -----------------------------------------------------------------------------
+# 제품·문서·거버넌스
+# -----------------------------------------------------------------------------
+
+/docs/ @salary-hijacking/product @salary-hijacking/core-team
+/docs/README.md @salary-hijacking/product @salary-hijacking/core-team
+/docs/governance/ @salary-hijacking/product @salary-hijacking/core-team
+/docs/references/ @salary-hijacking/product @salary-hijacking/core-team
+/docs/final-documents/ @salary-hijacking/product @salary-hijacking/core-team
+
+# 급여납치 핵심 기획·정책·QA 문서군
+# 공백 포함 실제 디렉터리명은 4.*/, 5.*/ 형식으로 안전하게 매칭한다.
+/docs/final-documents/4.*/ @salary-hijacking/product @salary-hijacking/backend
+/docs/final-documents/5.*/ @salary-hijacking/backend @salary-hijacking/security
+/docs/final-documents/6.*/ @salary-hijacking/backend @salary-hijacking/security
+/docs/final-documents/7.*/ @salary-hijacking/platform @salary-hijacking/backend
+/docs/final-documents/8.*/ @salary-hijacking/security @salary-hijacking/product
+/docs/final-documents/9.*/ @salary-hijacking/product @salary-hijacking/core-team
+/docs/final-documents/10.*/ @salary-hijacking/admin @salary-hijacking/product
+/docs/final-documents/11.*/ @salary-hijacking/platform @salary-hijacking/core-team
+/docs/final-documents/12.*/ @salary-hijacking/core-team @salary-hijacking/product
+
+# -----------------------------------------------------------------------------
+# 최상위 민감 파일 재보호
+# -----------------------------------------------------------------------------
+
+/.env* @salary-hijacking/platform @salary-hijacking/security
+/*.env* @salary-hijacking/platform @salary-hijacking/security
+/*.pem @salary-hijacking/security
+/*.key @salary-hijacking/security
+/*.p12 @salary-hijacking/security
+/*.p8 @salary-hijacking/security

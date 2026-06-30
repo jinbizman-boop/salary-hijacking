@@ -1,0 +1,112 @@
+{
+  "name": "salary-hijacking-platform",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Salary Hijacking mobile salary management, budgeting, self-development, community, advertising and admin operations platform.",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*",
+    "tools/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run dev --parallel",
+    "start": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run start",
+    "preview": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run preview --parallel",
+    "build": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run build",
+    "build:api": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run build:api",
+    "build:admin": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run build:admin",
+    "build:mobile": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run build:mobile",
+    "lint": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run lint",
+    "typecheck": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run typecheck",
+    "test": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test",
+    "test:unit": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:unit",
+    "test:integration": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:integration",
+    "test:e2e": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:e2e",
+    "test:qa": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:qa",
+    "test:root-scripts": "node --test scripts/dev/run-with-corepack-pnpm.test.mjs scripts/quality/check-package-manager-scripts.test.mjs scripts/quality/check-external-integrations.test.mjs scripts/build/fix-esm-imports.test.mjs scripts/security/offline-package-security-scan.test.mjs scripts/release/check-release-readiness.test.mjs",
+    "check:package-manager-scripts": "node scripts/quality/check-package-manager-scripts.mjs",
+    "check:scripts": "node scripts/quality/check-scripts.mjs",
+    "check:external-integrations": "node scripts/quality/check-external-integrations.mjs",
+    "check:release-readiness": "node scripts/release/check-release-readiness.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "quality": "corepack pnpm run check:package-manager-scripts && corepack pnpm run check:scripts && corepack pnpm run check:external-integrations && corepack pnpm run test:root-scripts && node scripts/dev/run-with-corepack-pnpm.mjs turbo run quality --concurrency=1",
+    "ci": "corepack pnpm run format:check && corepack pnpm run quality && corepack pnpm run build",
+    "db:validate": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run db:validate",
+    "db:migrate": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run db:migrate",
+    "db:seed": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run db:seed",
+    "db:reset": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run db:reset",
+    "db:backup": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run db:backup",
+    "db:restore:check": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run db:restore:check",
+    "api:contract": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run api:contract",
+    "docs:lint": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run docs:lint",
+    "docs:build": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run docs:build",
+    "security:scan": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run security:scan",
+    "privacy:check": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run privacy:check",
+    "deploy": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy",
+    "deploy:api": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy:api",
+    "deploy:admin": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy:admin",
+    "deploy:mobile": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy:mobile",
+    "release": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run release",
+    "release:preflight": "node scripts/release/check-release-readiness.mjs",
+    "clean": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run clean && rimraf .turbo node_modules apps/*/node_modules services/*/node_modules packages/*/node_modules tools/*/node_modules",
+    "doctor": "corepack pnpm --version && node --version && turbo --version && corepack pnpm run db:validate && corepack pnpm run api:contract && corepack pnpm run privacy:check"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "payroll",
+    "budgeting",
+    "expense-tracking",
+    "savings",
+    "community",
+    "level-up",
+    "admin-console",
+    "neon-postgresql",
+    "cloudflare-workers",
+    "expo",
+    "nextjs",
+    "turborepo",
+    "pnpm-workspace"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@cloudflare/workerd",
+      "esbuild",
+      "sharp",
+      "workerd"
+    ],
+    "overrides": {
+      "@xmldom/xmldom@<0.8.13": "0.8.13",
+      "ajv@>=8.0.0 <8.18.0": "8.18.0",
+      "form-data@>=4.0.0 <4.0.6": "4.0.6",
+      "joi@<17.13.4": "17.13.4",
+      "minimatch@>=5.0.0 <5.1.8": "5.1.8",
+      "node-forge@<1.4.0": "1.4.0",
+      "postcss@<8.5.10": "8.5.10",
+      "tar@>=7.0.0 <7.5.16": "7.5.16",
+      "ws@>=8.0.0 <8.21.0": "8.21.0",
+      "yaml@>=2.0.0 <2.8.3": "2.8.3"
+    },
+    "peerDependencyRules": {
+      "ignoreMissing": []
+    }
+  }
+}

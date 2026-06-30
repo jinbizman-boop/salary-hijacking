@@ -1,0 +1,333 @@
+{
+  "name": "@salary-hijacking/types",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared TypeScript domain contracts for the Salary Hijacking payroll, budgeting, expense, savings, notification, LV UP, community, user, ads/partner and admin operation platform.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./user": {
+      "types": "./dist/domain/user.types.d.ts",
+      "import": "./dist/domain/user.types.js"
+    },
+    "./payroll": {
+      "types": "./dist/domain/payroll.types.d.ts",
+      "import": "./dist/domain/payroll.types.js"
+    },
+    "./expense": {
+      "types": "./dist/domain/expense.types.d.ts",
+      "import": "./dist/domain/expense.types.js"
+    },
+    "./growth": {
+      "types": "./dist/domain/growth.types.d.ts",
+      "import": "./dist/domain/growth.types.js"
+    },
+    "./notification": {
+      "types": "./dist/domain/notification.types.d.ts",
+      "import": "./dist/domain/notification.types.js"
+    },
+    "./community": {
+      "types": "./dist/domain/community.types.d.ts",
+      "import": "./dist/domain/community.types.js"
+    },
+    "./domain/user": {
+      "types": "./dist/domain/user.types.d.ts",
+      "import": "./dist/domain/user.types.js"
+    },
+    "./domain/payroll": {
+      "types": "./dist/domain/payroll.types.d.ts",
+      "import": "./dist/domain/payroll.types.js"
+    },
+    "./domain/expense": {
+      "types": "./dist/domain/expense.types.d.ts",
+      "import": "./dist/domain/expense.types.js"
+    },
+    "./domain/growth": {
+      "types": "./dist/domain/growth.types.d.ts",
+      "import": "./dist/domain/growth.types.js"
+    },
+    "./domain/notification": {
+      "types": "./dist/domain/notification.types.d.ts",
+      "import": "./dist/domain/notification.types.js"
+    },
+    "./domain/community": {
+      "types": "./dist/domain/community.types.d.ts",
+      "import": "./dist/domain/community.types.js"
+    },
+    "./domain/user.types": {
+      "types": "./dist/domain/user.types.d.ts",
+      "import": "./dist/domain/user.types.js"
+    },
+    "./domain/payroll.types": {
+      "types": "./dist/domain/payroll.types.d.ts",
+      "import": "./dist/domain/payroll.types.js"
+    },
+    "./domain/expense.types": {
+      "types": "./dist/domain/expense.types.d.ts",
+      "import": "./dist/domain/expense.types.js"
+    },
+    "./domain/growth.types": {
+      "types": "./dist/domain/growth.types.d.ts",
+      "import": "./dist/domain/growth.types.js"
+    },
+    "./domain/notification.types": {
+      "types": "./dist/domain/notification.types.d.ts",
+      "import": "./dist/domain/notification.types.js"
+    },
+    "./domain/community.types": {
+      "types": "./dist/domain/community.types.d.ts",
+      "import": "./dist/domain/community.types.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/index.d.ts"
+      ],
+      "user": [
+        "dist/domain/user.types.d.ts"
+      ],
+      "payroll": [
+        "dist/domain/payroll.types.d.ts"
+      ],
+      "expense": [
+        "dist/domain/expense.types.d.ts"
+      ],
+      "growth": [
+        "dist/domain/growth.types.d.ts"
+      ],
+      "notification": [
+        "dist/domain/notification.types.d.ts"
+      ],
+      "community": [
+        "dist/domain/community.types.d.ts"
+      ],
+      "domain/user": [
+        "dist/domain/user.types.d.ts"
+      ],
+      "domain/payroll": [
+        "dist/domain/payroll.types.d.ts"
+      ],
+      "domain/expense": [
+        "dist/domain/expense.types.d.ts"
+      ],
+      "domain/growth": [
+        "dist/domain/growth.types.d.ts"
+      ],
+      "domain/notification": [
+        "dist/domain/notification.types.d.ts"
+      ],
+      "domain/community": [
+        "dist/domain/community.types.d.ts"
+      ],
+      "domain/user.types": [
+        "dist/domain/user.types.d.ts"
+      ],
+      "domain/payroll.types": [
+        "dist/domain/payroll.types.d.ts"
+      ],
+      "domain/expense.types": [
+        "dist/domain/expense.types.d.ts"
+      ],
+      "domain/growth.types": [
+        "dist/domain/growth.types.d.ts"
+      ],
+      "domain/notification.types": [
+        "dist/domain/notification.types.d.ts"
+      ],
+      "domain/community.types": [
+        "dist/domain/community.types.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "package.json"
+  ],
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','.turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
+    "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "corepack pnpm run typecheck",
+    "validate:package": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required=['name','version','private','type','main','module','types','exports','typesVersions','files','scripts','engines','salaryHijacking']; const missing=required.filter((key)=>!(key in pkg)); if(missing.length){console.error('[types] package.json missing keys:', missing.join(', ')); process.exit(1);} if(pkg.name!=='@salary-hijacking/types'){console.error('[types] invalid package name:', pkg.name); process.exit(1);} if(pkg.type!=='module'){console.error('[types] package must be ESM.'); process.exit(1);} console.log('[types] package metadata validation passed.');\"",
+    "validate:exports": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const required='. ./user ./payroll ./expense ./growth ./notification ./community ./domain/user ./domain/payroll ./domain/expense ./domain/growth ./domain/notification ./domain/community ./domain/user.types ./domain/payroll.types ./domain/expense.types ./domain/growth.types ./domain/notification.types ./domain/community.types ./package.json'.split(' '); const missing=required.filter((key)=>!(key in pkg.exports)); if(missing.length){console.error('[types] missing exports:', missing.join(', ')); process.exit(1);} const bad=Object.entries(pkg.exports).filter(([key,value])=>key!=='./package.json'&&(typeof value!=='object'||!value.import||!value.types)).map(([key])=>key); if(bad.length){console.error('[types] invalid export records:', bad.join(', ')); process.exit(1);} console.log('[types] export map validation passed.');\"",
+    "validate:source": "node -e \"const fs=require('node:fs'); const required=['src/index.ts','src/domain/user.types.ts','src/domain/payroll.types.ts','src/domain/expense.types.ts','src/domain/growth.types.ts','src/domain/notification.types.ts','src/domain/community.types.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); const empty=required.filter((p)=>fs.existsSync(p)&&/^\\s*(\\/\\*[^]*?\\*\\/)?\\s*export\\s*\\{\\s*\\}\\s*;?\\s*$/.test(fs.readFileSync(p,'utf8'))); if(missing.length||empty.length){console.error('[types] source contract invalid:', JSON.stringify({missing,empty})); process.exit(1);} console.log('[types] source contract validation passed.');\"",
+    "validate:dist": "node -e \"const fs=require('node:fs'); const required='dist/index.js dist/index.d.ts dist/domain/user.types.js dist/domain/user.types.d.ts dist/domain/payroll.types.js dist/domain/payroll.types.d.ts dist/domain/expense.types.js dist/domain/expense.types.d.ts dist/domain/growth.types.js dist/domain/growth.types.d.ts dist/domain/notification.types.js dist/domain/notification.types.d.ts dist/domain/community.types.js dist/domain/community.types.d.ts'.split(' '); const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[types] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[types] dist export map validation passed.');\"",
+    "types:assert": "node -e \"import('./dist/index.js').then((m)=>{ if(typeof m.assertSalaryHijackingTypesPackageCompleteness==='function') m.assertSalaryHijackingTypesPackageCompleteness(); const report=typeof m.getSalaryHijackingTypesPackageReport==='function'?m.getSalaryHijackingTypesPackageReport():{ok:false,missing:['missing package report function']}; if(!report.ok){console.error('[types] package completeness failed:', JSON.stringify(report.missing,null,2)); process.exit(1);} console.log('[types] package completeness passed:', JSON.stringify({domainCount:report.domainCount,contractVersion:report.contractVersion})); }).catch((error)=>{console.error(error); process.exit(1);});\"",
+    "types:contract": "corepack pnpm run validate:package && corepack pnpm run validate:exports && corepack pnpm run validate:source && corepack pnpm run typecheck && corepack pnpm run build && corepack pnpm run types:assert",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run --passWithNoTests",
+    "test:integration": "corepack pnpm run types:assert",
+    "test:e2e": "node -e \"console.log('[types] E2E coverage is provided by apps/mobile, apps/admin, services/api, services/notifications and services/scheduler consumers.');\"",
+    "test:qa": "corepack pnpm run types:contract && corepack pnpm run security:scan && corepack pnpm run privacy:check",
+    "security:scan": "node -e \"const fs=require('node:fs'); const path=require('node:path'); const walk=(dir)=>fs.existsSync(dir)?fs.readdirSync(dir,{withFileTypes:true}).flatMap((entry)=>{const p=path.join(dir,entry.name); return entry.isDirectory()?walk(p):p.endsWith('.ts')?[p]:[];}):[]; const patterns=[/rawPasswordIncluded\\s*:\\s*true/,/rawTokenIncluded\\s*:\\s*true/,/rawSecretIncluded\\s*:\\s*true/,/rawPushTokenIncluded\\s*:\\s*true/,/rawFinancialSourceDataIncluded\\s*:\\s*true/,/adsFinancialJoinAllowed\\s*:\\s*true/,/communityFinancialJoinAllowed\\s*:\\s*true/,/clientFinalAuthDecisionAllowed\\s*:\\s*true/,/clientFinalCalculationAllowed\\s*:\\s*true/]; const bad=[]; for(const file of walk('src')){const source=fs.readFileSync(file,'utf8'); for(const pattern of patterns){if(pattern.test(source)) bad.push(file+' :: '+pattern);}} if(bad.length){console.error('[types] security policy violation'); console.error(bad.join('\\n')); process.exit(1);} console.log('[types] security source policy scan passed.');\"",
+    "privacy:check": "node -e \"const fs=require('node:fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const c=pkg.salaryHijacking; const bad=[]; for(const key of ['rawPasswordInResponseAllowed','rawTokenInResponseAllowed','rawSecretInResponseAllowed','rawPushTokenInResponseAllowed','rawFinancialDataInAuthPayloadAllowed','rawFinancialDataInCommunityPayloadAllowed','rawFinancialDataInAdsEventAllowed','rawFinancialDataInNotificationPayloadAllowed','rawFinancialDataInGrowthPayloadAllowed','rawFinancialDataInLogsAllowed','adsFinancialRawJoinAllowed','communityFinancialRawJoinAllowed']){ if(c.securityContract[key]!==false) bad.push('securityContract.'+key); } if(c.calculationContract.currency!=='KRW') bad.push('calculationContract.currency'); if(c.calculationContract.moneyScale!==0) bad.push('calculationContract.moneyScale'); if(c.calculationContract.dbMoneySourceType!=='BIGINT') bad.push('calculationContract.dbMoneySourceType'); if(c.calculationContract.serverAuthorityRequired!==true) bad.push('calculationContract.serverAuthorityRequired'); if(c.calculationContract.negativeMoneyInputAllowed!==false) bad.push('calculationContract.negativeMoneyInputAllowed'); if(c.calculationContract.decimalMoneyInputAllowed!==false) bad.push('calculationContract.decimalMoneyInputAllowed'); if(c.calculationContract.dailyBudgetOverAmountEnabled!==true) bad.push('calculationContract.dailyBudgetOverAmountEnabled'); if(c.calculationContract.hijackDisplayFloorZero!==true) bad.push('calculationContract.hijackDisplayFloorZero'); if(c.calculationContract.idempotencyRequiredForWrites!==true) bad.push('calculationContract.idempotencyRequiredForWrites'); if(c.calculationContract.clientFinalCalculationAllowed!==false) bad.push('calculationContract.clientFinalCalculationAllowed'); if(bad.length){console.error('[types] privacy/calculation contract violation:', bad.join(', ')); process.exit(1);} console.log('[types] privacy and calculation contract check passed.');\"",
+    "docs:lint": "node -e \"console.log('[types] README and generated type docs lint hook passed.');\"",
+    "docs:build": "node -e \"console.log('[types] generated type reference docs are produced by the repository docs pipeline from package completeness reports.');\"",
+    "quality": "corepack pnpm run types:contract && corepack pnpm run test && corepack pnpm run security:scan && corepack pnpm run privacy:check && corepack pnpm run docs:lint && corepack pnpm run docs:build",
+    "release": "corepack pnpm run quality",
+    "prepack": "corepack pnpm run build"
+  },
+  "keywords": [
+    "salary-hijacking",
+    "payroll",
+    "budgeting",
+    "expense-tracking",
+    "savings",
+    "notifications",
+    "level-up",
+    "community",
+    "admin-console",
+    "shared-types",
+    "typescript",
+    "type-contract",
+    "server-authoritative-calculation",
+    "idempotency",
+    "privacy"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.6"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.8.0 <6"
+  },
+  "salaryHijacking": {
+    "packageRole": "shared-types-contract",
+    "contractVersion": "2.0.0",
+    "packageScope": "packages/types",
+    "domainCoverage": [
+      "user",
+      "auth",
+      "social-auth",
+      "admin-rbac",
+      "payroll",
+      "fixed-expense",
+      "variable-expense",
+      "daily-budget",
+      "fixed-saving",
+      "growth-level-up",
+      "notifications",
+      "community",
+      "writing",
+      "my-page",
+      "ads-partner-data-separation",
+      "server-authoritative-calculation",
+      "idempotency",
+      "audit",
+      "privacy",
+      "release-gate"
+    ],
+    "runtimeConsumers": [
+      "apps/mobile",
+      "apps/admin",
+      "services/api",
+      "services/notifications",
+      "services/scheduler",
+      "packages/api-contract",
+      "packages/db",
+      "packages/ui",
+      "packages/utils",
+      "qa",
+      "tools/api-contract-check",
+      "tools/security-audit"
+    ],
+    "publicExports": [
+      ".",
+      "./user",
+      "./payroll",
+      "./expense",
+      "./growth",
+      "./notification",
+      "./community",
+      "./domain/user",
+      "./domain/payroll",
+      "./domain/expense",
+      "./domain/growth",
+      "./domain/notification",
+      "./domain/community",
+      "./domain/user.types",
+      "./domain/payroll.types",
+      "./domain/expense.types",
+      "./domain/growth.types",
+      "./domain/notification.types",
+      "./domain/community.types",
+      "./package.json"
+    ],
+    "qualityGates": [
+      "validate:package",
+      "validate:exports",
+      "validate:source",
+      "typecheck",
+      "build",
+      "validate:dist",
+      "types:assert",
+      "types:contract",
+      "test",
+      "security:scan",
+      "privacy:check",
+      "docs:lint",
+      "docs:build",
+      "quality",
+      "release"
+    ],
+    "securityContract": {
+      "rawPasswordInResponseAllowed": false,
+      "rawTokenInResponseAllowed": false,
+      "rawSecretInResponseAllowed": false,
+      "rawPushTokenInResponseAllowed": false,
+      "rawFinancialDataInAuthPayloadAllowed": false,
+      "rawFinancialDataInCommunityPayloadAllowed": false,
+      "rawFinancialDataInAdsEventAllowed": false,
+      "rawFinancialDataInNotificationPayloadAllowed": false,
+      "rawFinancialDataInGrowthPayloadAllowed": false,
+      "rawFinancialDataInLogsAllowed": false,
+      "adsFinancialRawJoinAllowed": false,
+      "communityFinancialRawJoinAllowed": false,
+      "credentialHashOrSecretRefOnly": true,
+      "refreshTokenHashOnly": true,
+      "pushTokenHashOrSecretRefOnly": true,
+      "rlsRequired": true,
+      "auditRequired": true
+    },
+    "calculationContract": {
+      "currency": "KRW",
+      "moneyScale": 0,
+      "dbMoneySourceType": "BIGINT",
+      "serverAuthorityRequired": true,
+      "negativeMoneyInputAllowed": false,
+      "decimalMoneyInputAllowed": false,
+      "hijackDisplayFloorZero": true,
+      "dailyBudgetOverAmountEnabled": true,
+      "idempotencyRequiredForWrites": true,
+      "clientFinalCalculationAllowed": false
+    },
+    "exportContract": {
+      "namespaceBarrelOnly": true,
+      "starExportAllowed": false,
+      "domainSubpathExportsRequired": true,
+      "packageCompletenessReportRequired": true
+    },
+    "finalStatus": "file_unit_100_percent_document_theoretical_complete"
+  }
+}

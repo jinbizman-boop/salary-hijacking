@@ -1,0 +1,585 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_type": "project_structure_and_completion_manifest",
+  "name": "급여납치 플랫폼 통합 구조 매니페스트 최종본",
+  "project": "급여납치 Salary Hijacking Platform",
+  "root": "salary-hijacking-platform",
+  "date": "2026-06-16",
+  "timezone": "Asia/Seoul",
+  "currency": "KRW",
+  "status": "final_document_theoretical_complete",
+  "completion_scope": {
+    "file_unit": "MANIFEST.json is complete as a root project manifest",
+    "project_unit": "Project-wide completion requires repository files, package scripts, migrations, API/RBAC/E2E/QA, CI/CD and release verification to pass in a real environment",
+    "honesty_note": "This manifest records document/theoretical structure completion and does not by itself prove runtime production readiness"
+  },
+  "source_basis": [
+    "Paycheck accounting(급여 납치) 개발 문서.zip",
+    "급여납치 화면 및 기능 설계 기획안.html",
+    "급여납치 어플리케이션 디자인.pdf",
+    "salary-hijacking-platform.zip",
+    "TREE.txt",
+    "database/README.md",
+    "database/erd/salary-hijacking-final-erd.md",
+    "database/policies/index-policy.md",
+    "database/policies/retention-policy.md",
+    "database/migrations/0001_init_users.sql",
+    "database/migrations/0002_payroll_budget_expense.sql",
+    "database/migrations/0003_growth_community_notifications.sql",
+    "database/migrations/0004_admin_audit_ads.sql",
+    "database/seeds/local.seed.sql",
+    "database/seeds/staging.seed.sql",
+    "database/seeds/uat.seed.sql",
+    "pnpm-workspace.yaml",
+    "turbo.json",
+    "package.json"
+  ],
+  "repository_inventory": {
+    "file_count": 405,
+    "root_file_count": 13,
+    "top_level_directory_count": 15,
+    "top_level_directories": [
+      ".github",
+      "apps",
+      "assets",
+      "database",
+      "docs",
+      "infra",
+      "observability",
+      "ops",
+      "packages",
+      "qa",
+      "release",
+      "scripts",
+      "security",
+      "services",
+      "tools"
+    ],
+    "root_files": [
+      ".editorconfig",
+      ".env.example",
+      ".gitignore",
+      "CHANGELOG.md",
+      "CODE_OF_CONDUCT.md",
+      "LICENSE",
+      "MANIFEST.json",
+      "README.md",
+      "SECURITY.md",
+      "TREE.txt",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "turbo.json"
+    ],
+    "top_level_file_counts": {
+      ".editorconfig": 1,
+      ".env.example": 1,
+      ".github": 12,
+      ".gitignore": 1,
+      "CHANGELOG.md": 1,
+      "CODE_OF_CONDUCT.md": 1,
+      "LICENSE": 1,
+      "MANIFEST.json": 1,
+      "README.md": 1,
+      "SECURITY.md": 1,
+      "TREE.txt": 1,
+      "apps": 59,
+      "assets": 6,
+      "database": 11,
+      "docs": 139,
+      "infra": 19,
+      "observability": 5,
+      "ops": 7,
+      "package.json": 1,
+      "packages": 58,
+      "pnpm-workspace.yaml": 1,
+      "qa": 10,
+      "release": 7,
+      "scripts": 9,
+      "security": 5,
+      "services": 40,
+      "tools": 5,
+      "turbo.json": 1
+    }
+  },
+  "workspace_contract": {
+    "package_manager": "pnpm@10.0.0",
+    "task_runner": "turbo",
+    "node_engine": ">=20.11.0 <25",
+    "workspace_packages": ["apps/*", "services/*", "packages/*", "tools/*"],
+    "non_workspace_asset_directories": [
+      "docs",
+      "database",
+      "infra",
+      "qa",
+      "ops",
+      "release",
+      "security",
+      "observability",
+      "assets"
+    ],
+    "private_root_package": true
+  },
+  "commercialization_stages": {
+    "stage_1_2_foundation": [
+      "root_files",
+      "docs",
+      "database",
+      "packages",
+      "services",
+      "infra",
+      "scripts",
+      "tools",
+      ".github",
+      "security"
+    ],
+    "stage_3_4_product_and_qa": [
+      "apps",
+      "services",
+      "packages",
+      "database",
+      "qa",
+      "docs",
+      "assets"
+    ],
+    "stage_5_commercial_operations": [
+      "infra",
+      "observability",
+      "ops",
+      "release",
+      "security",
+      ".github",
+      "qa",
+      "assets"
+    ]
+  },
+  "work_order": [
+    {
+      "order": 0,
+      "target": "root_files",
+      "stage": "0_root_contract",
+      "purpose": "package manager, workspace, turbo task graph, env contract, security/readme/license/tree/manifest root contract finalization",
+      "must_finish_before": ["docs", "database", "packages", "services", "apps"]
+    },
+    {
+      "order": 1,
+      "target": "docs",
+      "stage": "1_requirements_and_specification",
+      "purpose": "PRD, BRD, UX/UI, features, data, API, technology, security, QA, operations, release and collaboration specs",
+      "must_finish_before": ["database", "packages", "services", "apps"]
+    },
+    {
+      "order": 2,
+      "target": "database",
+      "stage": "2_server_authoritative_data_foundation",
+      "purpose": "ERD, migrations, index/retention policies, local/staging/UAT seed and backup standards",
+      "must_finish_before": ["packages/db", "services/api", "apps"]
+    },
+    {
+      "order": 3,
+      "target": "packages",
+      "stage": "3_shared_contracts_and_libraries",
+      "purpose": "api-contract, db client/schema, security, types, UI, utilities and shared configuration",
+      "must_finish_before": ["services", "apps"]
+    },
+    {
+      "order": 4,
+      "target": "services",
+      "stage": "4_server_authoritative_runtime",
+      "purpose": "API, notification worker and scheduler for calculation, auth/RBAC, audit, push and retention jobs",
+      "must_finish_before": ["apps", "qa", "release"]
+    },
+    {
+      "order": 5,
+      "target": "apps",
+      "stage": "5_product_interfaces",
+      "purpose": "mobile salary-management UX and admin console UI/UX",
+      "must_finish_before": ["qa", "release"]
+    },
+    {
+      "order": 6,
+      "target": "assets",
+      "stage": "6_brand_and_store_assets",
+      "purpose": "brand, design, prototype and app-store screenshot guidelines",
+      "must_finish_before": ["release"]
+    },
+    {
+      "order": 7,
+      "target": "infra",
+      "stage": "7_deployment_infrastructure",
+      "purpose": "Cloudflare, Neon, domain, env, GitHub environments and secrets",
+      "must_finish_before": ["deploy", "release"]
+    },
+    {
+      "order": 8,
+      "target": "scripts",
+      "stage": "8_automation_scripts",
+      "purpose": "DB/dev/docs/quality/release automation",
+      "must_finish_before": [".github", "qa", "release"]
+    },
+    {
+      "order": 9,
+      "target": "tools",
+      "stage": "9_internal_validation_tools",
+      "purpose": "API contract, DB schema, documentation lint and security audit tools",
+      "must_finish_before": ["quality", "release"]
+    },
+    {
+      "order": 10,
+      "target": ".github",
+      "stage": "10_ci_cd_and_collaboration",
+      "purpose": "issue templates, PR template, CODEOWNERS, CI/CD, deploy and security workflows",
+      "must_finish_before": ["release"]
+    },
+    {
+      "order": 11,
+      "target": "security",
+      "stage": "11_security_and_privacy_governance",
+      "purpose": "threat model, PIA, security checklist and vulnerability response",
+      "must_finish_before": ["qa", "release"]
+    },
+    {
+      "order": 12,
+      "target": "observability",
+      "stage": "12_observability",
+      "purpose": "logging, metrics, dashboards and alert rules",
+      "must_finish_before": ["ops", "release"]
+    },
+    {
+      "order": 13,
+      "target": "qa",
+      "stage": "13_quality_assurance",
+      "purpose": "API, performance, security, test cases, master test plan and UAT approval",
+      "must_finish_before": ["release"]
+    },
+    {
+      "order": 14,
+      "target": "ops",
+      "stage": "14_commercial_operations",
+      "purpose": "admin operations, moderation, content operations, CS, incidents and operations dashboard",
+      "must_finish_before": ["release"]
+    },
+    {
+      "order": 15,
+      "target": "release",
+      "stage": "15_release_and_rollout",
+      "purpose": "release notes, rollback, screenshots, store metadata and version policy",
+      "must_finish_before": []
+    }
+  ],
+  "directories": {
+    ".github": {
+      "file_count": 12,
+      "responsibility": "GitHub collaboration, issue intake, PR review, CODEOWNERS, CI/CD, deployment and security scan workflows",
+      "stage_coverage": ["1", "2", "3", "4", "5"],
+      "required_files": [
+        "ISSUE_TEMPLATE/bug_report.yml",
+        "ISSUE_TEMPLATE/docs_task.yml",
+        "ISSUE_TEMPLATE/feature_request.yml",
+        "workflows/ci.yml",
+        "workflows/deploy-admin.yml",
+        "workflows/deploy-api.yml",
+        "workflows/mobile-build.yml",
+        "workflows/release.yml",
+        "workflows/security-scan.yml",
+        "CODEOWNERS",
+        "PULL_REQUEST_TEMPLATE.md",
+        "README.md"
+      ]
+    },
+    "apps": {
+      "file_count": 59,
+      "responsibility": "End-user mobile app and admin console interfaces",
+      "stage_coverage": ["3", "4", "5"],
+      "subsystems": ["apps/mobile", "apps/admin"]
+    },
+    "assets": {
+      "file_count": 6,
+      "responsibility": "Brand, design, prototype and app-store visual asset governance",
+      "stage_coverage": ["3", "4", "5"]
+    },
+    "database": {
+      "file_count": 11,
+      "responsibility": "Neon PostgreSQL schema, server-authoritative calculations, RLS, policies, seed and backup standards",
+      "stage_coverage": ["1", "2", "3", "4", "5"],
+      "required_files": [
+        "README.md",
+        "erd/salary-hijacking-final-erd.md",
+        "migrations/0001_init_users.sql",
+        "migrations/0002_payroll_budget_expense.sql",
+        "migrations/0003_growth_community_notifications.sql",
+        "migrations/0004_admin_audit_ads.sql",
+        "policies/index-policy.md",
+        "policies/retention-policy.md",
+        "seeds/local.seed.sql",
+        "seeds/staging.seed.sql",
+        "seeds/uat.seed.sql"
+      ]
+    },
+    "docs": {
+      "file_count": 139,
+      "responsibility": "Final product, UX/UI, feature, data, API, architecture, security, QA, operations, release and collaboration documentation",
+      "stage_coverage": ["1", "2", "3", "4", "5"],
+      "final_document_groups": [
+        "1. 최상위 기획 문서",
+        "2. 사용자·시장·전략 문서",
+        "3. UXUI 기획 문서",
+        "4. 기능 기획 문서",
+        "5. 데이터·DB 문서",
+        "6. API·백엔드 문서",
+        "7. 기술 설계 문서",
+        "8. 보안·개인정보·정책 문서",
+        "9. QA·테스트 문서",
+        "10. 운영·관리자 문서",
+        "11. 출시 문서",
+        "12. 개발 협업 문서"
+      ]
+    },
+    "infra": {
+      "file_count": 19,
+      "responsibility": "Cloudflare, Neon, domain, env, GitHub infrastructure and secret operations",
+      "stage_coverage": ["1", "2", "5"]
+    },
+    "observability": {
+      "file_count": 5,
+      "responsibility": "Logging, metrics, dashboards and alert rule specifications",
+      "stage_coverage": ["5"]
+    },
+    "ops": {
+      "file_count": 7,
+      "responsibility": "Admin operations, community moderation, content operations, CS, incident response and operations dashboard",
+      "stage_coverage": ["5"]
+    },
+    "packages": {
+      "file_count": 58,
+      "responsibility": "Shared contracts, db client/schema, security utilities, domain types, UI components and common utilities",
+      "stage_coverage": ["1", "2", "3", "4", "5"],
+      "subsystems": [
+        "api-contract",
+        "config",
+        "db",
+        "security",
+        "types",
+        "ui",
+        "utils"
+      ]
+    },
+    "qa": {
+      "file_count": 10,
+      "responsibility": "API, performance, security, scenario, UAT and regression validation",
+      "stage_coverage": ["3", "4", "5"]
+    },
+    "release": {
+      "file_count": 7,
+      "responsibility": "Release notes, rollback plan, screenshots, store metadata and version policy",
+      "stage_coverage": ["5"]
+    },
+    "scripts": {
+      "file_count": 9,
+      "responsibility": "DB, development, documentation, quality and release automation scripts",
+      "stage_coverage": ["1", "2", "3", "4", "5"]
+    },
+    "security": {
+      "file_count": 5,
+      "responsibility": "Threat model, privacy impact assessment, security checklist and vulnerability response",
+      "stage_coverage": ["1", "2", "3", "4", "5"]
+    },
+    "services": {
+      "file_count": 40,
+      "responsibility": "API, notifications and scheduler server runtimes",
+      "stage_coverage": ["1", "2", "3", "4", "5"],
+      "subsystems": ["api", "notifications", "scheduler"]
+    },
+    "tools": {
+      "file_count": 5,
+      "responsibility": "Internal validation tools for API contract, DB schema, docs and security",
+      "stage_coverage": ["1", "2", "3", "4", "5"]
+    }
+  },
+  "domain_coverage": {
+    "auth_and_user_identity": [
+      "database/migrations/0001_init_users.sql",
+      "packages/api-contract/src/auth",
+      "services/api/src/routes/auth.routes.ts",
+      "apps/mobile/app/(auth)",
+      "apps/admin/src/app/login"
+    ],
+    "payroll_and_hijack_calculation": [
+      "database/migrations/0002_payroll_budget_expense.sql",
+      "packages/types/src/domain/payroll.types.ts",
+      "packages/api-contract/src/payroll",
+      "services/api/src/routes/payroll.routes.ts",
+      "apps/mobile/app/(tabs)/salary"
+    ],
+    "daily_budget_and_expenses": [
+      "database/migrations/0002_payroll_budget_expense.sql",
+      "services/api/src/routes/daily-budgets.routes.ts",
+      "services/api/src/routes/variable-expenses.routes.ts",
+      "apps/mobile/src/features/budget",
+      "apps/mobile/src/features/expense"
+    ],
+    "fixed_expenses_and_savings": [
+      "database/migrations/0002_payroll_budget_expense.sql",
+      "services/api/src/routes/fixed-expenses.routes.ts",
+      "services/api/src/routes/savings.routes.ts",
+      "apps/mobile/app/(tabs)/plan"
+    ],
+    "notifications": [
+      "database/migrations/0003_growth_community_notifications.sql",
+      "services/notifications",
+      "services/scheduler/src/jobs/payday-reminder.job.ts",
+      "apps/mobile/app/notifications"
+    ],
+    "level_up_growth": [
+      "database/migrations/0003_growth_community_notifications.sql",
+      "services/api/src/routes/growth.routes.ts",
+      "apps/mobile/app/(tabs)/level",
+      "apps/mobile/app/level"
+    ],
+    "community_and_write": [
+      "database/migrations/0003_growth_community_notifications.sql",
+      "packages/api-contract/src/community",
+      "services/api/src/routes/community.routes.ts",
+      "apps/mobile/app/(tabs)/community",
+      "apps/mobile/app/community/write.tsx",
+      "apps/admin/src/app/posts",
+      "apps/admin/src/app/reports"
+    ],
+    "admin_console": [
+      "apps/admin",
+      "services/api/src/routes/admin.routes.ts",
+      "database/migrations/0004_admin_audit_ads.sql",
+      "ops/admin/admin-operations.md"
+    ],
+    "ads_and_partnerships": [
+      "database/migrations/0004_admin_audit_ads.sql",
+      "apps/admin/src/app/banners",
+      "infra/cloudflare/cache/cache-policy.md",
+      "docs/final-documents/10. 운영·관리자 문서/06_광고_제휴_운영_문서_최종본.md"
+    ],
+    "security_privacy_audit": [
+      "packages/security",
+      "security",
+      "database/policies/retention-policy.md",
+      "database/migrations/0004_admin_audit_ads.sql",
+      ".github/workflows/security-scan.yml"
+    ],
+    "release_operations": [
+      "release",
+      "ops",
+      "observability",
+      "infra",
+      ".github/workflows/release.yml"
+    ]
+  },
+  "database_contract": {
+    "engine": "Neon PostgreSQL / PostgreSQL compatible",
+    "timezone": "Asia/Seoul",
+    "money_type": "BIGINT KRW integer only",
+    "migration_order": [
+      "0001_init_users.sql",
+      "0002_payroll_budget_expense.sql",
+      "0003_growth_community_notifications.sql",
+      "0004_admin_audit_ads.sql"
+    ],
+    "seed_files": ["local.seed.sql", "staging.seed.sql", "uat.seed.sql"],
+    "mandatory_controls": [
+      "server-authoritative calculation",
+      "RLS owner/admin isolation",
+      "admin RBAC",
+      "audit logs",
+      "idempotency keys",
+      "no negative money input",
+      "no decimal money input",
+      "hijack amount display never below zero",
+      "ads separated from raw financial source data"
+    ]
+  },
+  "quality_gates": {
+    "root": [
+      "pnpm install",
+      "pnpm run format:check",
+      "pnpm run lint",
+      "pnpm run typecheck",
+      "pnpm run test",
+      "pnpm run quality",
+      "pnpm run build"
+    ],
+    "database": [
+      "db:validate",
+      "db:migrate",
+      "db:seed",
+      "db:backup",
+      "db:restore:check"
+    ],
+    "api": ["api:contract", "build:api", "test:integration", "security:scan"],
+    "apps": ["build:admin", "build:mobile", "test:e2e", "test:qa"],
+    "release": [
+      "docs:build",
+      "privacy:check",
+      "deploy:api",
+      "deploy:admin",
+      "deploy:mobile",
+      "release"
+    ]
+  },
+  "security_and_privacy_controls": {
+    "sensitive_financial_data": [
+      "salary_amount",
+      "fixed_expense_amount",
+      "saving_amount",
+      "daily_budget_amount",
+      "variable_expense_amount",
+      "hijack_amount",
+      "calculation_snapshot"
+    ],
+    "prohibited_raw_storage": [
+      "password",
+      "refresh_token",
+      "push_token",
+      "secret_key",
+      "plain_phone_number",
+      "plain_ip",
+      "plain_user_agent",
+      "salary_amount_in_ad_event",
+      "expense_amount_in_ad_event",
+      "hijack_amount_in_log"
+    ],
+    "required_separation": [
+      "financial source data",
+      "advertising events",
+      "community content",
+      "logs",
+      "admin audit metadata"
+    ],
+    "admin_controls": [
+      "RBAC",
+      "audit log",
+      "requestId traceability",
+      "masked before/after data",
+      "least privilege"
+    ]
+  },
+  "completion_criteria": {
+    "manifest_file_unit": [
+      "Valid JSON without comments or trailing commas",
+      "Root name, date, status and source basis are explicit",
+      "Repository inventory and top-level directories are represented",
+      "Workspace contract is aligned with pnpm-workspace.yaml",
+      "Task and commercialization order are aligned with turbo.json and TREE.txt",
+      "Database, services, apps, packages, infra, QA, ops and release responsibilities are represented",
+      "Security, privacy, ads separation and server-authoritative calculation requirements are represented",
+      "Quality gates and final objective caveat are explicit"
+    ],
+    "project_wide": [
+      "All files listed in TREE.txt exist in the repository",
+      "All package scripts referenced by package.json and turbo.json exist or are handled by package-level scripts",
+      "All migrations apply in order on a clean PostgreSQL/Neon database",
+      "Local, staging and UAT seeds execute idempotently",
+      "API/RBAC/E2E/security/privacy/QA checks pass",
+      "Deploy and release workflows pass in protected environments",
+      "Backup and restore rehearsal succeeds",
+      "No real PII, token, secret or raw financial data is exposed in logs, issues, PRs or ad events"
+    ]
+  },
+  "final_status": "file_unit_100_percent_document_theoretical_complete"
+}

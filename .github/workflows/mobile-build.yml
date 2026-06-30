@@ -1,0 +1,486 @@
+name: mobile-build
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "services/api/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/mobile-build.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - "apps/mobile/**"
+      - "packages/**"
+      - "services/api/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/mobile-build.yml"
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "EAS Build 플랫폼"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - android
+          - ios
+      build_profile:
+        description: "EAS Build 프로필"
+        required: true
+        default: "preview"
+        type: choice
+        options:
+          - development
+          - preview
+          - production
+      run_eas_build:
+        description: "EAS 원격 빌드를 실행합니다."
+        required: true
+        default: true
+        type: boolean
+      wait_for_build:
+        description: "EAS 빌드 완료까지 대기합니다. production 배포 검증 시 권장합니다."
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event.inputs.platform || 'auto' }}-${{ github.event.inputs.build_profile || 'auto' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  MOBILE_APP_DIR: ${{ vars.MOBILE_APP_DIR || 'apps/mobile' }}
+  MOBILE_DIST_DIR: ${{ vars.MOBILE_DIST_DIR || 'apps/mobile/dist' }}
+
+jobs:
+  verify-mobile:
+    name: Verify mobile app quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify mobile build contract
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const mobileAppDir = process.env.MOBILE_APP_DIR || "apps/mobile";
+          const mobileDistDir = process.env.MOBILE_DIST_DIR || "apps/mobile/dist";
+
+          const fail = (message) => {
+            console.error(`::error::${message}`);
+            process.exitCode = 1;
+          };
+
+          const warn = (message) => {
+            console.warn(`::warning::${message}`);
+          };
+
+          const readJson = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
+
+          const requiredRootFiles = [
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".github/workflows/mobile-build.yml"
+          ];
+
+          for (const file of requiredRootFiles) {
+            if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+              fail(`Required repository file is missing or empty: ${file}`);
+            }
+          }
+
+          if (!fs.existsSync(mobileAppDir) || !fs.statSync(mobileAppDir).isDirectory()) {
+            fail(`Mobile app directory does not exist: ${mobileAppDir}`);
+          }
+
+          const mobilePackagePath = path.join(mobileAppDir, "package.json");
+          const easJsonPath = path.join(mobileAppDir, "eas.json");
+
+          if (!fs.existsSync(mobilePackagePath)) {
+            fail(`Mobile package.json does not exist: ${mobilePackagePath}`);
+          }
+
+          if (!fs.existsSync(easJsonPath)) {
+            fail(`Mobile EAS config does not exist: ${easJsonPath}`);
+          }
+
+          const appConfigCandidates = [
+            "app.config.ts",
+            "app.config.js",
+            "app.json"
+          ].map((file) => path.join(mobileAppDir, file));
+
+          if (!appConfigCandidates.some((file) => fs.existsSync(file))) {
+            fail(`Mobile app config is missing. Expected one of: ${appConfigCandidates.join(", ")}`);
+          }
+
+          const rootPackage = readJson("package.json");
+          const mobilePackage = readJson(mobilePackagePath);
+
+          if (!rootPackage.packageManager || !rootPackage.packageManager.startsWith("pnpm@")) {
+            fail('Root package.json must define "packageManager": "pnpm@<version>".');
+          }
+
+          const requiredMobileScripts = [
+            "lint",
+            "typecheck",
+            "test",
+            "build"
+          ];
+
+          const missingMobileScripts = requiredMobileScripts.filter((script) => !mobilePackage.scripts || !mobilePackage.scripts[script]);
+
+          if (missingMobileScripts.length > 0) {
+            fail(`Mobile package.json is missing required scripts: ${missingMobileScripts.join(", ")}`);
+          }
+
+          const recommendedScripts = [
+            "doctor",
+            "test:e2e",
+            "export",
+            "prebuild:check"
+          ];
+
+          const missingRecommendedScripts = recommendedScripts.filter((script) => !mobilePackage.scripts || !mobilePackage.scripts[script]);
+
+          if (missingRecommendedScripts.length > 0) {
+            warn(`Mobile package.json is missing recommended scripts: ${missingRecommendedScripts.join(", ")}`);
+          }
+
+          let easConfig = {};
+          try {
+            easConfig = readJson(easJsonPath);
+          } catch (error) {
+            fail(`eas.json must be valid JSON: ${error.message}`);
+          }
+
+          if (!easConfig.build || typeof easConfig.build !== "object") {
+            fail("eas.json must define build profiles.");
+          }
+
+          for (const profile of ["development", "preview", "production"]) {
+            if (!easConfig.build[profile]) {
+              warn(`eas.json is missing recommended build profile: ${profile}`);
+            }
+          }
+
+          if (mobileDistDir === "." || mobileDistDir === "/" || mobileDistDir.trim() === "") {
+            fail(`MOBILE_DIST_DIR is unsafe: ${mobileDistDir}`);
+          }
+
+          if (process.exitCode) {
+            process.exit(process.exitCode);
+          }
+
+          console.log("Mobile build contract verified.");
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm store integrity
+        run: pnpm store status
+
+      - name: Lint mobile app
+        run: pnpm --dir "$MOBILE_APP_DIR" lint
+
+      - name: Typecheck mobile app
+        run: pnpm --dir "$MOBILE_APP_DIR" typecheck
+
+      - name: Test mobile app
+        run: pnpm --dir "$MOBILE_APP_DIR" test
+
+      - name: Run Expo doctor when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts.doctor ? 0 : 1)"; then
+            pnpm --dir "$MOBILE_APP_DIR" run doctor
+          else
+            echo "Mobile doctor script is not configured. Skipping."
+          fi
+
+      - name: Run mobile E2E tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:e2e'] ? 0 : 1)"; then
+            pnpm --dir "$MOBILE_APP_DIR" run test:e2e
+          else
+            echo "Mobile test:e2e script is not configured. Skipping."
+          fi
+
+      - name: Build mobile JavaScript bundle
+        run: pnpm --dir "$MOBILE_APP_DIR" build
+
+      - name: Run Expo export when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts.export ? 0 : 1)"; then
+            pnpm --dir "$MOBILE_APP_DIR" run export
+          else
+            echo "Mobile export script is not configured. Skipping."
+          fi
+
+      - name: Scan mobile outputs for unsafe secret exposure
+        run: |
+          set -euo pipefail
+
+          SCAN_TARGETS=()
+
+          if [ -d "$MOBILE_DIST_DIR" ]; then
+            SCAN_TARGETS+=("$MOBILE_DIST_DIR")
+          fi
+
+          if [ -d "$MOBILE_APP_DIR/.expo" ]; then
+            SCAN_TARGETS+=("$MOBILE_APP_DIR/.expo")
+          fi
+
+          if [ "${#SCAN_TARGETS[@]}" -eq 0 ]; then
+            echo "No mobile output directory found for secret scan. Skipping output scan."
+            exit 0
+          fi
+
+          if grep -RInE "(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|EXPO_TOKEN|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST|SENTRY_AUTH_TOKEN|CLOUDFLARE_API_TOKEN|NEON_|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY)" "${SCAN_TARGETS[@]}"; then
+            echo "::error::Potential secret-like token found in mobile build output."
+            exit 1
+          fi
+
+          echo "No known secret identifiers found in mobile build output."
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Upload mobile verification reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-verification-reports-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            apps/mobile/coverage/**
+            apps/mobile/test-results/**
+            apps/mobile/reports/**
+            apps/mobile/dist/**
+            apps/mobile/.expo/**
+            apps/mobile/**/junit.xml
+            packages/**/coverage/**
+            packages/**/test-results/**
+            **/junit.xml
+
+  eas-build:
+    name: Trigger EAS mobile build
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    needs:
+      - verify-mobile
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_eas_build != 'false')
+
+    environment:
+      name: ${{ (github.ref_name == 'main' || github.event.inputs.build_profile == 'production') && 'mobile-production' || 'mobile-preview' }}
+
+    permissions:
+      contents: read
+
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Validate Expo token
+        run: |
+          set -euo pipefail
+
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "::error::Missing secret: EXPO_TOKEN"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve EAS build context
+        id: eas_context
+        run: |
+          set -euo pipefail
+
+          PLATFORM="${{ github.event.inputs.platform || '' }}"
+          BUILD_PROFILE="${{ github.event.inputs.build_profile || '' }}"
+          WAIT_FOR_BUILD="${{ github.event.inputs.wait_for_build || '' }}"
+
+          if [ -z "$PLATFORM" ]; then
+            PLATFORM="all"
+          fi
+
+          if [ -z "$BUILD_PROFILE" ]; then
+            case "${GITHUB_REF_NAME:-}" in
+              main)
+                BUILD_PROFILE="production"
+                ;;
+              develop)
+                BUILD_PROFILE="preview"
+                ;;
+              *)
+                BUILD_PROFILE="preview"
+                ;;
+            esac
+          fi
+
+          if [ "$PLATFORM" != "all" ] && [ "$PLATFORM" != "android" ] && [ "$PLATFORM" != "ios" ]; then
+            echo "::error::Invalid EAS platform: $PLATFORM"
+            exit 1
+          fi
+
+          if [ "$BUILD_PROFILE" != "development" ] && [ "$BUILD_PROFILE" != "preview" ] && [ "$BUILD_PROFILE" != "production" ]; then
+            echo "::error::Invalid EAS build profile: $BUILD_PROFILE"
+            exit 1
+          fi
+
+          if [ -z "$WAIT_FOR_BUILD" ]; then
+            if [ "$BUILD_PROFILE" = "production" ]; then
+              WAIT_FOR_BUILD="true"
+            else
+              WAIT_FOR_BUILD="false"
+            fi
+          fi
+
+          if [ "$WAIT_FOR_BUILD" = "true" ]; then
+            WAIT_FLAG=""
+          else
+            WAIT_FLAG="--no-wait"
+          fi
+
+          echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+          echo "build_profile=$BUILD_PROFILE" >> "$GITHUB_OUTPUT"
+          echo "wait_flag=$WAIT_FLAG" >> "$GITHUB_OUTPUT"
+
+          echo "Resolved EAS platform: $PLATFORM"
+          echo "Resolved EAS build profile: $BUILD_PROFILE"
+          echo "Resolved EAS wait flag: ${WAIT_FLAG:-wait}"
+
+      - name: Validate EAS build profile
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const mobileAppDir = process.env.MOBILE_APP_DIR || "apps/mobile";
+          const profile = process.env.EAS_BUILD_PROFILE;
+          const easJsonPath = path.join(mobileAppDir, "eas.json");
+
+          const fail = (message) => {
+            console.error(`::error::${message}`);
+            process.exit(1);
+          };
+
+          if (!fs.existsSync(easJsonPath)) {
+            fail(`eas.json does not exist: ${easJsonPath}`);
+          }
+
+          const easConfig = JSON.parse(fs.readFileSync(easJsonPath, "utf8"));
+
+          if (!easConfig.build || !easConfig.build[profile]) {
+            fail(`eas.json is missing requested build profile: ${profile}`);
+          }
+
+          console.log(`EAS build profile verified: ${profile}`);
+          NODE
+        env:
+          EAS_BUILD_PROFILE: ${{ steps.eas_context.outputs.build_profile }}
+
+      - name: Build mobile app with EAS
+        run: |
+          set -euo pipefail
+
+          cd "$MOBILE_APP_DIR"
+
+          pnpm dlx eas-cli@latest build \
+            --platform "${{ steps.eas_context.outputs.platform }}" \
+            --profile "${{ steps.eas_context.outputs.build_profile }}" \
+            --non-interactive \
+            ${{ steps.eas_context.outputs.wait_flag }}
+
+      - name: Write EAS build summary
+        if: always()
+        run: |
+          {
+            echo "## 급여납치 모바일 빌드 결과"
+            echo ""
+            echo "- Workflow: $GITHUB_WORKFLOW"
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Ref: $GITHUB_REF"
+            echo "- Ref name: $GITHUB_REF_NAME"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Mobile app dir: $MOBILE_APP_DIR"
+            echo "- EAS platform: ${{ steps.eas_context.outputs.platform }}"
+            echo "- EAS build profile: ${{ steps.eas_context.outputs.build_profile }}"
+            echo "- EAS wait mode: ${{ steps.eas_context.outputs.wait_flag || 'wait' }}"
+          } >> "$GITHUB_STEP_SUMMARY"

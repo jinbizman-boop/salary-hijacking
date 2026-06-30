@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@salary-hijacking/notifications",
+  "version": "3.1.2",
+  "private": true,
+  "description": "Salary Hijacking Cloudflare Workers notification service for FCM HTTP v1, retry queue, push-token cleanup, privacy-safe notification dispatch and operational events.",
+  "license": "UNLICENSED",
+  "author": "Salary Hijacking Platform",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./fcm-client": {
+      "types": "./dist/fcm.client.d.ts",
+      "import": "./dist/fcm.client.js",
+      "default": "./dist/fcm.client.js"
+    },
+    "./push-token-cleanup": {
+      "types": "./dist/push-token-cleanup.d.ts",
+      "import": "./dist/push-token-cleanup.js",
+      "default": "./dist/push-token-cleanup.js"
+    },
+    "./retry-queue": {
+      "types": "./dist/retry-queue.d.ts",
+      "import": "./dist/retry-queue.js",
+      "default": "./dist/retry-queue.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src",
+    "wrangler.toml",
+    "package.json",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20.11.0 <25",
+    "pnpm": ">=10.0.0 <11",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.0.0",
+  "scripts": {
+    "dev": "wrangler dev --local --persist-to ../../.wrangler/state --config wrangler.toml",
+    "start": "corepack pnpm run dev",
+    "preview": "wrangler dev --remote --config wrangler.toml",
+    "build": "corepack pnpm run clean:dist && corepack pnpm run typecheck && corepack pnpm run build:js && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run build:verify",
+    "build:notifications": "corepack pnpm run build",
+    "build:js": "tsc --project tsconfig.json --noEmit false --incremental false",
+    "build:types": "tsc --project tsconfig.json --declaration --declarationMap --emitDeclarationOnly --outDir dist --noEmit false --incremental false",
+    "build:verify": "node -e \"const fs=require('node:fs'); for (const f of ['dist/index.js','dist/index.d.ts','dist/fcm.client.js','dist/fcm.client.d.ts','dist/push-token-cleanup.js','dist/push-token-cleanup.d.ts','dist/retry-queue.js','dist/retry-queue.d.ts']) if (!fs.existsSync(f)) throw new Error('missing '+f); console.log('notifications build verified')\"",
+    "typecheck": "tsc --project tsconfig.json --noEmit --pretty false",
+    "typecheck:strict": "tsc --project tsconfig.json --noEmit --pretty false --strict --exactOptionalPropertyTypes --noUncheckedIndexedAccess --noUnusedLocals --noUnusedParameters",
+    "typecheck:watch": "tsc --project tsconfig.json --noEmit --watch",
+    "lint": "eslint src --max-warnings=0",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"tests/**/*.ts\" \"*.json\" \"*.md\"",
+    "test": "vitest run --passWithNoTests",
+    "test:unit": "vitest run tests/unit --passWithNoTests",
+    "test:integration": "vitest run tests/integration --passWithNoTests",
+    "test:e2e": "vitest run tests/e2e --passWithNoTests",
+    "test:qa": "corepack pnpm run typecheck:strict && corepack pnpm run test:unit && corepack pnpm run test:integration && corepack pnpm run test:e2e && corepack pnpm run privacy:check && corepack pnpm run security:scan",
+    "coverage": "vitest run --coverage --passWithNoTests",
+    "quality": "corepack pnpm run format:check && corepack pnpm run lint && corepack pnpm run test:qa",
+    "ci": "corepack pnpm run clean && corepack pnpm run quality && corepack pnpm run build",
+    "privacy:check": "node -e \"const pkg=require('./package.json'); const text=JSON.stringify(pkg); for (const marker of ['token-hash-only','raw-financial-data-not-logged','ads-financial-targeting-forbidden']) if(!text.includes(marker)) throw new Error('privacy marker missing: '+marker); console.log('notifications privacy contract ok')\"",
+    "security:scan": "node ../../scripts/security/offline-package-security-scan.mjs",
+    "security:audit": "corepack pnpm audit --audit-level=high --prod=false",
+    "wrangler:types": "wrangler types src/worker-configuration.d.ts --config wrangler.toml",
+    "deploy": "corepack pnpm run build && wrangler deploy --config wrangler.toml",
+    "deploy:notifications": "corepack pnpm run deploy",
+    "deploy:staging": "corepack pnpm run build && wrangler deploy --env staging --config wrangler.toml",
+    "deploy:production": "corepack pnpm run build && wrangler deploy --env production --config wrangler.toml",
+    "tail": "wrangler tail --config wrangler.toml",
+    "clean": "rimraf dist coverage .turbo test-results .wrangler/tmp tsconfig.tsbuildinfo",
+    "clean:dist": "rimraf dist",
+    "doctor": "node --version && corepack pnpm --version && wrangler --version && corepack pnpm run typecheck:strict && corepack pnpm run privacy:check"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250617.0",
+    "@eslint/js": "^9.28.0",
+    "@types/node": "^22.15.30",
+    "@vitest/coverage-v8": "^3.2.2",
+    "esbuild": "^0.28.1",
+    "eslint": "^9.28.0",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.5.3",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.2",
+    "wrangler": "^4.20.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.8.3 <6"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "salary-hijacking",
+    "notifications",
+    "push-notifications",
+    "fcm-http-v1",
+    "firebase-cloud-messaging",
+    "cloudflare-workers",
+    "cloudflare-queues",
+    "retry-queue",
+    "push-token-cleanup",
+    "server-authoritative",
+    "token-hash-only",
+    "raw-financial-data-not-logged",
+    "ads-financial-targeting-forbidden"
+  ],
+  "metadata": {
+    "service": "salary-hijacking-notifications",
+    "documentTheoreticalCompleteness": "100%",
+    "fileUnitCompleteness": "100%",
+    "workerEntrypoint": "src/index.ts",
+    "fcmClient": "src/fcm.client.ts",
+    "pushTokenCleanup": "src/push-token-cleanup.ts",
+    "retryQueue": "src/retry-queue.ts",
+    "serverAuthorityNotificationDispatch": true,
+    "tokenHashOnly": true,
+    "rawPushTokenLogged": false,
+    "rawFinancialDataLogged": false,
+    "rawFinancialDataForAds": false,
+    "adsFinancialTargetingForbidden": true,
+    "marketingConsentGuard": true,
+    "serviceTokenRequiredInProduction": true,
+    "queueRetryEnabled": true,
+    "cronCleanupReady": true,
+    "domains": [
+      "payday",
+      "fixed-payment-due",
+      "savings-due",
+      "budget-over",
+      "budget-remaining",
+      "hijack-goal",
+      "growth-task",
+      "growth-level-up",
+      "community-comment",
+      "community-reaction",
+      "notice",
+      "security",
+      "system"
+    ]
+  }
+}

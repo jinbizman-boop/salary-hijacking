@@ -1,0 +1,544 @@
+name: release
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - "v*"
+    paths:
+      - "apps/**"
+      - "services/**"
+      - "packages/**"
+      - "docs/**"
+      - "db/**"
+      - "infra/**"
+      - "qa/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/release.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    paths:
+      - "apps/**"
+      - "services/**"
+      - "packages/**"
+      - "docs/**"
+      - "db/**"
+      - "infra/**"
+      - "qa/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/release.yml"
+  merge_group:
+  workflow_dispatch:
+    inputs:
+      release_mode:
+        description: "릴리즈 모드"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run
+          - prerelease
+          - production
+      release_version:
+        description: "릴리즈 버전 태그. 예: v1.0.0. 비우면 수동 실행용 후보 태그를 자동 생성합니다."
+        required: false
+        type: string
+      create_github_release:
+        description: "GitHub Release를 생성합니다. dry-run에서는 무시됩니다."
+        required: true
+        default: false
+        type: boolean
+      release_notes_path:
+        description: "릴리즈 노트로 사용할 파일 경로. 비우면 자동 생성합니다."
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ github.event.inputs.release_mode || 'auto' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  RELEASE_ARTIFACT_DIR: release-artifacts
+
+jobs:
+  release-quality-gate:
+    name: Release quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    outputs:
+      release_tag: ${{ steps.release_context.outputs.release_tag }}
+      release_mode: ${{ steps.release_context.outputs.release_mode }}
+      should_create_release: ${{ steps.release_context.outputs.should_create_release }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Resolve release context
+        id: release_context
+        run: |
+          set -euo pipefail
+
+          RELEASE_MODE="${{ github.event.inputs.release_mode || '' }}"
+          RELEASE_VERSION="${{ github.event.inputs.release_version || '' }}"
+          CREATE_GITHUB_RELEASE="${{ github.event.inputs.create_github_release || 'false' }}"
+
+          if [ -z "$RELEASE_MODE" ]; then
+            if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+              if [[ "${GITHUB_REF_NAME:-}" == *-* ]]; then
+                RELEASE_MODE="prerelease"
+              else
+                RELEASE_MODE="production"
+              fi
+            elif [ "${GITHUB_REF_NAME:-}" = "main" ]; then
+              RELEASE_MODE="dry-run"
+            else
+              RELEASE_MODE="dry-run"
+            fi
+          fi
+
+          if [ "$RELEASE_MODE" != "dry-run" ] && [ "$RELEASE_MODE" != "prerelease" ] && [ "$RELEASE_MODE" != "production" ]; then
+            echo "::error::Invalid release_mode: $RELEASE_MODE"
+            exit 1
+          fi
+
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            RELEASE_TAG="$GITHUB_REF_NAME"
+            SHOULD_CREATE_RELEASE="true"
+          elif [ -n "$RELEASE_VERSION" ]; then
+            RELEASE_TAG="$RELEASE_VERSION"
+            if [ "$CREATE_GITHUB_RELEASE" = "true" ] && [ "$RELEASE_MODE" != "dry-run" ]; then
+              SHOULD_CREATE_RELEASE="true"
+            else
+              SHOULD_CREATE_RELEASE="false"
+            fi
+          else
+            RELEASE_TAG="v0.0.0-${GITHUB_REF_NAME:-manual}.${GITHUB_RUN_NUMBER}.${GITHUB_SHA::7}"
+            SHOULD_CREATE_RELEASE="false"
+          fi
+
+          if ! [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Release tag must look like v1.2.3, v1.2.3-rc.1, or v1.2.3+build. Current: $RELEASE_TAG"
+            exit 1
+          fi
+
+          if [ "$RELEASE_MODE" = "dry-run" ]; then
+            SHOULD_CREATE_RELEASE="false"
+          fi
+
+          echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "release_mode=$RELEASE_MODE" >> "$GITHUB_OUTPUT"
+          echo "should_create_release=$SHOULD_CREATE_RELEASE" >> "$GITHUB_OUTPUT"
+
+          echo "Resolved release tag: $RELEASE_TAG"
+          echo "Resolved release mode: $RELEASE_MODE"
+          echo "Should create GitHub Release: $SHOULD_CREATE_RELEASE"
+
+      - name: Verify release contract
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("fs");
+
+          const fail = (message) => {
+            console.error(`::error::${message}`);
+            process.exitCode = 1;
+          };
+
+          const warn = (message) => {
+            console.warn(`::warning::${message}`);
+          };
+
+          const requiredFiles = [
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".github/workflows/release.yml"
+          ];
+
+          for (const file of requiredFiles) {
+            if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+              fail(`Required release file is missing or empty: ${file}`);
+            }
+          }
+
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+
+          if (!pkg.packageManager || !pkg.packageManager.startsWith("pnpm@")) {
+            fail('Root package.json must define "packageManager": "pnpm@<version>".');
+          }
+
+          const requiredScripts = [
+            "lint",
+            "typecheck",
+            "test",
+            "build",
+            "test:e2e"
+          ];
+
+          const missingScripts = requiredScripts.filter((script) => !pkg.scripts || !pkg.scripts[script]);
+
+          if (missingScripts.length > 0) {
+            fail(`Root package.json is missing required release scripts: ${missingScripts.join(", ")}`);
+          }
+
+          const recommendedScripts = [
+            "test:security",
+            "test:contract",
+            "test:calc",
+            "release:check",
+            "qa:release"
+          ];
+
+          const missingRecommendedScripts = recommendedScripts.filter((script) => !pkg.scripts || !pkg.scripts[script]);
+
+          if (missingRecommendedScripts.length > 0) {
+            warn(`Root package.json is missing recommended release scripts: ${missingRecommendedScripts.join(", ")}`);
+          }
+
+          const expectedProjectDirs = [
+            "apps",
+            "services",
+            "packages",
+            "docs"
+          ];
+
+          for (const dir of expectedProjectDirs) {
+            if (!fs.existsSync(dir)) {
+              warn(`Recommended project directory is missing: ${dir}`);
+            }
+          }
+
+          if (process.exitCode) {
+            process.exit(process.exitCode);
+          }
+
+          console.log("Release contract verified.");
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm store integrity
+        run: pnpm store status
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit and integration tests
+        run: pnpm test
+
+      - name: E2E and QA tests
+        run: pnpm test:e2e
+
+      - name: Run calculation tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['test:calc'] ? 0 : 1)"; then
+            pnpm run test:calc
+          else
+            echo "Root test:calc script is not configured. Skipping."
+          fi
+
+      - name: Run contract tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['test:contract'] ? 0 : 1)"; then
+            pnpm run test:contract
+          else
+            echo "Root test:contract script is not configured. Skipping."
+          fi
+
+      - name: Run security tests when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['test:security'] ? 0 : 1)"; then
+            pnpm run test:security
+          else
+            echo "Root test:security script is not configured. Skipping."
+          fi
+
+      - name: Run release checklist when configured
+        run: |
+          set -euo pipefail
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['release:check'] ? 0 : 1)"; then
+            pnpm run release:check
+          else
+            echo "Root release:check script is not configured. Skipping."
+          fi
+
+          if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['qa:release'] ? 0 : 1)"; then
+            pnpm run qa:release
+          else
+            echo "Root qa:release script is not configured. Skipping."
+          fi
+
+      - name: Build release candidates
+        run: pnpm build
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Prepare release artifacts
+        run: |
+          set -euo pipefail
+
+          RELEASE_TAG="${{ steps.release_context.outputs.release_tag }}"
+          RELEASE_MODE="${{ steps.release_context.outputs.release_mode }}"
+          RELEASE_NOTES_PATH="${{ github.event.inputs.release_notes_path || '' }}"
+
+          rm -rf "$RELEASE_ARTIFACT_DIR"
+          mkdir -p "$RELEASE_ARTIFACT_DIR"
+
+          git archive --format=tar.gz --output "$RELEASE_ARTIFACT_DIR/source-${RELEASE_TAG}-${GITHUB_SHA::7}.tar.gz" HEAD
+
+          {
+            echo "# 급여납치 릴리즈 매니페스트"
+            echo ""
+            echo "- 릴리즈 태그: ${RELEASE_TAG}"
+            echo "- 릴리즈 모드: ${RELEASE_MODE}"
+            echo "- 저장소: ${GITHUB_REPOSITORY}"
+            echo "- 브랜치/태그: ${GITHUB_REF}"
+            echo "- 커밋: ${GITHUB_SHA}"
+            echo "- 실행 번호: ${GITHUB_RUN_NUMBER}"
+            echo "- 실행 시각: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo "- 타임존 기준: Asia/Seoul"
+            echo "- Node.js: $(node --version)"
+            echo "- pnpm: $(pnpm --version)"
+            echo ""
+            echo "## 릴리즈 품질 게이트"
+            echo ""
+            echo "- lint: PASS"
+            echo "- typecheck: PASS"
+            echo "- unit/integration test: PASS"
+            echo "- E2E/QA test: PASS"
+            echo "- build: PASS"
+            echo "- production dependency audit: PASS"
+            echo ""
+            echo "## 급여납치 핵심 검증 범위"
+            echo ""
+            echo "- 서버 권위 급여·예산·지출·저축 계산 로직"
+            echo "- 급여 홈, 계획, 일일 예산, 고정지출, 고정저축, 변동지출"
+            echo "- 알림, LV UP, 커뮤니티, 글쓰기, 마이페이지"
+            echo "- 관리자 콘솔, 광고/제휴, 운영/QA/릴리즈 문서"
+            echo "- 개인정보·민감정보·광고 데이터 분리 기준"
+          } > "$RELEASE_ARTIFACT_DIR/RELEASE_MANIFEST.md"
+
+          {
+            echo "# 급여납치 ${RELEASE_TAG} 릴리즈 노트"
+            echo ""
+
+            if [ -n "$RELEASE_NOTES_PATH" ] && [ -f "$RELEASE_NOTES_PATH" ]; then
+              cat "$RELEASE_NOTES_PATH"
+              echo ""
+            else
+              echo "## 변경 요약"
+              echo ""
+
+              PREVIOUS_TAG="$(git tag --sort=-creatordate | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | grep -vx "$RELEASE_TAG" | head -n 1 || true)"
+
+              if [ -n "$PREVIOUS_TAG" ]; then
+                git log --pretty=format:'- %s (%h)' "${PREVIOUS_TAG}..HEAD"
+              else
+                git log --pretty=format:'- %s (%h)' -n 50
+              fi
+
+              echo ""
+            fi
+
+            echo ""
+            echo "## 출시 검증"
+            echo ""
+            echo "- [x] 의존성 잠금 파일 기준 설치"
+            echo "- [x] 정적 분석"
+            echo "- [x] 타입 검증"
+            echo "- [x] 테스트"
+            echo "- [x] E2E/QA"
+            echo "- [x] 빌드"
+            echo "- [x] 보안 의존성 감사"
+            echo "- [x] 릴리즈 산출물 체크섬 생성"
+          } > "$RELEASE_ARTIFACT_DIR/RELEASE_NOTES.md"
+
+          BUILD_OUTPUTS=()
+          for dir in \
+            "apps/admin/dist" \
+            "apps/web/dist" \
+            "apps/mobile/dist" \
+            "services/api/dist" \
+            "packages"; do
+            if [ -e "$dir" ]; then
+              BUILD_OUTPUTS+=("$dir")
+            fi
+          done
+
+          if [ "${#BUILD_OUTPUTS[@]}" -gt 0 ]; then
+            tar -czf "$RELEASE_ARTIFACT_DIR/build-outputs-${RELEASE_TAG}-${GITHUB_SHA::7}.tar.gz" "${BUILD_OUTPUTS[@]}"
+          else
+            echo "No build output directories found. Source archive and release manifest will be uploaded."
+          fi
+
+          {
+            echo "릴리즈 태그: ${RELEASE_TAG}"
+            echo "릴리즈 모드: ${RELEASE_MODE}"
+            echo "커밋: ${GITHUB_SHA}"
+            echo "생성 시각: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+          } > "$RELEASE_ARTIFACT_DIR/RELEASE_SUMMARY.txt"
+
+          (
+            cd "$RELEASE_ARTIFACT_DIR"
+            sha256sum * > SHA256SUMS.txt
+          )
+
+          find "$RELEASE_ARTIFACT_DIR" -maxdepth 1 -type f -print -exec ls -lh {} \;
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 30
+          path: ${{ env.RELEASE_ARTIFACT_DIR }}/**
+
+      - name: Write release candidate summary
+        if: always()
+        run: |
+          {
+            echo "## 급여납치 릴리즈 후보 검증 결과"
+            echo ""
+            echo "- Release tag: ${{ steps.release_context.outputs.release_tag }}"
+            echo "- Release mode: ${{ steps.release_context.outputs.release_mode }}"
+            echo "- Create GitHub Release: ${{ steps.release_context.outputs.should_create_release }}"
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Ref: $GITHUB_REF"
+            echo "- Commit: $GITHUB_SHA"
+            echo "- Artifact directory: $RELEASE_ARTIFACT_DIR"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs:
+      - release-quality-gate
+    if: needs.release-quality-gate.outputs.should_create_release == 'true'
+
+    environment:
+      name: ${{ needs.release-quality-gate.outputs.release_mode == 'production' && 'release-production' || 'release-prerelease' }}
+
+    permissions:
+      contents: write
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.release-quality-gate.outputs.release_tag }}
+      RELEASE_MODE: ${{ needs.release-quality-gate.outputs.release_mode }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-artifacts-${{ github.run_attempt }}
+          path: release-artifacts
+
+      - name: Verify release artifact checksums
+        run: |
+          set -euo pipefail
+
+          if [ ! -f release-artifacts/SHA256SUMS.txt ]; then
+            echo "::error::Missing SHA256SUMS.txt"
+            exit 1
+          fi
+
+          (
+            cd release-artifacts
+            sha256sum -c SHA256SUMS.txt
+          )
+
+      - name: Create GitHub Release
+        run: |
+          set -euo pipefail
+
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::GitHub Release already exists: $RELEASE_TAG"
+            exit 1
+          fi
+
+          PRERELEASE_FLAG=""
+
+          if [ "$RELEASE_MODE" = "prerelease" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
+          gh release create "$RELEASE_TAG" release-artifacts/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "급여납치 ${RELEASE_TAG}" \
+            --notes-file release-artifacts/RELEASE_NOTES.md \
+            $PRERELEASE_FLAG
+
+      - name: Write GitHub Release summary
+        if: always()
+        run: |
+          {
+            echo "## 급여납치 GitHub Release 생성 결과"
+            echo ""
+            echo "- Release tag: $RELEASE_TAG"
+            echo "- Release mode: $RELEASE_MODE"
+            echo "- Repository: $GITHUB_REPOSITORY"
+            echo "- Commit: $GITHUB_SHA"
+          } >> "$GITHUB_STEP_SUMMARY"

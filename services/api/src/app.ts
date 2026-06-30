@@ -1,0 +1,1290 @@
+/** services/api/src/app.ts
+ * 급여납치 Salary Hijacking Platform · API 애플리케이션 엔트리 최종본
+ *
+ * Cloudflare Workers Fetch API 호환. 인증, 오류, 레이트리밋, 앱 레벨 감사 게이트를 중앙에서 조합하고
+ * 모든 도메인 라우트를 /api/v1 및 /admin/api/v1 prefix에 연결한다. 급여/예산/지출/저축/알림/LV UP/
+ * 커뮤니티/업로드/마이페이지/관리자 콘솔 도메인을 서버 권위 아키텍처로 라우팅하며, 보안 헤더,
+ * CORS, health/readiness, manifest, app-config, 표준 JSON 응답, requestId, 민감정보 비노출 계약을 포함한다.
+ */
+
+import {
+  AUTH_ADMIN_AUDIENCE,
+  AUTH_MIDDLEWARE_VERSION,
+  AUTH_MOBILE_AUDIENCE,
+  AUTH_SERVICE_AUDIENCE,
+  AUTH_SERVICE_ISSUER,
+  assertAuthMiddlewareCompleteness,
+  createAuthMiddleware,
+  type AuthMiddlewareOptions,
+} from "./middlewares/auth.middleware";
+import {
+  ERROR_MIDDLEWARE_VERSION,
+  assertErrorMiddlewareCompleteness,
+  createErrorMiddleware,
+  type ErrorMiddlewareOptions,
+} from "./middlewares/error.middleware";
+import {
+  RATE_LIMIT_MIDDLEWARE_VERSION,
+  assertRateLimitMiddlewareCompleteness,
+  createRateLimitMiddleware,
+  type RateLimitMiddlewareOptions,
+} from "./middlewares/rate-limit.middleware";
+
+import {
+  ADMIN_API_PREFIX,
+  ADMIN_AUTH_PREFIX,
+  adminRoutesManifest,
+  assertAdminRoutesCompleteness,
+  handleAdminRoutes,
+} from "./routes/admin.routes";
+import {
+  AUTH_API_PREFIX,
+  authRoutesManifest,
+  assertAuthRoutesCompleteness,
+  createAuthRoutes,
+} from "./routes/auth.routes";
+import {
+  COMMUNITY_API_PREFIX,
+  assertCommunityRoutesCompleteness,
+  communityRoutesManifest,
+  handleCommunityRoutes,
+} from "./routes/community.routes";
+import {
+  DAILY_BUDGETS_API_PREFIX,
+  assertDailyBudgetsRoutesCompleteness,
+  dailyBudgetsRoutesManifest,
+  handleDailyBudgetsRoutes,
+} from "./routes/daily-budgets.routes";
+import {
+  FIXED_EXPENSES_API_PREFIX,
+  assertFixedExpensesRoutesCompleteness,
+  fixedExpensesRoutesManifest,
+  handleFixedExpensesRoutes,
+} from "./routes/fixed-expenses.routes";
+import {
+  GROWTH_API_PREFIX,
+  assertGrowthRoutesCompleteness,
+  growthRoutesManifest,
+  handleGrowthRoutes,
+} from "./routes/growth.routes";
+import {
+  NOTIFICATIONS_API_PREFIX,
+  assertNotificationsRoutesCompleteness,
+  handleNotificationsRoutes,
+  notificationsRoutesManifest,
+} from "./routes/notifications.routes";
+import {
+  PAYROLL_API_PREFIX,
+  assertPayrollRoutesCompleteness,
+  handlePayrollRoutes,
+  payrollRoutesManifest,
+} from "./routes/payroll.routes";
+import {
+  SAVINGS_API_PREFIX,
+  assertSavingsRoutesCompleteness,
+  handleSavingsRoutes,
+  savingsRoutesManifest,
+} from "./routes/savings.routes";
+import {
+  UPLOADS_API_PREFIX,
+  assertUploadsRoutesCompleteness,
+  handleUploadsRoutes,
+  uploadsRoutesManifest,
+} from "./routes/uploads.routes";
+import {
+  USERS_API_PREFIX,
+  assertUsersRoutesCompleteness,
+  handleUsersRoutes,
+  usersRoutesManifest,
+} from "./routes/users.routes";
+import {
+  VARIABLE_EXPENSES_API_PREFIX,
+  assertVariableExpensesRoutesCompleteness,
+  handleVariableExpensesRoutes,
+  variableExpensesRoutesManifest,
+} from "./routes/variable-expenses.routes";
+
+export const APP_VERSION = "3.1.0";
+export const APP_SERVICE_NAME = "salary-hijacking-api";
+export const APP_TIMEZONE = "Asia/Seoul";
+export const API_VERSION = "v1";
+export const API_PREFIX = "/api/v1";
+export const APP_AUDIT_GATE_VERSION = "3.1.0-compatible";
+
+const REQUEST_ID_HEADER = "x-request-id";
+const MAX_ROUTE_PATH_LENGTH = 2_048;
+const MOBILE_BOOTSTRAP_PATH = `${API_PREFIX}/mobile/bootstrap`;
+const MOBILE_DEFAULT_ROUTE = "/salary";
+const BOOTSTRAP_ROLES = [
+  "USER",
+  "OPERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "SYSTEM",
+] as const;
+const BOOTSTRAP_ACCOUNT_STATUSES = [
+  "ACTIVE",
+  "LOCKED",
+  "SUSPENDED",
+  "PENDING",
+] as const;
+const DEFAULT_ALLOWED_METHODS = "GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS";
+const DEFAULT_ALLOWED_HEADERS = [
+  "authorization",
+  "content-type",
+  "cookie",
+  "x-request-id",
+  "x-correlation-id",
+  "x-idempotency-key",
+  "idempotency-key",
+  "x-admin-reason",
+  "x-service-token",
+  "x-refresh-token",
+  "x-upload-file-name",
+  "x-upload-purpose",
+  "x-upload-owner-type",
+  "x-upload-owner-id",
+  "x-upload-visibility",
+  "x-upload-checksum-sha256",
+].join(", ");
+
+export interface WaitUntilCapable {
+  readonly waitUntil?: (promise: Promise<unknown>) => void;
+}
+
+export type FetchHandler<TEnv = unknown> = (
+  request: Request,
+  env: TEnv,
+  context: WaitUntilCapable,
+) => Response | Promise<Response>;
+
+export interface AppEnv extends Record<string, unknown> {
+  readonly APP_ENV?: string;
+  readonly NODE_ENV?: string;
+  readonly ENVIRONMENT?: string;
+  readonly JWT_SECRET?: string;
+  readonly AUTH_JWT_SECRET?: string;
+  readonly JWT_PUBLIC_KEYS_JSON?: string;
+  readonly HASH_SECRET?: string;
+  readonly AUDIT_HASH_SECRET?: string;
+  readonly RATE_LIMIT_HASH_SECRET?: string;
+  readonly CORS_ALLOWED_ORIGINS?: string;
+  readonly ALLOWED_ORIGINS?: string;
+  readonly APP_PUBLIC_BASE_URL?: string;
+}
+
+export interface CorsOptions<TEnv = unknown> {
+  readonly allowedOrigins?:
+    | readonly string[]
+    | ((env: TEnv) => readonly string[] | string | null | undefined);
+  readonly allowCredentials?: boolean;
+  readonly maxAgeSeconds?: number;
+}
+
+export interface AppAuditOptions<TEnv = unknown> {
+  readonly enforceAdminReason?: boolean;
+  readonly auditReads?: boolean;
+  readonly auditUserFailures?: boolean;
+  readonly onAuditEvent?: (
+    event: AppAuditEvent,
+    env: TEnv,
+    context: WaitUntilCapable,
+  ) => void | Promise<void>;
+}
+
+export interface AppAuditEvent {
+  readonly requestId: string;
+  readonly path: string;
+  readonly method: string;
+  readonly status: number;
+  readonly actorUserId: string | null;
+  readonly operation:
+    | "READ"
+    | "CREATE"
+    | "UPDATE"
+    | "DELETE"
+    | "AUTH"
+    | "SYSTEM";
+  readonly targetDomain: string;
+  readonly result: "SUCCESS" | "FAILURE" | "DENIED";
+  readonly reasonPresent: boolean;
+  readonly durationMs: number;
+  readonly createdAt: string;
+}
+
+export interface AppOptions<TEnv = unknown> {
+  readonly serviceName?: string;
+  readonly environment?: string | ((env: TEnv) => string | null | undefined);
+  readonly enableAuth?: boolean;
+  readonly enableRateLimit?: boolean;
+  readonly enableAuditGate?: boolean;
+  readonly enableErrorBoundary?: boolean;
+  readonly cors?: CorsOptions<TEnv>;
+  readonly authOptions?: AuthMiddlewareOptions<TEnv>;
+  readonly errorOptions?: ErrorMiddlewareOptions<TEnv>;
+  readonly rateLimitOptions?: RateLimitMiddlewareOptions<TEnv>;
+  readonly auditOptions?: AppAuditOptions<TEnv>;
+  readonly now?: () => Date;
+}
+
+export interface AppInstance<TEnv = unknown> {
+  readonly fetch: FetchHandler<TEnv>;
+  readonly manifest: typeof appManifest;
+  readonly assertCompleteness: typeof assertAppCompleteness;
+}
+
+interface RouteModule {
+  readonly id: string;
+  readonly domain: string;
+  readonly prefixes: readonly string[];
+  readonly handler: FetchHandler<unknown>;
+  readonly manifest: unknown;
+  readonly requiresAuth: boolean;
+  readonly mutatesFinancialData: boolean;
+  readonly exposesRawFinancialData: boolean;
+}
+
+interface AppRuntime<TEnv = unknown> {
+  readonly request: Request;
+  readonly env: TEnv;
+  readonly context: WaitUntilCapable;
+  readonly url: URL;
+  readonly path: string;
+  readonly method: string;
+  readonly requestId: string;
+  readonly startedAtEpochMs: number;
+  readonly now: Date;
+}
+
+type CompletenessResult = {
+  readonly ok: boolean;
+  readonly version: string;
+  readonly checks: readonly string[];
+};
+type BootstrapRole = (typeof BOOTSTRAP_ROLES)[number];
+type BootstrapAccountStatus = (typeof BOOTSTRAP_ACCOUNT_STATUSES)[number];
+
+const handleEnvAwareAuthRoutes: FetchHandler<unknown> = createAuthRoutes({
+  jwtSecret: (env) =>
+    envString(env, "JWT_SECRET") ?? envString(env, "AUTH_JWT_SECRET"),
+  cookieSecure: (env) => environmentOf(env) === "production",
+});
+
+const routeModules: readonly RouteModule[] = Object.freeze([
+  {
+    id: "auth",
+    domain: "인증/세션",
+    prefixes: [AUTH_API_PREFIX, ADMIN_AUTH_PREFIX],
+    handler: handleEnvAwareAuthRoutes,
+    manifest: authRoutesManifest,
+    requiresAuth: false,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "admin",
+    domain: "관리자 콘솔",
+    prefixes: [ADMIN_API_PREFIX],
+    handler: handleAdminRoutes as FetchHandler<unknown>,
+    manifest: adminRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "users",
+    domain: "마이페이지/사용자",
+    prefixes: [USERS_API_PREFIX],
+    handler: handleUsersRoutes as FetchHandler<unknown>,
+    manifest: usersRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "payroll",
+    domain: "급여계획/급여홈",
+    prefixes: [PAYROLL_API_PREFIX],
+    handler: handlePayrollRoutes as FetchHandler<unknown>,
+    manifest: payrollRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: true,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "daily-budgets",
+    domain: "일일예산",
+    prefixes: [DAILY_BUDGETS_API_PREFIX],
+    handler: handleDailyBudgetsRoutes as FetchHandler<unknown>,
+    manifest: dailyBudgetsRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: true,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "fixed-expenses",
+    domain: "고정지출",
+    prefixes: [FIXED_EXPENSES_API_PREFIX],
+    handler: handleFixedExpensesRoutes as FetchHandler<unknown>,
+    manifest: fixedExpensesRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: true,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "variable-expenses",
+    domain: "변동지출",
+    prefixes: [VARIABLE_EXPENSES_API_PREFIX],
+    handler: handleVariableExpensesRoutes as FetchHandler<unknown>,
+    manifest: variableExpensesRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: true,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "savings",
+    domain: "고정저축/저축목표",
+    prefixes: [SAVINGS_API_PREFIX],
+    handler: handleSavingsRoutes as FetchHandler<unknown>,
+    manifest: savingsRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: true,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "notifications",
+    domain: "알림",
+    prefixes: [NOTIFICATIONS_API_PREFIX],
+    handler: handleNotificationsRoutes as FetchHandler<unknown>,
+    manifest: notificationsRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "growth",
+    domain: "LV UP/자기계발",
+    prefixes: [GROWTH_API_PREFIX],
+    handler: handleGrowthRoutes as FetchHandler<unknown>,
+    manifest: growthRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "community",
+    domain: "커뮤니티/글쓰기",
+    prefixes: [COMMUNITY_API_PREFIX],
+    handler: handleCommunityRoutes as FetchHandler<unknown>,
+    manifest: communityRoutesManifest,
+    requiresAuth: false,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+  {
+    id: "uploads",
+    domain: "업로드/첨부파일",
+    prefixes: [UPLOADS_API_PREFIX],
+    handler: handleUploadsRoutes as FetchHandler<unknown>,
+    manifest: uploadsRoutesManifest,
+    requiresAuth: true,
+    mutatesFinancialData: false,
+    exposesRawFinancialData: false,
+  },
+]);
+
+export const appManifest = Object.freeze({
+  service: APP_SERVICE_NAME,
+  version: APP_VERSION,
+  apiVersion: API_VERSION,
+  apiPrefix: API_PREFIX,
+  timezone: APP_TIMEZONE,
+  runtime: "cloudflare-workers-fetch-api",
+  architecture: "server-authoritative-route-gateway",
+  middleware: Object.freeze({
+    auth: AUTH_MIDDLEWARE_VERSION,
+    error: ERROR_MIDDLEWARE_VERSION,
+    rateLimit: RATE_LIMIT_MIDDLEWARE_VERSION,
+    auditGate: APP_AUDIT_GATE_VERSION,
+  }),
+  routes: routeModules.map((route) =>
+    Object.freeze({
+      id: route.id,
+      domain: route.domain,
+      prefixes: route.prefixes,
+      requiresAuth: route.requiresAuth,
+      mutatesFinancialData: route.mutatesFinancialData,
+      exposesRawFinancialData: route.exposesRawFinancialData,
+      manifest: route.manifest,
+    }),
+  ),
+  security: Object.freeze({
+    authContextHeader: "x-auth-context-source",
+    authContextSource: "auth.middleware",
+    rawFinancialDataExposedToAds: false,
+    serverAuthorityCalculation: true,
+    ownerBoundaryRequired: true,
+    standardJsonContract: true,
+    cors: "allowlist-only",
+    securityHeaders: true,
+    adminReasonRequiredForMutation: true,
+  }),
+  finalStatus: "document_theoretical_app_file_unit_complete",
+});
+
+function envString<TEnv>(env: TEnv, key: string): string | null {
+  if (!env || typeof env !== "object") return null;
+  const value = (env as Record<string, unknown>)[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function environmentOf<TEnv>(env: TEnv, fallback = "production"): string {
+  return (
+    envString(env, "APP_ENV") ??
+    envString(env, "ENVIRONMENT") ??
+    envString(env, "NODE_ENV") ??
+    fallback
+  );
+}
+
+function stringFromOption<TEnv>(
+  env: TEnv,
+  option:
+    | string
+    | ((env: TEnv) => string | null | undefined)
+    | null
+    | undefined,
+  fallback: string,
+): string {
+  if (typeof option === "string" && option.trim()) return option.trim();
+  if (typeof option === "function") return option(env)?.trim() || fallback;
+  return fallback;
+}
+
+function normalizePath(pathname: string): string {
+  const normalized = (pathname || "/").replace(/\/+/g, "/");
+  return normalized.length > 1 && normalized.endsWith("/")
+    ? normalized.slice(0, -1)
+    : normalized;
+}
+
+function requestIdFromHeaders(request: Request): string {
+  const direct =
+    request.headers.get(REQUEST_ID_HEADER)?.trim() ??
+    request.headers.get("x-correlation-id")?.trim() ??
+    request.headers.get("cf-ray")?.trim();
+  if (direct && /^[a-zA-Z0-9._:\-/]{8,160}$/.test(direct))
+    return direct.slice(0, 160);
+  return globalThis.crypto?.randomUUID?.() ?? `req_${Date.now().toString(36)}`;
+}
+
+function json(
+  status: number,
+  runtime: Pick<AppRuntime, "requestId" | "path">,
+  body: Record<string, unknown>,
+): Response {
+  return new Response(
+    JSON.stringify({
+      success: status < 400,
+      ...body,
+      meta: {
+        service: APP_SERVICE_NAME,
+        version: APP_VERSION,
+        requestId: runtime.requestId,
+        path: runtime.path,
+        timestamp: new Date().toISOString(),
+      },
+    }),
+    {
+      status,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": status >= 400 ? "no-store" : "private, no-store",
+        [REQUEST_ID_HEADER]: runtime.requestId,
+        "x-content-type-options": "nosniff",
+      },
+    },
+  );
+}
+
+function notFound(runtime: AppRuntime): Response {
+  return json(404, runtime, {
+    error: {
+      code: "APP_ROUTE_NOT_FOUND",
+      message: "API 경로를 찾을 수 없습니다.",
+      status: 404,
+      requestId: runtime.requestId,
+    },
+  });
+}
+
+function assertSafePath(path: string): void {
+  const lowered = path.toLowerCase();
+  if (
+    path.length > MAX_ROUTE_PATH_LENGTH ||
+    lowered.includes("%2e%2e") ||
+    lowered.includes("..") ||
+    lowered.includes("%5c")
+  ) {
+    throw new Response(
+      JSON.stringify({
+        success: false,
+        error: {
+          code: "APP_PATH_REJECTED",
+          message: "허용되지 않은 요청 경로입니다.",
+          status: 400,
+        },
+      }),
+      {
+        status: 400,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store",
+        },
+      },
+    );
+  }
+}
+
+function routeMatches(route: RouteModule, path: string): boolean {
+  return route.prefixes.some(
+    (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+  );
+}
+
+function selectRoute(path: string): RouteModule | null {
+  return routeModules.find((route) => routeMatches(route, path)) ?? null;
+}
+
+function parseOrigins(value: string | null): readonly string[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function resolveAllowedOrigins<TEnv>(
+  env: TEnv,
+  cors: CorsOptions<TEnv> | undefined,
+): readonly string[] {
+  const configured = cors?.allowedOrigins;
+  if (Array.isArray(configured)) return configured;
+  if (typeof configured === "function") {
+    const resolved = configured(env);
+    if (Array.isArray(resolved)) return resolved;
+    return parseOrigins(typeof resolved === "string" ? resolved : null);
+  }
+  return parseOrigins(
+    envString(env, "CORS_ALLOWED_ORIGINS") ?? envString(env, "ALLOWED_ORIGINS"),
+  );
+}
+
+function originAllowed(
+  origin: string,
+  allowed: readonly string[],
+  environment: string,
+): string | null {
+  if (!origin) return null;
+  if (allowed.includes("*")) return origin;
+  if (allowed.includes(origin)) return origin;
+  if (
+    environment !== "production" &&
+    /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(origin)
+  )
+    return origin;
+  return null;
+}
+
+function corsHeaders<TEnv>(
+  request: Request,
+  env: TEnv,
+  options: AppOptions<TEnv>,
+): Headers {
+  const headers = new Headers();
+  const environment = stringFromOption(
+    env,
+    options.environment,
+    environmentOf(env),
+  );
+  const origin = request.headers.get("origin")?.trim() ?? "";
+  const allowedOrigin = originAllowed(
+    origin,
+    resolveAllowedOrigins(env, options.cors),
+    environment,
+  );
+  if (allowedOrigin) {
+    headers.set("access-control-allow-origin", allowedOrigin);
+    headers.set("vary", "Origin");
+  }
+  if (options.cors?.allowCredentials ?? true)
+    headers.set("access-control-allow-credentials", "true");
+  headers.set("access-control-allow-methods", DEFAULT_ALLOWED_METHODS);
+  headers.set(
+    "access-control-allow-headers",
+    request.headers.get("access-control-request-headers") ??
+      DEFAULT_ALLOWED_HEADERS,
+  );
+  headers.set(
+    "access-control-max-age",
+    String(options.cors?.maxAgeSeconds ?? 600),
+  );
+  return headers;
+}
+
+function preflightResponse<TEnv>(
+  request: Request,
+  env: TEnv,
+  options: AppOptions<TEnv>,
+  requestId: string,
+): Response {
+  const headers = corsHeaders(request, env, options);
+  headers.set(REQUEST_ID_HEADER, requestId);
+  headers.set("cache-control", "no-store");
+  headers.set("x-content-type-options", "nosniff");
+  return new Response(null, { status: 204, headers });
+}
+
+function applySecurityHeaders<TEnv>(
+  response: Response,
+  request: Request,
+  env: TEnv,
+  options: AppOptions<TEnv>,
+  requestId: string,
+): Response {
+  const headers = new Headers(response.headers);
+  const cors = corsHeaders(request, env, options);
+  cors.forEach((value, key) => headers.set(key, value));
+  if (!headers.has(REQUEST_ID_HEADER))
+    headers.set(REQUEST_ID_HEADER, requestId);
+  headers.set("x-service-name", options.serviceName ?? APP_SERVICE_NAME);
+  headers.set("x-app-version", APP_VERSION);
+  headers.set("x-content-type-options", "nosniff");
+  headers.set("x-frame-options", "DENY");
+  headers.set("referrer-policy", "no-referrer");
+  headers.set(
+    "permissions-policy",
+    "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()",
+  );
+  headers.set("cross-origin-opener-policy", "same-origin");
+  headers.set("cross-origin-resource-policy", "same-site");
+  headers.set("x-financial-raw-data-exposed", "false");
+  headers.set("x-ad-financial-targeting", "separated");
+  headers.set("x-server-authority", "true");
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function publicAppConfig<TEnv>(
+  runtime: AppRuntime<TEnv>,
+): Record<string, unknown> {
+  return {
+    service: APP_SERVICE_NAME,
+    version: APP_VERSION,
+    apiVersion: API_VERSION,
+    timezone: APP_TIMEZONE,
+    environment: environmentOf(runtime.env),
+    features: {
+      auth: true,
+      payroll: true,
+      dailyBudgets: true,
+      fixedExpenses: true,
+      variableExpenses: true,
+      savings: true,
+      notifications: true,
+      growth: true,
+      community: true,
+      uploads: true,
+      users: true,
+      admin: true,
+      mobileBootstrap: true,
+      advertisingPolicy:
+        "contextual_or_opt_in_only_no_sensitive_financial_targeting",
+    },
+    privacy: {
+      rawPayrollDataForAds: false,
+      rawExpenseDataForAds: false,
+      rawSavingsDataForAds: false,
+      advertiserUserIdentifierExposure: false,
+    },
+  };
+}
+
+function headerText(headers: Headers, name: string): string | null {
+  const value = headers.get(name)?.trim();
+  return value ? value : null;
+}
+
+function headerBool(headers: Headers, name: string): boolean {
+  return headerText(headers, name)?.toLowerCase() === "true";
+}
+
+function enumFrom<TValue extends readonly string[]>(
+  values: TValue,
+  value: string | null,
+  fallback: TValue[number],
+): TValue[number] {
+  return value && (values as readonly string[]).includes(value)
+    ? (value as TValue[number])
+    : fallback;
+}
+
+function mobileEnvironment<TEnv>(
+  env: TEnv,
+): "local" | "development" | "staging" | "production" {
+  const value = environmentOf(env).toLowerCase();
+  if (value === "local") return "local";
+  if (value === "staging") return "staging";
+  if (value === "production") return "production";
+  return "development";
+}
+
+function primaryBootstrapRole(headers: Headers): BootstrapRole {
+  const primary = headerText(headers, "x-auth-primary-role");
+  if (primary) return enumFrom(BOOTSTRAP_ROLES, primary, "USER");
+  const firstRole =
+    headerText(headers, "x-authenticated-roles")
+      ?.split(",")
+      .map((role) => role.trim())
+      .find(Boolean) ?? null;
+  return enumFrom(BOOTSTRAP_ROLES, firstRole, "USER");
+}
+
+function bootstrapAccountStatus(headers: Headers): BootstrapAccountStatus {
+  return enumFrom(
+    BOOTSTRAP_ACCOUNT_STATUSES,
+    headerText(headers, "x-auth-account-status"),
+    "PENDING",
+  );
+}
+
+function mfaRequiredFor(role: BootstrapRole, mfaVerified: boolean): boolean {
+  return (
+    (role === "OPERATOR" || role === "ADMIN" || role === "SUPER_ADMIN") &&
+    !mfaVerified
+  );
+}
+
+function fallbackStableHash(value: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `sha256:${Math.abs(hash).toString(16).padStart(32, "0").slice(0, 32)}`;
+}
+
+async function hashForMobileSession(
+  value: string | null,
+): Promise<string | null> {
+  if (!value) return null;
+  const source = `salary-hijacking-mobile-session:${value}`;
+  try {
+    const digest = await globalThis.crypto?.subtle?.digest(
+      "SHA-256",
+      new TextEncoder().encode(source),
+    );
+    if (!digest) return fallbackStableHash(source);
+    return `sha256:${Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("")
+      .slice(0, 32)}`;
+  } catch {
+    return fallbackStableHash(source);
+  }
+}
+
+async function mobileBootstrap<TEnv>(
+  runtime: AppRuntime<TEnv>,
+): Promise<Response> {
+  const headers = runtime.request.headers;
+  const trustedAuthContext =
+    headerText(headers, "x-auth-context-source") === "auth.middleware";
+  const userId = trustedAuthContext
+    ? headerText(headers, "x-authenticated-user-id")
+    : null;
+  const authenticated = Boolean(userId);
+  const role = authenticated ? primaryBootstrapRole(headers) : "USER";
+  const accountStatus = authenticated
+    ? bootstrapAccountStatus(headers)
+    : "PENDING";
+  const mfaVerified =
+    authenticated && headerBool(headers, "x-auth-mfa-verified");
+  const accountReady = accountStatus === "ACTIVE";
+
+  return json(200, runtime, {
+    data: {
+      session: {
+        authenticated,
+        userIdHash: await hashForMobileSession(userId),
+        role,
+        emailVerified: authenticated && accountReady,
+        onboardingCompleted: authenticated && accountReady,
+        mfaRequired: authenticated && mfaRequiredFor(role, mfaVerified),
+        accountStatus,
+        sessionExpiresAt: null,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+        adsFinancialTargetingUsed: false,
+      },
+      config: {
+        apiVersion: API_VERSION,
+        environment: mobileEnvironment(runtime.env),
+        maintenanceMode: false,
+        minSupportedBuild: "0",
+        defaultRoute: MOBILE_DEFAULT_ROUTE,
+        featureFlags: {
+          payroll: true,
+          dailyBudgets: true,
+          fixedExpenses: true,
+          variableExpenses: true,
+          savings: true,
+          notifications: true,
+          growth: true,
+          community: true,
+          uploads: true,
+          users: true,
+          contextualAdsOnly: true,
+        },
+        serverAuthorityEnabled: true,
+        privacyMode: "STRICT",
+        adsFinancialTargetingAllowed: false,
+      },
+      digest: {
+        payrollReady: true,
+        budgetReady: true,
+        fixedExpenseReady: true,
+        savingsReady: true,
+        notificationUnreadCount: 0,
+        levelUpTodayCount: 0,
+        communityUnreadCount: 0,
+        pushConsent: "UNKNOWN",
+        lastSyncedAt: runtime.now.toISOString(),
+        privacyPassRate: "100.00%",
+      },
+    },
+  });
+}
+
+async function coreDispatch<TEnv>(
+  request: Request,
+  env: TEnv,
+  context: WaitUntilCapable,
+  options: AppOptions<TEnv>,
+): Promise<Response> {
+  const url = new URL(request.url);
+  const path = normalizePath(url.pathname);
+  const method = request.method.toUpperCase();
+  const runtime: AppRuntime<TEnv> = {
+    request,
+    env,
+    context,
+    url,
+    path,
+    method,
+    requestId: requestIdFromHeaders(request),
+    startedAtEpochMs: Date.now(),
+    now: options.now?.() ?? new Date(),
+  };
+
+  assertSafePath(path);
+
+  if (
+    ["/", "/health", "/live", "/_health", `${API_PREFIX}/health`].includes(path)
+  ) {
+    return json(200, runtime, {
+      data: {
+        status: "ok",
+        service: APP_SERVICE_NAME,
+        version: APP_VERSION,
+        uptime: "edge",
+        routeCount: routeModules.length,
+      },
+    });
+  }
+
+  if (["/ready", `${API_PREFIX}/ready`].includes(path)) {
+    return json(200, runtime, {
+      data: {
+        status: "ready",
+        routes: routeModules.map((route) => route.id),
+        middleware: appManifest.middleware,
+        completeness: assertAppCompleteness().ok,
+      },
+    });
+  }
+
+  if (
+    path === `${API_PREFIX}/app-config` ||
+    path === `${API_PREFIX}/public/app-config`
+  ) {
+    return json(200, runtime, { data: publicAppConfig(runtime) });
+  }
+
+  if (path === MOBILE_BOOTSTRAP_PATH && method === "GET") {
+    return mobileBootstrap(runtime);
+  }
+
+  if (path === `${API_PREFIX}/manifest` || path === "/manifest") {
+    return json(200, runtime, { data: appManifest });
+  }
+
+  const route = selectRoute(path);
+  if (!route) return notFound(runtime);
+  return route.handler(request, env, context);
+}
+
+function parsePublicKeysByKid<TEnv>(
+  env: TEnv,
+): Readonly<Record<string, string>> | null {
+  const raw = envString(env, "JWT_PUBLIC_KEYS_JSON");
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return null;
+    const entries = Object.entries(parsed as Record<string, unknown>).filter(
+      (entry): entry is [string, string] =>
+        typeof entry[1] === "string" && entry[1].trim().length > 0,
+    );
+    return entries.length ? Object.fromEntries(entries) : null;
+  } catch {
+    return null;
+  }
+}
+
+function buildAuthOptions<TEnv>(
+  options: AppOptions<TEnv>,
+): AuthMiddlewareOptions<TEnv> {
+  const custom = options.authOptions ?? {};
+  const defaultPublicPolicies = [
+    {
+      id: "admin-auth-public",
+      pattern: /^\/admin\/auth\/(login|mfa\/verify)(?:\/|$)/,
+      methods: ["POST", "OPTIONS"],
+      public: true,
+    },
+    {
+      id: "api-health-public",
+      pattern: /^\/api\/v1\/(health|ready|manifest|app-config|public)(?:\/|$)/,
+      public: true,
+    },
+    {
+      id: "root-manifest-public",
+      pattern: /^\/(manifest|health|ready|live|_health)(?:\/|$)/,
+      public: true,
+    },
+  ] as const;
+
+  return {
+    serviceName: APP_SERVICE_NAME,
+    issuer: AUTH_SERVICE_ISSUER,
+    audiences: [
+      AUTH_MOBILE_AUDIENCE,
+      AUTH_ADMIN_AUDIENCE,
+      AUTH_SERVICE_AUDIENCE,
+    ],
+    jwtSecret: (env) =>
+      envString(env, "JWT_SECRET") ?? envString(env, "AUTH_JWT_SECRET"),
+    jwtPublicKeysByKid: parsePublicKeysByKid,
+    publicPolicies: [
+      ...defaultPublicPolicies,
+      ...(custom.publicPolicies ?? []),
+    ],
+    ...custom,
+  };
+}
+
+function buildErrorOptions<TEnv>(
+  options: AppOptions<TEnv>,
+): ErrorMiddlewareOptions<TEnv> {
+  return {
+    serviceName: options.serviceName ?? APP_SERVICE_NAME,
+    environment: (env) =>
+      stringFromOption(env, options.environment, environmentOf(env)),
+    ...options.errorOptions,
+  };
+}
+
+function buildRateLimitOptions<TEnv>(
+  options: AppOptions<TEnv>,
+): RateLimitMiddlewareOptions<TEnv> {
+  return {
+    serviceName: options.serviceName ?? APP_SERVICE_NAME,
+    environment: (env) =>
+      stringFromOption(env, options.environment, environmentOf(env)),
+    hashSecret: (env) =>
+      envString(env, "RATE_LIMIT_HASH_SECRET") ?? envString(env, "HASH_SECRET"),
+    ...options.rateLimitOptions,
+  };
+}
+
+function isMutation(method: string): boolean {
+  return (
+    method === "POST" ||
+    method === "PUT" ||
+    method === "PATCH" ||
+    method === "DELETE"
+  );
+}
+
+function operationFor(
+  method: string,
+  path: string,
+): AppAuditEvent["operation"] {
+  if (path.includes("/auth/")) return "AUTH";
+  if (method === "GET" || method === "HEAD") return "READ";
+  if (method === "POST") return "CREATE";
+  if (method === "PUT" || method === "PATCH") return "UPDATE";
+  if (method === "DELETE") return "DELETE";
+  return "SYSTEM";
+}
+
+function actorFromHeaders(request: Request): string | null {
+  const value = request.headers.get("x-authenticated-user-id")?.trim();
+  return value ? value : null;
+}
+
+function adminReasonPresent(request: Request): boolean {
+  return Boolean(request.headers.get("x-admin-reason")?.trim());
+}
+
+function isAdminMutation(path: string, method: string): boolean {
+  return (
+    (path === ADMIN_API_PREFIX || path.startsWith(`${ADMIN_API_PREFIX}/`)) &&
+    isMutation(method)
+  );
+}
+
+function routeDomainFor(path: string): string {
+  return selectRoute(path)?.domain ?? "unknown";
+}
+
+function createAppAuditGate<TEnv>(
+  handler: FetchHandler<TEnv>,
+  options: AppOptions<TEnv>,
+): FetchHandler<TEnv> {
+  return async (
+    request: Request,
+    env: TEnv,
+    context: WaitUntilCapable,
+  ): Promise<Response> => {
+    const startedAt = Date.now();
+    const url = new URL(request.url);
+    const path = normalizePath(url.pathname);
+    const method = request.method.toUpperCase();
+    const requestId = requestIdFromHeaders(request);
+    const reasonPresent = adminReasonPresent(request);
+    const enforceReason = options.auditOptions?.enforceAdminReason ?? true;
+
+    if (enforceReason && isAdminMutation(path, method) && !reasonPresent) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: {
+            code: "ADMIN_REASON_REQUIRED",
+            message:
+              "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
+            status: 400,
+            requestId,
+          },
+          meta: {
+            service: APP_SERVICE_NAME,
+            version: APP_VERSION,
+            requestId,
+            path,
+            timestamp: new Date().toISOString(),
+          },
+        }),
+        {
+          status: 400,
+          headers: {
+            "content-type": "application/json; charset=utf-8",
+            "cache-control": "no-store",
+            [REQUEST_ID_HEADER]: requestId,
+          },
+        },
+      );
+    }
+
+    const response = await handler(request, env, context);
+    const shouldAudit =
+      path === ADMIN_API_PREFIX ||
+      path.startsWith(`${ADMIN_API_PREFIX}/`) ||
+      isMutation(method) ||
+      ((options.auditOptions?.auditReads ?? false) &&
+        (method === "GET" || method === "HEAD")) ||
+      ((options.auditOptions?.auditUserFailures ?? true) &&
+        path.startsWith(API_PREFIX) &&
+        response.status >= 400);
+
+    if (shouldAudit && options.auditOptions?.onAuditEvent) {
+      const event: AppAuditEvent = {
+        requestId,
+        path,
+        method,
+        status: response.status,
+        actorUserId: actorFromHeaders(request),
+        operation: operationFor(method, path),
+        targetDomain: routeDomainFor(path),
+        result:
+          response.status < 400
+            ? "SUCCESS"
+            : response.status === 403 || response.status === 401
+              ? "DENIED"
+              : "FAILURE",
+        reasonPresent,
+        durationMs: Date.now() - startedAt,
+        createdAt: new Date().toISOString(),
+      };
+      context.waitUntil?.(
+        Promise.resolve(
+          options.auditOptions.onAuditEvent(event, env, context),
+        ).catch((error) => {
+          console.warn(
+            "app_audit_event_failed",
+            error instanceof Error ? error.name : "UnknownError",
+          );
+        }),
+      );
+    }
+
+    return response;
+  };
+}
+
+export function createAppHandler<TEnv = AppEnv>(
+  options: AppOptions<TEnv> = {},
+): FetchHandler<TEnv> {
+  let handler: FetchHandler<TEnv> = (request, env, context) =>
+    coreDispatch(request, env, context, options);
+
+  if (options.enableAuditGate ?? true)
+    handler = createAppAuditGate(handler, options);
+  if (options.enableAuth ?? true)
+    handler = createAuthMiddleware(handler, buildAuthOptions(options));
+  if (options.enableRateLimit ?? true)
+    handler = createRateLimitMiddleware(
+      handler,
+      buildRateLimitOptions(options),
+    );
+  if (options.enableErrorBoundary ?? true)
+    handler = createErrorMiddleware(handler, buildErrorOptions(options));
+
+  return async (
+    request: Request,
+    env: TEnv,
+    context: WaitUntilCapable,
+  ): Promise<Response> => {
+    const requestId = requestIdFromHeaders(request);
+    if (request.method.toUpperCase() === "OPTIONS")
+      return preflightResponse(request, env, options, requestId);
+    const response = await handler(request, env, context);
+    return applySecurityHeaders(response, request, env, options, requestId);
+  };
+}
+
+export function createApp<TEnv = AppEnv>(
+  options: AppOptions<TEnv> = {},
+): AppInstance<TEnv> {
+  const fetch = createAppHandler(options);
+  return Object.freeze({
+    fetch,
+    manifest: appManifest,
+    assertCompleteness: assertAppCompleteness,
+  });
+}
+
+function collectResult(
+  prefix: string,
+  result: CompletenessResult,
+): readonly string[] {
+  return result.checks.map((check) => `${prefix}:${check}`);
+}
+
+function assertAppAuditGateCompleteness(): CompletenessResult {
+  const checks = [
+    "admin_reason_required_for_admin_mutations",
+    "audit_event_wait_until_hook",
+    "actor_from_trusted_auth_headers",
+    "operation_classification_read_create_update_delete_auth_system",
+    "user_api_failure_audit_ready",
+    "no_raw_financial_payload_logging",
+  ] as const;
+  return { ok: checks.length >= 6, version: APP_AUDIT_GATE_VERSION, checks };
+}
+
+export function assertAppCompleteness(): {
+  readonly ok: boolean;
+  readonly version: string;
+  readonly checks: readonly string[];
+  readonly routeCount: number;
+  readonly middlewareCount: number;
+} {
+  const middlewareResults = [
+    assertAuthMiddlewareCompleteness(),
+    assertErrorMiddlewareCompleteness(),
+    assertRateLimitMiddlewareCompleteness(),
+    assertAppAuditGateCompleteness(),
+  ];
+  const routeResults = [
+    assertAuthRoutesCompleteness(),
+    assertAdminRoutesCompleteness(),
+    assertUsersRoutesCompleteness(),
+    assertPayrollRoutesCompleteness(),
+    assertDailyBudgetsRoutesCompleteness(),
+    assertFixedExpensesRoutesCompleteness(),
+    assertVariableExpensesRoutesCompleteness(),
+    assertSavingsRoutesCompleteness(),
+    assertNotificationsRoutesCompleteness(),
+    assertGrowthRoutesCompleteness(),
+    assertCommunityRoutesCompleteness(),
+    assertUploadsRoutesCompleteness(),
+  ];
+  const appChecks = [
+    "cloudflare_workers_fetch_entrypoint",
+    "central_route_dispatcher_all_12_route_modules",
+    "auth_error_rate_limit_audit_gate_chain",
+    "api_v1_and_admin_api_v1_prefixes",
+    "health_ready_manifest_app_config_public_endpoints",
+    "api_v1_mobile_bootstrap_endpoint",
+    "server_authority_financial_route_contract",
+    "owner_boundary_and_auth_context_source_contract",
+    "standard_json_response_contract",
+    "cors_allowlist_and_security_headers",
+    "raw_financial_data_not_exposed_to_ads",
+    "repository_injection_compatible_routes",
+    "request_id_propagation",
+    "admin_reason_and_audit_gate_ready",
+    "monorepo_index_export_ready",
+    "e2e_smoke_test_ready",
+  ] as const;
+  const checks = [
+    ...appChecks,
+    ...middlewareResults.flatMap((result, index) =>
+      collectResult(`middleware${index + 1}`, result),
+    ),
+    ...routeResults.flatMap((result, index) =>
+      collectResult(`route${index + 1}`, result),
+    ),
+  ];
+  return {
+    ok:
+      middlewareResults.every((result) => result.ok) &&
+      routeResults.every((result) => result.ok) &&
+      routeModules.length === 12 &&
+      appChecks.length >= 15,
+    version: APP_VERSION,
+    checks,
+    routeCount: routeModules.length,
+    middlewareCount: middlewareResults.length,
+  };
+}
+
+export const app = createApp();
+export const handleAppRequest = app.fetch;
+export default app;

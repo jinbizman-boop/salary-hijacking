@@ -1,0 +1,322 @@
+name: 문서 작업
+description: 급여납치 플랫폼의 기획, 화면, 기능, API, DB, 보안, QA, 운영, 출시 문서의 신규 작성·수정·정합성 보정을 요청합니다.
+title: "[DOCS] "
+labels:
+  - docs
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 급여납치 문서 작업 요청
+        이 템플릿은 급여납치 플랫폼의 문서 변경을 추적하기 위한 표준 양식입니다.
+
+        문서 작업은 단순 문구 수정이 아니라, 급여납치의 서비스 요구사항·화면 설계·기능 명세·API·DB·보안·QA·운영 기준과 일치해야 합니다.
+        급여, 대출, 저축, 소비 내역, 토큰, 이메일, 전화번호, 푸시 토큰 등 민감정보 원문은 작성하지 말고 반드시 마스킹해 주세요.
+
+  - type: input
+    id: doc_name
+    attributes:
+      label: 문서명
+      description: 신규 작성 또는 수정할 문서명을 정확히 입력해 주세요.
+      placeholder: "예: MASTER_SPEC_v3.md, 00_SCREEN_SPECIFICATION.md, implementation-checklist.md"
+    validations:
+      required: true
+
+  - type: input
+    id: doc_path
+    attributes:
+      label: 문서 경로
+      description: 저장소 기준 상대 경로를 입력해 주세요. 신규 문서라면 제안 경로를 입력합니다.
+      placeholder: "예: docs/specs/MASTER_SPEC_v3.md"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: doc_task_type
+    attributes:
+      label: 작업 유형
+      description: 이번 문서 작업의 성격을 선택해 주세요.
+      options:
+        - "신규 문서 작성"
+        - "기존 문서 수정"
+        - "문서 정합성 보정"
+        - "요구사항 누락 반영"
+        - "화면/UX 명세 보강"
+        - "기능 명세 보강"
+        - "API/DB 명세 보강"
+        - "보안/개인정보/권한 정책 보강"
+        - "QA/E2E/UAT 체크리스트 보강"
+        - "운영/배포/릴리즈 문서 보강"
+        - "문서 구조/목차/링크 정리"
+        - "오탈자/표현/용어 통일"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 우선순위
+      description: 문서 변경이 프로젝트 진행과 출시 기준에 미치는 영향을 기준으로 선택해 주세요.
+      options:
+        - "P0 - 즉시 반영 / 출시·보안·금액 정합성·운영 기준 차단"
+        - "P1 - 이번 단계 완료 전 필수 반영"
+        - "P2 - 정식 출시 전 반영 원칙"
+        - "P3 - 차기 개선 또는 품질 보강"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: 관련 구축 단계
+      description: 이 문서 작업이 어떤 구축 단계의 완료 기준과 연결되는지 선택해 주세요.
+      options:
+        - "1단계 - 기초 인프라/모노레포/경로/환경변수/CI/CD"
+        - "2단계 - 인증/서버 권위/급여·예산·지출·저축 데이터 안정성"
+        - "3단계 - 급여 홈/계획/일일 예산/고정·변동 지출/알림"
+        - "4단계 - LV UP/커뮤니티/글쓰기/마이페이지/자동화 테스트"
+        - "5단계 - 관리자/광고·제휴/운영/성능/배포 안정화/상용화"
+        - "공통 - 여러 단계에 걸친 문서"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: doc_domain
+    attributes:
+      label: 문서 영향 영역
+      description: 가장 직접적으로 영향을 받는 영역을 선택해 주세요.
+      options:
+        - "ServiceStrategy - 서비스 개요/시장/사용자/비즈니스 모델"
+        - "UXUI - 화면설계/사용자 흐름/디자인 시스템/프로토타입"
+        - "Auth - 로그인/소셜 로그인/토큰/세션/권한"
+        - "Payroll - 급여 홈/급여일/수령금액/납치금액/목표 달성률"
+        - "BudgetExpense - 일일 예산/고정지출/고정저축/변동지출"
+        - "Notification - 알림/푸시/결제 예정/예산 초과/성과 알림"
+        - "LevelUp - 독서/뉴스/영어/건강/경험치/레벨"
+        - "Community - 게시판/글쓰기/댓글/좋아요/신고/모더레이션"
+        - "MyPage - 프로필/누적 납치금액/내 활동/문의/공지"
+        - "AdminOps - 관리자 콘솔/운영/CS/공지/제재/감사로그"
+        - "AdsPartner - 광고/제휴/AdSense/배너/노출/클릭/동의"
+        - "API - Cloudflare Workers/Hono API/에러코드/응답 규격"
+        - "DB - Neon PostgreSQL/스키마/마이그레이션/트랜잭션"
+        - "InfraDeploy - Cloudflare/R2/GitHub Actions/환경변수/배포"
+        - "SecurityPrivacy - 보안/개인정보/민감정보/로그/데이터 분리"
+        - "QARelease - 테스트/E2E/UAT/릴리즈/롤백/체크리스트"
+        - "Repository - repo-structure/package/워크스페이스/컨벤션"
+    validations:
+      required: true
+
+  - type: textarea
+    id: reference_docs
+    attributes:
+      label: 기준 문서/출처
+      description: 이번 작업이 반드시 맞춰야 하는 기준 문서, 화면, 기능 ID, API, DB, 체크리스트를 입력해 주세요.
+      placeholder: |
+        - 급여납치 Paycheck accounting(급여 납치) 개발 문서.zip:
+        - 급여납치 화면 및 기능 설계 기획안.html:
+        - salary-hijacking-platform.zip:
+        - MASTER_SPEC_v3.md:
+        - APPENDIX_A_adsense_v3_1.md:
+        - repo-structure.md:
+        - implementation-checklist.md:
+        - 00_SCREEN_SPECIFICATION.md:
+        - guide.md:
+        - 화면 ID:
+        - 기능 ID:
+        - API/DB/테스트 케이스:
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_problem
+    attributes:
+      label: 현재 문제
+      description: 현재 문서의 누락, 오류, 불일치, 모호한 부분을 구체적으로 작성해 주세요.
+      placeholder: "예: 급여 홈 문서에는 변동지출 삭제 후 서버 권위 재계산 기준이 명시되어 있지 않아 API/프론트 구현 기준이 달라질 수 있음."
+    validations:
+      required: true
+
+  - type: textarea
+    id: requested_change
+    attributes:
+      label: 변경 내용
+      description: 문서에 추가·수정·삭제해야 하는 내용을 구체적으로 작성해 주세요.
+      placeholder: |
+        - 추가할 내용:
+        - 수정할 내용:
+        - 삭제할 내용:
+        - 용어 통일 필요 사항:
+        - 표/다이어그램/체크리스트 추가 여부:
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: 변경 사유
+      description: 왜 이 문서 작업이 필요한지, 제품·개발·QA·운영 관점에서 작성해 주세요.
+      placeholder: |
+        - 사용자 경험 영향:
+        - 개발 구현 영향:
+        - QA/테스트 영향:
+        - 운영/관리자 영향:
+        - 출시/상용화 영향:
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: 완료 기준
+      description: 이 문서 작업이 완료되었다고 판단할 수 있는 객관적 기준을 체크 가능한 형태로 작성해 주세요.
+      placeholder: |
+        - [ ] 급여납치 기준 문서와 용어가 일치한다.
+        - [ ] 화면/기능/API/DB/QA/운영 기준 간 불일치가 없다.
+        - [ ] 구현자가 문서만 보고 작업 범위와 완료 기준을 이해할 수 있다.
+        - [ ] QA가 문서 기준으로 테스트 케이스를 만들 수 있다.
+        - [ ] 보안/개인정보/광고 데이터 분리 영향이 필요한 경우 명시되어 있다.
+        - [ ] 관련 링크, 문서 경로, 화면 ID, 기능 ID가 연결되어 있다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact_scope
+    attributes:
+      label: 영향 범위
+      description: 이 문서 변경이 어떤 코드, 화면, API, DB, 테스트, 운영 정책에 영향을 주는지 작성해 주세요.
+      placeholder: |
+        - 모바일 앱 영향:
+        - 관리자 웹 영향:
+        - API 영향:
+        - DB/마이그레이션 영향:
+        - 알림/스케줄러 영향:
+        - 광고/제휴 영향:
+        - QA/E2E/UAT 영향:
+        - 배포/운영 영향:
+        - 사용자 공지 필요 여부:
+    validations:
+      required: true
+
+  - type: textarea
+    id: security_privacy_review
+    attributes:
+      label: 보안/개인정보/민감정보 영향
+      description: 급여·대출·저축·소비·토큰·이메일·광고 데이터와 관련된 문서라면 반드시 작성해 주세요.
+      placeholder: |
+        - 개인정보/민감정보 관련 여부: 예 / 아니오 / 판단 필요
+        - 급여·대출·저축·소비 데이터 관련 여부: 예 / 아니오 / 판단 필요
+        - 인증/인가/권한 관련 여부: 예 / 아니오 / 판단 필요
+        - 로그/감사로그 관련 여부: 예 / 아니오 / 판단 필요
+        - 광고/제휴 데이터와 재무 원천 데이터 분리 관련 여부: 예 / 아니오 / 판단 필요
+        - 법적/정책 검토 필요 여부:
+    validations:
+      required: true
+
+  - type: textarea
+    id: consistency_check
+    attributes:
+      label: 문서 정합성 확인 대상
+      description: 함께 확인해야 하는 문서나 섹션을 작성해 주세요.
+      placeholder: |
+        - 함께 수정해야 하는 문서:
+        - 링크를 갱신해야 하는 문서:
+        - 용어를 맞춰야 하는 문서:
+        - 화면/기능/API/DB 간 충돌 가능성:
+        - 기존 문서에서 폐기해야 하는 내용:
+    validations:
+      required: false
+
+  - type: textarea
+    id: validation_plan
+    attributes:
+      label: 검수 계획
+      description: 문서 변경 후 어떤 방식으로 검수할지 작성해 주세요.
+      placeholder: |
+        - 1차 검수: 작성자 자체 검토
+        - 2차 검수: 관련 기능/화면/API/DB 문서 대조
+        - 3차 검수: 개발/QA/운영 담당자 리뷰
+        - 링크/목차/경로 확인:
+        - 구현 체크리스트 반영 여부:
+    validations:
+      required: true
+
+  - type: input
+    id: owner
+    attributes:
+      label: 문서 담당자
+      description: 문서 작성 또는 수정을 담당할 사람을 입력해 주세요.
+      placeholder: "@username 또는 담당자명"
+    validations:
+      required: false
+
+  - type: textarea
+    id: reviewers
+    attributes:
+      label: 리뷰어/승인자
+      description: 문서 검토가 필요한 담당자를 작성해 주세요.
+      placeholder: |
+        - 기획 리뷰:
+        - 디자인 리뷰:
+        - 프론트엔드 리뷰:
+        - 백엔드/API 리뷰:
+        - DB 리뷰:
+        - QA 리뷰:
+        - 보안/개인정보 리뷰:
+        - 운영/관리자 리뷰:
+    validations:
+      required: false
+
+  - type: textarea
+    id: links
+    attributes:
+      label: 관련 링크
+      description: 관련 이슈, PR, 커밋, 디자인, 테스트 결과, 배포 문서 링크를 입력해 주세요.
+      placeholder: |
+        - 관련 이슈:
+        - 관련 PR:
+        - 관련 커밋:
+        - 디자인/프로토타입:
+        - 테스트/QA 결과:
+        - 배포/릴리즈 문서:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: reporter_checklist
+    attributes:
+      label: 요청자 체크리스트
+      description: 문서 작업 요청 전 확인한 항목을 체크해 주세요.
+      options:
+        - label: 기존 문서와 이슈를 검색해 중복 여부를 확인했습니다.
+          required: true
+        - label: 문서명과 문서 경로를 작성했습니다.
+          required: true
+        - label: 현재 문제와 변경 내용을 구분해서 작성했습니다.
+          required: true
+        - label: 급여납치 기준 문서, 화면 ID, 기능 ID, API/DB/테스트 케이스 중 관련 항목을 연결했습니다.
+          required: true
+        - label: 민감정보 원문을 입력하지 않았고 필요한 경우 마스킹했습니다.
+          required: true
+        - label: 완료 기준과 검수 계획을 작성했습니다.
+          required: true
+
+  - type: checkboxes
+    id: docs_owner_checklist
+    attributes:
+      label: 문서 담당자 검수 체크리스트
+      description: 담당자 배정 후 처리자가 확인합니다.
+      options:
+        - label: 급여납치 전체 요구사항과 문서 내용이 충돌하지 않는지 확인했습니다.
+          required: false
+        - label: 화면/기능/API/DB/QA/운영 문서 간 정합성을 확인했습니다.
+          required: false
+        - label: 문서 용어, 경로, 링크, 목차를 정리했습니다.
+          required: false
+        - label: 보안/개인정보/광고 데이터 분리 기준이 필요한 경우 문서에 명확히 반영했습니다.
+          required: false
+        - label: 구현 체크리스트 또는 테스트 체크리스트에 반영할 항목을 확인했습니다.
+          required: false
+        - label: 관련 PR 또는 커밋을 이슈에 연결했습니다.
+          required: false
+        - label: 리뷰어 승인 후 이슈를 종료하거나 후속 작업으로 전환했습니다.
+          required: false

@@ -1,0 +1,225 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  merge_group:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+
+jobs:
+  verify:
+    name: Verify monorepo quality gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify repository CI contract
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const fail = (message) => {
+            console.error(`::error::${message}`);
+            process.exitCode = 1;
+          };
+
+          const requiredFiles = [
+            "package.json",
+            "pnpm-lock.yaml",
+            "pnpm-workspace.yaml",
+            ".github/ISSUE_TEMPLATE/bug_report.yml",
+            ".github/ISSUE_TEMPLATE/docs_task.yml",
+            ".github/ISSUE_TEMPLATE/feature_request.yml",
+            ".github/workflows/ci.yml"
+          ];
+
+          for (const file of requiredFiles) {
+            if (!fs.existsSync(file) || fs.statSync(file).size === 0) {
+              fail(`Required repository file is missing or empty: ${file}`);
+            }
+          }
+
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+
+          if (!pkg.packageManager || !pkg.packageManager.startsWith("pnpm@")) {
+            fail('Root package.json must define "packageManager": "pnpm@<version>".');
+          }
+
+          const requiredScripts = [
+            "lint",
+            "typecheck",
+            "test",
+            "build",
+            "test:e2e"
+          ];
+
+          const missingScripts = requiredScripts.filter((script) => !pkg.scripts || !pkg.scripts[script]);
+
+          if (missingScripts.length > 0) {
+            fail(`Root package.json is missing required CI scripts: ${missingScripts.join(", ")}`);
+          }
+
+          const issueTemplateDir = ".github/ISSUE_TEMPLATE";
+          const issueTemplateFiles = [
+            "bug_report.yml",
+            "docs_task.yml",
+            "feature_request.yml"
+          ].map((file) => path.join(issueTemplateDir, file));
+
+          for (const file of issueTemplateFiles) {
+            const content = fs.readFileSync(file, "utf8");
+            const lines = content.split(/\r?\n/);
+
+            const ids = [...content.matchAll(/^\s+id:\s*([A-Za-z0-9_-]+)\s*$/gm)].map((match) => match[1]);
+            const duplicateIds = ids.filter((id, index) => ids.indexOf(id) !== index);
+
+            if (duplicateIds.length > 0) {
+              fail(`${file} contains duplicated Issue Form ids: ${[...new Set(duplicateIds)].join(", ")}`);
+            }
+
+            let inTextarea = false;
+
+            for (const line of lines) {
+              if (/^  - type:\s+/.test(line)) {
+                inTextarea = line.trim() === "- type: textarea";
+              }
+
+              if (inTextarea && /^      value:\s*(\||>|.*)?$/.test(line)) {
+                fail(`${file} contains textarea attributes.value. Use placeholder instead to avoid pre-filled required fields.`);
+              }
+            }
+
+            if (!/body:\s*\n/.test(content)) {
+              fail(`${file} must contain body.`);
+            }
+
+            if (!/validations:\s*\n\s+required:\s+true/.test(content)) {
+              fail(`${file} must contain at least one required validation.`);
+            }
+          }
+
+          if (process.exitCode) {
+            process.exit(process.exitCode);
+          }
+
+          console.log("Repository CI contract verified.");
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify pnpm store integrity
+        run: pnpm store status
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit and integration tests
+        run: pnpm test
+
+      - name: Build apps, services, and packages
+        run: pnpm build
+
+      - name: Install Playwright browsers when configured
+        run: |
+          set -euo pipefail
+
+          if pnpm exec playwright --version >/dev/null 2>&1; then
+            pnpm exec playwright install --with-deps
+          else
+            echo "Playwright is not configured. Skipping browser installation."
+          fi
+
+      - name: E2E and QA tests
+        run: pnpm test:e2e
+
+      - name: Audit production dependencies
+        run: pnpm audit --prod --audit-level high
+
+      - name: Upload CI reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-reports-${{ github.job }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            coverage/**
+            test-results/**
+            playwright-report/**
+            apps/**/coverage/**
+            apps/**/test-results/**
+            services/**/coverage/**
+            services/**/test-results/**
+            packages/**/coverage/**
+            packages/**/test-results/**
+            **/junit.xml
+
+  dependency-review:
+    name: Review dependency changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'pull_request'
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
