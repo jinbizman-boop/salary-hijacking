@@ -53,6 +53,7 @@ type ReactRuntime = Readonly<{
 
 type NativeRuntime = Readonly<{
   ActivityIndicator: ElementType;
+  Image: ElementType;
   Pressable: ElementType;
   SafeAreaView: ElementType;
   ScrollView: ElementType;
@@ -77,6 +78,11 @@ type RouterRuntime = Readonly<{
   Slot: ElementType;
   useRouter: () => RouterLike;
   useSegments: () => readonly string[];
+}>;
+type FontRuntime = Readonly<{
+  useFonts: (
+    fontMap: Readonly<Record<string, unknown>>,
+  ) => readonly [boolean, Error | null];
 }>;
 type SecureStoreRuntime = Readonly<{
   getItemAsync: (key: string) => Promise<string | null>;
@@ -188,11 +194,22 @@ const SENSITIVE_KEYWORDS = [
   "푸시",
   "기기토큰",
 ] as const;
+const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
+  "Freesentation-4Regular": require("../assets/fonts/Freesentation-4Regular.ttf"),
+  "Freesentation-5Medium": require("../assets/fonts/Freesentation-5Medium.ttf"),
+  "Freesentation-6SemiBold": require("../assets/fonts/Freesentation-6SemiBold.ttf"),
+  "Freesentation-7Bold": require("../assets/fonts/Freesentation-7Bold.ttf"),
+  "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
+  "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
+});
+const OFFICIAL_BI_LOGO =
+  require("../assets/brand/salary-hijacking-platform-logo.png") as unknown;
 
 const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
 const RouterRuntimeRef = loadRouterRuntime();
 const SecureStoreRuntimeRef = loadSecureStoreRuntime();
+const FontRuntimeRef = loadFontRuntime();
 const API_BASE_URL = readMobileApiBaseUrl();
 
 const fallbackSession: SessionSnapshot = Object.freeze({
@@ -232,6 +249,7 @@ const fallbackPayload: RootPayload = Object.freeze({
 });
 
 export default function MobileRootLayout(): unknown {
+  const [fontsLoaded] = FontRuntimeRef.useFonts(FONT_ASSETS);
   const router = RouterRuntimeRef.useRouter();
   const segments = RouterRuntimeRef.useSegments();
   const [state, setState] = ReactRuntimeRef.useState<RootState>({
@@ -303,6 +321,39 @@ export default function MobileRootLayout(): unknown {
 
   const shouldRenderSlot =
     state.status === "READY" || state.status === "OFFLINE" || isPublic;
+  const shouldShowRuntimeChrome = !shouldRenderSlot;
+
+  if (!fontsLoaded) {
+    return h(
+      NativeRuntimeRef.SafeAreaView,
+      {
+        accessibilityLabel: "급여납치 폰트를 불러오는 중",
+        style: styles.safeArea,
+        testID: ROOT_E2E_TEST_ID,
+      },
+      h(
+        NativeRuntimeRef.View,
+        { style: styles.fontLoading },
+        h(NativeRuntimeRef.Image, {
+          accessibilityIgnoresInvertColors: true,
+          accessibilityLabel: "급여납치 공식 BI",
+          resizeMode: "contain",
+          source: OFFICIAL_BI_LOGO,
+          style: styles.fontLoadingLogo,
+        }),
+        h(
+          NativeRuntimeRef.Text,
+          { style: styles.fontLoadingTitle },
+          "급여납치",
+        ),
+        h(
+          NativeRuntimeRef.Text,
+          { style: styles.fontLoadingText },
+          "Freesentation 글꼴을 적용하고 있어요.",
+        ),
+      ),
+    );
+  }
 
   return h(
     NativeRuntimeRef.SafeAreaView,
@@ -311,14 +362,16 @@ export default function MobileRootLayout(): unknown {
       style: styles.safeArea,
       testID: ROOT_E2E_TEST_ID,
     },
-    renderGlobalHeader(
-      state.payload,
-      state.status,
-      currentRouteKey,
-      (): void => router.replace(SALARY_HOME_ROUTE as never),
-      (): void => router.replace(PROFILE_ROUTE as never),
-    ),
-    renderToast(state.toast),
+    shouldShowRuntimeChrome
+      ? renderGlobalHeader(
+          state.payload,
+          state.status,
+          currentRouteKey,
+          (): void => router.replace(SALARY_HOME_ROUTE as never),
+          (): void => router.replace(PROFILE_ROUTE as never),
+        )
+      : null,
+    shouldShowRuntimeChrome ? renderToast(state.toast) : null,
     shouldRenderSlot
       ? h(
           NativeRuntimeRef.View,
@@ -326,7 +379,7 @@ export default function MobileRootLayout(): unknown {
           h(RouterRuntimeRef.Slot, { key: currentRouteKey }),
         )
       : renderGate(state.status, state.retrying, bootstrap),
-    renderRuntimeGuard(state.payload),
+    shouldShowRuntimeChrome ? renderRuntimeGuard(state.payload) : null,
   );
 }
 
@@ -354,7 +407,13 @@ function renderGlobalHeader(
         onPress: goHome,
         style: styles.logoButton,
       },
-      h(NativeRuntimeRef.Text, { style: styles.logoText }, "납"),
+      h(NativeRuntimeRef.Image, {
+        accessibilityIgnoresInvertColors: true,
+        accessibilityLabel: "급여납치 공식 BI",
+        resizeMode: "contain",
+        source: OFFICIAL_BI_LOGO,
+        style: styles.headerLogoImage,
+      }),
     ),
     h(
       NativeRuntimeRef.View,
@@ -419,7 +478,7 @@ function renderGate(
       h(NativeRuntimeRef.Text, { style: styles.gateTitle }, title),
       h(NativeRuntimeRef.Text, { style: styles.gateMessage }, message),
       retrying
-        ? h(NativeRuntimeRef.ActivityIndicator, { color: "#67e8f9" })
+        ? h(NativeRuntimeRef.ActivityIndicator, { color: "#209252" })
         : h(
             NativeRuntimeRef.Pressable,
             {
@@ -690,6 +749,7 @@ function loadNativeRuntime(): NativeRuntime {
   return {
     ActivityIndicator: mod.ActivityIndicator ?? fallback("ActivityIndicator"),
     Pressable: mod.Pressable ?? fallback("Pressable"),
+    Image: mod.Image ?? fallback("Image"),
     SafeAreaView: mod.SafeAreaView ?? fallback("SafeAreaView"),
     ScrollView: mod.ScrollView ?? fallback("ScrollView"),
     StyleSheet: mod.StyleSheet ?? { create: fallbackStyleCreate },
@@ -716,6 +776,15 @@ function loadRouterRuntime(): RouterRuntime {
         : (): readonly string[] => [],
   };
 }
+function loadFontRuntime(): FontRuntime {
+  const mod = loadModule("expo-font") as Partial<FontRuntime>;
+  return {
+    useFonts:
+      typeof mod.useFonts === "function"
+        ? mod.useFonts
+        : (): readonly [boolean, Error | null] => [true, null],
+  };
+}
 function loadSecureStoreRuntime(): SecureStoreRuntime {
   const mod = loadModule("expo-secure-store") as Partial<SecureStoreRuntime>;
   return createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod);
@@ -729,6 +798,8 @@ function loadModule(moduleName: string): unknown {
         return require("react-native");
       case "expo-router":
         return require("expo-router");
+      case "expo-font":
+        return require("expo-font");
       case "expo-secure-store":
         return require("expo-secure-store");
       default:
@@ -904,17 +975,22 @@ export function assertMobileRootLayoutCompleteness(): {
     "accessibility_roles",
     "responsive_root_shell",
     "e2e_root_test_id",
+    "runtime_chrome_hidden_for_public_launch_surfaces",
+    "clean_fintech_light_shell",
+    "expo_font_useFonts",
+    "Freesentation-4Regular.ttf",
+    "Freesentation-9Black.ttf",
     "typescript_strict_ready",
   ] as const;
   return { ok: checks.length >= 20, version: ROOT_LAYOUT_VERSION, checks };
 }
 
 const styles = NativeRuntimeRef.StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#020617" },
+  safeArea: { flex: 1, backgroundColor: "#F7F8FA" },
   header: {
     alignItems: "center",
-    backgroundColor: "#020617",
-    borderBottomColor: "rgba(255,255,255,0.10)",
+    backgroundColor: "#FFFFFF",
+    borderBottomColor: "#EEF0F2",
     borderBottomWidth: 1,
     flexDirection: "row",
     gap: 12,
@@ -924,20 +1000,31 @@ const styles = NativeRuntimeRef.StyleSheet.create({
   },
   logoButton: {
     alignItems: "center",
-    backgroundColor: "#67e8f9",
+    backgroundColor: "#FFFFFF",
     borderRadius: 18,
     height: 46,
     justifyContent: "center",
     width: 46,
   },
-  logoText: { color: "#020617", fontSize: 22, fontWeight: "900" },
+  headerLogoImage: { borderRadius: 18, height: 42, width: 42 },
   headerBody: { flex: 1, gap: 2 },
-  headerKicker: { color: "#67e8f9", fontSize: 11, fontWeight: "900" },
-  headerTitle: { color: "#ffffff", fontSize: 23, fontWeight: "900" },
-  headerMeta: { color: "#94a3b8", fontSize: 11, fontWeight: "800" },
+  headerKicker: { color: "#209252", fontSize: 11, fontWeight: "900" },
+  headerTitle: {
+    color: "#202327",
+    fontFamily: "Freesentation-9Black",
+    fontSize: 23,
+    fontWeight: "900",
+  },
+  headerMeta: {
+    color: "#6D737A",
+    fontFamily: "Freesentation-6SemiBold",
+    fontSize: 11,
+    fontWeight: "800",
+  },
   profileButton: {
     alignItems: "center",
-    borderColor: "rgba(255,255,255,0.14)",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#E7EBEF",
     borderRadius: 16,
     borderWidth: 1,
     minHeight: 44,
@@ -953,72 +1040,92 @@ const styles = NativeRuntimeRef.StyleSheet.create({
     paddingVertical: 11,
   },
   toastInfo: {
-    backgroundColor: "rgba(34,211,238,0.12)",
-    borderColor: "rgba(34,211,238,0.36)",
+    backgroundColor: "#EAF6EF",
+    borderColor: "#D9F0E3",
   },
   toastSuccess: {
-    backgroundColor: "rgba(16,185,129,0.12)",
-    borderColor: "rgba(52,211,153,0.36)",
+    backgroundColor: "#EAF6EF",
+    borderColor: "#D9F0E3",
   },
   toastError: {
-    backgroundColor: "rgba(244,63,94,0.16)",
-    borderColor: "rgba(251,113,133,0.42)",
+    backgroundColor: "#FFF1F1",
+    borderColor: "#F3C4C4",
   },
-  toastText: { color: "#e2e8f0", fontSize: 13, lineHeight: 19 },
-  slotHost: { flex: 1, backgroundColor: "#020617" },
-  gateScroll: { flex: 1, backgroundColor: "#020617" },
+  toastText: { color: "#202327", fontSize: 13, lineHeight: 19 },
+  slotHost: { flex: 1, backgroundColor: "#F7F8FA" },
+  gateScroll: { flex: 1, backgroundColor: "#F7F8FA" },
   gateContent: { flexGrow: 1, justifyContent: "center", padding: 20 },
   gateCard: {
     alignItems: "center",
-    backgroundColor: "#0f172a",
-    borderColor: "rgba(255,255,255,0.12)",
+    backgroundColor: "#FFFFFF",
+    borderColor: "#EEF0F2",
     borderRadius: 24,
     borderWidth: 1,
     gap: 14,
     padding: 22,
   },
   gateTitle: {
-    color: "#ffffff",
+    color: "#202327",
     fontSize: 22,
     fontWeight: "900",
     textAlign: "center",
   },
   gateMessage: {
-    color: "#cbd5e1",
+    color: "#6D737A",
     fontSize: 14,
     lineHeight: 21,
     textAlign: "center",
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: "#67e8f9",
+    backgroundColor: "#209252",
     borderRadius: 16,
     justifyContent: "center",
     minHeight: 48,
     paddingHorizontal: 16,
   },
-  primaryButtonText: { color: "#020617", fontSize: 14, fontWeight: "900" },
-  safeText: { color: "#86efac", fontSize: 11, fontWeight: "900" },
-  reviewText: { color: "#fde68a", fontSize: 11, fontWeight: "900" },
-  dangerText: { color: "#fecdd3", fontSize: 11, fontWeight: "900" },
+  primaryButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
+  safeText: { color: "#209252", fontSize: 11, fontWeight: "900" },
+  reviewText: { color: "#856600", fontSize: 11, fontWeight: "900" },
+  dangerText: { color: "#D74B4B", fontSize: 11, fontWeight: "900" },
   guardBox: {
-    borderColor: "rgba(52,211,153,0.26)",
+    borderColor: "#D9F0E3",
     borderRadius: 20,
     borderWidth: 1,
     gap: 10,
     margin: 16,
     padding: 12,
   },
-  guardTitle: { color: "#d1fae5", fontSize: 13, fontWeight: "900" },
+  guardTitle: { color: "#209252", fontSize: 13, fontWeight: "900" },
   guardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
   guardPill: {
-    backgroundColor: "rgba(16,185,129,0.14)",
-    borderColor: "rgba(52,211,153,0.24)",
+    backgroundColor: "#EAF6EF",
+    borderColor: "#D9F0E3",
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
-  guardPillText: { color: "#d1fae5", fontSize: 10, fontWeight: "800" },
+  guardPillText: { color: "#12663A", fontSize: 10, fontWeight: "800" },
   buttonDisabled: { opacity: 0.48 },
+  fontLoading: {
+    alignItems: "center",
+    flex: 1,
+    gap: 10,
+    justifyContent: "center",
+    padding: 24,
+  },
+  fontLoadingLogo: { borderRadius: 40, height: 96, width: 96 },
+  fontLoadingTitle: {
+    color: "#202327",
+    fontFamily: "Freesentation-9Black",
+    fontSize: 34,
+    fontWeight: "900",
+  },
+  fontLoadingText: {
+    color: "#6D737A",
+    fontFamily: "Freesentation-6SemiBold",
+    fontSize: 14,
+    fontWeight: "700",
+  },
 });

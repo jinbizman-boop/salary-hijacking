@@ -2,129 +2,76 @@
 
 ## 목적
 
-`apps/mobile/src/shared/styles`는 급여납치 모바일 앱의 디자인 토큰, 색상, 타이포그래피, 간격, radius, shadow, 상태 컬러, 접근성 대비, 반응형 규칙을 정의한다. 모든 화면은 동일한 브랜드 경험과 금융 서비스 수준의 신뢰감을 제공해야 한다.
+`apps/mobile/src/shared/styles`는 급여납치 모바일 앱의 공통 디자인 토큰, 화면 컴포넌트, 접근성 기준, 개인정보/광고 표시 기준을 정의한다. 현재 출시 우선 UI 방향은 `Salary Hijacking Clean Fintech v1`이다.
 
 ## 디자인 방향
 
-- 다크 기반의 고대비 금융 앱 UI
-- 급여/예산의 긴장감과 LV UP의 성취감을 동시에 표현
-- 핵심 CTA는 명확하고 터치하기 쉬운 형태
-- 금액과 상태는 과도한 자극 없이 정확하게 표시
-- 광고/제휴는 본문 콘텐츠와 시각적으로 구분
-- 오류와 경고는 색상뿐 아니라 텍스트로 의미 전달
+- 토스처럼 큰 숫자와 짧은 문장으로 금융 상태를 즉시 이해하게 한다.
+- 당근마켓처럼 커뮤니티와 생활 루틴 화면은 친근하고 가볍게 보이게 한다.
+- 홈 첫 화면은 사용자가 얻는 가치인 `이번 달 내가 지켜낸 돈`을 가장 먼저 보여준다.
+- 카드형 요약, 명확한 CTA, 낮은 정보 밀도, 8pt 간격 체계를 우선한다.
+- 광고/제휴는 핵심 금융 정보보다 아래에 두고 `제휴/광고` 라벨을 표시한다.
 
-## 권장 디렉터리 구성
-
-```text
-shared/styles/
-  README.md
-  tokens.ts
-  colors.ts
-  typography.ts
-  spacing.ts
-  radius.ts
-  shadows.ts
-  layout.ts
-  accessibility.ts
-  themes.ts
-  __tests__/
-```
-
-## 색상 토큰
+## 핵심 토큰
 
 ```text
-background.primary     #020617
-background.surface     #0f172a
-background.elevated    rgba(255,255,255,0.04)
-text.primary           #ffffff
-text.secondary         #cbd5e1
-text.muted             #94a3b8
-brand.primary          #67e8f9
-success                #86efac
-warning                #fde68a
-danger                 #fecdd3
-info                   #bfdbfe
-border.default         rgba(255,255,255,0.12)
-privacy.safe           rgba(16,185,129,0.14)
-ad.disclosure          rgba(251,191,36,0.14)
+theme.name              Salary Hijacking Clean Fintech v1
+font.family             var(--font-presentation), Presentation, Pretendard, Noto Sans KR, system-ui
+brand.primary           #209252
+brand.secondary         #2FA86A
+brand.soft              #EAF6EF
+brand.dark              #12663A
+surface.app             #F7F8FA
+surface.card            #FFFFFF
+surface.line            #E7EBEF
+surface.lineSoft        #EEF0F2
+text.primary            #202327
+text.secondary          #4B535B
+text.muted              #6D737A
+text.disabled           #ADB3B8
+semantic.danger         #D74B4B
+semantic.warning        #F7D34D
+bottomTab.height        76
+touchTarget.min         44
 ```
 
-## 타이포그래피
+## 공통 컴포넌트
 
-- 화면 제목: 24~30, weight 900
-- 섹션 제목: 18~22, weight 900
-- 본문: 13~15, line-height 19~22
-- 보조 문구: 11~13, weight 700~900
-- 금액 표시: weight 900, 숫자 가독성 우선
-- 오류/경고: 짧은 한국어 문장, 상태 텍스트 포함
+- `salaryHijackingTheme`: 색상, 간격, radius, typography, shadow, layout 토큰
+- `appIcons`: 아이콘 라이브러리 미사용 시 적용하는 이모지 fallback
+- `CleanFintechScreen`: 급여, 계획, LV, 알림, 커뮤니티, MY, 로그인 공통 화면
+- `CleanFintechSplashScreen`: 스플래시/앱 진입 화면
+- `CleanFintechSignupScreen`: 회원가입 화면
+- `CleanFintechWriteScreen`: 글쓰기 화면
+- `CleanFintechLevelDetailScreen`: 독서, 뉴스, 영어, 건강 상세 루틴 화면
+- `CleanFintechPostDetailScreen`: 커뮤니티 게시글 상세 화면
 
-## 간격과 형태
+## 화면별 기준
 
-- 기본 화면 padding: 16~20
-- 카드 padding: 14~18
-- 컴포넌트 gap: 8~14
-- 터치 최소 높이: 44
-- 주요 카드 radius: 20~28
-- pill radius: 999
-- border width: 1
-
-## 상태 컬러 의미
-
-```text
-success: 완료, 안전, 서버 확정
-warning: 예산 초과 임박, 검토 필요, 인증 필요
-critical/danger: 차단, 실패, 계정 제한, 삭제 위험
-info: 안내, 학습, 중립 정보
-privacy: 민감 데이터 보호 상태
-ad: 광고/제휴 표시
-```
+- 급여 홈: `이번 달 내가 지켜낸 돈`, 오늘 예산, 수령/지출/납치금액, 고정지출, 변동지출, 지출 추가
+- 계획: 목표 달성률, 급여 계획, 고정지출, 고정저축, 생활비, 목표금액을 카드형 UI로 제공
+- 알림: 중요 알림과 루틴 알림을 분리하고 읽지 않은 항목은 green dot 또는 soft green 배경으로 표시
+- LV UP: 현재 레벨, XP progress, 독서/뉴스/영어/건강 미션 카드, 완료 toast
+- LV 상세: 카테고리 pill tabs, 진행률 요약, 콘텐츠 리스트, 광고는 중간 이하
+- 커뮤니티: 전체/자유/레벨업 인증/취미 탭, 인기글, 게시글 리스트, 하단 FAB 글쓰기
+- 글쓰기: 제목, 본문, 게시판, 익명, 질문, 첨부 옵션과 필수 검증
+- MY: 프로필, 누적 납치금액, 레벨업 현황, 자기관리 성과, 관리 메뉴
 
 ## 접근성 기준
 
-1. 텍스트 대비는 WCAG AA 수준을 목표로 한다.
-2. 색상만으로 상태를 전달하지 않는다.
-3. 중요 액션은 최소 44px 터치 영역을 제공한다.
-4. disabled 상태는 opacity와 텍스트로 함께 표현한다.
-5. skeleton과 loading은 화면 낭독 시 의미 있는 label을 제공한다.
-6. 금액은 screen reader에서 원 단위로 읽기 쉬운 문자열을 제공한다.
-
-## 반응형 기준
-
-- 작은 모바일 화면에서는 단일 컬럼 카드 흐름을 기본으로 한다.
-- 넓은 화면이나 태블릿에서는 2열 카드 배치를 허용한다.
-- 하단 탭과 주요 CTA는 엄지 조작 영역을 고려한다.
-- 긴 커뮤니티/알림/지출 목록은 가상화 또는 페이지네이션을 사용한다.
-- safe area와 keyboard overlap을 항상 고려한다.
+1. 모든 주요 터치 영역은 최소 44px 이상이어야 한다.
+2. 금액 숫자는 screen reader용 label 또는 읽기 쉬운 텍스트를 제공한다.
+3. 예산 초과는 빨간색뿐 아니라 `예산 초과` 텍스트로도 전달한다.
+4. 탭과 선택 가능한 pill은 선택 상태를 제공한다.
+5. 숫자 입력은 numeric keyboard와 음수/소수 입력 방지를 기본으로 한다.
 
 ## 개인정보/광고 UI 규칙
 
-- 개인정보 보호 상태는 `Privacy Guard` 또는 동등한 UI로 표시할 수 있다.
-- raw 금융 데이터 미노출, raw 개인정보 미노출, raw 푸시 토큰 미노출, 금융 광고 타겟팅 미사용 상태를 개발/검수에서 확인 가능해야 한다.
-- 광고와 제휴는 `광고`, `제휴` 라벨을 명확히 표시한다.
-- 광고 카드가 급여/지출/저축 금액과 시각적으로 결합되어 타겟팅처럼 보이지 않도록 분리한다.
-
-## 기능별 스타일 가이드
-
-- 급여 홈: 가장 높은 정보 위계, 요약 카드, 안정적인 색상
-- 계획: 입력 폼과 서버 재계산 결과를 분리
-- 예산: 남은 금액, 초과 상태, 오늘 기준을 명확히 표시
-- 지출: 카테고리, 날짜, 삭제 위험 액션을 구분
-- 저축: 목표 달성률과 자동 저축 상태를 긍정적으로 표시
-- 알림: 읽음/안읽음 차이를 명확히 표시
-- LV UP: 성취, streak, XP를 가볍고 동기부여되게 표시
-- 커뮤니티: 익명성, 신고, 검토 상태를 신뢰감 있게 표시
-- 프로필: 보안/개인정보 설정 접근성을 높게 유지
-
-## 테스트 완료 기준
-
-- 토큰 import 순환 없음
-- 모든 색상 토큰 사용처 타입 검증 통과
-- 접근성 대비 검수 통과
-- 작은 화면/일반 화면/태블릿 레이아웃 검수 통과
-- 광고/제휴 라벨 시각 구분 검수 통과
-- 로딩/오류/오프라인/점검 상태 스타일 검수 통과
-- Expo iOS/Android 스냅샷 또는 시각 QA 통과
+- raw 금융 데이터, raw 개인정보, raw 푸시 토큰은 광고/분석/로그/푸시 payload에 넣지 않는다.
+- 광고와 제휴는 contextual-only를 기본값으로 한다.
+- 금융 금액 기반 광고 타겟팅은 금지한다.
+- 개발/검수 화면에는 필요 시 `serverAuthority=true`, `rawFinancialData=false`, `adsFinancialTargeting=false` 같은 guard 문구를 노출할 수 있다.
 
 ## 완료 판정
 
-이 README는 `shared/styles` 계층이 문서상·이론상 갖춰야 할 디자인 토큰, 접근성, 반응형, 상태 표현, 개인정보/광고 UI 기준을 정의한다. 실제 운영 완성도는 토큰 구현, 전체 화면 적용, 디바이스별 시각 QA, Expo 빌드, E2E/QA 통과 후 확정된다.
+이 문서는 모바일 스타일 계층의 문서상 기준이다. 실제 운영 완성도는 전체 화면 적용, 모바일 360~430px 시각 QA, native E2E, EAS 빌드, 스토어 제출 검수, production API/DB/secret 검증까지 통과한 뒤 별도로 판단한다.

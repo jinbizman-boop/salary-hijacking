@@ -58,7 +58,7 @@ const DEFAULT_SPLASH = "./assets/splash.png";
 const DEFAULT_ADAPTIVE_ICON = "./assets/adaptive-icon.png";
 const DEFAULT_FAVICON = "./assets/favicon.png";
 const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
-const DEFAULT_NOTIFICATION_COLOR = "#67E8F9";
+const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
 const FORBIDDEN_ENV_KEYWORDS = [
   "SECRET",
@@ -121,7 +121,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
     splash: {
       image: assetPathEnv("EXPO_PUBLIC_SPLASH_IMAGE", DEFAULT_SPLASH),
       resizeMode: "contain",
-      backgroundColor: "#020617",
+      backgroundColor: "#F7F8FA",
     },
     assetBundlePatterns: ["assets/**/*", "app/**/*", "src/**/*"],
     ios: iosConfig(buildNumber),
@@ -206,7 +206,7 @@ function androidConfig(versionCode: number): JsonRecord {
         "EXPO_PUBLIC_ANDROID_ADAPTIVE_ICON",
         DEFAULT_ADAPTIVE_ICON,
       ),
-      backgroundColor: "#020617",
+      backgroundColor: "#F7F8FA",
     },
     permissions: [
       "POST_NOTIFICATIONS",
@@ -257,8 +257,8 @@ function webConfig(): JsonRecord {
     name: SERVICE_NAME,
     shortName: SERVICE_NAME,
     lang: DEFAULT_LOCALE,
-    themeColor: "#020617",
-    backgroundColor: "#020617",
+    themeColor: "#209252",
+    backgroundColor: "#F7F8FA",
   };
 }
 
