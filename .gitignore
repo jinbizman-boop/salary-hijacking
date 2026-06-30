@@ -215,6 +215,7 @@ neon-branch-dumps/
 docs/generated/
 release/artifacts/
 release/checksums/
+release/screenshots/*_probe.png
 
 *.zip
 *.tar
