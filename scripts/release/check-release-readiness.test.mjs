@@ -24,6 +24,77 @@ const validPng = Buffer.from(
   "base64",
 );
 
+const validMobileAppConfig = `
+const SERVICE_NAME = "급여납치";
+const SERVICE_SLUG = "salary-hijacking";
+const DEFAULT_SCHEME = "salaryhijacking";
+const DEFAULT_VERSION = "1.0.0";
+const DEFAULT_IOS_BUNDLE_ID = "com.salaryhijacking.mobile";
+const DEFAULT_ANDROID_PACKAGE = "com.salaryhijacking.mobile";
+const DEFAULT_ICON = "./assets/icon.png";
+const DEFAULT_SPLASH = "./assets/splash.png";
+const DEFAULT_ADAPTIVE_ICON = "./assets/adaptive-icon.png";
+const DEFAULT_FAVICON = "./assets/favicon.png";
+const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
+const DEFAULT_TIMEZONE = "Asia/Seoul";
+const DEFAULT_LOCALE = "ko-KR";
+const DEFAULT_API_VERSION = "v1";
+const appConfig = {
+  name: SERVICE_NAME,
+  slug: SERVICE_SLUG,
+  scheme: DEFAULT_SCHEME,
+  version: DEFAULT_VERSION,
+  orientation: "portrait",
+  runtimeVersion: { policy: "appVersion" },
+  ios: { bundleIdentifier: DEFAULT_IOS_BUNDLE_ID, buildNumber: "1" },
+  android: { package: DEFAULT_ANDROID_PACKAGE, versionCode: 1 },
+  extra: {
+    api: { prefix: "/api/v1" },
+    privacy: {
+      serverAuthority: true,
+      financialAmountBasedTargeting: false,
+      contextualAdsOnly: true,
+      timezone: DEFAULT_TIMEZONE,
+    },
+    ads: { contextualOnly: true, financialTargetingAllowed: false },
+  },
+};
+export default appConfig;
+`;
+
+const validGooglePlayMetadata = `# Google Play Metadata
+
+## App Identity
+
+- app name: 급여납치
+- package name: \`com.salaryhijacking.mobile\`
+- default language: Korean (\`ko-KR\`)
+- category: Finance
+
+## Privacy And Safety
+
+- privacy policy: \`https://salaryhijacking.com/privacy\`
+- support contact: \`support@salaryhijacking.com\`
+- ads disclosure: ad and partner surfaces must be clearly labeled.
+`;
+
+const validAppStoreMetadata = `# App Store Metadata
+
+## App Identity
+
+- app name: 급여납치
+- bundle identifier: \`com.salaryhijacking.mobile\`
+- default language: Korean (\`ko-KR\`)
+- category: Finance
+
+## Privacy And Safety
+
+- privacy policy: \`https://salaryhijacking.com/privacy\`
+- support URL: \`https://salaryhijacking.com/support\`
+- marketing URL: \`https://salaryhijacking.com\`
+- tracking policy: no App Tracking Transparency prompt is required unless a future verified ads policy introduces tracking.
+`;
+
 const writeReleaseTargets = (rootDir, overrides = {}) => {
   const targets = {
     schemaVersion: 1,
@@ -138,8 +209,12 @@ const makeWorkspace = () => {
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
-  write(rootDir, "release/store/google-play-metadata.md", "# Google Play\n");
-  write(rootDir, "release/store/app-store-metadata.md", "# App Store\n");
+  write(
+    rootDir,
+    "release/store/google-play-metadata.md",
+    validGooglePlayMetadata,
+  );
+  write(rootDir, "release/store/app-store-metadata.md", validAppStoreMetadata);
   write(rootDir, "infra/domain/dns-records.md", "# DNS\n");
   write(rootDir, "infra/domain/certificates.md", "# Certificates\n");
   write(rootDir, "infra/github/secrets.md", "# GitHub Secrets\n");
@@ -162,6 +237,7 @@ const makeWorkspace = () => {
     'name = "notifications"\n',
   );
   write(rootDir, "services/scheduler/wrangler.toml", 'name = "scheduler"\n');
+  write(rootDir, "apps/mobile/app.config.ts", validMobileAppConfig);
   write(
     rootDir,
     "apps/mobile/eas.json",
@@ -397,6 +473,47 @@ test("blocks missing mobile launch assets and non-release EAS domains", () => {
   assert.match(report, /mobile:eas:production-api/);
   assert.match(report, /mobile:eas:production-deeplink/);
   assert.match(report, /mobile:eas:production-android/);
+});
+
+test("blocks mobile app config and store metadata that cannot be submitted", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "apps/mobile/app.config.ts",
+    `
+const SERVICE_NAME = "Paycheck Helper";
+const SERVICE_SLUG = "paycheck-helper";
+const DEFAULT_SCHEME = "paycheck";
+const DEFAULT_VERSION = "0.0.0";
+const DEFAULT_IOS_BUNDLE_ID = "com.example.paycheck";
+const DEFAULT_ANDROID_PACKAGE = "com.example.paycheck";
+`,
+  );
+  write(
+    rootDir,
+    "release/store/google-play-metadata.md",
+    "# Google Play\n\n- app name: TODO\n- package name: `com.example.paycheck`\n- privacy policy: `https://example.com/privacy`\n",
+  );
+  write(
+    rootDir,
+    "release/store/app-store-metadata.md",
+    "# App Store\n\n- app name: TODO\n- bundle identifier: `com.example.paycheck`\n- support URL: `https://example.com/support`\n",
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:app-config:identity/);
+  assert.match(report, /mobile:app-config:bundle-ids/);
+  assert.match(report, /mobile:store:google-play/);
+  assert.match(report, /mobile:store:app-store/);
 });
 
 test("blocks when the GitHub repository policy file is missing", () => {

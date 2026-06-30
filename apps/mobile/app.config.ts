@@ -78,6 +78,11 @@ const FORBIDDEN_ENV_KEYWORDS = [
   "지출",
   "저축",
   "납치금액",
+  "계좌",
+  "카드",
+  "대출",
+  "전화번호",
+  "이메일",
 ] as const;
 
 export default function appConfig(context: ConfigContext): ExpoConfig {

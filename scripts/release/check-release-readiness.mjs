@@ -32,6 +32,7 @@ const REQUIRED_FILES = [
   "services/api/wrangler.toml",
   "services/notifications/wrangler.toml",
   "services/scheduler/wrangler.toml",
+  "apps/mobile/app.config.ts",
   "apps/mobile/eas.json",
 ];
 
@@ -106,6 +107,24 @@ const EXPECTED_MOBILE_EAS = Object.freeze({
   productionApiBaseUrl: "https://api.salaryhijacking.com",
   productionDeeplinkHost: "salaryhijacking.com",
 });
+
+const EXPECTED_MOBILE_APP = Object.freeze({
+  name: "급여납치",
+  slug: "salary-hijacking",
+  scheme: "salaryhijacking",
+  packageId: "com.salaryhijacking.mobile",
+  version: "1.0.0",
+  privacyUrl: "https://salaryhijacking.com/privacy",
+  supportUrl: "https://salaryhijacking.com/support",
+  supportEmail: "support@salaryhijacking.com",
+  locale: "ko-KR",
+  timezone: "Asia/Seoul",
+});
+
+const MOJIBAKE_PATTERN = /[�]|[湲吏理疫]/;
+
+const SUBMISSION_PLACEHOLDER_PATTERN =
+  /\b(?:TODO|TBD|placeholder|coming soon|stub|not implemented|example\.com|salary-hijacking\.example)\b/i;
 
 const pathExists = (rootDir, relativePath) =>
   fs.existsSync(path.join(rootDir, relativePath));
@@ -963,6 +982,12 @@ const readJsonIfPresent = (rootDir, relativePath) => {
   }
 };
 
+const readTextIfPresent = (rootDir, relativePath) => {
+  const filePath = path.join(rootDir, relativePath);
+  if (!fs.existsSync(filePath)) return null;
+  return fs.readFileSync(filePath, "utf8");
+};
+
 const hasPngSignature = (filePath) => {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
     return false;
@@ -985,6 +1010,190 @@ const getEasEnv = (profile) => (isPlainObject(profile.env) ? profile.env : {});
 const addMobileCheck = (checks, blockers, status, name, detail, blocker) => {
   addCheck(checks, status, name, detail);
   if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const regexEscape = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const hasConstAssignment = (text, name, expectedValue) =>
+  new RegExp(
+    `const\\s+${regexEscape(name)}\\s*=\\s*["']${regexEscape(expectedValue)}["']`,
+  ).test(text);
+
+const hasAllText = (text, requiredValues) =>
+  requiredValues.every((value) => text.includes(value));
+
+const isSubmissionTextClean = (text) =>
+  !MOJIBAKE_PATTERN.test(text) && !SUBMISSION_PLACEHOLDER_PATTERN.test(text);
+
+const checkMobileAppConfig = (rootDir, checks, blockers) => {
+  const appConfigText = readTextIfPresent(rootDir, "apps/mobile/app.config.ts");
+  if (!appConfigText) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:app-config:file",
+      "apps/mobile/app.config.ts is missing",
+      "mobile app.config.ts must exist before app store submission",
+    );
+    return;
+  }
+
+  const identityOk =
+    hasConstAssignment(
+      appConfigText,
+      "SERVICE_NAME",
+      EXPECTED_MOBILE_APP.name,
+    ) &&
+    hasConstAssignment(
+      appConfigText,
+      "SERVICE_SLUG",
+      EXPECTED_MOBILE_APP.slug,
+    ) &&
+    hasConstAssignment(
+      appConfigText,
+      "DEFAULT_SCHEME",
+      EXPECTED_MOBILE_APP.scheme,
+    ) &&
+    appConfigText.includes('orientation: "portrait"');
+  addMobileCheck(
+    checks,
+    blockers,
+    identityOk ? "PASS" : "BLOCKED",
+    "mobile:app-config:identity",
+    identityOk
+      ? "name, slug, scheme, and orientation are aligned"
+      : "name, slug, scheme, or orientation is not aligned",
+    "mobile app identity must be 급여납치 / salary-hijacking / salaryhijacking / portrait",
+  );
+
+  const bundleIdsOk =
+    hasConstAssignment(
+      appConfigText,
+      "DEFAULT_IOS_BUNDLE_ID",
+      EXPECTED_MOBILE_APP.packageId,
+    ) &&
+    hasConstAssignment(
+      appConfigText,
+      "DEFAULT_ANDROID_PACKAGE",
+      EXPECTED_MOBILE_APP.packageId,
+    );
+  addMobileCheck(
+    checks,
+    blockers,
+    bundleIdsOk ? "PASS" : "BLOCKED",
+    "mobile:app-config:bundle-ids",
+    bundleIdsOk
+      ? EXPECTED_MOBILE_APP.packageId
+      : "iOS bundle identifier or Android package is not aligned",
+    `mobile iOS bundle identifier and Android package must be ${EXPECTED_MOBILE_APP.packageId}`,
+  );
+
+  const versioningOk =
+    hasConstAssignment(
+      appConfigText,
+      "DEFAULT_VERSION",
+      EXPECTED_MOBILE_APP.version,
+    ) &&
+    appConfigText.includes('runtimeVersion: { policy: "appVersion"') &&
+    appConfigText.includes("versionCode") &&
+    appConfigText.includes("buildNumber");
+  addMobileCheck(
+    checks,
+    blockers,
+    versioningOk ? "PASS" : "BLOCKED",
+    "mobile:app-config:versioning",
+    versioningOk
+      ? "default version, runtime policy, build number, and version code are declared"
+      : "version, runtime policy, build number, or version code is not aligned",
+    "mobile app versioning must declare 1.0.0, appVersion runtime policy, iOS buildNumber, and Android versionCode",
+  );
+
+  const policyOk = hasAllText(appConfigText, [
+    'const DEFAULT_API_VERSION = "v1"',
+    `const DEFAULT_TIMEZONE = "${EXPECTED_MOBILE_APP.timezone}"`,
+    `const DEFAULT_LOCALE = "${EXPECTED_MOBILE_APP.locale}"`,
+    "serverAuthority: true",
+    "financialAmountBasedTargeting: false",
+    "contextualOnly: true",
+  ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    policyOk ? "PASS" : "BLOCKED",
+    "mobile:app-config:policy",
+    policyOk
+      ? "API v1, Asia/Seoul, server authority, and contextual ads policy are declared"
+      : "API, timezone, server authority, or ads/privacy policy is not aligned",
+    "mobile app config must preserve API v1, Asia/Seoul, server authority, and contextual-only ads/privacy rules",
+  );
+
+  const textClean = isSubmissionTextClean(appConfigText);
+  addMobileCheck(
+    checks,
+    blockers,
+    textClean ? "PASS" : "BLOCKED",
+    "mobile:app-config:text",
+    textClean
+      ? "no submission placeholder or mojibake markers found"
+      : "submission placeholder or mojibake marker found",
+    "mobile app.config.ts must not contain placeholder or mojibake text before app store submission",
+  );
+};
+
+const checkStoreMetadata = (rootDir, checks, blockers) => {
+  const googlePlayText = readTextIfPresent(
+    rootDir,
+    "release/store/google-play-metadata.md",
+  );
+  const googlePlayOk =
+    typeof googlePlayText === "string" &&
+    isSubmissionTextClean(googlePlayText) &&
+    hasAllText(googlePlayText, [
+      `app name: ${EXPECTED_MOBILE_APP.name}`,
+      EXPECTED_MOBILE_APP.packageId,
+      EXPECTED_MOBILE_APP.locale,
+      "Finance",
+      EXPECTED_MOBILE_APP.privacyUrl,
+      EXPECTED_MOBILE_APP.supportEmail,
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    googlePlayOk ? "PASS" : "BLOCKED",
+    "mobile:store:google-play",
+    googlePlayOk
+      ? "Google Play metadata has identity, category, privacy, and support data"
+      : "Google Play metadata is missing submission identity, privacy, or support data",
+    "Google Play metadata must include 급여납치, package id, ko-KR, Finance, privacy URL, and support email without placeholders",
+  );
+
+  const appStoreText = readTextIfPresent(
+    rootDir,
+    "release/store/app-store-metadata.md",
+  );
+  const appStoreOk =
+    typeof appStoreText === "string" &&
+    isSubmissionTextClean(appStoreText) &&
+    hasAllText(appStoreText, [
+      `app name: ${EXPECTED_MOBILE_APP.name}`,
+      EXPECTED_MOBILE_APP.packageId,
+      EXPECTED_MOBILE_APP.locale,
+      "Finance",
+      EXPECTED_MOBILE_APP.privacyUrl,
+      EXPECTED_MOBILE_APP.supportUrl,
+      "https://salaryhijacking.com",
+    ]);
+  addMobileCheck(
+    checks,
+    blockers,
+    appStoreOk ? "PASS" : "BLOCKED",
+    "mobile:store:app-store",
+    appStoreOk
+      ? "App Store metadata has identity, category, privacy, support, and marketing data"
+      : "App Store metadata is missing submission identity, privacy, support, or marketing data",
+    "App Store metadata must include 급여납치, bundle id, ko-KR, Finance, privacy/support/marketing URLs without placeholders",
+  );
 };
 
 const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
@@ -1010,6 +1219,9 @@ const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
       );
     }
   }
+
+  checkMobileAppConfig(rootDir, checks, blockers);
+  checkStoreMetadata(rootDir, checks, blockers);
 
   const easConfig = readJsonIfPresent(rootDir, "apps/mobile/eas.json");
   if (!easConfig) {
