@@ -21,7 +21,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - workspace quality: PASS
 - workspace build: PASS
 - local Git baseline: PASS, commit `37bde95 chore: establish salary hijacking baseline`, clean working tree, no remote configured
-- root script tests: PASS, 29 tests
+- root script tests: PASS, 32 tests
 - release readiness preflight: reporting command PASS, release status BLOCKED
 - mobile typecheck/lint/format/Jest tests: PASS
 - mobile Detox config and smoke contract: present and covered by tests
@@ -29,7 +29,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - mobile/API bootstrap, payroll current/recalculate, and profile/privacy-export contracts: aligned in current code; profile alias is covered by `services/api/tests/mobile-profile-contract.test.ts`, and manifest alignment is covered by `services/api/tests/mobile-route-manifest-contract.test.ts`
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
-- infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, and local generated hosting/build metadata tracking risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, and `.open-next` through `pnpm run check:external-integrations`
+- infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, and release target mismatch risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, explicit `RETRO-DB` protection, `GITHUB_REPOSITORY`, and `CF_PAGES_PROJECT_NAME` through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
 - public release remains blocked by missing runtime secrets, missing Salary Hijacking GitHub/Cloudflare/Neon release-resource evidence, missing local EAS/Android CLI evidence, missing remote GitHub repository linkage, real DB migration/seed execution, staging/production deploy, certificates, store builds, and operating QA. Local GitHub/Neon CLI absence is a warning when connector evidence proves account access.
 
 The historical tables below are retained to explain why the hardening work was prioritized.

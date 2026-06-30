@@ -75,6 +75,8 @@ const PUBLIC_SECRET_ENV_PATTERN =
 const PLACEHOLDER_PATTERN =
   /^(?:replace-with-|your-|owner\/|postgresql:\/\/USER:PASSWORD@|https?:\/\/hooks\.invalid|https?:\/\/sentry\.invalid)/i;
 
+const REQUIRED_PROTECTED_EXISTING_REPOSITORIES = ["Retro Games", "RETRO-DB"];
+
 const pathExists = (rootDir, relativePath) =>
   fs.existsSync(path.join(rootDir, relativePath));
 
@@ -137,6 +139,18 @@ const isPlainObject = (value) =>
 
 const stringArray = (value) =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+
+const normalizeSlug = (value) =>
+  String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+const lastRepositorySegment = (repositoryFullName) => {
+  const value = String(repositoryFullName ?? "").trim();
+  const segments = value.split("/").filter(Boolean);
+  return segments.at(-1) ?? "";
+};
 
 const addExternalEvidenceBlocker = (
   checks,
@@ -285,10 +299,15 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
   const protectedExistingRepositories = stringArray(
     github.protectedExistingRepositories,
   );
+  const missingProtectedRepositories =
+    REQUIRED_PROTECTED_EXISTING_REPOSITORIES.filter(
+      (repositoryName) =>
+        !protectedExistingRepositories.includes(repositoryName),
+    );
   if (
     github.repositoryCreationRequired === true &&
     github.existingRepositoriesMustNotBeModified === true &&
-    protectedExistingRepositories.includes("Retro Games")
+    missingProtectedRepositories.length === 0
   ) {
     addCheck(
       checks,
@@ -301,8 +320,10 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
       checks,
       blockers,
       "external-evidence:github-repository-policy",
-      "new GitHub repository policy is not fully proven",
-      "New GitHub repository policy is not proven; existing repositories such as Retro Games must not be modified",
+      missingProtectedRepositories.length > 0
+        ? `protected repository evidence missing: ${missingProtectedRepositories.join(", ")}`
+        : "new GitHub repository policy is not fully proven",
+      `New GitHub repository policy is not proven; existing repositories such as ${REQUIRED_PROTECTED_EXISTING_REPOSITORIES.join(", ")} must not be modified`,
     );
   }
 
@@ -324,7 +345,7 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
         ? "new GitHub repository access is not proven"
         : "expected repository access is not proven",
       github.repositoryCreationRequired === true
-        ? "New GitHub repository creation/access is not proven; existing repositories such as Retro Games must not be modified"
+        ? `New GitHub repository creation/access is not proven; existing repositories such as ${REQUIRED_PROTECTED_EXISTING_REPOSITORIES.join(", ")} must not be modified`
         : "GitHub connector evidence does not prove expected repository access",
     );
   }
@@ -435,6 +456,92 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
       "external-evidence:source",
       "source is not documented",
     );
+  }
+};
+
+const checkRuntimeTargetConsistency = (evidence, env, checks, blockers) => {
+  if (!isPlainObject(evidence)) return;
+
+  const github = isPlainObject(evidence.github) ? evidence.github : {};
+  const expectedRepository =
+    typeof github.expectedRepository === "string"
+      ? github.expectedRepository.trim()
+      : "";
+  const runtimeRepository =
+    typeof env.GITHUB_REPOSITORY === "string"
+      ? env.GITHUB_REPOSITORY.trim()
+      : "";
+
+  if (expectedRepository && isUsableEnvValue(runtimeRepository)) {
+    if (runtimeRepository === expectedRepository) {
+      addCheck(
+        checks,
+        "PASS",
+        "release-target:GITHUB_REPOSITORY",
+        `matches expected GitHub repository ${expectedRepository}`,
+      );
+    } else {
+      addCheck(
+        checks,
+        "BLOCKED",
+        "release-target:GITHUB_REPOSITORY",
+        `expected ${expectedRepository}; got ${runtimeRepository}`,
+      );
+      blockers.push(
+        `GITHUB_REPOSITORY must match expected GitHub repository ${expectedRepository}`,
+      );
+    }
+
+    const protectedSlugs = stringArray(
+      github.protectedExistingRepositories,
+    ).map(normalizeSlug);
+    const runtimeRepositorySlug = normalizeSlug(
+      lastRepositorySegment(runtimeRepository),
+    );
+    if (protectedSlugs.includes(runtimeRepositorySlug)) {
+      addCheck(
+        checks,
+        "BLOCKED",
+        "release-target:protected-github-repository",
+        `${runtimeRepository} is a protected existing repository`,
+      );
+      blockers.push(
+        `${runtimeRepository} is a protected existing repository and must not be used as the Salary Hijacking release target`,
+      );
+    }
+  }
+
+  const cloudflare = isPlainObject(evidence.cloudflare)
+    ? evidence.cloudflare
+    : {};
+  const expectedPagesProject =
+    typeof cloudflare.expectedPagesProject === "string"
+      ? cloudflare.expectedPagesProject.trim()
+      : "";
+  const runtimePagesProject =
+    typeof env.CF_PAGES_PROJECT_NAME === "string"
+      ? env.CF_PAGES_PROJECT_NAME.trim()
+      : "";
+
+  if (expectedPagesProject && isUsableEnvValue(runtimePagesProject)) {
+    if (runtimePagesProject === expectedPagesProject) {
+      addCheck(
+        checks,
+        "PASS",
+        "release-target:CF_PAGES_PROJECT_NAME",
+        `matches expected Cloudflare Pages project ${expectedPagesProject}`,
+      );
+    } else {
+      addCheck(
+        checks,
+        "BLOCKED",
+        "release-target:CF_PAGES_PROJECT_NAME",
+        `expected ${expectedPagesProject}; got ${runtimePagesProject}`,
+      );
+      blockers.push(
+        `CF_PAGES_PROJECT_NAME must match expected Cloudflare Pages project ${expectedPagesProject}`,
+      );
+    }
   }
 };
 
@@ -579,6 +686,7 @@ export const analyzeReleaseReadiness = ({
 
   checkExternalReleaseEvidence(rootDir, checks, blockers, warnings);
   const externalEvidence = readExternalReleaseEvidence(rootDir);
+  checkRuntimeTargetConsistency(externalEvidence, env, checks, blockers);
 
   for (const group of REQUIRED_CLI_GROUPS) {
     const found = group.commands.filter((command) => commandExists(command));

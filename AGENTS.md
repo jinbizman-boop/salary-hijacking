@@ -91,7 +91,7 @@ Last checked by Codex on 2026-06-30 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 30 required files checked, including required source automation Git trackability; local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `corepack pnpm run test:root-scripts`: PASS, 29 tests
+- `corepack pnpm run test:root-scripts`: PASS, 32 tests
 - `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, new GitHub repository proof, Cloudflare Workers/Pages proof, Neon project proof, and missing local EAS/Android CLI tools; local `gh` and Neon CLI absence is WARN because connector evidence proves account access; Git status is PASS because local repository metadata is visible
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks

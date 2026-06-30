@@ -27,7 +27,7 @@ const writeExternalEvidence = (rootDir, overrides = {}) => {
       expectedRepository: "telos/salary-hijacking-platform",
       repositoryCreationRequired: true,
       existingRepositoriesMustNotBeModified: true,
-      protectedExistingRepositories: ["Retro Games"],
+      protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
       repositoryMatched: true,
     },
     cloudflare: {
@@ -356,4 +356,69 @@ test("blocks release evidence that does not prove the new GitHub repository poli
   assert.match(report, /new GitHub repository/i);
   assert.match(report, /existing repositories/i);
   assert.match(report, /Retro Games/);
+});
+
+test("blocks release evidence when RETRO-DB is not explicitly protected", () => {
+  const rootDir = makeWorkspace();
+  writeExternalEvidence(rootDir, {
+    github: {
+      connectorReachable: true,
+      appInstalled: true,
+      expectedRepository: "telos/salary-hijacking-platform",
+      repositoryCreationRequired: true,
+      existingRepositoriesMustNotBeModified: true,
+      protectedExistingRepositories: ["Retro Games"],
+      repositoryMatched: true,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /RETRO-DB/);
+  assert.match(report, /existing repositories/i);
+});
+
+test("blocks when runtime GitHub repository does not match external evidence", () => {
+  const rootDir = makeWorkspace();
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {
+      ...completeEnv,
+      GITHUB_REPOSITORY: "jinbizman-boop/RETRO-DB",
+    },
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /GITHUB_REPOSITORY/);
+  assert.match(report, /expected GitHub repository/i);
+  assert.match(report, /telos\/salary-hijacking-platform/);
+});
+
+test("blocks when runtime Cloudflare Pages project does not match external evidence", () => {
+  const rootDir = makeWorkspace();
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {
+      ...completeEnv,
+      CF_PAGES_PROJECT_NAME: "retro-db",
+    },
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /CF_PAGES_PROJECT_NAME/);
+  assert.match(report, /expected Cloudflare Pages project/i);
+  assert.match(report, /salary-hijacking-admin/);
 });
