@@ -12,8 +12,17 @@ import {
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
   fs.mkdirSync(path.dirname(target), { recursive: true });
-  fs.writeFileSync(target, content, "utf8");
+  fs.writeFileSync(
+    target,
+    content,
+    typeof content === "string" ? "utf8" : undefined,
+  );
 };
+
+const validPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l7mF4QAAAABJRU5ErkJggg==",
+  "base64",
+);
 
 const writeReleaseTargets = (rootDir, overrides = {}) => {
   const targets = {
@@ -153,7 +162,58 @@ const makeWorkspace = () => {
     'name = "notifications"\n',
   );
   write(rootDir, "services/scheduler/wrangler.toml", 'name = "scheduler"\n');
-  write(rootDir, "apps/mobile/eas.json", "{}\n");
+  write(
+    rootDir,
+    "apps/mobile/eas.json",
+    JSON.stringify(
+      {
+        build: {
+          preview: {
+            env: {
+              EXPO_PUBLIC_API_BASE_URL:
+                "https://api-staging.salaryhijacking.com",
+              EXPO_PUBLIC_DEEPLINK_HOST: "staging.salaryhijacking.com",
+            },
+            android: { buildType: "apk" },
+          },
+          staging: {
+            env: {
+              EXPO_PUBLIC_API_BASE_URL:
+                "https://api-staging.salaryhijacking.com",
+              EXPO_PUBLIC_DEEPLINK_HOST: "staging.salaryhijacking.com",
+            },
+            android: { buildType: "apk" },
+          },
+          e2e: {
+            env: {
+              EXPO_PUBLIC_API_BASE_URL:
+                "https://api-staging.salaryhijacking.com",
+              EXPO_PUBLIC_DEEPLINK_HOST: "staging.salaryhijacking.com",
+            },
+            android: { buildType: "apk" },
+          },
+          production: {
+            env: {
+              EXPO_PUBLIC_API_BASE_URL: "https://api.salaryhijacking.com",
+              EXPO_PUBLIC_DEEPLINK_HOST: "salaryhijacking.com",
+            },
+            android: { buildType: "app-bundle" },
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+  for (const assetName of [
+    "icon.png",
+    "splash.png",
+    "adaptive-icon.png",
+    "notification-icon.png",
+    "favicon.png",
+  ]) {
+    write(rootDir, `apps/mobile/assets/${assetName}`, validPng);
+  }
 
   write(
     rootDir,
@@ -296,6 +356,47 @@ test("blocks missing release artifacts and unsafe public secret env names", () =
       blocker.includes("NEXT_PUBLIC_JWT_SECRET"),
     ),
   );
+});
+
+test("blocks missing mobile launch assets and non-release EAS domains", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "apps", "mobile", "assets", "icon.png"), {
+    force: true,
+  });
+  write(
+    rootDir,
+    "apps/mobile/eas.json",
+    JSON.stringify(
+      {
+        build: {
+          production: {
+            env: {
+              EXPO_PUBLIC_API_BASE_URL: "https://api.salary-hijacking.example",
+              EXPO_PUBLIC_DEEPLINK_HOST: "app.salary-hijacking.example",
+            },
+            android: { buildType: "apk" },
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:asset:icon\.png/);
+  assert.match(report, /mobile:eas:production-api/);
+  assert.match(report, /mobile:eas:production-deeplink/);
+  assert.match(report, /mobile:eas:production-android/);
 });
 
 test("blocks when the GitHub repository policy file is missing", () => {

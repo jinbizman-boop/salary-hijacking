@@ -88,6 +88,25 @@ const PLACEHOLDER_PATTERN =
 
 const REQUIRED_PROTECTED_EXISTING_REPOSITORIES = ["Retro Games", "RETRO-DB"];
 
+const REQUIRED_MOBILE_ASSETS = [
+  "icon.png",
+  "splash.png",
+  "adaptive-icon.png",
+  "notification-icon.png",
+  "favicon.png",
+];
+
+const PNG_SIGNATURE = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+]);
+
+const EXPECTED_MOBILE_EAS = Object.freeze({
+  stagingApiBaseUrl: "https://api-staging.salaryhijacking.com",
+  stagingDeeplinkHost: "staging.salaryhijacking.com",
+  productionApiBaseUrl: "https://api.salaryhijacking.com",
+  productionDeeplinkHost: "salaryhijacking.com",
+});
+
 const pathExists = (rootDir, relativePath) =>
   fs.existsSync(path.join(rootDir, relativePath));
 
@@ -932,6 +951,177 @@ const checkRuntimeTargetConsistency = (evidence, env, checks, blockers) => {
   }
 };
 
+const readJsonIfPresent = (rootDir, relativePath) => {
+  const filePath = path.join(rootDir, relativePath);
+  if (!fs.existsSync(filePath)) return null;
+
+  try {
+    const value = readJson(filePath);
+    return isPlainObject(value) ? value : null;
+  } catch {
+    return null;
+  }
+};
+
+const hasPngSignature = (filePath) => {
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    return false;
+  }
+
+  const buffer = fs.readFileSync(filePath);
+  return (
+    buffer.length >= PNG_SIGNATURE.length &&
+    buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)
+  );
+};
+
+const getEasProfile = (easConfig, profileName) => {
+  const build = isPlainObject(easConfig?.build) ? easConfig.build : {};
+  return isPlainObject(build[profileName]) ? build[profileName] : {};
+};
+
+const getEasEnv = (profile) => (isPlainObject(profile.env) ? profile.env : {});
+
+const addMobileCheck = (checks, blockers, status, name, detail, blocker) => {
+  addCheck(checks, status, name, detail);
+  if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
+  const mobileRoot = path.join(rootDir, "apps", "mobile");
+  for (const assetName of REQUIRED_MOBILE_ASSETS) {
+    const assetPath = path.join(mobileRoot, "assets", assetName);
+    if (hasPngSignature(assetPath)) {
+      addMobileCheck(
+        checks,
+        blockers,
+        "PASS",
+        `mobile:asset:${assetName}`,
+        "PNG asset present",
+      );
+    } else {
+      addMobileCheck(
+        checks,
+        blockers,
+        "BLOCKED",
+        `mobile:asset:${assetName}`,
+        "missing or invalid PNG asset",
+        `mobile launch asset is missing or invalid: apps/mobile/assets/${assetName}`,
+      );
+    }
+  }
+
+  const easConfig = readJsonIfPresent(rootDir, "apps/mobile/eas.json");
+  if (!easConfig) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:eas:json",
+      "apps/mobile/eas.json is missing or invalid",
+      "apps/mobile/eas.json must be valid JSON for mobile release",
+    );
+    return;
+  }
+
+  const production = getEasProfile(easConfig, "production");
+  const productionEnv = getEasEnv(production);
+  const productionAndroid = isPlainObject(production.android)
+    ? production.android
+    : {};
+
+  if (
+    productionEnv.EXPO_PUBLIC_API_BASE_URL ===
+    EXPECTED_MOBILE_EAS.productionApiBaseUrl
+  ) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "PASS",
+      "mobile:eas:production-api",
+      EXPECTED_MOBILE_EAS.productionApiBaseUrl,
+    );
+  } else {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:eas:production-api",
+      `expected ${EXPECTED_MOBILE_EAS.productionApiBaseUrl}`,
+      `mobile production API base URL must be ${EXPECTED_MOBILE_EAS.productionApiBaseUrl}`,
+    );
+  }
+
+  if (
+    productionEnv.EXPO_PUBLIC_DEEPLINK_HOST ===
+    EXPECTED_MOBILE_EAS.productionDeeplinkHost
+  ) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "PASS",
+      "mobile:eas:production-deeplink",
+      EXPECTED_MOBILE_EAS.productionDeeplinkHost,
+    );
+  } else {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:eas:production-deeplink",
+      `expected ${EXPECTED_MOBILE_EAS.productionDeeplinkHost}`,
+      `mobile production deeplink host must be ${EXPECTED_MOBILE_EAS.productionDeeplinkHost}`,
+    );
+  }
+
+  if (productionAndroid.buildType === "app-bundle") {
+    addMobileCheck(
+      checks,
+      blockers,
+      "PASS",
+      "mobile:eas:production-android",
+      "Android production buildType is app-bundle",
+    );
+  } else {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:eas:production-android",
+      "Android production buildType must be app-bundle",
+      "mobile production Android build must use app-bundle for Play Store release",
+    );
+  }
+
+  for (const profileName of ["preview", "staging", "e2e"]) {
+    const profile = getEasProfile(easConfig, profileName);
+    const env = getEasEnv(profile);
+    const apiOk =
+      env.EXPO_PUBLIC_API_BASE_URL === EXPECTED_MOBILE_EAS.stagingApiBaseUrl;
+    const deeplinkOk =
+      env.EXPO_PUBLIC_DEEPLINK_HOST === EXPECTED_MOBILE_EAS.stagingDeeplinkHost;
+
+    if (apiOk && deeplinkOk) {
+      addMobileCheck(
+        checks,
+        blockers,
+        "PASS",
+        `mobile:eas:${profileName}`,
+        "staging API and deeplink targets are aligned",
+      );
+    } else {
+      addMobileCheck(
+        checks,
+        blockers,
+        "BLOCKED",
+        `mobile:eas:${profileName}`,
+        "staging API or deeplink target is not aligned",
+        `mobile ${profileName} EAS profile must target ${EXPECTED_MOBILE_EAS.stagingApiBaseUrl} and ${EXPECTED_MOBILE_EAS.stagingDeeplinkHost}`,
+      );
+    }
+  }
+};
+
 export const analyzeReleaseReadiness = ({
   rootDir = process.cwd(),
   env = process.env,
@@ -1087,6 +1277,7 @@ export const analyzeReleaseReadiness = ({
     checks,
     blockers,
   );
+  checkMobileReleaseReadiness(rootDir, checks, blockers);
 
   for (const group of REQUIRED_CLI_GROUPS) {
     const found = group.commands.filter((command) => commandExists(command));
