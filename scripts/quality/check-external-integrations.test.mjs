@@ -71,6 +71,7 @@ jobs:
   eas:
     environment:
       name: mobile-preview
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_eas_build != 'false'
     env:
       EXPO_TOKEN: \${{ secrets.EXPO_TOKEN }}
     steps:

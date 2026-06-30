@@ -324,7 +324,7 @@ jobs:
     timeout-minutes: 180
     needs:
       - verify-mobile
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.run_eas_build != 'false')
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_eas_build != 'false'
 
     environment:
       name: ${{ (github.ref_name == 'main' || github.event.inputs.build_profile == 'production') && 'mobile-production' || 'mobile-preview' }}

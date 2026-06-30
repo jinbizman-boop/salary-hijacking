@@ -72,6 +72,7 @@ const REQUIRED_TOKENS_BY_FILE = {
     "--profile",
     'pnpm --dir "$MOBILE_APP_DIR" run export',
     "Native mobile E2E skipped because no local E2E APK was found",
+    "github.event_name == 'workflow_dispatch'",
   ],
   ".github/workflows/release.yml": [
     "GH_TOKEN: ${{ github.token }}",
