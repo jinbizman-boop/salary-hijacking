@@ -66,7 +66,16 @@ const REQUIRED_CLI_GROUPS = [
   { label: "GitHub CLI", commands: ["gh"] },
   { label: "Cloudflare Wrangler", commands: ["wrangler"] },
   { label: "Neon CLI", commands: ["neon", "neonctl"], any: true },
-  { label: "Expo EAS CLI", commands: ["eas"] },
+  {
+    label: "Expo EAS CLI",
+    commands: ["eas"],
+    localPaths: [
+      "apps/mobile/node_modules/.bin/eas",
+      "apps/mobile/node_modules/.bin/eas.cmd",
+      "apps/mobile/node_modules/.bin/eas.CMD",
+      "apps/mobile/node_modules/.bin/eas.ps1",
+    ],
+  },
   { label: "Android adb", commands: ["adb"] },
   { label: "Android emulator", commands: ["emulator"] },
 ];
@@ -81,6 +90,9 @@ const REQUIRED_PROTECTED_EXISTING_REPOSITORIES = ["Retro Games", "RETRO-DB"];
 
 const pathExists = (rootDir, relativePath) =>
   fs.existsSync(path.join(rootDir, relativePath));
+
+const existingLocalPaths = (rootDir, relativePaths = []) =>
+  relativePaths.filter((relativePath) => pathExists(rootDir, relativePath));
 
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf8"));
 
@@ -1078,17 +1090,17 @@ export const analyzeReleaseReadiness = ({
 
   for (const group of REQUIRED_CLI_GROUPS) {
     const found = group.commands.filter((command) => commandExists(command));
+    const localPaths = existingLocalPaths(rootDir, group.localPaths);
     const ok =
       group.any === true
-        ? found.length > 0
-        : found.length === group.commands.length;
+        ? found.length > 0 || localPaths.length > 0
+        : found.length === group.commands.length || localPaths.length > 0;
     if (ok) {
-      addCheck(
-        checks,
-        "PASS",
-        `cli:${group.label}`,
-        `available: ${found.join(", ")}`,
-      );
+      const detail =
+        found.length > 0
+          ? `available: ${found.join(", ")}`
+          : `available locally: ${localPaths.join(", ")}`;
+      addCheck(checks, "PASS", `cli:${group.label}`, detail);
     } else {
       const missing = group.commands.filter(
         (command) => !found.includes(command),

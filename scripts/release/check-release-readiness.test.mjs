@@ -464,6 +464,24 @@ test("blocks GitHub repository evidence without write or push proof", () => {
   assert.match(report, /GitHub write or push access/);
 });
 
+test("uses workspace-local EAS CLI when eas is not on PATH", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, "apps/mobile/node_modules/.bin/eas.CMD", "@echo off\n");
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: (command) => command !== "eas",
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /cli:Expo EAS CLI/);
+  assert.doesNotMatch(report, /Expo EAS CLI is not available/);
+});
+
 test("blocks release evidence that does not prove the new GitHub repository policy", () => {
   const rootDir = makeWorkspace();
   writeExternalEvidence(rootDir, {

@@ -91,9 +91,9 @@ Last checked by Codex on 2026-06-30 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 30 required files checked, including required source automation Git trackability; local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 15 tests
-- `corepack pnpm run test:root-scripts`: PASS, 37 tests
-- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, Cloudflare Workers/Pages proof, Neon project proof, and missing local EAS/Android CLI tools; `release/release-targets.json`, external GitHub evidence, local `origin`, and authenticated push evidence now target `jinbizman-boop/salary-hijacking`; local `gh` and Neon CLI absence is WARN because connector evidence proves account access
+- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 16 tests
+- `corepack pnpm run test:root-scripts`: PASS, 38 tests
+- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, Cloudflare Workers/Pages proof, Neon project proof, and missing local Android `adb`/`emulator` tools; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, and workspace-local EAS CLI evidence now target `jinbizman-boop/salary-hijacking`; local `gh` and Neon CLI absence is WARN because connector evidence proves account access
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks

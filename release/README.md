@@ -20,5 +20,5 @@ Current protected rule:
 
 Before public release, `check:release-readiness` must report `READY` with real
 runtime secrets, matching Cloudflare Workers/Pages resources, matching Neon
-project evidence, EAS/Android tooling, deploy proof, DB migration/seed proof,
-store build proof, and operating QA.
+project evidence, EAS project credentials, Android device tooling, deploy proof,
+DB migration/seed proof, store build proof, and operating QA.

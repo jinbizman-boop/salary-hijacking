@@ -73,8 +73,9 @@ Verified on 2026-06-30 KST:
   `release/release-targets.json`.
 - Local CLI preflight finds `git` and `wrangler`. `gh` and Neon CLI are not
   available in this PowerShell PATH, but release readiness now treats them as
-  WARN when connector evidence proves account access. EAS CLI, `adb`, and
-  `emulator` remain blocking local release tools.
+  WARN when connector evidence proves account access. Workspace-local
+  `apps/mobile/node_modules/.bin/eas.CMD` runs `eas-cli/20.4.0`. Android `adb`
+  and `emulator` remain blocking local release tools.
 
 ## Product Maturity Read
 
