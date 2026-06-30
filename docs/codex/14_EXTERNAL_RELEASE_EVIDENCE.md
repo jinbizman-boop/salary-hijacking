@@ -18,6 +18,8 @@ Machine-readable evidence lives in:
 
 ## 2026-06-30 Connector Snapshot
 
+Latest read-only refresh: 2026-06-30 15:31:23 KST.
+
 GitHub:
 
 - GitHub app installation is visible for the user account.
@@ -55,8 +57,7 @@ Neon:
 
 - Neon connector organization access is visible.
 - One Neon project is visible: `Retro Games`.
-- Read-only Neon searches for `salary` and `hijacking` returned no matching
-  projects.
+- Read-only Neon project listing returned no matching Salary Hijacking project.
 - The existing `Retro Games` Neon project is unrelated and must not be reused
   for Salary Hijacking.
 - No Neon connection string was requested or stored.

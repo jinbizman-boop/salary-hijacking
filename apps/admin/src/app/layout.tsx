@@ -83,7 +83,7 @@ type ViewportLike = Readonly<{
 }>;
 
 export const metadata: MetadataLike = {
-  metadataBase: new URL("https://admin.salary-hijacking.app"),
+  metadataBase: new URL("https://admin.salaryhijacking.com"),
   title: { default: SERVICE_NAME, template: `%s · ${SERVICE_NAME}` },
   description: SERVICE_DESCRIPTION,
   applicationName: SERVICE_NAME,

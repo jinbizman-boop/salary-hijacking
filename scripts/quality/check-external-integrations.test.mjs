@@ -200,7 +200,7 @@ Required runtime resources:
 # Admin Pages
 
 Cloudflare Pages project: salary-hijacking-admin
-Production domain: admin.salary-hijacking.app
+Production domain: admin.salaryhijacking.com
 Preview branch: staging
 Build command: corepack pnpm --filter @salary-hijacking/admin run build
 Output directory: apps/admin/.next

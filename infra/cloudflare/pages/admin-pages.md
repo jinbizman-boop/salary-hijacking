@@ -6,8 +6,8 @@ admin console.
 ## Project
 
 - Cloudflare Pages project: `salary-hijacking-admin`
-- Production domain: `admin.salary-hijacking.app`
-- Staging domain: `staging-admin.salary-hijacking.app`
+- Production domain: `admin.salaryhijacking.com`
+- Staging domain: `staging-admin.salaryhijacking.com`
 - Preview branch: `staging`
 - Production branch: `main`
 
@@ -34,7 +34,7 @@ the root quality gates.
 The Pages project must be connected to the expected Salary Hijacking GitHub
 repository before production release. The release operator must verify:
 
-- the GitHub repository points to `salary-hijacking-platform`;
+- the GitHub repository points to `jinbizman-boop/salary-hijacking`;
 - preview deployments run from non-production branches;
 - production deployments run from `main`;
 - environment variables are scoped by preview, staging, and production;

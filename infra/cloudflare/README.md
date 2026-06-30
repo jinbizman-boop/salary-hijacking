@@ -24,7 +24,7 @@ The admin console must deploy to the Cloudflare Pages project
 
 The production admin domain is:
 
-- `admin.salary-hijacking.app`
+- `admin.salaryhijacking.com`
 
 See `infra/cloudflare/pages/admin-pages.md` for the Pages build contract.
 

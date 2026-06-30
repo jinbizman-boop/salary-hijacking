@@ -4,12 +4,12 @@ describe("resolveMobileApiBaseUrl", () => {
   it("prefers an explicit public API URL", () => {
     expect(
       resolveMobileApiBaseUrl({
-        explicitUrl: "https://api.salary-hijacking.app/",
+        explicitUrl: "https://api.salaryhijacking.com/",
         configuredUrl: "http://localhost:8787",
         environment: "production",
         platform: "web",
       }),
-    ).toBe("https://api.salary-hijacking.app");
+    ).toBe("https://api.salaryhijacking.com");
   });
 
   it("uses the configured development API URL on web", () => {

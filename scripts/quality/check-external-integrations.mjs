@@ -123,7 +123,7 @@ const REQUIRED_TOKENS_BY_FILE = {
   ],
   "infra/cloudflare/pages/admin-pages.md": [
     "salary-hijacking-admin",
-    "admin.salary-hijacking.app",
+    "admin.salaryhijacking.com",
     "Cloudflare Pages",
     "Build command",
     "Output directory",

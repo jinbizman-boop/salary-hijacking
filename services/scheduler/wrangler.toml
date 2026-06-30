@@ -132,7 +132,7 @@ ENVIRONMENT = "staging"
 NODE_ENV = "production"
 SERVICE_NAME = "salary-hijacking-scheduler"
 TIMEZONE = "Asia/Seoul"
-API_INTERNAL_BASE_URL = "https://api-staging.salary-hijacking.app"
+API_INTERNAL_BASE_URL = "https://api-staging.salaryhijacking.com"
 SCHEDULER_DISABLE_NETWORK = "false"
 SCHEDULER_ENABLE_HTTP_RUN = "true"
 SCHEDULER_ENABLE_SCHEDULED = "true"
@@ -223,7 +223,7 @@ minify = true
 upload_source_maps = true
 keep_vars = true
 routes = [
-  { pattern = "scheduler.salary-hijacking.app/*", custom_domain = true }
+  { pattern = "scheduler.salaryhijacking.com/*", custom_domain = true }
 ]
 
 [env.production.observability]
@@ -238,7 +238,7 @@ ENVIRONMENT = "production"
 NODE_ENV = "production"
 SERVICE_NAME = "salary-hijacking-scheduler"
 TIMEZONE = "Asia/Seoul"
-API_INTERNAL_BASE_URL = "https://api.salary-hijacking.app"
+API_INTERNAL_BASE_URL = "https://api.salaryhijacking.com"
 SCHEDULER_DISABLE_NETWORK = "false"
 SCHEDULER_ENABLE_HTTP_RUN = "true"
 SCHEDULER_ENABLE_SCHEDULED = "true"

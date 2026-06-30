@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-06-30T06:08:09Z",
-  "source": "Codex read-only connector checks, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-06-30",
+  "observedAt": "2026-06-30T06:31:23Z",
+  "source": "Codex read-only connector checks refreshed for Cloudflare and Neon, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-06-30",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
@@ -37,7 +37,7 @@
     "pagesProjectMatched": false,
     "observedWorkerNames": [],
     "observedPagesProjectNames": ["retro-db"],
-    "note": "Cloudflare connector account access was observed. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed."
+    "note": "Cloudflare connector account access was observed and refreshed at 2026-06-30T06:31:23Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed."
   },
   "neon": {
     "connectorReachable": true,
@@ -47,6 +47,6 @@
     "observedProjectCount": 1,
     "observedProjectNames": ["Retro Games"],
     "salaryProjectSearchMatched": false,
-    "note": "Neon organization access was observed. The listed project is Retro Games, and read-only searches for salary and hijacking returned no matching projects. Existing Retro Games database resources must not be used for Salary Hijacking."
+    "note": "Neon organization access was observed and refreshed at 2026-06-30T06:31:23Z. The listed project is Retro Games, and read-only project listing returned no matching Salary Hijacking project. Existing Retro Games database resources must not be used for Salary Hijacking."
   }
 }

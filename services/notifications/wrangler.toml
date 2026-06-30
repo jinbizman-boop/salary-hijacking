@@ -109,8 +109,8 @@ ENVIRONMENT = "staging"
 NODE_ENV = "production"
 SERVICE_NAME = "salary-hijacking-notifications"
 TIMEZONE = "Asia/Seoul"
-CORS_ALLOWED_ORIGINS = "https://staging.salary-hijacking.app,http://localhost:3000"
-ALLOWED_ORIGINS = "https://staging.salary-hijacking.app,http://localhost:3000"
+CORS_ALLOWED_ORIGINS = "https://staging.salaryhijacking.com,http://localhost:3000"
+ALLOWED_ORIGINS = "https://staging.salaryhijacking.com,http://localhost:3000"
 FCM_PROJECT_ID = "salary-hijacking-staging"
 FCM_DRY_RUN = "false"
 FCM_DISABLE_NETWORK = "false"
@@ -174,7 +174,7 @@ minify = true
 upload_source_maps = true
 keep_vars = true
 routes = [
-  { pattern = "notifications.salary-hijacking.app/*", custom_domain = true }
+  { pattern = "notifications.salaryhijacking.com/*", custom_domain = true }
 ]
 
 [env.production.observability]
@@ -189,8 +189,8 @@ ENVIRONMENT = "production"
 NODE_ENV = "production"
 SERVICE_NAME = "salary-hijacking-notifications"
 TIMEZONE = "Asia/Seoul"
-CORS_ALLOWED_ORIGINS = "https://salary-hijacking.app,https://www.salary-hijacking.app,https://admin.salary-hijacking.app,https://api.salary-hijacking.app"
-ALLOWED_ORIGINS = "https://salary-hijacking.app,https://www.salary-hijacking.app,https://admin.salary-hijacking.app,https://api.salary-hijacking.app"
+CORS_ALLOWED_ORIGINS = "https://salaryhijacking.com,https://www.salaryhijacking.com,https://admin.salaryhijacking.com,https://api.salaryhijacking.com"
+ALLOWED_ORIGINS = "https://salaryhijacking.com,https://www.salaryhijacking.com,https://admin.salaryhijacking.com,https://api.salaryhijacking.com"
 FCM_PROJECT_ID = "salary-hijacking-production"
 FCM_DRY_RUN = "false"
 FCM_DISABLE_NETWORK = "false"
