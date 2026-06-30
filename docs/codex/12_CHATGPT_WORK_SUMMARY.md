@@ -113,9 +113,9 @@ Commands run on 2026-06-30:
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 30 required files checked; GitHub repository policy, mobile release metadata, and source automation Git trackability are now included; local shell warns that `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
 - `corepack pnpm run test:root-scripts`: PASS, 29 tests
-- `corepack pnpm run check:release-readiness -- --soft`: GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access; EAS/Android CLI tools remain blockers.
+- `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`; GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access; EAS/Android CLI tools remain blockers.
 - GitHub release target policy: existing unrelated repositories, including `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused. Salary Hijacking requires a newly created repository, defaulting to `jinbizman-boop/salary-hijacking-platform`, before release readiness can pass.
-- Local Git status: `git init -b main` initialized local metadata only. No GitHub remote is configured.
+- Local Git status: local baseline commit `37bde95 chore: establish salary hijacking baseline` exists and `git status --short` is clean. No GitHub remote is configured and no GitHub repository has been created or modified from this workspace.
 - `node --test scripts/dev/run-with-corepack-pnpm.test.mjs`: PASS
 - `node --test scripts/quality/check-package-manager-scripts.test.mjs`: PASS
 - `node --test scripts/quality/check-external-integrations.test.mjs`: PASS
@@ -132,6 +132,7 @@ Commands run on 2026-06-30:
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, root script tests plus 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
+- `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, the Detox E2E APK, `adb`, and `emulator` are unavailable on this PC
 
 Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking GitHub/Cloudflare/Neon resource matching, EAS/Android CLI availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. Local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
 
