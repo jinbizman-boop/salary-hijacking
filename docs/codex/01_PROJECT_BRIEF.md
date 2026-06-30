@@ -58,8 +58,9 @@ Verified on 2026-06-30 KST:
 - Notifications and Scheduler service-local typecheck/build verification pass.
 - Package-level `pnpm` warnings for Admin/API/Notifications/Scheduler were resolved by moving shared pnpm settings to the root `package.json`.
 - Local scripts under `scripts/*` now provide conservative helper automation and pass `pnpm run check:scripts`.
-- Current folder now has a local Git repository initialized. `git status --short`
-  runs, but all files are currently untracked and no remote is configured.
+- Current folder now has a local Git repository initialized and committed.
+  `git status --short` is clean, but no remote is configured. Release readiness
+  blocks until `origin` points to the expected new Salary Hijacking repository.
 - User reported GitHub, Cloudflare, and Neon plugins/connectors are linked. Read-only connector checks now prove GitHub app installation, Cloudflare account access, and Neon organization access.
 - Connector checks do not yet prove the newly required Salary Hijacking GitHub
   repository, Cloudflare Workers/Pages resources, or Neon project. Existing
@@ -93,5 +94,5 @@ The project still needs hardening in:
 - real mobile native E2E execution with Android SDK/emulator or iOS simulator,
 - production-like API/Admin/mobile smoke against deployed environments,
 - Bash/CI execution verification for the local operational scripts,
-- Git/change tracking.
+- remote GitHub repository linkage for the new Salary Hijacking repository.
 - matching remote GitHub/Cloudflare/Neon resources for the Salary Hijacking release target.

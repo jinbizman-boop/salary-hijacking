@@ -164,6 +164,11 @@ const completeEnv = Object.freeze({
   SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/T000/B000/XXXX",
 });
 
+const matchingGitRemote = () => ({
+  ok: true,
+  output: "https://github.com/telos/salary-hijacking-platform.git",
+});
+
 test("passes when release files, scripts, env names, and tools are present", () => {
   const rootDir = makeWorkspace();
   const result = analyzeReleaseReadiness({
@@ -171,6 +176,7 @@ test("passes when release files, scripts, env names, and tools are present", () 
     env: completeEnv,
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
 
   assert.deepEqual(result.blockers, []);
@@ -214,6 +220,7 @@ test("uses connector evidence as an account-access fallback for GitHub, Cloudfla
     commandExists: (command) =>
       !["gh", "wrangler", "neon", "neonctl"].includes(command),
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
@@ -246,6 +253,7 @@ test("blocks missing release artifacts and unsafe public secret env names", () =
     env: completeEnv,
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
 
   assert.equal(result.ok, false);
@@ -270,6 +278,7 @@ test("blocks when the GitHub repository policy file is missing", () => {
     env: completeEnv,
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
 
   assert.equal(result.ok, false);
@@ -320,6 +329,7 @@ test("blocks external connector evidence that does not match release targets", (
     env: completeEnv,
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
@@ -349,6 +359,7 @@ test("blocks release evidence that does not prove the new GitHub repository poli
     env: completeEnv,
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
@@ -377,6 +388,7 @@ test("blocks release evidence when RETRO-DB is not explicitly protected", () => 
     env: completeEnv,
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
@@ -395,6 +407,7 @@ test("blocks when runtime GitHub repository does not match external evidence", (
     },
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
@@ -414,6 +427,7 @@ test("blocks when runtime Cloudflare Pages project does not match external evide
     },
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
@@ -421,4 +435,40 @@ test("blocks when runtime Cloudflare Pages project does not match external evide
   assert.match(report, /CF_PAGES_PROJECT_NAME/);
   assert.match(report, /expected Cloudflare Pages project/i);
   assert.match(report, /salary-hijacking-admin/);
+});
+
+test("blocks when git remote origin is not configured", () => {
+  const rootDir = makeWorkspace();
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({ ok: false, output: "fatal: No such remote 'origin'" }),
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /git remote origin/i);
+  assert.match(report, /telos\/salary-hijacking-platform/);
+});
+
+test("blocks when git remote origin points to a different repository", () => {
+  const rootDir = makeWorkspace();
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({
+      ok: true,
+      output: "https://github.com/jinbizman-boop/RETRO-DB.git",
+    }),
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /git remote origin/i);
+  assert.match(report, /expected GitHub repository/i);
+  assert.match(report, /telos\/salary-hijacking-platform/);
 });

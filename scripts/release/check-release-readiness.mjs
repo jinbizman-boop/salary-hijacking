@@ -111,6 +111,18 @@ const defaultGitStatus = (rootDir) => {
   };
 };
 
+const defaultGitRemote = (rootDir) => {
+  const result = spawnSync("git", ["remote", "get-url", "origin"], {
+    cwd: rootDir,
+    encoding: "utf8",
+    shell: false,
+  });
+  return {
+    ok: result.status === 0,
+    output: `${result.stdout ?? ""}${result.stderr ?? ""}`.trim(),
+  };
+};
+
 const addCheck = (checks, status, name, detail) => {
   checks.push({ status, name, detail });
 };
@@ -150,6 +162,36 @@ const lastRepositorySegment = (repositoryFullName) => {
   const value = String(repositoryFullName ?? "").trim();
   const segments = value.split("/").filter(Boolean);
   return segments.at(-1) ?? "";
+};
+
+const normalizeGitRemote = (remoteUrl) =>
+  String(remoteUrl ?? "")
+    .trim()
+    .split(/\r?\n/)[0]
+    .toLowerCase()
+    .replace(/^git@github\.com:/, "https://github.com/")
+    .replace(/^ssh:\/\/git@github\.com\//, "https://github.com/")
+    .replace(/\.git$/, "");
+
+const gitRemoteMatchesRepository = (remoteUrl, repositoryFullName) => {
+  const remote = normalizeGitRemote(remoteUrl);
+  const repository = String(repositoryFullName ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\.git$/, "");
+
+  return (
+    remote.endsWith(`/${repository}`) ||
+    remote.endsWith(`:${repository}`) ||
+    remote === repository
+  );
+};
+
+const getExpectedGithubRepository = (evidence) => {
+  const github = isPlainObject(evidence?.github) ? evidence.github : {};
+  return typeof github.expectedRepository === "string"
+    ? github.expectedRepository.trim()
+    : "";
 };
 
 const addExternalEvidenceBlocker = (
@@ -550,6 +592,7 @@ export const analyzeReleaseReadiness = ({
   env = process.env,
   commandExists = (command) => findCommandOnPath(command, env),
   gitStatus = () => defaultGitStatus(rootDir),
+  gitRemote = () => defaultGitRemote(rootDir),
 } = {}) => {
   const checks = [];
   const blockers = [];
@@ -745,6 +788,41 @@ export const analyzeReleaseReadiness = ({
     );
     if (git.output.length > 0)
       warnings.push("git repository has local changes");
+
+    const expectedRepository = getExpectedGithubRepository(externalEvidence);
+    if (expectedRepository) {
+      const remote = gitRemote();
+      if (!remote.ok || remote.output.length === 0) {
+        addCheck(
+          checks,
+          "BLOCKED",
+          "git:remote-origin",
+          `git remote origin is not configured for ${expectedRepository}`,
+        );
+        blockers.push(
+          `git remote origin must point to expected GitHub repository ${expectedRepository}`,
+        );
+      } else if (
+        gitRemoteMatchesRepository(remote.output, expectedRepository)
+      ) {
+        addCheck(
+          checks,
+          "PASS",
+          "git:remote-origin",
+          `origin matches expected GitHub repository ${expectedRepository}`,
+        );
+      } else {
+        addCheck(
+          checks,
+          "BLOCKED",
+          "git:remote-origin",
+          `expected ${expectedRepository}; got ${remote.output}`,
+        );
+        blockers.push(
+          `git remote origin must point to expected GitHub repository ${expectedRepository}`,
+        );
+      }
+    }
   } else {
     addCheck(checks, "BLOCKED", "git:status", "git status failed");
     blockers.push(
