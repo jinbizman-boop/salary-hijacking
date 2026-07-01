@@ -87,9 +87,40 @@ const appConfig = {
   scheme: DEFAULT_SCHEME,
   version: DEFAULT_VERSION,
   orientation: "portrait",
+  icon: assetPathEnv("EXPO_PUBLIC_APP_ICON", DEFAULT_ICON),
+  splash: {
+    image: assetPathEnv("EXPO_PUBLIC_SPLASH_IMAGE", DEFAULT_SPLASH),
+  },
   runtimeVersion: { policy: "appVersion" },
   ios: { bundleIdentifier: DEFAULT_IOS_BUNDLE_ID, buildNumber: "1" },
-  android: { package: DEFAULT_ANDROID_PACKAGE, versionCode: 1 },
+  android: {
+    package: DEFAULT_ANDROID_PACKAGE,
+    versionCode: 1,
+    adaptiveIcon: {
+      foregroundImage: assetPathEnv(
+        "EXPO_PUBLIC_ANDROID_ADAPTIVE_ICON",
+        DEFAULT_ADAPTIVE_ICON,
+      ),
+    },
+    notification: {
+      icon: assetPathEnv(
+        "EXPO_PUBLIC_NOTIFICATION_ICON",
+        DEFAULT_NOTIFICATION_ICON,
+      ),
+    },
+  },
+  web: { favicon: assetPathEnv("EXPO_PUBLIC_FAVICON", DEFAULT_FAVICON) },
+  plugins: [
+    [
+      "expo-notifications",
+      {
+        icon: assetPathEnv(
+          "EXPO_PUBLIC_NOTIFICATION_ICON",
+          DEFAULT_NOTIFICATION_ICON,
+        ),
+      },
+    ],
+  ],
   extra: {
     api: { prefix: "/api/v1" },
     privacy: {
@@ -1251,6 +1282,30 @@ const DEFAULT_ANDROID_PACKAGE = "com.example.paycheck";
   assert.match(report, /mobile:app-config:bundle-ids/);
   assert.match(report, /mobile:store:google-play/);
   assert.match(report, /mobile:store:app-store/);
+});
+
+test("blocks mobile app config launch asset reference drift", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "apps/mobile/app.config.ts",
+    validMobileAppConfig.replace(
+      'const DEFAULT_ICON = "./assets/icon.png";',
+      'const DEFAULT_ICON = "./assets/legacy-icon.png";',
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:app-config:launch-assets/);
 });
 
 test("blocks missing store screenshots and incomplete screenshot guidance", () => {

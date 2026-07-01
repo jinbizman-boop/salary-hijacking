@@ -169,6 +169,38 @@ const REQUIRED_MOBILE_ASSET_REQUIREMENTS = Object.freeze({
     label: "web favicon",
   },
 });
+const EXPECTED_MOBILE_APP_ASSET_REFERENCES = Object.freeze([
+  {
+    constName: "DEFAULT_ICON",
+    defaultPath: "./assets/icon.png",
+    envName: "EXPO_PUBLIC_APP_ICON",
+    label: "app icon",
+  },
+  {
+    constName: "DEFAULT_SPLASH",
+    defaultPath: "./assets/splash.png",
+    envName: "EXPO_PUBLIC_SPLASH_IMAGE",
+    label: "splash image",
+  },
+  {
+    constName: "DEFAULT_ADAPTIVE_ICON",
+    defaultPath: "./assets/adaptive-icon.png",
+    envName: "EXPO_PUBLIC_ANDROID_ADAPTIVE_ICON",
+    label: "Android adaptive icon",
+  },
+  {
+    constName: "DEFAULT_NOTIFICATION_ICON",
+    defaultPath: "./assets/notification-icon.png",
+    envName: "EXPO_PUBLIC_NOTIFICATION_ICON",
+    label: "notification icon",
+  },
+  {
+    constName: "DEFAULT_FAVICON",
+    defaultPath: "./assets/favicon.png",
+    envName: "EXPO_PUBLIC_FAVICON",
+    label: "web favicon",
+  },
+]);
 const OFFICIAL_BI_LOGO_ASSET =
   "assets/brand/salary-hijacking-platform-logo.png";
 const OFFICIAL_BI_LOGO_SHA256 =
@@ -2127,6 +2159,11 @@ const hasConstAssignment = (text, name, expectedValue) =>
 const hasAllText = (text, requiredValues) =>
   requiredValues.every((value) => text.includes(value));
 
+const hasAssetPathFallback = (text, envName, fallbackConstName) =>
+  new RegExp(
+    `assetPathEnv\\(\\s*["']${regexEscape(envName)}["']\\s*,\\s*${regexEscape(fallbackConstName)}\\s*,?\\s*\\)`,
+  ).test(text);
+
 const isSubmissionTextClean = (text) =>
   !MOJIBAKE_PATTERN.test(text) && !SUBMISSION_PLACEHOLDER_PATTERN.test(text);
 
@@ -2231,6 +2268,24 @@ const checkMobileAppConfig = (rootDir, checks, blockers) => {
       ? "API v1, Asia/Seoul, server authority, and contextual ads policy are declared"
       : "API, timezone, server authority, or ads/privacy policy is not aligned",
     "mobile app config must preserve API v1, Asia/Seoul, server authority, and contextual-only ads/privacy rules",
+  );
+
+  const launchAssetsOk = EXPECTED_MOBILE_APP_ASSET_REFERENCES.every(
+    (asset) =>
+      hasConstAssignment(appConfigText, asset.constName, asset.defaultPath) &&
+      hasAssetPathFallback(appConfigText, asset.envName, asset.constName),
+  );
+  addMobileCheck(
+    checks,
+    blockers,
+    launchAssetsOk ? "PASS" : "BLOCKED",
+    "mobile:app-config:launch-assets",
+    launchAssetsOk
+      ? "app config launch asset fallbacks point to checked mobile PNG assets"
+      : "app config launch asset fallback paths drift from checked mobile PNG assets",
+    `mobile app.config.ts launch asset fallbacks must point to checked assets: ${EXPECTED_MOBILE_APP_ASSET_REFERENCES.map(
+      (asset) => `${asset.constName}=${asset.defaultPath}`,
+    ).join(", ")}`,
   );
 
   const textClean = isSubmissionTextClean(appConfigText);

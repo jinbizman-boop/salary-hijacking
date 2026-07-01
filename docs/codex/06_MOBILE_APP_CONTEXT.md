@@ -132,6 +132,9 @@ too small to be the bundled launch font.
 It also validates launch PNG dimensions and byte sizes for `icon.png`,
 `splash.png`, `adaptive-icon.png`, `notification-icon.png`, and `favicon.png`,
 so placeholder-sized assets cannot pass the mobile release gate.
+The same release gate checks that `apps/mobile/app.config.ts` still points its
+default Expo launch asset fallbacks at those checked files, preventing a valid
+asset bundle from drifting away from the actual app configuration.
 
 On 2026-07-01, `corepack pnpm --filter @salary-hijacking/mobile run export:web`
 passed and exported the official BI plus Freesentation assets. `node
