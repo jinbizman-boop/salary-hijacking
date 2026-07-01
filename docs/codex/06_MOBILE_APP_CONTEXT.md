@@ -110,6 +110,14 @@ official BI asset, Freesentation font loading, Clean Fintech v1 token values,
 bottom tab IA, screenshot anchor, and Korean mojibake absence for the launch
 screen set.
 
+On 2026-07-01, `corepack pnpm --filter @salary-hijacking/mobile run export:web`
+passed and exported the official BI plus Freesentation assets. `node
+scripts\release\capture-mobile-clean-fintech-screenshots.mjs` then regenerated
+five 430x932 store screenshot candidates and one 1024x500 Google Play feature
+graphic from the local app export and mock API. Visual inspection confirmed the
+home, daily budget, and feature graphic surfaces render the official BI and
+Clean Fintech value-first layout.
+
 ## Feature File Status
 
 As of 2026-06-29, `apps/mobile/src/features/budget` and `apps/mobile/src/features/community` contain 51 non-empty files and no zero-byte source/test/component files were found in those two feature trees.

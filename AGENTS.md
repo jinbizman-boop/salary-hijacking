@@ -95,6 +95,8 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests
 - `corepack pnpm --filter @salary-hijacking/mobile typecheck`: PASS
 - `corepack pnpm --filter @salary-hijacking/mobile format:check`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS, Expo web export includes official BI and Freesentation assets
+- `node scripts\release\capture-mobile-clean-fintech-screenshots.mjs`: PASS, regenerated five 430x932 screenshots and one 1024x500 Google Play feature graphic
 - `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, and Android/iOS native build/E2E/store-submit evidence; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, Neon project evidence, and workspace-local EAS CLI evidence target `jinbizman-boop/salary-hijacking`
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
