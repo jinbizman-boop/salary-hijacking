@@ -8,8 +8,15 @@ import {
 
 const configuration = process.argv[2] ?? "android.emu.debug";
 const failures = [];
+const nextCommands = [];
 
 if (configuration.startsWith("android")) {
+  nextCommands.push(
+    "corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android",
+    "corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>",
+    "corepack pnpm --filter @salary-hijacking/mobile run test:e2e:android",
+  );
+
   const configuredSdkRoot =
     process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || "";
   const sdkRoot = resolveAndroidSdkRoot();
@@ -39,6 +46,11 @@ if (configuration.startsWith("android")) {
 }
 
 if (configuration.startsWith("ios")) {
+  nextCommands.push(
+    "corepack pnpm --filter @salary-hijacking/mobile run build:e2e:ios",
+    "corepack pnpm --filter @salary-hijacking/mobile run test:e2e:ios",
+  );
+
   const appPath = path.resolve("build/e2e/ios/salaryhijacking.app");
   if (!fs.existsSync(appPath)) {
     failures.push(`Missing Detox iOS app: ${appPath}`);
@@ -51,6 +63,10 @@ if (failures.length > 0) {
   console.error(
     "[detox-preflight] Build with the e2e EAS profile or provide a local native binary before running Detox.",
   );
+  if (nextCommands.length > 0) {
+    console.error("[detox-preflight] Next commands:");
+    for (const command of nextCommands) console.error(`- ${command}`);
+  }
   process.exit(2);
 }
 

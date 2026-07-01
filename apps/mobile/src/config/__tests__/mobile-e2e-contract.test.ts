@@ -99,6 +99,9 @@ describe("mobile Detox E2E contract", () => {
     expect(preflight).toContain("ANDROID_SDK_ROOT");
     expect(preflight).toContain("ANDROID_HOME");
     expect(preflight).toContain("salary-hijacking-e2e.apk");
+    expect(preflight).toContain("build:e2e:android");
+    expect(preflight).toContain("e2e:android:import-apk");
+    expect(preflight).toContain("test:e2e:android");
     expect(preflight).toContain("process.exit(2)");
   });
 

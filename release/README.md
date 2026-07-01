@@ -109,10 +109,12 @@ flags, and non-secret notes. It must not contain EAS tokens, Apple/Google
 credentials, binary download URLs, local artifact paths, signing keys, service
 account JSON, reviewer passwords, copied store-console payloads, or logs.
 
-For Android Detox runs, import a locally downloaded EAS/local E2E APK into the
-ignored Detox binary path before running native E2E:
+For Android Detox runs, build or obtain an E2E APK, import it into the ignored
+Detox binary path, then run native E2E:
 
+- `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android`
 - `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`
+- `corepack pnpm --filter @salary-hijacking/mobile run test:e2e:android`
 
 The import script accepts only local `.apk` files with an APK/ZIP header and
 rejects artifact URLs or placeholder text files. It writes to

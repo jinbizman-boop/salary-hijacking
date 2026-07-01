@@ -81,6 +81,9 @@ Detox now has a repository-level execution contract:
   E2E APK into `build/e2e/android/salary-hijacking-e2e.apk` without storing
   artifact URLs or release proof artifact paths in the repository. Run it through
   `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`.
+- When the Android Detox preflight fails, it now prints the concrete next
+  command sequence: `build:e2e:android`, `e2e:android:import-apk`, then
+  `test:e2e:android`.
 
 The current E2E blocker is local native binary/proof, not missing Detox config:
 
