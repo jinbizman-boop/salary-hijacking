@@ -159,6 +159,36 @@ test("rejects proof files that contain raw secret values", () => {
   );
 });
 
+test("rejects verified secret proof with unapproved store labels", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(rootDir, "release", "secrets-proof.local.json");
+  write(
+    rootDir,
+    "release/secrets-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        secrets: {
+          DATABASE_URL: {
+            verified: true,
+            stores: ["personal notes"],
+            note: "The value exists somewhere.",
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildSecretsEvidence({ rootDir, proofPath }),
+    /unapproved secret store/i,
+  );
+});
+
 test("rejects unknown secret names in proof files", () => {
   const rootDir = makeWorkspace();
   const proofPath = path.join(rootDir, "release", "secrets-proof.local.json");

@@ -42,6 +42,10 @@ export const DEFAULT_SECRET_STORES = Object.freeze({
   SLACK_WEBHOOK_URL: ["GitHub Environments", "provider secret store"],
 });
 
+const approvedSecretStoreSet = new Set(
+  Object.values(DEFAULT_SECRET_STORES).flat(),
+);
+
 const RAW_SECRET_VALUE_KEYS = new Set([
   "value",
   "rawValue",
@@ -102,6 +106,31 @@ const requiredSecretNameSet = new Set(REQUIRED_RUNTIME_SECRET_NAMES);
 const proofSecrets = (proof) =>
   isPlainObject(proof?.secrets) ? proof.secrets : {};
 
+const stringArray = (value) =>
+  Array.isArray(value)
+    ? value
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+
+const unapprovedVerifiedStoreLabels = (proof) => {
+  const invalidLabels = [];
+
+  for (const [secretName, sourceEntry] of Object.entries(proofSecrets(proof))) {
+    if (!isPlainObject(sourceEntry) || sourceEntry.verified !== true) continue;
+
+    const invalidStores = stringArray(sourceEntry.stores).filter(
+      (store) => !approvedSecretStoreSet.has(store),
+    );
+    if (invalidStores.length > 0) {
+      invalidLabels.push(`${secretName}: ${invalidStores.join(", ")}`);
+    }
+  }
+
+  return invalidLabels;
+};
+
 const validateNoSecretProof = (proof, proofPath) => {
   if (!isPlainObject(proof)) return {};
 
@@ -125,6 +154,13 @@ const validateNoSecretProof = (proof, proofPath) => {
     );
   }
 
+  const invalidStoreLabels = unapprovedVerifiedStoreLabels(proof);
+  if (invalidStoreLabels.length > 0) {
+    throw new Error(
+      `${proofPath} contains unapproved secret store labels: ${invalidStoreLabels.join("; ")}`,
+    );
+  }
+
   return proof;
 };
 
@@ -140,14 +176,6 @@ const readProof = (rootDir, proofPath) => {
 
   return {};
 };
-
-const stringArray = (value) =>
-  Array.isArray(value)
-    ? value
-        .filter((item) => typeof item === "string")
-        .map((item) => item.trim())
-        .filter(Boolean)
-    : [];
 
 const entryForSecret = (proof, secretName) => {
   const sourceEntry = proofSecrets(proof)[secretName];

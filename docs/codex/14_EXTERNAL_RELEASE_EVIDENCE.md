@@ -173,7 +173,11 @@ with a non-secret `SECRET_PROOF_STORE` label, then
 `corepack pnpm run release:secrets-evidence` to update tracked evidence from
 `release/secrets-proof.local.json`. The collector reads only environment key
 presence, never writes values, and does not mark local developer env values as
-release-verified unless an approved store label is supplied. Update
+release-verified unless an approved store label is supplied. The tracked
+evidence generator also rejects verified secret proof entries whose `stores`
+labels are not in the approved release evidence store list, so ad hoc notes,
+copied chats, spreadsheets, or arbitrary labels cannot satisfy secret proof.
+Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS
 certificates, cron triggers, and Worker secret binding presence. Prefer

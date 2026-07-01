@@ -66,7 +66,10 @@ The evidence command reads no committed secret values. If
 presence booleans, approved store names, and non-secret notes from provider
 consoles or CI environment settings. That local proof file is ignored by Git and
 must not contain raw database URLs, API tokens, DSNs, webhook URLs, private keys,
-service accounts, or real user/financial payloads.
+service accounts, or real user/financial payloads. Verified proof entries are
+accepted only when their `stores` labels match the approved release evidence
+store names; personal notes, copied chats, spreadsheets, or arbitrary labels are
+not release proof.
 
 Safe Cloudflare runtime evidence generation command:
 
