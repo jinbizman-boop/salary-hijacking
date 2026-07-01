@@ -45,13 +45,18 @@ Top-level areas:
 
 ## Current Verified State
 
-Verified on 2026-06-30 KST:
+Verified on 2026-07-01 KST:
 
 - Root package manager: `pnpm@10.0.0`.
 - Node engine: `>=20.11.0 <25`.
 - Root workspace globs: `apps/*`, `services/*`, `packages/*`, `tools/*`.
-- Project quality and build pass in the latest verified run.
+- Project quality and build pass in the latest verified run:
+  `corepack pnpm run quality` passed 82 Turbo tasks and
+  `corepack pnpm run build` passed 12 Turbo tasks.
 - Mobile package typecheck, lint, format check, and Jest tests pass.
+- Mobile Clean Fintech UI contract testing now explicitly guards the official
+  BI logo, Freesentation fonts, five-tab IA, daily-budget screenshot anchor, and
+  core Korean launch copy.
 - Mobile Jest currently reports 24 passing suites and 78 passing tests.
 - API package tests currently report 5 passing files and 10 passing tests, including mobile bootstrap, mobile profile endpoint, mobile withdrawal request, and mobile route manifest contracts.
 - Mobile Detox E2E configuration exists, but Android execution is blocked on this PC because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, `adb`, and `emulator` are unavailable.
@@ -72,9 +77,12 @@ Verified on 2026-06-30 KST:
   See
   `docs/codex/14_EXTERNAL_RELEASE_EVIDENCE.md` and
   `release/release-targets.json`.
-- Local CLI preflight finds `git` and `wrangler`. `gh` and Neon CLI are not
-  available in this PowerShell PATH, but release readiness now treats them as
-  WARN when connector evidence proves account access. Workspace-local
+- Release readiness finds `git`, Cloudflare account evidence, Neon project
+  evidence, and workspace-local EAS CLI evidence. The local
+  `check:external-integrations` script still warns that `wrangler`, `gh`,
+  `neon`, and `neonctl` are not on its PATH, while release readiness treats
+  missing `gh`/Neon CLI as WARN when connector evidence proves account access.
+  Workspace-local
   `apps/mobile/node_modules/.bin/eas.CMD` runs `eas-cli/20.4.0`. Android `adb`
   and `emulator` remain blocking local release tools.
 

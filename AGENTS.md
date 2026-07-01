@@ -86,27 +86,23 @@ Ads and partner surfaces must be contextual-only unless a future verified policy
 
 ## Current Verification Snapshot
 
-Last checked by Codex on 2026-06-30 KST:
+Last checked by Codex on 2026-07-01 KST:
 
-- `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
+- `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
-- `corepack pnpm run check:external-integrations`: PASS, 30 required files checked, including required source automation Git trackability; local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 16 tests
-- `corepack pnpm run test:root-scripts`: PASS, 38 tests
-- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secrets, Cloudflare Workers/Pages proof, Neon project proof, and missing local Android `adb`/`emulator` tools; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, and workspace-local EAS CLI evidence now target `jinbizman-boop/salary-hijacking`; local `gh` and Neon CLI absence is WARN because connector evidence proves account access
+- `corepack pnpm run check:external-integrations`: PASS, 56 required files checked; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
+- `corepack pnpm run test:root-scripts`: PASS, 75 tests
+- `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests
+- `corepack pnpm --filter @salary-hijacking/mobile typecheck`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile format:check`: PASS
+- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, and Android/iOS native build/E2E/store-submit evidence; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, Neon project evidence, and workspace-local EAS CLI evidence target `jinbizman-boop/salary-hijacking`
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
-- `corepack pnpm --filter @salary-hijacking/ui run quality`: PASS
-- `corepack pnpm --filter @salary-hijacking/utils run quality`: PASS
-- `corepack pnpm --filter @salary-hijacking/api run build`: PASS
-- `corepack pnpm --filter @salary-hijacking/notifications run build`: PASS
-- `corepack pnpm --filter @salary-hijacking/scheduler run build`: PASS
-- `node --test scripts/security/offline-package-security-scan.test.mjs`: PASS
 - `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight; `ANDROID_SDK_ROOT`/`ANDROID_HOME`, E2E APK, `adb`, and `emulator` are unavailable on this PC
 - Dependency vulnerability audit is separated into `security:audit` and still requires registry/network access before release
 - `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
-- `git push -u origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven
+- `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven through commit `64fc8c5e31fa0e906d5799548145754871bdf9e0`
 
 ## Editing Rules
 

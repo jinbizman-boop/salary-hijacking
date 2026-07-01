@@ -12,18 +12,20 @@ It is a working map for follow-up implementation, not a production readiness cer
 
 ## Current Update
 
-The original 2026-06-25 blockers listed below have largely been resolved by later work. Current verified state on 2026-06-30:
+The original 2026-06-25 blockers listed below have largely been resolved by later work. Current verified state on 2026-07-01:
 
 - root format check: PASS
 - workspace typecheck: PASS
 - workspace lint: PASS
 - workspace test: PASS
-- workspace quality: PASS
-- workspace build: PASS
+- workspace quality: PASS, `corepack pnpm run quality` completed 82 Turbo tasks
+- workspace build: PASS, `corepack pnpm run build` completed 12 Turbo tasks
 - local Git baseline: PASS, local Git metadata is initialized, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`, and authenticated push to `origin/main` is proven
-- root script tests: PASS, 38 tests
+- root script tests: PASS, 75 tests
 - release readiness preflight: reporting command PASS, release status BLOCKED
 - mobile typecheck/lint/format/Jest tests: PASS
+- mobile Clean Fintech UI contract: PASS, 9 focused tests for official BI,
+  Freesentation fonts, five-tab IA, screenshot anchor, and Korean launch copy
 - mobile Detox config and smoke contract: present and covered by tests
 - mobile native E2E: FAIL because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, `adb`, and `emulator` are unavailable
 - mobile/API bootstrap, payroll current/recalculate, and profile/privacy-export contracts: aligned in current code; profile alias is covered by `services/api/tests/mobile-profile-contract.test.ts`, and manifest alignment is covered by `services/api/tests/mobile-route-manifest-contract.test.ts`
