@@ -77,6 +77,10 @@ Detox now has a repository-level execution contract:
 - `e2e/smoke.e2e.js` launches the app and checks `salary-hijacking-mobile-root`.
 - `app/_layout.tsx` exposes `testID: "salary-hijacking-mobile-root"` on the root shell.
 - `scripts/check-detox-env.mjs` runs before Detox and fails fast with actionable Android/iOS native E2E prerequisites.
+- `scripts/import-e2e-apk.mjs` imports a locally downloaded EAS/local Android
+  E2E APK into `build/e2e/android/salary-hijacking-e2e.apk` without storing
+  artifact URLs in the repository. Run it through
+  `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`.
 
 The current E2E blocker is local native binary/proof, not missing Detox config:
 
@@ -89,6 +93,8 @@ The current E2E blocker is local native binary/proof, not missing Detox config:
   only because the local E2E APK was missing:
   `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk`.
 - No local Android E2E APK at `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` has been verified.
+- The expected APK path is ignored by Git through root `.gitignore` build and
+  APK protections.
 - Tool availability alone is not native E2E proof; `nativeE2eVerified` must
   remain false until Detox or equivalent device-farm evidence is recorded
   without secrets.

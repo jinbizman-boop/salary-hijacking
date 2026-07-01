@@ -32,6 +32,7 @@
     "test:e2e": "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
     "test:e2e:ios": "node scripts/check-detox-env.mjs ios.sim.debug && detox test --configuration ios.sim.debug",
     "test:e2e:android": "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+    "e2e:android:import-apk": "node scripts/import-e2e-apk.mjs",
     "export": "expo export",
     "export:web": "expo export --platform web",
     "build:dev:android": "eas build --platform android --profile development --non-interactive",
