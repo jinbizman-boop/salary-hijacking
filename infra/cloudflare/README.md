@@ -18,6 +18,23 @@ The release target requires these Workers:
 Staging and production names are defined in each `wrangler.toml` under
 `[env.staging]` and `[env.production]`.
 
+## Required Public App Domains
+
+The app launch metadata uses `https://salaryhijacking.com` for marketing and
+`https://salaryhijacking.com/privacy` and
+`https://salaryhijacking.com/support` for store review. Production therefore
+routes these host-only custom domains to the API Worker:
+
+- `salaryhijacking.com`
+- `www.salaryhijacking.com`
+- `api.salaryhijacking.com`
+
+The API Worker serves the public Korean `/privacy`, `/support`, and `/terms`
+pages without bearer authentication and without exposing raw financial data,
+personal data, tokens, or secret values. This document defines the target only;
+Cloudflare zone, DNS, Worker deployment, custom-domain ownership, and TLS
+certificate proof remain release gates.
+
 ## Required Admin OpenNext Worker
 
 The admin console is a Next.js application deployed as a Cloudflare Worker with
@@ -42,7 +59,8 @@ production:
 - scheduler queue
 - dead letter queue
 - Worker cron triggers
-- custom domains and certificates
+- public app, API, notification, scheduler, and admin custom domains and
+  certificates
 - environment-scoped secrets
 
 The queue and bucket names must match the environment-specific bindings in the

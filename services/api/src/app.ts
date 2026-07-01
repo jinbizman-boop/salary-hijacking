@@ -147,6 +147,10 @@ const DEFAULT_ALLOWED_HEADERS = [
   "x-upload-visibility",
   "x-upload-checksum-sha256",
 ].join(", ");
+const LEGAL_PAGE_PATHS = ["/privacy", "/support", "/terms"] as const;
+const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
+const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
+const LEGAL_LAST_UPDATED = "2026-07-01";
 
 export interface WaitUntilCapable {
   readonly waitUntil?: (promise: Promise<unknown>) => void;
@@ -429,6 +433,14 @@ export const appManifest = Object.freeze({
     securityHeaders: true,
     adminReasonRequiredForMutation: true,
   }),
+  publicLegalPages: Object.freeze({
+    paths: LEGAL_PAGE_PATHS,
+    privacyUrl: "https://salaryhijacking.com/privacy",
+    supportUrl: "https://salaryhijacking.com/support",
+    termsUrl: "https://salaryhijacking.com/terms",
+    rawFinancialDataExposed: false,
+    adsFinancialTargetingUsed: false,
+  }),
   finalStatus: "document_theoretical_app_file_unit_complete",
 });
 
@@ -505,6 +517,113 @@ function json(
       },
     },
   );
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[character] ?? character,
+  );
+}
+
+function canonicalOrigin<TEnv>(runtime: AppRuntime<TEnv>): string {
+  const configured = envString(runtime.env, "APP_PUBLIC_BASE_URL");
+  if (configured?.startsWith("https://")) return configured.replace(/\/+$/, "");
+  return "https://salaryhijacking.com";
+}
+
+function legalPageTitle(path: string): string | null {
+  if (path === "/privacy") return "개인정보 처리방침";
+  if (path === "/support") return "고객 지원";
+  if (path === "/terms") return "이용약관";
+  return null;
+}
+
+function legalPageBody(title: string): readonly string[] {
+  if (title === "개인정보 처리방침") {
+    return [
+      "급여납치는 급여, 예산, 지출, 저축, 알림, LV UP, 커뮤니티 기능을 제공하기 위해 필요한 정보만 처리합니다.",
+      "급여, 지출, 저축, 납치금액, 계좌, 카드, 대출, 인증 토큰, 푸시 토큰, raw device identifier는 광고, 제휴, 분석, 로그, 푸시 payload에 원문으로 제공하지 않습니다.",
+      "광고와 제휴 영역은 contextual-only를 기본 원칙으로 하며 금융 금액 기반 타겟팅을 사용하지 않습니다.",
+      "사용자는 앱의 마이페이지 또는 고객 지원을 통해 개인정보 열람, 내보내기, 정정, 삭제, 탈퇴 요청을 진행할 수 있습니다.",
+    ];
+  }
+  if (title === "고객 지원") {
+    return [
+      "앱 이용, 계정, 지출 계획, 커뮤니티 신고, 개인정보 요청은 고객 지원으로 문의할 수 있습니다.",
+      "심사 계정 비밀번호, 운영 secret, DB URL, 토큰, private key, 서비스 계정 파일은 저장소나 공개 문서에 포함하지 않습니다.",
+      "보안 또는 개인정보 이슈는 개인정보 보호 담당 메일로 별도 접수하며, 실제 금융 원문 데이터는 문의 본문에 포함하지 않는 것을 권장합니다.",
+    ];
+  }
+  return [
+    "급여납치는 월급 흐름을 계획하고 남길 돈을 먼저 분리하도록 돕는 개인 재무 자기관리 서비스입니다.",
+    "급여, 예산, 지출, 저축, 납치금액의 최종 계산은 서버 권위 API와 검증된 데이터 기준을 따릅니다.",
+    "사용자는 허위 정보, 타인의 개인정보, 금융 원문, 불법 콘텐츠, 광고성 게시물을 커뮤니티에 게시해서는 안 됩니다.",
+    "서비스 정책, 개인정보, 광고/제휴 분리 원칙은 출시 환경과 법적 요구에 맞춰 업데이트될 수 있습니다.",
+  ];
+}
+
+function legalPageResponse<TEnv>(
+  runtime: AppRuntime<TEnv>,
+  title: string,
+): Response {
+  const origin = canonicalOrigin(runtime);
+  const canonicalUrl = `${origin}${runtime.path}`;
+  const sections = legalPageBody(title)
+    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
+    .join("");
+  const body = `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(title)} | 급여납치</title>
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  <style>
+    :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
+    body { margin: 0; background: #f7f8fa; color: #202327; }
+    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 72px; }
+    .brand { color: #209252; font-weight: 800; letter-spacing: 0; }
+    h1 { margin: 12px 0 18px; font-size: 32px; line-height: 1.25; letter-spacing: 0; }
+    p, li { font-size: 16px; line-height: 1.75; }
+    section { background: #fff; border: 1px solid #e7ebef; border-radius: 16px; padding: 24px; }
+    a { color: #12663a; font-weight: 700; }
+    .meta { color: #6d737a; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="brand">SALARY HIJACKING · 급여납치</p>
+    <h1>${escapeHtml(title)}</h1>
+    <p class="meta">최종 업데이트: ${LEGAL_LAST_UPDATED} · 서버 권위 계산 · 개인정보/광고 분리 원칙 적용</p>
+    <section>
+      ${sections}
+      <p>고객 지원: <a href="mailto:${LEGAL_SUPPORT_EMAIL}">${LEGAL_SUPPORT_EMAIL}</a></p>
+      <p>개인정보 문의: <a href="mailto:${LEGAL_PRIVACY_EMAIL}">${LEGAL_PRIVACY_EMAIL}</a></p>
+    </section>
+  </main>
+</body>
+</html>`;
+
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "content-language": "ko-KR",
+      "content-security-policy":
+        "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "cache-control": "public, max-age=3600",
+      link: `<${canonicalUrl}>; rel="canonical"`,
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
 }
 
 function notFound(runtime: AppRuntime): Response {
@@ -907,6 +1026,11 @@ async function coreDispatch<TEnv>(
     });
   }
 
+  const legalTitle = legalPageTitle(path);
+  if (legalTitle && (method === "GET" || method === "HEAD")) {
+    return legalPageResponse(runtime, legalTitle);
+  }
+
   if (["/ready", `${API_PREFIX}/ready`].includes(path)) {
     return json(200, runtime, {
       data: {
@@ -975,7 +1099,8 @@ function buildAuthOptions<TEnv>(
     },
     {
       id: "root-manifest-public",
-      pattern: /^\/(manifest|health|ready|live|_health)(?:\/|$)/,
+      pattern:
+        /^\/(manifest|health|ready|live|_health|privacy|support|terms)(?:\/|$)/,
       public: true,
     },
   ] as const;
@@ -1252,6 +1377,7 @@ export function assertAppCompleteness(): {
     "api_v1_and_admin_api_v1_prefixes",
     "health_ready_manifest_app_config_public_endpoints",
     "api_v1_mobile_bootstrap_endpoint",
+    "public_legal_privacy_support_terms_pages_ready",
     "server_authority_financial_route_contract",
     "owner_boundary_and_auth_context_source_contract",
     "standard_json_response_contract",

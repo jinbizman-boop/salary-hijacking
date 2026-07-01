@@ -8,6 +8,8 @@ const DEFAULT_PROOF_PATH = "release/cloudflare-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/cloudflare-runtime-evidence.json";
 
 const DEFAULT_EXPECTED_DOMAINS = Object.freeze([
+  "salaryhijacking.com",
+  "www.salaryhijacking.com",
   "api.salaryhijacking.com",
   "notifications.salaryhijacking.com",
   "scheduler.salaryhijacking.com",
@@ -198,12 +200,12 @@ const buildNextEvidenceRequired = ({
   }
   if (networking.customDomainsVerified !== true) {
     next.push(
-      "Custom domain proof for API, notifications, scheduler, and admin",
+      "Custom domain proof for public app, API, notifications, scheduler, and admin",
     );
   }
   if (networking.certificatesVerified !== true) {
     next.push(
-      "TLS certificate proof for API, notifications, scheduler, and admin",
+      "TLS certificate proof for public app, API, notifications, scheduler, and admin",
     );
   }
 
@@ -273,10 +275,10 @@ export const buildCloudflareRuntimeEvidence = ({
   const networking = {
     customDomainsVerified: boolFrom(proofNetworking, "customDomainsVerified"),
     certificatesVerified: boolFrom(proofNetworking, "certificatesVerified"),
-    expectedDomains:
-      expectedDomains.length > 0
-        ? expectedDomains
-        : [...DEFAULT_EXPECTED_DOMAINS],
+    expectedDomains: uniqueStrings([
+      ...DEFAULT_EXPECTED_DOMAINS,
+      ...expectedDomains,
+    ]),
     note: noteFrom(
       proofNetworking,
       "note",

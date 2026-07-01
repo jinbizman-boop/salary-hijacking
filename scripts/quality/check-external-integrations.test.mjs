@@ -124,8 +124,14 @@ crons = ["0 * * * *"]
 
 [env.production]
 name = "salary-hijacking-api-production"
+routes = [
+  { pattern = "salaryhijacking.com", custom_domain = true },
+  { pattern = "www.salaryhijacking.com", custom_domain = true },
+  { pattern = "api.salaryhijacking.com", custom_domain = true }
+]
 [env.production.vars]
 APP_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://salaryhijacking.com"
 [[env.production.r2_buckets]]
 binding = "UPLOADS_BUCKET"
 bucket_name = "salary-hijacking-production-uploads"
@@ -598,6 +604,71 @@ test("passes a complete safe GitHub, Cloudflare, and Neon fixture", async () => 
 
     assert.equal(result.ok, true, result.failures.join("\n"));
     assert.deepEqual(result.failures, []);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when the API Worker omits public app legal custom domains", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "services/api/wrangler.toml": `
+name = "salary-hijacking-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[env.staging]
+name = "salary-hijacking-api-staging"
+[env.staging.vars]
+APP_ENV = "staging"
+[[env.staging.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-staging-uploads"
+[[env.staging.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-staging-operations"
+[env.staging.triggers]
+crons = ["0 * * * *"]
+
+[env.production]
+name = "salary-hijacking-api-production"
+routes = [
+  { pattern = "api.salaryhijacking.com", custom_domain = true }
+]
+[env.production.vars]
+APP_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://api.salaryhijacking.com"
+[[env.production.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-production-uploads"
+[[env.production.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-production-operations"
+[env.production.triggers]
+crons = ["0 * * * *"]
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /services\/api\/wrangler\.toml: missing required token "\{ pattern = "salaryhijacking\.com", custom_domain = true \}"/,
+    );
+    assert.match(
+      result.failures.join("\n"),
+      /services\/api\/wrangler\.toml: missing required token "\{ pattern = "www\.salaryhijacking\.com", custom_domain = true \}"/,
+    );
+    assert.match(
+      result.failures.join("\n"),
+      /services\/api\/wrangler\.toml: missing required token "APP_PUBLIC_BASE_URL = "https:\/\/salaryhijacking\.com""/,
+    );
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

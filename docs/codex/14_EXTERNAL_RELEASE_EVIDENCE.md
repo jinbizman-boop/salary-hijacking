@@ -76,9 +76,16 @@ Cloudflare:
   - `salary-hijacking-scheduler-production`
 - Production custom-domain route patterns were corrected and dry-run verified
   as host-only custom domains:
+  - `salaryhijacking.com`
+  - `www.salaryhijacking.com`
   - `api.salaryhijacking.com`
   - `notifications.salaryhijacking.com`
   - `scheduler.salaryhijacking.com`
+- The API Worker production dry-run passed after adding `salaryhijacking.com`
+  and `www.salaryhijacking.com` as the public app/legal surface for `/privacy`,
+  `/support`, and `/terms`. This is configuration validation, not proof that
+  Cloudflare DNS, custom-domain ownership, TLS, or production URL reachability
+  has been verified.
 - Dry-run verification does not prove Worker resource creation, DNS readiness,
   runtime secrets, queues, R2 buckets, or successful production deployment.
 

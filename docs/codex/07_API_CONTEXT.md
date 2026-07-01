@@ -24,10 +24,9 @@ Entrypoints:
 
 Current verification:
 
-- `pnpm.cmd --filter @salary-hijacking/api run typecheck`: PASS on 2026-06-29.
-- `pnpm.cmd --filter @salary-hijacking/api run lint`: PASS on 2026-06-29.
-- `pnpm.cmd --filter @salary-hijacking/api run format:check`: PASS on 2026-06-29.
-- `pnpm.cmd --filter @salary-hijacking/api run test`: PASS on 2026-06-29, 5 files and 10 tests.
+- `corepack pnpm --filter @salary-hijacking/api typecheck`: PASS on 2026-07-01.
+- `corepack pnpm --filter @salary-hijacking/api test`: PASS on 2026-07-01, 6 files and 13 tests.
+- `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-01.
 
 ## API Prefixes
 
@@ -69,8 +68,15 @@ Verified on 2026-06-29:
 - `GET /api/v1/users/me/profile`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile screen payload alias. The response uses hash-only user identity and explicit false privacy flags.
 - `POST /api/v1/users/me/privacy-export`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile privacy action alias. The response returns mobile profile payload privacy state without exposing raw financial, personal, or token data.
 - `POST /api/v1/users/me/withdrawal-request`: implemented in `services/api/src/routes/users.routes.ts` as a request-only mobile profile action. It records/request-flags withdrawal intent without performing destructive final account withdrawal.
+- Public store review pages: `GET /privacy`, `GET /support`, and
+  `GET /terms` are served by `services/api/src/app.ts` without bearer
+  authentication and with privacy/ads-safe response headers. Production API
+  Worker config targets `salaryhijacking.com`, `www.salaryhijacking.com`, and
+  `api.salaryhijacking.com`, but real DNS/TLS/deployment proof is still a
+  release gate.
 - Contract test: `services/api/tests/mobile-profile-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
+- Public legal page regression test: `services/api/tests/public-legal-pages.test.ts`.
 
 ## Persistence Warning
 

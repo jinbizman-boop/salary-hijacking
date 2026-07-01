@@ -128,6 +128,8 @@ workers_dev = false
 minify = true
 upload_source_maps = true
 routes = [
+  { pattern = "salaryhijacking.com", custom_domain = true },
+  { pattern = "www.salaryhijacking.com", custom_domain = true },
   { pattern = "api.salaryhijacking.com", custom_domain = true }
 ]
 
@@ -141,7 +143,7 @@ mode = "smart"
 APP_ENV = "production"
 ENVIRONMENT = "production"
 NODE_ENV = "production"
-APP_PUBLIC_BASE_URL = "https://api.salaryhijacking.com"
+APP_PUBLIC_BASE_URL = "https://salaryhijacking.com"
 CORS_ALLOWED_ORIGINS = "https://salaryhijacking.com,https://www.salaryhijacking.com,https://admin.salaryhijacking.com"
 ALLOWED_ORIGINS = "https://salaryhijacking.com,https://www.salaryhijacking.com,https://admin.salaryhijacking.com"
 ENABLE_QUEUE_HANDLER = "true"

@@ -21,6 +21,14 @@ const expectedWorkers = [
   "salary-hijacking-scheduler",
   "salary-hijacking-admin",
 ];
+const expectedDomains = [
+  "salaryhijacking.com",
+  "www.salaryhijacking.com",
+  "api.salaryhijacking.com",
+  "notifications.salaryhijacking.com",
+  "scheduler.salaryhijacking.com",
+  "admin.salaryhijacking.com",
+];
 
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
@@ -63,6 +71,7 @@ test("builds blocked no-secret Cloudflare runtime evidence by default", () => {
   assert.equal(evidence.workers.adminWorkerVerified, false);
   assert.equal(evidence.resources.r2BucketsVerified, false);
   assert.equal(evidence.networking.customDomainsVerified, false);
+  assert.deepEqual(evidence.networking.expectedDomains, expectedDomains);
   assert.ok(evidence.nextEvidenceRequired.length > 0);
   assert.doesNotMatch(JSON.stringify(evidence), /api[_-]?token/i);
 });
