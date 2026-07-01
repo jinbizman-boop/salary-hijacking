@@ -12,9 +12,10 @@ code, tests, logs, screenshots, or release notes.
 
 ## Repository Boundary
 
-The Salary Hijacking release must use a new repository. The default target is
-`jinbizman-boop/salary-hijacking-platform` unless the owner explicitly selects a
-different new Salary Hijacking repository.
+The Salary Hijacking release must use the new repository
+`jinbizman-boop/salary-hijacking`. Do not use an older temporary repository name
+or any unrelated repository unless the owner explicitly changes the canonical
+release target in `release/release-targets.json`.
 
 Existing repositories must not be modified or reused for this project. The
 `Retro Games` repository is unrelated and must not receive Salary Hijacking
@@ -88,4 +89,5 @@ corepack pnpm run check:release-readiness -- --soft
 `check:external-integrations` validates that workflow files and infrastructure
 docs reference required secret names without hard-coded secret values.
 `check:release-readiness` verifies whether runtime secret evidence is present in
-the current shell or release environment.
+the current shell, release environment, or no-value
+`release/secrets-evidence.json` proof.

@@ -1,7 +1,8 @@
 # Neon Infrastructure
 
 This directory defines the operational guardrails for Neon Serverless Postgres in the
-`salary-hijacking-platform` repository.
+Salary Hijacking workspace. The canonical GitHub repository target is
+`jinbizman-boop/salary-hijacking`.
 
 ## Scope
 

@@ -1,6 +1,6 @@
 # GitHub 운영 구조
 
-이 디렉터리는 급여납치(`salary-hijacking-platform`) 프로젝트의 GitHub 기반 협업·품질·보안·배포 운영 정책을 관리한다. `.github` 하위 파일은 단순 보조 문서가 아니라 PR 품질 게이트, 코드 오너 승인, 이슈 접수 품질, CI/CD, 보안 스캔, 릴리즈 통제의 기준점이다.
+이 디렉터리는 급여납치 프로젝트의 GitHub 기반 협업·품질·보안·배포 운영 정책을 관리한다. canonical GitHub repository target은 `jinbizman-boop/salary-hijacking`이다. `.github` 하위 파일은 단순 보조 문서가 아니라 PR 품질 게이트, 코드 오너 승인, 이슈 접수 품질, CI/CD, 보안 스캔, 릴리즈 통제의 기준점이다.
 
 ## 운영 원칙
 

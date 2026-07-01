@@ -420,6 +420,47 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
+    "release/secrets-evidence.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        observedAt: "2026-07-01T00:00:00Z",
+        source: "test-fixture",
+        secretsRedacted: true,
+        containsSecretValues: false,
+        secrets: {
+          DATABASE_URL: { verified: true, stores: ["github-environment"] },
+          STAGING_DATABASE_URL: {
+            verified: true,
+            stores: ["github-environment"],
+          },
+          NEON_API_KEY: { verified: true, stores: ["github-environment"] },
+          NEON_PROJECT_ID: { verified: true, stores: ["github-environment"] },
+          CLOUDFLARE_API_TOKEN: {
+            verified: true,
+            stores: ["github-environment"],
+          },
+          CLOUDFLARE_ACCOUNT_ID: {
+            verified: true,
+            stores: ["github-environment"],
+          },
+          CF_ADMIN_WORKER_NAME: {
+            verified: true,
+            stores: ["github-environment"],
+          },
+          EXPO_TOKEN: { verified: true, stores: ["github-environment"] },
+          EAS_PROJECT_ID: { verified: true, stores: ["github-environment"] },
+          GITHUB_TOKEN: { verified: true, stores: ["github-actions"] },
+          GITHUB_REPOSITORY: { verified: true, stores: ["github-actions"] },
+          SENTRY_DSN: { verified: true, stores: ["github-environment"] },
+          SLACK_WEBHOOK_URL: {
+            verified: true,
+            stores: ["github-environment"],
+          },
+        },
+      },
+      null,
+      2,
+    ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",

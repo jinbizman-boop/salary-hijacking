@@ -302,6 +302,49 @@ const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const requiredRuntimeSecretNames = [
+  "DATABASE_URL",
+  "STAGING_DATABASE_URL",
+  "NEON_API_KEY",
+  "NEON_PROJECT_ID",
+  "CLOUDFLARE_API_TOKEN",
+  "CLOUDFLARE_ACCOUNT_ID",
+  "CF_ADMIN_WORKER_NAME",
+  "EXPO_TOKEN",
+  "EAS_PROJECT_ID",
+  "GITHUB_TOKEN",
+  "GITHUB_REPOSITORY",
+  "SENTRY_DSN",
+  "SLACK_WEBHOOK_URL",
+];
+
+const writeSecretsEvidence = (rootDir, overrides = {}) => {
+  const secrets = Object.fromEntries(
+    requiredRuntimeSecretNames.map((name) => [
+      name,
+      {
+        verified: true,
+        stores: ["github-environment", "provider-secret-store"],
+      },
+    ]),
+  );
+  const evidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    containsSecretValues: false,
+    secrets,
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/secrets-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
@@ -343,6 +386,7 @@ const makeWorkspace = () => {
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   writeMobileNativeEvidence(rootDir);
+  writeSecretsEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
@@ -559,6 +603,56 @@ test("uses connector evidence as an account-access fallback for GitHub, Cloudfla
   assert.match(report, /WARN cli:GitHub CLI/);
   assert.match(report, /WARN cli:Cloudflare Wrangler/);
   assert.match(report, /WARN cli:Neon CLI/);
+});
+
+test("uses redacted secret evidence when local runtime env values are absent", () => {
+  const rootDir = makeWorkspace();
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.blockers, []);
+  assert.match(report, /secrets-evidence:schema/);
+  assert.match(report, /env-runtime:DATABASE_URL: verified in secret evidence/);
+  assert.match(report, /env-runtime:EXPO_TOKEN: verified in secret evidence/);
+  assert.doesNotMatch(report, /runtime value is missing or placeholder/);
+});
+
+test("blocks secret evidence that contains raw values", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    containsSecretValues: true,
+    secrets: {
+      DATABASE_URL: {
+        verified: true,
+        stores: ["github-environment"],
+        value: "postgresql://user:password@host.neon.tech/db",
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /secrets-evidence:secret-values/);
+  assert.match(
+    report,
+    /release\/secrets-evidence\.json must not contain raw secret values/,
+  );
+  assert.doesNotMatch(report, /postgresql:\/\/user:password/);
 });
 
 test("blocks missing release artifacts and unsafe public secret env names", () => {

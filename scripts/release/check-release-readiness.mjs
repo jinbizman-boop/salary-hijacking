@@ -7,6 +7,7 @@ const RELEASE_CHECK_VERSION = "1.0.0";
 const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
 const MOBILE_NATIVE_EVIDENCE_PATH = "release/mobile-native-evidence.json";
+const SECRETS_EVIDENCE_PATH = "release/secrets-evidence.json";
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -16,6 +17,7 @@ const REQUIRED_FILES = [
   RELEASE_TARGETS_PATH,
   EXTERNAL_RELEASE_EVIDENCE_PATH,
   MOBILE_NATIVE_EVIDENCE_PATH,
+  SECRETS_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
   "release/store/data-safety.md",
@@ -71,6 +73,20 @@ const REQUIRED_ENV_NAMES = [
   "SENTRY_DSN",
   "SLACK_WEBHOOK_URL",
 ];
+
+const RAW_SECRET_VALUE_EVIDENCE_KEYS = new Set([
+  "value",
+  "rawValue",
+  "secretValue",
+  "tokenValue",
+  "password",
+  "connectionString",
+  "databaseUrl",
+  "webhookUrl",
+  "dsnValue",
+  "privateKey",
+  "serviceAccountJson",
+]);
 
 const REQUIRED_CLI_GROUPS = [
   { label: "git", commands: ["git"] },
@@ -1024,6 +1040,120 @@ const readJsonIfPresent = (rootDir, relativePath) => {
   }
 };
 
+const containsRawSecretEvidenceValue = (value) => {
+  if (Array.isArray(value)) return value.some(containsRawSecretEvidenceValue);
+  if (!isPlainObject(value)) return false;
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    if (
+      RAW_SECRET_VALUE_EVIDENCE_KEYS.has(key) &&
+      typeof nestedValue === "string" &&
+      nestedValue.trim().length > 0
+    ) {
+      return true;
+    }
+
+    if (containsRawSecretEvidenceValue(nestedValue)) return true;
+  }
+
+  return false;
+};
+
+const secretEvidenceEntryIsVerified = (entry) => {
+  if (!isPlainObject(entry) || entry.verified !== true) return false;
+  const stores = stringArray(entry.stores);
+  return stores.length > 0;
+};
+
+const secretNameIsVerified = (evidence, envName) => {
+  if (!isPlainObject(evidence)) return false;
+  const secrets = isPlainObject(evidence.secrets) ? evidence.secrets : {};
+  return secretEvidenceEntryIsVerified(secrets[envName]);
+};
+
+const checkSecretsEvidence = (rootDir, checks, blockers) => {
+  const evidence = readJsonIfPresent(rootDir, SECRETS_EVIDENCE_PATH);
+  if (!evidence) {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "secrets-evidence:schema",
+      `${SECRETS_EVIDENCE_PATH} is missing or invalid`,
+    );
+    blockers.push(
+      `${SECRETS_EVIDENCE_PATH} must record required runtime secret presence without values`,
+    );
+    return null;
+  }
+
+  if (evidence.schemaVersion === 1 && evidence.secretsRedacted === true) {
+    addCheck(
+      checks,
+      "PASS",
+      "secrets-evidence:schema",
+      `${SECRETS_EVIDENCE_PATH} schema and redaction flag are valid`,
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "secrets-evidence:schema",
+      `${SECRETS_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+    );
+    blockers.push(
+      `${SECRETS_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+    );
+    return null;
+  }
+
+  const rawSecretValuesFound =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence);
+  if (rawSecretValuesFound) {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "secrets-evidence:secret-values",
+      "raw secret values may be present",
+    );
+    blockers.push(
+      `${SECRETS_EVIDENCE_PATH} must not contain raw secret values`,
+    );
+    return null;
+  }
+
+  addCheck(
+    checks,
+    "PASS",
+    "secrets-evidence:secret-values",
+    "no raw secret values are declared or embedded",
+  );
+
+  const missingSecrets = REQUIRED_ENV_NAMES.filter(
+    (envName) => !secretNameIsVerified(evidence, envName),
+  );
+  if (missingSecrets.length === 0) {
+    addCheck(
+      checks,
+      "PASS",
+      "secrets-evidence:required-secrets",
+      "all required runtime secrets are verified without values",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "secrets-evidence:required-secrets",
+      `unverified: ${missingSecrets.join(", ")}`,
+    );
+    blockers.push(
+      `${SECRETS_EVIDENCE_PATH} is missing verified entries for: ${missingSecrets.join(", ")}`,
+    );
+  }
+
+  return evidence;
+};
+
 const readTextIfPresent = (rootDir, relativePath) => {
   const filePath = path.join(rootDir, relativePath);
   if (!fs.existsSync(filePath)) return null;
@@ -1812,6 +1942,8 @@ export const analyzeReleaseReadiness = ({
     blockers.push(".env.example is missing or empty");
   }
 
+  const secretsEvidence = checkSecretsEvidence(rootDir, checks, blockers);
+
   for (const envName of REQUIRED_ENV_NAMES) {
     if (envExampleNames.has(envName)) {
       addCheck(
@@ -1837,14 +1969,23 @@ export const analyzeReleaseReadiness = ({
         `env-runtime:${envName}`,
         "runtime value present",
       );
+    } else if (secretNameIsVerified(secretsEvidence, envName)) {
+      addCheck(
+        checks,
+        "PASS",
+        `env-runtime:${envName}`,
+        "verified in secret evidence",
+      );
     } else {
       addCheck(
         checks,
         "BLOCKED",
         `env-runtime:${envName}`,
-        "runtime value missing or placeholder",
+        "runtime value missing or secret evidence unverified",
       );
-      blockers.push(`${envName} runtime value is missing or placeholder`);
+      blockers.push(
+        `${envName} runtime value is missing or secret evidence is unverified`,
+      );
     }
   }
 
