@@ -7,7 +7,7 @@ const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const DEFAULT_PROOF_PATH = "release/cloudflare-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/cloudflare-runtime-evidence.json";
 
-const DEFAULT_EXPECTED_DOMAINS = Object.freeze([
+export const DEFAULT_EXPECTED_DOMAINS = Object.freeze([
   "salaryhijacking.com",
   "www.salaryhijacking.com",
   "api.salaryhijacking.com",
@@ -16,7 +16,7 @@ const DEFAULT_EXPECTED_DOMAINS = Object.freeze([
   "admin.salaryhijacking.com",
 ]);
 
-const RAW_SECRET_VALUE_KEYS = new Set([
+export const RAW_SECRET_VALUE_KEYS = new Set([
   "value",
   "rawValue",
   "secretValue",
@@ -30,10 +30,10 @@ const RAW_SECRET_VALUE_KEYS = new Set([
   "serviceAccountJson",
 ]);
 
-const RAW_SECRET_PATTERN =
+export const RAW_SECRET_PATTERN =
   /(postgres(?:ql)?:\/\/|mysql:\/\/|mongodb(?:\+srv)?:\/\/|redis:\/\/|:\/\/[^/\s]+:[^@\s]+@|https?:\/\/hooks\.slack\.com\/services\/|https?:\/\/[^@\s]+@[^/\s]+\/\d+|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|gh[pousr]_[a-z0-9_]{16,}|github_pat_[a-z0-9_]{20,}|xox[baprs]-[a-z0-9-]+|napi_[a-z0-9_-]{16,}|cf_[a-z0-9_-]{16,})/i;
 
-const isPlainObject = (value) =>
+export const isPlainObject = (value) =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
 const readJsonIfPresent = (rootDir, filePath) => {
@@ -44,7 +44,7 @@ const readJsonIfPresent = (rootDir, filePath) => {
   return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
 };
 
-const stringArray = (value) =>
+export const stringArray = (value) =>
   Array.isArray(value)
     ? value
         .filter((item) => typeof item === "string")
@@ -52,19 +52,19 @@ const stringArray = (value) =>
         .filter(Boolean)
     : [];
 
-const uniqueStrings = (value) => [...new Set(stringArray(value))];
+export const uniqueStrings = (value) => [...new Set(stringArray(value))];
 
 const proofSection = (proof, key) =>
   isPlainObject(proof?.[key]) ? proof[key] : {};
 
-const isRawSecretValueKey = (key) => {
+export const isRawSecretValueKey = (key) => {
   if (RAW_SECRET_VALUE_KEYS.has(key)) return true;
   return /(?:token|secret|password|connection|string|database|webhook|dsn|privatekey|serviceaccount).*value$/i.test(
     key,
   );
 };
 
-const containsRawSecretValue = (value) => {
+export const containsRawSecretValue = (value) => {
   if (typeof value === "string") return RAW_SECRET_PATTERN.test(value);
   if (Array.isArray(value)) return value.some(containsRawSecretValue);
   if (!isPlainObject(value)) return false;

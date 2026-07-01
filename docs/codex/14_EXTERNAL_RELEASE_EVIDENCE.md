@@ -146,8 +146,13 @@ release-verified unless an approved store label is supplied. Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS
 certificates, cron triggers, and Worker secret binding presence. Prefer
-`corepack pnpm run release:cloudflare-evidence` after recording local no-secret
-booleans in `release/cloudflare-proof.local.json`.
+`corepack pnpm run release:cloudflare-proof` after recording read-only
+observations in `release/cloudflare-observation.local.json`, then
+`corepack pnpm run release:cloudflare-evidence` to update tracked evidence from
+`release/cloudflare-proof.local.json`. The collector and generator reject raw
+Cloudflare credentials, Worker script bodies, binding values, certificate
+material, private keys, copied runtime payloads, secret values, and unrelated
+Worker names before writing local or tracked evidence.
 Update `release/database-evidence.json` only with booleans, resource names,
 migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,

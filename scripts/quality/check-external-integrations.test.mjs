@@ -610,6 +610,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export function buildCloudflareRuntimeEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-cloudflare-runtime-evidence.test.mjs":
       "import test from 'node:test';\n\ntest('generates no-secret Cloudflare runtime evidence', () => {});\n",
+    "scripts/release/collect-cloudflare-proof.mjs":
+      "export function collectCloudflareProof() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/collect-cloudflare-proof.test.mjs":
+      "import test from 'node:test';\n\ntest('collects no-secret Cloudflare observation proof', () => {});\n",
     "scripts/release/generate-mobile-native-evidence.mjs":
       "export function buildMobileNativeEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-mobile-native-evidence.test.mjs":

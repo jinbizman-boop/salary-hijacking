@@ -63,6 +63,8 @@ const REQUIRED_FILES = [
   "scripts/release/collect-secrets-proof.test.mjs",
   "scripts/release/generate-cloudflare-runtime-evidence.mjs",
   "scripts/release/generate-cloudflare-runtime-evidence.test.mjs",
+  "scripts/release/collect-cloudflare-proof.mjs",
+  "scripts/release/collect-cloudflare-proof.test.mjs",
   "scripts/release/generate-mobile-native-evidence.mjs",
   "scripts/release/generate-mobile-native-evidence.test.mjs",
   "scripts/release/generate-public-url-evidence.mjs",
@@ -351,6 +353,8 @@ const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
   "scripts/release/collect-secrets-proof.test.mjs",
   "scripts/release/generate-cloudflare-runtime-evidence.mjs",
   "scripts/release/generate-cloudflare-runtime-evidence.test.mjs",
+  "scripts/release/collect-cloudflare-proof.mjs",
+  "scripts/release/collect-cloudflare-proof.test.mjs",
   "scripts/release/generate-mobile-native-evidence.mjs",
   "scripts/release/generate-mobile-native-evidence.test.mjs",
   "scripts/release/generate-public-url-evidence.mjs",
@@ -366,6 +370,8 @@ const LOCAL_GENERATED_OR_HOSTING_METADATA_PATHS = [
   "release/database-proof.local.json",
   "release/database-command-proof.local.json",
   "release/secrets-proof.local.json",
+  "release/cloudflare-observation.local.json",
+  "release/cloudflare-proof.local.json",
   "release/public-url-proof.local.json",
 ];
 

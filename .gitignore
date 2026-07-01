@@ -218,6 +218,8 @@ release/checksums/
 release/screenshots/*_probe.png
 release/*-proof.local.json
 release/*-proof.local.jsonc
+release/*-observation.local.json
+release/*-observation.local.jsonc
 
 *.zip
 *.tar
