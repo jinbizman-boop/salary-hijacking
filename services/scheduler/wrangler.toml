@@ -118,7 +118,6 @@ name = "salary-hijacking-scheduler-staging"
 workers_dev = true
 minify = true
 upload_source_maps = true
-keep_vars = true
 
 [env.staging.observability]
 enabled = true
@@ -221,9 +220,8 @@ name = "salary-hijacking-scheduler-production"
 workers_dev = false
 minify = true
 upload_source_maps = true
-keep_vars = true
 routes = [
-  { pattern = "scheduler.salaryhijacking.com/*", custom_domain = true }
+  { pattern = "scheduler.salaryhijacking.com", custom_domain = true }
 ]
 
 [env.production.observability]

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-01T00:24:02Z",
+  "observedAt": "2026-07-01T00:34:34Z",
   "source": "Codex connector checks refreshed for Cloudflare and Neon, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
   "secretsRedacted": true,
   "github": {
@@ -37,7 +37,19 @@
     "pagesProjectMatched": false,
     "observedWorkerNames": [],
     "observedPagesProjectNames": ["retro-db"],
-    "note": "Cloudflare connector account access was observed and refreshed at 2026-07-01T00:24:02Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed."
+    "productionDryRunVerified": true,
+    "productionDryRunVerifiedAt": "2026-07-01T00:34:34Z",
+    "productionDryRunWorkers": [
+      "salary-hijacking-api-production",
+      "salary-hijacking-notifications-production",
+      "salary-hijacking-scheduler-production"
+    ],
+    "customDomainRoutesVerified": [
+      "api.salaryhijacking.com",
+      "notifications.salaryhijacking.com",
+      "scheduler.salaryhijacking.com"
+    ],
+    "note": "Cloudflare connector account access was observed and refreshed at 2026-07-01T00:24:02Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
   },
   "neon": {
     "connectorReachable": true,

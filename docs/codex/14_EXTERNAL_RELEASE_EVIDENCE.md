@@ -18,7 +18,7 @@ Machine-readable evidence lives in:
 
 ## 2026-07-01 Connector Snapshot
 
-Latest connector refresh: 2026-07-01 09:24:02 KST.
+Latest connector/dry-run refresh: 2026-07-01 09:34:34 KST.
 
 GitHub:
 
@@ -52,6 +52,17 @@ Cloudflare:
   - `salary-hijacking-notifications`
   - `salary-hijacking-scheduler`
 - Required Salary Hijacking admin Pages project is not observed.
+- Production Wrangler dry-run passed for:
+  - `salary-hijacking-api-production`
+  - `salary-hijacking-notifications-production`
+  - `salary-hijacking-scheduler-production`
+- Production custom-domain route patterns were corrected and dry-run verified
+  as host-only custom domains:
+  - `api.salaryhijacking.com`
+  - `notifications.salaryhijacking.com`
+  - `scheduler.salaryhijacking.com`
+- Dry-run verification does not prove Worker resource creation, DNS readiness,
+  runtime secrets, queues, R2 buckets, or successful production deployment.
 
 Neon:
 
@@ -80,8 +91,9 @@ readiness. Release readiness requires both:
 As of this snapshot, the GitHub repository target, local `origin`,
 authenticated push access, and Neon project target are aligned. The release
 status remains blocked by runtime secrets, Cloudflare Workers/Pages project
-matching, mobile native E2E setup, real DB migration/seed execution, deployment,
-certificates, store builds, and operating QA.
+matching, Cloudflare runtime resource provisioning, mobile native E2E setup,
+real DB migration/seed execution, deployment, certificates, store builds, and
+operating QA.
 
 ## Update Rule
 

@@ -95,7 +95,6 @@ name = "salary-hijacking-notifications-staging"
 workers_dev = true
 minify = true
 upload_source_maps = true
-keep_vars = true
 
 [env.staging.observability]
 enabled = true
@@ -172,9 +171,8 @@ name = "salary-hijacking-notifications-production"
 workers_dev = false
 minify = true
 upload_source_maps = true
-keep_vars = true
 routes = [
-  { pattern = "notifications.salaryhijacking.com/*", custom_domain = true }
+  { pattern = "notifications.salaryhijacking.com", custom_domain = true }
 ]
 
 [env.production.observability]
