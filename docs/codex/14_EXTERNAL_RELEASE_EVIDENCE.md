@@ -198,8 +198,9 @@ recording command result booleans in
 `release/database-command-proof.local.json`, then
 `corepack pnpm run release:database-evidence` to update tracked evidence from
 `release/database-proof.local.json`. The collector and generator reject raw
-database URLs, secret values, production seed proof, raw smoke payloads, and
-sensitive user/financial data keys before writing local or tracked evidence.
+database URLs, secret values, production seed proof, raw smoke payloads, raw
+auth/cookie/header fields, and sensitive user/financial data keys before writing
+local or tracked evidence.
 Update `release/mobile-native-evidence.json` only with no-secret booleans for
 Android production AAB builds, Android native E2E or equivalent device-farm
 runs, Google Play submit dry-runs, iOS production builds, and App Store submit

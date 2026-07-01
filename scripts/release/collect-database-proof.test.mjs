@@ -225,6 +225,40 @@ test("rejects smoke proof containing raw payloads or sensitive user data keys", 
   );
 });
 
+test("rejects smoke proof containing raw auth or cookie headers", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/database-command-proof.local.json",
+    {
+      schemaVersion: 1,
+      secretsRedacted: true,
+      containsSecretValues: false,
+      commands: {
+        privacySmoke: {
+          verified: true,
+          environment: "staging",
+          noRawPayloadStored: true,
+          exitCode: 0,
+          requestHeaders: {
+            Authorization: "Bearer copied-runtime-token",
+            Cookie: "session=raw-session-cookie",
+          },
+        },
+      },
+    },
+  );
+
+  assert.throws(
+    () =>
+      collectDatabaseProof({
+        inputPath,
+        writeFile: false,
+      }),
+    /raw smoke payloads or sensitive user data/i,
+  );
+});
+
 test("rejects any production seed proof even when marked synthetic", () => {
   const rootDir = makeRoot();
   const inputPath = writeJson(
