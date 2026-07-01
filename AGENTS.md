@@ -104,7 +104,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight; `ANDROID_SDK_ROOT`/`ANDROID_HOME`, E2E APK, `adb`, and `emulator` are unavailable on this PC
 - Dependency vulnerability audit is separated into `security:audit` and still requires registry/network access before release
 - `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
-- `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven through commit `64fc8c5e31fa0e906d5799548145754871bdf9e0`
+- `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven; the latest recorded remote proof commit is stored in `release/external-release-evidence.json` and should be rechecked after new commits
 
 ## Editing Rules
 

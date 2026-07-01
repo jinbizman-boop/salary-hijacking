@@ -23,6 +23,7 @@ Machine-readable evidence lives in:
 ## 2026-07-01 Connector Snapshot
 
 Latest connector refresh: 2026-07-01 13:36:54 KST.
+Latest Git remote verification refresh: 2026-07-01 13:43:11 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 
 GitHub:
@@ -40,8 +41,11 @@ GitHub:
 - The local folder now has Git metadata initialized and `origin` configured to
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - After GitHub Desktop was installed, authenticated `git push` succeeded.
-- `git ls-remote origin refs/heads/main` proves remote branch read access at
-  commit `e2697c3d5b6803b707131d419a76c7f010614349`.
+- `git ls-remote origin refs/heads/main` proved remote branch read access at
+  the last Git remote evidence refresh commit
+  `c8dea2989ee414e7a5ecb0ee539cab691cc6cae8`. Future commits must be checked
+  with `git ls-remote`; this recorded evidence is historical and does not
+  self-update.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
