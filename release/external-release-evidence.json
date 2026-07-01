@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-01T01:42:45Z",
-  "source": "Codex connector checks refreshed for Cloudflare and Neon, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
+  "observedAt": "2026-07-01T03:24:28.642Z",
+  "source": "Codex connector checks refreshed for Cloudflare runtime resources, prior Neon/GitHub connector evidence, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
@@ -39,6 +39,11 @@
     "adminDeploymentType": "workers-opennext",
     "adminWorkerMatched": false,
     "observedWorkerNames": [],
+    "runtimeReadOnlyVerifiedAt": "2026-07-01T03:24:28.642Z",
+    "observedQueueCount": 0,
+    "r2ApiReadBlockedByAccountActivation": true,
+    "r2ReadErrorCode": "10042",
+    "salaryHijackingZoneObserved": false,
     "observedPagesProjectNames": ["retro-db"],
     "productionDryRunVerified": true,
     "productionDryRunVerifiedAt": "2026-07-01T00:34:34Z",
@@ -52,7 +57,7 @@
       "notifications.salaryhijacking.com",
       "scheduler.salaryhijacking.com"
     ],
-    "note": "Cloudflare connector account access was refreshed at 2026-07-01T01:42:45Z. The account returned zero Workers and a previously observed Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
+    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-01T03:24:28.642Z. The account returned zero Workers and zero Queues. The R2 bucket list endpoint returned Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The zones list did not observe salaryhijacking.com. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
   },
   "neon": {
     "connectorReachable": true,

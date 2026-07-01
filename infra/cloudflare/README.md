@@ -99,9 +99,13 @@ Salary Hijacking Workers, including the Admin OpenNext Worker, R2 buckets,
 Queues, custom domains, TLS certificates, cron triggers, and Worker secret
 bindings are not yet proven in the connected account.
 
-Latest read-only check on 2026-07-01 10:42:45 KST:
+Latest read-only check on 2026-07-01 12:24:28 KST:
 
 - Workers list: empty.
+- Queues list: empty.
+- R2 bucket list: blocked by Cloudflare error `10042`, indicating R2 must be
+  enabled through the Cloudflare Dashboard before bucket proof can be collected.
+- Zones list: `salaryhijacking.com` was not observed.
 - Pages projects: `retro-db` only. The current admin target is a Worker, but
   `retro-db` remains unrelated and must not be used as a Salary Hijacking
   deployment target.

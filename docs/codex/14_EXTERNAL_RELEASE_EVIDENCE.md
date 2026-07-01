@@ -50,7 +50,12 @@ Cloudflare:
 
 - Cloudflare connector account access is visible.
 - The read-only Workers list returned zero Workers again on
-  2026-07-01 10:42:45 KST.
+  2026-07-01 12:24:28 KST.
+- The read-only Queues list returned zero Queues.
+- The R2 bucket list endpoint returned Cloudflare error `10042`, indicating R2
+  must be enabled through the Cloudflare Dashboard before bucket proof can be
+  collected.
+- The read-only Zones list did not observe `salaryhijacking.com`.
 - The read-only Pages list returned `retro-db` only. That Pages project is
   unrelated and must not be reused for Salary Hijacking. The canonical admin
   console target is now an OpenNext Cloudflare Worker, not a Pages project.
@@ -115,7 +120,6 @@ connection strings, tokens, private keys, service account JSON, raw database
 URLs, DSNs, or webhook URLs. Update `release/cloudflare-runtime-evidence.json`
 only with resource names, booleans, and non-secret proof notes for Workers, R2,
 Queues, custom domains, TLS certificates, cron triggers, and Worker secret
-binding presence. Then run:
 binding presence. Update `release/database-evidence.json` only with booleans,
 resource names, migration counts, and non-secret proof notes for safe migration
 validation, staging migration, staging seed, production migration dry-run,
