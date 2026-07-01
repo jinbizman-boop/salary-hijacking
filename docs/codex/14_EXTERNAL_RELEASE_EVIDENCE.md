@@ -146,11 +146,15 @@ migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,
 privacy smoke, and rollback rehearsal. Never store raw Neon database URLs,
 connection strings, passwords, tokens, or query payloads with sensitive
-financial/user data. Prefer `corepack pnpm run release:database-evidence` after
-recording local no-secret booleans in `release/database-proof.local.json`; the
-generator rejects raw smoke payloads and sensitive user/financial data keys
-before writing tracked evidence. Update `release/public-url-evidence.json` only
-with no-secret booleans proving production reachability for
+financial/user data. Prefer `corepack pnpm run release:database-proof` after
+recording command result booleans in
+`release/database-command-proof.local.json`, then
+`corepack pnpm run release:database-evidence` to update tracked evidence from
+`release/database-proof.local.json`. The collector and generator reject raw
+database URLs, secret values, production seed proof, raw smoke payloads, and
+sensitive user/financial data keys before writing local or tracked evidence.
+Update `release/public-url-evidence.json` only with no-secret booleans proving
+production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and
 privacy/ads-safe headers, Korean public copy, store-review URL alignment, and
 public-page sensitive data non-exposure. Prefer

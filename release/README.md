@@ -69,7 +69,21 @@ Safe database evidence generation command:
 
 - `corepack pnpm run release:database-evidence`
 
-The command reads no committed database URL. If
+Before generating tracked evidence, database command proof can be normalized
+with:
+
+- `corepack pnpm run release:database-proof`
+
+The proof collector reads `release/database-command-proof.local.json` and writes
+only booleans to `release/database-proof.local.json`. The local command proof
+file is ignored by Git and may contain only command success booleans, exit codes,
+environment names, dry-run flags, synthetic-data flags, and non-secret notes.
+It must not contain raw Neon URLs, passwords, tokens, copied SQL output, smoke
+request or response bodies, emails, phone numbers, salary, expense, savings,
+hijack amounts, account/card/loan data, push tokens, or device identifiers.
+Production seed proof is always rejected.
+
+The evidence command reads no committed database URL. If
 `release/database-proof.local.json` exists, it may contain booleans and
 non-secret notes from migration, seed, smoke, and rollback runs. That local proof
 file is ignored by Git and must not contain raw Neon URLs, passwords, tokens, or
