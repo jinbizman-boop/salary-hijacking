@@ -27,6 +27,16 @@ The observed database migration, seed, API smoke, and rollback evidence is:
 
 - `release/database-evidence.json`
 
+Safe database evidence generation command:
+
+- `corepack pnpm run release:database-evidence`
+
+The command reads no committed database URL. If
+`release/database-proof.local.json` exists, it may contain booleans and
+non-secret notes from migration, seed, smoke, and rollback runs. That local proof
+file is ignored by Git and must not contain raw Neon URLs, passwords, tokens, or
+real user/financial payloads.
+
 Current protected rule:
 
 - Use the new Salary Hijacking repository

@@ -52,6 +52,8 @@ const REQUIRED_FILES = [
   "database/seeds/uat.seed.sql",
   "scripts/build/fix-esm-imports.mjs",
   "scripts/build/fix-esm-imports.test.mjs",
+  "scripts/release/generate-database-evidence.mjs",
+  "scripts/release/generate-database-evidence.test.mjs",
 ];
 
 const REQUIRED_TOKENS_BY_FILE = {

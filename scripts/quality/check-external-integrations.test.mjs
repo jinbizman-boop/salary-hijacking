@@ -551,6 +551,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export async function fixEsmImportSpecifiers() { return { checkedFiles: 0, changedFiles: 0 }; }\n",
     "scripts/build/fix-esm-imports.test.mjs":
       "import test from 'node:test';\n\ntest('adds .js to relative ESM import specifiers', () => {});\n",
+    "scripts/release/generate-database-evidence.mjs":
+      "export function buildDatabaseEvidence() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/generate-database-evidence.test.mjs":
+      "import test from 'node:test';\n\ntest('generates no-secret database evidence', () => {});\n",
   };
 
   for (const [relativePath, content] of Object.entries({
