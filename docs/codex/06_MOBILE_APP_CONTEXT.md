@@ -138,8 +138,8 @@ graphic from the local app export and mock API. Visual inspection confirmed the
 home, daily budget, and feature graphic surfaces render the official BI and
 Clean Fintech value-first layout.
 Release readiness blocks placeholder-sized screenshot PNGs by requiring phone
-screenshots to be at least 360x640 and the Google Play feature graphic to be
-exactly 1024x500.
+screenshots to be at least 360x640 and 20,000 bytes, and the Google Play
+feature graphic to be exactly 1024x500 and at least 40,000 bytes.
 
 ## Feature File Status
 

@@ -33,6 +33,7 @@ const freesentationFontSourceRoot = path.join(
   "assets",
   "fonts",
 );
+const storeScreenshotSourceRoot = path.join(repoRoot, "release", "screenshots");
 
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
@@ -675,9 +676,7 @@ const makeWorkspace = () => {
     write(
       rootDir,
       `release/screenshots/${imageName}`,
-      imageName === "feature_graphic_google_play.png"
-        ? validFeatureGraphicPng
-        : validPhoneScreenshotPng,
+      fs.readFileSync(path.join(storeScreenshotSourceRoot, imageName)),
     );
   }
 
@@ -1295,6 +1294,34 @@ test("blocks placeholder-sized store screenshots and feature graphic", () => {
   assert.match(report, /mobile:store-feature-graphic/);
   assert.match(report, /store screenshot/i);
   assert.match(report, /feature graphic/i);
+});
+
+test("blocks tiny store screenshot PNGs with spoofed dimensions", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/screenshots/02_daily_budget.png",
+    validPhoneScreenshotPng,
+  );
+  write(
+    rootDir,
+    "release/screenshots/feature_graphic_google_play.png",
+    validFeatureGraphicPng,
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:store-screenshot:02_daily_budget\.png/);
+  assert.match(report, /mobile:store-feature-graphic/);
+  assert.match(report, /store screenshot/i);
 });
 
 test("blocks missing store privacy, data safety, review, and content rating materials", () => {
