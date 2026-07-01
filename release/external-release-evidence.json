@@ -1,11 +1,12 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-01T03:24:28.642Z",
-  "source": "Codex connector checks refreshed for Cloudflare runtime resources, prior Neon/GitHub connector evidence, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
+  "observedAt": "2026-07-01T04:36:54.607Z",
+  "source": "Codex connector checks refreshed for Cloudflare runtime resources, Neon project/branch/compute resources, GitHub app account evidence, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
     "appInstalled": true,
+    "installedAccountsObserved": ["jinbizman-boop"],
     "expectedRepository": "jinbizman-boop/salary-hijacking",
     "repositoryCreationRequired": true,
     "existingRepositoriesMustNotBeModified": true,
@@ -13,12 +14,12 @@
     "repositoryMatched": true,
     "writeAccessProven": true,
     "pushProven": true,
-    "pushVerifiedAt": "2026-07-01T01:42:45Z",
+    "pushVerifiedAt": "2026-07-01T04:35:09Z",
     "pushCommand": "git push origin main",
     "pushedBranch": "main",
-    "pushProofCommit": "49787368ccfd46973ca9a8566c1acfd1633447b5",
+    "pushProofCommit": "e2697c3d5b6803b707131d419a76c7f010614349",
     "remoteVerificationCommand": "git ls-remote origin refs/heads/main",
-    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Authenticated git push succeeded again on 2026-07-01, and origin/main was readable through git ls-remote at commit 49787368ccfd46973ca9a8566c1acfd1633447b5. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
+    "note": "GitHub app installation was observed for account jinbizman-boop. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Authenticated git push succeeded again on 2026-07-01, and origin/main was readable through git ls-remote at commit e2697c3d5b6803b707131d419a76c7f010614349. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
   },
   "cloudflare": {
     "connectorReachable": true,
@@ -39,11 +40,12 @@
     "adminDeploymentType": "workers-opennext",
     "adminWorkerMatched": false,
     "observedWorkerNames": [],
-    "runtimeReadOnlyVerifiedAt": "2026-07-01T03:24:28.642Z",
+    "runtimeReadOnlyVerifiedAt": "2026-07-01T04:36:54.607Z",
     "observedQueueCount": 0,
     "r2ApiReadBlockedByAccountActivation": true,
     "r2ReadErrorCode": "10042",
     "salaryHijackingZoneObserved": false,
+    "observedZoneNames": ["retrogames.kr"],
     "observedPagesProjectNames": ["retro-db"],
     "productionDryRunVerified": true,
     "productionDryRunVerifiedAt": "2026-07-01T00:34:34Z",
@@ -57,7 +59,7 @@
       "notifications.salaryhijacking.com",
       "scheduler.salaryhijacking.com"
     ],
-    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-01T03:24:28.642Z. The account returned zero Workers and zero Queues. The R2 bucket list endpoint returned Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The zones list did not observe salaryhijacking.com. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
+    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-01T04:36:54.607Z. The account returned zero Workers and zero Queues. The R2 bucket list endpoint returned Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The zones list observed retrogames.kr only and did not observe salaryhijacking.com. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
   },
   "neon": {
     "connectorReachable": true,
@@ -70,7 +72,12 @@
     "observedProjectNames": ["salary-hijacking", "Retro Games"],
     "salaryProjectSearchMatched": true,
     "regionId": "aws-us-east-2",
+    "postgresVersion": 17,
     "databaseNames": ["neondb"],
+    "branchCount": 2,
+    "mainBranchReady": true,
+    "stagingBranchReady": true,
+    "computeCount": 2,
     "branches": [
       {
         "name": "main",
@@ -87,6 +94,6 @@
         "computeId": "ep-young-sunset-ajgi3bab"
       }
     ],
-    "note": "Neon organization access was refreshed at 2026-07-01T01:42:45Z. A new Salary Hijacking project named salary-hijacking was observed in organization org-dark-tree-79935393 with main and staging branches. The connector returned connection details during creation, but no connection string, password, token, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
+    "note": "Neon organization access was refreshed at 2026-07-01T04:36:54.607Z. A new Salary Hijacking project named salary-hijacking was observed in organization org-dark-tree-79935393 with main and staging branches, PostgreSQL 17, region aws-us-east-2, and two read-write compute endpoints. No connection string, password, token, host, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
   }
 }

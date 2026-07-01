@@ -22,12 +22,12 @@ Machine-readable evidence lives in:
 
 ## 2026-07-01 Connector Snapshot
 
-Latest connector refresh: 2026-07-01 10:42:45 KST.
+Latest connector refresh: 2026-07-01 13:36:54 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 
 GitHub:
 
-- GitHub app installation is visible for the user account.
+- GitHub app installation is visible for the `jinbizman-boop` user account.
 - Salary Hijacking must use a newly created GitHub repository for this product.
 - Canonical repository target: `jinbizman-boop/salary-hijacking`.
 - HTTPS remote: `https://github.com/jinbizman-boop/salary-hijacking.git`.
@@ -41,7 +41,7 @@ GitHub:
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - After GitHub Desktop was installed, authenticated `git push` succeeded.
 - `git ls-remote origin refs/heads/main` proves remote branch read access at
-  commit `49787368ccfd46973ca9a8566c1acfd1633447b5`.
+  commit `e2697c3d5b6803b707131d419a76c7f010614349`.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
@@ -50,12 +50,13 @@ Cloudflare:
 
 - Cloudflare connector account access is visible.
 - The read-only Workers list returned zero Workers again on
-  2026-07-01 12:24:28 KST.
+  2026-07-01 13:36:54 KST.
 - The read-only Queues list returned zero Queues.
 - The R2 bucket list endpoint returned Cloudflare error `10042`, indicating R2
   must be enabled through the Cloudflare Dashboard before bucket proof can be
   collected.
-- The read-only Zones list did not observe `salaryhijacking.com`.
+- The read-only Zones list observed `retrogames.kr` only and did not observe
+  `salaryhijacking.com`.
 - The read-only Pages list returned `retro-db` only. That Pages project is
   unrelated and must not be reused for Salary Hijacking. The canonical admin
   console target is now an OpenNext Cloudflare Worker, not a Pages project.
@@ -83,10 +84,14 @@ Neon:
 - A new Salary Hijacking Neon project is visible: `salary-hijacking`.
 - Project ID: `still-feather-22153967`.
 - Region: `aws-us-east-2`.
+- PostgreSQL version: `17`.
 - Database name observed: `neondb`.
 - Branches observed:
   - `main`: `br-icy-frog-aj3b1bl9`, primary, ready.
   - `staging`: `br-fragrant-sky-aj5kk2c3`, ready.
+- Two read-write compute endpoints are visible for the main and staging
+  branches, but endpoint hosts and connection strings are not stored in the
+  repository evidence.
 - The existing `Retro Games` Neon project is unrelated and must not be reused
   for Salary Hijacking.
 - A Neon connection string was returned by the connector during project
