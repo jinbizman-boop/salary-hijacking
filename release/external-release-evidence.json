@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-01T05:35:42.730Z",
-  "source": "Codex connector checks refreshed for Cloudflare runtime resources, Neon project/branch/compute resources, GitHub app account evidence, user-provided GitHub repository URL/screenshot, and latest authenticated git push/git ls-remote verification on 2026-07-01",
+  "observedAt": "2026-07-01T08:12:13.024Z",
+  "source": "Codex connector checks refreshed for Cloudflare runtime resources, Neon project/branch/compute resources, GitHub app account evidence, user-provided GitHub repository URL/screenshot, and authenticated git push/git ls-remote verification on 2026-07-01",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
@@ -40,7 +40,7 @@
     "adminDeploymentType": "workers-opennext",
     "adminWorkerMatched": false,
     "observedWorkerNames": [],
-    "runtimeReadOnlyVerifiedAt": "2026-07-01T04:36:54.607Z",
+    "runtimeReadOnlyVerifiedAt": "2026-07-01T08:12:13.024Z",
     "observedQueueCount": 0,
     "r2ApiReadBlockedByAccountActivation": true,
     "r2ReadErrorCode": "10042",
@@ -61,7 +61,7 @@
       "notifications.salaryhijacking.com",
       "scheduler.salaryhijacking.com"
     ],
-    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-01T04:36:54.607Z. The account returned zero Workers and zero Queues. The R2 bucket list endpoint returned Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The zones list observed retrogames.kr only and did not observe salaryhijacking.com. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed again on 2026-07-01T05:06:36Z after the API Worker config added the salaryhijacking.com and www.salaryhijacking.com public app/legal custom-domain targets for /, /privacy, /support, and /terms. No Worker was deployed and no Cloudflare resource existence proof is claimed."
+    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-01T08:12:13.024Z. The account returned zero Workers and zero Queues. The R2 bucket list endpoint returned Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The zones list observed retrogames.kr only and did not observe salaryhijacking.com. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed again on 2026-07-01T05:06:36Z after the API Worker config added the salaryhijacking.com and www.salaryhijacking.com public app/legal custom-domain targets for /, /privacy, /support, and /terms. No Worker was deployed and no Cloudflare resource existence proof is claimed."
   },
   "neon": {
     "connectorReachable": true,
@@ -96,6 +96,6 @@
         "computeId": "ep-young-sunset-ajgi3bab"
       }
     ],
-    "note": "Neon organization access was refreshed at 2026-07-01T04:36:54.607Z. A new Salary Hijacking project named salary-hijacking was observed in organization org-dark-tree-79935393 with main and staging branches, PostgreSQL 17, region aws-us-east-2, and two read-write compute endpoints. No connection string, password, token, host, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
+    "note": "Neon organization access was refreshed at 2026-07-01T08:12:13.024Z. A new Salary Hijacking project named salary-hijacking was observed in organization org-dark-tree-79935393 with main and staging branches ready, PostgreSQL 17, region aws-us-east-2, and two read-write compute endpoints. No connection string, password, token, host, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
   }
 }

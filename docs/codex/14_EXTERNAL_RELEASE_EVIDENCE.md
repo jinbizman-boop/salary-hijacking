@@ -39,7 +39,7 @@ evidence.
 Latest connector refresh: 2026-07-01 13:36:54 KST.
 Latest Git remote verification refresh: 2026-07-01 14:35:42 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
-Latest read-only spot check: 2026-07-01 15:30:05 KST.
+Latest read-only spot check: 2026-07-01 17:12:13 KST.
 
 GitHub:
 
@@ -77,7 +77,7 @@ Cloudflare:
 - Cloudflare connector account access is visible.
 - The read-only Workers list returned zero Workers again on
   2026-07-01 13:36:54 KST.
-- A later read-only spot check on 2026-07-01 15:29:00 KST also returned zero
+- A later read-only spot check on 2026-07-01 17:12:13 KST also returned zero
   Workers and zero Queues.
 - The read-only Queues list returned zero Queues.
 - The R2 bucket list endpoint returned Cloudflare error `10042`, indicating R2
@@ -88,7 +88,7 @@ Cloudflare:
 - The read-only Pages list returned `retro-db` only. That Pages project is
   unrelated and must not be reused for Salary Hijacking. The canonical admin
   console target is now an OpenNext Cloudflare Worker, not a Pages project.
-- The later Pages spot check on 2026-07-01 15:30:05 KST also observed only the
+- The later Pages spot check on 2026-07-01 17:12:13 KST also observed only the
   unrelated `retro-db` Pages project.
 - Required Salary Hijacking Workers are not observed:
   - `salary-hijacking-api`
@@ -119,9 +119,11 @@ Neon:
 
 - Neon connector organization access is visible.
 - A new Salary Hijacking Neon project is visible: `salary-hijacking`.
-- A later read-only Neon project search on 2026-07-01 15:29 KST still observed
-  the `salary-hijacking` project. This did not re-check branch/compute details,
-  so the branch evidence below remains from the earlier connector refresh.
+- A later read-only Neon project search/fetch/compute check on 2026-07-01
+  17:12 KST still observed the `salary-hijacking` project, ready `main` and
+  `staging` branches, and read-write compute presence for both branches. Compute
+  hosts and connection strings are intentionally not stored in this repository
+  evidence.
 - Project ID: `still-feather-22153967`.
 - Region: `aws-us-east-2`.
 - PostgreSQL version: `17`.
