@@ -397,6 +397,29 @@ const privacy = { financialAmountBasedTargeting: false };
 - Ads: contextual ads or partner placements may appear and must be labeled.
 - Final age and content rating must be confirmed in Google Play Console and App Store Connect.
 `,
+    "release/mobile-native-evidence.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        observedAt: "2026-07-01T00:00:00Z",
+        source: "test-fixture",
+        secretsRedacted: true,
+        android: {
+          productionBuildVerified: true,
+          productionBuildProfile: "production",
+          productionArtifactType: "aab",
+          storeSubmitDryRunVerified: true,
+          nativeE2eVerified: true,
+          nativeE2eConfiguration: "android.emu.debug",
+        },
+        ios: {
+          productionBuildVerified: true,
+          productionBuildProfile: "production",
+          storeSubmitDryRunVerified: true,
+        },
+      },
+      null,
+      2,
+    ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",

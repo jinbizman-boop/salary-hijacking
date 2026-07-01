@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-01T02:16:32Z",
+  "source": "Codex local release readiness check on 2026-07-01; no EAS build, store submit, or native E2E execution was performed",
+  "secretsRedacted": true,
+  "android": {
+    "localAdbAvailable": false,
+    "localEmulatorAvailable": false,
+    "productionBuildVerified": false,
+    "productionBuildProfile": "production",
+    "productionArtifactType": "aab",
+    "storeSubmitDryRunVerified": false,
+    "nativeE2eVerified": false,
+    "nativeE2eConfiguration": "android.emu.debug",
+    "note": "This company PC does not expose adb or emulator on PATH. Android release remains blocked until either local native E2E passes or EAS/native test evidence is recorded here without secrets."
+  },
+  "ios": {
+    "productionBuildVerified": false,
+    "productionBuildProfile": "production",
+    "storeSubmitDryRunVerified": false,
+    "note": "No iOS EAS production build or App Store submit dry-run has been verified in this workspace."
+  },
+  "privacy": {
+    "containsEasToken": false,
+    "containsStoreCredential": false,
+    "containsBinaryDownloadUrl": false,
+    "containsReviewerPassword": false
+  },
+  "nextEvidenceRequired": [
+    "EAS Android production AAB build result for profile production",
+    "Android native E2E result for android.emu.debug or equivalent device farm run",
+    "Google Play submit dry-run or console-ready submission proof",
+    "EAS iOS production build result for profile production",
+    "App Store submit dry-run or console-ready submission proof"
+  ]
+}

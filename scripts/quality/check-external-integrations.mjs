@@ -38,6 +38,7 @@ const REQUIRED_FILES = [
   "release/store/app-privacy.md",
   "release/store/review-notes.md",
   "release/store/content-rating.md",
+  "release/mobile-native-evidence.json",
   "packages/db/src/client/neon.client.ts",
   "database/migrations/0001_init_users.sql",
   "database/migrations/0002_payroll_budget_expense.sql",
@@ -293,6 +294,7 @@ const RELEASE_METADATA_FILES = [
   "release/store/app-privacy.md",
   "release/store/review-notes.md",
   "release/store/content-rating.md",
+  "release/mobile-native-evidence.json",
 ];
 
 const MOBILE_RELEASE_CONFIG_FILES = [

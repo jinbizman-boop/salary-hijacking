@@ -270,6 +270,38 @@ const writeExternalEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
+  const evidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    android: {
+      productionBuildVerified: true,
+      productionBuildProfile: "production",
+      productionArtifactType: "aab",
+      storeSubmitDryRunVerified: true,
+      nativeE2eVerified: true,
+      nativeE2eConfiguration: "android.emu.debug",
+      localAdbAvailable: true,
+      localEmulatorAvailable: true,
+    },
+    ios: {
+      productionBuildVerified: true,
+      productionBuildProfile: "production",
+      storeSubmitDryRunVerified: true,
+    },
+    note: "Fixture contains no EAS token, store credential, or binary URL.",
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/mobile-native-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
@@ -310,6 +342,7 @@ const makeWorkspace = () => {
   write(rootDir, "release/README.md", "# Release\n");
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
+  writeMobileNativeEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
@@ -906,6 +939,44 @@ test("uses workspace-local EAS CLI when eas is not on PATH", () => {
   assert.equal(result.ok, true);
   assert.match(report, /cli:Expo EAS CLI/);
   assert.doesNotMatch(report, /Expo EAS CLI is not available/);
+});
+
+test("blocks when mobile native release evidence is missing or unverified", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "mobile-native-evidence.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile-native-evidence\.json/);
+  assert.match(report, /mobile:native:evidence/);
+});
+
+test("uses EAS mobile native evidence when local Android tools are unavailable", () => {
+  const rootDir = makeWorkspace();
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: (command) => !["adb", "emulator"].includes(command),
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:native:android-build/);
+  assert.match(report, /mobile:native:android-e2e/);
+  assert.doesNotMatch(report, /Android adb is not available/);
+  assert.doesNotMatch(report, /Android emulator is not available/);
 });
 
 test("blocks release evidence that does not prove the new GitHub repository policy", () => {

@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const RELEASE_CHECK_VERSION = "1.0.0";
 const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
+const MOBILE_NATIVE_EVIDENCE_PATH = "release/mobile-native-evidence.json";
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -14,6 +15,7 @@ const REQUIRED_FILES = [
   "release/README.md",
   RELEASE_TARGETS_PATH,
   EXTERNAL_RELEASE_EVIDENCE_PATH,
+  MOBILE_NATIVE_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
   "release/store/data-safety.md",
@@ -85,8 +87,6 @@ const REQUIRED_CLI_GROUPS = [
       "apps/mobile/node_modules/.bin/eas.ps1",
     ],
   },
-  { label: "Android adb", commands: ["adb"] },
-  { label: "Android emulator", commands: ["emulator"] },
 ];
 
 const PUBLIC_SECRET_ENV_PATTERN =
@@ -1460,7 +1460,128 @@ const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
   );
 };
 
-const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
+const checkMobileNativeEvidence = (
+  rootDir,
+  checks,
+  blockers,
+  commandExists,
+) => {
+  const evidence = readJsonIfPresent(rootDir, MOBILE_NATIVE_EVIDENCE_PATH);
+  if (!evidence) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:native:evidence",
+      `${MOBILE_NATIVE_EVIDENCE_PATH} is missing or invalid`,
+      `${MOBILE_NATIVE_EVIDENCE_PATH} must record local Android tooling or EAS/native release evidence without secrets`,
+    );
+    return;
+  }
+
+  if (evidence.schemaVersion === 1 && evidence.secretsRedacted === true) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "PASS",
+      "mobile:native:evidence",
+      `${MOBILE_NATIVE_EVIDENCE_PATH} schema and secret redaction flag are valid`,
+    );
+  } else {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:native:evidence",
+      `${MOBILE_NATIVE_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+      `${MOBILE_NATIVE_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+    );
+  }
+
+  const android = isPlainObject(evidence.android) ? evidence.android : {};
+  const ios = isPlainObject(evidence.ios) ? evidence.ios : {};
+  const localAdbAvailable = commandExists("adb");
+  const localEmulatorAvailable = commandExists("emulator");
+
+  const androidBuildOk =
+    android.productionBuildVerified === true &&
+    android.productionBuildProfile === "production" &&
+    android.productionArtifactType === "aab";
+  addMobileCheck(
+    checks,
+    blockers,
+    androidBuildOk ? "PASS" : "BLOCKED",
+    "mobile:native:android-build",
+    androidBuildOk
+      ? "Android production EAS build evidence is verified as an AAB"
+      : "Android production EAS AAB build evidence is missing",
+    "Android production EAS build must be verified as an app-bundle/AAB before Play Store release",
+  );
+
+  const androidE2eEvidenceOk =
+    android.nativeE2eVerified === true &&
+    typeof android.nativeE2eConfiguration === "string" &&
+    android.nativeE2eConfiguration.trim().length > 0;
+  const androidExecutionOk =
+    (localAdbAvailable && localEmulatorAvailable) || androidE2eEvidenceOk;
+  addMobileCheck(
+    checks,
+    blockers,
+    androidExecutionOk ? "PASS" : "BLOCKED",
+    "mobile:native:android-e2e",
+    androidExecutionOk
+      ? localAdbAvailable && localEmulatorAvailable
+        ? "Local Android adb/emulator are available for native E2E execution"
+        : "Android native E2E evidence is verified without local adb/emulator"
+      : "Android native E2E evidence is missing and local adb/emulator are unavailable",
+    "Android native E2E must pass locally with adb/emulator or be proven by EAS/native test evidence before release",
+  );
+
+  const androidSubmitOk = android.storeSubmitDryRunVerified === true;
+  addMobileCheck(
+    checks,
+    blockers,
+    androidSubmitOk ? "PASS" : "BLOCKED",
+    "mobile:native:android-submit",
+    androidSubmitOk
+      ? "Android store submit dry-run evidence is verified"
+      : "Android store submit dry-run evidence is missing",
+    "Android Play Store submit dry-run or console-ready submission evidence must be verified before release",
+  );
+
+  const iosBuildOk =
+    ios.productionBuildVerified === true &&
+    ios.productionBuildProfile === "production";
+  addMobileCheck(
+    checks,
+    blockers,
+    iosBuildOk ? "PASS" : "BLOCKED",
+    "mobile:native:ios-build",
+    iosBuildOk
+      ? "iOS production EAS build evidence is verified"
+      : "iOS production EAS build evidence is missing",
+    "iOS production EAS build evidence must be verified before App Store release",
+  );
+
+  const iosSubmitOk = ios.storeSubmitDryRunVerified === true;
+  addMobileCheck(
+    checks,
+    blockers,
+    iosSubmitOk ? "PASS" : "BLOCKED",
+    "mobile:native:ios-submit",
+    iosSubmitOk
+      ? "iOS store submit dry-run evidence is verified"
+      : "iOS store submit dry-run evidence is missing",
+    "iOS App Store submit dry-run or console-ready submission evidence must be verified before release",
+  );
+};
+
+const checkMobileReleaseReadiness = (
+  rootDir,
+  checks,
+  blockers,
+  commandExists,
+) => {
   const mobileRoot = path.join(rootDir, "apps", "mobile");
   for (const assetName of REQUIRED_MOBILE_ASSETS) {
     const assetPath = path.join(mobileRoot, "assets", assetName);
@@ -1598,6 +1719,8 @@ const checkMobileReleaseReadiness = (rootDir, checks, blockers) => {
       );
     }
   }
+
+  checkMobileNativeEvidence(rootDir, checks, blockers, commandExists);
 };
 
 export const analyzeReleaseReadiness = ({
@@ -1755,7 +1878,7 @@ export const analyzeReleaseReadiness = ({
     checks,
     blockers,
   );
-  checkMobileReleaseReadiness(rootDir, checks, blockers);
+  checkMobileReleaseReadiness(rootDir, checks, blockers, commandExists);
 
   for (const group of REQUIRED_CLI_GROUPS) {
     const found = group.commands.filter((command) => commandExists(command));
