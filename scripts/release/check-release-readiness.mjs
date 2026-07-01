@@ -3,6 +3,8 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { androidToolExists } from "./android-sdk-tools.mjs";
+
 const RELEASE_CHECK_VERSION = "1.0.0";
 const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
@@ -223,6 +225,10 @@ const existingLocalPaths = (rootDir, relativePaths = []) =>
 const readJson = (filePath) => JSON.parse(fs.readFileSync(filePath, "utf8"));
 
 const findCommandOnPath = (command, env = process.env) => {
+  if (command === "adb" || command === "emulator") {
+    return androidToolExists(command, { env });
+  }
+
   const pathValue = env.PATH ?? env.Path ?? "";
   const extensions =
     process.platform === "win32"
@@ -2444,18 +2450,16 @@ const checkMobileNativeEvidence = (
     android.nativeE2eVerified === true &&
     typeof android.nativeE2eConfiguration === "string" &&
     android.nativeE2eConfiguration.trim().length > 0;
-  const androidExecutionOk =
-    (localAdbAvailable && localEmulatorAvailable) || androidE2eEvidenceOk;
   addMobileCheck(
     checks,
     blockers,
-    androidExecutionOk ? "PASS" : "BLOCKED",
+    androidE2eEvidenceOk ? "PASS" : "BLOCKED",
     "mobile:native:android-e2e",
-    androidExecutionOk
-      ? localAdbAvailable && localEmulatorAvailable
-        ? "Local Android adb/emulator are available for native E2E execution"
-        : "Android native E2E evidence is verified without local adb/emulator"
-      : "Android native E2E evidence is missing and local adb/emulator are unavailable",
+    androidE2eEvidenceOk
+      ? "Android native E2E evidence is verified"
+      : localAdbAvailable && localEmulatorAvailable
+        ? "Android native E2E proof is missing; local adb/emulator are available for execution"
+        : "Android native E2E evidence is missing and local adb/emulator are unavailable",
     "Android native E2E must pass locally with adb/emulator or be proven by EAS/native test evidence before release",
   );
 

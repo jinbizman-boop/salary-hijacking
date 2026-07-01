@@ -133,7 +133,10 @@ Commands run on 2026-06-30:
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, root script tests plus 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
-- `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, the Detox E2E APK, `adb`, and `emulator` are unavailable on this PC
+- `corepack pnpm run test:e2e`: BLOCKED at
+  `@salary-hijacking/mobile#test:e2e`; local `adb` and `emulator` are now
+  detected through Android SDK tool lookup, but the Detox E2E APK is missing and
+  native E2E proof has not been recorded
 
 Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking Cloudflare Worker resource matching, Android `adb`/`emulator` availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. The Neon project exists; local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
 

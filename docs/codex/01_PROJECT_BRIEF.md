@@ -62,7 +62,10 @@ Verified on 2026-07-01 KST:
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile route manifest contracts, and public `/`, `/privacy`, `/support`,
   `/terms` pages for store review URLs.
-- Mobile Detox E2E configuration exists, but Android execution is blocked on this PC because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, `adb`, and `emulator` are unavailable.
+- Mobile Detox E2E configuration exists, and local `adb`/`emulator` are now
+  detected through Android SDK tool lookup. Android execution is still blocked
+  until the local E2E APK is built or equivalent native device-farm proof is
+  recorded without secrets.
 - Notifications and Scheduler service-local typecheck/build verification pass.
 - Package-level `pnpm` warnings for Admin/API/Notifications/Scheduler were resolved by moving shared pnpm settings to the root `package.json`.
 - Local scripts under `scripts/*` now provide conservative helper automation and pass `pnpm run check:scripts`.

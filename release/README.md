@@ -111,10 +111,13 @@ passwords, copied store-console payloads, or logs.
 
 The command creates or refreshes `release/mobile-native-evidence.json` from
 local Android tool detection and optional `release/mobile-native-proof.local.json`
-booleans. The local proof file is ignored by Git and may contain only EAS build,
-native E2E, and store-submit dry-run booleans plus non-secret notes. It must not
-contain EAS tokens, Apple/Google credentials, binary download URLs, signing keys,
-service accounts, reviewer passwords, or copied store-console payloads.
+booleans. Android tool detection checks PATH and common Android Studio SDK
+locations, but detected `adb`/`emulator` tools are only execution prerequisites;
+they are not native E2E proof. The local proof file is ignored by Git and may
+contain only EAS build, native E2E, and store-submit dry-run booleans plus
+non-secret notes. It must not contain EAS tokens, Apple/Google credentials,
+binary download URLs, signing keys, service accounts, reviewer passwords, or
+copied store-console payloads.
 
 Safe database evidence generation command:
 

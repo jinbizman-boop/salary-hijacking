@@ -47,6 +47,32 @@ test("builds blocked no-secret mobile native evidence by default", () => {
   assert.doesNotMatch(JSON.stringify(evidence), /eas_[a-z0-9_-]+/i);
 });
 
+test("detects local Android SDK tools outside PATH for native E2E readiness", () => {
+  const rootDir = makeWorkspace();
+  const sdkRoot = path.join(rootDir, "Android", "Sdk");
+  write(sdkRoot, "platform-tools/adb.EXE");
+  write(sdkRoot, "emulator/emulator.EXE");
+
+  const evidence = buildMobileNativeEvidence({
+    rootDir,
+    androidToolEnv: {
+      ANDROID_SDK_ROOT: sdkRoot,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+    },
+    androidToolPath: "",
+    androidToolPlatform: "win32",
+    androidToolExistsSync: fs.existsSync,
+    now: () => new Date("2026-07-01T11:15:00.000Z"),
+  });
+
+  assert.equal(evidence.android.localAdbAvailable, true);
+  assert.equal(evidence.android.localEmulatorAvailable, true);
+  assert.match(
+    evidence.nextEvidenceRequired.join("\n"),
+    /Android native E2E result/i,
+  );
+});
+
 test("uses a local proof file to mark mobile native gates verified", () => {
   const rootDir = makeWorkspace();
   const proofPath = path.join(

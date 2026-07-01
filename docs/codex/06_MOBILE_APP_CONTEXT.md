@@ -78,13 +78,20 @@ Detox now has a repository-level execution contract:
 - `app/_layout.tsx` exposes `testID: "salary-hijacking-mobile-root"` on the root shell.
 - `scripts/check-detox-env.mjs` runs before Detox and fails fast with actionable Android/iOS native E2E prerequisites.
 
-The current E2E blocker is local environment, not missing Detox config:
+The current E2E blocker is local native binary/proof, not missing Detox config:
 
-- `ANDROID_SDK_ROOT` is not set.
-- `ANDROID_HOME` is not set.
-- `adb` is not found in PATH.
-- `emulator` is not found in PATH.
+- `apps/mobile/scripts/check-detox-env.mjs` now checks `ANDROID_SDK_ROOT`,
+  `ANDROID_HOME`, and common Android Studio SDK locations such as the Windows
+  default SDK directory.
+- On 2026-07-01, `release/mobile-native-evidence.json` detected local `adb`
+  and `emulator` through Android SDK tool lookup.
+- On 2026-07-01, `node scripts\check-detox-env.mjs android.emu.debug` failed
+  only because the local E2E APK was missing:
+  `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk`.
 - No local Android E2E APK at `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` has been verified.
+- Tool availability alone is not native E2E proof; `nativeE2eVerified` must
+  remain false until Detox or equivalent device-farm evidence is recorded
+  without secrets.
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only

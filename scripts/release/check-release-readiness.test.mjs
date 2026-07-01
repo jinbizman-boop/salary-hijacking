@@ -714,7 +714,6 @@ test("blocks missing runtime evidence without leaking secret values", () => {
   assert.match(report, /NEON_API_KEY/);
   assert.match(report, /EXPO_TOKEN/);
   assert.match(report, /gh/);
-  assert.match(report, /emulator/);
   assert.doesNotMatch(report, /cf_secret_value_that_must_not_print/);
 });
 
@@ -1363,6 +1362,55 @@ test("uses EAS mobile native evidence when local Android tools are unavailable",
   assert.match(report, /mobile:native:android-e2e/);
   assert.doesNotMatch(report, /Android adb is not available/);
   assert.doesNotMatch(report, /Android emulator is not available/);
+});
+
+test("uses Android SDK default tool paths without treating tools as native E2E proof", () => {
+  const rootDir = makeWorkspace();
+  const sdkRoot = path.join(rootDir, "Android", "Sdk");
+  const binDir = path.join(rootDir, "bin");
+  write(rootDir, "bin/git.EXE");
+  write(rootDir, "Android/Sdk/platform-tools/adb.EXE");
+  write(rootDir, "Android/Sdk/emulator/emulator.EXE");
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildVerified: true,
+      productionBuildProfile: "production",
+      productionArtifactType: "aab",
+      storeSubmitDryRunVerified: true,
+      nativeE2eVerified: false,
+      nativeE2eConfiguration: "android.emu.debug",
+      localAdbAvailable: false,
+      localEmulatorAvailable: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {
+      ...completeEnv,
+      ANDROID_SDK_ROOT: sdkRoot,
+      PATH: binDir,
+      Path: binDir,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+    },
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+  const androidE2eCheck = result.checks.find(
+    (check) => check.name === "mobile:native:android-e2e",
+  );
+
+  assert.equal(androidE2eCheck?.status, "BLOCKED");
+  assert.equal(
+    androidE2eCheck?.detail,
+    "Android native E2E proof is missing; local adb/emulator are available for execution",
+  );
+  assert.match(
+    report,
+    /Android native E2E proof is missing; local adb\/emulator are available for execution/,
+  );
+  assert.doesNotMatch(report, /local adb\/emulator are unavailable/);
 });
 
 test("blocks release evidence that does not prove the new GitHub repository policy", () => {

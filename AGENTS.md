@@ -91,7 +91,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 74 required files checked, including public app/legal custom-domain targets, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, and tracked no-secret local proof example templates; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 106 tests
+- `corepack pnpm run test:root-scripts`: PASS, 110 tests
 - `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
 - `node --test scripts/release/collect-database-proof.test.mjs`: PASS, database command proof collector stores booleans only and rejects raw database URLs, secret values, raw smoke payloads, sensitive user/financial keys, and production seed proof
 - `node --test scripts/release/collect-secrets-proof.test.mjs`: PASS, runtime secret proof collector writes only presence booleans and does not mark local developer env values as release-verified without an approved `SECRET_PROOF_STORE`
@@ -109,7 +109,8 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
-- `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight; `ANDROID_SDK_ROOT`/`ANDROID_HOME`, E2E APK, `adb`, and `emulator` are unavailable on this PC
+- `node scripts\check-detox-env.mjs android.emu.debug` from `apps/mobile`: FAIL only because the local Detox Android E2E APK `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` is missing; local `adb` and `emulator` are now detected through Android SDK tool lookup
+- `corepack pnpm run test:e2e`: still BLOCKED at `@salary-hijacking/mobile#test:e2e` until an E2E APK is built or equivalent native device-farm proof is recorded without secrets
 - Dependency vulnerability audit is separated into `security:audit` and still requires registry/network access before release
 - `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
 - `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven; the latest recorded remote proof commit is stored in `release/external-release-evidence.json` and should be rechecked after new commits

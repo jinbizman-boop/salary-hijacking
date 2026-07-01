@@ -4,6 +4,8 @@ import process from "node:process";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
+import { androidToolExists } from "./android-sdk-tools.mjs";
+
 const DEFAULT_PROOF_PATH = "release/mobile-native-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/mobile-native-evidence.json";
 
@@ -41,7 +43,11 @@ const readJsonIfPresent = (rootDir, filePath) => {
   return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
 };
 
-const defaultCommandExists = (command) => {
+const defaultCommandExists = (command, androidToolOptions = {}) => {
+  if (command === "adb" || command === "emulator") {
+    return androidToolExists(command, androidToolOptions);
+  }
+
   const lookup = process.platform === "win32" ? "where.exe" : "which";
   const result = spawnSync(lookup, [command], {
     encoding: "utf8",
@@ -123,15 +129,25 @@ const validateNoSecretProof = (proof, proofPath) => {
 
 const readProof = (rootDir, proofPath) => {
   const localProof = readJsonIfPresent(rootDir, proofPath);
-  if (localProof) return validateNoSecretProof(localProof, proofPath);
+  if (localProof) {
+    return {
+      proof: validateNoSecretProof(localProof, proofPath),
+      source: "local",
+    };
+  }
 
   const fallback =
     proofPath === DEFAULT_PROOF_PATH
       ? readJsonIfPresent(rootDir, DEFAULT_OUTPUT_PATH)
       : null;
-  if (fallback) return validateNoSecretProof(fallback, DEFAULT_OUTPUT_PATH);
+  if (fallback) {
+    return {
+      proof: validateNoSecretProof(fallback, DEFAULT_OUTPUT_PATH),
+      source: "tracked",
+    };
+  }
 
-  return {};
+  return { proof: {}, source: "none" };
 };
 
 const boolFrom = (source, key, fallback = false) =>
@@ -153,13 +169,7 @@ const buildNextEvidenceRequired = ({ android, ios }) => {
   if (android.productionBuildVerified !== true) {
     next.push("EAS Android production AAB build result for profile production");
   }
-  if (
-    android.nativeE2eVerified !== true &&
-    !(
-      android.localAdbAvailable === true &&
-      android.localEmulatorAvailable === true
-    )
-  ) {
+  if (android.nativeE2eVerified !== true) {
     next.push(
       "Android native E2E result for android.emu.debug or equivalent device farm run",
     );
@@ -180,14 +190,33 @@ const buildNextEvidenceRequired = ({ android, ios }) => {
 export const buildMobileNativeEvidence = ({
   rootDir = process.cwd(),
   proofPath = DEFAULT_PROOF_PATH,
-  commandExists = defaultCommandExists,
+  commandExists = null,
+  androidToolEnv = process.env,
+  androidToolExistsSync = fs.existsSync,
+  androidToolHomeDir,
+  androidToolPath = androidToolEnv.PATH ?? androidToolEnv.Path ?? "",
+  androidToolPlatform = process.platform,
   now = () => new Date(),
 } = {}) => {
-  const proof = readProof(rootDir, proofPath);
+  const { proof, source: proofSource } = readProof(rootDir, proofPath);
   const proofAndroid = proofSection(proof, "android");
   const proofIos = proofSection(proof, "ios");
-  const localAdbAvailable = commandExists("adb");
-  const localEmulatorAvailable = commandExists("emulator");
+  const commandAvailable =
+    commandExists ??
+    ((command) =>
+      defaultCommandExists(command, {
+        env: androidToolEnv,
+        existsSync: androidToolExistsSync,
+        homeDir: androidToolHomeDir,
+        pathValue: androidToolPath,
+        platform: androidToolPlatform,
+      }));
+  const localAdbAvailable = commandAvailable("adb");
+  const localEmulatorAvailable = commandAvailable("emulator");
+  const androidNoteFallback =
+    localAdbAvailable && localEmulatorAvailable
+      ? "Local Android SDK adb and emulator are detected. Native E2E remains unverified until Detox or equivalent device-farm proof is recorded without secrets."
+      : "Local Android SDK adb/emulator are not fully detected. Android release remains blocked until either local native E2E passes or EAS/native test evidence is recorded without secrets.";
 
   const android = {
     localAdbAvailable,
@@ -214,9 +243,9 @@ export const buildMobileNativeEvidence = ({
       "android.emu.debug",
     ),
     note: noteFrom(
-      proofAndroid,
+      proofSource === "local" ? proofAndroid : {},
       "note",
-      "This evidence records only local native tooling and EAS/native proof booleans. No EAS token, store credential, binary URL, or reviewer password is stored.",
+      androidNoteFallback,
     ),
   };
 
@@ -257,7 +286,7 @@ export const writeMobileNativeEvidenceFile = ({
   rootDir = process.cwd(),
   proofPath = DEFAULT_PROOF_PATH,
   outputPath = DEFAULT_OUTPUT_PATH,
-  commandExists = defaultCommandExists,
+  commandExists = null,
   now = () => new Date(),
 } = {}) => {
   const evidence = buildMobileNativeEvidence({

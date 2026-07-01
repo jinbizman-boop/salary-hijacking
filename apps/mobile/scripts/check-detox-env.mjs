@@ -1,18 +1,24 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+  androidToolExists,
+  resolveAndroidSdkRoot,
+} from "../../../scripts/release/android-sdk-tools.mjs";
+
 const configuration = process.argv[2] ?? "android.emu.debug";
 const failures = [];
 
 if (configuration.startsWith("android")) {
-  const sdkRoot =
+  const configuredSdkRoot =
     process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || "";
+  const sdkRoot = resolveAndroidSdkRoot();
   if (!sdkRoot) {
     failures.push(
-      "ANDROID_SDK_ROOT or ANDROID_HOME must point to Android SDK.",
+      configuredSdkRoot
+        ? `Android SDK path does not exist: ${configuredSdkRoot}`
+        : "ANDROID_SDK_ROOT, ANDROID_HOME, or the default Android Studio SDK path must point to Android SDK.",
     );
-  } else if (!fs.existsSync(sdkRoot)) {
-    failures.push(`Android SDK path does not exist: ${sdkRoot}`);
   }
 
   const apkPath = path.resolve("build/e2e/android/salary-hijacking-e2e.apk");
@@ -20,11 +26,15 @@ if (configuration.startsWith("android")) {
     failures.push(`Missing Detox APK: ${apkPath}`);
   }
 
-  if (!hasCommand("adb")) {
-    failures.push("adb is not available in PATH.");
+  if (!androidToolExists("adb")) {
+    failures.push(
+      "adb is not available in PATH or Android SDK platform-tools.",
+    );
   }
-  if (!hasCommand("emulator")) {
-    failures.push("emulator is not available in PATH.");
+  if (!androidToolExists("emulator")) {
+    failures.push(
+      "emulator is not available in PATH or Android SDK emulator directory.",
+    );
   }
 }
 
@@ -45,22 +55,3 @@ if (failures.length > 0) {
 }
 
 console.warn(`[detox-preflight] ${configuration} is ready.`);
-
-function hasCommand(name) {
-  const pathValue = process.env.PATH ?? "";
-  const extensions =
-    process.platform === "win32"
-      ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT;.COM").split(";")
-      : [""];
-
-  for (const directory of pathValue.split(path.delimiter)) {
-    if (!directory) continue;
-    for (const extension of extensions) {
-      if (fs.existsSync(path.join(directory, `${name}${extension}`))) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}

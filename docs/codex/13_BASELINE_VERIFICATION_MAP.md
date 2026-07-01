@@ -21,7 +21,8 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - workspace quality: PASS, `corepack pnpm run quality` completed 82 Turbo tasks
 - workspace build: PASS, `corepack pnpm run build` completed 12 Turbo tasks
 - local Git baseline: PASS, local Git metadata is initialized, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`, and authenticated push to `origin/main` is proven
-- root script tests: PASS, 106 tests after adding no-secret release proof
+- root script tests: PASS, 110 tests after adding Android SDK tool detection
+  coverage and preserving no-secret release proof coverage
   collectors for database, runtime secrets, Cloudflare observations, mobile
   native build/store observations, public URLs, and tracked proof example
   templates
@@ -30,7 +31,9 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - mobile Clean Fintech UI contract: PASS, 9 focused tests for official BI,
   Freesentation fonts, five-tab IA, screenshot anchor, and Korean launch copy
 - mobile Detox config and smoke contract: present and covered by tests
-- mobile native E2E: FAIL because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, `adb`, and `emulator` are unavailable
+- mobile native E2E: FAIL because the local Detox Android E2E APK is missing;
+  `adb` and `emulator` are now detected through Android SDK tool lookup, but
+  tool availability is not native E2E proof
 - mobile/API bootstrap, payroll current/recalculate, and profile/privacy-export contracts: aligned in current code; profile alias is covered by `services/api/tests/mobile-profile-contract.test.ts`, and manifest alignment is covered by `services/api/tests/mobile-route-manifest-contract.test.ts`
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
@@ -168,7 +171,7 @@ The Worker service typecheck blocker, package-level pnpm warning blocker, mobile
 
 1. Provide or configure runtime secrets in the correct local/CI secret stores without committing values, then update `release/secrets-evidence.json` with verified names and stores only.
 2. Keep Git repository metadata connected to the expected remote repository `jinbizman-boop/salary-hijacking`.
-3. Verify Cloudflare Worker resources, Cloudflare runtime resources in `release/cloudflare-runtime-evidence.json`, EAS project, and mobile native release evidence. Local Android SDK/`adb`/`emulator` can satisfy native E2E locally, or `release/mobile-native-evidence.json` can record equivalent EAS/native device-farm evidence without secrets. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`; do not reuse unrelated Cloudflare Pages projects such as `retro-db`.
+3. Verify Cloudflare Worker resources, Cloudflare runtime resources in `release/cloudflare-runtime-evidence.json`, EAS project, and mobile native release evidence. Local Android SDK/`adb`/`emulator` can satisfy native E2E prerequisites, but `nativeE2eVerified` must remain false until Detox or equivalent EAS/native device-farm proof is recorded without secrets. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`; do not reuse unrelated Cloudflare Pages projects such as `retro-db`.
 4. Run real staging DB migration/seed and API smoke checks against Neon and Cloudflare, then update `release/database-evidence.json` with booleans and non-secret proof notes only.
 5. Run native mobile E2E and store build/submission dry runs.
 6. Execute staging/production deploy, rollback rehearsal, observability checks, and operating QA.
