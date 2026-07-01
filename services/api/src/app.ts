@@ -151,6 +151,8 @@ const LEGAL_PAGE_PATHS = ["/privacy", "/support", "/terms"] as const;
 const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
 const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
 const LEGAL_LAST_UPDATED = "2026-07-01";
+const PUBLIC_HTML_CSP =
+  "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
 export interface WaitUntilCapable {
   readonly waitUntil?: (promise: Promise<unknown>) => void;
@@ -435,6 +437,7 @@ export const appManifest = Object.freeze({
   }),
   publicLegalPages: Object.freeze({
     paths: LEGAL_PAGE_PATHS,
+    landingUrl: "https://salaryhijacking.com",
     privacyUrl: "https://salaryhijacking.com/privacy",
     supportUrl: "https://salaryhijacking.com/support",
     termsUrl: "https://salaryhijacking.com/terms",
@@ -570,6 +573,62 @@ function legalPageBody(title: string): readonly string[] {
   ];
 }
 
+function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  const origin = canonicalOrigin(runtime);
+  const canonicalUrl = `${origin}/`;
+  const body = `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>급여납치 | Salary Hijacking</title>
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  <style>
+    :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
+    body { margin: 0; background: #f7f8fa; color: #202327; }
+    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 72px; }
+    .brand { color: #209252; font-weight: 800; letter-spacing: 0; }
+    h1 { margin: 12px 0 18px; font-size: 36px; line-height: 1.2; letter-spacing: 0; }
+    p { font-size: 16px; line-height: 1.75; }
+    .hero { background: #fff; border: 1px solid #e7ebef; border-radius: 20px; padding: 28px; }
+    .money { color: #12663a; font-size: 28px; font-weight: 800; line-height: 1.35; }
+    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+    a { color: #12663a; font-weight: 800; }
+    .button { border: 1px solid #d9f0e3; border-radius: 999px; padding: 10px 14px; text-decoration: none; }
+    .meta { color: #6d737a; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="brand">SALARY HIJACKING · 급여납치</p>
+    <section class="hero">
+      <h1>월급이 사라지기 전에 먼저 붙잡아요</h1>
+      <p class="money">이번 달 내가 지켜낸 돈을 가장 먼저 보여주는 급여 자기관리 앱</p>
+      <p>급여납치는 급여, 고정지출, 저축, 생활비, 일일 예산을 분리하고 사용자가 남긴 돈을 서버 권위 기준으로 확인하도록 돕습니다.</p>
+      <p class="meta">개인정보와 광고 데이터는 분리하며, 금융 금액 기반 광고 타겟팅은 사용하지 않습니다.</p>
+      <nav class="links" aria-label="급여납치 공개 링크">
+        <a class="button" href="${origin}/privacy">개인정보 처리방침</a>
+        <a class="button" href="${origin}/support">고객 지원</a>
+        <a class="button" href="${origin}/terms">이용약관</a>
+      </nav>
+    </section>
+  </main>
+</body>
+</html>`;
+
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "content-language": "ko-KR",
+      "content-security-policy": PUBLIC_HTML_CSP,
+      "cache-control": "public, max-age=3600",
+      link: `<${canonicalUrl}>; rel="canonical"`,
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
+}
+
 function legalPageResponse<TEnv>(
   runtime: AppRuntime<TEnv>,
   title: string,
@@ -617,8 +676,7 @@ function legalPageResponse<TEnv>(
     headers: {
       "content-type": "text/html; charset=utf-8",
       "content-language": "ko-KR",
-      "content-security-policy":
-        "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+      "content-security-policy": PUBLIC_HTML_CSP,
       "cache-control": "public, max-age=3600",
       link: `<${canonicalUrl}>; rel="canonical"`,
       [REQUEST_ID_HEADER]: runtime.requestId,
@@ -1012,9 +1070,11 @@ async function coreDispatch<TEnv>(
 
   assertSafePath(path);
 
-  if (
-    ["/", "/health", "/live", "/_health", `${API_PREFIX}/health`].includes(path)
-  ) {
+  if (path === "/" && (method === "GET" || method === "HEAD")) {
+    return publicLandingResponse(runtime);
+  }
+
+  if (["/health", "/live", "/_health", `${API_PREFIX}/health`].includes(path)) {
     return json(200, runtime, {
       data: {
         status: "ok",

@@ -35,7 +35,7 @@ Before public release, verify all of the following without committing secrets:
 - Nameservers are delegated and DNSSEC status is known.
 - `salaryhijacking.com`, `www.salaryhijacking.com`, and
   `api.salaryhijacking.com` route to the `salary-hijacking-api` Worker.
-- `/privacy`, `/support`, and `/terms` return public Korean pages without
+- `/`, `/privacy`, `/support`, and `/terms` return public Korean pages without
   exposing raw financial data, personal data, tokens, or secrets.
 - Cloudflare Worker custom domain routes to `salary-hijacking-admin`.
 - `retro-db`, `Retro Games`, and `RETRO-DB` resources are not reused.

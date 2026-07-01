@@ -58,10 +58,10 @@ Verified on 2026-07-01 KST:
   BI logo, Freesentation fonts, five-tab IA, daily-budget screenshot anchor, and
   core Korean launch copy.
 - Mobile Jest currently reports 24 passing suites and 78 passing tests.
-- API package tests currently report 6 passing files and 13 passing tests,
+- API package tests currently report 6 passing files and 14 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
-  mobile route manifest contracts, and public `/privacy`, `/support`, `/terms`
-  pages for store review URLs.
+  mobile route manifest contracts, and public `/`, `/privacy`, `/support`,
+  `/terms` pages for store review URLs.
 - Mobile Detox E2E configuration exists, but Android execution is blocked on this PC because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, `adb`, and `emulator` are unavailable.
 - Notifications and Scheduler service-local typecheck/build verification pass.
 - Package-level `pnpm` warnings for Admin/API/Notifications/Scheduler were resolved by moving shared pnpm settings to the root `package.json`.

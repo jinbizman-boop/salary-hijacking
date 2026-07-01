@@ -92,7 +92,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 56 required files checked, including public app/legal custom-domain targets; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
 - `corepack pnpm run test:root-scripts`: PASS, 77 tests
-- `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 13 tests, including public `/privacy`, `/support`, and `/terms` pages
+- `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 14 tests, including public `/`, `/privacy`, `/support`, and `/terms` pages
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, API Worker config parses with `salaryhijacking.com`, `www.salaryhijacking.com`, and `api.salaryhijacking.com` production custom-domain targets
 - `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests
 - `corepack pnpm --filter @salary-hijacking/mobile typecheck`: PASS

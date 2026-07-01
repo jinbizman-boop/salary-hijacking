@@ -29,11 +29,11 @@ routes these host-only custom domains to the API Worker:
 - `www.salaryhijacking.com`
 - `api.salaryhijacking.com`
 
-The API Worker serves the public Korean `/privacy`, `/support`, and `/terms`
-pages without bearer authentication and without exposing raw financial data,
-personal data, tokens, or secret values. This document defines the target only;
-Cloudflare zone, DNS, Worker deployment, custom-domain ownership, and TLS
-certificate proof remain release gates.
+The API Worker serves the public Korean `/` landing page plus `/privacy`,
+`/support`, and `/terms` pages without bearer authentication and without
+exposing raw financial data, personal data, tokens, or secret values. This
+document defines the target only; Cloudflare zone, DNS, Worker deployment,
+custom-domain ownership, and TLS certificate proof remain release gates.
 
 ## Required Admin OpenNext Worker
 
