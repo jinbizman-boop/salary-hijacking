@@ -86,6 +86,13 @@ The current E2E blocker is local environment, not missing Detox config:
 - `emulator` is not found in PATH.
 - No local Android E2E APK at `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` has been verified.
 
+Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
+When EAS build, native E2E, or store-submit dry-run proof changes, record only
+no-secret booleans in `release/mobile-native-proof.local.json`, then run
+`corepack pnpm run release:mobile-native-evidence`. Do not store EAS tokens,
+Apple/Google credentials, binary download URLs, signing keys, service accounts,
+reviewer passwords, or copied store-console payloads in repository files.
+
 ## Feature File Status
 
 As of 2026-06-29, `apps/mobile/src/features/budget` and `apps/mobile/src/features/community` contain 51 non-empty files and no zero-byte source/test/component files were found in those two feature trees.

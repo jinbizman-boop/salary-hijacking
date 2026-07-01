@@ -49,6 +49,17 @@ names, resource presence flags, domain/certificate flags, and non-secret notes.
 It must not contain Cloudflare tokens, Worker secret values, database URLs,
 private keys, certificates, service accounts, or copied runtime payloads.
 
+Safe mobile native evidence generation command:
+
+- `corepack pnpm run release:mobile-native-evidence`
+
+The command creates or refreshes `release/mobile-native-evidence.json` from
+local Android tool detection and optional `release/mobile-native-proof.local.json`
+booleans. The local proof file is ignored by Git and may contain only EAS build,
+native E2E, and store-submit dry-run booleans plus non-secret notes. It must not
+contain EAS tokens, Apple/Google credentials, binary download URLs, signing keys,
+service accounts, reviewer passwords, or copied store-console payloads.
+
 Safe database evidence generation command:
 
 - `corepack pnpm run release:database-evidence`
