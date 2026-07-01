@@ -137,6 +137,38 @@ const REQUIRED_MOBILE_ASSETS = [
   "notification-icon.png",
   "favicon.png",
 ];
+const REQUIRED_MOBILE_ASSET_REQUIREMENTS = Object.freeze({
+  "icon.png": {
+    minWidth: 1024,
+    minHeight: 1024,
+    minBytes: 40_000,
+    label: "app icon",
+  },
+  "splash.png": {
+    minWidth: 1000,
+    minHeight: 1800,
+    minBytes: 80_000,
+    label: "splash image",
+  },
+  "adaptive-icon.png": {
+    minWidth: 1024,
+    minHeight: 1024,
+    minBytes: 40_000,
+    label: "Android adaptive icon",
+  },
+  "notification-icon.png": {
+    minWidth: 256,
+    minHeight: 256,
+    minBytes: 2_000,
+    label: "notification icon",
+  },
+  "favicon.png": {
+    minWidth: 96,
+    minHeight: 96,
+    minBytes: 1_000,
+    label: "web favicon",
+  },
+});
 const OFFICIAL_BI_LOGO_ASSET =
   "assets/brand/salary-hijacking-platform-logo.png";
 const OFFICIAL_BI_LOGO_SHA256 =
@@ -2633,13 +2665,23 @@ const checkMobileReleaseReadiness = (
   const mobileRoot = path.join(rootDir, "apps", "mobile");
   for (const assetName of REQUIRED_MOBILE_ASSETS) {
     const assetPath = path.join(mobileRoot, "assets", assetName);
-    if (hasPngSignature(assetPath)) {
+    const dimensions = readPngDimensions(assetPath);
+    const bytes =
+      dimensions && fs.existsSync(assetPath) ? fs.statSync(assetPath).size : 0;
+    const requirements = REQUIRED_MOBILE_ASSET_REQUIREMENTS[assetName];
+    const assetOk =
+      dimensions &&
+      requirements &&
+      dimensions.width >= requirements.minWidth &&
+      dimensions.height >= requirements.minHeight &&
+      bytes >= requirements.minBytes;
+    if (assetOk) {
       addMobileCheck(
         checks,
         blockers,
         "PASS",
         `mobile:asset:${assetName}`,
-        "PNG asset present",
+        `${requirements.label} PNG asset present (${dimensions.width}x${dimensions.height}, ${bytes} bytes)`,
       );
     } else {
       addMobileCheck(
@@ -2647,8 +2689,8 @@ const checkMobileReleaseReadiness = (
         blockers,
         "BLOCKED",
         `mobile:asset:${assetName}`,
-        "missing or invalid PNG asset",
-        `mobile launch asset is missing or invalid: apps/mobile/assets/${assetName}`,
+        "missing, invalid, placeholder-sized, or too-small mobile launch PNG asset",
+        `mobile launch asset must be a PNG at least ${requirements.minWidth}x${requirements.minHeight} and ${requirements.minBytes} bytes: apps/mobile/assets/${assetName}`,
       );
     }
   }

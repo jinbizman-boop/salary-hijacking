@@ -33,7 +33,15 @@ const freesentationFontSourceRoot = path.join(
   "assets",
   "fonts",
 );
+const mobileAssetSourceRoot = path.join(repoRoot, "apps", "mobile", "assets");
 const storeScreenshotSourceRoot = path.join(repoRoot, "release", "screenshots");
+const requiredMobileAssetNames = [
+  "icon.png",
+  "splash.png",
+  "adaptive-icon.png",
+  "notification-icon.png",
+  "favicon.png",
+];
 
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
@@ -651,14 +659,12 @@ const makeWorkspace = () => {
       2,
     ),
   );
-  for (const assetName of [
-    "icon.png",
-    "splash.png",
-    "adaptive-icon.png",
-    "notification-icon.png",
-    "favicon.png",
-  ]) {
-    write(rootDir, `apps/mobile/assets/${assetName}`, validPng);
+  for (const assetName of requiredMobileAssetNames) {
+    write(
+      rootDir,
+      `apps/mobile/assets/${assetName}`,
+      fs.readFileSync(path.join(mobileAssetSourceRoot, assetName)),
+    );
   }
   write(
     rootDir,
@@ -1150,6 +1156,24 @@ test("blocks missing mobile launch assets and non-release EAS domains", () => {
   assert.match(report, /mobile:eas:production-api/);
   assert.match(report, /mobile:eas:production-deeplink/);
   assert.match(report, /mobile:eas:production-android/);
+});
+
+test("blocks placeholder-sized mobile launch assets", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, "apps/mobile/assets/adaptive-icon.png", validPng);
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:asset:adaptive-icon\.png/);
+  assert.match(report, /mobile launch asset/i);
 });
 
 test("blocks when bundled official BI logo hash drifts", () => {

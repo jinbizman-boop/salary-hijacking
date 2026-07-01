@@ -129,6 +129,9 @@ launch screen set.
 the bundled official BI logo is missing, invalid PNG, or SHA256-mismatched, or
 when any required Freesentation font asset is missing, not TTF/OTF-shaped, or
 too small to be the bundled launch font.
+It also validates launch PNG dimensions and byte sizes for `icon.png`,
+`splash.png`, `adaptive-icon.png`, `notification-icon.png`, and `favicon.png`,
+so placeholder-sized assets cannot pass the mobile release gate.
 
 On 2026-07-01, `corepack pnpm --filter @salary-hijacking/mobile run export:web`
 passed and exported the official BI plus Freesentation assets. `node
