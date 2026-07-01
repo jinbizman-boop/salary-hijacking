@@ -79,8 +79,8 @@ const isCliEntrypoint = () =>
 if (isCliEntrypoint()) {
   try {
     const outputPath = importAndroidE2eApk();
-    console.log(
-      `[mobile-e2e-apk] imported ${path.relative(process.cwd(), outputPath)}`,
+    process.stdout.write(
+      `[mobile-e2e-apk] imported ${path.relative(process.cwd(), outputPath)}\n`,
     );
   } catch (error) {
     console.error(`[mobile-e2e-apk] ${error.message}`);
