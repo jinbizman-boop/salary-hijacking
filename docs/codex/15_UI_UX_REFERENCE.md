@@ -61,6 +61,7 @@ The launch UI direction is `Salary Hijacking Clean Fintech v1`:
 | Official BI in app surfaces             | `apps/mobile/assets/brand/salary-hijacking-platform-logo.png`, `apps/mobile/app/_layout.tsx`, `apps/mobile/src/shared/styles/clean-fintech-screens.tsx` |
 | Official BI in release screenshots      | `scripts/release/capture-mobile-clean-fintech-screenshots.mjs`                                                                                          |
 | Freesentation font loading              | `apps/mobile/app/_layout.tsx` loads `Freesentation-4Regular.ttf` through `Freesentation-9Black.ttf`                                                     |
+| Freesentation release guard             | `scripts/release/check-release-readiness.mjs` blocks missing, invalid, or undersized Freesentation font assets                                          |
 | Clean Fintech design tokens             | `apps/mobile/src/shared/styles/clean-fintech-theme.ts`                                                                                                  |
 | Shared Clean Fintech screen system      | `apps/mobile/src/shared/styles/clean-fintech-screens.tsx`                                                                                               |
 | Five-tab IA                             | `apps/mobile/app/(tabs)/_layout.tsx` with `급여`, `계획`, `LV`, `커뮤니티`, `MY`                                                                        |

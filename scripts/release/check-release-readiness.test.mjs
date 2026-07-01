@@ -18,6 +18,21 @@ const repoRoot = path.resolve(
 const officialBrandLogoPath =
   "apps/mobile/assets/brand/salary-hijacking-platform-logo.png";
 const officialBrandLogoSource = path.join(repoRoot, officialBrandLogoPath);
+const requiredFreesentationFontNames = [
+  "Freesentation-4Regular.ttf",
+  "Freesentation-5Medium.ttf",
+  "Freesentation-6SemiBold.ttf",
+  "Freesentation-7Bold.ttf",
+  "Freesentation-8ExtraBold.ttf",
+  "Freesentation-9Black.ttf",
+];
+const freesentationFontSourceRoot = path.join(
+  repoRoot,
+  "apps",
+  "mobile",
+  "assets",
+  "fonts",
+);
 
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
@@ -649,6 +664,13 @@ const makeWorkspace = () => {
     officialBrandLogoPath,
     fs.readFileSync(officialBrandLogoSource),
   );
+  for (const fontName of requiredFreesentationFontNames) {
+    write(
+      rootDir,
+      `apps/mobile/assets/fonts/${fontName}`,
+      fs.readFileSync(path.join(freesentationFontSourceRoot, fontName)),
+    );
+  }
   for (const imageName of requiredStoreImageNames) {
     write(
       rootDir,
@@ -1147,6 +1169,24 @@ test("blocks when bundled official BI logo hash drifts", () => {
   assert.equal(result.ok, false);
   assert.match(report, /mobile:asset:official-bi-logo/);
   assert.match(report, /official BI logo must match/i);
+});
+
+test("blocks when Freesentation mobile font assets are missing or invalid", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, "apps/mobile/assets/fonts/Freesentation-7Bold.ttf", validPng);
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:font:Freesentation-7Bold\.ttf/);
+  assert.match(report, /Freesentation font asset/i);
 });
 
 test("blocks mobile app config and store metadata that cannot be submitted", () => {

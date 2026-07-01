@@ -141,6 +141,15 @@ const OFFICIAL_BI_LOGO_ASSET =
   "assets/brand/salary-hijacking-platform-logo.png";
 const OFFICIAL_BI_LOGO_SHA256 =
   "EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466";
+const REQUIRED_FREESENTATION_FONT_ASSETS = [
+  "Freesentation-4Regular.ttf",
+  "Freesentation-5Medium.ttf",
+  "Freesentation-6SemiBold.ttf",
+  "Freesentation-7Bold.ttf",
+  "Freesentation-8ExtraBold.ttf",
+  "Freesentation-9Black.ttf",
+];
+const MIN_FREESENTATION_FONT_BYTES = 2_000_000;
 
 const REQUIRED_STORE_SCREENSHOT_ASSETS = [
   "01_home_salary.png",
@@ -159,6 +168,11 @@ const REQUIRED_FEATURE_GRAPHIC_HEIGHT = 500;
 const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
 ]);
+const TTF_SIGNATURES = [
+  Buffer.from([0x00, 0x01, 0x00, 0x00]),
+  Buffer.from("true", "ascii"),
+  Buffer.from("OTTO", "ascii"),
+];
 
 const EXPECTED_MOBILE_EAS = Object.freeze({
   stagingApiBaseUrl: "https://api-staging.salaryhijacking.com",
@@ -2026,6 +2040,19 @@ const hasPngSignature = (filePath) => {
   );
 };
 
+const hasFontSignature = (filePath) => {
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
+    return false;
+  }
+
+  const buffer = fs.readFileSync(filePath);
+  return TTF_SIGNATURES.some(
+    (signature) =>
+      buffer.length >= signature.length &&
+      buffer.subarray(0, signature.length).equals(signature),
+  );
+};
+
 const readPngDimensions = (filePath) => {
   if (!hasPngSignature(filePath)) return null;
   const buffer = fs.readFileSync(filePath);
@@ -2628,6 +2655,23 @@ const checkMobileReleaseReadiness = (
       : "official BI logo is missing, invalid, or hash-mismatched",
     `mobile official BI logo must match user-provided SHA256 ${OFFICIAL_BI_LOGO_SHA256}`,
   );
+
+  for (const fontName of REQUIRED_FREESENTATION_FONT_ASSETS) {
+    const fontPath = path.join(mobileRoot, "assets", "fonts", fontName);
+    const fontOk =
+      hasFontSignature(fontPath) &&
+      fs.statSync(fontPath).size >= MIN_FREESENTATION_FONT_BYTES;
+    addMobileCheck(
+      checks,
+      blockers,
+      fontOk ? "PASS" : "BLOCKED",
+      `mobile:font:${fontName}`,
+      fontOk
+        ? "Freesentation font asset is present and valid"
+        : "Freesentation font asset is missing, invalid, or too small",
+      `Freesentation font asset must be bundled as a valid TTF: apps/mobile/assets/fonts/${fontName}`,
+    );
+  }
 
   checkMobileAppConfig(rootDir, checks, blockers);
   checkStoreMetadata(rootDir, checks, blockers);
