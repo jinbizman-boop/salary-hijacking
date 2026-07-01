@@ -90,10 +90,11 @@ Last checked by Codex on 2026-07-01 KST:
 
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
-- `corepack pnpm run check:external-integrations`: PASS, 63 required files checked, including public app/legal custom-domain targets, no-secret public URL evidence/proof automation, and no-secret database command proof automation; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 92 tests
+- `corepack pnpm run check:external-integrations`: PASS, 65 required files checked, including public app/legal custom-domain targets, no-secret public URL evidence/proof automation, no-secret database command proof automation, and no-value runtime secret proof automation; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
+- `corepack pnpm run test:root-scripts`: PASS, 96 tests
 - `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
 - `node --test scripts/release/collect-database-proof.test.mjs`: PASS, database command proof collector stores booleans only and rejects raw database URLs, secret values, raw smoke payloads, sensitive user/financial keys, and production seed proof
+- `node --test scripts/release/collect-secrets-proof.test.mjs`: PASS, runtime secret proof collector writes only presence booleans and does not mark local developer env values as release-verified without an approved `SECRET_PROOF_STORE`
 - `node --test scripts/release/collect-public-url-proof.test.mjs`: PASS, public URL proof collector stores booleans only and does not write copied HTML, raw headers, logs, identifiers, or financial payloads
 - `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 14 tests, including public `/`, `/privacy`, `/support`, and `/terms` pages
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, API Worker config parses with `salaryhijacking.com`, `www.salaryhijacking.com`, and `api.salaryhijacking.com` production custom-domain targets

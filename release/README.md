@@ -36,7 +36,19 @@ Safe runtime secret evidence generation command:
 
 - `corepack pnpm run release:secrets-evidence`
 
-The command reads no committed secret values. If
+Before generating tracked evidence, runtime secret name presence can be
+collected with:
+
+- `corepack pnpm run release:secrets-proof`
+
+The proof collector reads only runtime environment key presence and writes only
+booleans to `release/secrets-proof.local.json`. To avoid treating a developer
+machine as production evidence, it marks secrets verified only when
+`SECRET_PROOF_STORE` is an approved store label such as `GitHub Environments`,
+`GitHub Actions runtime`, `Cloudflare Worker secret`, `Neon`, `EAS secret store`,
+or `provider secret store`. It never writes raw environment values.
+
+The evidence command reads no committed secret values. If
 `release/secrets-proof.local.json` exists, it may contain only secret-name
 presence booleans, approved store names, and non-secret notes from provider
 consoles or CI environment settings. That local proof file is ignored by Git and

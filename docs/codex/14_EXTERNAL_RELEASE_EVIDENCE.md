@@ -136,11 +136,18 @@ canonical target changes, then update `release/external-release-evidence.json`
 using read-only evidence first. Update `release/secrets-evidence.json` only with
 verified secret names, stores, and booleans; do not paste secret values,
 connection strings, tokens, private keys, service account JSON, raw database
-URLs, DSNs, or webhook URLs. Update `release/cloudflare-runtime-evidence.json`
-only with resource names, booleans, and non-secret proof notes for Workers, R2,
-Queues, custom domains, TLS certificates, cron triggers, and Worker secret
-binding presence. Prefer `corepack pnpm run release:cloudflare-evidence` after
-recording local no-secret booleans in `release/cloudflare-proof.local.json`.
+URLs, DSNs, or webhook URLs. Prefer
+`corepack pnpm run release:secrets-proof` from an approved secret store context
+with a non-secret `SECRET_PROOF_STORE` label, then
+`corepack pnpm run release:secrets-evidence` to update tracked evidence from
+`release/secrets-proof.local.json`. The collector reads only environment key
+presence, never writes values, and does not mark local developer env values as
+release-verified unless an approved store label is supplied. Update
+`release/cloudflare-runtime-evidence.json` only with resource names, booleans,
+and non-secret proof notes for Workers, R2, Queues, custom domains, TLS
+certificates, cron triggers, and Worker secret binding presence. Prefer
+`corepack pnpm run release:cloudflare-evidence` after recording local no-secret
+booleans in `release/cloudflare-proof.local.json`.
 Update `release/database-evidence.json` only with booleans, resource names,
 migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,

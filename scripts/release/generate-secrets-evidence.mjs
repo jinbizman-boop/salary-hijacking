@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const DEFAULT_PROOF_PATH = "release/secrets-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/secrets-evidence.json";
 
-const REQUIRED_RUNTIME_SECRET_NAMES = Object.freeze([
+export const REQUIRED_RUNTIME_SECRET_NAMES = Object.freeze([
   "DATABASE_URL",
   "STAGING_DATABASE_URL",
   "NEON_API_KEY",
@@ -22,7 +22,7 @@ const REQUIRED_RUNTIME_SECRET_NAMES = Object.freeze([
   "SLACK_WEBHOOK_URL",
 ]);
 
-const DEFAULT_SECRET_STORES = Object.freeze({
+export const DEFAULT_SECRET_STORES = Object.freeze({
   DATABASE_URL: ["GitHub Environments", "Cloudflare Worker secret", "Neon"],
   STAGING_DATABASE_URL: [
     "GitHub Environments",
