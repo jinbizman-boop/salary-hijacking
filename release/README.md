@@ -81,7 +81,17 @@ Safe public URL evidence generation command:
 
 - `corepack pnpm run release:public-url-evidence`
 
-The command reads no runtime secret values. If
+Before generating tracked evidence, public URL proof can be collected with:
+
+- `corepack pnpm run release:public-url-proof`
+
+The proof collector requests `PUBLIC_APP_BASE_URL` or
+`https://salaryhijacking.com` by default, checks `/`, `/privacy`, `/support`,
+and `/terms`, and writes only booleans to
+`release/public-url-proof.local.json`. It does not write copied HTML, raw
+headers, logs, user identifiers, or financial payloads.
+
+The evidence generator reads no runtime secret values. If
 `release/public-url-proof.local.json` exists, it may contain only no-secret
 booleans proving production reachability for `/`, `/privacy`, `/support`, and
 `/terms`, CSP/privacy header checks, Korean public copy review, store review URL

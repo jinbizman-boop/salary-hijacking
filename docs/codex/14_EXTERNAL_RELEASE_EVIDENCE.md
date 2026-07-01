@@ -154,11 +154,13 @@ with no-secret booleans proving production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and
 privacy/ads-safe headers, Korean public copy, store-review URL alignment, and
 public-page sensitive data non-exposure. Prefer
-`corepack pnpm run release:public-url-evidence` after recording local no-secret
-booleans in `release/public-url-proof.local.json`; the generator rejects copied
-HTML, raw response bodies, raw headers, logs, emails, phone numbers, salary,
-expense, savings, hijack amounts, tokens, database URLs, and other sensitive
-payload keys before writing tracked evidence. Then run:
+`corepack pnpm run release:public-url-proof` to collect local no-secret booleans
+into `release/public-url-proof.local.json`, then
+`corepack pnpm run release:public-url-evidence` to update the tracked evidence;
+the collector and generator reject or avoid copied HTML, raw response bodies,
+raw headers, logs, emails, phone numbers, salary, expense, savings, hijack
+amounts, tokens, database URLs, and other sensitive payload keys before writing
+tracked evidence. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

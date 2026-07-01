@@ -90,9 +90,10 @@ Last checked by Codex on 2026-07-01 KST:
 
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
-- `corepack pnpm run check:external-integrations`: PASS, 59 required files checked, including public app/legal custom-domain targets and no-secret public URL evidence automation; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 84 tests
+- `corepack pnpm run check:external-integrations`: PASS, 61 required files checked, including public app/legal custom-domain targets and no-secret public URL evidence/proof automation; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
+- `corepack pnpm run test:root-scripts`: PASS, 87 tests
 - `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
+- `node --test scripts/release/collect-public-url-proof.test.mjs`: PASS, public URL proof collector stores booleans only and does not write copied HTML, raw headers, logs, identifiers, or financial payloads
 - `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 14 tests, including public `/`, `/privacy`, `/support`, and `/terms` pages
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, API Worker config parses with `salaryhijacking.com`, `www.salaryhijacking.com`, and `api.salaryhijacking.com` production custom-domain targets
 - `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests

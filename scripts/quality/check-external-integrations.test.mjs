@@ -610,6 +610,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export function buildPublicUrlEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-public-url-evidence.test.mjs":
       "import test from 'node:test';\n\ntest('generates no-secret public URL evidence', () => {});\n",
+    "scripts/release/collect-public-url-proof.mjs":
+      "export async function collectPublicUrlProof() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/collect-public-url-proof.test.mjs":
+      "import test from 'node:test';\n\ntest('collects no-secret public URL proof', () => {});\n",
   };
 
   for (const [relativePath, content] of Object.entries({

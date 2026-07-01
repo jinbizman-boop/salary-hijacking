@@ -63,6 +63,8 @@ const REQUIRED_FILES = [
   "scripts/release/generate-mobile-native-evidence.test.mjs",
   "scripts/release/generate-public-url-evidence.mjs",
   "scripts/release/generate-public-url-evidence.test.mjs",
+  "scripts/release/collect-public-url-proof.mjs",
+  "scripts/release/collect-public-url-proof.test.mjs",
 ];
 
 const REQUIRED_TOKENS_BY_FILE = {
@@ -343,6 +345,10 @@ const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
   "scripts/release/generate-cloudflare-runtime-evidence.test.mjs",
   "scripts/release/generate-mobile-native-evidence.mjs",
   "scripts/release/generate-mobile-native-evidence.test.mjs",
+  "scripts/release/generate-public-url-evidence.mjs",
+  "scripts/release/generate-public-url-evidence.test.mjs",
+  "scripts/release/collect-public-url-proof.mjs",
+  "scripts/release/collect-public-url-proof.test.mjs",
 ];
 
 const LOCAL_GENERATED_OR_HOSTING_METADATA_PATHS = [
