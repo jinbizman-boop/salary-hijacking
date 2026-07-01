@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-01T00:34:34Z",
+  "observedAt": "2026-07-01T01:42:45Z",
   "source": "Codex connector checks refreshed for Cloudflare and Neon, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
   "secretsRedacted": true,
   "github": {
@@ -13,12 +13,12 @@
     "repositoryMatched": true,
     "writeAccessProven": true,
     "pushProven": true,
-    "pushVerifiedAt": "2026-07-01T00:05:00Z",
+    "pushVerifiedAt": "2026-07-01T01:42:45Z",
     "pushCommand": "git push origin main",
     "pushedBranch": "main",
-    "pushProofCommit": "5da0dada942ddfe4ca27adf5423e30b0e526b144",
+    "pushProofCommit": "49787368ccfd46973ca9a8566c1acfd1633447b5",
     "remoteVerificationCommand": "git ls-remote origin refs/heads/main",
-    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Authenticated git push succeeded again on 2026-07-01, and origin/main was readable through git ls-remote at commit 5da0dada942ddfe4ca27adf5423e30b0e526b144. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
+    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Authenticated git push succeeded again on 2026-07-01, and origin/main was readable through git ls-remote at commit 49787368ccfd46973ca9a8566c1acfd1633447b5. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
   },
   "cloudflare": {
     "connectorReachable": true,
@@ -52,7 +52,7 @@
       "notifications.salaryhijacking.com",
       "scheduler.salaryhijacking.com"
     ],
-    "note": "Cloudflare connector account access was observed and refreshed at 2026-07-01T00:24:02Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
+    "note": "Cloudflare connector account access was refreshed at 2026-07-01T01:42:45Z. The account returned zero Workers and a previously observed Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
   },
   "neon": {
     "connectorReachable": true,
@@ -82,6 +82,6 @@
         "computeId": "ep-young-sunset-ajgi3bab"
       }
     ],
-    "note": "Neon organization access was observed and refreshed at 2026-07-01T00:24:02Z. A new Salary Hijacking project named salary-hijacking was created in organization org-dark-tree-79935393 with main and staging branches. The connector returned connection details during creation, but no connection string, password, token, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
+    "note": "Neon organization access was refreshed at 2026-07-01T01:42:45Z. A new Salary Hijacking project named salary-hijacking was observed in organization org-dark-tree-79935393 with main and staging branches. The connector returned connection details during creation, but no connection string, password, token, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
   }
 }

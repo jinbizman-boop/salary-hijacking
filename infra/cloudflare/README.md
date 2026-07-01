@@ -97,7 +97,7 @@ As of the latest snapshot, Cloudflare connector access is visible, but the
 Salary Hijacking Workers, including the Admin OpenNext Worker, are not yet
 proven in the connected account.
 
-Latest read-only check on 2026-06-30:
+Latest read-only check on 2026-07-01 10:42:45 KST:
 
 - Workers list: empty.
 - Pages projects: `retro-db` only. The current admin target is a Worker, but

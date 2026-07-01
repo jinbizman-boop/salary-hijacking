@@ -18,7 +18,8 @@ Machine-readable evidence lives in:
 
 ## 2026-07-01 Connector Snapshot
 
-Latest connector/dry-run refresh: 2026-07-01 09:34:34 KST.
+Latest connector refresh: 2026-07-01 10:42:45 KST.
+Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 
 GitHub:
 
@@ -36,7 +37,7 @@ GitHub:
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
 - After GitHub Desktop was installed, authenticated `git push` succeeded.
 - `git ls-remote origin refs/heads/main` proves remote branch read access at
-  commit `5da0dada942ddfe4ca27adf5423e30b0e526b144`.
+  commit `49787368ccfd46973ca9a8566c1acfd1633447b5`.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
@@ -44,7 +45,8 @@ GitHub:
 Cloudflare:
 
 - Cloudflare connector account access is visible.
-- The read-only Workers list returned zero Workers.
+- The read-only Workers list returned zero Workers again on
+  2026-07-01 10:42:45 KST.
 - The read-only Pages list returned `retro-db` only. That Pages project is
   unrelated and must not be reused for Salary Hijacking. The canonical admin
   console target is now an OpenNext Cloudflare Worker, not a Pages project.
