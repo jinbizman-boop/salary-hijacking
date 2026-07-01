@@ -68,7 +68,9 @@ The command reads no committed database URL. If
 `release/database-proof.local.json` exists, it may contain booleans and
 non-secret notes from migration, seed, smoke, and rollback runs. That local proof
 file is ignored by Git and must not contain raw Neon URLs, passwords, tokens, or
-real user/financial payloads.
+real user/financial payloads. The generator rejects raw database URLs, secret
+values, raw smoke response/request payloads, and sensitive financial or user data
+keys before writing the tracked evidence file.
 
 Current protected rule:
 

@@ -192,6 +192,43 @@ test("rejects proof files that contain raw database URLs or secret values", () =
   );
 });
 
+test("rejects proof files that contain raw smoke payloads or sensitive user data", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(rootDir, "release", "database-proof.local.json");
+  write(
+    rootDir,
+    "release/database-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        smoke: {
+          stagingApiSmokeVerified: true,
+          serverAuthoritySmokeVerified: true,
+          privacySmokeVerified: true,
+          noRawFinancialDataInSmokePayloads: false,
+          responsePayload: {
+            email: "actual-user@example.com",
+            salaryAmount: 2700000,
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () =>
+      buildDatabaseEvidence({
+        rootDir,
+        proofPath,
+      }),
+    /raw smoke payloads or sensitive user data/i,
+  );
+});
+
 test("writes release/database-evidence.json with generated evidence", () => {
   const rootDir = makeWorkspace();
 

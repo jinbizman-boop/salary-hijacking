@@ -127,7 +127,10 @@ migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,
 privacy smoke, and rollback rehearsal. Never store raw Neon database URLs,
 connection strings, passwords, tokens, or query payloads with sensitive
-financial/user data. Then run:
+financial/user data. Prefer `corepack pnpm run release:database-evidence` after
+recording local no-secret booleans in `release/database-proof.local.json`; the
+generator rejects raw smoke payloads and sensitive user/financial data keys
+before writing tracked evidence. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft
