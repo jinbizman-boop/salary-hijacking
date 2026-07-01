@@ -102,7 +102,8 @@ It must not contain Cloudflare tokens, Worker secret values, database URLs,
 private keys, certificates, service accounts, or copied runtime payloads.
 Release readiness independently blocks tracked Cloudflare runtime evidence when
 `observedWorkers` contains Worker names outside the Salary Hijacking release
-target set.
+target set, or when `workers.expectedWorkers` drifts from
+`release/release-targets.json`.
 
 Safe mobile native evidence generation command:
 

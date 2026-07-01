@@ -1726,6 +1726,21 @@ const checkCloudflareRuntimeEvidence = (
       ? targetCloudflare.expectedAdminWorker.trim()
       : "";
   const workers = isPlainObject(evidence.workers) ? evidence.workers : {};
+  const evidenceExpectedWorkers = sortedStrings(workers.expectedWorkers);
+  const targetWorkersOk =
+    expectedWorkers.length > 0 &&
+    sameStringArray(evidenceExpectedWorkers, expectedWorkers);
+  addCloudflareRuntimeCheck(
+    checks,
+    blockers,
+    targetWorkersOk ? "PASS" : "BLOCKED",
+    "cloudflare-runtime:target-workers",
+    targetWorkersOk
+      ? "Cloudflare runtime expected Workers match release targets"
+      : `expected Workers drifted from release targets: evidence=${evidenceExpectedWorkers.join(", ") || "none"}; releaseTargets=${expectedWorkers.join(", ") || "none"}`,
+    "Cloudflare runtime evidence must use the Salary Hijacking release target Worker names",
+  );
+
   const observedWorkers = sortedStrings(workers.observedWorkers);
   const unexpectedWorkers = observedWorkers.filter(
     (worker) => !expectedWorkers.includes(worker),
