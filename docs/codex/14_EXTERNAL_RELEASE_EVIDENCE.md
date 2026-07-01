@@ -2,7 +2,7 @@
 codex_context: true
 priority: P0
 scope: release-external-evidence
-last_verified: 2026-06-30
+last_verified: 2026-07-01
 ---
 
 # External Release Evidence
@@ -16,9 +16,9 @@ Machine-readable evidence lives in:
 - `release/release-targets.json`
 - `release/external-release-evidence.json`
 
-## 2026-06-30 Connector Snapshot
+## 2026-07-01 Connector Snapshot
 
-Latest read-only refresh: 2026-06-30 15:31:23 KST.
+Latest connector refresh: 2026-07-01 09:24:02 KST.
 
 GitHub:
 
@@ -34,9 +34,9 @@ GitHub:
   setup screenshot on 2026-06-30.
 - The local folder now has Git metadata initialized and `origin` configured to
   `https://github.com/jinbizman-boop/salary-hijacking.git`.
-- After GitHub Desktop was installed, authenticated `git push -u origin main`
-  succeeded.
-- `git ls-remote origin refs/heads/main` proves remote branch read access.
+- After GitHub Desktop was installed, authenticated `git push` succeeded.
+- `git ls-remote origin refs/heads/main` proves remote branch read access at
+  commit `5da0dada942ddfe4ca27adf5423e30b0e526b144`.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
@@ -56,11 +56,18 @@ Cloudflare:
 Neon:
 
 - Neon connector organization access is visible.
-- One Neon project is visible: `Retro Games`.
-- Read-only Neon project listing returned no matching Salary Hijacking project.
+- A new Salary Hijacking Neon project is visible: `salary-hijacking`.
+- Project ID: `still-feather-22153967`.
+- Region: `aws-us-east-2`.
+- Database name observed: `neondb`.
+- Branches observed:
+  - `main`: `br-icy-frog-aj3b1bl9`, primary, ready.
+  - `staging`: `br-fragrant-sky-aj5kk2c3`, ready.
 - The existing `Retro Games` Neon project is unrelated and must not be reused
   for Salary Hijacking.
-- No Neon connection string was requested or stored.
+- A Neon connection string was returned by the connector during project
+  creation, but no connection string, password, token, or raw database URL is
+  stored in this repository evidence.
 
 ## Release Interpretation
 
@@ -70,9 +77,9 @@ readiness. Release readiness requires both:
 - connector or CLI access to the correct accounts, and
 - matching project resources for the Salary Hijacking platform.
 
-As of this snapshot, the GitHub repository target, local `origin`, and
-authenticated push access are aligned. The release status remains blocked by
-runtime secrets, Cloudflare Workers/Pages project matching, Neon project
+As of this snapshot, the GitHub repository target, local `origin`,
+authenticated push access, and Neon project target are aligned. The release
+status remains blocked by runtime secrets, Cloudflare Workers/Pages project
 matching, mobile native E2E setup, real DB migration/seed execution, deployment,
 certificates, store builds, and operating QA.
 

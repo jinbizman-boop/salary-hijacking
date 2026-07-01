@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-06-30T06:31:23Z",
-  "source": "Codex read-only connector checks refreshed for Cloudflare and Neon, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-06-30",
+  "observedAt": "2026-07-01T00:24:02Z",
+  "source": "Codex connector checks refreshed for Cloudflare and Neon, user-provided GitHub repository URL/screenshot, and authenticated git push/ls-remote verification on 2026-07-01",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
@@ -13,12 +13,12 @@
     "repositoryMatched": true,
     "writeAccessProven": true,
     "pushProven": true,
-    "pushVerifiedAt": "2026-06-30T06:08:09Z",
-    "pushCommand": "git push -u origin main",
+    "pushVerifiedAt": "2026-07-01T00:05:00Z",
+    "pushCommand": "git push origin main",
     "pushedBranch": "main",
-    "pushProofCommit": "326f49eb6080b683897b8b315fadb1631673dbc4",
+    "pushProofCommit": "5da0dada942ddfe4ca27adf5423e30b0e526b144",
     "remoteVerificationCommand": "git ls-remote origin refs/heads/main",
-    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. After GitHub Desktop was installed, authenticated git push succeeded and origin/main was readable through git ls-remote. pushProofCommit records the commit used to prove write access at verification time; rerun git ls-remote for the current HEAD before a final public release gate. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
+    "note": "GitHub app installation was observed in a prior connector check. The user provided the newly created public repository URL https://github.com/jinbizman-boop/salary-hijacking.git and a GitHub Quick setup screenshot for salary-hijacking on 2026-06-30. Authenticated git push succeeded again on 2026-07-01, and origin/main was readable through git ls-remote at commit 5da0dada942ddfe4ca27adf5423e30b0e526b144. Existing repositories, including Retro Games and RETRO-DB, must not be modified or used as release targets."
   },
   "cloudflare": {
     "connectorReachable": true,
@@ -37,16 +37,36 @@
     "pagesProjectMatched": false,
     "observedWorkerNames": [],
     "observedPagesProjectNames": ["retro-db"],
-    "note": "Cloudflare connector account access was observed and refreshed at 2026-06-30T06:31:23Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed."
+    "note": "Cloudflare connector account access was observed and refreshed at 2026-07-01T00:24:02Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed."
   },
   "neon": {
     "connectorReachable": true,
     "organizationObserved": true,
     "expectedProjectHint": "salary-hijacking",
-    "projectMatched": false,
-    "observedProjectCount": 1,
-    "observedProjectNames": ["Retro Games"],
-    "salaryProjectSearchMatched": false,
-    "note": "Neon organization access was observed and refreshed at 2026-06-30T06:31:23Z. The listed project is Retro Games, and read-only project listing returned no matching Salary Hijacking project. Existing Retro Games database resources must not be used for Salary Hijacking."
+    "projectMatched": true,
+    "matchedProjectName": "salary-hijacking",
+    "matchedProjectId": "still-feather-22153967",
+    "observedProjectCount": 2,
+    "observedProjectNames": ["salary-hijacking", "Retro Games"],
+    "salaryProjectSearchMatched": true,
+    "regionId": "aws-us-east-2",
+    "databaseNames": ["neondb"],
+    "branches": [
+      {
+        "name": "main",
+        "id": "br-icy-frog-aj3b1bl9",
+        "primary": true,
+        "state": "ready",
+        "computeId": "ep-restless-mouse-aj80bf0j"
+      },
+      {
+        "name": "staging",
+        "id": "br-fragrant-sky-aj5kk2c3",
+        "primary": false,
+        "state": "ready",
+        "computeId": "ep-young-sunset-ajgi3bab"
+      }
+    ],
+    "note": "Neon organization access was observed and refreshed at 2026-07-01T00:24:02Z. A new Salary Hijacking project named salary-hijacking was created in organization org-dark-tree-79935393 with main and staging branches. The connector returned connection details during creation, but no connection string, password, token, or raw database URL is stored in this evidence file. Existing Retro Games database resources must not be used for Salary Hijacking."
   }
 }
