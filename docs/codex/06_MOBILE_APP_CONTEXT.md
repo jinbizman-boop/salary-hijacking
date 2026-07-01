@@ -93,6 +93,23 @@ no-secret booleans in `release/mobile-native-proof.local.json`, then run
 Apple/Google credentials, binary download URLs, signing keys, service accounts,
 reviewer passwords, or copied store-console payloads in repository files.
 
+Official mobile UI assets are already bundled:
+
+- Official BI logo:
+  `apps/mobile/assets/brand/salary-hijacking-platform-logo.png`
+- User-provided BI source hash on 2026-07-01:
+  `EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466`
+- Bundled BI hash:
+  `EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466`
+- Freesentation font files:
+  `apps/mobile/assets/fonts/Freesentation-4Regular.ttf` through
+  `Freesentation-9Black.ttf`
+
+`apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts` guards the
+official BI asset, Freesentation font loading, Clean Fintech v1 token values,
+bottom tab IA, screenshot anchor, and Korean mojibake absence for the launch
+screen set.
+
 ## Feature File Status
 
 As of 2026-06-29, `apps/mobile/src/features/budget` and `apps/mobile/src/features/community` contain 51 non-empty files and no zero-byte source/test/component files were found in those two feature trees.

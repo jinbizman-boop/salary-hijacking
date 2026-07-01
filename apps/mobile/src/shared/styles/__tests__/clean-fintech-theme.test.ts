@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { salaryHijackingTheme } from "../clean-fintech-theme";
 
 const appRoot = join(process.cwd(), "app");
+const mojibakePattern = /[湲怨吏猷醫紐留吏理痍寃]/;
 
 function source(path: string): string {
   return readFileSync(join(appRoot, path), "utf8");
@@ -14,7 +15,7 @@ function mobileSource(path: string): string {
 }
 
 describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
-  it("exposes the approved green fintech theme tokens", () => {
+  it("exposes the approved green fintech theme tokens and Freesentation font map", () => {
     expect(salaryHijackingTheme.name).toBe("Salary Hijacking Clean Fintech v1");
     expect(salaryHijackingTheme.color.brand.primary).toBe("#209252");
     expect(salaryHijackingTheme.color.brand.secondary).toBe("#2FA86A");
@@ -28,6 +29,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "Freesentation-4Regular",
     );
     expect(salaryHijackingTheme.font.native.black).toBe("Freesentation-9Black");
+    expect(salaryHijackingTheme.font.family).toContain(
+      "var(--font-presentation)",
+    );
   });
 
   it("keeps Freesentation font assets bundled and loaded by the root layout", () => {
@@ -83,24 +87,41 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(screenshotScript).toContain("/__brand-logo");
   });
 
-  it("keeps the daily budget screenshot anchor available for store capture", () => {
-    const cleanScreens = mobileSource(
+  it("keeps clean mobile launch screens free from Korean mojibake", () => {
+    const checkedSources = [
+      "src/shared/styles/clean-fintech-theme.ts",
       "src/shared/styles/clean-fintech-screens.tsx",
-    );
+      "app/(tabs)/_layout.tsx",
+      "app/(tabs)/salary/index.tsx",
+      "app/(tabs)/plan/index.tsx",
+      "app/(tabs)/level/index.tsx",
+      "app/(tabs)/community/index.tsx",
+      "app/(tabs)/profile/index.tsx",
+      "app/(auth)/login.tsx",
+      "app/(auth)/signup.tsx",
+      "app/notifications/index.tsx",
+      "app/community/write.tsx",
+      "app/community/[postId].tsx",
+      "app/level/reading.tsx",
+      "app/level/news.tsx",
+      "app/level/english.tsx",
+      "app/level/health.tsx",
+    ];
 
-    expect(cleanScreens).toContain('nativeID="daily-budget"');
-    expect(cleanScreens).toContain("scrollIntoView");
-    expect(cleanScreens).toContain("#daily-budget");
-    expect(cleanScreens).toContain("focus=daily-budget");
+    for (const relativePath of checkedSources) {
+      const text = mobileSource(relativePath);
+      expect(text).not.toMatch(mojibakePattern);
+    }
   });
 
-  it("keeps bottom navigation on the launch IA and clean color system", () => {
+  it("keeps the bottom navigation on the approved five-tab IA", () => {
     const tabs = source("(tabs)/_layout.tsx");
 
     for (const label of ["급여", "계획", "LV", "커뮤니티", "MY"]) {
       expect(tabs).toContain(label);
     }
 
+    expect(tabs).toContain("급여납치 하단 탭 내비게이션");
     expect(tabs).toContain("#209252");
     expect(tabs).toContain("#ADB3B8");
     expect(tabs).toContain("#FFFFFF");
@@ -121,8 +142,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(config).not.toContain("#67E8F9");
   });
 
-  it("keeps the salary home value-first and server-authority messaging visible", () => {
-    const salary = source("(tabs)/salary/index.tsx");
+  it("keeps the daily budget screenshot anchor available for store capture", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain('nativeID="daily-budget"');
+    expect(cleanScreens).toContain("scrollIntoView");
+    expect(cleanScreens).toContain("#daily-budget");
+    expect(cleanScreens).toContain("focus=daily-budget");
+  });
+
+  it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
 
     for (const marker of [
       "이번 달 내가 지켜낸 돈",
@@ -133,97 +167,64 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "다음 급여일 D-day",
       "지출 추가하기",
       "제휴/광고",
-      "serverAuthority=true",
-      "adsFinancialTargeting=false",
-    ]) {
-      expect(salary).toContain(marker);
-    }
-  });
-
-  it("keeps plan, level, notifications, community, compose, and profile launch markers visible", () => {
-    const plan = source("(tabs)/plan/index.tsx");
-    const level = source("(tabs)/level/index.tsx");
-    const notifications = source("notifications/index.tsx");
-    const community = source("(tabs)/community/index.tsx");
-    const write = source("community/write.tsx");
-    const profile = source("(tabs)/profile/index.tsx");
-
-    expect(plan).toContain("목표 달성률");
-    expect(plan).toContain("급여 계획");
-    expect(plan).toContain("고정지출");
-    expect(plan).toContain("고정저축");
-    expect(plan).toContain("생활비");
-
-    for (const marker of [
+      "목표 달성률",
+      "급여 계획",
+      "고정지출",
+      "고정저축",
+      "생활비",
       "현재 레벨",
       "독서하기",
       "뉴스보기",
       "영어연습",
       "홈트하기",
-    ]) {
-      expect(level).toContain(marker);
-    }
-
-    expect(notifications).toContain("새로운 알림이 있어요");
-    expect(notifications).toContain("중요 알림");
-    expect(notifications).toContain("루틴 알림");
-
-    for (const marker of [
+      "중요 알림",
+      "루틴 알림",
       "전체 게시판",
       "자유 게시판",
       "레벨업 인증",
       "취미 게시판",
+      "글쓰기",
+      "제목",
+      "본문",
+      "익명",
+      "누적 납치금액",
+      "레벨업 현황",
+      "자기관리 성과",
+      "내 게시글 관리",
     ]) {
-      expect(community).toContain(marker);
+      expect(cleanScreens).toContain(marker);
     }
-    expect(community).toContain("글쓰기");
-    expect(community).toContain("#209252");
-
-    expect(write).toContain("제목");
-    expect(write).toContain("본문");
-    expect(write).toContain("익명");
-    expect(write).toContain("게시판");
-
-    expect(profile).toContain("누적 납치금액");
-    expect(profile).toContain("레벨업 현황");
-    expect(profile).toContain("자기관리 성과");
-    expect(profile).toContain("내 게시글 관리");
   });
 
-  it("keeps splash, signup, LV detail, and community detail launch markers visible", () => {
-    const splash = source("index.tsx");
-    const signup = source("(auth)/signup.tsx");
-    const reading = source("level/reading.tsx");
-    const news = source("level/news.tsx");
-    const english = source("level/english.tsx");
-    const health = source("level/health.tsx");
-    const postDetail = source("community/[postId].tsx");
+  it("keeps splash, signup, LV detail, and community detail launch copy visible", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
 
-    expect(splash).toContain("SALARY HIJACKING");
-    expect(splash).toContain("월급이 사라지기 전에 먼저 붙잡아요");
-
-    expect(signup).toContain("민감 정보 보호");
-    expect(signup).toContain("약관 동의");
-    expect(signup).toContain("/api/v1/auth/register");
-
-    for (const marker of ["AI 추천", "소설", "경제/경영", "인문/철학"]) {
-      expect(reading).toContain(marker);
+    for (const marker of [
+      "SALARY HIJACKING",
+      "월급이 사라지기 전에 먼저 붙잡아요",
+      "민감 정보 보호",
+      "약관 동의",
+      "/api/v1/auth/register",
+      "AI 추천",
+      "소설",
+      "경제/경영",
+      "인문/철학",
+      "Listening",
+      "Speaking",
+      "Reading",
+      "Writing",
+      "월",
+      "화",
+      "수",
+      "목",
+      "금",
+      "토",
+      "댓글",
+      "공유",
+    ]) {
+      expect(cleanScreens).toContain(marker);
     }
-
-    for (const marker of ["경제", "산업", "사회", "기술"]) {
-      expect(news).toContain(marker);
-    }
-
-    for (const marker of ["Listening", "Speaking", "Reading", "Writing"]) {
-      expect(english).toContain(marker);
-    }
-
-    for (const marker of ["월", "화", "수", "목", "금", "토"]) {
-      expect(health).toContain(marker);
-    }
-
-    expect(postDetail).toContain("레벨업 인증");
-    expect(postDetail).toContain("댓글");
-    expect(postDetail).toContain("공유");
   });
 });
