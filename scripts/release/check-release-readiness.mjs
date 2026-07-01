@@ -2635,6 +2635,28 @@ const checkMobileNativeEvidence = (
     );
   }
 
+  const hasSecretValues =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence);
+  if (hasSecretValues) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:native:secret-values",
+      "raw native release secrets may be present",
+      `${MOBILE_NATIVE_EVIDENCE_PATH} must not contain raw native release secrets`,
+    );
+  } else {
+    addMobileCheck(
+      checks,
+      blockers,
+      "PASS",
+      "mobile:native:secret-values",
+      "no raw native release secrets are declared or embedded",
+    );
+  }
+
   const android = isPlainObject(evidence.android) ? evidence.android : {};
   const ios = isPlainObject(evidence.ios) ? evidence.ios : {};
   const localAdbAvailable = commandExists("adb");

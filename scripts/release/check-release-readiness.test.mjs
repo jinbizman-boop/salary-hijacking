@@ -355,6 +355,7 @@ const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
     observedAt: new Date().toISOString(),
     source: "test-fixture",
     secretsRedacted: true,
+    containsSecretValues: false,
     android: {
       productionBuildVerified: true,
       productionBuildProfile: "production",
@@ -1646,6 +1647,27 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.equal(result.ok, false);
   assert.match(report, /mobile-native-evidence\.json/);
   assert.match(report, /mobile:native:evidence/);
+});
+
+test("blocks when mobile native release evidence declares secret values", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, { containsSecretValues: true });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:native:secret-values/);
+  assert.match(
+    report,
+    /mobile-native-evidence\.json must not contain raw native release secrets/,
+  );
 });
 
 test("uses EAS mobile native evidence when local Android tools are unavailable", () => {

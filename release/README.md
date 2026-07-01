@@ -133,7 +133,9 @@ contain only EAS build, native E2E, and store-submit dry-run booleans plus
 non-secret notes. It must use `containsSecretValues=false` and must not contain
 EAS tokens, Apple/Google credentials, binary download URLs, local artifact
 paths, signing keys, service accounts, reviewer passwords, or copied
-store-console payloads.
+store-console payloads. Release readiness independently blocks tracked mobile
+native evidence when `containsSecretValues` is not explicitly `false` or when
+raw native release secret values are embedded.
 
 Safe database evidence generation command:
 
