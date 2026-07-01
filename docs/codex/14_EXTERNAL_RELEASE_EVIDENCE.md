@@ -194,8 +194,9 @@ recording console observations in `release/mobile-native-observation.local.json`
 then `corepack pnpm run release:mobile-native-evidence` to update tracked
 evidence from `release/mobile-native-proof.local.json`. The collector and
 generator reject EAS tokens, Apple/Google credentials, binary download URLs,
-signing keys, service account JSON, reviewer passwords, copied store-console
-payloads, and logs before writing local or tracked evidence.
+local artifact paths, signing keys, service account JSON, reviewer passwords,
+copied store-console payloads, and logs before writing local or tracked
+evidence.
 Update `release/public-url-evidence.json` only with no-secret booleans proving
 production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and

@@ -121,7 +121,7 @@ test("keeps release proof false for incomplete observations", () => {
   assert.equal(proof.ios.storeSubmitDryRunVerified, false);
 });
 
-test("rejects observations containing native build secrets or artifact URLs", () => {
+test("rejects observations containing native build secrets or artifact URLs and paths", () => {
   const rootDir = makeRoot();
   const inputPath = writeJson(
     rootDir,
@@ -138,7 +138,28 @@ test("rejects observations containing native build secrets or artifact URLs", ()
 
   assert.throws(
     () => collectMobileNativeProof({ inputPath, writeFile: false }),
-    /secret values or artifact URLs/i,
+    /secret values, artifact URLs, or artifact paths/i,
+  );
+});
+
+test("rejects local native artifact paths even when trailing text is present", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/mobile-native-observation.local.json",
+    {
+      ...completeObservation,
+      android: {
+        ...completeObservation.android,
+        artifactLocalPath:
+          "C:\\builds\\salary-hijacking-production.aab verified manually",
+      },
+    },
+  );
+
+  assert.throws(
+    () => collectMobileNativeProof({ inputPath, writeFile: false }),
+    /secret values, artifact URLs, or artifact paths/i,
   );
 });
 

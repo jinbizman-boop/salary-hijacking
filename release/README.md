@@ -106,8 +106,8 @@ writes only booleans to `release/mobile-native-proof.local.json`. The local
 observation file is ignored by Git and may contain only production build flags,
 Android AAB artifact type, native E2E pass/fail flags, store-submit dry-run
 flags, and non-secret notes. It must not contain EAS tokens, Apple/Google
-credentials, binary download URLs, signing keys, service account JSON, reviewer
-passwords, copied store-console payloads, or logs.
+credentials, binary download URLs, local artifact paths, signing keys, service
+account JSON, reviewer passwords, copied store-console payloads, or logs.
 
 For Android Detox runs, import a locally downloaded EAS/local E2E APK into the
 ignored Detox binary path before running native E2E:
@@ -126,8 +126,8 @@ locations, but detected `adb`/`emulator` tools are only execution prerequisites;
 they are not native E2E proof. The local proof file is ignored by Git and may
 contain only EAS build, native E2E, and store-submit dry-run booleans plus
 non-secret notes. It must not contain EAS tokens, Apple/Google credentials,
-binary download URLs, signing keys, service accounts, reviewer passwords, or
-copied store-console payloads.
+binary download URLs, local artifact paths, signing keys, service accounts,
+reviewer passwords, or copied store-console payloads.
 
 Safe database evidence generation command:
 

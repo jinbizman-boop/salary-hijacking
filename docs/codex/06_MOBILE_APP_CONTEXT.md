@@ -79,7 +79,7 @@ Detox now has a repository-level execution contract:
 - `scripts/check-detox-env.mjs` runs before Detox and fails fast with actionable Android/iOS native E2E prerequisites.
 - `scripts/import-e2e-apk.mjs` imports a locally downloaded EAS/local Android
   E2E APK into `build/e2e/android/salary-hijacking-e2e.apk` without storing
-  artifact URLs in the repository. Run it through
+  artifact URLs or release proof artifact paths in the repository. Run it through
   `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`.
 
 The current E2E blocker is local native binary/proof, not missing Detox config:
@@ -105,8 +105,9 @@ no-secret observations in `release/mobile-native-observation.local.json`, run
 `corepack pnpm run release:mobile-native-proof` to normalize
 `release/mobile-native-proof.local.json`, then run
 `corepack pnpm run release:mobile-native-evidence`. Do not store EAS tokens,
-Apple/Google credentials, binary download URLs, signing keys, service accounts,
-reviewer passwords, or copied store-console payloads in repository files.
+Apple/Google credentials, binary download URLs, local artifact paths, signing
+keys, service accounts, reviewer passwords, or copied store-console payloads in
+repository files.
 
 Official mobile UI assets are already bundled:
 

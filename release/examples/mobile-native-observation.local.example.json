@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "observedAt": "2026-07-01T00:00:00.000Z",
-  "source": "Example only. Copy to release/mobile-native-observation.local.json after EAS/native E2E/store-console checks. Never paste EAS tokens, store credentials, artifact URLs, signing keys, service accounts, reviewer passwords, console payloads, or logs.",
+  "source": "Example only. Copy to release/mobile-native-observation.local.json after EAS/native E2E/store-console checks. Never paste EAS tokens, store credentials, artifact URLs or paths, signing keys, service accounts, reviewer passwords, console payloads, or logs.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "android": {

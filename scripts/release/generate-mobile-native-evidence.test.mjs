@@ -169,7 +169,7 @@ test("preserves existing no-secret mobile native evidence when local proof is ab
   assert.equal(evidence.ios.productionBuildVerified, false);
 });
 
-test("rejects proof files that contain native build secrets or artifact URLs", () => {
+test("rejects proof files that contain native build secrets or artifact URLs and paths", () => {
   const rootDir = makeWorkspace();
   const proofPath = path.join(
     rootDir,
@@ -202,7 +202,7 @@ test("rejects proof files that contain native build secrets or artifact URLs", (
 
   assert.throws(
     () => buildMobileNativeEvidence({ rootDir, proofPath }),
-    /secret values or artifact URLs/i,
+    /secret values, artifact URLs, or artifact paths/i,
   );
 });
 

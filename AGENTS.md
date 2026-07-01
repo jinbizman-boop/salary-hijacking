@@ -91,7 +91,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 74 required files checked, including public app/legal custom-domain targets, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, and tracked no-secret local proof example templates; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 114 tests
+- `corepack pnpm run test:root-scripts`: PASS, 115 tests
 - `node --test apps\mobile\scripts\import-e2e-apk.test.mjs`: PASS, Android E2E APK import helper accepts only local APK/ZIP files and rejects artifact URLs, non-APK files, and placeholders
 - `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
 - `node --test scripts/release/collect-database-proof.test.mjs`: PASS, database command proof collector stores booleans only and rejects raw database URLs, secret values, raw smoke payloads, sensitive user/financial keys, and production seed proof
