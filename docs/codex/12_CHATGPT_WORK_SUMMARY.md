@@ -135,9 +135,9 @@ Commands run on 2026-06-30:
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
 - `corepack pnpm run test:e2e`: FAIL only at `@salary-hijacking/mobile#test:e2e` native preflight because `ANDROID_SDK_ROOT`, `ANDROID_HOME`, the Detox E2E APK, `adb`, and `emulator` are unavailable on this PC
 
-Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking Cloudflare/Neon resource matching, Android `adb`/`emulator` availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. Local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
+Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking Cloudflare Worker resource matching, Android `adb`/`emulator` availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. The Neon project exists; local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
 
-Cloudflare and GitHub infrastructure docs were replaced with operational release checklists. `check:external-integrations` now rejects placeholder/mojibake infrastructure docs, mobile release metadata, `.gitignore` rules that hide required source automation files such as `scripts/build/fix-esm-imports.mjs`, and local generated hosting/build metadata such as `.vercel` or `.open-next` if they are trackable. `check:release-readiness` now also blocks missing `release/release-targets.json`, external evidence drift from the canonical target manifest, release evidence that omits explicit `RETRO-DB` protection, missing GitHub write/push proof, runtime targets where `GITHUB_REPOSITORY` or `CF_PAGES_PROJECT_NAME` do not match the verified Salary Hijacking release target, and missing/mismatched `git remote origin` linkage.
+Cloudflare and GitHub infrastructure docs were replaced with operational release checklists. `check:external-integrations` now rejects placeholder/mojibake infrastructure docs, mobile release metadata, `.gitignore` rules that hide required source automation files such as `scripts/build/fix-esm-imports.mjs`, and local generated hosting/build metadata such as `.vercel` or `.open-next` if they are trackable. `check:release-readiness` now also blocks missing `release/release-targets.json`, external evidence drift from the canonical target manifest, release evidence that omits explicit `RETRO-DB` protection, missing GitHub write/push proof, runtime targets where `GITHUB_REPOSITORY` or `CF_ADMIN_WORKER_NAME` do not match the verified Salary Hijacking release target, and missing/mismatched `git remote origin` linkage.
 
 `security:scan` for API/Admin/Notifications/Scheduler is now an offline source and metadata policy scan so local quality does not depend on npm registry access. Dependency vulnerability audit remains required through the added `security:audit` scripts before release.
 
@@ -150,7 +150,7 @@ Use:
 - "mobile package typecheck/lint/format/Jest tests passed"
 - "native mobile E2E blocked by missing Android SDK/emulator tools"
 - "project-wide production readiness remains blocked by deployment, DB, secrets, certificates, and operating QA"
-- "GitHub release target and push access are aligned; Cloudflare/Neon release-target resources are not yet proven"
+- "GitHub release target, push access, and Neon project are aligned; Cloudflare Worker release-target resources are not yet proven"
 
 Do not use:
 

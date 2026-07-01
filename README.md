@@ -585,7 +585,7 @@ pnpm run build
 | ------------------- | -------------------------------------------------------- |
 | `ci.yml`            | 설치, lint, typecheck, test, build, DB/static validation |
 | `deploy-api.yml`    | API 빌드, 검증, DB migration, Cloudflare Workers 배포    |
-| `deploy-admin.yml`  | 관리자 콘솔 빌드와 Cloudflare Pages 배포                 |
+| `deploy-admin.yml`  | 관리자 콘솔 빌드와 Cloudflare OpenNext Worker 배포       |
 | `mobile-build.yml`  | Expo/EAS 모바일 빌드 검증                                |
 | `release.yml`       | 릴리즈 품질 게이트, 산출물, 체크섬, GitHub release       |
 | `security-scan.yml` | dependency, CodeQL, secret, security test                |

@@ -35,6 +35,8 @@ const REQUIRED_FILES = [
   ".github/workflows/deploy-api.yml",
   ".github/workflows/deploy-admin.yml",
   ".github/workflows/mobile-build.yml",
+  "apps/admin/open-next.config.ts",
+  "apps/admin/wrangler.jsonc",
   "services/api/wrangler.toml",
   "services/notifications/wrangler.toml",
   "services/scheduler/wrangler.toml",
@@ -59,7 +61,7 @@ const REQUIRED_ENV_NAMES = [
   "NEON_PROJECT_ID",
   "CLOUDFLARE_API_TOKEN",
   "CLOUDFLARE_ACCOUNT_ID",
-  "CF_PAGES_PROJECT_NAME",
+  "CF_ADMIN_WORKER_NAME",
   "EXPO_TOKEN",
   "EAS_PROJECT_ID",
   "GITHUB_TOKEN",
@@ -402,16 +404,26 @@ const checkReleaseTargets = (rootDir, checks, blockers) => {
     ? targets.cloudflare
     : {};
   const expectedWorkers = sortedStrings(cloudflare.expectedWorkers);
-  const expectedPagesProject =
-    typeof cloudflare.expectedPagesProject === "string"
-      ? cloudflare.expectedPagesProject.trim()
+  const expectedAdminWorker =
+    typeof cloudflare.expectedAdminWorker === "string"
+      ? cloudflare.expectedAdminWorker.trim()
+      : "";
+  const adminDeploymentType =
+    typeof cloudflare.adminDeploymentType === "string"
+      ? cloudflare.adminDeploymentType.trim()
       : "";
   const cloudflareProblems = [];
   if (expectedWorkers.length === 0) {
     cloudflareProblems.push("expectedWorkers missing");
   }
-  if (!expectedPagesProject) {
-    cloudflareProblems.push("expectedPagesProject missing");
+  if (!expectedAdminWorker) {
+    cloudflareProblems.push("expectedAdminWorker missing");
+  }
+  if (expectedAdminWorker && !expectedWorkers.includes(expectedAdminWorker)) {
+    cloudflareProblems.push("expectedWorkers must include expectedAdminWorker");
+  }
+  if (adminDeploymentType !== "workers-opennext") {
+    cloudflareProblems.push("adminDeploymentType must be workers-opennext");
   }
 
   if (cloudflareProblems.length === 0) {
@@ -419,7 +431,7 @@ const checkReleaseTargets = (rootDir, checks, blockers) => {
       checks,
       "PASS",
       "release-target-manifest:cloudflare",
-      `workers ${expectedWorkers.join(", ")}; pages ${expectedPagesProject}`,
+      `workers ${expectedWorkers.join(", ")}; admin ${expectedAdminWorker} (${adminDeploymentType})`,
     );
   } else {
     addCheck(
@@ -539,30 +551,41 @@ const checkEvidenceMatchesReleaseTargets = (
     );
   }
 
-  const targetPagesProject =
-    typeof targetCloudflare.expectedPagesProject === "string"
-      ? targetCloudflare.expectedPagesProject.trim()
+  const targetAdminWorker =
+    typeof targetCloudflare.expectedAdminWorker === "string"
+      ? targetCloudflare.expectedAdminWorker.trim()
       : "";
-  const evidencePagesProject =
-    typeof evidenceCloudflare.expectedPagesProject === "string"
-      ? evidenceCloudflare.expectedPagesProject.trim()
+  const evidenceAdminWorker =
+    typeof evidenceCloudflare.expectedAdminWorker === "string"
+      ? evidenceCloudflare.expectedAdminWorker.trim()
       : "";
-  if (targetPagesProject === evidencePagesProject) {
+  const targetAdminDeploymentType =
+    typeof targetCloudflare.adminDeploymentType === "string"
+      ? targetCloudflare.adminDeploymentType.trim()
+      : "";
+  const evidenceAdminDeploymentType =
+    typeof evidenceCloudflare.adminDeploymentType === "string"
+      ? evidenceCloudflare.adminDeploymentType.trim()
+      : "";
+  if (
+    targetAdminWorker === evidenceAdminWorker &&
+    targetAdminDeploymentType === evidenceAdminDeploymentType
+  ) {
     addCheck(
       checks,
       "PASS",
-      "release-target-manifest:cloudflare-pages",
-      "external evidence matches Pages target",
+      "release-target-manifest:cloudflare-admin-worker",
+      "external evidence matches Admin Worker target",
     );
   } else {
     addCheck(
       checks,
       "BLOCKED",
-      "release-target-manifest:cloudflare-pages",
-      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Pages target drifted`,
+      "release-target-manifest:cloudflare-admin-worker",
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Admin Worker target drifted`,
     );
     blockers.push(
-      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Cloudflare Pages target must match ${RELEASE_TARGETS_PATH}`,
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} Cloudflare Admin Worker target must match ${RELEASE_TARGETS_PATH}`,
     );
   }
 
@@ -840,20 +863,20 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
     );
   }
 
-  if (cloudflare.pagesProjectMatched === true) {
+  if (cloudflare.adminWorkerMatched === true) {
     addCheck(
       checks,
       "PASS",
-      "external-evidence:cloudflare-pages",
-      "expected Pages project observed",
+      "external-evidence:cloudflare-admin-worker",
+      "expected Admin OpenNext Worker observed",
     );
   } else {
     addExternalEvidenceBlocker(
       checks,
       blockers,
-      "external-evidence:cloudflare-pages",
-      "expected Pages project is not proven",
-      "Cloudflare Pages evidence does not prove the Salary Hijacking admin project exists",
+      "external-evidence:cloudflare-admin-worker",
+      "expected Admin OpenNext Worker is not proven",
+      "Cloudflare Admin Worker evidence does not prove the Salary Hijacking admin console exists",
     );
   }
 
@@ -958,32 +981,32 @@ const checkRuntimeTargetConsistency = (evidence, env, checks, blockers) => {
   const cloudflare = isPlainObject(evidence.cloudflare)
     ? evidence.cloudflare
     : {};
-  const expectedPagesProject =
-    typeof cloudflare.expectedPagesProject === "string"
-      ? cloudflare.expectedPagesProject.trim()
+  const expectedAdminWorker =
+    typeof cloudflare.expectedAdminWorker === "string"
+      ? cloudflare.expectedAdminWorker.trim()
       : "";
-  const runtimePagesProject =
-    typeof env.CF_PAGES_PROJECT_NAME === "string"
-      ? env.CF_PAGES_PROJECT_NAME.trim()
+  const runtimeAdminWorker =
+    typeof env.CF_ADMIN_WORKER_NAME === "string"
+      ? env.CF_ADMIN_WORKER_NAME.trim()
       : "";
 
-  if (expectedPagesProject && isUsableEnvValue(runtimePagesProject)) {
-    if (runtimePagesProject === expectedPagesProject) {
+  if (expectedAdminWorker && isUsableEnvValue(runtimeAdminWorker)) {
+    if (runtimeAdminWorker === expectedAdminWorker) {
       addCheck(
         checks,
         "PASS",
-        "release-target:CF_PAGES_PROJECT_NAME",
-        `matches expected Cloudflare Pages project ${expectedPagesProject}`,
+        "release-target:CF_ADMIN_WORKER_NAME",
+        `matches expected Cloudflare Admin Worker ${expectedAdminWorker}`,
       );
     } else {
       addCheck(
         checks,
         "BLOCKED",
-        "release-target:CF_PAGES_PROJECT_NAME",
-        `expected ${expectedPagesProject}; got ${runtimePagesProject}`,
+        "release-target:CF_ADMIN_WORKER_NAME",
+        `expected ${expectedAdminWorker}; got ${runtimeAdminWorker}`,
       );
       blockers.push(
-        `CF_PAGES_PROJECT_NAME must match expected Cloudflare Pages project ${expectedPagesProject}`,
+        `CF_ADMIN_WORKER_NAME must match expected Cloudflare Admin Worker ${expectedAdminWorker}`,
       );
     }
   }

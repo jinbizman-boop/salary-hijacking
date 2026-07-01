@@ -206,8 +206,10 @@ const writeReleaseTargets = (rootDir, overrides = {}) => {
         "salary-hijacking-api",
         "salary-hijacking-notifications",
         "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
       ],
-      expectedPagesProject: "salary-hijacking-admin",
+      expectedAdminWorker: "salary-hijacking-admin",
+      adminDeploymentType: "workers-opennext",
     },
     neon: {
       expectedProjectHint: "salary-hijacking",
@@ -245,10 +247,12 @@ const writeExternalEvidence = (rootDir, overrides = {}) => {
         "salary-hijacking-api",
         "salary-hijacking-notifications",
         "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
       ],
       missingWorkers: [],
-      expectedPagesProject: "salary-hijacking-admin",
-      pagesProjectMatched: true,
+      expectedAdminWorker: "salary-hijacking-admin",
+      adminDeploymentType: "workers-opennext",
+      adminWorkerMatched: true,
     },
     neon: {
       connectorReachable: true,
@@ -335,6 +339,16 @@ const makeWorkspace = () => {
   write(rootDir, ".github/workflows/deploy-api.yml", "name: API\n");
   write(rootDir, ".github/workflows/deploy-admin.yml", "name: Admin\n");
   write(rootDir, ".github/workflows/mobile-build.yml", "name: Mobile\n");
+  write(
+    rootDir,
+    "apps/admin/open-next.config.ts",
+    'export default { buildCommand: "corepack pnpm run build" };\n',
+  );
+  write(
+    rootDir,
+    "apps/admin/wrangler.jsonc",
+    '{ "name": "salary-hijacking-admin", "main": ".open-next/worker.js" }\n',
+  );
   write(rootDir, "database/migrations/0001_init.sql", "-- migration\n");
   write(rootDir, "database/seeds/staging.seed.sql", "-- seed\n");
   write(rootDir, "database/seeds/uat.seed.sql", "-- seed\n");
@@ -412,7 +426,7 @@ const makeWorkspace = () => {
       "NEON_PROJECT_ID=replace-with-neon-project-id",
       "CLOUDFLARE_API_TOKEN=replace-with-cloudflare-api-token",
       "CLOUDFLARE_ACCOUNT_ID=replace-with-cloudflare-account-id",
-      "CF_PAGES_PROJECT_NAME=salary-hijacking-admin",
+      "CF_ADMIN_WORKER_NAME=salary-hijacking-admin",
       "EXPO_TOKEN=replace-with-expo-token",
       "EAS_PROJECT_ID=replace-with-eas-project-id",
       "GITHUB_TOKEN=replace-with-github-token",
@@ -433,7 +447,7 @@ const completeEnv = Object.freeze({
   NEON_PROJECT_ID: "project-real",
   CLOUDFLARE_API_TOKEN: "cf_real_value",
   CLOUDFLARE_ACCOUNT_ID: "account-real",
-  CF_PAGES_PROJECT_NAME: "salary-hijacking-admin",
+  CF_ADMIN_WORKER_NAME: "salary-hijacking-admin",
   EXPO_TOKEN: "expo_real_value",
   EAS_PROJECT_ID: "eas-real",
   GITHUB_TOKEN: "ghp_real_value",
@@ -764,8 +778,9 @@ test("blocks external evidence that drifts from release target manifest", () => 
       accountObserved: true,
       expectedWorkers: ["other-api"],
       missingWorkers: [],
-      expectedPagesProject: "other-admin",
-      pagesProjectMatched: true,
+      expectedAdminWorker: "other-admin",
+      adminDeploymentType: "workers-opennext",
+      adminWorkerMatched: true,
     },
     neon: {
       connectorReachable: true,
@@ -787,7 +802,7 @@ test("blocks external evidence that drifts from release target manifest", () => 
   assert.equal(result.ok, false);
   assert.match(report, /release-target-manifest:github/);
   assert.match(report, /release-target-manifest:cloudflare-workers/);
-  assert.match(report, /release-target-manifest:cloudflare-pages/);
+  assert.match(report, /release-target-manifest:cloudflare-admin-worker/);
   assert.match(report, /release-target-manifest:neon/);
 });
 
@@ -810,13 +825,16 @@ test("blocks external connector evidence that does not match release targets", (
         "salary-hijacking-api",
         "salary-hijacking-notifications",
         "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
       ],
       missingWorkers: [
         "salary-hijacking-api",
         "salary-hijacking-notifications",
+        "salary-hijacking-admin",
       ],
-      expectedPagesProject: "salary-hijacking-admin",
-      pagesProjectMatched: false,
+      expectedAdminWorker: "salary-hijacking-admin",
+      adminDeploymentType: "workers-opennext",
+      adminWorkerMatched: false,
     },
     neon: {
       connectorReachable: true,
@@ -838,7 +856,7 @@ test("blocks external connector evidence that does not match release targets", (
   assert.equal(result.ok, false);
   assert.match(report, /New GitHub repository creation\/access/);
   assert.match(report, /Cloudflare Worker evidence/);
-  assert.match(report, /Cloudflare Pages evidence/);
+  assert.match(report, /Cloudflare Admin Worker evidence/);
   assert.match(report, /Neon connector evidence/);
 });
 
@@ -967,13 +985,13 @@ test("blocks when runtime GitHub repository does not match external evidence", (
   assert.match(report, /jinbizman-boop\/salary-hijacking/);
 });
 
-test("blocks when runtime Cloudflare Pages project does not match external evidence", () => {
+test("blocks when runtime Cloudflare Admin Worker does not match external evidence", () => {
   const rootDir = makeWorkspace();
   const result = analyzeReleaseReadiness({
     rootDir,
     env: {
       ...completeEnv,
-      CF_PAGES_PROJECT_NAME: "retro-db",
+      CF_ADMIN_WORKER_NAME: "retro-db",
     },
     commandExists: () => true,
     gitStatus: () => ({ ok: true, output: "" }),
@@ -982,8 +1000,8 @@ test("blocks when runtime Cloudflare Pages project does not match external evide
   const report = formatReleaseReadinessReport(result);
 
   assert.equal(result.ok, false);
-  assert.match(report, /CF_PAGES_PROJECT_NAME/);
-  assert.match(report, /expected Cloudflare Pages project/i);
+  assert.match(report, /CF_ADMIN_WORKER_NAME/);
+  assert.match(report, /expected Cloudflare Admin Worker/i);
   assert.match(report, /salary-hijacking-admin/);
 });
 

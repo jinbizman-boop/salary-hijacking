@@ -13,20 +13,23 @@ The release target requires these Workers:
 | API           | `salary-hijacking-api`           | `services/api/wrangler.toml`           |
 | Notifications | `salary-hijacking-notifications` | `services/notifications/wrangler.toml` |
 | Scheduler     | `salary-hijacking-scheduler`     | `services/scheduler/wrangler.toml`     |
+| Admin Console | `salary-hijacking-admin`         | `apps/admin/wrangler.jsonc`            |
 
 Staging and production names are defined in each `wrangler.toml` under
 `[env.staging]` and `[env.production]`.
 
-## Required Pages Project
+## Required Admin OpenNext Worker
 
-The admin console must deploy to the Cloudflare Pages project
-`salary-hijacking-admin`.
+The admin console is a Next.js application deployed as a Cloudflare Worker with
+OpenNext output, not a Cloudflare Pages project. The canonical admin Worker is
+`salary-hijacking-admin`; staging uses `salary-hijacking-admin-staging`.
 
 The production admin domain is:
 
 - `admin.salaryhijacking.com`
 
-See `infra/cloudflare/pages/admin-pages.md` for the Pages build contract.
+See `infra/cloudflare/pages/admin-pages.md` for the Admin OpenNext Worker build
+contract.
 
 ## Runtime Resources
 
@@ -62,6 +65,7 @@ Before production deployment, run a dry run for each Worker:
 corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml
 corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml
 corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml
+corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --dry-run --env production --config wrangler.jsonc
 ```
 
 The actual deployment command must use the intended environment:
@@ -70,6 +74,7 @@ The actual deployment command must use the intended environment:
 corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --env production --config wrangler.toml
 corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --env production --config wrangler.toml
 corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --env production --config wrangler.toml
+corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --env production --config wrangler.jsonc
 ```
 
 ## Secret Policy
@@ -89,12 +94,12 @@ Read-only connector evidence is tracked in:
 - `docs/codex/14_EXTERNAL_RELEASE_EVIDENCE.md`
 
 As of the latest snapshot, Cloudflare connector access is visible, but the
-Salary Hijacking Workers and Pages project are not yet proven in the connected
-account.
+Salary Hijacking Workers, including the Admin OpenNext Worker, are not yet
+proven in the connected account.
 
 Latest read-only check on 2026-06-30:
 
 - Workers list: empty.
-- Pages projects: `retro-db` only.
-- `retro-db` is unrelated and must not be used as a Salary Hijacking deployment
-  target.
+- Pages projects: `retro-db` only. The current admin target is a Worker, but
+  `retro-db` remains unrelated and must not be used as a Salary Hijacking
+  deployment target.

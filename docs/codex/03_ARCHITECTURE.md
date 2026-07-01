@@ -15,7 +15,7 @@ Root tooling:
 - Turbo task graph
 - TypeScript
 - Vitest/Jest/Playwright/Detox hooks by package
-- Cloudflare Workers and Pages targets
+- Cloudflare Workers targets, including the Admin OpenNext Worker
 - Expo/EAS mobile targets
 
 ## Applications

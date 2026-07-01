@@ -411,7 +411,7 @@ jobs:
 
           BUILD_OUTPUTS=()
           for dir in \
-            "apps/admin/dist" \
+            "apps/admin/.open-next" \
             "apps/web/dist" \
             "apps/mobile/dist" \
             "services/api/dist" \

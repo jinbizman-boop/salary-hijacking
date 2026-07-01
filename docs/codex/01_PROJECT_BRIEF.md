@@ -2,7 +2,7 @@
 codex_context: true
 priority: P0
 scope: repository
-last_verified: 2026-06-30
+last_verified: 2026-07-01
 ---
 
 # Project Brief
@@ -65,8 +65,9 @@ Verified on 2026-06-30 KST:
   `git ls-remote origin refs/heads/main` proves remote branch read access.
 - User reported GitHub, Cloudflare, and Neon plugins/connectors are linked. Read-only connector checks now prove GitHub app installation, Cloudflare account access, and Neon organization access.
 - The user provided the new Salary Hijacking GitHub repository URL and Quick
-  setup screenshot. Connector checks do not yet prove Cloudflare Workers/Pages
-  resources or a Neon project. Existing unrelated repositories, including
+  setup screenshot. Connector checks prove a new Neon project named
+  `salary-hijacking`, but do not yet prove the required Cloudflare Workers,
+  including the Admin OpenNext Worker. Existing unrelated repositories, including
   `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused.
   See
   `docs/codex/14_EXTERNAL_RELEASE_EVIDENCE.md` and
@@ -98,4 +99,4 @@ The project still needs hardening in:
 - real mobile native E2E execution with Android SDK/emulator or iOS simulator,
 - production-like API/Admin/mobile smoke against deployed environments,
 - Bash/CI execution verification for the local operational scripts,
-- matching remote Cloudflare/Neon resources for the Salary Hijacking release target.
+- matching remote Cloudflare Worker resources for the Salary Hijacking release target.

@@ -9,9 +9,11 @@
     "expectedWorkers": [
       "salary-hijacking-api",
       "salary-hijacking-notifications",
-      "salary-hijacking-scheduler"
+      "salary-hijacking-scheduler",
+      "salary-hijacking-admin"
     ],
-    "expectedPagesProject": "salary-hijacking-admin"
+    "expectedAdminWorker": "salary-hijacking-admin",
+    "adminDeploymentType": "workers-opennext"
   },
   "neon": {
     "expectedProjectHint": "salary-hijacking"

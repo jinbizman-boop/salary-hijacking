@@ -1,50 +1,71 @@
-# Admin Pages
+# Admin OpenNext Worker
 
-This file defines the Cloudflare Pages release contract for the Salary Hijacking
-admin console.
+This file defines the Cloudflare Worker release contract for the Salary
+Hijacking admin console. The path is retained for compatibility with existing
+release checks, but the deployment target is no longer Cloudflare Pages.
 
-## Project
+## Worker
 
-- Cloudflare Pages project: `salary-hijacking-admin`
+- Cloudflare Worker: `salary-hijacking-admin`
+- Staging Worker: `salary-hijacking-admin-staging`
 - Production domain: `admin.salaryhijacking.com`
 - Staging domain: `staging-admin.salaryhijacking.com`
-- Preview branch: `staging`
-- Production branch: `main`
+- Deployment adapter: OpenNext for Cloudflare Workers
 
 ## Build Contract
 
 Build command:
 
 ```powershell
-corepack pnpm --filter @salary-hijacking/admin run build
+corepack pnpm --filter @salary-hijacking/admin run build:cloudflare
 ```
 
 Output directory:
 
 ```text
-apps/admin/.next
+apps/admin/.open-next
 ```
 
-The project currently builds as a Next.js admin console. Cloudflare Pages
-deployment must use the repository's verified build output and must not bypass
-the root quality gates.
+Required output:
 
-## Required Pages Settings
+```text
+apps/admin/.open-next/worker.js
+apps/admin/.open-next/assets
+```
 
-The Pages project must be connected to the expected Salary Hijacking GitHub
-repository before production release. The release operator must verify:
+Deployment command:
+
+```powershell
+corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --env production --config wrangler.jsonc
+```
+
+The admin app uses `apps/admin/wrangler.jsonc` with `main` set to
+`.open-next/worker.js`, assets set to `.open-next/assets`, `nodejs_compat`
+enabled, and observability enabled.
+
+`apps/admin/open-next.config.ts` must keep `buildCommand:
+"corepack pnpm run build"` so OpenNext uses the repository-pinned pnpm version
+instead of a globally installed pnpm.
+
+## Required Worker Settings
+
+The Cloudflare Worker must be connected to the expected Salary Hijacking GitHub
+repository and deployment workflow before production release. The release
+operator must verify:
 
 - the GitHub repository points to `jinbizman-boop/salary-hijacking`;
-- preview deployments run from non-production branches;
-- production deployments run from `main`;
-- environment variables are scoped by preview, staging, and production;
+- staging deployments use the `staging` Worker environment;
+- production deployments use the `production` Worker environment;
+- environment variables are scoped by staging and production;
 - no secret value is committed to this repository;
-- the production custom domain has a valid certificate.
+- the production custom domain has a valid certificate;
+- `admin.salaryhijacking.com` routes to `salary-hijacking-admin`.
 
 ## Required Secrets
 
-Pages builds may reference secret names, but their values must live in GitHub
-Environments, Cloudflare Pages environment variables, or provider secret stores.
+The Worker build and runtime may reference secret names, but their values must
+live in GitHub Environments, Cloudflare Worker secrets, or provider secret
+stores.
 
 Required names include:
 
@@ -63,9 +84,17 @@ Before publishing the admin console:
 ```powershell
 corepack pnpm run quality
 corepack pnpm run build
+corepack pnpm --filter @salary-hijacking/admin run build:cloudflare
+corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --dry-run --env production --config wrangler.jsonc
 corepack pnpm run check:release-readiness -- --soft
 ```
 
-Then run the Pages deployment workflow or an equivalent Cloudflare Pages deploy
-command from the correct environment. Do not treat a successful local build as a
-production deployment.
+Then run the Admin Worker deployment workflow or an equivalent Wrangler deploy
+command from the correct environment. Do not treat a successful local build or
+dry run as a production deployment.
+
+On this Windows company PC, `opennextjs-cloudflare build` reaches the Next.js
+standalone tracing phase only when run outside the Codex filesystem sandbox, then
+fails because Windows blocks symlink creation for `.next/standalone`. The same
+contract still needs a Linux CI, WSL, or Windows Developer Mode environment for
+full OpenNext output verification.

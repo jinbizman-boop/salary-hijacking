@@ -2,7 +2,7 @@
 codex_context: true
 priority: P0
 scope: repository-baseline
-last_verified: 2026-06-30
+last_verified: 2026-07-01
 ---
 
 # Baseline Verification Map
@@ -29,8 +29,8 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - mobile/API bootstrap, payroll current/recalculate, and profile/privacy-export contracts: aligned in current code; profile alias is covered by `services/api/tests/mobile-profile-contract.test.ts`, and manifest alignment is covered by `services/api/tests/mobile-route-manifest-contract.test.ts`
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
-- infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, and release target mismatch risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, explicit `RETRO-DB` protection, `release/release-targets.json`, GitHub write/push proof, `GITHUB_REPOSITORY`, `CF_PAGES_PROJECT_NAME`, and `git remote origin` through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
-- public release remains blocked by missing runtime secrets, missing Salary Hijacking Cloudflare/Neon release-resource evidence, missing local Android `adb`/`emulator` evidence, real DB migration/seed execution, staging/production deploy, certificates, store builds, and operating QA. Local GitHub/Neon CLI absence is a warning when connector evidence proves account access.
+- infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, and release target mismatch risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, explicit `RETRO-DB` protection, `release/release-targets.json`, GitHub write/push proof, `GITHUB_REPOSITORY`, `CF_ADMIN_WORKER_NAME`, and `git remote origin` through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
+- public release remains blocked by missing runtime secrets, missing Salary Hijacking Cloudflare Worker release-resource evidence, missing local Android `adb`/`emulator` evidence, real DB migration/seed execution, staging/production deploy, certificates, store builds, and operating QA. Local GitHub/Neon CLI absence is a warning when connector evidence proves account access; the Neon project itself is now observed.
 
 The historical tables below are retained to explain why the hardening work was prioritized.
 
@@ -163,7 +163,7 @@ The Worker service typecheck blocker, package-level pnpm warning blocker, mobile
 
 1. Provide or configure runtime secrets in the correct local/CI secret stores without committing values.
 2. Keep Git repository metadata connected to the expected remote repository `jinbizman-boop/salary-hijacking`.
-3. Verify Cloudflare Workers/Pages resources, Neon project, EAS project, Android SDK, `adb`, and `emulator` in the execution environment. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`.
+3. Verify Cloudflare Worker resources, EAS project, Android SDK, `adb`, and `emulator` in the execution environment. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`; do not reuse unrelated Cloudflare Pages projects such as `retro-db`.
 4. Run real staging DB migration/seed and API smoke checks against Neon and Cloudflare.
 5. Run native mobile E2E and store build/submission dry runs.
 6. Execute staging/production deploy, rollback rehearsal, observability checks, and operating QA.

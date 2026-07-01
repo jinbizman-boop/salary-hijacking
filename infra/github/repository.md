@@ -15,7 +15,7 @@ work. The default target is:
 - HTTPS remote: `https://github.com/jinbizman-boop/salary-hijacking.git`
 
 Existing repositories must not be modified, renamed, pushed to, configured with
-secrets, connected to Cloudflare Pages, or used as deploy sources for Salary
+secrets, connected to unrelated Cloudflare deploy targets, or used as deploy sources for Salary
 Hijacking.
 
 The `Retro Games` repository is unrelated to Salary Hijacking and must not be
@@ -32,7 +32,7 @@ Before public release, create the new repository and configure:
 - required status checks for CI, quality, tests, build, security scan, and E2E
 - GitHub Environments for preview, staging, production, and release
 - environment-scoped secrets using the names in `infra/github/secrets.md`
-- protected deploy workflows for Cloudflare Workers, Cloudflare Pages, Neon DB
+- protected deploy workflows for Cloudflare Workers, Neon DB
   gates, and Expo/EAS mobile builds
 - release tags and release notes generated only after all readiness gates pass
 

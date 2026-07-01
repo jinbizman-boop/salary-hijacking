@@ -365,7 +365,7 @@ NEON
 WEBHOOK
 ```
 
-서버 비밀값은 Cloudflare Pages/Workers secret 또는 배포 환경의 private variable로 관리한다.
+서버 비밀값은 Cloudflare Worker secret 또는 배포 환경의 private variable로 관리한다.
 
 ---
 
@@ -404,7 +404,7 @@ pnpm --filter @salary-hijacking/admin dev
 7. privacy check
 8. policy check
 9. Next build
-10. Cloudflare Pages build
+10. Cloudflare OpenNext Worker build
 11. staging deploy
 12. staging E2E
 13. production deploy
@@ -477,7 +477,7 @@ pnpm --filter @salary-hijacking/admin ci
 
 ## 14. 배포 기준
 
-관리자 앱은 Cloudflare Pages 배포를 기준으로 한다.
+관리자 앱은 Cloudflare OpenNext Worker 배포를 기준으로 한다.
 
 배포 전 확인 항목은 다음과 같다.
 

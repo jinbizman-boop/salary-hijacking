@@ -33,17 +33,13 @@ on:
   workflow_dispatch:
     inputs:
       deploy_target:
-        description: "배포 대상 환경"
+        description: "Deployment target"
         required: true
         default: "preview"
         type: choice
         options:
           - preview
           - production
-      deploy_branch:
-        description: "Cloudflare Pages 배포 브랜치명. 비우면 현재 Git 브랜치를 사용합니다."
-        required: false
-        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.deploy_target || 'auto' }}
@@ -62,8 +58,8 @@ env:
   FORCE_COLOR: "1"
   TZ: Asia/Seoul
   ADMIN_APP_DIR: ${{ vars.ADMIN_APP_DIR || 'apps/admin' }}
-  ADMIN_DIST_DIR: ${{ vars.ADMIN_DIST_DIR || 'apps/admin/dist' }}
-  CLOUDFLARE_PAGES_PROJECT_NAME: ${{ vars.CLOUDFLARE_ADMIN_PAGES_PROJECT_NAME || 'salary-hijacking-admin' }}
+  ADMIN_OPEN_NEXT_DIR: ${{ vars.ADMIN_OPEN_NEXT_DIR || 'apps/admin/.open-next' }}
+  CLOUDFLARE_ADMIN_WORKER_NAME: ${{ vars.CLOUDFLARE_ADMIN_WORKER_NAME || 'salary-hijacking-admin' }}
 
 jobs:
   verify-admin:
@@ -88,7 +84,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
-      - name: Verify admin deployment contract
+      - name: Verify admin OpenNext Worker contract
         run: |
           set -euo pipefail
 
@@ -97,7 +93,8 @@ jobs:
           const path = require("path");
 
           const adminAppDir = process.env.ADMIN_APP_DIR || "apps/admin";
-          const adminDistDir = process.env.ADMIN_DIST_DIR || "apps/admin/dist";
+          const openNextDir = process.env.ADMIN_OPEN_NEXT_DIR || "apps/admin/.open-next";
+          const adminWorkerName = process.env.CLOUDFLARE_ADMIN_WORKER_NAME || "salary-hijacking-admin";
 
           const fail = (message) => {
             console.error(`::error::${message}`);
@@ -108,7 +105,7 @@ jobs:
             "package.json",
             "pnpm-lock.yaml",
             "pnpm-workspace.yaml",
-            ".github/workflows/deploy-admin.yml"
+            ".github/workflows/deploy-admin.yml",
           ];
 
           for (const file of requiredRootFiles) {
@@ -121,39 +118,74 @@ jobs:
             fail(`Admin app directory does not exist: ${adminAppDir}`);
           }
 
+          if (openNextDir === "." || openNextDir === "/" || openNextDir.trim() === "") {
+            fail(`ADMIN_OPEN_NEXT_DIR is unsafe: ${openNextDir}`);
+          }
+
+          if (adminWorkerName !== "salary-hijacking-admin") {
+            fail(`CLOUDFLARE_ADMIN_WORKER_NAME must be salary-hijacking-admin, got ${adminWorkerName}`);
+          }
+
           const adminPackagePath = path.join(adminAppDir, "package.json");
+          const openNextConfigPath = path.join(adminAppDir, "open-next.config.ts");
+          const wranglerConfigPath = path.join(adminAppDir, "wrangler.jsonc");
 
           if (!fs.existsSync(adminPackagePath)) {
             fail(`Admin package.json does not exist: ${adminPackagePath}`);
           }
 
+          if (!fs.existsSync(wranglerConfigPath)) {
+            fail(`Admin wrangler.jsonc does not exist: ${wranglerConfigPath}`);
+          }
+
+          if (!fs.existsSync(openNextConfigPath)) {
+            fail(`Admin open-next.config.ts does not exist: ${openNextConfigPath}`);
+          }
+
           const rootPackage = JSON.parse(fs.readFileSync("package.json", "utf8"));
           const adminPackage = JSON.parse(fs.readFileSync(adminPackagePath, "utf8"));
+          const openNextConfig = fs.readFileSync(openNextConfigPath, "utf8");
+          const wranglerConfig = fs.readFileSync(wranglerConfigPath, "utf8");
 
           if (!rootPackage.packageManager || !rootPackage.packageManager.startsWith("pnpm@")) {
             fail('Root package.json must define "packageManager": "pnpm@<version>".');
           }
 
-          if (!adminPackage.scripts || !adminPackage.scripts.build) {
-            fail(`Admin package.json must define a build script: ${adminPackagePath}`);
+          for (const script of ["build:cloudflare", "deploy:staging", "deploy:production"]) {
+            if (!adminPackage.scripts || !adminPackage.scripts[script]) {
+              fail(`Admin package.json must define script "${script}".`);
+            }
           }
 
-          const recommendedScripts = ["lint", "typecheck", "test"];
-          const missingRecommendedScripts = recommendedScripts.filter((script) => !adminPackage.scripts?.[script]);
-
-          if (missingRecommendedScripts.length > 0) {
-            console.warn(`::warning::Admin package.json is missing recommended scripts: ${missingRecommendedScripts.join(", ")}`);
+          for (const marker of [
+            '"name": "salary-hijacking-admin"',
+            '"main": ".open-next/worker.js"',
+            '"directory": ".open-next/assets"',
+            '"nodejs_compat"',
+            '"observability"',
+          ]) {
+            if (!wranglerConfig.includes(marker)) {
+              fail(`Admin wrangler.jsonc is missing required marker: ${marker}`);
+            }
           }
 
-          if (adminDistDir === "." || adminDistDir === "/" || adminDistDir.trim() === "") {
-            fail(`ADMIN_DIST_DIR is unsafe: ${adminDistDir}`);
+          for (const marker of [
+            "buildCommand",
+            "corepack pnpm run build",
+            "cloudflare-node",
+            "cloudflare-edge",
+            "node:crypto",
+          ]) {
+            if (!openNextConfig.includes(marker)) {
+              fail(`Admin open-next.config.ts is missing required marker: ${marker}`);
+            }
           }
 
           if (process.exitCode) {
             process.exit(process.exitCode);
           }
 
-          console.log("Admin deployment contract verified.");
+          console.log("Admin OpenNext Worker deployment contract verified.");
           NODE
 
       - name: Install dependencies
@@ -192,48 +224,88 @@ jobs:
             echo "Admin test script is not configured. Skipping."
           fi
 
-      - name: Build admin console
-        run: pnpm --dir "$ADMIN_APP_DIR" build
+      - name: Build admin OpenNext Worker
+        run: pnpm --dir "$ADMIN_APP_DIR" build:cloudflare
 
-      - name: Verify admin build output
+      - name: Verify admin OpenNext output
         run: |
           set -euo pipefail
 
-          if [ ! -d "$ADMIN_DIST_DIR" ]; then
-            echo "::error::Admin build output directory does not exist: $ADMIN_DIST_DIR"
+          if [ ! -f "$ADMIN_OPEN_NEXT_DIR/worker.js" ]; then
+            echo "::error::Admin OpenNext worker does not exist: $ADMIN_OPEN_NEXT_DIR/worker.js"
             exit 1
           fi
 
-          if [ -z "$(find "$ADMIN_DIST_DIR" -type f | head -n 1)" ]; then
-            echo "::error::Admin build output directory is empty: $ADMIN_DIST_DIR"
+          if [ ! -d "$ADMIN_OPEN_NEXT_DIR/assets" ]; then
+            echo "::error::Admin OpenNext assets directory does not exist: $ADMIN_OPEN_NEXT_DIR/assets"
             exit 1
           fi
 
-          echo "Admin build output verified: $ADMIN_DIST_DIR"
+          if [ -z "$(find "$ADMIN_OPEN_NEXT_DIR/assets" -type f | head -n 1)" ]; then
+            echo "::error::Admin OpenNext assets directory is empty: $ADMIN_OPEN_NEXT_DIR/assets"
+            exit 1
+          fi
 
-      - name: Scan admin build for unsafe secret exposure
+          echo "Admin OpenNext output verified: $ADMIN_OPEN_NEXT_DIR"
+
+      - name: Scan admin OpenNext output for raw secret values
         run: |
           set -euo pipefail
 
-          if grep -RInE "(CLOUDFLARE_API_TOKEN|DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|NEON_|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY)" "$ADMIN_DIST_DIR"; then
-            echo "::error::Potential secret-like token found in admin build output."
-            exit 1
-          fi
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
 
-          echo "No known secret identifiers found in admin build output."
+          const root = process.env.ADMIN_OPEN_NEXT_DIR || "apps/admin/.open-next";
+          const secretPatterns = [
+            /postgres(?:ql)?:\/\/[^\s"'`<>]+/i,
+            /-----BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY-----/,
+            /\b(?:ghp|github_pat|sk-|napi_|xox[baprs]-)[A-Za-z0-9_-]{20,}\b/,
+            /https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9/_-]+/i,
+          ];
 
-      - name: Upload admin build artifact
+          const findings = [];
+          const walk = (dir) => {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const filePath = path.join(dir, entry.name);
+              if (entry.isDirectory()) {
+                walk(filePath);
+                continue;
+              }
+              if (!entry.isFile()) continue;
+              const data = fs.readFileSync(filePath);
+              if (data.includes(0)) continue;
+              const text = data.toString("utf8");
+              for (const pattern of secretPatterns) {
+                if (pattern.test(text)) {
+                  findings.push(filePath);
+                  break;
+                }
+              }
+            }
+          };
+
+          walk(root);
+          if (findings.length > 0) {
+            console.error(`::error::Potential raw secret values found in admin OpenNext output: ${findings.join(", ")}`);
+            process.exit(1);
+          }
+
+          console.log("No raw secret value patterns found in admin OpenNext output.");
+          NODE
+
+      - name: Upload admin OpenNext artifact
         uses: actions/upload-artifact@v4
         with:
-          name: admin-build-${{ github.run_attempt }}
+          name: admin-opennext-${{ github.run_attempt }}
           if-no-files-found: error
           retention-days: 14
-          path: ${{ env.ADMIN_DIST_DIR }}/**
+          path: ${{ env.ADMIN_OPEN_NEXT_DIR }}/**
 
   deploy-admin:
     name: Deploy admin console
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     needs:
       - verify-admin
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -280,70 +352,63 @@ jobs:
             exit 1
           fi
 
-          if [ -z "${CLOUDFLARE_PAGES_PROJECT_NAME:-}" ]; then
-            echo "::error::Missing Cloudflare Pages project name. Set vars.CLOUDFLARE_ADMIN_PAGES_PROJECT_NAME or env CLOUDFLARE_PAGES_PROJECT_NAME."
+          if [ "${CLOUDFLARE_ADMIN_WORKER_NAME:-}" != "salary-hijacking-admin" ]; then
+            echo "::error::CLOUDFLARE_ADMIN_WORKER_NAME must be salary-hijacking-admin"
             exit 1
           fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build admin console for deployment
-        run: pnpm --dir "$ADMIN_APP_DIR" build
+      - name: Build admin OpenNext Worker for deployment
+        run: pnpm --dir "$ADMIN_APP_DIR" build:cloudflare
 
       - name: Verify deployment output
         run: |
           set -euo pipefail
 
-          if [ ! -d "$ADMIN_DIST_DIR" ]; then
-            echo "::error::Admin build output directory does not exist: $ADMIN_DIST_DIR"
+          if [ ! -f "$ADMIN_OPEN_NEXT_DIR/worker.js" ]; then
+            echo "::error::Admin OpenNext worker does not exist: $ADMIN_OPEN_NEXT_DIR/worker.js"
             exit 1
           fi
 
-          if [ -z "$(find "$ADMIN_DIST_DIR" -type f | head -n 1)" ]; then
-            echo "::error::Admin build output directory is empty: $ADMIN_DIST_DIR"
+          if [ ! -d "$ADMIN_OPEN_NEXT_DIR/assets" ]; then
+            echo "::error::Admin OpenNext assets directory does not exist: $ADMIN_OPEN_NEXT_DIR/assets"
             exit 1
           fi
 
-      - name: Resolve Cloudflare Pages branch
+      - name: Resolve Cloudflare Worker environment
         id: deploy_context
         run: |
           set -euo pipefail
 
           DEPLOY_TARGET="${{ inputs.deploy_target || '' }}"
-          DEPLOY_BRANCH_INPUT="${{ inputs.deploy_branch || '' }}"
 
-          if [ -n "$DEPLOY_BRANCH_INPUT" ]; then
-            DEPLOY_BRANCH="$DEPLOY_BRANCH_INPUT"
-          elif [ "$DEPLOY_TARGET" = "production" ]; then
-            DEPLOY_BRANCH="main"
-          elif [ -n "${GITHUB_REF_NAME:-}" ]; then
-            DEPLOY_BRANCH="$GITHUB_REF_NAME"
+          if [ "${GITHUB_REF_NAME:-}" = "main" ] || [ "$DEPLOY_TARGET" = "production" ]; then
+            WRANGLER_ENV="production"
+            WORKER_NAME="salary-hijacking-admin"
           else
-            DEPLOY_BRANCH="preview"
+            WRANGLER_ENV="staging"
+            WORKER_NAME="salary-hijacking-admin-staging"
           fi
 
-          if [ "${GITHUB_REF_NAME:-}" = "main" ]; then
-            DEPLOY_BRANCH="main"
-          fi
+          echo "wrangler_env=$WRANGLER_ENV" >> "$GITHUB_OUTPUT"
+          echo "worker_name=$WORKER_NAME" >> "$GITHUB_OUTPUT"
+          echo "Resolved Cloudflare Worker env: $WRANGLER_ENV"
+          echo "Resolved Cloudflare Worker name: $WORKER_NAME"
 
-          echo "branch=$DEPLOY_BRANCH" >> "$GITHUB_OUTPUT"
-          echo "Resolved Cloudflare Pages branch: $DEPLOY_BRANCH"
-
-      - name: Deploy admin to Cloudflare Pages
+      - name: Deploy admin OpenNext Worker
         id: cloudflare_deploy
         run: |
           set -euo pipefail
 
-          pnpm dlx wrangler@latest pages deploy "$ADMIN_DIST_DIR" \
-            --project-name "$CLOUDFLARE_PAGES_PROJECT_NAME" \
-            --branch "${{ steps.deploy_context.outputs.branch }}"
+          pnpm --dir "$ADMIN_APP_DIR" exec wrangler deploy --env "${{ steps.deploy_context.outputs.wrangler_env }}" --config wrangler.jsonc --keep-vars
 
       - name: Write deployment summary
         if: always()
         run: |
           {
-            echo "## 급여납치 관리자 콘솔 배포 결과"
+            echo "## Salary Hijacking admin deployment"
             echo ""
             echo "- Workflow: $GITHUB_WORKFLOW"
             echo "- Repository: $GITHUB_REPOSITORY"
@@ -351,7 +416,7 @@ jobs:
             echo "- Ref name: $GITHUB_REF_NAME"
             echo "- Commit: $GITHUB_SHA"
             echo "- Admin app dir: $ADMIN_APP_DIR"
-            echo "- Admin dist dir: $ADMIN_DIST_DIR"
-            echo "- Cloudflare Pages project: $CLOUDFLARE_PAGES_PROJECT_NAME"
-            echo "- Cloudflare Pages branch: ${{ steps.deploy_context.outputs.branch }}"
+            echo "- OpenNext output dir: $ADMIN_OPEN_NEXT_DIR"
+            echo "- Cloudflare Worker env: ${{ steps.deploy_context.outputs.wrangler_env }}"
+            echo "- Cloudflare Worker name: ${{ steps.deploy_context.outputs.worker_name }}"
           } >> "$GITHUB_STEP_SUMMARY"

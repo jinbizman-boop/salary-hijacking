@@ -46,12 +46,14 @@ Cloudflare:
 - Cloudflare connector account access is visible.
 - The read-only Workers list returned zero Workers.
 - The read-only Pages list returned `retro-db` only. That Pages project is
-  unrelated and must not be reused for Salary Hijacking.
+  unrelated and must not be reused for Salary Hijacking. The canonical admin
+  console target is now an OpenNext Cloudflare Worker, not a Pages project.
 - Required Salary Hijacking Workers are not observed:
   - `salary-hijacking-api`
   - `salary-hijacking-notifications`
   - `salary-hijacking-scheduler`
-- Required Salary Hijacking admin Pages project is not observed.
+  - `salary-hijacking-admin`
+- Required Salary Hijacking admin OpenNext Worker is not observed.
 - Production Wrangler dry-run passed for:
   - `salary-hijacking-api-production`
   - `salary-hijacking-notifications-production`
@@ -90,8 +92,8 @@ readiness. Release readiness requires both:
 
 As of this snapshot, the GitHub repository target, local `origin`,
 authenticated push access, and Neon project target are aligned. The release
-status remains blocked by runtime secrets, Cloudflare Workers/Pages project
-matching, Cloudflare runtime resource provisioning, mobile native E2E setup,
+status remains blocked by runtime secrets, Cloudflare Worker resource matching,
+Cloudflare runtime resource provisioning, mobile native E2E setup,
 real DB migration/seed execution, deployment, certificates, store builds, and
 operating QA.
 

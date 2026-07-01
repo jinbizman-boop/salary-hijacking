@@ -20,6 +20,8 @@ const REQUIRED_FILES = [
   "infra/neon/backup-restore.md",
   "infra/cloudflare/README.md",
   "infra/cloudflare/pages/admin-pages.md",
+  "apps/admin/open-next.config.ts",
+  "apps/admin/wrangler.jsonc",
   "infra/github/secrets.md",
   "infra/github/repository.md",
   "apps/mobile/package.json",
@@ -67,7 +69,10 @@ const REQUIRED_TOKENS_BY_FILE = {
   ".github/workflows/deploy-admin.yml": [
     "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}",
     "${{ secrets.CLOUDFLARE_API_TOKEN }}",
-    "pages deploy",
+    "build:cloudflare",
+    "wrangler deploy --env",
+    "ADMIN_OPEN_NEXT_DIR",
+    "salary-hijacking-admin",
   ],
   ".github/workflows/mobile-build.yml": [
     "${{ secrets.EXPO_TOKEN }}",
@@ -139,9 +144,25 @@ const REQUIRED_TOKENS_BY_FILE = {
   "infra/cloudflare/pages/admin-pages.md": [
     "salary-hijacking-admin",
     "admin.salaryhijacking.com",
-    "Cloudflare Pages",
+    "OpenNext",
+    "Cloudflare Worker",
     "Build command",
     "Output directory",
+    "wrangler deploy --env",
+  ],
+  "apps/admin/open-next.config.ts": [
+    "buildCommand",
+    "corepack pnpm run build",
+    "cloudflare-node",
+    "cloudflare-edge",
+    "node:crypto",
+  ],
+  "apps/admin/wrangler.jsonc": [
+    "salary-hijacking-admin",
+    ".open-next/worker.js",
+    ".open-next/assets",
+    "nodejs_compat",
+    "observability",
   ],
   "infra/github/secrets.md": [
     "CLOUDFLARE_ACCOUNT_ID",

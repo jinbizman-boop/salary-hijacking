@@ -26,15 +26,18 @@
     "expectedWorkers": [
       "salary-hijacking-api",
       "salary-hijacking-notifications",
-      "salary-hijacking-scheduler"
+      "salary-hijacking-scheduler",
+      "salary-hijacking-admin"
     ],
     "missingWorkers": [
       "salary-hijacking-api",
       "salary-hijacking-notifications",
-      "salary-hijacking-scheduler"
+      "salary-hijacking-scheduler",
+      "salary-hijacking-admin"
     ],
-    "expectedPagesProject": "salary-hijacking-admin",
-    "pagesProjectMatched": false,
+    "expectedAdminWorker": "salary-hijacking-admin",
+    "adminDeploymentType": "workers-opennext",
+    "adminWorkerMatched": false,
     "observedWorkerNames": [],
     "observedPagesProjectNames": ["retro-db"],
     "productionDryRunVerified": true,
@@ -49,7 +52,7 @@
       "notifications.salaryhijacking.com",
       "scheduler.salaryhijacking.com"
     ],
-    "note": "Cloudflare connector account access was observed and refreshed at 2026-07-01T00:24:02Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. No matching Salary Hijacking admin Pages project was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
+    "note": "Cloudflare connector account access was observed and refreshed at 2026-07-01T00:24:02Z. The account returned zero Workers and one Pages project named retro-db, which is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T00:34:34Z after custom-domain route patterns were corrected, but no Worker was deployed and no Cloudflare resource existence proof is claimed."
   },
   "neon": {
     "connectorReachable": true,

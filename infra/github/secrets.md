@@ -18,12 +18,12 @@ different new Salary Hijacking repository.
 
 Existing repositories must not be modified or reused for this project. The
 `Retro Games` repository is unrelated and must not receive Salary Hijacking
-commits, secrets, workflow changes, branch protection changes, Cloudflare Pages
+commits, secrets, workflow changes, branch protection changes, Cloudflare Workers
 links, or release artifacts.
 
 The observed `jinbizman-boop/RETRO-DB` repository is also unrelated and must not
 receive Salary Hijacking commits, secrets, workflow changes, branch protection
-changes, Cloudflare Pages links, or release artifacts.
+changes, Cloudflare Worker links, or release artifacts.
 
 Repository creation and branch protection are tracked in
 `infra/github/repository.md`.

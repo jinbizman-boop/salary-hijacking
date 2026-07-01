@@ -54,6 +54,9 @@ jobs:
     ".github/workflows/deploy-admin.yml": `
 name: Deploy Admin
 on: [workflow_dispatch]
+env:
+  ADMIN_OPEN_NEXT_DIR: apps/admin/.open-next
+  CLOUDFLARE_ADMIN_WORKER_NAME: salary-hijacking-admin
 jobs:
   deploy:
     environment:
@@ -62,7 +65,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
-      - run: pnpm dlx wrangler@latest pages deploy apps/admin/dist
+      - run: pnpm --dir apps/admin build:cloudflare
+      - run: pnpm --dir apps/admin exec wrangler deploy --env staging --config wrangler.jsonc
 `,
     ".github/workflows/mobile-build.yml": `
 name: Mobile Build
@@ -191,7 +195,7 @@ Required Workers:
 - salary-hijacking-notifications
 - salary-hijacking-scheduler
 
-Required Pages project:
+Required Admin OpenNext Worker:
 - salary-hijacking-admin
 
 Required runtime resources:
@@ -205,14 +209,51 @@ Required runtime resources:
 - wrangler deploy --env
 `,
     "infra/cloudflare/pages/admin-pages.md": `
-# Admin Pages
+# Admin OpenNext Worker
 
-Cloudflare Pages project: salary-hijacking-admin
+Cloudflare Worker: salary-hijacking-admin
 Production domain: admin.salaryhijacking.com
-Preview branch: staging
-Build command: corepack pnpm --filter @salary-hijacking/admin run build
-Output directory: apps/admin/.next
+Staging Worker: salary-hijacking-admin-staging
+Build command: corepack pnpm --filter @salary-hijacking/admin run build:cloudflare
+Output directory: apps/admin/.open-next
+Deploy command: wrangler deploy --env production
 Required secrets are configured in GitHub or Cloudflare, never committed.
+`,
+    "apps/admin/open-next.config.ts": `
+export default {
+  buildCommand: "corepack pnpm run build",
+  default: {
+    override: {
+      wrapper: "cloudflare-node",
+      converter: "edge",
+      proxyExternalRequest: "fetch",
+      incrementalCache: "dummy",
+      tagCache: "dummy",
+      queue: "dummy",
+    },
+  },
+  edgeExternals: ["node:crypto"],
+  middleware: {
+    external: true,
+    override: {
+      wrapper: "cloudflare-edge",
+      converter: "edge",
+      proxyExternalRequest: "fetch",
+      incrementalCache: "dummy",
+      tagCache: "dummy",
+      queue: "dummy",
+    },
+  },
+};
+`,
+    "apps/admin/wrangler.jsonc": `
+{
+  "name": "salary-hijacking-admin",
+  "main": ".open-next/worker.js",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": ".open-next/assets" },
+  "observability": { "enabled": true }
+}
 `,
     "infra/github/secrets.md": `
 # GitHub Secrets

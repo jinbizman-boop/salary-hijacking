@@ -43,7 +43,7 @@
 | `ISSUE_TEMPLATE/docs_task.yml`       | 문서 작업 표준화 | 문서 범위, 대상 독자, 요구사항 출처, 수락 기준 관리                              |
 | `ISSUE_TEMPLATE/feature_request.yml` | 기능 요청 표준화 | 사용자 가치, 화면/기능/데이터/API/운영/보안 요구사항 수집                        |
 | `workflows/ci.yml`                   | 기본 품질 게이트 | 설치, lint, typecheck, test, build, E2E, audit, 템플릿 회귀 방지                 |
-| `workflows/deploy-admin.yml`         | 관리자 콘솔 배포 | 관리자 앱 검증, 빌드 산출물 검사, Cloudflare Pages 배포                          |
+| `workflows/deploy-admin.yml`         | 관리자 콘솔 배포 | 관리자 앱 검증, OpenNext 산출물 검사, Cloudflare Worker 배포                     |
 | `workflows/deploy-api.yml`           | API 배포         | API 검증, Wrangler 설정, DB migration hook, Cloudflare Workers 배포, healthcheck |
 | `workflows/mobile-build.yml`         | 모바일 빌드      | Expo/EAS 설정 검증, 모바일 lint/test/build, Android/iOS EAS Build                |
 | `workflows/release.yml`              | 릴리즈 게이트    | 릴리즈 후보 검증, 릴리즈 노트, 체크섬, GitHub Release 생성                       |
