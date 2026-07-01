@@ -1761,6 +1761,34 @@ test("blocks when mobile native release evidence declares secret values", () => 
   );
 });
 
+test("blocks when mobile native release evidence declares unsafe privacy flags", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    privacy: {
+      containsEasToken: true,
+      containsStoreCredential: false,
+      containsBinaryDownloadUrl: false,
+      containsReviewerPassword: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:native:privacy-flags/);
+  assert.match(
+    report,
+    /mobile-native-evidence\.json must not declare native release secret or artifact privacy flags/,
+  );
+});
+
 test("uses EAS mobile native evidence when local Android tools are unavailable", () => {
   const rootDir = makeWorkspace();
   const result = analyzeReleaseReadiness({

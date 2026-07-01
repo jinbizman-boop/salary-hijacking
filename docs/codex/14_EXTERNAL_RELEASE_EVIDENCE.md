@@ -222,8 +222,9 @@ copied store-console payloads, and logs before writing local or tracked
 evidence. The tracked evidence generator requires `containsSecretValues=false`
 on local or fallback proof before writing refreshed mobile native evidence.
 Release readiness also independently blocks tracked mobile native evidence when
-`containsSecretValues` is not explicitly `false` or raw native release secret
-values are embedded.
+`containsSecretValues` is not explicitly `false`, raw native release secret
+values are embedded, or native release privacy flags declare EAS tokens, store
+credentials, binary download URLs, or reviewer passwords.
 Update `release/public-url-evidence.json` only with no-secret booleans proving
 production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and

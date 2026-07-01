@@ -2703,6 +2703,24 @@ const checkMobileNativeEvidence = (
     );
   }
 
+  const privacy = isPlainObject(evidence.privacy) ? evidence.privacy : {};
+  const unsafePrivacyFlagNames = [
+    "containsEasToken",
+    "containsStoreCredential",
+    "containsBinaryDownloadUrl",
+    "containsReviewerPassword",
+  ].filter((flagName) => privacy[flagName] === true);
+  addMobileCheck(
+    checks,
+    blockers,
+    unsafePrivacyFlagNames.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:native:privacy-flags",
+    unsafePrivacyFlagNames.length === 0
+      ? "native release privacy flags declare no embedded credentials or artifact URLs"
+      : `unsafe native release privacy flags are true: ${unsafePrivacyFlagNames.join(", ")}`,
+    `${MOBILE_NATIVE_EVIDENCE_PATH} must not declare native release secret or artifact privacy flags`,
+  );
+
   const android = isPlainObject(evidence.android) ? evidence.android : {};
   const ios = isPlainObject(evidence.ios) ? evidence.ios : {};
   const localAdbAvailable = commandExists("adb");

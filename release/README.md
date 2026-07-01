@@ -144,8 +144,10 @@ non-secret notes. It must use `containsSecretValues=false` and must not contain
 EAS tokens, Apple/Google credentials, binary download URLs, local artifact
 paths, signing keys, service accounts, reviewer passwords, or copied
 store-console payloads. Release readiness independently blocks tracked mobile
-native evidence when `containsSecretValues` is not explicitly `false` or when
-raw native release secret values are embedded.
+native evidence when `containsSecretValues` is not explicitly `false`, when raw
+native release secret values are embedded, or when native release privacy flags
+declare EAS tokens, store credentials, binary download URLs, or reviewer
+passwords.
 
 Safe database evidence generation command:
 
