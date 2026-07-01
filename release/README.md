@@ -27,6 +27,17 @@ The observed database migration, seed, API smoke, and rollback evidence is:
 
 - `release/database-evidence.json`
 
+Safe runtime secret evidence generation command:
+
+- `corepack pnpm run release:secrets-evidence`
+
+The command reads no committed secret values. If
+`release/secrets-proof.local.json` exists, it may contain only secret-name
+presence booleans, approved store names, and non-secret notes from provider
+consoles or CI environment settings. That local proof file is ignored by Git and
+must not contain raw database URLs, API tokens, DSNs, webhook URLs, private keys,
+service accounts, or real user/financial payloads.
+
 Safe database evidence generation command:
 
 - `corepack pnpm run release:database-evidence`

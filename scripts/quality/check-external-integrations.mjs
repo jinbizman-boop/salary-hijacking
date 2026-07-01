@@ -54,6 +54,8 @@ const REQUIRED_FILES = [
   "scripts/build/fix-esm-imports.test.mjs",
   "scripts/release/generate-database-evidence.mjs",
   "scripts/release/generate-database-evidence.test.mjs",
+  "scripts/release/generate-secrets-evidence.mjs",
+  "scripts/release/generate-secrets-evidence.test.mjs",
 ];
 
 const REQUIRED_TOKENS_BY_FILE = {
@@ -322,12 +324,18 @@ const REQUIRED_MOBILE_ASSET_FILES = [
 const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
   "scripts/build/fix-esm-imports.mjs",
   "scripts/build/fix-esm-imports.test.mjs",
+  "scripts/release/generate-database-evidence.mjs",
+  "scripts/release/generate-database-evidence.test.mjs",
+  "scripts/release/generate-secrets-evidence.mjs",
+  "scripts/release/generate-secrets-evidence.test.mjs",
 ];
 
 const LOCAL_GENERATED_OR_HOSTING_METADATA_PATHS = [
   "apps/admin/.vercel/project.json",
   "apps/admin/.open-next/.build/open-next.config.mjs",
   "apps/admin/.open-next/.build/open-next.config.edge.mjs",
+  "release/database-proof.local.json",
+  "release/secrets-proof.local.json",
 ];
 
 const SENSITIVE_KEY_PATTERN =

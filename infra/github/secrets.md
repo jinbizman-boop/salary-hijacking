@@ -10,6 +10,12 @@ Expo/EAS, Sentry, Slack, or another approved provider secret store. Do not commi
 values to `.env.example`, workflow files, Markdown, JSON evidence files, source
 code, tests, logs, screenshots, or release notes.
 
+When an operator has checked secret presence in a provider console, record only
+name/store booleans in `release/secrets-proof.local.json`, then run
+`corepack pnpm run release:secrets-evidence`. The local proof file is ignored by
+Git and must not contain any token, DSN, webhook URL, database URL, private key,
+service account, or copied secret value.
+
 ## Repository Boundary
 
 The Salary Hijacking release must use the new repository
@@ -82,12 +88,14 @@ only.
 Run:
 
 ```powershell
+corepack pnpm run release:secrets-evidence
 corepack pnpm run check:external-integrations
 corepack pnpm run check:release-readiness -- --soft
 ```
 
-`check:external-integrations` validates that workflow files and infrastructure
-docs reference required secret names without hard-coded secret values.
-`check:release-readiness` verifies whether runtime secret evidence is present in
-the current shell, release environment, or no-value
-`release/secrets-evidence.json` proof.
+`release:secrets-evidence` generates no-value runtime secret evidence and
+rejects proof files that contain raw values. `check:external-integrations`
+validates that workflow files and infrastructure docs reference required secret
+names without hard-coded secret values. `check:release-readiness` verifies
+whether runtime secret evidence is present in the current shell, release
+environment, or no-value `release/secrets-evidence.json` proof.

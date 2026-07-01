@@ -555,6 +555,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export function buildDatabaseEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-database-evidence.test.mjs":
       "import test from 'node:test';\n\ntest('generates no-secret database evidence', () => {});\n",
+    "scripts/release/generate-secrets-evidence.mjs":
+      "export function buildSecretsEvidence() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/generate-secrets-evidence.test.mjs":
+      "import test from 'node:test';\n\ntest('generates no-secret runtime secret evidence', () => {});\n",
   };
 
   for (const [relativePath, content] of Object.entries({
@@ -902,6 +906,10 @@ node_modules/
         '{"projectId":"example-local-project","orgId":"example-local-org"}\n',
       "apps/admin/.open-next/.build/open-next.config.mjs":
         "export default {};\n",
+      "release/database-proof.local.json":
+        '{"schemaVersion":1,"secretsRedacted":true,"containsSecretValues":false}\n',
+      "release/secrets-proof.local.json":
+        '{"schemaVersion":1,"secretsRedacted":true,"containsSecretValues":false}\n',
     });
     const init = spawnSync("git", ["init", "-b", "main"], {
       cwd: rootDir,
@@ -919,6 +927,8 @@ node_modules/
     assert.equal(result.ok, false);
     assert.match(result.failures.join("\n"), /apps\/admin\/\.vercel/);
     assert.match(result.failures.join("\n"), /apps\/admin\/\.open-next/);
+    assert.match(result.failures.join("\n"), /release\/database-proof/);
+    assert.match(result.failures.join("\n"), /release\/secrets-proof/);
     assert.match(result.failures.join("\n"), /must be ignored/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });

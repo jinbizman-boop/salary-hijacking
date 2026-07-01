@@ -216,6 +216,8 @@ docs/generated/
 release/artifacts/
 release/checksums/
 release/screenshots/*_probe.png
+release/*-proof.local.json
+release/*-proof.local.jsonc
 
 *.zip
 *.tar
