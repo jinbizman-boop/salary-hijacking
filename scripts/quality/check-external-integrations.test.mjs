@@ -461,6 +461,44 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
+    "release/cloudflare-runtime-evidence.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        observedAt: "2026-07-01T00:00:00Z",
+        source: "test-fixture",
+        secretsRedacted: true,
+        containsSecretValues: false,
+        workers: {
+          expectedWorkers: [
+            "salary-hijacking-api",
+            "salary-hijacking-notifications",
+            "salary-hijacking-scheduler",
+            "salary-hijacking-admin",
+          ],
+          observedWorkers: [
+            "salary-hijacking-api",
+            "salary-hijacking-notifications",
+            "salary-hijacking-scheduler",
+            "salary-hijacking-admin",
+          ],
+          productionDeployVerified: true,
+          adminWorkerVerified: true,
+        },
+        resources: {
+          r2BucketsVerified: true,
+          queuesVerified: true,
+          deadLetterQueuesVerified: true,
+          cronTriggersVerified: true,
+          workerSecretBindingsVerified: true,
+        },
+        networking: {
+          customDomainsVerified: true,
+          certificatesVerified: true,
+        },
+      },
+      null,
+      2,
+    ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",

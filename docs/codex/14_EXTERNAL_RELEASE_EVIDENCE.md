@@ -17,6 +17,7 @@ Machine-readable evidence lives in:
 - `release/external-release-evidence.json`
 - `release/mobile-native-evidence.json`
 - `release/secrets-evidence.json`
+- `release/cloudflare-runtime-evidence.json`
 
 ## 2026-07-01 Connector Snapshot
 
@@ -97,9 +98,10 @@ readiness. Release readiness requires both:
 As of this snapshot, the GitHub repository target, local `origin`,
 authenticated push access, and Neon project target are aligned. The release
 status remains blocked by unverified entries in `release/secrets-evidence.json`,
-Cloudflare Worker resource matching, Cloudflare runtime resource provisioning,
-mobile native build/E2E/store-submit evidence, real DB migration/seed execution,
-deployment, certificates, and operating QA.
+Cloudflare Worker resource matching, unverified entries in
+`release/cloudflare-runtime-evidence.json`, mobile native
+build/E2E/store-submit evidence, real DB migration/seed execution, deployment,
+certificates, and operating QA.
 
 ## Update Rule
 
@@ -108,7 +110,10 @@ canonical target changes, then update `release/external-release-evidence.json`
 using read-only evidence first. Update `release/secrets-evidence.json` only with
 verified secret names, stores, and booleans; do not paste secret values,
 connection strings, tokens, private keys, service account JSON, raw database
-URLs, DSNs, or webhook URLs. Then run:
+URLs, DSNs, or webhook URLs. Update `release/cloudflare-runtime-evidence.json`
+only with resource names, booleans, and non-secret proof notes for Workers, R2,
+Queues, custom domains, TLS certificates, cron triggers, and Worker secret
+binding presence. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

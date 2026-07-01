@@ -19,6 +19,10 @@ The observed runtime secret presence evidence is:
 
 - `release/secrets-evidence.json`
 
+The observed Cloudflare runtime resource evidence is:
+
+- `release/cloudflare-runtime-evidence.json`
+
 Current protected rule:
 
 - Use the new Salary Hijacking repository
@@ -28,7 +32,8 @@ Current protected rule:
 
 Before public release, `check:release-readiness` must report `READY` with real
 runtime secrets or verified no-value secret evidence, matching Cloudflare
-Workers resources, matching Neon project evidence, EAS project credentials,
-local Android device tooling or equivalent EAS/native test evidence, deploy
-proof, DB migration/seed proof, mobile native build and store-submit proof, and
+Workers resources, Cloudflare R2/Queue/DNS/certificate/runtime binding proof,
+matching Neon project evidence, EAS project credentials, local Android device
+tooling or equivalent EAS/native test evidence, deploy proof,
+DB migration/seed proof, mobile native build and store-submit proof, and
 operating QA.

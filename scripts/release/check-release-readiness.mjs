@@ -8,6 +8,8 @@ const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
 const MOBILE_NATIVE_EVIDENCE_PATH = "release/mobile-native-evidence.json";
 const SECRETS_EVIDENCE_PATH = "release/secrets-evidence.json";
+const CLOUDFLARE_RUNTIME_EVIDENCE_PATH =
+  "release/cloudflare-runtime-evidence.json";
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -18,6 +20,7 @@ const REQUIRED_FILES = [
   EXTERNAL_RELEASE_EVIDENCE_PATH,
   MOBILE_NATIVE_EVIDENCE_PATH,
   SECRETS_EVIDENCE_PATH,
+  CLOUDFLARE_RUNTIME_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
   "release/store/data-safety.md",
@@ -87,6 +90,13 @@ const RAW_SECRET_VALUE_EVIDENCE_KEYS = new Set([
   "privateKey",
   "serviceAccountJson",
 ]);
+
+const isRawSecretEvidenceKey = (key) => {
+  if (RAW_SECRET_VALUE_EVIDENCE_KEYS.has(key)) return true;
+  return /(?:token|secret|password|connection|string|database|webhook|dsn|privatekey|serviceaccount).*value$/i.test(
+    key,
+  );
+};
 
 const REQUIRED_CLI_GROUPS = [
   { label: "git", commands: ["git"] },
@@ -1046,7 +1056,7 @@ const containsRawSecretEvidenceValue = (value) => {
 
   for (const [key, nestedValue] of Object.entries(value)) {
     if (
-      RAW_SECRET_VALUE_EVIDENCE_KEYS.has(key) &&
+      isRawSecretEvidenceKey(key) &&
       typeof nestedValue === "string" &&
       nestedValue.trim().length > 0
     ) {
@@ -1152,6 +1162,211 @@ const checkSecretsEvidence = (rootDir, checks, blockers) => {
   }
 
   return evidence;
+};
+
+const addCloudflareRuntimeCheck = (
+  checks,
+  blockers,
+  status,
+  name,
+  detail,
+  blocker,
+) => {
+  addCheck(checks, status, name, detail);
+  if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const checkCloudflareRuntimeEvidence = (
+  rootDir,
+  releaseTargets,
+  checks,
+  blockers,
+) => {
+  const evidence = readJsonIfPresent(rootDir, CLOUDFLARE_RUNTIME_EVIDENCE_PATH);
+  if (!evidence) {
+    addCloudflareRuntimeCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "cloudflare-runtime:evidence",
+      `${CLOUDFLARE_RUNTIME_EVIDENCE_PATH} is missing or invalid`,
+      `${CLOUDFLARE_RUNTIME_EVIDENCE_PATH} must record Worker, R2, Queue, DNS, and certificate proof without secrets`,
+    );
+    return;
+  }
+
+  if (evidence.schemaVersion === 1 && evidence.secretsRedacted === true) {
+    addCloudflareRuntimeCheck(
+      checks,
+      blockers,
+      "PASS",
+      "cloudflare-runtime:evidence",
+      `${CLOUDFLARE_RUNTIME_EVIDENCE_PATH} schema and redaction flag are valid`,
+      "",
+    );
+  } else {
+    addCloudflareRuntimeCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "cloudflare-runtime:evidence",
+      `${CLOUDFLARE_RUNTIME_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+      `${CLOUDFLARE_RUNTIME_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+    );
+    return;
+  }
+
+  const rawSecretValuesFound =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence);
+  if (rawSecretValuesFound) {
+    addCloudflareRuntimeCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "cloudflare-runtime:secret-values",
+      "raw secret values may be present",
+      `${CLOUDFLARE_RUNTIME_EVIDENCE_PATH} must not contain raw secret values`,
+    );
+    return;
+  }
+
+  addCloudflareRuntimeCheck(
+    checks,
+    blockers,
+    "PASS",
+    "cloudflare-runtime:secret-values",
+    "no raw secret values are declared or embedded",
+    "",
+  );
+
+  const targetCloudflare = isPlainObject(releaseTargets?.cloudflare)
+    ? releaseTargets.cloudflare
+    : {};
+  const expectedWorkers = sortedStrings(targetCloudflare.expectedWorkers);
+  const expectedAdminWorker =
+    typeof targetCloudflare.expectedAdminWorker === "string"
+      ? targetCloudflare.expectedAdminWorker.trim()
+      : "";
+  const workers = isPlainObject(evidence.workers) ? evidence.workers : {};
+  const observedWorkers = sortedStrings(workers.observedWorkers);
+  const missingWorkers = expectedWorkers.filter(
+    (worker) => !observedWorkers.includes(worker),
+  );
+  const workersVerified =
+    expectedWorkers.length > 0 &&
+    missingWorkers.length === 0 &&
+    workers.productionDeployVerified === true;
+  addCloudflareRuntimeCheck(
+    checks,
+    blockers,
+    workersVerified ? "PASS" : "BLOCKED",
+    "cloudflare-runtime:workers",
+    workersVerified
+      ? "required Workers are observed and production deploy proof is recorded"
+      : `missing or unverified Workers: ${missingWorkers.join(", ") || expectedWorkers.join(", ") || "release target Workers"}`,
+    "Cloudflare runtime evidence must prove required Salary Hijacking Workers and production deploys",
+  );
+
+  const adminWorkerVerified =
+    expectedAdminWorker.length > 0 &&
+    observedWorkers.includes(expectedAdminWorker) &&
+    workers.adminWorkerVerified === true;
+  addCloudflareRuntimeCheck(
+    checks,
+    blockers,
+    adminWorkerVerified ? "PASS" : "BLOCKED",
+    "cloudflare-runtime:admin-worker",
+    adminWorkerVerified
+      ? "Admin OpenNext Worker is observed"
+      : "Admin OpenNext Worker proof is missing",
+    "Cloudflare runtime evidence must prove the Salary Hijacking Admin OpenNext Worker",
+  );
+
+  const resources = isPlainObject(evidence.resources) ? evidence.resources : {};
+  const resourceChecks = [
+    {
+      key: "r2BucketsVerified",
+      name: "cloudflare-runtime:r2-buckets",
+      pass: "R2 bucket proof is recorded",
+      fail: "R2 bucket proof is missing",
+      blocker: "Cloudflare runtime evidence must prove required R2 buckets",
+    },
+    {
+      key: "queuesVerified",
+      name: "cloudflare-runtime:queues",
+      pass: "Queue proof is recorded",
+      fail: "Queue proof is missing",
+      blocker: "Cloudflare runtime evidence must prove required Queues",
+    },
+    {
+      key: "deadLetterQueuesVerified",
+      name: "cloudflare-runtime:dead-letter-queues",
+      pass: "dead-letter Queue proof is recorded",
+      fail: "dead-letter Queue proof is missing",
+      blocker:
+        "Cloudflare runtime evidence must prove required dead-letter Queues",
+    },
+    {
+      key: "cronTriggersVerified",
+      name: "cloudflare-runtime:cron-triggers",
+      pass: "cron trigger proof is recorded",
+      fail: "cron trigger proof is missing",
+      blocker:
+        "Cloudflare runtime evidence must prove required Worker cron triggers",
+    },
+    {
+      key: "workerSecretBindingsVerified",
+      name: "cloudflare-runtime:worker-secret-bindings",
+      pass: "Worker secret binding proof is recorded",
+      fail: "Worker secret binding proof is missing",
+      blocker:
+        "Cloudflare runtime evidence must prove Worker secret bindings without values",
+    },
+  ];
+  for (const resourceCheck of resourceChecks) {
+    const ok = resources[resourceCheck.key] === true;
+    addCloudflareRuntimeCheck(
+      checks,
+      blockers,
+      ok ? "PASS" : "BLOCKED",
+      resourceCheck.name,
+      ok ? resourceCheck.pass : resourceCheck.fail,
+      resourceCheck.blocker,
+    );
+  }
+
+  const networking = isPlainObject(evidence.networking)
+    ? evidence.networking
+    : {};
+  const networkingChecks = [
+    {
+      key: "customDomainsVerified",
+      name: "cloudflare-runtime:custom-domains",
+      pass: "custom domain proof is recorded",
+      fail: "custom domain proof is missing",
+      blocker: "Cloudflare runtime evidence must prove required custom domains",
+    },
+    {
+      key: "certificatesVerified",
+      name: "cloudflare-runtime:certificates",
+      pass: "certificate proof is recorded",
+      fail: "certificate proof is missing",
+      blocker:
+        "Cloudflare runtime evidence must prove required TLS certificates",
+    },
+  ];
+  for (const networkingCheck of networkingChecks) {
+    const ok = networking[networkingCheck.key] === true;
+    addCloudflareRuntimeCheck(
+      checks,
+      blockers,
+      ok ? "PASS" : "BLOCKED",
+      networkingCheck.name,
+      ok ? networkingCheck.pass : networkingCheck.fail,
+      networkingCheck.blocker,
+    );
+  }
 };
 
 const readTextIfPresent = (rootDir, relativePath) => {
@@ -2013,6 +2228,7 @@ export const analyzeReleaseReadiness = ({
     checks,
     blockers,
   );
+  checkCloudflareRuntimeEvidence(rootDir, releaseTargets, checks, blockers);
   checkRuntimeTargetConsistency(
     releaseTargets ?? externalEvidence,
     env,

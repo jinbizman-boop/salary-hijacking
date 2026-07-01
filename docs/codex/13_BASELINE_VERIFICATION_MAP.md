@@ -30,7 +30,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
 - infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, and release target mismatch risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, explicit `RETRO-DB` protection, `release/release-targets.json`, GitHub write/push proof, `GITHUB_REPOSITORY`, `CF_ADMIN_WORKER_NAME`, and `git remote origin` through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
-- public release remains blocked by missing runtime secret presence evidence, missing Salary Hijacking Cloudflare Worker release-resource evidence, missing mobile native EAS build/E2E/store-submit evidence, real DB migration/seed execution, staging/production deploy, certificates, and operating QA. Local GitHub/Neon CLI absence is a warning when connector evidence proves account access; the Neon project itself is now observed.
+- public release remains blocked by missing runtime secret presence evidence, missing Salary Hijacking Cloudflare Worker/R2/Queue/DNS/certificate runtime evidence, missing mobile native EAS build/E2E/store-submit evidence, real DB migration/seed execution, staging/production deploy, certificates, and operating QA. Local GitHub/Neon CLI absence is a warning when connector evidence proves account access; the Neon project itself is now observed.
 
 The historical tables below are retained to explain why the hardening work was prioritized.
 
@@ -163,7 +163,7 @@ The Worker service typecheck blocker, package-level pnpm warning blocker, mobile
 
 1. Provide or configure runtime secrets in the correct local/CI secret stores without committing values, then update `release/secrets-evidence.json` with verified names and stores only.
 2. Keep Git repository metadata connected to the expected remote repository `jinbizman-boop/salary-hijacking`.
-3. Verify Cloudflare Worker resources, EAS project, and mobile native release evidence. Local Android SDK/`adb`/`emulator` can satisfy native E2E locally, or `release/mobile-native-evidence.json` can record equivalent EAS/native device-farm evidence without secrets. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`; do not reuse unrelated Cloudflare Pages projects such as `retro-db`.
+3. Verify Cloudflare Worker resources, Cloudflare runtime resources in `release/cloudflare-runtime-evidence.json`, EAS project, and mobile native release evidence. Local Android SDK/`adb`/`emulator` can satisfy native E2E locally, or `release/mobile-native-evidence.json` can record equivalent EAS/native device-farm evidence without secrets. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`; do not reuse unrelated Cloudflare Pages projects such as `retro-db`.
 4. Run real staging DB migration/seed and API smoke checks against Neon and Cloudflare.
 5. Run native mobile E2E and store build/submission dry runs.
 6. Execute staging/production deploy, rollback rehearsal, observability checks, and operating QA.

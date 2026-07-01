@@ -345,6 +345,50 @@ const writeSecretsEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const writeCloudflareRuntimeEvidence = (rootDir, overrides = {}) => {
+  const evidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    containsSecretValues: false,
+    workers: {
+      expectedWorkers: [
+        "salary-hijacking-api",
+        "salary-hijacking-notifications",
+        "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
+      ],
+      observedWorkers: [
+        "salary-hijacking-api",
+        "salary-hijacking-notifications",
+        "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
+      ],
+      productionDeployVerified: true,
+      adminWorkerVerified: true,
+    },
+    resources: {
+      r2BucketsVerified: true,
+      queuesVerified: true,
+      deadLetterQueuesVerified: true,
+      cronTriggersVerified: true,
+      workerSecretBindingsVerified: true,
+    },
+    networking: {
+      customDomainsVerified: true,
+      certificatesVerified: true,
+    },
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/cloudflare-runtime-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
@@ -387,6 +431,7 @@ const makeWorkspace = () => {
   writeExternalEvidence(rootDir);
   writeMobileNativeEvidence(rootDir);
   writeSecretsEvidence(rootDir);
+  writeCloudflareRuntimeEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
@@ -653,6 +698,57 @@ test("blocks secret evidence that contains raw values", () => {
     /release\/secrets-evidence\.json must not contain raw secret values/,
   );
   assert.doesNotMatch(report, /postgresql:\/\/user:password/);
+});
+
+test("blocks when Cloudflare runtime evidence is missing or unverified", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "cloudflare-runtime-evidence.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /cloudflare-runtime-evidence\.json/);
+  assert.match(report, /cloudflare-runtime:evidence/);
+});
+
+test("blocks Cloudflare runtime evidence that contains raw secret values", () => {
+  const rootDir = makeWorkspace();
+  writeCloudflareRuntimeEvidence(rootDir, {
+    containsSecretValues: true,
+    workers: {
+      expectedWorkers: ["salary-hijacking-api"],
+      observedWorkers: ["salary-hijacking-api"],
+      productionDeployVerified: true,
+      adminWorkerVerified: true,
+      apiTokenValue: "cf_live_secret_value",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /cloudflare-runtime:secret-values/);
+  assert.match(
+    report,
+    /release\/cloudflare-runtime-evidence\.json must not contain raw secret values/,
+  );
+  assert.doesNotMatch(report, /cf_live_secret_value/);
 });
 
 test("blocks missing release artifacts and unsafe public secret env names", () => {

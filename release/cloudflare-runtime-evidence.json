@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-01T03:15:00Z",
+  "source": "Codex local release readiness check on 2026-07-01; no Cloudflare deployment, Worker creation, R2 creation, Queue creation, DNS activation, certificate issuance, or Worker secret binding was performed",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "workers": {
+    "expectedWorkers": [
+      "salary-hijacking-api",
+      "salary-hijacking-notifications",
+      "salary-hijacking-scheduler",
+      "salary-hijacking-admin"
+    ],
+    "observedWorkers": [],
+    "productionDeployVerified": false,
+    "adminWorkerVerified": false,
+    "note": "The latest connector snapshot observed zero Salary Hijacking Workers. Wrangler dry-runs do not prove deployed Worker resources."
+  },
+  "resources": {
+    "r2BucketsVerified": false,
+    "queuesVerified": false,
+    "deadLetterQueuesVerified": false,
+    "cronTriggersVerified": false,
+    "workerSecretBindingsVerified": false,
+    "note": "No R2 bucket, Queue, dead-letter Queue, cron trigger, or Worker secret binding proof has been recorded."
+  },
+  "networking": {
+    "customDomainsVerified": false,
+    "certificatesVerified": false,
+    "expectedDomains": [
+      "api.salaryhijacking.com",
+      "notifications.salaryhijacking.com",
+      "scheduler.salaryhijacking.com",
+      "admin.salaryhijacking.com"
+    ],
+    "note": "Route dry-runs do not prove DNS activation, custom domain ownership, or issued TLS certificates."
+  },
+  "nextEvidenceRequired": [
+    "Cloudflare Worker list or deployment proof for salary-hijacking-api",
+    "Cloudflare Worker list or deployment proof for salary-hijacking-notifications",
+    "Cloudflare Worker list or deployment proof for salary-hijacking-scheduler",
+    "Cloudflare Worker list or deployment proof for salary-hijacking-admin",
+    "R2 upload bucket proof for staging and production",
+    "Queue and dead-letter Queue proof for operations and notifications",
+    "Cron trigger proof for API, notifications, and scheduler Workers",
+    "Worker secret binding presence proof without values",
+    "Custom domain and TLS certificate proof for API, notifications, scheduler, and admin"
+  ]
+}

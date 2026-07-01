@@ -91,11 +91,13 @@ URLs, push tokens, service accounts, JWT secrets, or webhook URLs.
 Read-only connector evidence is tracked in:
 
 - `release/external-release-evidence.json`
+- `release/cloudflare-runtime-evidence.json`
 - `docs/codex/14_EXTERNAL_RELEASE_EVIDENCE.md`
 
 As of the latest snapshot, Cloudflare connector access is visible, but the
-Salary Hijacking Workers, including the Admin OpenNext Worker, are not yet
-proven in the connected account.
+Salary Hijacking Workers, including the Admin OpenNext Worker, R2 buckets,
+Queues, custom domains, TLS certificates, cron triggers, and Worker secret
+bindings are not yet proven in the connected account.
 
 Latest read-only check on 2026-07-01 10:42:45 KST:
 
