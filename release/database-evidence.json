@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-01T03:45:00Z",
+  "source": "Codex local release readiness check on 2026-07-01; no Neon migration execution, seed execution, deployed API smoke, admin smoke, or database rollback rehearsal was performed",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "neon": {
+    "expectedProjectHint": "salary-hijacking",
+    "projectMatched": true,
+    "mainBranchReady": true,
+    "stagingBranchReady": true,
+    "note": "Connector evidence observed the Salary Hijacking Neon project and ready main/staging branches, but no raw database URL is stored here."
+  },
+  "migrations": {
+    "migrationFilesVerified": true,
+    "migrationFileCount": 4,
+    "migrationValidationVerified": false,
+    "stagingMigrationExecuted": false,
+    "productionMigrationDryRunVerified": false,
+    "note": "Checked-in migration files exist, but no safe database migration validation, staging execution, or production dry-run execution proof has been recorded."
+  },
+  "seeds": {
+    "stagingSeedExecuted": false,
+    "productionSeedExecuted": false,
+    "destructiveProductionSeedBlocked": true,
+    "note": "No staging seed execution proof has been recorded. Production seed execution remains blocked."
+  },
+  "smoke": {
+    "stagingApiSmokeVerified": false,
+    "adminSmokeVerified": false,
+    "serverAuthoritySmokeVerified": false,
+    "privacySmokeVerified": false,
+    "noRawFinancialDataInSmokePayloads": false,
+    "note": "No deployed API/Admin smoke was executed against migrated Neon data."
+  },
+  "rollback": {
+    "rollbackRehearsalVerified": false,
+    "note": "No database rollback rehearsal proof has been recorded."
+  },
+  "nextEvidenceRequired": [
+    "Safe migration validation against a non-production target",
+    "Staging migration execution proof",
+    "Staging seed execution proof with synthetic data only",
+    "Production migration dry-run proof",
+    "API smoke proof against migrated staging data",
+    "Admin smoke proof against migrated staging data",
+    "Server-authority payroll/budget smoke proof",
+    "Privacy/redaction smoke proof",
+    "Database rollback rehearsal proof"
+  ]
+}

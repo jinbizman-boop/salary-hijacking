@@ -18,6 +18,7 @@ Machine-readable evidence lives in:
 - `release/mobile-native-evidence.json`
 - `release/secrets-evidence.json`
 - `release/cloudflare-runtime-evidence.json`
+- `release/database-evidence.json`
 
 ## 2026-07-01 Connector Snapshot
 
@@ -100,7 +101,8 @@ authenticated push access, and Neon project target are aligned. The release
 status remains blocked by unverified entries in `release/secrets-evidence.json`,
 Cloudflare Worker resource matching, unverified entries in
 `release/cloudflare-runtime-evidence.json`, mobile native
-build/E2E/store-submit evidence, real DB migration/seed execution, deployment,
+build/E2E/store-submit evidence, unverified database migration/seed/API
+smoke/rollback entries in `release/database-evidence.json`, deployment,
 certificates, and operating QA.
 
 ## Update Rule
@@ -114,6 +116,12 @@ URLs, DSNs, or webhook URLs. Update `release/cloudflare-runtime-evidence.json`
 only with resource names, booleans, and non-secret proof notes for Workers, R2,
 Queues, custom domains, TLS certificates, cron triggers, and Worker secret
 binding presence. Then run:
+binding presence. Update `release/database-evidence.json` only with booleans,
+resource names, migration counts, and non-secret proof notes for safe migration
+validation, staging migration, staging seed, production migration dry-run,
+API/Admin smoke, privacy smoke, and rollback rehearsal. Never store raw Neon
+database URLs, connection strings, passwords, tokens, or query payloads with
+sensitive financial/user data. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

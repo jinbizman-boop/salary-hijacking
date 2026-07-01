@@ -10,6 +10,7 @@ const MOBILE_NATIVE_EVIDENCE_PATH = "release/mobile-native-evidence.json";
 const SECRETS_EVIDENCE_PATH = "release/secrets-evidence.json";
 const CLOUDFLARE_RUNTIME_EVIDENCE_PATH =
   "release/cloudflare-runtime-evidence.json";
+const DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -21,6 +22,7 @@ const REQUIRED_FILES = [
   MOBILE_NATIVE_EVIDENCE_PATH,
   SECRETS_EVIDENCE_PATH,
   CLOUDFLARE_RUNTIME_EVIDENCE_PATH,
+  DATABASE_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
   "release/store/data-safety.md",
@@ -1369,6 +1371,265 @@ const checkCloudflareRuntimeEvidence = (
   }
 };
 
+const addDatabaseCheck = (checks, blockers, status, name, detail, blocker) => {
+  addCheck(checks, status, name, detail);
+  if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const checkDatabaseEvidence = (
+  rootDir,
+  releaseTargets,
+  migrationCount,
+  checks,
+  blockers,
+) => {
+  const evidence = readJsonIfPresent(rootDir, DATABASE_EVIDENCE_PATH);
+  if (!evidence) {
+    addDatabaseCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "database:evidence",
+      `${DATABASE_EVIDENCE_PATH} is missing or invalid`,
+      `${DATABASE_EVIDENCE_PATH} must record Neon migration, seed, API smoke, and rollback evidence without raw database URLs`,
+    );
+    return;
+  }
+
+  if (evidence.schemaVersion === 1 && evidence.secretsRedacted === true) {
+    addDatabaseCheck(
+      checks,
+      blockers,
+      "PASS",
+      "database:evidence",
+      `${DATABASE_EVIDENCE_PATH} schema and redaction flag are valid`,
+      "",
+    );
+  } else {
+    addDatabaseCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "database:evidence",
+      `${DATABASE_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+      `${DATABASE_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+    );
+    return;
+  }
+
+  const rawSecretValuesFound =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence);
+  if (rawSecretValuesFound) {
+    addDatabaseCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "database:secret-values",
+      "raw database or secret values may be present",
+      `${DATABASE_EVIDENCE_PATH} must not contain raw database URLs or secret values`,
+    );
+    return;
+  }
+
+  addDatabaseCheck(
+    checks,
+    blockers,
+    "PASS",
+    "database:secret-values",
+    "no raw database URLs or secret values are declared or embedded",
+    "",
+  );
+
+  const targetNeon = isPlainObject(releaseTargets?.neon)
+    ? releaseTargets.neon
+    : {};
+  const expectedProjectHint =
+    typeof targetNeon.expectedProjectHint === "string"
+      ? targetNeon.expectedProjectHint.trim()
+      : "";
+  const neon = isPlainObject(evidence.neon) ? evidence.neon : {};
+  const observedProjectHint =
+    typeof neon.expectedProjectHint === "string"
+      ? neon.expectedProjectHint.trim()
+      : "";
+  const neonProjectOk =
+    expectedProjectHint.length > 0 &&
+    observedProjectHint === expectedProjectHint &&
+    neon.projectMatched === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    neonProjectOk ? "PASS" : "BLOCKED",
+    "database:neon-project",
+    neonProjectOk
+      ? `Neon project evidence matches ${expectedProjectHint}`
+      : "Neon project proof is missing or mismatched",
+    "Database evidence must prove the Salary Hijacking Neon project target",
+  );
+
+  const branchesOk =
+    neon.mainBranchReady === true && neon.stagingBranchReady === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    branchesOk ? "PASS" : "BLOCKED",
+    "database:neon-branches",
+    branchesOk
+      ? "main and staging Neon branches are ready"
+      : "main or staging Neon branch readiness proof is missing",
+    "Database evidence must prove ready main and staging Neon branches",
+  );
+
+  const migrations = isPlainObject(evidence.migrations)
+    ? evidence.migrations
+    : {};
+  const migrationFilesOk =
+    migrations.migrationFilesVerified === true &&
+    migrations.migrationFileCount === migrationCount &&
+    migrationCount > 0;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    migrationFilesOk ? "PASS" : "BLOCKED",
+    "database:migration-files",
+    migrationFilesOk
+      ? `${migrationCount} migration files are verified`
+      : "migration file evidence is missing or count drifted",
+    "Database evidence must verify the checked-in migration file set",
+  );
+
+  const migrationValidationOk = migrations.migrationValidationVerified === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    migrationValidationOk ? "PASS" : "BLOCKED",
+    "database:migration-validation",
+    migrationValidationOk
+      ? "migration validation proof is recorded"
+      : "migration validation proof is missing",
+    "Database evidence must prove migration validation against a safe target",
+  );
+
+  const stagingMigrationOk = migrations.stagingMigrationExecuted === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    stagingMigrationOk ? "PASS" : "BLOCKED",
+    "database:staging-migration",
+    stagingMigrationOk
+      ? "staging migration execution proof is recorded"
+      : "staging migration execution proof is missing",
+    "Database evidence must prove staging migration execution before release",
+  );
+
+  const productionDryRunOk =
+    migrations.productionMigrationDryRunVerified === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    productionDryRunOk ? "PASS" : "BLOCKED",
+    "database:production-migration-dry-run",
+    productionDryRunOk
+      ? "production migration dry-run proof is recorded"
+      : "production migration dry-run proof is missing",
+    "Database evidence must prove production migration dry-run before release",
+  );
+
+  const seeds = isPlainObject(evidence.seeds) ? evidence.seeds : {};
+  const stagingSeedOk = seeds.stagingSeedExecuted === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    stagingSeedOk ? "PASS" : "BLOCKED",
+    "database:staging-seed",
+    stagingSeedOk
+      ? "staging seed execution proof is recorded"
+      : "staging seed execution proof is missing",
+    "Database evidence must prove staging seed execution before release",
+  );
+
+  const productionSeedSafe =
+    seeds.productionSeedExecuted === false &&
+    seeds.destructiveProductionSeedBlocked === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    productionSeedSafe ? "PASS" : "BLOCKED",
+    "database:production-seed-safety",
+    productionSeedSafe
+      ? "destructive production seed execution is blocked"
+      : "production seed safety proof is missing",
+    "Database evidence must prove destructive production seed execution is blocked",
+  );
+
+  const smoke = isPlainObject(evidence.smoke) ? evidence.smoke : {};
+  const smokeChecks = [
+    {
+      key: "stagingApiSmokeVerified",
+      name: "database:staging-api-smoke",
+      pass: "staging API smoke proof is recorded",
+      fail: "staging API smoke proof is missing",
+      blocker:
+        "Database evidence must prove staging API smoke against migrated data",
+    },
+    {
+      key: "adminSmokeVerified",
+      name: "database:admin-smoke",
+      pass: "admin smoke proof is recorded",
+      fail: "admin smoke proof is missing",
+      blocker: "Database evidence must prove admin smoke against migrated data",
+    },
+    {
+      key: "serverAuthoritySmokeVerified",
+      name: "database:server-authority-smoke",
+      pass: "server-authority smoke proof is recorded",
+      fail: "server-authority smoke proof is missing",
+      blocker:
+        "Database evidence must prove server-authoritative payroll/budget smoke",
+    },
+    {
+      key: "privacySmokeVerified",
+      name: "database:privacy-smoke",
+      pass: "privacy smoke proof is recorded",
+      fail: "privacy smoke proof is missing",
+      blocker: "Database evidence must prove privacy-safe API smoke responses",
+    },
+    {
+      key: "noRawFinancialDataInSmokePayloads",
+      name: "database:smoke-payload-redaction",
+      pass: "smoke payload redaction proof is recorded",
+      fail: "smoke payload redaction proof is missing",
+      blocker:
+        "Database evidence must prove smoke payloads do not expose raw sensitive financial data",
+    },
+  ];
+  for (const smokeCheck of smokeChecks) {
+    const ok = smoke[smokeCheck.key] === true;
+    addDatabaseCheck(
+      checks,
+      blockers,
+      ok ? "PASS" : "BLOCKED",
+      smokeCheck.name,
+      ok ? smokeCheck.pass : smokeCheck.fail,
+      smokeCheck.blocker,
+    );
+  }
+
+  const rollback = isPlainObject(evidence.rollback) ? evidence.rollback : {};
+  const rollbackOk = rollback.rollbackRehearsalVerified === true;
+  addDatabaseCheck(
+    checks,
+    blockers,
+    rollbackOk ? "PASS" : "BLOCKED",
+    "database:rollback-rehearsal",
+    rollbackOk
+      ? "database rollback rehearsal proof is recorded"
+      : "database rollback rehearsal proof is missing",
+    "Database evidence must prove rollback rehearsal before release",
+  );
+};
+
 const readTextIfPresent = (rootDir, relativePath) => {
   const filePath = path.join(rootDir, relativePath);
   if (!fs.existsSync(filePath)) return null;
@@ -2229,6 +2490,13 @@ export const analyzeReleaseReadiness = ({
     blockers,
   );
   checkCloudflareRuntimeEvidence(rootDir, releaseTargets, checks, blockers);
+  checkDatabaseEvidence(
+    rootDir,
+    releaseTargets,
+    migrationCount,
+    checks,
+    blockers,
+  );
   checkRuntimeTargetConsistency(
     releaseTargets ?? externalEvidence,
     env,

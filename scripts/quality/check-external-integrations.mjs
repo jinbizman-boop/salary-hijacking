@@ -41,6 +41,7 @@ const REQUIRED_FILES = [
   "release/mobile-native-evidence.json",
   "release/secrets-evidence.json",
   "release/cloudflare-runtime-evidence.json",
+  "release/database-evidence.json",
   "packages/db/src/client/neon.client.ts",
   "database/migrations/0001_init_users.sql",
   "database/migrations/0002_payroll_budget_expense.sql",
@@ -299,6 +300,7 @@ const RELEASE_METADATA_FILES = [
   "release/mobile-native-evidence.json",
   "release/secrets-evidence.json",
   "release/cloudflare-runtime-evidence.json",
+  "release/database-evidence.json",
 ];
 
 const MOBILE_RELEASE_CONFIG_FILES = [

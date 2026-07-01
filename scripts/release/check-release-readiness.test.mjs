@@ -389,6 +389,51 @@ const writeCloudflareRuntimeEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const writeDatabaseEvidence = (rootDir, overrides = {}) => {
+  const evidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    containsSecretValues: false,
+    neon: {
+      expectedProjectHint: "salary-hijacking",
+      projectMatched: true,
+      mainBranchReady: true,
+      stagingBranchReady: true,
+    },
+    migrations: {
+      migrationFilesVerified: true,
+      migrationFileCount: 1,
+      migrationValidationVerified: true,
+      stagingMigrationExecuted: true,
+      productionMigrationDryRunVerified: true,
+    },
+    seeds: {
+      stagingSeedExecuted: true,
+      productionSeedExecuted: false,
+      destructiveProductionSeedBlocked: true,
+    },
+    smoke: {
+      stagingApiSmokeVerified: true,
+      adminSmokeVerified: true,
+      serverAuthoritySmokeVerified: true,
+      privacySmokeVerified: true,
+      noRawFinancialDataInSmokePayloads: true,
+    },
+    rollback: {
+      rollbackRehearsalVerified: true,
+    },
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/database-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
@@ -432,6 +477,7 @@ const makeWorkspace = () => {
   writeMobileNativeEvidence(rootDir);
   writeSecretsEvidence(rootDir);
   writeCloudflareRuntimeEvidence(rootDir);
+  writeDatabaseEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
@@ -749,6 +795,57 @@ test("blocks Cloudflare runtime evidence that contains raw secret values", () =>
     /release\/cloudflare-runtime-evidence\.json must not contain raw secret values/,
   );
   assert.doesNotMatch(report, /cf_live_secret_value/);
+});
+
+test("blocks when database migration, seed, and smoke evidence is missing", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "database-evidence.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /database-evidence\.json/);
+  assert.match(report, /database:evidence/);
+});
+
+test("blocks database evidence that contains raw database URLs", () => {
+  const rootDir = makeWorkspace();
+  writeDatabaseEvidence(rootDir, {
+    containsSecretValues: true,
+    neon: {
+      expectedProjectHint: "salary-hijacking",
+      projectMatched: true,
+      mainBranchReady: true,
+      stagingBranchReady: true,
+      databaseUrl: "postgresql://user:password@host.neon.tech/db",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /database:secret-values/);
+  assert.match(
+    report,
+    /release\/database-evidence\.json must not contain raw database URLs or secret values/,
+  );
+  assert.doesNotMatch(report, /postgresql:\/\/user:password/);
 });
 
 test("blocks missing release artifacts and unsafe public secret env names", () => {

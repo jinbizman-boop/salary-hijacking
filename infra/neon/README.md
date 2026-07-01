@@ -69,10 +69,20 @@ Local automation must not run production migrations by default.
 
 ## Current Release Evidence
 
-Latest read-only connector check on 2026-06-30:
+Latest read-only connector check on 2026-07-01:
 
-- Visible Neon organization: `매니지먼트`.
-- Visible project: `Retro Games`.
-- Searches for `salary` and `hijacking` returned no matching Neon projects.
-- The existing `Retro Games` project is unrelated and must not be used for
+- New Salary Hijacking Neon project observed: `salary-hijacking`.
+- Project ID observed: `still-feather-22153967`.
+- Region observed: `aws-us-east-2`.
+- Database name observed: `neondb`.
+- Branches observed:
+  - `main`: `br-icy-frog-aj3b1bl9`, primary, ready.
+  - `staging`: `br-fragrant-sky-aj5kk2c3`, ready.
+- No raw connection string, password, token, or database URL is stored in this
+  repository evidence.
+- Checked-in migration files are present, but safe migration validation, staging
+  migration execution, staging seed execution, production migration dry-run,
+  deployed API/Admin smoke, privacy smoke, and rollback rehearsal are not yet
+  verified. These release gates are tracked in `release/database-evidence.json`.
+- The existing `Retro Games` Neon project is unrelated and must not be reused for
   Salary Hijacking.
