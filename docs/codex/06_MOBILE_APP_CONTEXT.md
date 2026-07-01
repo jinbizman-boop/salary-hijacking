@@ -88,7 +88,9 @@ The current E2E blocker is local environment, not missing Detox config:
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only
-no-secret booleans in `release/mobile-native-proof.local.json`, then run
+no-secret observations in `release/mobile-native-observation.local.json`, run
+`corepack pnpm run release:mobile-native-proof` to normalize
+`release/mobile-native-proof.local.json`, then run
 `corepack pnpm run release:mobile-native-evidence`. Do not store EAS tokens,
 Apple/Google credentials, binary download URLs, signing keys, service accounts,
 reviewer passwords, or copied store-console payloads in repository files.

@@ -618,6 +618,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export function buildMobileNativeEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-mobile-native-evidence.test.mjs":
       "import test from 'node:test';\n\ntest('generates no-secret mobile native evidence', () => {});\n",
+    "scripts/release/collect-mobile-native-proof.mjs":
+      "export function collectMobileNativeProof() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/collect-mobile-native-proof.test.mjs":
+      "import test from 'node:test';\n\ntest('collects no-secret mobile native proof', () => {});\n",
     "scripts/release/generate-public-url-evidence.mjs":
       "export function buildPublicUrlEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-public-url-evidence.test.mjs":

@@ -83,6 +83,19 @@ Safe mobile native evidence generation command:
 
 - `corepack pnpm run release:mobile-native-evidence`
 
+Before generating tracked evidence, mobile native build, E2E, and store-submit
+observations can be normalized with:
+
+- `corepack pnpm run release:mobile-native-proof`
+
+The proof collector reads `release/mobile-native-observation.local.json` and
+writes only booleans to `release/mobile-native-proof.local.json`. The local
+observation file is ignored by Git and may contain only production build flags,
+Android AAB artifact type, native E2E pass/fail flags, store-submit dry-run
+flags, and non-secret notes. It must not contain EAS tokens, Apple/Google
+credentials, binary download URLs, signing keys, service account JSON, reviewer
+passwords, copied store-console payloads, or logs.
+
 The command creates or refreshes `release/mobile-native-evidence.json` from
 local Android tool detection and optional `release/mobile-native-proof.local.json`
 booleans. The local proof file is ignored by Git and may contain only EAS build,

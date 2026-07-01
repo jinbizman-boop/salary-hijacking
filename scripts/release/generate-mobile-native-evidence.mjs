@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const DEFAULT_PROOF_PATH = "release/mobile-native-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/mobile-native-evidence.json";
 
-const RAW_SECRET_VALUE_KEYS = new Set([
+export const RAW_SECRET_VALUE_KEYS = new Set([
   "value",
   "rawValue",
   "secretValue",
@@ -27,10 +27,10 @@ const RAW_SECRET_VALUE_KEYS = new Set([
   "serviceAccountJson",
 ]);
 
-const RAW_SECRET_OR_ARTIFACT_PATTERN =
+export const RAW_SECRET_OR_ARTIFACT_PATTERN =
   /(eas_[a-z0-9_-]{16,}|expo\.dev\/artifacts|expo\.dev\/accounts\/[^/\s]+\/projects\/[^/\s]+\/builds\/|\.aab(?:\?|$)|\.apk(?:\?|$)|\.ipa(?:\?|$)|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|gh[pousr]_[a-z0-9_]{16,}|github_pat_[a-z0-9_]{20,}|xox[baprs]-[a-z0-9-]+)/i;
 
-const isPlainObject = (value) =>
+export const isPlainObject = (value) =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
 const readJsonIfPresent = (rootDir, filePath) => {
@@ -51,14 +51,14 @@ const defaultCommandExists = (command) => {
   return result.status === 0;
 };
 
-const isRawSecretValueKey = (key) => {
+export const isRawSecretValueKey = (key) => {
   if (RAW_SECRET_VALUE_KEYS.has(key)) return true;
   return /(?:token|secret|password|credential|keystore|privatekey|serviceaccount|artifact|binary|download).*value$/i.test(
     key,
   );
 };
 
-const containsRawSecretOrArtifactValue = (value) => {
+export const containsRawSecretOrArtifactValue = (value) => {
   if (typeof value === "string") {
     return RAW_SECRET_OR_ARTIFACT_PATTERN.test(value);
   }
