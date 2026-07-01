@@ -913,6 +913,30 @@ test("uses connector evidence as an account-access fallback for GitHub, Cloudfla
   assert.match(report, /WARN cli:Neon CLI/);
 });
 
+test("blocks external evidence that contains raw secret values", () => {
+  const rootDir = makeWorkspace();
+  writeExternalEvidence(rootDir, {
+    apiTokenValue: "ghp_external_secret_value_that_must_not_print",
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /external-evidence:secret-values/);
+  assert.match(
+    report,
+    /release\/external-release-evidence\.json must not contain raw secret values/,
+  );
+  assert.doesNotMatch(report, /ghp_external_secret_value/);
+});
+
 test("uses redacted secret evidence when local runtime env values are absent", () => {
   const rootDir = makeWorkspace();
   const result = analyzeReleaseReadiness({

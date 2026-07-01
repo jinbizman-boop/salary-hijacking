@@ -11,6 +11,12 @@ The observed external-state evidence is:
 
 - `release/external-release-evidence.json`
 
+The external-state evidence file must contain only provider/resource names,
+booleans, counts, timestamps, commit IDs, public target URLs, and non-secret
+notes. Release readiness blocks it when raw token, password, private key,
+connection string, database URL, DSN, webhook, service-account, or similar
+secret value fields are embedded.
+
 The observed mobile native build, native E2E, and store-submit evidence is:
 
 - `release/mobile-native-evidence.json`

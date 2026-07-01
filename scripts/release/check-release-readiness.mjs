@@ -942,6 +942,23 @@ const checkExternalReleaseEvidence = (rootDir, checks, blockers, warnings) => {
     );
   }
 
+  if (containsRawSecretEvidenceValue(evidence)) {
+    addExternalEvidenceBlocker(
+      checks,
+      blockers,
+      "external-evidence:secret-values",
+      "raw secret values may be present",
+      `${EXTERNAL_RELEASE_EVIDENCE_PATH} must not contain raw secret values`,
+    );
+  } else {
+    addCheck(
+      checks,
+      "PASS",
+      "external-evidence:secret-values",
+      "no raw secret values are declared or embedded",
+    );
+  }
+
   if (typeof evidence.observedAt === "string" && evidence.observedAt.trim()) {
     addCheck(
       checks,

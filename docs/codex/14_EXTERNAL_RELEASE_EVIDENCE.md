@@ -164,7 +164,12 @@ operating QA.
 
 When external state changes, update `release/release-targets.json` only if the
 canonical target changes, then update `release/external-release-evidence.json`
-using read-only evidence first. Update `release/secrets-evidence.json` only with
+using read-only evidence first. The tracked external evidence file may contain
+only provider/resource names, booleans, counts, timestamps, commit IDs, public
+target URLs, and non-secret notes; release readiness blocks it when raw token,
+password, private key, connection string, database URL, DSN, webhook,
+service-account, or similar secret value fields are embedded. Update
+`release/secrets-evidence.json` only with
 verified secret names, stores, and booleans; do not paste secret values,
 connection strings, tokens, private keys, service account JSON, raw database
 URLs, DSNs, or webhook URLs. Prefer
