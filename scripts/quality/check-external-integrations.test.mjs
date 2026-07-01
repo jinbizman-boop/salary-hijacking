@@ -559,6 +559,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export function buildSecretsEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-secrets-evidence.test.mjs":
       "import test from 'node:test';\n\ntest('generates no-secret runtime secret evidence', () => {});\n",
+    "scripts/release/generate-cloudflare-runtime-evidence.mjs":
+      "export function buildCloudflareRuntimeEvidence() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/generate-cloudflare-runtime-evidence.test.mjs":
+      "import test from 'node:test';\n\ntest('generates no-secret Cloudflare runtime evidence', () => {});\n",
   };
 
   for (const [relativePath, content] of Object.entries({

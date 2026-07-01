@@ -56,6 +56,8 @@ const REQUIRED_FILES = [
   "scripts/release/generate-database-evidence.test.mjs",
   "scripts/release/generate-secrets-evidence.mjs",
   "scripts/release/generate-secrets-evidence.test.mjs",
+  "scripts/release/generate-cloudflare-runtime-evidence.mjs",
+  "scripts/release/generate-cloudflare-runtime-evidence.test.mjs",
 ];
 
 const REQUIRED_TOKENS_BY_FILE = {
@@ -328,6 +330,8 @@ const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
   "scripts/release/generate-database-evidence.test.mjs",
   "scripts/release/generate-secrets-evidence.mjs",
   "scripts/release/generate-secrets-evidence.test.mjs",
+  "scripts/release/generate-cloudflare-runtime-evidence.mjs",
+  "scripts/release/generate-cloudflare-runtime-evidence.test.mjs",
 ];
 
 const LOCAL_GENERATED_OR_HOSTING_METADATA_PATHS = [

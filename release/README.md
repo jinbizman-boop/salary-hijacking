@@ -38,6 +38,17 @@ consoles or CI environment settings. That local proof file is ignored by Git and
 must not contain raw database URLs, API tokens, DSNs, webhook URLs, private keys,
 service accounts, or real user/financial payloads.
 
+Safe Cloudflare runtime evidence generation command:
+
+- `corepack pnpm run release:cloudflare-evidence`
+
+The command creates or refreshes `release/cloudflare-runtime-evidence.json`
+from release targets and optional `release/cloudflare-proof.local.json`
+booleans. The local proof file is ignored by Git and may contain only Worker
+names, resource presence flags, domain/certificate flags, and non-secret notes.
+It must not contain Cloudflare tokens, Worker secret values, database URLs,
+private keys, certificates, service accounts, or copied runtime payloads.
+
 Safe database evidence generation command:
 
 - `corepack pnpm run release:database-evidence`
