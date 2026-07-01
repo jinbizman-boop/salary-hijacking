@@ -112,6 +112,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(config).toContain("#209252");
     expect(config).toContain("#F7F8FA");
+    expect(config).toContain('"급여금액"');
+    expect(config).toContain('"계좌번호"');
+    expect(config).not.toContain('"급여",');
+    expect(config).not.toContain('"월급",');
+    expect(config).toContain("공개 Expo 환경변수에 서버 비밀");
     expect(config).not.toContain("#020617");
     expect(config).not.toContain("#67E8F9");
   });
