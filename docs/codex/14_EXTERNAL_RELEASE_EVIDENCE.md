@@ -24,7 +24,7 @@ Machine-readable evidence lives in:
 ## 2026-07-01 Connector Snapshot
 
 Latest connector refresh: 2026-07-01 13:36:54 KST.
-Latest Git remote verification refresh: 2026-07-01 13:43:11 KST.
+Latest Git remote verification refresh: 2026-07-01 14:35:42 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 
 GitHub:
@@ -44,7 +44,7 @@ GitHub:
 - After GitHub Desktop was installed, authenticated `git push` succeeded.
 - `git ls-remote origin refs/heads/main` proved remote branch read access at
   the last Git remote evidence refresh commit
-  `c8dea2989ee414e7a5ecb0ee539cab691cc6cae8`. Future commits must be checked
+  `a49d96720586f3c84eb056b868350578f467dad6`. Future commits must be checked
   with `git ls-remote`; this recorded evidence is historical and does not
   self-update.
 - The current exposed GitHub connector tools can read/search repositories and
