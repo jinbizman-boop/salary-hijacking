@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { androidToolExists } from "./android-sdk-tools.mjs";
@@ -136,6 +137,10 @@ const REQUIRED_MOBILE_ASSETS = [
   "notification-icon.png",
   "favicon.png",
 ];
+const OFFICIAL_BI_LOGO_ASSET =
+  "assets/brand/salary-hijacking-platform-logo.png";
+const OFFICIAL_BI_LOGO_SHA256 =
+  "EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466";
 
 const REQUIRED_STORE_SCREENSHOT_ASSETS = [
   "01_home_salary.png",
@@ -2017,6 +2022,14 @@ const hasPngSignature = (filePath) => {
   );
 };
 
+const fileSha256 = (filePath) => {
+  if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return "";
+  return createHash("sha256")
+    .update(fs.readFileSync(filePath))
+    .digest("hex")
+    .toUpperCase();
+};
+
 const getEasProfile = (easConfig, profileName) => {
   const build = isPlainObject(easConfig?.build) ? easConfig.build : {};
   return isPlainObject(build[profileName]) ? build[profileName] : {};
@@ -2577,6 +2590,21 @@ const checkMobileReleaseReadiness = (
       );
     }
   }
+
+  const officialBiPath = path.join(mobileRoot, OFFICIAL_BI_LOGO_ASSET);
+  const officialBiOk =
+    hasPngSignature(officialBiPath) &&
+    fileSha256(officialBiPath) === OFFICIAL_BI_LOGO_SHA256;
+  addMobileCheck(
+    checks,
+    blockers,
+    officialBiOk ? "PASS" : "BLOCKED",
+    "mobile:asset:official-bi-logo",
+    officialBiOk
+      ? "official BI PNG hash matches user-provided source"
+      : "official BI logo is missing, invalid, or hash-mismatched",
+    `mobile official BI logo must match user-provided SHA256 ${OFFICIAL_BI_LOGO_SHA256}`,
+  );
 
   checkMobileAppConfig(rootDir, checks, blockers);
   checkStoreMetadata(rootDir, checks, blockers);

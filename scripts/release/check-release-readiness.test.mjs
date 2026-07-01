@@ -3,11 +3,21 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   analyzeReleaseReadiness,
   formatReleaseReadinessReport,
 } from "./check-release-readiness.mjs";
+
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+  "..",
+);
+const officialBrandLogoPath =
+  "apps/mobile/assets/brand/salary-hijacking-platform-logo.png";
+const officialBrandLogoSource = path.join(repoRoot, officialBrandLogoPath);
 
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
@@ -626,6 +636,11 @@ const makeWorkspace = () => {
   ]) {
     write(rootDir, `apps/mobile/assets/${assetName}`, validPng);
   }
+  write(
+    rootDir,
+    officialBrandLogoPath,
+    fs.readFileSync(officialBrandLogoSource),
+  );
   for (const imageName of requiredStoreImageNames) {
     write(rootDir, `release/screenshots/${imageName}`, validPng);
   }
@@ -1100,6 +1115,24 @@ test("blocks missing mobile launch assets and non-release EAS domains", () => {
   assert.match(report, /mobile:eas:production-api/);
   assert.match(report, /mobile:eas:production-deeplink/);
   assert.match(report, /mobile:eas:production-android/);
+});
+
+test("blocks when bundled official BI logo hash drifts", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, officialBrandLogoPath, validPng);
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:asset:official-bi-logo/);
+  assert.match(report, /official BI logo must match/i);
 });
 
 test("blocks mobile app config and store metadata that cannot be submitted", () => {

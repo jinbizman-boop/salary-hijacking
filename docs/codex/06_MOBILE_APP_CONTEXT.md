@@ -125,6 +125,8 @@ Official mobile UI assets are already bundled:
 official BI asset SHA256, Freesentation font loading, Clean Fintech v1 token
 values, bottom tab IA, screenshot anchor, and Korean mojibake absence for the
 launch screen set.
+`scripts/release/check-release-readiness.mjs` also blocks release readiness when
+the bundled official BI logo is missing, invalid PNG, or SHA256-mismatched.
 
 On 2026-07-01, `corepack pnpm --filter @salary-hijacking/mobile run export:web`
 passed and exported the official BI plus Freesentation assets. `node
