@@ -107,3 +107,28 @@ test("marks header proof false when CSP or privacy headers are missing", async (
   assert.equal(proof.headers.cspVerified, false);
   assert.equal(proof.headers.privacyHeadersVerified, false);
 });
+
+test("does not accept mojibake text as verified Korean public copy", async () => {
+  const proof = await collectPublicUrlProof({
+    baseUrl: "https://salaryhijacking.com",
+    fetchImpl: makeFetch({
+      "/": {
+        body: '<html><body>湲됱뿬?⑹튂 ?대쾲 ???닿? 吏耳쒕궦 ??<a href="/privacy">媛쒖씤?뺣낫</a><a href="/support">吏??</a><a href="/terms">?댁슜?쎄?</a></body></html>',
+      },
+      "/privacy": {
+        body: "<html><body>湲됱뿬?⑹튂 媛쒖씤?뺣낫 泥섎━諛⑹묠</body></html>",
+      },
+      "/support": {
+        body: "<html><body>湲됱뿬?⑹튂 怨좉컼 吏??</body></html>",
+      },
+      "/terms": {
+        body: "<html><body>湲됱뿬?⑹튂 ?댁슜?쎄?</body></html>",
+      },
+    }),
+    writeFile: false,
+  });
+
+  assert.equal(proof.reachability.landingReachable, true);
+  assert.equal(proof.content.koreanCopyVerified, false);
+  assert.equal(proof.content.storeReviewUrlsVerified, true);
+});
