@@ -225,7 +225,10 @@ raw headers, logs, emails, phone numbers, salary, expense, savings, hijack
 amounts, tokens, cookies, session identifiers, database URLs, and other
 sensitive payload keys before writing tracked evidence. The collector also
 treats sensitive public response header names or values as non-exposure failures
-without writing those headers. Then run:
+without writing those headers. The tracked evidence generator also rejects proof
+keys for copied request/response headers, raw headers, authorization, cookie,
+session, CSRF, API key, access token, JWT, and related sensitive header markers
+before writing tracked evidence. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

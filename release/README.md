@@ -184,7 +184,9 @@ alignment, and public-page sensitive data non-exposure. That local proof file is
 ignored by Git and must not contain copied HTML, raw response bodies, raw
 headers, logs, emails, phone numbers, salary, expense, savings, hijack amounts,
 tokens, cookies, session identifiers, database URLs, or other sensitive
-payloads.
+payloads. The generator rejects proof keys for copied request/response headers,
+raw headers, authorization, cookie, session, CSRF, API key, access token, JWT,
+and related sensitive header markers before writing tracked evidence.
 
 Current protected rule:
 

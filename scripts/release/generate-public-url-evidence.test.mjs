@@ -183,6 +183,42 @@ test("rejects proof files that contain raw secrets or copied response bodies", (
   );
 });
 
+test("rejects proof files that contain copied public response headers", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "public-url-proof.local.json",
+  );
+  write(
+    rootDir,
+    "release/public-url-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        headers: {
+          cspVerified: true,
+          privacyHeadersVerified: true,
+          noIndexAbsentOnPublicPages: true,
+          responseHeaders: {
+            "set-cookie": "session=raw-public-session",
+            authorization: "Bearer copied-public-token",
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildPublicUrlEvidence({ rootDir, proofPath }),
+    /raw public page payloads or sensitive data/i,
+  );
+});
+
 test("writes release/public-url-evidence.json with generated evidence", () => {
   const rootDir = makeWorkspace();
 
