@@ -32,6 +32,19 @@ evidence is:
 
 - `release/public-url-evidence.json`
 
+No-secret local proof templates live in:
+
+- `release/examples/secrets-proof.local.example.json`
+- `release/examples/cloudflare-observation.local.example.json`
+- `release/examples/mobile-native-observation.local.example.json`
+- `release/examples/database-command-proof.local.example.json`
+- `release/examples/public-url-proof.local.example.json`
+
+Copy a template to the matching ignored `release/*.local.json` path only after
+collecting proof from the correct provider console, CI run, or safe command.
+Templates intentionally default to unverified/false values so copying them alone
+cannot mark a release gate as ready.
+
 Safe runtime secret evidence generation command:
 
 - `corepack pnpm run release:secrets-evidence`

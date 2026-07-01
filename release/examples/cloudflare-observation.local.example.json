@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-01T00:00:00.000Z",
+  "source": "Example only. Copy to release/cloudflare-observation.local.json after read-only Cloudflare checks. Never paste credentials, API payloads, Worker source, binding values, certificate material, or logs.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "workers": {
+    "observedWorkers": [],
+    "productionDeployVerified": false
+  },
+  "resources": {
+    "r2BucketsVerified": false,
+    "r2ApiReadBlockedByAccountActivation": false,
+    "r2ReadErrorCode": "",
+    "queuesVerified": false,
+    "observedQueueCount": 0,
+    "deadLetterQueuesVerified": false,
+    "cronTriggersVerified": false,
+    "workerSecretBindingsVerified": false
+  },
+  "networking": {
+    "observedDomains": [],
+    "activeTlsCertificates": []
+  },
+  "note": "Only expected Salary Hijacking Worker names and booleans belong here. Do not include retro-db, unrelated projects, raw responses, tokens, secrets, private keys, or certificates."
+}

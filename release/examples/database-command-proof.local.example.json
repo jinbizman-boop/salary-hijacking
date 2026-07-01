@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-01T00:00:00.000Z",
+  "source": "Example only. Copy to release/database-command-proof.local.json after safe DB commands. Never paste database URLs, SQL outputs, request bodies, response bodies, real user data, or financial payloads.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "neon": {
+    "projectMatched": false,
+    "mainBranchReady": false,
+    "stagingBranchReady": false
+  },
+  "commands": {
+    "migrationValidation": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "local-safe"
+    },
+    "stagingMigration": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging"
+    },
+    "productionMigrationDryRun": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "production",
+      "dryRun": true
+    },
+    "stagingSeed": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging",
+      "syntheticDataOnly": true
+    },
+    "stagingApiSmoke": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging",
+      "noRawPayloadStored": true
+    },
+    "adminSmoke": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging",
+      "noRawPayloadStored": true
+    },
+    "serverAuthoritySmoke": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging",
+      "noRawPayloadStored": true
+    },
+    "privacySmoke": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging",
+      "noRawPayloadStored": true
+    },
+    "rollbackRehearsal": {
+      "verified": false,
+      "exitCode": 1,
+      "environment": "staging-drill"
+    }
+  },
+  "seeds": {
+    "productionSeedExecuted": false
+  },
+  "note": "Production seed proof is rejected. Keep this file to command result booleans, exit codes, safe environment names, dry-run flags, and non-secret notes."
+}

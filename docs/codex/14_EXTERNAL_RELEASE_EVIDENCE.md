@@ -21,6 +21,19 @@ Machine-readable evidence lives in:
 - `release/database-evidence.json`
 - `release/public-url-evidence.json`
 
+No-secret local proof examples live in:
+
+- `release/examples/secrets-proof.local.example.json`
+- `release/examples/cloudflare-observation.local.example.json`
+- `release/examples/mobile-native-observation.local.example.json`
+- `release/examples/database-command-proof.local.example.json`
+- `release/examples/public-url-proof.local.example.json`
+
+These templates intentionally default to unverified/false values. Copying a
+template into an ignored `release/*.local.json` path must not be treated as
+proof until the values are backed by provider console, CI, or safe command
+evidence.
+
 ## 2026-07-01 Connector Snapshot
 
 Latest connector refresh: 2026-07-01 13:36:54 KST.

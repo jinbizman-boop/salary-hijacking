@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-01T00:00:00.000Z",
+  "source": "Example only. release:public-url-proof normally writes this from live public URL checks. Never paste HTML, headers, logs, emails, phone numbers, tokens, database URLs, or user/financial payloads.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "reachability": {
+    "landingReachable": false,
+    "privacyReachable": false,
+    "supportReachable": false,
+    "termsReachable": false
+  },
+  "headers": {
+    "cspVerified": false,
+    "privacyHeadersVerified": false,
+    "noIndexAbsentOnPublicPages": false
+  },
+  "content": {
+    "koreanCopyVerified": false,
+    "storeReviewUrlsVerified": false,
+    "noSensitiveRawDataExposed": false
+  },
+  "note": "This template intentionally records false verification by default. Prefer running release:public-url-proof after production URLs are live."
+}

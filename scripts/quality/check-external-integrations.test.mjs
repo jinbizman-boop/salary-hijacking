@@ -577,6 +577,107 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
+    "release/examples/secrets-proof.local.example.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        secrets: {
+          DATABASE_URL: {
+            verified: false,
+            stores: ["GitHub Environments", "Cloudflare Worker secret"],
+          },
+        },
+      },
+      null,
+      2,
+    ),
+    "release/examples/cloudflare-observation.local.example.json":
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          secretsRedacted: true,
+          containsSecretValues: false,
+          workers: { observedWorkers: [] },
+          resources: { observedQueueCount: 0 },
+          networking: { observedDomains: [], activeTlsCertificates: [] },
+        },
+        null,
+        2,
+      ),
+    "release/examples/mobile-native-observation.local.example.json":
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          secretsRedacted: true,
+          containsSecretValues: false,
+          android: {
+            productionBuildVerified: false,
+            productionBuildProfile: "production",
+            productionArtifactType: "aab",
+          },
+          ios: {
+            productionBuildVerified: false,
+            productionBuildProfile: "production",
+          },
+          privacy: {
+            containsEasToken: false,
+            containsStoreCredential: false,
+            containsBinaryDownloadUrl: false,
+            containsReviewerPassword: false,
+          },
+        },
+        null,
+        2,
+      ),
+    "release/examples/database-command-proof.local.example.json":
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          secretsRedacted: true,
+          containsSecretValues: false,
+          neon: {
+            projectMatched: false,
+            mainBranchReady: false,
+            stagingBranchReady: false,
+          },
+          commands: {
+            migrationValidation: {
+              verified: false,
+              exitCode: 1,
+              environment: "local-safe",
+            },
+          },
+          seeds: { productionSeedExecuted: false },
+        },
+        null,
+        2,
+      ),
+    "release/examples/public-url-proof.local.example.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        reachability: {
+          landingReachable: false,
+          privacyReachable: false,
+          supportReachable: false,
+          termsReachable: false,
+        },
+        headers: {
+          cspVerified: false,
+          privacyHeadersVerified: false,
+          noIndexAbsentOnPublicPages: false,
+        },
+        content: {
+          koreanCopyVerified: false,
+          storeReviewUrlsVerified: false,
+          noSensitiveRawDataExposed: false,
+        },
+      },
+      null,
+      2,
+    ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",
@@ -1098,6 +1199,29 @@ node_modules/
     assert.match(result.failures.join("\n"), /release\/secrets-proof/);
     assert.match(result.failures.join("\n"), /release\/public-url-proof/);
     assert.match(result.failures.join("\n"), /must be ignored/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when release proof example templates are missing", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "release/examples/cloudflare-observation.local.example.json": null,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /release\/examples\/cloudflare-observation\.local\.example\.json/,
+    );
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }
