@@ -675,6 +675,16 @@ const matchingGitRemote = () => ({
   output: "https://github.com/jinbizman-boop/salary-hijacking.git",
 });
 
+const matchingGitHead = () => ({
+  ok: true,
+  output: "735eb533fb46c396eda857aafa33215587de032f",
+});
+
+const matchingGitRemoteHead = () => ({
+  ok: true,
+  output: "735eb533fb46c396eda857aafa33215587de032f\trefs/heads/main",
+});
+
 test("passes when release files, scripts, env names, and tools are present", () => {
   const rootDir = makeWorkspace();
   const result = analyzeReleaseReadiness({
@@ -693,6 +703,80 @@ test("passes when release files, scripts, env names, and tools are present", () 
       (check) => check.status === "PASS" || check.status === "WARN",
     ),
   );
+});
+
+test("blocks when the local release commit is not pushed to origin main", () => {
+  const rootDir = makeWorkspace();
+  writeExternalEvidence(rootDir, {
+    github: {
+      connectorReachable: true,
+      appInstalled: true,
+      expectedRepository: "jinbizman-boop/salary-hijacking",
+      repositoryCreationRequired: true,
+      existingRepositoriesMustNotBeModified: true,
+      protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
+      repositoryMatched: true,
+      writeAccessProven: true,
+      pushProven: true,
+      pushProofCommit: "735eb533fb46c396eda857aafa33215587de032f",
+    },
+  });
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: matchingGitHead,
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "a49d96720586f3c84eb056b868350578f467dad6\trefs/heads/main",
+    }),
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /git:remote-main-head/);
+  assert.match(
+    report,
+    /local HEAD must be pushed to origin\/main before release readiness is READY/,
+  );
+});
+
+test("uses the local origin main tracking ref when live remote read is unavailable", () => {
+  const rootDir = makeWorkspace();
+  writeExternalEvidence(rootDir, {
+    github: {
+      connectorReachable: true,
+      appInstalled: true,
+      expectedRepository: "jinbizman-boop/salary-hijacking",
+      repositoryCreationRequired: true,
+      existingRepositoriesMustNotBeModified: true,
+      protectedExistingRepositories: ["Retro Games", "RETRO-DB"],
+      repositoryMatched: true,
+      writeAccessProven: true,
+      pushProven: true,
+      pushProofCommit: "735eb533fb46c396eda857aafa33215587de032f",
+    },
+  });
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: matchingGitHead,
+    gitRemoteHead: () => ({
+      ok: false,
+      output: "fatal: unable to access github.com",
+    }),
+    gitRemoteTrackingHead: matchingGitRemoteHead,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /git:remote-main-head/);
+  assert.doesNotMatch(report, /origin\/main must be readable/);
 });
 
 test("blocks missing runtime evidence without leaking secret values", () => {

@@ -91,7 +91,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 74 required files checked, including public app/legal custom-domain targets, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, and tracked no-secret local proof example templates; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 115 tests
+- `corepack pnpm run test:root-scripts`: PASS, 117 tests
 - `node --test apps\mobile\scripts\import-e2e-apk.test.mjs`: PASS, Android E2E APK import helper accepts only local APK/ZIP files and rejects artifact URLs, non-APK files, and placeholders
 - `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
 - `node --test scripts/release/collect-database-proof.test.mjs`: PASS, database command proof collector stores booleans only and rejects raw database URLs, secret values, raw smoke payloads, sensitive user/financial keys, and production seed proof
@@ -106,7 +106,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm --filter @salary-hijacking/mobile format:check`: PASS
 - `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS, Expo web export includes official BI and Freesentation assets
 - `node scripts\release\capture-mobile-clean-fintech-screenshots.mjs`: PASS, regenerated five 430x932 screenshots and one 1024x500 Google Play feature graphic
-- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, and Android/iOS native build/E2E/store-submit evidence; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, Neon project evidence, public URL target evidence, and workspace-local EAS CLI evidence target `jinbizman-boop/salary-hijacking`
+- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, and Android/iOS native build/E2E/store-submit evidence; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, current local HEAD to `origin/main` sync, Neon project evidence, public URL target evidence, and workspace-local EAS CLI evidence target `jinbizman-boop/salary-hijacking`
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -114,7 +114,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm run test:e2e`: still BLOCKED at `@salary-hijacking/mobile#test:e2e` until an E2E APK is built or equivalent native device-farm proof is recorded without secrets
 - Dependency vulnerability audit is separated into `security:audit` and still requires registry/network access before release
 - `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
-- `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven; the latest recorded remote proof commit is stored in `release/external-release-evidence.json` and should be rechecked after new commits
+- `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven; release readiness now rechecks local HEAD against `origin/main` when authenticated push proof is claimed, falling back to the local `refs/remotes/origin/main` tracking ref with a warning when live remote reads are unavailable in the local Node sandbox; the latest recorded remote proof commit in `release/external-release-evidence.json` remains historical evidence
 
 ## Editing Rules
 

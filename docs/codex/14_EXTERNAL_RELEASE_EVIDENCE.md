@@ -61,6 +61,13 @@ GitHub:
   `a49d96720586f3c84eb056b868350578f467dad6`. Future commits must be checked
   with `git ls-remote`; this recorded evidence is historical and does not
   self-update.
+- `corepack pnpm run check:release-readiness -- --soft` now compares
+  `git rev-parse HEAD` with `git ls-remote origin refs/heads/main` whenever
+  authenticated push proof is claimed, so a committed but unpushed local HEAD
+  blocks release readiness instead of relying on the historical proof commit.
+  If live remote reads are unavailable inside the local Node sandbox, the
+  preflight falls back to `refs/remotes/origin/main` and records a warning
+  rather than treating the historical proof commit as current evidence.
 - The current exposed GitHub connector tools can read/search repositories and
   create/update repository files, but no new-repository creation action is
   exposed in this Codex session.
@@ -140,8 +147,9 @@ readiness. Release readiness requires both:
 - matching project resources for the Salary Hijacking platform.
 
 As of this snapshot, the GitHub repository target, local `origin`,
-authenticated push access, and Neon project target are aligned. The release
-status remains blocked by unverified entries in `release/secrets-evidence.json`,
+authenticated push access, current HEAD to `origin/main` sync, and Neon project
+target are aligned. The release status remains blocked by unverified entries in
+`release/secrets-evidence.json`,
 Cloudflare Worker resource matching, unverified entries in
 `release/cloudflare-runtime-evidence.json`, mobile native
 build/E2E/store-submit evidence, unverified database migration/seed/API

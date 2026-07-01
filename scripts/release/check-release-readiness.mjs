@@ -269,6 +269,43 @@ const defaultGitRemote = (rootDir) => {
   };
 };
 
+const defaultGitHead = (rootDir) => {
+  const result = spawnSync("git", ["rev-parse", "HEAD"], {
+    cwd: rootDir,
+    encoding: "utf8",
+    shell: false,
+  });
+  return {
+    ok: result.status === 0,
+    output: `${result.stdout ?? ""}${result.stderr ?? ""}`.trim(),
+  };
+};
+
+const defaultGitRemoteHead = (rootDir) => {
+  const result = spawnSync("git", ["ls-remote", "origin", "refs/heads/main"], {
+    cwd: rootDir,
+    encoding: "utf8",
+    shell: false,
+    timeout: 30_000,
+  });
+  return {
+    ok: result.status === 0,
+    output: `${result.stdout ?? ""}${result.stderr ?? ""}`.trim(),
+  };
+};
+
+const defaultGitRemoteTrackingHead = (rootDir) => {
+  const result = spawnSync("git", ["rev-parse", "refs/remotes/origin/main"], {
+    cwd: rootDir,
+    encoding: "utf8",
+    shell: false,
+  });
+  return {
+    ok: result.status === 0,
+    output: `${result.stdout ?? ""}${result.stderr ?? ""}`.trim(),
+  };
+};
+
 const addCheck = (checks, status, name, detail) => {
   checks.push({ status, name, detail });
 };
@@ -332,6 +369,16 @@ const gitRemoteMatchesRepository = (remoteUrl, repositoryFullName) => {
     remote === repository
   );
 };
+
+const parseGitSha = (output) => {
+  const candidate =
+    String(output ?? "")
+      .trim()
+      .split(/\s+/)[0] ?? "";
+  return /^[0-9a-f]{40}$/i.test(candidate) ? candidate.toLowerCase() : "";
+};
+
+const shortGitSha = (value) => String(value ?? "").slice(0, 12);
 
 const getExpectedGithubRepository = (evidence) => {
   const github = isPlainObject(evidence?.github) ? evidence.github : {};
@@ -2655,6 +2702,9 @@ export const analyzeReleaseReadiness = ({
   commandExists = (command) => findCommandOnPath(command, env),
   gitStatus = () => defaultGitStatus(rootDir),
   gitRemote = () => defaultGitRemote(rootDir),
+  gitHead = () => defaultGitHead(rootDir),
+  gitRemoteHead = () => defaultGitRemoteHead(rootDir),
+  gitRemoteTrackingHead = () => defaultGitRemoteTrackingHead(rootDir),
 } = {}) => {
   const checks = [];
   const blockers = [];
@@ -2908,6 +2958,77 @@ export const analyzeReleaseReadiness = ({
           "git:remote-origin",
           `origin matches expected GitHub repository ${expectedRepository}`,
         );
+
+        const githubEvidence = isPlainObject(externalEvidence?.github)
+          ? externalEvidence.github
+          : {};
+        const pushProofClaimed =
+          githubEvidence.pushProven === true ||
+          typeof githubEvidence.pushProofCommit === "string";
+
+        if (pushProofClaimed) {
+          const localHead = gitHead();
+          const remoteHead = gitRemoteHead();
+          const localSha = localHead.ok ? parseGitSha(localHead.output) : "";
+          let remoteSha = remoteHead.ok ? parseGitSha(remoteHead.output) : "";
+          let remoteSource = "origin/main";
+          let remoteStatus = "PASS";
+
+          if (!remoteSha) {
+            const trackingHead = gitRemoteTrackingHead();
+            const trackingSha = trackingHead.ok
+              ? parseGitSha(trackingHead.output)
+              : "";
+
+            if (trackingSha) {
+              remoteSha = trackingSha;
+              remoteSource = "local origin/main tracking ref";
+              remoteStatus = "WARN";
+              warnings.push(
+                "live origin/main read is unavailable; using local origin/main tracking ref",
+              );
+            }
+          }
+
+          if (!localSha) {
+            addCheck(
+              checks,
+              "BLOCKED",
+              "git:local-head",
+              "local HEAD commit could not be verified",
+            );
+            blockers.push(
+              "local HEAD commit must be readable before release readiness is READY",
+            );
+          } else if (!remoteSha) {
+            addCheck(
+              checks,
+              "BLOCKED",
+              "git:remote-main-head",
+              "origin/main commit could not be verified",
+            );
+            blockers.push(
+              "origin/main must be readable before release readiness is READY",
+            );
+          } else if (localSha === remoteSha) {
+            addCheck(
+              checks,
+              remoteStatus,
+              "git:remote-main-head",
+              `local HEAD ${shortGitSha(localSha)} matches ${remoteSource}`,
+            );
+          } else {
+            addCheck(
+              checks,
+              "BLOCKED",
+              "git:remote-main-head",
+              `local HEAD ${shortGitSha(localSha)} differs from ${remoteSource} ${shortGitSha(remoteSha)}`,
+            );
+            blockers.push(
+              "local HEAD must be pushed to origin/main before release readiness is READY",
+            );
+          }
+        }
       } else {
         addCheck(
           checks,
