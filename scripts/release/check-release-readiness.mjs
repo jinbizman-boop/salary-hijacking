@@ -1727,6 +1727,20 @@ const checkCloudflareRuntimeEvidence = (
       : "";
   const workers = isPlainObject(evidence.workers) ? evidence.workers : {};
   const observedWorkers = sortedStrings(workers.observedWorkers);
+  const unexpectedWorkers = observedWorkers.filter(
+    (worker) => !expectedWorkers.includes(worker),
+  );
+  addCloudflareRuntimeCheck(
+    checks,
+    blockers,
+    unexpectedWorkers.length === 0 ? "PASS" : "BLOCKED",
+    "cloudflare-runtime:worker-scope",
+    unexpectedWorkers.length === 0
+      ? "observed Workers are limited to the Salary Hijacking release target"
+      : `unexpected Worker names observed: ${unexpectedWorkers.join(", ")}`,
+    "Cloudflare runtime evidence must not include unrelated Worker resources",
+  );
+
   const missingWorkers = expectedWorkers.filter(
     (worker) => !observedWorkers.includes(worker),
   );

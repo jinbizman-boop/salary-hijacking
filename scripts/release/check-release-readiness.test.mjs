@@ -1038,6 +1038,42 @@ test("blocks Cloudflare runtime evidence that contains raw secret values", () =>
   assert.doesNotMatch(report, /cf_live_secret_value/);
 });
 
+test("blocks Cloudflare runtime evidence that includes unrelated Workers", () => {
+  const rootDir = makeWorkspace();
+  writeCloudflareRuntimeEvidence(rootDir, {
+    workers: {
+      expectedWorkers: [
+        "salary-hijacking-api",
+        "salary-hijacking-notifications",
+        "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
+      ],
+      observedWorkers: [
+        "salary-hijacking-api",
+        "salary-hijacking-notifications",
+        "salary-hijacking-scheduler",
+        "salary-hijacking-admin",
+        "retro-db",
+      ],
+      productionDeployVerified: true,
+      adminWorkerVerified: true,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /cloudflare-runtime:worker-scope/);
+  assert.match(report, /unexpected Worker names observed: retro-db/);
+});
+
 test("blocks when database migration, seed, and smoke evidence is missing", () => {
   const rootDir = makeWorkspace();
   fs.rmSync(path.join(rootDir, "release", "database-evidence.json"), {

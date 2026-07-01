@@ -192,7 +192,9 @@ observations in `release/cloudflare-observation.local.json`, then
 `release/cloudflare-proof.local.json`. The collector and generator reject raw
 Cloudflare credentials, Worker script bodies, binding values, certificate
 material, private keys, copied runtime payloads, secret values, and unrelated
-Worker names before writing local or tracked evidence.
+Worker names before writing local or tracked evidence. Release readiness also
+independently blocks tracked Cloudflare runtime evidence when `observedWorkers`
+contains names outside the Salary Hijacking release target set.
 Update `release/database-evidence.json` only with booleans, resource names,
 migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,

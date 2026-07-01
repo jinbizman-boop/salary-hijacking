@@ -100,6 +100,9 @@ booleans. The local proof file is ignored by Git and may contain only Worker
 names, resource presence flags, domain/certificate flags, and non-secret notes.
 It must not contain Cloudflare tokens, Worker secret values, database URLs,
 private keys, certificates, service accounts, or copied runtime payloads.
+Release readiness independently blocks tracked Cloudflare runtime evidence when
+`observedWorkers` contains Worker names outside the Salary Hijacking release
+target set.
 
 Safe mobile native evidence generation command:
 
