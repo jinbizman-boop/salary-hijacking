@@ -1,9 +1,12 @@
+import { createHash } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { salaryHijackingTheme } from "../clean-fintech-theme";
 
 const appRoot = join(process.cwd(), "app");
+const officialBiSha256 =
+  "EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466";
 const mojibakePattern = /[湲怨吏猷醫紐留吏理痍寃]/;
 
 function source(path: string): string {
@@ -81,6 +84,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(existsSync(brandLogo)).toBe(true);
     expect(statSync(brandLogo).size).toBeGreaterThan(500_000);
+    expect(
+      createHash("sha256")
+        .update(readFileSync(brandLogo))
+        .digest("hex")
+        .toUpperCase(),
+    ).toBe(officialBiSha256);
     expect(cleanScreens).toContain("salary-hijacking-platform-logo.png");
     expect(rootLayout).toContain("salary-hijacking-platform-logo.png");
     expect(screenshotScript).toContain("salary-hijacking-platform-logo.png");

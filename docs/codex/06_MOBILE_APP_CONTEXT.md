@@ -122,9 +122,9 @@ Official mobile UI assets are already bundled:
   `Freesentation-9Black.ttf`
 
 `apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts` guards the
-official BI asset, Freesentation font loading, Clean Fintech v1 token values,
-bottom tab IA, screenshot anchor, and Korean mojibake absence for the launch
-screen set.
+official BI asset SHA256, Freesentation font loading, Clean Fintech v1 token
+values, bottom tab IA, screenshot anchor, and Korean mojibake absence for the
+launch screen set.
 
 On 2026-07-01, `corepack pnpm --filter @salary-hijacking/mobile run export:web`
 passed and exported the official BI plus Freesentation assets. `node
