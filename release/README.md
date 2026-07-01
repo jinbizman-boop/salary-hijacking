@@ -173,7 +173,8 @@ The proof collector requests `PUBLIC_APP_BASE_URL` or
 `https://salaryhijacking.com` by default, checks `/`, `/privacy`, `/support`,
 and `/terms`, and writes only booleans to
 `release/public-url-proof.local.json`. It does not write copied HTML, raw
-headers, logs, user identifiers, or financial payloads.
+headers, logs, user identifiers, or financial payloads, and it treats sensitive
+response header names or values as public sensitive-data non-exposure failures.
 
 The evidence generator reads no runtime secret values. If
 `release/public-url-proof.local.json` exists, it may contain only no-secret
@@ -182,7 +183,8 @@ booleans proving production reachability for `/`, `/privacy`, `/support`, and
 alignment, and public-page sensitive data non-exposure. That local proof file is
 ignored by Git and must not contain copied HTML, raw response bodies, raw
 headers, logs, emails, phone numbers, salary, expense, savings, hijack amounts,
-tokens, database URLs, or other sensitive payloads.
+tokens, cookies, session identifiers, database URLs, or other sensitive
+payloads.
 
 Current protected rule:
 

@@ -222,8 +222,10 @@ into `release/public-url-proof.local.json`, then
 `corepack pnpm run release:public-url-evidence` to update the tracked evidence;
 the collector and generator reject or avoid copied HTML, raw response bodies,
 raw headers, logs, emails, phone numbers, salary, expense, savings, hijack
-amounts, tokens, database URLs, and other sensitive payload keys before writing
-tracked evidence. Then run:
+amounts, tokens, cookies, session identifiers, database URLs, and other
+sensitive payload keys before writing tracked evidence. The collector also
+treats sensitive public response header names or values as non-exposure failures
+without writing those headers. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

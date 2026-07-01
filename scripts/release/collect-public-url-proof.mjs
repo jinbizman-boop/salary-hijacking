@@ -36,6 +36,9 @@ const PUBLIC_PAGE_SPECS = Object.freeze([
 const SENSITIVE_PUBLIC_PAGE_PATTERN =
   /(salaryAmount|expenseAmount|savingAmount|savingsAmount|hijackAmount|accountNumber|cardNumber|loan|resident|phoneNumber|authToken|refreshToken|sessionToken|pushToken|rawDeviceIdentifier|DATABASE_URL|JWT_SECRET|PRIVATE_KEY|SERVICE_ACCOUNT|FCM_SERVER_KEY)/i;
 
+const SENSITIVE_PUBLIC_HEADER_PATTERN =
+  /(set-cookie|authorization|cookie|email|phone|token|session|auth|device|account|card|loan|database_url|jwt_secret|private_key|service_account|fcm_server_key|salary|expense|saving|hijack)/i;
+
 const normalizeBaseUrl = (baseUrl) => {
   const value = String(baseUrl ?? DEFAULT_BASE_URL).trim() || DEFAULT_BASE_URL;
   return value.replace(/\/+$/, "");
@@ -88,6 +91,19 @@ const hasStoreReviewLinks = (body) =>
   body.includes("/support") &&
   body.includes("/terms");
 
+const hasSensitiveHeader = (headers) => {
+  for (const [name, value] of headers.entries()) {
+    const header = `${name}:${value}`;
+    if (
+      SENSITIVE_PUBLIC_HEADER_PATTERN.test(header) ||
+      SENSITIVE_PUBLIC_PAGE_PATTERN.test(header)
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const emptyPageResult = (spec, error) => ({
   spec,
   reachable: false,
@@ -114,7 +130,9 @@ const fetchPage = async ({ spec, baseUrl, fetchImpl }) => {
       privacyHeaders: hasPrivacyHeaders(response),
       noIndexAbsent: noIndexAbsent(response, body),
       koreanCopy: hasRequiredKoreanCopy(body, spec.requiredText),
-      sensitiveSafe: !SENSITIVE_PUBLIC_PAGE_PATTERN.test(body),
+      sensitiveSafe:
+        !SENSITIVE_PUBLIC_PAGE_PATTERN.test(body) &&
+        !hasSensitiveHeader(response.headers),
       storeReviewLinks: spec.path === "/" ? hasStoreReviewLinks(body) : true,
       error: "",
     };

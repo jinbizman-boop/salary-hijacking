@@ -89,6 +89,24 @@ test("marks proof false when public pages expose sensitive payload markers", asy
   assert.equal(proof.content.noSensitiveRawDataExposed, false);
 });
 
+test("marks sensitive proof false when public response headers expose raw identifiers", async () => {
+  const proof = await collectPublicUrlProof({
+    baseUrl: "https://salaryhijacking.com",
+    fetchImpl: makeFetch({
+      "/support": {
+        headers: {
+          "set-cookie": "session=raw-public-session",
+          "x-user-email": "person@example.com",
+        },
+      },
+    }),
+    writeFile: false,
+  });
+
+  assert.equal(proof.reachability.supportReachable, true);
+  assert.equal(proof.content.noSensitiveRawDataExposed, false);
+});
+
 test("marks header proof false when CSP or privacy headers are missing", async () => {
   const proof = await collectPublicUrlProof({
     baseUrl: "https://salaryhijacking.com",
