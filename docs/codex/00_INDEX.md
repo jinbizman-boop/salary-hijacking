@@ -35,6 +35,7 @@ This directory is the durable context pack for Codex work on the Salary Hijackin
 | `12_CHATGPT_WORK_SUMMARY.md`      | Continuing from ChatGPT-era work               | Human-readable handoff summary                             |
 | `13_BASELINE_VERIFICATION_MAP.md` | Starting implementation hardening              | Current PASS/FAIL baseline, blockers, and next work target |
 | `14_EXTERNAL_RELEASE_EVIDENCE.md` | Checking release readiness                     | Read-only GitHub/Cloudflare/Neon evidence and blockers     |
+| `15_UI_UX_REFERENCE.md`           | Touching mobile UI, BI, fonts, screenshots     | Design references, source hashes, and app mapping          |
 
 ## Area Routing
 
@@ -45,6 +46,7 @@ This directory is the durable context pack for Codex work on the Salary Hijackin
 - Project-wide validation or completion claims: read `08_FILE_COMPLETION_LOG.md` and `09_VALIDATION_PROTOCOL.md`.
 - Baseline hardening work: read `13_BASELINE_VERIFICATION_MAP.md`.
 - Release readiness work: read `14_EXTERNAL_RELEASE_EVIDENCE.md`.
+- Mobile UI, BI, font, screenshot, or Clean Fintech work: read `15_UI_UX_REFERENCE.md`.
 
 ## Important Caveat
 
