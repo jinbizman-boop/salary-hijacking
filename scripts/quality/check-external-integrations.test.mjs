@@ -864,6 +864,35 @@ test("fails when mobile release config keeps example domains", async () => {
   }
 });
 
+test("fails when environment example drifts from mobile and GitHub release targets", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".env.example": `
+ANDROID_PACKAGE=com.salaryhijacking.app
+IOS_BUNDLE_IDENTIFIER=com.salaryhijacking.app
+GITHUB_REPOSITORY=owner/salary-hijacking-platform
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /\.env\.example/);
+    assert.match(result.failures.join("\n"), /com\.salaryhijacking\.mobile/);
+    assert.match(
+      result.failures.join("\n"),
+      /jinbizman-boop\/salary-hijacking/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when .gitignore hides required source automation scripts", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 

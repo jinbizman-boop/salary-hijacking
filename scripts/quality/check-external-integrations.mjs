@@ -346,6 +346,12 @@ const LOCAL_GENERATED_OR_HOSTING_METADATA_PATHS = [
   "release/secrets-proof.local.json",
 ];
 
+const ENV_EXAMPLE_RELEASE_TARGETS = {
+  ANDROID_PACKAGE: "com.salaryhijacking.mobile",
+  IOS_BUNDLE_IDENTIFIER: "com.salaryhijacking.mobile",
+  GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
+};
+
 const SENSITIVE_KEY_PATTERN =
   "CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|EXPO_TOKEN|DATABASE_URL|DIRECT_DATABASE_URL|STAGING_DATABASE_URL|UAT_DATABASE_URL|SHADOW_DATABASE_URL|NEON_API_KEY|NEON_DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SENTRY_AUTH_TOKEN|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST|FCM_SERVER_KEY|FCM_SERVICE_ACCOUNT_JSON";
 
@@ -497,6 +503,36 @@ function checkMobileLaunchAssets(rootDir, failures) {
   }
 }
 
+function parseEnvAssignments(source) {
+  const entries = {};
+  for (const line of source.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const match = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/.exec(trimmed);
+    if (!match) continue;
+
+    entries[match[1]] = match[2].replace(/^['"]|['"]$/g, "").trim();
+  }
+  return entries;
+}
+
+function checkEnvExampleReleaseTargets(rootDir, failures) {
+  const relativePath = ".env.example";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const values = parseEnvAssignments(readText(rootDir, relativePath));
+  for (const [key, expectedValue] of Object.entries(
+    ENV_EXAMPLE_RELEASE_TARGETS,
+  )) {
+    if (values[key] === expectedValue) continue;
+
+    failures.push(
+      `${relativePath}: ${key} must be ${expectedValue} for the Salary Hijacking release target`,
+    );
+  }
+}
+
 function checkMigrationOrder(rootDir, failures) {
   const migrationDir = resolvePath(rootDir, "database/migrations");
   if (!fs.existsSync(migrationDir)) return;
@@ -642,6 +678,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkReleaseMetadataText(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
+  checkEnvExampleReleaseTargets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);
   checkRequiredSourceFilesNotIgnored(rootDir, failures, warnings);
   checkLocalGeneratedOutputsIgnored(rootDir, failures, warnings);
