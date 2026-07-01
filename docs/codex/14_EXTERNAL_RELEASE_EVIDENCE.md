@@ -211,7 +211,8 @@ evidence from `release/mobile-native-proof.local.json`. The collector and
 generator reject EAS tokens, Apple/Google credentials, binary download URLs,
 local artifact paths, signing keys, service account JSON, reviewer passwords,
 copied store-console payloads, and logs before writing local or tracked
-evidence.
+evidence. The tracked evidence generator requires `containsSecretValues=false`
+on local or fallback proof before writing refreshed mobile native evidence.
 Update `release/public-url-evidence.json` only with no-secret booleans proving
 production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and

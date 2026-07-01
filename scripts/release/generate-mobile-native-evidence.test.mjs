@@ -30,6 +30,7 @@ test("builds blocked no-secret mobile native evidence by default", () => {
   assert.equal(evidence.schemaVersion, 1);
   assert.equal(evidence.observedAt, "2026-07-01T11:00:00.000Z");
   assert.equal(evidence.secretsRedacted, true);
+  assert.equal(evidence.containsSecretValues, false);
   assert.equal(evidence.android.localAdbAvailable, false);
   assert.equal(evidence.android.localEmulatorAvailable, false);
   assert.equal(evidence.android.productionBuildVerified, false);
@@ -87,6 +88,7 @@ test("uses a local proof file to mark mobile native gates verified", () => {
       {
         schemaVersion: 1,
         secretsRedacted: true,
+        containsSecretValues: false,
         android: {
           productionBuildVerified: true,
           productionBuildProfile: "production",
@@ -136,6 +138,7 @@ test("preserves existing no-secret mobile native evidence when local proof is ab
       {
         schemaVersion: 1,
         secretsRedacted: true,
+        containsSecretValues: false,
         android: {
           productionBuildVerified: true,
           productionBuildProfile: "production",
@@ -183,6 +186,7 @@ test("rejects proof files that contain native build secrets or artifact URLs and
       {
         schemaVersion: 1,
         secretsRedacted: true,
+        containsSecretValues: false,
         android: {
           productionBuildVerified: true,
           easTokenValue: "eas_live_token_value_that_must_not_be_stored",
@@ -206,6 +210,44 @@ test("rejects proof files that contain native build secrets or artifact URLs and
   );
 });
 
+test("rejects proof files marked as containing secret values", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "mobile-native-proof.local.json",
+  );
+  write(
+    rootDir,
+    "release/mobile-native-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: true,
+        android: {
+          productionBuildVerified: true,
+          productionBuildProfile: "production",
+          productionArtifactType: "aab",
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsBinaryDownloadUrl: false,
+          containsReviewerPassword: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildMobileNativeEvidence({ rootDir, proofPath }),
+    /containsSecretValues=false/i,
+  );
+});
+
 test("writes release/mobile-native-evidence.json with generated evidence", () => {
   const rootDir = makeWorkspace();
 
@@ -221,6 +263,7 @@ test("writes release/mobile-native-evidence.json with generated evidence", () =>
   );
   const written = JSON.parse(fs.readFileSync(outputPath, "utf8"));
   assert.equal(written.observedAt, "2026-07-01T12:00:00.000Z");
+  assert.equal(written.containsSecretValues, false);
   assert.equal(written.android.productionArtifactType, "aab");
   assert.doesNotMatch(JSON.stringify(written), /expo\.dev\/artifacts/i);
 });
