@@ -33,6 +33,14 @@ const validPng = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/l7mF4QAAAABJRU5ErkJggg==",
   "base64",
 );
+const pngWithDimensions = (width, height) => {
+  const buffer = Buffer.from(validPng);
+  buffer.writeUInt32BE(width, 16);
+  buffer.writeUInt32BE(height, 20);
+  return buffer;
+};
+const validPhoneScreenshotPng = pngWithDimensions(430, 932);
+const validFeatureGraphicPng = pngWithDimensions(1024, 500);
 
 const validMobileAppConfig = `
 const SERVICE_NAME = "급여납치";
@@ -642,7 +650,13 @@ const makeWorkspace = () => {
     fs.readFileSync(officialBrandLogoSource),
   );
   for (const imageName of requiredStoreImageNames) {
-    write(rootDir, `release/screenshots/${imageName}`, validPng);
+    write(
+      rootDir,
+      `release/screenshots/${imageName}`,
+      imageName === "feature_graphic_google_play.png"
+        ? validFeatureGraphicPng
+        : validPhoneScreenshotPng,
+    );
   }
 
   write(
@@ -1216,6 +1230,31 @@ test("blocks missing store screenshots and incomplete screenshot guidance", () =
   assert.match(report, /mobile:store-feature-graphic/);
   assert.match(report, /mobile:screenshot-plan/);
   assert.match(report, /mobile:screenshot-guideline/);
+});
+
+test("blocks placeholder-sized store screenshots and feature graphic", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, "release/screenshots/01_home_salary.png", validPng);
+  write(
+    rootDir,
+    "release/screenshots/feature_graphic_google_play.png",
+    validPng,
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:store-screenshot:01_home_salary\.png/);
+  assert.match(report, /mobile:store-feature-graphic/);
+  assert.match(report, /store screenshot/i);
+  assert.match(report, /feature graphic/i);
 });
 
 test("blocks missing store privacy, data safety, review, and content rating materials", () => {

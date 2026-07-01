@@ -151,6 +151,10 @@ const REQUIRED_STORE_SCREENSHOT_ASSETS = [
 ];
 
 const REQUIRED_STORE_FEATURE_GRAPHIC = "feature_graphic_google_play.png";
+const MIN_STORE_SCREENSHOT_WIDTH = 360;
+const MIN_STORE_SCREENSHOT_HEIGHT = 640;
+const REQUIRED_FEATURE_GRAPHIC_WIDTH = 1024;
+const REQUIRED_FEATURE_GRAPHIC_HEIGHT = 500;
 
 const PNG_SIGNATURE = Buffer.from([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
@@ -2022,6 +2026,16 @@ const hasPngSignature = (filePath) => {
   );
 };
 
+const readPngDimensions = (filePath) => {
+  if (!hasPngSignature(filePath)) return null;
+  const buffer = fs.readFileSync(filePath);
+  if (buffer.length < 24) return null;
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+};
+
 const fileSha256 = (filePath) => {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) return "";
   return createHash("sha256")
@@ -2348,13 +2362,18 @@ const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
       "screenshots",
       screenshotName,
     );
-    if (hasPngSignature(screenshotPath)) {
+    const dimensions = readPngDimensions(screenshotPath);
+    const screenshotOk =
+      dimensions &&
+      dimensions.width >= MIN_STORE_SCREENSHOT_WIDTH &&
+      dimensions.height >= MIN_STORE_SCREENSHOT_HEIGHT;
+    if (screenshotOk) {
       addMobileCheck(
         checks,
         blockers,
         "PASS",
         `mobile:store-screenshot:${screenshotName}`,
-        "PNG store screenshot present",
+        `PNG store screenshot present (${dimensions.width}x${dimensions.height})`,
       );
     } else {
       addMobileCheck(
@@ -2362,8 +2381,8 @@ const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
         blockers,
         "BLOCKED",
         `mobile:store-screenshot:${screenshotName}`,
-        "missing or invalid PNG store screenshot",
-        `store screenshot is missing or invalid: release/screenshots/${screenshotName}`,
+        "missing, invalid, or placeholder-sized PNG store screenshot",
+        `store screenshot must be a PNG at least ${MIN_STORE_SCREENSHOT_WIDTH}x${MIN_STORE_SCREENSHOT_HEIGHT}: release/screenshots/${screenshotName}`,
       );
     }
   }
@@ -2374,13 +2393,17 @@ const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
     "screenshots",
     REQUIRED_STORE_FEATURE_GRAPHIC,
   );
-  if (hasPngSignature(featureGraphicPath)) {
+  const featureGraphicDimensions = readPngDimensions(featureGraphicPath);
+  const featureGraphicOk =
+    featureGraphicDimensions?.width === REQUIRED_FEATURE_GRAPHIC_WIDTH &&
+    featureGraphicDimensions.height === REQUIRED_FEATURE_GRAPHIC_HEIGHT;
+  if (featureGraphicOk) {
     addMobileCheck(
       checks,
       blockers,
       "PASS",
       "mobile:store-feature-graphic",
-      "Google Play feature graphic PNG present",
+      `Google Play feature graphic PNG present (${REQUIRED_FEATURE_GRAPHIC_WIDTH}x${REQUIRED_FEATURE_GRAPHIC_HEIGHT})`,
     );
   } else {
     addMobileCheck(
@@ -2388,8 +2411,8 @@ const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
       blockers,
       "BLOCKED",
       "mobile:store-feature-graphic",
-      "missing or invalid Google Play feature graphic PNG",
-      `Google Play feature graphic is missing or invalid: release/screenshots/${REQUIRED_STORE_FEATURE_GRAPHIC}`,
+      "missing, invalid, or wrong-size Google Play feature graphic PNG",
+      `Google Play feature graphic must be a ${REQUIRED_FEATURE_GRAPHIC_WIDTH}x${REQUIRED_FEATURE_GRAPHIC_HEIGHT} PNG: release/screenshots/${REQUIRED_STORE_FEATURE_GRAPHIC}`,
     );
   }
 
