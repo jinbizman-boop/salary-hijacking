@@ -333,6 +333,14 @@ const RELEASE_METADATA_FILES = [
   "release/database-evidence.json",
 ];
 
+const CODEX_STATUS_DOC_FILES = [
+  "AGENTS.md",
+  "docs/codex/01_PROJECT_BRIEF.md",
+  "docs/codex/06_MOBILE_APP_CONTEXT.md",
+  "docs/codex/08_FILE_COMPLETION_LOG.md",
+  "docs/codex/13_BASELINE_VERIFICATION_MAP.md",
+];
+
 const MOBILE_RELEASE_CONFIG_FILES = [
   "apps/mobile/eas.json",
   "apps/mobile/app.config.ts",
@@ -402,6 +410,11 @@ const UNSAFE_SENSITIVE_ASSIGNMENT = new RegExp(
 
 const PLACEHOLDER_OR_MOJIBAKE_PATTERN =
   /final script location|placeholder|not implemented|stub|coming soon|최종 파일 위치|최종 기준 파일|理|湲|�|疫/i;
+
+const STALE_ANDROID_TOOL_BLOCKER_PATTERNS = [
+  /Android\s+`?adb`?\s+and\s+`?emulator`?\s+remain blocking local release tools/i,
+  /missing\s+(?:local\s+)?Android\s+`?adb`?\s*\/\s*`?emulator`?/i,
+];
 
 const FORBIDDEN_MOBILE_RELEASE_DOMAIN_PATTERN =
   /salary-hijacking\.example|salary-hijacking\.app/i;
@@ -509,6 +522,22 @@ function checkReleaseMetadataText(rootDir, failures) {
       failures.push(
         `${relativePath}: contains placeholder, mojibake, or non-release metadata marker`,
       );
+    }
+  }
+}
+
+function checkCodexStatusDocs(rootDir, failures) {
+  for (const relativePath of CODEX_STATUS_DOC_FILES) {
+    if (!fileExists(rootDir, relativePath)) continue;
+
+    const source = readText(rootDir, relativePath);
+    for (const pattern of STALE_ANDROID_TOOL_BLOCKER_PATTERNS) {
+      if (!pattern.test(source)) continue;
+
+      failures.push(
+        `${relativePath}: stale Android adb/emulator blocker language; current blocker must be missing APK/native E2E proof, not tool availability`,
+      );
+      break;
     }
   }
 }
@@ -716,6 +745,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkOperationalDocs(rootDir, failures);
   checkGitHubRepositoryPolicy(rootDir, failures);
   checkReleaseMetadataText(rootDir, failures);
+  checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
   checkEnvExampleReleaseTargets(rootDir, failures);

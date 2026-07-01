@@ -90,7 +90,9 @@ Verified on 2026-07-01 KST:
   missing `gh`/Neon CLI as WARN when connector evidence proves account access.
   Workspace-local
   `apps/mobile/node_modules/.bin/eas.CMD` runs `eas-cli/20.4.0`. Android `adb`
-  and `emulator` remain blocking local release tools.
+  and `emulator` are detected through Android SDK lookup; local release remains
+  blocked until the Detox E2E APK or equivalent native device-farm proof is
+  recorded without secrets.
 
 ## Product Maturity Read
 

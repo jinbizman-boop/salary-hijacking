@@ -1023,6 +1023,39 @@ test("fails when mobile release metadata contains mojibake", async () => {
   }
 });
 
+test("fails when Codex docs keep stale Android tool blocker language", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "docs/codex/01_PROJECT_BRIEF.md": `
+# Project Brief
+
+Android \`adb\` and \`emulator\` remain blocking local release tools.
+`,
+      "docs/codex/08_FILE_COMPLETION_LOG.md": `
+# Completion Log
+
+Release readiness is blocked by missing local Android \`adb\`/\`emulator\`.
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /docs\/codex\/01_PROJECT_BRIEF\.md/,
+    );
+    assert.match(result.failures.join("\n"), /Android adb\/emulator/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when mobile launch assets are missing", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
