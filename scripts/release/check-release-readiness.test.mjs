@@ -214,6 +214,12 @@ const writeReleaseTargets = (rootDir, overrides = {}) => {
     neon: {
       expectedProjectHint: "salary-hijacking",
     },
+    publicUrls: {
+      landingUrl: "https://salaryhijacking.com/",
+      privacyUrl: "https://salaryhijacking.com/privacy",
+      supportUrl: "https://salaryhijacking.com/support",
+      termsUrl: "https://salaryhijacking.com/terms",
+    },
     ...overrides,
   };
 
@@ -434,6 +440,45 @@ const writeDatabaseEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const writePublicUrlEvidence = (rootDir, overrides = {}) => {
+  const evidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    containsSecretValues: false,
+    expectedUrls: {
+      landingUrl: "https://salaryhijacking.com/",
+      privacyUrl: "https://salaryhijacking.com/privacy",
+      supportUrl: "https://salaryhijacking.com/support",
+      termsUrl: "https://salaryhijacking.com/terms",
+    },
+    reachability: {
+      landingReachable: true,
+      privacyReachable: true,
+      supportReachable: true,
+      termsReachable: true,
+    },
+    headers: {
+      cspVerified: true,
+      privacyHeadersVerified: true,
+      noIndexAbsentOnPublicPages: true,
+    },
+    content: {
+      koreanCopyVerified: true,
+      storeReviewUrlsVerified: true,
+      noSensitiveRawDataExposed: true,
+    },
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/public-url-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
@@ -478,6 +523,7 @@ const makeWorkspace = () => {
   writeSecretsEvidence(rootDir);
   writeCloudflareRuntimeEvidence(rootDir);
   writeDatabaseEvidence(rootDir);
+  writePublicUrlEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
@@ -815,6 +861,59 @@ test("blocks when database migration, seed, and smoke evidence is missing", () =
   assert.equal(result.ok, false);
   assert.match(report, /database-evidence\.json/);
   assert.match(report, /database:evidence/);
+});
+
+test("blocks when public app URL evidence is missing or unverified", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "public-url-evidence.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /public-url-evidence\.json/);
+  assert.match(report, /public-url:evidence/);
+});
+
+test("blocks public URL evidence that contains raw page payloads", () => {
+  const rootDir = makeWorkspace();
+  writePublicUrlEvidence(rootDir, {
+    containsSecretValues: false,
+    content: {
+      koreanCopyVerified: true,
+      storeReviewUrlsVerified: true,
+      noSensitiveRawDataExposed: true,
+      responseBody: {
+        email: "actual-user@example.com",
+        salaryAmount: 2700000,
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /public-url:secret-values/);
+  assert.match(
+    report,
+    /release\/public-url-evidence\.json must not contain raw secrets, copied page payloads, or sensitive user\/financial data/,
+  );
+  assert.doesNotMatch(report, /actual-user@example\.com/);
 });
 
 test("blocks database evidence that contains raw database URLs", () => {

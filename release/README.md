@@ -27,6 +27,11 @@ The observed database migration, seed, API smoke, and rollback evidence is:
 
 - `release/database-evidence.json`
 
+The observed public app/legal URL reachability, header, and non-exposure
+evidence is:
+
+- `release/public-url-evidence.json`
+
 Safe runtime secret evidence generation command:
 
 - `corepack pnpm run release:secrets-evidence`
@@ -72,6 +77,19 @@ real user/financial payloads. The generator rejects raw database URLs, secret
 values, raw smoke response/request payloads, and sensitive financial or user data
 keys before writing the tracked evidence file.
 
+Safe public URL evidence generation command:
+
+- `corepack pnpm run release:public-url-evidence`
+
+The command reads no runtime secret values. If
+`release/public-url-proof.local.json` exists, it may contain only no-secret
+booleans proving production reachability for `/`, `/privacy`, `/support`, and
+`/terms`, CSP/privacy header checks, Korean public copy review, store review URL
+alignment, and public-page sensitive data non-exposure. That local proof file is
+ignored by Git and must not contain copied HTML, raw response bodies, raw
+headers, logs, emails, phone numbers, salary, expense, savings, hijack amounts,
+tokens, database URLs, or other sensitive payloads.
+
 Current protected rule:
 
 - Use the new Salary Hijacking repository
@@ -84,6 +102,8 @@ runtime secrets or verified no-value secret evidence, matching Cloudflare
 Workers resources, Cloudflare R2/Queue/DNS/certificate/runtime binding proof,
 matching Neon project evidence, migration validation, staging migration and seed
 execution, production migration dry-run proof, deployed API/Admin smoke proof,
-database rollback rehearsal proof, EAS project credentials, local Android device
-tooling or equivalent EAS/native test evidence, deploy proof, mobile native
-build and store-submit proof, and operating QA.
+database rollback rehearsal proof, reachable public landing/privacy/support/
+terms URLs with CSP/privacy header and sensitive-data non-exposure proof, EAS
+project credentials, local Android device tooling or equivalent EAS/native test
+evidence, deploy proof, mobile native build and store-submit proof, and
+operating QA.

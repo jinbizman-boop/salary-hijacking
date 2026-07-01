@@ -42,6 +42,7 @@ const REQUIRED_FILES = [
   "release/secrets-evidence.json",
   "release/cloudflare-runtime-evidence.json",
   "release/database-evidence.json",
+  "release/public-url-evidence.json",
   "packages/db/src/client/neon.client.ts",
   "database/migrations/0001_init_users.sql",
   "database/migrations/0002_payroll_budget_expense.sql",
@@ -60,6 +61,8 @@ const REQUIRED_FILES = [
   "scripts/release/generate-cloudflare-runtime-evidence.test.mjs",
   "scripts/release/generate-mobile-native-evidence.mjs",
   "scripts/release/generate-mobile-native-evidence.test.mjs",
+  "scripts/release/generate-public-url-evidence.mjs",
+  "scripts/release/generate-public-url-evidence.test.mjs",
 ];
 
 const REQUIRED_TOKENS_BY_FILE = {
@@ -348,6 +351,7 @@ const LOCAL_GENERATED_OR_HOSTING_METADATA_PATHS = [
   "apps/admin/.open-next/.build/open-next.config.edge.mjs",
   "release/database-proof.local.json",
   "release/secrets-proof.local.json",
+  "release/public-url-proof.local.json",
 ];
 
 const ENV_EXAMPLE_RELEASE_TARGETS = {

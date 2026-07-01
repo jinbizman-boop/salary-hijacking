@@ -19,6 +19,7 @@ Machine-readable evidence lives in:
 - `release/secrets-evidence.json`
 - `release/cloudflare-runtime-evidence.json`
 - `release/database-evidence.json`
+- `release/public-url-evidence.json`
 
 ## 2026-07-01 Connector Snapshot
 
@@ -124,7 +125,9 @@ Cloudflare Worker resource matching, unverified entries in
 `release/cloudflare-runtime-evidence.json`, mobile native
 build/E2E/store-submit evidence, unverified database migration/seed/API
 smoke/rollback entries in `release/database-evidence.json`, deployment,
-certificates, and operating QA.
+certificates, unverified public landing/privacy/support/terms reachability and
+header/content safety entries in `release/public-url-evidence.json`, and
+operating QA.
 
 ## Update Rule
 
@@ -146,7 +149,16 @@ connection strings, passwords, tokens, or query payloads with sensitive
 financial/user data. Prefer `corepack pnpm run release:database-evidence` after
 recording local no-secret booleans in `release/database-proof.local.json`; the
 generator rejects raw smoke payloads and sensitive user/financial data keys
-before writing tracked evidence. Then run:
+before writing tracked evidence. Update `release/public-url-evidence.json` only
+with no-secret booleans proving production reachability for
+`https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and
+privacy/ads-safe headers, Korean public copy, store-review URL alignment, and
+public-page sensitive data non-exposure. Prefer
+`corepack pnpm run release:public-url-evidence` after recording local no-secret
+booleans in `release/public-url-proof.local.json`; the generator rejects copied
+HTML, raw response bodies, raw headers, logs, emails, phone numbers, salary,
+expense, savings, hijack amounts, tokens, database URLs, and other sensitive
+payload keys before writing tracked evidence. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

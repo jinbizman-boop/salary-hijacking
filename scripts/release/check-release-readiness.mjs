@@ -11,6 +11,7 @@ const SECRETS_EVIDENCE_PATH = "release/secrets-evidence.json";
 const CLOUDFLARE_RUNTIME_EVIDENCE_PATH =
   "release/cloudflare-runtime-evidence.json";
 const DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
+const PUBLIC_URL_EVIDENCE_PATH = "release/public-url-evidence.json";
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -23,6 +24,7 @@ const REQUIRED_FILES = [
   SECRETS_EVIDENCE_PATH,
   CLOUDFLARE_RUNTIME_EVIDENCE_PATH,
   DATABASE_EVIDENCE_PATH,
+  PUBLIC_URL_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
   "release/store/data-safety.md",
@@ -166,6 +168,43 @@ const EXPECTED_MOBILE_APP = Object.freeze({
   locale: "ko-KR",
   timezone: "Asia/Seoul",
 });
+
+const EXPECTED_PUBLIC_URLS = Object.freeze({
+  landingUrl: "https://salaryhijacking.com/",
+  privacyUrl: "https://salaryhijacking.com/privacy",
+  supportUrl: "https://salaryhijacking.com/support",
+  termsUrl: "https://salaryhijacking.com/terms",
+});
+
+const RAW_PUBLIC_PAGE_OR_SENSITIVE_KEY_TERMS = [
+  "payload",
+  "requestbody",
+  "responsebody",
+  "responsehtml",
+  "htmlbody",
+  "rawhtml",
+  "pagebody",
+  "sampledata",
+  "rawdata",
+  "salary",
+  "income",
+  "expense",
+  "savings",
+  "hijack",
+  "accountnumber",
+  "cardnumber",
+  "loan",
+  "resident",
+  "phone",
+  "email",
+  "authtoken",
+  "refreshtoken",
+  "sessiontoken",
+  "pushtoken",
+  "rawdeviceidentifier",
+  "deviceidentifier",
+  "deviceid",
+];
 
 const MOJIBAKE_PATTERN = /[�]|[湲吏理疫]/;
 
@@ -492,6 +531,30 @@ const checkReleaseTargets = (rootDir, checks, blockers) => {
       "expectedProjectHint missing",
     );
     blockers.push(`${RELEASE_TARGETS_PATH} Neon target is incomplete`);
+  }
+
+  const publicUrls = isPlainObject(targets.publicUrls)
+    ? targets.publicUrls
+    : {};
+  const publicUrlProblems = Object.entries(EXPECTED_PUBLIC_URLS)
+    .filter(([key, expectedValue]) => publicUrls[key] !== expectedValue)
+    .map(([key, expectedValue]) => `${key} must be ${expectedValue}`);
+
+  if (publicUrlProblems.length === 0) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:public-urls",
+      "public landing, privacy, support, and terms URLs are targeted",
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:public-urls",
+      publicUrlProblems.join("; "),
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} public URL targets are incomplete`);
   }
 
   return targets;
@@ -1083,6 +1146,43 @@ const secretNameIsVerified = (evidence, envName) => {
   return secretEvidenceEntryIsVerified(secrets[envName]);
 };
 
+const publicEvidenceKeyLooksUnsafe = (key) => {
+  const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return RAW_PUBLIC_PAGE_OR_SENSITIVE_KEY_TERMS.some((term) =>
+    normalized.includes(term),
+  );
+};
+
+const isNonBooleanEvidenceValue = (value) => {
+  if (value === null || value === undefined || typeof value === "boolean") {
+    return false;
+  }
+  if (typeof value === "string") return value.trim().length > 0;
+  if (typeof value === "number") return true;
+  if (Array.isArray(value)) return value.length > 0;
+  if (isPlainObject(value)) return Object.keys(value).length > 0;
+  return true;
+};
+
+const containsRawPublicPagePayloadOrSensitiveData = (value) => {
+  if (Array.isArray(value)) {
+    return value.some(containsRawPublicPagePayloadOrSensitiveData);
+  }
+  if (!isPlainObject(value)) return false;
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    if (
+      publicEvidenceKeyLooksUnsafe(key) &&
+      isNonBooleanEvidenceValue(nestedValue)
+    ) {
+      return true;
+    }
+    if (containsRawPublicPagePayloadOrSensitiveData(nestedValue)) return true;
+  }
+
+  return false;
+};
+
 const checkSecretsEvidence = (rootDir, checks, blockers) => {
   const evidence = readJsonIfPresent(rootDir, SECRETS_EVIDENCE_PATH);
   if (!evidence) {
@@ -1164,6 +1264,222 @@ const checkSecretsEvidence = (rootDir, checks, blockers) => {
   }
 
   return evidence;
+};
+
+const addPublicUrlCheck = (checks, blockers, status, name, detail, blocker) => {
+  addCheck(checks, status, name, detail);
+  if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const getExpectedPublicUrls = (releaseTargets) => {
+  const targetPublicUrls = isPlainObject(releaseTargets?.publicUrls)
+    ? releaseTargets.publicUrls
+    : {};
+  return Object.fromEntries(
+    Object.entries(EXPECTED_PUBLIC_URLS).map(([key, fallback]) => [
+      key,
+      typeof targetPublicUrls[key] === "string" && targetPublicUrls[key].trim()
+        ? targetPublicUrls[key].trim()
+        : fallback,
+    ]),
+  );
+};
+
+const checkPublicUrlEvidence = (rootDir, releaseTargets, checks, blockers) => {
+  const evidence = readJsonIfPresent(rootDir, PUBLIC_URL_EVIDENCE_PATH);
+  if (!evidence) {
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "public-url:evidence",
+      `${PUBLIC_URL_EVIDENCE_PATH} is missing or invalid`,
+      `${PUBLIC_URL_EVIDENCE_PATH} must record production public landing, legal, support, header, and non-exposure proof without raw page payloads`,
+    );
+    return;
+  }
+
+  if (evidence.schemaVersion === 1 && evidence.secretsRedacted === true) {
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      "PASS",
+      "public-url:evidence",
+      `${PUBLIC_URL_EVIDENCE_PATH} schema and redaction flag are valid`,
+      "",
+    );
+  } else {
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "public-url:evidence",
+      `${PUBLIC_URL_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+      `${PUBLIC_URL_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+    );
+    return;
+  }
+
+  const rawEvidenceFound =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence) ||
+    containsRawPublicPagePayloadOrSensitiveData(evidence);
+  if (rawEvidenceFound) {
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "public-url:secret-values",
+      "raw secrets, copied page payloads, or sensitive data may be present",
+      `${PUBLIC_URL_EVIDENCE_PATH} must not contain raw secrets, copied page payloads, or sensitive user/financial data`,
+    );
+    return;
+  }
+
+  addPublicUrlCheck(
+    checks,
+    blockers,
+    "PASS",
+    "public-url:secret-values",
+    "no raw secrets, copied page payloads, or sensitive data are declared or embedded",
+    "",
+  );
+
+  const expectedUrls = getExpectedPublicUrls(releaseTargets);
+  const evidenceUrls = isPlainObject(evidence.expectedUrls)
+    ? evidence.expectedUrls
+    : {};
+  const urlMismatches = Object.entries(expectedUrls)
+    .filter(([key, expectedValue]) => evidenceUrls[key] !== expectedValue)
+    .map(([key, expectedValue]) => `${key} must be ${expectedValue}`);
+  addPublicUrlCheck(
+    checks,
+    blockers,
+    urlMismatches.length === 0 ? "PASS" : "BLOCKED",
+    "public-url:targets",
+    urlMismatches.length === 0
+      ? "public URL evidence matches release target URLs"
+      : urlMismatches.join("; "),
+    "Public URL evidence must match release target landing, privacy, support, and terms URLs",
+  );
+
+  const reachability = isPlainObject(evidence.reachability)
+    ? evidence.reachability
+    : {};
+  const reachabilityChecks = [
+    {
+      key: "landingReachable",
+      name: "public-url:landing",
+      pass: "public landing URL reachability proof is recorded",
+      fail: "public landing URL reachability proof is missing",
+      blocker: "Public landing URL must be reachable before store release",
+    },
+    {
+      key: "privacyReachable",
+      name: "public-url:privacy",
+      pass: "privacy URL reachability proof is recorded",
+      fail: "privacy URL reachability proof is missing",
+      blocker: "Privacy URL must be reachable before store release",
+    },
+    {
+      key: "supportReachable",
+      name: "public-url:support",
+      pass: "support URL reachability proof is recorded",
+      fail: "support URL reachability proof is missing",
+      blocker: "Support URL must be reachable before store release",
+    },
+    {
+      key: "termsReachable",
+      name: "public-url:terms",
+      pass: "terms URL reachability proof is recorded",
+      fail: "terms URL reachability proof is missing",
+      blocker: "Terms URL must be reachable before store release",
+    },
+  ];
+  for (const item of reachabilityChecks) {
+    const ok = reachability[item.key] === true;
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      ok ? "PASS" : "BLOCKED",
+      item.name,
+      ok ? item.pass : item.fail,
+      item.blocker,
+    );
+  }
+
+  const headers = isPlainObject(evidence.headers) ? evidence.headers : {};
+  const headerChecks = [
+    {
+      key: "cspVerified",
+      name: "public-url:csp",
+      pass: "CSP header proof is recorded",
+      fail: "CSP header proof is missing",
+      blocker: "Public pages must have CSP proof before release",
+    },
+    {
+      key: "privacyHeadersVerified",
+      name: "public-url:privacy-headers",
+      pass: "privacy and ads-safe header proof is recorded",
+      fail: "privacy and ads-safe header proof is missing",
+      blocker: "Public pages must prove privacy and ads-safe headers",
+    },
+    {
+      key: "noIndexAbsentOnPublicPages",
+      name: "public-url:noindex",
+      pass: "public pages are not accidentally noindexed",
+      fail: "public noindex absence proof is missing",
+      blocker: "Store review public URLs must not be accidentally noindexed",
+    },
+  ];
+  for (const item of headerChecks) {
+    const ok = headers[item.key] === true;
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      ok ? "PASS" : "BLOCKED",
+      item.name,
+      ok ? item.pass : item.fail,
+      item.blocker,
+    );
+  }
+
+  const content = isPlainObject(evidence.content) ? evidence.content : {};
+  const contentChecks = [
+    {
+      key: "koreanCopyVerified",
+      name: "public-url:korean-copy",
+      pass: "Korean public page copy proof is recorded",
+      fail: "Korean public page copy proof is missing",
+      blocker: "Public pages must prove Korean app/store review copy",
+    },
+    {
+      key: "storeReviewUrlsVerified",
+      name: "public-url:store-review",
+      pass: "store review URL proof is recorded",
+      fail: "store review URL proof is missing",
+      blocker: "Store metadata URLs must be verified before submission",
+    },
+    {
+      key: "noSensitiveRawDataExposed",
+      name: "public-url:sensitive-data",
+      pass: "public sensitive data non-exposure proof is recorded",
+      fail: "public sensitive data non-exposure proof is missing",
+      blocker:
+        "Public pages must prove no raw financial, personal, token, or device data is exposed",
+    },
+  ];
+  for (const item of contentChecks) {
+    const ok = content[item.key] === true;
+    addPublicUrlCheck(
+      checks,
+      blockers,
+      ok ? "PASS" : "BLOCKED",
+      item.name,
+      ok ? item.pass : item.fail,
+      item.blocker,
+    );
+  }
 };
 
 const addCloudflareRuntimeCheck = (
@@ -2497,6 +2813,7 @@ export const analyzeReleaseReadiness = ({
     checks,
     blockers,
   );
+  checkPublicUrlEvidence(rootDir, releaseTargets, checks, blockers);
   checkRuntimeTargetConsistency(
     releaseTargets ?? externalEvidence,
     env,

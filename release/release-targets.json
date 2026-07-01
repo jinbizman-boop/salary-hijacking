@@ -17,5 +17,11 @@
   },
   "neon": {
     "expectedProjectHint": "salary-hijacking"
+  },
+  "publicUrls": {
+    "landingUrl": "https://salaryhijacking.com/",
+    "privacyUrl": "https://salaryhijacking.com/privacy",
+    "supportUrl": "https://salaryhijacking.com/support",
+    "termsUrl": "https://salaryhijacking.com/terms"
   }
 }

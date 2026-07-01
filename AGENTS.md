@@ -90,8 +90,9 @@ Last checked by Codex on 2026-07-01 KST:
 
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked in the latest `quality` run
 - `corepack pnpm run check:scripts`: PASS
-- `corepack pnpm run check:external-integrations`: PASS, 56 required files checked, including public app/legal custom-domain targets; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 77 tests
+- `corepack pnpm run check:external-integrations`: PASS, 59 required files checked, including public app/legal custom-domain targets and no-secret public URL evidence automation; this local shell warns `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH for that script
+- `corepack pnpm run test:root-scripts`: PASS, 84 tests
+- `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
 - `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 14 tests, including public `/`, `/privacy`, `/support`, and `/terms` pages
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, API Worker config parses with `salaryhijacking.com`, `www.salaryhijacking.com`, and `api.salaryhijacking.com` production custom-domain targets
 - `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests
@@ -99,7 +100,7 @@ Last checked by Codex on 2026-07-01 KST:
 - `corepack pnpm --filter @salary-hijacking/mobile format:check`: PASS
 - `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS, Expo web export includes official BI and Freesentation assets
 - `node scripts\release\capture-mobile-clean-fintech-screenshots.mjs`: PASS, regenerated five 430x932 screenshots and one 1024x500 Google Play feature graphic
-- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, and Android/iOS native build/E2E/store-submit evidence; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, Neon project evidence, and workspace-local EAS CLI evidence target `jinbizman-boop/salary-hijacking`
+- `corepack pnpm run check:release-readiness -- --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, and Android/iOS native build/E2E/store-submit evidence; `release/release-targets.json`, external GitHub evidence, local `origin`, authenticated push evidence, Neon project evidence, public URL target evidence, and workspace-local EAS CLI evidence target `jinbizman-boop/salary-hijacking`
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run quality`: PASS, 82 Turbo tasks
 - `corepack pnpm run build`: PASS, 12 Turbo tasks

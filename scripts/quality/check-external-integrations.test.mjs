@@ -544,6 +544,39 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
+    "release/public-url-evidence.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        observedAt: "2026-07-01T00:00:00Z",
+        source: "test-fixture",
+        secretsRedacted: true,
+        containsSecretValues: false,
+        expectedUrls: {
+          landingUrl: "https://salaryhijacking.com/",
+          privacyUrl: "https://salaryhijacking.com/privacy",
+          supportUrl: "https://salaryhijacking.com/support",
+          termsUrl: "https://salaryhijacking.com/terms",
+        },
+        reachability: {
+          landingReachable: true,
+          privacyReachable: true,
+          supportReachable: true,
+          termsReachable: true,
+        },
+        headers: {
+          cspVerified: true,
+          privacyHeadersVerified: true,
+          noIndexAbsentOnPublicPages: true,
+        },
+        content: {
+          koreanCopyVerified: true,
+          storeReviewUrlsVerified: true,
+          noSensitiveRawDataExposed: true,
+        },
+      },
+      null,
+      2,
+    ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",
@@ -573,6 +606,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export function buildMobileNativeEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-mobile-native-evidence.test.mjs":
       "import test from 'node:test';\n\ntest('generates no-secret mobile native evidence', () => {});\n",
+    "scripts/release/generate-public-url-evidence.mjs":
+      "export function buildPublicUrlEvidence() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/generate-public-url-evidence.test.mjs":
+      "import test from 'node:test';\n\ntest('generates no-secret public URL evidence', () => {});\n",
   };
 
   for (const [relativePath, content] of Object.entries({
@@ -1018,6 +1055,8 @@ node_modules/
         '{"schemaVersion":1,"secretsRedacted":true,"containsSecretValues":false}\n',
       "release/secrets-proof.local.json":
         '{"schemaVersion":1,"secretsRedacted":true,"containsSecretValues":false}\n',
+      "release/public-url-proof.local.json":
+        '{"schemaVersion":1,"secretsRedacted":true,"containsSecretValues":false}\n',
     });
     const init = spawnSync("git", ["init", "-b", "main"], {
       cwd: rootDir,
@@ -1037,6 +1076,7 @@ node_modules/
     assert.match(result.failures.join("\n"), /apps\/admin\/\.open-next/);
     assert.match(result.failures.join("\n"), /release\/database-proof/);
     assert.match(result.failures.join("\n"), /release\/secrets-proof/);
+    assert.match(result.failures.join("\n"), /release\/public-url-proof/);
     assert.match(result.failures.join("\n"), /must be ignored/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });

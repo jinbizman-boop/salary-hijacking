@@ -31,7 +31,7 @@
     "test:integration": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:integration",
     "test:e2e": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:e2e",
     "test:qa": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run test:qa",
-    "test:root-scripts": "node --test scripts/dev/run-with-corepack-pnpm.test.mjs scripts/quality/check-package-manager-scripts.test.mjs scripts/quality/check-external-integrations.test.mjs scripts/build/fix-esm-imports.test.mjs scripts/security/offline-package-security-scan.test.mjs scripts/release/check-release-readiness.test.mjs scripts/release/generate-database-evidence.test.mjs scripts/release/generate-secrets-evidence.test.mjs scripts/release/generate-cloudflare-runtime-evidence.test.mjs scripts/release/generate-mobile-native-evidence.test.mjs",
+    "test:root-scripts": "node --test scripts/dev/run-with-corepack-pnpm.test.mjs scripts/quality/check-package-manager-scripts.test.mjs scripts/quality/check-external-integrations.test.mjs scripts/build/fix-esm-imports.test.mjs scripts/security/offline-package-security-scan.test.mjs scripts/release/check-release-readiness.test.mjs scripts/release/generate-database-evidence.test.mjs scripts/release/generate-secrets-evidence.test.mjs scripts/release/generate-cloudflare-runtime-evidence.test.mjs scripts/release/generate-mobile-native-evidence.test.mjs scripts/release/generate-public-url-evidence.test.mjs",
     "check:package-manager-scripts": "node scripts/quality/check-package-manager-scripts.mjs",
     "check:scripts": "node scripts/quality/check-scripts.mjs",
     "check:external-integrations": "node scripts/quality/check-external-integrations.mjs",
@@ -60,6 +60,7 @@
     "release:secrets-evidence": "node scripts/release/generate-secrets-evidence.mjs",
     "release:cloudflare-evidence": "node scripts/release/generate-cloudflare-runtime-evidence.mjs",
     "release:mobile-native-evidence": "node scripts/release/generate-mobile-native-evidence.mjs",
+    "release:public-url-evidence": "node scripts/release/generate-public-url-evidence.mjs",
     "release:preflight": "node scripts/release/check-release-readiness.mjs",
     "clean": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run clean && rimraf .turbo node_modules apps/*/node_modules services/*/node_modules packages/*/node_modules tools/*/node_modules",
     "doctor": "corepack pnpm --version && node --version && turbo --version && corepack pnpm run db:validate && corepack pnpm run api:contract && corepack pnpm run privacy:check"
