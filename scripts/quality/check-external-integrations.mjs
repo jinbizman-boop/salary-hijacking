@@ -411,6 +411,20 @@ const ENV_EXAMPLE_RELEASE_TARGETS = {
   GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
 };
 
+const RELEASE_RUNTIME_SECRET_PROOF_NAMES = Object.freeze([
+  "DATABASE_URL",
+  "STAGING_DATABASE_URL",
+  "NEON_API_KEY",
+  "NEON_PROJECT_ID",
+  "CLOUDFLARE_API_TOKEN",
+  "CLOUDFLARE_ACCOUNT_ID",
+  "CF_ADMIN_WORKER_NAME",
+  "EXPO_TOKEN",
+  "EAS_PROJECT_ID",
+  "SENTRY_DSN",
+  "SLACK_WEBHOOK_URL",
+]);
+
 const SENSITIVE_KEY_PATTERN =
   "CLOUDFLARE_API_TOKEN|CLOUDFLARE_ACCOUNT_ID|EXPO_TOKEN|DATABASE_URL|DIRECT_DATABASE_URL|STAGING_DATABASE_URL|UAT_DATABASE_URL|SHADOW_DATABASE_URL|NEON_API_KEY|NEON_DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SENTRY_AUTH_TOKEN|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST|FCM_SERVER_KEY|FCM_SERVICE_ACCOUNT_JSON";
 
@@ -665,6 +679,49 @@ function checkPublicUrlProofWorkflow(rootDir, failures) {
     if (/\bif:\s*always\(\)/.test(uploadStepWindow)) {
       failures.push(
         `${relativePath}: public-url-proof artifact upload must not run after validation failure`,
+      );
+    }
+  }
+}
+
+function checkRuntimeSecretProofWorkflow(rootDir, failures) {
+  const relativePath = ".github/workflows/release.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredNames = RELEASE_RUNTIME_SECRET_PROOF_NAMES.join(",");
+  const requiredParts = [
+    'SECRET_PROOF_STORE: "GitHub Environments"',
+    `SECRET_PROOF_NAMES: "${requiredNames}"`,
+    "runtime-secret-proof-${{ github.run_attempt }}",
+    "release/secrets-proof.local.json",
+    "containsSecretValues",
+    "secretsRedacted",
+    "schemaVersion",
+    ...RELEASE_RUNTIME_SECRET_PROOF_NAMES.map(
+      (name) => `${"${{ secrets."}${name} }}`,
+    ),
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: must collect and upload no-value runtime-secret-proof evidence from GitHub Environments including ${requiredPart}`,
+    );
+  }
+
+  const artifactName = "runtime-secret-proof-${{ github.run_attempt }}";
+  const artifactIndex = source.indexOf(artifactName);
+  if (artifactIndex !== -1) {
+    const uploadStepWindow = source.slice(
+      Math.max(0, artifactIndex - 400),
+      artifactIndex + 400,
+    );
+
+    if (/\bif:\s*always\(\)/.test(uploadStepWindow)) {
+      failures.push(
+        `${relativePath}: runtime-secret-proof artifact upload must not run after validation failure`,
       );
     }
   }
@@ -948,6 +1005,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);
+  checkRuntimeSecretProofWorkflow(rootDir, failures);
   checkReleaseDependencyAuditWorkflow(rootDir, failures);
   checkReleaseReadinessWorkflowGate(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);

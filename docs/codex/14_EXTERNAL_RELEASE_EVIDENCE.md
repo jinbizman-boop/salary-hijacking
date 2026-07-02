@@ -240,8 +240,18 @@ short-retention CI evidence only; it must be inspected or downloaded by an
 operator and converted into tracked evidence with
 `corepack pnpm run release:secrets-evidence` without pasting raw values. The
 workflow artifact does not by itself make `release/secrets-evidence.json`
-verified, and all other runtime secrets remain blocked until their own approved
-store proof exists.
+verified.
+The release workflow also creates a no-value GitHub Environments proof artifact
+named `runtime-secret-proof-*` from `release/secrets-proof.local.json` for
+`DATABASE_URL`, `STAGING_DATABASE_URL`, `NEON_API_KEY`, `NEON_PROJECT_ID`,
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CF_ADMIN_WORKER_NAME`,
+`EXPO_TOKEN`, `EAS_PROJECT_ID`, `SENTRY_DSN`, and `SLACK_WEBHOOK_URL`, using
+`SECRET_PROOF_STORE="GitHub Environments"`. This artifact records only
+secret-name presence booleans, store labels, and non-secret notes. Missing
+secrets may remain `verified=false` in the artifact so the workflow can preserve
+diagnostic evidence without leaking values; tracked
+`release/secrets-evidence.json` remains blocked until verified entries are
+converted with `corepack pnpm run release:secrets-evidence`.
 Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS

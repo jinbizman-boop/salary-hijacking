@@ -101,6 +101,19 @@ An operator must inspect or download the trusted CI artifact and then refresh
 tracked evidence through `corepack pnpm run release:secrets-evidence` without
 pasting any secret value.
 
+The same release workflow also collects GitHub Environments runtime proof for
+the remaining approved runtime secret names and uploads a short-retention
+`runtime-secret-proof-*` artifact from `release/secrets-proof.local.json`. That
+artifact records only secret-name presence booleans, the approved
+`GitHub Environments` store label, and non-secret notes for `DATABASE_URL`,
+`STAGING_DATABASE_URL`, `NEON_API_KEY`, `NEON_PROJECT_ID`,
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CF_ADMIN_WORKER_NAME`,
+`EXPO_TOKEN`, `EAS_PROJECT_ID`, `SENTRY_DSN`, and `SLACK_WEBHOOK_URL`. Missing
+secret values are allowed to remain `verified=false` in the artifact so CI can
+still preserve no-value diagnostic proof, but tracked release evidence remains
+blocked until an operator converts verified entries with
+`corepack pnpm run release:secrets-evidence` without exposing values.
+
 Safe Cloudflare runtime evidence generation command:
 
 - `corepack pnpm run release:cloudflare-evidence`
