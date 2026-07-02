@@ -11,6 +11,8 @@ import { createNotificationsApi } from "../../features/notifications/api";
 import type { NotificationsApiClient } from "../../features/notifications/types";
 import { createPayrollApi } from "../../features/payroll/api";
 import type { PayrollApiClient } from "../../features/payroll/types";
+import { createProfileApi } from "../../features/profile/api";
+import type { ProfileApiClient } from "../../features/profile/types";
 import { readMobileApiBaseUrl } from "./api-base";
 
 export type MobileApiFactoryOptions = Readonly<{
@@ -81,6 +83,19 @@ export function createMobileGrowthApi(
   options: MobileApiFactoryOptions = {},
 ): GrowthApiClient {
   return createGrowthApi({
+    baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
+    platform: mobileClientPlatform(),
+    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    ...(options.createCorrelationId
+      ? { createCorrelationId: options.createCorrelationId }
+      : {}),
+  });
+}
+
+export function createMobileProfileApi(
+  options: MobileApiFactoryOptions = {},
+): ProfileApiClient {
+  return createProfileApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
     ...(options.fetcher ? { fetcher: options.fetcher } : {}),

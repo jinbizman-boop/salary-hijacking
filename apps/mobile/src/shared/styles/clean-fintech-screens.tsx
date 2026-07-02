@@ -23,6 +23,7 @@ import type {
   PayrollCalculation,
   PayrollPlanSnapshot,
 } from "../../features/payroll/types";
+import type { ProfileSnapshot } from "../../features/profile/types";
 import type {
   NotificationItem,
   NotificationPriority,
@@ -34,6 +35,7 @@ import {
   createMobileGrowthApi,
   createMobileNotificationsApi,
   createMobilePayrollApi,
+  createMobileProfileApi,
 } from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
@@ -224,6 +226,51 @@ const fallbackMissions: readonly Mission[] = [
     targetCount: 1,
   },
 ] as const;
+
+const fallbackProfileSnapshot: ProfileSnapshot = {
+  user: {
+    idHash: "sha256:fallback-profile",
+    nickname: "짠테크 기획자님",
+    role: "USER",
+    emailVerified: true,
+    onboardingCompleted: true,
+    joinedAt: "2026-07-02T09:00:00.000Z",
+    level: 18,
+    title: "급여 방어 루틴러",
+    avatarEmoji: "💸",
+    marketingConsent: false,
+    notificationConsent: true,
+    communityDisplayName: "익명 방어자",
+    rawEmailExposed: false,
+    rawPhoneExposed: false,
+    rawFinancialDataExposed: false,
+    rawPushTokenExposed: false,
+    adsFinancialTargetingUsed: false,
+  },
+  summary: {
+    totalHijackSaved: 5_780_000,
+    currentMonthHijack: 1_927_000,
+    currentLevel: 18,
+    levelXp: 380,
+    nextLevelXp: 999,
+    selfCareScore: 84,
+    completedGrowthTasks: 11,
+    communityPosts: 7,
+    communityComments: 14,
+    notificationUnread: 3,
+    privacyPassRate: "100.00%",
+  },
+  privacy: {
+    exportStatus: "NONE",
+    exportRequestedAt: null,
+    withdrawalRequested: false,
+    adPersonalization: false,
+    financialDataForAds: false,
+    rawPushTokenLogging: false,
+    tokenHashOnly: true,
+  },
+  activities: [],
+};
 
 const communityPosts = [
   {
@@ -1491,43 +1538,158 @@ function CommunityScreen(): React.ReactElement {
 }
 
 function ProfileScreen(): React.ReactElement {
+  const profileApi = useMemo(() => createMobileProfileApi(), []);
+  const [serverProfileSnapshot, setServerProfileSnapshot] =
+    useState<ProfileSnapshot | null>(null);
+  const [profileToast, setProfileToast] = useState(
+    "서버 MY 정보를 확인하는 중이에요.",
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateProfile(): Promise<void> {
+      try {
+        const snapshot = await profileApi.getProfile();
+        if (!mounted) return;
+        setServerProfileSnapshot(snapshot);
+        setProfileToast(
+          `서버 MY 동기화 · 개인정보 보호율 ${snapshot.summary.privacyPassRate}`,
+        );
+      } catch {
+        if (!mounted) return;
+        setServerProfileSnapshot(null);
+        setProfileToast("서버 연결 전이라 앱 기본 MY 정보를 보여줘요.");
+      }
+    }
+
+    void hydrateProfile();
+
+    return () => {
+      mounted = false;
+    };
+  }, [profileApi]);
+
+  const requestPrivacyExport = useCallback(() => {
+    setProfileToast("개인정보 내보내기 요청을 서버에 전달하는 중이에요.");
+    void profileApi
+      .requestPrivacyExport({ reason: "app-my-page" })
+      .then((snapshot) => {
+        setServerProfileSnapshot(snapshot);
+        setProfileToast(
+          `내보내기 요청 접수 · 상태 ${snapshot.privacy.exportStatus}`,
+        );
+      })
+      .catch(() => {
+        setProfileToast(
+          "내보내기 요청을 처리하지 못했어요. 다시 시도해 주세요.",
+        );
+      });
+  }, [profileApi]);
+
+  const requestWithdrawal = useCallback(() => {
+    setProfileToast("탈퇴 요청을 서버에 전달하는 중이에요.");
+    void profileApi
+      .requestWithdrawalRequest({ reason: "app-my-page" })
+      .then((snapshot) => {
+        setServerProfileSnapshot(snapshot);
+        setProfileToast(
+          snapshot.privacy.withdrawalRequested
+            ? "탈퇴 요청이 접수됐어요. 즉시 삭제가 아니라 운영 절차로 검토돼요."
+            : "탈퇴 요청 상태를 서버에서 다시 확인했어요.",
+        );
+      })
+      .catch(() => {
+        setProfileToast("탈퇴 요청을 처리하지 못했어요. 다시 시도해 주세요.");
+      });
+  }, [profileApi]);
+
+  const profileSnapshot = serverProfileSnapshot ?? fallbackProfileSnapshot;
+  const profileSyncLabel = serverProfileSnapshot
+    ? "서버 MY 동기화"
+    : "앱 기본 MY";
+  const privacyTargetingLabel = profileSnapshot.privacy.financialDataForAds
+    ? "차단 필요"
+    : "사용 안 함";
+
   return (
     <AppScreen title="MY" subtitle="성과와 계정을 한곳에서 관리해요">
+      <Toast message={profileToast} />
       <SectionCard>
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>👤</Text>
+            <Text style={styles.avatarText}>
+              {profileSnapshot.user.avatarEmoji}
+            </Text>
           </View>
           <View style={styles.flex}>
-            <Text style={styles.sectionTitle}>홍길동 기획자님</Text>
+            <Text style={styles.sectionTitle}>
+              {profileSnapshot.user.nickname}
+            </Text>
             <Text style={styles.bodyText}>
-              급여 방어 루틴러 · 익명 커뮤니티 활동 중
+              {profileSnapshot.user.title} ·{" "}
+              {profileSnapshot.user.communityDisplayName} · {profileSyncLabel}
             </Text>
           </View>
         </View>
         <View style={styles.attachmentRow}>
           <SmallButton label="프로필 설정" />
           <SmallButton label="계정 설정" />
+          <SmallButton label="데이터 내보내기" onPress={requestPrivacyExport} />
+          <SmallButton label="탈퇴 요청" onPress={requestWithdrawal} />
         </View>
       </SectionCard>
       <MetricGrid
         metrics={[
-          { label: "누적 납치금액", value: "5,780,000원" },
-          { label: "레벨업 현황", value: "18Lv" },
-          { label: "자기관리 성과", value: "4.2점" },
+          {
+            label: "누적 납치금액",
+            value: `${formatMoney(profileSnapshot.summary.totalHijackSaved)}원`,
+          },
+          {
+            label: "레벨업 현황",
+            value: `${profileSnapshot.summary.currentLevel}Lv`,
+          },
+          {
+            label: "자기관리 성과",
+            value: `${profileSnapshot.summary.selfCareScore}점`,
+          },
         ]}
       />
+      <SectionCard>
+        <Text style={styles.sectionTitle}>개인정보 보호</Text>
+        <ListRow
+          icon="🛡️"
+          title="금융 데이터 광고 타겟팅"
+          meta={`financialDataForAds=${String(
+            profileSnapshot.privacy.financialDataForAds,
+          )} · ${privacyTargetingLabel}`}
+        />
+        <ListRow
+          icon="🔐"
+          title="푸시 토큰 로그"
+          meta={
+            profileSnapshot.privacy.rawPushTokenLogging
+              ? "차단 필요"
+              : "원문 저장 안 함 · tokenHashOnly"
+          }
+        />
+        <ListRow
+          icon="📤"
+          title="개인정보 내보내기"
+          meta={`상태 ${profileSnapshot.privacy.exportStatus} · 보호율 ${profileSnapshot.summary.privacyPassRate}`}
+        />
+      </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>관리 메뉴</Text>
         <ListRow
           icon="📝"
           title="내 게시글 관리"
-          meta="내가 쓴 글, 댓글, 인증글"
+          meta={`${profileSnapshot.summary.communityPosts}개 글 · 댓글 ${profileSnapshot.summary.communityComments}개`}
         />
         <ListRow
           icon={appIcons.level}
           title="내 레벨업 관리"
-          meta="미션, 배지, 성장 기록"
+          meta={`미션 ${profileSnapshot.summary.completedGrowthTasks}개 · XP ${profileSnapshot.summary.levelXp}/${profileSnapshot.summary.nextLevelXp}`}
         />
         <ListRow icon="💬" title="1:1 문의" meta="계정, 결제, 개인정보 문의" />
         <ListRow icon="📣" title="공지사항" meta="서비스 안내와 이벤트" />
@@ -1886,9 +2048,14 @@ function ToggleRow({
 
 function SmallButton({
   label,
-}: Readonly<{ label: string }>): React.ReactElement {
+  onPress,
+}: Readonly<{ label: string; onPress?: () => void }>): React.ReactElement {
   return (
-    <Pressable accessibilityRole="button" style={styles.smallButton}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={styles.smallButton}
+    >
       <Text style={styles.smallButtonText}>{label}</Text>
     </Pressable>
   );

@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 28 suites and 103 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 107 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -149,6 +149,23 @@ The mobile client sends privacy-safe headers, refuses responses that report raw
 financial data exposure, strips owner `userId` from the normalized dashboard,
 and treats local missions only as a non-authoritative fallback when no server
 tasks are available.
+
+## MY Profile API Hydration
+
+As of 2026-07-03, the Clean Fintech MY screen calls the server Users/Profile API
+before using local fallback profile data:
+
+- `GET /api/v1/users/me/profile` through `ProfileApiClient.getProfile()`
+- `POST /api/v1/users/me/privacy-export` through
+  `ProfileApiClient.requestPrivacyExport()`
+- `POST /api/v1/users/me/withdrawal-request` through
+  `ProfileApiClient.requestWithdrawalRequest()`
+
+The mobile client sends privacy-safe headers, rejects raw email, raw phone, raw
+financial, raw push token, and ads financial targeting exposure flags, strips
+server-only identifiers from the normalized profile snapshot, and treats
+privacy export and withdrawal actions as non-destructive server requests rather
+than final local account deletion.
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only
