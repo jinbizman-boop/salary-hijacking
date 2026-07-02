@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -17,6 +17,7 @@ import {
   calculateOfflineDailyBudgetPreview,
   parseKrwInputAmount,
 } from "../../features/budget/utils";
+import type { DailyBudgetSnapshot } from "../../features/budget/types";
 import { createMobileBudgetApi } from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
@@ -586,6 +587,27 @@ function SalaryHomeScreen(): React.ReactElement {
   );
   const [prioritizeDailyBudget, setPrioritizeDailyBudget] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
+  const [serverBudgetSnapshot, setServerBudgetSnapshot] =
+    useState<DailyBudgetSnapshot | null>(null);
+
+  const refreshServerBudgetSnapshot = useCallback(
+    async (
+      options: Readonly<{ clearLocalPreview?: boolean }> = {},
+    ): Promise<void> => {
+      try {
+        const response = await budgetApi.getToday();
+        const nextSnapshot = response?.data.snapshot;
+        if (!nextSnapshot) return;
+
+        setServerBudgetSnapshot(nextSnapshot);
+        if (options.clearLocalPreview) setAddedExpenses([]);
+        setToast("서버 예산 기준으로 오늘 예산을 동기화했어요.");
+      } catch {
+        // Keep the existing offline preview when the API is unreachable.
+      }
+    },
+    [budgetApi],
+  );
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
@@ -608,12 +630,24 @@ function SalaryHomeScreen(): React.ReactElement {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    void refreshServerBudgetSnapshot();
+  }, [refreshServerBudgetSnapshot]);
+
+  const baseDailyLimit = serverBudgetSnapshot?.dailyLimit ?? 20_000;
+  const baseSpentToday = serverBudgetSnapshot?.spentToday ?? 13_000;
+  const baseMonthlyExpense = serverBudgetSnapshot
+    ? Math.max(0, 773_000 - 13_000 + serverBudgetSnapshot.spentToday)
+    : 773_000;
+  const baseMonthHijack = serverBudgetSnapshot
+    ? Math.max(0, 1_927_000 + 13_000 - serverBudgetSnapshot.spentToday)
+    : 1_927_000;
   const preview = calculateOfflineDailyBudgetPreview({
     addedExpenseAmounts: addedExpenses.map((item) => item.amount),
-    baseMonthHijack: 1_927_000,
-    baseMonthlyExpense: 773_000,
-    baseSpentToday: 13_000,
-    dailyLimit: 20_000,
+    baseMonthHijack,
+    baseMonthlyExpense,
+    baseSpentToday,
+    dailyLimit: baseDailyLimit,
   });
   const dailyLimit = preview.dailyLimit;
   const used = preview.spentToday;
@@ -667,6 +701,7 @@ function SalaryHomeScreen(): React.ReactElement {
           name: result.title,
         },
       ]);
+      void refreshServerBudgetSnapshot({ clearLocalPreview: true });
       setToast(
         `서버에 지출을 기록했어요. ${formatMoney(result.netAmountMinor)}원 기준으로 다시 계산했습니다.`,
       );
@@ -721,7 +756,7 @@ function SalaryHomeScreen(): React.ReactElement {
           danger={remaining < 0}
         />
         <Text style={styles.bodyText}>
-          설정 20,000원 · 사용 {formatMoney(used)}원
+          설정 {formatMoney(dailyLimit)}원 · 사용 {formatMoney(used)}원{" "}
           {remaining < 0
             ? " · 초과 금액은 빨간색과 문구로 함께 안내합니다."
             : ""}

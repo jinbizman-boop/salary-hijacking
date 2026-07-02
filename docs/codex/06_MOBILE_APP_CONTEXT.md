@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-02:
 
 - `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 25 suites and 92 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 25 suites and 93 tests
 - `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup
@@ -175,6 +175,11 @@ Official mobile UI assets are already bundled:
 official BI asset SHA256, Freesentation font loading, Clean Fintech v1 token
 values, bottom tab IA, screenshot anchor, and Korean mojibake absence for the
 launch screen set.
+As of 2026-07-02, Salary Home also hydrates its daily-budget base values from
+`BudgetApiClient.getToday()` before using the existing offline preview fallback.
+The fallback remains a non-authoritative UI preview; the `/api/v1/daily-budgets`
+server response remains the source of truth for daily limit, spent amount, and
+remaining amount.
 `scripts/release/check-release-readiness.mjs` also blocks release readiness when
 the bundled official BI logo is missing, invalid PNG, or SHA256-mismatched, or
 when any required Freesentation font asset is missing, not TTF/OTF-shaped, or

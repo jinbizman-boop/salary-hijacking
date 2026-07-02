@@ -175,6 +175,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("오프라인 미리보기로 반영했어요");
   });
 
+  it("keeps salary home daily budget hydrated from the server before offline preview fallback", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("serverBudgetSnapshot");
+    expect(cleanScreens).toContain("budgetApi.getToday");
+    expect(cleanScreens).toContain("setServerBudgetSnapshot");
+    expect(cleanScreens).toContain("baseSpentToday");
+    expect(cleanScreens).toContain("baseDailyLimit");
+    expect(cleanScreens).toContain("setAddedExpenses([]");
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
