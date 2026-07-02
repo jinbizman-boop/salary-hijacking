@@ -387,6 +387,62 @@ jobs:
           retention-days: 7
           path: release/secrets-proof.local.json
 
+      - name: Collect no-secret Cloudflare runtime proof
+        run: |
+          set -euo pipefail
+
+          corepack pnpm run release:cloudflare-proof || true
+
+          node <<'NODE'
+          const fs = require("fs");
+          const proof = JSON.parse(
+            fs.readFileSync("release/cloudflare-proof.local.json", "utf8").replace(/^\uFEFF/, "")
+          );
+
+          if (proof.schemaVersion !== 1 || proof.secretsRedacted !== true || proof.containsSecretValues !== false) {
+            console.error("::error::Cloudflare runtime proof must be schemaVersion 1, redacted, and no-secret.");
+            process.exit(1);
+          }
+
+          if (!proof.workers || !Array.isArray(proof.workers.observedWorkers)) {
+            console.error("::error::Cloudflare runtime proof must include observedWorkers.");
+            process.exit(1);
+          }
+
+          const requiredBooleans = [
+            proof.workers.productionDeployVerified,
+            proof.workers.adminWorkerVerified,
+            proof.resources?.r2BucketsVerified,
+            proof.resources?.queuesVerified,
+            proof.resources?.deadLetterQueuesVerified,
+            proof.resources?.cronTriggersVerified,
+            proof.resources?.workerSecretBindingsVerified,
+            proof.networking?.customDomainsVerified,
+            proof.networking?.certificatesVerified
+          ];
+
+          if (!requiredBooleans.every((value) => typeof value === "boolean")) {
+            console.error("::error::Cloudflare runtime proof must include worker, resource, and networking booleans.");
+            process.exit(1);
+          }
+
+          const serialized = JSON.stringify(proof);
+          if (/cf[_-]?[a-z0-9]{16,}|cloudflare[_-]?api[_-]?token|api[_-]?token\s*[:=]|BEGIN [A-Z ]+PRIVATE KEY|scriptBody|workerScript|bindingValue|postgres(?:ql)?:\/\//i.test(serialized)) {
+            console.error("::error::Cloudflare runtime proof contains a raw secret-like value or copied runtime payload marker.");
+            process.exit(1);
+          }
+
+          console.log("Cloudflare runtime proof is redacted and no-secret.");
+          NODE
+
+      - name: Upload no-secret Cloudflare runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-runtime-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: release/cloudflare-proof.local.json
+
       - name: Collect no-secret public URL proof
         run: |
           set -euo pipefail

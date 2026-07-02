@@ -688,6 +688,52 @@ function checkPublicUrlProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkCloudflareRuntimeProofWorkflow(rootDir, failures) {
+  const relativePath = ".github/workflows/release.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredParts = [
+    "corepack pnpm run release:cloudflare-proof",
+    "release/cloudflare-proof.local.json",
+    "cloudflare-runtime-proof-${{ github.run_attempt }}",
+    "observedWorkers",
+    "r2BucketsVerified",
+    "queuesVerified",
+    "deadLetterQueuesVerified",
+    "cronTriggersVerified",
+    "workerSecretBindingsVerified",
+    "customDomainsVerified",
+    "certificatesVerified",
+    "containsSecretValues",
+    "secretsRedacted",
+    "schemaVersion",
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: must collect and upload no-secret cloudflare-runtime-proof evidence including ${requiredPart}`,
+    );
+  }
+
+  const artifactName = "cloudflare-runtime-proof-${{ github.run_attempt }}";
+  const artifactIndex = source.indexOf(artifactName);
+  if (artifactIndex !== -1) {
+    const uploadStepWindow = source.slice(
+      Math.max(0, artifactIndex - 400),
+      artifactIndex + 400,
+    );
+
+    if (/\bif:\s*always\(\)/.test(uploadStepWindow)) {
+      failures.push(
+        `${relativePath}: cloudflare-runtime-proof artifact upload must not run after validation failure`,
+      );
+    }
+  }
+}
+
 function checkRuntimeSecretProofWorkflow(rootDir, failures) {
   const relativePath = ".github/workflows/release.yml";
   if (!fileExists(rootDir, relativePath)) return;
@@ -1008,6 +1054,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
+  checkCloudflareRuntimeProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);
   checkRuntimeSecretProofWorkflow(rootDir, failures);
   checkReleaseDependencyAuditWorkflow(rootDir, failures);

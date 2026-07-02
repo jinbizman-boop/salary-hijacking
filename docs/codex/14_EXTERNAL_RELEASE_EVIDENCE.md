@@ -276,6 +276,16 @@ contains unrelated domains outside the Salary Hijacking custom-domain set
 (`salaryhijacking.com`, `www.salaryhijacking.com`, `api.salaryhijacking.com`,
 `notifications.salaryhijacking.com`, `scheduler.salaryhijacking.com`, and
 `admin.salaryhijacking.com`).
+The release workflow now collects, validates, and uploads a no-secret
+`cloudflare-runtime-proof-*` artifact from `release/cloudflare-proof.local.json`.
+The artifact upload must run only after schema, redaction, no-secret,
+expected-Worker, resource-boolean, custom-domain, and TLS-certificate validation
+passes. It is short-retention CI proof material only; it must be inspected from
+a trusted workflow run and converted into tracked evidence with
+`corepack pnpm run release:cloudflare-evidence` without pasting raw credentials,
+Worker script bodies, binding values, certificate material, provider logs, or
+runtime payloads. The artifact does not by itself make Cloudflare runtime gates
+verified.
 Update `release/database-evidence.json` only with booleans, resource names,
 migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,

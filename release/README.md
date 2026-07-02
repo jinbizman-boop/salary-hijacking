@@ -154,6 +154,18 @@ the Salary Hijacking custom-domain set:
 `notifications.salaryhijacking.com`, `scheduler.salaryhijacking.com`, and
 `admin.salaryhijacking.com`.
 
+The release workflow collects and uploads a no-secret
+`cloudflare-runtime-proof-*` artifact from `release/cloudflare-proof.local.json`.
+The workflow validates that the proof is schema version 1, redacted, no-secret,
+contains expected Worker observations, and carries the required Worker,
+R2/Queue/cron, secret-binding, custom-domain, and certificate booleans before
+uploading the artifact. This is short-retention CI proof material only. It does
+not deploy Cloudflare resources, does not store credentials or runtime payloads,
+and does not automatically mark `release/cloudflare-runtime-evidence.json`
+verified; an operator must inspect trusted CI proof and refresh tracked evidence
+with `corepack pnpm run release:cloudflare-evidence` without pasting secret
+values or copied provider payloads.
+
 Safe mobile native evidence generation command:
 
 - `corepack pnpm run release:mobile-native-evidence`
