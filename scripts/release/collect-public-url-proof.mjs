@@ -244,7 +244,11 @@ export const collectPublicUrlProof = async ({
       fetchPage({ spec, baseUrl: normalizedBaseUrl, fetchImpl }),
     ),
   );
-  const proof = buildPublicUrlProof({ results, baseUrl: normalizedBaseUrl, now });
+  const proof = buildPublicUrlProof({
+    results,
+    baseUrl: normalizedBaseUrl,
+    now,
+  });
 
   if (writeFile) {
     const absoluteOutputPath = path.isAbsolute(outputPath)

@@ -88,7 +88,7 @@ Ads and partner surfaces must be contextual-only unless a future verified policy
 
 Last checked by Codex on 2026-07-02 KST:
 
-- `corepack pnpm run check:package-manager-scripts`: PASS, 13 package files checked
+- `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked after dependency restore
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 78 required files checked, including public app/legal custom-domain targets, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, no-secret dependency security audit evidence automation, and tracked no-secret local proof example templates; this local shell warns `gh`, `neon`, and `neonctl` are not on PATH for that script
 - `corepack pnpm run test:root-scripts`: PASS, 157 tests
@@ -114,16 +114,16 @@ Last checked by Codex on 2026-07-02 KST:
 - `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS, Expo web export includes official BI and Freesentation assets
 - `node scripts\release\capture-mobile-clean-fintech-screenshots.mjs`: PASS, regenerated five 430x932 screenshots and one 1024x500 Google Play feature graphic
 - `corepack pnpm audit --audit-level=high --prod=false --json`: PASS after lockfile-only override refresh, with 0 low, 0 moderate, 0 high, and 0 critical vulnerabilities reported for the current lockfile
-- `node scripts\release\check-release-readiness.mjs --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, Android/iOS native build/E2E/store-submit evidence, and missing `eas` on PATH after generated dependency cleanup; `release/release-targets.json`, mobile app identity evidence, external GitHub evidence, local `origin`, authenticated push evidence, current local HEAD to `origin/main` sync, Neon project evidence, public URL target evidence, and no-secret dependency security audit evidence align with `jinbizman-boop/salary-hijacking`
-- `corepack pnpm run format:check`: previously PASS before generated dependency cleanup; current no-`node_modules` run on 2026-07-02 cannot execute local `prettier` until dependencies are restored with `corepack pnpm install`
-- `corepack pnpm run quality`: previously PASS before generated dependency cleanup, 82 Turbo tasks
-- `corepack pnpm run build`: previously PASS before generated dependency cleanup, 12 Turbo tasks
+- `node scripts\release\check-release-readiness.mjs --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, and Android/iOS native build/E2E/store-submit evidence; workspace-local EAS CLI is restored at `apps/mobile/node_modules/.bin/eas.CMD`; `release/release-targets.json`, mobile app identity evidence, external GitHub evidence, local `origin`, authenticated push evidence, current local HEAD to `origin/main` sync, Neon project evidence, public URL target evidence, and no-secret dependency security audit evidence align with `jinbizman-boop/salary-hijacking`
+- `corepack pnpm run format:check`: PASS after restoring dependencies and applying Prettier to the previously unformatted tracked files
+- `corepack pnpm run quality`: PASS, 82 Turbo tasks
+- `corepack pnpm run build`: PASS, 12 Turbo tasks
 - `node scripts\check-detox-env.mjs android.emu.debug` from `apps/mobile`: FAIL only because the local Detox Android E2E APK `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` is missing; local `adb` and `emulator` are now detected through Android SDK tool lookup
 - `corepack pnpm run test:e2e`: still BLOCKED at `@salary-hijacking/mobile#test:e2e` until an E2E APK is built or equivalent native device-farm proof is recorded without secrets
 - Dependency vulnerability audit is represented by `release/security-audit-evidence.json`; the current lockfile has no-secret registry audit evidence with zero low/moderate/high/critical vulnerabilities, and the audit must be rerun after dependency changes before release
 - `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
 - `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven; release readiness now rechecks local HEAD against `origin/main` when authenticated push proof is claimed, falling back to the local `refs/remotes/origin/main` tracking ref with a warning when live remote reads are unavailable in the local Node sandbox; the latest recorded remote proof commit in `release/external-release-evidence.json` remains historical evidence
-- Ignored generated dependency/cache artifacts were cleaned on 2026-07-02 KST. `node_modules/`, `.pnpm-store/`, `.turbo/`, `.codex-runtime/`, `.open-next/`, `.wrangler/`, generated logs, TypeScript incremental build info, and probe images are intentionally absent until regenerated. Run `corepack pnpm install` before pnpm/Turbo package scripts that require dependencies.
+- Ignored generated dependency/cache artifacts were cleaned on 2026-07-02 KST and then dependencies were restored with `corepack pnpm install --frozen-lockfile` so local package scripts, Prettier, Turbo, and workspace-local EAS CLI can run again. Generated `node_modules/`, `.turbo/`, `dist/`, `.next/`, TypeScript incremental files, and local secret files remain ignored and must not be committed.
 
 ## Editing Rules
 

@@ -99,7 +99,10 @@ const containsCopiedAuditPayload = (value) => {
   if (!isPlainObject(value)) return false;
 
   for (const [key, nestedValue] of Object.entries(value)) {
-    if (keyLooksLikeCopiedAuditPayload(key) && isNonEmptyEvidenceValue(nestedValue)) {
+    if (
+      keyLooksLikeCopiedAuditPayload(key) &&
+      isNonEmptyEvidenceValue(nestedValue)
+    ) {
       return true;
     }
     if (containsCopiedAuditPayload(nestedValue)) return true;

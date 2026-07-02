@@ -702,28 +702,26 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
-    "release/examples/security-audit-proof.local.example.json":
-      JSON.stringify(
-        {
-          schemaVersion: 1,
-          secretsRedacted: true,
-          containsSecretValues: false,
-          audit: {
-            packageManager: "pnpm",
-            auditCommand:
-              "corepack pnpm audit --audit-level=high --prod=false",
-            registryAuditVerified: false,
-            lockfileAudited: false,
-            productionDependenciesAudited: false,
-            devDependenciesAudited: false,
-            criticalVulnerabilities: null,
-            highVulnerabilities: null,
-            noHighOrCriticalVulnerabilities: false,
-          },
+    "release/examples/security-audit-proof.local.example.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        audit: {
+          packageManager: "pnpm",
+          auditCommand: "corepack pnpm audit --audit-level=high --prod=false",
+          registryAuditVerified: false,
+          lockfileAudited: false,
+          productionDependenciesAudited: false,
+          devDependenciesAudited: false,
+          criticalVulnerabilities: null,
+          highVulnerabilities: null,
+          noHighOrCriticalVulnerabilities: false,
         },
-        null,
-        2,
-      ),
+      },
+      null,
+      2,
+    ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",

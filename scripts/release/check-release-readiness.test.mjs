@@ -2103,9 +2103,7 @@ test("blocks when mobile native release evidence app identity drifts from releas
     commandExists: () => true,
     gitRemote: () => ({
       ok: true,
-      output: [
-        "origin https://github.com/jinbizman-boop/salary-hijacking.git",
-      ],
+      output: ["origin https://github.com/jinbizman-boop/salary-hijacking.git"],
     }),
     gitHead: () => ({ ok: true, output: ["abc123"] }),
     gitRemoteHead: () => ({ ok: true, output: ["abc123\trefs/heads/main"] }),
