@@ -186,7 +186,9 @@ copied chats, spreadsheets, or arbitrary labels cannot satisfy secret proof.
 Release readiness also independently blocks tracked secret evidence when
 verified entries use unapproved `stores` labels or when any note/free-text field
 contains a raw secret-like string such as a database URL, webhook URL, API token,
-or private key marker.
+or private key marker. It also blocks unknown secret names, including unrelated
+legacy project names, so foreign repository or database secrets cannot satisfy
+Salary Hijacking release proof.
 Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS

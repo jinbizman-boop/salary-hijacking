@@ -1023,6 +1023,42 @@ test("blocks secret evidence that embeds raw secret strings in notes", () => {
   assert.doesNotMatch(report, /postgresql:\/\/user:password/);
 });
 
+test("blocks secret evidence with unknown secret names", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    secrets: {
+      ...Object.fromEntries(
+        requiredRuntimeSecretNames.map((name) => [
+          name,
+          {
+            verified: true,
+            stores: ["GitHub Environments", "provider secret store"],
+          },
+        ]),
+      ),
+      RETRO_GAMES_DATABASE_URL: {
+        verified: true,
+        stores: ["GitHub Environments"],
+        note: "Unrelated repository secret must never satisfy Salary Hijacking release proof.",
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /secrets-evidence:secret-names/);
+  assert.match(report, /unknown secret names/);
+  assert.match(report, /RETRO_GAMES_DATABASE_URL/);
+});
+
 test("blocks secret evidence verified only by unapproved store labels", () => {
   const rootDir = makeWorkspace();
   writeSecretsEvidence(rootDir, {

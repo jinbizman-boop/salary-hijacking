@@ -1322,6 +1322,15 @@ const secretNameIsVerified = (evidence, envName) => {
   return secretEvidenceEntryIsVerified(secrets[envName]);
 };
 
+const unknownSecretEvidenceNames = (evidence) => {
+  if (!isPlainObject(evidence)) return [];
+  const secrets = isPlainObject(evidence.secrets) ? evidence.secrets : {};
+  const requiredNames = new Set(REQUIRED_ENV_NAMES);
+  return Object.keys(secrets).filter(
+    (secretName) => !requiredNames.has(secretName),
+  );
+};
+
 const unapprovedSecretStoreLabels = (evidence) => {
   if (!isPlainObject(evidence)) return [];
   const secrets = isPlainObject(evidence.secrets) ? evidence.secrets : {};
@@ -1434,6 +1443,27 @@ const checkSecretsEvidence = (rootDir, checks, blockers) => {
     "PASS",
     "secrets-evidence:secret-values",
     "no raw secret values are declared or embedded",
+  );
+
+  const unknownSecretNames = unknownSecretEvidenceNames(evidence);
+  if (unknownSecretNames.length > 0) {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "secrets-evidence:secret-names",
+      `unknown secret names: ${unknownSecretNames.join(", ")}`,
+    );
+    blockers.push(
+      `${SECRETS_EVIDENCE_PATH} must not contain unknown or unrelated secret names`,
+    );
+    return null;
+  }
+
+  addCheck(
+    checks,
+    "PASS",
+    "secrets-evidence:secret-names",
+    "secret names match the approved runtime secret set",
   );
 
   const invalidStoreLabels = unapprovedSecretStoreLabels(evidence);

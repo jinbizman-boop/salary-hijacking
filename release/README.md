@@ -78,7 +78,9 @@ store names; personal notes, copied chats, spreadsheets, or arbitrary labels are
 not release proof. Release readiness independently blocks tracked
 `release/secrets-evidence.json` when verified entries use unapproved `stores`
 labels, and it also blocks raw secret-like strings pasted into notes or other
-free-text fields.
+free-text fields. The tracked file may contain only the approved Salary
+Hijacking runtime secret names; unrelated legacy project secret names are
+blocked even when their values are not present.
 
 Safe Cloudflare runtime evidence generation command:
 
