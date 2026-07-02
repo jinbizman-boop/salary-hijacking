@@ -37,6 +37,7 @@ describe("budget hooks", () => {
       .mockResolvedValueOnce(response)
       .mockRejectedValueOnce(new Error("network unavailable"));
     const api: BudgetApiClient = {
+      createVariableExpense: jest.fn(),
       getToday,
       recalculate: jest.fn(),
       recordChecked: jest.fn(),
@@ -68,6 +69,7 @@ describe("budget hooks", () => {
         }),
     );
     const api: BudgetApiClient = {
+      createVariableExpense: jest.fn(),
       getToday,
       recalculate: jest.fn(),
       recordChecked: jest.fn(),

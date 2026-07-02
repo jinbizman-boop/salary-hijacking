@@ -119,6 +119,114 @@ describe("budget api", () => {
     });
   });
 
+  it("creates a server-authoritative variable expense before local preview fallback", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              expenseId: "vex_123",
+              amountMinor: 5_000,
+              category: "MEAL",
+              title: "점심",
+              spentAt: "2026-07-02T03:00:00.000Z",
+              paymentMethod: "CARD",
+              merchantName: null,
+              memo: null,
+              dailyBudgetId: null,
+              source: "MANUAL",
+              status: "POSTED",
+              netAmountMinor: 5_000,
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+            },
+          }),
+          { status: 201 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+      createCorrelationId: () => "expense-correlation-1",
+    });
+
+    await expect(
+      api.createVariableExpense({
+        amountMinor: 5_000,
+        category: "MEAL",
+        dailyBudgetId: null,
+        idempotencyKey: "mobile-expense-1",
+        memo: null,
+        merchantName: null,
+        paymentMethod: "CARD",
+        receiptAttachmentId: null,
+        source: "MANUAL",
+        spentAt: "2026-07-02T03:00:00.000Z",
+        tags: [],
+        title: "점심",
+      }),
+    ).resolves.toMatchObject({
+      amountMinor: 5_000,
+      expenseId: "vex_123",
+      serverAuthority: true,
+      financialRawDataExposed: false,
+    });
+
+    const [url, init] = fetcher.mock.calls[0] ?? [];
+    expect(url).toBe("https://api.example.test/api/v1/variable-expenses");
+    expect(init?.method).toBe("POST");
+    expect(new Headers(init?.headers).get("x-raw-financial-data-exposed")).toBe(
+      "false",
+    );
+    expect(JSON.parse(String(init?.body))).toEqual({
+      amountMinor: 5_000,
+      category: "MEAL",
+      dailyBudgetId: null,
+      idempotencyKey: "mobile-expense-1",
+      memo: null,
+      merchantName: null,
+      paymentMethod: "CARD",
+      receiptAttachmentId: null,
+      source: "MANUAL",
+      spentAt: "2026-07-02T03:00:00.000Z",
+      tags: [],
+      title: "점심",
+    });
+  });
+
+  it("rejects invalid variable expense payloads before network access", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.createVariableExpense({
+        amountMinor: 0,
+        category: "MEAL",
+        dailyBudgetId: null,
+        idempotencyKey: "bad-expense",
+        memo: null,
+        merchantName: null,
+        paymentMethod: "CARD",
+        receiptAttachmentId: null,
+        source: "MANUAL",
+        spentAt: "2026-07-02T03:00:00.000Z",
+        tags: [],
+        title: "점심",
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE" });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("records a privacy-safe checked event without financial values", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

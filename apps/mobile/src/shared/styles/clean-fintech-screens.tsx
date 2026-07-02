@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -17,6 +17,7 @@ import {
   calculateOfflineDailyBudgetPreview,
   parseKrwInputAmount,
 } from "../../features/budget/utils";
+import { createMobileBudgetApi } from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
 type ScreenKind =
@@ -575,6 +576,7 @@ export function CleanFintechPostDetailScreen(): React.ReactElement {
 }
 
 function SalaryHomeScreen(): React.ReactElement {
+  const budgetApi = useMemo(() => createMobileBudgetApi(), []);
   const [expenseDraft, setExpenseDraft] = useState("");
   const [addedExpenses, setAddedExpenses] = useState<
     readonly VariableExpenseEntry[]
@@ -583,6 +585,7 @@ function SalaryHomeScreen(): React.ReactElement {
     "서버 응답이 없을 때만 안전한 오프라인 미리보기를 보여줘요.",
   );
   const [prioritizeDailyBudget, setPrioritizeDailyBudget] = useState(false);
+  const [savingExpense, setSavingExpense] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
@@ -617,7 +620,7 @@ function SalaryHomeScreen(): React.ReactElement {
   const remaining = preview.remainingToday;
   const allVariableExpenses = [...variableExpenses, ...addedExpenses];
 
-  const handleAddExpense = (): void => {
+  const handleAddExpense = async (): Promise<void> => {
     const amount = parseKrwInputAmount(expenseDraft);
     if (amount === null) {
       setToast(
@@ -626,22 +629,55 @@ function SalaryHomeScreen(): React.ReactElement {
       return;
     }
 
-    setAddedExpenses((current) => {
-      const nextIndex = current.length + 1;
-      return [
+    const nextIndex = addedExpenses.length + 1;
+    const title = `추가 지출 ${nextIndex}`;
+    const offlineEntry = {
+      amount,
+      icon: appIcons.expense,
+      id: `offline-expense-${nextIndex}-${amount}`,
+      name: title,
+    } satisfies VariableExpenseEntry;
+    setExpenseDraft("");
+
+    try {
+      setSavingExpense(true);
+      const result = await budgetApi.createVariableExpense({
+        amountMinor: amount,
+        category: "ETC",
+        dailyBudgetId: null,
+        idempotencyKey: `mobile-salary-home-${Date.now()}-${amount}`,
+        memo: null,
+        merchantName: null,
+        paymentMethod: "ETC",
+        receiptAttachmentId: null,
+        source: "MANUAL",
+        spentAt: new Date().toISOString(),
+        tags: [],
+        title,
+      });
+      if (result.serverAuthority !== true) {
+        throw new Error("serverAuthority response required");
+      }
+      setAddedExpenses((current) => [
         ...current,
         {
-          amount,
+          amount: result.netAmountMinor,
           icon: appIcons.expense,
-          id: `offline-expense-${nextIndex}-${amount}`,
-          name: `추가 지출 ${nextIndex}`,
+          id: result.expenseId,
+          name: result.title,
         },
-      ];
-    });
-    setExpenseDraft("");
-    setToast(
-      `${formatMoney(amount)}원 지출을 오늘 쓴 돈에 추가했어요. 서버 동기화 전 오프라인 미리보기입니다.`,
-    );
+      ]);
+      setToast(
+        `서버에 지출을 기록했어요. ${formatMoney(result.netAmountMinor)}원 기준으로 다시 계산했습니다.`,
+      );
+    } catch {
+      setAddedExpenses((current) => [...current, offlineEntry]);
+      setToast(
+        `${formatMoney(amount)}원 지출을 오프라인 미리보기로 반영했어요. 서버 연결 후 다시 동기화가 필요합니다.`,
+      );
+    } finally {
+      setSavingExpense(false);
+    }
   };
 
   const metrics: readonly MoneyMetric[] = [
@@ -706,10 +742,16 @@ function SalaryHomeScreen(): React.ReactElement {
           />
           <Pressable
             accessibilityRole="button"
+            disabled={savingExpense}
             onPress={handleAddExpense}
-            style={styles.primaryButton}
+            style={[
+              styles.primaryButton,
+              savingExpense ? styles.disabled : null,
+            ]}
           >
-            <Text style={styles.primaryButtonText}>지출 추가하기</Text>
+            <Text style={styles.primaryButtonText}>
+              {savingExpense ? "저장 중..." : "지출 추가하기"}
+            </Text>
           </Pressable>
         </View>
       </SectionCard>

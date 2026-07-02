@@ -3,11 +3,42 @@ import { resolveBudgetRiskLevel } from "./selectors";
 import type {
   DailyBudgetRecalculateRequest,
   DailyBudgetSnapshot,
+  VariableExpenseCategory,
+  VariableExpenseCreateRequest,
+  VariableExpensePaymentMethod,
+  VariableExpenseSource,
 } from "./types";
 import { calculateBudgetMetrics } from "./utils";
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/u;
 const RISK_LEVELS = new Set(["SAFE", "WATCH", "WARNING", "OVER"]);
+const VARIABLE_EXPENSE_CATEGORIES = new Set<VariableExpenseCategory>([
+  "MEAL",
+  "TRANSPORT",
+  "CAFE",
+  "GROCERIES",
+  "SHOPPING",
+  "HEALTH",
+  "CONTENT",
+  "EDUCATION",
+  "FAMILY",
+  "GIFT",
+  "TRAVEL",
+  "ETC",
+]);
+const VARIABLE_EXPENSE_PAYMENT_METHODS = new Set<VariableExpensePaymentMethod>([
+  "CASH",
+  "CARD",
+  "TRANSFER",
+  "PAY",
+  "ETC",
+]);
+const VARIABLE_EXPENSE_SOURCES = new Set<VariableExpenseSource>([
+  "MANUAL",
+  "RECEIPT",
+  "IMPORT",
+  "SYSTEM",
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -126,5 +157,47 @@ export function validateRecalculateRequest(
   return (
     value.memo === null ||
     (typeof value.memo === "string" && value.memo.trim().length <= 500)
+  );
+}
+
+export function validateVariableExpenseCreateRequest(
+  value: unknown,
+): value is VariableExpenseCreateRequest {
+  if (!isRecord(value)) return false;
+  if (
+    !isNonNegativeKrw(value.amountMinor) ||
+    value.amountMinor < 1 ||
+    !VARIABLE_EXPENSE_CATEGORIES.has(
+      String(value.category) as VariableExpenseCategory,
+    ) ||
+    typeof value.title !== "string" ||
+    value.title.trim().length < 1 ||
+    value.title.trim().length > 100 ||
+    !isIsoTimestamp(value.spentAt) ||
+    !VARIABLE_EXPENSE_PAYMENT_METHODS.has(
+      String(value.paymentMethod) as VariableExpensePaymentMethod,
+    ) ||
+    !VARIABLE_EXPENSE_SOURCES.has(
+      String(value.source) as VariableExpenseSource,
+    ) ||
+    !Array.isArray(value.tags) ||
+    value.tags.some((tag) => typeof tag !== "string" || tag.length > 50)
+  ) {
+    return false;
+  }
+
+  return (
+    nullableString(value.merchantName, 100) &&
+    nullableString(value.memo, 500) &&
+    nullableString(value.receiptAttachmentId, 160) &&
+    nullableString(value.dailyBudgetId, 160) &&
+    nullableString(value.idempotencyKey, 160)
+  );
+}
+
+function nullableString(value: unknown, maxLength: number): boolean {
+  return (
+    value === null ||
+    (typeof value === "string" && value.trim().length <= maxLength)
   );
 }

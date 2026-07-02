@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-02:
 
 - `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 25 suites and 89 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 25 suites and 92 tests
 - `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup

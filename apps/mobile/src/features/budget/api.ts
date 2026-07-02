@@ -3,6 +3,7 @@ import {
   BUDGET_RECALCULATE_PATH,
   BUDGET_SAFE_ERROR_MESSAGE,
   BUDGET_TODAY_PATH,
+  VARIABLE_EXPENSE_CREATE_PATH,
 } from "./constants";
 import {
   createBudgetActionHints,
@@ -15,11 +16,18 @@ import type {
   BudgetRecalculateResult,
   DailyBudgetRecalculateRequest,
   DailyBudgetSnapshot,
+  VariableExpenseCategory,
+  VariableExpenseCreateRequest,
+  VariableExpenseCreateResult,
+  VariableExpensePaymentMethod,
+  VariableExpenseSource,
+  VariableExpenseStatus,
 } from "./types";
 import { redactBudgetError } from "./utils";
 import {
   parseDailyBudgetSnapshot,
   validateRecalculateRequest,
+  validateVariableExpenseCreateRequest,
 } from "./validation";
 
 export type BudgetApiOptions = Readonly<{
@@ -235,6 +243,59 @@ function normalizeRecalculateResult(value: unknown): BudgetRecalculateResult {
   };
 }
 
+function normalizeVariableExpenseCreateResult(
+  value: unknown,
+): VariableExpenseCreateResult {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const data = value.data;
+  if (
+    typeof data.expenseId !== "string" ||
+    !isNonNegativeInteger(data.amountMinor) ||
+    data.amountMinor < 1 ||
+    typeof data.category !== "string" ||
+    typeof data.title !== "string" ||
+    !isIsoTimestamp(data.spentAt) ||
+    typeof data.paymentMethod !== "string" ||
+    typeof data.source !== "string" ||
+    typeof data.status !== "string" ||
+    !isNonNegativeInteger(data.netAmountMinor) ||
+    data.serverAuthority !== true ||
+    data.financialRawDataExposed !== false ||
+    data.adTargetingSeparated !== true
+  ) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return {
+    expenseId: data.expenseId,
+    amountMinor: data.amountMinor,
+    category: data.category as VariableExpenseCategory,
+    title: data.title,
+    spentAt: data.spentAt,
+    paymentMethod: data.paymentMethod as VariableExpensePaymentMethod,
+    merchantName:
+      typeof data.merchantName === "string" ? data.merchantName : null,
+    memo: typeof data.memo === "string" ? data.memo : null,
+    dailyBudgetId:
+      typeof data.dailyBudgetId === "string" ? data.dailyBudgetId : null,
+    source: data.source as VariableExpenseSource,
+    status: data.status as VariableExpenseStatus,
+    netAmountMinor: data.netAmountMinor,
+    serverAuthority: true,
+    financialRawDataExposed: false,
+    adTargetingSeparated: true,
+  };
+}
+
 export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -299,6 +360,23 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
         body: JSON.stringify(recalculateRequest),
       });
       return normalizeRecalculateResult(result);
+    },
+
+    async createVariableExpense(
+      variableExpenseRequest: VariableExpenseCreateRequest,
+    ): Promise<VariableExpenseCreateResult> {
+      if (!validateVariableExpenseCreateRequest(variableExpenseRequest)) {
+        throw new BudgetApiError(
+          0,
+          "BUDGET_INVALID_VARIABLE_EXPENSE",
+          "지출 추가 요청을 확인해 주세요.",
+        );
+      }
+      const result = await request(VARIABLE_EXPENSE_CREATE_PATH, {
+        method: "POST",
+        body: JSON.stringify(variableExpenseRequest),
+      });
+      return normalizeVariableExpenseCreateResult(result);
     },
 
     async recordChecked(): Promise<void> {

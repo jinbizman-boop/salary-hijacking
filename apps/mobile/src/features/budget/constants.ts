@@ -1,9 +1,11 @@
 import type { BudgetRiskLevel } from "./types";
 
 export const BUDGET_API_PREFIX = "/api/v1/daily-budgets";
+export const VARIABLE_EXPENSES_API_PREFIX = "/api/v1/variable-expenses";
 export const BUDGET_TODAY_PATH = `${BUDGET_API_PREFIX}/today`;
 export const BUDGET_RECALCULATE_PATH = `${BUDGET_API_PREFIX}/recalculate`;
 export const BUDGET_CHECKED_EVENT_PATH = "/api/v1/growth/events";
+export const VARIABLE_EXPENSE_CREATE_PATH = VARIABLE_EXPENSES_API_PREFIX;
 
 export const BUDGET_CURRENCY = "KRW" as const;
 export const BUDGET_TIMEZONE = "Asia/Seoul" as const;

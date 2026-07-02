@@ -1,5 +1,30 @@
 export type BudgetRiskLevel = "SAFE" | "WATCH" | "WARNING" | "OVER";
 export type BudgetHintSeverity = "INFO" | "SUCCESS" | "WARNING" | "CRITICAL";
+export type VariableExpenseCategory =
+  | "MEAL"
+  | "TRANSPORT"
+  | "CAFE"
+  | "GROCERIES"
+  | "SHOPPING"
+  | "HEALTH"
+  | "CONTENT"
+  | "EDUCATION"
+  | "FAMILY"
+  | "GIFT"
+  | "TRAVEL"
+  | "ETC";
+export type VariableExpensePaymentMethod =
+  | "CASH"
+  | "CARD"
+  | "TRANSFER"
+  | "PAY"
+  | "ETC";
+export type VariableExpenseSource = "MANUAL" | "RECEIPT" | "IMPORT" | "SYSTEM";
+export type VariableExpenseStatus =
+  | "POSTED"
+  | "REFUNDED"
+  | "VOIDED"
+  | "DELETED";
 
 export type DailyBudgetSnapshot = Readonly<{
   date: string;
@@ -47,11 +72,47 @@ export type BudgetRecalculateResult = Readonly<{
   serverAuthority: true;
 }>;
 
+export type VariableExpenseCreateRequest = Readonly<{
+  amountMinor: number;
+  category: VariableExpenseCategory;
+  title: string;
+  spentAt: string;
+  paymentMethod: VariableExpensePaymentMethod;
+  merchantName: string | null;
+  memo: string | null;
+  tags: readonly string[];
+  receiptAttachmentId: string | null;
+  dailyBudgetId: string | null;
+  source: VariableExpenseSource;
+  idempotencyKey: string | null;
+}>;
+
+export type VariableExpenseCreateResult = Readonly<{
+  expenseId: string;
+  amountMinor: number;
+  category: VariableExpenseCategory;
+  title: string;
+  spentAt: string;
+  paymentMethod: VariableExpensePaymentMethod;
+  merchantName: string | null;
+  memo: string | null;
+  dailyBudgetId: string | null;
+  source: VariableExpenseSource;
+  status: VariableExpenseStatus;
+  netAmountMinor: number;
+  serverAuthority: true;
+  financialRawDataExposed: false;
+  adTargetingSeparated: true;
+}>;
+
 export type BudgetApiClient = Readonly<{
   getToday: () => Promise<BudgetApiResponse | null>;
   recalculate: (
     request: DailyBudgetRecalculateRequest,
   ) => Promise<BudgetRecalculateResult>;
+  createVariableExpense: (
+    request: VariableExpenseCreateRequest,
+  ) => Promise<VariableExpenseCreateResult>;
   recordChecked: () => Promise<void>;
 }>;
 
