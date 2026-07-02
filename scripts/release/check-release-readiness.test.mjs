@@ -987,6 +987,42 @@ test("blocks secret evidence that contains raw values", () => {
   assert.doesNotMatch(report, /postgresql:\/\/user:password/);
 });
 
+test("blocks secret evidence that embeds raw secret strings in notes", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    secrets: {
+      ...Object.fromEntries(
+        requiredRuntimeSecretNames.map((name) => [
+          name,
+          {
+            verified: true,
+            stores: ["GitHub Environments", "provider secret store"],
+          },
+        ]),
+      ),
+      DATABASE_URL: {
+        verified: true,
+        stores: ["GitHub Environments"],
+        note: "Copied from postgresql://user:password@db.neon.tech/neondb",
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /secrets-evidence:secret-values/);
+  assert.match(report, /must not contain raw secret values/);
+  assert.doesNotMatch(report, /postgresql:\/\/user:password/);
+});
+
 test("blocks secret evidence verified only by unapproved store labels", () => {
   const rootDir = makeWorkspace();
   writeSecretsEvidence(rootDir, {

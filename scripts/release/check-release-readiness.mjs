@@ -111,6 +111,9 @@ const RAW_SECRET_VALUE_EVIDENCE_KEYS = new Set([
   "serviceAccountJson",
 ]);
 
+const RAW_SECRET_VALUE_PATTERN =
+  /(postgres(?:ql)?:\/\/|mysql:\/\/|mongodb(?:\+srv)?:\/\/|redis:\/\/|:\/\/[^/\s]+:[^@\s]+@|https?:\/\/hooks\.slack\.com\/services\/|https?:\/\/[^@\s]+@[^/\s]+\/\d+|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|gh[pousr]_[a-z0-9_]{16,}|github_pat_[a-z0-9_]{20,}|xox[baprs]-[a-z0-9-]+|napi_[a-z0-9_-]{16,}|cf_[a-z0-9_-]{16,})/i;
+
 const isRawSecretEvidenceKey = (key) => {
   if (RAW_SECRET_VALUE_EVIDENCE_KEYS.has(key)) return true;
   return /(?:token|secret|password|connection|string|database|webhook|dsn|privatekey|serviceaccount).*value$/i.test(
@@ -1288,6 +1291,7 @@ const readJsonIfPresent = (rootDir, relativePath) => {
 };
 
 const containsRawSecretEvidenceValue = (value) => {
+  if (typeof value === "string") return RAW_SECRET_VALUE_PATTERN.test(value);
   if (Array.isArray(value)) return value.some(containsRawSecretEvidenceValue);
   if (!isPlainObject(value)) return false;
 

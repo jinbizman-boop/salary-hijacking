@@ -168,7 +168,8 @@ using read-only evidence first. The tracked external evidence file may contain
 only provider/resource names, booleans, counts, timestamps, commit IDs, public
 target URLs, and non-secret notes; release readiness blocks it when raw token,
 password, private key, connection string, database URL, DSN, webhook,
-service-account, or similar secret value fields are embedded. Update
+service-account, similar secret value fields, or raw secret-like strings in
+free-text notes are embedded. Update
 `release/secrets-evidence.json` only with
 verified secret names, stores, and booleans; do not paste secret values,
 connection strings, tokens, private keys, service account JSON, raw database
@@ -183,7 +184,9 @@ evidence generator also rejects verified secret proof entries whose `stores`
 labels are not in the approved release evidence store list, so ad hoc notes,
 copied chats, spreadsheets, or arbitrary labels cannot satisfy secret proof.
 Release readiness also independently blocks tracked secret evidence when
-verified entries use unapproved `stores` labels.
+verified entries use unapproved `stores` labels or when any note/free-text field
+contains a raw secret-like string such as a database URL, webhook URL, API token,
+or private key marker.
 Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS

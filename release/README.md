@@ -77,7 +77,8 @@ accepted only when their `stores` labels match the approved release evidence
 store names; personal notes, copied chats, spreadsheets, or arbitrary labels are
 not release proof. Release readiness independently blocks tracked
 `release/secrets-evidence.json` when verified entries use unapproved `stores`
-labels.
+labels, and it also blocks raw secret-like strings pasted into notes or other
+free-text fields.
 
 Safe Cloudflare runtime evidence generation command:
 
