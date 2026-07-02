@@ -107,14 +107,15 @@ DB:
 
 ## Current Verification Snapshot
 
-Commands run on 2026-06-30:
+Current snapshot updated through 2026-07-02; the earliest retained command
+history began on 2026-06-30:
 
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked
 - `corepack pnpm run check:scripts`: PASS
-- `corepack pnpm run check:external-integrations`: PASS, 30 required files checked; GitHub repository policy, mobile release metadata, and source automation Git trackability are now included; local shell warns that `wrangler`, `gh`, `neon`, and `neonctl` are not on PATH
-- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 16 tests
-- `corepack pnpm run test:root-scripts`: PASS, 38 tests
-- `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`; GitHub target evidence, local `origin`, authenticated push evidence, and workspace-local EAS CLI evidence now match `jinbizman-boop/salary-hijacking`; GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access; Android `adb`/`emulator` remain blockers.
+- `corepack pnpm run check:external-integrations`: PASS, 78 required files checked; release target policy, source automation trackability, no-secret release proof paths, release readiness workflow gating, and Android blocker wording guards are included; local shell warns that `gh`, `neon`, and `neonctl` are not on PATH
+- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 54 tests
+- `corepack pnpm run test:root-scripts`: PASS, 177 tests
+- `corepack pnpm run check:release-readiness -- --soft`: PASS as a reporting command, with release status `BLOCKED`; GitHub target evidence, local `origin`, authenticated push evidence, workspace-local EAS CLI evidence, Cloudflare Wrangler availability, and Android SDK tool lookup are aligned with the Salary Hijacking target. GitHub CLI and Neon CLI absence are WARN when connector evidence proves account access. Android `adb` and `emulator` are detected, but native E2E remains blocked until a local Detox E2E APK or equivalent no-secret native/device-farm proof is recorded.
 - GitHub release target policy: existing unrelated repositories, including `Retro Games` and `jinbizman-boop/RETRO-DB`, must not be modified or reused. Salary Hijacking uses the newly created repository `jinbizman-boop/salary-hijacking` as the canonical release target.
 - Local Git status: local commits exist, `origin` is configured to `https://github.com/jinbizman-boop/salary-hijacking.git`, `git push -u origin main` succeeds, and `git ls-remote origin refs/heads/main` proves remote branch read access; no unrelated GitHub repository has been targeted from this workspace.
 - `node --test scripts/dev/run-with-corepack-pnpm.test.mjs`: PASS
@@ -138,7 +139,7 @@ Commands run on 2026-06-30:
   detected through Android SDK tool lookup, but the Detox E2E APK is missing and
   native E2E proof has not been recorded
 
-Current remaining blockers are operational rather than basic local compilation: runtime release secrets, expected Salary Hijacking Cloudflare Worker resource matching, Android `adb`/`emulator` availability in the local shell, native E2E device setup, real DB migration/seed execution, staging/production deployment, certificates, domain/store release configuration, and operating QA. The Neon project exists; local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
+Current remaining blockers are operational rather than basic local compilation: runtime release secret evidence, expected Salary Hijacking Cloudflare Worker/R2/Queue/DNS/TLS resource proof, Detox E2E APK or equivalent native E2E proof, real DB migration/seed execution, API/Admin/server-authority/privacy smoke proof, rollback rehearsal, staging/production deployment, public URL reachability/header/copy proof, store submission dry-runs, and operating QA. The Neon project exists; local `gh` and Neon CLI absence are warnings when connector evidence proves account access.
 
 Cloudflare and GitHub infrastructure docs were replaced with operational release checklists. `check:external-integrations` now rejects placeholder/mojibake infrastructure docs, mobile release metadata, `.gitignore` rules that hide required source automation files such as `scripts/build/fix-esm-imports.mjs`, and local generated hosting/build metadata such as `.vercel` or `.open-next` if they are trackable. `check:release-readiness` now also blocks missing `release/release-targets.json`, external evidence drift from the canonical target manifest, release evidence that omits explicit `RETRO-DB` protection, missing GitHub write/push proof, runtime targets where `GITHUB_REPOSITORY` or `CF_ADMIN_WORKER_NAME` do not match the verified Salary Hijacking release target, and missing/mismatched `git remote origin` linkage.
 

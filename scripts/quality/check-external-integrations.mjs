@@ -348,6 +348,7 @@ const CODEX_STATUS_DOC_FILES = [
   "docs/codex/01_PROJECT_BRIEF.md",
   "docs/codex/06_MOBILE_APP_CONTEXT.md",
   "docs/codex/08_FILE_COMPLETION_LOG.md",
+  "docs/codex/12_CHATGPT_WORK_SUMMARY.md",
   "docs/codex/13_BASELINE_VERIFICATION_MAP.md",
 ];
 
@@ -423,6 +424,8 @@ const PLACEHOLDER_OR_MOJIBAKE_PATTERN =
 
 const STALE_ANDROID_TOOL_BLOCKER_PATTERNS = [
   /Android\s+`?adb`?\s+and\s+`?emulator`?\s+remain blocking local release tools/i,
+  /Android\s+`?adb`?\s*\/\s*`?emulator`?\s+remain blockers/i,
+  /blockers?\s+(?:include|are).*Android\s+`?adb`?\s*\/\s*`?emulator`?\s+availability/i,
   /missing\s+(?:local\s+)?Android\s+`?adb`?\s*\/\s*`?emulator`?/i,
 ];
 

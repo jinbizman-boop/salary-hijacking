@@ -1626,6 +1626,34 @@ Release readiness is blocked by missing local Android \`adb\`/\`emulator\`.
   }
 });
 
+test("fails when ChatGPT work summary keeps stale Android tool blocker language", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "docs/codex/12_CHATGPT_WORK_SUMMARY.md": `
+# ChatGPT Work Summary
+
+Current remaining blockers include Android \`adb\`/\`emulator\` availability in the local shell.
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /docs\/codex\/12_CHATGPT_WORK_SUMMARY\.md/,
+    );
+    assert.match(result.failures.join("\n"), /Android adb\/emulator/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when mobile launch assets are missing", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
