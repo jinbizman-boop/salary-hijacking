@@ -250,6 +250,16 @@ write copied HTML, raw headers, logs, user identifiers, or financial payloads,
 and it treats sensitive response header names or values as public
 sensitive-data non-exposure failures.
 
+The release workflow collects and uploads a no-secret `public-url-proof-*`
+artifact from `release/public-url-proof.local.json`. The workflow validates that
+the proof is schema version 1, redacted, targets only the Salary Hijacking public
+app/legal URLs, and does not contain copied page/header content or sensitive
+markers before uploading the artifact. If validation fails, the artifact upload
+must be skipped. This artifact is short-retention CI proof material only; it
+does not automatically mark `release/public-url-evidence.json` verified. An
+operator must inspect trusted CI proof and refresh tracked evidence through
+`corepack pnpm run release:public-url-evidence` without pasting raw payloads.
+
 The evidence generator reads no runtime secret values. If
 `release/public-url-proof.local.json` exists, it may contain only no-secret
 booleans proving production reachability for `/`, `/privacy`, `/support`, and

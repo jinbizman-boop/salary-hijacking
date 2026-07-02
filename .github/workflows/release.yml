@@ -313,6 +313,52 @@ jobs:
           retention-days: 7
           path: release/secrets-proof.local.json
 
+      - name: Collect no-secret public URL proof
+        run: |
+          set -euo pipefail
+
+          corepack pnpm run release:public-url-proof || true
+
+          node <<'NODE'
+          const fs = require("fs");
+          const proof = JSON.parse(
+            fs.readFileSync("release/public-url-proof.local.json", "utf8").replace(/^\uFEFF/, "")
+          );
+
+          if (proof.schemaVersion !== 1 || proof.secretsRedacted !== true || proof.containsSecretValues !== false) {
+            console.error("::error::Public URL proof must be schemaVersion 1, redacted, and no-secret.");
+            process.exit(1);
+          }
+
+          const expectedUrls = {
+            landingUrl: "https://salaryhijacking.com/",
+            privacyUrl: "https://salaryhijacking.com/privacy",
+            supportUrl: "https://salaryhijacking.com/support",
+            termsUrl: "https://salaryhijacking.com/terms"
+          };
+
+          if (JSON.stringify(proof.checkedUrls || {}) !== JSON.stringify(expectedUrls)) {
+            console.error("::error::Public URL proof must target only salaryhijacking.com public app/legal URLs.");
+            process.exit(1);
+          }
+
+          const serialized = JSON.stringify(proof);
+          if (/<html|<\/|set-cookie|authorization|cookie|session|csrf|api[_-]?key|access[_-]?token|jwt|postgres(?:ql)?:\/\/|DATABASE_URL|salaryAmount|expenseAmount|savingAmount|hijackAmount|accountNumber|cardNumber|pushToken|rawDeviceIdentifier/i.test(serialized)) {
+            console.error("::error::Public URL proof contains copied page/header content or sensitive markers.");
+            process.exit(1);
+          }
+
+          console.log("Public URL proof is redacted and no-secret.");
+          NODE
+
+      - name: Upload no-secret public URL proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-url-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: release/public-url-proof.local.json
+
       - name: Verify pnpm store integrity
         run: pnpm store status
 

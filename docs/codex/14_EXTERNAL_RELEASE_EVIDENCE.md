@@ -333,6 +333,14 @@ non-exposure failures without writing those headers. The tracked evidence
 generator also rejects proof keys for copied request/response headers, raw
 headers, authorization, cookie, session, CSRF, API key, access token, JWT, and
 related sensitive header markers before writing tracked evidence.
+The release workflow now collects, validates, and uploads a no-secret
+`public-url-proof-*` artifact from `release/public-url-proof.local.json`. This
+artifact upload must run only after the local proof passes the redaction,
+target-URL, and sensitive-marker validation. It is short-retention CI proof
+material only; it must be inspected from a trusted workflow run and converted
+into tracked evidence with `corepack pnpm run release:public-url-evidence`
+without pasting raw page, header, token, identifier, or financial payloads. The
+artifact does not by itself make public URL release gates verified.
 Update `release/security-audit-evidence.json` only with no-secret dependency
 audit summary booleans and vulnerability counts. Prefer running
 `corepack pnpm audit --audit-level=high --prod=false` in a network-enabled

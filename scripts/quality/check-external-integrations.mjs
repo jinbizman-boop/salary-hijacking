@@ -630,6 +630,43 @@ function checkMobileNativeProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkPublicUrlProofWorkflow(rootDir, failures) {
+  const relativePath = ".github/workflows/release.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredParts = [
+    "corepack pnpm run release:public-url-proof",
+    "release/public-url-proof.local.json",
+    "public-url-proof-${{ github.run_attempt }}",
+    "checkedUrls",
+    "containsSecretValues",
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: must collect and upload no-secret public-url-proof evidence including ${requiredPart}`,
+    );
+  }
+
+  const artifactName = "public-url-proof-${{ github.run_attempt }}";
+  const artifactIndex = source.indexOf(artifactName);
+  if (artifactIndex !== -1) {
+    const uploadStepWindow = source.slice(
+      Math.max(0, artifactIndex - 400),
+      artifactIndex + 400,
+    );
+
+    if (/\bif:\s*always\(\)/.test(uploadStepWindow)) {
+      failures.push(
+        `${relativePath}: public-url-proof artifact upload must not run after validation failure`,
+      );
+    }
+  }
+}
+
 function checkMobileLaunchAssets(rootDir, failures) {
   for (const relativePath of REQUIRED_MOBILE_ASSET_FILES) {
     if (!fileExists(rootDir, relativePath)) continue;
@@ -823,6 +860,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
+  checkPublicUrlProofWorkflow(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
   checkEnvExampleReleaseTargets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);
