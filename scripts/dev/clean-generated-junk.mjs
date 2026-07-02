@@ -44,6 +44,12 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^paycheck-accounting/i,
   /^node-test-run-/i,
 ];
+const REMOVE_RETRY_OPTIONS = {
+  force: true,
+  maxRetries: 10,
+  recursive: true,
+  retryDelay: 250,
+};
 
 function toPosix(filePath) {
   return filePath.split(path.sep).join("/");
@@ -265,7 +271,7 @@ export async function cleanGeneratedJunk(options = {}) {
     try {
       const bytes = await measurePathBytes(target.path);
       if (!dryRun) {
-        await fs.promises.rm(target.path, { recursive: true, force: true });
+        await fs.promises.rm(target.path, REMOVE_RETRY_OPTIONS);
         removed.push({ ...target, bytes });
         bytesFreed += bytes;
       }

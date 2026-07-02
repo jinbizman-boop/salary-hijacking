@@ -1355,6 +1355,60 @@ test("fails when mobile local e2e APK build script is missing", async () => {
   }
 });
 
+test("passes when mobile local e2e APK build delegates to the guarded wrapper", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/package.json": JSON.stringify(
+        {
+          name: "@salary-hijacking/mobile",
+          description:
+            "급여납치 Salary Hijacking mobile app fixture with guarded local e2e wrapper.",
+          scripts: {
+            "test:e2e":
+              "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+            "build:e2e:android:local":
+              "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:preflight":
+              "node scripts/eas-local-android-build.mjs --check --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:production:android":
+              "eas build --platform android --profile production --non-interactive",
+          },
+          devDependencies: {
+            "eas-cli": "^20.4.0",
+          },
+        },
+        null,
+        2,
+      ),
+      "apps/mobile/scripts/eas-local-android-build.mjs": `
+const args = [
+  "build",
+  "--platform",
+  "android",
+  "--profile",
+  "e2e",
+  "--local",
+  "--output",
+  "build/e2e/android/salary-hijacking-e2e.apk",
+  "--non-interactive",
+];
+console.log(process.env.JAVA_HOME, args.join(" "));
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, true, result.failures.join("\n"));
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when mobile build workflow does not upload no-secret native proof", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 

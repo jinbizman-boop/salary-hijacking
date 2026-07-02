@@ -44,6 +44,33 @@ test("routes node test temp files into an isolated cleanup directory", async () 
   }
 });
 
+test("removes isolated temp directories with Windows-safe retry options", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-clean-temp-root-"));
+  const runDir = path.join(rootDir, "node-test-run-retry");
+  const calls = [];
+
+  try {
+    await removeNodeTestTempRunDir({
+      rootDir,
+      runDir,
+      rm: async (target, options) => {
+        calls.push({ options, target });
+      },
+    });
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].target, runDir);
+    assert.deepEqual(calls[0].options, {
+      force: true,
+      maxRetries: 10,
+      recursive: true,
+      retryDelay: 250,
+    });
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("CLI cleans the isolated temp directory after a passing node test run", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-clean-temp-cli-"));
   const testFile = path.join(rootDir, "sample.test.mjs");

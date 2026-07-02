@@ -371,6 +371,8 @@ const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
   "scripts/dev/clean-generated-junk.test.mjs",
   "scripts/dev/report-workspace-disk-usage.mjs",
   "scripts/dev/report-workspace-disk-usage.test.mjs",
+  "apps/mobile/scripts/eas-local-android-build.mjs",
+  "apps/mobile/scripts/eas-local-android-build.test.mjs",
   "scripts/dev/run-node-tests-with-clean-temp.mjs",
   "scripts/dev/run-node-tests-with-clean-temp.test.mjs",
   "scripts/build/fix-esm-imports.mjs",
@@ -602,6 +604,7 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
   }
 
   const script = packageJson?.scripts?.["build:e2e:android:local"];
+  const preflightScript = packageJson?.scripts?.["build:e2e:android:preflight"];
   const expectedOutput = "build/e2e/android/salary-hijacking-e2e.apk";
   const requiredParts = [
     "eas build",
@@ -620,12 +623,55 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
     return;
   }
 
-  for (const requiredPart of requiredParts) {
-    if (script.includes(requiredPart)) continue;
-
-    failures.push(
-      `${relativePath}: scripts.build:e2e:android:local must include ${requiredPart}`,
+  const directScriptIsComplete = requiredParts.every((requiredPart) =>
+    script.includes(requiredPart),
+  );
+  const wrapperRelativePath = "apps/mobile/scripts/eas-local-android-build.mjs";
+  const usesWrapper = script.includes("scripts/eas-local-android-build.mjs");
+  const wrapperSource = fileExists(rootDir, wrapperRelativePath)
+    ? readText(rootDir, wrapperRelativePath)
+    : "";
+  const wrapperRequiredParts = [
+    '"build"',
+    '"--platform"',
+    '"android"',
+    '"--profile"',
+    '"e2e"',
+    '"--local"',
+    '"--output"',
+    `"${expectedOutput}"`,
+    '"--non-interactive"',
+  ];
+  const wrapperIsComplete =
+    usesWrapper &&
+    wrapperRequiredParts.every((requiredPart) =>
+      wrapperSource.includes(requiredPart),
     );
+
+  if (!directScriptIsComplete && !wrapperIsComplete) {
+    for (const requiredPart of requiredParts) {
+      if (script.includes(requiredPart)) continue;
+
+      failures.push(
+        `${relativePath}: scripts.build:e2e:android:local must include ${requiredPart} directly or delegate to ${wrapperRelativePath}`,
+      );
+    }
+  }
+
+  if (usesWrapper) {
+    if (
+      typeof preflightScript !== "string" ||
+      !preflightScript.includes("--check")
+    ) {
+      failures.push(
+        `${relativePath}: scripts.build:e2e:android:preflight must run the local EAS Android wrapper with --check`,
+      );
+    }
+    if (!wrapperSource.includes("JAVA_HOME")) {
+      failures.push(
+        `${wrapperRelativePath}: wrapper must configure JAVA_HOME for local Android EAS builds`,
+      );
+    }
   }
 }
 

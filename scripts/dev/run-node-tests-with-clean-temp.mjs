@@ -6,6 +6,12 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "..", "..");
+const cleanupRetryOptions = {
+  force: true,
+  maxRetries: 10,
+  recursive: true,
+  retryDelay: 250,
+};
 
 function sanitizeRunId(runId) {
   return String(runId ?? `${process.pid}-${Date.now()}`).replace(
@@ -53,6 +59,7 @@ export function buildCleanNodeTestEnv(options = {}) {
 export async function removeNodeTestTempRunDir(options = {}) {
   const runDir = path.resolve(options.runDir);
   const rootDir = path.resolve(options.rootDir ?? path.dirname(runDir));
+  const remove = options.rm ?? fs.promises.rm;
   const relative = path.relative(rootDir, runDir);
 
   if (
@@ -64,7 +71,7 @@ export async function removeNodeTestTempRunDir(options = {}) {
     throw new Error(`Refusing to remove unsafe node test temp path: ${runDir}`);
   }
 
-  await fs.promises.rm(runDir, { recursive: true, force: true });
+  await remove(runDir, cleanupRetryOptions);
 }
 
 function run() {

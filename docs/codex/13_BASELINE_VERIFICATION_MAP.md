@@ -21,7 +21,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - workspace quality: PASS, `corepack pnpm run quality` completed 82 Turbo tasks
 - workspace build: PASS, `corepack pnpm run build` completed 12 Turbo tasks
 - local Git baseline: PASS, local Git metadata is initialized, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`, authenticated push to `origin/main` is proven, and release readiness rechecks local HEAD against `origin/main` when authenticated push proof is claimed, with a warning fallback to local `refs/remotes/origin/main` when live remote reads are unavailable in the local Node sandbox
-- root script tests: PASS, 190 tests after adding Android SDK tool detection
+- root script tests: PASS, 196 tests after adding Android SDK tool detection
   coverage and preserving no-secret release proof coverage
   collectors for database, runtime secrets, Cloudflare observations, mobile
   native build/store observations, public URLs, Cloudflare runtime proof
@@ -32,10 +32,11 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
   dependency security audit proof artifact guarding, release readiness workflow
   gate guarding, stale Android blocker wording guarding across Codex status and
   ChatGPT work summary docs, root Node test temp isolation/cleanup, generated
-  junk cleanup including native EAS/Android/iOS build cache targets, no-delete
-  workspace disk reporting, tracked proof example templates, missing/BOM
-  Cloudflare observation handling, and UTF-8 BOM local proof handling for
-  database and mobile native collectors
+  junk cleanup including native EAS/Android/iOS build cache targets, Windows-safe
+  cleanup retries for transient `EBUSY` locks, no-delete workspace disk
+  reporting, tracked proof example templates, missing/BOM Cloudflare observation
+  handling, UTF-8 BOM local proof handling for database and mobile native
+  collectors, and the guarded local Android E2E EAS build wrapper
 - database local-safe validation: PASS, `corepack pnpm run db:validate`
   validated the checked-in DB package/schema/DDL bundle and is recorded as the
   migration validation release gate without storing runtime DB URLs, SQL output,
@@ -46,8 +47,9 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
   Freesentation fonts, five-tab IA, screenshot anchor, and Korean launch copy
 - mobile Detox config and smoke contract: present and covered by tests
 - mobile native E2E: FAIL because the local Detox Android E2E APK is missing;
-  `adb` and `emulator` are now detected through Android SDK tool lookup, but
-  tool availability is not native E2E proof
+  `adb`, `emulator`, Java/JBR, and the EAS local build preflight are now
+  detected, but the actual local EAS APK build requires Expo authentication and
+  tool/preflight availability is not native E2E proof
 - mobile/API bootstrap, payroll current/recalculate, and profile/privacy-export contracts: aligned in current code; profile alias is covered by `services/api/tests/mobile-profile-contract.test.ts`, and manifest alignment is covered by `services/api/tests/mobile-route-manifest-contract.test.ts`
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
