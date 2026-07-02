@@ -108,7 +108,12 @@ private keys, certificates, service accounts, or copied runtime payloads.
 Release readiness independently blocks tracked Cloudflare runtime evidence when
 `observedWorkers` contains Worker names outside the Salary Hijacking release
 target set, or when `workers.expectedWorkers` drifts from
-`release/release-targets.json`.
+`release/release-targets.json`. It also blocks tracked Cloudflare runtime
+evidence when `networking.expectedDomains` contains unrelated domains outside
+the Salary Hijacking custom-domain set:
+`salaryhijacking.com`, `www.salaryhijacking.com`, `api.salaryhijacking.com`,
+`notifications.salaryhijacking.com`, `scheduler.salaryhijacking.com`, and
+`admin.salaryhijacking.com`.
 
 Safe mobile native evidence generation command:
 

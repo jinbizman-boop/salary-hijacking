@@ -283,6 +283,15 @@ const EXPECTED_PUBLIC_URLS = Object.freeze({
   termsUrl: "https://salaryhijacking.com/terms",
 });
 
+const EXPECTED_CLOUDFLARE_DOMAINS = Object.freeze([
+  "salaryhijacking.com",
+  "www.salaryhijacking.com",
+  "api.salaryhijacking.com",
+  "notifications.salaryhijacking.com",
+  "scheduler.salaryhijacking.com",
+  "admin.salaryhijacking.com",
+]);
+
 const RAW_PUBLIC_PAGE_OR_SENSITIVE_KEY_TERMS = [
   "payload",
   "requestbody",
@@ -1291,7 +1300,13 @@ const readJsonIfPresent = (rootDir, relativePath) => {
 };
 
 const containsRawSecretEvidenceValue = (value) => {
-  if (typeof value === "string") return RAW_SECRET_VALUE_PATTERN.test(value);
+  if (typeof value === "string") {
+    const withoutAllowedEnvNames = REQUIRED_ENV_NAMES.reduce(
+      (text, envName) => text.replaceAll(envName, ""),
+      value,
+    );
+    return RAW_SECRET_VALUE_PATTERN.test(withoutAllowedEnvNames);
+  }
   if (Array.isArray(value)) return value.some(containsRawSecretEvidenceValue);
   if (!isPlainObject(value)) return false;
 
@@ -1932,6 +1947,36 @@ const checkCloudflareRuntimeEvidence = (
   const networking = isPlainObject(evidence.networking)
     ? evidence.networking
     : {};
+  const expectedDomains = sortedStrings(EXPECTED_CLOUDFLARE_DOMAINS);
+  const evidenceExpectedDomains = sortedStrings(networking.expectedDomains);
+  const unexpectedDomains = evidenceExpectedDomains.filter(
+    (domain) => !expectedDomains.includes(domain),
+  );
+  const missingDomains = expectedDomains.filter(
+    (domain) => !evidenceExpectedDomains.includes(domain),
+  );
+  const domainsScoped =
+    unexpectedDomains.length === 0 && missingDomains.length === 0;
+  addCloudflareRuntimeCheck(
+    checks,
+    blockers,
+    domainsScoped ? "PASS" : "BLOCKED",
+    "cloudflare-runtime:domain-scope",
+    domainsScoped
+      ? "Cloudflare runtime expected domains match Salary Hijacking targets"
+      : [
+          unexpectedDomains.length > 0
+            ? `unexpected Cloudflare domains: ${unexpectedDomains.join(", ")}`
+            : "",
+          missingDomains.length > 0
+            ? `missing Cloudflare domains: ${missingDomains.join(", ")}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join("; "),
+    "Cloudflare runtime evidence must use only Salary Hijacking custom domains",
+  );
+
   const networkingChecks = [
     {
       key: "customDomainsVerified",

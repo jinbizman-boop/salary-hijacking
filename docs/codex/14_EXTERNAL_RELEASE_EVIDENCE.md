@@ -202,7 +202,12 @@ material, private keys, copied runtime payloads, secret values, and unrelated
 Worker names before writing local or tracked evidence. Release readiness also
 independently blocks tracked Cloudflare runtime evidence when `observedWorkers`
 contains names outside the Salary Hijacking release target set or when
-`workers.expectedWorkers` drifts from `release/release-targets.json`.
+`workers.expectedWorkers` drifts from `release/release-targets.json`. It also
+blocks tracked Cloudflare runtime evidence when `networking.expectedDomains`
+contains unrelated domains outside the Salary Hijacking custom-domain set
+(`salaryhijacking.com`, `www.salaryhijacking.com`, `api.salaryhijacking.com`,
+`notifications.salaryhijacking.com`, `scheduler.salaryhijacking.com`, and
+`admin.salaryhijacking.com`).
 Update `release/database-evidence.json` only with booleans, resource names,
 migration counts, and non-secret proof notes for safe migration validation,
 staging migration, staging seed, production migration dry-run, API/Admin smoke,

@@ -458,6 +458,14 @@ const writeCloudflareRuntimeEvidence = (rootDir, overrides = {}) => {
     networking: {
       customDomainsVerified: true,
       certificatesVerified: true,
+      expectedDomains: [
+        "salaryhijacking.com",
+        "www.salaryhijacking.com",
+        "api.salaryhijacking.com",
+        "notifications.salaryhijacking.com",
+        "scheduler.salaryhijacking.com",
+        "admin.salaryhijacking.com",
+      ],
     },
     ...overrides,
   };
@@ -956,6 +964,29 @@ test("uses redacted secret evidence when local runtime env values are absent", (
   assert.doesNotMatch(report, /runtime value is missing or placeholder/);
 });
 
+test("allows required secret names in evidence next steps without treating them as values", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    nextEvidenceRequired: [
+      "CF_ADMIN_WORKER_NAME presence proof in GitHub Environments or Cloudflare Worker config",
+      "SLACK_WEBHOOK_URL presence proof in GitHub Environments or provider secret store",
+    ],
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /PASS secrets-evidence:secret-values/);
+  assert.doesNotMatch(report, /raw secret values may be present/);
+});
+
 test("blocks secret evidence that contains raw values", () => {
   const rootDir = makeWorkspace();
   writeSecretsEvidence(rootDir, {
@@ -1204,6 +1235,38 @@ test("blocks Cloudflare runtime evidence whose expected Workers drift from relea
   assert.match(report, /cloudflare-runtime:target-workers/);
   assert.match(report, /expected Workers drifted from release targets/);
   assert.match(report, /other-api/);
+});
+
+test("blocks Cloudflare runtime evidence that includes unrelated domains", () => {
+  const rootDir = makeWorkspace();
+  writeCloudflareRuntimeEvidence(rootDir, {
+    networking: {
+      customDomainsVerified: true,
+      certificatesVerified: true,
+      expectedDomains: [
+        "salaryhijacking.com",
+        "www.salaryhijacking.com",
+        "api.salaryhijacking.com",
+        "notifications.salaryhijacking.com",
+        "scheduler.salaryhijacking.com",
+        "admin.salaryhijacking.com",
+        "retrogames.kr",
+      ],
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /cloudflare-runtime:domain-scope/);
+  assert.match(report, /unexpected Cloudflare domains: retrogames\.kr/);
 });
 
 test("blocks when database migration, seed, and smoke evidence is missing", () => {
