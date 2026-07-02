@@ -8,6 +8,12 @@ import { androidToolExists } from "./android-sdk-tools.mjs";
 
 const DEFAULT_PROOF_PATH = "release/mobile-native-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/mobile-native-evidence.json";
+const RELEASE_TARGETS_PATH = "release/release-targets.json";
+const DEFAULT_MOBILE_TARGET = Object.freeze({
+  expectedAppSlug: "salary-hijacking",
+  expectedAndroidPackage: "com.salaryhijacking.mobile",
+  expectedIosBundleIdentifier: "com.salaryhijacking.mobile",
+});
 
 export const RAW_SECRET_VALUE_KEYS = new Set([
   "value",
@@ -89,6 +95,83 @@ export const containsRawSecretOrArtifactValue = (value) => {
 const proofSection = (proof, key) =>
   isPlainObject(proof?.[key]) ? proof[key] : {};
 
+const stringFrom = (source, key, fallback = "") =>
+  typeof source?.[key] === "string" && source[key].trim()
+    ? source[key].trim()
+    : fallback;
+
+const readExpectedMobileTarget = (rootDir) => {
+  const targets = readJsonIfPresent(rootDir, RELEASE_TARGETS_PATH);
+  const mobile = isPlainObject(targets?.mobile) ? targets.mobile : {};
+  return {
+    expectedAppSlug: stringFrom(
+      mobile,
+      "expectedAppSlug",
+      DEFAULT_MOBILE_TARGET.expectedAppSlug,
+    ),
+    expectedAndroidPackage: stringFrom(
+      mobile,
+      "expectedAndroidPackage",
+      DEFAULT_MOBILE_TARGET.expectedAndroidPackage,
+    ),
+    expectedIosBundleIdentifier: stringFrom(
+      mobile,
+      "expectedIosBundleIdentifier",
+      DEFAULT_MOBILE_TARGET.expectedIosBundleIdentifier,
+    ),
+  };
+};
+
+const evidenceAppIdentityFromTarget = (target) => ({
+  appSlug: target.expectedAppSlug,
+  androidPackage: target.expectedAndroidPackage,
+  iosBundleIdentifier: target.expectedIosBundleIdentifier,
+});
+
+const proofHasVerifiedReleaseClaim = (proof) => {
+  const android = proofSection(proof, "android");
+  const ios = proofSection(proof, "ios");
+  return (
+    boolFrom(android, "productionBuildVerified") ||
+    boolFrom(android, "storeSubmitDryRunVerified") ||
+    boolFrom(android, "nativeE2eVerified") ||
+    boolFrom(ios, "productionBuildVerified") ||
+    boolFrom(ios, "storeSubmitDryRunVerified")
+  );
+};
+
+const assertMobileProofTargetMatches = ({
+  proof,
+  proofPath,
+  expectedMobileTarget,
+}) => {
+  const appIdentity = proofSection(proof, "appIdentity");
+  const checks = [
+    ["appSlug", expectedMobileTarget.expectedAppSlug],
+    ["androidPackage", expectedMobileTarget.expectedAndroidPackage],
+    ["iosBundleIdentifier", expectedMobileTarget.expectedIosBundleIdentifier],
+  ];
+  const requireIdentity = proofHasVerifiedReleaseClaim(proof);
+  const mismatches = checks
+    .map(([key, expected]) => {
+      const actual = stringFrom(appIdentity, key);
+      if (actual.length === 0 && requireIdentity) {
+        return `${key} is missing`;
+      }
+      if (actual.length > 0 && actual !== expected) {
+        return `${key} must be ${expected}`;
+      }
+      return "";
+    })
+    .filter(Boolean);
+
+  if (mismatches.length > 0) {
+    throw new Error(
+      `${proofPath} mobile proof target does not match release target: ${mismatches.join(", ")}`,
+    );
+  }
+};
+
 const privacySectionIsSafe = (proof) => {
   const privacy = proofSection(proof, "privacy");
   return (
@@ -99,7 +182,7 @@ const privacySectionIsSafe = (proof) => {
   );
 };
 
-const validateNoSecretProof = (proof, proofPath) => {
+const validateNoSecretProof = (proof, proofPath, expectedMobileTarget) => {
   if (!isPlainObject(proof)) return {};
 
   if (
@@ -125,14 +208,20 @@ const validateNoSecretProof = (proof, proofPath) => {
     );
   }
 
+  assertMobileProofTargetMatches({
+    proof,
+    proofPath,
+    expectedMobileTarget,
+  });
+
   return proof;
 };
 
-const readProof = (rootDir, proofPath) => {
+const readProof = (rootDir, proofPath, expectedMobileTarget) => {
   const localProof = readJsonIfPresent(rootDir, proofPath);
   if (localProof) {
     return {
-      proof: validateNoSecretProof(localProof, proofPath),
+      proof: validateNoSecretProof(localProof, proofPath, expectedMobileTarget),
       source: "local",
     };
   }
@@ -143,7 +232,11 @@ const readProof = (rootDir, proofPath) => {
       : null;
   if (fallback) {
     return {
-      proof: validateNoSecretProof(fallback, DEFAULT_OUTPUT_PATH),
+      proof: validateNoSecretProof(
+        fallback,
+        DEFAULT_OUTPUT_PATH,
+        expectedMobileTarget,
+      ),
       source: "tracked",
     };
   }
@@ -153,11 +246,6 @@ const readProof = (rootDir, proofPath) => {
 
 const boolFrom = (source, key, fallback = false) =>
   source?.[key] === true ? true : fallback;
-
-const stringFrom = (source, key, fallback = "") =>
-  typeof source?.[key] === "string" && source[key].trim()
-    ? source[key].trim()
-    : fallback;
 
 const noteFrom = (source, key, fallback) =>
   typeof source?.[key] === "string" && source[key].trim()
@@ -199,7 +287,12 @@ export const buildMobileNativeEvidence = ({
   androidToolPlatform = process.platform,
   now = () => new Date(),
 } = {}) => {
-  const { proof, source: proofSource } = readProof(rootDir, proofPath);
+  const expectedMobileTarget = readExpectedMobileTarget(rootDir);
+  const { proof, source: proofSource } = readProof(
+    rootDir,
+    proofPath,
+    expectedMobileTarget,
+  );
   const proofAndroid = proofSection(proof, "android");
   const proofIos = proofSection(proof, "ios");
   const commandAvailable =
@@ -272,6 +365,7 @@ export const buildMobileNativeEvidence = ({
       "Generated by scripts/release/generate-mobile-native-evidence.mjs from local no-secret proof booleans and local Android tool detection; raw EAS tokens, store credentials, artifact URLs or paths, private keys, and reviewer passwords are rejected before writing",
     secretsRedacted: true,
     containsSecretValues: false,
+    appIdentity: evidenceAppIdentityFromTarget(expectedMobileTarget),
     android,
     ios,
     privacy: {

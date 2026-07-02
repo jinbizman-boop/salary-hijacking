@@ -89,6 +89,11 @@ test("uses a local proof file to mark mobile native gates verified", () => {
         schemaVersion: 1,
         secretsRedacted: true,
         containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
         android: {
           productionBuildVerified: true,
           productionBuildProfile: "production",
@@ -126,7 +131,71 @@ test("uses a local proof file to mark mobile native gates verified", () => {
   assert.equal(evidence.android.nativeE2eVerified, true);
   assert.equal(evidence.ios.productionBuildVerified, true);
   assert.equal(evidence.ios.storeSubmitDryRunVerified, true);
+  assert.deepEqual(evidence.appIdentity, {
+    appSlug: "salary-hijacking",
+    androidPackage: "com.salaryhijacking.mobile",
+    iosBundleIdentifier: "com.salaryhijacking.mobile",
+  });
   assert.deepEqual(evidence.nextEvidenceRequired, []);
+});
+
+test("rejects local proof whose mobile app identity does not match release targets", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "mobile-native-proof.local.json",
+  );
+  write(
+    rootDir,
+    "release/release-targets.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        mobile: {
+          expectedAppSlug: "salary-hijacking",
+          expectedAndroidPackage: "com.salaryhijacking.mobile",
+          expectedIosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+      },
+      null,
+      2,
+    ),
+  );
+  write(
+    rootDir,
+    "release/mobile-native-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "retro-games",
+          androidPackage: "com.retrogames.mobile",
+          iosBundleIdentifier: "com.retrogames.mobile",
+        },
+        android: {
+          productionBuildVerified: true,
+          productionBuildProfile: "production",
+          productionArtifactType: "aab",
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsBinaryDownloadUrl: false,
+          containsReviewerPassword: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildMobileNativeEvidence({ rootDir, proofPath }),
+    /mobile proof target does not match release target/i,
+  );
 });
 
 test("preserves existing no-secret mobile native evidence when local proof is absent", () => {
@@ -139,6 +208,11 @@ test("preserves existing no-secret mobile native evidence when local proof is ab
         schemaVersion: 1,
         secretsRedacted: true,
         containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
         android: {
           productionBuildVerified: true,
           productionBuildProfile: "production",

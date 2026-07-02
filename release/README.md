@@ -132,9 +132,13 @@ The proof collector reads `release/mobile-native-observation.local.json` and
 writes only booleans to `release/mobile-native-proof.local.json`. The local
 observation file is ignored by Git and may contain only production build flags,
 Android AAB artifact type, native E2E pass/fail flags, store-submit dry-run
-flags, and non-secret notes. It must not contain EAS tokens, Apple/Google
-credentials, binary download URLs, local artifact paths, signing keys, service
-account JSON, reviewer passwords, copied store-console payloads, or logs.
+flags, app identity fields, and non-secret notes. Its `appIdentity` must match
+the Salary Hijacking release target in `release/release-targets.json`:
+`appSlug=salary-hijacking`, `androidPackage=com.salaryhijacking.mobile`, and
+`iosBundleIdentifier=com.salaryhijacking.mobile`. It must not contain EAS
+tokens, Apple/Google credentials, binary download URLs, local artifact paths,
+signing keys, service account JSON, reviewer passwords, copied store-console
+payloads, or logs.
 
 For Android Detox runs, build or obtain an E2E APK, import it into the ignored
 Detox binary path, then run native E2E:
@@ -154,14 +158,16 @@ booleans. Android tool detection checks PATH and common Android Studio SDK
 locations, but detected `adb`/`emulator` tools are only execution prerequisites;
 they are not native E2E proof. The local proof file is ignored by Git and may
 contain only EAS build, native E2E, and store-submit dry-run booleans plus
-non-secret notes. It must use `containsSecretValues=false` and must not contain
-EAS tokens, Apple/Google credentials, binary download URLs, local artifact
-paths, signing keys, service accounts, reviewer passwords, or copied
-store-console payloads. Release readiness independently blocks tracked mobile
-native evidence when `containsSecretValues` is not explicitly `false`, when raw
-native release secret values are embedded, or when native release privacy flags
-declare EAS tokens, store credentials, binary download URLs, or reviewer
-passwords.
+app identity fields and non-secret notes. It must use
+`containsSecretValues=false`, its `appIdentity` must match
+`release/release-targets.json`, and it must not contain EAS tokens,
+Apple/Google credentials, binary download URLs, local artifact paths, signing
+keys, service accounts, reviewer passwords, or copied store-console payloads.
+Release readiness independently blocks tracked mobile native evidence when
+`containsSecretValues` is not explicitly `false`, when raw native release secret
+values are embedded, when `appIdentity` drifts from the release target mobile
+slug/package/bundle identifier, or when native release privacy flags declare
+EAS tokens, store credentials, binary download URLs, or reviewer passwords.
 
 Safe database evidence generation command:
 

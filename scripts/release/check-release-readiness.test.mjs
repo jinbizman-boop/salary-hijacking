@@ -287,6 +287,11 @@ const writeReleaseTargets = (rootDir, overrides = {}) => {
     neon: {
       expectedProjectHint: "salary-hijacking",
     },
+    mobile: {
+      expectedAppSlug: "salary-hijacking",
+      expectedAndroidPackage: "com.salaryhijacking.mobile",
+      expectedIosBundleIdentifier: "com.salaryhijacking.mobile",
+    },
     publicUrls: {
       landingUrl: "https://salaryhijacking.com/",
       privacyUrl: "https://salaryhijacking.com/privacy",
@@ -356,6 +361,11 @@ const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
     source: "test-fixture",
     secretsRedacted: true,
     containsSecretValues: false,
+    appIdentity: {
+      appSlug: "salary-hijacking",
+      androidPackage: "com.salaryhijacking.mobile",
+      iosBundleIdentifier: "com.salaryhijacking.mobile",
+    },
     android: {
       productionBuildVerified: true,
       productionBuildProfile: "production",
@@ -1950,6 +1960,39 @@ test("blocks when mobile native release evidence declares unsafe privacy flags",
   assert.match(
     report,
     /mobile-native-evidence\.json must not declare native release secret or artifact privacy flags/,
+  );
+});
+
+test("blocks when mobile native release evidence app identity drifts from release targets", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    appIdentity: {
+      appSlug: "retro-games",
+      androidPackage: "com.retrogames.mobile",
+      iosBundleIdentifier: "com.retrogames.mobile",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitRemote: () => ({
+      ok: true,
+      output: [
+        "origin https://github.com/jinbizman-boop/salary-hijacking.git",
+      ],
+    }),
+    gitHead: () => ({ ok: true, output: ["abc123"] }),
+    gitRemoteHead: () => ({ ok: true, output: ["abc123\trefs/heads/main"] }),
+  });
+
+  const report = formatReleaseReadinessReport(result);
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:native:app-identity/);
+  assert.match(
+    report,
+    /mobile native evidence must match release target app identity/i,
   );
 });
 

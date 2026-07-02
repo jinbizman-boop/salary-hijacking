@@ -18,6 +18,11 @@
   "neon": {
     "expectedProjectHint": "salary-hijacking"
   },
+  "mobile": {
+    "expectedAppSlug": "salary-hijacking",
+    "expectedAndroidPackage": "com.salaryhijacking.mobile",
+    "expectedIosBundleIdentifier": "com.salaryhijacking.mobile"
+  },
   "publicUrls": {
     "landingUrl": "https://salaryhijacking.com/",
     "privacyUrl": "https://salaryhijacking.com/privacy",

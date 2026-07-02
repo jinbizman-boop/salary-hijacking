@@ -236,11 +236,17 @@ generator reject EAS tokens, Apple/Google credentials, binary download URLs,
 local artifact paths, signing keys, service account JSON, reviewer passwords,
 copied store-console payloads, and logs before writing local or tracked
 evidence. The tracked evidence generator requires `containsSecretValues=false`
-on local or fallback proof before writing refreshed mobile native evidence.
+on local or fallback proof before writing refreshed mobile native evidence, and
+verified local proof must carry `appIdentity` matching the mobile target in
+`release/release-targets.json`:
+`appSlug="salary-hijacking"`,
+`androidPackage="com.salaryhijacking.mobile"`, and
+`iosBundleIdentifier="com.salaryhijacking.mobile"`.
 Release readiness also independently blocks tracked mobile native evidence when
 `containsSecretValues` is not explicitly `false`, raw native release secret
-values are embedded, or native release privacy flags declare EAS tokens, store
-credentials, binary download URLs, or reviewer passwords.
+values are embedded, `appIdentity` drifts from the release target mobile
+slug/package/bundle identifier, or native release privacy flags declare EAS
+tokens, store credentials, binary download URLs, or reviewer passwords.
 Update `release/public-url-evidence.json` only with no-secret booleans proving
 production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and

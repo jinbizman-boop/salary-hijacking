@@ -700,6 +700,32 @@ const checkReleaseTargets = (rootDir, checks, blockers) => {
     blockers.push(`${RELEASE_TARGETS_PATH} Neon target is incomplete`);
   }
 
+  const mobile = isPlainObject(targets.mobile) ? targets.mobile : {};
+  const mobileTargetProblems = [
+    ["expectedAppSlug", EXPECTED_MOBILE_APP.slug],
+    ["expectedAndroidPackage", EXPECTED_MOBILE_APP.packageId],
+    ["expectedIosBundleIdentifier", EXPECTED_MOBILE_APP.packageId],
+  ]
+    .filter(([key, expectedValue]) => mobile[key] !== expectedValue)
+    .map(([key, expectedValue]) => `${key} must be ${expectedValue}`);
+
+  if (mobileTargetProblems.length === 0) {
+    addCheck(
+      checks,
+      "PASS",
+      "release-target-manifest:mobile",
+      `mobile app target ${EXPECTED_MOBILE_APP.slug} / ${EXPECTED_MOBILE_APP.packageId}`,
+    );
+  } else {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "release-target-manifest:mobile",
+      mobileTargetProblems.join("; "),
+    );
+    blockers.push(`${RELEASE_TARGETS_PATH} mobile target is incomplete`);
+  }
+
   const publicUrls = isPlainObject(targets.publicUrls)
     ? targets.publicUrls
     : {};
@@ -1544,6 +1570,29 @@ const getExpectedPublicUrls = (releaseTargets) => {
         : fallback,
     ]),
   );
+};
+
+const getExpectedMobileAppIdentity = (releaseTargets) => {
+  const mobile = isPlainObject(releaseTargets?.mobile)
+    ? releaseTargets.mobile
+    : {};
+  return {
+    appSlug:
+      typeof mobile.expectedAppSlug === "string" &&
+      mobile.expectedAppSlug.trim()
+        ? mobile.expectedAppSlug.trim()
+        : EXPECTED_MOBILE_APP.slug,
+    androidPackage:
+      typeof mobile.expectedAndroidPackage === "string" &&
+      mobile.expectedAndroidPackage.trim()
+        ? mobile.expectedAndroidPackage.trim()
+        : EXPECTED_MOBILE_APP.packageId,
+    iosBundleIdentifier:
+      typeof mobile.expectedIosBundleIdentifier === "string" &&
+      mobile.expectedIosBundleIdentifier.trim()
+        ? mobile.expectedIosBundleIdentifier.trim()
+        : EXPECTED_MOBILE_APP.packageId,
+  };
 };
 
 const checkPublicUrlEvidence = (rootDir, releaseTargets, checks, blockers) => {
@@ -2777,6 +2826,7 @@ const checkStoreScreenshotMaterials = (rootDir, checks, blockers) => {
 
 const checkMobileNativeEvidence = (
   rootDir,
+  releaseTargets,
   checks,
   blockers,
   commandExists,
@@ -2851,6 +2901,24 @@ const checkMobileNativeEvidence = (
       ? "native release privacy flags declare no embedded credentials or artifact URLs"
       : `unsafe native release privacy flags are true: ${unsafePrivacyFlagNames.join(", ")}`,
     `${MOBILE_NATIVE_EVIDENCE_PATH} must not declare native release secret or artifact privacy flags`,
+  );
+
+  const expectedAppIdentity = getExpectedMobileAppIdentity(releaseTargets);
+  const appIdentity = isPlainObject(evidence.appIdentity)
+    ? evidence.appIdentity
+    : {};
+  const appIdentityMismatches = Object.entries(expectedAppIdentity)
+    .filter(([key, expectedValue]) => appIdentity[key] !== expectedValue)
+    .map(([key, expectedValue]) => `${key} must be ${expectedValue}`);
+  addMobileCheck(
+    checks,
+    blockers,
+    appIdentityMismatches.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:native:app-identity",
+    appIdentityMismatches.length === 0
+      ? "mobile native evidence app identity matches release targets"
+      : `mobile native evidence app identity drifted: ${appIdentityMismatches.join(", ")}`,
+    "mobile native evidence must match release target app identity before native build, E2E, or store proof can satisfy release readiness",
   );
 
   const android = isPlainObject(evidence.android) ? evidence.android : {};
@@ -2931,6 +2999,7 @@ const checkMobileNativeEvidence = (
 
 const checkMobileReleaseReadiness = (
   rootDir,
+  releaseTargets,
   checks,
   blockers,
   commandExists,
@@ -3115,7 +3184,13 @@ const checkMobileReleaseReadiness = (
     }
   }
 
-  checkMobileNativeEvidence(rootDir, checks, blockers, commandExists);
+  checkMobileNativeEvidence(
+    rootDir,
+    releaseTargets,
+    checks,
+    blockers,
+    commandExists,
+  );
 };
 
 export const analyzeReleaseReadiness = ({
@@ -3296,7 +3371,13 @@ export const analyzeReleaseReadiness = ({
     checks,
     blockers,
   );
-  checkMobileReleaseReadiness(rootDir, checks, blockers, commandExists);
+  checkMobileReleaseReadiness(
+    rootDir,
+    releaseTargets,
+    checks,
+    blockers,
+    commandExists,
+  );
 
   for (const group of REQUIRED_CLI_GROUPS) {
     const found = group.commands.filter((command) => commandExists(command));

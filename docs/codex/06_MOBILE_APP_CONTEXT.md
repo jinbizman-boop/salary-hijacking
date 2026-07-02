@@ -110,11 +110,17 @@ no-secret observations in `release/mobile-native-observation.local.json`, run
 `corepack pnpm run release:mobile-native-evidence`. Do not store EAS tokens,
 Apple/Google credentials, binary download URLs, local artifact paths, signing
 keys, service accounts, reviewer passwords, or copied store-console payloads in
-repository files. Release readiness independently blocks tracked mobile native
-evidence when `containsSecretValues` is not explicitly false, raw native release
-secret values are embedded, or `privacy.containsEasToken`,
-`privacy.containsStoreCredential`, `privacy.containsBinaryDownloadUrl`, or
-`privacy.containsReviewerPassword` is true.
+repository files. Verified proof must also carry `appIdentity` for
+`appSlug=salary-hijacking`, `androidPackage=com.salaryhijacking.mobile`, and
+`iosBundleIdentifier=com.salaryhijacking.mobile`; the tracked evidence
+generator and release readiness reject unrelated mobile app identities before
+build, E2E, or store-submit booleans can count. Release readiness independently
+blocks tracked mobile native evidence when `containsSecretValues` is not
+explicitly false, raw native release secret values are embedded,
+`appIdentity` drifts from the release target mobile slug/package/bundle
+identifier, or `privacy.containsEasToken`, `privacy.containsStoreCredential`,
+`privacy.containsBinaryDownloadUrl`, or `privacy.containsReviewerPassword` is
+true.
 
 Official mobile UI assets are already bundled:
 

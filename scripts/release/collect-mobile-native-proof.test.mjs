@@ -20,6 +20,11 @@ const completeObservation = {
   schemaVersion: 1,
   secretsRedacted: true,
   containsSecretValues: false,
+  appIdentity: {
+    appSlug: "salary-hijacking",
+    androidPackage: "com.salaryhijacking.mobile",
+    iosBundleIdentifier: "com.salaryhijacking.mobile",
+  },
   android: {
     productionBuildVerified: true,
     productionBuildProfile: "production",
@@ -64,6 +69,11 @@ test("normalizes no-secret mobile native observations into release proof boolean
   assert.equal(proof.observedAt, "2026-07-01T18:30:00.000Z");
   assert.equal(proof.secretsRedacted, true);
   assert.equal(proof.containsSecretValues, false);
+  assert.deepEqual(proof.appIdentity, {
+    appSlug: "salary-hijacking",
+    androidPackage: "com.salaryhijacking.mobile",
+    iosBundleIdentifier: "com.salaryhijacking.mobile",
+  });
   assert.equal(proof.android.productionBuildVerified, true);
   assert.equal(proof.android.productionBuildProfile, "production");
   assert.equal(proof.android.productionArtifactType, "aab");
@@ -119,6 +129,27 @@ test("keeps release proof false for incomplete observations", () => {
   );
   assert.equal(proof.ios.productionBuildVerified, false);
   assert.equal(proof.ios.storeSubmitDryRunVerified, false);
+});
+
+test("rejects verified observations for an unrelated mobile app identity", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/mobile-native-observation.local.json",
+    {
+      ...completeObservation,
+      appIdentity: {
+        appSlug: "retro-games",
+        androidPackage: "com.retrogames.mobile",
+        iosBundleIdentifier: "com.retrogames.mobile",
+      },
+    },
+  );
+
+  assert.throws(
+    () => collectMobileNativeProof({ inputPath, writeFile: false }),
+    /mobile app identity/i,
+  );
 });
 
 test("rejects observations containing native build secrets or artifact URLs and paths", () => {
