@@ -423,8 +423,8 @@ jobs:
       - name: Build release candidates
         run: pnpm build
 
-      - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level high
+      - name: Audit dependencies
+        run: pnpm audit --audit-level high --prod=false
 
       - name: Prepare release artifacts
         run: |
@@ -460,7 +460,7 @@ jobs:
             echo "- unit/integration test: PASS"
             echo "- E2E/QA test: PASS"
             echo "- build: PASS"
-            echo "- production dependency audit: PASS"
+            echo "- dependency audit (lockfile/prod/dev): PASS"
             echo ""
             echo "## 급여납치 핵심 검증 범위"
             echo ""

@@ -667,6 +667,36 @@ function checkPublicUrlProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkReleaseDependencyAuditWorkflow(rootDir, failures) {
+  const relativePath = ".github/workflows/release.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const auditLines = source
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => /\bpnpm\s+audit\b/.test(line));
+
+  const hasFullAudit = auditLines.some(
+    (line) =>
+      /--prod=false\b/.test(line) && /--audit-level(?:=|\s+)high\b/.test(line),
+  );
+
+  if (!hasFullAudit) {
+    failures.push(
+      `${relativePath}: release dependency audit must include --prod=false and --audit-level high`,
+    );
+  }
+
+  for (const line of auditLines) {
+    if (/(^|\s)--prod(\s|$)/.test(line) && !/--prod=false\b/.test(line)) {
+      failures.push(
+        `${relativePath}: release dependency audit must not be limited to production dependencies; use --prod=false`,
+      );
+    }
+  }
+}
+
 function checkMobileLaunchAssets(rootDir, failures) {
   for (const relativePath of REQUIRED_MOBILE_ASSET_FILES) {
     if (!fileExists(rootDir, relativePath)) continue;
@@ -861,6 +891,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);
+  checkReleaseDependencyAuditWorkflow(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
   checkEnvExampleReleaseTargets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);

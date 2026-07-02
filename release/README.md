@@ -284,6 +284,10 @@ network-enabled release environment:
 
 - `corepack pnpm audit --audit-level=high --prod=false`
 
+The release workflow must use the same dev-inclusive audit scope, not a
+production-only `--prod` audit, so the lockfile, production dependencies, and
+dev dependencies are covered before release artifacts are prepared.
+
 Record only summary booleans and vulnerability counts in the ignored
 `release/security-audit-proof.local.json`. The local proof file must not contain
 npm tokens, registry auth values, copied full audit JSON, advisories, package

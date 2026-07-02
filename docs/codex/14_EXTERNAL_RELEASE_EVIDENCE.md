@@ -348,6 +348,9 @@ release environment, recording only the package manager, audit command,
 lockfile/production/dev coverage booleans, and vulnerability counts in the
 ignored `release/security-audit-proof.local.json`, then running
 `corepack pnpm run release:security-audit-evidence` to update tracked evidence.
+The release workflow must keep this same dev-inclusive audit scope and must not
+fall back to a production-only `--prod` audit before preparing release
+artifacts.
 Do not paste npm tokens, registry auth values, copied full audit JSON,
 advisories, registry responses, package payloads, dependency details, private
 keys, or provider logs. Release readiness blocks tracked security audit evidence
