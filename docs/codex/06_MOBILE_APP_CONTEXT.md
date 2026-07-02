@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 110 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 111 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -215,14 +215,19 @@ fallback:
   `CommunityService.listComments()`
 - `POST` or `DELETE /api/v1/community/posts/{postId}/like` through
   `CommunityService.setPostLiked()`
+- `POST /api/v1/community/posts/{postId}/comments` through
+  `CommunityService.createComment()`
 
 The detail screen parses post and comment responses through
-`parseCommunityPostDetail()`, `parseCommunityCommentPage()`, and
-`communityResponseData()`. It preserves local fallback detail/comment display
-when the API is unreachable, but the fallback is not authoritative. Like state
-is optimistically toggled only while the server request is in flight and is
-reverted on failure. The normalized detail/comment path keeps raw financial,
-raw personal, and ads financial targeting flags false.
+`parseCommunityPostDetail()`, `parseCommunityCommentPage()`,
+`parseCommunityComment()`, and `communityResponseData()`. It preserves local
+fallback detail/comment display when the API is unreachable, but the fallback is
+not authoritative. Like state is optimistically toggled only while the server
+request is in flight and is reverted on failure. Comment creation uses the
+service validator before the API call, clears the draft only after server
+success, and shows a failure toast without pretending local publication
+succeeded. The normalized detail/comment path keeps raw financial, raw personal,
+and ads financial targeting flags false.
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only

@@ -60,8 +60,8 @@ Verified on 2026-07-03 KST:
   hydration contract, LV UP Growth API hydration contract, MY Profile API
   hydration contract, Community feed service hydration contract, Community
   write publish service contract, and Community detail/comments service
-  hydration contract.
-- Mobile Jest currently reports 29 passing suites and 110 passing tests.
+  hydration plus comment submission service contract.
+- Mobile Jest currently reports 29 passing suites and 111 passing tests.
 - API package tests currently report 12 passing files and 21 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation

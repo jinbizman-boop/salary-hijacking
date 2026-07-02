@@ -15,6 +15,7 @@ import {
 import officialBiLogo from "../../../assets/brand/salary-hijacking-platform-logo.png";
 import {
   communityResponseData,
+  parseCommunityComment,
   parseCommunityCommentPage,
   parseCommunityFeedPage,
   parseCommunityPostDetail,
@@ -829,6 +830,8 @@ export function CleanFintechPostDetailScreen({
   const [serverCommunityComments, setServerCommunityComments] = useState<
     readonly CommunityComment[]
   >([]);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
   const [liked, setLiked] = useState(false);
   const [toast, setToast] = useState(
     "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
@@ -839,6 +842,7 @@ export function CleanFintechPostDetailScreen({
       ? serverCommunityComments
       : activeDetail.comments;
   const post = toCommunityScreenPost(activeDetail.post);
+  const commentReady = commentDraft.trim().length >= 2;
 
   const refreshCommunityDetail = useCallback(async (): Promise<void> => {
     const safePostId = postId.trim() || fallbackPostDetail.post.id;
@@ -901,6 +905,48 @@ export function CleanFintechPostDetailScreen({
       });
   }, [activeDetail.post.id, detailCommunityService, liked]);
 
+  const submitCommunityComment = useCallback((): void => {
+    const content = commentDraft.trim();
+    if (!content || !commentReady || commentSubmitting) return;
+
+    const targetPostId = activeDetail.post.id;
+    setCommentSubmitting(true);
+    setToast("댓글을 서버 커뮤니티에 등록하는 중이에요.");
+    void detailCommunityService
+      .createComment(targetPostId, { content, anonymous: true })
+      .then((response) => {
+        const nextComment = parseCommunityComment(
+          communityResponseData(response),
+        );
+        setServerCommunityComments((current) => [...current, nextComment]);
+        setServerCommunityDetail((current) => {
+          if (!current || current.post.id !== targetPostId) return current;
+          return {
+            ...current,
+            comments: [...current.comments, nextComment],
+            post: {
+              ...current.post,
+              commentCount: current.post.commentCount + 1,
+            },
+          };
+        });
+        setCommentDraft("");
+        setToast("댓글이 서버에 등록됐어요.");
+      })
+      .catch(() => {
+        setToast(
+          "댓글을 등록하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
+        );
+      })
+      .finally(() => setCommentSubmitting(false));
+  }, [
+    activeDetail.post.id,
+    commentDraft,
+    commentReady,
+    commentSubmitting,
+    detailCommunityService,
+  ]);
+
   useEffect(() => {
     void refreshCommunityDetail();
   }, [refreshCommunityDetail]);
@@ -946,6 +992,30 @@ export function CleanFintechPostDetailScreen({
             meta={comment.content}
           />
         ))}
+        <View style={styles.inputRow}>
+          <TextInput
+            accessibilityLabel="커뮤니티 댓글 입력"
+            multiline
+            onChangeText={setCommentDraft}
+            placeholder="민감 정보 없이 댓글을 입력하세요"
+            placeholderTextColor={theme.color.text.disabled}
+            style={styles.input}
+            value={commentDraft}
+          />
+          <Pressable
+            accessibilityRole="button"
+            disabled={!commentReady || commentSubmitting}
+            onPress={submitCommunityComment}
+            style={[
+              styles.primaryButton,
+              !commentReady || commentSubmitting ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.primaryButtonText}>
+              {commentSubmitting ? "등록중" : "댓글 등록"}
+            </Text>
+          </Pressable>
+        </View>
       </SectionCard>
       <GuardBox />
     </AppScreen>
