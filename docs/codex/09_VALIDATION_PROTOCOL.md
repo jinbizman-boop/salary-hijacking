@@ -84,10 +84,12 @@ run.
 After verification-heavy work, run `corepack pnpm run clean:junk:dry-run` first
 to inspect regenerated disposable outputs. If it lists only generated
 artifacts, run `corepack pnpm run clean:junk`. This cleanup command removes
-repository caches/build outputs/local proof files and Salary Hijacking temp
-fixtures, but intentionally preserves `node_modules`, `.dev.vars`, tracked
-release evidence JSON, source files, docs, and migrations. Use the broader
-`clean` script only when dependency folders should also be removed.
+repository caches/build outputs/local proof files, EAS local build cache,
+Android `.gradle`/`.cxx`/build outputs, iOS `build`/`Pods`, and Salary
+Hijacking temp fixtures, but intentionally preserves `node_modules`, `.dev.vars`,
+tracked release evidence JSON, explicit E2E APK paths, source files, docs, and
+migrations. Use the broader `clean` script only when dependency folders should
+also be removed.
 
 `check:release-readiness` verifies release artifacts, required root scripts, `.env.example` names, runtime secret presence, external connector evidence in `release/external-release-evidence.json`, required local CLI tools, database migration presence, unsafe public secret env names, and Git repository visibility. Use `--soft` for status reporting without failing the shell; omit `--soft` in a release gate so blockers fail the run.
 

@@ -32,7 +32,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
   dependency security audit proof artifact guarding, release readiness workflow
   gate guarding, stale Android blocker wording guarding across Codex status and
   ChatGPT work summary docs, root Node test temp isolation/cleanup, generated
-  junk cleanup, tracked proof example templates, missing/BOM
+  junk cleanup including native EAS/Android/iOS build cache targets, tracked proof example templates, missing/BOM
   Cloudflare observation handling, and UTF-8 BOM local proof handling for
   database and mobile native collectors
 - database local-safe validation: PASS, `corepack pnpm run db:validate`

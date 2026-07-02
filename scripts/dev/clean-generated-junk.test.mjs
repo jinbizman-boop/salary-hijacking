@@ -26,6 +26,34 @@ test("removes repository generated junk while preserving dependencies, local sec
     await touch(
       path.join(rootDir, "release", "public-url-observation.local.json"),
     );
+    await touch(path.join(rootDir, "apps", "mobile", ".eas", "build", "log"));
+    await touch(path.join(rootDir, "apps", "mobile", ".eas", "cache", "blob"));
+    await touch(
+      path.join(rootDir, "apps", "mobile", "android", ".gradle", "cache.bin"),
+    );
+    await touch(
+      path.join(rootDir, "apps", "mobile", "android", ".cxx", "cache.bin"),
+    );
+    await touch(
+      path.join(rootDir, "apps", "mobile", "android", "build", "out.bin"),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        "android",
+        "app",
+        "build",
+        "out.bin",
+      ),
+    );
+    await touch(
+      path.join(rootDir, "apps", "mobile", "ios", "build", "out.bin"),
+    );
+    await touch(
+      path.join(rootDir, "apps", "mobile", "ios", "Pods", "Manifest.lock"),
+    );
     await touch(
       path.join(rootDir, "packages", "utils", "tsconfig.tsbuildinfo"),
     );
@@ -33,6 +61,18 @@ test("removes repository generated junk while preserving dependencies, local sec
     await touch(path.join(rootDir, "services", "api", ".dev.vars"), "secret");
     await touch(
       path.join(rootDir, "release", "cloudflare-runtime-evidence.json"),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        "build",
+        "e2e",
+        "android",
+        "salary-hijacking-e2e.apk",
+      ),
+      "PK\u0003\u0004",
     );
     await touch(path.join(rootDir, "docs", "source.md"));
 
@@ -59,6 +99,40 @@ test("removes repository generated junk while preserving dependencies, local sec
       false,
     );
     assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", ".eas", "build")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", ".eas", "cache")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "android", ".gradle")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "android", ".cxx")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "android", "build")),
+      false,
+    );
+    assert.equal(
+      existsSync(
+        path.join(rootDir, "apps", "mobile", "android", "app", "build"),
+      ),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "ios", "build")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "ios", "Pods")),
+      false,
+    );
+    assert.equal(
       existsSync(
         path.join(rootDir, "packages", "utils", "tsconfig.tsbuildinfo"),
       ),
@@ -75,6 +149,20 @@ test("removes repository generated junk while preserving dependencies, local sec
     assert.equal(
       existsSync(
         path.join(rootDir, "release", "cloudflare-runtime-evidence.json"),
+      ),
+      true,
+    );
+    assert.equal(
+      existsSync(
+        path.join(
+          rootDir,
+          "apps",
+          "mobile",
+          "build",
+          "e2e",
+          "android",
+          "salary-hijacking-e2e.apk",
+        ),
       ),
       true,
     );

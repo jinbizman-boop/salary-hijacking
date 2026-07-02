@@ -4,8 +4,10 @@ import { pathToFileURL } from "node:url";
 
 const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   ".cache",
+  ".cxx",
   ".expo",
   ".expo-shared",
+  ".gradle",
   ".metro-cache",
   ".next",
   ".open-next",
@@ -19,6 +21,15 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   "playwright-report",
   "test-results",
   "web-build",
+]);
+
+const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
+  "apps/mobile/.eas/build",
+  "apps/mobile/.eas/cache",
+  "apps/mobile/android/build",
+  "apps/mobile/android/app/build",
+  "apps/mobile/ios/build",
+  "apps/mobile/ios/Pods",
 ]);
 
 const PROTECTED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
@@ -87,8 +98,12 @@ function isRepositoryJunkFile(relativePath) {
   );
 }
 
-function isRepositoryJunkDirectory(entryName) {
-  return REPOSITORY_JUNK_DIRECTORY_NAMES.has(entryName);
+function isRepositoryJunkDirectory(entryName, relativePath) {
+  const posixPath = toPosix(relativePath);
+  return (
+    REPOSITORY_JUNK_DIRECTORY_NAMES.has(entryName) ||
+    REPOSITORY_JUNK_RELATIVE_PATHS.has(posixPath)
+  );
 }
 
 function isTempJunkDirectory(entryName) {
@@ -153,7 +168,7 @@ async function collectRepositoryJunkTargets(rootDir) {
       if (entry.isDirectory()) {
         if (PROTECTED_DIRECTORY_NAMES.has(entry.name)) continue;
 
-        if (isRepositoryJunkDirectory(entry.name)) {
+        if (isRepositoryJunkDirectory(entry.name, relativePath)) {
           targets.push({ kind: "repo", path: fullPath });
           continue;
         }
