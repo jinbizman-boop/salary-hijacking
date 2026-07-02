@@ -6,6 +6,7 @@ import test from "node:test";
 
 import {
   buildSecretsEvidence,
+  DEFAULT_SECRET_STORES,
   writeSecretsEvidenceFile,
 } from "./generate-secrets-evidence.mjs";
 
@@ -70,7 +71,7 @@ test("uses a local proof file to mark required secret names verified", () => {
             name,
             {
               verified: true,
-              stores: ["GitHub Environments", "provider secret store"],
+              stores: [DEFAULT_SECRET_STORES[name][0]],
               note: `${name} presence verified by store UI without exposing the value.`,
             },
           ]),
@@ -90,8 +91,7 @@ test("uses a local proof file to mark required secret names verified", () => {
   for (const secretName of requiredRuntimeSecretNames) {
     assert.equal(evidence.secrets[secretName].verified, true, secretName);
     assert.deepEqual(evidence.secrets[secretName].stores, [
-      "GitHub Environments",
-      "provider secret store",
+      DEFAULT_SECRET_STORES[secretName][0],
     ]);
   }
   assert.deepEqual(evidence.nextEvidenceRequired, []);
@@ -185,7 +185,37 @@ test("rejects verified secret proof with unapproved store labels", () => {
 
   assert.throws(
     () => buildSecretsEvidence({ rootDir, proofPath }),
-    /unapproved secret store/i,
+    /unapproved or secret-mismatched store labels/i,
+  );
+});
+
+test("rejects verified secret proof with a store label not allowed for that secret", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(rootDir, "release", "secrets-proof.local.json");
+  write(
+    rootDir,
+    "release/secrets-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        secrets: {
+          GITHUB_TOKEN: {
+            verified: true,
+            stores: ["GitHub Environments"],
+            note: "GitHub token presence verified from the wrong store.",
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildSecretsEvidence({ rootDir, proofPath }),
+    /store labels/i,
   );
 });
 

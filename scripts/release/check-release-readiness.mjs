@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 
 import { androidToolExists } from "./android-sdk-tools.mjs";
+import { DEFAULT_SECRET_STORES } from "./generate-secrets-evidence.mjs";
 
 const RELEASE_CHECK_VERSION = "1.0.0";
 const RELEASE_TARGETS_PATH = "release/release-targets.json";
@@ -1382,8 +1383,10 @@ const unapprovedSecretStoreLabels = (evidence) => {
   for (const [secretName, entry] of Object.entries(secrets)) {
     if (!isPlainObject(entry) || entry.verified !== true) continue;
     const stores = stringArray(entry.stores);
+    const allowedStores = new Set(DEFAULT_SECRET_STORES[secretName] ?? []);
     const invalidStores = stores.filter(
-      (store) => !APPROVED_SECRET_STORE_LABELS.has(store),
+      (store) =>
+        !APPROVED_SECRET_STORE_LABELS.has(store) || !allowedStores.has(store),
     );
     if (invalidStores.length > 0) {
       invalidLabels.push(`${secretName}: ${invalidStores.join(", ")}`);
@@ -1515,10 +1518,10 @@ const checkSecretsEvidence = (rootDir, checks, blockers) => {
       checks,
       "BLOCKED",
       "secrets-evidence:store-labels",
-      `unapproved secret store labels: ${invalidStoreLabels.join("; ")}`,
+      `unapproved or secret-mismatched store labels: ${invalidStoreLabels.join("; ")}`,
     );
     blockers.push(
-      `${SECRETS_EVIDENCE_PATH} must use approved secret store labels for verified entries`,
+      `${SECRETS_EVIDENCE_PATH} must use approved secret store labels allowed for each verified entry`,
     );
     return null;
   }
@@ -1527,7 +1530,7 @@ const checkSecretsEvidence = (rootDir, checks, blockers) => {
     checks,
     "PASS",
     "secrets-evidence:store-labels",
-    "verified secret entries use approved secret store labels",
+    "verified secret entries use approved secret store labels for their secret names",
   );
 
   const missingSecrets = REQUIRED_ENV_NAMES.filter(

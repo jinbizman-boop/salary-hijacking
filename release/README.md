@@ -78,14 +78,16 @@ presence booleans, approved store names, and non-secret notes from provider
 consoles or CI environment settings. That local proof file is ignored by Git and
 must not contain raw database URLs, API tokens, DSNs, webhook URLs, private keys,
 service accounts, or real user/financial payloads. Verified proof entries are
-accepted only when their `stores` labels match the approved release evidence
-store names; personal notes, copied chats, spreadsheets, or arbitrary labels are
-not release proof. Release readiness independently blocks tracked
-`release/secrets-evidence.json` when verified entries use unapproved `stores`
-labels, and it also blocks raw secret-like strings pasted into notes or other
-free-text fields. The tracked file may contain only the approved Salary
-Hijacking runtime secret names; unrelated legacy project secret names are
-blocked even when their values are not present.
+accepted only when their `stores` labels match the approved store names for that
+specific secret. For example, `GITHUB_TOKEN` and `GITHUB_REPOSITORY` must be
+proven from `GitHub Actions runtime`, not from a generic provider label.
+Personal notes, copied chats, spreadsheets, or arbitrary labels are not release
+proof. Release readiness independently blocks tracked
+`release/secrets-evidence.json` when verified entries use unapproved or
+secret-mismatched `stores` labels, and it also blocks raw secret-like strings
+pasted into notes or other free-text fields. The tracked file may contain only
+the approved Salary Hijacking runtime secret names; unrelated legacy project
+secret names are blocked even when their values are not present.
 
 Safe Cloudflare runtime evidence generation command:
 

@@ -206,14 +206,16 @@ with a non-secret `SECRET_PROOF_STORE` label, then
 presence, never writes values, and does not mark local developer env values as
 release-verified unless an approved store label is supplied. The tracked
 evidence generator also rejects verified secret proof entries whose `stores`
-labels are not in the approved release evidence store list, so ad hoc notes,
-copied chats, spreadsheets, or arbitrary labels cannot satisfy secret proof.
-Release readiness also independently blocks tracked secret evidence when
-verified entries use unapproved `stores` labels or when any note/free-text field
-contains a raw secret-like string such as a database URL, webhook URL, API token,
-or private key marker. It also blocks unknown secret names, including unrelated
-legacy project names, so foreign repository or database secrets cannot satisfy
-Salary Hijacking release proof.
+labels are not allowed for that specific secret, so ad hoc notes, copied chats,
+spreadsheets, arbitrary labels, or a valid store label attached to the wrong
+secret cannot satisfy secret proof. For example, `GITHUB_TOKEN` and
+`GITHUB_REPOSITORY` must be proven from `GitHub Actions runtime`. Release
+readiness also independently blocks tracked secret evidence when verified
+entries use unapproved or secret-mismatched `stores` labels or when any
+note/free-text field contains a raw secret-like string such as a database URL,
+webhook URL, API token, or private key marker. It also blocks unknown secret
+names, including unrelated legacy project names, so foreign repository or
+database secrets cannot satisfy Salary Hijacking release proof.
 Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS

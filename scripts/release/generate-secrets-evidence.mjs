@@ -120,8 +120,10 @@ const unapprovedVerifiedStoreLabels = (proof) => {
   for (const [secretName, sourceEntry] of Object.entries(proofSecrets(proof))) {
     if (!isPlainObject(sourceEntry) || sourceEntry.verified !== true) continue;
 
+    const allowedStores = new Set(DEFAULT_SECRET_STORES[secretName] ?? []);
     const invalidStores = stringArray(sourceEntry.stores).filter(
-      (store) => !approvedSecretStoreSet.has(store),
+      (store) =>
+        !approvedSecretStoreSet.has(store) || !allowedStores.has(store),
     );
     if (invalidStores.length > 0) {
       invalidLabels.push(`${secretName}: ${invalidStores.join(", ")}`);
@@ -157,7 +159,7 @@ const validateNoSecretProof = (proof, proofPath) => {
   const invalidStoreLabels = unapprovedVerifiedStoreLabels(proof);
   if (invalidStoreLabels.length > 0) {
     throw new Error(
-      `${proofPath} contains unapproved secret store labels: ${invalidStoreLabels.join("; ")}`,
+      `${proofPath} contains unapproved or secret-mismatched store labels: ${invalidStoreLabels.join("; ")}`,
     );
   }
 

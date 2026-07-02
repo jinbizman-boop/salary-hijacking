@@ -9,6 +9,7 @@ import {
   analyzeReleaseReadiness,
   formatReleaseReadinessReport,
 } from "./check-release-readiness.mjs";
+import { DEFAULT_SECRET_STORES } from "./generate-secrets-evidence.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -414,7 +415,7 @@ const writeSecretsEvidence = (rootDir, overrides = {}) => {
       name,
       {
         verified: true,
-        stores: ["GitHub Environments", "provider secret store"],
+        stores: [DEFAULT_SECRET_STORES[name][0]],
       },
     ]),
   );
@@ -1156,8 +1157,42 @@ test("blocks secret evidence verified only by unapproved store labels", () => {
 
   assert.equal(result.ok, false);
   assert.match(report, /secrets-evidence:store-labels/);
-  assert.match(report, /unapproved secret store labels/);
+  assert.match(report, /unapproved or secret-mismatched store labels/);
   assert.match(report, /personal notes/);
+});
+
+test("blocks secret evidence verified by a store label approved for a different secret", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    secrets: {
+      ...Object.fromEntries(
+        requiredRuntimeSecretNames.map((name) => [
+          name,
+          {
+            verified: true,
+            stores: [DEFAULT_SECRET_STORES[name][0]],
+          },
+        ]),
+      ),
+      GITHUB_TOKEN: {
+        verified: true,
+        stores: ["GitHub Environments"],
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /secrets-evidence:store-labels/);
+  assert.match(report, /GITHUB_TOKEN: GitHub Environments/);
 });
 
 test("blocks when Cloudflare runtime evidence is missing or unverified", () => {
