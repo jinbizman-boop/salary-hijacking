@@ -404,7 +404,7 @@ const writeSecretsEvidence = (rootDir, overrides = {}) => {
       name,
       {
         verified: true,
-        stores: ["github-environment", "provider-secret-store"],
+        stores: ["GitHub Environments", "provider secret store"],
       },
     ]),
   );
@@ -985,6 +985,35 @@ test("blocks secret evidence that contains raw values", () => {
     /release\/secrets-evidence\.json must not contain raw secret values/,
   );
   assert.doesNotMatch(report, /postgresql:\/\/user:password/);
+});
+
+test("blocks secret evidence verified only by unapproved store labels", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    secrets: Object.fromEntries(
+      requiredRuntimeSecretNames.map((name) => [
+        name,
+        {
+          verified: true,
+          stores: ["personal notes"],
+        },
+      ]),
+    ),
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /secrets-evidence:store-labels/);
+  assert.match(report, /unapproved secret store labels/);
+  assert.match(report, /personal notes/);
 });
 
 test("blocks when Cloudflare runtime evidence is missing or unverified", () => {

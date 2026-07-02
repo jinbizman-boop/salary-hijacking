@@ -84,6 +84,19 @@ const REQUIRED_ENV_NAMES = [
   "SLACK_WEBHOOK_URL",
 ];
 
+const APPROVED_SECRET_STORE_LABELS = new Set([
+  "GitHub Environments",
+  "Cloudflare Worker secret",
+  "Neon",
+  "release external evidence",
+  "Cloudflare account secret",
+  "Cloudflare Worker config",
+  "EAS secret store",
+  "EAS project settings",
+  "GitHub Actions runtime",
+  "provider secret store",
+]);
+
 const RAW_SECRET_VALUE_EVIDENCE_KEYS = new Set([
   "value",
   "rawValue",
@@ -1305,6 +1318,25 @@ const secretNameIsVerified = (evidence, envName) => {
   return secretEvidenceEntryIsVerified(secrets[envName]);
 };
 
+const unapprovedSecretStoreLabels = (evidence) => {
+  if (!isPlainObject(evidence)) return [];
+  const secrets = isPlainObject(evidence.secrets) ? evidence.secrets : {};
+  const invalidLabels = [];
+
+  for (const [secretName, entry] of Object.entries(secrets)) {
+    if (!isPlainObject(entry) || entry.verified !== true) continue;
+    const stores = stringArray(entry.stores);
+    const invalidStores = stores.filter(
+      (store) => !APPROVED_SECRET_STORE_LABELS.has(store),
+    );
+    if (invalidStores.length > 0) {
+      invalidLabels.push(`${secretName}: ${invalidStores.join(", ")}`);
+    }
+  }
+
+  return invalidLabels;
+};
+
 const publicEvidenceKeyLooksUnsafe = (key) => {
   const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, "");
   return RAW_PUBLIC_PAGE_OR_SENSITIVE_KEY_TERMS.some((term) =>
@@ -1398,6 +1430,27 @@ const checkSecretsEvidence = (rootDir, checks, blockers) => {
     "PASS",
     "secrets-evidence:secret-values",
     "no raw secret values are declared or embedded",
+  );
+
+  const invalidStoreLabels = unapprovedSecretStoreLabels(evidence);
+  if (invalidStoreLabels.length > 0) {
+    addCheck(
+      checks,
+      "BLOCKED",
+      "secrets-evidence:store-labels",
+      `unapproved secret store labels: ${invalidStoreLabels.join("; ")}`,
+    );
+    blockers.push(
+      `${SECRETS_EVIDENCE_PATH} must use approved secret store labels for verified entries`,
+    );
+    return null;
+  }
+
+  addCheck(
+    checks,
+    "PASS",
+    "secrets-evidence:store-labels",
+    "verified secret entries use approved secret store labels",
   );
 
   const missingSecrets = REQUIRED_ENV_NAMES.filter(
