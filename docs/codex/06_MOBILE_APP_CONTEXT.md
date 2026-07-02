@@ -4,7 +4,7 @@ priority: P0
 scope: apps/mobile
 applies_to:
   - apps/mobile/**
-last_verified: 2026-06-29
+last_verified: 2026-07-02
 ---
 
 # Mobile App Context
@@ -95,7 +95,15 @@ The current E2E blocker is local native binary/proof, not missing Detox config:
 - On 2026-07-01, `node scripts\check-detox-env.mjs android.emu.debug` failed
   only because the local E2E APK was missing:
   `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk`.
+- On 2026-07-02, `node scripts\check-detox-env.mjs android.emu.debug` from
+  `apps/mobile` still failed only because that Android E2E APK was missing;
+  local `adb` and `emulator` remained detected through Android SDK lookup.
+- On 2026-07-02, `node scripts\check-detox-env.mjs ios.sim.debug` from
+  `apps/mobile` failed because the local Detox iOS app was missing at
+  `apps/mobile/build/e2e/ios/salaryhijacking.app`.
 - No local Android E2E APK at `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` has been verified.
+- No local iOS Detox app at `apps/mobile/build/e2e/ios/salaryhijacking.app`
+  has been verified.
 - The expected APK path is ignored by Git through root `.gitignore` build and
   APK protections.
 - Tool availability alone is not native E2E proof; `nativeE2eVerified` must

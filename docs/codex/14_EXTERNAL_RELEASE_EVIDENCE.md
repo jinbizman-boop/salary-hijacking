@@ -272,6 +272,13 @@ Release readiness also independently blocks tracked mobile native evidence when
 values are embedded, `appIdentity` drifts from the release target mobile
 slug/package/bundle identifier, or native release privacy flags declare EAS
 tokens, store credentials, binary download URLs, or reviewer passwords.
+On 2026-07-02, local read-only preflight confirmed `apps/mobile/node_modules/.bin/eas.CMD`
+runs `eas-cli/20.4.0`, Android `adb`/`emulator` are detected, Android native
+E2E remains blocked only by the missing local E2E APK, and iOS native E2E
+remains blocked by the missing local Detox `.app` binary. These observations do
+not set any native release proof boolean to true; Android/iOS production
+builds, native E2E execution, and store-submit dry-runs still require
+no-secret provider or device proof before release.
 Update `release/public-url-evidence.json` only with no-secret booleans proving
 production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and

@@ -1071,6 +1071,46 @@ test("fails when mobile release metadata contains mojibake", async () => {
   }
 });
 
+test("fails when mobile build workflow contains mojibake", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/mobile-build.yml": `
+name: mobile-build
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "EAS Build ?뚮옯??"
+jobs:
+  eas-build:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_eas_build != 'false'
+    env:
+      EXPO_TOKEN: \${{ secrets.EXPO_TOKEN }}
+    steps:
+      - run: pnpm --dir "$MOBILE_APP_DIR" run export
+      - run: echo "## 湲됱뿬?⑹튂 紐⑤컮??鍮뚮뱶 寃곌낵"
+      - run: pnpm dlx eas-cli@latest build --profile preview --platform all
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /\.github\/workflows\/mobile-build\.yml/,
+    );
+    assert.match(result.failures.join("\n"), /mojibake/i);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when Codex docs keep stale Android tool blocker language", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
