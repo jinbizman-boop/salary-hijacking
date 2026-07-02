@@ -159,9 +159,12 @@ Cloudflare Worker resource matching, unverified entries in
 build/E2E/store-submit evidence, unverified database migration/seed/API
 smoke/rollback entries in `release/database-evidence.json`, deployment,
 certificates, unverified public landing/privacy/support/terms reachability and
-header/content safety entries in `release/public-url-evidence.json`, unverified
-dependency security audit entries in `release/security-audit-evidence.json`,
-and operating QA.
+header/content safety entries in `release/public-url-evidence.json`, Android/iOS
+native build/E2E/store-submit evidence, and operating QA. The dependency
+security audit evidence in `release/security-audit-evidence.json` now proves
+pnpm registry audit coverage and zero low/moderate/high/critical vulnerability
+counts for the current lockfile, but it must be regenerated after any dependency
+or lockfile change before release.
 
 ## Update Rule
 
@@ -280,7 +283,9 @@ Do not paste npm tokens, registry auth values, copied full audit JSON,
 advisories, registry responses, package payloads, dependency details, private
 keys, or provider logs. Release readiness blocks tracked security audit evidence
 until the pnpm registry audit coverage is proven and high/critical vulnerability
-counts are both zero. Then run:
+counts are both zero. Current tracked evidence satisfies this for the present
+lockfile only; rerun the audit and regenerate evidence after any dependency or
+lockfile change. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

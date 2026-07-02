@@ -253,6 +253,10 @@ payloads, registry responses, dependency details, private keys, or provider
 logs. The tracked evidence blocks release until it proves the pnpm registry
 audit covered the lockfile, production dependencies, and dev dependencies, and
 that high and critical vulnerability counts are both zero.
+Current tracked evidence satisfies this gate for the present lockfile with zero
+low, moderate, high, and critical vulnerabilities after a lockfile-only override
+refresh. Rerun the audit and regenerate this evidence after any dependency or
+lockfile change before release.
 
 Current protected rule:
 
