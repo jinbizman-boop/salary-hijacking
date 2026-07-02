@@ -76,7 +76,9 @@ import {
 import {
   PAYROLL_API_PREFIX,
   assertPayrollRoutesCompleteness,
+  createPayrollRoutes,
   handlePayrollRoutes,
+  type PayrollRoutesOptions,
   payrollRoutesManifest,
 } from "./routes/payroll.routes";
 import {
@@ -232,6 +234,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly errorOptions?: ErrorMiddlewareOptions<TEnv>;
   readonly rateLimitOptions?: RateLimitMiddlewareOptions<TEnv>;
   readonly auditOptions?: AppAuditOptions<TEnv>;
+  readonly payrollRoutesOptions?: PayrollRoutesOptions<TEnv>;
   readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
@@ -1122,6 +1125,16 @@ async function coreDispatch<TEnv>(
 
   const route = selectRoute(path);
   if (!route) return notFound(runtime);
+  if (route.id === "payroll" && options.payrollRoutesOptions) {
+    const routeOptions: PayrollRoutesOptions<TEnv> =
+      options.payrollRoutesOptions.now || !options.now
+        ? options.payrollRoutesOptions
+        : {
+            ...options.payrollRoutesOptions,
+            now: options.now,
+          };
+    return createPayrollRoutes(routeOptions)(request, env, context);
+  }
   if (
     route.id === "variable-expenses" &&
     options.variableExpensesRoutesOptions

@@ -18,6 +18,10 @@ import {
   type WaitUntilCapable,
 } from "./app";
 import {
+  createNeonPayrollRepository,
+  shouldUseNeonPayrollRepository,
+} from "./repositories/payroll.repository";
+import {
   createNeonVariableExpensesRepository,
   shouldUseNeonVariableExpensesRepository,
 } from "./repositories/variable-expenses.repository";
@@ -148,6 +152,12 @@ const appInstance = createApp<WorkerEnv>({
         },
       });
     },
+  },
+  payrollRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonPayrollRepository(env)
+        ? createNeonPayrollRepository<WorkerEnv>()
+        : undefined,
   },
   variableExpensesRoutesOptions: {
     repository: (env) =>
