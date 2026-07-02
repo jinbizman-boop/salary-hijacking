@@ -1400,8 +1400,7 @@ export function normalizeGrowthDashboardForCleanFintech(input: {
 }
 
 function nonNegative(value: string): number {
-  const numeric = Number(value.replace(/[^0-9]/g, ""));
-  return Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : 0;
+  return parseKrwInputAmount(value) ?? 0;
 }
 
 function formatMoney(value: number): string {
