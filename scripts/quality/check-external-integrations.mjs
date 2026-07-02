@@ -606,6 +606,30 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
   }
 }
 
+function checkMobileNativeProofWorkflow(rootDir, failures) {
+  const relativePath = ".github/workflows/mobile-build.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredParts = [
+    "MOBILE_NATIVE_E2E_VERIFIED",
+    "corepack pnpm run release:mobile-native-proof",
+    "release/mobile-native-observation.local.json",
+    "release/mobile-native-proof.local.json",
+    "mobile-native-proof-${{ github.run_attempt }}",
+    "containsSecretValues",
+    "containsBinaryDownloadUrl",
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: must collect and upload no-secret mobile-native-proof evidence including ${requiredPart}`,
+    );
+  }
+}
+
 function checkMobileLaunchAssets(rootDir, failures) {
   for (const relativePath of REQUIRED_MOBILE_ASSET_FILES) {
     if (!fileExists(rootDir, relativePath)) continue;
@@ -798,6 +822,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);
+  checkMobileNativeProofWorkflow(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
   checkEnvExampleReleaseTargets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);

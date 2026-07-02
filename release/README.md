@@ -162,6 +162,7 @@ payloads, or logs.
 For Android Detox runs, build or obtain an E2E APK, import it into the ignored
 Detox binary path, then run native E2E:
 
+- `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local`
 - `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android`
 - `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`
 - `corepack pnpm --filter @salary-hijacking/mobile run test:e2e:android`
@@ -170,6 +171,16 @@ The import script accepts only local `.apk` files with an APK/ZIP header and
 rejects artifact URLs or placeholder text files. It writes to
 `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk`, which remains ignored
 by Git.
+
+The mobile build workflow writes a no-secret `mobile-native-proof-*` artifact
+from `release/mobile-native-proof.local.json` on every mobile verification run.
+That artifact records only booleans and the Salary Hijacking app identity. It
+does not contain EAS tokens, store credentials, binary URLs, local artifact
+paths, signing keys, service account JSON, reviewer passwords, copied provider
+payloads, or logs. The artifact is not itself tracked release evidence; an
+operator must inspect a trusted workflow artifact and then refresh tracked
+evidence with `corepack pnpm run release:mobile-native-evidence` without
+pasting secret values or artifact locations.
 
 The command creates or refreshes `release/mobile-native-evidence.json` from
 local Android tool detection and optional `release/mobile-native-proof.local.json`

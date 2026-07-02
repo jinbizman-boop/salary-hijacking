@@ -303,10 +303,13 @@ tokens, store credentials, binary download URLs, or reviewer passwords.
 On 2026-07-02, local read-only preflight confirmed `apps/mobile/node_modules/.bin/eas.CMD`
 runs `eas-cli/20.4.0`, Android `adb`/`emulator` are detected, Android native
 E2E remains blocked only by the missing local E2E APK, and iOS native E2E
-remains blocked by the missing local Detox `.app` binary. These observations do
-not set any native release proof boolean to true; Android/iOS production
-builds, native E2E execution, and store-submit dry-runs still require
-no-secret provider or device proof before release.
+remains blocked by the missing local Detox `.app` binary. The mobile build
+workflow now collects and uploads a no-secret `mobile-native-proof-*` artifact
+from `release/mobile-native-proof.local.json`, but that artifact is still only
+CI proof material. These observations do not set any native release proof
+boolean to true; Android/iOS production builds, native E2E execution, and
+store-submit dry-runs still require no-secret provider or device proof before
+release.
 Update `release/public-url-evidence.json` only with no-secret booleans proving
 production reachability for
 `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms`, CSP and

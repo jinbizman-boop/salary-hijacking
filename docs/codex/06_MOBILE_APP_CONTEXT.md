@@ -136,6 +136,12 @@ identifier, or `privacy.containsEasToken`, `privacy.containsStoreCredential`,
 `privacy.containsBinaryDownloadUrl`, or `privacy.containsReviewerPassword` is
 true.
 
+The GitHub mobile build workflow now writes and uploads a no-secret
+`mobile-native-proof-*` artifact from `release/mobile-native-proof.local.json`.
+This artifact can help a release operator refresh tracked evidence, but it does
+not by itself prove native release readiness or satisfy the blocked
+`release/mobile-native-evidence.json` gates.
+
 Official mobile UI assets are already bundled:
 
 - Official BI logo:

@@ -81,6 +81,14 @@ jobs:
     steps:
       - run: pnpm --dir "$MOBILE_APP_DIR" run export
       - run: echo "Native mobile E2E skipped because no local E2E APK was found"
+      - run: |
+          echo "MOBILE_NATIVE_E2E_VERIFIED=false" >> "$GITHUB_ENV"
+          node -e "require('node:fs').writeFileSync('release/mobile-native-observation.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, privacy: { containsBinaryDownloadUrl: false } }))"
+          corepack pnpm run release:mobile-native-proof || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-native-proof-\${{ github.run_attempt }}
+          path: release/mobile-native-proof.local.json
       - run: pnpm dlx eas-cli@latest build --profile preview --platform all
 `,
     ".github/workflows/release.yml": `
@@ -1154,6 +1162,43 @@ test("fails when mobile local e2e APK build script is missing", async () => {
     assert.match(
       result.failures.join("\n"),
       /build\/e2e\/android\/salary-hijacking-e2e\.apk/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when mobile build workflow does not upload no-secret native proof", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/mobile-build.yml": `
+name: mobile-build
+on: [workflow_dispatch]
+jobs:
+  verify-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pnpm --dir "$MOBILE_APP_DIR" run export
+      - run: echo "Native mobile E2E skipped because no local E2E APK was found"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-verification-reports-\${{ github.run_attempt }}
+          path: apps/mobile/dist/**
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /mobile-native-proof/);
+    assert.match(
+      result.failures.join("\n"),
+      /release\/mobile-native-proof\.local\.json/,
     );
   } finally {
     await rm(rootDir, { recursive: true, force: true });

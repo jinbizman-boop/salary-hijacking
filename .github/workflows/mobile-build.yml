@@ -256,10 +256,86 @@ jobs:
 
           if [ -f "$E2E_APK" ] && node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts['test:e2e'] ? 0 : 1)"; then
             pnpm --dir "$MOBILE_APP_DIR" run test:e2e
+            echo "MOBILE_NATIVE_E2E_VERIFIED=true" >> "$GITHUB_ENV"
           else
+            echo "MOBILE_NATIVE_E2E_VERIFIED=false" >> "$GITHUB_ENV"
             echo "Native mobile E2E skipped because no local E2E APK was found at $E2E_APK."
             echo "Native E2E remains a release gate and must pass in an Android SDK/EAS binary environment before public release."
           fi
+
+      - name: Collect no-secret mobile native proof
+        if: always()
+        run: |
+          set -euo pipefail
+
+          mkdir -p release
+
+          node <<'NODE'
+          const fs = require("fs");
+
+          const nativeE2eVerified = process.env.MOBILE_NATIVE_E2E_VERIFIED === "true";
+          const observation = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            appIdentity: {
+              appSlug: "salary-hijacking",
+              androidPackage: "com.salaryhijacking.mobile",
+              iosBundleIdentifier: "com.salaryhijacking.mobile"
+            },
+            android: {
+              productionBuildVerified: false,
+              productionBuildProfile: "production",
+              productionArtifactType: "aab",
+              storeSubmitDryRunVerified: false,
+              nativeE2eVerified,
+              nativeE2eConfiguration: "android.emu.debug",
+              note: nativeE2eVerified
+                ? "Android native E2E passed in GitHub Actions without storing binary paths."
+                : "Android native E2E did not run in this workflow attempt; no binary proof is stored."
+            },
+            ios: {
+              productionBuildVerified: false,
+              productionBuildProfile: "production",
+              storeSubmitDryRunVerified: false,
+              note: "No iOS native release proof was collected in this workflow attempt."
+            },
+            privacy: {
+              containsEasToken: false,
+              containsStoreCredential: false,
+              containsBinaryDownloadUrl: false,
+              containsReviewerPassword: false
+            }
+          };
+
+          fs.writeFileSync("release/mobile-native-observation.local.json", `${JSON.stringify(observation, null, 2)}\n`, "utf8");
+          NODE
+
+          corepack pnpm run release:mobile-native-proof || true
+
+          node <<'NODE'
+          const fs = require("fs");
+          const proof = JSON.parse(fs.readFileSync("release/mobile-native-proof.local.json", "utf8"));
+          if (proof.schemaVersion !== 1 || proof.secretsRedacted !== true || proof.containsSecretValues !== false) {
+            console.error("::error::Mobile native proof must be schemaVersion 1, redacted, and no-secret.");
+            process.exit(1);
+          }
+          const text = JSON.stringify(proof);
+          if (/eas_[a-z0-9_-]+|expo\.dev\/artifacts|\.aab\b|\.apk\b|\.ipa\b|-----BEGIN [A-Z ]*PRIVATE KEY-----/i.test(text)) {
+            console.error("::error::Mobile native proof contains a forbidden secret or artifact marker.");
+            process.exit(1);
+          }
+          console.log("Mobile native proof is redacted and no-secret.");
+          NODE
+
+      - name: Upload mobile native proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-native-proof-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: release/mobile-native-proof.local.json
 
       - name: Export mobile JavaScript bundle
         run: |
