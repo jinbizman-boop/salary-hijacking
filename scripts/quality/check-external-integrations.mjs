@@ -367,6 +367,8 @@ const REQUIRED_MOBILE_ASSET_FILES = [
 ];
 
 const REQUIRED_GIT_TRACKABLE_SOURCE_FILES = [
+  "scripts/dev/run-node-tests-with-clean-temp.mjs",
+  "scripts/dev/run-node-tests-with-clean-temp.test.mjs",
   "scripts/build/fix-esm-imports.mjs",
   "scripts/build/fix-esm-imports.test.mjs",
   "scripts/release/generate-database-evidence.mjs",

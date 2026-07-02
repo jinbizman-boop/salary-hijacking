@@ -72,6 +72,14 @@ corepack pnpm run quality
 corepack pnpm run build
 ```
 
+`test:root-scripts` runs through
+`scripts/dev/run-node-tests-with-clean-temp.mjs`, which redirects Node test
+fixtures and compile cache to an isolated cleanup directory. On Windows it
+prefers `D:\codex-temp\salary-hijacking` when available; otherwise it falls
+back to an OS temp subdirectory. Do not bypass this wrapper for full root script
+tests unless you also set a disposable `TEMP`/`TMP` path and clean it after the
+run.
+
 `check:release-readiness` verifies release artifacts, required root scripts, `.env.example` names, runtime secret presence, external connector evidence in `release/external-release-evidence.json`, required local CLI tools, database migration presence, unsafe public secret env names, and Git repository visibility. Use `--soft` for status reporting without failing the shell; omit `--soft` in a release gate so blockers fail the run.
 
 `check:external-integrations` verifies GitHub workflow tokens, Cloudflare Worker/Page config files, Neon migration/seed assets, infrastructure docs, mobile release metadata, required source automation files, Git trackability for source automation files, operational-doc placeholder markers, mojibake markers, and hard-coded sensitive values.
