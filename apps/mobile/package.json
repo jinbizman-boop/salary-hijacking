@@ -40,6 +40,7 @@
     "build:preview:android": "eas build --platform android --profile preview --non-interactive",
     "build:preview:ios": "eas build --platform ios --profile preview --non-interactive",
     "build:e2e:android": "eas build --platform android --profile e2e --non-interactive",
+    "build:e2e:android:local": "eas build --platform android --profile e2e --local --output build/e2e/android/salary-hijacking-e2e.apk --non-interactive",
     "build:e2e:ios": "eas build --platform ios --profile e2e --non-interactive",
     "build:production:android": "eas build --platform android --profile production --non-interactive",
     "build:production:ios": "eas build --platform ios --profile production --non-interactive",

@@ -303,6 +303,8 @@ Configure branch protection and GitHub Environments after the new repository exi
         scripts: {
           "test:e2e":
             "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+          "build:e2e:android:local":
+            "eas build --platform android --profile e2e --local --output build/e2e/android/salary-hijacking-e2e.apk --non-interactive",
           "build:production:android":
             "eas build --platform android --profile production --non-interactive",
         },
@@ -1112,6 +1114,47 @@ test("fails when mobile package metadata contains common Korean mojibake", async
     assert.equal(result.ok, false);
     assert.match(result.failures.join("\n"), /apps\/mobile\/package\.json/);
     assert.match(result.failures.join("\n"), /mojibake/i);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when mobile local e2e APK build script is missing", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/package.json": JSON.stringify(
+        {
+          name: "@salary-hijacking/mobile",
+          description:
+            "Salary Hijacking mobile app fixture with the local e2e script intentionally missing.",
+          scripts: {
+            "test:e2e":
+              "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+            "build:production:android":
+              "eas build --platform android --profile production --non-interactive",
+          },
+          devDependencies: {
+            "eas-cli": "^20.4.0",
+          },
+        },
+        null,
+        2,
+      ),
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /build:e2e:android:local/);
+    assert.match(
+      result.failures.join("\n"),
+      /build\/e2e\/android\/salary-hijacking-e2e\.apk/,
+    );
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

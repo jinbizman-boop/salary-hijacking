@@ -21,7 +21,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - workspace quality: PASS, `corepack pnpm run quality` completed 82 Turbo tasks
 - workspace build: PASS, `corepack pnpm run build` completed 12 Turbo tasks
 - local Git baseline: PASS, local Git metadata is initialized, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`, authenticated push to `origin/main` is proven, and release readiness rechecks local HEAD against `origin/main` when authenticated push proof is claimed, with a warning fallback to local `refs/remotes/origin/main` when live remote reads are unavailable in the local Node sandbox
-- root script tests: PASS, 165 tests after adding Android SDK tool detection
+- root script tests: PASS, 166 tests after adding Android SDK tool detection
   coverage and preserving no-secret release proof coverage
   collectors for database, runtime secrets, Cloudflare observations, mobile
   native build/store observations, public URLs, and tracked proof example

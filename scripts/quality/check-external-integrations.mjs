@@ -566,6 +566,46 @@ function checkMobileReleaseDomains(rootDir, failures) {
   }
 }
 
+function checkMobileLocalE2eBuildScript(rootDir, failures) {
+  const relativePath = "apps/mobile/package.json";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  let packageJson;
+  try {
+    packageJson = JSON.parse(readText(rootDir, relativePath));
+  } catch (error) {
+    failures.push(`${relativePath}: must parse as JSON (${error.message})`);
+    return;
+  }
+
+  const script = packageJson?.scripts?.["build:e2e:android:local"];
+  const expectedOutput = "build/e2e/android/salary-hijacking-e2e.apk";
+  const requiredParts = [
+    "eas build",
+    "--platform android",
+    "--profile e2e",
+    "--local",
+    "--output",
+    expectedOutput,
+    "--non-interactive",
+  ];
+
+  if (typeof script !== "string") {
+    failures.push(
+      `${relativePath}: scripts.build:e2e:android:local must build a local Detox APK at ${expectedOutput}`,
+    );
+    return;
+  }
+
+  for (const requiredPart of requiredParts) {
+    if (script.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: scripts.build:e2e:android:local must include ${requiredPart}`,
+    );
+  }
+}
+
 function checkMobileLaunchAssets(rootDir, failures) {
   for (const relativePath of REQUIRED_MOBILE_ASSET_FILES) {
     if (!fileExists(rootDir, relativePath)) continue;
@@ -757,6 +797,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkReleaseMetadataText(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
+  checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
   checkEnvExampleReleaseTargets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);
