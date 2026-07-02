@@ -1,9 +1,23 @@
+import { useLocalSearchParams } from "expo-router";
+
 import { CleanFintechPostDetailScreen } from "../../src/shared/styles/clean-fintech-screens";
 
 const SCREEN_VERSION = "4.0.0-clean-fintech";
 
 export default function CommunityPostDetailScreen(): React.ReactElement {
-  return <CleanFintechPostDetailScreen />;
+  const params = useLocalSearchParams();
+  const rawPostId = params.postId;
+  const postId = Array.isArray(rawPostId)
+    ? rawPostId[0]
+    : typeof rawPostId === "string"
+      ? rawPostId
+      : undefined;
+
+  return postId ? (
+    <CleanFintechPostDetailScreen postId={postId} />
+  ) : (
+    <CleanFintechPostDetailScreen />
+  );
 }
 
 export function assertMobileCommunityPostCompleteness(): {

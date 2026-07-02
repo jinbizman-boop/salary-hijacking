@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 109 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 110 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -181,8 +181,9 @@ Community service before using local fallback posts:
 The screen rejects raw financial, raw personal, or ads financial targeting
 exposure flags through the community parser and row normalization path. Local
 posts remain a non-authoritative visual fallback when the API cannot be reached.
-Write/detail/comment flows still require separate route-level screen hydration
-work before claiming full community workflow coverage.
+Write, detail, and comment list flows now have screen-level server-first
+coverage; deployed API auth, DB persistence, native E2E, and store review proof
+remain separate release gates.
 
 ## Community Write API Publication
 
@@ -201,6 +202,27 @@ server registration toast. On failure, it shows a failure toast and does not
 pretend that the post was published. This is still screen-level publication
 alignment; full write-flow release proof requires deployed API auth, DB-backed
 persistence, and native E2E/store review evidence.
+
+## Community Detail And Comments API Hydration
+
+As of 2026-07-03, the Clean Fintech community post detail route passes the
+Expo Router `postId` parameter into the detail screen and hydrates the screen
+through the existing mobile Community service before using a safe local
+fallback:
+
+- `GET /api/v1/community/posts/{postId}` through `CommunityService.getPost()`
+- `GET /api/v1/community/posts/{postId}/comments` through
+  `CommunityService.listComments()`
+- `POST` or `DELETE /api/v1/community/posts/{postId}/like` through
+  `CommunityService.setPostLiked()`
+
+The detail screen parses post and comment responses through
+`parseCommunityPostDetail()`, `parseCommunityCommentPage()`, and
+`communityResponseData()`. It preserves local fallback detail/comment display
+when the API is unreachable, but the fallback is not authoritative. Like state
+is optimistically toggled only while the server request is in flight and is
+reverted on failure. The normalized detail/comment path keeps raw financial,
+raw personal, and ads financial targeting flags false.
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only
@@ -295,7 +317,7 @@ Previously observed high-priority mobile/API alignment gaps have been reduced:
 - public Expo Router paths such as `/salary`, `/plan`, and `/level` are used for local smoke navigation.
 - local API plus Expo web smoke verified signup/login and `/salary`, `/level`, `/plan` navigation.
 
-Remaining endpoint work should still compare touched mobile calls against `services/api/src/routes` before claiming API/mobile coverage complete. Community detail, comment, report, and write flows require route-level verification when those screens are next touched.
+Remaining endpoint work should still compare touched mobile calls against `services/api/src/routes` before claiming API/mobile coverage complete. Community report, edit, and delete flows still require route-level screen verification when those screens are next touched.
 
 ## Mobile Work Checklist
 

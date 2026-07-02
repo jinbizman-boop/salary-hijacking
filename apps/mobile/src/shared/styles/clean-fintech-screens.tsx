@@ -15,12 +15,16 @@ import {
 import officialBiLogo from "../../../assets/brand/salary-hijacking-platform-logo.png";
 import {
   communityResponseData,
+  parseCommunityCommentPage,
   parseCommunityFeedPage,
+  parseCommunityPostDetail,
 } from "../../features/community/community.parsers";
 import type {
   CommunityBoardType,
+  CommunityComment,
   CommunityFeedPage,
   CommunityPost,
+  CommunityPostDetail,
   CommunityPostDraft,
 } from "../../features/community/community.types";
 import {
@@ -477,6 +481,40 @@ const postComments = [
   "레벨업 인증까지 같이 하니까 꾸준히 하게 되네요.",
 ] as const;
 
+const fallbackPostDetail: CommunityPostDetail = {
+  attachments: [],
+  comments: postComments.map((content, index) => ({
+    anonymousDisplayName: "익명 사용자",
+    content,
+    createdAt: `2026-07-03T00:0${index}:00.000Z`,
+    id: `fallback-comment-${index + 1}`,
+    moderationStatus: "SAFE",
+    postId: "fallback-level-proof",
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    updatedAt: `2026-07-03T00:0${index}:00.000Z`,
+  })),
+  content:
+    "고정지출을 먼저 분리하고 남은 생활비 안에서 홈트 루틴을 지켰어요. 금액 원문, 계좌, 카드, 토큰 정보는 게시글에 노출하지 않습니다.",
+  post: {
+    adsFinancialTargetingUsed: false,
+    anonymousDisplayName: "익명 사용자",
+    boardType: "LEVEL_CERTIFICATION",
+    bodyPreview: fallbackCommunityPosts[0].summary,
+    bookmarkCount: 0,
+    commentCount: postComments.length,
+    createdAt: "2026-07-03T00:00:00.000Z",
+    id: fallbackCommunityPosts[0].id,
+    likeCount: 96,
+    moderationStatus: "SAFE",
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    title: fallbackCommunityPosts[0].title,
+    updatedAt: "2026-07-03T00:00:00.000Z",
+  },
+  tags: ["레벨업", "홈트", "예산루틴"],
+};
+
 export function CleanFintechScreen({
   kind,
 }: Readonly<{ kind: ScreenKind }>): React.ReactElement {
@@ -779,10 +817,93 @@ export function CleanFintechLevelDetailScreen({
   );
 }
 
-export function CleanFintechPostDetailScreen(): React.ReactElement {
-  const post = fallbackCommunityPosts[0];
+export function CleanFintechPostDetailScreen({
+  postId = fallbackPostDetail.post.id,
+}: Readonly<{ postId?: string }>): React.ReactElement {
+  const detailCommunityService = useMemo(
+    () => createMobileCommunityService(),
+    [],
+  );
+  const [serverCommunityDetail, setServerCommunityDetail] =
+    useState<CommunityPostDetail | null>(null);
+  const [serverCommunityComments, setServerCommunityComments] = useState<
+    readonly CommunityComment[]
+  >([]);
   const [liked, setLiked] = useState(false);
-  const [toast, setToast] = useState("레벨업 인증 게시글을 안전하게 열었어요.");
+  const [toast, setToast] = useState(
+    "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
+  );
+  const activeDetail = serverCommunityDetail ?? fallbackPostDetail;
+  const activeComments =
+    serverCommunityComments.length > 0
+      ? serverCommunityComments
+      : activeDetail.comments;
+  const post = toCommunityScreenPost(activeDetail.post);
+
+  const refreshCommunityDetail = useCallback(async (): Promise<void> => {
+    const safePostId = postId.trim() || fallbackPostDetail.post.id;
+    try {
+      const [detailResponse, commentsResponse] = await Promise.all([
+        detailCommunityService.getPost(safePostId),
+        detailCommunityService.listComments(safePostId, 1, 100),
+      ]);
+      const nextDetail = parseCommunityPostDetail(
+        communityResponseData(detailResponse),
+      );
+      const nextComments = parseCommunityCommentPage(
+        communityResponseData(commentsResponse),
+      ).items;
+
+      setServerCommunityDetail({ ...nextDetail, comments: nextComments });
+      setServerCommunityComments(nextComments);
+      setToast(
+        `서버 커뮤니티 상세 동기화 · 댓글 ${formatCommunityCount(
+          nextComments.length,
+        )}개`,
+      );
+    } catch {
+      setServerCommunityDetail(null);
+      setServerCommunityComments([]);
+      setToast("서버 연결 전까지 안전한 예시 상세 화면을 보여드려요.");
+    }
+  }, [detailCommunityService, postId]);
+
+  const togglePostLike = useCallback((): void => {
+    const nextLiked = !liked;
+    const targetPostId = activeDetail.post.id;
+    setLiked(nextLiked);
+    setToast(
+      nextLiked
+        ? "좋아요를 서버에 반영하는 중이에요."
+        : "좋아요 취소를 서버에 반영하는 중이에요.",
+    );
+    void detailCommunityService
+      .setPostLiked(targetPostId, nextLiked)
+      .then(() => {
+        setServerCommunityDetail((current) => {
+          if (!current || current.post.id !== targetPostId) return current;
+          const delta = nextLiked ? 1 : -1;
+          return {
+            ...current,
+            post: {
+              ...current.post,
+              likeCount: Math.max(0, current.post.likeCount + delta),
+            },
+          };
+        });
+        setToast(
+          nextLiked ? "좋아요가 서버에 반영됐어요." : "좋아요를 취소했어요.",
+        );
+      })
+      .catch(() => {
+        setLiked(!nextLiked);
+        setToast("좋아요를 서버에 반영하지 못했어요. 다시 시도해 주세요.");
+      });
+  }, [activeDetail.post.id, detailCommunityService, liked]);
+
+  useEffect(() => {
+    void refreshCommunityDetail();
+  }, [refreshCommunityDetail]);
 
   return (
     <AppScreen title="커뮤니티" subtitle="레벨업 인증">
@@ -792,25 +913,19 @@ export function CleanFintechPostDetailScreen(): React.ReactElement {
         <Text style={styles.postDetailTitle}>{post.title}</Text>
         <Text style={styles.bodyText}>{post.summary}</Text>
         <View style={styles.attachmentRow}>
-          <SmallButton label="조회 1,284" />
-          <SmallButton label="좋아요 96" />
-          <SmallButton label="댓글 18" />
+          <SmallButton label={post.stats} />
           <SmallButton label="공유" />
         </View>
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>인증 내용</Text>
         <Text style={styles.bodyText}>
-          고정지출을 먼저 분리하고 남은 생활비 안에서 홈트 루틴을 지켰습니다.
-          금액 원문, 계좌, 카드, 토큰 정보는 게시글에 노출하지 않습니다.
+          {activeDetail.content || post.summary}
         </Text>
         <View style={styles.attachmentRow}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => {
-              setLiked((value) => !value);
-              setToast(liked ? "좋아요를 취소했어요." : "좋아요를 눌렀어요.");
-            }}
+            onPress={togglePostLike}
             style={styles.smallButton}
           >
             <Text style={styles.smallButtonText}>
@@ -823,8 +938,13 @@ export function CleanFintechPostDetailScreen(): React.ReactElement {
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>댓글</Text>
-        {postComments.map((comment) => (
-          <ListRow key={comment} icon="💬" title="익명 사용자" meta={comment} />
+        {activeComments.map((comment) => (
+          <ListRow
+            key={comment.id}
+            icon="💬"
+            title={comment.anonymousDisplayName}
+            meta={comment.content}
+          />
         ))}
       </SectionCard>
       <GuardBox />

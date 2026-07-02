@@ -295,6 +295,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('setBody("")');
   });
 
+  it("keeps community detail screen hydrated from the server detail and comments service", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
+    const postRoute = mobileSource("app/community/[postId].tsx");
+
+    expect(mobileApi).toContain("createMobileCommunityService");
+    expect(postRoute).toContain("useLocalSearchParams");
+    expect(postRoute).toContain("postId={postId}");
+    expect(cleanScreens).toContain("detailCommunityService");
+    expect(cleanScreens).toContain("serverCommunityDetail");
+    expect(cleanScreens).toContain("serverCommunityComments");
+    expect(cleanScreens).toContain("refreshCommunityDetail");
+    expect(cleanScreens).toContain("detailCommunityService.getPost");
+    expect(cleanScreens).toContain("detailCommunityService.listComments");
+    expect(cleanScreens).toContain("parseCommunityPostDetail");
+    expect(cleanScreens).toContain("parseCommunityCommentPage");
+    expect(cleanScreens).toContain("setPostLiked(targetPostId, nextLiked)");
+    expect(cleanScreens).toContain("fallbackPostDetail");
+    expect(cleanScreens).toContain("rawPersonalDataExposed");
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
