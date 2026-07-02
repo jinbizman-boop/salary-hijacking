@@ -1079,6 +1079,44 @@ test("fails when mobile release metadata contains mojibake", async () => {
   }
 });
 
+test("fails when mobile package metadata contains common Korean mojibake", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/package.json": JSON.stringify(
+        {
+          name: "@salary-hijacking/mobile",
+          description:
+            "급여납치 release metadata \u6E72\uB431\uB7EC?\u2479\uD282 marker sample.",
+          scripts: {
+            "test:e2e":
+              "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+            "build:production:android":
+              "eas build --platform android --profile production --non-interactive",
+          },
+          devDependencies: {
+            "eas-cli": "^20.4.0",
+          },
+        },
+        null,
+        2,
+      ),
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /apps\/mobile\/package\.json/);
+    assert.match(result.failures.join("\n"), /mojibake/i);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when mobile build workflow contains mojibake", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
