@@ -67,10 +67,35 @@ test("collects no-secret proof booleans for reachable public app URLs", async ()
   assert.equal(proof.content.koreanCopyVerified, true);
   assert.equal(proof.content.storeReviewUrlsVerified, true);
   assert.equal(proof.content.noSensitiveRawDataExposed, true);
+  assert.deepEqual(proof.checkedUrls, {
+    landingUrl: "https://salaryhijacking.com/",
+    privacyUrl: "https://salaryhijacking.com/privacy",
+    supportUrl: "https://salaryhijacking.com/support",
+    termsUrl: "https://salaryhijacking.com/terms",
+  });
 
   const written = fs.readFileSync(outputPath, "utf8");
   assert.doesNotMatch(written, /<html|support@salaryhijacking\.com/i);
   assert.doesNotMatch(written, /salaryAmount|expenseAmount|pushToken/i);
+});
+
+test("rejects non Salary Hijacking public base URLs before fetching", async () => {
+  let fetchCalled = false;
+
+  await assert.rejects(
+    () =>
+      collectPublicUrlProof({
+        baseUrl: "https://retrogames.kr",
+        fetchImpl: async () => {
+          fetchCalled = true;
+          return new Response("<html></html>", { status: 200 });
+        },
+        writeFile: false,
+      }),
+    /public URL proof baseUrl must be https:\/\/salaryhijacking\.com/i,
+  );
+
+  assert.equal(fetchCalled, false);
 });
 
 test("marks proof false when public pages expose sensitive payload markers", async () => {

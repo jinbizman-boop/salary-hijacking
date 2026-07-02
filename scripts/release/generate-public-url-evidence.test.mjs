@@ -100,6 +100,7 @@ test("uses a local proof file to mark public URL release gates verified", () => 
           storeReviewUrlsVerified: true,
           noSensitiveRawDataExposed: true,
         },
+        checkedUrls: expectedUrls,
       },
       null,
       2,
@@ -123,6 +124,55 @@ test("uses a local proof file to mark public URL release gates verified", () => 
   assert.equal(evidence.content.storeReviewUrlsVerified, true);
   assert.equal(evidence.content.noSensitiveRawDataExposed, true);
   assert.deepEqual(evidence.nextEvidenceRequired, []);
+});
+
+test("rejects local proof collected from unrelated public URLs", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "public-url-proof.local.json",
+  );
+  write(
+    rootDir,
+    "release/public-url-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        reachability: {
+          landingReachable: true,
+          privacyReachable: true,
+          supportReachable: true,
+          termsReachable: true,
+        },
+        headers: {
+          cspVerified: true,
+          privacyHeadersVerified: true,
+          noIndexAbsentOnPublicPages: true,
+        },
+        content: {
+          koreanCopyVerified: true,
+          storeReviewUrlsVerified: true,
+          noSensitiveRawDataExposed: true,
+        },
+        checkedUrls: {
+          landingUrl: "https://retrogames.kr/",
+          privacyUrl: "https://retrogames.kr/privacy",
+          supportUrl: "https://retrogames.kr/support",
+          termsUrl: "https://retrogames.kr/terms",
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildPublicUrlEvidence({ rootDir, proofPath }),
+    /public URL proof targets do not match release targets/i,
+  );
 });
 
 test("preserves existing no-secret public URL evidence when local proof is absent", () => {

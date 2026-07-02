@@ -246,15 +246,17 @@ public-page sensitive data non-exposure. Prefer
 `corepack pnpm run release:public-url-proof` to collect local no-secret booleans
 into `release/public-url-proof.local.json`, then
 `corepack pnpm run release:public-url-evidence` to update the tracked evidence;
-the collector and generator reject or avoid copied HTML, raw response bodies,
-raw headers, logs, emails, phone numbers, salary, expense, savings, hijack
-amounts, tokens, cookies, session identifiers, database URLs, and other
-sensitive payload keys before writing tracked evidence. The collector also
-treats sensitive public response header names or values as non-exposure failures
-without writing those headers. The tracked evidence generator also rejects proof
-keys for copied request/response headers, raw headers, authorization, cookie,
-session, CSRF, API key, access token, JWT, and related sensitive header markers
-before writing tracked evidence. Then run:
+the collector requires the base URL to normalize to exactly
+`https://salaryhijacking.com` and records the checked public URL set. The
+collector and generator reject or avoid copied HTML, raw response bodies, raw
+headers, logs, emails, phone numbers, salary, expense, savings, hijack amounts,
+tokens, cookies, session identifiers, database URLs, unrelated public URL proof
+targets, and other sensitive payload keys before writing tracked evidence. The
+collector also treats sensitive public response header names or values as
+non-exposure failures without writing those headers. The tracked evidence
+generator also rejects proof keys for copied request/response headers, raw
+headers, authorization, cookie, session, CSRF, API key, access token, JWT, and
+related sensitive header markers before writing tracked evidence. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft

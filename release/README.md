@@ -199,21 +199,26 @@ Before generating tracked evidence, public URL proof can be collected with:
 - `corepack pnpm run release:public-url-proof`
 
 The proof collector requests `PUBLIC_APP_BASE_URL` or
-`https://salaryhijacking.com` by default, checks `/`, `/privacy`, `/support`,
-and `/terms`, and writes only booleans to
-`release/public-url-proof.local.json`. It does not write copied HTML, raw
-headers, logs, user identifiers, or financial payloads, and it treats sensitive
-response header names or values as public sensitive-data non-exposure failures.
+`https://salaryhijacking.com` by default, but the base URL must normalize to
+exactly `https://salaryhijacking.com` without a path, query, or hash. It checks
+`/`, `/privacy`, `/support`, and `/terms`, records the checked public URL set,
+and writes only booleans to `release/public-url-proof.local.json`. It does not
+write copied HTML, raw headers, logs, user identifiers, or financial payloads,
+and it treats sensitive response header names or values as public
+sensitive-data non-exposure failures.
 
 The evidence generator reads no runtime secret values. If
 `release/public-url-proof.local.json` exists, it may contain only no-secret
 booleans proving production reachability for `/`, `/privacy`, `/support`, and
 `/terms`, CSP/privacy header checks, Korean public copy review, store review URL
-alignment, and public-page sensitive data non-exposure. That local proof file is
+alignment, public-page sensitive data non-exposure, and a `checkedUrls` object
+matching the Salary Hijacking release target URLs. That local proof file is
 ignored by Git and must not contain copied HTML, raw response bodies, raw
 headers, logs, emails, phone numbers, salary, expense, savings, hijack amounts,
 tokens, cookies, session identifiers, database URLs, or other sensitive
-payloads. The generator rejects proof keys for copied request/response headers,
+payloads. The generator rejects local proof collected from unrelated public
+URLs before writing tracked evidence, and rejects proof keys for copied
+request/response headers,
 raw headers, authorization, cookie, session, CSRF, API key, access token, JWT,
 and related sensitive header markers before writing tracked evidence.
 
