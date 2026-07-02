@@ -220,8 +220,11 @@ recording command result booleans in
 `corepack pnpm run release:database-evidence` to update tracked evidence from
 `release/database-proof.local.json`. The collector and generator reject raw
 database URLs, secret values, production seed proof, raw smoke payloads, raw
-auth/cookie/header fields, and sensitive user/financial data keys before writing
-local or tracked evidence.
+auth/cookie/header fields, unrelated Neon project hints, and sensitive
+user/financial data keys before writing local or tracked evidence. When database
+proof claims `neon.projectMatched=true`, the local proof must carry
+`neon.expectedProjectHint="salary-hijacking"`, and the tracked evidence
+generator compares that hint with `release/release-targets.json`.
 Update `release/mobile-native-evidence.json` only with no-secret booleans for
 Android production AAB builds, Android native E2E or equivalent device-farm
 runs, Google Play submit dry-runs, iOS production builds, and App Store submit

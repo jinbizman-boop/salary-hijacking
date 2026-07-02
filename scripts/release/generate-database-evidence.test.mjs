@@ -75,6 +75,7 @@ test("uses a local proof file to mark verified database release gates", () => {
         secretsRedacted: true,
         containsSecretValues: false,
         neon: {
+          expectedProjectHint: "salary-hijacking",
           projectMatched: true,
           mainBranchReady: true,
           stagingBranchReady: true,
@@ -110,6 +111,7 @@ test("uses a local proof file to mark verified database release gates", () => {
   });
 
   assert.equal(evidence.neon.projectMatched, true);
+  assert.equal(evidence.neon.expectedProjectHint, "salary-hijacking");
   assert.equal(evidence.neon.mainBranchReady, true);
   assert.equal(evidence.neon.stagingBranchReady, true);
   assert.equal(evidence.migrations.migrationValidationVerified, true);
@@ -159,6 +161,39 @@ test("preserves existing no-secret database evidence when local proof is absent"
   assert.equal(evidence.neon.stagingBranchReady, true);
   assert.equal(evidence.migrations.migrationValidationVerified, true);
   assert.equal(evidence.migrations.migrationFileCount, 2);
+});
+
+test("rejects local proof for unrelated Neon project hints", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(rootDir, "release", "database-proof.local.json");
+  write(
+    rootDir,
+    "release/database-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        neon: {
+          expectedProjectHint: "retro-games",
+          projectMatched: true,
+          mainBranchReady: true,
+          stagingBranchReady: true,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () =>
+      buildDatabaseEvidence({
+        rootDir,
+        proofPath,
+      }),
+    /Neon proof target does not match release target/i,
+  );
 });
 
 test("rejects proof files that contain raw database URLs or secret values", () => {

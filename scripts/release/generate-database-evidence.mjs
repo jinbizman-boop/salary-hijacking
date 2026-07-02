@@ -112,12 +112,43 @@ const readExpectedProjectHint = (rootDir) => {
   return typeof hint === "string" && hint.trim() ? hint.trim() : "";
 };
 
-const readProof = (rootDir, proofPath) => {
-  const proof =
-    readJsonIfPresent(rootDir, proofPath) ??
-    (proofPath === DEFAULT_PROOF_PATH
-      ? readJsonIfPresent(rootDir, DEFAULT_OUTPUT_PATH)
-      : null);
+const stringFrom = (source, key) =>
+  typeof source?.[key] === "string" ? source[key].trim() : "";
+
+const assertNeonProofTargetMatches = ({
+  proof,
+  proofPath,
+  expectedProjectHint,
+  requireExpectedProjectHint = false,
+}) => {
+  const neon = proofSection(proof, "neon");
+  const proofProjectHint = stringFrom(neon, "expectedProjectHint");
+  if (
+    requireExpectedProjectHint &&
+    neon.projectMatched === true &&
+    proofProjectHint.length === 0
+  ) {
+    throw new Error(
+      `${proofPath} Neon proof target does not match release target: expectedProjectHint is missing`,
+    );
+  }
+  if (
+    proofProjectHint.length > 0 &&
+    expectedProjectHint.length > 0 &&
+    proofProjectHint !== expectedProjectHint
+  ) {
+    throw new Error(
+      `${proofPath} Neon proof target does not match release target: expectedProjectHint must be ${expectedProjectHint}`,
+    );
+  }
+};
+
+const validateProof = ({
+  proof,
+  proofPath,
+  expectedProjectHint,
+  requireExpectedProjectHint = false,
+}) => {
   if (!proof) return {};
   if (
     proof.schemaVersion !== 1 ||
@@ -139,7 +170,35 @@ const readProof = (rootDir, proofPath) => {
       `${proofPath} must not mark production seed execution as verified`,
     );
   }
+  assertNeonProofTargetMatches({
+    proof,
+    proofPath,
+    expectedProjectHint,
+    requireExpectedProjectHint,
+  });
   return proof;
+};
+
+const readProof = (rootDir, proofPath, expectedProjectHint) => {
+  const localProof = readJsonIfPresent(rootDir, proofPath);
+  if (localProof) {
+    return validateProof({
+      proof: localProof,
+      proofPath,
+      expectedProjectHint,
+      requireExpectedProjectHint: true,
+    });
+  }
+
+  const fallback =
+    proofPath === DEFAULT_PROOF_PATH
+      ? readJsonIfPresent(rootDir, DEFAULT_OUTPUT_PATH)
+      : null;
+  return validateProof({
+    proof: fallback,
+    proofPath: DEFAULT_OUTPUT_PATH,
+    expectedProjectHint,
+  });
 };
 
 export const buildDatabaseEvidence = ({
@@ -147,7 +206,8 @@ export const buildDatabaseEvidence = ({
   proofPath = DEFAULT_PROOF_PATH,
   now = () => new Date(),
 } = {}) => {
-  const proof = readProof(rootDir, proofPath);
+  const expectedProjectHint = readExpectedProjectHint(rootDir);
+  const proof = readProof(rootDir, proofPath, expectedProjectHint);
   const neon = proofSection(proof, "neon");
   const migrations = proofSection(proof, "migrations");
   const seeds = proofSection(proof, "seeds");
@@ -163,7 +223,7 @@ export const buildDatabaseEvidence = ({
     secretsRedacted: true,
     containsSecretValues: false,
     neon: {
-      expectedProjectHint: readExpectedProjectHint(rootDir),
+      expectedProjectHint,
       projectMatched: boolFrom(neon, "projectMatched"),
       mainBranchReady: boolFrom(neon, "mainBranchReady"),
       stagingBranchReady: boolFrom(neon, "stagingBranchReady"),

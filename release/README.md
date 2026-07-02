@@ -176,11 +176,13 @@ The proof collector reads `release/database-command-proof.local.json` and writes
 only booleans to `release/database-proof.local.json`. The local command proof
 file is ignored by Git and may contain only command success booleans, exit codes,
 environment names, dry-run flags, synthetic-data flags, and non-secret notes.
-It must not contain raw Neon URLs, passwords, tokens, copied SQL output, smoke
-request or response bodies, raw request/response headers, authorization or
-cookie values, emails, phone numbers, salary, expense, savings, hijack amounts,
-account/card/loan data, push tokens, or device identifiers. Production seed
-proof is always rejected.
+When the proof claims `neon.projectMatched=true`, it must also carry
+`neon.expectedProjectHint="salary-hijacking"` so unrelated Neon projects cannot
+be treated as Salary Hijacking release proof. It must not contain raw Neon URLs,
+passwords, tokens, copied SQL output, smoke request or response bodies, raw
+request/response headers, authorization or cookie values, emails, phone numbers,
+salary, expense, savings, hijack amounts, account/card/loan data, push tokens,
+or device identifiers. Production seed proof is always rejected.
 
 The evidence command reads no committed database URL. If
 `release/database-proof.local.json` exists, it may contain booleans and
@@ -189,6 +191,8 @@ file is ignored by Git and must not contain raw Neon URLs, passwords, tokens, or
 real user/financial payloads. The generator rejects raw database URLs, secret
 values, raw smoke response/request payloads, raw auth/cookie/header fields, and
 sensitive financial or user data keys before writing the tracked evidence file.
+It also rejects local proof whose Neon `expectedProjectHint` does not match
+`release/release-targets.json`.
 
 Safe public URL evidence generation command:
 

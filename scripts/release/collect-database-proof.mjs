@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const DEFAULT_INPUT_PATH = "release/database-command-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/database-proof.local.json";
+const DEFAULT_EXPECTED_PROJECT_HINT = "salary-hijacking";
 
 const RAW_SECRET_PATTERN =
   /(postgres(?:ql)?:\/\/|mysql:\/\/|mongodb(?:\+srv)?:\/\/|redis:\/\/|:\/\/[^/\s]+:[^@\s]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|ghp_[a-z0-9_]{16,}|xox[baprs]-[a-z0-9-]+)/i;
@@ -116,6 +117,9 @@ const containsRawSmokePayloadOrSensitiveUserData = (value) => {
 
 const section = (value, key) => (isPlainObject(value?.[key]) ? value[key] : {});
 
+const stringFrom = (source, key) =>
+  typeof source?.[key] === "string" ? source[key].trim() : "";
+
 const command = (input, key) =>
   isPlainObject(section(input, "commands")[key])
     ? section(input, "commands")[key]
@@ -194,6 +198,22 @@ const validateInput = (input, inputPath) => {
     );
   }
 
+  const neon = section(input, "neon");
+  const expectedProjectHint = stringFrom(neon, "expectedProjectHint");
+  if (
+    expectedProjectHint.length > 0 &&
+    expectedProjectHint !== DEFAULT_EXPECTED_PROJECT_HINT
+  ) {
+    throw new Error(
+      `${inputPath} neon.expectedProjectHint must be ${DEFAULT_EXPECTED_PROJECT_HINT}`,
+    );
+  }
+  if (neon.projectMatched === true && expectedProjectHint.length === 0) {
+    throw new Error(
+      `${inputPath} neon.expectedProjectHint must be ${DEFAULT_EXPECTED_PROJECT_HINT} when projectMatched=true`,
+    );
+  }
+
   if (
     section(input, "seeds").productionSeedExecuted === true ||
     command(input, "productionSeed").verified === true
@@ -228,6 +248,7 @@ export const buildDatabaseProof = ({
     secretsRedacted: true,
     containsSecretValues: false,
     neon: {
+      expectedProjectHint: stringFrom(neon, "expectedProjectHint"),
       projectMatched: neon.projectMatched === true,
       mainBranchReady: neon.mainBranchReady === true,
       stagingBranchReady: neon.stagingBranchReady === true,

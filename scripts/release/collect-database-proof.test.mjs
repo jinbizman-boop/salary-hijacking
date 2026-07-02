@@ -21,6 +21,7 @@ const completeInput = {
   secretsRedacted: true,
   containsSecretValues: false,
   neon: {
+    expectedProjectHint: "salary-hijacking",
     projectMatched: true,
     mainBranchReady: true,
     stagingBranchReady: true,
@@ -99,6 +100,7 @@ test("normalizes no-secret database command proof into release proof booleans", 
   assert.equal(proof.observedAt, "2026-07-01T15:00:00.000Z");
   assert.equal(proof.secretsRedacted, true);
   assert.equal(proof.containsSecretValues, false);
+  assert.equal(proof.neon.expectedProjectHint, "salary-hijacking");
   assert.equal(proof.neon.projectMatched, true);
   assert.equal(proof.neon.mainBranchReady, true);
   assert.equal(proof.neon.stagingBranchReady, true);
@@ -189,6 +191,30 @@ test("rejects database command proof containing raw database URLs or secrets", (
         writeFile: false,
       }),
     /raw database URLs or secret values/i,
+  );
+});
+
+test("rejects database command proof for unrelated Neon project hints", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/database-command-proof.local.json",
+    {
+      ...completeInput,
+      neon: {
+        ...completeInput.neon,
+        expectedProjectHint: "retro-games",
+      },
+    },
+  );
+
+  assert.throws(
+    () =>
+      collectDatabaseProof({
+        inputPath,
+        writeFile: false,
+      }),
+    /expectedProjectHint must be salary-hijacking/i,
   );
 });
 

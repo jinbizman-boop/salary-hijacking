@@ -5,6 +5,7 @@
   "secretsRedacted": true,
   "containsSecretValues": false,
   "neon": {
+    "expectedProjectHint": "salary-hijacking",
     "projectMatched": false,
     "mainBranchReady": false,
     "stagingBranchReady": false
