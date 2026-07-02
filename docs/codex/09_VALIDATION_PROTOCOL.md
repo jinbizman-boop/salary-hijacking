@@ -67,6 +67,7 @@ corepack pnpm run check:package-manager-scripts
 corepack pnpm run check:scripts
 corepack pnpm run check:external-integrations
 corepack pnpm run test:root-scripts
+corepack pnpm run disk:report -- --top 20
 corepack pnpm run clean:junk:dry-run
 corepack pnpm run check:release-readiness -- --soft
 corepack pnpm run quality
@@ -90,6 +91,11 @@ Hijacking temp fixtures, but intentionally preserves `node_modules`, `.dev.vars`
 tracked release evidence JSON, explicit E2E APK paths, source files, docs, and
 migrations. Use the broader `clean` script only when dependency folders should
 also be removed.
+
+When storage use looks abnormal, run
+`corepack pnpm run disk:report -- --top 20` before deleting anything. The report
+separates protected dependency/local metadata paths such as `node_modules` and
+`.git` from removable generated cache/build paths covered by `clean:junk`.
 
 `check:release-readiness` verifies release artifacts, required root scripts, `.env.example` names, runtime secret presence, external connector evidence in `release/external-release-evidence.json`, required local CLI tools, database migration presence, unsafe public secret env names, and Git repository visibility. Use `--soft` for status reporting without failing the shell; omit `--soft` in a release gate so blockers fail the run.
 

@@ -2082,6 +2082,43 @@ node_modules/
   }
 });
 
+test("fails when .gitignore hides workspace disk report automation", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".gitignore": `
+scripts/dev/report-workspace-disk-usage.mjs
+`,
+      "scripts/dev/report-workspace-disk-usage.mjs":
+        "export function collectWorkspaceDiskUsage() { return {}; }\n",
+      "scripts/dev/report-workspace-disk-usage.test.mjs":
+        "import test from 'node:test';\n\ntest('placeholder', () => {});\n",
+    });
+    const init = spawnSync("git", ["init", "-b", "main"], {
+      cwd: rootDir,
+      encoding: "utf8",
+      shell: false,
+      windowsHide: true,
+    });
+    assert.equal(init.status, 0, init.stderr);
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /scripts\/dev\/report-workspace-disk-usage\.mjs/,
+    );
+    assert.match(result.failures.join("\n"), /ignored by \.gitignore/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when local hosting or generated build metadata is git-trackable", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
