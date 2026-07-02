@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 108 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 109 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -183,6 +183,24 @@ exposure flags through the community parser and row normalization path. Local
 posts remain a non-authoritative visual fallback when the API cannot be reached.
 Write/detail/comment flows still require separate route-level screen hydration
 work before claiming full community workflow coverage.
+
+## Community Write API Publication
+
+As of 2026-07-03, the Clean Fintech write screen submits posts through the
+existing mobile Community service instead of showing a local-only success state:
+
+- `POST /api/v1/community/posts` through `CommunityService.publishPost()`
+- app board labels are mapped to server board types with the same board map
+  used by the Community feed surface
+- invalid title/body inputs keep the submit button disabled
+- the service-side community validator still blocks unsafe personal, financial,
+  abusive, or risky content before a request reaches the API
+
+On successful submission, the screen clears the title/body fields and shows a
+server registration toast. On failure, it shows a failure toast and does not
+pretend that the post was published. This is still screen-level publication
+alignment; full write-flow release proof requires deployed API auth, DB-backed
+persistence, and native E2E/store review evidence.
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only

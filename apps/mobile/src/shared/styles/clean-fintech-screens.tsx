@@ -21,6 +21,7 @@ import type {
   CommunityBoardType,
   CommunityFeedPage,
   CommunityPost,
+  CommunityPostDraft,
 } from "../../features/community/community.types";
 import {
   calculateOfflineDailyBudgetPreview,
@@ -489,16 +490,56 @@ export function CleanFintechScreen({
 }
 
 export function CleanFintechWriteScreen(): React.ReactElement {
+  const writeCommunityService = useMemo(
+    () => createMobileCommunityService(),
+    [],
+  );
   const [board, setBoard] = useState<CommunityBoard>("자유 게시판");
   const [anonymous, setAnonymous] = useState(true);
   const [question, setQuestion] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(
     "제목, 본문, 게시판을 확인한 뒤 등록할 수 있어요.",
   );
 
   const valid = title.trim().length >= 2 && body.trim().length >= 5;
+  const submitCommunityPost = useCallback(() => {
+    if (!valid || submitting) return;
+    const draft: CommunityPostDraft = {
+      anonymous,
+      boardType: communityBoardApiMap[board] ?? "FREE",
+      content: body.trim(),
+      tags: question ? ["질문"] : [],
+      title: title.trim(),
+    };
+
+    setSubmitting(true);
+    setToast("게시글을 서버 커뮤니티에 등록하는 중이에요.");
+    void writeCommunityService
+      .publishPost(draft)
+      .then(() => {
+        setTitle("");
+        setBody("");
+        setToast("게시글이 서버에 등록되었습니다. 커뮤니티로 이동합니다.");
+      })
+      .catch(() => {
+        setToast(
+          "게시글을 등록하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
+        );
+      })
+      .finally(() => setSubmitting(false));
+  }, [
+    anonymous,
+    board,
+    body,
+    question,
+    submitting,
+    title,
+    valid,
+    writeCommunityService,
+  ]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -513,13 +554,16 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <Text style={styles.composeTitle}>글쓰기</Text>
           <Pressable
             accessibilityRole="button"
-            disabled={!valid}
-            onPress={() =>
-              setToast("게시글이 등록되었습니다. 커뮤니티로 이동합니다.")
-            }
-            style={[styles.doneButton, !valid ? styles.disabled : null]}
+            disabled={!valid || submitting}
+            onPress={submitCommunityPost}
+            style={[
+              styles.doneButton,
+              !valid || submitting ? styles.disabled : null,
+            ]}
           >
-            <Text style={styles.doneButtonText}>완료</Text>
+            <Text style={styles.doneButtonText}>
+              {submitting ? "전송중" : "완료"}
+            </Text>
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={styles.content}>
