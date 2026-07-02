@@ -52,8 +52,10 @@ import {
 import {
   DAILY_BUDGETS_API_PREFIX,
   assertDailyBudgetsRoutesCompleteness,
+  createDailyBudgetsRoutes,
   dailyBudgetsRoutesManifest,
   handleDailyBudgetsRoutes,
+  type DailyBudgetsRoutesOptions,
 } from "./routes/daily-budgets.routes";
 import {
   FIXED_EXPENSES_API_PREFIX,
@@ -235,6 +237,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly rateLimitOptions?: RateLimitMiddlewareOptions<TEnv>;
   readonly auditOptions?: AppAuditOptions<TEnv>;
   readonly payrollRoutesOptions?: PayrollRoutesOptions<TEnv>;
+  readonly dailyBudgetsRoutesOptions?: DailyBudgetsRoutesOptions<TEnv>;
   readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
@@ -1134,6 +1137,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createPayrollRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "daily-budgets" && options.dailyBudgetsRoutesOptions) {
+    const routeOptions: DailyBudgetsRoutesOptions<TEnv> =
+      options.dailyBudgetsRoutesOptions.now || !options.now
+        ? options.dailyBudgetsRoutesOptions
+        : {
+            ...options.dailyBudgetsRoutesOptions,
+            now: options.now,
+          };
+    return createDailyBudgetsRoutes(routeOptions)(request, env, context);
   }
   if (
     route.id === "variable-expenses" &&

@@ -22,6 +22,10 @@ import {
   shouldUseNeonPayrollRepository,
 } from "./repositories/payroll.repository";
 import {
+  createNeonDailyBudgetsRepository,
+  shouldUseNeonDailyBudgetsRepository,
+} from "./repositories/daily-budgets.repository";
+import {
   createNeonVariableExpensesRepository,
   shouldUseNeonVariableExpensesRepository,
 } from "./repositories/variable-expenses.repository";
@@ -157,6 +161,12 @@ const appInstance = createApp<WorkerEnv>({
     repository: (env) =>
       shouldUseNeonPayrollRepository(env)
         ? createNeonPayrollRepository<WorkerEnv>()
+        : undefined,
+  },
+  dailyBudgetsRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonDailyBudgetsRepository(env)
+        ? createNeonDailyBudgetsRepository<WorkerEnv>()
         : undefined,
   },
   variableExpensesRoutesOptions: {
