@@ -88,7 +88,7 @@ Ads and partner surfaces must be contextual-only unless a future verified policy
 
 Last checked by Codex on 2026-07-02 KST:
 
-- `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked after dependency restore
+- `corepack pnpm run check:package-manager-scripts`: PASS, 13 package files checked after dependency restore
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 78 required files checked, including public app/legal custom-domain targets, release workflow mojibake guard, GitHub Actions runtime proof artifact guard, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, no-secret dependency security audit evidence automation, and tracked no-secret local proof example templates; this local shell warns `gh`, `neon`, and `neonctl` are not on PATH for that script
 - `corepack pnpm run test:root-scripts`: PASS, 165 tests

@@ -2,7 +2,7 @@
 codex_context: true
 priority: P0
 scope: repository
-last_verified: 2026-07-01
+last_verified: 2026-07-02
 ---
 
 # Project Brief
@@ -45,7 +45,7 @@ Top-level areas:
 
 ## Current Verified State
 
-Verified on 2026-07-01 KST:
+Verified on 2026-07-02 KST:
 
 - Root package manager: `pnpm@10.0.0`.
 - Node engine: `>=20.11.0 <25`.
@@ -83,11 +83,16 @@ Verified on 2026-07-01 KST:
   See
   `docs/codex/14_EXTERNAL_RELEASE_EVIDENCE.md` and
   `release/release-targets.json`.
-- Release readiness finds `git`, Cloudflare account evidence, Neon project
-  evidence, and workspace-local EAS CLI evidence. The local
-  `check:external-integrations` script still warns that `wrangler`, `gh`,
-  `neon`, and `neonctl` are not on its PATH, while release readiness treats
-  missing `gh`/Neon CLI as WARN when connector evidence proves account access.
+- Release readiness currently reports `PASS=156`, `BLOCKED=49`, `WARN=2`,
+  `TOTAL=207`, or 75.4% by checked gate count. This is not production
+  readiness because the blocked gates still include runtime secrets,
+  Cloudflare resources, database smoke/rollback proof, public URL proof, and
+  native mobile build/E2E/store-submit proof.
+- Release readiness finds `git`, Cloudflare Wrangler, Cloudflare account
+  evidence, Neon project evidence, and workspace-local EAS CLI evidence. The
+  local `check:external-integrations` script currently warns only that `gh`,
+  `neon`, and `neonctl` are not on PATH. Release readiness treats missing
+  `gh`/Neon CLI as WARN when connector evidence proves account access.
   Workspace-local
   `apps/mobile/node_modules/.bin/eas.CMD` runs `eas-cli/20.4.0`. Android `adb`
   and `emulator` are detected through Android SDK lookup; local release remains
