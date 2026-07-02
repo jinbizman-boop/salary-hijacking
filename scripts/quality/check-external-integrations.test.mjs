@@ -42,6 +42,7 @@ name: Deploy API
 on: [workflow_dispatch]
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch'
     environment:
       name: api-staging
     env:
@@ -59,6 +60,7 @@ env:
   CLOUDFLARE_ADMIN_WORKER_NAME: salary-hijacking-admin
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch'
     environment:
       name: admin-preview
     env:
@@ -1110,6 +1112,124 @@ jobs:
     assert.equal(result.ok, false);
     assert.match(result.failures.join("\n"), /hard-coded sensitive value/i);
     assert.match(result.failures.join("\n"), /CLOUDFLARE_API_TOKEN/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when API/Admin deploy jobs can run on push", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/deploy-api.yml": `
+name: Deploy API
+on: [push, workflow_dispatch]
+jobs:
+  deploy-api:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    env:
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - run: pnpm exec wrangler deploy --dry-run
+      - run: pnpm exec wrangler deploy --env staging
+`,
+      ".github/workflows/deploy-admin.yml": `
+name: Deploy Admin
+on: [push, workflow_dispatch]
+env:
+  ADMIN_OPEN_NEXT_DIR: apps/admin/.open-next
+  CLOUDFLARE_ADMIN_WORKER_NAME: salary-hijacking-admin
+jobs:
+  deploy-admin:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    env:
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - run: pnpm --dir apps/admin build:cloudflare
+      - run: pnpm --dir apps/admin exec wrangler deploy --env staging --config wrangler.jsonc
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /deploy job must be workflow_dispatch-only/i,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when API/Admin deploy jobs omit workflow_dispatch-only gating", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/deploy-api.yml": `
+name: Deploy API
+on: [push, workflow_dispatch]
+jobs:
+  deploy-api:
+    env:
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - run: pnpm exec wrangler deploy --dry-run
+      - run: pnpm exec wrangler deploy --env staging
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /deploy job must be workflow_dispatch-only/i,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when API/Admin deploy workflows contain mojibake", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/deploy-api.yml": `
+name: Deploy API
+on: [workflow_dispatch]
+jobs:
+  deploy-api:
+    if: github.event_name == 'workflow_dispatch'
+    env:
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - run: pnpm exec wrangler deploy --dry-run
+      - run: pnpm exec wrangler deploy --env staging
+      - run: echo "湲됱뿬?⑹튂 API 諛고룷"
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /mojibake/i);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

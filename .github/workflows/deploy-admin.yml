@@ -308,7 +308,7 @@ jobs:
     timeout-minutes: 25
     needs:
       - verify-admin
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
 
     environment:
       name: ${{ (github.ref_name == 'main' || inputs.deploy_target == 'production') && 'admin-production' || 'admin-preview' }}

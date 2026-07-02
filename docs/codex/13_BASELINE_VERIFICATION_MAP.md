@@ -21,7 +21,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - workspace quality: PASS, `corepack pnpm run quality` completed 82 Turbo tasks
 - workspace build: PASS, `corepack pnpm run build` completed 12 Turbo tasks
 - local Git baseline: PASS, local Git metadata is initialized, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`, authenticated push to `origin/main` is proven, and release readiness rechecks local HEAD against `origin/main` when authenticated push proof is claimed, with a warning fallback to local `refs/remotes/origin/main` when live remote reads are unavailable in the local Node sandbox
-- root script tests: PASS, 196 tests after adding Android SDK tool detection
+- root script tests: PASS, 199 tests after adding Android SDK tool detection
   coverage and preserving no-secret release proof coverage
   collectors for database, runtime secrets, Cloudflare observations, mobile
   native build/store observations, public URLs, Cloudflare runtime proof
@@ -34,9 +34,10 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
   ChatGPT work summary docs, root Node test temp isolation/cleanup, generated
   junk cleanup including native EAS/Android/iOS build cache targets, Windows-safe
   cleanup retries for transient `EBUSY` locks, no-delete workspace disk
-  reporting, tracked proof example templates, missing/BOM Cloudflare observation
-  handling, UTF-8 BOM local proof handling for database and mobile native
-  collectors, and the guarded local Android E2E EAS build wrapper
+  reporting, API/Admin deploy workflow dispatch-only and mojibake guards,
+  tracked proof example templates, missing/BOM Cloudflare observation handling,
+  UTF-8 BOM local proof handling for database and mobile native collectors, and
+  the guarded local Android E2E EAS build wrapper
 - database local-safe validation: PASS, `corepack pnpm run db:validate`
   validated the checked-in DB package/schema/DDL bundle and is recorded as the
   migration validation release gate without storing runtime DB URLs, SQL output,
@@ -53,7 +54,7 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - mobile/API bootstrap, payroll current/recalculate, and profile/privacy-export contracts: aligned in current code; profile alias is covered by `services/api/tests/mobile-profile-contract.test.ts`, and manifest alignment is covered by `services/api/tests/mobile-route-manifest-contract.test.ts`
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
-- infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, release target mismatch risk, local release proof leakage risk, and repeated verification junk accumulation risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, ignored `release/*-proof.local.json`, ignored `release/*-observation.local.json`, tracked unverified no-secret example templates under `release/examples`, explicit `RETRO-DB` protection, `release/release-targets.json`, GitHub write/push proof, `GITHUB_REPOSITORY`, `CF_ADMIN_WORKER_NAME`, `git remote origin`, `clean:junk` generated-artifact cleanup, `disk:report` storage visibility, and runtime local HEAD to `origin/main` sync when push proof is claimed through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
+- infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, release target mismatch risk, local release proof leakage risk, unsafe push-triggered deploy risk, and repeated verification junk accumulation risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, ignored `release/*-proof.local.json`, ignored `release/*-observation.local.json`, tracked unverified no-secret example templates under `release/examples`, explicit `RETRO-DB` protection, `release/release-targets.json`, GitHub write/push proof, `GITHUB_REPOSITORY`, `CF_ADMIN_WORKER_NAME`, API/Admin workflow dispatch-only deployment, `git remote origin`, `clean:junk` generated-artifact cleanup, `disk:report` storage visibility, and runtime local HEAD to `origin/main` sync when push proof is claimed through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
 - public release remains blocked by missing runtime secret presence evidence,
   missing Salary Hijacking Cloudflare Worker/R2/Queue/DNS/certificate runtime
   evidence, missing mobile native EAS build/E2E/store-submit evidence, missing

@@ -343,6 +343,11 @@ const RELEASE_METADATA_FILES = [
   "release/database-evidence.json",
 ];
 
+const DEPLOY_WORKFLOW_FILES = [
+  ".github/workflows/deploy-api.yml",
+  ".github/workflows/deploy-admin.yml",
+];
+
 const CODEX_STATUS_DOC_FILES = [
   "AGENTS.md",
   "docs/codex/01_PROJECT_BRIEF.md",
@@ -443,6 +448,15 @@ const UNSAFE_SENSITIVE_ASSIGNMENT = new RegExp(
 
 const PLACEHOLDER_OR_MOJIBAKE_PATTERN =
   /final script location|placeholder|not implemented|stub|coming soon|최종 파일 위치|최종 기준 파일|理|湲|�|疫/i;
+
+const DEPLOY_WORKFLOW_MOJIBAKE_PATTERN =
+  /湲됱뿬|諛고룷|寃곌낵|占|疫|筌|�|理쒖쥌/i;
+
+const PUSH_DEPLOY_IF_PATTERN =
+  /if:\s*(?:\$\{\{\s*)?[^#\r\n]*github\.event_name\s*==\s*['"]push['"][^#\r\n]*/i;
+
+const WORKFLOW_DISPATCH_DEPLOY_IF_PATTERN =
+  /if:\s*(?:\$\{\{\s*)?github\.event_name\s*==\s*['"]workflow_dispatch['"]\s*(?:\}\})?\s*$/im;
 
 const STALE_ANDROID_TOOL_BLOCKER_PATTERNS = [
   /Android\s+`?adb`?\s+and\s+`?emulator`?\s+remain blocking local release tools/i,
@@ -558,6 +572,37 @@ function checkReleaseMetadataText(rootDir, failures) {
         `${relativePath}: contains placeholder, mojibake, or non-release metadata marker`,
       );
     }
+  }
+}
+
+function checkDeployWorkflowText(rootDir, failures) {
+  for (const relativePath of DEPLOY_WORKFLOW_FILES) {
+    if (!fileExists(rootDir, relativePath)) continue;
+
+    const source = readText(rootDir, relativePath);
+    if (!DEPLOY_WORKFLOW_MOJIBAKE_PATTERN.test(source)) continue;
+
+    failures.push(`${relativePath}: contains deploy workflow mojibake text`);
+  }
+}
+
+function checkDeployWorkflowsManualOnly(rootDir, failures) {
+  for (const relativePath of DEPLOY_WORKFLOW_FILES) {
+    if (!fileExists(rootDir, relativePath)) continue;
+
+    const source = readText(rootDir, relativePath);
+    if (!source.includes("wrangler deploy --env")) continue;
+
+    if (
+      WORKFLOW_DISPATCH_DEPLOY_IF_PATTERN.test(source) &&
+      !PUSH_DEPLOY_IF_PATTERN.test(source)
+    ) {
+      continue;
+    }
+
+    failures.push(
+      `${relativePath}: deploy job must be workflow_dispatch-only until runtime secrets and release evidence are verified`,
+    );
   }
 }
 
@@ -1148,6 +1193,8 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkOperationalDocs(rootDir, failures);
   checkGitHubRepositoryPolicy(rootDir, failures);
   checkReleaseMetadataText(rootDir, failures);
+  checkDeployWorkflowText(rootDir, failures);
+  checkDeployWorkflowsManualOnly(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);

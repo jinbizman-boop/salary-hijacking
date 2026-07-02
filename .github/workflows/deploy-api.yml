@@ -31,7 +31,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy_target:
-        description: "배포 대상 환경"
+        description: "Deployment target"
         required: true
         default: "staging"
         type: choice
@@ -292,7 +292,7 @@ jobs:
     timeout-minutes: 25
     needs:
       - verify-api
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
 
     environment:
       name: ${{ (github.ref_name == 'main' || github.event.inputs.deploy_target == 'production') && 'api-production' || 'api-staging' }}
@@ -419,7 +419,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## 급여납치 API 배포 결과"
+            echo "## Salary Hijacking API deployment result"
             echo ""
             echo "- Workflow: $GITHUB_WORKFLOW"
             echo "- Repository: $GITHUB_REPOSITORY"
