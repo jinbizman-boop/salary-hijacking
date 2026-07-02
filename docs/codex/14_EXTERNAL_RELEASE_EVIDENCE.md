@@ -44,6 +44,7 @@ Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 Latest read-only spot check: 2026-07-01 17:12:13 KST.
 Latest public URL live proof check: 2026-07-02 12:27:18 KST.
 Latest Cloudflare runtime read-only proof check: 2026-07-02 12:33:42 KST.
+Latest Neon read-only project proof check: 2026-07-02 12:40:45 KST.
 
 GitHub:
 
@@ -139,6 +140,11 @@ Neon:
   `staging` branches, and read-write compute presence for both branches. Compute
   hosts and connection strings are intentionally not stored in this repository
   evidence.
+- A read-only Neon project search/fetch/compute check on 2026-07-02 12:40:45
+  KST again observed the `salary-hijacking` project, ready `main` and `staging`
+  branches, and read-write compute presence for both branches. Compute hosts,
+  connection strings, passwords, tokens, SQL output, and database URLs are
+  intentionally not stored in this repository evidence.
 - Project ID: `still-feather-22153967`.
 - Region: `aws-us-east-2`.
 - PostgreSQL version: `17`.
