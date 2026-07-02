@@ -62,6 +62,7 @@ test("preflight passes with local EAS CLI, Android SDK tools, and Android Studio
   const result = checkEasLocalAndroidBuildPrerequisites({
     androidToolHomeDir: rootDir,
     env: {
+      EXPO_TOKEN: "test-token",
       LOCALAPPDATA: localAppData,
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),
@@ -78,6 +79,43 @@ test("preflight passes with local EAS CLI, Android SDK tools, and Android Studio
   assert.match(result.env.PATH, /Android Studio/);
 });
 
+test("preflight fails before an expensive local build when Expo auth is unavailable", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+
+  writeMobileBuildFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = checkEasLocalAndroidBuildPrerequisites({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn() {
+      return { status: 1, stdout: "Not logged in", stderr: "" };
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join("\n"), /Expo account authentication/i);
+});
+
 test("preflight fails before an expensive local build when Java is unavailable", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
@@ -90,6 +128,7 @@ test("preflight fails before an expensive local build when Java is unavailable",
   const result = checkEasLocalAndroidBuildPrerequisites({
     androidToolHomeDir: rootDir,
     env: {
+      EXPO_TOKEN: "test-token",
       LOCALAPPDATA: localAppData,
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
     },
@@ -149,6 +188,7 @@ test("local build runner executes the Windows EAS command through the shell", ()
   const result = runEasLocalAndroidBuild({
     androidToolHomeDir: rootDir,
     env: {
+      EXPO_TOKEN: "test-token",
       LOCALAPPDATA: localAppData,
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),

@@ -13,6 +13,10 @@ import {
 } from "react-native";
 
 import officialBiLogo from "../../../assets/brand/salary-hijacking-platform-logo.png";
+import {
+  calculateOfflineDailyBudgetPreview,
+  parseKrwInputAmount,
+} from "../../features/budget/utils";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
 type ScreenKind =
@@ -25,6 +29,12 @@ type ScreenKind =
   | "login";
 
 type MoneyMetric = Readonly<{ label: string; value: string; tone?: "danger" }>;
+type VariableExpenseEntry = Readonly<{
+  amount: number;
+  icon: string;
+  id: string;
+  name: string;
+}>;
 type Mission = Readonly<{
   id: string;
   icon: string;
@@ -61,10 +71,10 @@ const fixedExpenses = [
   { name: "유튜브 프리미엄", amount: "15,000원", status: "납부완료" },
 ] as const;
 
-const variableExpenses = [
-  { name: "커피", amount: 2000, icon: appIcons.coffee },
-  { name: "점심", amount: 6500, icon: appIcons.meal },
-  { name: "편의점", amount: 4500, icon: appIcons.expense },
+const variableExpenses: readonly VariableExpenseEntry[] = [
+  { id: "coffee", name: "커피", amount: 2000, icon: appIcons.coffee },
+  { id: "lunch", name: "점심", amount: 6500, icon: appIcons.meal },
+  { id: "store", name: "편의점", amount: 4500, icon: appIcons.expense },
 ] as const;
 
 const missions: readonly Mission[] = [
@@ -565,7 +575,10 @@ export function CleanFintechPostDetailScreen(): React.ReactElement {
 }
 
 function SalaryHomeScreen(): React.ReactElement {
-  const [extraExpense, setExtraExpense] = useState("");
+  const [expenseDraft, setExpenseDraft] = useState("");
+  const [addedExpenses, setAddedExpenses] = useState<
+    readonly VariableExpenseEntry[]
+  >([]);
   const [toast, setToast] = useState(
     "서버 응답이 없을 때만 안전한 오프라인 미리보기를 보여줘요.",
   );
@@ -592,16 +605,52 @@ function SalaryHomeScreen(): React.ReactElement {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const extra = nonNegative(extraExpense);
-  const dailyLimit = 20000;
-  const used = 13000 + extra;
-  const remaining = dailyLimit - used;
-  const monthHijack = 1927000 - extra;
+  const preview = calculateOfflineDailyBudgetPreview({
+    addedExpenseAmounts: addedExpenses.map((item) => item.amount),
+    baseMonthHijack: 1_927_000,
+    baseMonthlyExpense: 773_000,
+    baseSpentToday: 13_000,
+    dailyLimit: 20_000,
+  });
+  const dailyLimit = preview.dailyLimit;
+  const used = preview.spentToday;
+  const remaining = preview.remainingToday;
+  const allVariableExpenses = [...variableExpenses, ...addedExpenses];
+
+  const handleAddExpense = (): void => {
+    const amount = parseKrwInputAmount(expenseDraft);
+    if (amount === null) {
+      setToast(
+        "0보다 큰 KRW 정수만 입력해 주세요. 음수와 소수점은 제외됩니다.",
+      );
+      return;
+    }
+
+    setAddedExpenses((current) => {
+      const nextIndex = current.length + 1;
+      return [
+        ...current,
+        {
+          amount,
+          icon: appIcons.expense,
+          id: `offline-expense-${nextIndex}-${amount}`,
+          name: `추가 지출 ${nextIndex}`,
+        },
+      ];
+    });
+    setExpenseDraft("");
+    setToast(
+      `${formatMoney(amount)}원 지출을 오늘 쓴 돈에 추가했어요. 서버 동기화 전 오프라인 미리보기입니다.`,
+    );
+  };
 
   const metrics: readonly MoneyMetric[] = [
     { label: "수령금액", value: "2,700,000원" },
-    { label: "지출금액", value: `${formatMoney(773000 + extra)}원` },
-    { label: "이번 달 납치금액", value: `${formatMoney(monthHijack)}원` },
+    { label: "지출금액", value: `${formatMoney(preview.monthlyExpense)}원` },
+    {
+      label: "이번 달 납치금액",
+      value: `${formatMoney(preview.monthHijack)}원`,
+    },
     { label: "다음 급여일 D-day", value: "D-14" },
   ];
 
@@ -646,19 +695,18 @@ function SalaryHomeScreen(): React.ReactElement {
             accessibilityLabel="지출 추가 금액"
             inputMode="numeric"
             keyboardType="number-pad"
-            onChangeText={setExtraExpense}
+            maxLength={12}
+            onChangeText={setExpenseDraft}
+            onSubmitEditing={handleAddExpense}
             placeholder="예: 5000"
             placeholderTextColor={theme.color.text.disabled}
+            returnKeyType="done"
             style={styles.input}
-            value={extraExpense}
+            value={expenseDraft}
           />
           <Pressable
             accessibilityRole="button"
-            onPress={() =>
-              setToast(
-                "지출 추가하기: 사용금액, 남은금액, 납치금액을 즉시 다시 계산했어요.",
-              )
-            }
+            onPress={handleAddExpense}
             style={styles.primaryButton}
           >
             <Text style={styles.primaryButtonText}>지출 추가하기</Text>
@@ -680,9 +728,9 @@ function SalaryHomeScreen(): React.ReactElement {
       <AdSlot />
       <SectionCard>
         <Text style={styles.sectionTitle}>오늘 쓴 돈</Text>
-        {variableExpenses.map((item) => (
+        {allVariableExpenses.map((item) => (
           <ListRow
-            key={item.name}
+            key={item.id}
             icon={item.icon}
             title={item.name}
             meta={`${formatMoney(item.amount)}원`}

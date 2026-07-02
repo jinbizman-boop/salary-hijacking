@@ -62,10 +62,10 @@ Do not convert large screen files to a new architecture without a scoped plan.
 
 ## Current Verification
 
-Commands run on 2026-06-29:
+Commands run on 2026-07-02:
 
 - `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
-- `pnpm.cmd --filter @salary-hijacking/mobile run test`: PASS, 24 suites and 77 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 25 suites and 89 tests
 - `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup
@@ -83,8 +83,9 @@ Detox now has a repository-level execution contract:
   `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`.
 - `build:e2e:android:preflight` runs
   `scripts/eas-local-android-build.mjs --check` and verifies local EAS CLI,
-  Android SDK tools, the EAS `e2e` APK profile, and a usable Java runtime
-  without exposing token values.
+  Expo authentication via trusted `EXPO_TOKEN` or `eas whoami`, Android SDK
+  tools, the EAS `e2e` APK profile, and a usable Java runtime without exposing
+  token values.
 - `build:e2e:android:local` runs through
   `scripts/eas-local-android-build.mjs`, which sets `JAVA_HOME`/`PATH` to the
   Android Studio bundled JBR when Java is not on the shell PATH, then invokes
@@ -114,13 +115,15 @@ The current E2E blocker is local native binary/proof, not missing Detox config:
   `apps/mobile` failed because the local Detox iOS app was missing at
   `apps/mobile/build/e2e/ios/salaryhijacking.app`.
 - On 2026-07-02, `corepack pnpm --filter @salary-hijacking/mobile run
-build:e2e:android:preflight` passed on this PC, detecting
+build:e2e:android:preflight` now fails fast because Expo account
+  authentication is unavailable. It still detects
   `C:\Program Files\Android\Android Studio\jbr` as Java and
-  `C:\Users\Telos_PC_17\AppData\Local\Android\Sdk` as the Android SDK root.
+  `C:\Users\Telos_PC_17\AppData\Local\Android\Sdk` as the Android SDK root, but
+  `eas login` or `EXPO_TOKEN` from a trusted secret store is required before
+  attempting the local EAS Android E2E APK build.
 - On 2026-07-02, `corepack pnpm --filter @salary-hijacking/mobile run
-build:e2e:android:local` reached EAS CLI and then failed because an Expo user
-  account is required: run `eas login` or provide `EXPO_TOKEN` through a trusted
-  secret store. No E2E APK was produced.
+build:e2e:android:local` remains blocked by the same Expo account
+  authentication requirement. No E2E APK was produced.
 - No local Android E2E APK at `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` has been verified.
 - No local iOS Detox app at `apps/mobile/build/e2e/ios/salaryhijacking.app`
   has been verified.

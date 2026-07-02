@@ -1,7 +1,9 @@
 import {
   calculateBudgetMetrics,
+  calculateOfflineDailyBudgetPreview,
   formatKrw,
   normalizeKrwAmount,
+  parseKrwInputAmount,
   redactBudgetError,
 } from "../utils";
 
@@ -31,6 +33,37 @@ describe("budget utils", () => {
     expect(normalizeKrwAmount(Number.POSITIVE_INFINITY)).toBe(0);
     expect(normalizeKrwAmount(Number.MAX_SAFE_INTEGER + 1)).toBe(0);
     expect(normalizeKrwAmount(12_345)).toBe(12_345);
+  });
+
+  it("parses positive KRW input for interactive expense entry", () => {
+    expect(parseKrwInputAmount("5,000")).toBe(5_000);
+    expect(parseKrwInputAmount(" 12000 ")).toBe(12_000);
+    expect(parseKrwInputAmount("0")).toBeNull();
+    expect(parseKrwInputAmount("-1000")).toBeNull();
+    expect(parseKrwInputAmount("1.5")).toBeNull();
+    expect(parseKrwInputAmount("abc500")).toBeNull();
+    expect(parseKrwInputAmount(String(Number.MAX_SAFE_INTEGER + 1))).toBeNull();
+  });
+
+  it("calculates an offline daily-budget preview from accumulated added expenses", () => {
+    expect(
+      calculateOfflineDailyBudgetPreview({
+        addedExpenseAmounts: [5_000, 3_500, -1, 1.25],
+        baseMonthHijack: 1_927_000,
+        baseMonthlyExpense: 773_000,
+        baseSpentToday: 13_000,
+        dailyLimit: 20_000,
+      }),
+    ).toEqual({
+      addedExpenseTotal: 8_500,
+      dailyLimit: 20_000,
+      monthHijack: 1_918_500,
+      monthlyExpense: 781_500,
+      overspentAmount: 1_500,
+      remainingToday: -1_500,
+      spentToday: 21_500,
+      usageRate: 107.5,
+    });
   });
 
   it("formats KRW and removes sensitive values from user-facing errors", () => {

@@ -124,6 +124,32 @@ const validateEasProfile = ({ mobileRootDir, profile }) => {
   return [];
 };
 
+const hasExpoToken = (env) =>
+  typeof env.EXPO_TOKEN === "string" && env.EXPO_TOKEN.trim().length > 0;
+
+const checkEasAuthentication = ({
+  command,
+  env,
+  mobileRootDir,
+  platform,
+  spawn,
+}) => {
+  if (hasExpoToken(env)) return { ok: true, source: "EXPO_TOKEN" };
+  if (!command) return { ok: false, source: "" };
+
+  const result = spawn(command, ["whoami"], {
+    cwd: mobileRootDir,
+    encoding: "utf8",
+    env,
+    shell: isWindows(platform),
+    stdio: "pipe",
+    windowsHide: true,
+  });
+
+  if (result.status === 0) return { ok: true, source: "eas whoami" };
+  return { ok: false, source: "" };
+};
+
 export const buildEasLocalAndroidBuildInvocation = ({
   mobileRootDir = defaultMobileRootDir(),
   output = "build/e2e/android/salary-hijacking-e2e.apk",
@@ -156,6 +182,7 @@ export const checkEasLocalAndroidBuildPrerequisites = ({
   pathValue = env.PATH ?? env.Path ?? "",
   platform = process.platform,
   profile = "e2e",
+  spawn = spawnSync,
 } = {}) => {
   const failures = [];
   failures.push(...validateEasProfile({ mobileRootDir, profile }));
@@ -169,6 +196,19 @@ export const checkEasLocalAndroidBuildPrerequisites = ({
   if (!invocation.command) {
     failures.push(
       "Workspace-local EAS CLI is missing under apps/mobile/node_modules/.bin.",
+    );
+  }
+
+  const auth = checkEasAuthentication({
+    command: invocation.command,
+    env,
+    mobileRootDir,
+    platform,
+    spawn,
+  });
+  if (!auth.ok) {
+    failures.push(
+      "Expo account authentication is unavailable. Run `eas login` or provide `EXPO_TOKEN` through a trusted secret store before running the local Android E2E build.",
     );
   }
 
@@ -222,6 +262,7 @@ export const checkEasLocalAndroidBuildPrerequisites = ({
         }
       : { ...env },
     failures,
+    expoAuthSource: auth.source,
     javaHome,
     ok: failures.length === 0,
     sdkRoot,
@@ -255,9 +296,11 @@ const parseArgs = (argv) => {
 
 const printPreflight = (result) => {
   if (result.ok) {
-    console.log("[eas-local-android] preflight passed.");
-    console.log(`[eas-local-android] JAVA_HOME=${result.javaHome}`);
-    console.log(`[eas-local-android] ANDROID_SDK_ROOT=${result.sdkRoot}`);
+    process.stdout.write("[eas-local-android] preflight passed.\n");
+    process.stdout.write(`[eas-local-android] JAVA_HOME=${result.javaHome}\n`);
+    process.stdout.write(
+      `[eas-local-android] ANDROID_SDK_ROOT=${result.sdkRoot}\n`,
+    );
     return;
   }
 

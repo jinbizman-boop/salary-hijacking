@@ -10,6 +10,25 @@ const KRW_FORMATTER = new Intl.NumberFormat("ko-KR", {
 const SENSITIVE_ERROR_PATTERN =
   /\b(password|token|secret|authorization|cookie|email|phone|account|card|salary|payroll|income|expense|savings|amount|hijack|loan|debt|push|fcm)\b|비밀번호|토큰|이메일|전화|계좌|카드|급여|월급|지출|저축|금액|납치|대출|부채|푸시/iu;
 
+type OfflineDailyBudgetPreviewInput = Readonly<{
+  addedExpenseAmounts?: readonly unknown[];
+  baseMonthHijack: unknown;
+  baseMonthlyExpense: unknown;
+  baseSpentToday: unknown;
+  dailyLimit: unknown;
+}>;
+
+type OfflineDailyBudgetPreview = Readonly<{
+  addedExpenseTotal: number;
+  dailyLimit: number;
+  monthHijack: number;
+  monthlyExpense: number;
+  overspentAmount: number;
+  remainingToday: number;
+  spentToday: number;
+  usageRate: number;
+}>;
+
 export function normalizeKrwAmount(value: unknown): number {
   return typeof value === "number" &&
     Number.isSafeInteger(value) &&
@@ -17,6 +36,14 @@ export function normalizeKrwAmount(value: unknown): number {
     value >= 0
     ? value
     : 0;
+}
+
+export function parseKrwInputAmount(value: string): number | null {
+  const normalized = value.trim().replace(/,/g, "");
+  if (!/^[0-9]+$/u.test(normalized)) return null;
+
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
 export function calculateBudgetMetrics(
@@ -37,6 +64,40 @@ export function calculateBudgetMetrics(
   return {
     remainingToday: Math.max(0, dailyLimit - spentToday),
     overspentAmount: Math.max(0, spentToday - dailyLimit),
+    usageRate,
+  };
+}
+
+export function calculateOfflineDailyBudgetPreview(
+  input: OfflineDailyBudgetPreviewInput,
+): OfflineDailyBudgetPreview {
+  const dailyLimit = normalizeKrwAmount(input.dailyLimit);
+  const baseSpentToday = normalizeKrwAmount(input.baseSpentToday);
+  const baseMonthlyExpense = normalizeKrwAmount(input.baseMonthlyExpense);
+  const baseMonthHijack = normalizeKrwAmount(input.baseMonthHijack);
+  const addedExpenseTotal = (input.addedExpenseAmounts ?? []).reduce<number>(
+    (total, value) => total + normalizeKrwAmount(value),
+    0,
+  );
+  const spentToday = baseSpentToday + addedExpenseTotal;
+  const remainingToday = dailyLimit - spentToday;
+  const usageRate =
+    dailyLimit > 0
+      ? Math.min(
+          MAX_BUDGET_USAGE_RATE,
+          Math.round(((spentToday / dailyLimit) * 100 + Number.EPSILON) * 100) /
+            100,
+        )
+      : 0;
+
+  return {
+    addedExpenseTotal,
+    dailyLimit,
+    monthHijack: Math.max(0, baseMonthHijack - addedExpenseTotal),
+    monthlyExpense: baseMonthlyExpense + addedExpenseTotal,
+    overspentAmount: Math.max(0, spentToday - dailyLimit),
+    remainingToday,
+    spentToday,
     usageRate,
   };
 }
