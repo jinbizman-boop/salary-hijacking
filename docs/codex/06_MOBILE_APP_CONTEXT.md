@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-02:
 
 - `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 25 suites and 93 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 26 suites and 96 tests
 - `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup
@@ -180,6 +180,11 @@ As of 2026-07-02, Salary Home also hydrates its daily-budget base values from
 The fallback remains a non-authoritative UI preview; the `/api/v1/daily-budgets`
 server response remains the source of truth for daily limit, spent amount, and
 remaining amount.
+As of 2026-07-02, Plan also uses `PayrollApiClient.getCurrent()` and
+`PayrollApiClient.recalculate()` through `/api/v1/payroll/current` and
+`/api/v1/payroll/recalculate` before falling back to the existing local preview.
+The client-side preview remains non-authoritative; the server payroll
+calculation response remains the source of truth for the payroll plan summary.
 `scripts/release/check-release-readiness.mjs` also blocks release readiness when
 the bundled official BI logo is missing, invalid PNG, or SHA256-mismatched, or
 when any required Freesentation font asset is missing, not TTF/OTF-shaped, or

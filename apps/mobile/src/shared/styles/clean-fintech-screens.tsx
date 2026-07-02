@@ -18,7 +18,14 @@ import {
   parseKrwInputAmount,
 } from "../../features/budget/utils";
 import type { DailyBudgetSnapshot } from "../../features/budget/types";
-import { createMobileBudgetApi } from "../api/mobile-api";
+import type {
+  PayrollCalculation,
+  PayrollPlanSnapshot,
+} from "../../features/payroll/types";
+import {
+  createMobileBudgetApi,
+  createMobilePayrollApi,
+} from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
 type ScreenKind =
@@ -820,13 +827,107 @@ function SalaryHomeScreen(): React.ReactElement {
 }
 
 function PlanScreen(): React.ReactElement {
+  const payrollApi = useMemo(() => createMobilePayrollApi(), []);
   const [salary, setSalary] = useState("2700000");
   const [expense, setExpense] = useState("773000");
   const [target, setTarget] = useState("2200000");
-  const expectedHijack = Math.max(
+  const [serverPayrollPlan, setServerPayrollPlan] =
+    useState<PayrollPlanSnapshot | null>(null);
+  const [serverPayrollCalculation, setServerPayrollCalculation] =
+    useState<PayrollCalculation | null>(null);
+  const [planToast, setPlanToast] = useState(
+    "서버 급여 계획이 없으면 로컬 미리보기로 계산해요.",
+  );
+  const [recalculatingPlan, setRecalculatingPlan] = useState(false);
+
+  const applyServerPayrollPlan = useCallback(
+    (nextPlan: PayrollPlanSnapshot): void => {
+      setServerPayrollPlan(nextPlan);
+      setServerPayrollCalculation(nextPlan.calculation);
+      setSalary(String(nextPlan.payrollAmountMinor));
+      setExpense(String(nextPlan.fixedExpenseTotalMinor));
+      setTarget(String(nextPlan.fixedSavingsTotalMinor));
+      setPlanToast("서버 급여 계획을 불러왔어요.");
+    },
+    [],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    const currentPlanPromise = payrollApi.getCurrent();
+    void currentPlanPromise
+      .then((nextPlan) => {
+        if (cancelled || !nextPlan) return;
+        applyServerPayrollPlan(nextPlan);
+      })
+      .catch(() => {
+        if (!cancelled) setPlanToast("서버 연결 전 로컬 미리보기로 계산해요.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [applyServerPayrollPlan, payrollApi]);
+
+  const refreshServerPayrollCalculation =
+    useCallback(async (): Promise<void> => {
+      const payrollAmountMinor = nonNegative(salary);
+      if (payrollAmountMinor <= 0) {
+        setServerPayrollCalculation(null);
+        setPlanToast("급여는 0보다 큰 KRW 정수로 입력해 주세요.");
+        return;
+      }
+
+      try {
+        setRecalculatingPlan(true);
+        const result = await payrollApi.recalculate({
+          alreadySpentAmountMinor: 0,
+          carryOverAmountMinor: serverPayrollPlan?.carryOverAmountMinor ?? 0,
+          emergencyBufferMinor: serverPayrollPlan?.emergencyBufferMinor ?? 0,
+          fixedExpenseTotalMinor: nonNegative(expense),
+          fixedSavingsTotalMinor: nonNegative(target),
+          overwritePlan: false,
+          payrollAmountMinor,
+          periodEndDate: serverPayrollPlan?.periodEndDate ?? "2026-07-31",
+          periodStartDate: serverPayrollPlan?.periodStartDate ?? "2026-07-01",
+          planId: serverPayrollPlan?.planId ?? null,
+          reason: "mobile plan preview",
+          variableExpenseReserveMinor:
+            serverPayrollPlan?.variableExpenseReserveMinor ?? 0,
+        });
+        setServerPayrollCalculation(result.calculation);
+        if (result.updatedPlan) applyServerPayrollPlan(result.updatedPlan);
+        setPlanToast("서버 기준으로 급여 계획을 다시 계산했어요.");
+      } catch {
+        setServerPayrollCalculation(null);
+        setPlanToast("서버 재계산 전 로컬 미리보기로 계산해요.");
+      } finally {
+        setRecalculatingPlan(false);
+      }
+    }, [
+      applyServerPayrollPlan,
+      expense,
+      payrollApi,
+      salary,
+      serverPayrollPlan,
+      target,
+    ]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void refreshServerPayrollCalculation();
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [refreshServerPayrollCalculation]);
+
+  const localExpectedHijack = Math.max(
     0,
     nonNegative(salary) - nonNegative(expense),
   );
+  const expectedHijack =
+    serverPayrollCalculation?.availableForDailyBudgetMinor ??
+    localExpectedHijack;
   const achievement = Math.min(
     100,
     Math.round((expectedHijack / Math.max(1, nonNegative(target))) * 100),
@@ -840,7 +941,7 @@ function PlanScreen(): React.ReactElement {
             <Text style={styles.sectionTitle}>목표 달성률</Text>
             <Text style={styles.money}>{achievement}%</Text>
           </View>
-          <StatusPill label="서버 기준" />
+          <StatusPill label={recalculatingPlan ? "재계산" : "서버 기준"} />
         </View>
         <ProgressBar value={achievement} />
         <Text style={styles.bodyText}>
@@ -848,6 +949,7 @@ function PlanScreen(): React.ReactElement {
           {formatMoney(nonNegative(target))}원
         </Text>
       </SectionCard>
+      <Toast message={planToast} />
       <PlanInputCard
         label="급여 계획"
         value={salary}
