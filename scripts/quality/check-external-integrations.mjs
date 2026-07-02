@@ -734,6 +734,56 @@ function checkCloudflareRuntimeProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkDatabaseCommandProofWorkflow(rootDir, failures) {
+  const relativePath = ".github/workflows/release.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredParts = [
+    "corepack pnpm run db:validate",
+    "corepack pnpm run release:database-proof",
+    "release/database-command-proof.local.json",
+    "release/database-proof.local.json",
+    "database-command-proof-${{ github.run_attempt }}",
+    "migrationValidationVerified",
+    "stagingMigrationExecuted",
+    "productionMigrationDryRunVerified",
+    "stagingSeedExecuted",
+    "productionSeedExecuted",
+    "stagingApiSmokeVerified",
+    "adminSmokeVerified",
+    "serverAuthoritySmokeVerified",
+    "privacySmokeVerified",
+    "rollbackRehearsalVerified",
+    "containsSecretValues",
+    "secretsRedacted",
+    "schemaVersion",
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: must collect and upload no-secret database-command-proof evidence including ${requiredPart}`,
+    );
+  }
+
+  const artifactName = "database-command-proof-${{ github.run_attempt }}";
+  const artifactIndex = source.indexOf(artifactName);
+  if (artifactIndex !== -1) {
+    const uploadStepWindow = source.slice(
+      Math.max(0, artifactIndex - 400),
+      artifactIndex + 400,
+    );
+
+    if (/\bif:\s*always\(\)/.test(uploadStepWindow)) {
+      failures.push(
+        `${relativePath}: database-command-proof artifact upload must not run after validation failure`,
+      );
+    }
+  }
+}
+
 function checkRuntimeSecretProofWorkflow(rootDir, failures) {
   const relativePath = ".github/workflows/release.yml";
   if (!fileExists(rootDir, relativePath)) return;
@@ -1055,6 +1105,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
   checkCloudflareRuntimeProofWorkflow(rootDir, failures);
+  checkDatabaseCommandProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);
   checkRuntimeSecretProofWorkflow(rootDir, failures);
   checkReleaseDependencyAuditWorkflow(rootDir, failures);

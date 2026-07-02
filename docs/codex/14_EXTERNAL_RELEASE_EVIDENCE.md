@@ -302,6 +302,17 @@ user/financial data keys before writing local or tracked evidence. When database
 proof claims `neon.projectMatched=true`, the local proof must carry
 `neon.expectedProjectHint="salary-hijacking"`, and the tracked evidence
 generator compares that hint with `release/release-targets.json`.
+The release workflow now collects, validates, and uploads a no-secret
+`database-command-proof-*` artifact from `release/database-proof.local.json`.
+It records only the local-safe `db:validate` exit code into the ignored
+`release/database-command-proof.local.json`, keeps staging migration, staging
+seed, production migration dry-run, API/Admin/server-authority/privacy smoke,
+and rollback booleans false until separately proven, then runs
+`corepack pnpm run release:database-proof` to normalize the artifact. The
+artifact upload must run only after schema, redaction, no-secret, Neon,
+migration, seed, smoke, rollback, and production-seed-block validation passes.
+It is CI proof material only and does not prove Neon runtime execution,
+staging migration, seed, smoke, rollback, or tracked DB release readiness.
 Update `release/mobile-native-evidence.json` only with no-secret booleans for
 Android production AAB builds, Android native E2E or equivalent device-farm
 runs, Google Play submit dry-runs, iOS production builds, and App Store submit

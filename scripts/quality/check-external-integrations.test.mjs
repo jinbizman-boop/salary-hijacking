@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -137,6 +137,15 @@ jobs:
         with:
           name: cloudflare-runtime-proof-\${{ github.run_attempt }}
           path: release/cloudflare-proof.local.json
+      - run: |
+          corepack pnpm run db:validate || true
+          node -e "require('node:fs').writeFileSync('release/database-command-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, neon: { expectedProjectHint: 'salary-hijacking', projectMatched: false, mainBranchReady: false, stagingBranchReady: false }, commands: { migrationValidation: { verified: true, exitCode: 0, environment: 'local-safe' }, stagingMigration: { verified: false, exitCode: 1, environment: 'staging' }, productionMigrationDryRun: { verified: false, exitCode: 1, environment: 'production', dryRun: true }, stagingSeed: { verified: false, exitCode: 1, environment: 'staging', syntheticDataOnly: true }, stagingApiSmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, adminSmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, serverAuthoritySmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, privacySmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, rollbackRehearsal: { verified: false, exitCode: 1, environment: 'staging-drill' } }, seeds: { productionSeedExecuted: false } }))"
+          corepack pnpm run release:database-proof || true
+          node -e "const p=JSON.parse(require('node:fs').readFileSync('release/database-proof.local.json','utf8')); if (p.schemaVersion !== 1 || p.secretsRedacted !== true || p.containsSecretValues !== false || !p.migrations || typeof p.migrations.migrationValidationVerified !== 'boolean' || typeof p.migrations.stagingMigrationExecuted !== 'boolean' || typeof p.migrations.productionMigrationDryRunVerified !== 'boolean' || !p.seeds || typeof p.seeds.stagingSeedExecuted !== 'boolean' || p.seeds.productionSeedExecuted !== false || !p.smoke || typeof p.smoke.stagingApiSmokeVerified !== 'boolean' || typeof p.smoke.adminSmokeVerified !== 'boolean' || typeof p.smoke.serverAuthoritySmokeVerified !== 'boolean' || typeof p.smoke.privacySmokeVerified !== 'boolean' || !p.rollback || typeof p.rollback.rollbackRehearsalVerified !== 'boolean') process.exit(1)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: database-command-proof-\${{ github.run_attempt }}
+          path: release/database-proof.local.json
       - run: |
           corepack pnpm run release:public-url-proof || true
           node -e "const p=JSON.parse(require('node:fs').readFileSync('release/public-url-proof.local.json','utf8')); if (p.schemaVersion !== 1 || p.secretsRedacted !== true || p.containsSecretValues !== false || !p.checkedUrls) process.exit(1)"
@@ -909,6 +918,15 @@ jobs:
           name: cloudflare-runtime-proof-\${{ github.run_attempt }}
           path: release/cloudflare-proof.local.json
       - run: |
+          corepack pnpm run db:validate || true
+          node -e "require('node:fs').writeFileSync('release/database-command-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, neon: { expectedProjectHint: 'salary-hijacking', projectMatched: false, mainBranchReady: false, stagingBranchReady: false }, commands: { migrationValidation: { verified: true, exitCode: 0, environment: 'local-safe' }, stagingMigration: { verified: false, exitCode: 1, environment: 'staging' }, productionMigrationDryRun: { verified: false, exitCode: 1, environment: 'production', dryRun: true }, stagingSeed: { verified: false, exitCode: 1, environment: 'staging', syntheticDataOnly: true }, stagingApiSmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, adminSmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, serverAuthoritySmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, privacySmoke: { verified: false, exitCode: 1, environment: 'staging', noRawPayloadStored: true }, rollbackRehearsal: { verified: false, exitCode: 1, environment: 'staging-drill' } }, seeds: { productionSeedExecuted: false } }))"
+          corepack pnpm run release:database-proof || true
+          node -e "const p=JSON.parse(require('node:fs').readFileSync('release/database-proof.local.json','utf8')); if (p.schemaVersion !== 1 || p.secretsRedacted !== true || p.containsSecretValues !== false || !p.migrations || typeof p.migrations.migrationValidationVerified !== 'boolean' || typeof p.migrations.stagingMigrationExecuted !== 'boolean' || typeof p.migrations.productionMigrationDryRunVerified !== 'boolean' || !p.seeds || typeof p.seeds.stagingSeedExecuted !== 'boolean' || p.seeds.productionSeedExecuted !== false || !p.smoke || typeof p.smoke.stagingApiSmokeVerified !== 'boolean' || typeof p.smoke.adminSmokeVerified !== 'boolean' || typeof p.smoke.serverAuthoritySmokeVerified !== 'boolean' || typeof p.smoke.privacySmokeVerified !== 'boolean' || !p.rollback || typeof p.rollback.rollbackRehearsalVerified !== 'boolean') process.exit(1)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: database-command-proof-\${{ github.run_attempt }}
+          path: release/database-proof.local.json
+      - run: |
           corepack pnpm run release:public-url-proof || true
           node -e "const p=JSON.parse(require('node:fs').readFileSync('release/public-url-proof.local.json','utf8')); if (p.schemaVersion !== 1 || p.secretsRedacted !== true || p.containsSecretValues !== false || !p.checkedUrls) process.exit(1)"
       - uses: actions/upload-artifact@v4
@@ -1492,6 +1510,41 @@ jobs:
     assert.match(
       result.failures.join("\n"),
       /release\/cloudflare-proof\.local\.json/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when release workflow does not upload no-secret database command proof", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir);
+    const workflowPath = path.join(rootDir, ".github/workflows/release.yml");
+    const workflow = await readFile(workflowPath, "utf8");
+    await writeFile(
+      workflowPath,
+      workflow.replace(
+        /      - run: \|\r?\n          corepack pnpm run db:validate[\s\S]*?          path: release\/database-proof\.local\.json\r?\n/,
+        "",
+      ),
+    );
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      allowMissingCommands: true,
+      env: {
+        GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
+        CF_ADMIN_WORKER_NAME: "salary-hijacking-admin",
+      },
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /database-command-proof/);
+    assert.match(
+      result.failures.join("\n"),
+      /release\/database-proof\.local\.json/,
     );
   } finally {
     await rm(rootDir, { recursive: true, force: true });

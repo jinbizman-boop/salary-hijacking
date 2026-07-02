@@ -258,6 +258,19 @@ sensitive financial or user data keys before writing the tracked evidence file.
 It also rejects local proof whose Neon `expectedProjectHint` does not match
 `release/release-targets.json`.
 
+The release workflow collects and uploads a no-secret
+`database-command-proof-*` artifact from `release/database-proof.local.json`.
+It first records the local-safe `db:validate` exit code into the ignored
+`release/database-command-proof.local.json`, keeps staging migration, staging
+seed, production migration dry-run, API/Admin/server-authority/privacy smoke,
+and rollback proof false until separately proven, then normalizes the proof with
+`corepack pnpm run release:database-proof`. The workflow validates schema
+version 1, redaction, no-secret payloads, required Neon/migration/seed/smoke/
+rollback booleans, and the production-seed block before uploading. This artifact
+does not connect to Neon, run staging migrations, seed data, execute smoke
+requests, rehearse rollback, or automatically mark
+`release/database-evidence.json` verified.
+
 Safe public URL evidence generation command:
 
 - `corepack pnpm run release:public-url-evidence`
