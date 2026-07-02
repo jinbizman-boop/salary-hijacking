@@ -115,9 +115,9 @@ Last checked by Codex on 2026-07-02 KST:
 - `node scripts\release\capture-mobile-clean-fintech-screenshots.mjs`: PASS, regenerated five 430x932 screenshots and one 1024x500 Google Play feature graphic
 - `corepack pnpm audit --audit-level=high --prod=false --json`: PASS after lockfile-only override refresh, with 0 low, 0 moderate, 0 high, and 0 critical vulnerabilities reported for the current lockfile
 - `node scripts\release\check-release-readiness.mjs --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, Android/iOS native build/E2E/store-submit evidence, and missing `eas` on PATH after generated dependency cleanup; `release/release-targets.json`, mobile app identity evidence, external GitHub evidence, local `origin`, authenticated push evidence, current local HEAD to `origin/main` sync, Neon project evidence, public URL target evidence, and no-secret dependency security audit evidence align with `jinbizman-boop/salary-hijacking`
-- `corepack pnpm run format:check`: PASS
-- `corepack pnpm run quality`: PASS, 82 Turbo tasks
-- `corepack pnpm run build`: PASS, 12 Turbo tasks
+- `corepack pnpm run format:check`: previously PASS before generated dependency cleanup; current no-`node_modules` run on 2026-07-02 cannot execute local `prettier` until dependencies are restored with `corepack pnpm install`
+- `corepack pnpm run quality`: previously PASS before generated dependency cleanup, 82 Turbo tasks
+- `corepack pnpm run build`: previously PASS before generated dependency cleanup, 12 Turbo tasks
 - `node scripts\check-detox-env.mjs android.emu.debug` from `apps/mobile`: FAIL only because the local Detox Android E2E APK `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` is missing; local `adb` and `emulator` are now detected through Android SDK tool lookup
 - `corepack pnpm run test:e2e`: still BLOCKED at `@salary-hijacking/mobile#test:e2e` until an E2E APK is built or equivalent native device-farm proof is recorded without secrets
 - Dependency vulnerability audit is represented by `release/security-audit-evidence.json`; the current lockfile has no-secret registry audit evidence with zero low/moderate/high/critical vulnerabilities, and the audit must be rerun after dependency changes before release
