@@ -22,8 +22,15 @@ import type {
   PayrollCalculation,
   PayrollPlanSnapshot,
 } from "../../features/payroll/types";
+import type {
+  NotificationItem,
+  NotificationPriority,
+  NotificationStatus,
+  NotificationType,
+} from "../../features/notifications/types";
 import {
   createMobileBudgetApi,
+  createMobileNotificationsApi,
   createMobilePayrollApi,
 } from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
@@ -73,6 +80,15 @@ type LevelDetailConfig = Readonly<{
   progressLabel: string;
   progressValue: number;
 }>;
+type NotificationScreenItem = Readonly<{
+  id: string;
+  icon: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  priority: NotificationPriority;
+  status: NotificationStatus;
+}>;
 
 const fixedExpenses = [
   { name: "ChatGPT", amount: "30,000원", status: "납부완료" },
@@ -84,6 +100,72 @@ const variableExpenses: readonly VariableExpenseEntry[] = [
   { id: "coffee", name: "커피", amount: 2000, icon: appIcons.coffee },
   { id: "lunch", name: "점심", amount: 6500, icon: appIcons.meal },
   { id: "store", name: "편의점", amount: 4500, icon: appIcons.expense },
+] as const;
+
+const fallbackNotifications: readonly NotificationScreenItem[] = [
+  {
+    id: "fallback_goal",
+    icon: "🏅",
+    title: "목표 달성",
+    message: "누적 납치금액 5,780,000원 달성",
+    type: "SAVINGS_GOAL",
+    priority: "HIGH",
+    status: "UNREAD",
+  },
+  {
+    id: "fallback_budget",
+    icon: appIcons.warning,
+    title: "예산 초과 주의",
+    message: "오늘 남은 예산이 0원 아래로 내려갈 수 있어요.",
+    type: "BUDGET_WARNING",
+    priority: "HIGH",
+    status: "UNREAD",
+  },
+  {
+    id: "fallback_reward",
+    icon: appIcons.reward,
+    title: "이벤트 포인트",
+    message: "납치금액 달성 이벤트 500P 지급 예정",
+    type: "NOTICE",
+    priority: "NORMAL",
+    status: "READ",
+  },
+  {
+    id: "fallback_reading",
+    icon: appIcons.reading,
+    title: "독서 루틴",
+    message: "오늘 추천 도서를 10분만 읽어볼까요?",
+    type: "CONTENT_RECOMMENDATION",
+    priority: "NORMAL",
+    status: "READ",
+  },
+  {
+    id: "fallback_news",
+    icon: appIcons.news,
+    title: "뉴스 루틴",
+    message: "경제 뉴스 3개로 하루 감각을 열어요.",
+    type: "CONTENT_RECOMMENDATION",
+    priority: "NORMAL",
+    status: "READ",
+  },
+  {
+    id: "fallback_english",
+    icon: appIcons.english,
+    title: "영어 루틴",
+    message: "출퇴근 5문장 듣기 미션이 기다려요.",
+    type: "CONTENT_RECOMMENDATION",
+    priority: "NORMAL",
+    status: "READ",
+  },
+  {
+    id: "fallback_health",
+    icon: appIcons.health,
+    title: "건강 루틴",
+    message: "20분 홈트로 소비 통제 체력을 채워요.",
+    type: "CONTENT_RECOMMENDATION",
+    priority: "NORMAL",
+    status: "READ",
+  },
 ] as const;
 
 const missions: readonly Mission[] = [
@@ -1040,51 +1122,166 @@ function LevelScreen(): React.ReactElement {
   );
 }
 
+function notificationIcon(type: NotificationType): string {
+  if (type === "BUDGET_WARNING" || type === "BUDGET_EXCEEDED") {
+    return appIcons.warning;
+  }
+  if (type === "SAVINGS_GOAL") return "🏅";
+  if (type === "LEVEL_UP") return appIcons.level;
+  if (type === "COMMUNITY") return appIcons.community;
+  if (type === "CONTENT_RECOMMENDATION") return appIcons.reading;
+  if (type === "SECURITY") return "🔒";
+  if (type === "AD_PARTNER") return appIcons.reward;
+  return appIcons.notification;
+}
+
+function toNotificationScreenItem(
+  item: NotificationItem,
+): NotificationScreenItem {
+  return {
+    id: item.notificationId,
+    icon: notificationIcon(item.type),
+    title: item.title,
+    message: item.message,
+    type: item.type,
+    priority: item.priority,
+    status: item.status,
+  };
+}
+
+function isImportantNotification(item: NotificationScreenItem): boolean {
+  return (
+    item.priority === "HIGH" ||
+    item.priority === "URGENT" ||
+    item.type === "PAYDAY" ||
+    item.type === "PAYMENT_DUE" ||
+    item.type === "BUDGET_WARNING" ||
+    item.type === "BUDGET_EXCEEDED" ||
+    item.type === "SAVINGS_GOAL" ||
+    item.type === "SECURITY" ||
+    item.type === "NOTICE"
+  );
+}
+
 function NotificationsScreen(): React.ReactElement {
+  const notificationsApi = useMemo(() => createMobileNotificationsApi(), []);
+  const [serverNotifications, setServerNotifications] = useState<
+    readonly NotificationScreenItem[]
+  >(fallbackNotifications);
+  const [unreadCount, setUnreadCount] = useState(
+    fallbackNotifications.filter((item) => item.status === "UNREAD").length,
+  );
+  const [syncLabel, setSyncLabel] = useState("서버 알림을 확인하는 중이에요.");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateNotifications(): Promise<void> {
+      try {
+        const [listResult, unreadResult] = await Promise.all([
+          notificationsApi.list({ page: 1, pageSize: 20 }),
+          notificationsApi.unreadCount(),
+        ]);
+        if (!mounted) return;
+
+        const nextNotifications = listResult.items
+          .filter((item) => item.status !== "DELETED")
+          .map(toNotificationScreenItem);
+        setServerNotifications(
+          nextNotifications.length ? nextNotifications : fallbackNotifications,
+        );
+        setUnreadCount(unreadResult.unreadCount);
+        setSyncLabel("서버 알림 기준으로 동기화됐어요.");
+      } catch {
+        if (!mounted) return;
+        setServerNotifications(fallbackNotifications);
+        setUnreadCount(
+          fallbackNotifications.filter((item) => item.status === "UNREAD")
+            .length,
+        );
+        setSyncLabel("서버 연결 전이라 앱 기준 예시 알림을 보여줘요.");
+      }
+    }
+
+    void hydrateNotifications();
+
+    return () => {
+      mounted = false;
+    };
+  }, [notificationsApi]);
+
+  const importantNotifications = serverNotifications.filter(
+    isImportantNotification,
+  );
+  const routineNotifications = serverNotifications.filter(
+    (item) => !isImportantNotification(item),
+  );
+
+  const markRead = useCallback(
+    (item: NotificationScreenItem) => {
+      if (item.status !== "UNREAD") return;
+      setServerNotifications((current) =>
+        current.map((candidate) =>
+          candidate.id === item.id
+            ? { ...candidate, status: "READ" }
+            : candidate,
+        ),
+      );
+      setUnreadCount((current) => Math.max(0, current - 1));
+      void notificationsApi.markRead(item.id).catch(() => {
+        setSyncLabel("읽음 처리는 서버 연결 후 다시 확인해 주세요.");
+      });
+    },
+    [notificationsApi],
+  );
+
   return (
     <AppScreen title="알림" subtitle="새로운 알림이 있어요">
+      <Toast message={`${syncLabel} · 읽지 않은 알림 ${unreadCount}개`} />
       <SectionCard>
-        <Text style={styles.sectionTitle}>중요 알림</Text>
-        <ListRow
-          icon="🏅"
-          title="목표 달성"
-          meta="누적 납치금액 5,780,000원 달성"
-          unread
-        />
-        <ListRow
-          icon={appIcons.warning}
-          title="예산 초과 주의"
-          meta="오늘 남은 예산이 0원 아래로 내려갈 수 있어요."
-          unread
-        />
-        <ListRow
-          icon={appIcons.reward}
-          title="이벤트 포인트"
-          meta="납치금액 달성 이벤트 500P 지급 예정"
-        />
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>중요 알림</Text>
+          <StatusPill label={`${unreadCount} unread`} />
+        </View>
+        {importantNotifications.length ? (
+          importantNotifications.map((item) => (
+            <ListRow
+              icon={item.icon}
+              key={item.id}
+              meta={item.message}
+              onPress={() => markRead(item)}
+              title={item.title}
+              unread={item.status === "UNREAD"}
+            />
+          ))
+        ) : (
+          <ListRow
+            icon={appIcons.success}
+            meta="예산 초과, 보안, 목표 달성 같은 긴급 알림이 없습니다."
+            title="중요 알림 없음"
+          />
+        )}
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>루틴 알림</Text>
-        <ListRow
-          icon={appIcons.reading}
-          title="독서 루틴"
-          meta="오늘 추천 도서를 10분만 읽어볼까요?"
-        />
-        <ListRow
-          icon={appIcons.news}
-          title="뉴스 루틴"
-          meta="경제 뉴스 3개로 하루 감각을 열어요."
-        />
-        <ListRow
-          icon={appIcons.english}
-          title="영어 루틴"
-          meta="출퇴근 5문장 듣기 미션이 기다려요."
-        />
-        <ListRow
-          icon={appIcons.health}
-          title="건강 루틴"
-          meta="20분 홈트로 소비 통제 체력을 채워요."
-        />
+        {routineNotifications.length ? (
+          routineNotifications.map((item) => (
+            <ListRow
+              icon={item.icon}
+              key={item.id}
+              meta={item.message}
+              onPress={() => markRead(item)}
+              title={item.title}
+              unread={item.status === "UNREAD"}
+            />
+          ))
+        ) : (
+          <ListRow
+            icon={appIcons.notification}
+            meta="오늘 확인할 독서, 뉴스, 영어, 건강 루틴 알림이 없습니다."
+            title="루틴 알림 없음"
+          />
+        )}
       </SectionCard>
       <GuardBox />
     </AppScreen>
@@ -1394,21 +1591,39 @@ function ListRow({
   icon,
   title,
   meta,
+  onPress,
   unread = false,
 }: Readonly<{
   icon: string;
   title: string;
   meta: string;
+  onPress?: () => void;
   unread?: boolean;
 }>): React.ReactElement {
-  return (
-    <View style={[styles.listRow, unread ? styles.unreadRow : null]}>
+  const content = (
+    <>
       <Text style={styles.listIcon}>{icon}</Text>
       <View style={styles.flex}>
         <Text style={styles.listTitle}>{title}</Text>
         <Text style={styles.listMeta}>{meta}</Text>
       </View>
       {unread ? <View style={styles.greenDot} /> : null}
+    </>
+  );
+  if (onPress) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        onPress={onPress}
+        style={[styles.listRow, unread ? styles.unreadRow : null]}
+      >
+        {content}
+      </Pressable>
+    );
+  }
+  return (
+    <View style={[styles.listRow, unread ? styles.unreadRow : null]}>
+      {content}
     </View>
   );
 }

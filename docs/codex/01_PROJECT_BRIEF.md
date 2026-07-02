@@ -56,8 +56,9 @@ Verified on 2026-07-02 KST:
 - Mobile package typecheck, lint, format check, and Jest tests pass.
 - Mobile Clean Fintech UI contract testing now explicitly guards the official
   BI logo, Freesentation fonts, five-tab IA, daily-budget screenshot anchor, and
-  core Korean launch copy.
-- Mobile Jest currently reports 26 passing suites and 96 passing tests.
+  core Korean launch copy, including the server-first notifications API
+  hydration contract.
+- Mobile Jest currently reports 27 passing suites and 100 passing tests.
 - API package tests currently report 12 passing files and 21 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation

@@ -211,6 +211,22 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps notification screen hydrated from the server before static fallback", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
+
+    expect(mobileApi).toContain("createMobileNotificationsApi");
+    expect(cleanScreens).toContain("createMobileNotificationsApi");
+    expect(cleanScreens).toContain("serverNotifications");
+    expect(cleanScreens).toContain("fallbackNotifications");
+    expect(cleanScreens).toContain("notificationsApi.list");
+    expect(cleanScreens).toContain("notificationsApi.unreadCount");
+    expect(cleanScreens).toContain("중요 알림");
+    expect(cleanScreens).toContain("루틴 알림");
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

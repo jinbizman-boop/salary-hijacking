@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-02:
 
 - `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 26 suites and 96 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 27 suites and 100 tests
 - `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
 - `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup
@@ -185,6 +185,12 @@ As of 2026-07-02, Plan also uses `PayrollApiClient.getCurrent()` and
 `/api/v1/payroll/recalculate` before falling back to the existing local preview.
 The client-side preview remains non-authoritative; the server payroll
 calculation response remains the source of truth for the payroll plan summary.
+As of 2026-07-02, Notifications also use `NotificationsApiClient.list()` and
+`NotificationsApiClient.unreadCount()` through `/api/v1/notifications` before
+falling back to the existing static example notifications. The mobile client
+normalizes server notification payloads, refuses sensitive financial exposure
+flags, sends privacy-safe headers, and marks local unread state immediately
+while delegating persisted read state to the server.
 `scripts/release/check-release-readiness.mjs` also blocks release readiness when
 the bundled official BI logo is missing, invalid PNG, or SHA256-mismatched, or
 when any required Freesentation font asset is missing, not TTF/OTF-shaped, or
