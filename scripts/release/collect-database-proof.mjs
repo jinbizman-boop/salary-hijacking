@@ -68,7 +68,9 @@ const readJsonFile = (filePath) => {
   if (!fs.existsSync(absolutePath)) {
     throw new Error(`${filePath} is missing`);
   }
-  return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
+  return JSON.parse(
+    fs.readFileSync(absolutePath, "utf8").replace(/^\uFEFF/, ""),
+  );
 };
 
 const containsRawSensitiveValue = (value) => {

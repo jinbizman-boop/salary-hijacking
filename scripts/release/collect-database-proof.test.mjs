@@ -164,6 +164,27 @@ test("keeps unverified gates false when command proof is incomplete", () => {
   assert.equal(proof.smoke.noRawFinancialDataInSmokePayloads, false);
 });
 
+test("accepts UTF-8 BOM in local database command proof files", () => {
+  const rootDir = makeRoot();
+  const inputPath = path.join(
+    rootDir,
+    "release",
+    "database-command-proof.local.json",
+  );
+  fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+  fs.writeFileSync(
+    inputPath,
+    `\uFEFF${JSON.stringify(completeInput, null, 2)}\n`,
+    "utf8",
+  );
+
+  const proof = collectDatabaseProof({ inputPath, writeFile: false });
+
+  assert.equal(proof.neon.expectedProjectHint, "salary-hijacking");
+  assert.equal(proof.migrations.migrationValidationVerified, true);
+  assert.equal(proof.rollback.rollbackRehearsalVerified, true);
+});
+
 test("rejects database command proof containing raw database URLs or secrets", () => {
   const rootDir = makeRoot();
   const inputPath = writeJson(

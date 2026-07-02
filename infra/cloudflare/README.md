@@ -125,18 +125,22 @@ Read-only connector evidence is tracked in:
 
 When an operator has verified Cloudflare resource presence in the dashboard,
 connector, or Wrangler output, record only names and booleans in
-`release/cloudflare-proof.local.json`, then run
-`corepack pnpm run release:cloudflare-evidence`. The local proof file is ignored
-by Git and must not contain Cloudflare tokens, Worker secret values, database
-URLs, private keys, certificate materials, service account JSON, or copied
-request/response payloads.
+`release/cloudflare-observation.local.json`, run
+`corepack pnpm run release:cloudflare-proof`, then run
+`corepack pnpm run release:cloudflare-evidence`. The local observation and proof
+files are ignored by Git and must not contain Cloudflare tokens, Worker secret
+values, database URLs, private keys, certificate materials, service account
+JSON, or copied request/response payloads. If the observation file is absent,
+the proof collector writes blocked no-secret proof with all runtime booleans
+false; that is useful for automation continuity but does not prove runtime
+readiness.
 
 As of the latest snapshot, Cloudflare connector access is visible, but the
 Salary Hijacking Workers, including the Admin OpenNext Worker, R2 buckets,
 Queues, custom domains, TLS certificates, cron triggers, and Worker secret
 bindings are not yet proven in the connected account.
 
-Latest read-only check on 2026-07-01 12:24:28 KST:
+Latest read-only check on 2026-07-02 14:30:22 KST:
 
 - Workers list: empty.
 - Queues list: empty.

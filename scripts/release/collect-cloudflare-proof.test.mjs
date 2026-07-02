@@ -144,6 +144,76 @@ test("keeps proof false for incomplete observations", () => {
   assert.equal(proof.networking.certificatesVerified, false);
 });
 
+test("writes blocked no-secret proof when Cloudflare observation file is missing", () => {
+  const rootDir = makeRoot();
+  const inputPath = path.join(
+    rootDir,
+    "release",
+    "cloudflare-observation.local.json",
+  );
+  const outputPath = path.join(
+    rootDir,
+    "release",
+    "cloudflare-proof.local.json",
+  );
+
+  const proof = collectCloudflareProof({
+    inputPath,
+    outputPath,
+    expectedWorkers,
+    expectedAdminWorker: "salary-hijacking-admin",
+    expectedDomains,
+    now: () => new Date("2026-07-02T05:40:00.000Z"),
+  });
+
+  assert.equal(proof.schemaVersion, 1);
+  assert.equal(proof.observedAt, "2026-07-02T05:40:00.000Z");
+  assert.equal(proof.secretsRedacted, true);
+  assert.equal(proof.containsSecretValues, false);
+  assert.deepEqual(proof.workers.observedWorkers, []);
+  assert.equal(proof.workers.productionDeployVerified, false);
+  assert.equal(proof.workers.adminWorkerVerified, false);
+  assert.equal(proof.resources.r2BucketsVerified, false);
+  assert.equal(proof.resources.queuesVerified, false);
+  assert.equal(proof.resources.cronTriggersVerified, false);
+  assert.equal(proof.resources.workerSecretBindingsVerified, false);
+  assert.equal(proof.networking.customDomainsVerified, false);
+  assert.equal(proof.networking.certificatesVerified, false);
+  assert.deepEqual(proof.networking.expectedDomains, expectedDomains);
+
+  const written = fs.readFileSync(outputPath, "utf8");
+  assert.doesNotMatch(
+    written,
+    /cf_live_token_value|retrogames|-----BEGIN [A-Z ]*PRIVATE KEY-----/i,
+  );
+});
+
+test("accepts UTF-8 BOM in local Cloudflare observation files", () => {
+  const rootDir = makeRoot();
+  const inputPath = path.join(
+    rootDir,
+    "release",
+    "cloudflare-observation.local.json",
+  );
+  fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+  fs.writeFileSync(
+    inputPath,
+    `\uFEFF${JSON.stringify(completeObservation, null, 2)}\n`,
+    "utf8",
+  );
+
+  const proof = collectCloudflareProof({
+    inputPath,
+    expectedWorkers,
+    expectedAdminWorker: "salary-hijacking-admin",
+    expectedDomains,
+    writeFile: false,
+  });
+
+  assert.equal(proof.workers.productionDeployVerified, true);
+  assert.equal(proof.workers.adminWorkerVerified, true);
+});
+
 test("rejects observations containing raw Cloudflare or secret values", () => {
   const rootDir = makeRoot();
   const inputPath = writeJson(

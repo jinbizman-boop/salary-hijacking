@@ -2,7 +2,7 @@
 codex_context: true
 priority: P0
 scope: release-external-evidence
-last_verified: 2026-07-01
+last_verified: 2026-07-02
 ---
 
 # External Release Evidence
@@ -36,14 +36,14 @@ template into an ignored `release/*.local.json` path must not be treated as
 proof until the values are backed by provider console, CI, or safe command
 evidence.
 
-## 2026-07-01 Connector Snapshot
+## 2026-07-02 Connector Snapshot
 
 Latest connector refresh: 2026-07-01 13:36:54 KST.
 Latest Git remote verification refresh: 2026-07-01 14:35:42 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 Latest read-only spot check: 2026-07-01 17:12:13 KST.
-Latest public URL live proof check: 2026-07-02 12:27:18 KST.
-Latest Cloudflare runtime read-only proof check: 2026-07-02 12:33:42 KST.
+Latest public URL live proof check: 2026-07-02 14:31:46 KST.
+Latest Cloudflare runtime read-only proof check: 2026-07-02 14:30:22 KST.
 Latest Neon read-only project proof check: 2026-07-02 12:40:45 KST.
 Latest local-safe DB validation proof check: 2026-07-02 KST.
 
@@ -85,7 +85,7 @@ Cloudflare:
   2026-07-01 13:36:54 KST.
 - A later read-only spot check on 2026-07-01 17:12:13 KST also returned zero
   Workers and zero Queues.
-- A read-only Cloudflare runtime proof check on 2026-07-02 12:33:42 KST again
+- A read-only Cloudflare runtime proof check on 2026-07-02 14:30:22 KST again
   observed zero Workers, zero Queues, no `salaryhijacking.com` zone, no Salary
   Hijacking Pages project, and no active TLS certificate proof for the expected
   Salary Hijacking hostnames.
@@ -131,7 +131,7 @@ build:cloudflare` failed fast at the repository preflight because OpenNext
   reachability has been verified.
 - Dry-run verification does not prove Worker resource creation, DNS readiness,
   runtime secrets, queues, R2 buckets, or successful production deployment.
-- A live no-secret public URL proof check on 2026-07-02 12:27:18 KST recorded
+- A live no-secret public URL proof check on 2026-07-02 14:31:46 KST recorded
   `false` booleans for landing, privacy, support, and terms reachability, CSP
   and privacy header proof, Korean copy, store-review URL alignment, and
   sensitive-data non-exposure. The ignored local proof file does not store raw
@@ -253,7 +253,11 @@ observations in `release/cloudflare-observation.local.json`, then
 Cloudflare credentials, Worker script bodies, binding values, certificate
 material, private keys, copied runtime payloads, secret values, unrelated
 Worker names, and unrelated custom-domain or TLS certificate hostnames before
-writing local or tracked evidence. Release readiness also
+writing local or tracked evidence. If the ignored local observation file is
+missing, the collector writes a blocked no-secret proof with all runtime
+booleans false instead of throwing before evidence generation; a verified
+runtime claim still requires real read-only provider or deployment evidence.
+Release readiness also
 independently blocks tracked Cloudflare runtime evidence when `observedWorkers`
 contains names outside the Salary Hijacking release target set or when
 `workers.expectedWorkers` drifts from `release/release-targets.json`. It also

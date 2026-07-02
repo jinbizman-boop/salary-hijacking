@@ -131,6 +131,27 @@ test("keeps release proof false for incomplete observations", () => {
   assert.equal(proof.ios.storeSubmitDryRunVerified, false);
 });
 
+test("accepts UTF-8 BOM in local mobile native observation files", () => {
+  const rootDir = makeRoot();
+  const inputPath = path.join(
+    rootDir,
+    "release",
+    "mobile-native-observation.local.json",
+  );
+  fs.mkdirSync(path.dirname(inputPath), { recursive: true });
+  fs.writeFileSync(
+    inputPath,
+    `\uFEFF${JSON.stringify(completeObservation, null, 2)}\n`,
+    "utf8",
+  );
+
+  const proof = collectMobileNativeProof({ inputPath, writeFile: false });
+
+  assert.equal(proof.android.productionBuildVerified, true);
+  assert.equal(proof.android.nativeE2eVerified, true);
+  assert.equal(proof.ios.productionBuildVerified, true);
+});
+
 test("rejects verified observations for an unrelated mobile app identity", () => {
   const rootDir = makeRoot();
   const inputPath = writeJson(

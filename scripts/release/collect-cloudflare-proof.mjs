@@ -18,12 +18,15 @@ const DEFAULT_OUTPUT_PATH = "release/cloudflare-proof.local.json";
 const resolveFromCwd = (filePath) =>
   path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
 
-const readJsonFile = (filePath) => {
+const readJsonFile = (filePath, { missingFallback } = {}) => {
   const absolutePath = resolveFromCwd(filePath);
   if (!fs.existsSync(absolutePath)) {
+    if (typeof missingFallback === "function") return missingFallback();
     throw new Error(`${filePath} is missing`);
   }
-  return JSON.parse(fs.readFileSync(absolutePath, "utf8"));
+  return JSON.parse(
+    fs.readFileSync(absolutePath, "utf8").replace(/^\uFEFF/, ""),
+  );
 };
 
 const section = (value, key) => (isPlainObject(value?.[key]) ? value[key] : {});
@@ -47,6 +50,30 @@ const normalizeExpectedWorkers = (expectedWorkers) =>
 
 const normalizeExpectedDomains = (expectedDomains) =>
   uniqueStrings([...DEFAULT_EXPECTED_DOMAINS, ...stringArray(expectedDomains)]);
+
+const buildDefaultBlockedObservation = () => ({
+  schemaVersion: 1,
+  secretsRedacted: true,
+  containsSecretValues: false,
+  workers: {
+    observedWorkers: [],
+    productionDeployVerified: false,
+  },
+  resources: {
+    r2BucketsVerified: false,
+    r2ApiReadBlockedByAccountActivation: false,
+    r2ReadErrorCode: "",
+    queuesVerified: false,
+    observedQueueCount: 0,
+    deadLetterQueuesVerified: false,
+    cronTriggersVerified: false,
+    workerSecretBindingsVerified: false,
+  },
+  networking: {
+    observedDomains: [],
+    activeTlsCertificates: [],
+  },
+});
 
 const validateObservation = (
   observation,
@@ -177,7 +204,9 @@ export const collectCloudflareProof = ({
   now = () => new Date(),
   writeFile = true,
 } = {}) => {
-  const observation = readJsonFile(inputPath);
+  const observation = readJsonFile(inputPath, {
+    missingFallback: buildDefaultBlockedObservation,
+  });
   const proof = buildCloudflareProof({
     observation,
     inputPath,

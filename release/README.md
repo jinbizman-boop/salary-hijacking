@@ -118,7 +118,10 @@ flags, and non-secret notes. It must not contain Cloudflare credentials, Worker
 script bodies, binding values, certificate material, private keys, API response
 payloads, or copied provider logs. The collector rejects observed custom-domain
 and TLS certificate hostnames outside the Salary Hijacking custom-domain set
-before writing local proof.
+before writing local proof. If the ignored local observation file is absent, the
+collector writes a blocked no-secret proof with all runtime booleans false so
+automation can continue to tracked evidence generation without making a false
+runtime readiness claim.
 
 The command creates or refreshes `release/cloudflare-runtime-evidence.json`
 from release targets and optional `release/cloudflare-proof.local.json`
