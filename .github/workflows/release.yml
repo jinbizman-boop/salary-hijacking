@@ -426,6 +426,55 @@ jobs:
       - name: Audit dependencies
         run: pnpm audit --audit-level high --prod=false
 
+      - name: Write no-secret dependency audit proof
+        run: |
+          set -euo pipefail
+
+          mkdir -p release
+
+          node <<'NODE'
+          const fs = require("fs");
+
+          const proof = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source: "GitHub Actions release workflow after successful pnpm audit; summary booleans only",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            audit: {
+              packageManager: "pnpm",
+              auditCommand: "pnpm audit --audit-level high --prod=false",
+              registryAuditVerified: true,
+              lockfileAudited: true,
+              productionDependenciesAudited: true,
+              devDependenciesAudited: true,
+              criticalVulnerabilities: 0,
+              highVulnerabilities: 0,
+              moderateVulnerabilities: null,
+              lowVulnerabilities: null,
+              noHighOrCriticalVulnerabilities: true,
+              note: "Release workflow audit exited successfully at high threshold; raw audit payload is intentionally not stored."
+            }
+          };
+
+          const serialized = JSON.stringify(proof);
+          if (/npm_[a-z0-9_-]{16,}|napi_[a-z0-9_-]{16,}|\/\/registry\.npmjs\.org\/:_authToken=|advisories|vulnerabilityDetails|registryResponse|dependencyPayload/i.test(serialized)) {
+            console.error("::error::Security audit proof contains forbidden secret or copied audit payload markers.");
+            process.exit(1);
+          }
+
+          fs.writeFileSync("release/security-audit-proof.local.json", `${JSON.stringify(proof, null, 2)}\n`);
+          console.log("Security audit proof is redacted and no-secret.");
+          NODE
+
+      - name: Upload no-secret dependency audit proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: release/security-audit-proof.local.json
+
       - name: Prepare release artifacts
         run: |
           set -euo pipefail

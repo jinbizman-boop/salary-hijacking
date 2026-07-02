@@ -117,6 +117,12 @@ jobs:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
       - run: pnpm audit --audit-level high --prod=false
+      - run: |
+          node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: security-audit-proof-\${{ github.run_attempt }}
+          path: release/security-audit-proof.local.json
       - run: gh release create v1.0.0 release-artifacts/*
 `,
     ".github/workflows/security-scan.yml": `
@@ -1341,6 +1347,108 @@ jobs:
     assert.equal(result.ok, false);
     assert.match(result.failures.join("\n"), /dependency audit/i);
     assert.match(result.failures.join("\n"), /--prod=false/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when release workflow does not upload no-secret security audit proof", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/release.yml": `
+name: release
+on: [workflow_dispatch]
+jobs:
+  release-quality-gate:
+    steps:
+      - run: corepack pnpm run release:secrets-proof
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-runtime-secret-proof-\${{ github.run_attempt }}
+          path: release/secrets-proof.local.json
+      - run: |
+          corepack pnpm run release:public-url-proof || true
+          node -e "const p=JSON.parse(require('node:fs').readFileSync('release/public-url-proof.local.json','utf8')); if (p.schemaVersion !== 1 || p.secretsRedacted !== true || p.containsSecretValues !== false || !p.checkedUrls) process.exit(1)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-url-proof-\${{ github.run_attempt }}
+          path: release/public-url-proof.local.json
+      - run: pnpm audit --audit-level high --prod=false
+      - run: gh release create v1.0.0 release-artifacts/*
+    env:
+      GH_TOKEN: \${{ github.token }}
+      GITHUB_TOKEN: \${{ github.token }}
+      SECRET_PROOF_STORE: "GitHub Actions runtime"
+      SECRET_PROOF_NAMES: "GITHUB_TOKEN,GITHUB_REPOSITORY"
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /security-audit-proof/);
+    assert.match(
+      result.failures.join("\n"),
+      /release\/security-audit-proof\.local\.json/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when security audit proof artifact upload is allowed after validation failure", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/release.yml": `
+name: release
+on: [workflow_dispatch]
+jobs:
+  release-quality-gate:
+    steps:
+      - run: corepack pnpm run release:secrets-proof
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-runtime-secret-proof-\${{ github.run_attempt }}
+          path: release/secrets-proof.local.json
+      - run: |
+          corepack pnpm run release:public-url-proof || true
+          node -e "const p=JSON.parse(require('node:fs').readFileSync('release/public-url-proof.local.json','utf8')); if (p.schemaVersion !== 1 || p.secretsRedacted !== true || p.containsSecretValues !== false || !p.checkedUrls) process.exit(1)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: public-url-proof-\${{ github.run_attempt }}
+          path: release/public-url-proof.local.json
+      - run: pnpm audit --audit-level high --prod=false
+      - run: |
+          node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-proof-\${{ github.run_attempt }}
+          path: release/security-audit-proof.local.json
+      - run: gh release create v1.0.0 release-artifacts/*
+    env:
+      GH_TOKEN: \${{ github.token }}
+      GITHUB_TOKEN: \${{ github.token }}
+      SECRET_PROOF_STORE: "GitHub Actions runtime"
+      SECRET_PROOF_NAMES: "GITHUB_TOKEN,GITHUB_REPOSITORY"
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /security-audit-proof/);
+    assert.match(result.failures.join("\n"), /validation failure/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

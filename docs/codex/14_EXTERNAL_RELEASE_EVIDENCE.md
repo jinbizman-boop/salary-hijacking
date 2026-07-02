@@ -351,6 +351,11 @@ ignored `release/security-audit-proof.local.json`, then running
 The release workflow must keep this same dev-inclusive audit scope and must not
 fall back to a production-only `--prod` audit before preparing release
 artifacts.
+After a successful audit, the workflow writes and uploads a no-secret
+`security-audit-proof-*` artifact from
+`release/security-audit-proof.local.json`; the artifact is CI proof material only
+and must be inspected or converted into tracked evidence without pasting raw
+audit payloads.
 Do not paste npm tokens, registry auth values, copied full audit JSON,
 advisories, registry responses, package payloads, dependency details, private
 keys, or provider logs. Release readiness blocks tracked security audit evidence

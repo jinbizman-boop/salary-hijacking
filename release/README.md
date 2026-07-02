@@ -287,6 +287,11 @@ network-enabled release environment:
 The release workflow must use the same dev-inclusive audit scope, not a
 production-only `--prod` audit, so the lockfile, production dependencies, and
 dev dependencies are covered before release artifacts are prepared.
+After a successful audit, the workflow writes and uploads a no-secret
+`security-audit-proof-*` artifact from
+`release/security-audit-proof.local.json`. This artifact stores summary booleans
+and high/critical counts only; it must not contain npm tokens, full audit JSON,
+advisories, registry responses, package payloads, or dependency details.
 
 Record only summary booleans and vulnerability counts in the ignored
 `release/security-audit-proof.local.json`. The local proof file must not contain

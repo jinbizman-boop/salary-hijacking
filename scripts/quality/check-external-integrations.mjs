@@ -695,6 +695,39 @@ function checkReleaseDependencyAuditWorkflow(rootDir, failures) {
       );
     }
   }
+
+  const requiredProofParts = [
+    "release/security-audit-proof.local.json",
+    "security-audit-proof-${{ github.run_attempt }}",
+    "registryAuditVerified",
+    "noHighOrCriticalVulnerabilities",
+    "criticalVulnerabilities",
+    "highVulnerabilities",
+    "containsSecretValues",
+  ];
+
+  for (const requiredPart of requiredProofParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: must collect and upload no-secret security-audit-proof evidence including ${requiredPart}`,
+    );
+  }
+
+  const artifactName = "security-audit-proof-${{ github.run_attempt }}";
+  const artifactIndex = source.indexOf(artifactName);
+  if (artifactIndex !== -1) {
+    const uploadStepWindow = source.slice(
+      Math.max(0, artifactIndex - 400),
+      artifactIndex + 400,
+    );
+
+    if (/\bif:\s*always\(\)/.test(uploadStepWindow)) {
+      failures.push(
+        `${relativePath}: security-audit-proof artifact upload must not run after validation failure`,
+      );
+    }
+  }
 }
 
 function checkMobileLaunchAssets(rootDir, failures) {
