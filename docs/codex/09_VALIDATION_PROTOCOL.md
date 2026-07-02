@@ -67,6 +67,7 @@ corepack pnpm run check:package-manager-scripts
 corepack pnpm run check:scripts
 corepack pnpm run check:external-integrations
 corepack pnpm run test:root-scripts
+corepack pnpm run clean:junk:dry-run
 corepack pnpm run check:release-readiness -- --soft
 corepack pnpm run quality
 corepack pnpm run build
@@ -79,6 +80,14 @@ prefers `D:\codex-temp\salary-hijacking` when available; otherwise it falls
 back to an OS temp subdirectory. Do not bypass this wrapper for full root script
 tests unless you also set a disposable `TEMP`/`TMP` path and clean it after the
 run.
+
+After verification-heavy work, run `corepack pnpm run clean:junk:dry-run` first
+to inspect regenerated disposable outputs. If it lists only generated
+artifacts, run `corepack pnpm run clean:junk`. This cleanup command removes
+repository caches/build outputs/local proof files and Salary Hijacking temp
+fixtures, but intentionally preserves `node_modules`, `.dev.vars`, tracked
+release evidence JSON, source files, docs, and migrations. Use the broader
+`clean` script only when dependency folders should also be removed.
 
 `check:release-readiness` verifies release artifacts, required root scripts, `.env.example` names, runtime secret presence, external connector evidence in `release/external-release-evidence.json`, required local CLI tools, database migration presence, unsafe public secret env names, and Git repository visibility. Use `--soft` for status reporting without failing the shell; omit `--soft` in a release gate so blockers fail the run.
 
