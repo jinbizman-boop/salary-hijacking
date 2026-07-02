@@ -4,7 +4,7 @@ priority: P0
 scope: apps/mobile
 applies_to:
   - apps/mobile/**
-last_verified: 2026-07-02
+last_verified: 2026-07-03
 ---
 
 # Mobile App Context
@@ -62,13 +62,14 @@ Do not convert large screen files to a new architecture without a scoped plan.
 
 ## Current Verification
 
-Commands run on 2026-07-02:
+Commands run on 2026-07-03:
 
-- `pnpm.cmd --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 27 suites and 100 tests
-- `pnpm.cmd --filter @salary-hijacking/mobile run lint`: PASS
-- `pnpm.cmd --filter @salary-hijacking/mobile run format:check`: PASS
-- `pnpm.cmd --filter @salary-hijacking/mobile run test:e2e`: FAIL at Android environment setup
+- `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 28 suites and 103 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
+- `corepack pnpm run format:check`: PASS
+- `corepack pnpm run build`: PASS, 12 Turbo tasks
+- `corepack pnpm --filter @salary-hijacking/mobile run test:e2e`: FAIL fast on missing Detox APK
 
 Detox now has a repository-level execution contract:
 
@@ -108,6 +109,7 @@ The current E2E blocker is local native binary/proof, not missing Detox config:
 - On 2026-07-01, `node scripts\check-detox-env.mjs android.emu.debug` failed
   only because the local E2E APK was missing:
   `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk`.
+
 - On 2026-07-02, `node scripts\check-detox-env.mjs android.emu.debug` from
   `apps/mobile` still failed only because that Android E2E APK was missing;
   local `adb` and `emulator` remained detected through Android SDK lookup.
@@ -132,6 +134,21 @@ build:e2e:android:local` remains blocked by the same Expo account
 - Tool availability alone is not native E2E proof; `nativeE2eVerified` must
   remain false until Detox or equivalent device-farm evidence is recorded
   without secrets.
+
+## LV UP Growth API Hydration
+
+As of 2026-07-03, the Clean Fintech LV UP screen calls the server Growth API
+before using local fallback missions:
+
+- `GET /api/v1/growth/dashboard` through `GrowthApiClient.getDashboard()`
+- `GET /api/v1/growth/tasks` through `GrowthApiClient.listTasks()`
+- `POST /api/v1/growth/tasks/{taskId}/progress` through
+  `GrowthApiClient.recordTaskProgress()`
+
+The mobile client sends privacy-safe headers, refuses responses that report raw
+financial data exposure, strips owner `userId` from the normalized dashboard,
+and treats local missions only as a non-authoritative fallback when no server
+tasks are available.
 
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only

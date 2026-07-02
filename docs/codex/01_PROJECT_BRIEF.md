@@ -2,7 +2,7 @@
 codex_context: true
 priority: P0
 scope: repository
-last_verified: 2026-07-02
+last_verified: 2026-07-03
 ---
 
 # Project Brief
@@ -45,7 +45,7 @@ Top-level areas:
 
 ## Current Verified State
 
-Verified on 2026-07-02 KST:
+Verified on 2026-07-03 KST:
 
 - Root package manager: `pnpm@10.0.0`.
 - Node engine: `>=20.11.0 <25`.
@@ -57,8 +57,8 @@ Verified on 2026-07-02 KST:
 - Mobile Clean Fintech UI contract testing now explicitly guards the official
   BI logo, Freesentation fonts, five-tab IA, daily-budget screenshot anchor, and
   core Korean launch copy, including the server-first notifications API
-  hydration contract.
-- Mobile Jest currently reports 27 passing suites and 100 passing tests.
+  hydration contract and LV UP Growth API hydration contract.
+- Mobile Jest currently reports 28 passing suites and 103 passing tests.
 - API package tests currently report 12 passing files and 21 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation

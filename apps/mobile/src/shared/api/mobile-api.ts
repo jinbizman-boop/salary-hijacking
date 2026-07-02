@@ -5,6 +5,8 @@ import type { BudgetApiClient } from "../../features/budget/types";
 import { createCommunityApi } from "../../features/community/api";
 import { createCommunityService } from "../../features/community/community.service";
 import type { CommunityService } from "../../features/community/community.types";
+import { createGrowthApi } from "../../features/level/api";
+import type { GrowthApiClient } from "../../features/level/types";
 import { createNotificationsApi } from "../../features/notifications/api";
 import type { NotificationsApiClient } from "../../features/notifications/types";
 import { createPayrollApi } from "../../features/payroll/api";
@@ -66,6 +68,19 @@ export function createMobileNotificationsApi(
   options: MobileApiFactoryOptions = {},
 ): NotificationsApiClient {
   return createNotificationsApi({
+    baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
+    platform: mobileClientPlatform(),
+    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    ...(options.createCorrelationId
+      ? { createCorrelationId: options.createCorrelationId }
+      : {}),
+  });
+}
+
+export function createMobileGrowthApi(
+  options: MobileApiFactoryOptions = {},
+): GrowthApiClient {
+  return createGrowthApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
     ...(options.fetcher ? { fetcher: options.fetcher } : {}),

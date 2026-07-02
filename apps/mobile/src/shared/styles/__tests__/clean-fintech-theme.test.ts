@@ -227,6 +227,22 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("루틴 알림");
   });
 
+  it("keeps LV UP screen hydrated from the server growth API before local fallback", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
+
+    expect(mobileApi).toContain("createMobileGrowthApi");
+    expect(cleanScreens).toContain("createMobileGrowthApi");
+    expect(cleanScreens).toContain("serverGrowthDashboard");
+    expect(cleanScreens).toContain("serverGrowthTasks");
+    expect(cleanScreens).toContain("growthApi.getDashboard");
+    expect(cleanScreens).toContain("growthApi.listTasks");
+    expect(cleanScreens).toContain("recordTaskProgress");
+    expect(cleanScreens).toContain("fallbackMissions");
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

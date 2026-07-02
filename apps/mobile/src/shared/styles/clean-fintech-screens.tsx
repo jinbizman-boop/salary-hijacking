@@ -18,6 +18,7 @@ import {
   parseKrwInputAmount,
 } from "../../features/budget/utils";
 import type { DailyBudgetSnapshot } from "../../features/budget/types";
+import type { GrowthDashboard, GrowthTask } from "../../features/level/types";
 import type {
   PayrollCalculation,
   PayrollPlanSnapshot,
@@ -30,6 +31,7 @@ import type {
 } from "../../features/notifications/types";
 import {
   createMobileBudgetApi,
+  createMobileGrowthApi,
   createMobileNotificationsApi,
   createMobilePayrollApi,
 } from "../api/mobile-api";
@@ -58,6 +60,10 @@ type Mission = Readonly<{
   description: string;
   routeLabel: string;
   xp: number;
+  progressCount: number;
+  serverTaskId: string | null;
+  status: "ACTIVE" | "COMPLETED";
+  targetCount: number;
 }>;
 type CommunityBoard =
   | "전체 게시판"
@@ -168,7 +174,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
   },
 ] as const;
 
-const missions: readonly Mission[] = [
+const fallbackMissions: readonly Mission[] = [
   {
     id: "reading",
     icon: appIcons.reading,
@@ -176,6 +182,10 @@ const missions: readonly Mission[] = [
     description: "AI 추천 도서 한 챕터를 읽고 오늘의 생각을 남겨요.",
     routeLabel: "독서 시작",
     xp: 30,
+    progressCount: 0,
+    serverTaskId: null,
+    status: "ACTIVE",
+    targetCount: 1,
   },
   {
     id: "news",
@@ -184,6 +194,10 @@ const missions: readonly Mission[] = [
     description: "경제/기술 뉴스 3개를 보고 돈의 흐름을 익혀요.",
     routeLabel: "뉴스 보기",
     xp: 25,
+    progressCount: 0,
+    serverTaskId: null,
+    status: "ACTIVE",
+    targetCount: 1,
   },
   {
     id: "english",
@@ -192,6 +206,10 @@ const missions: readonly Mission[] = [
     description: "듣기와 말하기 루틴으로 출퇴근 시간을 회수해요.",
     routeLabel: "영어 연습",
     xp: 25,
+    progressCount: 0,
+    serverTaskId: null,
+    status: "ACTIVE",
+    targetCount: 1,
   },
   {
     id: "health",
@@ -200,6 +218,10 @@ const missions: readonly Mission[] = [
     description: "20분 움직이고 소비 통제에 필요한 체력을 채워요.",
     routeLabel: "운동 완료",
     xp: 35,
+    progressCount: 1,
+    serverTaskId: null,
+    status: "COMPLETED",
+    targetCount: 1,
   },
 ] as const;
 
@@ -1065,15 +1087,157 @@ function PlanScreen(): React.ReactElement {
   );
 }
 
+function growthTaskIcon(task: GrowthTask): string {
+  if (task.taskType === "READING") return appIcons.reading;
+  if (task.taskType === "EXERCISE") return appIcons.health;
+  if (task.taskType === "STUDY") return appIcons.english;
+  if (task.taskType === "CONTENT") return appIcons.news;
+  if (task.taskType === "EXPENSE_LOG" || task.taskType === "BUDGET_REVIEW") {
+    return appIcons.budget;
+  }
+  return appIcons.level;
+}
+
+function missionFromGrowthTask(task: GrowthTask): Mission {
+  const completed =
+    task.status === "COMPLETED" || task.progressCount >= task.targetCount;
+  return {
+    id: task.taskId,
+    icon: growthTaskIcon(task),
+    title: task.title,
+    description:
+      task.note ??
+      `${task.progressCount}/${task.targetCount}회 진행 · 서버 권위 LV UP 과제`,
+    routeLabel: completed ? "완료됨" : `${task.expReward} XP 받기`,
+    xp: task.expReward,
+    progressCount: task.progressCount,
+    serverTaskId: task.taskId,
+    status: completed ? "COMPLETED" : "ACTIVE",
+    targetCount: task.targetCount,
+  };
+}
+
+function completedMissionIds(items: readonly Mission[]): ReadonlySet<string> {
+  return new Set(
+    items
+      .filter(
+        (item) =>
+          item.status === "COMPLETED" || item.progressCount >= item.targetCount,
+      )
+      .map((item) => item.id),
+  );
+}
+
 function LevelScreen(): React.ReactElement {
-  const [completed, setCompleted] = useState<ReadonlySet<string>>(
-    () => new Set(["health"]),
+  const growthApi = useMemo(() => createMobileGrowthApi(), []);
+  const [serverGrowthDashboard, setServerGrowthDashboard] =
+    useState<GrowthDashboard | null>(null);
+  const [serverGrowthTasks, setServerGrowthTasks] = useState<
+    readonly GrowthTask[]
+  >([]);
+  const [completed, setCompleted] = useState<ReadonlySet<string>>(() =>
+    completedMissionIds(fallbackMissions),
   );
-  const [toast, setToast] = useState(
-    "오늘 완료한 미션 1/4 · 루틴을 끝내면 XP가 올라가요.",
-  );
-  const xp = 380 + Array.from(completed).length * 25;
+  const [toast, setToast] = useState("서버 LV UP 데이터를 확인하는 중이에요.");
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateGrowth(): Promise<void> {
+      try {
+        const [dashboard, taskResult] = await Promise.all([
+          growthApi.getDashboard(),
+          growthApi.listTasks({ page: 1, pageSize: 20, status: "ACTIVE" }),
+        ]);
+        if (!mounted) return;
+        setServerGrowthDashboard(dashboard);
+        setServerGrowthTasks(taskResult.items);
+        const nextMissions = taskResult.items.length
+          ? taskResult.items.map(missionFromGrowthTask)
+          : fallbackMissions;
+        setCompleted(completedMissionIds(nextMissions));
+        setToast(
+          taskResult.items.length
+            ? dashboard.todaySuggestion
+            : "서버 과제가 아직 없어 기본 루틴 미션을 보여줘요.",
+        );
+      } catch {
+        if (!mounted) return;
+        setServerGrowthDashboard(null);
+        setServerGrowthTasks([]);
+        setCompleted(completedMissionIds(fallbackMissions));
+        setToast("서버 연결 전이라 앱 기준 루틴 미션을 보여줘요.");
+      }
+    }
+
+    void hydrateGrowth();
+
+    return () => {
+      mounted = false;
+    };
+  }, [growthApi]);
+
+  const visibleMissions = serverGrowthTasks.length
+    ? serverGrowthTasks.map(missionFromGrowthTask)
+    : fallbackMissions;
+  const xp =
+    serverGrowthDashboard?.profile.totalExp ?? 380 + completed.size * 25;
+  const level = serverGrowthDashboard?.profile.level ?? 18;
   const progress = Math.min(100, (xp / 999) * 100);
+
+  const completeMission = useCallback(
+    (mission: Mission, done: boolean) => {
+      if (done) return;
+      setCompleted((current) => new Set(current).add(mission.id));
+      if (!mission.serverTaskId) {
+        setToast(`${mission.title} 완료! +${mission.xp} XP가 반영됐어요.`);
+        return;
+      }
+
+      const occurredAt = new Date().toISOString();
+      void growthApi
+        .recordTaskProgress(mission.serverTaskId, {
+          idempotencyKey: `mobile-${mission.serverTaskId}-${occurredAt}`,
+          note: "mobile LV UP mission complete",
+          occurredAt,
+          progressCount: Math.max(
+            1,
+            mission.targetCount - mission.progressCount,
+          ),
+        })
+        .then((result) => {
+          setServerGrowthTasks((current) =>
+            current.map((task) =>
+              task.taskId === result.task.taskId ? result.task : task,
+            ),
+          );
+          setServerGrowthDashboard((current) =>
+            current
+              ? {
+                  ...current,
+                  profile: {
+                    ...current.profile,
+                    totalExp: current.profile.totalExp + result.expDelta,
+                  },
+                  completedTaskCount:
+                    result.task.status === "COMPLETED"
+                      ? current.completedTaskCount + 1
+                      : current.completedTaskCount,
+                }
+              : current,
+          );
+          setToast(
+            `${mission.title} 서버 기록 완료! +${result.expDelta} XP가 반영됐어요.`,
+          );
+        })
+        .catch(() => {
+          setToast(
+            "서버 기록은 실패했지만 앱 화면에는 임시 완료로 반영했어요.",
+          );
+        });
+    },
+    [growthApi],
+  );
 
   return (
     <AppScreen title="LV UP" subtitle="매일 조금씩 성장하는 루틴">
@@ -1081,9 +1245,11 @@ function LevelScreen(): React.ReactElement {
         <View style={styles.between}>
           <View>
             <Text style={styles.sectionTitle}>현재 레벨</Text>
-            <Text style={styles.money}>18Lv</Text>
+            <Text style={styles.money}>{formatMoney(level)}Lv</Text>
           </View>
-          <StatusPill label={`완료 ${completed.size}/4`} />
+          <StatusPill
+            label={`완료 ${completed.size}/${visibleMissions.length}`}
+          />
         </View>
         <ProgressBar value={progress} />
         <Text style={styles.bodyText}>
@@ -1092,18 +1258,14 @@ function LevelScreen(): React.ReactElement {
       </SectionCard>
       <Toast message={toast} />
       <View style={styles.gridTwo}>
-        {missions.map((mission) => {
-          const done = completed.has(mission.id);
+        {visibleMissions.map((mission) => {
+          const done =
+            completed.has(mission.id) || mission.status === "COMPLETED";
           return (
             <Pressable
               accessibilityRole="button"
               key={mission.id}
-              onPress={() => {
-                setCompleted((current) => new Set(current).add(mission.id));
-                setToast(
-                  `${mission.title} 완료! +${mission.xp} XP가 반영됐어요.`,
-                );
-              }}
+              onPress={() => completeMission(mission, done)}
               style={[styles.card, done ? styles.softGreen : null]}
             >
               <Text style={styles.cardIcon}>{mission.icon}</Text>
