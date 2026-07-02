@@ -6,7 +6,7 @@ applies_to:
   - services/**
   - packages/db/**
   - database/**
-last_verified: 2026-06-29
+last_verified: 2026-07-02
 ---
 
 # API And Service Context
@@ -24,8 +24,8 @@ Entrypoints:
 
 Current verification:
 
-- `corepack pnpm --filter @salary-hijacking/api typecheck`: PASS on 2026-07-01.
-- `corepack pnpm --filter @salary-hijacking/api test`: PASS on 2026-07-01, 6 files and 14 tests.
+- `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-02.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-02, 7 files and 15 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -68,6 +68,7 @@ Verified on 2026-06-29:
 - `GET /api/v1/users/me/profile`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile screen payload alias. The response uses hash-only user identity and explicit false privacy flags.
 - `POST /api/v1/users/me/privacy-export`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile privacy action alias. The response returns mobile profile payload privacy state without exposing raw financial, personal, or token data.
 - `POST /api/v1/users/me/withdrawal-request`: implemented in `services/api/src/routes/users.routes.ts` as a request-only mobile profile action. It records/request-flags withdrawal intent without performing destructive final account withdrawal.
+- `POST /api/v1/variable-expenses`: implemented in `services/api/src/routes/variable-expenses.routes.ts` as the server-authoritative mobile Salary Home quick-add target. The response keeps server-authority and privacy flags while omitting the internal owner `userId`.
 - Public store review pages: `GET /`, `GET /privacy`, `GET /support`, and
   `GET /terms` are served by `services/api/src/app.ts` without bearer
   authentication and with CSP plus privacy/ads-safe response headers. Production
@@ -75,6 +76,7 @@ Verified on 2026-06-29:
   and `api.salaryhijacking.com`, but real DNS/TLS/deployment proof is still a
   release gate.
 - Contract test: `services/api/tests/mobile-profile-contract.test.ts`.
+- Variable expense contract test: `services/api/tests/mobile-variable-expense-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
 - Public legal page regression test: `services/api/tests/public-legal-pages.test.ts`.
 

@@ -915,8 +915,10 @@ function netAmount(record: JsonRecord): number {
 }
 
 function computed(record: JsonRecord): JsonRecord {
+  const safeRecord: JsonRecord = { ...record };
+  delete safeRecord.userId;
   return {
-    ...record,
+    ...safeRecord,
     netAmountMinor: netAmount(record),
     serverAuthority: true,
     financialRawDataExposed: false,
