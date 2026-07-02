@@ -28,7 +28,10 @@ Path: `apps/mobile`
 - Main screens live in `apps/mobile/app`.
 - Several route screens use runtime module loading and `React.createElement` style helpers.
 - Feature module folders under `src/features/budget` and `src/features/community` now contain non-empty implementation/test files verified by mobile Jest suites.
-- Detox E2E has a checked-in configuration and smoke spec; native Android execution is currently blocked by missing local Android SDK tools.
+- Detox E2E has a checked-in configuration and smoke spec; local Android SDK
+  `adb`/`emulator` tools are detected, but native execution remains blocked
+  until the Android E2E APK or equivalent no-secret device-farm proof is
+  available.
 
 ### Admin
 

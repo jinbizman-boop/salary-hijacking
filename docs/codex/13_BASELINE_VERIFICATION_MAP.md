@@ -12,7 +12,7 @@ It is a working map for follow-up implementation, not a production readiness cer
 
 ## Current Update
 
-The original 2026-06-25 blockers listed below have largely been resolved by later work. Current verified state on 2026-07-01:
+The original 2026-06-25 blockers listed below have largely been resolved by later work. Current verified state on 2026-07-02:
 
 - root format check: PASS
 - workspace typecheck: PASS
@@ -21,11 +21,15 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - workspace quality: PASS, `corepack pnpm run quality` completed 82 Turbo tasks
 - workspace build: PASS, `corepack pnpm run build` completed 12 Turbo tasks
 - local Git baseline: PASS, local Git metadata is initialized, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`, authenticated push to `origin/main` is proven, and release readiness rechecks local HEAD against `origin/main` when authenticated push proof is claimed, with a warning fallback to local `refs/remotes/origin/main` when live remote reads are unavailable in the local Node sandbox
-- root script tests: PASS, 117 tests after adding Android SDK tool detection
+- root script tests: PASS, 162 tests after adding Android SDK tool detection
   coverage and preserving no-secret release proof coverage
   collectors for database, runtime secrets, Cloudflare observations, mobile
   native build/store observations, public URLs, and tracked proof example
   templates
+- database local-safe validation: PASS, `corepack pnpm run db:validate`
+  validated the checked-in DB package/schema/DDL bundle and is recorded as the
+  migration validation release gate without storing runtime DB URLs, SQL output,
+  secrets, or smoke payloads
 - release readiness preflight: reporting command PASS, release status BLOCKED
 - mobile typecheck/lint/format/Jest tests: PASS
 - mobile Clean Fintech UI contract: PASS, 9 focused tests for official BI,
@@ -38,7 +42,14 @@ The original 2026-06-25 blockers listed below have largely been resolved by late
 - `apps/mobile/src/features/budget` and `apps/mobile/src/features/community`: no zero-byte files found in the latest scan
 - scripts placeholder risk: resolved with conservative helper scripts and `pnpm run check:scripts`
 - infrastructure/mobile release metadata placeholder risk, source automation `.gitignore` trackability risk, local generated hosting/build metadata tracking risk, release target mismatch risk, and local release proof leakage risk: resolved for Cloudflare, GitHub, mobile release metadata, `scripts/build/*`, `.vercel`, `.open-next`, ignored `release/*-proof.local.json`, ignored `release/*-observation.local.json`, tracked unverified no-secret example templates under `release/examples`, explicit `RETRO-DB` protection, `release/release-targets.json`, GitHub write/push proof, `GITHUB_REPOSITORY`, `CF_ADMIN_WORKER_NAME`, `git remote origin`, and runtime local HEAD to `origin/main` sync when push proof is claimed through `pnpm run check:external-integrations` plus `pnpm run check:release-readiness -- --soft`
-- public release remains blocked by missing runtime secret presence evidence, missing Salary Hijacking Cloudflare Worker/R2/Queue/DNS/certificate runtime evidence, missing mobile native EAS build/E2E/store-submit evidence, missing DB migration validation/staging migration/staging seed/production dry-run/API smoke/rollback evidence in `release/database-evidence.json`, staging/production deploy, certificates, and operating QA. Local GitHub/Neon CLI absence is a warning when connector evidence proves account access; the Neon project itself is now observed.
+- public release remains blocked by missing runtime secret presence evidence,
+  missing Salary Hijacking Cloudflare Worker/R2/Queue/DNS/certificate runtime
+  evidence, missing mobile native EAS build/E2E/store-submit evidence, missing
+  DB staging migration/staging seed/production dry-run/API smoke/rollback
+  evidence in `release/database-evidence.json`, staging/production deploy,
+  certificates, and operating QA. Local GitHub/Neon CLI absence is a warning
+  when connector evidence proves account access; the Neon project itself is now
+  observed.
 
 The historical tables below are retained to explain why the hardening work was prioritized.
 
@@ -172,7 +183,7 @@ The Worker service typecheck blocker, package-level pnpm warning blocker, mobile
 1. Provide or configure runtime secrets in the correct local/CI secret stores without committing values, then update `release/secrets-evidence.json` with verified names and stores only.
 2. Keep Git repository metadata connected to the expected remote repository `jinbizman-boop/salary-hijacking`.
 3. Verify Cloudflare Worker resources, Cloudflare runtime resources in `release/cloudflare-runtime-evidence.json`, EAS project, and mobile native release evidence. Local Android SDK/`adb`/`emulator` can satisfy native E2E prerequisites, but `nativeE2eVerified` must remain false until Detox or equivalent EAS/native device-farm proof is recorded without secrets. Do not modify or reuse existing unrelated repositories such as `Retro Games` or `jinbizman-boop/RETRO-DB`; do not reuse unrelated Cloudflare Pages projects such as `retro-db`.
-4. Run real staging DB migration/seed and API smoke checks against Neon and Cloudflare, then update `release/database-evidence.json` with booleans and non-secret proof notes only.
+4. Run real staging DB migration/seed, production migration dry-run, API/Admin/server-authority/privacy smoke checks, and rollback rehearsal against Neon and Cloudflare, then update `release/database-evidence.json` with booleans and non-secret proof notes only.
 5. Run native mobile E2E and store build/submission dry runs.
 6. Execute staging/production deploy, rollback rehearsal, observability checks, and operating QA.
 

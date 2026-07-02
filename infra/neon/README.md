@@ -82,7 +82,11 @@ Latest read-only connector check on 2026-07-01:
   repository evidence.
 - Checked-in migration files are present, but safe migration validation, staging
   migration execution, staging seed execution, production migration dry-run,
-  deployed API/Admin smoke, privacy smoke, and rollback rehearsal are not yet
-  verified. These release gates are tracked in `release/database-evidence.json`.
+  deployed API/Admin smoke, privacy smoke, and rollback rehearsal are tracked in
+  `release/database-evidence.json`.
+- Local-safe migration validation is now verified by
+  `corepack pnpm run db:validate` on 2026-07-02 KST for the checked-in DB
+  package/schema/DDL bundle only. It does not execute staging migrations,
+  production dry-runs, seed, deployed smoke checks, or rollback rehearsals.
 - The existing `Retro Games` Neon project is unrelated and must not be reused for
   Salary Hijacking.

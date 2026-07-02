@@ -45,6 +45,7 @@ Latest read-only spot check: 2026-07-01 17:12:13 KST.
 Latest public URL live proof check: 2026-07-02 12:27:18 KST.
 Latest Cloudflare runtime read-only proof check: 2026-07-02 12:33:42 KST.
 Latest Neon read-only project proof check: 2026-07-02 12:40:45 KST.
+Latest local-safe DB validation proof check: 2026-07-02 KST.
 
 GitHub:
 
@@ -145,6 +146,11 @@ Neon:
   branches, and read-write compute presence for both branches. Compute hosts,
   connection strings, passwords, tokens, SQL output, and database URLs are
   intentionally not stored in this repository evidence.
+- `corepack pnpm run db:validate` passed on 2026-07-02 KST as local-safe
+  migration validation evidence for the checked-in DB package/schema/DDL bundle.
+  This stores no database URL, SQL output, secret, or smoke payload, and it does
+  not prove staging migration execution, production migration dry-run, staging
+  seed, deployed API/Admin smoke, privacy smoke, or rollback rehearsal.
 - Project ID: `still-feather-22153967`.
 - Region: `aws-us-east-2`.
 - PostgreSQL version: `17`.
@@ -176,7 +182,9 @@ target are aligned. The release status remains blocked by unverified entries in
 Cloudflare Worker resource matching, unverified entries in
 `release/cloudflare-runtime-evidence.json`, mobile native
 build/E2E/store-submit evidence, unverified database migration/seed/API
-smoke/rollback entries in `release/database-evidence.json`, deployment,
+smoke/rollback entries in `release/database-evidence.json`, except for the
+local-safe DB migration validation gate now recorded from `corepack pnpm run
+db:validate`, deployment,
 certificates, unverified public landing/privacy/support/terms reachability and
 header/content safety entries in `release/public-url-evidence.json`, Android/iOS
 native build/E2E/store-submit evidence, and operating QA. The dependency
