@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 107 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 108 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -167,6 +167,23 @@ server-only identifiers from the normalized profile snapshot, and treats
 privacy export and withdrawal actions as non-destructive server requests rather
 than final local account deletion.
 
+## Community Feed API Hydration
+
+As of 2026-07-03, the Clean Fintech Community tab calls the existing mobile
+Community service before using local fallback posts:
+
+- `GET /api/v1/community/posts` through `CommunityService.listPosts()`
+- board-filtered requests map app tabs to server board types where the current
+  UI has a concrete server equivalent
+- server responses are parsed through `parseCommunityFeedPage()` and
+  `communityResponseData()` before rendering
+
+The screen rejects raw financial, raw personal, or ads financial targeting
+exposure flags through the community parser and row normalization path. Local
+posts remain a non-authoritative visual fallback when the API cannot be reached.
+Write/detail/comment flows still require separate route-level screen hydration
+work before claiming full community workflow coverage.
+
 Mobile native release evidence is tracked in `release/mobile-native-evidence.json`.
 When EAS build, native E2E, or store-submit dry-run proof changes, record only
 no-secret observations in `release/mobile-native-observation.local.json`, run
@@ -260,7 +277,7 @@ Previously observed high-priority mobile/API alignment gaps have been reduced:
 - public Expo Router paths such as `/salary`, `/plan`, and `/level` are used for local smoke navigation.
 - local API plus Expo web smoke verified signup/login and `/salary`, `/level`, `/plan` navigation.
 
-Remaining endpoint work should still compare touched mobile calls against `services/api/src/routes` before claiming API/mobile coverage complete. Community bookmark-like actions and deeper write flows require route-level verification when those screens are next touched.
+Remaining endpoint work should still compare touched mobile calls against `services/api/src/routes` before claiming API/mobile coverage complete. Community detail, comment, report, and write flows require route-level verification when those screens are next touched.
 
 ## Mobile Work Checklist
 

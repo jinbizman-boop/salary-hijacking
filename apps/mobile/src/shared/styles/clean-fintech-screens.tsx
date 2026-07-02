@@ -14,6 +14,15 @@ import {
 
 import officialBiLogo from "../../../assets/brand/salary-hijacking-platform-logo.png";
 import {
+  communityResponseData,
+  parseCommunityFeedPage,
+} from "../../features/community/community.parsers";
+import type {
+  CommunityBoardType,
+  CommunityFeedPage,
+  CommunityPost,
+} from "../../features/community/community.types";
+import {
   calculateOfflineDailyBudgetPreview,
   parseKrwInputAmount,
 } from "../../features/budget/utils";
@@ -32,6 +41,7 @@ import type {
 } from "../../features/notifications/types";
 import {
   createMobileBudgetApi,
+  createMobileCommunityService,
   createMobileGrowthApi,
   createMobileNotificationsApi,
   createMobilePayrollApi,
@@ -72,6 +82,14 @@ type CommunityBoard =
   | "자유 게시판"
   | "레벨업 인증"
   | "취미 게시판";
+type CommunityScreenPost = Readonly<{
+  board: CommunityBoard;
+  id: string;
+  stats: string;
+  summary: string;
+  thumb: string;
+  title: string;
+}>;
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type LevelDetailConfig = Readonly<{
   title: string;
@@ -272,9 +290,10 @@ const fallbackProfileSnapshot: ProfileSnapshot = {
   activities: [],
 };
 
-const communityPosts = [
+const fallbackCommunityPosts = [
   {
     board: "레벨업 인증",
+    id: "fallback-level-proof",
     title: "퇴근 후 20분 홈트 18일째 인증",
     summary: "월급도 지키고 체력도 지키는 루틴으로 이번 달을 버티는 중이에요.",
     stats: "조회 1,284 · 좋아요 96 · 댓글 18",
@@ -282,6 +301,7 @@ const communityPosts = [
   },
   {
     board: "자유 게시판",
+    id: "fallback-free-subscription",
     title: "구독 서비스 정리하고 60,000원 지켰어요",
     summary: "자동결제 목록을 펼쳐보니 생각보다 빠져나가는 돈이 많았네요.",
     stats: "조회 842 · 좋아요 71 · 댓글 12",
@@ -289,12 +309,46 @@ const communityPosts = [
   },
   {
     board: "취미 게시판",
+    id: "fallback-hobby-weekend",
     title: "돈 안 드는 주말 루틴 추천 받아요",
     summary: "이번 주는 무지출 주말로 보내려고 합니다.",
     stats: "조회 512 · 좋아요 34 · 댓글 22",
     thumb: "☕",
   },
-] as const;
+] as const satisfies readonly CommunityScreenPost[];
+
+const communityBoardApiMap: Readonly<
+  Record<CommunityBoard, CommunityBoardType | null>
+> = {
+  "전체 게시판": null,
+  "자유 게시판": "FREE",
+  "레벨업 인증": "LEVEL_CERTIFICATION",
+  "취미 게시판": "HEALTH_ROUTINE",
+};
+
+const communityBoardLabelMap: Readonly<
+  Record<CommunityBoardType, CommunityBoard>
+> = {
+  SALARY_TALK: "자유 게시판",
+  BUDGET_TIP: "자유 게시판",
+  EXPENSE_CUT: "자유 게시판",
+  SAVINGS_GOAL: "자유 게시판",
+  LEVEL_CERTIFICATION: "레벨업 인증",
+  SIDE_HUSTLE: "취미 게시판",
+  HEALTH_ROUTINE: "취미 게시판",
+  FREE: "자유 게시판",
+};
+
+const communityBoardThumbMap: Readonly<Record<CommunityBoardType, string>> = {
+  SALARY_TALK: appIcons.salary,
+  BUDGET_TIP: appIcons.budget,
+  EXPENSE_CUT: appIcons.expense,
+  SAVINGS_GOAL: appIcons.saving,
+  LEVEL_CERTIFICATION: appIcons.level,
+  SIDE_HUSTLE: "🧰",
+  HEALTH_ROUTINE: appIcons.health,
+  FREE: appIcons.community,
+};
 
 const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
   {
@@ -682,7 +736,7 @@ export function CleanFintechLevelDetailScreen({
 }
 
 export function CleanFintechPostDetailScreen(): React.ReactElement {
-  const post = communityPosts[0];
+  const post = fallbackCommunityPosts[0];
   const [liked, setLiked] = useState(false);
   const [toast, setToast] = useState("레벨업 인증 게시글을 안전하게 열었어요.");
 
@@ -1372,6 +1426,45 @@ function isImportantNotification(item: NotificationScreenItem): boolean {
   );
 }
 
+function formatCommunityCount(value: number): string {
+  return new Intl.NumberFormat("ko-KR").format(Math.max(0, Math.trunc(value)));
+}
+
+function toCommunityScreenPost(post: CommunityPost): CommunityScreenPost {
+  if (
+    post.rawFinancialDataExposed ||
+    post.rawPersonalDataExposed ||
+    post.adsFinancialTargetingUsed
+  ) {
+    throw new Error("unsafe community post payload");
+  }
+  return {
+    board: communityBoardLabelMap[post.boardType],
+    id: post.id,
+    stats: `좋아요 ${formatCommunityCount(post.likeCount)} · 댓글 ${formatCommunityCount(
+      post.commentCount,
+    )} · 북마크 ${formatCommunityCount(post.bookmarkCount)}`,
+    summary: post.bodyPreview,
+    thumb: communityBoardThumbMap[post.boardType],
+    title: post.title,
+  };
+}
+
+function toCommunityScreenPosts(
+  serverCommunityFeed: CommunityFeedPage | null,
+): readonly CommunityScreenPost[] {
+  if (!serverCommunityFeed) return [];
+  return serverCommunityFeed.items.map(toCommunityScreenPost);
+}
+
+function popularCommunityPosts(
+  posts: readonly CommunityScreenPost[],
+): readonly CommunityScreenPost[] {
+  return [...posts]
+    .sort((first, second) => second.stats.localeCompare(first.stats, "ko-KR"))
+    .slice(0, 3);
+}
+
 function NotificationsScreen(): React.ReactElement {
   const notificationsApi = useMemo(() => createMobileNotificationsApi(), []);
   const [serverNotifications, setServerNotifications] = useState<
@@ -1498,17 +1591,65 @@ function NotificationsScreen(): React.ReactElement {
 }
 
 function CommunityScreen(): React.ReactElement {
+  const communityService = useMemo(() => createMobileCommunityService(), []);
   const [board, setBoard] = useState<CommunityBoard>("전체 게시판");
+  const [serverCommunityFeed, setServerCommunityFeed] =
+    useState<CommunityFeedPage | null>(null);
+  const [communitySyncLabel, setCommunitySyncLabel] = useState(
+    "서버 커뮤니티 피드를 확인하는 중이에요.",
+  );
   const boards: readonly CommunityBoard[] = [
     "전체 게시판",
     "자유 게시판",
     "레벨업 인증",
     "취미 게시판",
   ];
-  const filtered =
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateCommunityFeed(): Promise<void> {
+      try {
+        const boardType = communityBoardApiMap[board];
+        const response = await communityService.listPosts({
+          ...(boardType ? { boardType } : {}),
+          page: 1,
+          pageSize: 20,
+          sort: "LATEST",
+        });
+        const parsed = parseCommunityFeedPage(communityResponseData(response));
+        if (!mounted) return;
+        setServerCommunityFeed(parsed);
+        setCommunitySyncLabel(
+          `서버 커뮤니티 동기화 · ${formatCommunityCount(parsed.meta.total)}개 글`,
+        );
+      } catch {
+        if (!mounted) return;
+        setServerCommunityFeed(null);
+        setCommunitySyncLabel(
+          "서버 연결 전이라 기본 커뮤니티 예시를 보여드려요.",
+        );
+      }
+    }
+
+    void hydrateCommunityFeed();
+
+    return () => {
+      mounted = false;
+    };
+  }, [board, communityService]);
+
+  const serverCommunityPosts = toCommunityScreenPosts(serverCommunityFeed);
+  const fallbackFiltered =
     board === "전체 게시판"
-      ? communityPosts
-      : communityPosts.filter((post) => post.board === board);
+      ? fallbackCommunityPosts
+      : fallbackCommunityPosts.filter((post) => post.board === board);
+  const visibleCommunityPosts = serverCommunityPosts.length
+    ? serverCommunityPosts
+    : fallbackFiltered;
+  const visiblePopularPosts = popularCommunityPosts(
+    serverCommunityPosts.length ? serverCommunityPosts : fallbackCommunityPosts,
+  );
 
   return (
     <AppScreen title="커뮤니티" subtitle="가볍고 친근한 생활형 게시판">
@@ -1517,16 +1658,17 @@ function CommunityScreen(): React.ReactElement {
         selected={board}
         onSelect={(next) => setBoard(next as CommunityBoard)}
       />
+      <Toast message={communitySyncLabel} />
       <SectionCard>
         <Text style={styles.sectionTitle}>인기 게시글</Text>
-        {communityPosts.slice(0, 3).map((post) => (
-          <CommunityPostRow key={post.title} post={post} />
+        {visiblePopularPosts.map((post) => (
+          <CommunityPostRow key={`popular-${post.id}`} post={post} />
         ))}
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>{board}</Text>
-        {filtered.map((post) => (
-          <CommunityPostRow key={`${board}-${post.title}`} post={post} />
+        {visibleCommunityPosts.map((post) => (
+          <CommunityPostRow key={`${board}-${post.id}`} post={post} />
         ))}
       </SectionCard>
       <Pressable accessibilityRole="button" style={styles.fab}>
@@ -1954,7 +2096,7 @@ function ListRow({
 
 function CommunityPostRow({
   post,
-}: Readonly<{ post: (typeof communityPosts)[number] }>): React.ReactElement {
+}: Readonly<{ post: CommunityScreenPost }>): React.ReactElement {
   return (
     <View style={styles.postRow}>
       <View style={styles.thumbnail}>
