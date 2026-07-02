@@ -325,6 +325,7 @@ const RELEASE_METADATA_FILES = [
   "apps/mobile/eas.json",
   "apps/mobile/app.config.ts",
   ".github/workflows/mobile-build.yml",
+  ".github/workflows/release.yml",
   "release/store/google-play-metadata.md",
   "release/store/app-store-metadata.md",
   "release/store/data-safety.md",

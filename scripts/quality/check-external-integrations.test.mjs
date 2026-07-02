@@ -1111,6 +1111,46 @@ jobs:
   }
 });
 
+test("fails when release workflow contains mojibake", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/release.yml": `
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      release_mode:
+        description: "由대━利?紐⑤뱶"
+        required: true
+        default: dry-run
+jobs:
+  release-quality-gate:
+    steps:
+      - run: echo "# 湲됱뿬?⑹튂 由대━利?留ㅻ땲?섏뒪??"
+      - run: gh release create v1.0.0 release-artifacts/*
+    env:
+      GH_TOKEN: \${{ github.token }}
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /\.github\/workflows\/release\.yml/,
+    );
+    assert.match(result.failures.join("\n"), /mojibake/i);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when Codex docs keep stale Android tool blocker language", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
