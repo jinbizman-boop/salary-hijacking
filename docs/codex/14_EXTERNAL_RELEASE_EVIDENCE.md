@@ -42,6 +42,7 @@ Latest connector refresh: 2026-07-01 13:36:54 KST.
 Latest Git remote verification refresh: 2026-07-01 14:35:42 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 Latest read-only spot check: 2026-07-01 17:12:13 KST.
+Latest public URL live proof check: 2026-07-02 12:27:18 KST.
 
 GitHub:
 
@@ -116,6 +117,13 @@ Cloudflare:
   reachability has been verified.
 - Dry-run verification does not prove Worker resource creation, DNS readiness,
   runtime secrets, queues, R2 buckets, or successful production deployment.
+- A live no-secret public URL proof check on 2026-07-02 12:27:18 KST recorded
+  `false` booleans for landing, privacy, support, and terms reachability, CSP
+  and privacy header proof, Korean copy, store-review URL alignment, and
+  sensitive-data non-exposure. The ignored local proof file does not store raw
+  HTML, response headers, logs, user identifiers, financial payloads, tokens, or
+  database URLs. This keeps public URL readiness blocked until the production
+  public pages are actually reachable through `salaryhijacking.com`.
 
 Neon:
 
