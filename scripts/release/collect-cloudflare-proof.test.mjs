@@ -196,3 +196,29 @@ test("rejects unrelated Worker observations", () => {
     /unexpected Cloudflare Worker/i,
   );
 });
+
+test("rejects unrelated domain observations before proof generation", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/cloudflare-observation.local.json",
+    {
+      ...completeObservation,
+      networking: {
+        observedDomains: [...expectedDomains, "retrogames.kr"],
+        activeTlsCertificates: [...expectedDomains, "retrogames.kr"],
+      },
+    },
+  );
+
+  assert.throws(
+    () =>
+      collectCloudflareProof({
+        inputPath,
+        expectedWorkers,
+        expectedDomains,
+        writeFile: false,
+      }),
+    /unexpected Cloudflare domain/i,
+  );
+});

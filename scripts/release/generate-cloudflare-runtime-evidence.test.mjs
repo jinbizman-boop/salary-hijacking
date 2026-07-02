@@ -226,6 +226,39 @@ test("rejects unrelated observed Worker names", () => {
   );
 });
 
+test("rejects unrelated proof domains before runtime evidence generation", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "cloudflare-proof.local.json",
+  );
+  write(
+    rootDir,
+    "release/cloudflare-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        workers: {
+          observedWorkers: expectedWorkers,
+        },
+        networking: {
+          expectedDomains: [...expectedDomains, "retrogames.kr"],
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  assert.throws(
+    () => buildCloudflareRuntimeEvidence({ rootDir, proofPath }),
+    /unexpected Cloudflare domain/i,
+  );
+});
+
 test("writes release/cloudflare-runtime-evidence.json with generated evidence", () => {
   const rootDir = makeWorkspace();
 

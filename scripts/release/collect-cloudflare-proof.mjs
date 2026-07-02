@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   DEFAULT_EXPECTED_DOMAINS,
+  assertCloudflareDomainsInScope,
   containsRawSecretValue,
   isPlainObject,
   stringArray,
@@ -47,7 +48,12 @@ const normalizeExpectedWorkers = (expectedWorkers) =>
 const normalizeExpectedDomains = (expectedDomains) =>
   uniqueStrings([...DEFAULT_EXPECTED_DOMAINS, ...stringArray(expectedDomains)]);
 
-const validateObservation = (observation, inputPath, expectedWorkers) => {
+const validateObservation = (
+  observation,
+  inputPath,
+  expectedWorkers,
+  expectedDomains,
+) => {
   if (
     observation.schemaVersion !== 1 ||
     observation.secretsRedacted !== true ||
@@ -68,6 +74,19 @@ const validateObservation = (observation, inputPath, expectedWorkers) => {
       `${inputPath} contains unexpected Cloudflare Worker names: ${unexpectedWorkers.join(", ")}`,
     );
   }
+
+  const networking = section(observation, "networking");
+  assertCloudflareDomainsInScope({
+    domains: networking.observedDomains,
+    proofPath: inputPath,
+    expectedDomains,
+  });
+  assertCloudflareDomainsInScope({
+    domains: networking.activeTlsCertificates,
+    proofPath: inputPath,
+    label: "Cloudflare TLS certificate domains",
+    expectedDomains,
+  });
 };
 
 export const buildCloudflareProof = ({
@@ -80,7 +99,12 @@ export const buildCloudflareProof = ({
 } = {}) => {
   const normalizedExpectedWorkers = normalizeExpectedWorkers(expectedWorkers);
   const normalizedExpectedDomains = normalizeExpectedDomains(expectedDomains);
-  validateObservation(observation, inputPath, normalizedExpectedWorkers);
+  validateObservation(
+    observation,
+    inputPath,
+    normalizedExpectedWorkers,
+    normalizedExpectedDomains,
+  );
 
   const workersInput = section(observation, "workers");
   const resourcesInput = section(observation, "resources");

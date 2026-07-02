@@ -97,7 +97,9 @@ file is ignored by Git and may contain only expected Worker names, resource
 presence flags, observed Queue counts, expected hostnames, certificate status
 flags, and non-secret notes. It must not contain Cloudflare credentials, Worker
 script bodies, binding values, certificate material, private keys, API response
-payloads, or copied provider logs.
+payloads, or copied provider logs. The collector rejects observed custom-domain
+and TLS certificate hostnames outside the Salary Hijacking custom-domain set
+before writing local proof.
 
 The command creates or refreshes `release/cloudflare-runtime-evidence.json`
 from release targets and optional `release/cloudflare-proof.local.json`
@@ -105,7 +107,9 @@ booleans. The local proof file is ignored by Git and may contain only Worker
 names, resource presence flags, domain/certificate flags, and non-secret notes.
 It must not contain Cloudflare tokens, Worker secret values, database URLs,
 private keys, certificates, service accounts, or copied runtime payloads.
-Release readiness independently blocks tracked Cloudflare runtime evidence when
+The generator rejects proof `networking.expectedDomains` values outside the
+Salary Hijacking custom-domain set before writing tracked evidence. Release
+readiness independently blocks tracked Cloudflare runtime evidence when
 `observedWorkers` contains Worker names outside the Salary Hijacking release
 target set, or when `workers.expectedWorkers` drifts from
 `release/release-targets.json`. It also blocks tracked Cloudflare runtime

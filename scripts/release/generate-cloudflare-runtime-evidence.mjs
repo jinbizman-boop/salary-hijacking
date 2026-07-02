@@ -57,6 +57,33 @@ export const uniqueStrings = (value) => [...new Set(stringArray(value))];
 const proofSection = (proof, key) =>
   isPlainObject(proof?.[key]) ? proof[key] : {};
 
+export const unexpectedCloudflareDomains = ({
+  domains,
+  expectedDomains = DEFAULT_EXPECTED_DOMAINS,
+} = {}) => {
+  const expectedDomainSet = new Set(uniqueStrings(expectedDomains));
+  return uniqueStrings(domains).filter(
+    (domain) => !expectedDomainSet.has(domain),
+  );
+};
+
+export const assertCloudflareDomainsInScope = ({
+  domains,
+  proofPath,
+  label = "Cloudflare domains",
+  expectedDomains = DEFAULT_EXPECTED_DOMAINS,
+} = {}) => {
+  const unexpectedDomains = unexpectedCloudflareDomains({
+    domains,
+    expectedDomains,
+  });
+  if (unexpectedDomains.length > 0) {
+    throw new Error(
+      `${proofPath} contains unexpected ${label}: ${unexpectedDomains.join(", ")}`,
+    );
+  }
+};
+
 export const isRawSecretValueKey = (key) => {
   if (RAW_SECRET_VALUE_KEYS.has(key)) return true;
   return /(?:token|secret|password|connection|string|database|webhook|dsn|privatekey|serviceaccount).*value$/i.test(
@@ -121,6 +148,11 @@ const validateNoSecretProof = (proof, proofPath, expectedWorkers) => {
       `${proofPath} contains unexpected Cloudflare Worker names: ${unexpectedWorkers.join(", ")}`,
     );
   }
+
+  assertCloudflareDomainsInScope({
+    domains: proofSection(proof, "networking").expectedDomains,
+    proofPath,
+  });
 
   return proof;
 };
