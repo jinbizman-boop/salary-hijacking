@@ -47,7 +47,9 @@ import {
   COMMUNITY_API_PREFIX,
   assertCommunityRoutesCompleteness,
   communityRoutesManifest,
+  createCommunityRoutes,
   handleCommunityRoutes,
+  type CommunityRoutesOptions,
 } from "./routes/community.routes";
 import {
   DAILY_BUDGETS_API_PREFIX,
@@ -239,6 +241,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly payrollRoutesOptions?: PayrollRoutesOptions<TEnv>;
   readonly dailyBudgetsRoutesOptions?: DailyBudgetsRoutesOptions<TEnv>;
   readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
+  readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
 
@@ -1160,6 +1163,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createVariableExpensesRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "community" && options.communityRoutesOptions) {
+    const routeOptions: CommunityRoutesOptions<TEnv> =
+      options.communityRoutesOptions.now || !options.now
+        ? options.communityRoutesOptions
+        : {
+            ...options.communityRoutesOptions,
+            now: options.now,
+          };
+    return createCommunityRoutes(routeOptions)(request, env, context);
   }
   return route.handler(request, env, context);
 }

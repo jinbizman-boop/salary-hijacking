@@ -338,6 +338,14 @@ const sensitiveKeyFragments = [
   "카드",
 ];
 
+const safeBooleanPolicyKeys = new Set([
+  "serverAuthority",
+  "financialRawDataExposed",
+  "rawPersonalDataExposed",
+  "rawPushTokenExposed",
+  "adsFinancialTargetingUsed",
+]);
+
 const riskyContentPatterns = [
   /\b\d{3}-\d{2,4}-\d{4}\b/,
   /\b\d{4}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b/,
@@ -572,7 +580,10 @@ function sanitize(
       .slice(0, 120)
       .map(([key, item]) => [
         key.slice(0, 160),
-        keyLooksSensitive(key) ? "[REDACTED]" : sanitize(item, depth + 1, seen),
+        keyLooksSensitive(key) &&
+        !(typeof item === "boolean" && safeBooleanPolicyKeys.has(key))
+          ? "[REDACTED]"
+          : sanitize(item, depth + 1, seen),
       ]),
   );
 }
