@@ -43,11 +43,13 @@ const REQUIRED_FILES = [
   "release/cloudflare-runtime-evidence.json",
   "release/database-evidence.json",
   "release/public-url-evidence.json",
+  "release/security-audit-evidence.json",
   "release/examples/secrets-proof.local.example.json",
   "release/examples/cloudflare-observation.local.example.json",
   "release/examples/mobile-native-observation.local.example.json",
   "release/examples/database-command-proof.local.example.json",
   "release/examples/public-url-proof.local.example.json",
+  "release/examples/security-audit-proof.local.example.json",
   "packages/db/src/client/neon.client.ts",
   "database/migrations/0001_init_users.sql",
   "database/migrations/0002_payroll_budget_expense.sql",
@@ -78,6 +80,8 @@ const REQUIRED_FILES = [
   "scripts/release/generate-public-url-evidence.test.mjs",
   "scripts/release/collect-public-url-proof.mjs",
   "scripts/release/collect-public-url-proof.test.mjs",
+  "scripts/release/generate-security-audit-evidence.mjs",
+  "scripts/release/generate-security-audit-evidence.test.mjs",
 ];
 
 const REQUIRED_TOKENS_BY_FILE = {

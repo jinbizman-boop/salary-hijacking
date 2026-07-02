@@ -571,6 +571,36 @@ const writePublicUrlEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const writeSecurityAuditEvidence = (rootDir, overrides = {}) => {
+  const evidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    containsSecretValues: false,
+    audit: {
+      packageManager: "pnpm",
+      auditCommand: "corepack pnpm audit --audit-level=high --prod=false",
+      registryAuditVerified: true,
+      lockfileAudited: true,
+      productionDependenciesAudited: true,
+      devDependenciesAudited: true,
+      criticalVulnerabilities: 0,
+      highVulnerabilities: 0,
+      moderateVulnerabilities: 0,
+      lowVulnerabilities: 0,
+      noHighOrCriticalVulnerabilities: true,
+    },
+    ...overrides,
+  };
+
+  write(
+    rootDir,
+    "release/security-audit-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
@@ -616,6 +646,7 @@ const makeWorkspace = () => {
   writeCloudflareRuntimeEvidence(rootDir);
   writeDatabaseEvidence(rootDir);
   writePublicUrlEvidence(rootDir);
+  writeSecurityAuditEvidence(rootDir);
   write(rootDir, "release/rollback/rollback-plan.md", "# Rollback\n");
   write(rootDir, "release/screenshots/screenshot-plan.md", validScreenshotPlan);
   write(
@@ -1350,6 +1381,99 @@ test("blocks public URL evidence that contains raw page payloads", () => {
     /release\/public-url-evidence\.json must not contain raw secrets, copied page payloads, or sensitive user\/financial data/,
   );
   assert.doesNotMatch(report, /actual-user@example\.com/);
+});
+
+test("blocks when dependency security audit evidence is missing or unverified", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "security-audit-evidence.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /security-audit-evidence\.json/);
+  assert.match(report, /security-audit:evidence/);
+});
+
+test("blocks dependency security audit evidence with high or critical vulnerabilities", () => {
+  const rootDir = makeWorkspace();
+  writeSecurityAuditEvidence(rootDir, {
+    audit: {
+      packageManager: "pnpm",
+      auditCommand: "corepack pnpm audit --audit-level=high --prod=false",
+      registryAuditVerified: true,
+      lockfileAudited: true,
+      productionDependenciesAudited: true,
+      devDependenciesAudited: true,
+      criticalVulnerabilities: 0,
+      highVulnerabilities: 1,
+      moderateVulnerabilities: 0,
+      lowVulnerabilities: 0,
+      noHighOrCriticalVulnerabilities: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /security-audit:vulnerabilities/);
+  assert.match(
+    report,
+    /Dependency audit must prove zero high and critical vulnerabilities before release/,
+  );
+});
+
+test("blocks dependency security audit evidence that contains raw registry tokens", () => {
+  const rootDir = makeWorkspace();
+  writeSecurityAuditEvidence(rootDir, {
+    containsSecretValues: false,
+    audit: {
+      packageManager: "pnpm",
+      auditCommand: "corepack pnpm audit --audit-level=high --prod=false",
+      registryAuditVerified: true,
+      lockfileAudited: true,
+      productionDependenciesAudited: true,
+      devDependenciesAudited: true,
+      criticalVulnerabilities: 0,
+      highVulnerabilities: 0,
+      moderateVulnerabilities: 0,
+      lowVulnerabilities: 0,
+      noHighOrCriticalVulnerabilities: true,
+      npmTokenValue: "npm_secret_value_that_must_not_print",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /security-audit:secret-values/);
+  assert.match(
+    report,
+    /release\/security-audit-evidence\.json must not contain raw registry tokens or secret values/,
+  );
+  assert.doesNotMatch(report, /npm_secret_value/);
 });
 
 test("blocks database evidence that contains raw database URLs", () => {

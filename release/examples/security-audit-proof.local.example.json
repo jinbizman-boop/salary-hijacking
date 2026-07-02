@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-02T00:00:00.000Z",
+  "source": "Example only. Copy to release/security-audit-proof.local.json after running dependency audit in a trusted release environment.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "audit": {
+    "packageManager": "pnpm",
+    "auditCommand": "corepack pnpm audit --audit-level=high --prod=false",
+    "registryAuditVerified": false,
+    "lockfileAudited": false,
+    "productionDependenciesAudited": false,
+    "devDependenciesAudited": false,
+    "criticalVulnerabilities": null,
+    "highVulnerabilities": null,
+    "moderateVulnerabilities": null,
+    "lowVulnerabilities": null,
+    "noHighOrCriticalVulnerabilities": false,
+    "note": "Do not paste npm tokens, registry output, full audit JSON, advisories, package payloads, or dependency details here. Record only counts and booleans."
+  }
+}

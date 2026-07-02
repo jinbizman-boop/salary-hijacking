@@ -38,6 +38,10 @@ evidence is:
 
 - `release/public-url-evidence.json`
 
+The observed dependency security audit evidence is:
+
+- `release/security-audit-evidence.json`
+
 No-secret local proof templates live in:
 
 - `release/examples/secrets-proof.local.example.json`
@@ -45,6 +49,7 @@ No-secret local proof templates live in:
 - `release/examples/mobile-native-observation.local.example.json`
 - `release/examples/database-command-proof.local.example.json`
 - `release/examples/public-url-proof.local.example.json`
+- `release/examples/security-audit-proof.local.example.json`
 
 Copy a template to the matching ignored `release/*.local.json` path only after
 collecting proof from the correct provider console, CI run, or safe command.
@@ -232,6 +237,23 @@ request/response headers,
 raw headers, authorization, cookie, session, CSRF, API key, access token, JWT,
 and related sensitive header markers before writing tracked evidence.
 
+Safe dependency security audit evidence generation command:
+
+- `corepack pnpm run release:security-audit-evidence`
+
+Before generating tracked evidence, run the dependency audit in a
+network-enabled release environment:
+
+- `corepack pnpm audit --audit-level=high --prod=false`
+
+Record only summary booleans and vulnerability counts in the ignored
+`release/security-audit-proof.local.json`. The local proof file must not contain
+npm tokens, registry auth values, copied full audit JSON, advisories, package
+payloads, registry responses, dependency details, private keys, or provider
+logs. The tracked evidence blocks release until it proves the pnpm registry
+audit covered the lockfile, production dependencies, and dev dependencies, and
+that high and critical vulnerability counts are both zero.
+
 Current protected rule:
 
 - Use the new Salary Hijacking repository
@@ -245,7 +267,8 @@ Workers resources, Cloudflare R2/Queue/DNS/certificate/runtime binding proof,
 matching Neon project evidence, migration validation, staging migration and seed
 execution, production migration dry-run proof, deployed API/Admin smoke proof,
 database rollback rehearsal proof, reachable public landing/privacy/support/
-terms URLs with CSP/privacy header and sensitive-data non-exposure proof, EAS
+terms URLs with CSP/privacy header and sensitive-data non-exposure proof,
+dependency security audit proof with zero high/critical vulnerabilities, EAS
 project credentials, local Android device tooling or equivalent EAS/native test
 evidence, deploy proof, mobile native build and store-submit proof, and
 operating QA.

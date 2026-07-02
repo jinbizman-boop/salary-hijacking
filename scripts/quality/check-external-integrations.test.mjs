@@ -577,6 +577,30 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
+    "release/security-audit-evidence.json": JSON.stringify(
+      {
+        schemaVersion: 1,
+        observedAt: "2026-07-01T00:00:00Z",
+        source: "test-fixture",
+        secretsRedacted: true,
+        containsSecretValues: false,
+        audit: {
+          packageManager: "pnpm",
+          auditCommand: "corepack pnpm audit --audit-level=high --prod=false",
+          registryAuditVerified: true,
+          lockfileAudited: true,
+          productionDependenciesAudited: true,
+          devDependenciesAudited: true,
+          criticalVulnerabilities: 0,
+          highVulnerabilities: 0,
+          moderateVulnerabilities: 0,
+          lowVulnerabilities: 0,
+          noHighOrCriticalVulnerabilities: true,
+        },
+      },
+      null,
+      2,
+    ),
     "release/examples/secrets-proof.local.example.json": JSON.stringify(
       {
         schemaVersion: 1,
@@ -678,6 +702,28 @@ const privacy = { financialAmountBasedTargeting: false };
       null,
       2,
     ),
+    "release/examples/security-audit-proof.local.example.json":
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          secretsRedacted: true,
+          containsSecretValues: false,
+          audit: {
+            packageManager: "pnpm",
+            auditCommand:
+              "corepack pnpm audit --audit-level=high --prod=false",
+            registryAuditVerified: false,
+            lockfileAudited: false,
+            productionDependenciesAudited: false,
+            devDependenciesAudited: false,
+            criticalVulnerabilities: null,
+            highVulnerabilities: null,
+            noHighOrCriticalVulnerabilities: false,
+          },
+        },
+        null,
+        2,
+      ),
     "packages/db/src/client/neon.client.ts":
       'const NEON_SERVERLESS_PACKAGE = "@neondatabase/serverless"; export const DATABASE_URL_ENV_KEYS = ["DATABASE_URL", "NEON_DATABASE_URL"];',
     "database/migrations/0001_init_users.sql": "-- users",
@@ -731,6 +777,10 @@ const privacy = { financialAmountBasedTargeting: false };
       "export async function collectPublicUrlProof() { return { schemaVersion: 1 }; }\n",
     "scripts/release/collect-public-url-proof.test.mjs":
       "import test from 'node:test';\n\ntest('collects no-secret public URL proof', () => {});\n",
+    "scripts/release/generate-security-audit-evidence.mjs":
+      "export function buildSecurityAuditEvidence() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/generate-security-audit-evidence.test.mjs":
+      "import test from 'node:test';\n\ntest('generates no-secret dependency security audit evidence', () => {});\n",
   };
 
   for (const [relativePath, content] of Object.entries({

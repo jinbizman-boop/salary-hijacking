@@ -15,6 +15,7 @@ const CLOUDFLARE_RUNTIME_EVIDENCE_PATH =
   "release/cloudflare-runtime-evidence.json";
 const DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
 const PUBLIC_URL_EVIDENCE_PATH = "release/public-url-evidence.json";
+const SECURITY_AUDIT_EVIDENCE_PATH = "release/security-audit-evidence.json";
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -28,6 +29,7 @@ const REQUIRED_FILES = [
   CLOUDFLARE_RUNTIME_EVIDENCE_PATH,
   DATABASE_EVIDENCE_PATH,
   PUBLIC_URL_EVIDENCE_PATH,
+  SECURITY_AUDIT_EVIDENCE_PATH,
   "release/rollback/rollback-plan.md",
   "release/screenshots/screenshot-plan.md",
   "release/store/data-safety.md",
@@ -1792,6 +1794,126 @@ const checkPublicUrlEvidence = (rootDir, releaseTargets, checks, blockers) => {
   }
 };
 
+const addSecurityAuditCheck = (
+  checks,
+  blockers,
+  status,
+  name,
+  detail,
+  blocker,
+) => {
+  addCheck(checks, status, name, detail);
+  if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const isNonNegativeInteger = (value) => Number.isInteger(value) && value >= 0;
+
+const checkSecurityAuditEvidence = (rootDir, checks, blockers) => {
+  const evidence = readJsonIfPresent(rootDir, SECURITY_AUDIT_EVIDENCE_PATH);
+  if (!evidence) {
+    addSecurityAuditCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "security-audit:evidence",
+      `${SECURITY_AUDIT_EVIDENCE_PATH} is missing or invalid`,
+      `${SECURITY_AUDIT_EVIDENCE_PATH} must record dependency audit proof without raw registry tokens or advisory payloads`,
+    );
+    return;
+  }
+
+  if (evidence.schemaVersion === 1 && evidence.secretsRedacted === true) {
+    addSecurityAuditCheck(
+      checks,
+      blockers,
+      "PASS",
+      "security-audit:evidence",
+      `${SECURITY_AUDIT_EVIDENCE_PATH} schema and redaction flag are valid`,
+      "",
+    );
+  } else {
+    addSecurityAuditCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "security-audit:evidence",
+      `${SECURITY_AUDIT_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+      `${SECURITY_AUDIT_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+    );
+    return;
+  }
+
+  const rawSecretValuesFound =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence);
+  if (rawSecretValuesFound) {
+    addSecurityAuditCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "security-audit:secret-values",
+      "raw registry token or secret values may be present",
+      `${SECURITY_AUDIT_EVIDENCE_PATH} must not contain raw registry tokens or secret values`,
+    );
+    return;
+  }
+
+  addSecurityAuditCheck(
+    checks,
+    blockers,
+    "PASS",
+    "security-audit:secret-values",
+    "no raw registry tokens or secret values are declared or embedded",
+    "",
+  );
+
+  const audit = isPlainObject(evidence.audit) ? evidence.audit : {};
+  const packageManagerOk = audit.packageManager === "pnpm";
+  const auditCommand =
+    typeof audit.auditCommand === "string" ? audit.auditCommand : "";
+  const commandOk =
+    auditCommand.includes("pnpm audit") &&
+    auditCommand.includes("--audit-level=high");
+  const coverageOk =
+    audit.registryAuditVerified === true &&
+    audit.lockfileAudited === true &&
+    audit.productionDependenciesAudited === true &&
+    audit.devDependenciesAudited === true &&
+    packageManagerOk &&
+    commandOk;
+
+  addSecurityAuditCheck(
+    checks,
+    blockers,
+    coverageOk ? "PASS" : "BLOCKED",
+    "security-audit:registry",
+    coverageOk
+      ? "pnpm dependency audit coverage proof is recorded"
+      : "pnpm dependency audit coverage proof is missing or incomplete",
+    "Dependency audit must prove pnpm registry audit coverage for lockfile, production dependencies, and dev dependencies before release",
+  );
+
+  const criticalCount = audit.criticalVulnerabilities;
+  const highCount = audit.highVulnerabilities;
+  const vulnerabilitiesOk =
+    audit.noHighOrCriticalVulnerabilities === true &&
+    criticalCount === 0 &&
+    highCount === 0 &&
+    isNonNegativeInteger(criticalCount) &&
+    isNonNegativeInteger(highCount);
+
+  addSecurityAuditCheck(
+    checks,
+    blockers,
+    vulnerabilitiesOk ? "PASS" : "BLOCKED",
+    "security-audit:vulnerabilities",
+    vulnerabilitiesOk
+      ? "dependency audit proves zero high and critical vulnerabilities"
+      : "dependency audit does not prove zero high and critical vulnerabilities",
+    "Dependency audit must prove zero high and critical vulnerabilities before release",
+  );
+};
+
 const addCloudflareRuntimeCheck = (
   checks,
   blockers,
@@ -3365,6 +3487,7 @@ export const analyzeReleaseReadiness = ({
     blockers,
   );
   checkPublicUrlEvidence(rootDir, releaseTargets, checks, blockers);
+  checkSecurityAuditEvidence(rootDir, checks, blockers);
   checkRuntimeTargetConsistency(
     releaseTargets ?? externalEvidence,
     env,

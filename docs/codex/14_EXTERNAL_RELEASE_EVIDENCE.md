@@ -20,6 +20,7 @@ Machine-readable evidence lives in:
 - `release/cloudflare-runtime-evidence.json`
 - `release/database-evidence.json`
 - `release/public-url-evidence.json`
+- `release/security-audit-evidence.json`
 
 No-secret local proof examples live in:
 
@@ -28,6 +29,7 @@ No-secret local proof examples live in:
 - `release/examples/mobile-native-observation.local.example.json`
 - `release/examples/database-command-proof.local.example.json`
 - `release/examples/public-url-proof.local.example.json`
+- `release/examples/security-audit-proof.local.example.json`
 
 These templates intentionally default to unverified/false values. Copying a
 template into an ignored `release/*.local.json` path must not be treated as
@@ -157,8 +159,9 @@ Cloudflare Worker resource matching, unverified entries in
 build/E2E/store-submit evidence, unverified database migration/seed/API
 smoke/rollback entries in `release/database-evidence.json`, deployment,
 certificates, unverified public landing/privacy/support/terms reachability and
-header/content safety entries in `release/public-url-evidence.json`, and
-operating QA.
+header/content safety entries in `release/public-url-evidence.json`, unverified
+dependency security audit entries in `release/security-audit-evidence.json`,
+and operating QA.
 
 ## Update Rule
 
@@ -265,7 +268,19 @@ collector also treats sensitive public response header names or values as
 non-exposure failures without writing those headers. The tracked evidence
 generator also rejects proof keys for copied request/response headers, raw
 headers, authorization, cookie, session, CSRF, API key, access token, JWT, and
-related sensitive header markers before writing tracked evidence. Then run:
+related sensitive header markers before writing tracked evidence.
+Update `release/security-audit-evidence.json` only with no-secret dependency
+audit summary booleans and vulnerability counts. Prefer running
+`corepack pnpm audit --audit-level=high --prod=false` in a network-enabled
+release environment, recording only the package manager, audit command,
+lockfile/production/dev coverage booleans, and vulnerability counts in the
+ignored `release/security-audit-proof.local.json`, then running
+`corepack pnpm run release:security-audit-evidence` to update tracked evidence.
+Do not paste npm tokens, registry auth values, copied full audit JSON,
+advisories, registry responses, package payloads, dependency details, private
+keys, or provider logs. Release readiness blocks tracked security audit evidence
+until the pnpm registry audit coverage is proven and high/critical vulnerability
+counts are both zero. Then run:
 
 ```powershell
 corepack pnpm run check:release-readiness -- --soft
