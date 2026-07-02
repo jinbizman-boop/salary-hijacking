@@ -16,6 +16,16 @@ name/store booleans in `release/secrets-proof.local.json`, then run
 Git and must not contain any token, DSN, webhook URL, database URL, private key,
 service account, or copied secret value.
 
+The release workflow also collects no-value GitHub Actions runtime proof for
+`GITHUB_TOKEN` and `GITHUB_REPOSITORY` only. It sets
+`SECRET_PROOF_STORE="GitHub Actions runtime"` and
+`SECRET_PROOF_NAMES="GITHUB_TOKEN,GITHUB_REPOSITORY"`, runs
+`corepack pnpm run release:secrets-proof`, validates that no raw secret-like
+value was written, and uploads `release/secrets-proof.local.json` as a
+short-retention `github-runtime-secret-proof-*` artifact. That artifact is
+evidence to review; it is not a secret value source and does not automatically
+update tracked release readiness.
+
 ## Repository Boundary
 
 The Salary Hijacking release must use the new repository

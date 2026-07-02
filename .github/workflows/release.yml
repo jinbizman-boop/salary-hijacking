@@ -262,6 +262,57 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Collect GitHub runtime secret proof
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SECRET_PROOF_STORE: "GitHub Actions runtime"
+          SECRET_PROOF_NAMES: "GITHUB_TOKEN,GITHUB_REPOSITORY"
+        run: |
+          set -euo pipefail
+
+          corepack pnpm run release:secrets-proof
+
+          node <<'NODE'
+          const fs = require("fs");
+          const proof = JSON.parse(fs.readFileSync("release/secrets-proof.local.json", "utf8"));
+
+          if (proof.schemaVersion !== 1 || proof.secretsRedacted !== true || proof.containsSecretValues !== false) {
+            console.error("::error::GitHub runtime secret proof must be schemaVersion 1, redacted, and no-value.");
+            process.exit(1);
+          }
+
+          const names = Object.keys(proof.secrets || {}).sort();
+          const expected = ["GITHUB_REPOSITORY", "GITHUB_TOKEN"];
+          if (JSON.stringify(names) !== JSON.stringify(expected)) {
+            console.error(`::error::Unexpected GitHub runtime proof names: ${names.join(", ")}`);
+            process.exit(1);
+          }
+
+          for (const name of expected) {
+            const entry = proof.secrets[name];
+            if (!entry || entry.verified !== true || !Array.isArray(entry.stores) || !entry.stores.includes("GitHub Actions runtime")) {
+              console.error(`::error::${name} must be verified from GitHub Actions runtime without writing its value.`);
+              process.exit(1);
+            }
+          }
+
+          const serialized = JSON.stringify(proof);
+          if (/gh[pousr]_[a-z0-9_]{16,}|github_pat_[a-z0-9_]{20,}|sk-[a-z0-9_-]{16,}|postgres(?:ql)?:\/\//i.test(serialized)) {
+            console.error("::error::GitHub runtime proof contains a raw secret-like value.");
+            process.exit(1);
+          }
+
+          console.log("GitHub runtime secret proof is redacted and no-value.");
+          NODE
+
+      - name: Upload GitHub runtime secret proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-runtime-secret-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: release/secrets-proof.local.json
+
       - name: Verify pnpm store integrity
         run: pnpm store status
 

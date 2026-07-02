@@ -89,6 +89,18 @@ pasted into notes or other free-text fields. The tracked file may contain only
 the approved Salary Hijacking runtime secret names; unrelated legacy project
 secret names are blocked even when their values are not present.
 
+The release workflow collects GitHub Actions runtime proof for only
+`GITHUB_TOKEN` and `GITHUB_REPOSITORY` with
+`SECRET_PROOF_STORE="GitHub Actions runtime"` and
+`SECRET_PROOF_NAMES="GITHUB_TOKEN,GITHUB_REPOSITORY"`, then uploads the ignored
+`release/secrets-proof.local.json` as a short-retention
+`github-runtime-secret-proof-*` artifact. This artifact is no-value proof only:
+it must not contain raw tokens, database URLs, or copied runtime payloads, and it
+does not automatically mark the tracked `release/secrets-evidence.json` ready.
+An operator must inspect or download the trusted CI artifact and then refresh
+tracked evidence through `corepack pnpm run release:secrets-evidence` without
+pasting any secret value.
+
 Safe Cloudflare runtime evidence generation command:
 
 - `corepack pnpm run release:cloudflare-evidence`

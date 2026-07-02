@@ -216,6 +216,17 @@ note/free-text field contains a raw secret-like string such as a database URL,
 webhook URL, API token, or private key marker. It also blocks unknown secret
 names, including unrelated legacy project names, so foreign repository or
 database secrets cannot satisfy Salary Hijacking release proof.
+The release workflow now creates a no-value GitHub Actions runtime proof
+artifact named `github-runtime-secret-proof-*` from
+`release/secrets-proof.local.json` for only `GITHUB_TOKEN` and
+`GITHUB_REPOSITORY`, using `SECRET_PROOF_STORE="GitHub Actions runtime"` and
+`SECRET_PROOF_NAMES="GITHUB_TOKEN,GITHUB_REPOSITORY"`. This artifact is
+short-retention CI evidence only; it must be inspected or downloaded by an
+operator and converted into tracked evidence with
+`corepack pnpm run release:secrets-evidence` without pasting raw values. The
+workflow artifact does not by itself make `release/secrets-evidence.json`
+verified, and all other runtime secrets remain blocked until their own approved
+store proof exists.
 Update
 `release/cloudflare-runtime-evidence.json` only with resource names, booleans,
 and non-secret proof notes for Workers, R2, Queues, custom domains, TLS

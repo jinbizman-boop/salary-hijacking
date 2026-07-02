@@ -79,6 +79,34 @@ test("does not verify present local environment values without a trusted store",
   ]);
 });
 
+test("collects selected secret names from CI environment proof settings", () => {
+  const proof = collectSecretsProof({
+    env: {
+      GITHUB_TOKEN: "ghs_runtime_token_value_must_not_be_written",
+      GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
+      DATABASE_URL: "postgresql://user:password@host.neon.tech/neondb",
+      SECRET_PROOF_STORE: "GitHub Actions runtime",
+      SECRET_PROOF_NAMES: "GITHUB_TOKEN,GITHUB_REPOSITORY",
+    },
+    writeFile: false,
+    now: () => new Date("2026-07-02T07:00:00.000Z"),
+  });
+
+  assert.deepEqual(Object.keys(proof.secrets), [
+    "GITHUB_TOKEN",
+    "GITHUB_REPOSITORY",
+  ]);
+  assert.equal(proof.secrets.GITHUB_TOKEN.verified, true);
+  assert.equal(proof.secrets.GITHUB_REPOSITORY.verified, true);
+  assert.deepEqual(proof.secrets.GITHUB_TOKEN.stores, [
+    "GitHub Actions runtime",
+  ]);
+
+  const serialized = JSON.stringify(proof);
+  assert.doesNotMatch(serialized, /ghs_runtime_token_value/i);
+  assert.doesNotMatch(serialized, /postgres(?:ql)?:\/\//i);
+});
+
 test("keeps blank secret names unverified even for a trusted store", () => {
   const env = makeEnv();
   env.DATABASE_URL = "";

@@ -38,8 +38,10 @@ const normalizeProofStore = (proofStore) => {
 };
 
 const normalizeSecretNames = (secretNames) => {
-  const names = Array.isArray(secretNames)
-    ? secretNames
+  const candidateNames =
+    typeof secretNames === "string" ? secretNames.split(",") : secretNames;
+  const names = Array.isArray(candidateNames)
+    ? candidateNames
         .filter((name) => typeof name === "string")
         .map((name) => name.trim())
         .filter(Boolean)
@@ -76,8 +78,8 @@ const buildEntry = ({ env, name, proofStore }) => {
 
 export const buildSecretsProof = ({
   env = process.env,
-  proofStore = process.env.SECRET_PROOF_STORE,
-  secretNames,
+  proofStore = env?.SECRET_PROOF_STORE ?? process.env.SECRET_PROOF_STORE,
+  secretNames = env?.SECRET_PROOF_NAMES,
   now = () => new Date(),
 } = {}) => {
   const normalizedStore = normalizeProofStore(proofStore);
@@ -103,8 +105,8 @@ export const buildSecretsProof = ({
 
 export const collectSecretsProof = ({
   env = process.env,
-  proofStore = process.env.SECRET_PROOF_STORE,
-  secretNames,
+  proofStore = env?.SECRET_PROOF_STORE ?? process.env.SECRET_PROOF_STORE,
+  secretNames = env?.SECRET_PROOF_NAMES,
   outputPath = DEFAULT_OUTPUT_PATH,
   now = () => new Date(),
   writeFile = true,

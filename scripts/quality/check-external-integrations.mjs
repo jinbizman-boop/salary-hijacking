@@ -119,6 +119,11 @@ const REQUIRED_TOKENS_BY_FILE = {
   ],
   ".github/workflows/release.yml": [
     "GH_TOKEN: ${{ github.token }}",
+    "GITHUB_TOKEN: ${{ github.token }}",
+    'SECRET_PROOF_STORE: "GitHub Actions runtime"',
+    'SECRET_PROOF_NAMES: "GITHUB_TOKEN,GITHUB_REPOSITORY"',
+    "corepack pnpm run release:secrets-proof",
+    "release/secrets-proof.local.json",
     "gh release create",
   ],
   ".github/workflows/security-scan.yml": [

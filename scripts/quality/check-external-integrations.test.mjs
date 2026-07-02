@@ -92,7 +92,15 @@ jobs:
       name: release-prerelease
     env:
       GH_TOKEN: \${{ github.token }}
+      GITHUB_TOKEN: \${{ github.token }}
+      SECRET_PROOF_STORE: "GitHub Actions runtime"
+      SECRET_PROOF_NAMES: "GITHUB_TOKEN,GITHUB_REPOSITORY"
     steps:
+      - run: corepack pnpm run release:secrets-proof
+      - uses: actions/upload-artifact@v4
+        with:
+          name: github-runtime-secret-proof
+          path: release/secrets-proof.local.json
       - run: gh release create v1.0.0 release-artifacts/*
 `,
     ".github/workflows/security-scan.yml": `
