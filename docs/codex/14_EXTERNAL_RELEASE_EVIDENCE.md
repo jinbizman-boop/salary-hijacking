@@ -43,6 +43,7 @@ Latest Git remote verification refresh: 2026-07-01 14:35:42 KST.
 Latest production dry-run refresh: 2026-07-01 09:34:34 KST.
 Latest read-only spot check: 2026-07-01 17:12:13 KST.
 Latest public URL live proof check: 2026-07-02 12:27:18 KST.
+Latest Cloudflare runtime read-only proof check: 2026-07-02 12:33:42 KST.
 
 GitHub:
 
@@ -82,6 +83,10 @@ Cloudflare:
   2026-07-01 13:36:54 KST.
 - A later read-only spot check on 2026-07-01 17:12:13 KST also returned zero
   Workers and zero Queues.
+- A read-only Cloudflare runtime proof check on 2026-07-02 12:33:42 KST again
+  observed zero Workers, zero Queues, no `salaryhijacking.com` zone, no Salary
+  Hijacking Pages project, and no active TLS certificate proof for the expected
+  Salary Hijacking hostnames.
 - The read-only Queues list returned zero Queues.
 - The R2 bucket list endpoint returned Cloudflare error `10042`, indicating R2
   must be enabled through the Cloudflare Dashboard before bucket proof can be
