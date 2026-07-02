@@ -58,10 +58,11 @@ Verified on 2026-07-02 KST:
   BI logo, Freesentation fonts, five-tab IA, daily-budget screenshot anchor, and
   core Korean launch copy.
 - Mobile Jest currently reports 25 passing suites and 92 passing tests.
-- API package tests currently report 7 passing files and 15 passing tests,
+- API package tests currently report 8 passing files and 17 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
-  mobile variable expense creation contract, mobile route manifest contracts,
-  and public `/`, `/privacy`, `/support`, `/terms` pages for store review URLs.
+  mobile variable expense creation contract, DB-backed variable expense
+  repository contract, mobile route manifest contracts, and public `/`,
+  `/privacy`, `/support`, `/terms` pages for store review URLs.
 - Mobile Detox E2E configuration exists, and local `adb`/`emulator` are now
   detected through Android SDK tool lookup. Android execution is still blocked
   until the local E2E APK is built or equivalent native device-farm proof is
@@ -114,7 +115,8 @@ The project is strongest in:
 
 The project still needs hardening in:
 
-- API-to-DB repository integration,
+- remaining API-to-DB repository integration beyond the newly wired variable
+  expense repository path,
 - remaining endpoint path alignment outside the verified mobile bootstrap/payroll/profile contracts,
 - service-level build/runtime verification beyond typecheck,
 - real mobile native E2E execution with Android SDK/emulator or iOS simulator,

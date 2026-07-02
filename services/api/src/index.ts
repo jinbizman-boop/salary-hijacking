@@ -17,6 +17,10 @@ import {
   type AppEnv,
   type WaitUntilCapable,
 } from "./app";
+import {
+  createNeonVariableExpensesRepository,
+  shouldUseNeonVariableExpensesRepository,
+} from "./repositories/variable-expenses.repository";
 
 const INDEX_VERSION = "3.1.1";
 const WORKER_ENTRYPOINT_NAME = "salary-hijacking-api-worker";
@@ -34,6 +38,13 @@ interface WorkerEnv extends AppEnv {
   readonly OPERATION_WEBHOOK_TOKEN?: string;
   readonly INDEX_AUDIT_TO_CONSOLE?: string;
   readonly ENABLE_QUEUE_HANDLER?: string;
+  readonly SALARY_HIJACKING_DATABASE_URL?: string;
+  readonly DATABASE_URL?: string;
+  readonly POSTGRES_URL?: string;
+  readonly POSTGRES_PRISMA_URL?: string;
+  readonly NEON_DATABASE_URL?: string;
+  readonly NEON_POSTGRES_URL?: string;
+  readonly DIRECT_DATABASE_URL?: string;
 }
 
 interface WorkerExecutionContext extends WaitUntilCapable {
@@ -137,6 +148,12 @@ const appInstance = createApp<WorkerEnv>({
         },
       });
     },
+  },
+  variableExpensesRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonVariableExpensesRepository(env)
+        ? createNeonVariableExpensesRepository<WorkerEnv>()
+        : undefined,
   },
 });
 

@@ -25,7 +25,7 @@ Entrypoints:
 Current verification:
 
 - `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-02.
-- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-02, 7 files and 15 tests.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-02, 8 files and 17 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -69,6 +69,7 @@ Verified on 2026-06-29:
 - `POST /api/v1/users/me/privacy-export`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile privacy action alias. The response returns mobile profile payload privacy state without exposing raw financial, personal, or token data.
 - `POST /api/v1/users/me/withdrawal-request`: implemented in `services/api/src/routes/users.routes.ts` as a request-only mobile profile action. It records/request-flags withdrawal intent without performing destructive final account withdrawal.
 - `POST /api/v1/variable-expenses`: implemented in `services/api/src/routes/variable-expenses.routes.ts` as the server-authoritative mobile Salary Home quick-add target. The response keeps server-authority and privacy flags while omitting the internal owner `userId`.
+- DB-backed variable expenses repository: `services/api/src/repositories/variable-expenses.repository.ts` can create records through the `daily_budgets` and `variable_expenses` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
 - Public store review pages: `GET /`, `GET /privacy`, `GET /support`, and
   `GET /terms` are served by `services/api/src/app.ts` without bearer
   authentication and with CSP plus privacy/ads-safe response headers. Production
@@ -77,6 +78,7 @@ Verified on 2026-06-29:
   release gate.
 - Contract test: `services/api/tests/mobile-profile-contract.test.ts`.
 - Variable expense contract test: `services/api/tests/mobile-variable-expense-contract.test.ts`.
+- Variable expense DB repository test: `services/api/tests/variable-expenses-db-repository.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
 - Public legal page regression test: `services/api/tests/public-legal-pages.test.ts`.
 

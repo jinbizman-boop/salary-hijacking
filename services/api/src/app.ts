@@ -100,7 +100,9 @@ import {
 import {
   VARIABLE_EXPENSES_API_PREFIX,
   assertVariableExpensesRoutesCompleteness,
+  createVariableExpensesRoutes,
   handleVariableExpensesRoutes,
+  type VariableExpensesRoutesOptions,
   variableExpensesRoutesManifest,
 } from "./routes/variable-expenses.routes";
 
@@ -230,6 +232,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly errorOptions?: ErrorMiddlewareOptions<TEnv>;
   readonly rateLimitOptions?: RateLimitMiddlewareOptions<TEnv>;
   readonly auditOptions?: AppAuditOptions<TEnv>;
+  readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
 
@@ -1119,6 +1122,19 @@ async function coreDispatch<TEnv>(
 
   const route = selectRoute(path);
   if (!route) return notFound(runtime);
+  if (
+    route.id === "variable-expenses" &&
+    options.variableExpensesRoutesOptions
+  ) {
+    const routeOptions: VariableExpensesRoutesOptions<TEnv> =
+      options.variableExpensesRoutesOptions.now || !options.now
+        ? options.variableExpensesRoutesOptions
+        : {
+            ...options.variableExpensesRoutesOptions,
+            now: options.now,
+          };
+    return createVariableExpensesRoutes(routeOptions)(request, env, context);
+  }
   return route.handler(request, env, context);
 }
 
