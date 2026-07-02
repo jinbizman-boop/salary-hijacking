@@ -305,6 +305,12 @@ low, moderate, high, and critical vulnerabilities after a lockfile-only override
 refresh. Rerun the audit and regenerate this evidence after any dependency or
 lockfile change before release.
 
+The release workflow also runs `corepack pnpm run check:release-readiness`
+before preparing release artifacts. Production release mode runs the hard gate;
+dry-run and prerelease modes run the soft gate
+`corepack pnpm run check:release-readiness -- --soft` so they can report blocked
+readiness without creating a false production-ready claim.
+
 Current protected rule:
 
 - Use the new Salary Hijacking repository

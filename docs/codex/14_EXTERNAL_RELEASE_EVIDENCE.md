@@ -356,6 +356,11 @@ After a successful audit, the workflow writes and uploads a no-secret
 `release/security-audit-proof.local.json`; the artifact is CI proof material only
 and must be inspected or converted into tracked evidence without pasting raw
 audit payloads.
+Before release artifacts are prepared, the release workflow now runs
+`corepack pnpm run check:release-readiness`. Production release mode uses the
+hard gate; dry-run and prerelease modes use
+`corepack pnpm run check:release-readiness -- --soft` for blocked-readiness
+reporting without claiming production readiness.
 Do not paste npm tokens, registry auth values, copied full audit JSON,
 advisories, registry responses, package payloads, dependency details, private
 keys, or provider logs. Release readiness blocks tracked security audit evidence

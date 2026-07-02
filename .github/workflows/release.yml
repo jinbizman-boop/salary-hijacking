@@ -420,6 +420,18 @@ jobs:
             echo "Root qa:release script is not configured. Skipping."
           fi
 
+      - name: Run release readiness preflight
+        run: |
+          set -euo pipefail
+
+          RELEASE_MODE="${{ steps.release_context.outputs.release_mode }}"
+
+          if [ "$RELEASE_MODE" = "production" ]; then
+            corepack pnpm run check:release-readiness
+          else
+            corepack pnpm run check:release-readiness -- --soft
+          fi
+
       - name: Build release candidates
         run: pnpm build
 

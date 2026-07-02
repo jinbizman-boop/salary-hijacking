@@ -730,6 +730,27 @@ function checkReleaseDependencyAuditWorkflow(rootDir, failures) {
   }
 }
 
+function checkReleaseReadinessWorkflowGate(rootDir, failures) {
+  const relativePath = ".github/workflows/release.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredParts = [
+    "corepack pnpm run check:release-readiness",
+    "-- --soft",
+    "RELEASE_MODE",
+    "production",
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: release readiness gate must run check:release-readiness and include ${requiredPart}`,
+    );
+  }
+}
+
 function checkMobileLaunchAssets(rootDir, failures) {
   for (const relativePath of REQUIRED_MOBILE_ASSET_FILES) {
     if (!fileExists(rootDir, relativePath)) continue;
@@ -925,6 +946,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileNativeProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);
   checkReleaseDependencyAuditWorkflow(rootDir, failures);
+  checkReleaseReadinessWorkflowGate(rootDir, failures);
   checkMobileLaunchAssets(rootDir, failures);
   checkEnvExampleReleaseTargets(rootDir, failures);
   checkMigrationOrder(rootDir, failures);
