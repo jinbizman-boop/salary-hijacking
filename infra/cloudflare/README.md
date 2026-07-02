@@ -86,6 +86,17 @@ corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-ru
 corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --dry-run --env production --config wrangler.jsonc
 ```
 
+Admin OpenNext dry-run requires a successful local OpenNext build first:
+
+```powershell
+corepack pnpm --filter @salary-hijacking/admin run build:cloudflare
+```
+
+On Windows, this build requires directory symlink permission because OpenNext
+enables Next.js standalone output. Use Windows Developer Mode, an administrator
+shell, WSL, or CI if
+`scripts/release/check-opennext-windows-symlink.mjs` blocks the build.
+
 The actual deployment command must use the intended environment:
 
 ```powershell

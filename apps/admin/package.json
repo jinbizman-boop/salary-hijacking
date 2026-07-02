@@ -27,7 +27,7 @@
     "build": "corepack pnpm run clean:next && corepack pnpm run validate:package && corepack pnpm run typecheck:strict && corepack pnpm run lint && corepack pnpm run test:qa && corepack pnpm run build:next && corepack pnpm run build:verify",
     "build:admin": "corepack pnpm run build",
     "build:next": "next build",
-    "build:cloudflare": "corepack pnpm run clean:cloudflare && opennextjs-cloudflare build && corepack pnpm run build:cloudflare:verify",
+    "build:cloudflare": "node ../../scripts/release/check-opennext-windows-symlink.mjs && corepack pnpm run clean:cloudflare && opennextjs-cloudflare build && corepack pnpm run build:cloudflare:verify",
     "build:cloudflare:verify": "node -e \"const fs=require('node:fs'); const required=['.open-next/worker.js','.open-next/assets']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length) throw new Error('missing OpenNext output: '+missing.join(', ')); console.log('admin OpenNext build verified')\"",
     "build:verify": "node -e \"const fs=require('node:fs'); for (const f of ['.next']) if (!fs.existsSync(f)) throw new Error('missing '+f); console.log('admin build verified')\"",
     "typecheck": "tsc --project tsconfig.json --noEmit --pretty false",

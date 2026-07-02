@@ -26,7 +26,7 @@ Current verification:
 
 - `corepack pnpm --filter @salary-hijacking/api typecheck`: PASS on 2026-07-01.
 - `corepack pnpm --filter @salary-hijacking/api test`: PASS on 2026-07-01, 6 files and 14 tests.
-- `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-01.
+- `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
 
@@ -101,6 +101,7 @@ Manifest endpoints include health, ready, manifest, send, multicast, topic, cond
 Current verification:
 
 - `pnpm.cmd --filter @salary-hijacking/notifications typecheck`: PASS after adding `services/notifications/tsconfig.json`.
+- `corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## Scheduler Service
 
@@ -122,6 +123,19 @@ Manifest endpoints include health, ready, manifest, and scheduler job execution 
 Current verification:
 
 - `pnpm.cmd --filter @salary-hijacking/scheduler typecheck`: PASS after adding `services/scheduler/tsconfig.json`.
+- `corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
+
+## Admin OpenNext Worker Dry-Run Note
+
+The Admin OpenNext Worker target is documented in `apps/admin/wrangler.jsonc`
+and `infra/cloudflare/pages/admin-pages.md`, but Admin Worker dry-run requires
+`apps/admin/.open-next/worker.js` from `corepack pnpm --filter
+@salary-hijacking/admin run build:cloudflare`. On 2026-07-02 KST, this build
+was blocked on the local Windows PC because Next standalone output requires
+directory symlink permission. The repository now fails fast through
+`scripts/release/check-opennext-windows-symlink.mjs`; use Windows Developer
+Mode, an administrator shell, WSL, or CI before claiming Admin OpenNext dry-run
+readiness.
 
 ## DB Context
 

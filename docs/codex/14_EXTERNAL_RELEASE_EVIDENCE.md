@@ -110,6 +110,13 @@ Cloudflare:
   - `salary-hijacking-api-production`
   - `salary-hijacking-notifications-production`
   - `salary-hijacking-scheduler-production`
+- Admin OpenNext local Cloudflare build/dry-run is not proven on this Windows
+  PC. On 2026-07-02 KST, `corepack pnpm --filter @salary-hijacking/admin run
+build:cloudflare` failed fast at the repository preflight because OpenNext
+  sets Next standalone output and this shell cannot create Windows directory
+  symlinks. Run the Admin OpenNext build and Worker dry-run from Windows
+  Developer Mode, an administrator shell, WSL, or CI before claiming Admin
+  Worker dry-run readiness.
 - Production custom-domain route patterns were corrected and dry-run verified
   as host-only custom domains:
   - `salaryhijacking.com`

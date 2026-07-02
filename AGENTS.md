@@ -91,7 +91,7 @@ Last checked by Codex on 2026-07-02 KST:
 - `corepack pnpm run check:package-manager-scripts`: PASS, 15 package files checked after dependency restore
 - `corepack pnpm run check:scripts`: PASS
 - `corepack pnpm run check:external-integrations`: PASS, 78 required files checked, including public app/legal custom-domain targets, release workflow mojibake guard, GitHub Actions runtime proof artifact guard, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, no-secret dependency security audit evidence automation, and tracked no-secret local proof example templates; this local shell warns `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 163 tests
+- `corepack pnpm run test:root-scripts`: PASS, 165 tests
 - `node --test apps\mobile\scripts\import-e2e-apk.test.mjs`: PASS, Android E2E APK import helper accepts only local APK/ZIP files and rejects artifact URLs, non-APK files, and placeholders
 - `corepack pnpm run release:public-url-proof`: FAIL by design because `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms` are not yet reachable with verified CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure; the ignored local proof stores only false booleans and no raw headers/body data
 - `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
@@ -114,6 +114,9 @@ Last checked by Codex on 2026-07-02 KST:
 - `node --test scripts/release/generate-public-url-evidence.test.mjs`: PASS, public URL evidence generator rejects proof files containing raw secrets, unrelated checked public URL targets, copied response bodies, copied response/request headers, cookies, sessions, auth markers, or sensitive user/financial keys before writing tracked evidence
 - `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 14 tests, including public `/`, `/privacy`, `/support`, and `/terms` pages
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, API Worker config parses with `salaryhijacking.com`, `www.salaryhijacking.com`, and `api.salaryhijacking.com` production custom-domain targets
+- `corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, Notifications Worker production config parses with retry/operation Queue bindings and privacy-safe notification flags
+- `corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, Scheduler Worker production config parses with scheduler/notification/growth Queue bindings, cron-capable Worker entrypoint, and server-authority/privacy flags
+- `corepack pnpm --filter @salary-hijacking/admin run build:cloudflare`: FAIL fast on this Windows PC because OpenNext/Next standalone output requires directory symlink permission; run from Developer Mode, an administrator shell, WSL, or CI before Admin Worker dry-run/deploy
 - `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests
 - `corepack pnpm --filter @salary-hijacking/mobile typecheck`: PASS
 - `corepack pnpm --filter @salary-hijacking/mobile format:check`: PASS
