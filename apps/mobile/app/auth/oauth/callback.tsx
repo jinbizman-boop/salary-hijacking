@@ -123,7 +123,7 @@ export default function OAuthCallbackScreen(): React.ReactElement {
             textAlign: "center",
           }}
         >
-          서버 인증 결과를 확인한 뒤 급여 홈으로 이동합니다.
+          서버 인증 결과와 계정 상태를 확인한 뒤 다음 화면으로 이동합니다.
         </Text>
       </View>
     </SafeAreaView>
@@ -141,6 +141,9 @@ export function assertMobileOAuthCallbackCompleteness(): {
     "createMobileAuthApi",
     "completeOAuth",
     "AUTHENTICATED",
+    "emailVerified",
+    "onboardingCompleted",
+    "계정 상태",
     'router.replace("/(auth)/verify-email")',
     'router.replace("/onboarding")',
     'router.replace("/salary")',
@@ -148,5 +151,5 @@ export function assertMobileOAuthCallbackCompleteness(): {
     "rawVerifierNotRendered",
   ] as const;
 
-  return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 13, version: SCREEN_VERSION, checks };
 }

@@ -425,6 +425,18 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toBeLessThan(callbackRoute.indexOf('router.replace("/salary")'));
   });
 
+  it("keeps social OAuth callback copy readable and aligned with state routing", () => {
+    const callbackRoute = source("auth/oauth/callback.tsx");
+
+    expect(callbackRoute).toContain("소셜 로그인 확인 중");
+    expect(callbackRoute).toContain(
+      "서버 인증 결과와 계정 상태를 확인한 뒤 다음 화면으로 이동합니다.",
+    );
+    expect(callbackRoute).not.toMatch(/[?][가-힣]|[가-힣][?]|�/u);
+    expect(callbackRoute).not.toContain("급여 홈으로 이동합니다");
+    expect(callbackRoute).toContain("routeAuthenticatedOAuthResult");
+  });
+
   it("keeps reset-password screen routed to the server password reset confirm flow", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
