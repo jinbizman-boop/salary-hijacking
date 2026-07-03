@@ -1,5 +1,6 @@
 import {
   NOTIFICATIONS_PATH,
+  NOTIFICATIONS_PREFERENCES_PATH,
   NOTIFICATIONS_READ_ALL_PATH,
   NOTIFICATIONS_SAFE_ERROR_MESSAGE,
   NOTIFICATIONS_UNREAD_COUNT_PATH,
@@ -9,6 +10,8 @@ import type {
   NotificationItem,
   NotificationListResult,
   NotificationPriority,
+  NotificationPreferences,
+  NotificationPreferencesUpdateRequest,
   NotificationReadAllResult,
   NotificationStatus,
   NotificationType,
@@ -360,6 +363,119 @@ function normalizeReadAllResult(value: unknown): NotificationReadAllResult {
   };
 }
 
+const PREFERENCE_BOOLEAN_KEYS = [
+  "adPartnerEnabled",
+  "budgetExceededEnabled",
+  "budgetWarningEnabled",
+  "communityEnabled",
+  "contentRecommendationEnabled",
+  "emailEnabled",
+  "inAppEnabled",
+  "levelUpEnabled",
+  "paymentDueEnabled",
+  "paydayEnabled",
+  "pushEnabled",
+  "savingsGoalEnabled",
+  "securityEnabled",
+] as const;
+
+function normalizeBooleanPreference(
+  value: Record<string, unknown>,
+  key: (typeof PREFERENCE_BOOLEAN_KEYS)[number],
+): boolean {
+  if (typeof value[key] === "boolean") return value[key];
+  throw new NotificationsApiError(
+    0,
+    "NOTIFICATION_INVALID_RESPONSE",
+    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+  );
+}
+
+function normalizeTimeWindow(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && /^\d{2}:\d{2}$/u.test(value)) return value;
+  throw new NotificationsApiError(
+    0,
+    "NOTIFICATION_INVALID_RESPONSE",
+    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+  );
+}
+
+function normalizePreferences(value: unknown): NotificationPreferences {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_RESPONSE",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const data = value.data;
+  if (
+    typeof data.timezone !== "string" ||
+    !data.timezone ||
+    !isIsoTimestamp(data.updatedAt) ||
+    data.sensitiveFinancialTargetingConsent !== false
+  ) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_RESPONSE",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+
+  return {
+    adPartnerEnabled: normalizeBooleanPreference(data, "adPartnerEnabled"),
+    budgetExceededEnabled: normalizeBooleanPreference(
+      data,
+      "budgetExceededEnabled",
+    ),
+    budgetWarningEnabled: normalizeBooleanPreference(
+      data,
+      "budgetWarningEnabled",
+    ),
+    communityEnabled: normalizeBooleanPreference(data, "communityEnabled"),
+    contentRecommendationEnabled: normalizeBooleanPreference(
+      data,
+      "contentRecommendationEnabled",
+    ),
+    emailEnabled: normalizeBooleanPreference(data, "emailEnabled"),
+    inAppEnabled: normalizeBooleanPreference(data, "inAppEnabled"),
+    levelUpEnabled: normalizeBooleanPreference(data, "levelUpEnabled"),
+    paymentDueEnabled: normalizeBooleanPreference(data, "paymentDueEnabled"),
+    paydayEnabled: normalizeBooleanPreference(data, "paydayEnabled"),
+    pushEnabled: normalizeBooleanPreference(data, "pushEnabled"),
+    savingsGoalEnabled: normalizeBooleanPreference(data, "savingsGoalEnabled"),
+    securityEnabled: normalizeBooleanPreference(data, "securityEnabled"),
+    quietHoursEnd: normalizeTimeWindow(data.quietHoursEnd),
+    quietHoursStart: normalizeTimeWindow(data.quietHoursStart),
+    sensitiveFinancialTargetingConsent: false,
+    timezone: data.timezone,
+    updatedAt: data.updatedAt,
+  };
+}
+
+function validPreferenceUpdate(
+  request: NotificationPreferencesUpdateRequest,
+): boolean {
+  if (!isRecord(request) || Object.keys(request).length === 0) return false;
+  for (const [key, value] of Object.entries(request)) {
+    if (PREFERENCE_BOOLEAN_KEYS.includes(key as never)) {
+      if (typeof value !== "boolean") return false;
+      continue;
+    }
+    if (key === "quietHoursStart" || key === "quietHoursEnd") {
+      if (value !== null && !normalizeTimeWindow(value)) return false;
+      continue;
+    }
+    if (key === "timezone") {
+      if (typeof value !== "string" || !value.trim()) return false;
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
 function notificationResourcePath(notificationId: string): string {
   if (!/^[A-Za-z0-9_-]+$/u.test(notificationId)) {
     throw new NotificationsApiError(
@@ -495,6 +611,30 @@ export function createNotificationsApi(
     async markAllRead(): Promise<NotificationReadAllResult> {
       return normalizeReadAllResult(
         await request(NOTIFICATIONS_READ_ALL_PATH, { method: "POST" }),
+      );
+    },
+
+    async getPreferences(): Promise<NotificationPreferences> {
+      return normalizePreferences(
+        await request(NOTIFICATIONS_PREFERENCES_PATH),
+      );
+    },
+
+    async updatePreferences(
+      preferencesRequest: NotificationPreferencesUpdateRequest,
+    ): Promise<NotificationPreferences> {
+      if (!validPreferenceUpdate(preferencesRequest)) {
+        throw new NotificationsApiError(
+          0,
+          "NOTIFICATION_INVALID_PREFERENCES_UPDATE",
+          NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizePreferences(
+        await request(NOTIFICATIONS_PREFERENCES_PATH, {
+          method: "PATCH",
+          body: JSON.stringify(preferencesRequest),
+        }),
       );
     },
   };

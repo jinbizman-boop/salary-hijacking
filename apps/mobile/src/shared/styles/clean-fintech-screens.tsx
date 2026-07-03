@@ -54,6 +54,8 @@ import type {
 import { mergeProfileSnapshotWithMyPageSummary } from "../../features/profile/api";
 import type {
   NotificationItem,
+  NotificationPreferences,
+  NotificationPreferencesUpdateRequest,
   NotificationPriority,
   NotificationStatus,
   NotificationType,
@@ -3836,6 +3838,8 @@ function NotificationsScreen(): React.ReactElement {
   const [unreadCount, setUnreadCount] = useState(
     fallbackNotifications.filter((item) => item.status === "UNREAD").length,
   );
+  const [serverNotificationPreferences, setServerNotificationPreferences] =
+    useState<NotificationPreferences | null>(null);
   const [syncLabel, setSyncLabel] = useState("서버 알림을 확인하는 중이에요.");
 
   useEffect(() => {
@@ -3843,10 +3847,13 @@ function NotificationsScreen(): React.ReactElement {
 
     async function hydrateNotifications(): Promise<void> {
       try {
-        const [listResult, unreadResult] = await Promise.all([
-          notificationsApi.list({ page: 1, pageSize: 20 }),
-          notificationsApi.unreadCount(),
-        ]);
+        const [listResult, unreadResult, preferencesResult] = await Promise.all(
+          [
+            notificationsApi.list({ page: 1, pageSize: 20 }),
+            notificationsApi.unreadCount(),
+            notificationsApi.getPreferences(),
+          ],
+        );
         if (!mounted) return;
 
         const nextNotifications = listResult.items
@@ -3858,10 +3865,12 @@ function NotificationsScreen(): React.ReactElement {
           nextNotifications.length ? nextNotifications : fallbackNotifications,
         );
         setUnreadCount(unreadResult.unreadCount);
+        setServerNotificationPreferences(preferencesResult);
         setSyncLabel("서버 알림 기준으로 동기화됐어요.");
       } catch {
         if (!mounted) return;
         setServerNotifications(fallbackNotifications);
+        setServerNotificationPreferences(null);
         setUnreadCount(
           fallbackNotifications.filter((item) => item.status === "UNREAD")
             .length,
@@ -3975,9 +3984,68 @@ function NotificationsScreen(): React.ReactElement {
     [notificationsApi],
   );
 
+  const updateNotificationPreference = useCallback(
+    (preferencesRequest: NotificationPreferencesUpdateRequest) => {
+      const current = serverNotificationPreferences;
+      if (!current) {
+        setSyncLabel("서버 알림 설정을 먼저 불러와야 해요.");
+        return;
+      }
+      const optimistic = { ...current, ...preferencesRequest };
+      setServerNotificationPreferences(optimistic);
+      void notificationsApi
+        .updatePreferences({
+          ...preferencesRequest,
+        })
+        .then((updated) => {
+          setServerNotificationPreferences(updated);
+          setSyncLabel("서버에 알림 설정을 저장했어요.");
+        })
+        .catch(() => {
+          setServerNotificationPreferences(current);
+          setSyncLabel(
+            "알림 설정을 서버에 저장하지 못했어요. 다시 확인해 주세요.",
+          );
+        });
+    },
+    [notificationsApi, serverNotificationPreferences],
+  );
+
   return (
     <AppScreen title="알림" subtitle="새로운 알림이 있어요">
       <Toast message={`${syncLabel} · 읽지 않은 알림 ${unreadCount}개`} />
+      {serverNotificationPreferences ? (
+        <SectionCard>
+          <View style={styles.between}>
+            <Text style={styles.sectionTitle}>알림 설정</Text>
+            <StatusPill label={serverNotificationPreferences.timezone} />
+          </View>
+          <ToggleRow
+            active={serverNotificationPreferences.pushEnabled}
+            label="푸시 알림"
+            onPress={() =>
+              updateNotificationPreference({
+                pushEnabled: !serverNotificationPreferences.pushEnabled,
+              })
+            }
+          />
+          <ToggleRow
+            active={serverNotificationPreferences.contentRecommendationEnabled}
+            label="LV UP 추천 알림"
+            onPress={() =>
+              updateNotificationPreference({
+                contentRecommendationEnabled:
+                  !serverNotificationPreferences.contentRecommendationEnabled,
+              })
+            }
+          />
+          <Text style={styles.listMeta}>
+            Quiet {serverNotificationPreferences.quietHoursStart ?? "--:--"}-
+            {serverNotificationPreferences.quietHoursEnd ?? "--:--"} · financial
+            targeting off
+          </Text>
+        </SectionCard>
+      ) : null}
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>중요 알림</Text>

@@ -52,6 +52,51 @@ export type NotificationReadAllResult = Readonly<{
   updatedAt: string;
 }>;
 
+export type NotificationPreferences = Readonly<{
+  inAppEnabled: boolean;
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+  paydayEnabled: boolean;
+  paymentDueEnabled: boolean;
+  budgetWarningEnabled: boolean;
+  budgetExceededEnabled: boolean;
+  savingsGoalEnabled: boolean;
+  levelUpEnabled: boolean;
+  communityEnabled: boolean;
+  securityEnabled: boolean;
+  contentRecommendationEnabled: boolean;
+  adPartnerEnabled: boolean;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  timezone: string;
+  sensitiveFinancialTargetingConsent: false;
+  updatedAt: string;
+}>;
+
+export type NotificationPreferencesUpdateRequest = Readonly<
+  Partial<
+    Pick<
+      NotificationPreferences,
+      | "adPartnerEnabled"
+      | "budgetExceededEnabled"
+      | "budgetWarningEnabled"
+      | "communityEnabled"
+      | "contentRecommendationEnabled"
+      | "emailEnabled"
+      | "inAppEnabled"
+      | "levelUpEnabled"
+      | "paymentDueEnabled"
+      | "paydayEnabled"
+      | "pushEnabled"
+      | "quietHoursEnd"
+      | "quietHoursStart"
+      | "savingsGoalEnabled"
+      | "securityEnabled"
+      | "timezone"
+    >
+  >
+>;
+
 export type NotificationsApiClient = Readonly<{
   list: (options?: {
     readonly page?: number;
@@ -63,4 +108,8 @@ export type NotificationsApiClient = Readonly<{
   archive: (notificationId: string) => Promise<NotificationItem>;
   delete: (notificationId: string) => Promise<NotificationItem>;
   markAllRead: () => Promise<NotificationReadAllResult>;
+  getPreferences: () => Promise<NotificationPreferences>;
+  updatePreferences: (
+    request: NotificationPreferencesUpdateRequest,
+  ) => Promise<NotificationPreferences>;
 }>;

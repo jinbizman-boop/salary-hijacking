@@ -215,6 +215,77 @@ describe("notifications api", () => {
     );
   });
 
+  it("reads and updates notification preferences without exposing owner or financial targeting", async () => {
+    const calls: Request[] = [];
+    const serverPreferences = {
+      userId: "user_123",
+      inAppEnabled: true,
+      pushEnabled: true,
+      emailEnabled: false,
+      paydayEnabled: true,
+      paymentDueEnabled: true,
+      budgetWarningEnabled: true,
+      budgetExceededEnabled: true,
+      savingsGoalEnabled: true,
+      levelUpEnabled: true,
+      communityEnabled: true,
+      securityEnabled: true,
+      contentRecommendationEnabled: false,
+      adPartnerEnabled: false,
+      quietHoursStart: "22:00",
+      quietHoursEnd: "08:00",
+      timezone: "Asia/Seoul",
+      sensitiveFinancialTargetingConsent: false,
+      updatedAt: "2026-07-02T09:30:00.000Z",
+    };
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        if (normalized.method === "PATCH") {
+          return jsonResponse({
+            data: {
+              ...serverPreferences,
+              pushEnabled: false,
+              updatedAt: "2026-07-02T09:35:00.000Z",
+            },
+          });
+        }
+        return jsonResponse({ data: serverPreferences });
+      },
+      platform: "ios",
+    });
+
+    const preferences = await api.getPreferences();
+    expect(preferences).toMatchObject({
+      pushEnabled: true,
+      quietHoursStart: "22:00",
+      sensitiveFinancialTargetingConsent: false,
+    });
+    await expect(
+      api.updatePreferences({
+        contentRecommendationEnabled: true,
+        pushEnabled: false,
+      }),
+    ).resolves.toMatchObject({
+      pushEnabled: false,
+      updatedAt: "2026-07-02T09:35:00.000Z",
+    });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/notifications/preferences",
+    );
+    expect(calls[1]?.method).toBe("PATCH");
+    await expect(calls[1]?.clone().json()).resolves.toEqual({
+      contentRecommendationEnabled: true,
+      pushEnabled: false,
+    });
+    expect(JSON.stringify(preferences)).not.toContain("userId");
+  });
+
   it("rejects sensitive or invalid server payloads before the screen consumes them", async () => {
     const api = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",
