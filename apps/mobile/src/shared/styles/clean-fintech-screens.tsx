@@ -4403,6 +4403,8 @@ function NotificationsScreen(): React.ReactElement {
     useState<NotificationPreferences | null>(null);
   const [notificationPreferencePending, setNotificationPreferencePending] =
     useState(false);
+  const [notificationReadAllPending, setNotificationReadAllPending] =
+    useState(false);
   const [serverNotificationDevices, setServerNotificationDevices] = useState<
     readonly NotificationDevice[]
   >([]);
@@ -4523,9 +4525,10 @@ function NotificationsScreen(): React.ReactElement {
   );
 
   const markAllNotificationsRead = useCallback(() => {
-    if (unreadCount <= 0) return;
+    if (notificationReadAllPending || unreadCount <= 0) return;
     const previousNotifications = serverNotifications;
     const previousUnreadCount = unreadCount;
+    setNotificationReadAllPending(true);
     setServerNotifications((current) =>
       current.map((item) => ({ ...item, status: "READ" })),
     );
@@ -4545,8 +4548,10 @@ function NotificationsScreen(): React.ReactElement {
         setSyncLabel(
           "전체 읽음 처리를 서버에 저장하지 못했어요. 다시 확인해 주세요.",
         );
-      });
+      })
+      .finally(() => setNotificationReadAllPending(false));
   }, [
+    notificationReadAllPending,
     notificationsApi,
     restoreAllNotificationsReadOnFailure,
     serverNotifications,
@@ -4807,7 +4812,11 @@ function NotificationsScreen(): React.ReactElement {
           <Text style={styles.sectionTitle}>중요 알림</Text>
           <StatusPill label={`${unreadCount} unread`} />
         </View>
-        <SmallButton label="전체 읽음" onPress={markAllNotificationsRead} />
+        <SmallButton
+          disabled={notificationReadAllPending || unreadCount <= 0}
+          label={notificationReadAllPending ? "읽음 처리 중" : "전체 읽음"}
+          onPress={markAllNotificationsRead}
+        />
         {importantNotifications.length ? (
           importantNotifications.map((item) => (
             <ListRow
