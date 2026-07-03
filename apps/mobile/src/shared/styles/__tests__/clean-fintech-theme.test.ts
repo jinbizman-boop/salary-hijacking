@@ -409,7 +409,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
 
     expect(cleanScreens).toContain("openMyCommunityPosts");
-    expect(cleanScreens).toContain('profileRouter.push("/community")');
+    expect(cleanScreens).toContain('profileRouter.push("/profile/community")');
     expect(cleanScreens).toContain("openMyLevelProgress");
     expect(cleanScreens).toContain('profileRouter.push("/level")');
     expect(cleanScreens).toContain("openProfileNotices");
@@ -509,6 +509,28 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("rawPersonalData=false");
     expect(source("profile/support.tsx")).toContain(
       "<CleanFintechSupportScreen />",
+    );
+  });
+
+  it("keeps MY community management routed to a server-backed own posts screen", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const communityService = mobileSource(
+      "src/features/community/community.service.ts",
+    );
+
+    expect(communityService).toContain("listMyPosts");
+    expect(communityService).toContain("listMyComments");
+    expect(cleanScreens).toContain("CleanFintechMyCommunityScreen");
+    expect(cleanScreens).toContain("myCommunityService.listMyPosts");
+    expect(cleanScreens).toContain("myCommunityService.listMyComments");
+    expect(cleanScreens).toContain('profileRouter.push("/profile/community")');
+    expect(cleanScreens).toContain("내 게시글 관리");
+    expect(cleanScreens).toContain("rawFinancialDataExposed");
+    expect(cleanScreens).toContain("adsFinancialTargetingUsed");
+    expect(source("profile/community.tsx")).toContain(
+      "<CleanFintechMyCommunityScreen />",
     );
   });
 

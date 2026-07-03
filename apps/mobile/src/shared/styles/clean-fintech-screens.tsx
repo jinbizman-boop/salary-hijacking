@@ -1495,6 +1495,108 @@ export function CleanFintechSupportScreen(): React.ReactElement {
   );
 }
 
+export function CleanFintechMyCommunityScreen(): React.ReactElement {
+  const myCommunityRouter = useRouter();
+  const myCommunityService = useMemo(() => createMobileCommunityService(), []);
+  const [myCommunityPosts, setMyCommunityPosts] = useState<
+    readonly CommunityScreenPost[]
+  >(fallbackCommunityPosts);
+  const [myCommunityComments, setMyCommunityComments] = useState<
+    readonly CommunityComment[]
+  >(fallbackPostDetail.comments);
+  const [toast, setToast] = useState(
+    "내 게시글과 댓글을 서버 기준으로 확인하는 중이에요.",
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateMyCommunity(): Promise<void> {
+      try {
+        const [postsResponse, commentsResponse] = await Promise.all([
+          myCommunityService.listMyPosts(1, 20),
+          myCommunityService.listMyComments(1, 20),
+        ]);
+        if (!mounted) return;
+
+        const posts = parseCommunityFeedPage(
+          communityResponseData(postsResponse),
+        ).items.map(toCommunityScreenPost);
+        const comments = parseCommunityCommentPage(
+          communityResponseData(commentsResponse),
+        ).items;
+
+        setMyCommunityPosts(posts.length ? posts : fallbackCommunityPosts);
+        setMyCommunityComments(
+          comments.length ? comments : fallbackPostDetail.comments,
+        );
+        setToast(
+          `서버 내 커뮤니티 동기화 · 글 ${formatCommunityCount(
+            posts.length,
+          )}개 · 댓글 ${formatCommunityCount(comments.length)}개`,
+        );
+      } catch {
+        if (!mounted) return;
+        setMyCommunityPosts(fallbackCommunityPosts);
+        setMyCommunityComments(fallbackPostDetail.comments);
+        setToast("서버 연결 전까지 안전한 예시 내 활동을 보여드려요.");
+      }
+    }
+
+    void hydrateMyCommunity();
+
+    return () => {
+      mounted = false;
+    };
+  }, [myCommunityService]);
+
+  const openManagedPost = useCallback(
+    (post: CommunityScreenPost): void => {
+      myCommunityRouter.push(`/community/${post.id}`);
+    },
+    [myCommunityRouter],
+  );
+
+  return (
+    <AppScreen title="내 게시글 관리" subtitle="내 커뮤니티 활동">
+      <Toast message={toast} />
+      <SectionCard>
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>내 게시글</Text>
+          <StatusPill label={`${myCommunityPosts.length} posts`} />
+        </View>
+        {myCommunityPosts.map((post) => (
+          <CommunityPostRow
+            key={post.id}
+            onPress={() => openManagedPost(post)}
+            post={post}
+          />
+        ))}
+      </SectionCard>
+      <SectionCard>
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>내 댓글</Text>
+          <StatusPill label={`${myCommunityComments.length} comments`} />
+        </View>
+        {myCommunityComments.map((comment) => (
+          <ListRow
+            icon="💬"
+            key={comment.id}
+            meta={`${formatNoticeDate(comment.createdAt)} · rawFinancialDataExposed=${String(
+              comment.rawFinancialDataExposed,
+            )}`}
+            onPress={() =>
+              myCommunityRouter.push(`/community/${comment.postId}`)
+            }
+            title={comment.content}
+          />
+        ))}
+      </SectionCard>
+      <GuardBox />
+    </AppScreen>
+  );
+}
+
 export function CleanFintechPostDetailScreen({
   postId = fallbackPostDetail.post.id,
 }: Readonly<{ postId?: string }>): React.ReactElement {
@@ -3339,7 +3441,7 @@ function ProfileScreen(): React.ReactElement {
   }, [profileAuthApi, profileRouter]);
 
   const openMyCommunityPosts = useCallback(() => {
-    profileRouter.push("/community");
+    profileRouter.push("/profile/community");
   }, [profileRouter]);
 
   const openMyLevelProgress = useCallback(() => {
