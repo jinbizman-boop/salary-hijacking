@@ -62,9 +62,10 @@ Verified on 2026-07-03 KST:
   write publish service contract, Community detail/comments service hydration
   plus comment submission service contract, Plan fixed-expense/savings
   commitments hydration contract, and Login/Signup Auth API submission
-  contract. Shared mobile API factory testing also guards bearer access-token
-  attachment for feature API requests after login.
-- Mobile Jest currently reports 32 passing suites and 121 passing tests.
+  contract, and Auth refresh/logout session-continuity contract. Shared mobile
+  API factory testing also guards bearer access-token attachment for feature API
+  requests after login.
+- Mobile Jest currently reports 32 passing suites and 124 passing tests.
 - API package tests currently report 24 passing files and 47 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation

@@ -4,13 +4,17 @@ import {
 } from "../../shared/api/auth-response";
 import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
+  AUTH_LOGOUT_PATH,
   AUTH_LOGIN_PATH,
+  AUTH_REFRESH_PATH,
   AUTH_REGISTER_PATH,
   AUTH_SAFE_ERROR_MESSAGE,
 } from "./constants";
 import type {
   AuthApiClient,
   AuthLoginRequest,
+  AuthLogoutResult,
+  AuthRefreshRequest,
   AuthRegisterRequest,
   AuthTokenStore,
 } from "./types";
@@ -152,6 +156,27 @@ async function persistAccessToken(
   }
 }
 
+async function clearAccessToken(
+  tokenStore: AuthTokenStore | undefined,
+): Promise<void> {
+  if (!tokenStore?.deleteItemAsync) return;
+
+  try {
+    await tokenStore.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+  } catch {
+    throw new AuthApiError(
+      0,
+      "AUTH_TOKEN_STORE_FAILED",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+}
+
+function logoutResult(value: unknown): AuthLogoutResult {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  return { revoked: data.revoked === true };
+}
+
 export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -278,6 +303,49 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         );
       }
       return normalized;
+    },
+
+    async refresh(request: AuthRefreshRequest = {}) {
+      const body: Record<string, unknown> = {};
+      appendOptional(body, "deviceId", request.deviceId);
+
+      let parsed: unknown;
+      try {
+        parsed = await post(AUTH_REFRESH_PATH, body);
+      } catch (error) {
+        await clearAccessToken(options.tokenStore);
+        throw error;
+      }
+      let normalized;
+      try {
+        normalized = normalizeMobileAuthResponse(
+          parsed as Readonly<{ data?: unknown; error?: unknown }>,
+          now(),
+        );
+      } catch {
+        await clearAccessToken(options.tokenStore);
+        throw new AuthApiError(
+          0,
+          "AUTH_INVALID_RESPONSE",
+          AUTH_SAFE_ERROR_MESSAGE,
+        );
+      }
+      if (!normalized.data || normalized.data.status !== "AUTHENTICATED") {
+        await clearAccessToken(options.tokenStore);
+        throw new AuthApiError(
+          0,
+          "AUTH_INVALID_RESPONSE",
+          AUTH_SAFE_ERROR_MESSAGE,
+        );
+      }
+      await persistAccessToken(options.tokenStore, normalized.data.accessToken);
+      return normalized;
+    },
+
+    async logout() {
+      const parsed = await post(AUTH_LOGOUT_PATH, {});
+      await clearAccessToken(options.tokenStore);
+      return logoutResult(parsed);
     },
   };
 }

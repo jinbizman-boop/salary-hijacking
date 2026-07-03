@@ -20,11 +20,22 @@ export type AuthRegisterRequest = Readonly<{
   deviceId?: string;
 }>;
 
+export type AuthRefreshRequest = Readonly<{
+  deviceId?: string;
+}>;
+
+export type AuthLogoutResult = Readonly<{
+  revoked: boolean;
+}>;
+
 export type AuthTokenStore = Readonly<{
   setItemAsync: (key: string, value: string) => Promise<void>;
+  deleteItemAsync?: (key: string) => Promise<void>;
 }>;
 
 export type AuthApiClient = Readonly<{
   login: (request: AuthLoginRequest) => Promise<MobileAuthResponse>;
   register: (request: AuthRegisterRequest) => Promise<MobileSignupResponse>;
+  refresh: (request?: AuthRefreshRequest) => Promise<MobileAuthResponse>;
+  logout: () => Promise<AuthLogoutResult>;
 }>;

@@ -218,4 +218,112 @@ describe("auth api", () => {
     });
     expect(stored.size).toBe(0);
   });
+
+  it("refreshes the access token through the server refresh cookie without storing refresh tokens", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-refresh-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        expect(normalized.url).toBe(
+          "https://api.salaryhijacking.com/api/v1/auth/refresh",
+        );
+        expect(normalized.credentials).toBe("include");
+        expect(JSON.parse(await normalized.text())).toEqual({
+          deviceId: "device-1",
+        });
+        return jsonResponse({
+          data: {
+            user: {
+              userId: "usr_refresh",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "refreshed.access.jwt",
+              refreshToken: "rotated.refresh.cookie",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        });
+      },
+      now: () => now,
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    const result = await api.refresh({ deviceId: "device-1" });
+
+    expect(result.data).toMatchObject({
+      status: "AUTHENTICATED",
+      accessToken: "refreshed.access.jwt",
+    });
+    expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("refreshed.access.jwt");
+    expect(Array.from(stored.values()).join(" ")).not.toContain(
+      "rotated.refresh.cookie",
+    );
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+  });
+
+  it("logs out through the server and clears only the local access token", async () => {
+    const calls: Request[] = [];
+    const deleted: string[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-logout-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        expect(normalized.url).toBe(
+          "https://api.salaryhijacking.com/api/v1/auth/logout",
+        );
+        expect(normalized.credentials).toBe("include");
+        expect(JSON.parse(await normalized.text())).toEqual({});
+        return jsonResponse({ data: { revoked: true } });
+      },
+      platform: "ios",
+      tokenStore: {
+        setItemAsync: async () => undefined,
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+        },
+      },
+    });
+
+    const result = await api.logout();
+
+    expect(result).toEqual({ revoked: true });
+    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+  });
+
+  it("clears the local access token when refresh is rejected by the server", async () => {
+    const deleted: string[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({ error: { code: "AUTH_REFRESH_TOKEN_INVALID" } }, 401),
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async () => undefined,
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+        },
+      },
+    });
+
+    await expect(api.refresh()).rejects.toMatchObject({
+      code: "AUTH_REFRESH_TOKEN_INVALID",
+    });
+    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+  });
 });

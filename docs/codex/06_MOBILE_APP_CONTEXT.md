@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 121 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 124 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -151,6 +151,20 @@ locked-account responses stay pending/error states instead of being reported as
 local login success. The screen tests verify server-first submission wiring,
 but deployed API auth, DB-backed user persistence, native E2E, and store review
 proof remain separate release gates.
+
+## Auth Refresh/Logout Session Continuity
+
+As of 2026-07-03, the mobile Auth API client also supports the server refresh
+and logout routes:
+
+- `POST /api/v1/auth/refresh` through `AuthApiClient.refresh()`
+- `POST /api/v1/auth/logout` through `AuthApiClient.logout()`
+
+The refresh call relies on the server HttpOnly refresh cookie through
+`credentials: include`, stores only the rotated access token, and clears the
+local access token when refresh is rejected by the server. The logout call
+delegates session revocation and cookie clearing to the server, then deletes the
+local access token. The mobile client still does not persist raw refresh tokens.
 
 ## Bearer Token Attachment For Feature APIs
 
