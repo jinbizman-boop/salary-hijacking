@@ -4857,6 +4857,9 @@ function ProfileScreen(): React.ReactElement {
   const profileRouter = useRouter();
   const [serverProfileSnapshot, setServerProfileSnapshot] =
     useState<ProfileSnapshot | null>(null);
+  const [profileActionPending, setProfileActionPending] = useState<
+    "privacy-export" | "withdrawal" | "logout" | null
+  >(null);
   const [profileToast, setProfileToast] = useState(
     "서버 MY 정보를 확인하는 중이에요.",
   );
@@ -4894,6 +4897,8 @@ function ProfileScreen(): React.ReactElement {
   }, [profileApi]);
 
   const requestPrivacyExport = useCallback(() => {
+    if (profileActionPending !== null) return;
+    setProfileActionPending("privacy-export");
     setProfileToast("개인정보 내보내기 요청을 서버에 전달하는 중이에요.");
     void profileApi
       .requestPrivacyExport({ reason: "app-my-page" })
@@ -4907,10 +4912,15 @@ function ProfileScreen(): React.ReactElement {
         setProfileToast(
           "내보내기 요청을 처리하지 못했어요. 다시 시도해 주세요.",
         );
+      })
+      .finally(() => {
+        setProfileActionPending(null);
       });
-  }, [profileApi]);
+  }, [profileActionPending, profileApi]);
 
   const requestWithdrawal = useCallback(() => {
+    if (profileActionPending !== null) return;
+    setProfileActionPending("withdrawal");
     setProfileToast("탈퇴 요청을 서버에 전달하는 중이에요.");
     void profileApi
       .requestWithdrawalRequest({ reason: "app-my-page" })
@@ -4924,10 +4934,15 @@ function ProfileScreen(): React.ReactElement {
       })
       .catch(() => {
         setProfileToast("탈퇴 요청을 처리하지 못했어요. 다시 시도해 주세요.");
+      })
+      .finally(() => {
+        setProfileActionPending(null);
       });
-  }, [profileApi]);
+  }, [profileActionPending, profileApi]);
 
   const logoutSession = useCallback(() => {
+    if (profileActionPending !== null) return;
+    setProfileActionPending("logout");
     setProfileToast("로그아웃을 서버에 요청하는 중이에요.");
     void profileAuthApi
       .logout()
@@ -4940,8 +4955,11 @@ function ProfileScreen(): React.ReactElement {
         setProfileToast(
           "로그아웃을 완료하지 못했어요. 네트워크 상태를 확인해 주세요.",
         );
+      })
+      .finally(() => {
+        setProfileActionPending(null);
       });
-  }, [profileAuthApi, profileRouter]);
+  }, [profileActionPending, profileAuthApi, profileRouter]);
 
   const openMyCommunityPosts = useCallback(() => {
     profileRouter.push("/profile/community");
@@ -4998,9 +5016,31 @@ function ProfileScreen(): React.ReactElement {
         <View style={styles.attachmentRow}>
           <SmallButton label="프로필 설정" onPress={openProfileSettings} />
           <SmallButton label="계정 설정" onPress={openAccountSettings} />
-          <SmallButton label="데이터 내보내기" onPress={requestPrivacyExport} />
-          <SmallButton label="탈퇴 요청" onPress={requestWithdrawal} />
-          <SmallButton label="로그아웃" onPress={logoutSession} />
+          <SmallButton
+            disabled={profileActionPending !== null}
+            label={
+              profileActionPending === "privacy-export"
+                ? "내보내기 요청 중"
+                : "데이터 내보내기"
+            }
+            onPress={requestPrivacyExport}
+          />
+          <SmallButton
+            disabled={profileActionPending !== null}
+            label={
+              profileActionPending === "withdrawal"
+                ? "탈퇴 요청 중"
+                : "탈퇴 요청"
+            }
+            onPress={requestWithdrawal}
+          />
+          <SmallButton
+            disabled={profileActionPending !== null}
+            label={
+              profileActionPending === "logout" ? "로그아웃 중" : "로그아웃"
+            }
+            onPress={logoutSession}
+          />
         </View>
       </SectionCard>
       <MetricGrid
@@ -5748,14 +5788,20 @@ function ToggleRow({
 }
 
 function SmallButton({
+  disabled = false,
   label,
   onPress,
-}: Readonly<{ label: string; onPress: () => void }>): React.ReactElement {
+}: Readonly<{
+  disabled?: boolean;
+  label: string;
+  onPress: () => void;
+}>): React.ReactElement {
   return (
     <Pressable
       accessibilityRole="button"
+      disabled={disabled}
       onPress={onPress}
-      style={styles.smallButton}
+      style={[styles.smallButton, disabled ? styles.disabled : null]}
     >
       <Text style={styles.smallButtonText}>{label}</Text>
     </Pressable>

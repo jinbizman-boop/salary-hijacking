@@ -787,6 +787,32 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("financialDataForAds");
   });
 
+  it("prevents duplicate privacy-sensitive MY actions while one server request is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const profileSource =
+      cleanScreens.match(
+        /function ProfileScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechForgotPasswordScreen/u,
+      )?.[0] ?? "";
+    const smallButtonSource =
+      cleanScreens.match(
+        /function SmallButton\(\{[\s\S]*?function AdSlot/u,
+      )?.[0] ?? "";
+
+    expect(profileSource).toContain("profileActionPending");
+    expect(profileSource).toContain("profileActionPending !== null");
+    expect(profileSource).toContain(
+      'setProfileActionPending("privacy-export")',
+    );
+    expect(profileSource).toContain('setProfileActionPending("withdrawal")');
+    expect(profileSource).toContain('setProfileActionPending("logout")');
+    expect(profileSource).toContain("setProfileActionPending(null)");
+    expect(profileSource).toContain("disabled={profileActionPending !== null}");
+    expect(smallButtonSource).toContain("disabled = false");
+    expect(smallButtonSource).toContain("disabled={disabled}");
+  });
+
   it("keeps MY management menu entries connected to app actions", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -1228,9 +1254,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         /function SmallButton\(\{[\s\S]*?function AdSlot/u,
       )?.[0] ?? "";
 
-    expect(smallButtonSource).toContain(
-      "}: Readonly<{ label: string; onPress: () => void }>): React.ReactElement",
-    );
+    expect(smallButtonSource).toContain("onPress: () => void;");
+    expect(smallButtonSource).toContain("disabled?: boolean;");
     expect(cleanScreens).not.toContain("<SmallButton label={post.stats} />");
     expect(cleanScreens).not.toContain('<SmallButton label="댓글" />');
     expect(smallButtonSource).not.toContain("onPress?: () => void");
