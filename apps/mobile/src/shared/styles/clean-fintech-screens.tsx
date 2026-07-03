@@ -4209,6 +4209,26 @@ function NotificationsScreen(): React.ReactElement {
       });
   }, [notificationsApi, unreadCount]);
 
+  const restoreNotificationOnFailure = useCallback(
+    (item: NotificationScreenItem) => {
+      setServerNotifications((current) =>
+        current.some((candidate) => candidate.id === item.id)
+          ? current
+          : [item, ...current],
+      );
+    },
+    [],
+  );
+
+  const restoreUnreadCountOnFailure = useCallback(
+    (item: NotificationScreenItem) => {
+      if (item.status === "UNREAD") {
+        setUnreadCount((current) => current + 1);
+      }
+    },
+    [],
+  );
+
   const archiveNotification = useCallback(
     (item: NotificationScreenItem) => {
       setServerNotifications((current) =>
@@ -4219,6 +4239,11 @@ function NotificationsScreen(): React.ReactElement {
       }
       void notificationsApi
         .archive(item.id)
+        .catch((error) => {
+          restoreNotificationOnFailure(item);
+          restoreUnreadCountOnFailure(item);
+          throw error;
+        })
         .then(() => {
           setSyncLabel("서버에 알림 보관을 저장했어요.");
         })
@@ -4228,7 +4253,11 @@ function NotificationsScreen(): React.ReactElement {
           );
         });
     },
-    [notificationsApi],
+    [
+      notificationsApi,
+      restoreNotificationOnFailure,
+      restoreUnreadCountOnFailure,
+    ],
   );
 
   const deleteNotification = useCallback(
@@ -4241,6 +4270,11 @@ function NotificationsScreen(): React.ReactElement {
       }
       void notificationsApi
         .delete(item.id)
+        .catch((error) => {
+          restoreNotificationOnFailure(item);
+          restoreUnreadCountOnFailure(item);
+          throw error;
+        })
         .then(() => {
           setSyncLabel("서버에 알림 삭제를 저장했어요.");
         })
@@ -4250,7 +4284,11 @@ function NotificationsScreen(): React.ReactElement {
           );
         });
     },
-    [notificationsApi],
+    [
+      notificationsApi,
+      restoreNotificationOnFailure,
+      restoreUnreadCountOnFailure,
+    ],
   );
 
   const updateNotificationPreference = useCallback(

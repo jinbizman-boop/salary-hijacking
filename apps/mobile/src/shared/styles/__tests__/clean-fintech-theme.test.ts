@@ -511,6 +511,26 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("restores archived or deleted notifications when the server mutation fails", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const notificationMutationSource =
+      cleanScreens.match(
+        /const archiveNotification = useCallback\([\s\S]*?const updateNotificationPreference = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(notificationMutationSource).toContain(
+      "restoreNotificationOnFailure",
+    );
+    expect(notificationMutationSource).toContain(
+      "restoreNotificationOnFailure(item)",
+    );
+    expect(notificationMutationSource).toContain(
+      "restoreUnreadCountOnFailure(item)",
+    );
+  });
+
   it("keeps notification preferences loaded and saved through the server API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
