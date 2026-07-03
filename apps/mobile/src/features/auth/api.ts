@@ -6,6 +6,7 @@ import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
   AUTH_LOGOUT_PATH,
   AUTH_LOGIN_PATH,
+  AUTH_PASSWORD_RESET_CONFIRM_PATH,
   AUTH_PASSWORD_RESET_PATH,
   AUTH_REFRESH_PATH,
   AUTH_REGISTER_PATH,
@@ -15,6 +16,8 @@ import type {
   AuthApiClient,
   AuthLoginRequest,
   AuthLogoutResult,
+  AuthPasswordResetConfirmRequest,
+  AuthPasswordResetConfirmResult,
   AuthPasswordResetRequest,
   AuthPasswordResetResult,
   AuthRefreshRequest,
@@ -185,6 +188,13 @@ function passwordResetResult(value: unknown): AuthPasswordResetResult {
   return { accepted: data.accepted === true };
 }
 
+function passwordResetConfirmResult(
+  value: unknown,
+): AuthPasswordResetConfirmResult {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  return { completed: data.completed === true };
+}
+
 export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -318,6 +328,20 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
       });
       return passwordResetResult(parsed);
+    },
+
+    async confirmPasswordReset(request: AuthPasswordResetConfirmRequest) {
+      const parsed = await post(AUTH_PASSWORD_RESET_CONFIRM_PATH, {
+        token: assertPresent(
+          request.token,
+          "AUTH_PASSWORD_RESET_TOKEN_REQUIRED",
+        ),
+        newPassword: assertPresent(
+          request.newPassword,
+          "AUTH_PASSWORD_REQUIRED",
+        ),
+      });
+      return passwordResetConfirmResult(parsed);
     },
 
     async refresh(request: AuthRefreshRequest = {}) {

@@ -32,6 +32,15 @@ export type AuthPasswordResetResult = Readonly<{
   accepted: boolean;
 }>;
 
+export type AuthPasswordResetConfirmRequest = Readonly<{
+  token: string;
+  newPassword: string;
+}>;
+
+export type AuthPasswordResetConfirmResult = Readonly<{
+  completed: boolean;
+}>;
+
 export type AuthLogoutResult = Readonly<{
   revoked: boolean;
 }>;
@@ -47,6 +56,9 @@ export type AuthApiClient = Readonly<{
   requestPasswordReset: (
     request: AuthPasswordResetRequest,
   ) => Promise<AuthPasswordResetResult>;
+  confirmPasswordReset: (
+    request: AuthPasswordResetConfirmRequest,
+  ) => Promise<AuthPasswordResetConfirmResult>;
   refresh: (request?: AuthRefreshRequest) => Promise<MobileAuthResponse>;
   logout: () => Promise<AuthLogoutResult>;
 }>;

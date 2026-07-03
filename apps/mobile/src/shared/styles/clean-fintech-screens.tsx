@@ -4692,6 +4692,102 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
   );
 }
 
+export function CleanFintechResetPasswordScreen({
+  token,
+}: Readonly<{ token: string }>): React.ReactElement {
+  const resetPasswordRouter = useRouter();
+  const resetPasswordAuthApi = useMemo(() => createMobileAuthApi(), []);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(
+    "server password reset confirm 화면입니다. 새 비밀번호를 입력해 주세요.",
+  );
+  const valid =
+    token.trim().length >= 8 &&
+    newPassword.trim().length >= 8 &&
+    newPassword === confirmPassword;
+
+  const submitPasswordResetConfirm = useCallback(async () => {
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    try {
+      const result = await resetPasswordAuthApi.confirmPasswordReset({
+        token,
+        newPassword,
+      });
+      if (result.completed) {
+        setToast("비밀번호가 서버에서 변경됐어요. 다시 로그인해 주세요.");
+        resetPasswordRouter.replace("/(auth)/login");
+      } else {
+        setToast("변경 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      }
+    } catch {
+      setToast(
+        "비밀번호 변경을 완료하지 못했어요. 링크와 입력값을 확인해 주세요.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, [
+    newPassword,
+    resetPasswordAuthApi,
+    resetPasswordRouter,
+    submitting,
+    token,
+    valid,
+  ]);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={[styles.content, styles.centerContent]}
+      >
+        <SalaryLogo large />
+        <Text style={styles.loginTitle}>새 비밀번호 설정</Text>
+        <Text style={styles.loginSubtitle}>
+          재설정 토큰은 서버 확인에만 사용하고 앱에 저장하지 않습니다
+        </Text>
+        <Toast message={toast} />
+        <SectionCard>
+          <TextInput
+            accessibilityLabel="새 비밀번호"
+            onChangeText={setNewPassword}
+            placeholder="새 비밀번호"
+            placeholderTextColor={theme.color.text.disabled}
+            secureTextEntry
+            style={styles.input}
+            value={newPassword}
+          />
+          <TextInput
+            accessibilityLabel="새 비밀번호 확인"
+            onChangeText={setConfirmPassword}
+            placeholder="새 비밀번호 확인"
+            placeholderTextColor={theme.color.text.disabled}
+            secureTextEntry
+            style={styles.input}
+            value={confirmPassword}
+          />
+          <Pressable
+            accessibilityRole="button"
+            disabled={!valid || submitting}
+            onPress={submitPasswordResetConfirm}
+            style={[
+              styles.primaryButton,
+              !valid || submitting ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.primaryButtonText}>
+              {submitting ? "변경 중" : "비밀번호 변경"}
+            </Text>
+          </Pressable>
+        </SectionCard>
+        <GuardBox />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
 function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
   const [email, setEmail] = useState("");

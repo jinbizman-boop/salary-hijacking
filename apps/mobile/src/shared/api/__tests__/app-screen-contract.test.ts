@@ -67,4 +67,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-raw-financial-data-exposed");
     expect(source).toContain("x-ad-financial-targeting-used");
   });
+
+  it("keeps reset-password available as a public auth recovery route", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain('"reset-password"');
+    expect(source).toContain('routeKey === "(auth)/reset-password"');
+  });
 });

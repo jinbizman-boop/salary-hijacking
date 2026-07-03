@@ -153,6 +153,7 @@ const PUBLIC_SEGMENTS = [
   "login",
   "signup",
   "verify-email",
+  "reset-password",
   "onboarding",
   "legal",
   "privacy",
@@ -744,7 +745,8 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
   return (
     routeKey === "(auth)/login" ||
     routeKey === "(auth)/signup" ||
-    routeKey === "(auth)/forgot-password"
+    routeKey === "(auth)/forgot-password" ||
+    routeKey === "(auth)/reset-password"
   );
 }
 

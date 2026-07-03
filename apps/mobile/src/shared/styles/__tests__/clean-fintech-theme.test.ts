@@ -366,6 +366,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("onPress={openForgotPassword}");
   });
 
+  it("keeps reset-password screen routed to the server password reset confirm flow", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const resetRoute = mobileSource("app/(auth)/reset-password.tsx");
+
+    expect(resetRoute).toContain("CleanFintechResetPasswordScreen");
+    expect(resetRoute).toContain("useLocalSearchParams");
+    expect(resetRoute).toContain("token={token}");
+    expect(cleanScreens).toContain("confirmPasswordReset");
+    expect(cleanScreens).toContain("resetPasswordAuthApi");
+    expect(cleanScreens).toContain("submitPasswordResetConfirm");
+    expect(cleanScreens).toContain("server password reset confirm");
+    expect(cleanScreens).toContain(
+      'resetPasswordRouter.replace("/(auth)/login")',
+    );
+  });
+
   it("keeps plan screen hydrated and recalculated through the server payroll API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
