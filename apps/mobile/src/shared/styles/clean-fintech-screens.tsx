@@ -4204,8 +4204,21 @@ function NotificationsScreen(): React.ReactElement {
     [markRead, notificationRouter],
   );
 
+  const restoreAllNotificationsReadOnFailure = useCallback(
+    (
+      previousNotifications: readonly NotificationScreenItem[],
+      previousUnreadCount: number,
+    ) => {
+      setServerNotifications([...previousNotifications]);
+      setUnreadCount(previousUnreadCount);
+    },
+    [],
+  );
+
   const markAllNotificationsRead = useCallback(() => {
     if (unreadCount <= 0) return;
+    const previousNotifications = serverNotifications;
+    const previousUnreadCount = unreadCount;
     setServerNotifications((current) =>
       current.map((item) => ({ ...item, status: "READ" })),
     );
@@ -4218,11 +4231,20 @@ function NotificationsScreen(): React.ReactElement {
         );
       })
       .catch(() => {
+        restoreAllNotificationsReadOnFailure(
+          previousNotifications,
+          previousUnreadCount,
+        );
         setSyncLabel(
           "전체 읽음 처리를 서버에 저장하지 못했어요. 다시 확인해 주세요.",
         );
       });
-  }, [notificationsApi, unreadCount]);
+  }, [
+    notificationsApi,
+    restoreAllNotificationsReadOnFailure,
+    serverNotifications,
+    unreadCount,
+  ]);
 
   const restoreNotificationOnFailure = useCallback(
     (item: NotificationScreenItem) => {
