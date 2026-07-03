@@ -1,0 +1,171 @@
+import { createPlanCommitmentsApi } from "../api";
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    headers: { "content-type": "application/json" },
+    status,
+  });
+}
+
+describe("plan commitments api", () => {
+  it("hydrates fixed expense and savings commitments through server-authoritative APIs", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "plan-commitments-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        if (normalized.url.endsWith("/api/v1/fixed-expenses")) {
+          return jsonResponse({
+            data: {
+              items: [
+                {
+                  expenseId: "expense_chatgpt",
+                  title: "ChatGPT",
+                  category: "SUBSCRIPTION",
+                  amountMinor: 30_000,
+                  frequency: "MONTHLY",
+                  paymentDay: 20,
+                  status: "ACTIVE",
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                },
+                {
+                  expenseId: "expense_mobile",
+                  title: "통신비",
+                  category: "UTILITY",
+                  amountMinor: 70_000,
+                  frequency: "MONTHLY",
+                  paymentDay: 25,
+                  status: "ACTIVE",
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 2,
+            },
+          });
+        }
+
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                goalId: "goal_emergency",
+                title: "비상금",
+                goalType: "EMERGENCY_FUND",
+                targetAmountMinor: 1_000_000,
+                currentAmountMinor: 120_000,
+                fixedSaveAmountMinor: 150_000,
+                status: "ACTIVE",
+                serverAuthority: true,
+                financialRawAccountDataExposed: false,
+              },
+              {
+                goalId: "goal_travel",
+                title: "여행 준비",
+                goalType: "CUSTOM",
+                targetAmountMinor: 2_000_000,
+                currentAmountMinor: 500_000,
+                fixedSaveAmountMinor: 200_000,
+                status: "ACTIVE",
+                serverAuthority: true,
+                financialRawAccountDataExposed: false,
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 2,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    const result = await api.getCommitments();
+
+    expect(result).toMatchObject({
+      fixedExpenseTotalMinor: 100_000,
+      fixedSavingsTotalMinor: 350_000,
+      serverAuthority: true,
+      rawFinancialDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(result.fixedExpenses).toHaveLength(2);
+    expect(result.savingsGoals).toHaveLength(2);
+    expect(result.fixedExpenses[0]).toMatchObject({
+      amountMinor: 30_000,
+      dueLabel: "매월 20일",
+      title: "ChatGPT",
+    });
+    expect(result.savingsGoals[0]).toMatchObject({
+      fixedSaveAmountMinor: 150_000,
+      title: "비상금",
+    });
+    expect(calls.map((call) => call.url)).toEqual([
+      "https://api.salaryhijacking.com/api/v1/fixed-expenses",
+      "https://api.salaryhijacking.com/api/v1/savings",
+    ]);
+
+    for (const call of calls) {
+      expect(call.headers.get("x-correlation-id")).toBe(
+        "plan-commitments-test",
+      );
+      expect(call.headers.get("x-client-platform")).toBe("android");
+      expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
+      expect(call.headers.get("x-raw-personal-data-exposed")).toBe("false");
+      expect(call.headers.get("x-raw-push-token-exposed")).toBe("false");
+      expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
+    }
+    expect(JSON.stringify(result)).not.toContain("userId");
+  });
+
+  it("rejects unsafe financial exposure flags before the plan screen uses them", async () => {
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        if (normalized.url.endsWith("/api/v1/fixed-expenses")) {
+          return jsonResponse({
+            data: {
+              items: [
+                {
+                  expenseId: "unsafe_expense",
+                  title: "unsafe",
+                  amountMinor: 10_000,
+                  paymentDay: 1,
+                  status: "ACTIVE",
+                  serverAuthority: true,
+                  financialRawDataExposed: true,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          });
+        }
+
+        return jsonResponse({
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 20,
+            total: 0,
+          },
+        });
+      },
+      platform: "ios",
+    });
+
+    await expect(api.getCommitments()).rejects.toMatchObject({
+      code: "PLAN_UNSAFE_FINANCIAL_EXPOSURE",
+    });
+  });
+});

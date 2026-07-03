@@ -1,0 +1,38 @@
+export type PlanFixedExpenseCommitment = Readonly<{
+  amountMinor: number;
+  category: string | null;
+  dueDay: number | null;
+  dueLabel: string;
+  financialRawDataExposed: false;
+  id: string;
+  serverAuthority: true;
+  status: string;
+  title: string;
+}>;
+
+export type PlanSavingsGoalCommitment = Readonly<{
+  currentAmountMinor: number;
+  financialRawAccountDataExposed: false;
+  fixedSaveAmountMinor: number;
+  goalType: string | null;
+  id: string;
+  serverAuthority: true;
+  status: string;
+  targetAmountMinor: number;
+  title: string;
+}>;
+
+export type PlanCommitmentsSnapshot = Readonly<{
+  adsFinancialTargetingUsed: false;
+  fixedExpenseTotalMinor: number;
+  fixedExpenses: readonly PlanFixedExpenseCommitment[];
+  fixedSavingsTotalMinor: number;
+  rawFinancialDataExposed: false;
+  rawPersonalDataExposed: false;
+  savingsGoals: readonly PlanSavingsGoalCommitment[];
+  serverAuthority: true;
+}>;
+
+export type PlanCommitmentsApiClient = Readonly<{
+  getCommitments: () => Promise<PlanCommitmentsSnapshot>;
+}>;

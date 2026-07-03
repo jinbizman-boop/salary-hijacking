@@ -195,13 +195,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
 
     expect(mobileApi).toContain("createMobilePayrollApi");
+    expect(mobileApi).toContain("createMobilePlanCommitmentsApi");
     expect(cleanScreens).toContain("createMobilePayrollApi");
+    expect(cleanScreens).toContain("createMobilePlanCommitmentsApi");
     expect(cleanScreens).toContain("serverPayrollPlan");
     expect(cleanScreens).toContain("serverPayrollCalculation");
+    expect(cleanScreens).toContain("serverFixedExpenses");
+    expect(cleanScreens).toContain("serverSavingsGoals");
+    expect(cleanScreens).toContain("planCommitmentsApi.getCommitments");
     expect(cleanScreens).toContain("payrollApi.getCurrent");
     expect(cleanScreens).toContain("payrollApi.recalculate");
     expect(cleanScreens).toContain(
       "setSalary(String(nextPlan.payrollAmountMinor))",
+    );
+    expect(cleanScreens).toContain(
+      "setExpense(String(commitments.fixedExpenseTotalMinor))",
+    );
+    expect(cleanScreens).toContain(
+      "setTarget(String(commitments.fixedSavingsTotalMinor))",
     );
     expect(cleanScreens).toContain(
       "fixedExpenseTotalMinor: nonNegative(expense)",

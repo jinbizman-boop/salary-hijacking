@@ -38,6 +38,10 @@ import type {
   PayrollCalculation,
   PayrollPlanSnapshot,
 } from "../../features/payroll/types";
+import type {
+  PlanFixedExpenseCommitment,
+  PlanSavingsGoalCommitment,
+} from "../../features/plan/types";
 import type { ProfileSnapshot } from "../../features/profile/types";
 import type {
   NotificationItem,
@@ -51,6 +55,7 @@ import {
   createMobileGrowthApi,
   createMobileNotificationsApi,
   createMobilePayrollApi,
+  createMobilePlanCommitmentsApi,
   createMobileProfileApi,
 } from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
@@ -121,11 +126,47 @@ type NotificationScreenItem = Readonly<{
   priority: NotificationPriority;
   status: NotificationStatus;
 }>;
+type PlanCommitmentRow = Readonly<{
+  amountMinor: number;
+  id: string;
+  meta: string;
+  title: string;
+}>;
 
 const fixedExpenses = [
   { name: "ChatGPT", amount: "30,000원", status: "납부완료" },
   { name: "넷플릭스", amount: "15,000원", status: "납부완료" },
   { name: "유튜브 프리미엄", amount: "15,000원", status: "납부완료" },
+] as const;
+
+const fallbackPlanFixedExpenseRows: readonly PlanCommitmentRow[] = [
+  {
+    amountMinor: 30_000,
+    id: "fallback-fixed-chatgpt",
+    meta: "서버 연결 전 예시 · 매월 20일",
+    title: "ChatGPT",
+  },
+  {
+    amountMinor: 70_000,
+    id: "fallback-fixed-mobile",
+    meta: "서버 연결 전 예시 · 매월 25일",
+    title: "통신비",
+  },
+] as const;
+
+const fallbackPlanSavingsRows: readonly PlanCommitmentRow[] = [
+  {
+    amountMinor: 150_000,
+    id: "fallback-savings-emergency",
+    meta: "서버 연결 전 예시 · 비상금",
+    title: "비상금",
+  },
+  {
+    amountMinor: 200_000,
+    id: "fallback-savings-growth",
+    meta: "서버 연결 전 예시 · 자기계발",
+    title: "자기계발",
+  },
 ] as const;
 
 const variableExpenses: readonly VariableExpenseEntry[] = [
@@ -1265,8 +1306,34 @@ function SalaryHomeScreen(): React.ReactElement {
   );
 }
 
+function fixedExpenseRowFromServer(
+  item: PlanFixedExpenseCommitment,
+): PlanCommitmentRow {
+  return {
+    amountMinor: item.amountMinor,
+    id: item.id,
+    meta: `${item.dueLabel} · 서버 기준 ${item.status}`,
+    title: item.title,
+  };
+}
+
+function savingsGoalRowFromServer(
+  item: PlanSavingsGoalCommitment,
+): PlanCommitmentRow {
+  return {
+    amountMinor: item.fixedSaveAmountMinor,
+    id: item.id,
+    meta: `목표 ${formatMoney(item.targetAmountMinor)}원 · 서버 기준 ${item.status}`,
+    title: item.title,
+  };
+}
+
 function PlanScreen(): React.ReactElement {
   const payrollApi = useMemo(() => createMobilePayrollApi(), []);
+  const planCommitmentsApi = useMemo(
+    () => createMobilePlanCommitmentsApi(),
+    [],
+  );
   const [salary, setSalary] = useState("2700000");
   const [expense, setExpense] = useState("773000");
   const [target, setTarget] = useState("2200000");
@@ -1274,6 +1341,12 @@ function PlanScreen(): React.ReactElement {
     useState<PayrollPlanSnapshot | null>(null);
   const [serverPayrollCalculation, setServerPayrollCalculation] =
     useState<PayrollCalculation | null>(null);
+  const [serverFixedExpenses, setServerFixedExpenses] = useState<
+    readonly PlanFixedExpenseCommitment[]
+  >([]);
+  const [serverSavingsGoals, setServerSavingsGoals] = useState<
+    readonly PlanSavingsGoalCommitment[]
+  >([]);
   const [planToast, setPlanToast] = useState(
     "서버 급여 계획이 없으면 로컬 미리보기로 계산해요.",
   );
@@ -1307,6 +1380,31 @@ function PlanScreen(): React.ReactElement {
       cancelled = true;
     };
   }, [applyServerPayrollPlan, payrollApi]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const commitmentsPromise = planCommitmentsApi.getCommitments();
+    void commitmentsPromise
+      .then((commitments) => {
+        if (cancelled) return;
+        setServerFixedExpenses(commitments.fixedExpenses);
+        setServerSavingsGoals(commitments.savingsGoals);
+        setExpense(String(commitments.fixedExpenseTotalMinor));
+        setTarget(String(commitments.fixedSavingsTotalMinor));
+        setPlanToast("서버 고정지출과 고정저축을 계획에 반영했어요.");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setServerFixedExpenses([]);
+          setServerSavingsGoals([]);
+          setPlanToast("서버 계획 상세 연결 전 미리보기 목록으로 표시해요.");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planCommitmentsApi]);
 
   const refreshServerPayrollCalculation =
     useCallback(async (): Promise<void> => {
@@ -1371,6 +1469,22 @@ function PlanScreen(): React.ReactElement {
     100,
     Math.round((expectedHijack / Math.max(1, nonNegative(target))) * 100),
   );
+  const fixedExpenseRows =
+    serverFixedExpenses.length > 0
+      ? serverFixedExpenses.map(fixedExpenseRowFromServer)
+      : fallbackPlanFixedExpenseRows;
+  const savingsRows =
+    serverSavingsGoals.length > 0
+      ? serverSavingsGoals.map(savingsGoalRowFromServer)
+      : fallbackPlanSavingsRows;
+  const livingBudgetPreview =
+    serverPayrollCalculation?.recommendedDailyBudgetMinor ??
+    Math.max(
+      0,
+      Math.round(
+        (nonNegative(salary) - nonNegative(expense) - nonNegative(target)) / 31,
+      ),
+    );
 
   return (
     <AppScreen title="계획" subtitle="급여 흐름을 먼저 분리해요">
@@ -1401,15 +1515,37 @@ function PlanScreen(): React.ReactElement {
         onChange={setExpense}
         helper="월세, 구독, 통신비를 먼저 분리"
       />
+      <SectionCard>
+        <Text style={styles.sectionTitle}>서버 고정지출 목록</Text>
+        {fixedExpenseRows.map((item) => (
+          <ListRow
+            key={item.id}
+            icon={appIcons.subscription}
+            title={item.title}
+            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
+          />
+        ))}
+      </SectionCard>
       <PlanSummaryCard
         title="고정저축"
-        amount="650,000원"
-        meta="급여 직후 자동 분리 · 납치금액 보호"
+        amount={`${formatMoney(nonNegative(target))}원`}
+        meta={`${savingsRows.length}개 목표 · 급여 직후 자동 분리`}
       />
+      <SectionCard>
+        <Text style={styles.sectionTitle}>서버 고정저축 목표</Text>
+        {savingsRows.map((item) => (
+          <ListRow
+            key={item.id}
+            icon={appIcons.saving}
+            title={item.title}
+            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
+          />
+        ))}
+      </SectionCard>
       <PlanSummaryCard
         title="생활비"
-        amount="900,000원"
-        meta="하루 30,000원 기준 · 초과 시 알림"
+        amount={`${formatMoney(livingBudgetPreview)}원`}
+        meta="서버 추천 일일예산 기준 · 초과 시 알림"
       />
       <PlanInputCard
         label="목표금액"

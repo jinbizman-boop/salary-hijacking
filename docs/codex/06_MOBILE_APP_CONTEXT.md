@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 29 suites and 111 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 30 suites and 113 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -281,6 +281,14 @@ As of 2026-07-02, Plan also uses `PayrollApiClient.getCurrent()` and
 `/api/v1/payroll/recalculate` before falling back to the existing local preview.
 The client-side preview remains non-authoritative; the server payroll
 calculation response remains the source of truth for the payroll plan summary.
+As of 2026-07-03, Plan also uses `PlanCommitmentsApiClient.getCommitments()`
+to hydrate fixed expense and fixed savings commitments from
+`/api/v1/fixed-expenses` and `/api/v1/savings`. The mobile client sends the
+same privacy-safe headers used by other finance clients, accepts only
+server-authoritative KRW integer money fields, rejects raw financial/account
+exposure flags, strips server-only internal IDs, and feeds the resulting fixed
+expense and savings totals into the payroll recalculation preview. Static rows
+remain only as non-authoritative offline display fallback.
 As of 2026-07-02, Notifications also use `NotificationsApiClient.list()` and
 `NotificationsApiClient.unreadCount()` through `/api/v1/notifications` before
 falling back to the existing static example notifications. The mobile client
