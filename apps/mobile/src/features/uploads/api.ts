@@ -190,7 +190,7 @@ function attachmentFromResponse(value: unknown): UploadAttachment {
   return {
     attachmentId,
     contentType,
-    fileName,
+    fileName: safeFileName(fileName),
     scanStatus: scanStatus as UploadScanStatus,
     sizeBytes,
     status: status as UploadStatus,

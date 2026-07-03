@@ -99,6 +99,42 @@ describe("uploads api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects sensitive upload file names echoed by the server response", async () => {
+    const fetcher = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValue(
+        jsonResponse(
+          {
+            attachmentId: "att_sensitive_response",
+            fileName: "월급_010-1234-5678.png",
+            contentType: "image/png",
+            sizeBytes: 4,
+            scanStatus: "PENDING",
+            status: "UPLOADED",
+          },
+          201,
+        ),
+      );
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-sensitive-response",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName: "proof.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_SENSITIVE_FILE_NAME_FORBIDDEN",
+    });
+  });
+
   it("attaches a completed upload to a community post without exposing raw file paths", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
