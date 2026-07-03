@@ -9,6 +9,7 @@ const FORBIDDEN_API_HELPERS = [
 ] as const;
 const INTERNAL_TABS_ROUTE = /(["'`])\/\(tabs\)(?:\/[^"'`]*)?\1/g;
 const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
+const PROFILE_HUB_SCREEN = join(APP_ROOT, "profile", "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
@@ -57,6 +58,19 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(source).toContain("/api/v1/users/me/withdrawal-request");
     expect(source).not.toContain('route: "/api/v1/users/me/withdraw"');
+  });
+
+  it("keeps the root profile route implemented for header navigation", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const profileHub = readFileSync(PROFILE_HUB_SCREEN, "utf8");
+
+    expect(rootLayout).toContain('const PROFILE_ROUTE = "/profile"');
+    expect(profileHub).toContain("ProfileHubScreen");
+    expect(profileHub).toContain("/profile/settings");
+    expect(profileHub).toContain("/profile/account");
+    expect(profileHub).toContain("/profile/support");
+    expect(profileHub).toContain("/salary");
+    expect(profileHub).toContain("rawFinancialData=false");
   });
 
   it("refreshes the root bootstrap access token before falling back from a 401", () => {
