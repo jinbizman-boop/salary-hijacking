@@ -435,6 +435,71 @@ describe("auth api", () => {
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
   });
 
+  it("starts social OAuth through the server without exposing PKCE verifier secrets", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-oauth-start-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            provider: "KAKAO",
+            state: "oauth-state-1",
+            codeVerifier: "server-secret-code-verifier",
+            codeChallenge: "server-code-challenge",
+            codeChallengeMethod: "S256",
+            redirectUri: "salaryhijacking://auth/oauth/callback",
+            authorizationUrl:
+              "https://accounts.kakao.example/oauth/authorize?state=oauth-state-1",
+          },
+        });
+      },
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    const result = await api.startOAuth({
+      provider: "KAKAO",
+      redirectUri: "salaryhijacking://auth/oauth/callback",
+    });
+
+    expect(result).toEqual({
+      provider: "KAKAO",
+      state: "oauth-state-1",
+      codeChallenge: "server-code-challenge",
+      codeChallengeMethod: "S256",
+      redirectUri: "salaryhijacking://auth/oauth/callback",
+      authorizationUrl:
+        "https://accounts.kakao.example/oauth/authorize?state=oauth-state-1",
+    });
+    expect(JSON.stringify(result)).not.toContain("server-secret-code-verifier");
+    expect(stored.size).toBe(0);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/auth/oauth?provider=KAKAO&redirectUri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback",
+    );
+    expect(calls[0]?.credentials).toBe("include");
+    expect(calls[0]?.headers.get("x-correlation-id")).toBe(
+      "auth-oauth-start-test",
+    );
+    expect(calls[0]?.headers.get("x-client-platform")).toBe("android");
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-push-token-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+  });
+
   it("confirms password reset through the server without storing reset secrets", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

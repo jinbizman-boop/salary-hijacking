@@ -2,6 +2,7 @@ export const AUTH_LOGIN_PATH = "/api/v1/auth/login";
 export const AUTH_REGISTER_PATH = "/api/v1/auth/register";
 export const AUTH_REFRESH_PATH = "/api/v1/auth/refresh";
 export const AUTH_LOGOUT_PATH = "/api/v1/auth/logout";
+export const AUTH_OAUTH_START_PATH = "/api/v1/auth/oauth";
 export const AUTH_PASSWORD_RESET_PATH = "/api/v1/auth/password-reset";
 export const AUTH_PASSWORD_RESET_CONFIRM_PATH =
   "/api/v1/auth/password-reset/confirm";

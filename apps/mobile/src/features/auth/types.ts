@@ -24,6 +24,22 @@ export type AuthRefreshRequest = Readonly<{
   deviceId?: string;
 }>;
 
+export type AuthSocialProvider = "KAKAO" | "NAVER" | "GOOGLE" | "APPLE";
+
+export type AuthOAuthStartRequest = Readonly<{
+  provider: AuthSocialProvider;
+  redirectUri: string;
+}>;
+
+export type AuthOAuthStartResult = Readonly<{
+  provider: AuthSocialProvider;
+  state: string;
+  codeChallenge: string | null;
+  codeChallengeMethod: "S256" | null;
+  redirectUri: string;
+  authorizationUrl: string | null;
+}>;
+
 export type AuthPasswordResetRequest = Readonly<{
   email: string;
 }>;
@@ -53,6 +69,7 @@ export type AuthTokenStore = Readonly<{
 export type AuthApiClient = Readonly<{
   login: (request: AuthLoginRequest) => Promise<MobileAuthResponse>;
   register: (request: AuthRegisterRequest) => Promise<MobileSignupResponse>;
+  startOAuth: (request: AuthOAuthStartRequest) => Promise<AuthOAuthStartResult>;
   requestPasswordReset: (
     request: AuthPasswordResetRequest,
   ) => Promise<AuthPasswordResetResult>;

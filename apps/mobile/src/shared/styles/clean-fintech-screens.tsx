@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
+import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
+import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import {
   Image,
@@ -90,6 +92,16 @@ type ScreenKind =
   | "community"
   | "profile"
   | "login";
+type LoginSocialProvider = "KAKAO" | "NAVER" | "GOOGLE" | "APPLE";
+
+const SOCIAL_LOGIN_LABELS: ReadonlyArray<
+  Readonly<{ label: string; provider: LoginSocialProvider }>
+> = [
+  { label: "Kakao", provider: "KAKAO" },
+  { label: "Naver", provider: "NAVER" },
+  { label: "Apple", provider: "APPLE" },
+  { label: "Google", provider: "GOOGLE" },
+];
 
 type MoneyMetric = Readonly<{ label: string; value: string; tone?: "danger" }>;
 type VariableExpenseEntry = Readonly<{
@@ -5184,6 +5196,10 @@ function LoginScreen(): React.ReactElement {
     "서버 권위 인증으로 급여 데이터를 안전하게 불러옵니다.",
   );
   const loginAuthApi = useMemo(() => createMobileAuthApi(), []);
+  const socialRedirectUri = useMemo(
+    () => Linking.createURL("auth/oauth/callback"),
+    [],
+  );
   const valid = email.includes("@") && password.trim().length >= 8;
 
   const openSignup = useCallback((): void => {
@@ -5193,6 +5209,36 @@ function LoginScreen(): React.ReactElement {
   const openForgotPassword = useCallback((): void => {
     loginRouter.push("/(auth)/forgot-password");
   }, [loginRouter]);
+
+  const startSocialLogin = useCallback(
+    async (provider: LoginSocialProvider): Promise<void> => {
+      if (submitting) return;
+      setSubmitting(true);
+      setToast(`${provider} server OAuth start request is in progress.`);
+      try {
+        const result = await loginAuthApi.startOAuth({
+          provider,
+          redirectUri: socialRedirectUri,
+        });
+        if (result.authorizationUrl) {
+          await WebBrowser.openAuthSessionAsync(
+            result.authorizationUrl,
+            socialRedirectUri,
+          );
+          setToast(`${provider} OAuth browser session was opened.`);
+          return;
+        }
+        setToast(
+          `${provider} OAuth state is ready. Provider authorization URL is waiting for server configuration.`,
+        );
+      } catch {
+        setToast(`${provider} OAuth could not start. Please try again later.`);
+      } finally {
+        setSubmitting(false);
+      }
+    },
+    [loginAuthApi, socialRedirectUri, submitting],
+  );
 
   const submitLogin = useCallback(async () => {
     if (!valid || submitting) return;
@@ -5266,10 +5312,13 @@ function LoginScreen(): React.ReactElement {
           <SmallButton label="회원가입" onPress={openSignup} />
           <SmallButton label="비밀번호 찾기" onPress={openForgotPassword} />
           <View style={styles.attachmentRow}>
-            <SmallButton label="Kakao" />
-            <SmallButton label="Naver" />
-            <SmallButton label="Apple" />
-            <SmallButton label="Google" />
+            {SOCIAL_LOGIN_LABELS.map(({ label, provider }) => (
+              <SmallButton
+                key={provider}
+                label={label}
+                onPress={() => startSocialLogin(provider)}
+              />
+            ))}
           </View>
         </SectionCard>
         <GuardBox />

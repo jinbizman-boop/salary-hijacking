@@ -6,6 +6,7 @@ import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
   AUTH_LOGOUT_PATH,
   AUTH_LOGIN_PATH,
+  AUTH_OAUTH_START_PATH,
   AUTH_PASSWORD_RESET_CONFIRM_PATH,
   AUTH_PASSWORD_RESET_PATH,
   AUTH_REFRESH_PATH,
@@ -16,12 +17,15 @@ import type {
   AuthApiClient,
   AuthLoginRequest,
   AuthLogoutResult,
+  AuthOAuthStartRequest,
+  AuthOAuthStartResult,
   AuthPasswordResetConfirmRequest,
   AuthPasswordResetConfirmResult,
   AuthPasswordResetRequest,
   AuthPasswordResetResult,
   AuthRefreshRequest,
   AuthRegisterRequest,
+  AuthSocialProvider,
   AuthTokenStore,
 } from "./types";
 
@@ -62,6 +66,13 @@ const UNSAFE_RESPONSE_FLAGS = [
   "pushTokenRawDataExposed",
   "adsFinancialTargetingUsed",
 ] as const;
+
+const SOCIAL_PROVIDERS = new Set<AuthSocialProvider>([
+  "KAKAO",
+  "NAVER",
+  "GOOGLE",
+  "APPLE",
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -146,6 +157,47 @@ function appendOptional(
   if (value !== undefined) target[key] = value;
 }
 
+function authHeaders(
+  platform: AuthApiOptions["platform"],
+  correlationId: string,
+  hasJsonBody: boolean,
+): Headers {
+  const headers = new Headers({
+    accept: "application/json",
+    "x-client-platform": platform,
+    "x-correlation-id": correlationId,
+    ...PRIVACY_HEADERS,
+  });
+  if (hasJsonBody) headers.set("content-type", "application/json");
+  return headers;
+}
+
+function assertSocialProvider(value: AuthSocialProvider): AuthSocialProvider {
+  if (!SOCIAL_PROVIDERS.has(value)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_PROVIDER_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return value;
+}
+
+function optionalNonEmptyString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function optionalAuthorizationUrl(value: unknown): string | null {
+  const normalized = optionalNonEmptyString(value);
+  if (!normalized) return null;
+  try {
+    const url = new URL(normalized);
+    return url.protocol === "https:" ? normalized : null;
+  } catch {
+    return null;
+  }
+}
+
 async function persistAccessToken(
   tokenStore: AuthTokenStore | undefined,
   accessToken: string | null | undefined,
@@ -197,6 +249,30 @@ function passwordResetConfirmResult(
   return { completed: data.completed === true };
 }
 
+function oauthStartResult(value: unknown): AuthOAuthStartResult {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  const provider = data.provider;
+  if (
+    typeof provider !== "string" ||
+    !SOCIAL_PROVIDERS.has(provider as AuthSocialProvider)
+  ) {
+    throw new AuthApiError(0, "AUTH_INVALID_RESPONSE", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  const state = optionalNonEmptyString(data.state);
+  const redirectUri = optionalNonEmptyString(data.redirectUri);
+  if (!state || !redirectUri) {
+    throw new AuthApiError(0, "AUTH_INVALID_RESPONSE", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  return {
+    provider: provider as AuthSocialProvider,
+    state,
+    codeChallenge: optionalNonEmptyString(data.codeChallenge),
+    codeChallengeMethod: data.codeChallengeMethod === "S256" ? "S256" : null,
+    redirectUri,
+    authorizationUrl: optionalAuthorizationUrl(data.authorizationUrl),
+  };
+}
+
 export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -205,13 +281,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const now = options.now ?? (() => new Date());
 
   async function post(path: string, body: Record<string, unknown>) {
-    const headers = new Headers({
-      accept: "application/json",
-      "content-type": "application/json",
-      "x-client-platform": options.platform,
-      "x-correlation-id": createCorrelationId(),
-      ...PRIVACY_HEADERS,
-    });
+    const headers = authHeaders(options.platform, createCorrelationId(), true);
 
     let response: Response;
     try {
@@ -221,6 +291,44 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
           credentials: "include",
           headers,
           method: "POST",
+        }),
+      );
+    } catch {
+      throw new AuthApiError(0, "AUTH_NETWORK_ERROR", AUTH_SAFE_ERROR_MESSAGE);
+    }
+
+    const parsed = await parseJson(response);
+    if (!response.ok) {
+      throw new AuthApiError(
+        response.status,
+        errorCode(parsed),
+        AUTH_SAFE_ERROR_MESSAGE,
+      );
+    }
+    if (hasUnsafeResponseFlag(parsed)) {
+      throw new AuthApiError(
+        0,
+        "AUTH_UNSAFE_RESPONSE",
+        AUTH_SAFE_ERROR_MESSAGE,
+      );
+    }
+    return parsed;
+  }
+
+  async function get(path: string, query: Record<string, string>) {
+    const url = new URL(`${baseUrl}${path}`);
+    for (const [key, value] of Object.entries(query)) {
+      url.searchParams.set(key, value);
+    }
+    const headers = authHeaders(options.platform, createCorrelationId(), false);
+
+    let response: Response;
+    try {
+      response = await fetcher(
+        new Request(url.toString(), {
+          credentials: "include",
+          headers,
+          method: "GET",
         }),
       );
     } catch {
@@ -323,6 +431,17 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         );
       }
       return normalized;
+    },
+
+    async startOAuth(request: AuthOAuthStartRequest) {
+      const parsed = await get(AUTH_OAUTH_START_PATH, {
+        provider: assertSocialProvider(request.provider),
+        redirectUri: assertPresent(
+          request.redirectUri,
+          "AUTH_OAUTH_REDIRECT_URI_REQUIRED",
+        ),
+      });
+      return oauthStartResult(parsed);
     },
 
     async requestPasswordReset(request: AuthPasswordResetRequest) {
