@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react-native";
+import { act, renderHook, waitFor } from "@testing-library/react-native";
 
 import type {
   CommunityApiResponse,
@@ -55,5 +55,48 @@ describe("community write hook", () => {
       expect.objectContaining({ id: "post_1" }),
     );
     expect(result.current.error).toBeNull();
+  });
+
+  it("restores a persisted draft and clears it after successful publish", async () => {
+    const publishPost = jest.fn(
+      async (): Promise<CommunityApiResponse> => ({
+        data: {
+          postId: "post_1",
+          boardType: "FREE",
+          title: draft.title,
+          content: draft.content,
+          authorMasked: "anonymous user",
+          status: "VISIBLE",
+          likeCount: 0,
+          commentCount: 0,
+          createdAt: "2026-06-25T00:00:00.000Z",
+          updatedAt: "2026-06-25T00:00:00.000Z",
+          financialRawDataExposed: false,
+        },
+      }),
+    );
+    const service = {
+      previewPost: jest.fn(() => ({
+        valid: true,
+        issues: [],
+        moderationStatus: "SAFE",
+      })),
+      publishPost,
+    } as unknown as CommunityService;
+    const draftStore = {
+      clearDraft: jest.fn(async () => undefined),
+      loadDraft: jest.fn(async () => draft),
+      saveDraft: jest.fn(async () => undefined),
+    };
+    const { result } = renderHook(() =>
+      useCommunityWrite(service, { draftStore }),
+    );
+
+    await waitFor(() => expect(result.current.draft.title).toBe(draft.title));
+    await act(async () => result.current.submit());
+
+    expect(draftStore.loadDraft).toHaveBeenCalledTimes(1);
+    expect(publishPost).toHaveBeenCalledWith(draft);
+    expect(draftStore.clearDraft).toHaveBeenCalledTimes(1);
   });
 });

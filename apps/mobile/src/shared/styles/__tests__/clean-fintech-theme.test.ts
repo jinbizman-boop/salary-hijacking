@@ -912,6 +912,28 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(navigationIndex).toBeGreaterThan(successToastIndex);
   });
 
+  it("keeps community write drafts restored and cleared through safe local storage", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const submitSource =
+      cleanScreens.match(
+        /const submitCommunityPost = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("COMMUNITY_WRITE_DRAFT_KEY");
+    expect(cleanScreens).toContain("createSecureStoreRuntime");
+    expect(cleanScreens).toContain("containsSensitiveCommunityContent");
+    expect(cleanScreens).toContain("getItemAsync(COMMUNITY_WRITE_DRAFT_KEY)");
+    expect(cleanScreens).toContain("setItemAsync(");
+    expect(cleanScreens).toContain(
+      "deleteItemAsync(COMMUNITY_WRITE_DRAFT_KEY)",
+    );
+    expect(submitSource).toContain(
+      "writeDraftStore.deleteItemAsync(COMMUNITY_WRITE_DRAFT_KEY)",
+    );
+  });
+
   it("keeps community write attachments connected to native picker and uploads API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

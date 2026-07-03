@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import {
   Image,
@@ -17,6 +18,7 @@ import {
 
 import officialBiLogo from "../../../assets/brand/salary-hijacking-platform-logo.png";
 import { CommunityAttachmentList } from "../../features/community/components/CommunityAttachmentList";
+import { containsSensitiveCommunityContent } from "../../features/community/community.redaction";
 import {
   communityResponseData,
   parseCommunityComment,
@@ -77,6 +79,7 @@ import {
   createMobileProfileApi,
   createMobileUploadsApi,
 } from "../api/mobile-api";
+import { createSecureStoreRuntime } from "../storage/secure-store";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
 type ScreenKind =
@@ -129,8 +132,17 @@ type CommunityScreenPost = Readonly<{
 }>;
 
 const NOTIFICATION_DEVICE_ID_KEY = "salary-hijacking.notification.device-id";
+const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft";
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type SettingsKind = "profile" | "account";
+type StoredCommunityWriteDraft = Readonly<{
+  schemaVersion: 1;
+  board: CommunityBoard;
+  anonymous: boolean;
+  question: boolean;
+  title: string;
+  body: string;
+}>;
 type LevelDetailConfig = Readonly<{
   title: string;
   subtitle: string;
@@ -748,11 +760,23 @@ export function CleanFintechWriteScreen(): React.ReactElement {
     [],
   );
   const writeUploadsApi = useMemo(() => createMobileUploadsApi(), []);
+  const writeDraftStore = useMemo(
+    () =>
+      createSecureStoreRuntime(Platform.OS, {
+        deleteItemAsync: async (key: string) =>
+          SecureStore.deleteItemAsync(key),
+        getItemAsync: async (key: string) => SecureStore.getItemAsync(key),
+        setItemAsync: async (key: string, value: string) =>
+          SecureStore.setItemAsync(key, value),
+      }),
+    [],
+  );
   const [board, setBoard] = useState<CommunityBoard>("자유 게시판");
   const [anonymous, setAnonymous] = useState(true);
   const [question, setQuestion] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [draftRestored, setDraftRestored] = useState(false);
   const [uploadedCommunityAttachments, setUploadedCommunityAttachments] =
     useState<readonly UploadAttachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -760,6 +784,63 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   const [toast, setToast] = useState(
     "제목, 본문, 게시판을 확인한 뒤 등록할 수 있어요.",
   );
+
+  useEffect(() => {
+    let active = true;
+    void writeDraftStore
+      .getItemAsync(COMMUNITY_WRITE_DRAFT_KEY)
+      .then((rawDraft) => {
+        if (!active || !rawDraft) return;
+        const parsed = JSON.parse(
+          rawDraft,
+        ) as Partial<StoredCommunityWriteDraft>;
+        const boardDraft = parsed.board;
+        if (
+          parsed.schemaVersion !== 1 ||
+          boardDraft === undefined ||
+          !(boardDraft in communityBoardApiMap)
+        ) {
+          void writeDraftStore.deleteItemAsync(COMMUNITY_WRITE_DRAFT_KEY);
+          return;
+        }
+        setBoard(boardDraft);
+        setAnonymous(parsed.anonymous === true);
+        setQuestion(parsed.question === true);
+        setTitle(typeof parsed.title === "string" ? parsed.title : "");
+        setBody(typeof parsed.body === "string" ? parsed.body : "");
+      })
+      .catch(() => {
+        void writeDraftStore.deleteItemAsync(COMMUNITY_WRITE_DRAFT_KEY);
+      })
+      .finally(() => {
+        if (active) setDraftRestored(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, [writeDraftStore]);
+
+  useEffect(() => {
+    if (!draftRestored) return;
+    const hasDraft = Boolean(title.trim() || body.trim());
+    if (!hasDraft) {
+      void writeDraftStore.deleteItemAsync(COMMUNITY_WRITE_DRAFT_KEY);
+      return;
+    }
+    if (containsSensitiveCommunityContent(`${title}\n${body}`)) return;
+    const draftPayload: StoredCommunityWriteDraft = {
+      anonymous,
+      board,
+      body,
+      question,
+      schemaVersion: 1,
+      title,
+    };
+    void writeDraftStore.setItemAsync(
+      COMMUNITY_WRITE_DRAFT_KEY,
+      JSON.stringify(draftPayload),
+    );
+  }, [anonymous, board, body, draftRestored, question, title, writeDraftStore]);
 
   const valid = title.trim().length >= 2 && body.trim().length >= 5;
   const attachUploadedCommunityAttachments = useCallback(
@@ -863,6 +944,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           return;
         }
         setToast("게시글이 서버에 등록되었습니다. 커뮤니티로 이동합니다.");
+        await writeDraftStore.deleteItemAsync(COMMUNITY_WRITE_DRAFT_KEY);
         writeRouter.replace("/community");
       })
       .catch(() => {
@@ -882,6 +964,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
     uploadedCommunityAttachments.length,
     valid,
     writeCommunityService,
+    writeDraftStore,
     writeRouter,
   ]);
 
