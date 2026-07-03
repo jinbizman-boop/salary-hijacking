@@ -153,6 +153,7 @@ const PUBLIC_SEGMENTS = [
   "login",
   "signup",
   "verify-email",
+  "forgot-password",
   "reset-password",
   "onboarding",
   "legal",
@@ -736,6 +737,7 @@ async function readCachedSessionStatus(): Promise<SessionSnapshot> {
 function isPublicRoute(segments: readonly string[]): boolean {
   const clean = normalizeSegments(segments);
   if (clean.length === 0) return false;
+  if (clean.join("/") === "auth/oauth/callback") return true;
   return clean.some((segment: string) =>
     PUBLIC_SEGMENTS.includes(segment as (typeof PUBLIC_SEGMENTS)[number]),
   );

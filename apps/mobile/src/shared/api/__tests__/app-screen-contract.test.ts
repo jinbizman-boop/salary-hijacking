@@ -13,6 +13,7 @@ const PROFILE_HUB_SCREEN = join(APP_ROOT, "profile", "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
+const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
 
 function collectAppSourceFiles(directory: string): readonly string[] {
   const files: string[] = [];
@@ -122,7 +123,21 @@ describe("mobile app screen API and route contracts", () => {
   it("keeps reset-password available as a public auth recovery route", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
+    expect(source).toContain('"forgot-password"');
+    expect(source).toContain('routeKey === "(auth)/forgot-password"');
     expect(source).toContain('"reset-password"');
     expect(source).toContain('routeKey === "(auth)/reset-password"');
+  });
+
+  it("keeps the OAuth callback route public so social login can finish", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const callbackRoute = readFileSync(OAUTH_CALLBACK_SCREEN, "utf8");
+
+    expect(rootLayout).toContain('"auth/oauth/callback"');
+    expect(callbackRoute).toContain("OAuthCallbackScreen");
+    expect(callbackRoute).toContain("completeOAuth");
+    expect(callbackRoute).toContain("/api/v1/auth/oauth/callback");
+    expect(callbackRoute).toContain("/salary");
+    expect(callbackRoute).toContain("/(auth)/login");
   });
 });
