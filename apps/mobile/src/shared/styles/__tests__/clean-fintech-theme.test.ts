@@ -451,9 +451,32 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("submitPasswordResetConfirm");
     expect(cleanScreens).toContain("isServerAuthPasswordCandidate");
     expect(cleanScreens).toContain("AUTH_PASSWORD_POLICY_MESSAGE");
-    expect(cleanScreens).toContain("server password reset confirm");
+    expect(cleanScreens).toContain(
+      "재설정 토큰은 서버 확인에만 사용하고 앱에 저장하지 않습니다",
+    );
     expect(cleanScreens).toContain(
       'resetPasswordRouter.replace("/(auth)/login")',
+    );
+  });
+
+  it("keeps reset-password screen recoverable when the reset token is missing", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("missingResetToken");
+    expect(cleanScreens).toContain("재설정 링크가 올바르지 않아요.");
+    expect(cleanScreens).toContain(
+      "이메일의 최신 비밀번호 재설정 링크로 다시 열어 주세요.",
+    );
+    expect(cleanScreens).toContain("backToResetLogin");
+    expect(cleanScreens).toContain(
+      'resetPasswordRouter.replace("/(auth)/login")',
+    );
+    expect(cleanScreens).toContain('label="로그인으로 돌아가기"');
+    expect(cleanScreens).toContain("onPress={backToResetLogin}");
+    expect(cleanScreens).not.toContain(
+      "server password reset confirm 화면입니다",
     );
   });
 

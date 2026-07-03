@@ -5134,13 +5134,20 @@ export function CleanFintechResetPasswordScreen({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const missingResetToken = token.trim().length < 8;
   const [toast, setToast] = useState(
-    "server password reset confirm 화면입니다. 새 비밀번호를 입력해 주세요.",
+    missingResetToken
+      ? "재설정 링크가 올바르지 않아요."
+      : "새 비밀번호를 입력해 주세요.",
   );
   const valid =
-    token.trim().length >= 8 &&
+    !missingResetToken &&
     isServerAuthPasswordCandidate(newPassword) &&
     newPassword === confirmPassword;
+
+  const backToResetLogin = useCallback(() => {
+    resetPasswordRouter.replace("/(auth)/login");
+  }, [resetPasswordRouter]);
 
   const submitPasswordResetConfirm = useCallback(async () => {
     if (!valid || submitting) return;
@@ -5184,38 +5191,61 @@ export function CleanFintechResetPasswordScreen({
         </Text>
         <Toast message={toast} />
         <SectionCard>
-          <TextInput
-            accessibilityLabel="새 비밀번호"
-            onChangeText={setNewPassword}
-            placeholder="새 비밀번호"
-            placeholderTextColor={theme.color.text.disabled}
-            secureTextEntry
-            style={styles.input}
-            value={newPassword}
-          />
-          <TextInput
-            accessibilityLabel="새 비밀번호 확인"
-            onChangeText={setConfirmPassword}
-            placeholder="새 비밀번호 확인"
-            placeholderTextColor={theme.color.text.disabled}
-            secureTextEntry
-            style={styles.input}
-            value={confirmPassword}
-          />
-          <Text style={styles.listMeta}>{AUTH_PASSWORD_POLICY_MESSAGE}</Text>
-          <Pressable
-            accessibilityRole="button"
-            disabled={!valid || submitting}
-            onPress={submitPasswordResetConfirm}
-            style={[
-              styles.primaryButton,
-              !valid || submitting ? styles.disabled : null,
-            ]}
-          >
-            <Text style={styles.primaryButtonText}>
-              {submitting ? "변경 중" : "비밀번호 변경"}
-            </Text>
-          </Pressable>
+          {missingResetToken ? (
+            <>
+              <Text style={styles.sectionTitle}>
+                재설정 링크가 올바르지 않아요.
+              </Text>
+              <Text style={styles.bodyText}>
+                이메일의 최신 비밀번호 재설정 링크로 다시 열어 주세요.
+              </Text>
+              <SmallButton
+                label="로그인으로 돌아가기"
+                onPress={backToResetLogin}
+              />
+            </>
+          ) : (
+            <>
+              <TextInput
+                accessibilityLabel="새 비밀번호"
+                onChangeText={setNewPassword}
+                placeholder="새 비밀번호"
+                placeholderTextColor={theme.color.text.disabled}
+                secureTextEntry
+                style={styles.input}
+                value={newPassword}
+              />
+              <TextInput
+                accessibilityLabel="새 비밀번호 확인"
+                onChangeText={setConfirmPassword}
+                placeholder="새 비밀번호 확인"
+                placeholderTextColor={theme.color.text.disabled}
+                secureTextEntry
+                style={styles.input}
+                value={confirmPassword}
+              />
+              <Text style={styles.listMeta}>
+                {AUTH_PASSWORD_POLICY_MESSAGE}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                disabled={!valid || submitting}
+                onPress={submitPasswordResetConfirm}
+                style={[
+                  styles.primaryButton,
+                  !valid || submitting ? styles.disabled : null,
+                ]}
+              >
+                <Text style={styles.primaryButtonText}>
+                  {submitting ? "변경 중" : "비밀번호 변경"}
+                </Text>
+              </Pressable>
+              <SmallButton
+                label="로그인으로 돌아가기"
+                onPress={backToResetLogin}
+              />
+            </>
+          )}
         </SectionCard>
         <GuardBox />
       </ScrollView>
