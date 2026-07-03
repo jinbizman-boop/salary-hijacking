@@ -32,7 +32,8 @@ export function containsSensitiveCommunityContent(value: string): boolean {
 }
 
 export function redactCommunityText(value: string): string {
-  return value
+  const withoutJwt = value.replace(JWT_PATTERN, "[auth-redacted]");
+  return withoutJwt
     .replace(EMAIL_PATTERN, "[이메일 비공개]")
     .replace(PHONE_PATTERN, "[전화번호 비공개]")
     .replace(RESIDENT_ID_PATTERN, "[개인정보 비공개]")

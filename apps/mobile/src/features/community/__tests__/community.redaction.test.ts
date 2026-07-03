@@ -19,6 +19,14 @@ describe("community redaction", () => {
     expect(output).toContain("[금액 비공개]");
   });
 
+  it("redacts raw JWT-shaped authentication tokens without token keywords", () => {
+    const rawJwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signatureABC";
+    const output = redactCommunityText(`draft leaked ${rawJwt} by mistake`);
+
+    expect(output).not.toContain(rawJwt);
+    expect(output).toContain("[auth-redacted]");
+  });
+
   it("allows non-identifying routine descriptions", () => {
     const safe = "이번 달 고정지출을 줄이고 영어 루틴을 7일 유지했어요.";
     expect(containsSensitiveCommunityContent(safe)).toBe(false);
