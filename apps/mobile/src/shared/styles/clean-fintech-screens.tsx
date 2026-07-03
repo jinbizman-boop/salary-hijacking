@@ -902,6 +902,7 @@ export function CleanFintechLevelDetailScreen({
 export function CleanFintechPostDetailScreen({
   postId = fallbackPostDetail.post.id,
 }: Readonly<{ postId?: string }>): React.ReactElement {
+  const detailRouter = useRouter();
   const detailCommunityService = useMemo(
     () => createMobileCommunityService(),
     [],
@@ -1060,6 +1061,60 @@ export function CleanFintechPostDetailScreen({
     [detailCommunityService],
   );
 
+  const deleteCommunityPost = useCallback((): void => {
+    const targetPostId = activeDetail.post.id;
+    setToast("게시글 삭제를 서버 커뮤니티에 요청하는 중이에요.");
+    void detailCommunityService
+      .deletePost(targetPostId)
+      .then(() => {
+        setServerCommunityDetail(null);
+        setServerCommunityComments([]);
+        setToast("게시글이 서버에서 삭제됐어요. 커뮤니티로 이동합니다.");
+        detailRouter.replace("/community");
+      })
+      .catch(() => {
+        setToast(
+          "게시글을 삭제하지 못했어요. 권한과 네트워크 상태를 확인해 주세요.",
+        );
+      });
+  }, [activeDetail.post.id, detailCommunityService, detailRouter]);
+
+  const deleteCommunityComment = useCallback(
+    (comment: CommunityComment): void => {
+      const targetPostId = activeDetail.post.id;
+      setToast("댓글 삭제를 서버 커뮤니티에 요청하는 중이에요.");
+      void detailCommunityService
+        .deleteComment(comment.id)
+        .then(() => {
+          setServerCommunityComments((current) =>
+            (current.length > 0 ? current : activeComments).filter(
+              (item) => item.id !== comment.id,
+            ),
+          );
+          setServerCommunityDetail((current) => {
+            if (!current || current.post.id !== targetPostId) return current;
+            return {
+              ...current,
+              comments: current.comments.filter(
+                (item) => item.id !== comment.id,
+              ),
+              post: {
+                ...current.post,
+                commentCount: Math.max(0, current.post.commentCount - 1),
+              },
+            };
+          });
+          setToast("댓글이 서버에서 삭제됐어요.");
+        })
+        .catch(() => {
+          setToast(
+            "댓글을 삭제하지 못했어요. 권한과 네트워크 상태를 확인해 주세요.",
+          );
+        });
+    },
+    [activeComments, activeDetail.post.id, detailCommunityService],
+  );
+
   useEffect(() => {
     void refreshCommunityDetail();
   }, [refreshCommunityDetail]);
@@ -1075,6 +1130,7 @@ export function CleanFintechPostDetailScreen({
           <SmallButton label={post.stats} />
           <SmallButton label="공유" />
           <SmallButton label="신고" onPress={reportCommunityPost} />
+          <SmallButton label="삭제" onPress={deleteCommunityPost} />
         </View>
       </SectionCard>
       <SectionCard>
@@ -1095,18 +1151,29 @@ export function CleanFintechPostDetailScreen({
           <SmallButton label="댓글" />
           <SmallButton label="공유" />
           <SmallButton label="신고" onPress={reportCommunityPost} />
+          <SmallButton label="삭제" onPress={deleteCommunityPost} />
         </View>
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>댓글</Text>
         {activeComments.map((comment) => (
-          <ListRow
-            key={comment.id}
-            icon="💬"
-            title={comment.anonymousDisplayName}
-            meta={comment.content}
-            onPress={() => reportCommunityComment(comment)}
-          />
+          <View key={comment.id}>
+            <ListRow
+              icon="💬"
+              title={comment.anonymousDisplayName}
+              meta={comment.content}
+            />
+            <View style={styles.attachmentRow}>
+              <SmallButton
+                label="신고"
+                onPress={() => reportCommunityComment(comment)}
+              />
+              <SmallButton
+                label="삭제"
+                onPress={() => deleteCommunityComment(comment)}
+              />
+            </View>
+          </View>
         ))}
         <View style={styles.inputRow}>
           <TextInput
