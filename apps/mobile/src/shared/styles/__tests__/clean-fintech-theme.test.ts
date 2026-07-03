@@ -723,6 +723,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("revokeNotificationDevice");
     expect(cleanScreens).toContain(".registerDevice({");
     expect(cleanScreens).toContain(".revokeDevice(");
+    expect(cleanScreens).toContain("notificationDeviceActionPending");
+    expect(cleanScreens).toContain(
+      'setNotificationDeviceActionPending("register")',
+    );
+    expect(cleanScreens).toContain(
+      'setNotificationDeviceActionPending("revoke")',
+    );
+    expect(cleanScreens).toContain(
+      "finally(() => setNotificationDeviceActionPending(null))",
+    );
+    expect(cleanScreens).toContain(
+      "disabled={notificationDeviceActionPending !== null}",
+    );
   });
 
   it("keeps LV UP screen hydrated from the server growth API before local fallback", () => {

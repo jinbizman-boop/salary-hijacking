@@ -4404,6 +4404,8 @@ function NotificationsScreen(): React.ReactElement {
   const [serverNotificationDevices, setServerNotificationDevices] = useState<
     readonly NotificationDevice[]
   >([]);
+  const [notificationDeviceActionPending, setNotificationDeviceActionPending] =
+    useState<"register" | "revoke" | null>(null);
   const [syncLabel, setSyncLabel] = useState("서버 알림을 확인하는 중이에요.");
 
   useEffect(() => {
@@ -4657,6 +4659,8 @@ function NotificationsScreen(): React.ReactElement {
   );
 
   const registerNotificationDevice = useCallback(() => {
+    if (notificationDeviceActionPending !== null) return;
+    setNotificationDeviceActionPending("register");
     setSyncLabel("푸시 기기 등록을 서버에 저장하고 있어요.");
     void createNativeNotificationRegistrationRequest()
       .then((registrationRequest) =>
@@ -4679,11 +4683,14 @@ function NotificationsScreen(): React.ReactElement {
       })
       .catch(() => {
         setSyncLabel("푸시 권한, Expo 설정, 또는 서버 연결을 확인해 주세요.");
-      });
-  }, [notificationsApi]);
+      })
+      .finally(() => setNotificationDeviceActionPending(null));
+  }, [notificationDeviceActionPending, notificationsApi]);
 
   const revokeNotificationDevice = useCallback(
     (deviceId: string) => {
+      if (notificationDeviceActionPending !== null) return;
+      setNotificationDeviceActionPending("revoke");
       void notificationsApi
         .revokeDevice(deviceId)
         .then((revokedDevice) => {
@@ -4698,9 +4705,10 @@ function NotificationsScreen(): React.ReactElement {
         })
         .catch(() => {
           setSyncLabel("푸시 기기 해제를 서버에 저장하지 못했어요.");
-        });
+        })
+        .finally(() => setNotificationDeviceActionPending(null));
     },
-    [notificationsApi],
+    [notificationDeviceActionPending, notificationsApi],
   );
 
   return (
@@ -4749,10 +4757,23 @@ function NotificationsScreen(): React.ReactElement {
             : "기기 등록 전에는 원문 푸시 토큰을 보관하지 않아요."}
         </Text>
         <View style={styles.notificationActions}>
-          <SmallButton label="기기 등록" onPress={registerNotificationDevice} />
+          <SmallButton
+            disabled={notificationDeviceActionPending !== null}
+            label={
+              notificationDeviceActionPending === "register"
+                ? "등록 중"
+                : "기기 등록"
+            }
+            onPress={registerNotificationDevice}
+          />
           {primaryNotificationDevice ? (
             <SmallButton
-              label="기기 해제"
+              disabled={notificationDeviceActionPending !== null}
+              label={
+                notificationDeviceActionPending === "revoke"
+                  ? "해제 중"
+                  : "기기 해제"
+              }
               onPress={() =>
                 revokeNotificationDevice(primaryNotificationDevice.deviceId)
               }
