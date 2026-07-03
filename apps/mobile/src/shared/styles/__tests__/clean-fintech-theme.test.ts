@@ -356,6 +356,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("financialDataForAds");
   });
 
+  it("keeps MY management menu entries connected to app actions", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("openMyCommunityPosts");
+    expect(cleanScreens).toContain('profileRouter.push("/community")');
+    expect(cleanScreens).toContain("openMyLevelProgress");
+    expect(cleanScreens).toContain('profileRouter.push("/level")');
+    expect(cleanScreens).toContain("openProfileNotices");
+    expect(cleanScreens).toContain('profileRouter.push("/notifications")');
+    expect(cleanScreens).toContain("openSupportInquiry");
+    expect(cleanScreens).toContain("onPress={openMyCommunityPosts}");
+    expect(cleanScreens).toContain("onPress={openMyLevelProgress}");
+    expect(cleanScreens).toContain("onPress={openSupportInquiry}");
+    expect(cleanScreens).toContain("onPress={openProfileNotices}");
+  });
+
   it("keeps community screen hydrated from the server feed service before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

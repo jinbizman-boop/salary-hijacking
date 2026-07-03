@@ -2547,7 +2547,7 @@ function CommunityScreen(): React.ReactElement {
 function ProfileScreen(): React.ReactElement {
   const profileApi = useMemo(() => createMobileProfileApi(), []);
   const profileAuthApi = useMemo(() => createMobileAuthApi(), []);
-  const router = useRouter();
+  const profileRouter = useRouter();
   const [serverProfileSnapshot, setServerProfileSnapshot] =
     useState<ProfileSnapshot | null>(null);
   const [profileToast, setProfileToast] = useState(
@@ -2620,14 +2620,32 @@ function ProfileScreen(): React.ReactElement {
       .then(() => {
         setServerProfileSnapshot(null);
         setProfileToast("로그아웃됐어요. 다시 로그인해 주세요.");
-        router.replace("/(auth)/login");
+        profileRouter.replace("/(auth)/login");
       })
       .catch(() => {
         setProfileToast(
           "로그아웃을 완료하지 못했어요. 네트워크 상태를 확인해 주세요.",
         );
       });
-  }, [profileAuthApi, router]);
+  }, [profileAuthApi, profileRouter]);
+
+  const openMyCommunityPosts = useCallback(() => {
+    profileRouter.push("/community");
+  }, [profileRouter]);
+
+  const openMyLevelProgress = useCallback(() => {
+    profileRouter.push("/level");
+  }, [profileRouter]);
+
+  const openSupportInquiry = useCallback(() => {
+    setProfileToast(
+      "1:1 문의는 계정, 결제, 개인정보 요청을 민감 정보 없이 접수하도록 준비 중이에요. 급한 문의는 support@salaryhijacking.com으로 보내 주세요.",
+    );
+  }, []);
+
+  const openProfileNotices = useCallback(() => {
+    profileRouter.push("/notifications");
+  }, [profileRouter]);
 
   const profileSnapshot = serverProfileSnapshot ?? fallbackProfileSnapshot;
   const profileSyncLabel = serverProfileSnapshot
@@ -2711,14 +2729,26 @@ function ProfileScreen(): React.ReactElement {
           icon="📝"
           title="내 게시글 관리"
           meta={`${profileSnapshot.summary.communityPosts}개 글 · 댓글 ${profileSnapshot.summary.communityComments}개`}
+          onPress={openMyCommunityPosts}
         />
         <ListRow
           icon={appIcons.level}
           title="내 레벨업 관리"
           meta={`미션 ${profileSnapshot.summary.completedGrowthTasks}개 · XP ${profileSnapshot.summary.levelXp}/${profileSnapshot.summary.nextLevelXp}`}
+          onPress={openMyLevelProgress}
         />
-        <ListRow icon="💬" title="1:1 문의" meta="계정, 결제, 개인정보 문의" />
-        <ListRow icon="📣" title="공지사항" meta="서비스 안내와 이벤트" />
+        <ListRow
+          icon="💬"
+          meta="계정, 결제, 개인정보 문의"
+          onPress={openSupportInquiry}
+          title="1:1 문의"
+        />
+        <ListRow
+          icon="📣"
+          meta="서비스 안내와 이벤트"
+          onPress={openProfileNotices}
+          title="공지사항"
+        />
       </SectionCard>
       <AdSlot />
       <GuardBox />
