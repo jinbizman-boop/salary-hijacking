@@ -654,6 +654,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "setUnreadCount((current) => Math.max(0, current - 1))",
     );
+    expect(cleanScreens).toContain("notificationRowActionPendingId");
+    expect(cleanScreens).toContain(
+      "setNotificationRowActionPendingId(`archive:${item.id}`)",
+    );
+    expect(cleanScreens).toContain(
+      "finally(() => setNotificationRowActionPendingId(null))",
+    );
   });
 
   it("keeps notification delete actions persisted through the server API", () => {
@@ -670,6 +677,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(".delete(item.id)");
     expect(cleanScreens).toContain(
       "setUnreadCount((current) => Math.max(0, current - 1))",
+    );
+    expect(cleanScreens).toContain(
+      "setNotificationRowActionPendingId(`delete:${item.id}`)",
+    );
+    expect(cleanScreens).toContain(
+      "disabled={notificationRowActionPendingId !== null}",
     );
   });
 

@@ -4408,6 +4408,8 @@ function NotificationsScreen(): React.ReactElement {
   >([]);
   const [notificationDeviceActionPending, setNotificationDeviceActionPending] =
     useState<"register" | "revoke" | null>(null);
+  const [notificationRowActionPendingId, setNotificationRowActionPendingId] =
+    useState<string | null>(null);
   const [syncLabel, setSyncLabel] = useState("서버 알림을 확인하는 중이에요.");
 
   useEffect(() => {
@@ -4573,6 +4575,8 @@ function NotificationsScreen(): React.ReactElement {
 
   const archiveNotification = useCallback(
     (item: NotificationScreenItem) => {
+      if (notificationRowActionPendingId !== null) return;
+      setNotificationRowActionPendingId(`archive:${item.id}`);
       setServerNotifications((current) =>
         current.filter((candidate) => candidate.id !== item.id),
       );
@@ -4593,9 +4597,11 @@ function NotificationsScreen(): React.ReactElement {
           setSyncLabel(
             "알림 보관을 서버에 저장하지 못했어요. 다시 확인해 주세요.",
           );
-        });
+        })
+        .finally(() => setNotificationRowActionPendingId(null));
     },
     [
+      notificationRowActionPendingId,
       notificationsApi,
       restoreNotificationOnFailure,
       restoreUnreadCountOnFailure,
@@ -4604,6 +4610,8 @@ function NotificationsScreen(): React.ReactElement {
 
   const deleteNotification = useCallback(
     (item: NotificationScreenItem) => {
+      if (notificationRowActionPendingId !== null) return;
+      setNotificationRowActionPendingId(`delete:${item.id}`);
       setServerNotifications((current) =>
         current.filter((candidate) => candidate.id !== item.id),
       );
@@ -4624,9 +4632,11 @@ function NotificationsScreen(): React.ReactElement {
           setSyncLabel(
             "알림 삭제를 서버에 저장하지 못했어요. 다시 확인해 주세요.",
           );
-        });
+        })
+        .finally(() => setNotificationRowActionPendingId(null));
     },
     [
+      notificationRowActionPendingId,
       notificationsApi,
       restoreNotificationOnFailure,
       restoreUnreadCountOnFailure,
@@ -4808,11 +4818,21 @@ function NotificationsScreen(): React.ReactElement {
               trailing={
                 <View style={styles.notificationActions}>
                   <SmallButton
-                    label="Archive"
+                    disabled={notificationRowActionPendingId !== null}
+                    label={
+                      notificationRowActionPendingId === `archive:${item.id}`
+                        ? "Archiving"
+                        : "Archive"
+                    }
                     onPress={() => archiveNotification(item)}
                   />
                   <SmallButton
-                    label="Delete"
+                    disabled={notificationRowActionPendingId !== null}
+                    label={
+                      notificationRowActionPendingId === `delete:${item.id}`
+                        ? "Deleting"
+                        : "Delete"
+                    }
                     onPress={() => deleteNotification(item)}
                   />
                 </View>
@@ -4841,11 +4861,21 @@ function NotificationsScreen(): React.ReactElement {
               trailing={
                 <View style={styles.notificationActions}>
                   <SmallButton
-                    label="Archive"
+                    disabled={notificationRowActionPendingId !== null}
+                    label={
+                      notificationRowActionPendingId === `archive:${item.id}`
+                        ? "Archiving"
+                        : "Archive"
+                    }
                     onPress={() => archiveNotification(item)}
                   />
                   <SmallButton
-                    label="Delete"
+                    disabled={notificationRowActionPendingId !== null}
+                    label={
+                      notificationRowActionPendingId === `delete:${item.id}`
+                        ? "Deleting"
+                        : "Delete"
+                    }
                     onPress={() => deleteNotification(item)}
                   />
                 </View>
