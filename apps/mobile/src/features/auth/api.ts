@@ -2,6 +2,7 @@ import {
   normalizeMobileAuthResponse,
   normalizeMobileSignupResponse,
 } from "../../shared/api/auth-response";
+import * as Crypto from "expo-crypto";
 import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
   AUTH_LOGOUT_PATH,
@@ -37,8 +38,14 @@ export type AuthApiOptions = Readonly<{
   platform: "ios" | "android" | "web";
   fetcher?: typeof fetch;
   createCorrelationId?: () => string;
+  createOAuthPkcePair?: () => Promise<OAuthPkcePair>;
   now?: () => Date;
   tokenStore?: AuthTokenStore;
+}>;
+
+type OAuthPkcePair = Readonly<{
+  codeVerifier: string;
+  codeChallenge: string;
 }>;
 
 export class AuthApiError extends Error {
@@ -201,6 +208,40 @@ function optionalAuthorizationUrl(value: unknown): string | null {
   }
 }
 
+function base64UrlFromBase64(value: string): string {
+  return value.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function base64UrlFromBytes(bytes: Uint8Array): string {
+  const alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  let output = "";
+  for (let index = 0; index < bytes.length; index += 3) {
+    const first = bytes[index] ?? 0;
+    const second = bytes[index + 1] ?? 0;
+    const third = bytes[index + 2] ?? 0;
+    const value = (first << 16) | (second << 8) | third;
+    output += alphabet[(value >> 18) & 63];
+    output += alphabet[(value >> 12) & 63];
+    if (index + 1 < bytes.length) output += alphabet[(value >> 6) & 63];
+    if (index + 2 < bytes.length) output += alphabet[value & 63];
+  }
+  return output;
+}
+
+async function defaultOAuthPkcePair(): Promise<OAuthPkcePair> {
+  const codeVerifier = base64UrlFromBytes(Crypto.getRandomBytes(32));
+  const digest = await Crypto.digestStringAsync(
+    Crypto.CryptoDigestAlgorithm.SHA256,
+    codeVerifier,
+    { encoding: Crypto.CryptoEncoding.BASE64 },
+  );
+  return {
+    codeVerifier,
+    codeChallenge: base64UrlFromBase64(digest),
+  };
+}
+
 function oauthVerifierKey(state: string): string {
   const normalized = assertPresent(state, "AUTH_OAUTH_STATE_REQUIRED");
   if (!/^[A-Za-z0-9._:-]{1,256}$/u.test(normalized)) {
@@ -352,16 +393,13 @@ function oauthStartResult(value: unknown): AuthOAuthStartResult {
   };
 }
 
-function oauthCodeVerifier(value: unknown): string | null {
-  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
-  return optionalNonEmptyString(data.codeVerifier);
-}
-
 export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
   const createCorrelationId =
     options.createCorrelationId ?? defaultCorrelationId;
+  const createOAuthPkcePair =
+    options.createOAuthPkcePair ?? defaultOAuthPkcePair;
   const now = options.now ?? (() => new Date());
 
   async function post(path: string, body: Record<string, unknown>) {
@@ -518,7 +556,12 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async startOAuth(request: AuthOAuthStartRequest) {
+      const pkce = await createOAuthPkcePair();
       const parsed = await get(AUTH_OAUTH_START_PATH, {
+        codeChallenge: assertPresent(
+          pkce.codeChallenge,
+          "AUTH_OAUTH_CODE_CHALLENGE_REQUIRED",
+        ),
         provider: assertSocialProvider(request.provider),
         redirectUri: assertPresent(
           request.redirectUri,
@@ -529,7 +572,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
       await persistOAuthVerifier(
         options.tokenStore,
         result.state,
-        oauthCodeVerifier(parsed),
+        pkce.codeVerifier,
       );
       return result;
     },

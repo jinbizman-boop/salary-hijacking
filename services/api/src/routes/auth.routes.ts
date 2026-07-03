@@ -420,6 +420,17 @@ async function sha256Hex(input: string): Promise<string> {
   ).join("");
 }
 
+async function pkceS256Challenge(input: string): Promise<string> {
+  return base64Url(
+    new Uint8Array(
+      await globalThis.crypto.subtle.digest(
+        "SHA-256",
+        toArrayBuffer(utf8(input)),
+      ),
+    ),
+  );
+}
+
 async function hmacSign(secret: string, input: string): Promise<Uint8Array> {
   const key = await globalThis.crypto.subtle.importKey(
     "raw",
@@ -507,6 +518,18 @@ function normalizeProvider(value: unknown): AuthProvider {
     "AUTH_PROVIDER_UNSUPPORTED",
     "지원하지 않는 로그인 제공자입니다.",
   );
+}
+
+function optionalOAuthCodeChallenge(value: string | null): string | null {
+  const challenge = value?.trim() ?? "";
+  if (!challenge) return null;
+  if (!/^[A-Za-z0-9._~-]{43,128}$/.test(challenge))
+    throw new AuthRouteError(
+      400,
+      "AUTH_PKCE_CHALLENGE_INVALID",
+      "PKCE code challenge媛 ?щ컮瑜댁? ?딆뒿?덈떎.",
+    );
+  return challenge;
 }
 
 function envText<TEnv>(env: TEnv, key: string): string | null {
@@ -1425,20 +1448,19 @@ async function handleOAuthStart<TEnv>(
       "허용되지 않은 redirectUri입니다.",
     );
   const state = randomToken("ost");
-  const codeVerifier = randomToken("pkce");
-  const codeChallenge = base64Url(
-    new Uint8Array(
-      await globalThis.crypto.subtle.digest(
-        "SHA-256",
-        toArrayBuffer(utf8(codeVerifier)),
-      ),
-    ),
+  const clientCodeChallenge = optionalOAuthCodeChallenge(
+    runtime.url.searchParams.get("codeChallenge"),
   );
+  const codeVerifier = clientCodeChallenge ? null : randomToken("pkce");
+  const codeChallenge =
+    clientCodeChallenge ?? (await pkceS256Challenge(codeVerifier ?? ""));
   await runtime.repository.storeOAuthState(
     {
       state,
       provider,
-      codeVerifierHash: await sha256Hex(codeVerifier),
+      codeVerifierHash: clientCodeChallenge
+        ? `s256:${clientCodeChallenge}`
+        : await sha256Hex(codeVerifier ?? ""),
       redirectUri,
       createdAt: runtime.now.toISOString(),
       expiresAt: new Date(
@@ -1458,10 +1480,10 @@ async function handleOAuthStart<TEnv>(
     data: {
       provider,
       state,
-      codeVerifier,
       codeChallenge,
       codeChallengeMethod: "S256",
       redirectUri,
+      ...(codeVerifier ? { codeVerifier } : {}),
       ...(authorizationUrl ? { authorizationUrl } : {}),
     },
   });
@@ -1503,12 +1525,15 @@ async function handleOAuthCallback<TEnv>(
       "AUTH_OAUTH_STATE_INVALID",
       "OAuth state가 유효하지 않습니다.",
     );
-  if (
-    !constantTimeEqual(
-      await sha256Hex(codeVerifier),
-      stateRecord.codeVerifierHash,
-    )
-  )
+  const storedPkce = stateRecord.codeVerifierHash;
+  const isClientChallenge = storedPkce.startsWith("s256:");
+  const expectedPkce = isClientChallenge
+    ? storedPkce.slice("s256:".length)
+    : storedPkce;
+  const actualPkce = isClientChallenge
+    ? await pkceS256Challenge(codeVerifier)
+    : await sha256Hex(codeVerifier);
+  if (!constantTimeEqual(actualPkce, expectedPkce))
     throw new AuthRouteError(
       400,
       "AUTH_PKCE_INVALID",

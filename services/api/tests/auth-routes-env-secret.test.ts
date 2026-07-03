@@ -21,10 +21,11 @@ describe("auth route env secret wiring", () => {
       enableRateLimit: false,
       now: () => new Date("2026-06-29T05:00:00.000Z"),
     });
+    const codeChallenge = "clientGeneratedPkceChallengeForMobileOAuthStart123";
 
     const response = await app.fetch(
       new Request(
-        "https://api.test/api/v1/auth/oauth?provider=KAKAO&redirectUri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback",
+        `https://api.test/api/v1/auth/oauth?provider=KAKAO&redirectUri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback&codeChallenge=${codeChallenge}`,
       ),
       env,
       context,
@@ -32,6 +33,8 @@ describe("auth route env secret wiring", () => {
     const body = (await response.json()) as {
       readonly data?: {
         readonly authorizationUrl?: string;
+        readonly codeChallenge?: string;
+        readonly codeVerifier?: string;
         readonly redirectUri?: string;
         readonly state?: string;
       };
@@ -44,6 +47,8 @@ describe("auth route env secret wiring", () => {
       "salaryhijacking://auth/oauth/callback",
     );
     expect(body.data?.state).toEqual(expect.stringMatching(/^ost_/));
+    expect(body.data?.codeChallenge).toBe(codeChallenge);
+    expect(body.data?.codeVerifier).toBeUndefined();
     expect(body.data?.authorizationUrl).toContain(
       "https://kauth.kakao.com/oauth/authorize?",
     );
@@ -52,6 +57,9 @@ describe("auth route env secret wiring", () => {
     );
     expect(body.data?.authorizationUrl).toContain(
       "redirect_uri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback",
+    );
+    expect(body.data?.authorizationUrl).toContain(
+      `code_challenge=${codeChallenge}`,
     );
     expect(body.data?.authorizationUrl).toContain("code_challenge_method=S256");
   });

@@ -436,22 +436,28 @@ describe("auth api", () => {
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
   });
 
-  it("starts social OAuth through the server without exposing PKCE verifier secrets", async () => {
+  it("starts social OAuth with an app-generated PKCE challenge and stores only the local verifier", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();
     const api = createAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
       createCorrelationId: () => "auth-oauth-start-test",
+      createOAuthPkcePair: async () => ({
+        codeVerifier: "app-local-code-verifier",
+        codeChallenge: "app-local-code-challenge",
+      }),
       fetcher: async (request) => {
         const normalized =
           request instanceof Request ? request : new Request(request);
         calls.push(normalized);
+        expect(new URL(normalized.url).searchParams.get("codeChallenge")).toBe(
+          "app-local-code-challenge",
+        );
         return jsonResponse({
           data: {
             provider: "KAKAO",
             state: "oauth-state-1",
-            codeVerifier: "server-secret-code-verifier",
-            codeChallenge: "server-code-challenge",
+            codeChallenge: "app-local-code-challenge",
             codeChallengeMethod: "S256",
             redirectUri: "salaryhijacking://auth/oauth/callback",
             authorizationUrl:
@@ -475,22 +481,30 @@ describe("auth api", () => {
     expect(result).toEqual({
       provider: "KAKAO",
       state: "oauth-state-1",
-      codeChallenge: "server-code-challenge",
+      codeChallenge: "app-local-code-challenge",
       codeChallengeMethod: "S256",
       redirectUri: "salaryhijacking://auth/oauth/callback",
       authorizationUrl:
         "https://accounts.kakao.example/oauth/authorize?state=oauth-state-1",
     });
-    expect(JSON.stringify(result)).not.toContain("server-secret-code-verifier");
+    expect(JSON.stringify(result)).not.toContain("app-local-code-verifier");
     expect(
       stored.get(`${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-1`),
-    ).toBe("server-secret-code-verifier");
+    ).toBe("app-local-code-verifier");
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBeUndefined();
     expect(stored.size).toBe(1);
     expect(calls).toHaveLength(1);
     expect(calls[0]?.method).toBe("GET");
-    expect(calls[0]?.url).toBe(
-      "https://api.salaryhijacking.com/api/v1/auth/oauth?provider=KAKAO&redirectUri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback",
+    const startUrl = new URL(calls[0]?.url ?? "");
+    expect(startUrl.origin + startUrl.pathname).toBe(
+      "https://api.salaryhijacking.com/api/v1/auth/oauth",
+    );
+    expect(startUrl.searchParams.get("provider")).toBe("KAKAO");
+    expect(startUrl.searchParams.get("redirectUri")).toBe(
+      "salaryhijacking://auth/oauth/callback",
+    );
+    expect(startUrl.searchParams.get("codeChallenge")).toBe(
+      "app-local-code-challenge",
     );
     expect(calls[0]?.credentials).toBe("include");
     expect(calls[0]?.headers.get("x-correlation-id")).toBe(
