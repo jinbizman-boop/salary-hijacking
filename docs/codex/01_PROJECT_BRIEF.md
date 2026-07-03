@@ -65,12 +65,12 @@ Verified on 2026-07-03 KST:
   contract. Shared mobile API factory testing also guards bearer access-token
   attachment for feature API requests after login.
 - Mobile Jest currently reports 32 passing suites and 121 passing tests.
-- API package tests currently report 22 passing files and 41 passing tests,
+- API package tests currently report 23 passing files and 45 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation
   contract, DB-backed payroll, daily budget, fixed expense, variable expense,
-  savings, growth, notifications, and community repository contracts, mobile
-  fixed-expense/savings/growth/notifications/community route injection
+  savings, growth, notifications, community, and auth repository contracts,
+  mobile fixed-expense/savings/growth/notifications/community route injection
   contracts, mobile route manifest contracts, and public `/`, `/privacy`,
   `/support`, `/terms` pages for store review URLs.
 - Mobile Detox E2E configuration exists, and local `adb`/`emulator` are now
@@ -99,6 +99,13 @@ Verified on 2026-07-03 KST:
   readiness because the blocked gates still include runtime secrets,
   Cloudflare resources, database smoke/rollback proof, public URL proof, and
   native mobile build/E2E/store-submit proof.
+- API auth now has a DB-backed repository path. When a supported database URL is
+  present, `/api/v1/auth` selects `createNeonAuthRepository()` instead of the
+  in-memory fallback. The repository persists email users, password hashes,
+  refresh-session hashes, email verification tokens, password reset tokens,
+  OAuth state, and MFA checks without storing raw passwords, refresh tokens,
+  raw device identifiers, or financial payloads. Runtime staging migration and
+  auth smoke proof are still blocked release gates.
 - Release readiness finds `git`, Cloudflare Wrangler, Cloudflare account
   evidence, Neon project evidence, and workspace-local EAS CLI evidence. The
   local `check:external-integrations` script currently warns only that `gh`,
@@ -125,8 +132,8 @@ The project is strongest in:
 
 The project still needs hardening in:
 
-- remaining API-to-DB repository integration beyond the newly wired payroll,
-  daily budget, fixed expense, variable expense, savings, growth,
+- remaining API-to-DB repository integration beyond the newly wired auth,
+  payroll, daily budget, fixed expense, variable expense, savings, growth,
   notifications, and community repository paths,
 - remaining endpoint path alignment outside the verified mobile bootstrap/payroll/profile contracts,
 - service-level build/runtime verification beyond typecheck,

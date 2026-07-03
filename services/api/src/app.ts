@@ -44,6 +44,10 @@ import {
   createAuthRoutes,
 } from "./routes/auth.routes";
 import {
+  createNeonAuthRepository,
+  shouldUseNeonAuthRepository,
+} from "./repositories/auth.repository";
+import {
   COMMUNITY_API_PREFIX,
   assertCommunityRoutesCompleteness,
   communityRoutesManifest,
@@ -295,6 +299,8 @@ type BootstrapRole = (typeof BOOTSTRAP_ROLES)[number];
 type BootstrapAccountStatus = (typeof BOOTSTRAP_ACCOUNT_STATUSES)[number];
 
 const handleEnvAwareAuthRoutes: FetchHandler<unknown> = createAuthRoutes({
+  repository: (env) =>
+    shouldUseNeonAuthRepository(env) ? createNeonAuthRepository() : null,
   jwtSecret: (env) =>
     envString(env, "JWT_SECRET") ?? envString(env, "AUTH_JWT_SECRET"),
   cookieSecure: (env) => environmentOf(env) === "production",

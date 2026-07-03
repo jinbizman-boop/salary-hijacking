@@ -25,7 +25,7 @@ Entrypoints:
 Current verification:
 
 - `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-03.
-- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 22 files and 41 tests.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 23 files and 45 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -63,6 +63,15 @@ Current verification:
 
 Verified through 2026-07-03:
 
+- Auth routes: `POST /api/v1/auth/register`, `POST /api/v1/auth/login`,
+  `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and related auth
+  routes are implemented in `services/api/src/routes/auth.routes.ts`. As of
+  2026-07-03, `services/api/src/repositories/auth.repository.ts` provides a
+  Neon-backed runtime repository that `services/api/src/app.ts` selects when a
+  supported database URL is present. It stores password hashes, refresh token
+  hashes, OAuth state, email verification/password reset token hashes, and MFA
+  code hashes without raw password/token/device/financial payloads. The
+  in-memory fallback remains for local no-DB tests.
 - `GET /api/v1/mobile/bootstrap`: implemented in `services/api/src/app.ts` and covered by `services/api/tests/mobile-bootstrap.test.ts`.
 - `GET /api/v1/payroll/home`, `GET /api/v1/payroll/current`, `POST /api/v1/payroll/recalculate`: implemented in `services/api/src/routes/payroll.routes.ts` and aligned with the current mobile salary/plan screens.
 - DB-backed payroll repository: `services/api/src/repositories/payroll.repository.ts` can create and query payroll plans through the `payroll_plans` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
@@ -107,6 +116,7 @@ Verified through 2026-07-03:
 - Mobile community repository injection contract test: `services/api/tests/mobile-community-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
 - Public legal page regression test: `services/api/tests/public-legal-pages.test.ts`.
+- Auth DB repository test: `services/api/tests/auth-db-repository.test.ts`.
 
 ## Persistence Warning
 
@@ -177,6 +187,7 @@ Migrations:
 - `0002_payroll_budget_expense.sql`
 - `0003_growth_community_notifications.sql`
 - `0004_admin_audit_ads.sql`
+- `0005_auth_runtime.sql`
 
 Seeds:
 
