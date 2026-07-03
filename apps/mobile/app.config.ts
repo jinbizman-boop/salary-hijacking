@@ -231,9 +231,12 @@ function androidConfig(versionCode: number): JsonRecord {
       "android.permission.WRITE_CONTACTS",
       "android.permission.ACCESS_FINE_LOCATION",
       "android.permission.ACCESS_COARSE_LOCATION",
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
       "android.permission.READ_SMS",
       "android.permission.SEND_SMS",
       "android.permission.RECORD_AUDIO",
+      "android.permission.SYSTEM_ALERT_WINDOW",
     ],
     intentFilters: [
       {

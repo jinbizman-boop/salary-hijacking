@@ -122,4 +122,17 @@ describe("mobile Detox E2E contract", () => {
 
     expect(rootLayout).toContain("salary-hijacking-mobile-root");
   });
+
+  it("blocks Android storage and overlay permissions that are not required for a finance app", () => {
+    const appConfig = readRequiredText("app.config.ts");
+    const blockedPermissions = [
+      "android.permission.READ_EXTERNAL_STORAGE",
+      "android.permission.WRITE_EXTERNAL_STORAGE",
+      "android.permission.SYSTEM_ALERT_WINDOW",
+    ];
+
+    for (const permission of blockedPermissions) {
+      expect(appConfig).toContain(`"${permission}"`);
+    }
+  });
 });
