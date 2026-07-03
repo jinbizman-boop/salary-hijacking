@@ -358,6 +358,82 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("records savings deposits through the server savings transaction API", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "savings-deposit-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        return jsonResponse(
+          {
+            data: {
+              goal: {
+                goalId: "goal_emergency",
+                title: "Emergency fund",
+                goalType: "EMERGENCY_FUND",
+                targetAmountMinor: 1_000_000,
+                currentAmountMinor: 200_000,
+                fixedSaveAmountMinor: 80_000,
+                status: "ACTIVE",
+                serverAuthority: true,
+                financialRawAccountDataExposed: false,
+                userId: "internal-user-id",
+              },
+              transaction: {
+                transactionId: "svt_1",
+                userId: "internal-user-id",
+              },
+              idempotentReplay: false,
+            },
+          },
+          201,
+        );
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.recordSavingsDeposit("goal_emergency", {
+        amountMinor: 80_000,
+        idempotencyKey: "savings-deposit-test-key",
+        memo: "mobile plan savings deposit",
+        occurredAt: "2026-07-03T00:00:00.000Z",
+      }),
+    ).resolves.toMatchObject({
+      currentAmountMinor: 200_000,
+      fixedSaveAmountMinor: 80_000,
+      id: "goal_emergency",
+      serverAuthority: true,
+      title: "Emergency fund",
+    });
+    await expect(
+      api.recordSavingsDeposit("goal_emergency", {
+        amountMinor: 0,
+        idempotencyKey: "bad",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_SAVINGS_DEPOSIT_REQUEST" });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/savings/goal_emergency/deposit",
+    );
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+    expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
+      amountMinor: 80_000,
+      idempotencyKey: "savings-deposit-test-key",
+      memo: "mobile plan savings deposit",
+      transactionType: "DEPOSIT",
+    });
+  });
+
   it("deletes fixed expenses and savings goals through server-authoritative APIs", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({

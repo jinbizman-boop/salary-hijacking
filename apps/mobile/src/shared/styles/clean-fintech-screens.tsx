@@ -148,6 +148,7 @@ type NotificationScreenItem = Readonly<{
 }>;
 type PlanCommitmentRow = Readonly<{
   amountMinor: number;
+  currentAmountMinor?: number;
   id: string;
   lastPaidAt?: string | null;
   meta: string;
@@ -2561,6 +2562,47 @@ function VariableExpenseActionRow({
   );
 }
 
+function SavingsGoalActionRow({
+  deleting,
+  depositing,
+  item,
+  onDelete,
+  onDeposit,
+  serverEnabled,
+}: Readonly<{
+  deleting: boolean;
+  depositing: boolean;
+  item: PlanCommitmentRow;
+  onDelete: () => void;
+  onDeposit: () => void;
+  serverEnabled: boolean;
+}>): React.ReactElement {
+  return (
+    <View style={styles.listRow}>
+      <Text style={styles.listIcon}>{appIcons.saving}</Text>
+      <View style={styles.flex}>
+        <Text style={styles.listTitle}>{item.title}</Text>
+        <Text style={styles.listMeta}>
+          {formatMoney(item.amountMinor)}원 · 현재{" "}
+          {formatMoney(item.currentAmountMinor ?? 0)}원 · {item.meta}
+        </Text>
+      </View>
+      {serverEnabled ? (
+        <>
+          <SmallButton
+            label={depositing ? "납입중" : "납입"}
+            onPress={onDeposit}
+          />
+          <SmallButton
+            label={deleting ? "삭제중" : "삭제"}
+            onPress={onDelete}
+          />
+        </>
+      ) : null}
+    </View>
+  );
+}
+
 function fixedExpenseRowFromServer(
   item: PlanFixedExpenseCommitment,
 ): PlanCommitmentRow {
@@ -2579,6 +2621,7 @@ function savingsGoalRowFromServer(
 ): PlanCommitmentRow {
   return {
     amountMinor: item.fixedSaveAmountMinor,
+    currentAmountMinor: item.currentAmountMinor,
     id: item.id,
     meta: `목표 ${formatMoney(item.targetAmountMinor)}원 · 서버 기준 ${item.status}`,
     title: item.title,
@@ -2617,6 +2660,9 @@ function PlanScreen(): React.ReactElement {
   const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("80000");
   const [savingPlanCommitment, setSavingPlanCommitment] = useState(false);
   const [deletingPlanCommitmentId, setDeletingPlanCommitmentId] = useState<
+    string | null
+  >(null);
+  const [depositingSavingsGoalId, setDepositingSavingsGoalId] = useState<
     string | null
   >(null);
 
@@ -2844,6 +2890,36 @@ function PlanScreen(): React.ReactElement {
     [deletingPlanCommitmentId, planCommitmentsApi, planCommitmentsHydrated],
   );
 
+  const recordPlanSavingsDeposit = useCallback(
+    async (item: PlanCommitmentRow): Promise<void> => {
+      if (!planCommitmentsHydrated || depositingSavingsGoalId !== null) return;
+      setDepositingSavingsGoalId(item.id);
+      setPlanToast("고정저축 납입을 서버에 기록하는 중이에요.");
+      try {
+        const deposited = await planCommitmentsApi.recordSavingsDeposit(
+          item.id,
+          {
+            amountMinor: item.amountMinor,
+            idempotencyKey: `mobile-savings-deposit-${item.id}-${Date.now()}`,
+            memo: "mobile plan savings deposit",
+            occurredAt: new Date().toISOString(),
+          },
+        );
+        setServerSavingsGoals((current) =>
+          current.map((goal) => (goal.id === deposited.id ? deposited : goal)),
+        );
+        setPlanToast(
+          `${deposited.title} ${formatMoney(item.amountMinor)}원 납입을 서버 기준으로 기록했어요.`,
+        );
+      } catch {
+        setPlanToast("고정저축 납입 기록에 실패했어요. 다시 시도해 주세요.");
+      } finally {
+        setDepositingSavingsGoalId(null);
+      }
+    },
+    [depositingSavingsGoalId, planCommitmentsApi, planCommitmentsHydrated],
+  );
+
   const localExpectedHijack = Math.max(
     0,
     nonNegative(salary) - nonNegative(expense),
@@ -2959,20 +3035,18 @@ function PlanScreen(): React.ReactElement {
       <SectionCard>
         <Text style={styles.sectionTitle}>서버 고정저축 목표</Text>
         {savingsRows.map((item) => (
-          <ListRow
+          <SavingsGoalActionRow
             key={item.id}
-            icon={appIcons.saving}
-            title={item.title}
-            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}${
-              deletingPlanCommitmentId === item.id ? " · 삭제 중" : ""
-            }`}
-            {...(planCommitmentsHydrated
-              ? {
-                  onPress: () => {
-                    void deletePlanSavingsGoal(item.id);
-                  },
-                }
-              : {})}
+            deleting={deletingPlanCommitmentId === item.id}
+            depositing={depositingSavingsGoalId === item.id}
+            item={item}
+            onDelete={() => {
+              void deletePlanSavingsGoal(item.id);
+            }}
+            onDeposit={() => {
+              void recordPlanSavingsDeposit(item);
+            }}
+            serverEnabled={planCommitmentsHydrated}
           />
         ))}
         <TextInput

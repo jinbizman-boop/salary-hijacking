@@ -10,6 +10,7 @@ import type {
   PlanFixedExpenseCreateRequest,
   PlanFixedExpenseCommitment,
   PlanFixedExpensePaymentRequest,
+  PlanSavingsDepositRequest,
   PlanSavingsGoalCreateRequest,
   PlanSavingsGoalCommitment,
 } from "./types";
@@ -276,6 +277,26 @@ function validFixedExpensePayment(
   );
 }
 
+function validSavingsDeposit(
+  goalId: string,
+  value: PlanSavingsDepositRequest,
+): boolean {
+  return (
+    typeof goalId === "string" &&
+    goalId.trim().length > 0 &&
+    isPositiveMoney(value.amountMinor) &&
+    typeof value.idempotencyKey === "string" &&
+    value.idempotencyKey.trim().length > 0 &&
+    value.idempotencyKey.length <= 160 &&
+    (value.memo === undefined ||
+      value.memo === null ||
+      (typeof value.memo === "string" && value.memo.length <= 500)) &&
+    (value.occurredAt === undefined ||
+      (typeof value.occurredAt === "string" &&
+        !Number.isNaN(new Date(value.occurredAt).getTime())))
+  );
+}
+
 function validDeleteId(value: string): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
@@ -488,6 +509,47 @@ export function createPlanCommitmentsApi(
         );
       }
       return normalizeSavingsGoal(response.data);
+    },
+
+    async recordSavingsDeposit(
+      goalId: string,
+      depositRequest: PlanSavingsDepositRequest,
+    ): Promise<PlanSavingsGoalCommitment> {
+      if (!validSavingsDeposit(goalId, depositRequest)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_SAVINGS_DEPOSIT_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const response = await request(
+        `${PLAN_SAVINGS_PATH}/${encodeURIComponent(goalId.trim())}/deposit`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            amountMinor: depositRequest.amountMinor,
+            idempotencyKey: depositRequest.idempotencyKey.trim(),
+            memo: depositRequest.memo ?? null,
+            ...(depositRequest.occurredAt !== undefined
+              ? { occurredAt: depositRequest.occurredAt }
+              : {}),
+            reason: "mobile plan savings deposit",
+            transactionType: "DEPOSIT",
+          }),
+        },
+      );
+      if (
+        !isRecord(response) ||
+        !isRecord(response.data) ||
+        !("goal" in response.data)
+      ) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_RESPONSE",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeSavingsGoal(response.data.goal);
     },
 
     async deleteFixedExpense(expenseId: string): Promise<PlanDeleteResult> {

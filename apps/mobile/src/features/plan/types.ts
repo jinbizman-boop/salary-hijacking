@@ -49,6 +49,13 @@ export type PlanFixedExpensePaymentRequest = Readonly<{
   paidAt?: string;
 }>;
 
+export type PlanSavingsDepositRequest = Readonly<{
+  amountMinor: number;
+  idempotencyKey: string;
+  memo?: string | null;
+  occurredAt?: string;
+}>;
+
 export type PlanSavingsGoalCreateRequest = Readonly<{
   fixedSaveAmountMinor: number;
   goalType: string;
@@ -72,6 +79,10 @@ export type PlanCommitmentsApiClient = Readonly<{
     expenseId: string,
     request: PlanFixedExpensePaymentRequest,
   ) => Promise<PlanFixedExpenseCommitment>;
+  recordSavingsDeposit: (
+    goalId: string,
+    request: PlanSavingsDepositRequest,
+  ) => Promise<PlanSavingsGoalCommitment>;
   createSavingsGoal: (
     request: PlanSavingsGoalCreateRequest,
   ) => Promise<PlanSavingsGoalCommitment>;
