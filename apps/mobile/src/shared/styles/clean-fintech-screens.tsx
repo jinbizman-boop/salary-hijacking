@@ -120,6 +120,7 @@ type LevelDetailConfig = Readonly<{
   progressValue: number;
 }>;
 type NotificationScreenItem = Readonly<{
+  deeplink: string | null;
   id: string;
   icon: string;
   title: string;
@@ -179,6 +180,7 @@ const variableExpenses: readonly VariableExpenseEntry[] = [
 
 const fallbackNotifications: readonly NotificationScreenItem[] = [
   {
+    deeplink: "/plan",
     id: "fallback_goal",
     icon: "🏅",
     title: "목표 달성",
@@ -188,6 +190,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     status: "UNREAD",
   },
   {
+    deeplink: "/salary",
     id: "fallback_budget",
     icon: appIcons.warning,
     title: "예산 초과 주의",
@@ -197,6 +200,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     status: "UNREAD",
   },
   {
+    deeplink: "/notifications",
     id: "fallback_reward",
     icon: appIcons.reward,
     title: "이벤트 포인트",
@@ -206,6 +210,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     status: "READ",
   },
   {
+    deeplink: "/level/reading",
     id: "fallback_reading",
     icon: appIcons.reading,
     title: "독서 루틴",
@@ -215,6 +220,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     status: "READ",
   },
   {
+    deeplink: "/level/news",
     id: "fallback_news",
     icon: appIcons.news,
     title: "뉴스 루틴",
@@ -224,6 +230,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     status: "READ",
   },
   {
+    deeplink: "/level/english",
     id: "fallback_english",
     icon: appIcons.english,
     title: "영어 루틴",
@@ -233,6 +240,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     status: "READ",
   },
   {
+    deeplink: "/level/health",
     id: "fallback_health",
     icon: appIcons.health,
     title: "건강 루틴",
@@ -304,6 +312,59 @@ const levelMissionRouteMap: Readonly<
   news: "/level/news",
   english: "/level/english",
   health: "/level/health",
+};
+
+type NotificationRoute =
+  | "/salary"
+  | "/plan"
+  | "/level"
+  | "/level/reading"
+  | "/level/news"
+  | "/level/english"
+  | "/level/health"
+  | "/community"
+  | `/community/${string}`
+  | "/notifications"
+  | "/profile";
+
+const notificationRouteByType: Readonly<
+  Record<NotificationType, NotificationRoute>
+> = {
+  AD_PARTNER: "/salary",
+  BUDGET_EXCEEDED: "/salary",
+  BUDGET_WARNING: "/salary",
+  COMMUNITY: "/community",
+  CONTENT_RECOMMENDATION: "/level",
+  LEVEL_UP: "/level",
+  NOTICE: "/notifications",
+  PAYDAY: "/salary",
+  PAYMENT_DUE: "/plan",
+  SAVINGS_GOAL: "/plan",
+  SECURITY: "/profile",
+};
+
+const notificationRouteAliases: Readonly<Record<string, NotificationRoute>> = {
+  "/(tabs)/community": "/community",
+  "/(tabs)/level": "/level",
+  "/(tabs)/plan": "/plan",
+  "/(tabs)/profile": "/profile",
+  "/(tabs)/salary": "/salary",
+  "/community": "/community",
+  "/level": "/level",
+  "/level/english": "/level/english",
+  "/level/health": "/level/health",
+  "/level/news": "/level/news",
+  "/level/reading": "/level/reading",
+  "/notifications": "/notifications",
+  "/plan": "/plan",
+  "/profile": "/profile",
+  "/salary": "/salary",
+  community: "/community",
+  level: "/level",
+  notifications: "/notifications",
+  plan: "/plan",
+  profile: "/profile",
+  salary: "/salary",
 };
 
 const fallbackProfileSnapshot: ProfileSnapshot = {
@@ -2133,6 +2194,7 @@ function toNotificationScreenItem(
   item: NotificationItem,
 ): NotificationScreenItem {
   return {
+    deeplink: item.deeplink,
     id: item.notificationId,
     icon: notificationIcon(item.type),
     title: item.title,
@@ -2141,6 +2203,25 @@ function toNotificationScreenItem(
     priority: item.priority,
     status: item.status,
   };
+}
+
+function safeNotificationRoute(
+  item: NotificationScreenItem,
+): NotificationRoute {
+  const deeplink = item.deeplink?.trim();
+  if (!deeplink) return notificationRouteByType[item.type];
+
+  const aliasedRoute = notificationRouteAliases[deeplink];
+  if (aliasedRoute) return aliasedRoute;
+
+  const communityPostMatch = /^\/community\/([A-Za-z0-9_-]{1,80})$/u.exec(
+    deeplink,
+  );
+  if (communityPostMatch?.[1]) {
+    return `/community/${communityPostMatch[1]}`;
+  }
+
+  return notificationRouteByType[item.type];
 }
 
 function isImportantNotification(item: NotificationScreenItem): boolean {
@@ -2198,6 +2279,7 @@ function popularCommunityPosts(
 
 function NotificationsScreen(): React.ReactElement {
   const notificationsApi = useMemo(() => createMobileNotificationsApi(), []);
+  const notificationRouter = useRouter();
   const [serverNotifications, setServerNotifications] = useState<
     readonly NotificationScreenItem[]
   >(fallbackNotifications);
@@ -2268,6 +2350,15 @@ function NotificationsScreen(): React.ReactElement {
     [notificationsApi],
   );
 
+  const openNotification = useCallback(
+    (item: NotificationScreenItem) => {
+      markRead(item);
+      const notificationRoute = safeNotificationRoute(item);
+      notificationRouter.push(notificationRoute);
+    },
+    [markRead, notificationRouter],
+  );
+
   const markAllNotificationsRead = useCallback(() => {
     if (unreadCount <= 0) return;
     setServerNotifications((current) =>
@@ -2303,7 +2394,7 @@ function NotificationsScreen(): React.ReactElement {
               icon={item.icon}
               key={item.id}
               meta={item.message}
-              onPress={() => markRead(item)}
+              onPress={() => openNotification(item)}
               title={item.title}
               unread={item.status === "UNREAD"}
             />
@@ -2324,7 +2415,7 @@ function NotificationsScreen(): React.ReactElement {
               icon={item.icon}
               key={item.id}
               meta={item.message}
-              onPress={() => markRead(item)}
+              onPress={() => openNotification(item)}
               title={item.title}
               unread={item.status === "UNREAD"}
             />
