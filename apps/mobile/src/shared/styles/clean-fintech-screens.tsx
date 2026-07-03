@@ -1912,6 +1912,7 @@ export function CleanFintechPostDetailScreen({
     >(null);
   const [liked, setLiked] = useState(false);
   const [likePending, setLikePending] = useState(false);
+  const [sharePending, setSharePending] = useState(false);
   const [toast, setToast] = useState(
     "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
   );
@@ -2007,19 +2008,23 @@ export function CleanFintechPostDetailScreen({
   }, [activeDetail.post.id, detailCommunityService, liked, likePending]);
 
   const shareCommunityPost = useCallback((): void => {
+    if (sharePending) return;
     const targetPostId = encodeURIComponent(activeDetail.post.id);
     const url = `https://salaryhijacking.com/community/${targetPostId}`;
     const title = activeDetail.post.title;
 
+    setSharePending(true);
     setToast("공유할 수 있는 화면을 열었어요.");
     void Share.share({
       message: `${title}\n${url}`,
       title,
       url,
-    }).catch(() => {
-      setToast("공유 화면을 열지 못했어요. 다시 시도해 주세요.");
-    });
-  }, [activeDetail.post.id, activeDetail.post.title]);
+    })
+      .catch(() => {
+        setToast("공유 화면을 열지 못했어요. 다시 시도해 주세요.");
+      })
+      .finally(() => setSharePending(false));
+  }, [activeDetail.post.id, activeDetail.post.title, sharePending]);
 
   const focusCommunityCommentInput = useCallback((): void => {
     commentInputRef.current?.focus();
@@ -2281,7 +2286,11 @@ export function CleanFintechPostDetailScreen({
         <Text style={styles.bodyText}>{post.summary}</Text>
         <View style={styles.attachmentRow}>
           <StatusPill label={post.stats} />
-          <SmallButton label="공유" onPress={shareCommunityPost} />
+          <SmallButton
+            disabled={sharePending}
+            label={sharePending ? "공유중" : "공유"}
+            onPress={shareCommunityPost}
+          />
           <SmallButton
             disabled={communityDetailActionPending !== null}
             label={
@@ -2333,7 +2342,11 @@ export function CleanFintechPostDetailScreen({
             </Text>
           </Pressable>
           <SmallButton label="댓글" onPress={focusCommunityCommentInput} />
-          <SmallButton label="공유" onPress={shareCommunityPost} />
+          <SmallButton
+            disabled={sharePending}
+            label={sharePending ? "공유중" : "공유"}
+            onPress={shareCommunityPost}
+          />
           <SmallButton
             disabled={postEditing}
             label={postEditing ? "수정 중" : "수정 저장"}
