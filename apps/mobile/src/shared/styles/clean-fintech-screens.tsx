@@ -15,6 +15,7 @@ import {
 } from "react-native";
 
 import officialBiLogo from "../../../assets/brand/salary-hijacking-platform-logo.png";
+import { CommunityAttachmentList } from "../../features/community/components/CommunityAttachmentList";
 import {
   communityResponseData,
   parseCommunityComment,
@@ -1987,6 +1988,7 @@ export function CleanFintechPostDetailScreen({
         <Text style={styles.bodyText}>
           {activeDetail.content || post.summary}
         </Text>
+        <CommunityAttachmentList attachments={activeDetail.attachments} />
         <TextInput
           accessibilityLabel="커뮤니티 게시글 제목 수정"
           onChangeText={setPostEditTitle}
