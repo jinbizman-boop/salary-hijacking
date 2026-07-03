@@ -268,6 +268,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(listRowSource).toContain("accessibilityState={{ disabled }}");
     expect(listRowSource).toContain("disabled={disabled}");
     expect(cleanScreens).toContain("disabled={payingFixedExpenseId !== null}");
+    expect(cleanScreens).toContain("payingFixedExpenseInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (payingFixedExpenseInFlightRef.current !== null) return",
+    );
+    expect(cleanScreens).toContain(
+      "payingFixedExpenseInFlightRef.current = item.id",
+    );
+    expect(cleanScreens).toContain(
+      "payingFixedExpenseInFlightRef.current = null",
+    );
     expect(cleanScreens).toContain(
       'payingFixedExpenseId === item.id ? "납부 기록 중" : undefined',
     );

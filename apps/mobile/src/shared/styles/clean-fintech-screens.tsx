@@ -2484,6 +2484,7 @@ function SalaryHomeScreen(): React.ReactElement {
   const [payingFixedExpenseId, setPayingFixedExpenseId] = useState<
     string | null
   >(null);
+  const payingFixedExpenseInFlightRef = useRef<string | null>(null);
   const [updatingVariableExpenseId, setUpdatingVariableExpenseId] = useState<
     string | null
   >(null);
@@ -2830,9 +2831,10 @@ function SalaryHomeScreen(): React.ReactElement {
 
   const paySalaryFixedExpense = useCallback(
     async (item: PlanCommitmentRow): Promise<void> => {
-      if (payingFixedExpenseId !== null) return;
+      if (payingFixedExpenseInFlightRef.current !== null) return;
 
       try {
+        payingFixedExpenseInFlightRef.current = item.id;
         setPayingFixedExpenseId(item.id);
         const paid = await salaryPlanCommitmentsApi.recordFixedExpensePayment(
           item.id,
@@ -2856,10 +2858,11 @@ function SalaryHomeScreen(): React.ReactElement {
           "고정지출 납부를 서버에 기록하지 못했어요. 네트워크 확인 후 다시 시도해 주세요.",
         );
       } finally {
+        payingFixedExpenseInFlightRef.current = null;
         setPayingFixedExpenseId(null);
       }
     },
-    [payingFixedExpenseId, salaryPlanCommitmentsApi],
+    [salaryPlanCommitmentsApi],
   );
 
   const metrics: readonly MoneyMetric[] = [
