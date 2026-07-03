@@ -60,6 +60,10 @@ import type {
 } from "../../features/profile/types";
 import type { UploadAttachment } from "../../features/uploads/types";
 import { mergeProfileSnapshotWithMyPageSummary } from "../../features/profile/api";
+import {
+  AUTH_PASSWORD_POLICY_MESSAGE,
+  isServerAuthPasswordCandidate,
+} from "../../features/auth/password-policy";
 import type {
   NotificationDevice,
   NotificationDeviceRegistrationRequest,
@@ -1112,7 +1116,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
   const valid =
     email.includes("@") &&
     nickname.trim().length >= 2 &&
-    password.trim().length >= 8 &&
+    isServerAuthPasswordCandidate(password) &&
     signupConsentLabels.every((label) => agreed.has(label));
   const submitSignup = useCallback(async () => {
     if (!valid || submitting) return;
@@ -1182,6 +1186,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
             style={styles.input}
             value={password}
           />
+          <Text style={styles.listMeta}>{AUTH_PASSWORD_POLICY_MESSAGE}</Text>
         </SectionCard>
         <SectionCard>
           <Text style={styles.sectionTitle}>민감 정보 보호 및 약관 동의</Text>
@@ -5104,7 +5109,7 @@ export function CleanFintechResetPasswordScreen({
   );
   const valid =
     token.trim().length >= 8 &&
-    newPassword.trim().length >= 8 &&
+    isServerAuthPasswordCandidate(newPassword) &&
     newPassword === confirmPassword;
 
   const submitPasswordResetConfirm = useCallback(async () => {
@@ -5167,6 +5172,7 @@ export function CleanFintechResetPasswordScreen({
             style={styles.input}
             value={confirmPassword}
           />
+          <Text style={styles.listMeta}>{AUTH_PASSWORD_POLICY_MESSAGE}</Text>
           <Pressable
             accessibilityRole="button"
             disabled={!valid || submitting}
