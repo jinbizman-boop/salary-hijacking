@@ -5267,6 +5267,7 @@ function LoginScreen(): React.ReactElement {
       });
       if (response.data?.status === "AUTHENTICATED") {
         setToast("서버 인증이 완료됐어요. 급여 홈 데이터를 불러올 수 있어요.");
+        loginRouter.replace("/salary");
       } else if (response.data?.status === "MFA_REQUIRED") {
         setToast("추가 인증이 필요해요. 등록된 인증 수단을 확인해 주세요.");
       } else {
