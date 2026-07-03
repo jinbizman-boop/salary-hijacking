@@ -914,6 +914,17 @@ export function CleanFintechPostDetailScreen({
   >([]);
   const [commentDraft, setCommentDraft] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [postEditTitle, setPostEditTitle] = useState(
+    fallbackPostDetail.post.title,
+  );
+  const [postEditContent, setPostEditContent] = useState(
+    fallbackPostDetail.content,
+  );
+  const [postEditing, setPostEditing] = useState(false);
+  const [commentEditDrafts, setCommentEditDrafts] = useState<
+    Record<string, string>
+  >({});
+  const [commentEditingId, setCommentEditingId] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [toast, setToast] = useState(
     "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
@@ -925,6 +936,8 @@ export function CleanFintechPostDetailScreen({
       : activeDetail.comments;
   const post = toCommunityScreenPost(activeDetail.post);
   const commentReady = commentDraft.trim().length >= 2;
+  const postEditReady =
+    postEditTitle.trim().length >= 2 && postEditContent.trim().length >= 5;
 
   const refreshCommunityDetail = useCallback(async (): Promise<void> => {
     const safePostId = postId.trim() || fallbackPostDetail.post.id;
@@ -942,6 +955,13 @@ export function CleanFintechPostDetailScreen({
 
       setServerCommunityDetail({ ...nextDetail, comments: nextComments });
       setServerCommunityComments(nextComments);
+      setPostEditTitle(nextDetail.post.title);
+      setPostEditContent(nextDetail.content || nextDetail.post.bodyPreview);
+      setCommentEditDrafts(
+        Object.fromEntries(
+          nextComments.map((comment) => [comment.id, comment.content]),
+        ),
+      );
       setToast(
         `서버 커뮤니티 상세 동기화 · 댓글 ${formatCommunityCount(
           nextComments.length,
@@ -950,6 +970,16 @@ export function CleanFintechPostDetailScreen({
     } catch {
       setServerCommunityDetail(null);
       setServerCommunityComments([]);
+      setPostEditTitle(fallbackPostDetail.post.title);
+      setPostEditContent(fallbackPostDetail.content);
+      setCommentEditDrafts(
+        Object.fromEntries(
+          fallbackPostDetail.comments.map((comment) => [
+            comment.id,
+            comment.content,
+          ]),
+        ),
+      );
       setToast("서버 연결 전까지 안전한 예시 상세 화면을 보여드려요.");
     }
   }, [detailCommunityService, postId]);
@@ -1028,6 +1058,94 @@ export function CleanFintechPostDetailScreen({
     commentSubmitting,
     detailCommunityService,
   ]);
+
+  const updateCommunityPost = useCallback((): void => {
+    if (!postEditReady || postEditing) return;
+    const targetPostId = activeDetail.post.id;
+    const draft: CommunityPostDraft = {
+      anonymous: true,
+      boardType: activeDetail.post.boardType,
+      content: postEditContent.trim(),
+      tags: activeDetail.tags,
+      title: postEditTitle.trim(),
+    };
+
+    setPostEditing(true);
+    setToast("게시글 수정을 서버 커뮤니티에 저장하는 중이에요.");
+    void detailCommunityService
+      .updatePost(targetPostId, draft)
+      .then(() => {
+        setServerCommunityDetail((current) => {
+          const base = current ?? activeDetail;
+          if (base.post.id !== targetPostId) return current;
+          return {
+            ...base,
+            content: draft.content,
+            post: {
+              ...base.post,
+              bodyPreview: draft.content.slice(0, 180),
+              title: draft.title,
+            },
+            tags: draft.tags,
+          };
+        });
+        setToast("게시글 수정이 서버에 저장됐어요.");
+      })
+      .catch(() => {
+        setToast(
+          "게시글 수정을 저장하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
+        );
+      })
+      .finally(() => setPostEditing(false));
+  }, [
+    activeDetail,
+    detailCommunityService,
+    postEditContent,
+    postEditReady,
+    postEditTitle,
+    postEditing,
+  ]);
+
+  const updateCommunityComment = useCallback(
+    (comment: CommunityComment): void => {
+      const content = (commentEditDrafts[comment.id] ?? comment.content).trim();
+      if (content.length < 2 || commentEditingId === comment.id) return;
+      const targetPostId = activeDetail.post.id;
+
+      setCommentEditingId(comment.id);
+      setToast("댓글 수정을 서버 커뮤니티에 저장하는 중이에요.");
+      void detailCommunityService
+        .updateComment(comment.id, { content, anonymous: true })
+        .then(() => {
+          const updateComment = (item: CommunityComment): CommunityComment =>
+            item.id === comment.id ? { ...item, content } : item;
+          setServerCommunityComments((current) =>
+            (current.length > 0 ? current : activeComments).map(updateComment),
+          );
+          setServerCommunityDetail((current) => {
+            if (!current || current.post.id !== targetPostId) return current;
+            return {
+              ...current,
+              comments: current.comments.map(updateComment),
+            };
+          });
+          setToast("댓글 수정이 서버에 저장됐어요.");
+        })
+        .catch(() => {
+          setToast(
+            "댓글 수정을 저장하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
+          );
+        })
+        .finally(() => setCommentEditingId(null));
+    },
+    [
+      activeComments,
+      activeDetail.post.id,
+      commentEditDrafts,
+      commentEditingId,
+      detailCommunityService,
+    ],
+  );
 
   const reportCommunityPost = useCallback((): void => {
     const targetPostId = activeDetail.post.id;
@@ -1138,6 +1256,23 @@ export function CleanFintechPostDetailScreen({
         <Text style={styles.bodyText}>
           {activeDetail.content || post.summary}
         </Text>
+        <TextInput
+          accessibilityLabel="커뮤니티 게시글 제목 수정"
+          onChangeText={setPostEditTitle}
+          placeholder="게시글 제목"
+          placeholderTextColor={theme.color.text.disabled}
+          style={styles.input}
+          value={postEditTitle}
+        />
+        <TextInput
+          accessibilityLabel="커뮤니티 게시글 본문 수정"
+          multiline
+          onChangeText={setPostEditContent}
+          placeholder="게시글 본문"
+          placeholderTextColor={theme.color.text.disabled}
+          style={[styles.input, styles.composeBody]}
+          value={postEditContent}
+        />
         <View style={styles.attachmentRow}>
           <Pressable
             accessibilityRole="button"
@@ -1150,6 +1285,10 @@ export function CleanFintechPostDetailScreen({
           </Pressable>
           <SmallButton label="댓글" />
           <SmallButton label="공유" />
+          <SmallButton
+            label={postEditing ? "수정 중" : "수정 저장"}
+            onPress={updateCommunityPost}
+          />
           <SmallButton label="신고" onPress={reportCommunityPost} />
           <SmallButton label="삭제" onPress={deleteCommunityPost} />
         </View>
@@ -1163,7 +1302,27 @@ export function CleanFintechPostDetailScreen({
               title={comment.anonymousDisplayName}
               meta={comment.content}
             />
+            <TextInput
+              accessibilityLabel="커뮤니티 댓글 수정"
+              multiline
+              onChangeText={(value) =>
+                setCommentEditDrafts((current) => ({
+                  ...current,
+                  [comment.id]: value,
+                }))
+              }
+              placeholder="댓글 수정"
+              placeholderTextColor={theme.color.text.disabled}
+              style={styles.input}
+              value={commentEditDrafts[comment.id] ?? comment.content}
+            />
             <View style={styles.attachmentRow}>
+              <SmallButton
+                label={
+                  commentEditingId === comment.id ? "수정 중" : "수정 저장"
+                }
+                onPress={() => updateCommunityComment(comment)}
+              />
               <SmallButton
                 label="신고"
                 onPress={() => reportCommunityComment(comment)}
