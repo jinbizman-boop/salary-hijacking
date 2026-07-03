@@ -133,4 +133,60 @@ describe("auth route env secret wiring", () => {
     expect(loginBody.data?.tokens?.accessToken).toEqual(expect.any(String));
     expect(loginBody.data?.tokens?.refreshToken).toEqual(expect.any(String));
   });
+
+  it("reissues email verification delivery tokens through a privacy-safe resend endpoint", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+      now: () => new Date("2026-06-29T05:00:00.000Z"),
+    });
+
+    const registerResponse = await app.fetch(
+      new Request("https://api.test/api/v1/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "verify-resend@example.com",
+          password: "StrongPass123!",
+          nickname: "verifyresend",
+          termsAccepted: true,
+          privacyAccepted: true,
+          marketingAccepted: false,
+        }),
+      }),
+      env,
+      context,
+    );
+    expect(registerResponse.status).toBe(201);
+
+    const resendResponse = await app.fetch(
+      new Request("https://api.test/api/v1/auth/verify-email/resend", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "verify-resend@example.com",
+        }),
+      }),
+      env,
+      context,
+    );
+    const resendBody = (await resendResponse.json()) as {
+      readonly data?: {
+        readonly accepted?: boolean;
+        readonly emailVerificationTokenForDelivery?: string | null;
+        readonly email?: string;
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(resendResponse.status).toBe(200);
+    expect(resendBody.error?.code).toBeUndefined();
+    expect(resendBody.data?.accepted).toBe(true);
+    expect(resendBody.data?.emailVerificationTokenForDelivery).toEqual(
+      expect.stringMatching(/^emv_/),
+    );
+    expect(JSON.stringify(resendBody)).not.toContain(
+      "verify-resend@example.com",
+    );
+  });
 });

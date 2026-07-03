@@ -5,6 +5,7 @@ import {
   Pressable,
   SafeAreaView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
@@ -13,8 +14,14 @@ import { salaryHijackingTheme as theme } from "../../src/shared/styles/clean-fin
 
 const SCREEN_VERSION = "4.0.0-clean-fintech";
 const VERIFY_EMAIL_PATH = "/api/v1/auth/verify-email";
+const VERIFY_EMAIL_RESEND_PATH = "/api/v1/auth/verify-email/resend";
 
-type VerifyEmailStatus = "PENDING" | "VERIFIED" | "WAITING" | "FAILED";
+type VerifyEmailStatus =
+  | "PENDING"
+  | "VERIFIED"
+  | "WAITING"
+  | "FAILED"
+  | "RESENT";
 
 function paramValue(value: string | readonly string[] | undefined): string {
   const raw = Array.isArray(value) ? value[0] : value;
@@ -26,7 +33,10 @@ export default function VerifyEmailScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ token?: string | string[] }>();
   const authApi = useMemo(() => createMobileAuthApi(), []);
   const [status, setStatus] = useState<VerifyEmailStatus>("PENDING");
+  const [email, setEmail] = useState("");
+  const [resendPending, setResendPending] = useState(false);
   const token = paramValue(params.token);
+  const canResend = email.trim().length > 3 && !resendPending;
 
   useEffect(() => {
     let active = true;
@@ -53,18 +63,35 @@ export default function VerifyEmailScreen(): React.ReactElement {
     };
   }, [authApi, router, token]);
 
+  async function resendEmailVerification(): Promise<void> {
+    if (!canResend) return;
+    setResendPending(true);
+    try {
+      const result = await authApi.requestEmailVerification({ email });
+      setStatus(result.accepted ? "RESENT" : "FAILED");
+    } catch {
+      setStatus("FAILED");
+    } finally {
+      setResendPending(false);
+    }
+  }
+
   const title =
     status === "VERIFIED"
       ? "이메일 인증이 완료됐어요."
       : status === "WAITING"
         ? "인증 메일을 확인해 주세요."
-        : status === "FAILED"
-          ? "인증 링크를 다시 확인해 주세요."
-          : "이메일 인증을 확인하고 있어요.";
+        : status === "RESENT"
+          ? "인증 메일을 다시 보냈어요."
+          : status === "FAILED"
+            ? "인증 링크를 다시 확인해 주세요."
+            : "이메일 인증을 확인하고 있어요.";
   const description =
     status === "WAITING"
       ? "메일의 인증 링크를 열면 서버에서 계정을 확인합니다."
-      : "인증 토큰은 화면에 표시하거나 저장하지 않고 서버 확인에만 사용합니다.";
+      : status === "RESENT"
+        ? "새 링크가 도착하면 다시 열어 주세요. 이메일 주소는 재전송 요청에만 사용합니다."
+        : "인증 토큰은 화면에 표시하거나 저장하지 않고 서버 확인에만 사용합니다.";
 
   return (
     <SafeAreaView
@@ -120,6 +147,67 @@ export default function VerifyEmailScreen(): React.ReactElement {
         >
           {description}
         </Text>
+        <View style={{ gap: theme.spacing[8] }}>
+          <Text
+            style={{
+              color: theme.color.text.primary,
+              fontFamily: theme.font.native.bold,
+              fontSize: 13,
+              fontWeight: "800",
+            }}
+          >
+            메일 주소
+          </Text>
+          <TextInput
+            accessibilityLabel="인증 메일을 다시 받을 메일 주소"
+            autoCapitalize="none"
+            autoCorrect={false}
+            inputMode="email"
+            keyboardType="email-address"
+            onChangeText={setEmail}
+            placeholder="name@example.com"
+            style={{
+              backgroundColor: theme.color.surface.soft,
+              borderColor: theme.color.surface.lineSoft,
+              borderRadius: theme.radius.md,
+              borderWidth: 1,
+              color: theme.color.text.primary,
+              fontFamily: theme.font.native.medium,
+              fontSize: 15,
+              minHeight: 48,
+              paddingHorizontal: theme.spacing[12],
+            }}
+            value={email}
+          />
+          <Pressable
+            accessibilityLabel="인증 메일 다시 보내기"
+            accessibilityRole="button"
+            disabled={!canResend}
+            onPress={resendEmailVerification}
+            style={{
+              alignItems: "center",
+              backgroundColor: canResend
+                ? theme.color.brand.primary
+                : theme.color.surface.line,
+              borderRadius: theme.radius.md,
+              justifyContent: "center",
+              minHeight: 48,
+            }}
+          >
+            <Text
+              style={{
+                color: canResend
+                  ? theme.color.text.inverse
+                  : theme.color.text.muted,
+                fontFamily: theme.font.native.bold,
+                fontSize: 15,
+                fontWeight: "900",
+              }}
+            >
+              {resendPending ? "전송 중" : "인증 메일 다시 보내기"}
+            </Text>
+          </Pressable>
+        </View>
         <Pressable
           accessibilityLabel="로그인 화면으로 이동"
           accessibilityRole="button"
@@ -156,14 +244,17 @@ export function assertMobileVerifyEmailCompleteness(): {
   const checks = [
     "/(auth)/verify-email",
     VERIFY_EMAIL_PATH,
+    VERIFY_EMAIL_RESEND_PATH,
     "VerifyEmailScreen",
     "createMobileAuthApi",
     "verifyEmail",
+    "requestEmailVerification",
+    "resendEmailVerification",
     'router.replace("/salary")',
     'router.replace("/(auth)/login")',
     "rawPersonalData=false",
     "tokenNotRendered",
   ] as const;
 
-  return { ok: checks.length >= 9, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
 }

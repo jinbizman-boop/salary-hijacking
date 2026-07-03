@@ -108,6 +108,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "app/(tabs)/profile/index.tsx",
       "app/(auth)/login.tsx",
       "app/(auth)/signup.tsx",
+      "app/(auth)/verify-email.tsx",
       "app/notifications/index.tsx",
       "app/community/write.tsx",
       "app/community/[postId].tsx",
@@ -423,6 +424,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(
       callbackRoute.indexOf("!response.data.user.onboardingCompleted"),
     ).toBeLessThan(callbackRoute.indexOf('router.replace("/salary")'));
+  });
+
+  it("keeps verify-email screen recoverable with server-side resend instead of a dead end", () => {
+    const verifyRoute = source("(auth)/verify-email.tsx");
+
+    expect(verifyRoute).toContain("requestEmailVerification");
+    expect(verifyRoute).toContain("/api/v1/auth/verify-email/resend");
+    expect(verifyRoute).toContain("resendEmailVerification");
+    expect(verifyRoute).toContain("인증 메일 다시 보내기");
+    expect(verifyRoute).toContain("메일 주소");
+    expect(verifyRoute).toContain("rawPersonalData=false");
+    expect(verifyRoute).not.toContain("?대찓");
+    expect(verifyRoute).not.toContain("濡쒓렇");
   });
 
   it("keeps social OAuth callback copy readable and aligned with state routing", () => {

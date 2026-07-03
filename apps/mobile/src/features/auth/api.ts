@@ -15,10 +15,13 @@ import {
   AUTH_REFRESH_PATH,
   AUTH_REGISTER_PATH,
   AUTH_VERIFY_EMAIL_PATH,
+  AUTH_VERIFY_EMAIL_RESEND_PATH,
   AUTH_SAFE_ERROR_MESSAGE,
 } from "./constants";
 import type {
   AuthApiClient,
+  AuthEmailVerificationRequest,
+  AuthEmailVerificationResult,
   AuthLoginRequest,
   AuthLogoutResult,
   AuthOAuthCompleteRequest,
@@ -377,6 +380,11 @@ function verifyEmailResult(value: unknown): AuthVerifyEmailResult {
   return { verified: data.verified === true };
 }
 
+function emailVerificationResult(value: unknown): AuthEmailVerificationResult {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  return { accepted: data.accepted === true };
+}
+
 function oauthStartResult(value: unknown): AuthOAuthStartResult {
   const data = isRecord(value) && isRecord(value.data) ? value.data : {};
   const provider = data.provider;
@@ -651,6 +659,13 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         token: assertPresent(request.token, "AUTH_EMAIL_VERIFY_TOKEN_REQUIRED"),
       });
       return verifyEmailResult(parsed);
+    },
+
+    async requestEmailVerification(request: AuthEmailVerificationRequest) {
+      const parsed = await post(AUTH_VERIFY_EMAIL_RESEND_PATH, {
+        email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
+      });
+      return emailVerificationResult(parsed);
     },
 
     async refresh(request: AuthRefreshRequest = {}) {

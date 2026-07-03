@@ -281,6 +281,7 @@ export interface AuthSecurityEvent {
     | "auth_logout_all"
     | "auth_password_reset_requested"
     | "auth_password_reset_completed"
+    | "auth_email_verification_requested"
     | "auth_email_verified"
     | "auth_admin_mfa_verified"
     | "auth_admin_mfa_failed";
@@ -1354,6 +1355,43 @@ async function handlePasswordResetRequest<TEnv>(
   });
 }
 
+async function handleEmailVerificationResend<TEnv>(
+  runtime: AuthRuntime<TEnv>,
+): Promise<Response> {
+  const body = await parseJsonBody(runtime.request);
+  const email = normalizeEmail(stringField(body, "email"));
+  const user = await runtime.repository.findUserByEmail(email, runtime);
+  let verifyToken: string | null = null;
+
+  if (user) {
+    verifyToken = randomToken("emv");
+    await runtime.repository.storeEmailVerification(
+      user.userId,
+      await sha256Hex(verifyToken),
+      new Date(
+        runtime.now.getTime() + EMAIL_VERIFY_TTL_SECONDS * 1_000,
+      ).toISOString(),
+      runtime,
+    );
+  }
+
+  await emit(runtime, {
+    event: "auth_email_verification_requested",
+    requestId: runtime.requestId,
+    userId: user?.userId ?? null,
+    provider: "EMAIL",
+    path: runtime.path,
+    createdAt: runtime.now.toISOString(),
+  });
+
+  return jsonResponse(runtime, 200, {
+    data: {
+      accepted: true,
+      emailVerificationTokenForDelivery: verifyToken,
+    },
+  });
+}
+
 async function handlePasswordResetConfirm<TEnv>(
   runtime: AuthRuntime<TEnv>,
 ): Promise<Response> {
@@ -1857,6 +1895,8 @@ async function dispatchAuthRoute<TEnv>(
     return handlePasswordResetRequest(runtime);
   if (method === "POST" && path === "/password-reset/confirm")
     return handlePasswordResetConfirm(runtime);
+  if (method === "POST" && path === "/verify-email/resend")
+    return handleEmailVerificationResend(runtime);
   if (method === "POST" && path === "/verify-email")
     return handleVerifyEmail(runtime);
   if (method === "GET" && (path === "/oauth" || path.startsWith("/oauth/")))
@@ -1943,6 +1983,7 @@ export const authRoutesManifest = Object.freeze({
     "POST /api/v1/auth/password-reset",
     "POST /api/v1/auth/password-reset/confirm",
     "POST /api/v1/auth/verify-email",
+    "POST /api/v1/auth/verify-email/resend",
     "POST /admin/auth/login",
     "POST /admin/auth/mfa/verify",
   ],
@@ -1973,6 +2014,7 @@ export function assertAuthRoutesCompleteness(): {
     "refresh_token_rotation_hash_storage",
     "logout_and_logout_all",
     "email_verification",
+    "email_verification_resend",
     "password_reset_request_confirm",
     "admin_login_and_mfa_verify",
     "account_status_blocking",

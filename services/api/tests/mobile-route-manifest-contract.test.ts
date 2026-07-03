@@ -4,7 +4,7 @@ import { appManifest } from "../src/app";
 type RouteManifest = Readonly<{
   id: string;
   manifest: Readonly<{
-    prefix: string;
+    prefix?: string;
     endpoints: readonly string[];
   }>;
 }>;
@@ -14,8 +14,8 @@ const routeManifests = appManifest.routes as readonly RouteManifest[];
 function endpointsFor(routeId: string): readonly string[] {
   const route = routeManifests.find((item) => item.id === routeId);
   if (!route) throw new Error(`Route manifest not found: ${routeId}`);
-  return route.manifest.endpoints.map(
-    (endpoint) => `${route.manifest.prefix} ${endpoint}`,
+  return route.manifest.endpoints.map((endpoint) =>
+    route.manifest.prefix ? `${route.manifest.prefix} ${endpoint}` : endpoint,
   );
 }
 
@@ -62,6 +62,17 @@ describe("mobile route manifest contract", () => {
     );
     expect(endpointsFor("fixed-expenses")).toContain(
       "/api/v1/fixed-expenses POST /{expenseId}/pay",
+    );
+  });
+
+  it("keeps mobile auth recovery endpoints exposed by the API manifest", () => {
+    expect(endpointsFor("auth")).toEqual(
+      expect.arrayContaining([
+        "POST /api/v1/auth/password-reset",
+        "POST /api/v1/auth/password-reset/confirm",
+        "POST /api/v1/auth/verify-email",
+        "POST /api/v1/auth/verify-email/resend",
+      ]),
     );
   });
 });

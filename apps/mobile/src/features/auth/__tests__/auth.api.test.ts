@@ -480,6 +480,53 @@ describe("auth api", () => {
     );
   });
 
+  it("requests a new email verification token without storing delivery tokens", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-email-verification-resend-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        expect(normalized.url).toBe(
+          "https://api.salaryhijacking.com/api/v1/auth/verify-email/resend",
+        );
+        expect(normalized.credentials).toBe("include");
+        expect(JSON.parse(await normalized.text())).toEqual({
+          email: "verify@example.com",
+        });
+        return jsonResponse({
+          data: {
+            accepted: true,
+            emailVerificationTokenForDelivery: "delivery-only-email-token",
+          },
+        });
+      },
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    const result = await api.requestEmailVerification({
+      email: "verify@example.com",
+    });
+
+    expect(result).toEqual({ accepted: true });
+    expect(JSON.stringify(result)).not.toContain("delivery-only-email-token");
+    expect(stored.size).toBe(0);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-correlation-id")).toBe(
+      "auth-email-verification-resend-test",
+    );
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+  });
+
   it("starts social OAuth with an app-generated PKCE challenge and stores only the local verifier", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

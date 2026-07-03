@@ -71,6 +71,14 @@ export type AuthVerifyEmailResult = Readonly<{
   verified: boolean;
 }>;
 
+export type AuthEmailVerificationRequest = Readonly<{
+  email: string;
+}>;
+
+export type AuthEmailVerificationResult = Readonly<{
+  accepted: boolean;
+}>;
+
 export type AuthLogoutResult = Readonly<{
   revoked: boolean;
 }>;
@@ -97,6 +105,9 @@ export type AuthApiClient = Readonly<{
   verifyEmail: (
     request: AuthVerifyEmailRequest,
   ) => Promise<AuthVerifyEmailResult>;
+  requestEmailVerification: (
+    request: AuthEmailVerificationRequest,
+  ) => Promise<AuthEmailVerificationResult>;
   refresh: (request?: AuthRefreshRequest) => Promise<MobileAuthResponse>;
   logout: () => Promise<AuthLogoutResult>;
 }>;
