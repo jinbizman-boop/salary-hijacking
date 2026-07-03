@@ -19,16 +19,41 @@ import type { PlanCommitmentsApiClient } from "../../features/plan/types";
 import { createProfileApi } from "../../features/profile/api";
 import type { ProfileApiClient } from "../../features/profile/types";
 import { readMobileApiBaseUrl } from "./api-base";
+import {
+  attachMobileBearerToken,
+  type MobileBearerTokenStore,
+} from "../storage/auth-token";
 
 export type MobileApiFactoryOptions = Readonly<{
   baseUrl?: string;
   fetcher?: typeof fetch;
   createCorrelationId?: () => string;
+  tokenStore?: MobileBearerTokenStore;
+}>;
+
+export type MobileAuthenticatedFetcherOptions = Readonly<{
+  fetcher?: typeof fetch;
+  tokenStore?: MobileBearerTokenStore;
 }>;
 
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
   return "web";
+}
+
+export function createMobileAuthenticatedFetcher(
+  options: MobileAuthenticatedFetcherOptions = {},
+): typeof fetch {
+  const fetcher = options.fetcher ?? fetch;
+  const tokenStore = options.tokenStore ?? SecureStore;
+  return async (input, init) => {
+    const request = new Request(input, init);
+    const headers = await attachMobileBearerToken(
+      new Headers(request.headers),
+      tokenStore,
+    );
+    return fetcher(new Request(request, { headers }));
+  };
 }
 
 export function createMobileAuthApi(
@@ -48,10 +73,11 @@ export function createMobileAuthApi(
 export function createMobileCommunityService(
   options: MobileApiFactoryOptions = {},
 ): CommunityService {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   const api = createCommunityApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
@@ -62,10 +88,11 @@ export function createMobileCommunityService(
 export function createMobileBudgetApi(
   options: MobileApiFactoryOptions = {},
 ): BudgetApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   return createBudgetApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
@@ -75,10 +102,11 @@ export function createMobileBudgetApi(
 export function createMobilePayrollApi(
   options: MobileApiFactoryOptions = {},
 ): PayrollApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   return createPayrollApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
@@ -88,10 +116,11 @@ export function createMobilePayrollApi(
 export function createMobilePlanCommitmentsApi(
   options: MobileApiFactoryOptions = {},
 ): PlanCommitmentsApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   return createPlanCommitmentsApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
@@ -101,10 +130,11 @@ export function createMobilePlanCommitmentsApi(
 export function createMobileNotificationsApi(
   options: MobileApiFactoryOptions = {},
 ): NotificationsApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   return createNotificationsApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
@@ -114,10 +144,11 @@ export function createMobileNotificationsApi(
 export function createMobileGrowthApi(
   options: MobileApiFactoryOptions = {},
 ): GrowthApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   return createGrowthApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
@@ -127,10 +158,11 @@ export function createMobileGrowthApi(
 export function createMobileProfileApi(
   options: MobileApiFactoryOptions = {},
 ): ProfileApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
   return createProfileApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    fetcher,
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),

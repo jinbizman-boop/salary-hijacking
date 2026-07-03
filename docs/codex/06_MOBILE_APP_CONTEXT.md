@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 31 suites and 119 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 121 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -151,6 +151,20 @@ locked-account responses stay pending/error states instead of being reported as
 local login success. The screen tests verify server-first submission wiring,
 but deployed API auth, DB-backed user persistence, native E2E, and store review
 proof remain separate release gates.
+
+## Bearer Token Attachment For Feature APIs
+
+As of 2026-07-03, shared mobile API factories wrap feature API fetchers with
+`createMobileAuthenticatedFetcher()`:
+
+- stored access tokens are read through `MOBILE_ACCESS_TOKEN_KEY`
+- valid tokens are attached as `Authorization: Bearer ...`
+- malformed stored tokens are dropped before network requests leave the app
+- refresh tokens are not read from or written to the feature API bearer path
+
+The wrapper is used by the mobile budget, payroll, plan commitments,
+notifications, growth, profile, and community factories. Auth login/register
+requests remain unauthenticated entrypoints.
 
 ## LV UP Growth API Hydration
 
