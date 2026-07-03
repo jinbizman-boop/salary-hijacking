@@ -1354,6 +1354,7 @@ export function CleanFintechLevelDetailScreen({
 export function CleanFintechSettingsScreen({
   kind,
 }: Readonly<{ kind: SettingsKind }>): React.ReactElement {
+  const settingsRouter = useRouter();
   const config = settingsScreenConfig[kind];
   const profileSettingsApi = useMemo(() => createMobileProfileApi(), []);
   const accountSettingsApi = useMemo(() => createMobileProfileApi(), []);
@@ -1379,6 +1380,9 @@ export function CleanFintechSettingsScreen({
     profileNickname.trim().length >= 2 &&
     profileDisplayBio.trim().length <= 300 &&
     profileOccupationCategory.trim().length >= 2;
+  const closeSettingsScreen = useCallback(() => {
+    settingsRouter.replace("/profile");
+  }, [settingsRouter]);
   const submitProfileSettings = useCallback(() => {
     if (kind !== "profile" || !profileSettingsValid) return;
     setProfileSettingsToast("프로필 설정을 서버에 저장하는 중이에요.");
@@ -1451,6 +1455,9 @@ export function CleanFintechSettingsScreen({
 
   return (
     <AppScreen title={config.title} subtitle={config.subtitle}>
+      <SectionCard>
+        <SmallButton label="MY로 돌아가기" onPress={closeSettingsScreen} />
+      </SectionCard>
       {kind === "profile" ? (
         <SectionCard>
           <Text style={styles.sectionTitle}>프로필 저장</Text>
