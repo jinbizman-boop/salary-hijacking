@@ -68,6 +68,14 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("routes an authenticated root launch into the salary home", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain('routeKey === "root"');
+    expect(source).toContain("shouldRouteReadyStateToHome");
+    expect(source).toContain("router.replace(SALARY_HOME_ROUTE as never)");
+  });
+
   it("keeps reset-password available as a public auth recovery route", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

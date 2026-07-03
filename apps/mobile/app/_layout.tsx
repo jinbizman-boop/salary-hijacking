@@ -314,7 +314,7 @@ export default function MobileRootLayout(): unknown {
 
   ReactRuntimeRef.useEffect((): void => {
     const next = state.status;
-    if (next === "READY" && isAuthenticatedAuthRoute(currentRouteKey))
+    if (next === "READY" && shouldRouteReadyStateToHome(currentRouteKey))
       router.replace(SALARY_HOME_ROUTE as never);
     if (next === "AUTH_REQUIRED" && !isPublic)
       router.replace(AUTH_LOGIN_ROUTE as never);
@@ -748,6 +748,10 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
     routeKey === "(auth)/forgot-password" ||
     routeKey === "(auth)/reset-password"
   );
+}
+
+function shouldRouteReadyStateToHome(routeKey: string): boolean {
+  return routeKey === "root" || isAuthenticatedAuthRoute(routeKey);
 }
 
 function normalizeSegments(segments: readonly string[]): readonly string[] {
