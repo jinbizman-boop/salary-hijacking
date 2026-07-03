@@ -6,6 +6,7 @@ import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
   AUTH_LOGOUT_PATH,
   AUTH_LOGIN_PATH,
+  AUTH_PASSWORD_RESET_PATH,
   AUTH_REFRESH_PATH,
   AUTH_REGISTER_PATH,
   AUTH_SAFE_ERROR_MESSAGE,
@@ -14,6 +15,8 @@ import type {
   AuthApiClient,
   AuthLoginRequest,
   AuthLogoutResult,
+  AuthPasswordResetRequest,
+  AuthPasswordResetResult,
   AuthRefreshRequest,
   AuthRegisterRequest,
   AuthTokenStore,
@@ -177,6 +180,11 @@ function logoutResult(value: unknown): AuthLogoutResult {
   return { revoked: data.revoked === true };
 }
 
+function passwordResetResult(value: unknown): AuthPasswordResetResult {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  return { accepted: data.accepted === true };
+}
+
 export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -303,6 +311,13 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         );
       }
       return normalized;
+    },
+
+    async requestPasswordReset(request: AuthPasswordResetRequest) {
+      const parsed = await post(AUTH_PASSWORD_RESET_PATH, {
+        email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
+      });
+      return passwordResetResult(parsed);
     },
 
     async refresh(request: AuthRefreshRequest = {}) {

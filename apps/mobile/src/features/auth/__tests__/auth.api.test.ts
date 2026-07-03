@@ -219,6 +219,48 @@ describe("auth api", () => {
     expect(stored.size).toBe(0);
   });
 
+  it("requests password reset through the server without storing delivery tokens", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-password-reset-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        expect(normalized.url).toBe(
+          "https://api.salaryhijacking.com/api/v1/auth/password-reset",
+        );
+        expect(normalized.credentials).toBe("include");
+        expect(JSON.parse(await normalized.text())).toEqual({
+          email: "reset@example.com",
+        });
+        return jsonResponse({
+          data: {
+            accepted: true,
+            resetTokenForDelivery: "delivery-only-reset-token",
+          },
+        });
+      },
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    const result = await api.requestPasswordReset({
+      email: "reset@example.com",
+    });
+
+    expect(result).toEqual({ accepted: true });
+    expect(JSON.stringify(result)).not.toContain("delivery-only-reset-token");
+    expect(stored.size).toBe(0);
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+  });
+
   it("refreshes the access token through the server refresh cookie without storing refresh tokens", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

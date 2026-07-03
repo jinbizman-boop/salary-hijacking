@@ -24,6 +24,14 @@ export type AuthRefreshRequest = Readonly<{
   deviceId?: string;
 }>;
 
+export type AuthPasswordResetRequest = Readonly<{
+  email: string;
+}>;
+
+export type AuthPasswordResetResult = Readonly<{
+  accepted: boolean;
+}>;
+
 export type AuthLogoutResult = Readonly<{
   revoked: boolean;
 }>;
@@ -36,6 +44,9 @@ export type AuthTokenStore = Readonly<{
 export type AuthApiClient = Readonly<{
   login: (request: AuthLoginRequest) => Promise<MobileAuthResponse>;
   register: (request: AuthRegisterRequest) => Promise<MobileSignupResponse>;
+  requestPasswordReset: (
+    request: AuthPasswordResetRequest,
+  ) => Promise<AuthPasswordResetResult>;
   refresh: (request?: AuthRefreshRequest) => Promise<MobileAuthResponse>;
   logout: () => Promise<AuthLogoutResult>;
 }>;

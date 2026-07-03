@@ -4612,6 +4612,86 @@ function ProfileScreen(): React.ReactElement {
   );
 }
 
+export function CleanFintechForgotPasswordScreen(): React.ReactElement {
+  const forgotPasswordRouter = useRouter();
+  const forgotPasswordAuthApi = useMemo(() => createMobileAuthApi(), []);
+  const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(
+    "가입한 이메일로 비밀번호 재설정 안내를 받을 수 있어요.",
+  );
+  const valid = email.trim().includes("@");
+
+  const submitPasswordReset = useCallback(async () => {
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    try {
+      const result = await forgotPasswordAuthApi.requestPasswordReset({
+        email,
+      });
+      if (result.accepted) {
+        setToast(
+          "비밀번호 재설정 요청을 서버에 접수했어요. 이메일 안내를 확인해 주세요.",
+        );
+      } else {
+        setToast("요청 상태를 확인하지 못했어요. 잠시 후 다시 시도해 주세요.");
+      }
+    } catch {
+      setToast(
+        "비밀번호 재설정 요청을 완료하지 못했어요. 이메일과 네트워크를 확인해 주세요.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, [email, forgotPasswordAuthApi, submitting, valid]);
+
+  const backToLogin = useCallback((): void => {
+    forgotPasswordRouter.replace("/(auth)/login");
+  }, [forgotPasswordRouter]);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={[styles.content, styles.centerContent]}
+      >
+        <SalaryLogo large />
+        <Text style={styles.loginTitle}>비밀번호 찾기</Text>
+        <Text style={styles.loginSubtitle}>
+          서버 권위 인증으로 계정 복구 요청을 안전하게 보냅니다
+        </Text>
+        <Toast message={toast} />
+        <SectionCard>
+          <TextInput
+            accessibilityLabel="비밀번호 재설정 이메일"
+            autoCapitalize="none"
+            inputMode="email"
+            onChangeText={setEmail}
+            placeholder="가입 이메일"
+            placeholderTextColor={theme.color.text.disabled}
+            style={styles.input}
+            value={email}
+          />
+          <Pressable
+            accessibilityRole="button"
+            disabled={!valid || submitting}
+            onPress={submitPasswordReset}
+            style={[
+              styles.primaryButton,
+              !valid || submitting ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.primaryButtonText}>
+              {submitting ? "요청 중" : "재설정 메일 받기"}
+            </Text>
+          </Pressable>
+          <SmallButton label="로그인으로 돌아가기" onPress={backToLogin} />
+        </SectionCard>
+        <GuardBox />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
 function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
   const [email, setEmail] = useState("");
@@ -4625,6 +4705,10 @@ function LoginScreen(): React.ReactElement {
 
   const openSignup = useCallback((): void => {
     loginRouter.push("/(auth)/signup");
+  }, [loginRouter]);
+
+  const openForgotPassword = useCallback((): void => {
+    loginRouter.push("/(auth)/forgot-password");
   }, [loginRouter]);
 
   const submitLogin = useCallback(async () => {
@@ -4697,6 +4781,7 @@ function LoginScreen(): React.ReactElement {
             </Text>
           </Pressable>
           <SmallButton label="회원가입" onPress={openSignup} />
+          <SmallButton label="비밀번호 찾기" onPress={openForgotPassword} />
           <View style={styles.attachmentRow}>
             <SmallButton label="Kakao" />
             <SmallButton label="Naver" />
