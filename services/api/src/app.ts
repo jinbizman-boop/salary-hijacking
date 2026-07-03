@@ -78,8 +78,10 @@ import {
 import {
   NOTIFICATIONS_API_PREFIX,
   assertNotificationsRoutesCompleteness,
+  createNotificationsRoutes,
   handleNotificationsRoutes,
   notificationsRoutesManifest,
+  type NotificationsRoutesOptions,
 } from "./routes/notifications.routes";
 import {
   PAYROLL_API_PREFIX,
@@ -251,6 +253,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly savingsRoutesOptions?: SavingsRoutesOptions<TEnv>;
   readonly growthRoutesOptions?: GrowthRoutesOptions<TEnv>;
   readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
+  readonly notificationsRoutesOptions?: NotificationsRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
 
@@ -1202,6 +1205,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createGrowthRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "notifications" && options.notificationsRoutesOptions) {
+    const routeOptions: NotificationsRoutesOptions<TEnv> =
+      options.notificationsRoutesOptions.now || !options.now
+        ? options.notificationsRoutesOptions
+        : {
+            ...options.notificationsRoutesOptions,
+            now: options.now,
+          };
+    return createNotificationsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "community" && options.communityRoutesOptions) {
     const routeOptions: CommunityRoutesOptions<TEnv> =

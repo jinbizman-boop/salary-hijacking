@@ -45,6 +45,10 @@ import {
   createNeonGrowthRepository,
   shouldUseNeonGrowthRepository,
 } from "./repositories/growth.repository";
+import {
+  createNeonNotificationsRepository,
+  shouldUseNeonNotificationsRepository,
+} from "./repositories/notifications.repository";
 
 const INDEX_VERSION = "3.1.1";
 const WORKER_ENTRYPOINT_NAME = "salary-hijacking-api-worker";
@@ -207,6 +211,12 @@ const appInstance = createApp<WorkerEnv>({
     repository: (env) =>
       shouldUseNeonGrowthRepository(env)
         ? createNeonGrowthRepository<WorkerEnv>()
+        : undefined,
+  },
+  notificationsRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonNotificationsRepository(env)
+        ? createNeonNotificationsRepository<WorkerEnv>()
         : undefined,
   },
   communityRoutesOptions: {

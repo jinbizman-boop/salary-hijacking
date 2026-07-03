@@ -62,14 +62,14 @@ Verified on 2026-07-03 KST:
   write publish service contract, and Community detail/comments service
   hydration plus comment submission service contract.
 - Mobile Jest currently reports 29 passing suites and 111 passing tests.
-- API package tests currently report 20 passing files and 37 passing tests,
+- API package tests currently report 22 passing files and 41 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation
   contract, DB-backed payroll, daily budget, fixed expense, variable expense,
-  savings, growth, and community repository contracts, mobile fixed-expense/
-  savings/growth/community route injection contracts, mobile route manifest
-  contracts, and public `/`, `/privacy`, `/support`, `/terms` pages for store
-  review URLs.
+  savings, growth, notifications, and community repository contracts, mobile
+  fixed-expense/savings/growth/notifications/community route injection
+  contracts, mobile route manifest contracts, and public `/`, `/privacy`,
+  `/support`, `/terms` pages for store review URLs.
 - Mobile Detox E2E configuration exists, and local `adb`/`emulator` are now
   detected through Android SDK tool lookup. Android execution is still blocked
   until the local E2E APK is built or equivalent native device-farm proof is
@@ -123,8 +123,8 @@ The project is strongest in:
 The project still needs hardening in:
 
 - remaining API-to-DB repository integration beyond the newly wired payroll,
-  daily budget, fixed expense, variable expense, savings, growth, and community
-  repository paths,
+  daily budget, fixed expense, variable expense, savings, growth,
+  notifications, and community repository paths,
 - remaining endpoint path alignment outside the verified mobile bootstrap/payroll/profile contracts,
 - service-level build/runtime verification beyond typecheck,
 - real mobile native E2E execution with Android SDK/emulator or iOS simulator,

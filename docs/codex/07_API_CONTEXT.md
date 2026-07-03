@@ -25,7 +25,7 @@ Entrypoints:
 Current verification:
 
 - `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-03.
-- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 20 files and 37 tests.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 22 files and 41 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -78,6 +78,8 @@ Verified through 2026-07-03:
 - DB-backed savings repository: `services/api/src/repositories/savings.repository.ts` can list, create, update, pause, resume, archive/delete, record transactions, summarize, calendar, upcoming, and impact savings through the `savings_plans` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal `user_id` or `payroll_plan_id` values.
 - `GET /api/v1/growth/dashboard`, `GET /api/v1/growth/tasks`, and `POST /api/v1/growth/tasks/{taskId}/progress`: implemented in `services/api/src/routes/growth.routes.ts` as the server-authoritative LV UP mobile surface.
 - DB-backed growth repository: `services/api/src/repositories/growth.repository.ts` can load LV UP dashboard/profile/task lists and record task progress through the `growth_tasks`, `growth_task_completions`, and `user_growth_stats` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal raw `user_id` values.
+- `GET /api/v1/notifications`, `GET /api/v1/notifications/unread-count`, `POST /api/v1/notifications/{notificationId}/read`, and `POST /api/v1/notifications/read-all`: implemented in `services/api/src/routes/notifications.routes.ts` as the server-authoritative mobile notification surface.
+- DB-backed notifications repository: `services/api/src/repositories/notifications.repository.ts` can list notifications, count unread notifications, mark one/all read, create server notifications, archive/delete notification records, register/revoke/list devices, and return privacy-safe preferences/rule previews through the `notifications` and `user_devices` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal `user_id`, raw push token, or raw financial payload values.
 - `GET /api/v1/community/posts`, `POST /api/v1/community/posts`, `GET /api/v1/community/posts/{postId}/comments`, and `POST /api/v1/community/posts/{postId}/comments`: implemented in `services/api/src/routes/community.routes.ts` and aligned with the current Expo community feed/write/detail/comments surfaces.
 - DB-backed community repository: `services/api/src/repositories/community.repository.ts` can list boards/posts/comments and create/update/delete posts/comments/reports/reactions through the `community_*` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
 - Public store review pages: `GET /`, `GET /privacy`, `GET /support`, and
@@ -99,6 +101,8 @@ Verified through 2026-07-03:
 - Mobile savings repository injection contract test: `services/api/tests/mobile-savings-contract.test.ts`.
 - Growth DB repository test: `services/api/tests/growth-db-repository.test.ts`.
 - Mobile growth repository injection contract test: `services/api/tests/mobile-growth-contract.test.ts`.
+- Notifications DB repository test: `services/api/tests/notifications-db-repository.test.ts`.
+- Mobile notifications repository injection contract test: `services/api/tests/mobile-notifications-contract.test.ts`.
 - Community DB repository test: `services/api/tests/community-db-repository.test.ts`.
 - Mobile community repository injection contract test: `services/api/tests/mobile-community-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.

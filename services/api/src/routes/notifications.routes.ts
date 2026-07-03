@@ -293,6 +293,18 @@ const sensitiveKeyFragments = [
   "지출",
 ];
 
+const safePrivacyFlagKeys = new Set([
+  "adtargetingseparated",
+  "adfinancialtargetingused",
+  "adsfinancialtargetingused",
+  "rawfinancialdataexposed",
+  "rawpersonaldataexposed",
+  "rawpushtokenexposed",
+  "sensitivefinancialdataexposed",
+  "financialrawdataexposed",
+  "financialrawaccountdataexposed",
+]);
+
 function normalizePath(pathname: string): string {
   const normalized = (pathname || "/").replace(/\/+/g, "/");
   return normalized.length > 1 && normalized.endsWith("/")
@@ -381,6 +393,7 @@ function assertOwner(userId: string, runtime: NotificationsRouteRuntime): void {
 
 function keyLooksSensitive(key: string): boolean {
   const normalized = key.toLowerCase().replace(/[\s._-]/g, "");
+  if (safePrivacyFlagKeys.has(normalized)) return false;
   return sensitiveKeyFragments.some((fragment) =>
     normalized.includes(fragment.toLowerCase().replace(/[\s._-]/g, "")),
   );
