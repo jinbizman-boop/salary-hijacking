@@ -225,7 +225,7 @@ function requiredAccessToken(
 }
 
 function validAccessToken(value: string): string {
-  if (value.length > 8_192 || /[\r\n\t]/u.test(value)) {
+  if (value.length > 8_192 || /\s/u.test(value)) {
     throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
   }
   return value;

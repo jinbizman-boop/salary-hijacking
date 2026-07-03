@@ -254,6 +254,40 @@ describe("auth api", () => {
     expect(stored.size).toBe(0);
   });
 
+  it("rejects bearer-prefixed access tokens before writing secure storage", async () => {
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            user: {
+              userId: "usr_bearer_prefixed",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "Bearer server-token",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        }),
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    await expect(
+      api.login({ email: "user@example.com", password: "server-password" }),
+    ).rejects.toMatchObject({
+      code: "AUTH_INVALID_RESPONSE",
+    });
+    expect(stored.size).toBe(0);
+  });
+
   it("keeps MFA-required logins pending without storing bearer tokens", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
