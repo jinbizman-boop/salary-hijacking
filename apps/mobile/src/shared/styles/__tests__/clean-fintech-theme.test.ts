@@ -271,6 +271,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("rawFinancialDataExposed=false");
   });
 
+  it("keeps plan screen fixed expense and savings updates persisted through server APIs", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planApi = mobileSource("src/features/plan/api.ts");
+
+    expect(planApi).toContain("updateFixedExpense");
+    expect(planApi).toContain("updateSavingsGoal");
+    expect(cleanScreens).toContain("updatePlanFixedExpense");
+    expect(cleanScreens).toContain("planCommitmentsApi.updateFixedExpense");
+    expect(cleanScreens).toContain("updatePlanSavingsGoal");
+    expect(cleanScreens).toContain("planCommitmentsApi.updateSavingsGoal");
+  });
+
   it("keeps plan screen savings deposits recorded through the server API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

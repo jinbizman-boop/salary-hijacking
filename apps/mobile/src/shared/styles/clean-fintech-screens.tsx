@@ -2568,14 +2568,18 @@ function SavingsGoalActionRow({
   item,
   onDelete,
   onDeposit,
+  onUpdate,
   serverEnabled,
+  updating,
 }: Readonly<{
   deleting: boolean;
   depositing: boolean;
   item: PlanCommitmentRow;
   onDelete: () => void;
   onDeposit: () => void;
+  onUpdate: () => void;
   serverEnabled: boolean;
+  updating: boolean;
 }>): React.ReactElement {
   return (
     <View style={styles.listRow}>
@@ -2589,6 +2593,10 @@ function SavingsGoalActionRow({
       </View>
       {serverEnabled ? (
         <>
+          <SmallButton
+            label={updating ? "수정중" : "수정"}
+            onPress={onUpdate}
+          />
           <SmallButton
             label={depositing ? "납입중" : "납입"}
             onPress={onDeposit}
@@ -2661,6 +2669,9 @@ function PlanScreen(): React.ReactElement {
   const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("80000");
   const [savingPlanCommitment, setSavingPlanCommitment] = useState(false);
   const [deletingPlanCommitmentId, setDeletingPlanCommitmentId] = useState<
+    string | null
+  >(null);
+  const [updatingPlanCommitmentId, setUpdatingPlanCommitmentId] = useState<
     string | null
   >(null);
   const [depositingSavingsGoalId, setDepositingSavingsGoalId] = useState<
@@ -2939,6 +2950,114 @@ function PlanScreen(): React.ReactElement {
     [deletingPlanCommitmentId, planCommitmentsApi, planCommitmentsHydrated],
   );
 
+  const updatePlanFixedExpense = useCallback(
+    async (item: PlanCommitmentRow): Promise<void> => {
+      if (!planCommitmentsHydrated || updatingPlanCommitmentId !== null) return;
+      const amountMinor =
+        nonNegative(planFixedExpenseAmount) || item.amountMinor;
+      const title = planFixedExpenseTitle.trim() || item.title;
+      if (!title || amountMinor <= 0) {
+        setPlanToast("수정할 고정지출 이름과 KRW 정수 금액을 확인해 주세요.");
+        return;
+      }
+
+      setUpdatingPlanCommitmentId(item.id);
+      setPlanToast("고정지출을 서버 기준으로 수정하는 중이에요.");
+      try {
+        const updated = await planCommitmentsApi.updateFixedExpense(item.id, {
+          amountMinor,
+          category: "SUBSCRIPTION",
+          paymentDay: 25,
+          title,
+        });
+        setServerFixedExpenses((current) => {
+          const next = current.map((expenseItem) =>
+            expenseItem.id === updated.id ? updated : expenseItem,
+          );
+          setExpense(
+            String(
+              next.reduce(
+                (sum, expenseItem) => sum + expenseItem.amountMinor,
+                0,
+              ),
+            ),
+          );
+          return next;
+        });
+        setPlanToast(
+          `${updated.title} 고정지출을 서버 기준으로 수정했어요. rawFinancialDataExposed=false`,
+        );
+      } catch {
+        setPlanToast("고정지출 수정에 실패했어요. 다시 시도해 주세요.");
+      } finally {
+        setUpdatingPlanCommitmentId(null);
+      }
+    },
+    [
+      planCommitmentsApi,
+      planCommitmentsHydrated,
+      planFixedExpenseAmount,
+      planFixedExpenseTitle,
+      updatingPlanCommitmentId,
+    ],
+  );
+
+  const updatePlanSavingsGoal = useCallback(
+    async (item: PlanCommitmentRow): Promise<void> => {
+      if (!planCommitmentsHydrated || updatingPlanCommitmentId !== null) return;
+      const fixedSaveAmountMinor =
+        nonNegative(planSavingsGoalAmount) || item.amountMinor;
+      const currentAmountMinor = item.currentAmountMinor ?? 0;
+      const title = planSavingsGoalTitle.trim() || item.title;
+      const targetAmountMinor = Math.max(
+        fixedSaveAmountMinor,
+        currentAmountMinor,
+        nonNegative(target),
+      );
+      if (!title || fixedSaveAmountMinor <= 0) {
+        setPlanToast("수정할 고정저축 이름과 KRW 정수 금액을 확인해 주세요.");
+        return;
+      }
+
+      setUpdatingPlanCommitmentId(item.id);
+      setPlanToast("고정저축 목표를 서버 기준으로 수정하는 중이에요.");
+      try {
+        const updated = await planCommitmentsApi.updateSavingsGoal(item.id, {
+          fixedSaveAmountMinor,
+          goalType: "CUSTOM",
+          targetAmountMinor,
+          title,
+        });
+        setServerSavingsGoals((current) => {
+          const next = current.map((goal) =>
+            goal.id === updated.id ? updated : goal,
+          );
+          setTarget(
+            String(
+              next.reduce((sum, goal) => sum + goal.fixedSaveAmountMinor, 0),
+            ),
+          );
+          return next;
+        });
+        setPlanToast(
+          `${updated.title} 저축 목표를 서버 기준으로 수정했어요. rawFinancialDataExposed=false`,
+        );
+      } catch {
+        setPlanToast("고정저축 목표 수정에 실패했어요. 다시 시도해 주세요.");
+      } finally {
+        setUpdatingPlanCommitmentId(null);
+      }
+    },
+    [
+      planCommitmentsApi,
+      planCommitmentsHydrated,
+      planSavingsGoalAmount,
+      planSavingsGoalTitle,
+      target,
+      updatingPlanCommitmentId,
+    ],
+  );
+
   const recordPlanSavingsDeposit = useCallback(
     async (item: PlanCommitmentRow): Promise<void> => {
       if (!planCommitmentsHydrated || depositingSavingsGoalId !== null) return;
@@ -3056,6 +3175,28 @@ function PlanScreen(): React.ReactElement {
             key={item.id}
             icon={appIcons.subscription}
             title={item.title}
+            trailing={
+              planCommitmentsHydrated ? (
+                <>
+                  <SmallButton
+                    label={
+                      updatingPlanCommitmentId === item.id ? "수정중" : "수정"
+                    }
+                    onPress={() => {
+                      void updatePlanFixedExpense(item);
+                    }}
+                  />
+                  <SmallButton
+                    label={
+                      deletingPlanCommitmentId === item.id ? "삭제중" : "삭제"
+                    }
+                    onPress={() => {
+                      void deletePlanFixedExpense(item.id);
+                    }}
+                  />
+                </>
+              ) : null
+            }
             meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}${
               deletingPlanCommitmentId === item.id ? " · 삭제 중" : ""
             }`}
@@ -3120,7 +3261,11 @@ function PlanScreen(): React.ReactElement {
             onDeposit={() => {
               void recordPlanSavingsDeposit(item);
             }}
+            onUpdate={() => {
+              void updatePlanSavingsGoal(item);
+            }}
             serverEnabled={planCommitmentsHydrated}
+            updating={updatingPlanCommitmentId === item.id}
           />
         ))}
         <TextInput
@@ -4394,12 +4539,14 @@ function ListRow({
   title,
   meta,
   onPress,
+  trailing,
   unread = false,
 }: Readonly<{
   icon: string;
   title: string;
   meta: string;
   onPress?: () => void;
+  trailing?: React.ReactNode;
   unread?: boolean;
 }>): React.ReactElement {
   const content = (
@@ -4409,7 +4556,7 @@ function ListRow({
         <Text style={styles.listTitle}>{title}</Text>
         <Text style={styles.listMeta}>{meta}</Text>
       </View>
-      {unread ? <View style={styles.greenDot} /> : null}
+      {trailing ?? (unread ? <View style={styles.greenDot} /> : null)}
     </>
   );
   if (onPress) {

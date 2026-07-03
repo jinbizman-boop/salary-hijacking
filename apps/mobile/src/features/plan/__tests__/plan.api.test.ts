@@ -486,4 +486,113 @@ describe("plan commitments api", () => {
       expect(call.headers.get("x-correlation-id")).toBe("plan-delete-test");
     }
   });
+
+  it("updates fixed expenses and savings goals through server-authoritative APIs", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "plan-update-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        if (normalized.url.endsWith("/api/v1/fixed-expenses/expense_chatgpt")) {
+          return jsonResponse({
+            data: {
+              expenseId: "expense_chatgpt",
+              title: "ChatGPT Plus",
+              category: "SUBSCRIPTION",
+              amountMinor: 35_000,
+              paymentDay: 20,
+              status: "ACTIVE",
+              serverAuthority: true,
+              financialRawDataExposed: false,
+            },
+          });
+        }
+
+        return jsonResponse({
+          data: {
+            goalId: "goal_emergency",
+            title: "Emergency fund",
+            goalType: "EMERGENCY_FUND",
+            targetAmountMinor: 1_200_000,
+            currentAmountMinor: 200_000,
+            fixedSaveAmountMinor: 100_000,
+            status: "ACTIVE",
+            serverAuthority: true,
+            financialRawAccountDataExposed: false,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.updateFixedExpense("expense_chatgpt", {
+        amountMinor: 35_000,
+        category: "SUBSCRIPTION",
+        paymentDay: 20,
+        title: "ChatGPT Plus",
+      }),
+    ).resolves.toMatchObject({
+      amountMinor: 35_000,
+      id: "expense_chatgpt",
+      serverAuthority: true,
+      title: "ChatGPT Plus",
+    });
+
+    await expect(
+      api.updateSavingsGoal("goal_emergency", {
+        fixedSaveAmountMinor: 100_000,
+        goalType: "EMERGENCY_FUND",
+        targetAmountMinor: 1_200_000,
+        title: "Emergency fund",
+      }),
+    ).resolves.toMatchObject({
+      fixedSaveAmountMinor: 100_000,
+      id: "goal_emergency",
+      serverAuthority: true,
+      title: "Emergency fund",
+    });
+
+    await expect(
+      api.updateFixedExpense("expense_chatgpt", { amountMinor: 0 }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_UPDATE_REQUEST" });
+    await expect(
+      api.updateSavingsGoal("goal_emergency", {
+        fixedSaveAmountMinor: 2_000_000,
+        targetAmountMinor: 1_000_000,
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_UPDATE_REQUEST" });
+
+    expect(calls.map((call) => [call.method, call.url])).toEqual([
+      [
+        "PATCH",
+        "https://api.salaryhijacking.com/api/v1/fixed-expenses/expense_chatgpt",
+      ],
+      [
+        "PATCH",
+        "https://api.salaryhijacking.com/api/v1/savings/goal_emergency",
+      ],
+    ]);
+    expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
+      amountMinor: 35_000,
+      category: "SUBSCRIPTION",
+      paymentDay: 20,
+      title: "ChatGPT Plus",
+    });
+    expect(JSON.parse((await calls[1]?.clone().text()) ?? "{}")).toMatchObject({
+      fixedSaveAmountMinor: 100_000,
+      goalType: "EMERGENCY_FUND",
+      targetAmountMinor: 1_200_000,
+      title: "Emergency fund",
+    });
+    for (const call of calls) {
+      expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
+      expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
+      expect(call.headers.get("x-correlation-id")).toBe("plan-update-test");
+    }
+  });
 });

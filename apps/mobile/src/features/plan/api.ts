@@ -10,9 +10,11 @@ import type {
   PlanFixedExpenseCreateRequest,
   PlanFixedExpenseCommitment,
   PlanFixedExpensePaymentRequest,
+  PlanFixedExpenseUpdateRequest,
   PlanSavingsDepositRequest,
   PlanSavingsGoalCreateRequest,
   PlanSavingsGoalCommitment,
+  PlanSavingsGoalUpdateRequest,
 } from "./types";
 
 export type PlanCommitmentsApiOptions = Readonly<{
@@ -257,6 +259,50 @@ function validSavingsGoalCreate(value: PlanSavingsGoalCreateRequest): boolean {
   );
 }
 
+function hasDefinedValue(value: Record<string, unknown>): boolean {
+  return Object.values(value).some((item) => item !== undefined);
+}
+
+function validFixedExpenseUpdate(
+  value: PlanFixedExpenseUpdateRequest,
+): boolean {
+  return (
+    hasDefinedValue(value as Record<string, unknown>) &&
+    (value.title === undefined ||
+      (typeof value.title === "string" &&
+        value.title.trim().length > 0 &&
+        value.title.length <= 100)) &&
+    (value.category === undefined ||
+      (typeof value.category === "string" &&
+        value.category.trim().length > 0)) &&
+    (value.amountMinor === undefined || isPositiveMoney(value.amountMinor)) &&
+    (value.paymentDay === undefined || isPositiveDay(value.paymentDay))
+  );
+}
+
+function validSavingsGoalUpdate(value: PlanSavingsGoalUpdateRequest): boolean {
+  const targetAmountMinor = value.targetAmountMinor;
+  const fixedSaveAmountMinor = value.fixedSaveAmountMinor;
+  return (
+    hasDefinedValue(value as Record<string, unknown>) &&
+    (value.title === undefined ||
+      (typeof value.title === "string" &&
+        value.title.trim().length > 0 &&
+        value.title.length <= 100)) &&
+    (value.goalType === undefined ||
+      (typeof value.goalType === "string" &&
+        value.goalType.trim().length > 0)) &&
+    (targetAmountMinor === undefined || isPositiveMoney(targetAmountMinor)) &&
+    (fixedSaveAmountMinor === undefined ||
+      isNonNegativeInteger(fixedSaveAmountMinor)) &&
+    !(
+      targetAmountMinor !== undefined &&
+      fixedSaveAmountMinor !== undefined &&
+      fixedSaveAmountMinor > targetAmountMinor
+    )
+  );
+}
+
 function validFixedExpensePayment(
   expenseId: string,
   value: PlanFixedExpensePaymentRequest,
@@ -475,6 +521,45 @@ export function createPlanCommitmentsApi(
       return normalizeFixedExpense(response.data.expense);
     },
 
+    async updateFixedExpense(
+      expenseId: string,
+      updateRequest: PlanFixedExpenseUpdateRequest,
+    ): Promise<PlanFixedExpenseCommitment> {
+      if (
+        !validDeleteId(expenseId) ||
+        !validFixedExpenseUpdate(updateRequest)
+      ) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_UPDATE_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const response = await request(
+        `${PLAN_FIXED_EXPENSES_PATH}/${encodeURIComponent(expenseId.trim())}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            ...updateRequest,
+            ...(updateRequest.title !== undefined
+              ? { title: updateRequest.title.trim() }
+              : {}),
+            ...(updateRequest.category !== undefined
+              ? { category: updateRequest.category.trim() }
+              : {}),
+          }),
+        },
+      );
+      if (!isRecord(response) || !("data" in response)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_RESPONSE",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeFixedExpense(response.data);
+    },
+
     async createSavingsGoal(
       createRequest: PlanSavingsGoalCreateRequest,
     ): Promise<PlanSavingsGoalCommitment> {
@@ -550,6 +635,42 @@ export function createPlanCommitmentsApi(
         );
       }
       return normalizeSavingsGoal(response.data.goal);
+    },
+
+    async updateSavingsGoal(
+      goalId: string,
+      updateRequest: PlanSavingsGoalUpdateRequest,
+    ): Promise<PlanSavingsGoalCommitment> {
+      if (!validDeleteId(goalId) || !validSavingsGoalUpdate(updateRequest)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_UPDATE_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const response = await request(
+        `${PLAN_SAVINGS_PATH}/${encodeURIComponent(goalId.trim())}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            ...updateRequest,
+            ...(updateRequest.title !== undefined
+              ? { title: updateRequest.title.trim() }
+              : {}),
+            ...(updateRequest.goalType !== undefined
+              ? { goalType: updateRequest.goalType.trim() }
+              : {}),
+          }),
+        },
+      );
+      if (!isRecord(response) || !("data" in response)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_RESPONSE",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeSavingsGoal(response.data);
     },
 
     async deleteFixedExpense(expenseId: string): Promise<PlanDeleteResult> {
