@@ -94,6 +94,11 @@ export interface UserWithdrawalRequestInput {
   readonly reason: string;
   readonly deleteCommunityContent: boolean;
 }
+export interface UserSupportTicketInput {
+  readonly category: "ACCOUNT" | "PAYMENT" | "PRIVACY" | "BUG" | "OTHER";
+  readonly message: string;
+  readonly subject: string;
+}
 
 export interface UsersRouteRuntime<TEnv = unknown> {
   readonly request: Request;
@@ -121,6 +126,10 @@ export interface UsersRepository<TEnv = unknown> {
   ): Promise<JsonRecord>;
   requestWithdrawal?(
     input: UserWithdrawalRequestInput,
+    runtime: UsersRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  createSupportTicket?(
+    input: UserSupportTicketInput,
     runtime: UsersRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
   restore(runtime: UsersRouteRuntime<TEnv>): Promise<JsonRecord>;
@@ -172,6 +181,7 @@ export interface UserEvent {
     | "user_settings_updated"
     | "user_consents_updated"
     | "user_export_requested"
+    | "user_support_ticket_created"
     | "user_withdrawal_requested"
     | "user_withdrawn"
     | "user_restored";
@@ -760,6 +770,50 @@ function withdrawalRequestInput(
   };
 }
 
+function supportTicketInput(
+  input: Record<string, unknown>,
+): UserSupportTicketInput {
+  const category = str(input, "category", true, 24);
+  if (!["ACCOUNT", "PAYMENT", "PRIVACY", "BUG", "OTHER"].includes(category)) {
+    throw new UserHttpError(
+      400,
+      "USER_SUPPORT_CATEGORY_INVALID",
+      "문의 유형이 올바르지 않습니다.",
+      { field: "category" },
+    );
+  }
+  if (
+    input.rawFinancialDataExposed !== false ||
+    input.rawPersonalDataExposed !== false ||
+    input.rawPushTokenExposed !== false ||
+    input.adsFinancialTargetingUsed !== false
+  ) {
+    throw new UserHttpError(
+      400,
+      "USER_SUPPORT_PRIVACY_FLAGS_REQUIRED",
+      "문의에는 민감 원문 노출 금지 플래그가 필요합니다.",
+    );
+  }
+  const subject = str(input, "subject", true, 80);
+  const message = str(input, "message", true, 1_000);
+  if (
+    /salary|income|expense|saving|hijack|token|email|phone|card|accountNumber/iu.test(
+      `${subject} ${message}`,
+    )
+  ) {
+    throw new UserHttpError(
+      400,
+      "USER_SUPPORT_SENSITIVE_RAW_DATA_REJECTED",
+      "문의에는 급여, 지출, 계좌, 토큰 등 민감 원문을 입력할 수 없습니다.",
+    );
+  }
+  return {
+    category: category as UserSupportTicketInput["category"],
+    message,
+    subject,
+  };
+}
+
 type MobileExportStatus = "NONE" | "REQUESTED" | "READY" | "EXPIRED";
 
 function safeString(value: JsonValue | undefined, fallback: string): string {
@@ -988,6 +1042,7 @@ function createInMemoryUsersRepository<
   const settings = new Map<string, JsonRecord>();
   const consents = new Map<string, JsonRecord>();
   const exportsMap = new Map<string, JsonRecord>();
+  const supportTickets = new Map<string, JsonRecord[]>();
   const activities = new Map<string, JsonRecord[]>();
   const u = (rt: UsersRouteRuntime<TEnv>): JsonRecord => {
     const x = users.get(rt.principal.userId);
@@ -1091,6 +1146,23 @@ function createInMemoryUsersRepository<
         withdrawalRequestedAt: rt.now.toISOString(),
         deleteCommunityContent: input.deleteCommunityContent,
       };
+    },
+    async createSupportTicket(input, rt) {
+      const ticket: JsonRecord = {
+        adsFinancialTargetingUsed: false,
+        category: input.category,
+        createdAt: rt.now.toISOString(),
+        id: `ust_${globalThis.crypto.randomUUID()}`,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+        status: "OPEN",
+        subject: input.subject,
+      };
+      const listForUser = supportTickets.get(rt.principal.userId) ?? [];
+      supportTickets.set(rt.principal.userId, [ticket, ...listForUser]);
+      act(rt.principal.userId, "USER_SUPPORT_TICKET_CREATED", rt);
+      return ticket;
     },
     async restore(rt) {
       const user = u(rt);
@@ -1249,6 +1321,32 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
         exportRequestedAt: rt.now.toISOString(),
       }),
     });
+  }
+  if (method === "POST" && relativePath === "/me/support-tickets") {
+    const input = supportTicketInput(await body(rt.request));
+    const data =
+      typeof repository.createSupportTicket === "function"
+        ? await repository.createSupportTicket(input, rt)
+        : {
+            adsFinancialTargetingUsed: false,
+            category: input.category,
+            createdAt: rt.now.toISOString(),
+            id: `ust_${globalThis.crypto.randomUUID()}`,
+            rawFinancialDataExposed: false,
+            rawPersonalDataExposed: false,
+            rawPushTokenExposed: false,
+            status: "OPEN",
+            subject: input.subject,
+          };
+    await emit(rt, {
+      event: "user_support_ticket_created",
+      requestId: rt.requestId,
+      userId: rt.principal.userId,
+      targetId: String(data.id ?? ""),
+      path: rt.path,
+      createdAt: rt.now.toISOString(),
+    });
+    return out(rt, 202, { data });
   }
   if (method === "POST" && relativePath === "/me/withdrawal-request") {
     const input = withdrawalRequestInput(await body(rt.request));
@@ -1460,6 +1558,7 @@ export const usersRoutesManifest = Object.freeze({
     "GET /me/summary",
     "GET /me/activity",
     "POST /me/withdrawal-request",
+    "POST /me/support-tickets",
     "POST /me/withdraw",
     "POST /me/restore",
     "POST /me/privacy-export",
@@ -1493,6 +1592,7 @@ export function assertUsersRoutesCompleteness(): {
     "auth_context_required_and_owner_boundary",
     "my_page_profile_get_update",
     "mobile_profile_payload_alias",
+    "mobile_support_ticket_alias",
     "profile_mass_assignment_protection",
     "summary_and_activity",
     "settings_get_update",

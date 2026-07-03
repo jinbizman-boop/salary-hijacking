@@ -2,6 +2,7 @@ import {
   PROFILE_PATH,
   PROFILE_PRIVACY_EXPORT_PATH,
   PROFILE_SAFE_ERROR_MESSAGE,
+  PROFILE_SUPPORT_TICKETS_PATH,
   PROFILE_WITHDRAWAL_REQUEST_PATH,
 } from "./constants";
 import type {
@@ -11,6 +12,9 @@ import type {
   ProfileExportStatus,
   ProfilePrivacy,
   ProfileSnapshot,
+  ProfileSupportTicket,
+  ProfileSupportTicketCategory,
+  ProfileSupportTicketRequest,
   ProfileSummary,
   ProfileUser,
 } from "./types";
@@ -46,6 +50,19 @@ const EXPORT_STATUSES = new Set<ProfileExportStatus>([
   "REQUESTED",
   "READY",
   "EXPIRED",
+]);
+const SUPPORT_TICKET_CATEGORIES = new Set<ProfileSupportTicketCategory>([
+  "ACCOUNT",
+  "PAYMENT",
+  "PRIVACY",
+  "BUG",
+  "OTHER",
+]);
+const SUPPORT_TICKET_STATUSES = new Set<ProfileSupportTicket["status"]>([
+  "OPEN",
+  "IN_PROGRESS",
+  "ANSWERED",
+  "CLOSED",
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -280,12 +297,64 @@ function normalizeSnapshot(value: unknown): ProfileSnapshot {
   };
 }
 
+function normalizeSupportTicket(value: unknown): ProfileSupportTicket {
+  if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
+  const data = value.data;
+  if (
+    !nonEmptyString(data.id) ||
+    typeof data.category !== "string" ||
+    !SUPPORT_TICKET_CATEGORIES.has(
+      data.category as ProfileSupportTicketCategory,
+    ) ||
+    typeof data.status !== "string" ||
+    !SUPPORT_TICKET_STATUSES.has(
+      data.status as ProfileSupportTicket["status"],
+    ) ||
+    !nonEmptyString(data.subject) ||
+    !isIsoTimestamp(data.createdAt) ||
+    data.rawFinancialDataExposed !== false ||
+    data.rawPersonalDataExposed !== false ||
+    data.rawPushTokenExposed !== false ||
+    data.adsFinancialTargetingUsed !== false
+  ) {
+    return invalidResponse();
+  }
+
+  return {
+    adsFinancialTargetingUsed: false,
+    category: data.category as ProfileSupportTicketCategory,
+    createdAt: data.createdAt,
+    id: data.id,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    status: data.status as ProfileSupportTicket["status"],
+    subject: data.subject,
+  };
+}
+
 function validActionRequest(value: ProfileActionRequest): boolean {
   return (
     nonEmptyString(value.reason) &&
     value.reason.length <= 120 &&
     !/salary|income|expense|saving|hijack|token|email|phone|card|account/iu.test(
       value.reason,
+    )
+  );
+}
+
+function validSupportTicketRequest(
+  value: ProfileSupportTicketRequest,
+): boolean {
+  const text = `${value.subject} ${value.message}`;
+  return (
+    SUPPORT_TICKET_CATEGORIES.has(value.category) &&
+    nonEmptyString(value.subject) &&
+    value.subject.length <= 80 &&
+    nonEmptyString(value.message) &&
+    value.message.length <= 1_000 &&
+    !/salary|income|expense|saving|hijack|token|email|phone|card|accountNumber/iu.test(
+      text,
     )
   );
 }
@@ -304,6 +373,25 @@ function actionPayload(request: ProfileActionRequest): string {
     rawPersonalDataExposed: false,
     rawPushTokenExposed: false,
     reason: request.reason,
+  });
+}
+
+function supportTicketPayload(request: ProfileSupportTicketRequest): string {
+  if (!validSupportTicketRequest(request)) {
+    throw new ProfileApiError(
+      0,
+      "PROFILE_INVALID_SUPPORT_TICKET_REQUEST",
+      PROFILE_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return JSON.stringify({
+    adsFinancialTargetingUsed: false,
+    category: request.category,
+    message: request.message.trim(),
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    subject: request.subject.trim(),
   });
 }
 
@@ -355,6 +443,46 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     return normalizeSnapshot(parsed);
   }
 
+  async function requestSupportTicket(
+    path: string,
+    init: RequestInit,
+  ): Promise<ProfileSupportTicket> {
+    const headers = new Headers({
+      accept: "application/json",
+      "x-client-platform": options.platform,
+      "x-correlation-id": createCorrelationId(),
+      ...PRIVACY_HEADERS,
+    });
+    headers.set("content-type", "application/json");
+
+    let response: Response;
+    try {
+      response = await fetcher(
+        new Request(`${baseUrl}${path}`, {
+          ...init,
+          headers,
+          credentials: "include",
+        }),
+      );
+    } catch {
+      throw new ProfileApiError(
+        0,
+        "PROFILE_NETWORK_ERROR",
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+
+    const parsed = await parseJson(response);
+    if (!response.ok) {
+      throw new ProfileApiError(
+        response.status,
+        errorCode(parsed),
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+    return normalizeSupportTicket(parsed);
+  }
+
   return {
     getProfile(): Promise<ProfileSnapshot> {
       return request(PROFILE_PATH);
@@ -374,6 +502,15 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     ): Promise<ProfileSnapshot> {
       return request(PROFILE_WITHDRAWAL_REQUEST_PATH, {
         body: actionPayload(profileRequest),
+        method: "POST",
+      });
+    },
+
+    createSupportTicket(
+      supportRequest: ProfileSupportTicketRequest,
+    ): Promise<ProfileSupportTicket> {
+      return requestSupportTicket(PROFILE_SUPPORT_TICKETS_PATH, {
+        body: supportTicketPayload(supportRequest),
         method: "POST",
       });
     },

@@ -67,6 +67,31 @@ export type ProfileActionRequest = Readonly<{
   reason: string;
 }>;
 
+export type ProfileSupportTicketCategory =
+  | "ACCOUNT"
+  | "PAYMENT"
+  | "PRIVACY"
+  | "BUG"
+  | "OTHER";
+
+export type ProfileSupportTicketRequest = Readonly<{
+  category: ProfileSupportTicketCategory;
+  message: string;
+  subject: string;
+}>;
+
+export type ProfileSupportTicket = Readonly<{
+  category: ProfileSupportTicketCategory;
+  createdAt: string;
+  id: string;
+  rawFinancialDataExposed: false;
+  rawPersonalDataExposed: false;
+  rawPushTokenExposed: false;
+  adsFinancialTargetingUsed: false;
+  status: "OPEN" | "IN_PROGRESS" | "ANSWERED" | "CLOSED";
+  subject: string;
+}>;
+
 export type ProfileApiClient = Readonly<{
   getProfile: () => Promise<ProfileSnapshot>;
   requestPrivacyExport: (
@@ -75,4 +100,7 @@ export type ProfileApiClient = Readonly<{
   requestWithdrawalRequest: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;
+  createSupportTicket: (
+    request: ProfileSupportTicketRequest,
+  ) => Promise<ProfileSupportTicket>;
 }>;

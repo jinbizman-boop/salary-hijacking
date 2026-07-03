@@ -104,6 +104,47 @@ describe("mobile profile API contract", () => {
     });
   });
 
+  it("accepts a privacy-safe mobile support ticket without echoing sensitive raw data", async () => {
+    const app = createProfileContractApp();
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/support-tickets", {
+        method: "POST",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({
+          category: "ACCOUNT",
+          subject: "로그인 도움이 필요해요",
+          message: "앱 계정 설정 화면에서 로그인 상태를 확인하고 싶어요.",
+          rawFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          rawPushTokenExposed: false,
+          adsFinancialTargetingUsed: false,
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(202);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data).toMatchObject({
+      category: "ACCOUNT",
+      status: "OPEN",
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(body.data).not.toHaveProperty("userId");
+    expect(JSON.stringify(Object.values(body.data ?? {}))).not.toMatch(
+      /salary|expense|saving|hijack|token|email|phone|card|accountNumber/iu,
+    );
+  });
+
   it("accepts the mobile withdrawal request without performing destructive final withdrawal", async () => {
     const app = createProfileContractApp();
 

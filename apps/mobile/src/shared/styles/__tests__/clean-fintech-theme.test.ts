@@ -394,6 +394,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps MY support inquiry routed to a privacy-safe compose screen", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("CleanFintechSupportScreen");
+    expect(cleanScreens).toContain("supportSubject");
+    expect(cleanScreens).toContain("supportMessage");
+    expect(cleanScreens).toContain("openSupportInquiry");
+    expect(cleanScreens).toContain('profileRouter.push("/profile/support")');
+    expect(cleanScreens).toContain("support@salaryhijacking.com");
+    expect(cleanScreens).toContain("민감한 금융 원문은 문의에 적지 마세요.");
+    expect(cleanScreens).toContain("rawFinancialData=false");
+    expect(cleanScreens).toContain("rawPersonalData=false");
+    expect(source("profile/support.tsx")).toContain(
+      "<CleanFintechSupportScreen />",
+    );
+  });
+
   it("keeps community screen hydrated from the server feed service before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

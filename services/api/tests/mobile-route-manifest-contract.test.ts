@@ -35,6 +35,7 @@ describe("mobile route manifest contract", () => {
       expect.arrayContaining([
         "/api/v1/users GET /me/profile",
         "/api/v1/users POST /me/privacy-export",
+        "/api/v1/users POST /me/support-tickets",
         "/api/v1/users POST /me/withdrawal-request",
         "/api/v1/users POST /me/withdraw",
       ]),

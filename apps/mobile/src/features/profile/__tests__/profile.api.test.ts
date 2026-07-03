@@ -164,6 +164,67 @@ describe("profile api", () => {
     }
   });
 
+  it("creates support tickets without raw financial or personal payloads", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse(
+          {
+            data: {
+              adsFinancialTargetingUsed: false,
+              category: "ACCOUNT",
+              createdAt: "2026-07-03T05:30:00.000Z",
+              id: "ticket_1",
+              rawFinancialDataExposed: false,
+              rawPersonalDataExposed: false,
+              rawPushTokenExposed: false,
+              status: "OPEN",
+              subject: "로그인 도움이 필요해요",
+            },
+          },
+          202,
+        );
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.createSupportTicket({
+        category: "ACCOUNT",
+        message: "계정 설정 화면에서 로그인 상태를 확인하고 싶어요.",
+        subject: "로그인 도움이 필요해요",
+      }),
+    ).resolves.toMatchObject({
+      adsFinancialTargetingUsed: false,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      status: "OPEN",
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/me/support-tickets",
+    );
+    const body = JSON.parse(await calls[0]!.clone().text()) as Record<
+      string,
+      unknown
+    >;
+    expect(body).toMatchObject({
+      adsFinancialTargetingUsed: false,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+    });
+    expect(JSON.stringify(Object.values(body))).not.toMatch(
+      /salary|expense|saving|hijack|token|email|phone|card|accountNumber/iu,
+    );
+  });
+
   it("rejects unsafe profile responses before MY screen consumes them", async () => {
     const api = createProfileApi({
       baseUrl: "https://api.salaryhijacking.com",

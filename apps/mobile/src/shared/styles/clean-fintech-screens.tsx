@@ -43,7 +43,10 @@ import type {
   PlanFixedExpenseCommitment,
   PlanSavingsGoalCommitment,
 } from "../../features/plan/types";
-import type { ProfileSnapshot } from "../../features/profile/types";
+import type {
+  ProfileSnapshot,
+  ProfileSupportTicketCategory,
+} from "../../features/profile/types";
 import type {
   NotificationItem,
   NotificationPriority,
@@ -1058,6 +1061,116 @@ export function CleanFintechSettingsScreen({
       </SectionCard>
       <GuardBox />
     </AppScreen>
+  );
+}
+
+export function CleanFintechSupportScreen(): React.ReactElement {
+  const supportApi = useMemo(() => createMobileProfileApi(), []);
+  const [supportCategory, setSupportCategory] =
+    useState<ProfileSupportTicketCategory>("ACCOUNT");
+  const [supportSubject, setSupportSubject] = useState("");
+  const [supportMessage, setSupportMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(
+    "문의 내용을 서버에 안전하게 접수할 준비가 됐어요.",
+  );
+  const valid =
+    supportSubject.trim().length >= 2 && supportMessage.trim().length >= 5;
+  const submitSupportTicket = useCallback(() => {
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    setToast("1:1 문의를 서버에 접수하는 중이에요.");
+    void supportApi
+      .createSupportTicket({
+        category: supportCategory,
+        message: supportMessage.trim(),
+        subject: supportSubject.trim(),
+      })
+      .then((ticket) => {
+        setSupportMessage("");
+        setSupportSubject("");
+        setToast(`문의가 접수됐어요. 상태 ${ticket.status}`);
+      })
+      .catch(() => {
+        setToast(
+          "문의 접수에 실패했어요. 민감한 금융 원문은 문의에 적지 마세요.",
+        );
+      })
+      .finally(() => setSubmitting(false));
+  }, [
+    submitting,
+    supportApi,
+    supportCategory,
+    supportMessage,
+    supportSubject,
+    valid,
+  ]);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
+      >
+        <View style={styles.composeHeader}>
+          <Text style={styles.composeTitle}>1:1 문의</Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!valid || submitting}
+            onPress={submitSupportTicket}
+            style={[
+              styles.doneButton,
+              !valid || submitting ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.doneButtonText}>
+              {submitting ? "접수중" : "완료"}
+            </Text>
+          </Pressable>
+        </View>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Toast message={toast} />
+          <SectionCard>
+            <Text style={styles.sectionTitle}>문의 유형</Text>
+            <PillRow
+              items={["ACCOUNT", "PAYMENT", "PRIVACY", "BUG", "OTHER"]}
+              selected={supportCategory}
+              onSelect={(next) =>
+                setSupportCategory(next as ProfileSupportTicketCategory)
+              }
+            />
+          </SectionCard>
+          <SectionCard>
+            <TextInput
+              accessibilityLabel="문의 제목"
+              onChangeText={setSupportSubject}
+              placeholder="문의 제목"
+              placeholderTextColor={theme.color.text.disabled}
+              style={styles.composeInput}
+              value={supportSubject}
+            />
+            <TextInput
+              accessibilityLabel="문의 내용"
+              multiline
+              onChangeText={setSupportMessage}
+              placeholder="문의 내용을 입력하세요. 급여, 지출, 계좌, 카드, 토큰 같은 민감 원문은 제외해 주세요."
+              placeholderTextColor={theme.color.text.disabled}
+              style={[styles.composeInput, styles.composeBody]}
+              value={supportMessage}
+            />
+          </SectionCard>
+          <SectionCard>
+            <Text style={styles.sectionTitle}>개인정보 보호 기준</Text>
+            <Text style={styles.bodyText}>
+              민감한 금융 원문은 문의에 적지 마세요. rawFinancialData=false ·
+              rawPersonalData=false · rawPushToken=false 기준으로만 접수합니다.
+            </Text>
+            <Text style={styles.listMeta}>support@salaryhijacking.com</Text>
+          </SectionCard>
+          <GuardBox />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -2727,10 +2840,8 @@ function ProfileScreen(): React.ReactElement {
   }, [profileRouter]);
 
   const openSupportInquiry = useCallback(() => {
-    setProfileToast(
-      "1:1 문의는 계정, 결제, 개인정보 요청을 민감 정보 없이 접수하도록 준비 중이에요. 급한 문의는 support@salaryhijacking.com으로 보내 주세요.",
-    );
-  }, []);
+    profileRouter.push("/profile/support");
+  }, [profileRouter]);
 
   const openProfileNotices = useCallback(() => {
     profileRouter.push("/notifications");
