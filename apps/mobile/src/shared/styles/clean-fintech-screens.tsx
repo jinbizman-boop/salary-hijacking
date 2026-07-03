@@ -2974,21 +2974,31 @@ function SalaryHomeScreen(): React.ReactElement {
       <SectionCard>
         <Text style={styles.sectionTitle}>오늘 빠져나간 고정지출</Text>
         {salaryFixedExpenseRows.length > 0
-          ? salaryFixedExpenseRows.map((item) => (
-              <ListRow
-                key={item.id}
-                icon={appIcons.subscription}
-                title={item.title}
-                meta={`${formatMoney(item.amountMinor)}원 · ${
-                  item.lastPaidAt ? "납부 완료" : "탭해서 납부 완료"
-                } · ${item.meta}${
-                  payingFixedExpenseId === item.id ? " · 서버 기록 중" : ""
-                }`}
-                onPress={() => {
-                  void paySalaryFixedExpense(item);
-                }}
-              />
-            ))
+          ? salaryFixedExpenseRows.map((item) => {
+              const fixedExpensePaymentStatusLabel =
+                payingFixedExpenseId === item.id ? "납부 기록 중" : undefined;
+              return (
+                <ListRow
+                  disabled={payingFixedExpenseId !== null}
+                  key={item.id}
+                  icon={appIcons.subscription}
+                  title={item.title}
+                  meta={`${formatMoney(item.amountMinor)}원 · ${
+                    item.lastPaidAt ? "납부 완료" : "탭해서 납부 완료"
+                  } · ${item.meta}${
+                    payingFixedExpenseId === item.id ? " · 서버 기록 중" : ""
+                  }`}
+                  onPress={() => {
+                    void paySalaryFixedExpense(item);
+                  }}
+                  trailing={
+                    fixedExpensePaymentStatusLabel ? (
+                      <StatusPill label={fixedExpensePaymentStatusLabel} />
+                    ) : undefined
+                  }
+                />
+              );
+            })
           : fixedExpenses.map((item) => (
               <ListRow
                 key={item.name}
@@ -5809,6 +5819,7 @@ function ProgressBar({
 }
 
 function ListRow({
+  disabled = false,
   icon,
   title,
   meta,
@@ -5819,6 +5830,7 @@ function ListRow({
   icon: string;
   title: string;
   meta: string;
+  disabled?: boolean;
   onPress?: () => void;
   trailing?: React.ReactNode;
   unread?: boolean;
@@ -5837,8 +5849,14 @@ function ListRow({
     return (
       <Pressable
         accessibilityRole="button"
+        accessibilityState={{ disabled }}
+        disabled={disabled}
         onPress={onPress}
-        style={[styles.listRow, unread ? styles.unreadRow : null]}
+        style={[
+          styles.listRow,
+          unread ? styles.unreadRow : null,
+          disabled ? styles.disabled : null,
+        ]}
       >
         {content}
       </Pressable>

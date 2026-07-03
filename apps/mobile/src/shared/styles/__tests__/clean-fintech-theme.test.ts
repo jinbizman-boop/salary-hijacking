@@ -254,6 +254,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("납부 완료");
   });
 
+  it("prevents duplicate salary home fixed expense payment taps while the server request is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const listRowSource =
+      cleanScreens.match(
+        /function ListRow\([\s\S]*?function CommunityPostRow/u,
+      )?.[0] ?? "";
+
+    expect(listRowSource).toContain("disabled = false");
+    expect(listRowSource).toContain("disabled?: boolean");
+    expect(listRowSource).toContain("accessibilityState={{ disabled }}");
+    expect(listRowSource).toContain("disabled={disabled}");
+    expect(cleanScreens).toContain("disabled={payingFixedExpenseId !== null}");
+    expect(cleanScreens).toContain(
+      'payingFixedExpenseId === item.id ? "납부 기록 중" : undefined',
+    );
+  });
+
   it("keeps plan screen fixed expense and savings creation persisted through server APIs", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
