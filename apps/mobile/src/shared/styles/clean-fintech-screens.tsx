@@ -4611,6 +4611,7 @@ function ProfileScreen(): React.ReactElement {
 }
 
 function LoginScreen(): React.ReactElement {
+  const loginRouter = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -4619,6 +4620,11 @@ function LoginScreen(): React.ReactElement {
   );
   const loginAuthApi = useMemo(() => createMobileAuthApi(), []);
   const valid = email.includes("@") && password.trim().length >= 8;
+
+  const openSignup = useCallback((): void => {
+    loginRouter.push("/(auth)/signup");
+  }, [loginRouter]);
+
   const submitLogin = useCallback(async () => {
     if (!valid || submitting) return;
     setSubmitting(true);
@@ -4688,6 +4694,7 @@ function LoginScreen(): React.ReactElement {
               {submitting ? "로그인 중" : "로그인"}
             </Text>
           </Pressable>
+          <SmallButton label="회원가입" onPress={openSignup} />
           <View style={styles.attachmentRow}>
             <SmallButton label="Kakao" />
             <SmallButton label="Naver" />

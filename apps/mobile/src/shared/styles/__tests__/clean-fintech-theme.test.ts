@@ -337,6 +337,18 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps login screen routed to the signup flow instead of leaving signup as a no-op", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("loginRouter");
+    expect(cleanScreens).toContain("openSignup");
+    expect(cleanScreens).toContain('loginRouter.push("/(auth)/signup")');
+    expect(cleanScreens).toContain('SmallButton label="회원가입"');
+    expect(cleanScreens).toContain("onPress={openSignup}");
+  });
+
   it("keeps plan screen hydrated and recalculated through the server payroll API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
