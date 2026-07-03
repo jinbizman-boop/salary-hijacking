@@ -2244,6 +2244,26 @@ function NotificationsScreen(): React.ReactElement {
     [notificationsApi],
   );
 
+  const markAllNotificationsRead = useCallback(() => {
+    if (unreadCount <= 0) return;
+    setServerNotifications((current) =>
+      current.map((item) => ({ ...item, status: "READ" })),
+    );
+    setUnreadCount(0);
+    void notificationsApi
+      .markAllRead()
+      .then(({ markedReadCount }) => {
+        setSyncLabel(
+          `서버에 ${markedReadCount}개 알림 읽음 처리를 저장했어요.`,
+        );
+      })
+      .catch(() => {
+        setSyncLabel(
+          "전체 읽음 처리를 서버에 저장하지 못했어요. 다시 확인해 주세요.",
+        );
+      });
+  }, [notificationsApi, unreadCount]);
+
   return (
     <AppScreen title="알림" subtitle="새로운 알림이 있어요">
       <Toast message={`${syncLabel} · 읽지 않은 알림 ${unreadCount}개`} />
@@ -2252,6 +2272,7 @@ function NotificationsScreen(): React.ReactElement {
           <Text style={styles.sectionTitle}>중요 알림</Text>
           <StatusPill label={`${unreadCount} unread`} />
         </View>
+        <SmallButton label="전체 읽음" onPress={markAllNotificationsRead} />
         {importantNotifications.length ? (
           importantNotifications.map((item) => (
             <ListRow
