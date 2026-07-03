@@ -357,6 +357,7 @@ function assertOwner(userId: string, runtime: SavingsRouteRuntime): void {
 
 function keySensitive(key: string): boolean {
   const normalized = key.toLowerCase().replace(/[\s._-]/g, "");
+  if (normalized === "financialrawaccountdataexposed") return false;
   return sensitiveKeys.some((fragment) =>
     normalized.includes(fragment.replace(/[\s._-]/g, "")),
   );

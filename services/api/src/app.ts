@@ -90,7 +90,9 @@ import {
 import {
   SAVINGS_API_PREFIX,
   assertSavingsRoutesCompleteness,
+  createSavingsRoutes,
   handleSavingsRoutes,
+  type SavingsRoutesOptions,
   savingsRoutesManifest,
 } from "./routes/savings.routes";
 import {
@@ -244,6 +246,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly dailyBudgetsRoutesOptions?: DailyBudgetsRoutesOptions<TEnv>;
   readonly fixedExpensesRoutesOptions?: FixedExpensesRoutesOptions<TEnv>;
   readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
+  readonly savingsRoutesOptions?: SavingsRoutesOptions<TEnv>;
   readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
@@ -1176,6 +1179,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createVariableExpensesRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "savings" && options.savingsRoutesOptions) {
+    const routeOptions: SavingsRoutesOptions<TEnv> =
+      options.savingsRoutesOptions.now || !options.now
+        ? options.savingsRoutesOptions
+        : {
+            ...options.savingsRoutesOptions,
+            now: options.now,
+          };
+    return createSavingsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "community" && options.communityRoutesOptions) {
     const routeOptions: CommunityRoutesOptions<TEnv> =

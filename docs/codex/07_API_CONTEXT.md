@@ -25,7 +25,7 @@ Entrypoints:
 Current verification:
 
 - `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-03.
-- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 16 files and 29 tests.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 18 files and 33 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -61,7 +61,7 @@ Current verification:
 
 ## Mobile API Compatibility Contracts
 
-Verified on 2026-06-29:
+Verified through 2026-07-03:
 
 - `GET /api/v1/mobile/bootstrap`: implemented in `services/api/src/app.ts` and covered by `services/api/tests/mobile-bootstrap.test.ts`.
 - `GET /api/v1/payroll/home`, `GET /api/v1/payroll/current`, `POST /api/v1/payroll/recalculate`: implemented in `services/api/src/routes/payroll.routes.ts` and aligned with the current mobile salary/plan screens.
@@ -74,6 +74,8 @@ Verified on 2026-06-29:
 - `POST /api/v1/users/me/withdrawal-request`: implemented in `services/api/src/routes/users.routes.ts` as a request-only mobile profile action. It records/request-flags withdrawal intent without performing destructive final account withdrawal.
 - `POST /api/v1/variable-expenses`: implemented in `services/api/src/routes/variable-expenses.routes.ts` as the server-authoritative mobile Salary Home quick-add target. The response keeps server-authority and privacy flags while omitting the internal owner `userId`.
 - DB-backed variable expenses repository: `services/api/src/repositories/variable-expenses.repository.ts` can create records through the `daily_budgets` and `variable_expenses` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
+- `GET /api/v1/savings` and savings goal/transaction endpoints are implemented in `services/api/src/routes/savings.routes.ts` as the server-authoritative fixed savings and savings goal surface.
+- DB-backed savings repository: `services/api/src/repositories/savings.repository.ts` can list, create, update, pause, resume, archive/delete, record transactions, summarize, calendar, upcoming, and impact savings through the `savings_plans` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal `user_id` or `payroll_plan_id` values.
 - `GET /api/v1/community/posts`, `POST /api/v1/community/posts`, `GET /api/v1/community/posts/{postId}/comments`, and `POST /api/v1/community/posts/{postId}/comments`: implemented in `services/api/src/routes/community.routes.ts` and aligned with the current Expo community feed/write/detail/comments surfaces.
 - DB-backed community repository: `services/api/src/repositories/community.repository.ts` can list boards/posts/comments and create/update/delete posts/comments/reports/reactions through the `community_*` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
 - Public store review pages: `GET /`, `GET /privacy`, `GET /support`, and
@@ -91,6 +93,8 @@ Verified on 2026-06-29:
 - Mobile daily budget repository injection contract test: `services/api/tests/mobile-daily-budget-contract.test.ts`.
 - Fixed expense DB repository test: `services/api/tests/fixed-expenses-db-repository.test.ts`.
 - Mobile fixed expense repository injection contract test: `services/api/tests/mobile-fixed-expense-contract.test.ts`.
+- Savings DB repository test: `services/api/tests/savings-db-repository.test.ts`.
+- Mobile savings repository injection contract test: `services/api/tests/mobile-savings-contract.test.ts`.
 - Community DB repository test: `services/api/tests/community-db-repository.test.ts`.
 - Mobile community repository injection contract test: `services/api/tests/mobile-community-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
