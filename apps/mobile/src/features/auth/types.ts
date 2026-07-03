@@ -31,6 +31,12 @@ export type AuthOAuthStartRequest = Readonly<{
   redirectUri: string;
 }>;
 
+export type AuthOAuthCompleteRequest = Readonly<{
+  state: string;
+  code: string;
+  deviceId?: string;
+}>;
+
 export type AuthOAuthStartResult = Readonly<{
   provider: AuthSocialProvider;
   state: string;
@@ -62,6 +68,7 @@ export type AuthLogoutResult = Readonly<{
 }>;
 
 export type AuthTokenStore = Readonly<{
+  getItemAsync?: (key: string) => Promise<string | null>;
   setItemAsync: (key: string, value: string) => Promise<void>;
   deleteItemAsync?: (key: string) => Promise<void>;
 }>;
@@ -70,6 +77,9 @@ export type AuthApiClient = Readonly<{
   login: (request: AuthLoginRequest) => Promise<MobileAuthResponse>;
   register: (request: AuthRegisterRequest) => Promise<MobileSignupResponse>;
   startOAuth: (request: AuthOAuthStartRequest) => Promise<AuthOAuthStartResult>;
+  completeOAuth: (
+    request: AuthOAuthCompleteRequest,
+  ) => Promise<MobileAuthResponse>;
   requestPasswordReset: (
     request: AuthPasswordResetRequest,
   ) => Promise<AuthPasswordResetResult>;

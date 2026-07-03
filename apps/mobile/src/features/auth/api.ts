@@ -6,6 +6,8 @@ import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
   AUTH_LOGOUT_PATH,
   AUTH_LOGIN_PATH,
+  AUTH_OAUTH_CALLBACK_PATH,
+  AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX,
   AUTH_OAUTH_START_PATH,
   AUTH_PASSWORD_RESET_CONFIRM_PATH,
   AUTH_PASSWORD_RESET_PATH,
@@ -17,6 +19,7 @@ import type {
   AuthApiClient,
   AuthLoginRequest,
   AuthLogoutResult,
+  AuthOAuthCompleteRequest,
   AuthOAuthStartRequest,
   AuthOAuthStartResult,
   AuthPasswordResetConfirmRequest,
@@ -198,6 +201,18 @@ function optionalAuthorizationUrl(value: unknown): string | null {
   }
 }
 
+function oauthVerifierKey(state: string): string {
+  const normalized = assertPresent(state, "AUTH_OAUTH_STATE_REQUIRED");
+  if (!/^[A-Za-z0-9._:-]{1,256}$/u.test(normalized)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_STATE_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}${normalized}`;
+}
+
 async function persistAccessToken(
   tokenStore: AuthTokenStore | undefined,
   accessToken: string | null | undefined,
@@ -227,6 +242,70 @@ async function clearAccessToken(
     throw new AuthApiError(
       0,
       "AUTH_TOKEN_STORE_FAILED",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+}
+
+async function persistOAuthVerifier(
+  tokenStore: AuthTokenStore | undefined,
+  state: string,
+  codeVerifier: string | null,
+): Promise<void> {
+  if (!tokenStore || !codeVerifier) return;
+  try {
+    await tokenStore.setItemAsync(oauthVerifierKey(state), codeVerifier);
+  } catch {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_VERIFIER_STORE_FAILED",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+}
+
+async function readOAuthVerifier(
+  tokenStore: AuthTokenStore | undefined,
+  state: string,
+): Promise<string> {
+  if (!tokenStore?.getItemAsync) {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_VERIFIER_MISSING",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  try {
+    const verifier = await tokenStore.getItemAsync(oauthVerifierKey(state));
+    if (!verifier?.trim()) {
+      throw new AuthApiError(
+        0,
+        "AUTH_OAUTH_VERIFIER_MISSING",
+        AUTH_SAFE_ERROR_MESSAGE,
+      );
+    }
+    return verifier;
+  } catch (error) {
+    if (error instanceof AuthApiError) throw error;
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_VERIFIER_MISSING",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+}
+
+async function clearOAuthVerifier(
+  tokenStore: AuthTokenStore | undefined,
+  state: string,
+): Promise<void> {
+  if (!tokenStore?.deleteItemAsync) return;
+  try {
+    await tokenStore.deleteItemAsync(oauthVerifierKey(state));
+  } catch {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_VERIFIER_STORE_FAILED",
       AUTH_SAFE_ERROR_MESSAGE,
     );
   }
@@ -271,6 +350,11 @@ function oauthStartResult(value: unknown): AuthOAuthStartResult {
     redirectUri,
     authorizationUrl: optionalAuthorizationUrl(data.authorizationUrl),
   };
+}
+
+function oauthCodeVerifier(value: unknown): string | null {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  return optionalNonEmptyString(data.codeVerifier);
 }
 
 export function createAuthApi(options: AuthApiOptions): AuthApiClient {
@@ -441,7 +525,53 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
           "AUTH_OAUTH_REDIRECT_URI_REQUIRED",
         ),
       });
-      return oauthStartResult(parsed);
+      const result = oauthStartResult(parsed);
+      await persistOAuthVerifier(
+        options.tokenStore,
+        result.state,
+        oauthCodeVerifier(parsed),
+      );
+      return result;
+    },
+
+    async completeOAuth(request: AuthOAuthCompleteRequest) {
+      const state = assertPresent(request.state, "AUTH_OAUTH_STATE_REQUIRED");
+      const codeVerifier = await readOAuthVerifier(options.tokenStore, state);
+      const body: Record<string, unknown> = {
+        state,
+        code: assertPresent(request.code, "AUTH_OAUTH_CODE_REQUIRED"),
+        codeVerifier,
+      };
+      appendOptional(body, "deviceId", request.deviceId);
+
+      let parsed: unknown;
+      try {
+        parsed = await post(AUTH_OAUTH_CALLBACK_PATH, body);
+      } finally {
+        await clearOAuthVerifier(options.tokenStore, state);
+      }
+      let normalized;
+      try {
+        normalized = normalizeMobileAuthResponse(
+          parsed as Readonly<{ data?: unknown; error?: unknown }>,
+          now(),
+        );
+      } catch {
+        throw new AuthApiError(
+          0,
+          "AUTH_INVALID_RESPONSE",
+          AUTH_SAFE_ERROR_MESSAGE,
+        );
+      }
+      if (!normalized.data || normalized.data.status !== "AUTHENTICATED") {
+        throw new AuthApiError(
+          0,
+          "AUTH_INVALID_RESPONSE",
+          AUTH_SAFE_ERROR_MESSAGE,
+        );
+      }
+      await persistAccessToken(options.tokenStore, normalized.data.accessToken);
+      return normalized;
     },
 
     async requestPasswordReset(request: AuthPasswordResetRequest) {

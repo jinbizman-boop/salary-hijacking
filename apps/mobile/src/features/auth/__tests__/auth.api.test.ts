@@ -1,5 +1,6 @@
 import { MOBILE_ACCESS_TOKEN_KEY } from "../../../shared/storage/auth-token";
 import { createAuthApi } from "../api";
+import { AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -481,7 +482,11 @@ describe("auth api", () => {
         "https://accounts.kakao.example/oauth/authorize?state=oauth-state-1",
     });
     expect(JSON.stringify(result)).not.toContain("server-secret-code-verifier");
-    expect(stored.size).toBe(0);
+    expect(
+      stored.get(`${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-1`),
+    ).toBe("server-secret-code-verifier");
+    expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBeUndefined();
+    expect(stored.size).toBe(1);
     expect(calls).toHaveLength(1);
     expect(calls[0]?.method).toBe("GET");
     expect(calls[0]?.url).toBe(
@@ -492,6 +497,91 @@ describe("auth api", () => {
       "auth-oauth-start-test",
     );
     expect(calls[0]?.headers.get("x-client-platform")).toBe("android");
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-push-token-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+  });
+
+  it("completes social OAuth callback with the stored verifier and clears it after token storage", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>([
+      [
+        `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-2`,
+        "stored-code-verifier",
+      ],
+    ]);
+    const deleted: string[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-oauth-callback-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        expect(normalized.url).toBe(
+          "https://api.salaryhijacking.com/api/v1/auth/oauth/callback",
+        );
+        expect(normalized.credentials).toBe("include");
+        expect(JSON.parse(await normalized.text())).toEqual({
+          state: "oauth-state-2",
+          code: "provider-callback-code",
+          codeVerifier: "stored-code-verifier",
+          deviceId: "device-oauth",
+        });
+        return jsonResponse({
+          data: {
+            user: {
+              userId: "usr_oauth",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "oauth.access.jwt",
+              refreshToken: "oauth.refresh.cookie",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        });
+      },
+      now: () => now,
+      platform: "android",
+      tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+          stored.delete(key);
+        },
+      },
+    });
+
+    const result = await api.completeOAuth({
+      state: "oauth-state-2",
+      code: "provider-callback-code",
+      deviceId: "device-oauth",
+    });
+
+    expect(result.data).toMatchObject({
+      status: "AUTHENTICATED",
+      accessToken: "oauth.access.jwt",
+      user: { id: "usr_oauth", role: "USER" },
+    });
+    expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("oauth.access.jwt");
+    expect(JSON.stringify(result)).not.toContain("stored-code-verifier");
+    expect(Array.from(stored.values()).join(" ")).not.toContain(
+      "oauth.refresh.cookie",
+    );
+    expect(deleted).toContain(
+      `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-2`,
+    );
+    expect(
+      stored.has(`${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-2`),
+    ).toBe(false);
     expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
     expect(calls[0]?.headers.get("x-raw-push-token-exposed")).toBe("false");

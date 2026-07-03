@@ -383,6 +383,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps social OAuth callback routed through the server before entering the app", () => {
+    const callbackRoute = source("auth/oauth/callback.tsx");
+    const authApi = mobileSource("src/features/auth/api.ts");
+
+    expect(authApi).toContain("completeOAuth");
+    expect(callbackRoute).toContain("useLocalSearchParams");
+    expect(callbackRoute).toContain("createMobileAuthApi");
+    expect(callbackRoute).toContain(".completeOAuth({");
+    expect(callbackRoute).toContain('router.replace("/salary")');
+    expect(callbackRoute).toContain('router.replace("/(auth)/login")');
+    expect(callbackRoute).toContain("AUTHENTICATED");
+  });
+
   it("keeps reset-password screen routed to the server password reset confirm flow", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
