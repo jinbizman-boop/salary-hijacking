@@ -10,6 +10,12 @@ import type {
   RegisterInput,
   SocialLoginInput,
 } from "../routes/auth.routes";
+import type {
+  AuthenticatedPrincipal,
+  AuthRouteRuntime,
+  SessionValidationResult,
+  UserRole,
+} from "../middlewares/auth.middleware";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];
@@ -33,6 +39,11 @@ export type AuthDbQuery<TEnv = unknown> = (
 
 export interface NeonAuthRepositoryOptions<TEnv = unknown> {
   readonly query?: AuthDbQuery<TEnv>;
+}
+
+export interface NeonAuthSessionResolverOptions<TEnv = unknown> {
+  readonly query?: AuthDbQuery<TEnv>;
+  readonly now?: () => Date;
 }
 
 const DATABASE_URL_ENV_KEYS = [
@@ -219,6 +230,10 @@ function rolesFrom(value: unknown): readonly AuthRole[] {
   return roles.length ? [...new Set(roles)] : ["USER"];
 }
 
+function middlewareRolesFrom(value: unknown): readonly UserRole[] {
+  return rolesFrom(value) as readonly UserRole[];
+}
+
 function mapUser(row: DbRow | undefined): AuthUser | null {
   if (!row) return null;
   const email = typeof row.email === "string" ? row.email : null;
@@ -255,6 +270,34 @@ function mapSession(row: DbRow | undefined): AuthSession | null {
     revokedAt: toNullableIso(row.revoked_at),
     createdAt: toIso(row.created_at),
   };
+}
+
+function sessionActiveFromRow(
+  row: DbRow | undefined,
+  now: Date,
+): SessionValidationResult {
+  if (!row) return { active: false, revoked: true, reason: "NOT_FOUND" };
+
+  const status =
+    typeof row.status === "string" ? row.status.trim().toUpperCase() : "";
+  const revoked = row.revoked_at !== null && row.revoked_at !== undefined;
+  const expiresAt = new Date(toIso(row.expires_at));
+  const expired = expiresAt.getTime() <= now.getTime();
+  const reason = revoked
+    ? "REVOKED"
+    : expired
+      ? "EXPIRED"
+      : status !== "ACTIVE"
+        ? status || "INACTIVE"
+        : null;
+
+  const result: SessionValidationResult = {
+    active: status === "ACTIVE" && !revoked && !expired,
+    revoked: revoked || status !== "ACTIVE" || expired,
+    accountStatus: accountStatusFrom(row.user_status),
+    roles: middlewareRolesFrom(row.roles),
+  };
+  return reason ? { ...result, reason } : result;
 }
 
 function mapOAuthState(row: DbRow | undefined): OAuthStateRecord | null {
@@ -969,5 +1012,67 @@ export function createNeonAuthRepository<TEnv = unknown>(
       );
       return result.rows.length > 0;
     },
+  };
+}
+
+export function createNeonAuthSessionResolver<TEnv = unknown>(
+  options: NeonAuthSessionResolverOptions<TEnv> = {},
+): (
+  principal: AuthenticatedPrincipal,
+  runtime: AuthRouteRuntime,
+  env: TEnv,
+) => Promise<SessionValidationResult> {
+  const query = options.query ?? defaultQuery<TEnv>;
+
+  return async (principal, _runtime, env): Promise<SessionValidationResult> => {
+    if (principal.tokenKind === "SERVICE") return { active: true };
+    if (!principal.sessionId)
+      return { active: false, revoked: true, reason: "SESSION_ID_MISSING" };
+    if (
+      !uuidPattern.test(principal.userId) ||
+      !uuidPattern.test(principal.sessionId)
+    )
+      return { active: false, revoked: true, reason: "SESSION_ID_INVALID" };
+
+    const now = options.now?.() ?? new Date();
+    const result = await query(
+      `
+      select
+        s.session_id,
+        s.user_id,
+        s.status,
+        s.expires_at,
+        s.revoked_at,
+        u.status as user_status,
+        coalesce(
+          array_agg(distinct ar.role_key)
+            filter (where arm.status = 'ACTIVE' and ar.status = 'ACTIVE'),
+          array[]::text[]
+        ) as roles
+      from public.auth_sessions s
+      join public.users u
+        on u.user_id = s.user_id
+       and u.deleted_at is null
+      left join public.admin_role_members arm
+        on arm.user_id = u.user_id
+       and arm.status = 'ACTIVE'
+      left join public.admin_roles ar
+        on ar.admin_role_id = arm.admin_role_id
+       and ar.status = 'ACTIVE'
+      where s.session_id = $1::uuid
+        and s.user_id = $2::uuid
+      group by
+        s.session_id,
+        s.user_id,
+        s.status,
+        s.expires_at,
+        s.revoked_at,
+        u.status
+      limit 1`,
+      [principal.sessionId, principal.userId],
+      { operationName: "auth.resolveAccessSession", env },
+    );
+
+    return sessionActiveFromRow(result.rows[0], now);
   };
 }

@@ -45,6 +45,7 @@ import {
 } from "./routes/auth.routes";
 import {
   createNeonAuthRepository,
+  createNeonAuthSessionResolver,
   shouldUseNeonAuthRepository,
 } from "./repositories/auth.repository";
 import {
@@ -1258,6 +1259,7 @@ function buildAuthOptions<TEnv>(
   options: AppOptions<TEnv>,
 ): AuthMiddlewareOptions<TEnv> {
   const custom = options.authOptions ?? {};
+  const dbSessionResolver = createNeonAuthSessionResolver<TEnv>();
   const defaultPublicPolicies = [
     {
       id: "admin-auth-public",
@@ -1289,6 +1291,10 @@ function buildAuthOptions<TEnv>(
     jwtSecret: (env) =>
       envString(env, "JWT_SECRET") ?? envString(env, "AUTH_JWT_SECRET"),
     jwtPublicKeysByKid: parsePublicKeysByKid,
+    resolveSession: (principal, runtime, env) =>
+      shouldUseNeonAuthRepository(env)
+        ? dbSessionResolver(principal, runtime, env)
+        : { active: true },
     publicPolicies: [
       ...defaultPublicPolicies,
       ...(custom.publicPolicies ?? []),

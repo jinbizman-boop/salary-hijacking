@@ -65,11 +65,12 @@ Verified on 2026-07-03 KST:
   contract. Shared mobile API factory testing also guards bearer access-token
   attachment for feature API requests after login.
 - Mobile Jest currently reports 32 passing suites and 121 passing tests.
-- API package tests currently report 23 passing files and 45 passing tests,
+- API package tests currently report 24 passing files and 47 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation
   contract, DB-backed payroll, daily budget, fixed expense, variable expense,
   savings, growth, notifications, community, and auth repository contracts,
+  DB-backed auth access-session resolver contracts,
   mobile fixed-expense/savings/growth/notifications/community route injection
   contracts, mobile route manifest contracts, and public `/`, `/privacy`,
   `/support`, `/terms` pages for store review URLs.
@@ -104,8 +105,11 @@ Verified on 2026-07-03 KST:
   in-memory fallback. The repository persists email users, password hashes,
   refresh-session hashes, email verification tokens, password reset tokens,
   OAuth state, and MFA checks without storing raw passwords, refresh tokens,
-  raw device identifiers, or financial payloads. Runtime staging migration and
-  auth smoke proof are still blocked release gates.
+  raw device identifiers, or financial payloads. Protected API requests now also
+  use a DB-backed access-session resolver when a supported database URL is
+  present, so revoked, missing, expired, or inactive auth session rows block the
+  request before route handlers run. Runtime staging migration and auth smoke
+  proof are still blocked release gates.
 - Release readiness finds `git`, Cloudflare Wrangler, Cloudflare account
   evidence, Neon project evidence, and workspace-local EAS CLI evidence. The
   local `check:external-integrations` script currently warns only that `gh`,

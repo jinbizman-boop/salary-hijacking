@@ -71,7 +71,10 @@ Verified through 2026-07-03:
   supported database URL is present. It stores password hashes, refresh token
   hashes, OAuth state, email verification/password reset token hashes, and MFA
   code hashes without raw password/token/device/financial payloads. The
-  in-memory fallback remains for local no-DB tests.
+  in-memory fallback remains for local no-DB tests. The app gateway also selects
+  `createNeonAuthSessionResolver()` for protected API requests when a supported
+  database URL is present, so access-token `sessionId` plus `userId` must match
+  an active DB session row before route handlers receive trusted auth context.
 - `GET /api/v1/mobile/bootstrap`: implemented in `services/api/src/app.ts` and covered by `services/api/tests/mobile-bootstrap.test.ts`.
 - `GET /api/v1/payroll/home`, `GET /api/v1/payroll/current`, `POST /api/v1/payroll/recalculate`: implemented in `services/api/src/routes/payroll.routes.ts` and aligned with the current mobile salary/plan screens.
 - DB-backed payroll repository: `services/api/src/repositories/payroll.repository.ts` can create and query payroll plans through the `payroll_plans` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
@@ -117,6 +120,7 @@ Verified through 2026-07-03:
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
 - Public legal page regression test: `services/api/tests/public-legal-pages.test.ts`.
 - Auth DB repository test: `services/api/tests/auth-db-repository.test.ts`.
+- Auth DB access-session resolver contract test: `services/api/tests/auth-session-resolver-contract.test.ts`.
 
 ## Persistence Warning
 
