@@ -742,6 +742,7 @@ export function CleanFintechScreen({
 }
 
 export function CleanFintechWriteScreen(): React.ReactElement {
+  const writeRouter = useRouter();
   const writeCommunityService = useMemo(
     () => createMobileCommunityService(),
     [],
@@ -862,6 +863,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           return;
         }
         setToast("게시글이 서버에 등록되었습니다. 커뮤니티로 이동합니다.");
+        writeRouter.replace("/community");
       })
       .catch(() => {
         setToast(
@@ -880,6 +882,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
     uploadedCommunityAttachments.length,
     valid,
     writeCommunityService,
+    writeRouter,
   ]);
 
   return (

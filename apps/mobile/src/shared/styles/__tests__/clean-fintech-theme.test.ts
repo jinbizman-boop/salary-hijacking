@@ -892,6 +892,26 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('setBody("")');
   });
 
+  it("keeps community write success navigating back to the community feed", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const submitSource =
+      cleanScreens.match(
+        /const submitCommunityPost = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("const writeRouter = useRouter()");
+    expect(submitSource).toContain('writeRouter.replace("/community")');
+    const successToastIndex = submitSource.indexOf('setToast("게시글이 서버');
+    const navigationIndex = submitSource.indexOf(
+      'writeRouter.replace("/community")',
+    );
+
+    expect(successToastIndex).toBeGreaterThanOrEqual(0);
+    expect(navigationIndex).toBeGreaterThan(successToastIndex);
+  });
+
   it("keeps community write attachments connected to native picker and uploads API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
