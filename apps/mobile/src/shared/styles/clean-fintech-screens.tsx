@@ -2647,15 +2647,13 @@ function SalaryHomeScreen(): React.ReactElement {
       const receiptAttached = await attachReceiptToCreatedExpense(
         result.expenseId,
       );
-      setAddedExpenses((current) => [
-        ...current,
-        {
-          amount: result.netAmountMinor,
-          icon: appIcons.expense,
-          id: result.expenseId,
-          name: result.title,
-        },
+      setServerVariableExpenses((current) => [
+        result,
+        ...current.filter(
+          (expenseItem) => expenseItem.expenseId !== result.expenseId,
+        ),
       ]);
+      setVariableExpensesHydrated(true);
       void refreshServerVariableExpenses();
       void refreshServerBudgetSnapshot({ clearLocalPreview: true });
       if (!receiptAttached) {

@@ -1158,6 +1158,27 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toBeLessThan(addExpenseSource.indexOf("setAddedExpenses"));
   });
 
+  it("keeps server-created salary home expenses visible as server rows before refresh can clear offline preview", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const addExpenseSource =
+      cleanScreens.match(
+        /const handleAddExpense = async \(\): Promise<void> => \{[\s\S]*?const updateSalaryVariableExpense = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(addExpenseSource).toContain("setServerVariableExpenses((current)");
+    expect(addExpenseSource).toContain(
+      "expenseItem.expenseId !== result.expenseId",
+    );
+    expect(addExpenseSource.indexOf("createVariableExpense")).toBeLessThan(
+      addExpenseSource.indexOf("setServerVariableExpenses((current)"),
+    );
+    expect(
+      addExpenseSource.indexOf("setServerVariableExpenses((current)"),
+    ).toBeLessThan(addExpenseSource.indexOf("refreshServerBudgetSnapshot"));
+  });
+
   it("keeps community detail screen hydrated from the server detail and comments service", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
