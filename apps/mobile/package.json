@@ -46,6 +46,8 @@
     "build:e2e:android:local": "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
     "build:e2e:ios": "eas build --platform ios --profile e2e --non-interactive",
     "build:production:android": "eas build --platform android --profile production --non-interactive",
+    "build:production:android:local-aab": "node scripts/expo-local-android-production-build.mjs --output build/release/android/salary-hijacking-production.aab",
+    "build:production:android:local-aab:preflight": "node scripts/expo-local-android-production-build.mjs --check --output build/release/android/salary-hijacking-production.aab",
     "build:production:ios": "eas build --platform ios --profile production --non-interactive",
     "submit:staging:android": "eas submit --platform android --profile staging --latest --non-interactive",
     "submit:production:android": "eas submit --platform android --profile production --latest --non-interactive",
