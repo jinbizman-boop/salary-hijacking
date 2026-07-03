@@ -87,7 +87,7 @@ export type VariableExpenseCreateRequest = Readonly<{
   idempotencyKey: string | null;
 }>;
 
-export type VariableExpenseCreateResult = Readonly<{
+export type VariableExpenseRecord = Readonly<{
   expenseId: string;
   amountMinor: number;
   category: VariableExpenseCategory;
@@ -105,14 +105,69 @@ export type VariableExpenseCreateResult = Readonly<{
   adTargetingSeparated: true;
 }>;
 
+export type VariableExpenseCreateResult = VariableExpenseRecord;
+
+export type VariableExpenseListRequest = Readonly<{
+  page: number;
+  pageSize: number;
+  startDate?: string | undefined;
+  endDate?: string | undefined;
+  category?: VariableExpenseCategory | undefined;
+  status?: VariableExpenseStatus | undefined;
+  q?: string | undefined;
+}>;
+
+export type VariableExpenseListResult = Readonly<{
+  items: readonly VariableExpenseRecord[];
+  page: number;
+  pageSize: number;
+  total: number;
+}>;
+
+export type VariableExpenseUpdateRequest = Readonly<{
+  amountMinor?: number | undefined;
+  category?: VariableExpenseCategory | undefined;
+  title?: string | undefined;
+  spentAt?: string | undefined;
+  paymentMethod?: VariableExpensePaymentMethod | undefined;
+  merchantName?: string | null | undefined;
+  memo?: string | null | undefined;
+  tags?: readonly string[] | undefined;
+  receiptAttachmentId?: string | null | undefined;
+  dailyBudgetId?: string | null | undefined;
+}>;
+
+export type VariableExpenseDeleteRequest = Readonly<{
+  reason: string;
+}>;
+
+export type VariableExpenseDeleteResult = Readonly<{
+  expenseId: string;
+  status: "DELETED";
+  serverAuthority: true;
+  financialRawDataExposed: false;
+  adTargetingSeparated: true;
+}>;
+
 export type BudgetApiClient = Readonly<{
   getToday: () => Promise<BudgetApiResponse | null>;
   recalculate: (
     request: DailyBudgetRecalculateRequest,
   ) => Promise<BudgetRecalculateResult>;
+  listVariableExpenses: (
+    request: VariableExpenseListRequest,
+  ) => Promise<VariableExpenseListResult>;
   createVariableExpense: (
     request: VariableExpenseCreateRequest,
   ) => Promise<VariableExpenseCreateResult>;
+  updateVariableExpense: (
+    expenseId: string,
+    request: VariableExpenseUpdateRequest,
+  ) => Promise<VariableExpenseRecord>;
+  deleteVariableExpense: (
+    expenseId: string,
+    request: VariableExpenseDeleteRequest,
+  ) => Promise<VariableExpenseDeleteResult>;
   recordChecked: () => Promise<void>;
 }>;
 

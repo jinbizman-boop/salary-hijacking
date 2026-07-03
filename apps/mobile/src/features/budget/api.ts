@@ -4,6 +4,7 @@ import {
   BUDGET_SAFE_ERROR_MESSAGE,
   BUDGET_TODAY_PATH,
   VARIABLE_EXPENSE_CREATE_PATH,
+  VARIABLE_EXPENSE_LIST_PATH,
 } from "./constants";
 import {
   createBudgetActionHints,
@@ -19,15 +20,24 @@ import type {
   VariableExpenseCategory,
   VariableExpenseCreateRequest,
   VariableExpenseCreateResult,
+  VariableExpenseDeleteRequest,
+  VariableExpenseDeleteResult,
+  VariableExpenseListRequest,
+  VariableExpenseListResult,
   VariableExpensePaymentMethod,
+  VariableExpenseRecord,
   VariableExpenseSource,
   VariableExpenseStatus,
+  VariableExpenseUpdateRequest,
 } from "./types";
 import { redactBudgetError } from "./utils";
 import {
   parseDailyBudgetSnapshot,
   validateRecalculateRequest,
   validateVariableExpenseCreateRequest,
+  validateVariableExpenseDeleteRequest,
+  validateVariableExpenseListRequest,
+  validateVariableExpenseUpdateRequest,
 } from "./validation";
 
 export type BudgetApiOptions = Readonly<{
@@ -296,6 +306,101 @@ function normalizeVariableExpenseCreateResult(
   };
 }
 
+function normalizeVariableExpenseRecord(value: unknown): VariableExpenseRecord {
+  return normalizeVariableExpenseCreateResult({ data: value });
+}
+
+function normalizeVariableExpenseListResult(
+  value: unknown,
+): VariableExpenseListResult {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const data = value.data;
+  if (
+    !Array.isArray(data.items) ||
+    !isNonNegativeInteger(data.page) ||
+    data.page < 1 ||
+    !isNonNegativeInteger(data.pageSize) ||
+    data.pageSize < 1 ||
+    !isNonNegativeInteger(data.total)
+  ) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return {
+    items: data.items.map(normalizeVariableExpenseRecord),
+    page: data.page,
+    pageSize: data.pageSize,
+    total: data.total,
+  };
+}
+
+function normalizeVariableExpenseDeleteResult(
+  value: unknown,
+): VariableExpenseDeleteResult {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const data = value.data;
+  if (
+    typeof data.expenseId !== "string" ||
+    data.status !== "DELETED" ||
+    data.serverAuthority !== true ||
+    data.financialRawDataExposed !== false ||
+    data.adTargetingSeparated !== true
+  ) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return {
+    expenseId: data.expenseId,
+    status: "DELETED",
+    serverAuthority: true,
+    financialRawDataExposed: false,
+    adTargetingSeparated: true,
+  };
+}
+
+function variableExpensePath(expenseId: string): string {
+  const id = expenseId.trim();
+  if (!id) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_VARIABLE_EXPENSE_ID",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return `${VARIABLE_EXPENSE_LIST_PATH}/${encodeURIComponent(id)}`;
+}
+
+function listVariableExpensePath(request: VariableExpenseListRequest): string {
+  const params = new URLSearchParams({
+    page: String(request.page),
+    pageSize: String(request.pageSize),
+  });
+  if (request.startDate) params.set("startDate", request.startDate);
+  if (request.endDate) params.set("endDate", request.endDate);
+  if (request.category) params.set("category", request.category);
+  if (request.status) params.set("status", request.status);
+  if (request.q?.trim()) params.set("q", request.q.trim());
+  return `${VARIABLE_EXPENSE_LIST_PATH}?${params.toString()}`;
+}
+
 export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -362,6 +467,21 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
       return normalizeRecalculateResult(result);
     },
 
+    async listVariableExpenses(
+      listRequest: VariableExpenseListRequest,
+    ): Promise<VariableExpenseListResult> {
+      if (!validateVariableExpenseListRequest(listRequest)) {
+        throw new BudgetApiError(
+          0,
+          "BUDGET_INVALID_VARIABLE_EXPENSE_LIST",
+          BUDGET_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeVariableExpenseListResult(
+        await request(listVariableExpensePath(listRequest)),
+      );
+    },
+
     async createVariableExpense(
       variableExpenseRequest: VariableExpenseCreateRequest,
     ): Promise<VariableExpenseCreateResult> {
@@ -377,6 +497,42 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
         body: JSON.stringify(variableExpenseRequest),
       });
       return normalizeVariableExpenseCreateResult(result);
+    },
+
+    async updateVariableExpense(
+      expenseId: string,
+      updateRequest: VariableExpenseUpdateRequest,
+    ): Promise<VariableExpenseRecord> {
+      if (!validateVariableExpenseUpdateRequest(updateRequest)) {
+        throw new BudgetApiError(
+          0,
+          "BUDGET_INVALID_VARIABLE_EXPENSE_UPDATE",
+          BUDGET_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const result = await request(variableExpensePath(expenseId), {
+        method: "PATCH",
+        body: JSON.stringify(updateRequest),
+      });
+      return normalizeVariableExpenseCreateResult(result);
+    },
+
+    async deleteVariableExpense(
+      expenseId: string,
+      deleteRequest: VariableExpenseDeleteRequest,
+    ): Promise<VariableExpenseDeleteResult> {
+      if (!validateVariableExpenseDeleteRequest(deleteRequest)) {
+        throw new BudgetApiError(
+          0,
+          "BUDGET_INVALID_VARIABLE_EXPENSE_DELETE",
+          BUDGET_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const result = await request(variableExpensePath(expenseId), {
+        method: "DELETE",
+        body: JSON.stringify({ reason: deleteRequest.reason.trim() }),
+      });
+      return normalizeVariableExpenseDeleteResult(result);
     },
 
     async recordChecked(): Promise<void> {

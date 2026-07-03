@@ -33,7 +33,10 @@ import {
   calculateOfflineDailyBudgetPreview,
   parseKrwInputAmount,
 } from "../../features/budget/utils";
-import type { DailyBudgetSnapshot } from "../../features/budget/types";
+import type {
+  DailyBudgetSnapshot,
+  VariableExpenseRecord,
+} from "../../features/budget/types";
 import type { GrowthDashboard, GrowthTask } from "../../features/level/types";
 import type {
   PayrollCalculation,
@@ -83,6 +86,13 @@ type VariableExpenseEntry = Readonly<{
   id: string;
   name: string;
 }>;
+type VariableExpenseRow = VariableExpenseEntry &
+  Readonly<{
+    category: string;
+    paymentMethod: string;
+    source: "server" | "offline";
+    spentAt: string | null;
+  }>;
 type Mission = Readonly<{
   id: string;
   icon: string;
@@ -2079,10 +2089,21 @@ function SalaryHomeScreen(): React.ReactElement {
   const [savingExpense, setSavingExpense] = useState(false);
   const [serverBudgetSnapshot, setServerBudgetSnapshot] =
     useState<DailyBudgetSnapshot | null>(null);
+  const [serverVariableExpenses, setServerVariableExpenses] = useState<
+    readonly VariableExpenseRecord[]
+  >([]);
+  const [variableExpensesHydrated, setVariableExpensesHydrated] =
+    useState(false);
   const [salaryFixedExpenses, setSalaryFixedExpenses] = useState<
     readonly PlanFixedExpenseCommitment[]
   >([]);
   const [payingFixedExpenseId, setPayingFixedExpenseId] = useState<
+    string | null
+  >(null);
+  const [updatingVariableExpenseId, setUpdatingVariableExpenseId] = useState<
+    string | null
+  >(null);
+  const [deletingVariableExpenseId, setDeletingVariableExpenseId] = useState<
     string | null
   >(null);
 
@@ -2104,6 +2125,19 @@ function SalaryHomeScreen(): React.ReactElement {
     },
     [budgetApi],
   );
+
+  const refreshServerVariableExpenses = useCallback(async (): Promise<void> => {
+    try {
+      const response = await budgetApi.listVariableExpenses({
+        page: 1,
+        pageSize: 20,
+      });
+      setServerVariableExpenses(response.items);
+      setVariableExpensesHydrated(true);
+    } catch {
+      // Keep the existing offline preview when the API is unreachable.
+    }
+  }, [budgetApi]);
 
   useEffect(() => {
     if (Platform.OS !== "web" || typeof window === "undefined") return;
@@ -2129,6 +2163,10 @@ function SalaryHomeScreen(): React.ReactElement {
   useEffect(() => {
     void refreshServerBudgetSnapshot();
   }, [refreshServerBudgetSnapshot]);
+
+  useEffect(() => {
+    void refreshServerVariableExpenses();
+  }, [refreshServerVariableExpenses]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2166,6 +2204,9 @@ function SalaryHomeScreen(): React.ReactElement {
   const used = preview.spentToday;
   const remaining = preview.remainingToday;
   const allVariableExpenses = [...variableExpenses, ...addedExpenses];
+  const serverVariableExpenseRows = serverVariableExpenses.map(
+    variableExpenseRowFromServer,
+  );
   const salaryFixedExpenseRows = salaryFixedExpenses.map(
     fixedExpenseRowFromServer,
   );
@@ -2217,6 +2258,7 @@ function SalaryHomeScreen(): React.ReactElement {
           name: result.title,
         },
       ]);
+      void refreshServerVariableExpenses();
       void refreshServerBudgetSnapshot({ clearLocalPreview: true });
       setToast(
         `서버에 지출을 기록했어요. ${formatMoney(result.netAmountMinor)}원 기준으로 다시 계산했습니다.`,
@@ -2230,6 +2272,75 @@ function SalaryHomeScreen(): React.ReactElement {
       setSavingExpense(false);
     }
   };
+
+  const updateSalaryVariableExpense = useCallback(
+    async (item: VariableExpenseRow): Promise<void> => {
+      if (item.source !== "server" || updatingVariableExpenseId !== null)
+        return;
+      const amount = parseKrwInputAmount(expenseDraft);
+      if (amount === null) {
+        setToast("수정할 지출 금액을 0보다 큰 KRW 정수로 먼저 입력해 주세요.");
+        return;
+      }
+
+      try {
+        setUpdatingVariableExpenseId(item.id);
+        const updated = await budgetApi.updateVariableExpense(item.id, {
+          amountMinor: amount,
+          memo: "mobile salary home correction",
+          title: item.name,
+        });
+        setServerVariableExpenses((current) =>
+          current.map((expenseItem) =>
+            expenseItem.expenseId === updated.expenseId ? updated : expenseItem,
+          ),
+        );
+        setExpenseDraft("");
+        void refreshServerBudgetSnapshot({ clearLocalPreview: true });
+        setToast(
+          `${item.name} 지출을 ${formatMoney(updated.netAmountMinor)}원으로 수정했어요.`,
+        );
+      } catch {
+        setToast(
+          "지출 수정이 서버에 반영되지 않았어요. 연결을 확인한 뒤 다시 시도해 주세요.",
+        );
+      } finally {
+        setUpdatingVariableExpenseId(null);
+      }
+    },
+    [
+      budgetApi,
+      expenseDraft,
+      refreshServerBudgetSnapshot,
+      updatingVariableExpenseId,
+    ],
+  );
+
+  const deleteSalaryVariableExpense = useCallback(
+    async (item: VariableExpenseRow): Promise<void> => {
+      if (item.source !== "server" || deletingVariableExpenseId !== null)
+        return;
+
+      try {
+        setDeletingVariableExpenseId(item.id);
+        await budgetApi.deleteVariableExpense(item.id, {
+          reason: "mobile salary home user deleted variable expense",
+        });
+        setServerVariableExpenses((current) =>
+          current.filter((expenseItem) => expenseItem.expenseId !== item.id),
+        );
+        void refreshServerBudgetSnapshot({ clearLocalPreview: true });
+        setToast(`${item.name} 지출을 삭제했어요.`);
+      } catch {
+        setToast(
+          "지출 삭제가 서버에 반영되지 않았어요. 연결을 확인한 뒤 다시 시도해 주세요.",
+        );
+      } finally {
+        setDeletingVariableExpenseId(null);
+      }
+    },
+    [budgetApi, deletingVariableExpenseId, refreshServerBudgetSnapshot],
+  );
 
   const paySalaryFixedExpense = useCallback(
     async (item: PlanCommitmentRow): Promise<void> => {
@@ -2371,17 +2482,82 @@ function SalaryHomeScreen(): React.ReactElement {
       <AdSlot />
       <SectionCard>
         <Text style={styles.sectionTitle}>오늘 쓴 돈</Text>
-        {allVariableExpenses.map((item) => (
-          <ListRow
-            key={item.id}
-            icon={item.icon}
-            title={item.name}
-            meta={`${formatMoney(item.amount)}원`}
-          />
-        ))}
+        {serverVariableExpenseRows.length > 0 ? (
+          serverVariableExpenseRows.map((item) => (
+            <VariableExpenseActionRow
+              key={item.id}
+              deleting={deletingVariableExpenseId === item.id}
+              item={item}
+              onDelete={() => {
+                void deleteSalaryVariableExpense(item);
+              }}
+              onUpdate={() => {
+                void updateSalaryVariableExpense(item);
+              }}
+              updating={updatingVariableExpenseId === item.id}
+            />
+          ))
+        ) : variableExpensesHydrated ? (
+          <Text style={styles.bodyText}>
+            오늘 서버에 기록된 변동지출이 아직 없어요.
+          </Text>
+        ) : (
+          allVariableExpenses.map((item) => (
+            <ListRow
+              key={item.id}
+              icon={item.icon}
+              title={item.name}
+              meta={`${formatMoney(item.amount)}원`}
+            />
+          ))
+        )}
       </SectionCard>
       <GuardBox />
     </AppScreen>
+  );
+}
+
+function variableExpenseRowFromServer(
+  item: VariableExpenseRecord,
+): VariableExpenseRow {
+  return {
+    amount: item.netAmountMinor,
+    category: item.category,
+    icon: appIcons.expense,
+    id: item.expenseId,
+    name: item.title,
+    paymentMethod: item.paymentMethod,
+    source: "server",
+    spentAt: item.spentAt,
+  };
+}
+
+function VariableExpenseActionRow({
+  deleting,
+  item,
+  onDelete,
+  onUpdate,
+  updating,
+}: Readonly<{
+  deleting: boolean;
+  item: VariableExpenseRow;
+  onDelete: () => void;
+  onUpdate: () => void;
+  updating: boolean;
+}>): React.ReactElement {
+  return (
+    <View style={styles.listRow}>
+      <Text style={styles.listIcon}>{item.icon}</Text>
+      <View style={styles.flex}>
+        <Text style={styles.listTitle}>{item.name}</Text>
+        <Text style={styles.listMeta}>
+          {formatMoney(item.amount)}원 · 서버 기준 {item.category} ·{" "}
+          {item.paymentMethod}
+        </Text>
+      </View>
+      <SmallButton label={updating ? "수정중" : "수정"} onPress={onUpdate} />
+      <SmallButton label={deleting ? "삭제중" : "삭제"} onPress={onDelete} />
+    </View>
   );
 }
 

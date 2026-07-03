@@ -38,9 +38,12 @@ describe("budget hooks", () => {
       .mockRejectedValueOnce(new Error("network unavailable"));
     const api: BudgetApiClient = {
       createVariableExpense: jest.fn(),
+      deleteVariableExpense: jest.fn(),
       getToday,
+      listVariableExpenses: jest.fn(),
       recalculate: jest.fn(),
       recordChecked: jest.fn(),
+      updateVariableExpense: jest.fn(),
     };
     const { result } = renderHook(() =>
       useDailyBudget(api, { autoLoad: false }),
@@ -70,9 +73,12 @@ describe("budget hooks", () => {
     );
     const api: BudgetApiClient = {
       createVariableExpense: jest.fn(),
+      deleteVariableExpense: jest.fn(),
       getToday,
+      listVariableExpenses: jest.fn(),
       recalculate: jest.fn(),
       recordChecked: jest.fn(),
+      updateVariableExpense: jest.fn(),
     };
     const { result } = renderHook(() =>
       useDailyBudget(api, { autoLoad: false }),

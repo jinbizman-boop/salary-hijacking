@@ -197,6 +197,159 @@ describe("budget api", () => {
     });
   });
 
+  it("lists server-authoritative variable expenses for salary home hydration", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              items: [
+                {
+                  expenseId: "vex_list_1",
+                  amountMinor: 6500,
+                  category: "MEAL",
+                  title: "Lunch",
+                  spentAt: "2026-07-02T03:00:00.000Z",
+                  paymentMethod: "CARD",
+                  merchantName: null,
+                  memo: null,
+                  dailyBudgetId: null,
+                  source: "MANUAL",
+                  status: "POSTED",
+                  netAmountMinor: 6500,
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                  adTargetingSeparated: true,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.listVariableExpenses({ page: 1, pageSize: 20 }),
+    ).resolves.toMatchObject({
+      items: [
+        {
+          amountMinor: 6500,
+          expenseId: "vex_list_1",
+          serverAuthority: true,
+          financialRawDataExposed: false,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+    });
+
+    const [url, init] = fetcher.mock.calls[0] ?? [];
+    expect(url).toBe(
+      "https://api.example.test/api/v1/variable-expenses?page=1&pageSize=20",
+    );
+    expect(init?.method).toBeUndefined();
+    expect(new Headers(init?.headers).get("x-raw-financial-data-exposed")).toBe(
+      "false",
+    );
+  });
+
+  it("updates and deletes server-authoritative variable expenses without raw financial leakage", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              expenseId: "vex_edit_1",
+              amountMinor: 7000,
+              category: "ETC",
+              title: "Corrected expense",
+              spentAt: "2026-07-02T03:00:00.000Z",
+              paymentMethod: "ETC",
+              merchantName: null,
+              memo: null,
+              dailyBudgetId: null,
+              source: "MANUAL",
+              status: "POSTED",
+              netAmountMinor: 7000,
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+            },
+          }),
+          { status: 200 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              expenseId: "vex_edit_1",
+              status: "DELETED",
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.updateVariableExpense("vex_edit_1", {
+        amountMinor: 7000,
+        memo: "mobile correction",
+        title: "Corrected expense",
+      }),
+    ).resolves.toMatchObject({
+      amountMinor: 7000,
+      expenseId: "vex_edit_1",
+      serverAuthority: true,
+    });
+    await expect(
+      api.deleteVariableExpense("vex_edit_1", {
+        reason: "mobile user deleted variable expense",
+      }),
+    ).resolves.toMatchObject({
+      expenseId: "vex_edit_1",
+      status: "DELETED",
+      serverAuthority: true,
+      financialRawDataExposed: false,
+    });
+
+    expect(fetcher.mock.calls[0]?.[0]).toBe(
+      "https://api.example.test/api/v1/variable-expenses/vex_edit_1",
+    );
+    expect(fetcher.mock.calls[0]?.[1]?.method).toBe("PATCH");
+    expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
+      amountMinor: 7000,
+      memo: "mobile correction",
+      title: "Corrected expense",
+    });
+    expect(fetcher.mock.calls[1]?.[0]).toBe(
+      "https://api.example.test/api/v1/variable-expenses/vex_edit_1",
+    );
+    expect(fetcher.mock.calls[1]?.[1]?.method).toBe("DELETE");
+    expect(JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body))).toEqual({
+      reason: "mobile user deleted variable expense",
+    });
+  });
+
   it("rejects invalid variable expense payloads before network access", async () => {
     const fetcher = jest.fn<
       Promise<Response>,
