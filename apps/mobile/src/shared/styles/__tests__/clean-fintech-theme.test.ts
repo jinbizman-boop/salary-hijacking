@@ -819,6 +819,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("myLevelGrowthApi.listTasks");
     expect(cleanScreens).toMatch(/myLevelGrowthApi\s*\.?\s*recordTaskProgress/);
     expect(cleanScreens).toContain('profileRouter.push("/profile/level")');
+    expect(cleanScreens).toContain("closeMyLevelProgress");
+    expect(cleanScreens).toContain('myLevelRouter.replace("/profile")');
+    expect(cleanScreens).toContain("onPress={closeMyLevelProgress}");
     expect(cleanScreens).toContain("serverAuthority=true");
     expect(cleanScreens).toContain("rawFinancialDataExposed=false");
     expect(source("profile/level.tsx")).toContain(
@@ -837,6 +840,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fallbackProfileSnapshot.activities");
     expect(cleanScreens).toContain("rawFinancialDataExposed");
     expect(cleanScreens).toContain("adsFinancialTargetingUsed");
+    expect(cleanScreens).toContain("profileNoticesRouter");
+    expect(cleanScreens).toContain("closeProfileNotices");
+    expect(cleanScreens).toContain('profileNoticesRouter.replace("/profile")');
+    expect(cleanScreens).toContain("onPress={closeProfileNotices}");
     expect(source("profile/notices.tsx")).toContain(
       "<CleanFintechProfileNoticesScreen />",
     );
@@ -938,6 +945,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("myCommunityService.listMyPosts");
     expect(cleanScreens).toContain("myCommunityService.listMyComments");
     expect(cleanScreens).toContain('profileRouter.push("/profile/community")');
+    expect(cleanScreens).toContain("closeMyCommunityScreen");
+    expect(cleanScreens).toContain('myCommunityRouter.replace("/profile")');
+    expect(cleanScreens).toContain("onPress={closeMyCommunityScreen}");
     expect(cleanScreens).toContain("내 게시글 관리");
     expect(cleanScreens).toContain("rawFinancialDataExposed");
     expect(cleanScreens).toContain("adsFinancialTargetingUsed");

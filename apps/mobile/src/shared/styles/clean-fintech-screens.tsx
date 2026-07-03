@@ -1567,6 +1567,7 @@ export function CleanFintechSettingsScreen({
 }
 
 export function CleanFintechProfileNoticesScreen(): React.ReactElement {
+  const profileNoticesRouter = useRouter();
   const profileNoticesApi = useMemo(() => createMobileProfileApi(), []);
   const [profileActivities, setProfileActivities] = useState<
     readonly ProfileActivity[]
@@ -1613,6 +1614,9 @@ export function CleanFintechProfileNoticesScreen(): React.ReactElement {
   const visibleActivities = profileActivities.length
     ? profileActivities
     : fallbackProfileSnapshot.activities;
+  const closeProfileNotices = useCallback(() => {
+    profileNoticesRouter.replace("/profile");
+  }, [profileNoticesRouter]);
 
   return (
     <AppScreen title="공지사항" subtitle="MY 활동과 서비스 안내">
@@ -1641,6 +1645,7 @@ export function CleanFintechProfileNoticesScreen(): React.ReactElement {
           </Text>
         )}
       </SectionCard>
+      <SmallButton label="MY로 돌아가기" onPress={closeProfileNotices} />
       <GuardBox />
     </AppScreen>
   );
@@ -1829,6 +1834,9 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
     },
     [myCommunityRouter],
   );
+  const closeMyCommunityScreen = useCallback(() => {
+    myCommunityRouter.replace("/profile");
+  }, [myCommunityRouter]);
 
   return (
     <AppScreen title="내 게시글 관리" subtitle="내 커뮤니티 활동">
@@ -1865,6 +1873,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
           />
         ))}
       </SectionCard>
+      <SmallButton label="MY로 돌아가기" onPress={closeMyCommunityScreen} />
       <GuardBox />
     </AppScreen>
   );
@@ -3838,6 +3847,9 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
   const totalExp = myLevelDashboard?.profile.totalExp ?? 380;
   const level = myLevelDashboard?.profile.level ?? 18;
   const progress = Math.min(100, (totalExp / 999) * 100);
+  const closeMyLevelProgress = useCallback(() => {
+    myLevelRouter.replace("/profile");
+  }, [myLevelRouter]);
 
   const completeMyLevelTask = useCallback(
     (mission: Mission): void => {
@@ -3937,6 +3949,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
           />
         ))}
       </SectionCard>
+      <SmallButton label="MY로 돌아가기" onPress={closeMyLevelProgress} />
       <GuardBox />
     </AppScreen>
   );
