@@ -368,12 +368,28 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("openMyLevelProgress");
     expect(cleanScreens).toContain('profileRouter.push("/level")');
     expect(cleanScreens).toContain("openProfileNotices");
-    expect(cleanScreens).toContain('profileRouter.push("/notifications")');
+    expect(cleanScreens).toContain('profileRouter.push("/profile/notices")');
     expect(cleanScreens).toContain("openSupportInquiry");
     expect(cleanScreens).toContain("onPress={openMyCommunityPosts}");
     expect(cleanScreens).toContain("onPress={openMyLevelProgress}");
     expect(cleanScreens).toContain("onPress={openSupportInquiry}");
     expect(cleanScreens).toContain("onPress={openProfileNotices}");
+  });
+
+  it("keeps MY notices routed to a server-backed profile activity screen", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("CleanFintechProfileNoticesScreen");
+    expect(cleanScreens).toContain("profileNoticesApi.getProfile");
+    expect(cleanScreens).toContain("profileActivities");
+    expect(cleanScreens).toContain("fallbackProfileSnapshot.activities");
+    expect(cleanScreens).toContain("rawFinancialDataExposed");
+    expect(cleanScreens).toContain("adsFinancialTargetingUsed");
+    expect(source("profile/notices.tsx")).toContain(
+      "<CleanFintechProfileNoticesScreen />",
+    );
   });
 
   it("keeps MY profile and account settings entry points routed", () => {

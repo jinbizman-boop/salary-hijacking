@@ -44,6 +44,7 @@ import type {
   PlanSavingsGoalCommitment,
 } from "../../features/plan/types";
 import type {
+  ProfileActivity,
   ProfileSnapshot,
   ProfileSupportTicketCategory,
 } from "../../features/profile/types";
@@ -1059,6 +1060,86 @@ export function CleanFintechSettingsScreen({
           실제 수정 저장은 배포 API, DB, 인증 세션, 운영 QA가 검증된 뒤 서버
           권위 흐름으로 확정합니다.
         </Text>
+      </SectionCard>
+      <GuardBox />
+    </AppScreen>
+  );
+}
+
+export function CleanFintechProfileNoticesScreen(): React.ReactElement {
+  const profileNoticesApi = useMemo(() => createMobileProfileApi(), []);
+  const [profileActivities, setProfileActivities] = useState<
+    readonly ProfileActivity[]
+  >(fallbackProfileSnapshot.activities);
+  const [toast, setToast] = useState(
+    "공지사항을 서버 MY 활동에서 불러오는 중이에요.",
+  );
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function hydrateProfileNotices(): Promise<void> {
+      try {
+        const snapshot = await profileNoticesApi.getProfile();
+        if (!mounted) return;
+        const safeActivities = snapshot.activities.filter(
+          (activity) =>
+            !activity.rawFinancialDataExposed &&
+            !activity.rawPersonalDataExposed &&
+            !activity.adsFinancialTargetingUsed,
+        );
+        setProfileActivities(
+          safeActivities.length
+            ? safeActivities
+            : fallbackProfileSnapshot.activities,
+        );
+        setToast("서버 공지사항을 개인정보 보호 기준으로 동기화했어요.");
+      } catch {
+        if (!mounted) return;
+        setProfileActivities(fallbackProfileSnapshot.activities);
+        setToast(
+          "서버 공지사항을 불러오지 못해 안전한 기본 안내를 보여드려요.",
+        );
+      }
+    }
+
+    void hydrateProfileNotices();
+
+    return () => {
+      mounted = false;
+    };
+  }, [profileNoticesApi]);
+
+  const visibleActivities = profileActivities.length
+    ? profileActivities
+    : fallbackProfileSnapshot.activities;
+
+  return (
+    <AppScreen title="공지사항" subtitle="MY 활동과 서비스 안내">
+      <Toast message={toast} />
+      <SectionCard>
+        <Text style={styles.sectionTitle}>프로필 활동 공지</Text>
+        {visibleActivities.length ? (
+          visibleActivities.map((activity) => (
+            <ListRow
+              icon={activity.kind === "SECURITY" ? "🔐" : appIcons.notification}
+              key={activity.id}
+              meta={`${activity.description} · ${formatNoticeDate(
+                activity.createdAt,
+              )} · rawFinancialDataExposed=${String(
+                activity.rawFinancialDataExposed,
+              )} · adsFinancialTargetingUsed=${String(
+                activity.adsFinancialTargetingUsed,
+              )}`}
+              title={activity.title}
+            />
+          ))
+        ) : (
+          <Text style={styles.bodyText}>
+            아직 표시할 서버 공지사항이 없어요. 중요한 서비스·보안 안내는 금융,
+            개인정보, 토큰, 광고 타겟팅 원문 없이 이곳에 표시됩니다.
+          </Text>
+        )}
       </SectionCard>
       <GuardBox />
     </AppScreen>
@@ -2852,7 +2933,7 @@ function ProfileScreen(): React.ReactElement {
   }, [profileRouter]);
 
   const openProfileNotices = useCallback(() => {
-    profileRouter.push("/notifications");
+    profileRouter.push("/profile/notices");
   }, [profileRouter]);
 
   const openProfileSettings = useCallback(() => {
@@ -3456,6 +3537,15 @@ function nonNegative(value: string): number {
 
 function formatMoney(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(Math.trunc(value));
+}
+
+function formatNoticeDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "날짜 확인 중";
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
 
 const theme = salaryHijackingTheme;
