@@ -3953,6 +3953,28 @@ function NotificationsScreen(): React.ReactElement {
     [notificationsApi],
   );
 
+  const deleteNotification = useCallback(
+    (item: NotificationScreenItem) => {
+      setServerNotifications((current) =>
+        current.filter((candidate) => candidate.id !== item.id),
+      );
+      if (item.status === "UNREAD") {
+        setUnreadCount((current) => Math.max(0, current - 1));
+      }
+      void notificationsApi
+        .delete(item.id)
+        .then(() => {
+          setSyncLabel("서버에 알림 삭제를 저장했어요.");
+        })
+        .catch(() => {
+          setSyncLabel(
+            "알림 삭제를 서버에 저장하지 못했어요. 다시 확인해 주세요.",
+          );
+        });
+    },
+    [notificationsApi],
+  );
+
   return (
     <AppScreen title="알림" subtitle="새로운 알림이 있어요">
       <Toast message={`${syncLabel} · 읽지 않은 알림 ${unreadCount}개`} />
@@ -3974,6 +3996,10 @@ function NotificationsScreen(): React.ReactElement {
                   <SmallButton
                     label="Archive"
                     onPress={() => archiveNotification(item)}
+                  />
+                  <SmallButton
+                    label="Delete"
+                    onPress={() => deleteNotification(item)}
                   />
                 </View>
               }
@@ -4003,6 +4029,10 @@ function NotificationsScreen(): React.ReactElement {
                   <SmallButton
                     label="Archive"
                     onPress={() => archiveNotification(item)}
+                  />
+                  <SmallButton
+                    label="Delete"
+                    onPress={() => deleteNotification(item)}
                   />
                 </View>
               }

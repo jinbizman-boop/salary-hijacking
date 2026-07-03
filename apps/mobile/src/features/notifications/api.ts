@@ -360,10 +360,7 @@ function normalizeReadAllResult(value: unknown): NotificationReadAllResult {
   };
 }
 
-function notificationPath(
-  notificationId: string,
-  action: "archive" | "read",
-): string {
+function notificationResourcePath(notificationId: string): string {
   if (!/^[A-Za-z0-9_-]+$/u.test(notificationId)) {
     throw new NotificationsApiError(
       0,
@@ -371,7 +368,14 @@ function notificationPath(
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  return `${NOTIFICATIONS_PATH}/${encodeURIComponent(notificationId)}/${action}`;
+  return `${NOTIFICATIONS_PATH}/${encodeURIComponent(notificationId)}`;
+}
+
+function notificationPath(
+  notificationId: string,
+  action: "archive" | "read",
+): string {
+  return `${notificationResourcePath(notificationId)}/${action}`;
 }
 
 export function createNotificationsApi(
@@ -464,6 +468,20 @@ export function createNotificationsApi(
           method: "POST",
         },
       );
+      if (!isRecord(result) || !("data" in result)) {
+        throw new NotificationsApiError(
+          0,
+          "NOTIFICATION_INVALID_RESPONSE",
+          NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeNotificationItem(result.data);
+    },
+
+    async delete(notificationId: string): Promise<NotificationItem> {
+      const result = await request(notificationResourcePath(notificationId), {
+        method: "DELETE",
+      });
       if (!isRecord(result) || !("data" in result)) {
         throw new NotificationsApiError(
           0,

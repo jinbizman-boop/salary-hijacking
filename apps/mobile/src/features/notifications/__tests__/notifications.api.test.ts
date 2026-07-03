@@ -179,6 +179,42 @@ describe("notifications api", () => {
     );
   });
 
+  it("deletes a notification through the server without raw payload exposure", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            ...serverNotification,
+            archivedAt: "2026-07-02T09:20:00.000Z",
+            status: "DELETED",
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.delete("ntf_budget_warning")).resolves.toMatchObject({
+      notificationId: "ntf_budget_warning",
+      status: "DELETED",
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/notifications/ntf_budget_warning",
+    );
+    expect(calls[0]?.method).toBe("DELETE");
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-push-token-exposed")).toBe("false");
+    expect(String(calls[0]?.body)).not.toMatch(
+      /salary|expense|saving|token|device/i,
+    );
+  });
+
   it("rejects sensitive or invalid server payloads before the screen consumes them", async () => {
     const api = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",
