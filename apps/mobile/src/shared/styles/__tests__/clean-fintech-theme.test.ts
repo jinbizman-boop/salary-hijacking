@@ -858,6 +858,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setServerCommunityDetail((current)");
   });
 
+  it("keeps community detail share action wired to the native app share sheet", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("Share,");
+    expect(cleanScreens).toContain("shareCommunityPost");
+    expect(cleanScreens).toContain("Share.share({");
+    expect(cleanScreens).toContain("https://salaryhijacking.com/community/");
+    expect(cleanScreens).toContain("onPress={shareCommunityPost}");
+    expect(cleanScreens).toContain("공유할 수 있는 화면을 열었어요.");
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

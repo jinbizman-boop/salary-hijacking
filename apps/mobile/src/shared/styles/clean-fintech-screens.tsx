@@ -7,6 +7,7 @@ import {
   Pressable,
   SafeAreaView,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -1732,6 +1733,21 @@ export function CleanFintechPostDetailScreen({
       });
   }, [activeDetail.post.id, detailCommunityService, liked]);
 
+  const shareCommunityPost = useCallback((): void => {
+    const targetPostId = encodeURIComponent(activeDetail.post.id);
+    const url = `https://salaryhijacking.com/community/${targetPostId}`;
+    const title = activeDetail.post.title;
+
+    setToast("공유할 수 있는 화면을 열었어요.");
+    void Share.share({
+      message: `${title}\n${url}`,
+      title,
+      url,
+    }).catch(() => {
+      setToast("공유 화면을 열지 못했어요. 다시 시도해 주세요.");
+    });
+  }, [activeDetail.post.id, activeDetail.post.title]);
+
   const submitCommunityComment = useCallback((): void => {
     const content = commentDraft.trim();
     if (!content || !commentReady || commentSubmitting) return;
@@ -1961,7 +1977,7 @@ export function CleanFintechPostDetailScreen({
         <Text style={styles.bodyText}>{post.summary}</Text>
         <View style={styles.attachmentRow}>
           <SmallButton label={post.stats} />
-          <SmallButton label="공유" />
+          <SmallButton label="공유" onPress={shareCommunityPost} />
           <SmallButton label="신고" onPress={reportCommunityPost} />
           <SmallButton label="삭제" onPress={deleteCommunityPost} />
         </View>
@@ -1999,7 +2015,7 @@ export function CleanFintechPostDetailScreen({
             </Text>
           </Pressable>
           <SmallButton label="댓글" />
-          <SmallButton label="공유" />
+          <SmallButton label="공유" onPress={shareCommunityPost} />
           <SmallButton
             label={postEditing ? "수정 중" : "수정 저장"}
             onPress={updateCommunityPost}
