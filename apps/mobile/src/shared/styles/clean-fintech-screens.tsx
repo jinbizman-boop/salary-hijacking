@@ -5266,8 +5266,18 @@ function LoginScreen(): React.ReactElement {
         rememberMe: true,
       });
       if (response.data?.status === "AUTHENTICATED") {
-        setToast("서버 인증이 완료됐어요. 급여 홈 데이터를 불러올 수 있어요.");
-        loginRouter.replace("/salary");
+        if (!response.data.user.emailVerified) {
+          setToast("서버 인증이 완료됐어요. 이메일 인증을 먼저 확인해 주세요.");
+          loginRouter.replace("/(auth)/verify-email");
+        } else if (!response.data.user.onboardingCompleted) {
+          setToast("서버 인증이 완료됐어요. 급여 계획을 먼저 설정해 주세요.");
+          loginRouter.replace("/onboarding");
+        } else {
+          setToast(
+            "서버 인증이 완료됐어요. 급여 홈 데이터를 불러올 수 있어요.",
+          );
+          loginRouter.replace("/salary");
+        }
       } else if (response.data?.status === "MFA_REQUIRED") {
         setToast("추가 인증이 필요해요. 등록된 인증 수단을 확인해 주세요.");
       } else {
@@ -5280,7 +5290,7 @@ function LoginScreen(): React.ReactElement {
     } finally {
       setSubmitting(false);
     }
-  }, [email, loginAuthApi, password, submitting, valid]);
+  }, [email, loginAuthApi, loginRouter, password, submitting, valid]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

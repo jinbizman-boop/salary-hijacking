@@ -330,6 +330,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("signupAuthApi.register");
     expect(cleanScreens).toContain("AUTHENTICATED");
     expect(cleanScreens).toContain('loginRouter.replace("/salary")');
+    expect(cleanScreens).toContain(
+      'loginRouter.replace("/(auth)/verify-email")',
+    );
+    expect(cleanScreens).toContain('loginRouter.replace("/onboarding")');
     expect(cleanScreens).toContain("signupRouter");
     expect(cleanScreens).toContain('signupRouter.replace("/salary")');
     expect(cleanScreens).toContain("MFA_REQUIRED");
