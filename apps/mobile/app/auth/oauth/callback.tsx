@@ -14,6 +14,26 @@ function paramValue(value: string | readonly string[] | undefined): string {
   return typeof raw === "string" ? raw.trim() : "";
 }
 
+function routeAuthenticatedOAuthResult(
+  router: ReturnType<typeof useRouter>,
+  response: Awaited<
+    ReturnType<ReturnType<typeof createMobileAuthApi>["completeOAuth"]>
+  >,
+): void {
+  if (response.data?.status !== "AUTHENTICATED") {
+    throw new Error("OAuth callback did not authenticate the session.");
+  }
+  if (!response.data.user.emailVerified) {
+    router.replace("/(auth)/verify-email");
+    return;
+  }
+  if (!response.data.user.onboardingCompleted) {
+    router.replace("/onboarding");
+    return;
+  }
+  router.replace("/salary");
+}
+
 export default function OAuthCallbackScreen(): React.ReactElement {
   const router = useRouter();
   const params = useLocalSearchParams<{
@@ -42,11 +62,8 @@ export default function OAuthCallbackScreen(): React.ReactElement {
           code,
           state,
         });
-        if (response.data?.status !== "AUTHENTICATED") {
-          throw new Error("OAuth callback did not authenticate the session.");
-        }
         if (active) setStatus("AUTHENTICATED");
-        router.replace("/salary");
+        routeAuthenticatedOAuthResult(router, response);
       } catch {
         if (active) setStatus("FAILED");
         router.replace("/(auth)/login");
@@ -124,10 +141,12 @@ export function assertMobileOAuthCallbackCompleteness(): {
     "createMobileAuthApi",
     "completeOAuth",
     "AUTHENTICATED",
+    'router.replace("/(auth)/verify-email")',
+    'router.replace("/onboarding")',
     'router.replace("/salary")',
     'router.replace("/(auth)/login")',
     "rawVerifierNotRendered",
   ] as const;
 
-  return { ok: checks.length >= 8, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };
 }
