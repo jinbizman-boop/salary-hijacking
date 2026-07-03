@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import * as Linking from "expo-linking";
 import * as SecureStore from "expo-secure-store";
@@ -1866,6 +1866,7 @@ export function CleanFintechPostDetailScreen({
   >([]);
   const [commentDraft, setCommentDraft] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const commentInputRef = useRef<TextInput | null>(null);
   const [postEditTitle, setPostEditTitle] = useState(
     fallbackPostDetail.post.title,
   );
@@ -1983,6 +1984,11 @@ export function CleanFintechPostDetailScreen({
       setToast("공유 화면을 열지 못했어요. 다시 시도해 주세요.");
     });
   }, [activeDetail.post.id, activeDetail.post.title]);
+
+  const focusCommunityCommentInput = useCallback((): void => {
+    commentInputRef.current?.focus();
+    setToast("댓글 입력칸으로 이동했어요.");
+  }, []);
 
   const submitCommunityComment = useCallback((): void => {
     const content = commentDraft.trim();
@@ -2212,7 +2218,7 @@ export function CleanFintechPostDetailScreen({
         <Text style={styles.postDetailTitle}>{post.title}</Text>
         <Text style={styles.bodyText}>{post.summary}</Text>
         <View style={styles.attachmentRow}>
-          <SmallButton label={post.stats} />
+          <StatusPill label={post.stats} />
           <SmallButton label="공유" onPress={shareCommunityPost} />
           <SmallButton label="신고" onPress={reportCommunityPost} />
           <SmallButton label="삭제" onPress={deleteCommunityPost} />
@@ -2251,7 +2257,7 @@ export function CleanFintechPostDetailScreen({
               {liked ? "좋아요 취소" : "좋아요"}
             </Text>
           </Pressable>
-          <SmallButton label="댓글" />
+          <SmallButton label="댓글" onPress={focusCommunityCommentInput} />
           <SmallButton label="공유" onPress={shareCommunityPost} />
           <SmallButton
             label={postEditing ? "수정 중" : "수정 저장"}
@@ -2309,6 +2315,7 @@ export function CleanFintechPostDetailScreen({
             onChangeText={setCommentDraft}
             placeholder="민감 정보 없이 댓글을 입력하세요"
             placeholderTextColor={theme.color.text.disabled}
+            ref={commentInputRef}
             style={styles.input}
             value={commentDraft}
           />
@@ -5683,7 +5690,7 @@ function ToggleRow({
 function SmallButton({
   label,
   onPress,
-}: Readonly<{ label: string; onPress?: () => void }>): React.ReactElement {
+}: Readonly<{ label: string; onPress: () => void }>): React.ReactElement {
   return (
     <Pressable
       accessibilityRole="button"

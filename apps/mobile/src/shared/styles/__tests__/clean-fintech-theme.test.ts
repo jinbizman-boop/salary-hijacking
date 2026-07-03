@@ -1122,6 +1122,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps community detail chips from rendering no-op buttons", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("commentInputRef");
+    expect(cleanScreens).toContain("focusCommunityCommentInput");
+    expect(cleanScreens).toContain("ref={commentInputRef}");
+    expect(cleanScreens).toContain('label="댓글"');
+    expect(cleanScreens).toContain("onPress={focusCommunityCommentInput}");
+    const smallButtonSource =
+      cleanScreens.match(
+        /function SmallButton\(\{[\s\S]*?function AdSlot/u,
+      )?.[0] ?? "";
+
+    expect(smallButtonSource).toContain(
+      "}: Readonly<{ label: string; onPress: () => void }>): React.ReactElement",
+    );
+    expect(cleanScreens).not.toContain("<SmallButton label={post.stats} />");
+    expect(cleanScreens).not.toContain('<SmallButton label="댓글" />');
+    expect(smallButtonSource).not.toContain("onPress?: () => void");
+  });
+
   it("keeps community detail comments submitted through the server comment service", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
