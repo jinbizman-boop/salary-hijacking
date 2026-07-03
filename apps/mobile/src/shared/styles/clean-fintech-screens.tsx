@@ -2404,6 +2404,25 @@ function SalaryHomeScreen(): React.ReactElement {
       .finally(() => setUploadingExpenseReceipt(false));
   }, [salaryUploadsApi, uploadingExpenseReceipt]);
 
+  const attachReceiptToCreatedExpense = useCallback(
+    async (expenseId: string): Promise<boolean> => {
+      if (!uploadedExpenseReceipt) return true;
+
+      try {
+        await salaryUploadsApi.attachToVariableExpense(
+          uploadedExpenseReceipt.attachmentId,
+          expenseId,
+        );
+        setUploadedExpenseReceipt(null);
+        return true;
+      } catch {
+        setUploadedExpenseReceipt(null);
+        return false;
+      }
+    },
+    [salaryUploadsApi, uploadedExpenseReceipt],
+  );
+
   const handleAddExpense = async (): Promise<void> => {
     const amount = parseKrwInputAmount(expenseDraft);
     if (amount === null) {
@@ -2442,6 +2461,9 @@ function SalaryHomeScreen(): React.ReactElement {
       if (result.serverAuthority !== true) {
         throw new Error("serverAuthority response required");
       }
+      const receiptAttached = await attachReceiptToCreatedExpense(
+        result.expenseId,
+      );
       setAddedExpenses((current) => [
         ...current,
         {
@@ -2451,15 +2473,14 @@ function SalaryHomeScreen(): React.ReactElement {
           name: result.title,
         },
       ]);
-      if (uploadedExpenseReceipt) {
-        await salaryUploadsApi.attachToVariableExpense(
-          uploadedExpenseReceipt.attachmentId,
-          result.expenseId,
-        );
-        setUploadedExpenseReceipt(null);
-      }
       void refreshServerVariableExpenses();
       void refreshServerBudgetSnapshot({ clearLocalPreview: true });
+      if (!receiptAttached) {
+        setToast(
+          "지출은 서버에 저장됐지만 영수증 연결은 실패했어요. 영수증은 다시 첨부해 주세요.",
+        );
+        return;
+      }
       setToast(
         `서버에 지출을 기록했어요. ${formatMoney(result.netAmountMinor)}원 기준으로 다시 계산했습니다.`,
       );
