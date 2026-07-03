@@ -1549,6 +1549,10 @@ test("passes when mobile local e2e APK build delegates to the guarded wrapper", 
               "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
             "build:e2e:android:preflight":
               "node scripts/eas-local-android-build.mjs --check --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:local-debug":
+              "node scripts/expo-local-android-debug-build.mjs --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:local-debug:preflight":
+              "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
             "build:production:android":
               "eas build --platform android --profile production --non-interactive",
           },
@@ -1572,6 +1576,13 @@ const args = [
   "--non-interactive",
 ];
 console.log(process.env.JAVA_HOME, args.join(" "));
+`,
+      "apps/mobile/scripts/expo-local-android-debug-build.mjs": `
+const prebuildArgs = ["prebuild", "--platform", "android", "--no-install"];
+const gradleArgs = ["assembleDebug"];
+const debugApkPath = "android/app/build/outputs/apk/debug/app-debug.apk";
+const outputPath = "build/e2e/android/salary-hijacking-e2e.apk";
+console.log(prebuildArgs, gradleArgs, debugApkPath, outputPath);
 `,
     });
 

@@ -691,6 +691,9 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
   }
 
   const script = packageJson?.scripts?.["build:e2e:android:local"];
+  const debugScript = packageJson?.scripts?.["build:e2e:android:local-debug"];
+  const debugPreflightScript =
+    packageJson?.scripts?.["build:e2e:android:local-debug:preflight"];
   const preflightScript = packageJson?.scripts?.["build:e2e:android:preflight"];
   const expectedOutput = "build/e2e/android/salary-hijacking-e2e.apk";
   const requiredParts = [
@@ -759,6 +762,45 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
         `${wrapperRelativePath}: wrapper must configure JAVA_HOME for local Android EAS builds`,
       );
     }
+  }
+
+  const debugWrapperRelativePath =
+    "apps/mobile/scripts/expo-local-android-debug-build.mjs";
+  const debugWrapperSource = fileExists(rootDir, debugWrapperRelativePath)
+    ? readText(rootDir, debugWrapperRelativePath)
+    : "";
+  if (
+    typeof debugScript !== "string" ||
+    !debugScript.includes("scripts/expo-local-android-debug-build.mjs") ||
+    !debugScript.includes(expectedOutput)
+  ) {
+    failures.push(
+      `${relativePath}: scripts.build:e2e:android:local-debug must build a no-EAS local debug APK at ${expectedOutput}`,
+    );
+  }
+  if (
+    typeof debugPreflightScript !== "string" ||
+    !debugPreflightScript.includes(
+      "scripts/expo-local-android-debug-build.mjs",
+    ) ||
+    !debugPreflightScript.includes("--check")
+  ) {
+    failures.push(
+      `${relativePath}: scripts.build:e2e:android:local-debug:preflight must check the no-EAS local debug APK builder`,
+    );
+  }
+  for (const requiredPart of [
+    '"prebuild"',
+    '"--platform"',
+    '"android"',
+    '"assembleDebug"',
+    "app-debug.apk",
+    expectedOutput,
+  ]) {
+    if (debugWrapperSource.includes(requiredPart)) continue;
+    failures.push(
+      `${debugWrapperRelativePath}: no-EAS debug APK wrapper must include ${requiredPart}`,
+    );
   }
 }
 

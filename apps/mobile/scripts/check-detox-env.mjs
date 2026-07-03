@@ -12,6 +12,7 @@ const nextCommands = [];
 
 if (configuration.startsWith("android")) {
   nextCommands.push(
+    "corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local-debug",
     "corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local",
     "corepack pnpm --filter @salary-hijacking/mobile run test:e2e:android",
     "or build remotely and import the APK:",

@@ -34,6 +34,8 @@
     "test:e2e:android": "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
     "e2e:android:import-apk": "node scripts/import-e2e-apk.mjs",
     "build:e2e:android:preflight": "node scripts/eas-local-android-build.mjs --check --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+    "build:e2e:android:local-debug": "node scripts/expo-local-android-debug-build.mjs --output build/e2e/android/salary-hijacking-e2e.apk",
+    "build:e2e:android:local-debug:preflight": "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
     "export": "expo export",
     "export:web": "expo export --platform web",
     "build:dev:android": "eas build --platform android --profile development --non-interactive",

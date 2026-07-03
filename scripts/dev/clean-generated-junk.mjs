@@ -11,6 +11,7 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   ".metro-cache",
   ".next",
   ".open-next",
+  ".tmp",
   ".turbo",
   ".vercel",
   ".worker-build",
@@ -34,6 +35,7 @@ const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
 
 const PROTECTED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
 const PROTECTED_RELATIVE_PATHS = new Set(["scripts/build"]);
+const DEPENDENCY_NATIVE_JUNK_RELATIVE_PATHS = [".cxx", ".gradle", "build"];
 
 const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^salary-hijacking/i,
@@ -196,6 +198,39 @@ async function collectRepositoryJunkTargets(rootDir) {
   return targets;
 }
 
+async function collectDependencyNativeJunkTargets(rootDir) {
+  const targets = [];
+  const pnpmRoot = path.join(path.resolve(rootDir), "node_modules", ".pnpm");
+  if (!(await pathExists(pnpmRoot))) return targets;
+
+  const packageEntries = await fs.promises.readdir(pnpmRoot, {
+    withFileTypes: true,
+  });
+  for (const packageEntry of packageEntries) {
+    if (!packageEntry.isDirectory()) continue;
+    const moduleRoot = path.join(pnpmRoot, packageEntry.name, "node_modules");
+    if (!(await pathExists(moduleRoot))) continue;
+
+    const moduleEntries = await fs.promises.readdir(moduleRoot, {
+      withFileTypes: true,
+    });
+    for (const moduleEntry of moduleEntries) {
+      if (!moduleEntry.isDirectory()) continue;
+      const androidDir = path.join(moduleRoot, moduleEntry.name, "android");
+      if (!(await pathExists(androidDir))) continue;
+
+      for (const relativeJunkPath of DEPENDENCY_NATIVE_JUNK_RELATIVE_PATHS) {
+        const junkPath = path.join(androidDir, relativeJunkPath);
+        if (await pathExists(junkPath)) {
+          targets.push({ kind: "dependency", path: junkPath });
+        }
+      }
+    }
+  }
+
+  return targets;
+}
+
 function defaultTempRoots() {
   const candidates = [
     process.env.TEMP,
@@ -246,6 +281,7 @@ export async function cleanGeneratedJunk(options = {}) {
 
   const planned = [
     ...(await collectRepositoryJunkTargets(rootDir)),
+    ...(await collectDependencyNativeJunkTargets(rootDir)),
     ...(await collectTempJunkTargets(
       tempRoots.map((root) => path.resolve(root)),
     )),
@@ -255,7 +291,7 @@ export async function cleanGeneratedJunk(options = {}) {
   const seen = new Set();
   for (const target of planned) {
     const resolvedPath =
-      target.kind === "repo"
+      target.kind === "repo" || target.kind === "dependency"
         ? assertInsideRoot(rootDir, target.path)
         : target.path;
     if (seen.has(resolvedPath)) continue;

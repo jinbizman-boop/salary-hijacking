@@ -20,6 +20,9 @@ test("removes repository generated junk while preserving dependencies, local sec
 
   try {
     await touch(path.join(rootDir, ".turbo", "cache.bin"));
+    await touch(
+      path.join(rootDir, ".tmp", "chrome-clean-fintech-home-1", "cache.bin"),
+    );
     await touch(path.join(rootDir, "apps", "mobile", ".expo", "web", "cache"));
     await touch(path.join(rootDir, "services", "api", ".wrangler", "state"));
     await touch(path.join(rootDir, "release", "cloudflare-proof.local.json"));
@@ -46,6 +49,45 @@ test("removes repository generated junk while preserving dependencies, local sec
         "app",
         "build",
         "out.bin",
+      ),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "node_modules",
+        ".pnpm",
+        "expo-modules-core@2.5.0",
+        "node_modules",
+        "expo-modules-core",
+        "android",
+        ".cxx",
+        "cache.bin",
+      ),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "node_modules",
+        ".pnpm",
+        "expo@53.0.27",
+        "node_modules",
+        "expo",
+        "android",
+        "build",
+        "generated.bin",
+      ),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "node_modules",
+        ".pnpm",
+        "react-native-reanimated@3.17.0",
+        "node_modules",
+        "react-native-reanimated",
+        "android",
+        ".gradle",
+        "cache.bin",
       ),
     );
     await touch(
@@ -80,6 +122,7 @@ test("removes repository generated junk while preserving dependencies, local sec
 
     assert.equal(result.errors.length, 0);
     assert.equal(existsSync(path.join(rootDir, ".turbo")), false);
+    assert.equal(existsSync(path.join(rootDir, ".tmp")), false);
     assert.equal(
       existsSync(path.join(rootDir, "apps", "mobile", ".expo")),
       false,
@@ -123,6 +166,64 @@ test("removes repository generated junk while preserving dependencies, local sec
         path.join(rootDir, "apps", "mobile", "android", "app", "build"),
       ),
       false,
+    );
+    assert.equal(
+      existsSync(
+        path.join(
+          rootDir,
+          "node_modules",
+          ".pnpm",
+          "expo-modules-core@2.5.0",
+          "node_modules",
+          "expo-modules-core",
+          "android",
+          ".cxx",
+        ),
+      ),
+      false,
+    );
+    assert.equal(
+      existsSync(
+        path.join(
+          rootDir,
+          "node_modules",
+          ".pnpm",
+          "expo@53.0.27",
+          "node_modules",
+          "expo",
+          "android",
+          "build",
+        ),
+      ),
+      false,
+    );
+    assert.equal(
+      existsSync(
+        path.join(
+          rootDir,
+          "node_modules",
+          ".pnpm",
+          "react-native-reanimated@3.17.0",
+          "node_modules",
+          "react-native-reanimated",
+          "android",
+          ".gradle",
+        ),
+      ),
+      false,
+    );
+    assert.equal(
+      existsSync(
+        path.join(
+          rootDir,
+          "node_modules",
+          ".pnpm",
+          "expo@53.0.27",
+          "node_modules",
+          "expo",
+        ),
+      ),
+      true,
     );
     assert.equal(
       existsSync(path.join(rootDir, "apps", "mobile", "ios", "build")),
