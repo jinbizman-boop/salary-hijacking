@@ -1028,6 +1028,38 @@ export function CleanFintechPostDetailScreen({
     detailCommunityService,
   ]);
 
+  const reportCommunityPost = useCallback((): void => {
+    const targetPostId = activeDetail.post.id;
+    setToast("게시글 신고를 server moderation 큐에 전달하는 중이에요.");
+    void detailCommunityService
+      .reportPost(targetPostId, "ABUSE", "mobile community detail report")
+      .then(() => {
+        setToast("게시글 신고가 접수됐어요. 운영 정책에 따라 검토할게요.");
+      })
+      .catch(() => {
+        setToast(
+          "게시글 신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요.",
+        );
+      });
+  }, [activeDetail.post.id, detailCommunityService]);
+
+  const reportCommunityComment = useCallback(
+    (comment: CommunityComment): void => {
+      setToast("댓글 신고를 server moderation 큐에 전달하는 중이에요.");
+      void detailCommunityService
+        .reportComment(comment.id, "ABUSE", "mobile community comment report")
+        .then(() => {
+          setToast("댓글 신고가 접수됐어요. 운영 정책에 따라 검토할게요.");
+        })
+        .catch(() => {
+          setToast(
+            "댓글 신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요.",
+          );
+        });
+    },
+    [detailCommunityService],
+  );
+
   useEffect(() => {
     void refreshCommunityDetail();
   }, [refreshCommunityDetail]);
@@ -1042,6 +1074,7 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.attachmentRow}>
           <SmallButton label={post.stats} />
           <SmallButton label="공유" />
+          <SmallButton label="신고" onPress={reportCommunityPost} />
         </View>
       </SectionCard>
       <SectionCard>
@@ -1061,6 +1094,7 @@ export function CleanFintechPostDetailScreen({
           </Pressable>
           <SmallButton label="댓글" />
           <SmallButton label="공유" />
+          <SmallButton label="신고" onPress={reportCommunityPost} />
         </View>
       </SectionCard>
       <SectionCard>
@@ -1071,6 +1105,7 @@ export function CleanFintechPostDetailScreen({
             icon="💬"
             title={comment.anonymousDisplayName}
             meta={comment.content}
+            onPress={() => reportCommunityComment(comment)}
           />
         ))}
         <View style={styles.inputRow}>
