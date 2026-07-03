@@ -1,6 +1,5 @@
 import type {
   JsonRecord,
-  JsonValue,
   UserSupportTicketInput,
   UsersRepository,
   UsersRouteRuntime,
@@ -105,6 +104,10 @@ function nowIso(runtime: UsersRouteRuntime): string {
   return runtime.now.toISOString();
 }
 
+function nullableText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 function defaultUser(runtime: UsersRouteRuntime): JsonRecord {
   const userId = runtime.principal.userId;
   return {
@@ -183,6 +186,35 @@ function ticketFromRow(row: DbRow): JsonRecord {
   };
 }
 
+function exportFromRow(row: DbRow): JsonRecord {
+  return {
+    createdAt: text(row.created_at, new Date().toISOString()),
+    downloadUrl:
+      typeof row.download_url === "string" && row.download_url.trim()
+        ? row.download_url.trim()
+        : null,
+    expiresAt: text(row.expires_at, ""),
+    exportId: text(row.export_id),
+    financialRawDataIncluded: row.financial_raw_data_included === true,
+    includeCommunity: row.include_community === true,
+    includeConsents: row.include_consents === true,
+    includeFinancialSummaryOnly: row.include_financial_summary_only !== false,
+    includeGrowth: row.include_growth === true,
+    includeProfile: row.include_profile === true,
+    includeSettings: row.include_settings === true,
+    status: text(row.status, "REQUESTED"),
+  };
+}
+
+function withdrawalRequestFromRow(row: DbRow): JsonRecord {
+  return {
+    deleteCommunityContent: row.delete_community_content === true,
+    status: "ACTIVE",
+    withdrawalRequested: true,
+    withdrawalRequestedAt: text(row.requested_at, new Date().toISOString()),
+  };
+}
+
 export function createNeonUsersRepository<TEnv = unknown>(
   options: NeonUsersRepositoryOptions<TEnv> = {},
 ): UsersRepository<TEnv> {
@@ -217,13 +249,37 @@ export function createNeonUsersRepository<TEnv = unknown>(
     },
 
     async requestWithdrawal(input, runtime) {
-      return {
-        deleteCommunityContent: bool(input.deleteCommunityContent),
-        status: "ACTIVE",
-        userId: runtime.principal.userId,
-        withdrawalRequested: true,
-        withdrawalRequestedAt: nowIso(runtime),
-      };
+      const result = await query(
+        `
+          insert into public.user_withdrawal_requests (
+            user_id,
+            reason,
+            delete_community_content,
+            status,
+            request_trace_id,
+            requested_at,
+            created_at,
+            updated_at
+          )
+          values ($1, $2, $3, 'REQUESTED', $4, $5::timestamptz, $5::timestamptz, $5::timestamptz)
+          returning
+            request_id,
+            status,
+            delete_community_content,
+            requested_at
+        `,
+        [
+          runtime.principal.userId,
+          input.reason,
+          bool(input.deleteCommunityContent),
+          runtime.requestId,
+          nowIso(runtime),
+        ],
+        { env: runtime.env, operationName: "users.requestWithdrawal" },
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Withdrawal request insert returned no row.");
+      return withdrawalRequestFromRow(row);
     },
 
     async createSupportTicket(
@@ -336,22 +392,77 @@ export function createNeonUsersRepository<TEnv = unknown>(
     },
 
     async requestExport(input, runtime) {
-      return {
-        createdAt: nowIso(runtime),
-        downloadUrl: `export://${runtime.principal.userId}/${runtime.requestId}.json`,
-        expiresAt: new Date(runtime.now.getTime() + 86_400_000).toISOString(),
-        exportId: `uex_${runtime.requestId}`,
-        financialRawDataIncluded: false,
-        includeCommunity: bool(input.includeCommunity),
-        includeConsents: bool(input.includeConsents),
-        includeFinancialSummaryOnly: true,
-        includeGrowth: bool(input.includeGrowth),
-        includeProfile: bool(input.includeProfile),
-        includeSettings: bool(input.includeSettings),
-        reason: (input.reason as JsonValue) ?? null,
-        status: "READY",
-        userId: runtime.principal.userId,
-      };
+      const result = await query(
+        `
+          insert into public.user_privacy_exports (
+            user_id,
+            status,
+            include_profile,
+            include_settings,
+            include_consents,
+            include_community,
+            include_growth,
+            include_financial_summary_only,
+            reason,
+            financial_raw_data_included,
+            raw_personal_data_included,
+            raw_token_included,
+            ads_financial_targeting_used,
+            request_id,
+            expires_at,
+            created_at,
+            updated_at
+          )
+          values (
+            $1,
+            'REQUESTED',
+            $2,
+            $3,
+            $4,
+            $5,
+            $6,
+            true,
+            $7,
+            false,
+            false,
+            false,
+            false,
+            $8,
+            $9::timestamptz,
+            $10::timestamptz,
+            $10::timestamptz
+          )
+          returning
+            export_id,
+            status,
+            include_profile,
+            include_settings,
+            include_consents,
+            include_community,
+            include_growth,
+            include_financial_summary_only,
+            financial_raw_data_included,
+            download_url,
+            expires_at,
+            created_at
+        `,
+        [
+          runtime.principal.userId,
+          bool(input.includeProfile),
+          bool(input.includeSettings),
+          bool(input.includeConsents),
+          bool(input.includeCommunity),
+          bool(input.includeGrowth),
+          nullableText(input.reason),
+          runtime.requestId,
+          new Date(runtime.now.getTime() + 86_400_000).toISOString(),
+          nowIso(runtime),
+        ],
+        { env: runtime.env, operationName: "users.requestExport" },
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Privacy export insert returned no row.");
+      return exportFromRow(row);
     },
 
     async getExport(exportId, runtime) {

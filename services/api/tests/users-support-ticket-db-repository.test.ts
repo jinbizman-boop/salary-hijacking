@@ -7,6 +7,8 @@ import type { UsersRouteRuntime } from "../src/routes/users.routes";
 
 const userId = "11111111-1111-4111-8111-111111111111";
 const ticketId = "22222222-2222-4222-8222-222222222222";
+const exportId = "33333333-3333-4333-8333-333333333333";
+const withdrawalRequestId = "44444444-4444-4444-8444-444444444444";
 
 function createRuntime(): UsersRouteRuntime<unknown> {
   return {
@@ -100,5 +102,125 @@ describe("Neon users support ticket repository", () => {
     expect(calls[0]?.params).toContain(
       "계정 설정 화면에서 로그인 상태를 확인하고 싶어요.",
     );
+  });
+  it("stores privacy export requests as financial-summary-only records without returning owner ids or raw financial data", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              created_at: "2026-07-03T06:00:00.000Z",
+              download_url: null,
+              export_id: exportId,
+              expires_at: "2026-07-04T06:00:00.000Z",
+              financial_raw_data_included: false,
+              include_community: true,
+              include_consents: true,
+              include_financial_summary_only: true,
+              include_growth: true,
+              include_profile: true,
+              include_settings: true,
+              reason: "mobile privacy export",
+              status: "REQUESTED",
+              user_id: userId,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.requestExport(
+      {
+        includeCommunity: true,
+        includeConsents: true,
+        includeFinancialSummaryOnly: true,
+        includeGrowth: true,
+        includeProfile: true,
+        includeSettings: true,
+        reason: "mobile privacy export",
+      },
+      createRuntime(),
+    );
+
+    expect(result).toMatchObject({
+      createdAt: "2026-07-03T06:00:00.000Z",
+      exportId,
+      financialRawDataIncluded: false,
+      includeCommunity: true,
+      includeConsents: true,
+      includeFinancialSummaryOnly: true,
+      includeGrowth: true,
+      includeProfile: true,
+      includeSettings: true,
+      status: "REQUESTED",
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain("salary");
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "users.requestExport",
+    ]);
+    expect(calls[0]?.sqlText).toContain(
+      "insert into public.user_privacy_exports",
+    );
+    expect(calls[0]?.params).toContain(userId);
+    expect(calls[0]?.params).toContain(true);
+  });
+
+  it("stores withdrawal requests without performing destructive withdrawal or returning the raw reason", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              delete_community_content: true,
+              reason: "mobile withdrawal request",
+              requested_at: "2026-07-03T06:00:00.000Z",
+              request_id: withdrawalRequestId,
+              status: "REQUESTED",
+              user_id: userId,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.requestWithdrawal(
+      {
+        deleteCommunityContent: true,
+        reason: "mobile withdrawal request",
+      },
+      createRuntime(),
+    );
+
+    expect(result).toMatchObject({
+      deleteCommunityContent: true,
+      status: "ACTIVE",
+      withdrawalRequested: true,
+      withdrawalRequestedAt: "2026-07-03T06:00:00.000Z",
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain("mobile withdrawal request");
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "users.requestWithdrawal",
+    ]);
+    expect(calls[0]?.sqlText).toContain(
+      "insert into public.user_withdrawal_requests",
+    );
+    expect(calls[0]?.params).toContain(userId);
+    expect(calls[0]?.params).toContain("mobile withdrawal request");
   });
 });
