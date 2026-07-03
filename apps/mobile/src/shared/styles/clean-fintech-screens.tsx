@@ -4162,6 +4162,20 @@ function NotificationsScreen(): React.ReactElement {
   );
   const primaryNotificationDevice = activeNotificationDevices[0] ?? null;
 
+  const restoreNotificationReadOnFailure = useCallback(
+    (item: NotificationScreenItem) => {
+      setServerNotifications((current) =>
+        current.map((candidate) =>
+          candidate.id === item.id ? item : candidate,
+        ),
+      );
+      if (item.status === "UNREAD") {
+        setUnreadCount((current) => current + 1);
+      }
+    },
+    [],
+  );
+
   const markRead = useCallback(
     (item: NotificationScreenItem) => {
       if (item.status !== "UNREAD") return;
@@ -4174,10 +4188,11 @@ function NotificationsScreen(): React.ReactElement {
       );
       setUnreadCount((current) => Math.max(0, current - 1));
       void notificationsApi.markRead(item.id).catch(() => {
+        restoreNotificationReadOnFailure(item);
         setSyncLabel("읽음 처리는 서버 연결 후 다시 확인해 주세요.");
       });
     },
-    [notificationsApi],
+    [notificationsApi, restoreNotificationReadOnFailure],
   );
 
   const openNotification = useCallback(
