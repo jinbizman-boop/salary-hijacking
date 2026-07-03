@@ -1906,6 +1906,10 @@ export function CleanFintechPostDetailScreen({
     Record<string, string>
   >({});
   const [commentEditingId, setCommentEditingId] = useState<string | null>(null);
+  const [communityDetailActionPending, setCommunityDetailActionPending] =
+    useState<
+      "report-post" | "delete-post" | "report-comment" | "delete-comment" | null
+    >(null);
   const [liked, setLiked] = useState(false);
   const [toast, setToast] = useState(
     "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
@@ -2149,7 +2153,9 @@ export function CleanFintechPostDetailScreen({
   );
 
   const reportCommunityPost = useCallback((): void => {
+    if (communityDetailActionPending !== null) return;
     const targetPostId = activeDetail.post.id;
+    setCommunityDetailActionPending("report-post");
     setToast("게시글 신고를 server moderation 큐에 전달하는 중이에요.");
     void detailCommunityService
       .reportPost(targetPostId, "ABUSE", "mobile community detail report")
@@ -2160,11 +2166,18 @@ export function CleanFintechPostDetailScreen({
         setToast(
           "게시글 신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
-      });
-  }, [activeDetail.post.id, detailCommunityService]);
+      })
+      .finally(() => setCommunityDetailActionPending(null));
+  }, [
+    activeDetail.post.id,
+    communityDetailActionPending,
+    detailCommunityService,
+  ]);
 
   const reportCommunityComment = useCallback(
     (comment: CommunityComment): void => {
+      if (communityDetailActionPending !== null) return;
+      setCommunityDetailActionPending("report-comment");
       setToast("댓글 신고를 server moderation 큐에 전달하는 중이에요.");
       void detailCommunityService
         .reportComment(comment.id, "ABUSE", "mobile community comment report")
@@ -2175,13 +2188,16 @@ export function CleanFintechPostDetailScreen({
           setToast(
             "댓글 신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요.",
           );
-        });
+        })
+        .finally(() => setCommunityDetailActionPending(null));
     },
-    [detailCommunityService],
+    [communityDetailActionPending, detailCommunityService],
   );
 
   const deleteCommunityPost = useCallback((): void => {
+    if (communityDetailActionPending !== null) return;
     const targetPostId = activeDetail.post.id;
+    setCommunityDetailActionPending("delete-post");
     setToast("게시글 삭제를 서버 커뮤니티에 요청하는 중이에요.");
     void detailCommunityService
       .deletePost(targetPostId)
@@ -2195,12 +2211,20 @@ export function CleanFintechPostDetailScreen({
         setToast(
           "게시글을 삭제하지 못했어요. 권한과 네트워크 상태를 확인해 주세요.",
         );
-      });
-  }, [activeDetail.post.id, detailCommunityService, detailRouter]);
+      })
+      .finally(() => setCommunityDetailActionPending(null));
+  }, [
+    activeDetail.post.id,
+    communityDetailActionPending,
+    detailCommunityService,
+    detailRouter,
+  ]);
 
   const deleteCommunityComment = useCallback(
     (comment: CommunityComment): void => {
+      if (communityDetailActionPending !== null) return;
       const targetPostId = activeDetail.post.id;
+      setCommunityDetailActionPending("delete-comment");
       setToast("댓글 삭제를 서버 커뮤니티에 요청하는 중이에요.");
       void detailCommunityService
         .deleteComment(comment.id)
@@ -2229,9 +2253,15 @@ export function CleanFintechPostDetailScreen({
           setToast(
             "댓글을 삭제하지 못했어요. 권한과 네트워크 상태를 확인해 주세요.",
           );
-        });
+        })
+        .finally(() => setCommunityDetailActionPending(null));
     },
-    [activeComments, activeDetail.post.id, detailCommunityService],
+    [
+      activeComments,
+      activeDetail.post.id,
+      communityDetailActionPending,
+      detailCommunityService,
+    ],
   );
 
   useEffect(() => {
@@ -2248,8 +2278,20 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.attachmentRow}>
           <StatusPill label={post.stats} />
           <SmallButton label="공유" onPress={shareCommunityPost} />
-          <SmallButton label="신고" onPress={reportCommunityPost} />
-          <SmallButton label="삭제" onPress={deleteCommunityPost} />
+          <SmallButton
+            disabled={communityDetailActionPending !== null}
+            label={
+              communityDetailActionPending === "report-post" ? "신고중" : "신고"
+            }
+            onPress={reportCommunityPost}
+          />
+          <SmallButton
+            disabled={communityDetailActionPending !== null}
+            label={
+              communityDetailActionPending === "delete-post" ? "삭제중" : "삭제"
+            }
+            onPress={deleteCommunityPost}
+          />
         </View>
       </SectionCard>
       <SectionCard>
@@ -2291,8 +2333,20 @@ export function CleanFintechPostDetailScreen({
             label={postEditing ? "수정 중" : "수정 저장"}
             onPress={updateCommunityPost}
           />
-          <SmallButton label="신고" onPress={reportCommunityPost} />
-          <SmallButton label="삭제" onPress={deleteCommunityPost} />
+          <SmallButton
+            disabled={communityDetailActionPending !== null}
+            label={
+              communityDetailActionPending === "report-post" ? "신고중" : "신고"
+            }
+            onPress={reportCommunityPost}
+          />
+          <SmallButton
+            disabled={communityDetailActionPending !== null}
+            label={
+              communityDetailActionPending === "delete-post" ? "삭제중" : "삭제"
+            }
+            onPress={deleteCommunityPost}
+          />
         </View>
       </SectionCard>
       <SectionCard>
@@ -2326,11 +2380,21 @@ export function CleanFintechPostDetailScreen({
                 onPress={() => updateCommunityComment(comment)}
               />
               <SmallButton
-                label="신고"
+                disabled={communityDetailActionPending !== null}
+                label={
+                  communityDetailActionPending === "report-comment"
+                    ? "신고중"
+                    : "신고"
+                }
                 onPress={() => reportCommunityComment(comment)}
               />
               <SmallButton
-                label="삭제"
+                disabled={communityDetailActionPending !== null}
+                label={
+                  communityDetailActionPending === "delete-comment"
+                    ? "삭제중"
+                    : "삭제"
+                }
                 onPress={() => deleteCommunityComment(comment)}
               />
             </View>

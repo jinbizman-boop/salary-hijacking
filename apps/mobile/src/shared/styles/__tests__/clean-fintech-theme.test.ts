@@ -1298,6 +1298,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
 
+    expect(cleanScreens).toContain("communityDetailActionPending");
+    expect(cleanScreens).toContain(
+      'setCommunityDetailActionPending("report-post")',
+    );
+    expect(cleanScreens).toContain(
+      'setCommunityDetailActionPending("report-comment")',
+    );
+    expect(cleanScreens).toContain(
+      "if (communityDetailActionPending !== null) return",
+    );
     expect(cleanScreens).toContain("reportCommunityPost");
     expect(cleanScreens).toContain("reportCommunityComment");
     expect(cleanScreens).toContain(".reportPost(targetPostId");
@@ -1311,6 +1321,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
 
+    expect(cleanScreens).toContain(
+      'setCommunityDetailActionPending("delete-post")',
+    );
+    expect(cleanScreens).toContain(
+      'setCommunityDetailActionPending("delete-comment")',
+    );
+    expect(cleanScreens).toContain(
+      "finally(() => setCommunityDetailActionPending(null))",
+    );
     expect(cleanScreens).toContain("deleteCommunityPost");
     expect(cleanScreens).toContain("deleteCommunityComment");
     expect(cleanScreens).toContain(".deletePost(targetPostId");
