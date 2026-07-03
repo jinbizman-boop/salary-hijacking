@@ -306,6 +306,27 @@ describe("auth api", () => {
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
   });
 
+  it("clears the local access token even when server logout is rejected", async () => {
+    const deleted: string[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({ error: { code: "AUTH_SESSION_REVOKE_FAILED" } }, 503),
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async () => undefined,
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+        },
+      },
+    });
+
+    await expect(api.logout()).rejects.toMatchObject({
+      code: "AUTH_SESSION_REVOKE_FAILED",
+    });
+    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+  });
+
   it("clears the local access token when refresh is rejected by the server", async () => {
     const deleted: string[] = [];
     const api = createAuthApi({

@@ -343,8 +343,12 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async logout() {
-      const parsed = await post(AUTH_LOGOUT_PATH, {});
-      await clearAccessToken(options.tokenStore);
+      let parsed: unknown;
+      try {
+        parsed = await post(AUTH_LOGOUT_PATH, {});
+      } finally {
+        await clearAccessToken(options.tokenStore);
+      }
       return logoutResult(parsed);
     },
   };
