@@ -6,13 +6,56 @@ const context = Object.freeze({
 });
 const env = Object.freeze({
   APP_ENV: "development",
+  EXPO_PUBLIC_APP_SCHEME: "salaryhijacking",
   JWT_SECRET: "local-test-jwt-secret-with-at-least-32-characters",
+  KAKAO_REST_API_KEY: "kakao-public-client-id",
   HASH_SECRET: "local-test-hash-secret-with-at-least-32-characters",
   RATE_LIMIT_HASH_SECRET: "local-test-rate-secret-with-at-least-32-characters",
   AUDIT_HASH_SECRET: "local-test-audit-secret-with-at-least-32-characters",
 });
 
 describe("auth route env secret wiring", () => {
+  it("allows the verified mobile app scheme as an OAuth redirect target", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+      now: () => new Date("2026-06-29T05:00:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request(
+        "https://api.test/api/v1/auth/oauth?provider=KAKAO&redirectUri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback",
+      ),
+      env,
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly authorizationUrl?: string;
+        readonly redirectUri?: string;
+        readonly state?: string;
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data?.redirectUri).toBe(
+      "salaryhijacking://auth/oauth/callback",
+    );
+    expect(body.data?.state).toEqual(expect.stringMatching(/^ost_/));
+    expect(body.data?.authorizationUrl).toContain(
+      "https://kauth.kakao.com/oauth/authorize?",
+    );
+    expect(body.data?.authorizationUrl).toContain(
+      "client_id=kakao-public-client-id",
+    );
+    expect(body.data?.authorizationUrl).toContain(
+      "redirect_uri=salaryhijacking%3A%2F%2Fauth%2Foauth%2Fcallback",
+    );
+    expect(body.data?.authorizationUrl).toContain("code_challenge_method=S256");
+  });
+
   it("passes AppEnv JWT_SECRET into auth routes and keeps the fallback repository stable across auth requests", async () => {
     const app = createApp({
       enableAuditGate: false,

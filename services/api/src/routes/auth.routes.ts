@@ -240,7 +240,9 @@ export interface AuthRoutesOptions<TEnv = unknown> {
   readonly jwtSecret?: string | ((env: TEnv) => string | null | undefined);
   readonly refreshCookieName?: string;
   readonly cookieSecure?: boolean | ((env: TEnv) => boolean);
-  readonly allowedRedirectOrigins?: readonly string[];
+  readonly allowedRedirectOrigins?:
+    | readonly string[]
+    | ((env: TEnv) => readonly string[] | string | null | undefined);
   readonly verifyPassword?: (
     password: string,
     passwordHash: string,
@@ -505,6 +507,56 @@ function normalizeProvider(value: unknown): AuthProvider {
     "AUTH_PROVIDER_UNSUPPORTED",
     "지원하지 않는 로그인 제공자입니다.",
   );
+}
+
+function envText<TEnv>(env: TEnv, key: string): string | null {
+  const value = (env as Record<string, unknown> | null)?.[key];
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed || /^replace-with-/iu.test(trimmed)) return null;
+  return trimmed;
+}
+
+function oauthClientId<TEnv>(
+  provider: AuthProvider,
+  runtime: AuthRuntime<TEnv>,
+): string | null {
+  if (provider === "KAKAO") return envText(runtime.env, "KAKAO_REST_API_KEY");
+  if (provider === "NAVER") return envText(runtime.env, "NAVER_CLIENT_ID");
+  if (provider === "GOOGLE") return envText(runtime.env, "GOOGLE_CLIENT_ID");
+  if (provider === "APPLE") return envText(runtime.env, "APPLE_CLIENT_ID");
+  return null;
+}
+
+function oauthAuthorizeEndpoint(provider: AuthProvider): string | null {
+  if (provider === "KAKAO") return "https://kauth.kakao.com/oauth/authorize";
+  if (provider === "NAVER") return "https://nid.naver.com/oauth2.0/authorize";
+  if (provider === "GOOGLE")
+    return "https://accounts.google.com/o/oauth2/v2/auth";
+  if (provider === "APPLE") return "https://appleid.apple.com/auth/authorize";
+  return null;
+}
+
+function oauthAuthorizationUrl<TEnv>(
+  provider: AuthProvider,
+  runtime: AuthRuntime<TEnv>,
+  redirectUri: string,
+  state: string,
+  codeChallenge: string,
+): string | null {
+  const endpoint = oauthAuthorizeEndpoint(provider);
+  const clientId = oauthClientId(provider, runtime);
+  if (!endpoint || !clientId) return null;
+  const url = new URL(endpoint);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("client_id", clientId);
+  url.searchParams.set("redirect_uri", redirectUri);
+  url.searchParams.set("state", state);
+  url.searchParams.set("code_challenge", codeChallenge);
+  url.searchParams.set("code_challenge_method", "S256");
+  if (provider === "GOOGLE" || provider === "APPLE")
+    url.searchParams.set("scope", "openid email profile");
+  return url.toString();
 }
 
 function keyLooksSensitive(key: string): boolean {
@@ -870,10 +922,46 @@ function redirectAllowed(
   try {
     if (redirectUri.startsWith("/")) return true;
     const url = new URL(redirectUri);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return allowedOrigins.some((entry) =>
+        redirectSchemeAllowed(entry, url.protocol),
+      );
+    }
     return allowedOrigins.includes(url.origin);
   } catch {
     return false;
   }
+}
+
+function redirectSchemeAllowed(entry: string, protocol: string): boolean {
+  const scheme = protocol.toLowerCase().replace(/:$/u, "");
+  const normalized = entry.trim().toLowerCase().replace(/\/+$/u, "");
+  return (
+    normalized === scheme ||
+    normalized === `${scheme}:` ||
+    normalized === `${scheme}://`
+  );
+}
+
+function parseRedirectOrigins(value: string | null): readonly string[] {
+  if (!value) return [];
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function allowedRedirectOrigins<TEnv>(
+  runtime: AuthRuntime<TEnv>,
+): readonly string[] {
+  const configured = runtime.options.allowedRedirectOrigins;
+  if (Array.isArray(configured)) return configured;
+  if (typeof configured === "function") {
+    const resolved = configured(runtime.env);
+    if (Array.isArray(resolved)) return resolved;
+    return parseRedirectOrigins(typeof resolved === "string" ? resolved : null);
+  }
+  return [];
 }
 
 async function emit<TEnv>(
@@ -1329,7 +1417,7 @@ async function handleOAuthStart<TEnv>(
     );
   const redirectUri =
     runtime.url.searchParams.get("redirectUri") ?? SAFE_REDIRECT_FALLBACK;
-  const allowed = runtime.options.allowedRedirectOrigins ?? [];
+  const allowed = allowedRedirectOrigins(runtime);
   if (!redirectAllowed(redirectUri, allowed))
     throw new AuthRouteError(
       400,
@@ -1359,6 +1447,13 @@ async function handleOAuthStart<TEnv>(
     },
     runtime,
   );
+  const authorizationUrl = oauthAuthorizationUrl(
+    provider,
+    runtime,
+    redirectUri,
+    state,
+    codeChallenge,
+  );
   return jsonResponse(runtime, 200, {
     data: {
       provider,
@@ -1367,6 +1462,7 @@ async function handleOAuthStart<TEnv>(
       codeChallenge,
       codeChallengeMethod: "S256",
       redirectUri,
+      ...(authorizationUrl ? { authorizationUrl } : {}),
     },
   });
 }

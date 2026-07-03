@@ -312,6 +312,13 @@ const handleEnvAwareAuthRoutes: FetchHandler<unknown> = createAuthRoutes({
   jwtSecret: (env) =>
     envString(env, "JWT_SECRET") ?? envString(env, "AUTH_JWT_SECRET"),
   cookieSecure: (env) => environmentOf(env) === "production",
+  allowedRedirectOrigins: (env) => [
+    ...parseOrigins(
+      envString(env, "CORS_ALLOWED_ORIGINS") ??
+        envString(env, "ALLOWED_ORIGINS"),
+    ),
+    ...mobileDeepLinkSchemes(env),
+  ],
 });
 
 const routeModules: readonly RouteModule[] = Object.freeze([
@@ -777,6 +784,14 @@ function parseOrigins(value: string | null): readonly string[] {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function mobileDeepLinkSchemes<TEnv>(env: TEnv): readonly string[] {
+  const configured =
+    envString(env, "MOBILE_DEEPLINK_SCHEMES") ??
+    envString(env, "EXPO_PUBLIC_APP_SCHEME") ??
+    "salaryhijacking";
+  return parseOrigins(configured);
 }
 
 function resolveAllowedOrigins<TEnv>(
