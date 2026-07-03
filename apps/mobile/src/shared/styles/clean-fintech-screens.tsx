@@ -2813,6 +2813,163 @@ function completedMissionIds(items: readonly Mission[]): ReadonlySet<string> {
   );
 }
 
+export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
+  const myLevelRouter = useRouter();
+  const myLevelGrowthApi = useMemo(() => createMobileGrowthApi(), []);
+  const [myLevelDashboard, setMyLevelDashboard] =
+    useState<GrowthDashboard | null>(null);
+  const [myLevelActiveTasks, setMyLevelActiveTasks] = useState<
+    readonly GrowthTask[]
+  >([]);
+  const [myLevelCompletedTasks, setMyLevelCompletedTasks] = useState<
+    readonly GrowthTask[]
+  >([]);
+  const [toast, setToast] = useState(
+    "내 레벨업 현황을 서버 기준으로 확인하는 중이에요.",
+  );
+
+  const refreshMyLevelProgress = useCallback(async (): Promise<void> => {
+    try {
+      const [dashboard, activeTasks, completedTasks] = await Promise.all([
+        myLevelGrowthApi.getDashboard(),
+        myLevelGrowthApi.listTasks({ page: 1, pageSize: 20, status: "ACTIVE" }),
+        myLevelGrowthApi.listTasks({
+          page: 1,
+          pageSize: 20,
+          status: "COMPLETED",
+        }),
+      ]);
+      setMyLevelDashboard(dashboard);
+      setMyLevelActiveTasks(activeTasks.items);
+      setMyLevelCompletedTasks(completedTasks.items);
+      setToast(
+        `${dashboard.todaySuggestion} · serverAuthority=true · rawFinancialDataExposed=false`,
+      );
+    } catch {
+      setMyLevelDashboard(null);
+      setMyLevelActiveTasks([]);
+      setMyLevelCompletedTasks([]);
+      setToast("서버 연결 전까지 안전한 기본 레벨업 현황을 보여드려요.");
+    }
+  }, [myLevelGrowthApi]);
+
+  useEffect(() => {
+    void refreshMyLevelProgress();
+  }, [refreshMyLevelProgress]);
+
+  const activeMissions = myLevelActiveTasks.length
+    ? myLevelActiveTasks.map(missionFromGrowthTask)
+    : fallbackMissions.filter((mission) => mission.status !== "COMPLETED");
+  const completedMissions = myLevelCompletedTasks.length
+    ? myLevelCompletedTasks.map(missionFromGrowthTask)
+    : fallbackMissions.filter((mission) => mission.status === "COMPLETED");
+  const totalExp = myLevelDashboard?.profile.totalExp ?? 380;
+  const level = myLevelDashboard?.profile.level ?? 18;
+  const progress = Math.min(100, (totalExp / 999) * 100);
+
+  const completeMyLevelTask = useCallback(
+    (mission: Mission): void => {
+      if (!mission.serverTaskId) {
+        myLevelRouter.push("/level");
+        return;
+      }
+      const occurredAt = new Date().toISOString();
+      setToast("레벨업 진행을 서버에 기록하는 중이에요.");
+      void myLevelGrowthApi
+        .recordTaskProgress(mission.serverTaskId, {
+          idempotencyKey: `mobile-my-level-${mission.serverTaskId}-${occurredAt}`,
+          note: "mobile MY level progress complete",
+          occurredAt,
+          progressCount: Math.max(
+            1,
+            mission.targetCount - mission.progressCount,
+          ),
+        })
+        .then((result) => {
+          setMyLevelDashboard((current) =>
+            current
+              ? {
+                  ...current,
+                  completedTaskCount:
+                    result.task.status === "COMPLETED"
+                      ? current.completedTaskCount + 1
+                      : current.completedTaskCount,
+                  profile: {
+                    ...current.profile,
+                    totalExp: current.profile.totalExp + result.expDelta,
+                  },
+                }
+              : current,
+          );
+          setMyLevelActiveTasks((current) =>
+            current.map((task) =>
+              task.taskId === result.task.taskId ? result.task : task,
+            ),
+          );
+          setToast(
+            `${mission.title} 서버 기록 완료 · +${result.expDelta} XP · rawFinancialDataExposed=false`,
+          );
+        })
+        .catch(() => {
+          setToast("서버 기록에 실패했어요. LV 탭에서 다시 시도해 주세요.");
+        });
+    },
+    [myLevelGrowthApi, myLevelRouter],
+  );
+
+  return (
+    <AppScreen title="내 레벨업 관리" subtitle="MY 성장 루틴">
+      <SectionCard>
+        <View style={styles.between}>
+          <View>
+            <Text style={styles.sectionTitle}>현재 레벨</Text>
+            <Text style={styles.money}>{formatMoney(level)}Lv</Text>
+          </View>
+          <StatusPill
+            label={`완료 ${completedMissions.length} · 진행 ${activeMissions.length}`}
+          />
+        </View>
+        <ProgressBar value={progress} />
+        <Text style={styles.bodyText}>
+          {formatMoney(totalExp)} / 999 XP · serverAuthority=true
+        </Text>
+      </SectionCard>
+      <Toast message={toast} />
+      <SectionCard>
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>진행 중인 미션</Text>
+          <StatusPill label={`${activeMissions.length} active`} />
+        </View>
+        {activeMissions.map((mission) => (
+          <ListRow
+            icon={mission.icon}
+            key={mission.id}
+            meta={`${mission.progressCount}/${mission.targetCount} · ${mission.xp} XP · rawFinancialDataExposed=false`}
+            onPress={() => completeMyLevelTask(mission)}
+            title={mission.title}
+          />
+        ))}
+      </SectionCard>
+      <SectionCard>
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>완료한 미션</Text>
+          <StatusPill label={`${completedMissions.length} completed`} />
+        </View>
+        {completedMissions.map((mission) => (
+          <ListRow
+            icon={mission.icon}
+            key={mission.id}
+            meta={`${mission.xp} XP · adsFinancialTargetingUsed=false`}
+            onPress={() => myLevelRouter.push("/level")}
+            title={mission.title}
+          />
+        ))}
+      </SectionCard>
+      <GuardBox />
+    </AppScreen>
+  );
+}
+
 function LevelScreen(): React.ReactElement {
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
   const levelRouter = useRouter();
@@ -3445,7 +3602,7 @@ function ProfileScreen(): React.ReactElement {
   }, [profileRouter]);
 
   const openMyLevelProgress = useCallback(() => {
-    profileRouter.push("/level");
+    profileRouter.push("/profile/level");
   }, [profileRouter]);
 
   const openSupportInquiry = useCallback(() => {

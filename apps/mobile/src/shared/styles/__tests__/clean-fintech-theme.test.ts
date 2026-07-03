@@ -411,7 +411,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("openMyCommunityPosts");
     expect(cleanScreens).toContain('profileRouter.push("/profile/community")');
     expect(cleanScreens).toContain("openMyLevelProgress");
-    expect(cleanScreens).toContain('profileRouter.push("/level")');
+    expect(cleanScreens).toContain('profileRouter.push("/profile/level")');
     expect(cleanScreens).toContain("openProfileNotices");
     expect(cleanScreens).toContain('profileRouter.push("/profile/notices")');
     expect(cleanScreens).toContain("openSupportInquiry");
@@ -419,6 +419,27 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("onPress={openMyLevelProgress}");
     expect(cleanScreens).toContain("onPress={openSupportInquiry}");
     expect(cleanScreens).toContain("onPress={openProfileNotices}");
+  });
+
+  it("keeps MY level progress routed to a server-backed growth management screen", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const growthApi = mobileSource("src/features/level/api.ts");
+
+    expect(growthApi).toContain("getDashboard");
+    expect(growthApi).toContain("listTasks");
+    expect(growthApi).toContain("recordTaskProgress");
+    expect(cleanScreens).toContain("CleanFintechMyLevelProgressScreen");
+    expect(cleanScreens).toContain("myLevelGrowthApi.getDashboard");
+    expect(cleanScreens).toContain("myLevelGrowthApi.listTasks");
+    expect(cleanScreens).toMatch(/myLevelGrowthApi\s*\.?\s*recordTaskProgress/);
+    expect(cleanScreens).toContain('profileRouter.push("/profile/level")');
+    expect(cleanScreens).toContain("serverAuthority=true");
+    expect(cleanScreens).toContain("rawFinancialDataExposed=false");
+    expect(source("profile/level.tsx")).toContain(
+      "<CleanFintechMyLevelProgressScreen />",
+    );
   });
 
   it("keeps MY notices routed to a server-backed profile activity screen", () => {
