@@ -13,6 +13,9 @@ import { resolveJavaHome } from "./eas-local-android-build.mjs";
 const defaultMobileRootDir = () =>
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+const defaultMonorepoRootDir = (mobileRootDir) =>
+  path.resolve(mobileRootDir, "..", "..");
+
 const isWindows = (platform) => platform === "win32";
 
 const executableNames = (command, platform) =>
@@ -84,6 +87,40 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
   );
 };
 
+const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
+  const entryFilePath = path.join(mobileRootDir, "index.android.js");
+  const source = 'import "expo-router/entry";\n';
+  if (!fs.existsSync(entryFilePath)) {
+    fs.writeFileSync(entryFilePath, source, "utf8");
+    return;
+  }
+
+  const current = fs.readFileSync(entryFilePath, "utf8");
+  if (!current.includes("expo-router/entry")) {
+    fs.writeFileSync(entryFilePath, source, "utf8");
+  }
+};
+
+const ensureGradleInputMetroEntryShim = ({ mobileRootDir }) => {
+  const shimPath = path.join(
+    mobileRootDir,
+    "apps",
+    "mobile",
+    "index.android.js",
+  );
+  const source = 'import "../../index.android.js";\n';
+  fs.mkdirSync(path.dirname(shimPath), { recursive: true });
+  if (!fs.existsSync(shimPath)) {
+    fs.writeFileSync(shimPath, source, "utf8");
+    return;
+  }
+
+  const current = fs.readFileSync(shimPath, "utf8");
+  if (!current.includes("../../index.android.js")) {
+    fs.writeFileSync(shimPath, source, "utf8");
+  }
+};
+
 const ensureAndroidSplashScreenDependency = ({ mobileRootDir }) => {
   const appBuildGradlePath = path.join(
     mobileRootDir,
@@ -136,6 +173,35 @@ const ensureReactNativeDebugBundle = ({ mobileRootDir }) => {
     ? source.replace(/react\s*\{/u, `react {\n${bundleLine}`)
     : `${source.trimEnd()}\n\nreact {\n${bundleLine}\n}\n`;
   fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+};
+
+const patchAndroidDebugEntryFile = ({ mobileRootDir }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!fs.existsSync(appBuildGradlePath)) return;
+
+  const source = fs.readFileSync(appBuildGradlePath, "utf8");
+  let nextSource = source.replace(
+    /^\s*entryFile\s*=\s*file\((?:"\$\{projectRoot\}\/apps\/mobile\/index\.android\.js"|"\$\{projectRoot\}\/index\.android\.js"|"\$\{projectRoot\}\/\.\.\/\.\.\/index\.android\.js"|"\.\.\/\.\.\/index\.android\.js"|\["node",\s*"-e",\s*"require\('expo\/scripts\/resolveAppEntry'\)",\s*projectRoot,\s*"android",\s*"absolute"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\))\)\s*$/mu,
+    '    entryFile = file("${projectRoot}/apps/mobile/index.android.js")',
+  );
+  nextSource = nextSource.replace(
+    /^\s*root\s*=\s*file\((?:"\.\.\/\.\.\/"|"\.\.\/")\)\s*$/mu,
+    '    root = file("../../")',
+  );
+  if (!/^\s*root\s*=\s*file\("\.\.\/\.\.\/"\)\s*$/mu.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /react\s*\{\s*\r?\n/u,
+      'react {\n    root = file("../../")\n',
+    );
+  }
+  if (nextSource !== source) {
+    fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+  }
 };
 
 const resolveDetoxAndroidVersion = ({ mobileRootDir }) => {
@@ -481,6 +547,58 @@ const repairReanimatedWindowsCmakeDirectories = ({
   }
 };
 
+const repairExpoModulesCoreWindowsCmakeDirectories = ({
+  mobileRootDir,
+  platform,
+}) => {
+  if (!isWindows(platform)) return;
+  const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
+  const nodeModulesRoot = path.join(monorepoRootDir, "node_modules");
+  const expoModulesRoots = [
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "Debug",
+    ),
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "Debug",
+    ),
+    path.join(
+      nodeModulesRoot,
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "Debug",
+    ),
+  ];
+  const sourceSegments = toWindowsCmakePathSegments(nodeModulesRoot);
+
+  for (const debugRoot of expoModulesRoots) {
+    const cmakeFileDirs = collectDirectories(debugRoot).filter(
+      (directory) =>
+        directory.endsWith(".dir") &&
+        directory.includes(`${path.sep}CMakeFiles${path.sep}`),
+    );
+    for (const directory of cmakeFileDirs) {
+      mkdirSyncLongPath(path.join(directory, ...sourceSegments));
+    }
+  }
+};
+
 export const buildExpoLocalAndroidDebugInvocations = ({
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
@@ -726,9 +844,12 @@ export const runExpoLocalAndroidDebugBuild = ({
     mobileRootDir,
     sdkRoot: preflight.sdkRoot,
   });
+  ensureLocalMetroEntryFile({ mobileRootDir });
+  ensureGradleInputMetroEntryShim({ mobileRootDir });
   ensureAndroidSplashScreenDependency({ mobileRootDir });
   ensureExpoProjectDependency({ mobileRootDir });
   ensureReactNativeDebugBundle({ mobileRootDir });
+  patchAndroidDebugEntryFile({ mobileRootDir });
   ensureDetoxAndroidMavenRepository({ mobileRootDir });
   ensureDetoxAndroidTestConfig({ mobileRootDir });
   ensureDetoxAndroidTestSource({ mobileRootDir });
@@ -767,6 +888,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   }
 
   repairReanimatedWindowsCmakeDirectories({ mobileRootDir, platform });
+  repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
 
   const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
     cwd: path.join(mobileRootDir, "android"),

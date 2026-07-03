@@ -222,6 +222,11 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
         touch(
           path.join(rootDir, "android", "app", "build.gradle"),
           [
+            "react {",
+            '    root = file("../../")',
+            '    entryFile = file("${projectRoot}/apps/mobile/index.android.js")',
+            "}",
+            "",
             "android {",
             "    defaultConfig {",
             "    }",
@@ -314,6 +319,24 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
             "placeholder.txt",
           ),
         );
+        touch(
+          path.join(
+            rootDir,
+            "node_modules",
+            ".pnpm",
+            "expo-modules-core@2.5.0",
+            "node_modules",
+            "expo-modules-core",
+            "android",
+            ".cxx",
+            "Debug",
+            "hash",
+            "x86_64",
+            "CMakeFiles",
+            "expo-modules-core.dir",
+            "placeholder.txt",
+          ),
+        );
       }
       if (
         commandName.includes("gradlew") &&
@@ -392,6 +415,31 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
       "utf8",
     ),
     /debuggableVariants = \[\]/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /root = file\("\.\.\/\.\.\/"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /entryFile = file\("\$\{projectRoot\}\/apps\/mobile\/index\.android\.js"\)/,
+  );
+  assert.equal(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    'import "expo-router/entry";\n',
+  );
+  assert.equal(
+    fs.readFileSync(
+      path.join(rootDir, "apps", "mobile", "index.android.js"),
+      "utf8",
+    ),
+    'import "../../index.android.js";\n',
   );
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "build.gradle"), "utf8"),
@@ -573,6 +621,32 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
         "worklets.dir",
         ...path
           .resolve(rootDir, "node_modules")
+          .replace(/\\/gu, "/")
+          .replace(/^([A-Za-z]):\//u, "$1_/")
+          .split("/")
+          .filter(Boolean),
+      ),
+    ),
+    true,
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        rootDir,
+        "node_modules",
+        ".pnpm",
+        "expo-modules-core@2.5.0",
+        "node_modules",
+        "expo-modules-core",
+        "android",
+        ".cxx",
+        "Debug",
+        "hash",
+        "x86_64",
+        "CMakeFiles",
+        "expo-modules-core.dir",
+        ...path
+          .resolve(rootDir, "..", "..", "node_modules")
           .replace(/\\/gu, "/")
           .replace(/^([A-Za-z]):\//u, "$1_/")
           .split("/")

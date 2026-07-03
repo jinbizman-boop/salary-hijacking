@@ -25,6 +25,7 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
 ]);
 
 const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
+  "apps/mobile/apps",
   "apps/mobile/.eas/build",
   "apps/mobile/.eas/cache",
   "apps/mobile/android/build",

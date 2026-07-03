@@ -24,6 +24,17 @@ test("removes repository generated junk while preserving dependencies, local sec
       path.join(rootDir, ".tmp", "chrome-clean-fintech-home-1", "cache.bin"),
     );
     await touch(path.join(rootDir, "apps", "mobile", ".expo", "web", "cache"));
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        "apps",
+        "mobile",
+        "index.android.js",
+      ),
+      'import "../../index.android.js";\n',
+    );
     await touch(path.join(rootDir, "services", "api", ".wrangler", "state"));
     await touch(path.join(rootDir, "release", "cloudflare-proof.local.json"));
     await touch(
@@ -125,6 +136,10 @@ test("removes repository generated junk while preserving dependencies, local sec
     assert.equal(existsSync(path.join(rootDir, ".tmp")), false);
     assert.equal(
       existsSync(path.join(rootDir, "apps", "mobile", ".expo")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "apps")),
       false,
     );
     assert.equal(
