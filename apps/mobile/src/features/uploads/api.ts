@@ -88,7 +88,12 @@ function safeFileName(value: string): string {
     );
   }
   if (
-    /salary|payslip|bankbook|statement|account|card|token|secret/iu.test(
+    /salary|payslip|bankbook|statement|account|card|token|secret|월급|급여|계좌|카드|토큰|비밀|주민|전화|휴대폰|대출|부채|저축|지출|금액|납치/iu.test(
+      normalized,
+    ) ||
+    /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u.test(normalized) ||
+    /\b\d{2,6}(?:[-\s]\d{2,6}){1,4}\b/u.test(normalized) ||
+    /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u.test(
       normalized,
     )
   ) {

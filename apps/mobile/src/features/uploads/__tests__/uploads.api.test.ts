@@ -71,6 +71,34 @@ describe("uploads api", () => {
     );
   });
 
+  it("blocks sensitive Korean, identifier, and token-like upload file names before network access", async () => {
+    const fetcher = jest.fn<
+      ReturnType<typeof fetch>,
+      Parameters<typeof fetch>
+    >();
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-sensitive",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName:
+          "월급_010-1234-5678_eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signatureABC.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_SENSITIVE_FILE_NAME_FORBIDDEN",
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("attaches a completed upload to a community post without exposing raw file paths", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
