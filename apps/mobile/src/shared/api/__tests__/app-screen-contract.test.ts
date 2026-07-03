@@ -9,6 +9,7 @@ const FORBIDDEN_API_HELPERS = [
 ] as const;
 const INTERNAL_TABS_ROUTE = /(["'`])\/\(tabs\)(?:\/[^"'`]*)?\1/g;
 const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
+const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 
 function collectAppSourceFiles(directory: string): readonly string[] {
   const files: string[] = [];
@@ -54,5 +55,16 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(source).toContain("/api/v1/users/me/withdrawal-request");
     expect(source).not.toContain('route: "/api/v1/users/me/withdraw"');
+  });
+
+  it("refreshes the root bootstrap access token before falling back from a 401", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("/api/v1/mobile/bootstrap");
+    expect(source).toContain("/api/v1/auth/refresh");
+    expect(source).toContain("requestJsonWithAuthRefresh");
+    expect(source).toContain("MOBILE_ACCESS_TOKEN_KEY");
+    expect(source).toContain("x-raw-financial-data-exposed");
+    expect(source).toContain("x-ad-financial-targeting-used");
   });
 });

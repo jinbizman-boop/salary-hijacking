@@ -3,8 +3,12 @@
  * 정적 import와 JSX 없이 Expo Router·React Native 런타임 모듈을 지연 로딩한다.
  */
 
+import { createAuthApi } from "../src/features/auth/api";
 import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
-import { attachMobileBearerToken } from "../src/shared/storage/auth-token";
+import {
+  attachMobileBearerToken,
+  MOBILE_ACCESS_TOKEN_KEY,
+} from "../src/shared/storage/auth-token";
 import { createSecureStoreRuntime } from "../src/shared/storage/secure-store";
 
 declare function require(moduleName: string): unknown;
@@ -271,7 +275,7 @@ export default function MobileRootLayout(): unknown {
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
     try {
-      const response = await requestJson<RootResponse>(
+      const response = await requestJsonWithAuthRefresh<RootResponse>(
         "/api/v1/mobile/bootstrap",
       );
       const payload = normalizePayload(response.data ?? {});
@@ -545,10 +549,31 @@ function renderRuntimeGuard(payload: RootPayload): unknown {
   );
 }
 
-async function requestJson<T>(
+async function requestJsonWithAuthRefresh<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  const response = await fetchJson(path, init);
+  const parsed = await parseJsonResponse(response);
+  if (response.ok) return parsed as T;
+
+  if (response.status === 401 && path !== "/api/v1/auth/refresh") {
+    const refreshed = await refreshRootAccessToken();
+    if (refreshed) {
+      const retryResponse = await fetchJson(path, init);
+      const retryParsed = await parseJsonResponse(retryResponse);
+      if (retryResponse.ok) return retryParsed as T;
+      throw new Error(errorMessage(retryParsed, retryResponse.status));
+    }
+  }
+
+  throw new Error(errorMessage(parsed, response.status));
+}
+
+async function fetchJson(
+  path: string,
+  init: RequestInit = {},
+): Promise<Response> {
   const headers = new Headers(init.headers);
   headers.set("accept", "application/json");
   headers.set("x-client-platform", String(NativeRuntimeRef.Platform.OS));
@@ -560,15 +585,37 @@ async function requestJson<T>(
   await attachMobileBearerToken(headers, SecureStoreRuntimeRef);
   if (init.body && !headers.has("content-type"))
     headers.set("content-type", "application/json");
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  return fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
     credentials: "include",
   });
+}
+
+async function parseJsonResponse(response: Response): Promise<unknown> {
   const text = await response.text();
-  const parsed: unknown = text ? JSON.parse(text) : {};
-  if (!response.ok) throw new Error(errorMessage(parsed, response.status));
-  return parsed as T;
+  return text ? (JSON.parse(text) as unknown) : {};
+}
+
+async function refreshRootAccessToken(): Promise<boolean> {
+  try {
+    await createAuthApi({
+      baseUrl: API_BASE_URL,
+      createCorrelationId,
+      platform: rootAuthPlatform(),
+      tokenStore: SecureStoreRuntimeRef,
+    }).refresh();
+    await SecureStoreRuntimeRef.getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function rootAuthPlatform(): "ios" | "android" | "web" {
+  const platform = String(NativeRuntimeRef.Platform.OS);
+  if (platform === "ios" || platform === "android") return platform;
+  return "web";
 }
 
 function normalizePayload(partial: Partial<RootPayload>): RootPayload {
