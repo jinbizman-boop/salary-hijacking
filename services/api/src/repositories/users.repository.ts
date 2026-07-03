@@ -215,6 +215,91 @@ function withdrawalRequestFromRow(row: DbRow): JsonRecord {
   };
 }
 
+function rowBool(row: DbRow, key: string, fallback = false): boolean {
+  return typeof row[key] === "boolean" ? row[key] === true : fallback;
+}
+
+function rowNumber(row: DbRow, key: string, fallback: number): number {
+  const value = row[key];
+  return typeof value === "number" && Number.isInteger(value)
+    ? value
+    : fallback;
+}
+
+function settingsFromRow(row: DbRow): JsonRecord {
+  return {
+    dashboardCompactMode: rowBool(row, "dashboard_compact_mode"),
+    language: text(row.language, text(row.locale, "ko-KR")),
+    paydayReminderDaysBefore: rowNumber(row, "payday_reminder_days_before", 3),
+    showAmountsInCommunity: rowBool(row, "show_amounts_in_community"),
+    theme: text(row.theme, "SYSTEM"),
+    timezone: text(row.timezone, "Asia/Seoul"),
+    updatedAt: text(row.updated_at, new Date().toISOString()),
+    weekStartsOnMonday: rowBool(row, "week_starts_on_monday"),
+  };
+}
+
+function consentsFromRows(rows: readonly DbRow[]): JsonRecord {
+  const result: Record<string, boolean | string> = {
+    adPartnerAccepted: false,
+    adPartnerFinancialRawDataUsed: false,
+    analyticsAccepted: false,
+    consentVersion: "v3.1",
+    contentRecommendationAccepted: false,
+    marketingAccepted: false,
+    privacyAccepted: true,
+    sensitiveFinancialTargetingAccepted: false,
+    termsAccepted: true,
+    updatedAt: new Date().toISOString(),
+  };
+  for (const row of rows) {
+    const granted = row.granted === true;
+    const version = text(row.consent_version, "");
+    const updatedAt = text(row.updated_at, "");
+    if (version) result.consentVersion = version;
+    if (updatedAt) result.updatedAt = updatedAt;
+    switch (text(row.consent_type)) {
+      case "TERMS_OF_SERVICE":
+        result.termsAccepted = granted;
+        break;
+      case "PRIVACY_POLICY":
+        result.privacyAccepted = granted;
+        break;
+      case "MARKETING":
+        result.marketingAccepted = granted;
+        break;
+      case "ANALYTICS":
+        result.analyticsAccepted = granted;
+        break;
+      case "ADS_PARTNER":
+        result.adPartnerAccepted = granted;
+        break;
+      case "CONTENT_RECOMMENDATION":
+        result.contentRecommendationAccepted = granted;
+        break;
+    }
+  }
+  return result;
+}
+
+function consentsFromAggregateRow(row: DbRow): JsonRecord {
+  return {
+    adPartnerAccepted: rowBool(row, "ad_partner_accepted"),
+    adPartnerFinancialRawDataUsed: false,
+    analyticsAccepted: rowBool(row, "analytics_accepted"),
+    consentVersion: text(row.consent_version, "v3.1"),
+    contentRecommendationAccepted: rowBool(
+      row,
+      "content_recommendation_accepted",
+    ),
+    marketingAccepted: rowBool(row, "marketing_accepted"),
+    privacyAccepted: rowBool(row, "privacy_accepted", true),
+    sensitiveFinancialTargetingAccepted: false,
+    termsAccepted: rowBool(row, "terms_accepted", true),
+    updatedAt: text(row.updated_at, new Date().toISOString()),
+  };
+}
+
 export function createNeonUsersRepository<TEnv = unknown>(
   options: NeonUsersRepositoryOptions<TEnv> = {},
 ): UsersRepository<TEnv> {
@@ -366,29 +451,178 @@ export function createNeonUsersRepository<TEnv = unknown>(
     },
 
     async getSettings(runtime) {
-      return defaultSettings(runtime);
+      const result = await query(
+        `
+          select
+            user_id,
+            theme,
+            locale as language,
+            timezone,
+            week_starts_on_monday,
+            show_amounts_in_community,
+            dashboard_compact_mode,
+            payday_reminder_days_before,
+            updated_at
+          from public.user_settings
+          where user_id = $1
+          limit 1
+        `,
+        [runtime.principal.userId],
+        { env: runtime.env, operationName: "users.getSettings" },
+      );
+      const row = result.rows[0];
+      return row ? settingsFromRow(row) : defaultSettings(runtime);
     },
 
     async updateSettings(input, runtime) {
-      return {
-        ...defaultSettings(runtime),
-        ...(input as JsonRecord),
-        updatedAt: nowIso(runtime),
-      };
+      const base = defaultSettings(runtime);
+      const merged = { ...base, ...(input as JsonRecord) };
+      const result = await query(
+        `
+          insert into public.user_settings (
+            user_id,
+            timezone,
+            locale,
+            theme,
+            week_starts_on_monday,
+            show_amounts_in_community,
+            dashboard_compact_mode,
+            payday_reminder_days_before,
+            updated_at
+          )
+          values ($1, $2, $3, $4, $5, $6, $7, $8, $9::timestamptz)
+          on conflict (user_id) do update
+          set
+            timezone = excluded.timezone,
+            locale = excluded.locale,
+            theme = excluded.theme,
+            week_starts_on_monday = excluded.week_starts_on_monday,
+            show_amounts_in_community = excluded.show_amounts_in_community,
+            dashboard_compact_mode = excluded.dashboard_compact_mode,
+            payday_reminder_days_before = excluded.payday_reminder_days_before,
+            updated_at = excluded.updated_at
+          returning
+            user_id,
+            theme,
+            locale as language,
+            timezone,
+            week_starts_on_monday,
+            show_amounts_in_community,
+            dashboard_compact_mode,
+            payday_reminder_days_before,
+            updated_at
+        `,
+        [
+          runtime.principal.userId,
+          text(merged.timezone, "Asia/Seoul"),
+          text(merged.language, "ko-KR"),
+          text(merged.theme, "SYSTEM"),
+          bool(merged.weekStartsOnMonday),
+          bool(merged.showAmountsInCommunity),
+          bool(merged.dashboardCompactMode),
+          rowNumber(
+            { payday_reminder_days_before: merged.paydayReminderDaysBefore },
+            "payday_reminder_days_before",
+            3,
+          ),
+          nowIso(runtime),
+        ],
+        { env: runtime.env, operationName: "users.updateSettings" },
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Settings upsert returned no row.");
+      return settingsFromRow(row);
     },
 
     async getConsents(runtime) {
-      return defaultConsents(runtime);
+      const result = await query(
+        `
+          select distinct on (consent_type)
+            consent_type,
+            granted,
+            consent_version,
+            created_at as updated_at
+          from public.user_consents
+          where user_id = $1
+          order by consent_type, created_at desc
+        `,
+        [runtime.principal.userId],
+        { env: runtime.env, operationName: "users.getConsents" },
+      );
+      return result.rows.length
+        ? consentsFromRows(result.rows)
+        : defaultConsents(runtime);
     },
 
     async updateConsents(input, runtime) {
-      return {
+      const merged = {
         ...defaultConsents(runtime),
         ...(input as JsonRecord),
-        adPartnerFinancialRawDataUsed: false,
-        sensitiveFinancialTargetingAccepted: false,
-        updatedAt: nowIso(runtime),
       };
+      const consentTypes = [
+        "TERMS_OF_SERVICE",
+        "PRIVACY_POLICY",
+        "MARKETING",
+        "ANALYTICS",
+        "ADS_PARTNER",
+        "CONTENT_RECOMMENDATION",
+      ] as const;
+      const grantedValues = [
+        bool(merged.termsAccepted),
+        bool(merged.privacyAccepted),
+        bool(merged.marketingAccepted),
+        bool(merged.analyticsAccepted),
+        bool(merged.adPartnerAccepted),
+        bool(merged.contentRecommendationAccepted),
+      ] as const;
+      const result = await query(
+        `
+          with inserted as (
+            insert into public.user_consents (
+              user_id,
+              consent_type,
+              granted,
+              consent_version,
+              source,
+              granted_at,
+              revoked_at,
+              created_at
+            )
+            select
+              $1::uuid,
+              consent_type,
+              granted,
+              $4,
+              'APP',
+              case when granted then $5::timestamptz else null end,
+              case when granted then null else $5::timestamptz end,
+              $5::timestamptz
+            from unnest($2::text[], $3::boolean[]) as input(consent_type, granted)
+            returning consent_type, granted, consent_version, created_at
+          )
+          select
+            bool_or(consent_type = 'TERMS_OF_SERVICE' and granted) as terms_accepted,
+            bool_or(consent_type = 'PRIVACY_POLICY' and granted) as privacy_accepted,
+            bool_or(consent_type = 'MARKETING' and granted) as marketing_accepted,
+            bool_or(consent_type = 'ANALYTICS' and granted) as analytics_accepted,
+            bool_or(consent_type = 'ADS_PARTNER' and granted) as ad_partner_accepted,
+            bool_or(consent_type = 'CONTENT_RECOMMENDATION' and granted) as content_recommendation_accepted,
+            max(consent_version) as consent_version,
+            max(created_at) as updated_at
+          from inserted
+        `,
+        [
+          runtime.principal.userId,
+          consentTypes,
+          grantedValues,
+          text(merged.consentVersion, "v3.1"),
+          nowIso(runtime),
+        ],
+        { env: runtime.env, operationName: "users.updateConsents" },
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Consent update returned no row.");
+      return consentsFromAggregateRow(row);
     },
 
     async requestExport(input, runtime) {

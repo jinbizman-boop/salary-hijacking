@@ -223,4 +223,159 @@ describe("Neon users support ticket repository", () => {
     expect(calls[0]?.params).toContain(userId);
     expect(calls[0]?.params).toContain("mobile withdrawal request");
   });
+
+  it("loads and upserts mobile profile settings through user_settings", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              dashboard_compact_mode: true,
+              language: "ko-KR",
+              payday_reminder_days_before: 5,
+              show_amounts_in_community: false,
+              theme: "DARK",
+              timezone: "Asia/Seoul",
+              updated_at: "2026-07-03T06:00:00.000Z",
+              user_id: userId,
+              week_starts_on_monday: true,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const settings = await repository.getSettings(createRuntime());
+    const updated = await repository.updateSettings(
+      {
+        dashboardCompactMode: true,
+        language: "ko-KR",
+        paydayReminderDaysBefore: 5,
+        showAmountsInCommunity: false,
+        theme: "DARK",
+        timezone: "Asia/Seoul",
+        weekStartsOnMonday: true,
+      },
+      createRuntime(),
+    );
+
+    expect(settings).toMatchObject({
+      dashboardCompactMode: true,
+      language: "ko-KR",
+      paydayReminderDaysBefore: 5,
+      showAmountsInCommunity: false,
+      theme: "DARK",
+      timezone: "Asia/Seoul",
+      updatedAt: "2026-07-03T06:00:00.000Z",
+      weekStartsOnMonday: true,
+    });
+    expect(updated).toMatchObject(settings);
+    expect(JSON.stringify(updated)).not.toContain(userId);
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "users.getSettings",
+      "users.updateSettings",
+    ]);
+    expect(calls[0]?.sqlText).toContain("from public.user_settings");
+    expect(calls[1]?.sqlText).toContain("insert into public.user_settings");
+    expect(calls[1]?.sqlText).toContain("on conflict (user_id) do update");
+    expect(calls[1]?.params).toContain(userId);
+    expect(calls[1]?.params).toContain("DARK");
+  });
+
+  it("loads latest consents and records consent updates without financial targeting consent", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows:
+            options.operationName === "users.getConsents"
+              ? [
+                  {
+                    consent_type: "TERMS_OF_SERVICE",
+                    consent_version: "v3.1",
+                    granted: true,
+                    updated_at: "2026-07-03T06:00:00.000Z",
+                  },
+                  {
+                    consent_type: "PRIVACY_POLICY",
+                    consent_version: "v3.1",
+                    granted: true,
+                    updated_at: "2026-07-03T06:00:00.000Z",
+                  },
+                  {
+                    consent_type: "ADS_PARTNER",
+                    consent_version: "v3.1",
+                    granted: true,
+                    updated_at: "2026-07-03T06:00:00.000Z",
+                  },
+                ]
+              : [
+                  {
+                    ad_partner_accepted: true,
+                    analytics_accepted: true,
+                    consent_version: "v3.1",
+                    content_recommendation_accepted: true,
+                    marketing_accepted: false,
+                    privacy_accepted: true,
+                    terms_accepted: true,
+                    updated_at: "2026-07-03T06:00:00.000Z",
+                  },
+                ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const consents = await repository.getConsents(createRuntime());
+    const updated = await repository.updateConsents(
+      {
+        adPartnerAccepted: true,
+        analyticsAccepted: true,
+        consentVersion: "v3.1",
+        contentRecommendationAccepted: true,
+        marketingAccepted: false,
+        privacyAccepted: true,
+        termsAccepted: true,
+      },
+      createRuntime(),
+    );
+
+    expect(consents).toMatchObject({
+      adPartnerAccepted: true,
+      adPartnerFinancialRawDataUsed: false,
+      privacyAccepted: true,
+      sensitiveFinancialTargetingAccepted: false,
+      termsAccepted: true,
+    });
+    expect(updated).toMatchObject({
+      adPartnerAccepted: true,
+      adPartnerFinancialRawDataUsed: false,
+      analyticsAccepted: true,
+      contentRecommendationAccepted: true,
+      marketingAccepted: false,
+      privacyAccepted: true,
+      sensitiveFinancialTargetingAccepted: false,
+      termsAccepted: true,
+    });
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "users.getConsents",
+      "users.updateConsents",
+    ]);
+    expect(calls[0]?.sqlText).toContain("from public.user_consents");
+    expect(calls[1]?.sqlText).toContain("insert into public.user_consents");
+    expect(calls[1]?.params).toContain(userId);
+    expect(JSON.stringify(updated)).not.toContain("salary");
+  });
 });
