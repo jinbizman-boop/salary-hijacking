@@ -2406,6 +2406,12 @@ function CommunityScreen(): React.ReactElement {
   const openCommunityWrite = useCallback(() => {
     communityRouter.push("/community/write");
   }, [communityRouter]);
+  const openCommunityPost = useCallback(
+    (post: CommunityScreenPost) => {
+      communityRouter.push(`/community/${post.id}`);
+    },
+    [communityRouter],
+  );
 
   return (
     <AppScreen title="커뮤니티" subtitle="가볍고 친근한 생활형 게시판">
@@ -2418,13 +2424,21 @@ function CommunityScreen(): React.ReactElement {
       <SectionCard>
         <Text style={styles.sectionTitle}>인기 게시글</Text>
         {visiblePopularPosts.map((post) => (
-          <CommunityPostRow key={`popular-${post.id}`} post={post} />
+          <CommunityPostRow
+            key={`popular-${post.id}`}
+            onPress={() => openCommunityPost(post)}
+            post={post}
+          />
         ))}
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>{board}</Text>
         {visibleCommunityPosts.map((post) => (
-          <CommunityPostRow key={`${board}-${post.id}`} post={post} />
+          <CommunityPostRow
+            key={`${board}-${post.id}`}
+            onPress={() => openCommunityPost(post)}
+            post={post}
+          />
         ))}
       </SectionCard>
       <Pressable
@@ -2922,10 +2936,18 @@ function ListRow({
 }
 
 function CommunityPostRow({
+  onPress,
   post,
-}: Readonly<{ post: CommunityScreenPost }>): React.ReactElement {
+}: Readonly<{
+  onPress: () => void;
+  post: CommunityScreenPost;
+}>): React.ReactElement {
   return (
-    <View style={styles.postRow}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={styles.postRow}
+    >
       <View style={styles.thumbnail}>
         <Text style={styles.thumbnailText}>{post.thumb}</Text>
       </View>
@@ -2937,7 +2959,7 @@ function CommunityPostRow({
         </Text>
         <Text style={styles.listMeta}>{post.stats}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
