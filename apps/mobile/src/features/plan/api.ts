@@ -6,7 +6,9 @@ import {
 import type {
   PlanCommitmentsApiClient,
   PlanCommitmentsSnapshot,
+  PlanFixedExpenseCreateRequest,
   PlanFixedExpenseCommitment,
+  PlanSavingsGoalCreateRequest,
   PlanSavingsGoalCommitment,
 } from "./types";
 
@@ -51,6 +53,10 @@ function isPositiveDay(value: unknown): value is number {
     value >= 1 &&
     value <= 31
   );
+}
+
+function isPositiveMoney(value: unknown): value is number {
+  return isNonNegativeInteger(value) && value > 0;
 }
 
 function defaultCorrelationId(): string {
@@ -217,6 +223,33 @@ function sumSafe(values: readonly number[]): number {
   return total;
 }
 
+function validFixedExpenseCreate(
+  value: PlanFixedExpenseCreateRequest,
+): boolean {
+  return (
+    typeof value.title === "string" &&
+    value.title.trim().length > 0 &&
+    value.title.length <= 100 &&
+    typeof value.category === "string" &&
+    value.category.trim().length > 0 &&
+    isPositiveMoney(value.amountMinor) &&
+    isPositiveDay(value.paymentDay)
+  );
+}
+
+function validSavingsGoalCreate(value: PlanSavingsGoalCreateRequest): boolean {
+  return (
+    typeof value.title === "string" &&
+    value.title.trim().length > 0 &&
+    value.title.length <= 100 &&
+    typeof value.goalType === "string" &&
+    value.goalType.trim().length > 0 &&
+    isPositiveMoney(value.targetAmountMinor) &&
+    isNonNegativeInteger(value.fixedSaveAmountMinor) &&
+    value.fixedSaveAmountMinor <= value.targetAmountMinor
+  );
+}
+
 export function createPlanCommitmentsApi(
   options: PlanCommitmentsApiOptions,
 ): PlanCommitmentsApiClient {
@@ -225,21 +258,27 @@ export function createPlanCommitmentsApi(
   const createCorrelationId =
     options.createCorrelationId ?? defaultCorrelationId;
 
-  async function request(path: string): Promise<unknown> {
+  async function request(
+    path: string,
+    init: RequestInit = {},
+  ): Promise<unknown> {
     const headers = new Headers({
       accept: "application/json",
       "x-client-platform": options.platform,
       "x-correlation-id": createCorrelationId(),
       ...PRIVACY_HEADERS,
     });
+    if (init.body !== undefined)
+      headers.set("content-type", "application/json");
 
     let response: Response;
     try {
       response = await fetcher(
         new Request(`${baseUrl}${path}`, {
+          ...init,
           credentials: "include",
           headers,
-          method: "GET",
+          method: init.method ?? "GET",
         }),
       );
     } catch {
@@ -286,6 +325,74 @@ export function createPlanCommitmentsApi(
         savingsGoals,
         serverAuthority: true,
       };
+    },
+
+    async createFixedExpense(
+      createRequest: PlanFixedExpenseCreateRequest,
+    ): Promise<PlanFixedExpenseCommitment> {
+      if (!validFixedExpenseCreate(createRequest)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_CREATE_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const response = await request(PLAN_FIXED_EXPENSES_PATH, {
+        method: "POST",
+        body: JSON.stringify({
+          affectsDailyBudget: true,
+          amountMinor: createRequest.amountMinor,
+          autoPay: true,
+          category: createRequest.category,
+          frequency: "MONTHLY",
+          paymentDay: createRequest.paymentDay,
+          title: createRequest.title.trim(),
+        }),
+      });
+      if (!isRecord(response) || !("data" in response)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_RESPONSE",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeFixedExpense(response.data);
+    },
+
+    async createSavingsGoal(
+      createRequest: PlanSavingsGoalCreateRequest,
+    ): Promise<PlanSavingsGoalCommitment> {
+      if (!validSavingsGoalCreate(createRequest)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_CREATE_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const response = await request(PLAN_SAVINGS_PATH, {
+        method: "POST",
+        body: JSON.stringify({
+          accountAlias: null,
+          affectsDailyBudget: true,
+          autoSave: true,
+          currentAmountMinor: 0,
+          fixedSaveAmountMinor: createRequest.fixedSaveAmountMinor,
+          frequency: "MONTHLY",
+          goalType: createRequest.goalType,
+          memo: null,
+          saveDay: 25,
+          targetAmountMinor: createRequest.targetAmountMinor,
+          title: createRequest.title.trim(),
+        }),
+      });
+      if (!isRecord(response) || !("data" in response)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_RESPONSE",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeSavingsGoal(response.data);
     },
   };
 }

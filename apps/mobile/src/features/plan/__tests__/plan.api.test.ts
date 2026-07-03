@@ -168,4 +168,119 @@ describe("plan commitments api", () => {
       code: "PLAN_UNSAFE_FINANCIAL_EXPOSURE",
     });
   });
+
+  it("creates fixed expense and savings commitments through server-authoritative APIs", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "plan-create-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        if (normalized.url.endsWith("/api/v1/fixed-expenses")) {
+          return jsonResponse(
+            {
+              data: {
+                expenseId: "expense_new_subscription",
+                title: "New subscription",
+                category: "SUBSCRIPTION",
+                amountMinor: 19_000,
+                paymentDay: 21,
+                status: "ACTIVE",
+                serverAuthority: true,
+                financialRawDataExposed: false,
+              },
+            },
+            201,
+          );
+        }
+
+        return jsonResponse(
+          {
+            data: {
+              goalId: "goal_new_saving",
+              title: "New saving",
+              goalType: "CUSTOM",
+              targetAmountMinor: 500_000,
+              currentAmountMinor: 0,
+              fixedSaveAmountMinor: 80_000,
+              status: "ACTIVE",
+              serverAuthority: true,
+              financialRawAccountDataExposed: false,
+            },
+          },
+          201,
+        );
+      },
+      platform: "ios",
+    });
+
+    await expect(
+      api.createFixedExpense({
+        amountMinor: 19_000,
+        category: "SUBSCRIPTION",
+        paymentDay: 21,
+        title: "New subscription",
+      }),
+    ).resolves.toMatchObject({
+      amountMinor: 19_000,
+      id: "expense_new_subscription",
+      serverAuthority: true,
+      title: "New subscription",
+    });
+    await expect(
+      api.createSavingsGoal({
+        fixedSaveAmountMinor: 80_000,
+        goalType: "CUSTOM",
+        targetAmountMinor: 500_000,
+        title: "New saving",
+      }),
+    ).resolves.toMatchObject({
+      fixedSaveAmountMinor: 80_000,
+      id: "goal_new_saving",
+      serverAuthority: true,
+      title: "New saving",
+    });
+    await expect(
+      api.createFixedExpense({
+        amountMinor: -1,
+        category: "SUBSCRIPTION",
+        paymentDay: 21,
+        title: "Bad",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_CREATE_REQUEST" });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/fixed-expenses",
+    );
+    expect(calls[1]?.method).toBe("POST");
+    expect(calls[1]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/savings",
+    );
+    for (const call of calls) {
+      expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
+      expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
+    }
+    expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
+      affectsDailyBudget: true,
+      amountMinor: 19_000,
+      autoPay: true,
+      frequency: "MONTHLY",
+      paymentDay: 21,
+      title: "New subscription",
+    });
+    expect(JSON.parse((await calls[1]?.clone().text()) ?? "{}")).toMatchObject({
+      affectsDailyBudget: true,
+      autoSave: true,
+      fixedSaveAmountMinor: 80_000,
+      frequency: "MONTHLY",
+      saveDay: 25,
+      targetAmountMinor: 500_000,
+      title: "New saving",
+    });
+  });
 });

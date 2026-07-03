@@ -2282,6 +2282,13 @@ function PlanScreen(): React.ReactElement {
     "서버 급여 계획이 없으면 로컬 미리보기로 계산해요.",
   );
   const [recalculatingPlan, setRecalculatingPlan] = useState(false);
+  const [planFixedExpenseTitle, setPlanFixedExpenseTitle] =
+    useState("새 고정지출");
+  const [planFixedExpenseAmount, setPlanFixedExpenseAmount] = useState("19000");
+  const [planSavingsGoalTitle, setPlanSavingsGoalTitle] =
+    useState("새 고정저축");
+  const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("80000");
+  const [savingPlanCommitment, setSavingPlanCommitment] = useState(false);
 
   const applyServerPayrollPlan = useCallback(
     (nextPlan: PayrollPlanSnapshot): void => {
@@ -2389,6 +2396,68 @@ function PlanScreen(): React.ReactElement {
     return () => clearTimeout(timer);
   }, [refreshServerPayrollCalculation]);
 
+  const submitPlanFixedExpense = useCallback(async (): Promise<void> => {
+    const amountMinor = nonNegative(planFixedExpenseAmount);
+    const title = planFixedExpenseTitle.trim();
+    if (!title || amountMinor <= 0) {
+      setPlanToast("고정지출 이름과 1원 이상 KRW 정수 금액을 입력해 주세요.");
+      return;
+    }
+    try {
+      setSavingPlanCommitment(true);
+      const created = await planCommitmentsApi.createFixedExpense({
+        amountMinor,
+        category: "SUBSCRIPTION",
+        paymentDay: 25,
+        title,
+      });
+      setServerFixedExpenses((current) => [created, ...current]);
+      setExpense((current) =>
+        String(nonNegative(current) + created.amountMinor),
+      );
+      setPlanFixedExpenseTitle("");
+      setPlanFixedExpenseAmount("");
+      setPlanToast("서버에 고정지출 계획을 저장했어요.");
+    } catch {
+      setPlanToast(
+        "고정지출 계획을 서버에 저장하지 못했어요. 다시 시도해 주세요.",
+      );
+    } finally {
+      setSavingPlanCommitment(false);
+    }
+  }, [planCommitmentsApi, planFixedExpenseAmount, planFixedExpenseTitle]);
+
+  const submitPlanSavingsGoal = useCallback(async (): Promise<void> => {
+    const fixedSaveAmountMinor = nonNegative(planSavingsGoalAmount);
+    const title = planSavingsGoalTitle.trim();
+    if (!title || fixedSaveAmountMinor <= 0) {
+      setPlanToast("고정저축 이름과 1원 이상 KRW 정수 금액을 입력해 주세요.");
+      return;
+    }
+    try {
+      setSavingPlanCommitment(true);
+      const created = await planCommitmentsApi.createSavingsGoal({
+        fixedSaveAmountMinor,
+        goalType: "CUSTOM",
+        targetAmountMinor: Math.max(fixedSaveAmountMinor, nonNegative(target)),
+        title,
+      });
+      setServerSavingsGoals((current) => [created, ...current]);
+      setTarget((current) =>
+        String(nonNegative(current) + created.fixedSaveAmountMinor),
+      );
+      setPlanSavingsGoalTitle("");
+      setPlanSavingsGoalAmount("");
+      setPlanToast("서버에 고정저축 목표를 저장했어요.");
+    } catch {
+      setPlanToast(
+        "고정저축 목표를 서버에 저장하지 못했어요. 다시 시도해 주세요.",
+      );
+    } finally {
+      setSavingPlanCommitment(false);
+    }
+  }, [planCommitmentsApi, planSavingsGoalAmount, planSavingsGoalTitle, target]);
+
   const localExpectedHijack = Math.max(
     0,
     nonNegative(salary) - nonNegative(expense),
@@ -2456,6 +2525,38 @@ function PlanScreen(): React.ReactElement {
             meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
           />
         ))}
+        <TextInput
+          accessibilityLabel="고정지출 이름"
+          onChangeText={setPlanFixedExpenseTitle}
+          placeholder="예: OTT 구독"
+          placeholderTextColor={theme.color.text.disabled}
+          style={styles.input}
+          value={planFixedExpenseTitle}
+        />
+        <TextInput
+          accessibilityLabel="고정지출 금액"
+          keyboardType="numeric"
+          onChangeText={setPlanFixedExpenseAmount}
+          placeholder="예: 19000"
+          placeholderTextColor={theme.color.text.disabled}
+          style={styles.input}
+          value={planFixedExpenseAmount}
+        />
+        <Pressable
+          accessibilityRole="button"
+          disabled={savingPlanCommitment}
+          onPress={() => {
+            void submitPlanFixedExpense();
+          }}
+          style={[
+            styles.primaryButton,
+            savingPlanCommitment ? styles.disabled : null,
+          ]}
+        >
+          <Text style={styles.primaryButtonText}>
+            {savingPlanCommitment ? "저장 중" : "고정지출 서버 저장"}
+          </Text>
+        </Pressable>
       </SectionCard>
       <PlanSummaryCard
         title="고정저축"
@@ -2472,6 +2573,38 @@ function PlanScreen(): React.ReactElement {
             meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
           />
         ))}
+        <TextInput
+          accessibilityLabel="고정저축 목표 이름"
+          onChangeText={setPlanSavingsGoalTitle}
+          placeholder="예: 비상금"
+          placeholderTextColor={theme.color.text.disabled}
+          style={styles.input}
+          value={planSavingsGoalTitle}
+        />
+        <TextInput
+          accessibilityLabel="고정저축 금액"
+          keyboardType="numeric"
+          onChangeText={setPlanSavingsGoalAmount}
+          placeholder="예: 80000"
+          placeholderTextColor={theme.color.text.disabled}
+          style={styles.input}
+          value={planSavingsGoalAmount}
+        />
+        <Pressable
+          accessibilityRole="button"
+          disabled={savingPlanCommitment}
+          onPress={() => {
+            void submitPlanSavingsGoal();
+          }}
+          style={[
+            styles.primaryButton,
+            savingPlanCommitment ? styles.disabled : null,
+          ]}
+        >
+          <Text style={styles.primaryButtonText}>
+            {savingPlanCommitment ? "저장 중" : "고정저축 서버 저장"}
+          </Text>
+        </Pressable>
       </SectionCard>
       <PlanSummaryCard
         title="생활비"

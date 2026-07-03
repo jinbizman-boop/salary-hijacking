@@ -33,6 +33,26 @@ export type PlanCommitmentsSnapshot = Readonly<{
   serverAuthority: true;
 }>;
 
+export type PlanFixedExpenseCreateRequest = Readonly<{
+  amountMinor: number;
+  category: string;
+  paymentDay: number;
+  title: string;
+}>;
+
+export type PlanSavingsGoalCreateRequest = Readonly<{
+  fixedSaveAmountMinor: number;
+  goalType: string;
+  targetAmountMinor: number;
+  title: string;
+}>;
+
 export type PlanCommitmentsApiClient = Readonly<{
   getCommitments: () => Promise<PlanCommitmentsSnapshot>;
+  createFixedExpense: (
+    request: PlanFixedExpenseCreateRequest,
+  ) => Promise<PlanFixedExpenseCommitment>;
+  createSavingsGoal: (
+    request: PlanSavingsGoalCreateRequest,
+  ) => Promise<PlanSavingsGoalCommitment>;
 }>;
