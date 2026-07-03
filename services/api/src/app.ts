@@ -70,6 +70,8 @@ import {
 import {
   GROWTH_API_PREFIX,
   assertGrowthRoutesCompleteness,
+  createGrowthRoutes,
+  type GrowthRoutesOptions,
   growthRoutesManifest,
   handleGrowthRoutes,
 } from "./routes/growth.routes";
@@ -247,6 +249,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly fixedExpensesRoutesOptions?: FixedExpensesRoutesOptions<TEnv>;
   readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
   readonly savingsRoutesOptions?: SavingsRoutesOptions<TEnv>;
+  readonly growthRoutesOptions?: GrowthRoutesOptions<TEnv>;
   readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
@@ -1189,6 +1192,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createSavingsRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "growth" && options.growthRoutesOptions) {
+    const routeOptions: GrowthRoutesOptions<TEnv> =
+      options.growthRoutesOptions.now || !options.now
+        ? options.growthRoutesOptions
+        : {
+            ...options.growthRoutesOptions,
+            now: options.now,
+          };
+    return createGrowthRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "community" && options.communityRoutesOptions) {
     const routeOptions: CommunityRoutesOptions<TEnv> =

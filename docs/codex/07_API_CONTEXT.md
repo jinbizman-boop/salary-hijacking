@@ -25,7 +25,7 @@ Entrypoints:
 Current verification:
 
 - `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-03.
-- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 18 files and 33 tests.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 20 files and 37 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -76,6 +76,8 @@ Verified through 2026-07-03:
 - DB-backed variable expenses repository: `services/api/src/repositories/variable-expenses.repository.ts` can create records through the `daily_budgets` and `variable_expenses` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
 - `GET /api/v1/savings` and savings goal/transaction endpoints are implemented in `services/api/src/routes/savings.routes.ts` as the server-authoritative fixed savings and savings goal surface.
 - DB-backed savings repository: `services/api/src/repositories/savings.repository.ts` can list, create, update, pause, resume, archive/delete, record transactions, summarize, calendar, upcoming, and impact savings through the `savings_plans` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal `user_id` or `payroll_plan_id` values.
+- `GET /api/v1/growth/dashboard`, `GET /api/v1/growth/tasks`, and `POST /api/v1/growth/tasks/{taskId}/progress`: implemented in `services/api/src/routes/growth.routes.ts` as the server-authoritative LV UP mobile surface.
+- DB-backed growth repository: `services/api/src/repositories/growth.repository.ts` can load LV UP dashboard/profile/task lists and record task progress through the `growth_tasks`, `growth_task_completions`, and `user_growth_stats` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal raw `user_id` values.
 - `GET /api/v1/community/posts`, `POST /api/v1/community/posts`, `GET /api/v1/community/posts/{postId}/comments`, and `POST /api/v1/community/posts/{postId}/comments`: implemented in `services/api/src/routes/community.routes.ts` and aligned with the current Expo community feed/write/detail/comments surfaces.
 - DB-backed community repository: `services/api/src/repositories/community.repository.ts` can list boards/posts/comments and create/update/delete posts/comments/reports/reactions through the `community_*` migration tables when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
 - Public store review pages: `GET /`, `GET /privacy`, `GET /support`, and
@@ -95,6 +97,8 @@ Verified through 2026-07-03:
 - Mobile fixed expense repository injection contract test: `services/api/tests/mobile-fixed-expense-contract.test.ts`.
 - Savings DB repository test: `services/api/tests/savings-db-repository.test.ts`.
 - Mobile savings repository injection contract test: `services/api/tests/mobile-savings-contract.test.ts`.
+- Growth DB repository test: `services/api/tests/growth-db-repository.test.ts`.
+- Mobile growth repository injection contract test: `services/api/tests/mobile-growth-contract.test.ts`.
 - Community DB repository test: `services/api/tests/community-db-repository.test.ts`.
 - Mobile community repository injection contract test: `services/api/tests/mobile-community-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.

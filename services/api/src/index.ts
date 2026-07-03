@@ -41,6 +41,10 @@ import {
   createNeonSavingsRepository,
   shouldUseNeonSavingsRepository,
 } from "./repositories/savings.repository";
+import {
+  createNeonGrowthRepository,
+  shouldUseNeonGrowthRepository,
+} from "./repositories/growth.repository";
 
 const INDEX_VERSION = "3.1.1";
 const WORKER_ENTRYPOINT_NAME = "salary-hijacking-api-worker";
@@ -197,6 +201,12 @@ const appInstance = createApp<WorkerEnv>({
     repository: (env) =>
       shouldUseNeonSavingsRepository(env)
         ? createNeonSavingsRepository<WorkerEnv>()
+        : undefined,
+  },
+  growthRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonGrowthRepository(env)
+        ? createNeonGrowthRepository<WorkerEnv>()
         : undefined,
   },
   communityRoutesOptions: {
