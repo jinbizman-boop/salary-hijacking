@@ -360,7 +360,10 @@ function normalizeReadAllResult(value: unknown): NotificationReadAllResult {
   };
 }
 
-function notificationPath(notificationId: string, action: "read"): string {
+function notificationPath(
+  notificationId: string,
+  action: "archive" | "read",
+): string {
   if (!/^[A-Za-z0-9_-]+$/u.test(notificationId)) {
     throw new NotificationsApiError(
       0,
@@ -444,6 +447,23 @@ export function createNotificationsApi(
       const result = await request(notificationPath(notificationId, "read"), {
         method: "POST",
       });
+      if (!isRecord(result) || !("data" in result)) {
+        throw new NotificationsApiError(
+          0,
+          "NOTIFICATION_INVALID_RESPONSE",
+          NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeNotificationItem(result.data);
+    },
+
+    async archive(notificationId: string): Promise<NotificationItem> {
+      const result = await request(
+        notificationPath(notificationId, "archive"),
+        {
+          method: "POST",
+        },
+      );
       if (!isRecord(result) || !("data" in result)) {
         throw new NotificationsApiError(
           0,

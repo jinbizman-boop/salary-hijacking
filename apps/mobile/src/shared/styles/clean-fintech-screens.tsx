@@ -3850,7 +3850,9 @@ function NotificationsScreen(): React.ReactElement {
         if (!mounted) return;
 
         const nextNotifications = listResult.items
-          .filter((item) => item.status !== "DELETED")
+          .filter(
+            (item) => item.status !== "DELETED" && item.status !== "ARCHIVED",
+          )
           .map(toNotificationScreenItem);
         setServerNotifications(
           nextNotifications.length ? nextNotifications : fallbackNotifications,
@@ -3929,6 +3931,28 @@ function NotificationsScreen(): React.ReactElement {
       });
   }, [notificationsApi, unreadCount]);
 
+  const archiveNotification = useCallback(
+    (item: NotificationScreenItem) => {
+      setServerNotifications((current) =>
+        current.filter((candidate) => candidate.id !== item.id),
+      );
+      if (item.status === "UNREAD") {
+        setUnreadCount((current) => Math.max(0, current - 1));
+      }
+      void notificationsApi
+        .archive(item.id)
+        .then(() => {
+          setSyncLabel("서버에 알림 보관을 저장했어요.");
+        })
+        .catch(() => {
+          setSyncLabel(
+            "알림 보관을 서버에 저장하지 못했어요. 다시 확인해 주세요.",
+          );
+        });
+    },
+    [notificationsApi],
+  );
+
   return (
     <AppScreen title="알림" subtitle="새로운 알림이 있어요">
       <Toast message={`${syncLabel} · 읽지 않은 알림 ${unreadCount}개`} />
@@ -3945,6 +3969,14 @@ function NotificationsScreen(): React.ReactElement {
               key={item.id}
               meta={item.message}
               onPress={() => openNotification(item)}
+              trailing={
+                <View style={styles.notificationActions}>
+                  <SmallButton
+                    label="Archive"
+                    onPress={() => archiveNotification(item)}
+                  />
+                </View>
+              }
               title={item.title}
               unread={item.status === "UNREAD"}
             />
@@ -3966,6 +3998,14 @@ function NotificationsScreen(): React.ReactElement {
               key={item.id}
               meta={item.message}
               onPress={() => openNotification(item)}
+              trailing={
+                <View style={styles.notificationActions}>
+                  <SmallButton
+                    label="Archive"
+                    onPress={() => archiveNotification(item)}
+                  />
+                </View>
+              }
               title={item.title}
               unread={item.status === "UNREAD"}
             />
@@ -5057,6 +5097,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     lineHeight: 18,
+  },
+  notificationActions: {
+    flexDirection: "row",
+    flexShrink: 0,
+    gap: 6,
   },
   greenDot: {
     backgroundColor: theme.color.brand.primary,

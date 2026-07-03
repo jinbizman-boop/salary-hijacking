@@ -142,6 +142,43 @@ describe("notifications api", () => {
     expect(String(calls[1]?.body)).not.toMatch(/pushToken|deviceId|token/i);
   });
 
+  it("archives a notification through the server without raw payload exposure", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            ...serverNotification,
+            archivedAt: "2026-07-02T09:10:00.000Z",
+            status: "ARCHIVED",
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.archive("ntf_budget_warning")).resolves.toMatchObject({
+      archivedAt: "2026-07-02T09:10:00.000Z",
+      notificationId: "ntf_budget_warning",
+      status: "ARCHIVED",
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/notifications/ntf_budget_warning/archive",
+    );
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-push-token-exposed")).toBe("false");
+    expect(String(calls[0]?.body)).not.toMatch(
+      /salary|expense|saving|token|device/i,
+    );
+  });
+
   it("rejects sensitive or invalid server payloads before the screen consumes them", async () => {
     const api = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",

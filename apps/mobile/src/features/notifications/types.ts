@@ -60,5 +60,6 @@ export type NotificationsApiClient = Readonly<{
   }) => Promise<NotificationListResult>;
   unreadCount: () => Promise<NotificationUnreadCount>;
   markRead: (notificationId: string) => Promise<NotificationItem>;
+  archive: (notificationId: string) => Promise<NotificationItem>;
   markAllRead: () => Promise<NotificationReadAllResult>;
 }>;
