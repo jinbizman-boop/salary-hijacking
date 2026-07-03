@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 30 suites and 114 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 31 suites and 119 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -134,6 +134,23 @@ build:e2e:android:local` remains blocked by the same Expo account
 - Tool availability alone is not native E2E proof; `nativeE2eVerified` must
   remain false until Detox or equivalent device-farm evidence is recorded
   without secrets.
+
+## Auth Login/Signup API Submission
+
+As of 2026-07-03, the Clean Fintech Login and Signup screens submit through a
+dedicated mobile Auth API client before showing success:
+
+- `POST /api/v1/auth/login` through `AuthApiClient.login()`
+- `POST /api/v1/auth/register` through `AuthApiClient.register()`
+
+The client sends privacy-safe headers, requires HTTPS or localhost base URLs,
+normalizes the current API login/register response shape through the shared
+mobile auth response adapter, stores only the access token in SecureStore, and
+does not persist refresh tokens in the mobile token store. MFA-required and
+locked-account responses stay pending/error states instead of being reported as
+local login success. The screen tests verify server-first submission wiring,
+but deployed API auth, DB-backed user persistence, native E2E, and store review
+proof remain separate release gates.
 
 ## LV UP Growth API Hydration
 

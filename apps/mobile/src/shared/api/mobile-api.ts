@@ -1,5 +1,8 @@
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
+import { createAuthApi } from "../../features/auth/api";
+import type { AuthApiClient } from "../../features/auth/types";
 import { createBudgetApi } from "../../features/budget/api";
 import type { BudgetApiClient } from "../../features/budget/types";
 import { createCommunityApi } from "../../features/community/api";
@@ -26,6 +29,20 @@ export type MobileApiFactoryOptions = Readonly<{
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
   return "web";
+}
+
+export function createMobileAuthApi(
+  options: MobileApiFactoryOptions = {},
+): AuthApiClient {
+  return createAuthApi({
+    baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
+    platform: mobileClientPlatform(),
+    tokenStore: SecureStore,
+    ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+    ...(options.createCorrelationId
+      ? { createCorrelationId: options.createCorrelationId }
+      : {}),
+  });
 }
 
 export function createMobileCommunityService(

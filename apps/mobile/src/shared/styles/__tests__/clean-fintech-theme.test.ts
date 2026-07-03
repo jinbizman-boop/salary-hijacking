@@ -203,6 +203,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fixedExpenseRowFromServer");
   });
 
+  it("keeps login and signup submitted through the server auth API", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
+
+    expect(mobileApi).toContain("createMobileAuthApi");
+    expect(cleanScreens).toContain("createMobileAuthApi");
+    expect(cleanScreens).toContain("loginAuthApi");
+    expect(cleanScreens).toContain("signupAuthApi");
+    expect(cleanScreens).toContain("submitLogin");
+    expect(cleanScreens).toContain("submitSignup");
+    expect(cleanScreens).toContain("loginAuthApi.login");
+    expect(cleanScreens).toContain("signupAuthApi.register");
+    expect(cleanScreens).toContain("AUTHENTICATED");
+    expect(cleanScreens).toContain("MFA_REQUIRED");
+    expect(cleanScreens).toContain("서버 인증이 완료됐어요");
+    expect(cleanScreens).toContain("가입 요청을 서버에 등록했어요");
+    expect(cleanScreens).not.toContain(
+      "회원가입 요청을 서버 권위 API로 보낼 준비가 됐어요.",
+    );
+  });
+
   it("keeps plan screen hydrated and recalculated through the server payroll API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

@@ -50,6 +50,7 @@ import type {
   NotificationType,
 } from "../../features/notifications/types";
 import {
+  createMobileAuthApi,
   createMobileBudgetApi,
   createMobileCommunityService,
   createMobileGrowthApi,
@@ -726,14 +727,47 @@ export function CleanFintechSplashScreen(): React.ReactElement {
 export function CleanFintechSignupScreen(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
+  const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState<ReadonlySet<string>>(() => new Set());
+  const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState(
     "급여·지출·저축 정보는 민감 정보 보호 기준으로 다룹니다.",
   );
+  const signupAuthApi = useMemo(() => createMobileAuthApi(), []);
   const valid =
     email.includes("@") &&
     nickname.trim().length >= 2 &&
+    password.trim().length >= 8 &&
     signupConsentLabels.every((label) => agreed.has(label));
+  const submitSignup = useCallback(async () => {
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    try {
+      const response = await signupAuthApi.register({
+        email,
+        marketingAccepted: false,
+        nickname,
+        password,
+        privacyAccepted: true,
+        termsAccepted: true,
+      });
+      if (response.data?.status === "AUTHENTICATED") {
+        setToast("가입 요청을 서버에 등록했어요. 서버 인증이 완료됐어요.");
+      } else if (response.data?.status === "EMAIL_VERIFICATION_REQUIRED") {
+        setToast("가입 요청을 서버에 등록했어요. 이메일 인증을 확인해 주세요.");
+      } else {
+        setToast(
+          "가입 요청을 서버에 등록했어요. 로그인 화면에서 계속해 주세요.",
+        );
+      }
+    } catch {
+      setToast(
+        "회원가입 요청을 완료하지 못했어요. 입력값과 네트워크를 확인해 주세요.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, [email, nickname, password, signupAuthApi, submitting, valid]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -766,10 +800,12 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="회원가입 비밀번호"
+            onChangeText={setPassword}
             placeholder="비밀번호"
             placeholderTextColor={theme.color.text.disabled}
             secureTextEntry
             style={styles.input}
+            value={password}
           />
         </SectionCard>
         <SectionCard>
@@ -792,13 +828,16 @@ export function CleanFintechSignupScreen(): React.ReactElement {
         </SectionCard>
         <Pressable
           accessibilityRole="button"
-          disabled={!valid}
-          onPress={() =>
-            setToast("회원가입 요청을 서버 권위 API로 보낼 준비가 됐어요.")
-          }
-          style={[styles.primaryButton, !valid ? styles.disabled : null]}
+          disabled={!valid || submitting}
+          onPress={submitSignup}
+          style={[
+            styles.primaryButton,
+            !valid || submitting ? styles.disabled : null,
+          ]}
         >
-          <Text style={styles.primaryButtonText}>가입 완료</Text>
+          <Text style={styles.primaryButtonText}>
+            {submitting ? "가입 요청 중" : "가입 완료"}
+          </Text>
         </Pressable>
         <GuardBox />
       </ScrollView>
@@ -2249,6 +2288,39 @@ function ProfileScreen(): React.ReactElement {
 }
 
 function LoginScreen(): React.ReactElement {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState(
+    "서버 권위 인증으로 급여 데이터를 안전하게 불러옵니다.",
+  );
+  const loginAuthApi = useMemo(() => createMobileAuthApi(), []);
+  const valid = email.includes("@") && password.trim().length >= 8;
+  const submitLogin = useCallback(async () => {
+    if (!valid || submitting) return;
+    setSubmitting(true);
+    try {
+      const response = await loginAuthApi.login({
+        email,
+        password,
+        rememberMe: true,
+      });
+      if (response.data?.status === "AUTHENTICATED") {
+        setToast("서버 인증이 완료됐어요. 급여 홈 데이터를 불러올 수 있어요.");
+      } else if (response.data?.status === "MFA_REQUIRED") {
+        setToast("추가 인증이 필요해요. 등록된 인증 수단을 확인해 주세요.");
+      } else {
+        setToast("계정 상태 확인이 필요해요. 잠시 후 다시 시도해 주세요.");
+      }
+    } catch {
+      setToast(
+        "로그인 요청을 완료하지 못했어요. 이메일과 비밀번호를 확인해 주세요.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  }, [email, loginAuthApi, password, submitting, valid]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView
@@ -2259,24 +2331,39 @@ function LoginScreen(): React.ReactElement {
         <Text style={styles.loginSubtitle}>
           월급이 사라지기 전에 먼저 붙잡아요
         </Text>
+        <Toast message={toast} />
         <SectionCard>
           <TextInput
             accessibilityLabel="이메일"
             autoCapitalize="none"
             inputMode="email"
+            onChangeText={setEmail}
             placeholder="이메일"
             placeholderTextColor={theme.color.text.disabled}
             style={styles.input}
+            value={email}
           />
           <TextInput
             accessibilityLabel="비밀번호"
+            onChangeText={setPassword}
             placeholder="비밀번호"
             placeholderTextColor={theme.color.text.disabled}
             secureTextEntry
             style={styles.input}
+            value={password}
           />
-          <Pressable accessibilityRole="button" style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>로그인</Text>
+          <Pressable
+            accessibilityRole="button"
+            disabled={!valid || submitting}
+            onPress={submitLogin}
+            style={[
+              styles.primaryButton,
+              !valid || submitting ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.primaryButtonText}>
+              {submitting ? "로그인 중" : "로그인"}
+            </Text>
           </Pressable>
           <View style={styles.attachmentRow}>
             <SmallButton label="Kakao" />
