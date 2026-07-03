@@ -62,8 +62,10 @@ import {
 import {
   FIXED_EXPENSES_API_PREFIX,
   assertFixedExpensesRoutesCompleteness,
+  createFixedExpensesRoutes,
   fixedExpensesRoutesManifest,
   handleFixedExpensesRoutes,
+  type FixedExpensesRoutesOptions,
 } from "./routes/fixed-expenses.routes";
 import {
   GROWTH_API_PREFIX,
@@ -240,6 +242,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly auditOptions?: AppAuditOptions<TEnv>;
   readonly payrollRoutesOptions?: PayrollRoutesOptions<TEnv>;
   readonly dailyBudgetsRoutesOptions?: DailyBudgetsRoutesOptions<TEnv>;
+  readonly fixedExpensesRoutesOptions?: FixedExpensesRoutesOptions<TEnv>;
   readonly variableExpensesRoutesOptions?: VariableExpensesRoutesOptions<TEnv>;
   readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
   readonly now?: () => Date;
@@ -1150,6 +1153,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createDailyBudgetsRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "fixed-expenses" && options.fixedExpensesRoutesOptions) {
+    const routeOptions: FixedExpensesRoutesOptions<TEnv> =
+      options.fixedExpensesRoutesOptions.now || !options.now
+        ? options.fixedExpensesRoutesOptions
+        : {
+            ...options.fixedExpensesRoutesOptions,
+            now: options.now,
+          };
+    return createFixedExpensesRoutes(routeOptions)(request, env, context);
   }
   if (
     route.id === "variable-expenses" &&

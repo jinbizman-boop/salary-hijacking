@@ -24,8 +24,8 @@ Entrypoints:
 
 Current verification:
 
-- `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-02.
-- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 14 files and 25 tests.
+- `corepack pnpm --filter @salary-hijacking/api run typecheck:strict`: PASS on 2026-07-03.
+- `corepack pnpm --filter @salary-hijacking/api run test`: PASS on 2026-07-03, 16 files and 29 tests.
 - `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS on 2026-07-02.
 
 ## API Prefixes
@@ -68,6 +68,7 @@ Verified on 2026-06-29:
 - DB-backed payroll repository: `services/api/src/repositories/payroll.repository.ts` can create and query payroll plans through the `payroll_plans` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available.
 - `GET /api/v1/daily-budgets/today`, `POST /api/v1/daily-budgets`, `POST /api/v1/daily-budgets/{budgetId}/spend`, `GET /api/v1/daily-budgets/summary`, and `GET /api/v1/daily-budgets/calendar`: implemented in `services/api/src/routes/daily-budgets.routes.ts` as the server-authoritative Salary Home daily budget surface.
 - DB-backed daily budgets repository: `services/api/src/repositories/daily-budgets.repository.ts` can create, read, update, recalculate, summarize, and calendar daily budgets through the `daily_budgets` migration table. Its spend path writes to `variable_expenses` so the existing DB trigger recalculates daily budget balances. It keeps the existing in-memory fallback when no DB URL is available.
+- DB-backed fixed expenses repository: `services/api/src/repositories/fixed-expenses.repository.ts` can list, create, update, pause, resume, end, delete, record payment, summarize, calendar, upcoming, and impact fixed expenses through the `fixed_expenses` migration table when the Worker env has a supported database URL. It keeps the existing in-memory fallback when no DB URL is available and does not return internal `user_id` or `payroll_plan_id` values.
 - `GET /api/v1/users/me/profile`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile screen payload alias. The response uses hash-only user identity and explicit false privacy flags.
 - `POST /api/v1/users/me/privacy-export`: implemented in `services/api/src/routes/users.routes.ts` as the Expo profile privacy action alias. The response returns mobile profile payload privacy state without exposing raw financial, personal, or token data.
 - `POST /api/v1/users/me/withdrawal-request`: implemented in `services/api/src/routes/users.routes.ts` as a request-only mobile profile action. It records/request-flags withdrawal intent without performing destructive final account withdrawal.
@@ -88,6 +89,8 @@ Verified on 2026-06-29:
 - Mobile payroll repository injection contract test: `services/api/tests/mobile-payroll-contract.test.ts`.
 - Daily budget DB repository test: `services/api/tests/daily-budgets-db-repository.test.ts`.
 - Mobile daily budget repository injection contract test: `services/api/tests/mobile-daily-budget-contract.test.ts`.
+- Fixed expense DB repository test: `services/api/tests/fixed-expenses-db-repository.test.ts`.
+- Mobile fixed expense repository injection contract test: `services/api/tests/mobile-fixed-expense-contract.test.ts`.
 - Community DB repository test: `services/api/tests/community-db-repository.test.ts`.
 - Mobile community repository injection contract test: `services/api/tests/mobile-community-contract.test.ts`.
 - Manifest regression test: `services/api/tests/mobile-route-manifest-contract.test.ts`.
