@@ -8,6 +8,8 @@ const RAW_KRW_PATTERN =
   /(?:(?:급여|월급|연봉|수입|소득|지출|저축|예산|금액)\s*)?(?:₩\s*)?(?:\d{1,3}(?:,\d{3})+|\d{6,})\s*원?/gu;
 const TOKEN_PATTERN =
   /\b(token|authorization|bearer|session|refresh|push|fcm)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/giu;
+const JWT_PATTERN =
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/gu;
 
 const SENSITIVE_PATTERNS = [
   EMAIL_PATTERN,
@@ -17,6 +19,7 @@ const SENSITIVE_PATTERNS = [
   ACCOUNT_PATTERN,
   RAW_KRW_PATTERN,
   TOKEN_PATTERN,
+  JWT_PATTERN,
 ] as const;
 
 function testPattern(pattern: RegExp, value: string): boolean {

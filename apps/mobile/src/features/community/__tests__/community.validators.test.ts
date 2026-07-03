@@ -25,6 +25,11 @@ describe("community validators", () => {
     ["급여 공개", "월급은 3,500,000원입니다.", "FINANCIAL_DATA"],
     ["고수익 보장", "원금 보장 고수익 투자 링크로 오세요.", "RISKY_ADVICE"],
     ["개인 연락", "전화번호 010-1234-5678로 연락하세요.", "PERSONAL_DATA"],
+    [
+      "raw JWT exposure",
+      "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signature",
+      "PERSONAL_DATA",
+    ],
   ])("blocks %s", (title, content, expectedCode) => {
     const result = validatePostDraft({
       boardType: "FREE",
