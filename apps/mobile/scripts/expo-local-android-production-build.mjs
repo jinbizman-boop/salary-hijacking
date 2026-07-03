@@ -10,6 +10,9 @@ import { resolveJavaHome } from "./eas-local-android-build.mjs";
 const defaultMobileRootDir = () =>
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
+const defaultMonorepoRootDir = (mobileRootDir) =>
+  path.resolve(mobileRootDir, "..", "..");
+
 const isWindows = (platform) => platform === "win32";
 
 const executableNames = (command, platform) =>
@@ -74,6 +77,65 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
     `sdk.dir=${escapeAndroidPropertiesPath(sdkRoot)}\n`,
     "utf8",
   );
+};
+
+const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
+  const entryFilePath = path.join(mobileRootDir, "index.android.js");
+  const source = 'import "expo-router/entry";\n';
+  if (!fs.existsSync(entryFilePath)) {
+    fs.writeFileSync(entryFilePath, source, "utf8");
+    return;
+  }
+
+  const current = fs.readFileSync(entryFilePath, "utf8");
+  if (!current.includes("expo-router/entry")) {
+    fs.writeFileSync(entryFilePath, source, "utf8");
+  }
+};
+
+const ensureMonorepoMetroEntryFile = ({ mobileRootDir, monorepoRootDir }) => {
+  if (path.resolve(mobileRootDir) === path.resolve(monorepoRootDir)) return;
+
+  const entryFilePath = path.join(monorepoRootDir, "index.android.js");
+  const importPath = path
+    .relative(monorepoRootDir, path.join(mobileRootDir, "index.android.js"))
+    .replace(/\\/gu, "/");
+  const source = `import "./${importPath}";\n`;
+  if (!fs.existsSync(entryFilePath)) {
+    fs.writeFileSync(entryFilePath, source, "utf8");
+    return;
+  }
+
+  const current = fs.readFileSync(entryFilePath, "utf8");
+  if (!current.includes(importPath)) {
+    fs.writeFileSync(entryFilePath, source, "utf8");
+  }
+};
+
+const patchAndroidReleaseEntryFile = ({ mobileRootDir }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!fs.existsSync(appBuildGradlePath)) return;
+
+  const source = fs.readFileSync(appBuildGradlePath, "utf8");
+  const patchedEntry = 'entryFile = file("${projectRoot}/index.android.js")';
+  let nextSource = source.replace(
+    /^\s*entryFile\s*=\s*file\((?:"\$\{projectRoot\}\/index\.android\.js"|"\$\{projectRoot\}\/\.\.\/\.\.\/index\.android\.js"|"\.\.\/\.\.\/index\.android\.js"|\["node",\s*"-e",\s*"require\('expo\/scripts\/resolveAppEntry'\)",\s*projectRoot,\s*"android",\s*"absolute"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\))\)\s*$/mu,
+    `    ${patchedEntry}`,
+  );
+  if (!/^\s*root\s*=\s*file\("\.\.\/\.\.\/"\)\s*$/mu.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /react\s*\{\s*\r?\n/u,
+      'react {\n    root = file("../../")\n',
+    );
+  }
+  if (nextSource !== source) {
+    fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+  }
 };
 
 export const buildExpoLocalAndroidProductionInvocations = ({
@@ -240,6 +302,7 @@ export const runExpoLocalAndroidProductionBuild = ({
   env = process.env,
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
+  monorepoRootDir = defaultMonorepoRootDir(mobileRootDir),
   output = "build/release/android/salary-hijacking-production.aab",
   pathValue = env.PATH ?? env.Path ?? "",
   platform = process.platform,
@@ -288,6 +351,9 @@ export const runExpoLocalAndroidProductionBuild = ({
     mobileRootDir,
     sdkRoot: preflight.sdkRoot,
   });
+  ensureLocalMetroEntryFile({ mobileRootDir });
+  ensureMonorepoMetroEntryFile({ mobileRootDir, monorepoRootDir });
+  patchAndroidReleaseEntryFile({ mobileRootDir });
 
   const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
     cwd: path.join(mobileRootDir, "android"),

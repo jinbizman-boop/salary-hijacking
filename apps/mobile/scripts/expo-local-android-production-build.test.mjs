@@ -132,6 +132,7 @@ test("production AAB runner copies only a verified AAB archive to the release pa
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
+    monorepoRootDir: rootDir,
     pathValue: "",
     platform: "win32",
     spawn(command, args, options) {
@@ -139,6 +140,10 @@ test("production AAB runner copies only a verified AAB archive to the release pa
       const commandName = path.basename(String(command)).toLowerCase();
       if (commandName.includes("expo")) {
         touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          `react {\n    entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())\n}\n`,
+        );
       }
       if (
         commandName.includes("gradlew") &&
@@ -169,6 +174,28 @@ test("production AAB runner copies only a verified AAB archive to the release pa
   assert.equal(calls[1].args[0], "bundleRelease");
   assert.equal(calls[1].options.env.ANDROID_HOME, sdkRoot);
   assert.equal(calls[1].options.env.ANDROID_SDK_ROOT, sdkRoot);
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /entryFile = file\("\$\{projectRoot\}\/index\.android\.js"\)/u,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /root = file\("\.\.\/\.\.\/"\)/u,
+  );
   assert.equal(
     fs.readFileSync(
       path.join(
