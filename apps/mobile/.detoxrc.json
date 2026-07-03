@@ -11,7 +11,8 @@
   "apps": {
     "android.debug": {
       "type": "android.apk",
-      "binaryPath": "build/e2e/android/salary-hijacking-e2e.apk"
+      "binaryPath": "build/e2e/android/salary-hijacking-e2e.apk",
+      "testBinaryPath": "build/e2e/android/salary-hijacking-e2e-androidTest.apk"
     },
     "ios.debug": {
       "type": "ios.app",

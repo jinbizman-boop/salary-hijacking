@@ -112,6 +112,26 @@ const ensureMonorepoMetroEntryFile = ({ mobileRootDir, monorepoRootDir }) => {
   }
 };
 
+const ensureGradleInputMetroEntryShim = ({ mobileRootDir }) => {
+  const shimPath = path.join(
+    mobileRootDir,
+    "apps",
+    "mobile",
+    "index.android.js",
+  );
+  const source = 'import "../../index.android.js";\n';
+  fs.mkdirSync(path.dirname(shimPath), { recursive: true });
+  if (!fs.existsSync(shimPath)) {
+    fs.writeFileSync(shimPath, source, "utf8");
+    return;
+  }
+
+  const current = fs.readFileSync(shimPath, "utf8");
+  if (!current.includes("../../index.android.js")) {
+    fs.writeFileSync(shimPath, source, "utf8");
+  }
+};
+
 const patchAndroidReleaseEntryFile = ({ mobileRootDir }) => {
   const appBuildGradlePath = path.join(
     mobileRootDir,
@@ -122,9 +142,10 @@ const patchAndroidReleaseEntryFile = ({ mobileRootDir }) => {
   if (!fs.existsSync(appBuildGradlePath)) return;
 
   const source = fs.readFileSync(appBuildGradlePath, "utf8");
-  const patchedEntry = 'entryFile = file("${projectRoot}/index.android.js")';
+  const patchedEntry =
+    'entryFile = file("${projectRoot}/apps/mobile/index.android.js")';
   let nextSource = source.replace(
-    /^\s*entryFile\s*=\s*file\((?:"\$\{projectRoot\}\/index\.android\.js"|"\$\{projectRoot\}\/\.\.\/\.\.\/index\.android\.js"|"\.\.\/\.\.\/index\.android\.js"|\["node",\s*"-e",\s*"require\('expo\/scripts\/resolveAppEntry'\)",\s*projectRoot,\s*"android",\s*"absolute"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\))\)\s*$/mu,
+    /^\s*entryFile\s*=\s*file\((?:"\$\{projectRoot\}\/apps\/mobile\/index\.android\.js"|"\$\{projectRoot\}\/index\.android\.js"|"\$\{projectRoot\}\/\.\.\/\.\.\/index\.android\.js"|"\.\.\/\.\.\/index\.android\.js"|\["node",\s*"-e",\s*"require\('expo\/scripts\/resolveAppEntry'\)",\s*projectRoot,\s*"android",\s*"absolute"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\))\)\s*$/mu,
     `    ${patchedEntry}`,
   );
   if (!/^\s*root\s*=\s*file\("\.\.\/\.\.\/"\)\s*$/mu.test(nextSource)) {
@@ -135,6 +156,46 @@ const patchAndroidReleaseEntryFile = ({ mobileRootDir }) => {
   }
   if (nextSource !== source) {
     fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+  }
+};
+
+const patchReactNativePackageList = ({ mobileRootDir }) => {
+  const packageListPath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build",
+    "generated",
+    "autolinking",
+    "src",
+    "main",
+    "java",
+    "com",
+    "facebook",
+    "react",
+    "PackageList.java",
+  );
+  if (!fs.existsSync(packageListPath)) return;
+
+  const source = fs.readFileSync(packageListPath, "utf8");
+  let nextSource = source.replace(
+    /^\s*import\s+expo\.core\.ExpoModulesPackage;\r?\n/gmu,
+    "import expo.modules.ExpoModulesPackage;\n",
+  );
+  if (!/import\s+expo\.modules\.ExpoModulesPackage;/u.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /(\/\/ expo\r?\n)/u,
+      "$1import expo.modules.ExpoModulesPackage;\n",
+    );
+  }
+  if (!/new\s+ExpoModulesPackage\(\)/u.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /(new\s+MainReactPackage\(mConfig\),\r?\n)/u,
+      "$1      new ExpoModulesPackage(),\n",
+    );
+  }
+  if (nextSource !== source) {
+    fs.writeFileSync(packageListPath, nextSource, "utf8");
   }
 };
 
@@ -162,9 +223,16 @@ export const buildExpoLocalAndroidProductionInvocations = ({
       "bundleRelease",
       "-PreactNativeArchitectures=arm64-v8a",
       "-PnewArchEnabled=false",
+      "-x",
+      ":app:generateAutolinkingPackageList",
     ],
     gradleCommand,
     outputPath: path.resolve(mobileRootDir, output),
+    packageListArgs: [
+      ":app:generateAutolinkingPackageList",
+      "-PreactNativeArchitectures=arm64-v8a",
+      "-PnewArchEnabled=false",
+    ],
     prebuildArgs: ["prebuild", "--platform", "android", "--no-install"],
     releaseAabPath: path.join(
       mobileRootDir,
@@ -353,7 +421,30 @@ export const runExpoLocalAndroidProductionBuild = ({
   });
   ensureLocalMetroEntryFile({ mobileRootDir });
   ensureMonorepoMetroEntryFile({ mobileRootDir, monorepoRootDir });
+  ensureGradleInputMetroEntryShim({ mobileRootDir });
   patchAndroidReleaseEntryFile({ mobileRootDir });
+
+  const packageList = spawn(
+    invocations.gradleCommand,
+    invocations.packageListArgs,
+    {
+      cwd: path.join(mobileRootDir, "android"),
+      env: preflight.env,
+      shell: isWindows(platform),
+      stdio: "inherit",
+      windowsHide: true,
+    },
+  );
+  if ((packageList.status ?? 1) !== 0) {
+    return {
+      ...preflight,
+      failures: packageList.error
+        ? [...failures, packageList.error.message]
+        : failures,
+      status: packageList.status ?? 1,
+    };
+  }
+  patchReactNativePackageList({ mobileRootDir });
 
   const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
     cwd: path.join(mobileRootDir, "android"),

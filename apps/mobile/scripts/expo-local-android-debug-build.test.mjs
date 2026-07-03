@@ -34,6 +34,9 @@ const writeMobileFixture = (rootDir) => {
     expo: { android: { package: "com.salaryhijacking.mobile" } },
   });
   touch(path.join(rootDir, "node_modules", ".bin", "expo.CMD"));
+  writeJson(path.join(rootDir, "node_modules", "detox", "package.json"), {
+    version: "20.51.4",
+  });
 };
 
 test("preflight passes without Expo account auth when Expo CLI, Java, and Android SDK are present", () => {
@@ -139,6 +142,13 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "-x",
     ":app:generateAutolinkingPackageList",
   ]);
+  assert.deepEqual(invocations.androidTestArgs, [
+    ":app:assembleDebugAndroidTest",
+    "-PreactNativeArchitectures=x86_64",
+    "-PnewArchEnabled=false",
+    "-x",
+    ":app:generateAutolinkingPackageList",
+  ]);
   assert.deepEqual(invocations.packageListArgs, [
     ":app:generateAutolinkingPackageList",
     "-PreactNativeArchitectures=x86_64",
@@ -156,6 +166,10 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   assert.match(
     invocations.outputPath,
     /build[\\/]e2e[\\/]android[\\/]salary-hijacking-e2e\.apk$/,
+  );
+  assert.match(
+    invocations.testOutputPath,
+    /build[\\/]e2e[\\/]android[\\/]salary-hijacking-e2e-androidTest\.apk$/,
   );
 });
 
@@ -194,8 +208,30 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
       if (commandName.includes("expo")) {
         touch(path.join(rootDir, "android", "gradlew.bat"));
         touch(
+          path.join(rootDir, "android", "build.gradle"),
+          [
+            "allprojects {",
+            "  repositories {",
+            "    google()",
+            "    mavenCentral()",
+            "  }",
+            "}",
+            "",
+          ].join("\n"),
+        );
+        touch(
           path.join(rootDir, "android", "app", "build.gradle"),
-          'dependencies {\n    implementation("com.facebook.react:react-android")\n}\n',
+          [
+            "android {",
+            "    defaultConfig {",
+            "    }",
+            "}",
+            "",
+            "dependencies {",
+            '    implementation("com.facebook.react:react-android")',
+            "}",
+            "",
+          ].join("\n"),
         );
         touch(
           path.join(
@@ -215,6 +251,7 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
             "import expo.modules.splashscreen.SplashScreenManager",
             "class MainActivity {",
             "  fun onCreate() {",
+            "    // setTheme(R.style.AppTheme);",
             "    SplashScreenManager.registerOnActivity(this)",
             "  }",
             "}",
@@ -296,12 +333,31 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
           "PK\u0003\u0004",
         );
       }
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "androidTest",
+            "debug",
+            "app-debug-androidTest.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+      }
       return { status: 0 };
     },
   });
 
   assert.equal(result.status, 0, result.failures.join("\n"));
-  assert.equal(calls.length, 4);
+  assert.equal(calls.length, 5);
   assert.match(String(calls[0].command).toLowerCase(), /expo/);
   assert.match(String(calls[1].command).toLowerCase(), /gradlew/);
   assert.equal(calls[1].args[0], ":app:generateAutolinkingPackageList");
@@ -310,6 +366,8 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.match(String(calls[3].command).toLowerCase(), /gradlew/);
   assert.equal(calls[3].options.env.ANDROID_HOME, sdkRoot);
   assert.equal(calls[3].options.env.ANDROID_SDK_ROOT, sdkRoot);
+  assert.match(String(calls[4].command).toLowerCase(), /gradlew/);
+  assert.equal(calls[4].args[0], ":app:assembleDebugAndroidTest");
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),
     /sdk\.dir=/,
@@ -328,6 +386,84 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
     ),
     /implementation project\(':expo'\)/,
   );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /debuggableVariants = \[\]/,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "android", "build.gradle"), "utf8"),
+    /maven \{ url "\$rootDir\/\.\.\/node_modules\/detox\/Detox-android" \}/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /androidTestImplementation\("com\.wix:detox:20\.51\.4"\)/,
+  );
+  assert.doesNotMatch(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /androidTestImplementation\("com\.wix:detox:\+"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /androidTestImplementation\("androidx\.test:core:1\.6\.1"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /androidTestImplementation\("androidx\.test\.ext:junit:1\.2\.1"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /androidTestImplementation\("androidx\.test:runner:1\.6\.2"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /androidTestImplementation\("androidx\.test:rules:1\.6\.1"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /testInstrumentationRunner "androidx\.test\.runner\.AndroidJUnitRunner"/,
+  );
+  const detoxTestSource = fs.readFileSync(
+    path.join(
+      rootDir,
+      "android",
+      "app",
+      "src",
+      "androidTest",
+      "java",
+      "com",
+      "salaryhijacking",
+      "mobile",
+      "DetoxTest.java",
+    ),
+    "utf8",
+  );
+  assert.match(detoxTestSource, /package com\.salaryhijacking\.mobile;/);
+  assert.match(detoxTestSource, /Detox\.runTests\(mActivityRule\);/);
+  assert.match(detoxTestSource, /ActivityTestRule<MainActivity>/);
   assert.doesNotMatch(
     fs.readFileSync(
       path.join(
@@ -345,6 +481,42 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
       "utf8",
     ),
     /SplashScreenManager/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(
+        rootDir,
+        "android",
+        "app",
+        "src",
+        "main",
+        "java",
+        "com",
+        "salaryhijacking",
+        "mobile",
+        "MainActivity.kt",
+      ),
+      "utf8",
+    ),
+    /setTheme\(R\.style\.AppTheme\);/,
+  );
+  assert.doesNotMatch(
+    fs.readFileSync(
+      path.join(
+        rootDir,
+        "android",
+        "app",
+        "src",
+        "main",
+        "java",
+        "com",
+        "salaryhijacking",
+        "mobile",
+        "MainActivity.kt",
+      ),
+      "utf8",
+    ),
+    /\/\/\s*setTheme\(R\.style\.AppTheme\);/,
   );
   assert.equal(
     fs.existsSync(
@@ -380,7 +552,8 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
     "utf8",
   );
   assert.doesNotMatch(packageListSource, /expo\.core/);
-  assert.doesNotMatch(packageListSource, /ExpoModulesPackage/);
+  assert.match(packageListSource, /import expo\.modules\.ExpoModulesPackage;/);
+  assert.match(packageListSource, /new ExpoModulesPackage\(\),/);
   assert.equal(
     fs.existsSync(
       path.join(
@@ -411,6 +584,19 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.equal(
     fs.readFileSync(
       path.join(rootDir, "build", "e2e", "android", "salary-hijacking-e2e.apk"),
+      "utf8",
+    ),
+    "PK\u0003\u0004",
+  );
+  assert.equal(
+    fs.readFileSync(
+      path.join(
+        rootDir,
+        "build",
+        "e2e",
+        "android",
+        "salary-hijacking-e2e-androidTest.apk",
+      ),
       "utf8",
     ),
     "PK\u0003\u0004",

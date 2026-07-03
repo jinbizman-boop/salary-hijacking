@@ -95,6 +95,13 @@ test("production AAB invocations use Expo prebuild and Gradle bundleRelease", ()
     "bundleRelease",
     "-PreactNativeArchitectures=arm64-v8a",
     "-PnewArchEnabled=false",
+    "-x",
+    ":app:generateAutolinkingPackageList",
+  ]);
+  assert.deepEqual(invocations.packageListArgs, [
+    ":app:generateAutolinkingPackageList",
+    "-PreactNativeArchitectures=arm64-v8a",
+    "-PnewArchEnabled=false",
   ]);
   assert.match(
     invocations.releaseAabPath,
@@ -147,6 +154,38 @@ test("production AAB runner copies only a verified AAB archive to the release pa
       }
       if (
         commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          [
+            "package com.facebook.react;",
+            "import expo.core.ExpoModulesPackage;",
+            "public class PackageList {",
+            "  Object[] packages = new Object[] {",
+            "    new ExpoModulesPackage(),",
+            "  };",
+            "}",
+            "",
+          ].join("\n"),
+        );
+      }
+      if (
+        commandName.includes("gradlew") &&
         String(args[0]) === "bundleRelease"
       ) {
         touch(
@@ -168,12 +207,14 @@ test("production AAB runner copies only a verified AAB archive to the release pa
   });
 
   assert.equal(result.status, 0, result.failures.join("\n"));
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   assert.match(String(calls[0].command).toLowerCase(), /expo/);
   assert.match(String(calls[1].command).toLowerCase(), /gradlew/);
-  assert.equal(calls[1].args[0], "bundleRelease");
-  assert.equal(calls[1].options.env.ANDROID_HOME, sdkRoot);
-  assert.equal(calls[1].options.env.ANDROID_SDK_ROOT, sdkRoot);
+  assert.equal(calls[1].args[0], ":app:generateAutolinkingPackageList");
+  assert.match(String(calls[2].command).toLowerCase(), /gradlew/);
+  assert.equal(calls[2].args[0], "bundleRelease");
+  assert.equal(calls[2].options.env.ANDROID_HOME, sdkRoot);
+  assert.equal(calls[2].options.env.ANDROID_SDK_ROOT, sdkRoot);
   assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
     /expo-router\/entry/u,
@@ -187,7 +228,7 @@ test("production AAB runner copies only a verified AAB archive to the release pa
       path.join(rootDir, "android", "app", "build.gradle"),
       "utf8",
     ),
-    /entryFile = file\("\$\{projectRoot\}\/index\.android\.js"\)/u,
+    /entryFile = file\("\$\{projectRoot\}\/apps\/mobile\/index\.android\.js"\)/u,
   );
   assert.match(
     fs.readFileSync(
@@ -196,6 +237,34 @@ test("production AAB runner copies only a verified AAB archive to the release pa
     ),
     /root = file\("\.\.\/\.\.\/"\)/u,
   );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "apps", "mobile", "index.android.js"),
+      "utf8",
+    ),
+    /\.\.\/\.\.\/index\.android\.js/u,
+  );
+  const packageListSource = fs.readFileSync(
+    path.join(
+      rootDir,
+      "android",
+      "app",
+      "build",
+      "generated",
+      "autolinking",
+      "src",
+      "main",
+      "java",
+      "com",
+      "facebook",
+      "react",
+      "PackageList.java",
+    ),
+    "utf8",
+  );
+  assert.doesNotMatch(packageListSource, /expo\.core/u);
+  assert.match(packageListSource, /import expo\.modules\.ExpoModulesPackage;/u);
+  assert.match(packageListSource, /new ExpoModulesPackage\(\),/u);
   assert.equal(
     fs.readFileSync(
       path.join(

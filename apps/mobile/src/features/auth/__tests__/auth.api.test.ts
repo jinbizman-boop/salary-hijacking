@@ -11,6 +11,44 @@ function jsonResponse(body: unknown, status = 200): Response {
 describe("auth api", () => {
   const now = new Date("2026-07-03T00:00:00.000Z");
 
+  it("allows the Android emulator loopback base URL for local native E2E builds", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "http://10.0.2.2:8787",
+      createCorrelationId: () => "auth-emulator-loopback-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            user: {
+              userId: "usr_emulator",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "emulator.access.jwt",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        });
+      },
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async () => undefined,
+      },
+    });
+
+    await api.refresh();
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe("http://10.0.2.2:8787/api/v1/auth/refresh");
+    expect(calls[0]?.headers.get("x-correlation-id")).toBe(
+      "auth-emulator-loopback-test",
+    );
+  });
+
   it("logs in through the server auth API and stores only the access token", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

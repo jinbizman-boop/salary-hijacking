@@ -121,6 +121,177 @@ const ensureExpoProjectDependency = ({ mobileRootDir }) => {
   fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
 };
 
+const ensureReactNativeDebugBundle = ({ mobileRootDir }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!fs.existsSync(appBuildGradlePath)) return;
+  const source = fs.readFileSync(appBuildGradlePath, "utf8");
+  if (source.includes("debuggableVariants = []")) return;
+  const bundleLine = "    debuggableVariants = []";
+  const nextSource = /react\s*\{/u.test(source)
+    ? source.replace(/react\s*\{/u, `react {\n${bundleLine}`)
+    : `${source.trimEnd()}\n\nreact {\n${bundleLine}\n}\n`;
+  fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+};
+
+const resolveDetoxAndroidVersion = ({ mobileRootDir }) => {
+  const detoxPackagePath = path.join(
+    mobileRootDir,
+    "node_modules",
+    "detox",
+    "package.json",
+  );
+  if (!fs.existsSync(detoxPackagePath)) return "20.51.4";
+  const packageJson = JSON.parse(fs.readFileSync(detoxPackagePath, "utf8"));
+  return typeof packageJson.version === "string" && packageJson.version
+    ? packageJson.version
+    : "20.51.4";
+};
+
+const ensureDetoxAndroidMavenRepository = ({ mobileRootDir }) => {
+  const rootBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "build.gradle",
+  );
+  if (!fs.existsSync(rootBuildGradlePath)) return;
+  const source = fs.readFileSync(rootBuildGradlePath, "utf8");
+  const detoxRepositoryLine =
+    '    maven { url "$rootDir/../node_modules/detox/Detox-android" }';
+  if (source.includes("node_modules/detox/Detox-android")) return;
+  const lastMavenCentralIndex = source.lastIndexOf("    mavenCentral()");
+  const insertIndex =
+    lastMavenCentralIndex >= 0
+      ? source.indexOf("\n", lastMavenCentralIndex) + 1
+      : -1;
+  const nextSource =
+    insertIndex > 0
+      ? `${source.slice(0, insertIndex)}${detoxRepositoryLine}\n${source.slice(
+          insertIndex,
+        )}`
+      : source.replace(
+          /repositories\s*\{/u,
+          `repositories {\n${detoxRepositoryLine}`,
+        );
+  fs.writeFileSync(rootBuildGradlePath, nextSource, "utf8");
+};
+
+const ensureDetoxAndroidTestConfig = ({ mobileRootDir }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!fs.existsSync(appBuildGradlePath)) return;
+
+  let source = fs.readFileSync(appBuildGradlePath, "utf8");
+  const detoxAndroidVersion = resolveDetoxAndroidVersion({ mobileRootDir });
+  source = source.replace(
+    /^\s*androidTestImplementation\("com\.wix:detox:\+"\)\r?\n/gmu,
+    "",
+  );
+  const androidTestDependencies = [
+    `androidTestImplementation("com.wix:detox:${detoxAndroidVersion}")`,
+    'androidTestImplementation("androidx.test:core:1.6.1")',
+    'androidTestImplementation("androidx.test.ext:junit:1.2.1")',
+    'androidTestImplementation("androidx.test:runner:1.6.2")',
+    'androidTestImplementation("androidx.test:rules:1.6.1")',
+  ];
+  const missingAndroidTestDependencies = androidTestDependencies.filter(
+    (dependency) => !source.includes(dependency),
+  );
+  if (missingAndroidTestDependencies.length > 0) {
+    source = source.replace(
+      /dependencies\s*\{/u,
+      `dependencies {\n    ${missingAndroidTestDependencies.join("\n    ")}`,
+    );
+  }
+
+  if (!source.includes("testInstrumentationRunner")) {
+    source = source.replace(
+      /(defaultConfig\s*\{\s*)/u,
+      '$1\n        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"\n',
+    );
+  }
+
+  fs.writeFileSync(appBuildGradlePath, source, "utf8");
+};
+
+const findMainActivityPackage = ({ mobileRootDir }) => {
+  const javaRoot = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "java",
+  );
+  const stack = [javaRoot];
+
+  while (stack.length > 0) {
+    const currentDir = stack.pop();
+    if (!currentDir || !fs.existsSync(currentDir)) continue;
+    for (const entry of fs.readdirSync(currentDir, { withFileTypes: true })) {
+      const entryPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        stack.push(entryPath);
+        continue;
+      }
+      if (!/^MainActivity\.(?:kt|java)$/u.test(entry.name)) continue;
+      const source = fs.readFileSync(entryPath, "utf8");
+      const packageMatch = source.match(/^\s*package\s+([\w.]+)\s*;?/mu);
+      if (packageMatch?.[1]) return packageMatch[1];
+    }
+  }
+
+  return "com.salaryhijacking.mobile";
+};
+
+const ensureDetoxAndroidTestSource = ({ mobileRootDir }) => {
+  const activityPackage = findMainActivityPackage({ mobileRootDir });
+  const testSourceDir = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "androidTest",
+    "java",
+    ...activityPackage.split("."),
+  );
+  fs.mkdirSync(testSourceDir, { recursive: true });
+
+  const testSourcePath = path.join(testSourceDir, "DetoxTest.java");
+  const source = [
+    `package ${activityPackage};`,
+    "",
+    "import androidx.test.ext.junit.runners.AndroidJUnit4;",
+    "import androidx.test.rule.ActivityTestRule;",
+    "import com.wix.detox.Detox;",
+    "import org.junit.Rule;",
+    "import org.junit.Test;",
+    "import org.junit.runner.RunWith;",
+    "",
+    "@RunWith(AndroidJUnit4.class)",
+    "public class DetoxTest {",
+    "  @Rule",
+    "  public ActivityTestRule<MainActivity> mActivityRule =",
+    "      new ActivityTestRule<>(MainActivity.class, false, false);",
+    "",
+    "  @Test",
+    "  public void runDetoxTests() {",
+    "    Detox.runTests(mActivityRule);",
+    "  }",
+    "}",
+    "",
+  ].join("\n");
+  fs.writeFileSync(testSourcePath, source, "utf8");
+};
+
 const ensureSecureStoreBackupXmlResources = ({ mobileRootDir }) => {
   const xmlDir = path.join(
     mobileRootDir,
@@ -168,9 +339,22 @@ const patchReactNativePackageList = ({ mobileRootDir }) => {
   );
   if (!fs.existsSync(packageListPath)) return;
   const source = fs.readFileSync(packageListPath, "utf8");
-  const nextSource = source
-    .replace(/^\s*import\s+expo\.core\.ExpoModulesPackage;\r?\n/gmu, "")
-    .replace(/^\s*new\s+ExpoModulesPackage\(\),\r?\n/gmu, "");
+  let nextSource = source.replace(
+    /^\s*import\s+expo\.core\.ExpoModulesPackage;\r?\n/gmu,
+    "import expo.modules.ExpoModulesPackage;\n",
+  );
+  if (!/import\s+expo\.modules\.ExpoModulesPackage;/u.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /(\/\/ expo\r?\n)/u,
+      "$1import expo.modules.ExpoModulesPackage;\n",
+    );
+  }
+  if (!/new\s+ExpoModulesPackage\(\)/u.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /(new\s+MainReactPackage\(mConfig\),\r?\n)/u,
+      "$1      new ExpoModulesPackage(),\n",
+    );
+  }
   if (nextSource !== source)
     fs.writeFileSync(packageListPath, nextSource, "utf8");
 };
@@ -198,6 +382,10 @@ const patchAndroidExpoEntrypoints = ({ mobileRootDir }) => {
       .replace(
         /^\s*SplashScreenManager\.registerOnActivity\(this\)\r?\n/gmu,
         "",
+      )
+      .replace(
+        /^(\s*)\/\/\s*setTheme\(R\.style\.AppTheme\);\r?$/gmu,
+        "$1setTheme(R.style.AppTheme);",
       );
     if (nextSource !== source)
       fs.writeFileSync(mainActivityPath, nextSource, "utf8");
@@ -311,6 +499,13 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     gradleWrapperName(platform),
   );
   return {
+    androidTestArgs: [
+      ":app:assembleDebugAndroidTest",
+      "-PreactNativeArchitectures=x86_64",
+      "-PnewArchEnabled=false",
+      "-x",
+      ":app:generateAutolinkingPackageList",
+    ],
     debugApkPath: path.join(
       mobileRootDir,
       "android",
@@ -342,6 +537,21 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "-PreactNativeArchitectures=x86_64",
       "-PnewArchEnabled=false",
     ],
+    testApkPath: path.join(
+      mobileRootDir,
+      "android",
+      "app",
+      "build",
+      "outputs",
+      "apk",
+      "androidTest",
+      "debug",
+      "app-debug-androidTest.apk",
+    ),
+    testOutputPath: path.resolve(
+      mobileRootDir,
+      "build/e2e/android/salary-hijacking-e2e-androidTest.apk",
+    ),
   };
 };
 
@@ -461,6 +671,16 @@ const copyVerifiedApk = ({ debugApkPath, outputPath }) => {
   fs.copyFileSync(debugApkPath, outputPath);
 };
 
+const copyVerifiedAndroidTestApk = ({ testApkPath, testOutputPath }) => {
+  if (!hasApkHeader(testApkPath)) {
+    throw new Error(
+      `Debug Android test APK was not produced or has an invalid APK header: ${testApkPath}`,
+    );
+  }
+  fs.mkdirSync(path.dirname(testOutputPath), { recursive: true });
+  fs.copyFileSync(testApkPath, testOutputPath);
+};
+
 export const runExpoLocalAndroidDebugBuild = ({
   androidToolHomeDir,
   env = process.env,
@@ -508,6 +728,10 @@ export const runExpoLocalAndroidDebugBuild = ({
   });
   ensureAndroidSplashScreenDependency({ mobileRootDir });
   ensureExpoProjectDependency({ mobileRootDir });
+  ensureReactNativeDebugBundle({ mobileRootDir });
+  ensureDetoxAndroidMavenRepository({ mobileRootDir });
+  ensureDetoxAndroidTestConfig({ mobileRootDir });
+  ensureDetoxAndroidTestSource({ mobileRootDir });
   ensureSecureStoreBackupXmlResources({ mobileRootDir });
   patchAndroidExpoEntrypoints({ mobileRootDir });
 
@@ -555,8 +779,24 @@ export const runExpoLocalAndroidDebugBuild = ({
     return { ...preflight, failures, status: gradle.status ?? 1 };
   }
 
+  const androidTest = spawn(
+    invocations.gradleCommand,
+    invocations.androidTestArgs,
+    {
+      cwd: path.join(mobileRootDir, "android"),
+      env: preflight.env,
+      shell: isWindows(platform),
+      stdio: "inherit",
+      windowsHide: true,
+    },
+  );
+  if ((androidTest.status ?? 1) !== 0) {
+    return { ...preflight, failures, status: androidTest.status ?? 1 };
+  }
+
   try {
     copyVerifiedApk(invocations);
+    copyVerifiedAndroidTestApk(invocations);
   } catch (error) {
     failures.push(error instanceof Error ? error.message : String(error));
     return { ...preflight, failures, status: 1 };
