@@ -188,6 +188,11 @@ function text(record: UnknownRecord | null, key: string): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function rawText(record: UnknownRecord | null, key: string): string | null {
+  const value = record?.[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
 function numeric(record: UnknownRecord | null, key: string): number | null {
   const value = record?.[key];
   return typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -212,7 +217,8 @@ function optionalAccessToken(
   primary: UnknownRecord,
   fallback: UnknownRecord | null,
 ): string | null {
-  const value = text(primary, "accessToken") ?? text(fallback, "accessToken");
+  const value =
+    rawText(primary, "accessToken") ?? rawText(fallback, "accessToken");
   if (!value) return null;
   return validAccessToken(value);
 }
@@ -221,7 +227,11 @@ function requiredAccessToken(
   primary: UnknownRecord,
   fallback: UnknownRecord | null,
 ): string {
-  return validAccessToken(requiredText(primary, fallback, "accessToken"));
+  requiredText(primary, fallback, "accessToken");
+  const value =
+    rawText(primary, "accessToken") ?? rawText(fallback, "accessToken");
+  if (!value) throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
+  return validAccessToken(value);
 }
 
 function validAccessToken(value: string): string {
