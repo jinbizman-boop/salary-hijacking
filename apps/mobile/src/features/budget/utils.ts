@@ -39,7 +39,13 @@ export function normalizeKrwAmount(value: unknown): number {
 }
 
 export function parseKrwInputAmount(value: string): number | null {
-  const normalized = value.trim().replace(/,/g, "");
+  const trimmed = value.trim();
+  const validFormat = /^[0-9]+$/u.test(trimmed)
+    ? true
+    : /^[0-9]{1,3}(?:,[0-9]{3})+$/u.test(trimmed);
+  if (!validFormat) return null;
+
+  const normalized = trimmed.replace(/,/g, "");
   if (!/^[0-9]+$/u.test(normalized)) return null;
 
   const parsed = Number(normalized);

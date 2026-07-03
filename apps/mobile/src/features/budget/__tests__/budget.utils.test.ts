@@ -45,6 +45,13 @@ describe("budget utils", () => {
     expect(parseKrwInputAmount(String(Number.MAX_SAFE_INTEGER + 1))).toBeNull();
   });
 
+  it("rejects malformed comma grouping instead of silently changing KRW input", () => {
+    expect(parseKrwInputAmount("1,,000")).toBeNull();
+    expect(parseKrwInputAmount("12,34")).toBeNull();
+    expect(parseKrwInputAmount("123,45,678")).toBeNull();
+    expect(parseKrwInputAmount("1,234,567")).toBe(1_234_567);
+  });
+
   it("calculates an offline daily-budget preview from accumulated added expenses", () => {
     expect(
       calculateOfflineDailyBudgetPreview({
