@@ -370,9 +370,15 @@ Configure branch protection and GitHub Environments after the new repository exi
           "급여납치 모바일 앱: 급여, 예산, 지출, 저축, 알림, LV UP, 커뮤니티를 서버 권위로 연결하는 Expo 앱",
         scripts: {
           "test:e2e":
-            "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+            "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
+          "test:e2e:android":
+            "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
           "build:e2e:android:local":
             "eas build --platform android --profile e2e --local --output build/e2e/android/salary-hijacking-e2e.apk --non-interactive",
+          "build:e2e:android:local-debug":
+            "node scripts/expo-local-android-debug-build.mjs --output build/e2e/android/salary-hijacking-e2e.apk",
+          "build:e2e:android:local-debug:preflight":
+            "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
           "build:production:android":
             "eas build --platform android --profile production --non-interactive",
         },
@@ -421,6 +427,21 @@ const DEFAULT_API_BASE_URL = "https://api.salaryhijacking.com";
 const DEFAULT_DEEPLINK_HOST = "salaryhijacking.com";
 function assertNoServerSecretExposure() {}
 const privacy = { financialAmountBasedTargeting: false };
+`,
+    "apps/mobile/scripts/expo-local-android-debug-build.mjs": `
+const prebuildArgs = ["prebuild", "--platform", "android", "--no-install"];
+const gradleArgs = ["assembleDebug"];
+const debugApkPath = "android/app/build/outputs/apk/debug/app-debug.apk";
+const outputPath = "build/e2e/android/salary-hijacking-e2e.apk";
+console.log(prebuildArgs, gradleArgs, debugApkPath, outputPath);
+`,
+    "apps/mobile/scripts/run-detox-android.mjs": `
+const env = {
+  ANDROID_SDK_ROOT: process.env.ANDROID_SDK_ROOT,
+  ANDROID_HOME: process.env.ANDROID_HOME,
+  Path: ["platform-tools", "emulator"].join(";"),
+};
+console.log("detox", "--configuration", env);
 `,
     "apps/mobile/assets/icon.png": VALID_PNG,
     "apps/mobile/assets/splash.png": VALID_PNG,
@@ -1532,6 +1553,64 @@ test("fails when mobile local e2e APK build script is missing", async () => {
   }
 });
 
+test("fails when mobile Android E2E calls Detox without the SDK env runner", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/package.json": JSON.stringify(
+        {
+          name: "@salary-hijacking/mobile",
+          description:
+            "급여납치 Salary Hijacking mobile app fixture with a direct Detox Android command.",
+          scripts: {
+            "test:e2e":
+              "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+            "test:e2e:android":
+              "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+            "build:e2e:android:local":
+              "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:preflight":
+              "node scripts/eas-local-android-build.mjs --check --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:local-debug":
+              "node scripts/expo-local-android-debug-build.mjs --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:local-debug:preflight":
+              "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:production:android":
+              "eas build --platform android --profile production --non-interactive",
+          },
+          devDependencies: {
+            "eas-cli": "^20.4.0",
+          },
+        },
+        null,
+        2,
+      ),
+      "apps/mobile/scripts/eas-local-android-build.mjs": `
+const args = ["build", "--platform", "android", "--profile", "e2e", "--local", "--output", "build/e2e/android/salary-hijacking-e2e.apk", "--non-interactive"];
+console.log(process.env.JAVA_HOME, args.join(" "));
+`,
+      "apps/mobile/scripts/expo-local-android-debug-build.mjs": `
+const prebuildArgs = ["prebuild", "--platform", "android", "--no-install"];
+const gradleArgs = ["assembleDebug"];
+const debugApkPath = "android/app/build/outputs/apk/debug/app-debug.apk";
+const outputPath = "build/e2e/android/salary-hijacking-e2e.apk";
+console.log(prebuildArgs, gradleArgs, debugApkPath, outputPath);
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /run-detox-android\.mjs/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("passes when mobile local e2e APK build delegates to the guarded wrapper", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
@@ -1544,7 +1623,9 @@ test("passes when mobile local e2e APK build delegates to the guarded wrapper", 
             "급여납치 Salary Hijacking mobile app fixture with guarded local e2e wrapper.",
           scripts: {
             "test:e2e":
-              "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
+              "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
+            "test:e2e:android":
+              "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
             "build:e2e:android:local":
               "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
             "build:e2e:android:preflight":
@@ -1583,6 +1664,14 @@ const gradleArgs = ["assembleDebug"];
 const debugApkPath = "android/app/build/outputs/apk/debug/app-debug.apk";
 const outputPath = "build/e2e/android/salary-hijacking-e2e.apk";
 console.log(prebuildArgs, gradleArgs, debugApkPath, outputPath);
+`,
+      "apps/mobile/scripts/run-detox-android.mjs": `
+const env = {
+  ANDROID_SDK_ROOT: process.env.ANDROID_SDK_ROOT,
+  ANDROID_HOME: process.env.ANDROID_HOME,
+  Path: ["platform-tools", "emulator"].join(";"),
+};
+console.log("detox", "--configuration", env);
 `,
     });
 

@@ -691,11 +691,45 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
   }
 
   const script = packageJson?.scripts?.["build:e2e:android:local"];
+  const testScript = packageJson?.scripts?.["test:e2e"];
+  const androidTestScript = packageJson?.scripts?.["test:e2e:android"];
   const debugScript = packageJson?.scripts?.["build:e2e:android:local-debug"];
   const debugPreflightScript =
     packageJson?.scripts?.["build:e2e:android:local-debug:preflight"];
   const preflightScript = packageJson?.scripts?.["build:e2e:android:preflight"];
   const expectedOutput = "build/e2e/android/salary-hijacking-e2e.apk";
+  const detoxRunnerRelativePath = "apps/mobile/scripts/run-detox-android.mjs";
+  const detoxRunnerSource = fileExists(rootDir, detoxRunnerRelativePath)
+    ? readText(rootDir, detoxRunnerRelativePath)
+    : "";
+  for (const [scriptName, command] of [
+    ["test:e2e", testScript],
+    ["test:e2e:android", androidTestScript],
+  ]) {
+    if (
+      typeof command !== "string" ||
+      !command.includes("scripts/check-detox-env.mjs android.emu.debug") ||
+      !command.includes("scripts/run-detox-android.mjs android.emu.debug")
+    ) {
+      failures.push(
+        `${relativePath}: scripts.${scriptName} must run check-detox-env and then ${detoxRunnerRelativePath} so Android SDK env reaches Detox`,
+      );
+    }
+  }
+  for (const requiredPart of [
+    "ANDROID_SDK_ROOT",
+    "ANDROID_HOME",
+    "platform-tools",
+    "emulator",
+    "detox",
+    "--configuration",
+  ]) {
+    if (detoxRunnerSource.includes(requiredPart)) continue;
+    failures.push(
+      `${detoxRunnerRelativePath}: Android Detox runner must include ${requiredPart}`,
+    );
+  }
+
   const requiredParts = [
     "eas build",
     "--platform android",

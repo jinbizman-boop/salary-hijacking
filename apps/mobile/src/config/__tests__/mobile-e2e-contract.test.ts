@@ -92,9 +92,16 @@ describe("mobile Detox E2E contract", () => {
       readRequiredText("package.json"),
     ) as PackageJson;
     const preflight = readRequiredText("scripts/check-detox-env.mjs");
+    const detoxRunner = readRequiredText("scripts/run-detox-android.mjs");
 
     expect(packageJson.scripts?.["test:e2e"]).toContain(
       "node scripts/check-detox-env.mjs android.emu.debug",
+    );
+    expect(packageJson.scripts?.["test:e2e"]).toContain(
+      "node scripts/run-detox-android.mjs android.emu.debug",
+    );
+    expect(packageJson.scripts?.["test:e2e:android"]).toContain(
+      "node scripts/run-detox-android.mjs android.emu.debug",
     );
     expect(preflight).toContain("ANDROID_SDK_ROOT");
     expect(preflight).toContain("ANDROID_HOME");
@@ -104,6 +111,10 @@ describe("mobile Detox E2E contract", () => {
     expect(preflight).toContain("e2e:android:import-apk");
     expect(preflight).toContain("test:e2e:android");
     expect(preflight).toContain("process.exit(2)");
+    expect(detoxRunner).toContain("ANDROID_SDK_ROOT");
+    expect(detoxRunner).toContain("ANDROID_HOME");
+    expect(detoxRunner).toContain("detox");
+    expect(detoxRunner).toContain("--configuration");
   });
 
   it("exposes a stable root testID in the Expo Router layout", () => {
