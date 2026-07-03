@@ -2118,7 +2118,7 @@ export function CleanFintechPostDetailScreen({
   const updateCommunityComment = useCallback(
     (comment: CommunityComment): void => {
       const content = (commentEditDrafts[comment.id] ?? comment.content).trim();
-      if (content.length < 2 || commentEditingId === comment.id) return;
+      if (content.length < 2 || commentEditingId !== null) return;
       const targetPostId = activeDetail.post.id;
 
       setCommentEditingId(comment.id);
@@ -2335,6 +2335,7 @@ export function CleanFintechPostDetailScreen({
           <SmallButton label="댓글" onPress={focusCommunityCommentInput} />
           <SmallButton label="공유" onPress={shareCommunityPost} />
           <SmallButton
+            disabled={postEditing}
             label={postEditing ? "수정 중" : "수정 저장"}
             onPress={updateCommunityPost}
           />
@@ -2379,6 +2380,7 @@ export function CleanFintechPostDetailScreen({
             />
             <View style={styles.attachmentRow}>
               <SmallButton
+                disabled={commentEditingId !== null}
                 label={
                   commentEditingId === comment.id ? "수정 중" : "수정 저장"
                 }
