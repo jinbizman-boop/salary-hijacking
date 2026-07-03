@@ -1640,6 +1640,7 @@ export function CleanFintechProfileNoticesScreen(): React.ReactElement {
 }
 
 export function CleanFintechSupportScreen(): React.ReactElement {
+  const supportRouter = useRouter();
   const supportApi = useMemo(() => createMobileProfileApi(), []);
   const [supportCategory, setSupportCategory] =
     useState<ProfileSupportTicketCategory>("ACCOUNT");
@@ -1651,6 +1652,9 @@ export function CleanFintechSupportScreen(): React.ReactElement {
   );
   const valid =
     supportSubject.trim().length >= 2 && supportMessage.trim().length >= 5;
+  const closeSupportInquiry = useCallback(() => {
+    supportRouter.replace("/profile");
+  }, [supportRouter]);
   const submitSupportTicket = useCallback(() => {
     if (!valid || submitting) return;
     setSubmitting(true);
@@ -1688,6 +1692,14 @@ export function CleanFintechSupportScreen(): React.ReactElement {
         style={styles.flex}
       >
         <View style={styles.composeHeader}>
+          <Pressable
+            accessibilityLabel="MY로 돌아가기"
+            accessibilityRole="button"
+            onPress={closeSupportInquiry}
+            style={styles.iconButton}
+          >
+            <Text style={styles.iconButtonText}>×</Text>
+          </Pressable>
           <Text style={styles.composeTitle}>1:1 문의</Text>
           <Pressable
             accessibilityRole="button"

@@ -912,6 +912,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("민감한 금융 원문은 문의에 적지 마세요.");
     expect(cleanScreens).toContain("rawFinancialData=false");
     expect(cleanScreens).toContain("rawPersonalData=false");
+    expect(cleanScreens).toContain("supportRouter");
+    expect(cleanScreens).toContain("closeSupportInquiry");
+    expect(cleanScreens).toContain('supportRouter.replace("/profile")');
+    expect(cleanScreens).toContain('accessibilityLabel="MY로 돌아가기"');
     expect(source("profile/support.tsx")).toContain(
       "<CleanFintechSupportScreen />",
     );
