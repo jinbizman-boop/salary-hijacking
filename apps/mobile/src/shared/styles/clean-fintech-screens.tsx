@@ -47,6 +47,7 @@ import type {
   ProfileSnapshot,
   ProfileSupportTicketCategory,
 } from "../../features/profile/types";
+import { mergeProfileSnapshotWithMyPageSummary } from "../../features/profile/api";
 import type {
   NotificationItem,
   NotificationPriority,
@@ -2761,9 +2762,16 @@ function ProfileScreen(): React.ReactElement {
 
     async function hydrateProfile(): Promise<void> {
       try {
-        const snapshot = await profileApi.getProfile();
+        const [snapshot, myPageSummary] = await Promise.all([
+          profileApi.getProfile(),
+          profileApi.getMyPageSummary().catch(() => null),
+        ]);
         if (!mounted) return;
-        setServerProfileSnapshot(snapshot);
+        const mergedSnapshot = mergeProfileSnapshotWithMyPageSummary(
+          snapshot,
+          myPageSummary,
+        );
+        setServerProfileSnapshot(mergedSnapshot);
         setProfileToast(
           `서버 MY 동기화 · 개인정보 보호율 ${snapshot.summary.privacyPassRate}`,
         );

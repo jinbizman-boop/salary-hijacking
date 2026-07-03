@@ -280,8 +280,10 @@ const publicBooleanFlags = [
   "rawPersonalDataExposed",
   "rawPushTokenExposed",
   "rawPushTokenLogging",
+  "rawTokenExposed",
   "adsFinancialTargetingUsed",
   "financialDataForAds",
+  "sensitiveFinancialTargetingAccepted",
   "tokenHashOnly",
   "adPersonalization",
 ].map((key) => key.toLowerCase().replace(/[\s._-]/g, ""));
@@ -1391,7 +1393,10 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
     });
     return out(rt, 200, { data });
   }
-  if (method === "GET" && relativePath === "/me/summary")
+  if (
+    method === "GET" &&
+    (relativePath === "/me/summary" || relativePath === "/me/my-page-summary")
+  )
     return out(rt, 200, { data: await repository.summary(rt) });
   if (method === "GET" && relativePath === "/me/activity")
     return out(rt, 200, {
@@ -1556,6 +1561,7 @@ export const usersRoutesManifest = Object.freeze({
     "PATCH /me",
     "GET /me/profile",
     "GET /me/summary",
+    "GET /me/my-page-summary",
     "GET /me/activity",
     "POST /me/withdrawal-request",
     "POST /me/support-tickets",

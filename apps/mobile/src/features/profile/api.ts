@@ -1,4 +1,5 @@
 import {
+  PROFILE_MY_PAGE_SUMMARY_PATH,
   PROFILE_PATH,
   PROFILE_PRIVACY_EXPORT_PATH,
   PROFILE_SAFE_ERROR_MESSAGE,
@@ -10,6 +11,7 @@ import type {
   ProfileActivity,
   ProfileApiClient,
   ProfileExportStatus,
+  ProfileMyPageSummary,
   ProfilePrivacy,
   ProfileSnapshot,
   ProfileSupportTicket,
@@ -232,6 +234,103 @@ function normalizeSummary(value: unknown): ProfileSummary {
     communityComments: value.communityComments,
     notificationUnread: value.notificationUnread,
     privacyPassRate: value.privacyPassRate,
+  };
+}
+
+function normalizeMyPageSummary(value: unknown): ProfileMyPageSummary {
+  if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
+  const data = value.data;
+  if (
+    typeof data.adPartnerAccepted !== "boolean" ||
+    data.adsFinancialTargetingUsed !== false ||
+    !isNonNegativeInteger(data.communityComments) ||
+    !isNonNegativeInteger(data.communityPosts) ||
+    typeof data.contentRecommendationAccepted !== "boolean" ||
+    data.financialRawDataExposed !== false ||
+    !isNonNegativeInteger(data.level) ||
+    !isNonNegativeInteger(data.levelXp) ||
+    !nonEmptyString(data.nextActions) ||
+    !isNonNegativeInteger(data.notificationUnread) ||
+    !isNonNegativeInteger(data.privacyExportCount) ||
+    typeof data.profileCompleted !== "boolean" ||
+    data.rawPersonalDataExposed !== false ||
+    data.rawTokenExposed !== false ||
+    !isNonNegativeInteger(data.selfCareScore) ||
+    data.sensitiveFinancialTargetingAccepted !== false ||
+    !nonEmptyString(data.status) ||
+    !nonEmptyString(data.theme) ||
+    !isNonNegativeInteger(data.totalExp)
+  ) {
+    return invalidResponse();
+  }
+  return {
+    adPartnerAccepted: data.adPartnerAccepted,
+    adsFinancialTargetingUsed: false,
+    communityComments: data.communityComments,
+    communityPosts: data.communityPosts,
+    contentRecommendationAccepted: data.contentRecommendationAccepted,
+    financialRawDataExposed: false,
+    latestExportRequestedAt: normalizeNullableTimestamp(
+      data.latestExportRequestedAt,
+    ),
+    latestExportStatus:
+      data.latestExportStatus === null || data.latestExportStatus === undefined
+        ? null
+        : nonEmptyString(data.latestExportStatus)
+          ? data.latestExportStatus
+          : invalidResponse(),
+    level: data.level,
+    levelXp: data.levelXp,
+    nextActions: data.nextActions,
+    notificationUnread: data.notificationUnread,
+    privacyExportCount: data.privacyExportCount,
+    profileCompleted: data.profileCompleted,
+    rawPersonalDataExposed: false,
+    rawTokenExposed: false,
+    selfCareScore: data.selfCareScore,
+    sensitiveFinancialTargetingAccepted: false,
+    status: data.status,
+    theme: data.theme,
+    totalExp: data.totalExp,
+  };
+}
+
+export function mergeProfileSnapshotWithMyPageSummary(
+  snapshot: ProfileSnapshot,
+  myPageSummary: ProfileMyPageSummary | null,
+): ProfileSnapshot {
+  if (!myPageSummary) return snapshot;
+  return {
+    ...snapshot,
+    summary: {
+      ...snapshot.summary,
+      communityComments: myPageSummary.communityComments,
+      communityPosts: myPageSummary.communityPosts,
+      currentLevel: myPageSummary.level,
+      levelXp: myPageSummary.levelXp,
+      notificationUnread: myPageSummary.notificationUnread,
+      privacyPassRate:
+        myPageSummary.financialRawDataExposed === false &&
+        myPageSummary.rawPersonalDataExposed === false &&
+        myPageSummary.rawTokenExposed === false &&
+        myPageSummary.adsFinancialTargetingUsed === false &&
+        myPageSummary.sensitiveFinancialTargetingAccepted === false
+          ? "100.00%"
+          : snapshot.summary.privacyPassRate,
+      selfCareScore: myPageSummary.selfCareScore,
+    },
+    privacy: {
+      ...snapshot.privacy,
+      exportRequestedAt:
+        myPageSummary.latestExportRequestedAt ??
+        snapshot.privacy.exportRequestedAt,
+      exportStatus: normalizeExportStatus(
+        myPageSummary.latestExportStatus ?? snapshot.privacy.exportStatus,
+      ),
+      financialDataForAds: false,
+      rawPushTokenLogging: false,
+      tokenHashOnly: true,
+    },
   };
 }
 
@@ -483,9 +582,48 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     return normalizeSupportTicket(parsed);
   }
 
+  async function requestMyPageSummary(): Promise<ProfileMyPageSummary> {
+    const headers = new Headers({
+      accept: "application/json",
+      "x-client-platform": options.platform,
+      "x-correlation-id": createCorrelationId(),
+      ...PRIVACY_HEADERS,
+    });
+
+    let response: Response;
+    try {
+      response = await fetcher(
+        new Request(`${baseUrl}${PROFILE_MY_PAGE_SUMMARY_PATH}`, {
+          headers,
+          credentials: "include",
+        }),
+      );
+    } catch {
+      throw new ProfileApiError(
+        0,
+        "PROFILE_NETWORK_ERROR",
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+
+    const parsed = await parseJson(response);
+    if (!response.ok) {
+      throw new ProfileApiError(
+        response.status,
+        errorCode(parsed),
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+    return normalizeMyPageSummary(parsed);
+  }
+
   return {
     getProfile(): Promise<ProfileSnapshot> {
       return request(PROFILE_PATH);
+    },
+
+    getMyPageSummary(): Promise<ProfileMyPageSummary> {
+      return requestMyPageSummary();
     },
 
     requestPrivacyExport(

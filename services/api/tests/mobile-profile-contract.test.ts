@@ -69,6 +69,69 @@ describe("mobile profile API contract", () => {
     expect(Array.isArray(body.data?.activities)).toBe(true);
   });
 
+  it("serves the mobile MY page summary alias without raw private or financial data", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableAuth: false,
+      enableRateLimit: false,
+      usersRoutesOptions: {
+        repository: {
+          summary: async () => ({
+            adPartnerAccepted: false,
+            adsFinancialTargetingUsed: false,
+            communityComments: 4,
+            communityPosts: 3,
+            contentRecommendationAccepted: true,
+            financialRawDataExposed: false,
+            latestExportRequestedAt: "2026-07-03T06:00:00.000Z",
+            latestExportStatus: "READY",
+            level: 18,
+            levelXp: 420,
+            nextActions: "Profile ready; review LV UP routine",
+            notificationUnread: 2,
+            privacyExportCount: 2,
+            profileCompleted: true,
+            rawPersonalDataExposed: false,
+            rawTokenExposed: false,
+            selfCareScore: 91,
+            sensitiveFinancialTargetingAccepted: false,
+            status: "ACTIVE",
+            theme: "DARK",
+            totalExp: 1740,
+          }),
+        } as never,
+      },
+      now: () => new Date("2026-07-03T06:10:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/my-page-summary", {
+        headers: authHeaders,
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data).toMatchObject({
+      adsFinancialTargetingUsed: false,
+      communityPosts: 3,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawTokenExposed: false,
+      sensitiveFinancialTargetingAccepted: false,
+    });
+    expect(body.data).not.toHaveProperty("userId");
+    expect(JSON.stringify(body.data)).not.toMatch(
+      /raw@example\.com|salary|expense|saving|hijack|phone|card|account/iu,
+    );
+  });
+
   it("accepts the mobile privacy export action without exposing raw financial data", async () => {
     const app = createProfileContractApp();
 

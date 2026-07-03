@@ -1,4 +1,7 @@
-import { createProfileApi } from "../api";
+import {
+  createProfileApi,
+  mergeProfileSnapshotWithMyPageSummary,
+} from "../api";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -62,7 +65,31 @@ const profilePayload = {
       adsFinancialTargetingUsed: false,
     },
   ],
-};
+} as const;
+
+const myPageSummaryPayload = {
+  adPartnerAccepted: false,
+  adsFinancialTargetingUsed: false,
+  communityComments: 4,
+  communityPosts: 3,
+  contentRecommendationAccepted: true,
+  financialRawDataExposed: false,
+  latestExportRequestedAt: "2026-07-03T06:00:00.000Z",
+  latestExportStatus: "READY",
+  level: 18,
+  levelXp: 420,
+  nextActions: "Profile ready; review LV UP routine",
+  notificationUnread: 2,
+  privacyExportCount: 2,
+  profileCompleted: true,
+  rawPersonalDataExposed: false,
+  rawTokenExposed: false,
+  selfCareScore: 91,
+  sensitiveFinancialTargetingAccepted: false,
+  status: "ACTIVE",
+  theme: "DARK",
+  totalExp: 1740,
+} as const;
 
 describe("profile api", () => {
   it("loads the mobile profile payload with privacy headers and redacted identifiers", async () => {
@@ -116,6 +143,67 @@ describe("profile api", () => {
     expect(JSON.stringify(await api.getProfile())).not.toContain("userId");
     expect(JSON.stringify(await api.getProfile())).not.toContain(
       "raw@example.com",
+    );
+  });
+
+  it("loads and merges the server MY page summary without exposing owner ids or raw private data", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "profile-summary-correlation-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({ data: myPageSummaryPayload });
+      },
+      platform: "android",
+    });
+
+    const summary = await api.getMyPageSummary();
+    const merged = mergeProfileSnapshotWithMyPageSummary(
+      {
+        activities: profilePayload.activities,
+        privacy: profilePayload.privacy,
+        summary: profilePayload.summary,
+        user: profilePayload.user,
+      },
+      summary,
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/me/my-page-summary",
+    );
+    expect(calls[0]?.headers.get("x-client-platform")).toBe("android");
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(summary).toMatchObject({
+      adsFinancialTargetingUsed: false,
+      communityPosts: 3,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawTokenExposed: false,
+      sensitiveFinancialTargetingAccepted: false,
+    });
+    expect(merged.summary).toMatchObject({
+      communityComments: 4,
+      communityPosts: 3,
+      currentLevel: 18,
+      levelXp: 420,
+      notificationUnread: 2,
+      privacyPassRate: "100.00%",
+      selfCareScore: 91,
+    });
+    expect(merged.privacy).toMatchObject({
+      exportRequestedAt: "2026-07-03T06:00:00.000Z",
+      exportStatus: "READY",
+      financialDataForAds: false,
+      rawPushTokenLogging: false,
+      tokenHashOnly: true,
+    });
+    expect(JSON.stringify(summary)).not.toContain("userId");
+    expect(JSON.stringify(summary)).not.toMatch(
+      /raw@example\.com|salary|expense|saving|hijack|phone|card|account/iu,
     );
   });
 

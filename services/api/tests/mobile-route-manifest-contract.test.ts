@@ -34,6 +34,7 @@ describe("mobile route manifest contract", () => {
     expect(endpointsFor("users")).toEqual(
       expect.arrayContaining([
         "/api/v1/users GET /me/profile",
+        "/api/v1/users GET /me/my-page-summary",
         "/api/v1/users POST /me/privacy-export",
         "/api/v1/users POST /me/support-tickets",
         "/api/v1/users POST /me/withdrawal-request",

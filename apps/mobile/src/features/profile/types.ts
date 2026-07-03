@@ -34,6 +34,30 @@ export type ProfileSummary = Readonly<{
   privacyPassRate: string;
 }>;
 
+export type ProfileMyPageSummary = Readonly<{
+  adPartnerAccepted: boolean;
+  adsFinancialTargetingUsed: false;
+  communityComments: number;
+  communityPosts: number;
+  contentRecommendationAccepted: boolean;
+  financialRawDataExposed: false;
+  latestExportRequestedAt: string | null;
+  latestExportStatus: string | null;
+  level: number;
+  levelXp: number;
+  nextActions: string;
+  notificationUnread: number;
+  privacyExportCount: number;
+  profileCompleted: boolean;
+  rawPersonalDataExposed: false;
+  rawTokenExposed: false;
+  selfCareScore: number;
+  sensitiveFinancialTargetingAccepted: false;
+  status: string;
+  theme: string;
+  totalExp: number;
+}>;
+
 export type ProfilePrivacy = Readonly<{
   exportStatus: ProfileExportStatus;
   exportRequestedAt: string | null;
@@ -94,6 +118,7 @@ export type ProfileSupportTicket = Readonly<{
 
 export type ProfileApiClient = Readonly<{
   getProfile: () => Promise<ProfileSnapshot>;
+  getMyPageSummary: () => Promise<ProfileMyPageSummary>;
   requestPrivacyExport: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;
