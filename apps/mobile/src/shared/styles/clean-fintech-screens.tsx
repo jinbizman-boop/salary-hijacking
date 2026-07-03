@@ -843,6 +843,10 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   }, [anonymous, board, body, draftRestored, question, title, writeDraftStore]);
 
   const valid = title.trim().length >= 2 && body.trim().length >= 5;
+  const closeCommunityWrite = useCallback(() => {
+    writeRouter.replace("/community");
+  }, [writeRouter]);
+
   const attachUploadedCommunityAttachments = useCallback(
     async (postId: string): Promise<boolean> => {
       if (uploadedCommunityAttachments.length <= 0) return true;
@@ -975,7 +979,12 @@ export function CleanFintechWriteScreen(): React.ReactElement {
         style={styles.flex}
       >
         <View style={styles.composeHeader}>
-          <Pressable accessibilityRole="button" style={styles.iconButton}>
+          <Pressable
+            accessibilityLabel="커뮤니티 글쓰기 닫기"
+            accessibilityRole="button"
+            onPress={closeCommunityWrite}
+            style={styles.iconButton}
+          >
             <Text style={styles.iconButtonText}>×</Text>
           </Pressable>
           <Text style={styles.composeTitle}>글쓰기</Text>
