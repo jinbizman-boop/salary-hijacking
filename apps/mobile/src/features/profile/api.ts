@@ -18,6 +18,7 @@ import type {
   ProfileSupportTicketCategory,
   ProfileSupportTicketRequest,
   ProfileSummary,
+  ProfileUpdateRequest,
   ProfileUser,
 } from "./types";
 
@@ -458,6 +459,57 @@ function validSupportTicketRequest(
   );
 }
 
+function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
+  const keys = Object.keys(value);
+  if (!keys.length) return false;
+  if (value.nickname !== undefined) {
+    if (
+      !nonEmptyString(value.nickname) ||
+      value.nickname.length < 2 ||
+      value.nickname.length > 40
+    ) {
+      return false;
+    }
+  }
+  if (value.displayBio !== undefined && value.displayBio !== null) {
+    if (typeof value.displayBio !== "string" || value.displayBio.length > 300) {
+      return false;
+    }
+  }
+  if (
+    value.avatarAttachmentId !== undefined &&
+    value.avatarAttachmentId !== null
+  ) {
+    if (
+      typeof value.avatarAttachmentId !== "string" ||
+      value.avatarAttachmentId.length > 160
+    ) {
+      return false;
+    }
+  }
+  if (value.birthYear !== undefined && value.birthYear !== null) {
+    if (
+      !Number.isSafeInteger(value.birthYear) ||
+      value.birthYear < 1900 ||
+      value.birthYear > 2100
+    ) {
+      return false;
+    }
+  }
+  if (
+    value.occupationCategory !== undefined &&
+    value.occupationCategory !== null
+  ) {
+    if (
+      typeof value.occupationCategory !== "string" ||
+      value.occupationCategory.length > 80
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function actionPayload(request: ProfileActionRequest): string {
   if (!validActionRequest(request)) {
     throw new ProfileApiError(
@@ -472,6 +524,23 @@ function actionPayload(request: ProfileActionRequest): string {
     rawPersonalDataExposed: false,
     rawPushTokenExposed: false,
     reason: request.reason,
+  });
+}
+
+function profileUpdatePayload(request: ProfileUpdateRequest): string {
+  if (!validProfileUpdateRequest(request)) {
+    throw new ProfileApiError(
+      0,
+      "PROFILE_INVALID_UPDATE_REQUEST",
+      PROFILE_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return JSON.stringify({
+    adsFinancialTargetingUsed: false,
+    ...request,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
   });
 }
 
@@ -624,6 +693,15 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
 
     getMyPageSummary(): Promise<ProfileMyPageSummary> {
       return requestMyPageSummary();
+    },
+
+    updateProfile(
+      profileRequest: ProfileUpdateRequest,
+    ): Promise<ProfileSnapshot> {
+      return request(PROFILE_PATH, {
+        body: profileUpdatePayload(profileRequest),
+        method: "PATCH",
+      });
     },
 
     requestPrivacyExport(

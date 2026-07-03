@@ -1040,9 +1040,96 @@ export function CleanFintechSettingsScreen({
   kind,
 }: Readonly<{ kind: SettingsKind }>): React.ReactElement {
   const config = settingsScreenConfig[kind];
+  const profileSettingsApi = useMemo(() => createMobileProfileApi(), []);
+  const [profileNickname, setProfileNickname] = useState(
+    fallbackProfileSnapshot.user.nickname,
+  );
+  const [profileDisplayBio, setProfileDisplayBio] =
+    useState("월급을 먼저 지키는 루틴러");
+  const [profileOccupationCategory, setProfileOccupationCategory] =
+    useState("PRODUCT");
+  const [profileSettingsToast, setProfileSettingsToast] = useState(
+    "프로필 설정은 서버 MY 프로필 API 기준으로 저장됩니다.",
+  );
+  const profileSettingsValid =
+    profileNickname.trim().length >= 2 &&
+    profileDisplayBio.trim().length <= 300 &&
+    profileOccupationCategory.trim().length >= 2;
+  const submitProfileSettings = useCallback(() => {
+    if (kind !== "profile" || !profileSettingsValid) return;
+    setProfileSettingsToast("프로필 설정을 서버에 저장하는 중이에요.");
+    void profileSettingsApi
+      .updateProfile({
+        displayBio: profileDisplayBio.trim() || null,
+        nickname: profileNickname.trim(),
+        occupationCategory: profileOccupationCategory.trim() || null,
+      })
+      .then((snapshot) => {
+        setProfileNickname(snapshot.user.nickname);
+        setProfileSettingsToast(
+          `프로필 설정 저장 완료 · rawFinancialDataExposed=false · adsFinancialTargetingUsed=${String(
+            snapshot.user.adsFinancialTargetingUsed,
+          )}`,
+        );
+      })
+      .catch(() => {
+        setProfileSettingsToast(
+          "프로필 설정 저장에 실패했어요. 민감 정보 입력 여부와 네트워크 상태를 확인해 주세요.",
+        );
+      });
+  }, [
+    kind,
+    profileDisplayBio,
+    profileNickname,
+    profileOccupationCategory,
+    profileSettingsApi,
+    profileSettingsValid,
+  ]);
 
   return (
     <AppScreen title={config.title} subtitle={config.subtitle}>
+      {kind === "profile" ? (
+        <SectionCard>
+          <Text style={styles.sectionTitle}>프로필 저장</Text>
+          <Toast message={profileSettingsToast} />
+          <TextInput
+            accessibilityLabel="프로필 닉네임"
+            onChangeText={setProfileNickname}
+            placeholder="닉네임"
+            placeholderTextColor={theme.color.text.disabled}
+            style={styles.composeInput}
+            value={profileNickname}
+          />
+          <TextInput
+            accessibilityLabel="프로필 소개"
+            multiline
+            onChangeText={setProfileDisplayBio}
+            placeholder="커뮤니티에 표시할 자기소개"
+            placeholderTextColor={theme.color.text.disabled}
+            style={[styles.composeInput, styles.composeBody]}
+            value={profileDisplayBio}
+          />
+          <TextInput
+            accessibilityLabel="직무 또는 관심 카테고리"
+            onChangeText={setProfileOccupationCategory}
+            placeholder="예: PRODUCT"
+            placeholderTextColor={theme.color.text.disabled}
+            style={styles.composeInput}
+            value={profileOccupationCategory}
+          />
+          <Pressable
+            accessibilityRole="button"
+            disabled={!profileSettingsValid}
+            onPress={submitProfileSettings}
+            style={[
+              styles.primaryButton,
+              !profileSettingsValid ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.primaryButtonText}>저장하기</Text>
+          </Pressable>
+        </SectionCard>
+      ) : null}
       <SectionCard>
         <Text style={styles.sectionTitle}>설정 항목</Text>
         {config.rows.map((row) => (

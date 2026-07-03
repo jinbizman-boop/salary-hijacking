@@ -207,6 +207,72 @@ describe("profile api", () => {
     );
   });
 
+  it("updates profile settings through the server profile boundary without unsafe fields", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "profile-update-correlation-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            ...profilePayload,
+            user: {
+              ...profilePayload.user,
+              communityDisplayName: "익명 방어자",
+              nickname: "급여 방어자",
+              title: "프로덕트 루틴러",
+            },
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.updateProfile({
+        displayBio: "월급을 먼저 지키는 루틴러",
+        nickname: "급여 방어자",
+        occupationCategory: "PRODUCT",
+      }),
+    ).resolves.toMatchObject({
+      user: {
+        adsFinancialTargetingUsed: false,
+        nickname: "급여 방어자",
+        rawFinancialDataExposed: false,
+        rawPhoneExposed: false,
+      },
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("PATCH");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/me/profile",
+    );
+    expect(calls[0]?.headers.get("x-client-platform")).toBe("android");
+    expect(calls[0]?.headers.get("x-correlation-id")).toBe(
+      "profile-update-correlation-1",
+    );
+    const body = JSON.parse(await calls[0]!.clone().text()) as Record<
+      string,
+      unknown
+    >;
+    expect(body).toEqual({
+      adsFinancialTargetingUsed: false,
+      displayBio: "월급을 먼저 지키는 루틴러",
+      nickname: "급여 방어자",
+      occupationCategory: "PRODUCT",
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+    });
+    expect(JSON.stringify(Object.values(body))).not.toMatch(
+      /salary|expense|saving|hijack|token|email|phone|card|accountNumber/iu,
+    );
+  });
+
   it("requests privacy export and withdrawal request without raw financial payloads", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

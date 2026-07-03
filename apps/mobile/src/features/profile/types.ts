@@ -91,6 +91,14 @@ export type ProfileActionRequest = Readonly<{
   reason: string;
 }>;
 
+export type ProfileUpdateRequest = Readonly<{
+  avatarAttachmentId?: string | null;
+  birthYear?: number | null;
+  displayBio?: string | null;
+  nickname?: string;
+  occupationCategory?: string | null;
+}>;
+
 export type ProfileSupportTicketCategory =
   | "ACCOUNT"
   | "PAYMENT"
@@ -119,6 +127,7 @@ export type ProfileSupportTicket = Readonly<{
 export type ProfileApiClient = Readonly<{
   getProfile: () => Promise<ProfileSnapshot>;
   getMyPageSummary: () => Promise<ProfileMyPageSummary>;
+  updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileSnapshot>;
   requestPrivacyExport: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;

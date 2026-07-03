@@ -1304,6 +1304,18 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
   const { method, relativePath, repository } = rt;
   if (method === "GET" && relativePath === "/me/profile")
     return out(rt, 200, { data: await mobileProfilePayload(rt) });
+  if (method === "PATCH" && relativePath === "/me/profile") {
+    await repository.updateMe(profileInput(await body(rt.request)), rt);
+    await emit(rt, {
+      event: "user_profile_updated",
+      requestId: rt.requestId,
+      userId: rt.principal.userId,
+      targetId: rt.principal.userId,
+      path: rt.path,
+      createdAt: rt.now.toISOString(),
+    });
+    return out(rt, 200, { data: await mobileProfilePayload(rt) });
+  }
   if (method === "POST" && relativePath === "/me/privacy-export") {
     const data = await repository.requestExport(
       exportInput(await body(rt.request)),
@@ -1560,6 +1572,7 @@ export const usersRoutesManifest = Object.freeze({
     "GET /me",
     "PATCH /me",
     "GET /me/profile",
+    "PATCH /me/profile",
     "GET /me/summary",
     "GET /me/my-page-summary",
     "GET /me/activity",

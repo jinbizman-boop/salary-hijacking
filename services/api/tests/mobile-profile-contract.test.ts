@@ -69,6 +69,51 @@ describe("mobile profile API contract", () => {
     expect(Array.isArray(body.data?.activities)).toBe(true);
   });
 
+  it("updates the mobile profile payload at the same endpoint used by profile settings", async () => {
+    const app = createProfileContractApp();
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/profile", {
+        method: "PATCH",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({
+          nickname: "급여 방어자",
+          displayBio: "월급을 먼저 지키는 루틴러",
+          occupationCategory: "PRODUCT",
+          rawFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          rawPushTokenExposed: false,
+          adsFinancialTargetingUsed: false,
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly user?: Record<string, unknown>;
+        readonly privacy?: Record<string, unknown>;
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data?.user).toMatchObject({
+      nickname: "급여 방어자",
+      rawEmailExposed: false,
+      rawFinancialDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(body.data?.user).not.toHaveProperty("userId");
+    expect(body.data?.privacy).toMatchObject({
+      financialDataForAds: false,
+      rawPushTokenLogging: false,
+      tokenHashOnly: true,
+    });
+  });
+
   it("serves the mobile MY page summary alias without raw private or financial data", async () => {
     const app = createApp({
       enableAuditGate: false,

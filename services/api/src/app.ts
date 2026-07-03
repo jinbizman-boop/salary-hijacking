@@ -1284,7 +1284,9 @@ function buildAuthOptions<TEnv>(
   options: AppOptions<TEnv>,
 ): AuthMiddlewareOptions<TEnv> {
   const custom = options.authOptions ?? {};
-  const dbSessionResolver = createNeonAuthSessionResolver<TEnv>();
+  const dbSessionResolver = createNeonAuthSessionResolver<TEnv>(
+    options.now ? { now: options.now } : {},
+  );
   const defaultPublicPolicies = [
     {
       id: "admin-auth-public",
