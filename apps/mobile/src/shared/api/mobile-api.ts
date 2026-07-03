@@ -32,8 +32,11 @@ export type MobileApiFactoryOptions = Readonly<{
 }>;
 
 export type MobileAuthenticatedFetcherOptions = Readonly<{
+  baseUrl?: string;
+  createCorrelationId?: () => string;
   fetcher?: typeof fetch;
-  tokenStore?: MobileBearerTokenStore;
+  refreshAccessToken?: () => Promise<unknown>;
+  tokenStore?: MobileApiTokenStore;
 }>;
 
 export type MobileApiTokenStore = MobileBearerTokenStore &
@@ -49,13 +52,22 @@ export function createMobileAuthenticatedFetcher(
 ): typeof fetch {
   const fetcher = options.fetcher ?? fetch;
   const tokenStore = options.tokenStore ?? SecureStore;
+  const refreshAccessToken =
+    options.refreshAccessToken ??
+    createDefaultRefreshAccessToken(options, tokenStore);
   return async (input, init) => {
     const request = new Request(input, init);
-    const headers = await attachMobileBearerToken(
-      new Headers(request.headers),
-      tokenStore,
+    const response = await fetcher(
+      await authorizeRequest(request.clone(), tokenStore),
     );
-    return fetcher(new Request(request, { headers }));
+    if (response.status !== 401 || !refreshAccessToken) return response;
+
+    try {
+      await refreshAccessToken();
+    } catch {
+      return response;
+    }
+    return fetcher(await authorizeRequest(request.clone(), tokenStore));
   };
 }
 
@@ -80,6 +92,34 @@ function hasAuthTokenWriter(
   tokenStore: MobileApiTokenStore | undefined,
 ): tokenStore is MobileApiTokenStore & AuthTokenStore {
   return typeof tokenStore?.setItemAsync === "function";
+}
+
+async function authorizeRequest(
+  request: Request,
+  tokenStore: MobileBearerTokenStore,
+): Promise<Request> {
+  const headers = await attachMobileBearerToken(
+    new Headers(request.headers),
+    tokenStore,
+  );
+  return new Request(request, { headers });
+}
+
+function createDefaultRefreshAccessToken(
+  options: MobileAuthenticatedFetcherOptions,
+  tokenStore: MobileApiTokenStore,
+): (() => Promise<unknown>) | null {
+  if (!hasAuthTokenWriter(tokenStore)) return null;
+  return () =>
+    createAuthApi({
+      baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
+      platform: mobileClientPlatform(),
+      tokenStore,
+      ...(options.fetcher ? { fetcher: options.fetcher } : {}),
+      ...(options.createCorrelationId
+        ? { createCorrelationId: options.createCorrelationId }
+        : {}),
+    }).refresh();
 }
 
 export function createMobileCommunityService(

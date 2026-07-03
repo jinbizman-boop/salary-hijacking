@@ -210,6 +210,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
 
     expect(mobileApi).toContain("createMobileAuthApi");
+    expect(mobileApi).toContain("createDefaultRefreshAccessToken");
+    expect(mobileApi).toContain(".refresh()");
     expect(cleanScreens).toContain("createMobileAuthApi");
     expect(cleanScreens).toContain("loginAuthApi");
     expect(cleanScreens).toContain("signupAuthApi");

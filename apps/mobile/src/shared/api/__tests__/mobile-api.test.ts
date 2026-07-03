@@ -124,4 +124,96 @@ describe("mobile api factory", () => {
     );
     expect(deleted).toEqual(["salary-hijacking.mobile.access-token"]);
   });
+
+  it("refreshes an expired access token once and retries the original feature request", async () => {
+    const calls: Request[] = [];
+    let storedToken = "expired.access.jwt";
+    const budgetApi = createMobileBudgetApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "mobile-api-refresh-retry-test",
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
+        if (request.url.endsWith("/api/v1/auth/refresh")) {
+          return new Response(
+            JSON.stringify({
+              data: {
+                user: {
+                  userId: "usr_refresh_retry",
+                  roles: "USER",
+                  accountStatus: "ACTIVE",
+                },
+                tokens: {
+                  accessToken: "rotated.access.jwt",
+                  refreshToken: "server.http-only.cookie",
+                  accessTokenExpiresIn: 900,
+                },
+              },
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+        }
+        if (
+          calls.filter((call) => call.url.includes("daily-budgets")).length ===
+          1
+        ) {
+          expect(request.headers.get("authorization")).toBe(
+            "Bearer expired.access.jwt",
+          );
+          return new Response(
+            JSON.stringify({ error: { code: "TOKEN_EXPIRED" } }),
+            {
+              headers: { "content-type": "application/json" },
+              status: 401,
+            },
+          );
+        }
+        expect(request.headers.get("authorization")).toBe(
+          "Bearer rotated.access.jwt",
+        );
+        return new Response(
+          JSON.stringify({
+            data: {
+              budgetId: "budget_retry",
+              budgetDate: "2026-07-03",
+              availableAmountMinor: 20_000,
+              spentAmountMinor: 8_000,
+              remainingAmountMinor: 12_000,
+              usageRate: 0.4,
+              currency: "KRW",
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+              updatedAt: "2026-07-03T00:00:00.000Z",
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        );
+      },
+      tokenStore: {
+        getItemAsync: async () => storedToken,
+        setItemAsync: async (_key, value) => {
+          storedToken = value;
+        },
+        deleteItemAsync: async () => undefined,
+      },
+    });
+
+    await expect(budgetApi.getToday()).resolves.toMatchObject({
+      data: {
+        snapshot: {
+          remainingToday: 12_000,
+        },
+      },
+    });
+
+    expect(calls.map((call) => new URL(call.url).pathname)).toEqual([
+      "/api/v1/daily-budgets/today",
+      "/api/v1/auth/refresh",
+      "/api/v1/daily-budgets/today",
+    ]);
+    expect(storedToken).toBe("rotated.access.jwt");
+    expect(calls[1]?.credentials).toBe("include");
+  });
 });

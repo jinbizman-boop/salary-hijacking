@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 125 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 126 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -184,6 +184,14 @@ As of 2026-07-03, shared mobile API factories wrap feature API fetchers with
 The wrapper is used by the mobile budget, payroll, plan commitments,
 notifications, growth, profile, and community factories. Auth login/register
 requests remain unauthenticated entrypoints.
+
+As of 2026-07-03, that shared authenticated fetcher also performs a single
+server refresh attempt when a protected feature API returns 401. It calls
+`POST /api/v1/auth/refresh` through the raw auth client, relies on the server
+HttpOnly refresh cookie, stores only the rotated access token, then retries the
+original feature request once with the new bearer token. If refresh fails, the
+original 401 response is returned to the feature API parser so the app does not
+loop or pretend the request succeeded.
 
 ## LV UP Growth API Hydration
 
