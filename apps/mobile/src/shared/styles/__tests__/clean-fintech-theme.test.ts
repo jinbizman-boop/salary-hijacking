@@ -203,6 +203,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fixedExpenseRowFromServer");
   });
 
+  it("keeps salary home fixed expense payment recorded through the server API", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planApi = mobileSource("src/features/plan/api.ts");
+
+    expect(planApi).toContain("recordFixedExpensePayment");
+    expect(planApi).toContain("/pay");
+    expect(planApi).toContain("paidAmountMinor");
+    expect(cleanScreens).toContain("paySalaryFixedExpense");
+    expect(cleanScreens).toContain(".recordFixedExpensePayment(");
+    expect(cleanScreens).toContain("setPayingFixedExpenseId");
+    expect(cleanScreens).toContain("납부 완료");
+  });
+
   it("keeps plan screen fixed expense and savings creation persisted through server APIs", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

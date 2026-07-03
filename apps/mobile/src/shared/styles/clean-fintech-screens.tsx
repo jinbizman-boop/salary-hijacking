@@ -139,7 +139,9 @@ type NotificationScreenItem = Readonly<{
 type PlanCommitmentRow = Readonly<{
   amountMinor: number;
   id: string;
+  lastPaidAt?: string | null;
   meta: string;
+  paidTotalMinor?: number;
   title: string;
 }>;
 
@@ -1978,6 +1980,9 @@ function SalaryHomeScreen(): React.ReactElement {
   const [salaryFixedExpenses, setSalaryFixedExpenses] = useState<
     readonly PlanFixedExpenseCommitment[]
   >([]);
+  const [payingFixedExpenseId, setPayingFixedExpenseId] = useState<
+    string | null
+  >(null);
 
   const refreshServerBudgetSnapshot = useCallback(
     async (
@@ -2124,6 +2129,40 @@ function SalaryHomeScreen(): React.ReactElement {
     }
   };
 
+  const paySalaryFixedExpense = useCallback(
+    async (item: PlanCommitmentRow): Promise<void> => {
+      if (payingFixedExpenseId !== null) return;
+
+      try {
+        setPayingFixedExpenseId(item.id);
+        const paid = await salaryPlanCommitmentsApi.recordFixedExpensePayment(
+          item.id,
+          {
+            amountMinor: item.amountMinor,
+            idempotencyKey: `mobile-fixed-payment-${item.id}-${Date.now()}`,
+            memo: "mobile salary home fixed expense payment",
+            paidAt: new Date().toISOString(),
+          },
+        );
+        setSalaryFixedExpenses((current) =>
+          current.map((expenseItem) =>
+            expenseItem.id === paid.id ? paid : expenseItem,
+          ),
+        );
+        setToast(
+          `${paid.title} ${formatMoney(paid.amountMinor)}원 납부를 서버 기준으로 기록했어요.`,
+        );
+      } catch {
+        setToast(
+          "고정지출 납부를 서버에 기록하지 못했어요. 네트워크 확인 후 다시 시도해 주세요.",
+        );
+      } finally {
+        setPayingFixedExpenseId(null);
+      }
+    },
+    [payingFixedExpenseId, salaryPlanCommitmentsApi],
+  );
+
   const metrics: readonly MoneyMetric[] = [
     { label: "수령금액", value: "2,700,000원" },
     { label: "지출금액", value: `${formatMoney(preview.monthlyExpense)}원` },
@@ -2208,7 +2247,14 @@ function SalaryHomeScreen(): React.ReactElement {
                 key={item.id}
                 icon={appIcons.subscription}
                 title={item.title}
-                meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
+                meta={`${formatMoney(item.amountMinor)}원 · ${
+                  item.lastPaidAt ? "납부 완료" : "탭해서 납부 완료"
+                } · ${item.meta}${
+                  payingFixedExpenseId === item.id ? " · 서버 기록 중" : ""
+                }`}
+                onPress={() => {
+                  void paySalaryFixedExpense(item);
+                }}
               />
             ))
           : fixedExpenses.map((item) => (
@@ -2243,7 +2289,9 @@ function fixedExpenseRowFromServer(
   return {
     amountMinor: item.amountMinor,
     id: item.id,
+    lastPaidAt: item.lastPaidAt,
     meta: `${item.dueLabel} · 서버 기준 ${item.status}`,
+    paidTotalMinor: item.paidTotalMinor,
     title: item.title,
   };
 }

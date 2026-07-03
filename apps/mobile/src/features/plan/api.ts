@@ -8,6 +8,7 @@ import type {
   PlanCommitmentsSnapshot,
   PlanFixedExpenseCreateRequest,
   PlanFixedExpenseCommitment,
+  PlanFixedExpensePaymentRequest,
   PlanSavingsGoalCreateRequest,
   PlanSavingsGoalCommitment,
 } from "./types";
@@ -168,6 +169,10 @@ function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
     dueLabel: dueDay === null ? "매월 자동 납부" : `매월 ${dueDay}일`,
     financialRawDataExposed: false,
     id: value.expenseId,
+    lastPaidAt: typeof value.lastPaidAt === "string" ? value.lastPaidAt : null,
+    paidTotalMinor: isNonNegativeInteger(value.paidTotalMinor)
+      ? value.paidTotalMinor
+      : 0,
     serverAuthority: true,
     status: value.status,
     title: value.title,
@@ -247,6 +252,26 @@ function validSavingsGoalCreate(value: PlanSavingsGoalCreateRequest): boolean {
     isPositiveMoney(value.targetAmountMinor) &&
     isNonNegativeInteger(value.fixedSaveAmountMinor) &&
     value.fixedSaveAmountMinor <= value.targetAmountMinor
+  );
+}
+
+function validFixedExpensePayment(
+  expenseId: string,
+  value: PlanFixedExpensePaymentRequest,
+): boolean {
+  return (
+    typeof expenseId === "string" &&
+    expenseId.trim().length > 0 &&
+    isPositiveMoney(value.amountMinor) &&
+    typeof value.idempotencyKey === "string" &&
+    value.idempotencyKey.trim().length > 0 &&
+    value.idempotencyKey.length <= 160 &&
+    (value.memo === undefined ||
+      value.memo === null ||
+      (typeof value.memo === "string" && value.memo.length <= 500)) &&
+    (value.paidAt === undefined ||
+      (typeof value.paidAt === "string" &&
+        !Number.isNaN(new Date(value.paidAt).getTime())))
   );
 }
 
@@ -357,6 +382,46 @@ export function createPlanCommitmentsApi(
         );
       }
       return normalizeFixedExpense(response.data);
+    },
+
+    async recordFixedExpensePayment(
+      expenseId: string,
+      paymentRequest: PlanFixedExpensePaymentRequest,
+    ): Promise<PlanFixedExpenseCommitment> {
+      if (!validFixedExpensePayment(expenseId, paymentRequest)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_PAYMENT_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const response = await request(
+        `${PLAN_FIXED_EXPENSES_PATH}/${encodeURIComponent(expenseId.trim())}/pay`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            idempotencyKey: paymentRequest.idempotencyKey.trim(),
+            memo: paymentRequest.memo ?? null,
+            paidAmountMinor: paymentRequest.amountMinor,
+            ...(paymentRequest.paidAt !== undefined
+              ? { paidAt: paymentRequest.paidAt }
+              : {}),
+            paymentStatus: "PAID",
+          }),
+        },
+      );
+      if (
+        !isRecord(response) ||
+        !isRecord(response.data) ||
+        !("expense" in response.data)
+      ) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_RESPONSE",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeFixedExpense(response.data.expense);
     },
 
     async createSavingsGoal(

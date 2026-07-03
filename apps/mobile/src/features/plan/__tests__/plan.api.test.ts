@@ -283,4 +283,78 @@ describe("plan commitments api", () => {
       title: "New saving",
     });
   });
+
+  it("records fixed expense payment through the server payment API without exposing raw user fields", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "fixed-payment-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        return jsonResponse(
+          {
+            data: {
+              expense: {
+                expenseId: "expense_chatgpt",
+                title: "ChatGPT",
+                category: "SUBSCRIPTION",
+                amountMinor: 30_000,
+                paymentDay: 20,
+                status: "ACTIVE",
+                paidTotalMinor: 30_000,
+                lastPaidAt: "2026-07-03T00:00:00.000Z",
+                serverAuthority: true,
+                financialRawDataExposed: false,
+                userId: "internal-user-id",
+              },
+              idempotentReplay: false,
+              payment: {
+                paymentId: "payment_1",
+                userId: "internal-user-id",
+              },
+            },
+          },
+          201,
+        );
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.recordFixedExpensePayment("expense_chatgpt", {
+        amountMinor: 30_000,
+        idempotencyKey: "fixed-payment-test-key",
+        paidAt: "2026-07-03T00:00:00.000Z",
+      }),
+    ).resolves.toMatchObject({
+      amountMinor: 30_000,
+      id: "expense_chatgpt",
+      serverAuthority: true,
+      title: "ChatGPT",
+    });
+    await expect(
+      api.recordFixedExpensePayment("expense_chatgpt", {
+        amountMinor: 0,
+        idempotencyKey: "bad",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_PAYMENT_REQUEST" });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/fixed-expenses/expense_chatgpt/pay",
+    );
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+    expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
+      idempotencyKey: "fixed-payment-test-key",
+      paidAmountMinor: 30_000,
+      paymentStatus: "PAID",
+    });
+  });
 });

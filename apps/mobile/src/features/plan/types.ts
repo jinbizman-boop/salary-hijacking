@@ -5,6 +5,8 @@ export type PlanFixedExpenseCommitment = Readonly<{
   dueLabel: string;
   financialRawDataExposed: false;
   id: string;
+  lastPaidAt: string | null;
+  paidTotalMinor: number;
   serverAuthority: true;
   status: string;
   title: string;
@@ -40,6 +42,13 @@ export type PlanFixedExpenseCreateRequest = Readonly<{
   title: string;
 }>;
 
+export type PlanFixedExpensePaymentRequest = Readonly<{
+  amountMinor: number;
+  idempotencyKey: string;
+  memo?: string | null;
+  paidAt?: string;
+}>;
+
 export type PlanSavingsGoalCreateRequest = Readonly<{
   fixedSaveAmountMinor: number;
   goalType: string;
@@ -51,6 +60,10 @@ export type PlanCommitmentsApiClient = Readonly<{
   getCommitments: () => Promise<PlanCommitmentsSnapshot>;
   createFixedExpense: (
     request: PlanFixedExpenseCreateRequest,
+  ) => Promise<PlanFixedExpenseCommitment>;
+  recordFixedExpensePayment: (
+    expenseId: string,
+    request: PlanFixedExpensePaymentRequest,
   ) => Promise<PlanFixedExpenseCommitment>;
   createSavingsGoal: (
     request: PlanSavingsGoalCreateRequest,
