@@ -55,15 +55,15 @@ export default function VerifyEmailScreen(): React.ReactElement {
 
   const title =
     status === "VERIFIED"
-      ? "이메일 인증이 완료됐어요"
+      ? "이메일 인증이 완료됐어요."
       : status === "WAITING"
-        ? "인증 메일을 확인해 주세요"
+        ? "인증 메일을 확인해 주세요."
         : status === "FAILED"
-          ? "인증 링크를 다시 확인해 주세요"
-          : "이메일 인증을 확인하고 있어요";
+          ? "인증 링크를 다시 확인해 주세요."
+          : "이메일 인증을 확인하고 있어요.";
   const description =
     status === "WAITING"
-      ? "메일함의 인증 링크로 다시 열면 서버에서 계정을 확인합니다."
+      ? "메일의 인증 링크를 열면 서버에서 계정을 확인합니다."
       : "인증 토큰은 화면에 표시하거나 저장하지 않고 서버 확인에만 사용합니다.";
 
   return (

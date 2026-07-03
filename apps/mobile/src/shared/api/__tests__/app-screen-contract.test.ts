@@ -120,6 +120,20 @@ describe("mobile app screen API and route contracts", () => {
     expect(verifyEmail).toContain("rawPersonalData=false");
   });
 
+  it("keeps the verify-email waiting state readable for OAuth and signup email gates", () => {
+    const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");
+
+    expect(verifyEmail).toContain('setStatus("WAITING")');
+    expect(verifyEmail).toContain("이메일 인증이 완료됐어요.");
+    expect(verifyEmail).toContain("인증 메일을 확인해 주세요.");
+    expect(verifyEmail).toContain("인증 링크를 다시 확인해 주세요.");
+    expect(verifyEmail).toContain("로그인으로 돌아가기");
+    expect(verifyEmail).toContain(
+      "메일의 인증 링크를 열면 서버에서 계정을 확인합니다.",
+    );
+    expect(verifyEmail).not.toMatch(/[?][가-힣]|[가-힣][?]|�/u);
+  });
+
   it("keeps reset-password available as a public auth recovery route", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
