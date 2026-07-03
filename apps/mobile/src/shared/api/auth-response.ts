@@ -294,10 +294,13 @@ function tokenExpiresAt(
     numeric(primary, "accessTokenExpiresIn") ??
     numeric(fallback, "accessTokenExpiresIn") ??
     numeric(primary, "expiresIn") ??
-    numeric(fallback, "expiresIn") ??
-    900;
+    numeric(fallback, "expiresIn");
+  if (ttlSeconds !== null && Math.trunc(ttlSeconds) < 1) {
+    throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
+  }
   return new Date(
-    now.getTime() + Math.max(1, Math.trunc(ttlSeconds)) * 1_000,
+    now.getTime() +
+      (ttlSeconds === null ? 900 : Math.trunc(ttlSeconds)) * 1_000,
   ).toISOString();
 }
 
