@@ -1,5 +1,6 @@
 import { CommunityApiError } from "./api";
 import { COMMUNITY_API_PREFIX } from "./community.constants";
+import { redactCommunityText } from "./community.redaction";
 import type {
   CommunityApiResponse,
   CommunityApiTransport,
@@ -96,7 +97,10 @@ function reportBody(
       "신고 사유를 확인해 주세요.",
     );
   }
-  return { reasonType: normalizedType, reason: safeReason };
+  return {
+    reasonType: normalizedType,
+    reason: redactCommunityText(safeReason),
+  };
 }
 
 export function createCommunityService(

@@ -107,4 +107,32 @@ describe("community service", () => {
       ],
     ]);
   });
+
+  it("redacts sensitive report reason text before sending moderation payloads", async () => {
+    const request = jest
+      .fn<
+        ReturnType<CommunityApiTransport["request"]>,
+        Parameters<CommunityApiTransport["request"]>
+      >()
+      .mockResolvedValue({ data: {} });
+    const service = createCommunityService({ request });
+    const rawJwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signatureABC";
+
+    await service.reportPost(
+      "post_1",
+      "abuse",
+      `leaked phone 010-1234-5678 and token ${rawJwt}`,
+    );
+    await service.reportComment(
+      "comment_1",
+      "spam",
+      "shared account 123-456-789012",
+    );
+
+    const payload = JSON.stringify(request.mock.calls);
+    expect(payload).not.toContain("010-1234-5678");
+    expect(payload).not.toContain(rawJwt);
+    expect(payload).not.toContain("123-456-789012");
+    expect(payload).toContain("[auth-redacted]");
+  });
 });
