@@ -26,6 +26,6 @@ async function readAccessToken(
 function normalizeBearerToken(value: string | null): string | null {
   const token = value?.trim();
   if (!token || token.length > 8_192) return null;
-  if (/[\r\n\t]/.test(token)) return null;
+  if (/\s/u.test(token)) return null;
   return token;
 }

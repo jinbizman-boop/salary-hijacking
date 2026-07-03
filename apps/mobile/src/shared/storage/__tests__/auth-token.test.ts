@@ -22,4 +22,13 @@ describe("mobile auth token storage helper", () => {
 
     expect(headers.has("authorization")).toBe(false);
   });
+
+  it("does not add an authorization header from bearer-prefixed stored values", async () => {
+    const headers = new Headers();
+    await attachMobileBearerToken(headers, {
+      getItemAsync: async () => "Bearer access.jwt.token",
+    });
+
+    expect(headers.has("authorization")).toBe(false);
+  });
 });
