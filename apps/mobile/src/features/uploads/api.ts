@@ -243,6 +243,17 @@ function attachmentFromResponse(value: unknown): UploadAttachment {
   };
 }
 
+function attachmentIdFromAttachResponse(
+  value: unknown,
+  expectedAttachmentId: string,
+): string {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  if (typeof data.attachmentId !== "string") return expectedAttachmentId;
+  const returnedAttachmentId = safeId(data.attachmentId, "attachmentId");
+  if (returnedAttachmentId !== expectedAttachmentId) invalidUploadResponse();
+  return returnedAttachmentId;
+}
+
 async function parseJson(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) return {};
@@ -357,12 +368,8 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
           method: "POST",
         },
       );
-      const data = isRecord(parsed) && isRecord(parsed.data) ? parsed.data : {};
       return {
-        attachmentId:
-          typeof data.attachmentId === "string"
-            ? safeId(data.attachmentId, "attachmentId")
-            : attachmentId,
+        attachmentId: attachmentIdFromAttachResponse(parsed, safeAttachmentId),
       };
     },
 
@@ -387,12 +394,8 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
           method: "POST",
         },
       );
-      const data = isRecord(parsed) && isRecord(parsed.data) ? parsed.data : {};
       return {
-        attachmentId:
-          typeof data.attachmentId === "string"
-            ? safeId(data.attachmentId, "attachmentId")
-            : attachmentId,
+        attachmentId: attachmentIdFromAttachResponse(parsed, safeAttachmentId),
       };
     },
   };
