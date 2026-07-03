@@ -2088,6 +2088,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
   const [prioritizeDailyBudget, setPrioritizeDailyBudget] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
+  const [savingDailyBudget, setSavingDailyBudget] = useState(false);
   const [serverBudgetSnapshot, setServerBudgetSnapshot] =
     useState<DailyBudgetSnapshot | null>(null);
   const [serverVariableExpenses, setServerVariableExpenses] = useState<
@@ -2211,6 +2212,34 @@ function SalaryHomeScreen(): React.ReactElement {
   const salaryFixedExpenseRows = salaryFixedExpenses.map(
     fixedExpenseRowFromServer,
   );
+
+  const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
+    const amount = parseKrwInputAmount(expenseDraft);
+    if (amount === null) {
+      setToast("저장할 오늘 예산을 0보다 큰 KRW 정수로 입력해 주세요.");
+      return;
+    }
+
+    try {
+      setSavingDailyBudget(true);
+      const response = await budgetApi.saveDailyBudget({
+        budgetDate: serverBudgetSnapshot?.date ?? todayDateInSeoul(),
+        budgetId: serverBudgetSnapshot?.budgetId ?? null,
+        memo: "mobile salary home daily budget save",
+        plannedAmountMinor: amount,
+      });
+      setServerBudgetSnapshot(response.data.snapshot);
+      setAddedExpenses([]);
+      setExpenseDraft("");
+      setToast(
+        `오늘 예산을 ${formatMoney(response.data.snapshot.dailyLimit)}원으로 서버 저장했어요.`,
+      );
+    } catch {
+      setToast("오늘 예산 저장에 실패했어요. 서버 연결 후 다시 시도해 주세요.");
+    } finally {
+      setSavingDailyBudget(false);
+    }
+  }, [budgetApi, expenseDraft, serverBudgetSnapshot]);
 
   const handleAddExpense = async (): Promise<void> => {
     const amount = parseKrwInputAmount(expenseDraft);
@@ -2448,6 +2477,21 @@ function SalaryHomeScreen(): React.ReactElement {
           >
             <Text style={styles.primaryButtonText}>
               {savingExpense ? "저장 중..." : "지출 추가하기"}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={savingDailyBudget}
+            onPress={() => {
+              void saveSalaryDailyBudget();
+            }}
+            style={[
+              styles.primaryButton,
+              savingDailyBudget ? styles.disabled : null,
+            ]}
+          >
+            <Text style={styles.primaryButtonText}>
+              {savingDailyBudget ? "예산 저장중" : "오늘 예산 저장"}
             </Text>
           </Pressable>
         </View>
@@ -4770,6 +4814,15 @@ function formatNoticeDate(value: string): string {
     month: "2-digit",
     day: "2-digit",
   }).format(date);
+}
+
+function todayDateInSeoul(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+  }).format(new Date());
 }
 
 const theme = salaryHijackingTheme;

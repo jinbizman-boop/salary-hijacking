@@ -27,6 +27,7 @@ export type VariableExpenseStatus =
   | "DELETED";
 
 export type DailyBudgetSnapshot = Readonly<{
+  budgetId?: string | null;
   date: string;
   timezone: "Asia/Seoul";
   currency: "KRW";
@@ -154,6 +155,9 @@ export type BudgetApiClient = Readonly<{
   recalculate: (
     request: DailyBudgetRecalculateRequest,
   ) => Promise<BudgetRecalculateResult>;
+  saveDailyBudget: (
+    request: DailyBudgetSaveRequest,
+  ) => Promise<BudgetApiResponse>;
   listVariableExpenses: (
     request: VariableExpenseListRequest,
   ) => Promise<VariableExpenseListResult>;
@@ -202,6 +206,13 @@ export type DailyBudgetRecalculateRequest = Readonly<{
   carryOverAmountMinor: number;
   overwriteExisting: boolean;
   memo: string | null;
+}>;
+
+export type DailyBudgetSaveRequest = Readonly<{
+  budgetDate: string;
+  budgetId: string | null;
+  memo: string | null;
+  plannedAmountMinor: number;
 }>;
 
 export type BudgetLoadState =

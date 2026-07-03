@@ -77,6 +77,7 @@ export function parseDailyBudgetSnapshot(value: unknown): DailyBudgetSnapshot {
   }
 
   const {
+    budgetId,
     date,
     timezone,
     currency,
@@ -129,6 +130,9 @@ export function parseDailyBudgetSnapshot(value: unknown): DailyBudgetSnapshot {
   }
 
   return {
+    ...(typeof budgetId === "string" && budgetId.length > 0
+      ? { budgetId }
+      : {}),
     date,
     timezone,
     currency,

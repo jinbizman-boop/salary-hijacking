@@ -43,6 +43,7 @@ describe("budget hooks", () => {
       listVariableExpenses: jest.fn(),
       recalculate: jest.fn(),
       recordChecked: jest.fn(),
+      saveDailyBudget: jest.fn(),
       updateVariableExpense: jest.fn(),
     };
     const { result } = renderHook(() =>
@@ -78,6 +79,7 @@ describe("budget hooks", () => {
       listVariableExpenses: jest.fn(),
       recalculate: jest.fn(),
       recordChecked: jest.fn(),
+      saveDailyBudget: jest.fn(),
       updateVariableExpense: jest.fn(),
     };
     const { result } = renderHook(() =>

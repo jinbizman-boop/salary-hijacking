@@ -1,5 +1,6 @@
 import {
   BUDGET_CHECKED_EVENT_PATH,
+  BUDGET_DAILY_BUDGET_PATH,
   BUDGET_RECALCULATE_PATH,
   BUDGET_SAFE_ERROR_MESSAGE,
   BUDGET_TODAY_PATH,
@@ -16,6 +17,7 @@ import type {
   BudgetApiResponse,
   BudgetRecalculateResult,
   DailyBudgetRecalculateRequest,
+  DailyBudgetSaveRequest,
   DailyBudgetSnapshot,
   VariableExpenseCategory,
   VariableExpenseCreateRequest,
@@ -177,6 +179,10 @@ function normalizedServerSnapshot(value: unknown): DailyBudgetSnapshot {
 
   const usageRate = Math.round(ratio * 10_000) / 100;
   const snapshot: DailyBudgetSnapshot = {
+    budgetId:
+      typeof value.budgetId === "string" && value.budgetId.length > 0
+        ? value.budgetId
+        : null,
     date,
     timezone: "Asia/Seoul",
     currency: "KRW",
@@ -401,6 +407,22 @@ function listVariableExpensePath(request: VariableExpenseListRequest): string {
   return `${VARIABLE_EXPENSE_LIST_PATH}?${params.toString()}`;
 }
 
+function isDateOnly(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value);
+}
+
+function validDailyBudgetSaveRequest(value: DailyBudgetSaveRequest): boolean {
+  return (
+    isDateOnly(value.budgetDate) &&
+    (value.budgetId === null ||
+      (typeof value.budgetId === "string" &&
+        value.budgetId.trim().length > 0)) &&
+    isNonNegativeInteger(value.plannedAmountMinor) &&
+    (value.memo === null ||
+      (typeof value.memo === "string" && value.memo.trim().length <= 500))
+  );
+}
+
 export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -465,6 +487,49 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
         body: JSON.stringify(recalculateRequest),
       });
       return normalizeRecalculateResult(result);
+    },
+
+    async saveDailyBudget(
+      saveRequest: DailyBudgetSaveRequest,
+    ): Promise<BudgetApiResponse> {
+      if (!validDailyBudgetSaveRequest(saveRequest)) {
+        throw new BudgetApiError(
+          0,
+          "BUDGET_INVALID_DAILY_BUDGET_SAVE",
+          BUDGET_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const budgetId = saveRequest.budgetId?.trim() ?? null;
+      const result = await request(
+        budgetId === null
+          ? BUDGET_DAILY_BUDGET_PATH
+          : `${BUDGET_DAILY_BUDGET_PATH}/${encodeURIComponent(budgetId)}`,
+        {
+          method: budgetId === null ? "POST" : "PATCH",
+          body: JSON.stringify(
+            budgetId === null
+              ? {
+                  budgetDate: saveRequest.budgetDate,
+                  memo: saveRequest.memo,
+                  plannedAmountMinor: saveRequest.plannedAmountMinor,
+                  source: "MANUAL",
+                }
+              : {
+                  memo: saveRequest.memo,
+                  plannedAmountMinor: saveRequest.plannedAmountMinor,
+                },
+          ),
+        },
+      );
+      const normalized = normalizeTodayResponse(result);
+      if (normalized === null) {
+        throw new BudgetApiError(
+          0,
+          "BUDGET_INVALID_RESPONSE",
+          BUDGET_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalized;
     },
 
     async listVariableExpenses(

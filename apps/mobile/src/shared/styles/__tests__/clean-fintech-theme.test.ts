@@ -188,6 +188,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setAddedExpenses([]");
   });
 
+  it("keeps salary home daily budget saved through the server daily budget API", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const budgetApi = mobileSource("src/features/budget/api.ts");
+
+    expect(budgetApi).toContain("saveDailyBudget");
+    expect(cleanScreens).toContain("saveSalaryDailyBudget");
+    expect(cleanScreens).toContain("budgetApi.saveDailyBudget");
+    expect(cleanScreens).toContain("setSavingDailyBudget");
+    expect(cleanScreens).toContain("serverBudgetSnapshot?.budgetId ?? null");
+  });
+
   it("keeps salary home variable expenses hydrated, editable, and deletable through the server API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

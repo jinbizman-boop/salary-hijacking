@@ -119,6 +119,117 @@ describe("budget api", () => {
     });
   });
 
+  it("saves today's daily budget through create or update without raw data exposure", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              budgetId: "budget_today",
+              budgetDate: "2026-07-03",
+              plannedAmountMinor: 25_000,
+              availableAmountMinor: 25_000,
+              spentAmountMinor: 5_000,
+              remainingAmountMinor: 20_000,
+              usageRate: 0.2,
+              status: "ACTIVE",
+              updatedAt: "2026-07-03T01:00:00.000Z",
+              serverAuthority: true,
+            },
+          }),
+          { status: 201 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              budgetId: "budget_today",
+              budgetDate: "2026-07-03",
+              plannedAmountMinor: 30_000,
+              availableAmountMinor: 30_000,
+              spentAmountMinor: 5_000,
+              remainingAmountMinor: 25_000,
+              usageRate: 0.1667,
+              status: "ACTIVE",
+              updatedAt: "2026-07-03T02:00:00.000Z",
+              serverAuthority: true,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      createCorrelationId: () => "daily-budget-save-test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.saveDailyBudget({
+        budgetDate: "2026-07-03",
+        budgetId: null,
+        memo: "mobile daily budget create",
+        plannedAmountMinor: 25_000,
+      }),
+    ).resolves.toMatchObject({
+      data: {
+        snapshot: {
+          budgetId: "budget_today",
+          dailyLimit: 25_000,
+          rawFinancialDataExposed: false,
+        },
+      },
+    });
+    await expect(
+      api.saveDailyBudget({
+        budgetDate: "2026-07-03",
+        budgetId: "budget_today",
+        memo: "mobile daily budget update",
+        plannedAmountMinor: 30_000,
+      }),
+    ).resolves.toMatchObject({
+      data: {
+        snapshot: {
+          budgetId: "budget_today",
+          dailyLimit: 30_000,
+        },
+      },
+    });
+    await expect(
+      api.saveDailyBudget({
+        budgetDate: "2026-07-03",
+        budgetId: null,
+        memo: null,
+        plannedAmountMinor: -1,
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_DAILY_BUDGET_SAVE" });
+
+    expect(
+      fetcher.mock.calls.map((call) => [call[0], call[1]?.method]),
+    ).toEqual([
+      ["https://api.example.test/api/v1/daily-budgets", "POST"],
+      ["https://api.example.test/api/v1/daily-budgets/budget_today", "PATCH"],
+    ]);
+    expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toEqual({
+      budgetDate: "2026-07-03",
+      memo: "mobile daily budget create",
+      plannedAmountMinor: 25_000,
+      source: "MANUAL",
+    });
+    expect(JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body))).toEqual({
+      memo: "mobile daily budget update",
+      plannedAmountMinor: 30_000,
+    });
+    for (const [, init] of fetcher.mock.calls) {
+      const headers = new Headers(init?.headers);
+      expect(headers.get("x-raw-financial-data-exposed")).toBe("false");
+      expect(headers.get("x-ad-financial-targeting-used")).toBe("false");
+    }
+  });
+
   it("creates a server-authoritative variable expense before local preview fallback", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
