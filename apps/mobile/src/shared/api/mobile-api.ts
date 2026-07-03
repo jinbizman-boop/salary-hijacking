@@ -55,6 +55,7 @@ export function createMobileAuthenticatedFetcher(
   const refreshAccessToken =
     options.refreshAccessToken ??
     createDefaultRefreshAccessToken(options, tokenStore);
+  let refreshInFlight: Promise<unknown> | null = null;
   return async (input, init) => {
     const request = new Request(input, init);
     const response = await fetcher(
@@ -63,7 +64,10 @@ export function createMobileAuthenticatedFetcher(
     if (response.status !== 401 || !refreshAccessToken) return response;
 
     try {
-      await refreshAccessToken();
+      refreshInFlight ??= refreshAccessToken().finally(() => {
+        refreshInFlight = null;
+      });
+      await refreshInFlight;
     } catch {
       return response;
     }

@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 126 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 127 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -192,6 +192,11 @@ HttpOnly refresh cookie, stores only the rotated access token, then retries the
 original feature request once with the new bearer token. If refresh fails, the
 original 401 response is returned to the feature API parser so the app does not
 loop or pretend the request succeeded.
+
+The refresh attempt is single-flight within each shared authenticated fetcher:
+if multiple protected feature requests receive 401 at the same time, they await
+the same refresh promise and then retry individually. This prevents duplicated
+refresh calls during app startup or tab hydration bursts.
 
 ## LV UP Growth API Hydration
 

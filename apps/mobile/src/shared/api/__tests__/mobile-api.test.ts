@@ -216,4 +216,48 @@ describe("mobile api factory", () => {
     expect(storedToken).toBe("rotated.access.jwt");
     expect(calls[1]?.credentials).toBe("include");
   });
+
+  it("shares one refresh attempt across concurrent protected requests", async () => {
+    const calls: Request[] = [];
+    let refreshCount = 0;
+    let allowSuccess = false;
+    const fetcher = createMobileAuthenticatedFetcher({
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
+        if (!allowSuccess) {
+          return new Response(
+            JSON.stringify({ error: { code: "TOKEN_EXPIRED" } }),
+            {
+              headers: { "content-type": "application/json" },
+              status: 401,
+            },
+          );
+        }
+        return new Response(JSON.stringify({ data: { ok: true } }), {
+          headers: { "content-type": "application/json" },
+        });
+      },
+      refreshAccessToken: async () => {
+        refreshCount += 1;
+        await Promise.resolve();
+        allowSuccess = true;
+      },
+      tokenStore: {
+        getItemAsync: async () => "expired.access.jwt",
+        setItemAsync: async () => undefined,
+      },
+    });
+
+    const [first, second] = await Promise.all([
+      fetcher("https://api.salaryhijacking.com/api/v1/payroll/current"),
+      fetcher("https://api.salaryhijacking.com/api/v1/users/me/profile"),
+    ]);
+
+    expect(first.ok).toBe(true);
+    expect(second.ok).toBe(true);
+    expect(refreshCount).toBe(1);
+    expect(calls).toHaveLength(4);
+  });
 });

@@ -65,9 +65,10 @@ Verified on 2026-07-03 KST:
   contract, Auth refresh/logout session-continuity contract, and MY-screen
   server logout wiring. Shared mobile API factory testing also guards bearer
   access-token attachment for feature API requests after login, token-store
-  injection for the auth lifecycle, and one-time access-token refresh/retry for
-  protected feature APIs that receive a 401.
-- Mobile Jest currently reports 32 passing suites and 126 passing tests.
+  injection for the auth lifecycle, one-time access-token refresh/retry for
+  protected feature APIs that receive a 401, and single-flight refresh sharing
+  for concurrent protected API requests.
+- Mobile Jest currently reports 32 passing suites and 127 passing tests.
 - API package tests currently report 24 passing files and 47 passing tests,
   including mobile bootstrap, mobile profile endpoint, mobile withdrawal request,
   mobile payroll route injection contract, mobile variable expense creation
