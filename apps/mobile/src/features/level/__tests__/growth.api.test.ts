@@ -175,4 +175,74 @@ describe("growth api", () => {
       progressCount: 1,
     });
   });
+
+  it("completes level detail content through the server growth API without exposing sensitive data", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "growth-content-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse(
+          {
+            data: {
+              completion: {
+                completionId: "gcc_reading_1",
+                contentId: "cnt_reading_recommendation",
+                note: "mobile level detail content complete",
+                expDelta: 30,
+                idempotencyKey: "content-reading-1",
+                completedAt: "2026-07-02T09:20:00.000Z",
+                recommendationUsesSensitiveFinancialData: false,
+              },
+              badges: [],
+              idempotentReplay: false,
+            },
+          },
+          201,
+        );
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.completeContent({
+        contentId: "cnt_reading_recommendation",
+        idempotencyKey: "content-reading-1",
+        note: "mobile level detail content complete",
+      }),
+    ).resolves.toMatchObject({
+      completion: {
+        contentId: "cnt_reading_recommendation",
+        expDelta: 30,
+        recommendationUsesSensitiveFinancialData: false,
+      },
+      idempotentReplay: false,
+    });
+    await expect(
+      api.completeContent({
+        contentId: "../bad-content",
+        idempotencyKey: "bad",
+        note: null,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_CONTENT_ID" });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/growth/contents/cnt_reading_recommendation/complete",
+    );
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+    const body = await calls[0]?.clone().text();
+    expect(JSON.parse(body ?? "{}")).toEqual({
+      idempotencyKey: "content-reading-1",
+      note: "mobile level detail content complete",
+    });
+  });
 });

@@ -109,4 +109,44 @@ describe("mobile growth API contract", () => {
       "11111111-1111-4111-8111-111111111111",
     );
   });
+
+  it("accepts mobile LV UP detail content completion IDs in the default runtime repository", async () => {
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+    });
+
+    const response = await app.fetch(
+      new Request(
+        "https://api.test/api/v1/growth/contents/cnt_reading_recommendation/complete",
+        {
+          body: JSON.stringify({
+            idempotencyKey: "mobile-detail-reading-1",
+            note: "mobile level detail content complete",
+          }),
+          headers: authHeaders,
+          method: "POST",
+        },
+      ),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly completion?: Record<string, unknown>;
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(201);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data?.completion).toMatchObject({
+      contentId: "cnt_reading_recommendation",
+      recommendationUsesSensitiveFinancialData: false,
+    });
+    expect(JSON.stringify(body)).not.toContain(
+      "11111111-1111-4111-8111-111111111111",
+    );
+  });
 });

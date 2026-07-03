@@ -1,10 +1,13 @@
 import {
+  GROWTH_CONTENTS_PATH,
   GROWTH_DASHBOARD_PATH,
   GROWTH_SAFE_ERROR_MESSAGE,
   GROWTH_TASKS_PATH,
 } from "./constants";
 import type {
   GrowthApiClient,
+  GrowthContentCompleteRequest,
+  GrowthContentCompleteResult,
   GrowthDashboard,
   GrowthTask,
   GrowthTaskDifficulty,
@@ -300,6 +303,16 @@ function validProgressRequest(value: GrowthTaskProgressRequest): boolean {
   );
 }
 
+function validContentCompleteRequest(
+  value: GrowthContentCompleteRequest,
+): boolean {
+  return (
+    /^[A-Za-z0-9_-]+$/u.test(value.contentId) &&
+    (value.note === null || typeof value.note === "string") &&
+    (value.idempotencyKey === null || typeof value.idempotencyKey === "string")
+  );
+}
+
 function normalizeProgress(value: unknown): GrowthTaskProgressResult {
   if (!isRecord(value) || !isRecord(value.data)) {
     return invalidResponse();
@@ -341,6 +354,44 @@ function normalizeProgress(value: unknown): GrowthTaskProgressResult {
   };
 }
 
+function normalizeContentCompletion(
+  value: unknown,
+): GrowthContentCompleteResult {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    return invalidResponse();
+  }
+  const data = value.data;
+  const completionValue = data.completion;
+  if (!isRecord(completionValue)) {
+    return invalidResponse();
+  }
+  const completion = completionValue;
+  if (
+    typeof completion.completionId !== "string" ||
+    typeof completion.contentId !== "string" ||
+    !isNonNegativeInteger(completion.expDelta) ||
+    !isIsoTimestamp(completion.completedAt) ||
+    completion.recommendationUsesSensitiveFinancialData !== false ||
+    !Array.isArray(data.badges) ||
+    typeof data.idempotentReplay !== "boolean"
+  ) {
+    return invalidResponse();
+  }
+  return {
+    completion: {
+      completionId: completion.completionId,
+      contentId: completion.contentId,
+      note: normalizeNullableString(completion.note),
+      expDelta: completion.expDelta,
+      idempotencyKey: normalizeNullableString(completion.idempotencyKey),
+      completedAt: completion.completedAt,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    badges: data.badges.filter(isRecord),
+    idempotentReplay: data.idempotentReplay,
+  };
+}
+
 function taskProgressPath(taskId: string): string {
   if (!/^[A-Za-z0-9_-]+$/u.test(taskId)) {
     throw new GrowthApiError(
@@ -350,6 +401,17 @@ function taskProgressPath(taskId: string): string {
     );
   }
   return `${GROWTH_TASKS_PATH}/${encodeURIComponent(taskId)}/progress`;
+}
+
+function contentCompletePath(contentId: string): string {
+  if (!/^[A-Za-z0-9_-]+$/u.test(contentId)) {
+    throw new GrowthApiError(
+      0,
+      "GROWTH_INVALID_CONTENT_ID",
+      GROWTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return `${GROWTH_CONTENTS_PATH}/${encodeURIComponent(contentId)}/complete`;
 }
 
 export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
@@ -428,6 +490,27 @@ export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
         await request(taskProgressPath(taskId), {
           method: "POST",
           body: JSON.stringify(progressRequest),
+        }),
+      );
+    },
+
+    async completeContent(
+      completeRequest: GrowthContentCompleteRequest,
+    ): Promise<GrowthContentCompleteResult> {
+      if (!validContentCompleteRequest(completeRequest)) {
+        throw new GrowthApiError(
+          0,
+          "GROWTH_INVALID_CONTENT_ID",
+          GROWTH_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeContentCompletion(
+        await request(contentCompletePath(completeRequest.contentId), {
+          method: "POST",
+          body: JSON.stringify({
+            idempotencyKey: completeRequest.idempotencyKey,
+            note: completeRequest.note,
+          }),
         }),
       );
     },

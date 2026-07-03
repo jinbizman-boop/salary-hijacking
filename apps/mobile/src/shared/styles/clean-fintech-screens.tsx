@@ -121,6 +121,7 @@ type LevelDetailConfig = Readonly<{
     meta: string;
     action: string;
     icon: string;
+    contentId: string;
   }>[];
   progressLabel: string;
   progressValue: number;
@@ -554,12 +555,14 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           meta: "AI 추천 · 12분 읽기 · XP 30",
           action: "추천 도서 읽기",
           icon: "📘",
+          contentId: "cnt_reading_recommendation",
         },
         {
           title: "월급 이후의 현금흐름",
           meta: "경제/경영 · 핵심 요약 + 노트",
           action: "생각 남기기",
           icon: "📗",
+          contentId: "cnt_reading_note",
         },
       ],
       progressLabel: "오늘 독서 루틴",
@@ -581,12 +584,14 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           meta: "경제 · 오늘 08:10 · 좋아요 42",
           action: "요약 보기",
           icon: "📰",
+          contentId: "cnt_news_summary",
         },
         {
           title: "구독 경제와 자동결제 관리 트렌드",
           meta: "산업 · 오늘 09:30 · 댓글 8",
           action: "북마크",
           icon: "📌",
+          contentId: "cnt_news_bookmark",
         },
       ],
       progressLabel: "오늘 뉴스 루틴",
@@ -609,12 +614,14 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           meta: "A2 · 7분 · XP 25",
           action: "문장 학습",
           icon: "🎧",
+          contentId: "cnt_english_sentence",
         },
         {
           title: "생활비를 줄였어요",
           meta: "I saved money on daily expenses.",
           action: "말하기 연습",
           icon: "🗣️",
+          contentId: "cnt_english_speaking",
         },
       ],
       progressLabel: "오늘 영어 루틴",
@@ -637,12 +644,14 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           meta: "오늘 1/1 · XP 35 · 인증 가능",
           action: "홈트 완료",
           icon: "🏃",
+          contentId: "cnt_health_homeworkout",
         },
         {
           title: "물 1,500ml 채우기",
           meta: "현재 900ml · 60% 달성",
           action: "물 마심 기록",
           icon: "💧",
+          contentId: "cnt_health_water",
         },
       ],
       progressLabel: "오늘 건강 루틴",
@@ -987,9 +996,51 @@ export function CleanFintechLevelDetailScreen({
   kind,
 }: Readonly<{ kind: LevelDetailKind }>): React.ReactElement {
   const config = levelDetailConfigs[kind];
+  const growthDetailApi = useMemo(() => createMobileGrowthApi(), []);
   const [selectedTab, setSelectedTab] = useState(config.tabs[0] ?? "");
   const [toast, setToast] = useState(
     `${config.progressLabel}: 완료하면 XP와 진행률이 올라가요.`,
+  );
+  const [completedContentIds, setCompletedContentIds] = useState<
+    ReadonlySet<string>
+  >(() => new Set());
+  const [submittingContentId, setSubmittingContentId] = useState<string | null>(
+    null,
+  );
+  const completeLevelContent = useCallback(
+    async (card: LevelDetailConfig["cards"][number]): Promise<void> => {
+      if (completedContentIds.has(card.contentId)) {
+        setToast(`${card.title}: 이미 서버에 완료 기록이 있어요.`);
+        return;
+      }
+      setSubmittingContentId(card.contentId);
+      try {
+        const result = await growthDetailApi.completeContent({
+          contentId: card.contentId,
+          idempotencyKey: `mobile-${card.contentId}-${new Date()
+            .toISOString()
+            .slice(0, 10)}`,
+          note: "mobile level detail content complete",
+        });
+        if (result.completion.recommendationUsesSensitiveFinancialData) {
+          setToast("민감 금융정보가 포함된 추천은 완료 처리하지 않아요.");
+          return;
+        }
+        setCompletedContentIds((current) =>
+          new Set(current).add(card.contentId),
+        );
+        setToast(
+          `${card.title}: 서버 기록 완료! +${result.completion.expDelta} XP가 반영됐어요.`,
+        );
+      } catch {
+        setToast(
+          "서버에 LV UP 콘텐츠 완료를 기록하지 못했어요. 다시 시도해 주세요.",
+        );
+      } finally {
+        setSubmittingContentId(null);
+      }
+    },
+    [completedContentIds, growthDetailApi],
   );
 
   return (
@@ -1018,7 +1069,9 @@ export function CleanFintechLevelDetailScreen({
           <Pressable
             accessibilityRole="button"
             key={card.title}
-            onPress={() => setToast(`${card.title}: ${card.action}`)}
+            onPress={() => {
+              void completeLevelContent(card);
+            }}
             style={styles.detailCardRow}
           >
             <Text style={styles.listIcon}>{card.icon}</Text>
@@ -1026,7 +1079,13 @@ export function CleanFintechLevelDetailScreen({
               <Text style={styles.listTitle}>{card.title}</Text>
               <Text style={styles.listMeta}>{card.meta}</Text>
             </View>
-            <Text style={styles.linkText}>{card.action}</Text>
+            <Text style={styles.linkText}>
+              {submittingContentId === card.contentId
+                ? "기록 중"
+                : completedContentIds.has(card.contentId)
+                  ? "완료됨"
+                  : card.action}
+            </Text>
           </Pressable>
         ))}
       </SectionCard>

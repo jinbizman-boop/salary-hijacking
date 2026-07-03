@@ -81,6 +81,26 @@ export type GrowthTaskProgressResult = Readonly<{
   idempotentReplay: boolean;
 }>;
 
+export type GrowthContentCompleteRequest = Readonly<{
+  contentId: string;
+  note: string | null;
+  idempotencyKey: string | null;
+}>;
+
+export type GrowthContentCompleteResult = Readonly<{
+  completion: Readonly<{
+    completionId: string;
+    contentId: string;
+    note: string | null;
+    expDelta: number;
+    idempotencyKey: string | null;
+    completedAt: string;
+    recommendationUsesSensitiveFinancialData: false;
+  }>;
+  badges: readonly Readonly<Record<string, unknown>>[];
+  idempotentReplay: boolean;
+}>;
+
 export type GrowthApiClient = Readonly<{
   getDashboard: () => Promise<GrowthDashboard>;
   listTasks: (options?: {
@@ -92,4 +112,7 @@ export type GrowthApiClient = Readonly<{
     taskId: string,
     request: GrowthTaskProgressRequest,
   ) => Promise<GrowthTaskProgressResult>;
+  completeContent: (
+    request: GrowthContentCompleteRequest,
+  ) => Promise<GrowthContentCompleteResult>;
 }>;

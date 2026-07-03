@@ -952,6 +952,70 @@ function createInMemoryGrowthRepository<
       expReward: 25,
       recommendationUsesSensitiveFinancialData: false,
     },
+    {
+      contentId: "cnt_reading_recommendation",
+      contentType: "ARTICLE",
+      title: "Mobile reading recommendation routine",
+      tags: "reading,routine",
+      expReward: 30,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_reading_note",
+      contentType: "CHECKLIST",
+      title: "Mobile reading reflection routine",
+      tags: "reading,note",
+      expReward: 20,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_news_summary",
+      contentType: "ARTICLE",
+      title: "Mobile news summary routine",
+      tags: "news,summary",
+      expReward: 25,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_news_bookmark",
+      contentType: "CHECKLIST",
+      title: "Mobile news bookmark routine",
+      tags: "news,bookmark",
+      expReward: 15,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_english_sentence",
+      contentType: "CHECKLIST",
+      title: "Mobile English sentence routine",
+      tags: "english,sentence",
+      expReward: 25,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_english_speaking",
+      contentType: "CHECKLIST",
+      title: "Mobile English speaking routine",
+      tags: "english,speaking",
+      expReward: 25,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_health_homeworkout",
+      contentType: "CHECKLIST",
+      title: "Mobile health home workout routine",
+      tags: "health,workout",
+      expReward: 35,
+      recommendationUsesSensitiveFinancialData: false,
+    },
+    {
+      contentId: "cnt_health_water",
+      contentType: "CHECKLIST",
+      title: "Mobile health hydration routine",
+      tags: "health,water",
+      expReward: 15,
+      recommendationUsesSensitiveFinancialData: false,
+    },
   ];
 
   function userTasks(userId: string): JsonRecord[] {
@@ -1022,6 +1086,11 @@ function createInMemoryGrowthRepository<
       }
     });
     return awarded;
+  }
+
+  function publicContentCompletion(record: JsonRecord): JsonRecord {
+    const { userId: _userId, ...publicRecord } = record;
+    return publicRecord;
   }
 
   return {
@@ -1339,7 +1408,11 @@ function createInMemoryGrowthRepository<
             item.userId === runtime.principal.userId,
         );
         if (existing)
-          return { completion: existing, idempotentReplay: true, badges: [] };
+          return {
+            completion: publicContentCompletion(existing),
+            idempotentReplay: true,
+            badges: [],
+          };
       }
       const content = seedContents.find(
         (item) => item.contentId === input.contentId,
@@ -1364,7 +1437,7 @@ function createInMemoryGrowthRepository<
       completedContents.set(completionId, record);
       const awarded = awardBadgeIfNeeded(runtime.principal.userId, runtime.now);
       return {
-        completion: record,
+        completion: publicContentCompletion(record),
         badges: [...awarded],
         idempotentReplay: false,
       };
