@@ -706,6 +706,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("updateNotificationPreference");
     expect(cleanScreens).toContain(".getPreferences()");
     expect(cleanScreens).toContain(".updatePreferences({");
+    expect(cleanScreens).toContain("notificationPreferencePending");
+    expect(cleanScreens).toContain("if (notificationPreferencePending) return");
+    expect(cleanScreens).toContain("setNotificationPreferencePending(true)");
+    expect(cleanScreens).toContain(
+      "finally(() => setNotificationPreferencePending(false))",
+    );
+    expect(cleanScreens).toContain("disabled={notificationPreferencePending}");
   });
 
   it("keeps notification device registration and revocation wired to the server API", () => {

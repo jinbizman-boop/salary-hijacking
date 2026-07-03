@@ -4401,6 +4401,8 @@ function NotificationsScreen(): React.ReactElement {
   );
   const [serverNotificationPreferences, setServerNotificationPreferences] =
     useState<NotificationPreferences | null>(null);
+  const [notificationPreferencePending, setNotificationPreferencePending] =
+    useState(false);
   const [serverNotificationDevices, setServerNotificationDevices] = useState<
     readonly NotificationDevice[]
   >([]);
@@ -4633,12 +4635,14 @@ function NotificationsScreen(): React.ReactElement {
 
   const updateNotificationPreference = useCallback(
     (preferencesRequest: NotificationPreferencesUpdateRequest) => {
+      if (notificationPreferencePending) return;
       const current = serverNotificationPreferences;
       if (!current) {
         setSyncLabel("서버 알림 설정을 먼저 불러와야 해요.");
         return;
       }
       const optimistic = { ...current, ...preferencesRequest };
+      setNotificationPreferencePending(true);
       setServerNotificationPreferences(optimistic);
       void notificationsApi
         .updatePreferences({
@@ -4653,9 +4657,14 @@ function NotificationsScreen(): React.ReactElement {
           setSyncLabel(
             "알림 설정을 서버에 저장하지 못했어요. 다시 확인해 주세요.",
           );
-        });
+        })
+        .finally(() => setNotificationPreferencePending(false));
     },
-    [notificationsApi, serverNotificationPreferences],
+    [
+      notificationPreferencePending,
+      notificationsApi,
+      serverNotificationPreferences,
+    ],
   );
 
   const registerNotificationDevice = useCallback(() => {
@@ -4722,6 +4731,7 @@ function NotificationsScreen(): React.ReactElement {
           </View>
           <ToggleRow
             active={serverNotificationPreferences.pushEnabled}
+            disabled={notificationPreferencePending}
             label="푸시 알림"
             onPress={() =>
               updateNotificationPreference({
@@ -4731,6 +4741,7 @@ function NotificationsScreen(): React.ReactElement {
           />
           <ToggleRow
             active={serverNotificationPreferences.contentRecommendationEnabled}
+            disabled={notificationPreferencePending}
             label="LV UP 추천 알림"
             onPress={() =>
               updateNotificationPreference({
@@ -5881,10 +5892,12 @@ function StatusPill({
 
 function ToggleRow({
   active,
+  disabled = false,
   label,
   onPress,
 }: Readonly<{
   active: boolean;
+  disabled?: boolean;
   label: string;
   onPress: () => void;
 }>): React.ReactElement {
@@ -5892,8 +5905,9 @@ function ToggleRow({
     <Pressable
       accessibilityRole="checkbox"
       accessibilityState={{ checked: active }}
+      disabled={disabled}
       onPress={onPress}
-      style={styles.toggleRow}
+      style={[styles.toggleRow, disabled ? styles.disabled : null]}
     >
       <View style={[styles.checkbox, active ? styles.checkboxActive : null]}>
         <Text style={styles.checkboxText}>{active ? "✓" : ""}</Text>
