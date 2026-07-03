@@ -2428,6 +2428,7 @@ function PlanScreen(): React.ReactElement {
   const [serverSavingsGoals, setServerSavingsGoals] = useState<
     readonly PlanSavingsGoalCommitment[]
   >([]);
+  const [planCommitmentsHydrated, setPlanCommitmentsHydrated] = useState(false);
   const [planToast, setPlanToast] = useState(
     "서버 급여 계획이 없으면 로컬 미리보기로 계산해요.",
   );
@@ -2439,6 +2440,9 @@ function PlanScreen(): React.ReactElement {
     useState("새 고정저축");
   const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("80000");
   const [savingPlanCommitment, setSavingPlanCommitment] = useState(false);
+  const [deletingPlanCommitmentId, setDeletingPlanCommitmentId] = useState<
+    string | null
+  >(null);
 
   const applyServerPayrollPlan = useCallback(
     (nextPlan: PayrollPlanSnapshot): void => {
@@ -2477,6 +2481,7 @@ function PlanScreen(): React.ReactElement {
         if (cancelled) return;
         setServerFixedExpenses(commitments.fixedExpenses);
         setServerSavingsGoals(commitments.savingsGoals);
+        setPlanCommitmentsHydrated(true);
         setExpense(String(commitments.fixedExpenseTotalMinor));
         setTarget(String(commitments.fixedSavingsTotalMinor));
         setPlanToast("서버 고정지출과 고정저축을 계획에 반영했어요.");
@@ -2485,6 +2490,7 @@ function PlanScreen(): React.ReactElement {
         if (!cancelled) {
           setServerFixedExpenses([]);
           setServerSavingsGoals([]);
+          setPlanCommitmentsHydrated(false);
           setPlanToast("서버 계획 상세 연결 전 미리보기 목록으로 표시해요.");
         }
       });
@@ -2608,6 +2614,60 @@ function PlanScreen(): React.ReactElement {
     }
   }, [planCommitmentsApi, planSavingsGoalAmount, planSavingsGoalTitle, target]);
 
+  const deletePlanFixedExpense = useCallback(
+    async (expenseId: string): Promise<void> => {
+      if (!planCommitmentsHydrated || deletingPlanCommitmentId !== null) return;
+      setDeletingPlanCommitmentId(expenseId);
+      setPlanToast("고정지출을 서버에서 삭제하는 중이에요.");
+      try {
+        const deleted = await planCommitmentsApi.deleteFixedExpense(expenseId);
+        setServerFixedExpenses((current) => {
+          const next = current.filter((item) => item.id !== deleted.id);
+          setExpense(
+            String(next.reduce((sum, item) => sum + item.amountMinor, 0)),
+          );
+          return next;
+        });
+        setPlanToast(
+          "고정지출을 삭제했어요. serverAuthority=true · rawFinancialDataExposed=false",
+        );
+      } catch {
+        setPlanToast("고정지출 삭제에 실패했어요. 다시 시도해 주세요.");
+      } finally {
+        setDeletingPlanCommitmentId(null);
+      }
+    },
+    [deletingPlanCommitmentId, planCommitmentsApi, planCommitmentsHydrated],
+  );
+
+  const deletePlanSavingsGoal = useCallback(
+    async (goalId: string): Promise<void> => {
+      if (!planCommitmentsHydrated || deletingPlanCommitmentId !== null) return;
+      setDeletingPlanCommitmentId(goalId);
+      setPlanToast("고정저축 목표를 서버에서 삭제하는 중이에요.");
+      try {
+        const deleted = await planCommitmentsApi.deleteSavingsGoal(goalId);
+        setServerSavingsGoals((current) => {
+          const next = current.filter((item) => item.id !== deleted.id);
+          setTarget(
+            String(
+              next.reduce((sum, item) => sum + item.fixedSaveAmountMinor, 0),
+            ),
+          );
+          return next;
+        });
+        setPlanToast(
+          "고정저축 목표를 삭제했어요. serverAuthority=true · rawFinancialDataExposed=false",
+        );
+      } catch {
+        setPlanToast("고정저축 목표 삭제에 실패했어요. 다시 시도해 주세요.");
+      } finally {
+        setDeletingPlanCommitmentId(null);
+      }
+    },
+    [deletingPlanCommitmentId, planCommitmentsApi, planCommitmentsHydrated],
+  );
+
   const localExpectedHijack = Math.max(
     0,
     nonNegative(salary) - nonNegative(expense),
@@ -2619,14 +2679,12 @@ function PlanScreen(): React.ReactElement {
     100,
     Math.round((expectedHijack / Math.max(1, nonNegative(target))) * 100),
   );
-  const fixedExpenseRows =
-    serverFixedExpenses.length > 0
-      ? serverFixedExpenses.map(fixedExpenseRowFromServer)
-      : fallbackPlanFixedExpenseRows;
-  const savingsRows =
-    serverSavingsGoals.length > 0
-      ? serverSavingsGoals.map(savingsGoalRowFromServer)
-      : fallbackPlanSavingsRows;
+  const fixedExpenseRows = planCommitmentsHydrated
+    ? serverFixedExpenses.map(fixedExpenseRowFromServer)
+    : fallbackPlanFixedExpenseRows;
+  const savingsRows = planCommitmentsHydrated
+    ? serverSavingsGoals.map(savingsGoalRowFromServer)
+    : fallbackPlanSavingsRows;
   const livingBudgetPreview =
     serverPayrollCalculation?.recommendedDailyBudgetMinor ??
     Math.max(
@@ -2672,7 +2730,16 @@ function PlanScreen(): React.ReactElement {
             key={item.id}
             icon={appIcons.subscription}
             title={item.title}
-            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
+            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}${
+              deletingPlanCommitmentId === item.id ? " · 삭제 중" : ""
+            }`}
+            {...(planCommitmentsHydrated
+              ? {
+                  onPress: () => {
+                    void deletePlanFixedExpense(item.id);
+                  },
+                }
+              : {})}
           />
         ))}
         <TextInput
@@ -2720,7 +2787,16 @@ function PlanScreen(): React.ReactElement {
             key={item.id}
             icon={appIcons.saving}
             title={item.title}
-            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
+            meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}${
+              deletingPlanCommitmentId === item.id ? " · 삭제 중" : ""
+            }`}
+            {...(planCommitmentsHydrated
+              ? {
+                  onPress: () => {
+                    void deletePlanSavingsGoal(item.id);
+                  },
+                }
+              : {})}
           />
         ))}
         <TextInput

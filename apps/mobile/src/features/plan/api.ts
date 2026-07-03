@@ -6,6 +6,7 @@ import {
 import type {
   PlanCommitmentsApiClient,
   PlanCommitmentsSnapshot,
+  PlanDeleteResult,
   PlanFixedExpenseCreateRequest,
   PlanFixedExpenseCommitment,
   PlanFixedExpensePaymentRequest,
@@ -275,6 +276,35 @@ function validFixedExpensePayment(
   );
 }
 
+function validDeleteId(value: string): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function normalizeDeleteResult(
+  value: unknown,
+  idKey: "expenseId" | "goalId",
+): PlanDeleteResult {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.data) ||
+    typeof value.data[idKey] !== "string" ||
+    !value.data[idKey] ||
+    value.data.status !== "DELETED"
+  ) {
+    throw new PlanCommitmentsApiError(
+      0,
+      "PLAN_INVALID_RESPONSE",
+      PLAN_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return {
+    id: value.data[idKey],
+    rawFinancialDataExposed: false,
+    serverAuthority: true,
+    status: "DELETED",
+  };
+}
+
 export function createPlanCommitmentsApi(
   options: PlanCommitmentsApiOptions,
 ): PlanCommitmentsApiClient {
@@ -458,6 +488,42 @@ export function createPlanCommitmentsApi(
         );
       }
       return normalizeSavingsGoal(response.data);
+    },
+
+    async deleteFixedExpense(expenseId: string): Promise<PlanDeleteResult> {
+      if (!validDeleteId(expenseId)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_DELETE_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeDeleteResult(
+        await request(
+          `${PLAN_FIXED_EXPENSES_PATH}/${encodeURIComponent(expenseId.trim())}`,
+          { method: "DELETE" },
+        ),
+        "expenseId",
+      );
+    },
+
+    async deleteSavingsGoal(goalId: string): Promise<PlanDeleteResult> {
+      if (!validDeleteId(goalId)) {
+        throw new PlanCommitmentsApiError(
+          0,
+          "PLAN_INVALID_DELETE_REQUEST",
+          PLAN_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeDeleteResult(
+        await request(
+          `${PLAN_SAVINGS_PATH}/${encodeURIComponent(goalId.trim())}`,
+          {
+            method: "DELETE",
+          },
+        ),
+        "goalId",
+      );
     },
   };
 }

@@ -357,4 +357,57 @@ describe("plan commitments api", () => {
       paymentStatus: "PAID",
     });
   });
+
+  it("deletes fixed expenses and savings goals through server-authoritative APIs", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "plan-delete-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        if (normalized.url.endsWith("/api/v1/fixed-expenses/expense_old")) {
+          return jsonResponse({
+            data: { expenseId: "expense_old", status: "DELETED" },
+          });
+        }
+
+        return jsonResponse({
+          data: { goalId: "goal_old", status: "DELETED" },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.deleteFixedExpense("expense_old")).resolves.toMatchObject({
+      id: "expense_old",
+      rawFinancialDataExposed: false,
+      serverAuthority: true,
+      status: "DELETED",
+    });
+    await expect(api.deleteSavingsGoal("goal_old")).resolves.toMatchObject({
+      id: "goal_old",
+      rawFinancialDataExposed: false,
+      serverAuthority: true,
+      status: "DELETED",
+    });
+    await expect(api.deleteFixedExpense("")).rejects.toMatchObject({
+      code: "PLAN_INVALID_DELETE_REQUEST",
+    });
+
+    expect(calls.map((call) => [call.method, call.url])).toEqual([
+      [
+        "DELETE",
+        "https://api.salaryhijacking.com/api/v1/fixed-expenses/expense_old",
+      ],
+      ["DELETE", "https://api.salaryhijacking.com/api/v1/savings/goal_old"],
+    ]);
+    for (const call of calls) {
+      expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
+      expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
+      expect(call.headers.get("x-correlation-id")).toBe("plan-delete-test");
+    }
+  });
 });

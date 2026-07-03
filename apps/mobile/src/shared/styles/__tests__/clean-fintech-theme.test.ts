@@ -234,6 +234,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setServerSavingsGoals");
   });
 
+  it("keeps plan screen fixed expense and savings deletion persisted through server APIs", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planApi = mobileSource("src/features/plan/api.ts");
+
+    expect(planApi).toContain("deleteFixedExpense");
+    expect(planApi).toContain("deleteSavingsGoal");
+    expect(cleanScreens).toContain("deletePlanFixedExpense");
+    expect(cleanScreens).toContain("deletePlanSavingsGoal");
+    expect(cleanScreens).toContain("planCommitmentsApi.deleteFixedExpense");
+    expect(cleanScreens).toContain("planCommitmentsApi.deleteSavingsGoal");
+    expect(cleanScreens).toContain("setServerFixedExpenses((current) =>");
+    expect(cleanScreens).toContain("setServerSavingsGoals((current) =>");
+    expect(cleanScreens).toContain("planCommitmentsHydrated");
+    expect(cleanScreens).toContain("serverAuthority=true");
+    expect(cleanScreens).toContain("rawFinancialDataExposed=false");
+  });
+
   it("keeps login and signup submitted through the server auth API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

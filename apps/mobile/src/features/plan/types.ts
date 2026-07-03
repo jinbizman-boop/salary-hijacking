@@ -56,6 +56,13 @@ export type PlanSavingsGoalCreateRequest = Readonly<{
   title: string;
 }>;
 
+export type PlanDeleteResult = Readonly<{
+  id: string;
+  rawFinancialDataExposed: false;
+  serverAuthority: true;
+  status: "DELETED";
+}>;
+
 export type PlanCommitmentsApiClient = Readonly<{
   getCommitments: () => Promise<PlanCommitmentsSnapshot>;
   createFixedExpense: (
@@ -68,4 +75,6 @@ export type PlanCommitmentsApiClient = Readonly<{
   createSavingsGoal: (
     request: PlanSavingsGoalCreateRequest,
   ) => Promise<PlanSavingsGoalCommitment>;
+  deleteFixedExpense: (expenseId: string) => Promise<PlanDeleteResult>;
+  deleteSavingsGoal: (goalId: string) => Promise<PlanDeleteResult>;
 }>;
