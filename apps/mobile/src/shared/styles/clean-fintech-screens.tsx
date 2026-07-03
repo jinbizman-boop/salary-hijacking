@@ -2320,6 +2320,7 @@ function NotificationsScreen(): React.ReactElement {
 
 function CommunityScreen(): React.ReactElement {
   const communityService = useMemo(() => createMobileCommunityService(), []);
+  const communityRouter = useRouter();
   const [board, setBoard] = useState<CommunityBoard>("전체 게시판");
   const [serverCommunityFeed, setServerCommunityFeed] =
     useState<CommunityFeedPage | null>(null);
@@ -2378,6 +2379,9 @@ function CommunityScreen(): React.ReactElement {
   const visiblePopularPosts = popularCommunityPosts(
     serverCommunityPosts.length ? serverCommunityPosts : fallbackCommunityPosts,
   );
+  const openCommunityWrite = useCallback(() => {
+    communityRouter.push("/community/write");
+  }, [communityRouter]);
 
   return (
     <AppScreen title="커뮤니티" subtitle="가볍고 친근한 생활형 게시판">
@@ -2399,7 +2403,11 @@ function CommunityScreen(): React.ReactElement {
           <CommunityPostRow key={`${board}-${post.id}`} post={post} />
         ))}
       </SectionCard>
-      <Pressable accessibilityRole="button" style={styles.fab}>
+      <Pressable
+        accessibilityRole="button"
+        onPress={openCommunityWrite}
+        style={styles.fab}
+      >
         <Text style={styles.fabText}>글쓰기</Text>
       </Pressable>
       <GuardBox />

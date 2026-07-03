@@ -284,7 +284,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
 
     expect(cleanScreens).toContain("markAllNotificationsRead");
-    expect(cleanScreens).toContain("notificationsApi.markAllRead");
+    expect(cleanScreens).toContain(".markAllRead()");
     expect(cleanScreens).toContain('status: "READ"');
     expect(cleanScreens).toContain("setUnreadCount(0)");
     expect(cleanScreens).toContain("markedReadCount");
@@ -341,6 +341,17 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fallbackCommunityPosts");
     expect(cleanScreens).toContain("rawFinancialDataExposed");
     expect(cleanScreens).toContain("adsFinancialTargetingUsed");
+  });
+
+  it("keeps community FAB navigating to the write flow", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("const communityRouter = useRouter()");
+    expect(cleanScreens).toContain("openCommunityWrite");
+    expect(cleanScreens).toContain('communityRouter.push("/community/write")');
+    expect(cleanScreens).toContain("onPress={openCommunityWrite}");
   });
 
   it("keeps community write screen submitting through the server publish service", () => {
