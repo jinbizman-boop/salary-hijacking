@@ -330,6 +330,10 @@ export const buildMobileNativeEvidence = ({
       proofAndroid,
       "storeSubmitDryRunVerified",
     ),
+    storeSubmitEvidenceType: stringFrom(
+      proofAndroid,
+      "storeSubmitEvidenceType",
+    ),
     nativeE2eVerified: boolFrom(proofAndroid, "nativeE2eVerified"),
     nativeE2eConfiguration: stringFrom(
       proofAndroid,

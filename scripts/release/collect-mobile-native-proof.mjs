@@ -10,11 +10,25 @@ import {
 
 const DEFAULT_INPUT_PATH = "release/mobile-native-observation.local.json";
 const DEFAULT_OUTPUT_PATH = "release/mobile-native-proof.local.json";
+const DEFAULT_ROOT_DIR = process.cwd();
 const EXPECTED_APP_IDENTITY = Object.freeze({
   appSlug: "salary-hijacking",
   androidPackage: "com.salaryhijacking.mobile",
   iosBundleIdentifier: "com.salaryhijacking.mobile",
 });
+const GOOGLE_PLAY_CONSOLE_READY_REQUIRED_FILES = Object.freeze([
+  "apps/mobile/build/release/android/salary-hijacking-production.aab",
+  "release/store/google-play-metadata.md",
+  "release/store/data-safety.md",
+  "release/store/review-notes.md",
+  "release/store/content-rating.md",
+  "release/screenshots/01_home_salary.png",
+  "release/screenshots/02_daily_budget.png",
+  "release/screenshots/03_plan_setting.png",
+  "release/screenshots/04_notifications.png",
+  "release/screenshots/05_level_up.png",
+  "release/screenshots/feature_graphic_google_play.png",
+]);
 
 const COPIED_PROVIDER_PAYLOAD_KEY_TERMS = [
   "payload",
@@ -43,6 +57,36 @@ const readJsonFile = (filePath) => {
     fs.readFileSync(absolutePath, "utf8").replace(/^\uFEFF/, ""),
   );
 };
+
+const resolveFromRoot = (rootDir, filePath) =>
+  path.isAbsolute(filePath) ? filePath : path.join(rootDir, filePath);
+
+const fileExistsWithContent = (rootDir, filePath) => {
+  const absolutePath = resolveFromRoot(rootDir, filePath);
+  if (!fs.existsSync(absolutePath)) return false;
+  const stats = fs.statSync(absolutePath);
+  return stats.isFile() && stats.size > 0;
+};
+
+const zipHeaderVerified = (rootDir, filePath) => {
+  const absolutePath = resolveFromRoot(rootDir, filePath);
+  if (!fs.existsSync(absolutePath)) return false;
+  const header = Buffer.alloc(4);
+  const fd = fs.openSync(absolutePath, "r");
+  try {
+    fs.readSync(fd, header, 0, 4, 0);
+  } finally {
+    fs.closeSync(fd);
+  }
+  return header[0] === 0x50 && header[1] === 0x4b;
+};
+
+const missingGooglePlayConsoleReadyFiles = (rootDir) =>
+  GOOGLE_PLAY_CONSOLE_READY_REQUIRED_FILES.filter((filePath) => {
+    if (!fileExistsWithContent(rootDir, filePath)) return true;
+    if (filePath.endsWith(".aab")) return !zipHeaderVerified(rootDir, filePath);
+    return false;
+  });
 
 const section = (value, key) => (isPlainObject(value?.[key]) ? value[key] : {});
 
@@ -197,9 +241,31 @@ const nativeE2eVerified = (android) =>
   boolFrom(android, "nativeE2eVerified") &&
   stringFrom(android, "nativeE2eConfiguration", "android.emu.debug").length > 0;
 
+const androidStoreSubmitVerified = ({ android, inputPath, rootDir }) => {
+  if (!boolFrom(android, "storeSubmitDryRunVerified")) return false;
+
+  const evidenceType = stringFrom(android, "storeSubmitEvidenceType");
+  if (evidenceType === "google-play-submit-dry-run") return true;
+
+  if (evidenceType === "google-play-console-ready") {
+    const missing = missingGooglePlayConsoleReadyFiles(rootDir);
+    if (missing.length > 0) {
+      throw new Error(
+        `${inputPath} Google Play console-ready proof is missing required release files`,
+      );
+    }
+    return true;
+  }
+
+  throw new Error(
+    `${inputPath} Android store submit proof requires storeSubmitEvidenceType=google-play-submit-dry-run or google-play-console-ready`,
+  );
+};
+
 export const buildMobileNativeProof = ({
   observation,
   inputPath = DEFAULT_INPUT_PATH,
+  rootDir = DEFAULT_ROOT_DIR,
   now = () => new Date(),
 } = {}) => {
   validateObservation(observation, inputPath);
@@ -219,7 +285,12 @@ export const buildMobileNativeProof = ({
       productionBuildVerified: androidProductionBuildVerified(android),
       productionBuildProfile: "production",
       productionArtifactType: "aab",
-      storeSubmitDryRunVerified: boolFrom(android, "storeSubmitDryRunVerified"),
+      storeSubmitDryRunVerified: androidStoreSubmitVerified({
+        android,
+        inputPath,
+        rootDir,
+      }),
+      storeSubmitEvidenceType: stringFrom(android, "storeSubmitEvidenceType"),
       nativeE2eVerified: nativeE2eVerified(android),
       nativeE2eConfiguration: stringFrom(
         android,
@@ -254,11 +325,17 @@ export const buildMobileNativeProof = ({
 export const collectMobileNativeProof = ({
   inputPath = DEFAULT_INPUT_PATH,
   outputPath = DEFAULT_OUTPUT_PATH,
+  rootDir = DEFAULT_ROOT_DIR,
   now = () => new Date(),
   writeFile = true,
 } = {}) => {
   const observation = readJsonFile(inputPath);
-  const proof = buildMobileNativeProof({ observation, inputPath, now });
+  const proof = buildMobileNativeProof({
+    observation,
+    inputPath,
+    rootDir,
+    now,
+  });
 
   if (writeFile) {
     const absoluteOutputPath = resolveFromCwd(outputPath);

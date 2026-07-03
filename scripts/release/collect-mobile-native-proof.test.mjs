@@ -30,6 +30,7 @@ const completeObservation = {
     productionBuildProfile: "production",
     productionArtifactType: "aab",
     storeSubmitDryRunVerified: true,
+    storeSubmitEvidenceType: "google-play-submit-dry-run",
     nativeE2eVerified: true,
     nativeE2eConfiguration: "android.emu.debug",
   },
@@ -129,6 +130,85 @@ test("keeps release proof false for incomplete observations", () => {
   );
   assert.equal(proof.ios.productionBuildVerified, false);
   assert.equal(proof.ios.storeSubmitDryRunVerified, false);
+});
+
+test("rejects Android console-ready store proof when required release files are missing", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/mobile-native-observation.local.json",
+    {
+      ...completeObservation,
+      android: {
+        ...completeObservation.android,
+        storeSubmitEvidenceType: "google-play-console-ready",
+      },
+      ios: {
+        productionBuildVerified: false,
+        productionBuildProfile: "production",
+        storeSubmitDryRunVerified: false,
+      },
+    },
+  );
+
+  assert.throws(
+    () => collectMobileNativeProof({ inputPath, rootDir, writeFile: false }),
+    /Google Play console-ready proof is missing/i,
+  );
+});
+
+test("accepts Android console-ready store proof when required release files are present", () => {
+  const rootDir = makeRoot();
+  for (const filePath of [
+    "release/store/google-play-metadata.md",
+    "release/store/data-safety.md",
+    "release/store/review-notes.md",
+    "release/store/content-rating.md",
+    "release/screenshots/01_home_salary.png",
+    "release/screenshots/02_daily_budget.png",
+    "release/screenshots/03_plan_setting.png",
+    "release/screenshots/04_notifications.png",
+    "release/screenshots/05_level_up.png",
+    "release/screenshots/feature_graphic_google_play.png",
+  ]) {
+    const absolutePath = path.join(rootDir, filePath);
+    fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
+    fs.writeFileSync(absolutePath, "verified\n", "utf8");
+  }
+  const aabPath = path.join(
+    rootDir,
+    "apps/mobile/build/release/android/salary-hijacking-production.aab",
+  );
+  fs.mkdirSync(path.dirname(aabPath), { recursive: true });
+  fs.writeFileSync(aabPath, Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+  const inputPath = writeJson(
+    rootDir,
+    "release/mobile-native-observation.local.json",
+    {
+      ...completeObservation,
+      android: {
+        ...completeObservation.android,
+        storeSubmitEvidenceType: "google-play-console-ready",
+      },
+      ios: {
+        productionBuildVerified: false,
+        productionBuildProfile: "production",
+        storeSubmitDryRunVerified: false,
+      },
+    },
+  );
+
+  const proof = collectMobileNativeProof({
+    inputPath,
+    rootDir,
+    writeFile: false,
+  });
+
+  assert.equal(proof.android.storeSubmitDryRunVerified, true);
+  assert.equal(
+    proof.android.storeSubmitEvidenceType,
+    "google-play-console-ready",
+  );
 });
 
 test("accepts UTF-8 BOM in local mobile native observation files", () => {

@@ -99,6 +99,7 @@ test("uses a local proof file to mark mobile native gates verified", () => {
           productionBuildProfile: "production",
           productionArtifactType: "aab",
           storeSubmitDryRunVerified: true,
+          storeSubmitEvidenceType: "google-play-console-ready",
           nativeE2eVerified: true,
           nativeE2eConfiguration: "android.emu.debug",
         },
@@ -128,6 +129,10 @@ test("uses a local proof file to mark mobile native gates verified", () => {
 
   assert.equal(evidence.android.productionBuildVerified, true);
   assert.equal(evidence.android.storeSubmitDryRunVerified, true);
+  assert.equal(
+    evidence.android.storeSubmitEvidenceType,
+    "google-play-console-ready",
+  );
   assert.equal(evidence.android.nativeE2eVerified, true);
   assert.equal(evidence.ios.productionBuildVerified, true);
   assert.equal(evidence.ios.storeSubmitDryRunVerified, true);
