@@ -1,0 +1,100 @@
+import { describe, expect, it } from "vitest";
+import { createApp } from "../src/app";
+
+const context = Object.freeze({
+  waitUntil: (_promise: Promise<unknown>) => undefined,
+});
+
+const authHeaders = Object.freeze({
+  "x-auth-context-source": "auth.middleware",
+  "x-authenticated-user-id": "user_mobile_upload_contract",
+  "x-auth-primary-role": "USER",
+  "x-authenticated-roles": "USER",
+  "x-auth-account-status": "ACTIVE",
+  "x-auth-mfa-verified": "false",
+  "x-correlation-id": "mobile-uploads-contract",
+});
+
+function createUploadContractApp() {
+  return createApp({
+    enableAuth: false,
+    enableAuditGate: false,
+    enableRateLimit: false,
+    now: () => new Date("2026-07-03T04:00:00.000Z"),
+  });
+}
+
+describe("mobile uploads API contract", () => {
+  it("accepts variable expense receipt uploads and attaches them to the expense owner", async () => {
+    const app = createUploadContractApp();
+    const receiptBytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: receiptBytes,
+        headers: {
+          ...authHeaders,
+          "content-type": "image/png",
+          "x-upload-file-name": "coffee-receipt.png",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "VARIABLE_EXPENSE_RECEIPT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(uploadResponse.status).toBe(201);
+    expect(uploadBody.error?.code).toBeUndefined();
+    expect(uploadBody.data).toMatchObject({
+      contentType: "image/png",
+      fileName: "coffee-receipt.png",
+      financialRawFileAllowed: false,
+      ownerType: "USER",
+      purpose: "VARIABLE_EXPENSE_RECEIPT",
+      sizeBytes: 4,
+    });
+    expect(JSON.stringify(uploadBody)).not.toMatch(
+      /user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+    const attachResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/attach`, {
+        body: JSON.stringify({
+          ownerId: "vex_receipt_1",
+          ownerType: "VARIABLE_EXPENSE",
+        }),
+        headers: {
+          ...authHeaders,
+          "content-type": "application/json",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const attachBody = (await attachResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(attachResponse.status).toBe(200);
+    expect(attachBody.error?.code).toBeUndefined();
+    expect(attachBody.data).toMatchObject({
+      attachmentId,
+      ownerId: "vex_receipt_1",
+      ownerType: "VARIABLE_EXPENSE",
+      purpose: "VARIABLE_EXPENSE_RECEIPT",
+    });
+    expect(JSON.stringify(attachBody)).not.toMatch(
+      /user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+  });
+});

@@ -2186,6 +2186,7 @@ export function CleanFintechPostDetailScreen({
 
 function SalaryHomeScreen(): React.ReactElement {
   const budgetApi = useMemo(() => createMobileBudgetApi(), []);
+  const salaryUploadsApi = useMemo(() => createMobileUploadsApi(), []);
   const salaryPlanCommitmentsApi = useMemo(
     () => createMobilePlanCommitmentsApi(),
     [],
@@ -2200,6 +2201,9 @@ function SalaryHomeScreen(): React.ReactElement {
   const [prioritizeDailyBudget, setPrioritizeDailyBudget] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [savingDailyBudget, setSavingDailyBudget] = useState(false);
+  const [uploadedExpenseReceipt, setUploadedExpenseReceipt] =
+    useState<UploadAttachment | null>(null);
+  const [uploadingExpenseReceipt, setUploadingExpenseReceipt] = useState(false);
   const [serverBudgetSnapshot, setServerBudgetSnapshot] =
     useState<DailyBudgetSnapshot | null>(null);
   const [serverVariableExpenses, setServerVariableExpenses] = useState<
@@ -2352,6 +2356,54 @@ function SalaryHomeScreen(): React.ReactElement {
     }
   }, [budgetApi, expenseDraft, serverBudgetSnapshot]);
 
+  const pickVariableExpenseReceipt = useCallback(() => {
+    if (uploadingExpenseReceipt) return;
+    setUploadingExpenseReceipt(true);
+    setToast("영수증 파일을 선택하고 서버 업로드를 준비하고 있어요.");
+    void DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: false,
+      type: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    })
+      .then(async (result) => {
+        if (result.canceled) {
+          setToast("영수증 선택이 취소되었어요.");
+          return;
+        }
+
+        const asset = result.assets[0];
+        if (!asset) {
+          setToast("선택한 영수증 파일을 확인하지 못했어요.");
+          return;
+        }
+
+        const response = await fetch(asset.uri);
+        const bytes = await response.arrayBuffer();
+        const contentType =
+          asset.mimeType ??
+          response.headers.get("content-type") ??
+          "application/octet-stream";
+        const uploaded =
+          await salaryUploadsApi.directUploadVariableExpenseReceipt({
+            bytes,
+            contentType,
+            fileName: asset.name || "variable-expense-receipt",
+            sizeBytes: asset.size ?? bytes.byteLength,
+          });
+
+        setUploadedExpenseReceipt(uploaded);
+        setToast(
+          "영수증이 서버 업로드에 등록되었어요. 지출 추가 시 함께 연결합니다.",
+        );
+      })
+      .catch(() => {
+        setToast(
+          "영수증 업로드를 준비하지 못했어요. 파일 형식과 네트워크를 확인해 주세요.",
+        );
+      })
+      .finally(() => setUploadingExpenseReceipt(false));
+  }, [salaryUploadsApi, uploadingExpenseReceipt]);
+
   const handleAddExpense = async (): Promise<void> => {
     const amount = parseKrwInputAmount(expenseDraft);
     if (amount === null) {
@@ -2381,7 +2433,7 @@ function SalaryHomeScreen(): React.ReactElement {
         memo: null,
         merchantName: null,
         paymentMethod: "ETC",
-        receiptAttachmentId: null,
+        receiptAttachmentId: uploadedExpenseReceipt?.attachmentId ?? null,
         source: "MANUAL",
         spentAt: new Date().toISOString(),
         tags: [],
@@ -2399,6 +2451,13 @@ function SalaryHomeScreen(): React.ReactElement {
           name: result.title,
         },
       ]);
+      if (uploadedExpenseReceipt) {
+        await salaryUploadsApi.attachToVariableExpense(
+          uploadedExpenseReceipt.attachmentId,
+          result.expenseId,
+        );
+        setUploadedExpenseReceipt(null);
+      }
       void refreshServerVariableExpenses();
       void refreshServerBudgetSnapshot({ clearLocalPreview: true });
       setToast(
@@ -2605,6 +2664,24 @@ function SalaryHomeScreen(): React.ReactElement {
               {savingDailyBudget ? "예산 저장중" : "오늘 예산 저장"}
             </Text>
           </Pressable>
+        </View>
+        <View style={styles.attachmentRow}>
+          <SmallButton
+            label={
+              uploadingExpenseReceipt
+                ? "영수증 업로드 준비 중"
+                : uploadedExpenseReceipt
+                  ? `영수증 연결됨 · ${uploadedExpenseReceipt.fileName}`
+                  : "영수증 첨부"
+            }
+            onPress={pickVariableExpenseReceipt}
+          />
+          {uploadedExpenseReceipt ? (
+            <SmallButton
+              label="영수증 제거"
+              onPress={() => setUploadedExpenseReceipt(null)}
+            />
+          ) : null}
         </View>
       </SectionCard>
       <Toast message={toast} />

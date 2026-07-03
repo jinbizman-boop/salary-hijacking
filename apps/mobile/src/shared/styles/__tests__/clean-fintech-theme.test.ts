@@ -840,6 +840,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(uploadsApi).toContain("x-upload-purpose");
   });
 
+  it("keeps salary home variable expense receipts connected to native picker and uploads API", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const uploadsApi = mobileSource("src/features/uploads/api.ts");
+
+    expect(cleanScreens).toContain("salaryUploadsApi");
+    expect(cleanScreens).toContain("pickVariableExpenseReceipt");
+    expect(cleanScreens).toContain("directUploadVariableExpenseReceipt");
+    expect(cleanScreens).toContain("uploadedExpenseReceipt");
+    expect(cleanScreens).toContain(
+      "receiptAttachmentId: uploadedExpenseReceipt?.attachmentId ?? null",
+    );
+    expect(cleanScreens).toContain("attachToVariableExpense");
+    expect(cleanScreens).toContain("setUploadedExpenseReceipt(null)");
+    expect(uploadsApi).toContain("VARIABLE_EXPENSE_RECEIPT");
+    expect(uploadsApi).toContain("VARIABLE_EXPENSE");
+  });
+
   it("keeps community detail screen hydrated from the server detail and comments service", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

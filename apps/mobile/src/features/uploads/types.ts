@@ -24,12 +24,22 @@ export type DirectCommunityAttachmentUpload = Readonly<{
   sizeBytes: number;
 }>;
 
+export type DirectVariableExpenseReceiptUpload =
+  DirectCommunityAttachmentUpload;
+
 export type UploadsApiClient = Readonly<{
   directUploadCommunityAttachment: (
     input: DirectCommunityAttachmentUpload,
   ) => Promise<UploadAttachment>;
+  directUploadVariableExpenseReceipt: (
+    input: DirectVariableExpenseReceiptUpload,
+  ) => Promise<UploadAttachment>;
   attachToCommunityPost: (
     attachmentId: string,
     postId: string,
+  ) => Promise<Readonly<{ attachmentId: string }>>;
+  attachToVariableExpense: (
+    attachmentId: string,
+    expenseId: string,
   ) => Promise<Readonly<{ attachmentId: string }>>;
 }>;

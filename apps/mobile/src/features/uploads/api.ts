@@ -3,10 +3,13 @@ import {
   UPLOADS_COMMUNITY_CONTENT_TYPES,
   UPLOADS_DIRECT_PATH,
   UPLOADS_MAX_COMMUNITY_ATTACHMENT_BYTES,
+  UPLOADS_MAX_VARIABLE_EXPENSE_RECEIPT_BYTES,
   UPLOADS_PRIVACY_HEADERS,
+  UPLOADS_VARIABLE_EXPENSE_RECEIPT_CONTENT_TYPES,
 } from "./constants";
 import type {
   DirectCommunityAttachmentUpload,
+  DirectVariableExpenseReceiptUpload,
   UploadAttachment,
   UploadScanStatus,
   UploadStatus,
@@ -125,6 +128,35 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
   return { contentType, fileName: safeFileName(input.fileName) };
 }
 
+function assertVariableExpenseReceipt(
+  input: DirectVariableExpenseReceiptUpload,
+): {
+  readonly contentType: string;
+  readonly fileName: string;
+} {
+  const contentType = normalizeContentType(input.contentType);
+  if (!UPLOADS_VARIABLE_EXPENSE_RECEIPT_CONTENT_TYPES.includes(contentType)) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_CONTENT_TYPE_FORBIDDEN",
+      "Unsupported variable expense receipt type",
+    );
+  }
+  if (
+    !Number.isSafeInteger(input.sizeBytes) ||
+    input.sizeBytes < 1 ||
+    input.sizeBytes > UPLOADS_MAX_VARIABLE_EXPENSE_RECEIPT_BYTES ||
+    input.bytes.byteLength !== input.sizeBytes
+  ) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_SIZE_FORBIDDEN",
+      "Variable expense receipt size is invalid",
+    );
+  }
+  return { contentType, fileName: safeFileName(input.fileName) };
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -232,11 +264,62 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       return attachmentFromResponse(parsed);
     },
 
+    async directUploadVariableExpenseReceipt(input) {
+      const { contentType, fileName } = assertVariableExpenseReceipt(input);
+      const headers = new Headers({
+        "content-type": contentType,
+        "x-client-platform": options.platform,
+        "x-correlation-id": createCorrelationId(),
+        "x-upload-file-name": fileName,
+        "x-upload-owner-type": "USER",
+        "x-upload-purpose": "VARIABLE_EXPENSE_RECEIPT",
+        "x-upload-visibility": "AUTHENTICATED",
+        ...UPLOADS_PRIVACY_HEADERS,
+      });
+      const parsed = await send(UPLOADS_DIRECT_PATH, {
+        body: input.bytes,
+        credentials: "include",
+        headers,
+        method: "POST",
+      });
+      return attachmentFromResponse(parsed);
+    },
+
     async attachToCommunityPost(attachmentId, postId) {
       const safeAttachmentId = safeId(attachmentId, "attachmentId");
       const body = {
         ownerId: safeId(postId, "postId"),
         ownerType: "COMMUNITY_POST",
+      };
+      const headers = new Headers({
+        "content-type": "application/json",
+        "x-client-platform": options.platform,
+        "x-correlation-id": createCorrelationId(),
+        ...UPLOADS_PRIVACY_HEADERS,
+      });
+      const parsed = await send(
+        `${UPLOADS_API_PREFIX}/${safeAttachmentId}/attach`,
+        {
+          body: JSON.stringify(body),
+          credentials: "include",
+          headers,
+          method: "POST",
+        },
+      );
+      const data = isRecord(parsed) && isRecord(parsed.data) ? parsed.data : {};
+      return {
+        attachmentId:
+          typeof data.attachmentId === "string"
+            ? data.attachmentId
+            : attachmentId,
+      };
+    },
+
+    async attachToVariableExpense(attachmentId, expenseId) {
+      const safeAttachmentId = safeId(attachmentId, "attachmentId");
+      const body = {
+        ownerId: safeId(expenseId, "expenseId"),
+        ownerType: "VARIABLE_EXPENSE",
       };
       const headers = new Headers({
         "content-type": "application/json",

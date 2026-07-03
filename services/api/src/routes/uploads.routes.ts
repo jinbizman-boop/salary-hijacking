@@ -23,6 +23,7 @@ const AUTH_CONTEXT_SOURCE_VALUE = "auth.middleware";
 
 export type UploadOwnerType =
   | "USER"
+  | "VARIABLE_EXPENSE"
   | "COMMUNITY_POST"
   | "COMMUNITY_COMMENT"
   | "GROWTH_TASK"
@@ -31,6 +32,7 @@ export type UploadOwnerType =
   | "SUPPORT_TICKET";
 export type UploadPurpose =
   | "PROFILE_IMAGE"
+  | "VARIABLE_EXPENSE_RECEIPT"
   | "COMMUNITY_ATTACHMENT"
   | "GROWTH_PROOF"
   | "NOTICE_ATTACHMENT"
@@ -238,6 +240,12 @@ class UploadHttpError extends Error {
 
 const allowedContentTypesByPurpose: Record<UploadPurpose, readonly string[]> = {
   PROFILE_IMAGE: ["image/jpeg", "image/png", "image/webp"],
+  VARIABLE_EXPENSE_RECEIPT: [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+  ],
   COMMUNITY_ATTACHMENT: [
     "image/jpeg",
     "image/png",
@@ -263,6 +271,7 @@ const allowedContentTypesByPurpose: Record<UploadPurpose, readonly string[]> = {
 
 const maxSizeByPurpose: Record<UploadPurpose, number> = {
   PROFILE_IMAGE: 5 * 1024 * 1024,
+  VARIABLE_EXPENSE_RECEIPT: 10 * 1024 * 1024,
   COMMUNITY_ATTACHMENT: 10 * 1024 * 1024,
   GROWTH_PROOF: 10 * 1024 * 1024,
   NOTICE_ATTACHMENT: 20 * 1024 * 1024,
@@ -613,6 +622,7 @@ function normalizePurpose(value: unknown): UploadPurpose {
   if (
     [
       "PROFILE_IMAGE",
+      "VARIABLE_EXPENSE_RECEIPT",
       "COMMUNITY_ATTACHMENT",
       "GROWTH_PROOF",
       "NOTICE_ATTACHMENT",
@@ -634,6 +644,7 @@ function normalizeOwnerType(value: unknown): UploadOwnerType {
   if (
     [
       "USER",
+      "VARIABLE_EXPENSE",
       "COMMUNITY_POST",
       "COMMUNITY_COMMENT",
       "GROWTH_TASK",
@@ -888,8 +899,16 @@ function createInMemoryUploadsRepository<
   }
 
   function publicView(record: JsonRecord): JsonRecord {
+    const {
+      checksumSha256: _checksumSha256,
+      computedChecksumSha256: _computedChecksumSha256,
+      storageKey: _storageKey,
+      uploadExpiresAt: _uploadExpiresAt,
+      userId: _userId,
+      ...safeRecord
+    } = record;
     return {
-      ...record,
+      ...safeRecord,
       downloadUrl: null,
       uploadUrl: null,
       rawStorageSecretExposed: false,
@@ -1120,6 +1139,9 @@ function createInMemoryUploadsRepository<
   };
 }
 
+const defaultInMemoryUploadsRepository =
+  createInMemoryUploadsRepository<unknown>();
+
 function resolveRepository<TEnv>(
   env: TEnv,
   options: UploadsRoutesOptions<TEnv>,
@@ -1128,7 +1150,7 @@ function resolveRepository<TEnv>(
     typeof options.repository === "function"
       ? options.repository(env)
       : options.repository;
-  return repo ?? createInMemoryUploadsRepository<TEnv>();
+  return repo ?? (defaultInMemoryUploadsRepository as UploadsRepository<TEnv>);
 }
 
 async function directUploadInput(
@@ -1454,7 +1476,7 @@ export function assertUploadsRoutesCompleteness(): {
     "scan_status_and_quarantine",
     "download_url_issuance",
     "attach_to_owner_resource",
-    "profile_community_growth_notice_ad_support_purposes",
+    "profile_variable_expense_community_growth_notice_ad_support_purposes",
     "content_type_allowlist_and_size_limit",
     "sensitive_financial_file_name_blocking",
     "ad_creative_sensitive_financial_targeting_forbidden",
