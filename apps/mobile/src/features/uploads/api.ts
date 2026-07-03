@@ -166,6 +166,56 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
+const UPLOAD_RESPONSE_CONTENT_TYPES = new Set<string>([
+  ...UPLOADS_COMMUNITY_CONTENT_TYPES,
+  ...UPLOADS_VARIABLE_EXPENSE_RECEIPT_CONTENT_TYPES,
+]);
+
+const UPLOAD_SCAN_STATUSES = new Set<UploadScanStatus>([
+  "PENDING",
+  "PASSED",
+  "FAILED",
+  "SKIPPED",
+]);
+
+const UPLOAD_STATUSES = new Set<UploadStatus>([
+  "PREPARED",
+  "UPLOADING",
+  "UPLOADED",
+  "SCANNING",
+  "AVAILABLE",
+  "QUARANTINED",
+  "DELETED",
+]);
+
+function invalidUploadResponse(): never {
+  throw new UploadsApiError(
+    0,
+    "UPLOADS_INVALID_RESPONSE",
+    "Invalid uploads response",
+  );
+}
+
+function responseContentType(value: string): string {
+  const contentType = normalizeContentType(value);
+  if (!UPLOAD_RESPONSE_CONTENT_TYPES.has(contentType)) invalidUploadResponse();
+  return contentType;
+}
+
+function responseScanStatus(value: string): UploadScanStatus {
+  const status = value.trim().toUpperCase();
+  if (!UPLOAD_SCAN_STATUSES.has(status as UploadScanStatus)) {
+    invalidUploadResponse();
+  }
+  return status as UploadScanStatus;
+}
+
+function responseStatus(value: string): UploadStatus {
+  const status = value.trim().toUpperCase();
+  if (!UPLOAD_STATUSES.has(status as UploadStatus)) invalidUploadResponse();
+  return status as UploadStatus;
+}
+
 function attachmentFromResponse(value: unknown): UploadAttachment {
   const data = isRecord(value) && isRecord(value.data) ? value.data : {};
   const attachmentId =
@@ -181,19 +231,15 @@ function attachmentFromResponse(value: unknown): UploadAttachment {
     typeof data.scanStatus === "string" ? data.scanStatus : "PENDING";
   const status = typeof data.status === "string" ? data.status : "UPLOADED";
   if (!attachmentId || !fileName || !contentType || sizeBytes < 1) {
-    throw new UploadsApiError(
-      0,
-      "UPLOADS_INVALID_RESPONSE",
-      "Invalid uploads response",
-    );
+    invalidUploadResponse();
   }
   return {
     attachmentId,
-    contentType,
+    contentType: responseContentType(contentType),
     fileName: safeFileName(fileName),
-    scanStatus: scanStatus as UploadScanStatus,
+    scanStatus: responseScanStatus(scanStatus),
     sizeBytes,
-    status: status as UploadStatus,
+    status: responseStatus(status),
   };
 }
 

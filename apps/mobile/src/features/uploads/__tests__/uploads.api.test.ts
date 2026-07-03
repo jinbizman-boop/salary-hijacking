@@ -135,6 +135,61 @@ describe("uploads api", () => {
     });
   });
 
+  it("rejects invalid upload response content types and status values", async () => {
+    const fetcher = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            attachmentId: "att_bad_type",
+            fileName: "proof.png",
+            contentType: "application/x-msdownload",
+            sizeBytes: 4,
+            scanStatus: "PENDING",
+            status: "UPLOADED",
+          },
+          201,
+        ),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            attachmentId: "att_bad_status",
+            fileName: "proof.png",
+            contentType: "image/png",
+            sizeBytes: 4,
+            scanStatus: "INFECTED",
+            status: "READY_WITH_RAW_PAYLOAD",
+          },
+          201,
+        ),
+      );
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-bad-response",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName: "proof.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({ code: "UPLOADS_INVALID_RESPONSE" });
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName: "proof.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({ code: "UPLOADS_INVALID_RESPONSE" });
+  });
+
   it("attaches a completed upload to a community post without exposing raw file paths", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
