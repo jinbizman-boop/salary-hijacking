@@ -1911,6 +1911,7 @@ export function CleanFintechPostDetailScreen({
       "report-post" | "delete-post" | "report-comment" | "delete-comment" | null
     >(null);
   const [liked, setLiked] = useState(false);
+  const [likePending, setLikePending] = useState(false);
   const [toast, setToast] = useState(
     "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
   );
@@ -1970,8 +1971,10 @@ export function CleanFintechPostDetailScreen({
   }, [detailCommunityService, postId]);
 
   const togglePostLike = useCallback((): void => {
+    if (likePending) return;
     const nextLiked = !liked;
     const targetPostId = activeDetail.post.id;
+    setLikePending(true);
     setLiked(nextLiked);
     setToast(
       nextLiked
@@ -1999,8 +2002,9 @@ export function CleanFintechPostDetailScreen({
       .catch(() => {
         setLiked(!nextLiked);
         setToast("좋아요를 서버에 반영하지 못했어요. 다시 시도해 주세요.");
-      });
-  }, [activeDetail.post.id, detailCommunityService, liked]);
+      })
+      .finally(() => setLikePending(false));
+  }, [activeDetail.post.id, detailCommunityService, liked, likePending]);
 
   const shareCommunityPost = useCallback((): void => {
     const targetPostId = encodeURIComponent(activeDetail.post.id);
@@ -2320,11 +2324,12 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.attachmentRow}>
           <Pressable
             accessibilityRole="button"
+            disabled={likePending}
             onPress={togglePostLike}
-            style={styles.smallButton}
+            style={[styles.smallButton, likePending ? styles.disabled : null]}
           >
             <Text style={styles.smallButtonText}>
-              {liked ? "좋아요 취소" : "좋아요"}
+              {likePending ? "반영 중" : liked ? "좋아요 취소" : "좋아요"}
             </Text>
           </Pressable>
           <SmallButton label="댓글" onPress={focusCommunityCommentInput} />

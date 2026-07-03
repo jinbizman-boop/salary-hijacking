@@ -1238,6 +1238,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("parseCommunityPostDetail");
     expect(cleanScreens).toContain("parseCommunityCommentPage");
     expect(cleanScreens).toContain("setPostLiked(targetPostId, nextLiked)");
+    expect(cleanScreens).toContain("likePending");
+    expect(cleanScreens).toContain("if (likePending) return");
+    expect(cleanScreens).toContain("setLikePending(true)");
+    expect(cleanScreens).toContain("finally(() => setLikePending(false))");
+    expect(cleanScreens).toContain("disabled={likePending}");
     expect(cleanScreens).toContain("fallbackPostDetail");
     expect(cleanScreens).toContain("rawPersonalDataExposed");
   });
