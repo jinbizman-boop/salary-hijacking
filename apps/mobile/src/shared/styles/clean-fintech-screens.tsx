@@ -3120,14 +3120,17 @@ function SavingsGoalActionRow({
       {serverEnabled ? (
         <>
           <SmallButton
+            disabled={updating}
             label={updating ? "수정중" : "수정"}
             onPress={onUpdate}
           />
           <SmallButton
+            disabled={depositing}
             label={depositing ? "납입중" : "납입"}
             onPress={onDeposit}
           />
           <SmallButton
+            disabled={deleting}
             label={deleting ? "삭제중" : "삭제"}
             onPress={onDelete}
           />

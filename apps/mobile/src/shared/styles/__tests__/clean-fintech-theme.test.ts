@@ -307,6 +307,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
+    const savingsGoalActionRow = cleanScreens.slice(
+      cleanScreens.indexOf("function SavingsGoalActionRow"),
+      cleanScreens.indexOf("function savingsGoalRowFromServer"),
+    );
     const planApi = mobileSource("src/features/plan/api.ts");
 
     expect(planApi).toContain("recordSavingsDeposit");
@@ -315,6 +319,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("recordPlanSavingsDeposit");
     expect(cleanScreens).toContain(".recordSavingsDeposit(");
     expect(cleanScreens).toContain("setDepositingSavingsGoalId");
+    expect(cleanScreens).toContain("depositingSavingsGoalId !== null");
+    expect(savingsGoalActionRow).toContain("disabled={updating}");
+    expect(savingsGoalActionRow).toContain("disabled={depositing}");
+    expect(savingsGoalActionRow).toContain("disabled={deleting}");
   });
 
   it("keeps login and signup submitted through the server auth API", () => {
