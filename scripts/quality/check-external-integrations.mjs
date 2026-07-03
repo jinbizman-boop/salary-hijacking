@@ -363,6 +363,12 @@ const MOBILE_RELEASE_CONFIG_FILES = [
   "apps/mobile/README.md",
 ];
 
+const CLOUDFLARE_WORKER_CONFIG_FILES = [
+  "services/api/wrangler.toml",
+  "services/notifications/wrangler.toml",
+  "services/scheduler/wrangler.toml",
+];
+
 const REQUIRED_MOBILE_ASSET_FILES = [
   "apps/mobile/assets/icon.png",
   "apps/mobile/assets/splash.png",
@@ -602,6 +608,42 @@ function checkDeployWorkflowsManualOnly(rootDir, failures) {
 
     failures.push(
       `${relativePath}: deploy job must be workflow_dispatch-only until runtime secrets and release evidence are verified`,
+    );
+  }
+}
+
+function readTomlStringAssignment(source, key) {
+  const match = new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m").exec(source);
+  return match?.[1]?.trim() ?? "";
+}
+
+function readTomlSection(source, sectionName) {
+  const sectionHeader = `[${sectionName}]`;
+  const start = source.indexOf(sectionHeader);
+  if (start === -1) return "";
+
+  const afterHeader = source.slice(start + sectionHeader.length);
+  const nextSection = afterHeader.search(/\n\[[^\]]+\]/);
+  return nextSection === -1 ? afterHeader : afterHeader.slice(0, nextSection);
+}
+
+function checkCloudflareProductionWorkerNames(rootDir, failures) {
+  for (const relativePath of CLOUDFLARE_WORKER_CONFIG_FILES) {
+    if (!fileExists(rootDir, relativePath)) continue;
+
+    const source = readText(rootDir, relativePath);
+    const rootWorkerName = readTomlStringAssignment(source, "name");
+    const productionSection = readTomlSection(source, "env.production");
+    const productionWorkerName = readTomlStringAssignment(
+      productionSection,
+      "name",
+    );
+
+    if (!rootWorkerName || !productionWorkerName) continue;
+    if (rootWorkerName === productionWorkerName) continue;
+
+    failures.push(
+      `${relativePath}: production Worker name must match release target ${rootWorkerName}, got ${productionWorkerName}`,
     );
   }
 }
@@ -1195,6 +1237,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkReleaseMetadataText(rootDir, failures);
   checkDeployWorkflowText(rootDir, failures);
   checkDeployWorkflowsManualOnly(rootDir, failures);
+  checkCloudflareProductionWorkerNames(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);

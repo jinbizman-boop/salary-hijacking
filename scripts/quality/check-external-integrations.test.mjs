@@ -199,7 +199,7 @@ queue = "salary-hijacking-staging-operations"
 crons = ["0 * * * *"]
 
 [env.production]
-name = "salary-hijacking-api-production"
+name = "salary-hijacking-api"
 routes = [
   { pattern = "salaryhijacking.com", custom_domain = true },
   { pattern = "www.salaryhijacking.com", custom_domain = true },
@@ -233,7 +233,7 @@ queue = "salary-hijacking-staging-notifications-retry"
 crons = ["0 * * * *"]
 
 [env.production]
-name = "salary-hijacking-notifications-production"
+name = "salary-hijacking-notifications"
 [env.production.vars]
 APP_ENV = "production"
 [[env.production.queues.producers]]
@@ -255,7 +255,7 @@ APP_ENV = "staging"
 crons = ["0 * * * *"]
 
 [env.production]
-name = "salary-hijacking-scheduler-production"
+name = "salary-hijacking-scheduler"
 [env.production.vars]
 APP_ENV = "production"
 [env.production.triggers]
@@ -1046,7 +1046,7 @@ queue = "salary-hijacking-staging-operations"
 crons = ["0 * * * *"]
 
 [env.production]
-name = "salary-hijacking-api-production"
+name = "salary-hijacking-api"
 routes = [
   { pattern = "api.salaryhijacking.com", custom_domain = true }
 ]
@@ -1197,6 +1197,63 @@ jobs:
       result.failures.join("\n"),
       /deploy job must be workflow_dispatch-only/i,
     );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when production Worker env names drift from release targets", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "services/api/wrangler.toml": `
+name = "salary-hijacking-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[env.staging]
+name = "salary-hijacking-api-staging"
+[env.staging.vars]
+APP_ENV = "staging"
+[[env.staging.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-staging-uploads"
+[[env.staging.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-staging-operations"
+[env.staging.triggers]
+crons = ["0 * * * *"]
+
+[env.production]
+name = "salary-hijacking-api-production"
+routes = [
+  { pattern = "salaryhijacking.com", custom_domain = true },
+  { pattern = "www.salaryhijacking.com", custom_domain = true },
+  { pattern = "api.salaryhijacking.com", custom_domain = true }
+]
+[env.production.vars]
+APP_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://salaryhijacking.com"
+[[env.production.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-production-uploads"
+[[env.production.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-production-operations"
+[env.production.triggers]
+crons = ["0 * * * *"]
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /services\/api\/wrangler\.toml/);
+    assert.match(result.failures.join("\n"), /production Worker name/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

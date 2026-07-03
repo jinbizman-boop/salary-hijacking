@@ -123,7 +123,7 @@ max_retries = 3
 dead_letter_queue = "salary-hijacking-staging-operations-dlq"
 
 [env.production]
-name = "salary-hijacking-api-production"
+name = "salary-hijacking-api"
 workers_dev = false
 minify = true
 upload_source_maps = true

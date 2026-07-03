@@ -106,10 +106,10 @@ Cloudflare:
   - `salary-hijacking-scheduler`
   - `salary-hijacking-admin`
 - Required Salary Hijacking admin OpenNext Worker is not observed.
-- Production Wrangler dry-run passed for:
-  - `salary-hijacking-api-production`
-  - `salary-hijacking-notifications-production`
-  - `salary-hijacking-scheduler-production`
+- Production Wrangler dry-run passed for the release-target Worker names:
+  - `salary-hijacking-api`
+  - `salary-hijacking-notifications`
+  - `salary-hijacking-scheduler`
 - Admin OpenNext local Cloudflare build/dry-run is not proven on this Windows
   PC. On 2026-07-02 KST, `corepack pnpm --filter @salary-hijacking/admin run
 build:cloudflare` failed fast at the repository preflight because OpenNext

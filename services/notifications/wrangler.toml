@@ -167,7 +167,7 @@ max_retries = 3
 dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
 
 [env.production]
-name = "salary-hijacking-notifications-production"
+name = "salary-hijacking-notifications"
 workers_dev = false
 minify = true
 upload_source_maps = true
