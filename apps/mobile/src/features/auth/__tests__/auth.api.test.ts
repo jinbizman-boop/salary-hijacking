@@ -436,6 +436,50 @@ describe("auth api", () => {
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
   });
 
+  it("verifies email through the server without storing verification tokens", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-verify-email-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        expect(normalized.url).toBe(
+          "https://api.salaryhijacking.com/api/v1/auth/verify-email",
+        );
+        expect(JSON.parse(await normalized.text())).toEqual({
+          token: "email.verify.token",
+        });
+        return jsonResponse({
+          data: {
+            verified: true,
+          },
+        });
+      },
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    const result = await api.verifyEmail({ token: "email.verify.token" });
+
+    expect(result).toEqual({ verified: true });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-correlation-id")).toBe(
+      "auth-verify-email-test",
+    );
+    expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+    expect(Array.from(stored.values()).join(" ")).not.toContain(
+      "email.verify.token",
+    );
+  });
+
   it("starts social OAuth with an app-generated PKCE challenge and stores only the local verifier", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

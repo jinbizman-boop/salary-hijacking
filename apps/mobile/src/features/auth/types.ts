@@ -63,6 +63,14 @@ export type AuthPasswordResetConfirmResult = Readonly<{
   completed: boolean;
 }>;
 
+export type AuthVerifyEmailRequest = Readonly<{
+  token: string;
+}>;
+
+export type AuthVerifyEmailResult = Readonly<{
+  verified: boolean;
+}>;
+
 export type AuthLogoutResult = Readonly<{
   revoked: boolean;
 }>;
@@ -86,6 +94,9 @@ export type AuthApiClient = Readonly<{
   confirmPasswordReset: (
     request: AuthPasswordResetConfirmRequest,
   ) => Promise<AuthPasswordResetConfirmResult>;
+  verifyEmail: (
+    request: AuthVerifyEmailRequest,
+  ) => Promise<AuthVerifyEmailResult>;
   refresh: (request?: AuthRefreshRequest) => Promise<MobileAuthResponse>;
   logout: () => Promise<AuthLogoutResult>;
 }>;

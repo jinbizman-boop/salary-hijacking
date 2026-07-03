@@ -11,6 +11,7 @@ const INTERNAL_TABS_ROUTE = /(["'`])\/\(tabs\)(?:\/[^"'`]*)?\1/g;
 const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
+const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 
 function collectAppSourceFiles(directory: string): readonly string[] {
   const files: string[] = [];
@@ -87,6 +88,21 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain("/salary");
     expect(onboarding).toContain("serverAuthority=true");
     expect(onboarding).toContain("rawFinancialData=false");
+  });
+
+  it("keeps the verify-email route implemented for protected email gates", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");
+
+    expect(rootLayout).toContain(
+      'const AUTH_VERIFY_ROUTE = "/(auth)/verify-email"',
+    );
+    expect(verifyEmail).toContain("VerifyEmailScreen");
+    expect(verifyEmail).toContain("verifyEmail");
+    expect(verifyEmail).toContain("/api/v1/auth/verify-email");
+    expect(verifyEmail).toContain("/salary");
+    expect(verifyEmail).toContain("/(auth)/login");
+    expect(verifyEmail).toContain("rawPersonalData=false");
   });
 
   it("keeps reset-password available as a public auth recovery route", () => {

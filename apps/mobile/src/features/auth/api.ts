@@ -14,6 +14,7 @@ import {
   AUTH_PASSWORD_RESET_PATH,
   AUTH_REFRESH_PATH,
   AUTH_REGISTER_PATH,
+  AUTH_VERIFY_EMAIL_PATH,
   AUTH_SAFE_ERROR_MESSAGE,
 } from "./constants";
 import type {
@@ -31,6 +32,8 @@ import type {
   AuthRegisterRequest,
   AuthSocialProvider,
   AuthTokenStore,
+  AuthVerifyEmailRequest,
+  AuthVerifyEmailResult,
 } from "./types";
 
 export type AuthApiOptions = Readonly<{
@@ -369,6 +372,11 @@ function passwordResetConfirmResult(
   return { completed: data.completed === true };
 }
 
+function verifyEmailResult(value: unknown): AuthVerifyEmailResult {
+  const data = isRecord(value) && isRecord(value.data) ? value.data : {};
+  return { verified: data.verified === true };
+}
+
 function oauthStartResult(value: unknown): AuthOAuthStartResult {
   const data = isRecord(value) && isRecord(value.data) ? value.data : {};
   const provider = data.provider;
@@ -636,6 +644,13 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         ),
       });
       return passwordResetConfirmResult(parsed);
+    },
+
+    async verifyEmail(request: AuthVerifyEmailRequest) {
+      const parsed = await post(AUTH_VERIFY_EMAIL_PATH, {
+        token: assertPresent(request.token, "AUTH_EMAIL_VERIFY_TOKEN_REQUIRED"),
+      });
+      return verifyEmailResult(parsed);
     },
 
     async refresh(request: AuthRefreshRequest = {}) {
