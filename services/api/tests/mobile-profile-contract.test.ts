@@ -114,6 +114,50 @@ describe("mobile profile API contract", () => {
     });
   });
 
+  it("updates mobile account consent settings without enabling financial ad targeting", async () => {
+    const app = createProfileContractApp();
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/consents", {
+        method: "PATCH",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({
+          adPartnerAccepted: false,
+          analyticsAccepted: false,
+          consentVersion: "mobile-v1",
+          contentRecommendationAccepted: true,
+          marketingAccepted: false,
+          privacyAccepted: true,
+          sensitiveFinancialTargetingAccepted: false,
+          termsAccepted: true,
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data).toMatchObject({
+      adPartnerAccepted: false,
+      adPartnerFinancialRawDataUsed: false,
+      analyticsAccepted: false,
+      contentRecommendationAccepted: true,
+      marketingAccepted: false,
+      privacyAccepted: true,
+      sensitiveFinancialTargetingAccepted: false,
+      termsAccepted: true,
+    });
+    expect(body.data).not.toHaveProperty("userId");
+    expect(JSON.stringify(body.data)).not.toMatch(
+      /salary|expense|saving|hijack|rawToken|email|phone|card|account/iu,
+    );
+  });
+
   it("serves the mobile MY page summary alias without raw private or financial data", async () => {
     const app = createApp({
       enableAuditGate: false,

@@ -430,6 +430,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps account settings saved through the server consent API", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const profileApi = mobileSource("src/features/profile/api.ts");
+
+    expect(profileApi).toContain("updateAccountSettings");
+    expect(cleanScreens).toMatch(
+      /accountSettingsApi\s*\.?\s*updateAccountSettings/,
+    );
+    expect(cleanScreens).toContain("marketingAccepted");
+    expect(cleanScreens).toContain("contentRecommendationAccepted");
+    expect(cleanScreens).toContain("sensitiveFinancialTargetingAccepted=false");
+    expect(source("profile/account.tsx")).toContain(
+      'CleanFintechSettingsScreen kind="account"',
+    );
+  });
+
   it("keeps MY support inquiry routed to a privacy-safe compose screen", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

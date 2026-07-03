@@ -876,6 +876,24 @@ function mobileActivity(item: JsonRecord, index: number): JsonRecord {
   };
 }
 
+function mobileConsentPayload(consents: JsonRecord): JsonRecord {
+  return {
+    adPartnerAccepted: safeBoolean(consents.adPartnerAccepted, false),
+    adPartnerFinancialRawDataUsed: false,
+    analyticsAccepted: safeBoolean(consents.analyticsAccepted, false),
+    consentVersion: safeString(consents.consentVersion, "v3.1"),
+    contentRecommendationAccepted: safeBoolean(
+      consents.contentRecommendationAccepted,
+      true,
+    ),
+    marketingAccepted: safeBoolean(consents.marketingAccepted, false),
+    privacyAccepted: safeBoolean(consents.privacyAccepted, true),
+    sensitiveFinancialTargetingAccepted: false,
+    termsAccepted: safeBoolean(consents.termsAccepted, true),
+    updatedAt: safeOptionalString(consents.updatedAt),
+  };
+}
+
 function exportStatusFromRecord(
   record: JsonRecord | undefined,
   now: Date,
@@ -1462,7 +1480,9 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
     return out(rt, 200, { data });
   }
   if (method === "GET" && relativePath === "/consents")
-    return out(rt, 200, { data: await repository.getConsents(rt) });
+    return out(rt, 200, {
+      data: mobileConsentPayload(await repository.getConsents(rt)),
+    });
   if (
     (method === "PATCH" || method === "PUT" || method === "POST") &&
     relativePath === "/consents"
@@ -1479,7 +1499,7 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
       path: rt.path,
       createdAt: rt.now.toISOString(),
     });
-    return out(rt, 200, { data });
+    return out(rt, 200, { data: mobileConsentPayload(data) });
   }
   if (method === "GET" && relativePath === "/privacy/export")
     return out(rt, 200, { data: await repository.listExports(p, rt) });

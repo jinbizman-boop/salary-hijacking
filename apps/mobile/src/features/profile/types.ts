@@ -91,6 +91,23 @@ export type ProfileActionRequest = Readonly<{
   reason: string;
 }>;
 
+export type ProfileAccountSettingsRequest = Readonly<{
+  adPartnerAccepted: boolean;
+  analyticsAccepted: boolean;
+  consentVersion: string;
+  contentRecommendationAccepted: boolean;
+  marketingAccepted: boolean;
+  privacyAccepted: boolean;
+  termsAccepted: boolean;
+}>;
+
+export type ProfileAccountSettings = ProfileAccountSettingsRequest &
+  Readonly<{
+    adPartnerFinancialRawDataUsed: false;
+    sensitiveFinancialTargetingAccepted: false;
+    updatedAt: string | null;
+  }>;
+
 export type ProfileUpdateRequest = Readonly<{
   avatarAttachmentId?: string | null;
   birthYear?: number | null;
@@ -127,6 +144,9 @@ export type ProfileSupportTicket = Readonly<{
 export type ProfileApiClient = Readonly<{
   getProfile: () => Promise<ProfileSnapshot>;
   getMyPageSummary: () => Promise<ProfileMyPageSummary>;
+  updateAccountSettings: (
+    request: ProfileAccountSettingsRequest,
+  ) => Promise<ProfileAccountSettings>;
   updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileSnapshot>;
   requestPrivacyExport: (
     request: ProfileActionRequest,

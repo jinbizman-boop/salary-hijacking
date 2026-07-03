@@ -1,4 +1,5 @@
 import {
+  PROFILE_CONSENTS_PATH,
   PROFILE_MY_PAGE_SUMMARY_PATH,
   PROFILE_PATH,
   PROFILE_PRIVACY_EXPORT_PATH,
@@ -7,6 +8,8 @@ import {
   PROFILE_WITHDRAWAL_REQUEST_PATH,
 } from "./constants";
 import type {
+  ProfileAccountSettings,
+  ProfileAccountSettingsRequest,
   ProfileActionRequest,
   ProfileActivity,
   ProfileApiClient,
@@ -296,6 +299,36 @@ function normalizeMyPageSummary(value: unknown): ProfileMyPageSummary {
   };
 }
 
+function normalizeAccountSettings(value: unknown): ProfileAccountSettings {
+  if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
+  const data = value.data;
+  if (
+    typeof data.adPartnerAccepted !== "boolean" ||
+    data.adPartnerFinancialRawDataUsed !== false ||
+    typeof data.analyticsAccepted !== "boolean" ||
+    !nonEmptyString(data.consentVersion) ||
+    typeof data.contentRecommendationAccepted !== "boolean" ||
+    typeof data.marketingAccepted !== "boolean" ||
+    typeof data.privacyAccepted !== "boolean" ||
+    data.sensitiveFinancialTargetingAccepted !== false ||
+    typeof data.termsAccepted !== "boolean"
+  ) {
+    return invalidResponse();
+  }
+  return {
+    adPartnerAccepted: data.adPartnerAccepted,
+    adPartnerFinancialRawDataUsed: false,
+    analyticsAccepted: data.analyticsAccepted,
+    consentVersion: data.consentVersion,
+    contentRecommendationAccepted: data.contentRecommendationAccepted,
+    marketingAccepted: data.marketingAccepted,
+    privacyAccepted: data.privacyAccepted,
+    sensitiveFinancialTargetingAccepted: false,
+    termsAccepted: data.termsAccepted,
+    updatedAt: normalizeNullableTimestamp(data.updatedAt),
+  };
+}
+
 export function mergeProfileSnapshotWithMyPageSummary(
   snapshot: ProfileSnapshot,
   myPageSummary: ProfileMyPageSummary | null,
@@ -510,6 +543,21 @@ function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
   return true;
 }
 
+function validAccountSettingsRequest(
+  value: ProfileAccountSettingsRequest,
+): boolean {
+  return (
+    typeof value.adPartnerAccepted === "boolean" &&
+    typeof value.analyticsAccepted === "boolean" &&
+    nonEmptyString(value.consentVersion) &&
+    value.consentVersion.length <= 60 &&
+    typeof value.contentRecommendationAccepted === "boolean" &&
+    typeof value.marketingAccepted === "boolean" &&
+    value.privacyAccepted === true &&
+    value.termsAccepted === true
+  );
+}
+
 function actionPayload(request: ProfileActionRequest): string {
   if (!validActionRequest(request)) {
     throw new ProfileApiError(
@@ -524,6 +572,32 @@ function actionPayload(request: ProfileActionRequest): string {
     rawPersonalDataExposed: false,
     rawPushTokenExposed: false,
     reason: request.reason,
+  });
+}
+
+function accountSettingsPayload(
+  request: ProfileAccountSettingsRequest,
+): string {
+  if (!validAccountSettingsRequest(request)) {
+    throw new ProfileApiError(
+      0,
+      "PROFILE_INVALID_ACCOUNT_SETTINGS_REQUEST",
+      PROFILE_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return JSON.stringify({
+    adPartnerAccepted: request.adPartnerAccepted,
+    adsFinancialTargetingUsed: false,
+    analyticsAccepted: request.analyticsAccepted,
+    consentVersion: request.consentVersion,
+    contentRecommendationAccepted: request.contentRecommendationAccepted,
+    marketingAccepted: request.marketingAccepted,
+    privacyAccepted: true,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    sensitiveFinancialTargetingAccepted: false,
+    termsAccepted: true,
   });
 }
 
@@ -686,6 +760,46 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     return normalizeMyPageSummary(parsed);
   }
 
+  async function requestAccountSettings(
+    accountRequest: ProfileAccountSettingsRequest,
+  ): Promise<ProfileAccountSettings> {
+    const headers = new Headers({
+      accept: "application/json",
+      "content-type": "application/json",
+      "x-client-platform": options.platform,
+      "x-correlation-id": createCorrelationId(),
+      ...PRIVACY_HEADERS,
+    });
+
+    let response: Response;
+    try {
+      response = await fetcher(
+        new Request(`${baseUrl}${PROFILE_CONSENTS_PATH}`, {
+          body: accountSettingsPayload(accountRequest),
+          headers,
+          method: "PATCH",
+          credentials: "include",
+        }),
+      );
+    } catch {
+      throw new ProfileApiError(
+        0,
+        "PROFILE_NETWORK_ERROR",
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+
+    const parsed = await parseJson(response);
+    if (!response.ok) {
+      throw new ProfileApiError(
+        response.status,
+        errorCode(parsed),
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+    return normalizeAccountSettings(parsed);
+  }
+
   return {
     getProfile(): Promise<ProfileSnapshot> {
       return request(PROFILE_PATH);
@@ -693,6 +807,12 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
 
     getMyPageSummary(): Promise<ProfileMyPageSummary> {
       return requestMyPageSummary();
+    },
+
+    updateAccountSettings(
+      accountRequest: ProfileAccountSettingsRequest,
+    ): Promise<ProfileAccountSettings> {
+      return requestAccountSettings(accountRequest);
     },
 
     updateProfile(

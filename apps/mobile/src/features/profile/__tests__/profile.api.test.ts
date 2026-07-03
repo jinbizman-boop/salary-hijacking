@@ -273,6 +273,82 @@ describe("profile api", () => {
     );
   });
 
+  it("updates account consent settings without financial targeting or raw token payloads", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "account-settings-correlation-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            adPartnerAccepted: false,
+            adPartnerFinancialRawDataUsed: false,
+            analyticsAccepted: false,
+            consentVersion: "mobile-v1",
+            contentRecommendationAccepted: true,
+            marketingAccepted: false,
+            privacyAccepted: true,
+            sensitiveFinancialTargetingAccepted: false,
+            termsAccepted: true,
+            updatedAt: "2026-07-03T08:20:00.000Z",
+          },
+        });
+      },
+      platform: "ios",
+    });
+
+    await expect(
+      api.updateAccountSettings({
+        adPartnerAccepted: false,
+        analyticsAccepted: false,
+        consentVersion: "mobile-v1",
+        contentRecommendationAccepted: true,
+        marketingAccepted: false,
+        privacyAccepted: true,
+        termsAccepted: true,
+      }),
+    ).resolves.toMatchObject({
+      adPartnerAccepted: false,
+      adPartnerFinancialRawDataUsed: false,
+      marketingAccepted: false,
+      sensitiveFinancialTargetingAccepted: false,
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("PATCH");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/consents",
+    );
+    expect(calls[0]?.headers.get("x-client-platform")).toBe("ios");
+    expect(calls[0]?.headers.get("x-correlation-id")).toBe(
+      "account-settings-correlation-1",
+    );
+    const body = JSON.parse(await calls[0]!.clone().text()) as Record<
+      string,
+      unknown
+    >;
+    expect(body).toEqual({
+      adPartnerAccepted: false,
+      adsFinancialTargetingUsed: false,
+      analyticsAccepted: false,
+      consentVersion: "mobile-v1",
+      contentRecommendationAccepted: true,
+      marketingAccepted: false,
+      privacyAccepted: true,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      sensitiveFinancialTargetingAccepted: false,
+      termsAccepted: true,
+    });
+    expect(JSON.stringify(Object.values(body))).not.toMatch(
+      /salary|expense|saving|hijack|token|email|phone|card|accountNumber/iu,
+    );
+  });
+
   it("requests privacy export and withdrawal request without raw financial payloads", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

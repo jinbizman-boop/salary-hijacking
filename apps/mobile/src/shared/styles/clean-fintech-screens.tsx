@@ -1041,6 +1041,7 @@ export function CleanFintechSettingsScreen({
 }: Readonly<{ kind: SettingsKind }>): React.ReactElement {
   const config = settingsScreenConfig[kind];
   const profileSettingsApi = useMemo(() => createMobileProfileApi(), []);
+  const accountSettingsApi = useMemo(() => createMobileProfileApi(), []);
   const [profileNickname, setProfileNickname] = useState(
     fallbackProfileSnapshot.user.nickname,
   );
@@ -1050,6 +1051,14 @@ export function CleanFintechSettingsScreen({
     useState("PRODUCT");
   const [profileSettingsToast, setProfileSettingsToast] = useState(
     "프로필 설정은 서버 MY 프로필 API 기준으로 저장됩니다.",
+  );
+  const [marketingAccepted, setMarketingAccepted] = useState(false);
+  const [contentRecommendationAccepted, setContentRecommendationAccepted] =
+    useState(true);
+  const [adPartnerAccepted, setAdPartnerAccepted] = useState(false);
+  const [analyticsAccepted, setAnalyticsAccepted] = useState(false);
+  const [accountSettingsToast, setAccountSettingsToast] = useState(
+    "계정 동의 설정은 서버 consents API 기준으로 저장됩니다.",
   );
   const profileSettingsValid =
     profileNickname.trim().length >= 2 &&
@@ -1084,6 +1093,45 @@ export function CleanFintechSettingsScreen({
     profileOccupationCategory,
     profileSettingsApi,
     profileSettingsValid,
+  ]);
+  const submitAccountSettings = useCallback(() => {
+    if (kind !== "account") return;
+    setAccountSettingsToast("계정 동의 설정을 서버에 저장하는 중이에요.");
+    void accountSettingsApi
+      .updateAccountSettings({
+        adPartnerAccepted,
+        analyticsAccepted,
+        consentVersion: "mobile-v1",
+        contentRecommendationAccepted,
+        marketingAccepted,
+        privacyAccepted: true,
+        termsAccepted: true,
+      })
+      .then((settings) => {
+        setMarketingAccepted(settings.marketingAccepted);
+        setContentRecommendationAccepted(
+          settings.contentRecommendationAccepted,
+        );
+        setAdPartnerAccepted(settings.adPartnerAccepted);
+        setAnalyticsAccepted(settings.analyticsAccepted);
+        setAccountSettingsToast(
+          `계정 동의 저장 완료 · sensitiveFinancialTargetingAccepted=false · adPartnerFinancialRawDataUsed=${String(
+            settings.adPartnerFinancialRawDataUsed,
+          )}`,
+        );
+      })
+      .catch(() => {
+        setAccountSettingsToast(
+          "계정 동의 저장에 실패했어요. 필수 약관과 네트워크 상태를 확인해 주세요.",
+        );
+      });
+  }, [
+    accountSettingsApi,
+    adPartnerAccepted,
+    analyticsAccepted,
+    contentRecommendationAccepted,
+    kind,
+    marketingAccepted,
   ]);
 
   return (
@@ -1127,6 +1175,49 @@ export function CleanFintechSettingsScreen({
             ]}
           >
             <Text style={styles.primaryButtonText}>저장하기</Text>
+          </Pressable>
+        </SectionCard>
+      ) : null}
+      {kind === "account" ? (
+        <SectionCard>
+          <Text style={styles.sectionTitle}>동의 설정 저장</Text>
+          <Toast message={accountSettingsToast} />
+          <ToggleRow
+            active={contentRecommendationAccepted}
+            label="LV UP 콘텐츠 추천 받기"
+            onPress={() =>
+              setContentRecommendationAccepted(
+                (currentAccepted) => !currentAccepted,
+              )
+            }
+          />
+          <ToggleRow
+            active={marketingAccepted}
+            label="마케팅 알림 받기"
+            onPress={() =>
+              setMarketingAccepted((currentAccepted) => !currentAccepted)
+            }
+          />
+          <ToggleRow
+            active={analyticsAccepted}
+            label="서비스 개선 분석 허용"
+            onPress={() =>
+              setAnalyticsAccepted((currentAccepted) => !currentAccepted)
+            }
+          />
+          <ToggleRow
+            active={adPartnerAccepted}
+            label="제휴 혜택 받기"
+            onPress={() =>
+              setAdPartnerAccepted((currentAccepted) => !currentAccepted)
+            }
+          />
+          <Pressable
+            accessibilityRole="button"
+            onPress={submitAccountSettings}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>동의 설정 저장</Text>
           </Pressable>
         </SectionCard>
       ) : null}
