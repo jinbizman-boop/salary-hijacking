@@ -44,6 +44,14 @@ const requiredMobileAssetNames = [
   "favicon.png",
 ];
 
+const singleQuotedValues = (source) =>
+  [...source.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+
+const recalculateReasons = (source) =>
+  [
+    ...source.matchAll(/recalculate_payroll_plan\([^;]*?,\s*'([^']+)'\s*\)/g),
+  ].map((match) => match[1]);
+
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -1363,6 +1371,35 @@ test("blocks when database migration, seed, and smoke evidence is missing", () =
   assert.equal(result.ok, false);
   assert.match(report, /database-evidence\.json/);
   assert.match(report, /database:evidence/);
+});
+
+test("staging seed payroll recalculation reasons match migration constraint", () => {
+  const migration = fs.readFileSync(
+    path.join(
+      repoRoot,
+      "database",
+      "migrations",
+      "0002_payroll_budget_expense.sql",
+    ),
+    "utf8",
+  );
+  const seed = fs.readFileSync(
+    path.join(repoRoot, "database", "seeds", "staging.seed.sql"),
+    "utf8",
+  );
+  const constraintBody = migration.match(
+    /CONSTRAINT\s+chk_calc_snapshots_reason[\s\S]*?calculation_reason\s+IN\s*\(([\s\S]*?)\)\s*\)/i,
+  )?.[1];
+  assert.ok(constraintBody, "chk_calc_snapshots_reason must be readable");
+
+  const allowedReasons = new Set(singleQuotedValues(constraintBody));
+  const seedReasons = recalculateReasons(seed);
+
+  assert.ok(seedReasons.length > 0, "staging seed must recalculate payroll");
+  assert.deepEqual(
+    seedReasons.filter((reason) => !allowedReasons.has(reason)),
+    [],
+  );
 });
 
 test("blocks when public app URL evidence is missing or unverified", () => {

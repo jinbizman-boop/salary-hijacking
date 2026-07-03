@@ -1410,8 +1410,8 @@ ON CONFLICT (admin_audit_log_id) DO NOTHING;
 -- 9. 서버 권위 재계산 보정
 -- -----------------------------------------------------------------------------
 
-SELECT public.recalculate_payroll_plan('10000000-0000-4000-8000-000000001001'::uuid, 'STAGING_SEED_FINAL_RECALCULATE');
-SELECT public.recalculate_payroll_plan('10000000-0000-4000-8000-000000001002'::uuid, 'STAGING_SEED_FINAL_RECALCULATE');
+SELECT public.recalculate_payroll_plan('10000000-0000-4000-8000-000000001001'::uuid, 'MIGRATION');
+SELECT public.recalculate_payroll_plan('10000000-0000-4000-8000-000000001002'::uuid, 'MIGRATION');
 
 SELECT public.recalculate_user_growth_stats('10000000-0000-4000-8000-000000000101'::uuid);
 SELECT public.recalculate_user_growth_stats('10000000-0000-4000-8000-000000000102'::uuid);
