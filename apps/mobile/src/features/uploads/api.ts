@@ -361,7 +361,7 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       return {
         attachmentId:
           typeof data.attachmentId === "string"
-            ? data.attachmentId
+            ? safeId(data.attachmentId, "attachmentId")
             : attachmentId,
       };
     },
@@ -391,7 +391,7 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       return {
         attachmentId:
           typeof data.attachmentId === "string"
-            ? data.attachmentId
+            ? safeId(data.attachmentId, "attachmentId")
             : attachmentId,
       };
     },

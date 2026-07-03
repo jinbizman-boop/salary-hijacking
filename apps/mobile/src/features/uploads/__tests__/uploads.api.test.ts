@@ -219,6 +219,30 @@ describe("uploads api", () => {
     );
   });
 
+  it("rejects invalid attachment ids echoed by attach responses", async () => {
+    const fetcher = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(
+        jsonResponse({ attachmentId: "att_community_1\r\nAuthorization" }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ attachmentId: "../att_receipt_1" }),
+      );
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-invalid-attach",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.attachToCommunityPost("att_community_1", "post_1"),
+    ).rejects.toMatchObject({ code: "UPLOADS_INVALID_ID" });
+    await expect(
+      api.attachToVariableExpense("att_receipt_1", "vex_1"),
+    ).rejects.toMatchObject({ code: "UPLOADS_INVALID_ID" });
+  });
+
   it("directly uploads variable expense receipt bytes through the API v1 uploads boundary", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
