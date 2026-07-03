@@ -124,7 +124,7 @@ export function normalizeMobileAuthResponse(
   return {
     data: {
       status: "AUTHENTICATED",
-      accessToken: requiredText(data, tokens, "accessToken"),
+      accessToken: requiredAccessToken(data, tokens),
       refreshToken: text(data, "refreshToken") ?? text(tokens, "refreshToken"),
       expiresAt: tokenExpiresAt(data, tokens, now),
       user: mobileUser(user, data, false),
@@ -162,7 +162,7 @@ export function normalizeMobileSignupResponse(
   return {
     data: {
       status: hasAccessToken ? "AUTHENTICATED" : "REGISTERED",
-      accessToken: text(data, "accessToken") ?? text(tokens, "accessToken"),
+      accessToken: hasAccessToken ? optionalAccessToken(data, tokens) : null,
       refreshToken: text(data, "refreshToken") ?? text(tokens, "refreshToken"),
       expiresAt: hasAccessToken ? tokenExpiresAt(data, tokens, now) : null,
       emailVerificationRequired,
@@ -205,6 +205,29 @@ function requiredText(
 ): string {
   const value = text(primary, key) ?? text(fallback, key);
   if (!value) throw new Error("인증 응답이 올바르지 않습니다.");
+  return value;
+}
+
+function optionalAccessToken(
+  primary: UnknownRecord,
+  fallback: UnknownRecord | null,
+): string | null {
+  const value = text(primary, "accessToken") ?? text(fallback, "accessToken");
+  if (!value) return null;
+  return validAccessToken(value);
+}
+
+function requiredAccessToken(
+  primary: UnknownRecord,
+  fallback: UnknownRecord | null,
+): string {
+  return validAccessToken(requiredText(primary, fallback, "accessToken"));
+}
+
+function validAccessToken(value: string): string {
+  if (value.length > 8_192 || /[\r\n\t]/u.test(value)) {
+    throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
+  }
   return value;
 }
 
