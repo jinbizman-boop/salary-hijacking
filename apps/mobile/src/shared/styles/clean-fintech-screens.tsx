@@ -104,6 +104,7 @@ type CommunityScreenPost = Readonly<{
   title: string;
 }>;
 type LevelDetailKind = "reading" | "news" | "english" | "health";
+type SettingsKind = "profile" | "account";
 type LevelDetailConfig = Readonly<{
   title: string;
   subtitle: string;
@@ -470,6 +471,64 @@ const communityBoardThumbMap: Readonly<Record<CommunityBoardType, string>> = {
   SIDE_HUSTLE: "🧰",
   HEALTH_ROUTINE: appIcons.health,
   FREE: appIcons.community,
+};
+
+const settingsScreenConfig: Readonly<
+  Record<
+    SettingsKind,
+    Readonly<{
+      title: string;
+      subtitle: string;
+      rows: readonly Readonly<{
+        icon: string;
+        title: string;
+        meta: string;
+      }>[];
+    }>
+  >
+> = {
+  account: {
+    title: "계정 설정",
+    subtitle: "로그인, 보안, 알림 동의를 한곳에서 확인해요",
+    rows: [
+      {
+        icon: "🔐",
+        title: "서버 세션 보안",
+        meta: "보호 API는 서버 세션, 만료, revoke 상태를 기준으로 확인해요.",
+      },
+      {
+        icon: appIcons.notification,
+        title: "알림 동의",
+        meta: "푸시 토큰 원문 없이 알림 수신 상태만 관리해요.",
+      },
+      {
+        icon: "🛡️",
+        title: "개인정보 요청",
+        meta: "내보내기와 탈퇴 요청은 운영 절차와 감사 로그 기준으로 처리해요.",
+      },
+    ],
+  },
+  profile: {
+    title: "프로필 설정",
+    subtitle: "커뮤니티 표시 이름과 자기관리 상태를 점검해요",
+    rows: [
+      {
+        icon: appIcons.my,
+        title: "커뮤니티 표시 이름",
+        meta: "익명 옵션과 게시판 노출 이름을 분리해서 다룰 수 있게 준비해요.",
+      },
+      {
+        icon: appIcons.level,
+        title: "레벨 타이틀",
+        meta: "LV UP 성과와 프로필 배지를 연결해 자기관리 동기를 유지해요.",
+      },
+      {
+        icon: appIcons.salary,
+        title: "광고 분리",
+        meta: "급여, 지출, 저축, 납치금액 원문은 광고 타겟팅에 쓰지 않아요.",
+      },
+    ],
+  },
 };
 
 const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
@@ -967,6 +1026,36 @@ export function CleanFintechLevelDetailScreen({
         ))}
       </SectionCard>
       <AdSlot />
+      <GuardBox />
+    </AppScreen>
+  );
+}
+
+export function CleanFintechSettingsScreen({
+  kind,
+}: Readonly<{ kind: SettingsKind }>): React.ReactElement {
+  const config = settingsScreenConfig[kind];
+
+  return (
+    <AppScreen title={config.title} subtitle={config.subtitle}>
+      <SectionCard>
+        <Text style={styles.sectionTitle}>설정 항목</Text>
+        {config.rows.map((row) => (
+          <ListRow
+            icon={row.icon}
+            key={`${kind}-${row.title}`}
+            meta={row.meta}
+            title={row.title}
+          />
+        ))}
+      </SectionCard>
+      <SectionCard>
+        <Text style={styles.sectionTitle}>출시 전 운영 기준</Text>
+        <Text style={styles.bodyText}>
+          실제 수정 저장은 배포 API, DB, 인증 세션, 운영 QA가 검증된 뒤 서버
+          권위 흐름으로 확정합니다.
+        </Text>
+      </SectionCard>
       <GuardBox />
     </AppScreen>
   );
@@ -2647,6 +2736,14 @@ function ProfileScreen(): React.ReactElement {
     profileRouter.push("/notifications");
   }, [profileRouter]);
 
+  const openProfileSettings = useCallback(() => {
+    profileRouter.push("/profile/settings");
+  }, [profileRouter]);
+
+  const openAccountSettings = useCallback(() => {
+    profileRouter.push("/profile/account");
+  }, [profileRouter]);
+
   const profileSnapshot = serverProfileSnapshot ?? fallbackProfileSnapshot;
   const profileSyncLabel = serverProfileSnapshot
     ? "서버 MY 동기화"
@@ -2676,8 +2773,8 @@ function ProfileScreen(): React.ReactElement {
           </View>
         </View>
         <View style={styles.attachmentRow}>
-          <SmallButton label="프로필 설정" />
-          <SmallButton label="계정 설정" />
+          <SmallButton label="프로필 설정" onPress={openProfileSettings} />
+          <SmallButton label="계정 설정" onPress={openAccountSettings} />
           <SmallButton label="데이터 내보내기" onPress={requestPrivacyExport} />
           <SmallButton label="탈퇴 요청" onPress={requestWithdrawal} />
           <SmallButton label="로그아웃" onPress={logoutSession} />
