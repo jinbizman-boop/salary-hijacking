@@ -725,6 +725,7 @@ async function persistSessionStatus(
     role: session.role,
     emailVerified: session.emailVerified,
     onboardingCompleted: session.onboardingCompleted,
+    mfaRequired: session.mfaRequired,
     status,
     rawFinancialDataExposed: false,
     rawPersonalDataExposed: false,

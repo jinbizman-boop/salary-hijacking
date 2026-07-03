@@ -92,6 +92,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain(
       "offlineStatusFromCachedSession(cached, isPublic)",
     );
+    expect(source).toContain("mfaRequired: session.mfaRequired");
     expect(source).toContain('if (session.mfaRequired) return "AUTH_REQUIRED"');
     expect(source).toContain(
       'if (!session.emailVerified) return "VERIFY_EMAIL"',
