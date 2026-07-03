@@ -762,15 +762,22 @@ export function CleanFintechWriteScreen(): React.ReactElement {
 
   const valid = title.trim().length >= 2 && body.trim().length >= 5;
   const attachUploadedCommunityAttachments = useCallback(
-    async (postId: string): Promise<void> => {
-      await Promise.all(
-        uploadedCommunityAttachments.map((attachment) =>
-          writeUploadsApi.attachToCommunityPost(
-            attachment.attachmentId,
-            postId,
+    async (postId: string): Promise<boolean> => {
+      if (uploadedCommunityAttachments.length <= 0) return true;
+
+      try {
+        await Promise.all(
+          uploadedCommunityAttachments.map((attachment) =>
+            writeUploadsApi.attachToCommunityPost(
+              attachment.attachmentId,
+              postId,
+            ),
           ),
-        ),
-      );
+        );
+        return true;
+      } catch {
+        return false;
+      }
     },
     [uploadedCommunityAttachments, writeUploadsApi],
   );
@@ -842,12 +849,18 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           typeof data.postId === "string"
             ? data.postId
             : null;
-        if (postId && uploadedCommunityAttachments.length > 0) {
-          await attachUploadedCommunityAttachments(postId);
-        }
+        const attachmentsAttached = postId
+          ? await attachUploadedCommunityAttachments(postId)
+          : true;
         setTitle("");
         setBody("");
         setUploadedCommunityAttachments([]);
+        if (!attachmentsAttached) {
+          setToast(
+            "게시글은 서버에 등록됐지만 첨부 연결은 실패했어요. 필요한 파일은 다시 첨부해 주세요.",
+          );
+          return;
+        }
         setToast("게시글이 서버에 등록되었습니다. 커뮤니티로 이동합니다.");
       })
       .catch(() => {

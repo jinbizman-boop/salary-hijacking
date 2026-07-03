@@ -910,6 +910,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(uploadsApi).toContain("x-upload-purpose");
   });
 
+  it("keeps server-created community posts from being reported as failed when attachment linking fails", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const submitSource =
+      cleanScreens.match(
+        /const submitCommunityPost = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("async (postId: string): Promise<boolean>");
+    expect(submitSource).toContain("attachmentsAttached");
+    expect(submitSource).toContain(
+      "attachUploadedCommunityAttachments(postId)",
+    );
+    expect(submitSource).toContain("setUploadedCommunityAttachments([])");
+    expect(submitSource).toContain("return;");
+    expect(submitSource.indexOf("publishPost")).toBeLessThan(
+      submitSource.indexOf("attachUploadedCommunityAttachments(postId)"),
+    );
+    expect(
+      submitSource.indexOf("attachUploadedCommunityAttachments(postId)"),
+    ).toBeLessThan(submitSource.indexOf("setTitle"));
+  });
+
   it("keeps salary home variable expense receipts connected to native picker and uploads API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
