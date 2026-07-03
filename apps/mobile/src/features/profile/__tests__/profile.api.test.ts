@@ -273,6 +273,56 @@ describe("profile api", () => {
     );
   });
 
+  it("completes onboarding through the server profile boundary without unsafe fields", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "onboarding-complete-correlation-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            ...profilePayload,
+            user: {
+              ...profilePayload.user,
+              onboardingCompleted: true,
+            },
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.completeOnboarding()).resolves.toMatchObject({
+      user: {
+        onboardingCompleted: true,
+        rawFinancialDataExposed: false,
+        rawPushTokenExposed: false,
+      },
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/me/onboarding-complete",
+    );
+    const body = JSON.parse(await calls[0]!.clone().text()) as Record<
+      string,
+      unknown
+    >;
+    expect(body).toEqual({
+      adsFinancialTargetingUsed: false,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+    });
+    expect(JSON.stringify(Object.values(body))).not.toMatch(
+      /salary|expense|saving|hijack|token|email|phone|card|account/iu,
+    );
+  });
+
   it("updates account consent settings without financial targeting or raw token payloads", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

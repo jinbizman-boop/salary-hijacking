@@ -114,6 +114,48 @@ describe("mobile profile API contract", () => {
     });
   });
 
+  it("completes mobile onboarding through the server profile boundary", async () => {
+    const app = createProfileContractApp();
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/onboarding-complete", {
+        method: "POST",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({
+          rawFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          rawPushTokenExposed: false,
+          adsFinancialTargetingUsed: false,
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly user?: Record<string, unknown>;
+        readonly privacy?: Record<string, unknown>;
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data?.user).toMatchObject({
+      onboardingCompleted: true,
+      rawEmailExposed: false,
+      rawFinancialDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(body.data?.user).not.toHaveProperty("userId");
+    expect(body.data?.privacy).toMatchObject({
+      financialDataForAds: false,
+      rawPushTokenLogging: false,
+      tokenHashOnly: true,
+    });
+  });
+
   it("updates mobile account consent settings without enabling financial ad targeting", async () => {
     const app = createProfileContractApp();
 

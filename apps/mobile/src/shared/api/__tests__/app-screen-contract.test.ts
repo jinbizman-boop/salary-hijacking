@@ -99,6 +99,9 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(rootLayout).toContain('const ONBOARDING_ROUTE = "/onboarding"');
     expect(onboarding).toContain("OnboardingScreen");
+    expect(onboarding).toContain("createMobileProfileApi");
+    expect(onboarding).toContain("completeOnboarding");
+    expect(onboarding).toContain("finishOnboarding");
     expect(onboarding).toContain("/plan");
     expect(onboarding).toContain("/salary");
     expect(onboarding).toContain("serverAuthority=true");

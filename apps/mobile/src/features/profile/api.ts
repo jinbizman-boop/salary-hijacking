@@ -1,6 +1,7 @@
 import {
   PROFILE_CONSENTS_PATH,
   PROFILE_MY_PAGE_SUMMARY_PATH,
+  PROFILE_ONBOARDING_COMPLETE_PATH,
   PROFILE_PATH,
   PROFILE_PRIVACY_EXPORT_PATH,
   PROFILE_SAFE_ERROR_MESSAGE,
@@ -618,6 +619,15 @@ function profileUpdatePayload(request: ProfileUpdateRequest): string {
   });
 }
 
+function onboardingCompletePayload(): string {
+  return JSON.stringify({
+    adsFinancialTargetingUsed: false,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+  });
+}
+
 function supportTicketPayload(request: ProfileSupportTicketRequest): string {
   if (!validSupportTicketRequest(request)) {
     throw new ProfileApiError(
@@ -821,6 +831,13 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
       return request(PROFILE_PATH, {
         body: profileUpdatePayload(profileRequest),
         method: "PATCH",
+      });
+    },
+
+    completeOnboarding(): Promise<ProfileSnapshot> {
+      return request(PROFILE_ONBOARDING_COMPLETE_PATH, {
+        body: onboardingCompletePayload(),
+        method: "POST",
       });
     },
 

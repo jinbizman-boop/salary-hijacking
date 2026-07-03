@@ -148,6 +148,7 @@ export type ProfileApiClient = Readonly<{
     request: ProfileAccountSettingsRequest,
   ) => Promise<ProfileAccountSettings>;
   updateProfile: (request: ProfileUpdateRequest) => Promise<ProfileSnapshot>;
+  completeOnboarding: () => Promise<ProfileSnapshot>;
   requestPrivacyExport: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;

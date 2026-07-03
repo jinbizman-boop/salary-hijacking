@@ -657,6 +657,29 @@ function profileInput(input: Record<string, unknown>): UserProfileUpdateInput {
     );
   return p;
 }
+function onboardingCompleteInput(input: Record<string, unknown>): JsonRecord {
+  const unsafeFlags = [
+    "rawFinancialDataExposed",
+    "rawPersonalDataExposed",
+    "rawPushTokenExposed",
+    "adsFinancialTargetingUsed",
+  ] as const;
+  const unsafe = unsafeFlags.find((field) => input[field] === true);
+  if (unsafe) {
+    throw new UserHttpError(
+      400,
+      "USER_ONBOARDING_UNSAFE_PAYLOAD",
+      "온보딩 완료 요청에 민감 정보 노출 플래그를 포함할 수 없습니다.",
+      { field: unsafe },
+    );
+  }
+  return {
+    adsFinancialTargetingUsed: false,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+  };
+}
 function settingsInput(input: Record<string, unknown>): UserSettingsInput {
   const p: {
     theme?: Theme;
@@ -1334,6 +1357,18 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
     });
     return out(rt, 200, { data: await mobileProfilePayload(rt) });
   }
+  if (method === "POST" && relativePath === "/me/onboarding-complete") {
+    onboardingCompleteInput(await body(rt.request));
+    await emit(rt, {
+      event: "user_profile_updated",
+      requestId: rt.requestId,
+      userId: rt.principal.userId,
+      targetId: rt.principal.userId,
+      path: rt.path,
+      createdAt: rt.now.toISOString(),
+    });
+    return out(rt, 200, { data: await mobileProfilePayload(rt) });
+  }
   if (method === "POST" && relativePath === "/me/privacy-export") {
     const data = await repository.requestExport(
       exportInput(await body(rt.request)),
@@ -1593,6 +1628,7 @@ export const usersRoutesManifest = Object.freeze({
     "PATCH /me",
     "GET /me/profile",
     "PATCH /me/profile",
+    "POST /me/onboarding-complete",
     "GET /me/summary",
     "GET /me/my-page-summary",
     "GET /me/activity",
@@ -1631,6 +1667,7 @@ export function assertUsersRoutesCompleteness(): {
     "auth_context_required_and_owner_boundary",
     "my_page_profile_get_update",
     "mobile_profile_payload_alias",
+    "mobile_onboarding_complete_alias",
     "mobile_support_ticket_alias",
     "profile_mass_assignment_protection",
     "summary_and_activity",
