@@ -85,6 +85,26 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("does not let cached offline sessions bypass verify-email, onboarding, or MFA gates", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("offlineStatusFromCachedSession");
+    expect(source).toContain(
+      "offlineStatusFromCachedSession(cached, isPublic)",
+    );
+    expect(source).toContain('if (session.mfaRequired) return "AUTH_REQUIRED"');
+    expect(source).toContain(
+      'if (!session.emailVerified) return "VERIFY_EMAIL"',
+    );
+    expect(source).toContain(
+      'if (!session.onboardingCompleted) return "ONBOARDING"',
+    );
+    expect(source).toContain('return "OFFLINE"');
+    expect(source).not.toContain(
+      'const cachedStatus = cached.authenticated ? "OFFLINE" : "AUTH_REQUIRED"',
+    );
+  });
+
   it("routes an authenticated root launch into the salary home", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

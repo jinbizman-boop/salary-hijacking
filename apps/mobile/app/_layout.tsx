@@ -292,7 +292,7 @@ export default function MobileRootLayout(): unknown {
       }));
     } catch (error) {
       const cached = await readCachedSessionStatus();
-      const cachedStatus = cached.authenticated ? "OFFLINE" : "AUTH_REQUIRED";
+      const cachedStatus = offlineStatusFromCachedSession(cached, isPublic);
       setState((prev: RootState) => ({
         ...prev,
         payload: { ...prev.payload, session: cached },
@@ -702,6 +702,18 @@ function resolveStatus(payload: RootPayload, isPublic: boolean): RootStatus {
   if (!payload.session.emailVerified) return "VERIFY_EMAIL";
   if (!payload.session.onboardingCompleted) return "ONBOARDING";
   return "READY";
+}
+
+function offlineStatusFromCachedSession(
+  session: SessionSnapshot,
+  isPublic: boolean,
+): RootStatus {
+  if (isPublic) return "READY";
+  if (!session.authenticated) return "AUTH_REQUIRED";
+  if (session.mfaRequired) return "AUTH_REQUIRED";
+  if (!session.emailVerified) return "VERIFY_EMAIL";
+  if (!session.onboardingCompleted) return "ONBOARDING";
+  return "OFFLINE";
 }
 
 async function persistSessionStatus(
