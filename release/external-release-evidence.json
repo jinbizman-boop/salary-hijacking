@@ -24,6 +24,7 @@
   "cloudflare": {
     "connectorReachable": true,
     "accountObserved": true,
+    "observedAccountId": "dd66373cd6f32d3cddfee542fc262cc0",
     "expectedWorkers": [
       "salary-hijacking-api",
       "salary-hijacking-notifications",

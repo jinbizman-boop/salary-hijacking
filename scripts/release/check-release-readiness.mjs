@@ -1600,6 +1600,16 @@ const getExpectedMobileAppIdentity = (releaseTargets) => {
   };
 };
 
+const mobileTreatsIosAsPostLaunch = (releaseTargets) => {
+  const mobile = isPlainObject(releaseTargets?.mobile)
+    ? releaseTargets.mobile
+    : {};
+  return (
+    mobile.primaryReleasePlatform === "android" &&
+    stringArray(mobile.postLaunchPlatforms).includes("ios")
+  );
+};
+
 const checkPublicUrlEvidence = (rootDir, releaseTargets, checks, blockers) => {
   const evidence = readJsonIfPresent(rootDir, PUBLIC_URL_EVIDENCE_PATH);
   if (!evidence) {
@@ -3095,17 +3105,20 @@ const checkMobileNativeEvidence = (
     "Android Play Store submit dry-run or console-ready submission evidence must be verified before release",
   );
 
+  const iosPostLaunch = mobileTreatsIosAsPostLaunch(releaseTargets);
   const iosBuildOk =
     ios.productionBuildVerified === true &&
     ios.productionBuildProfile === "production";
   addMobileCheck(
     checks,
     blockers,
-    iosBuildOk ? "PASS" : "BLOCKED",
+    iosBuildOk || iosPostLaunch ? "PASS" : "BLOCKED",
     "mobile:native:ios-build",
     iosBuildOk
       ? "iOS production EAS build evidence is verified"
-      : "iOS production EAS build evidence is missing",
+      : iosPostLaunch
+        ? "iOS production EAS build is tracked as post-launch for the Android-first Google Play release"
+        : "iOS production EAS build evidence is missing",
     "iOS production EAS build evidence must be verified before App Store release",
   );
 
@@ -3113,11 +3126,13 @@ const checkMobileNativeEvidence = (
   addMobileCheck(
     checks,
     blockers,
-    iosSubmitOk ? "PASS" : "BLOCKED",
+    iosSubmitOk || iosPostLaunch ? "PASS" : "BLOCKED",
     "mobile:native:ios-submit",
     iosSubmitOk
       ? "iOS store submit dry-run evidence is verified"
-      : "iOS store submit dry-run evidence is missing",
+      : iosPostLaunch
+        ? "iOS store submit proof is tracked as post-launch for the Android-first Google Play release"
+        : "iOS store submit dry-run evidence is missing",
     "iOS App Store submit dry-run or console-ready submission evidence must be verified before release",
   );
 };

@@ -2110,6 +2110,41 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.match(report, /mobile:native:evidence/);
 });
 
+test("treats iOS native evidence as post-launch when Android is the primary release platform", () => {
+  const rootDir = makeWorkspace();
+  writeReleaseTargets(rootDir, {
+    mobile: {
+      expectedAppSlug: "salary-hijacking",
+      expectedAndroidPackage: "com.salaryhijacking.mobile",
+      expectedIosBundleIdentifier: "com.salaryhijacking.mobile",
+      primaryReleasePlatform: "android",
+      postLaunchPlatforms: ["ios"],
+    },
+  });
+  writeMobileNativeEvidence(rootDir, {
+    ios: {
+      productionBuildVerified: false,
+      productionBuildProfile: "production",
+      storeSubmitDryRunVerified: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:native:ios-build/);
+  assert.match(report, /iOS production EAS build is tracked as post-launch/);
+  assert.match(report, /mobile:native:ios-submit/);
+  assert.match(report, /iOS store submit proof is tracked as post-launch/);
+});
+
 test("blocks when mobile native release evidence declares secret values", () => {
   const rootDir = makeWorkspace();
   writeMobileNativeEvidence(rootDir, { containsSecretValues: true });

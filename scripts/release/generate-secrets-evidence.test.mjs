@@ -129,6 +129,55 @@ test("preserves existing no-secret evidence when local proof is absent", () => {
   assert.equal(evidence.secrets.DATABASE_URL.verified, false);
 });
 
+test("uses no-secret external release evidence for runtime identifier names", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/external-release-evidence.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        github: {
+          appInstalled: true,
+          expectedRepository: "jinbizman-boop/salary-hijacking",
+          repositoryMatched: true,
+        },
+        cloudflare: {
+          accountObserved: true,
+          observedAccountId: "dd66373cd6f32d3cddfee542fc262cc0",
+          expectedAdminWorker: "salary-hijacking-admin",
+          adminWorkerMatched: true,
+        },
+        neon: {
+          projectMatched: true,
+          matchedProjectId: "still-feather-22153967",
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const evidence = buildSecretsEvidence({ rootDir });
+
+  assert.equal(evidence.secrets.GITHUB_REPOSITORY.verified, true);
+  assert.deepEqual(evidence.secrets.GITHUB_REPOSITORY.stores, [
+    "release external evidence",
+  ]);
+  assert.equal(evidence.secrets.CLOUDFLARE_ACCOUNT_ID.verified, true);
+  assert.equal(evidence.secrets.CF_ADMIN_WORKER_NAME.verified, true);
+  assert.equal(evidence.secrets.NEON_PROJECT_ID.verified, true);
+  assert.equal(evidence.secrets.GITHUB_TOKEN.verified, true);
+  assert.equal(evidence.secrets.DATABASE_URL.verified, false);
+  assert.equal(evidence.secrets.CLOUDFLARE_API_TOKEN.verified, false);
+  assert.equal(evidence.secrets.EXPO_TOKEN.verified, false);
+  assert.doesNotMatch(
+    evidence.nextEvidenceRequired.join("\n"),
+    /GITHUB_REPOSITORY|GITHUB_TOKEN|CLOUDFLARE_ACCOUNT_ID|CF_ADMIN_WORKER_NAME|NEON_PROJECT_ID/u,
+  );
+});
+
 test("rejects proof files that contain raw secret values", () => {
   const rootDir = makeWorkspace();
   const proofPath = path.join(rootDir, "release", "secrets-proof.local.json");

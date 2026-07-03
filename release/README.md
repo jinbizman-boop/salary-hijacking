@@ -187,6 +187,14 @@ tokens, Apple/Google credentials, binary download URLs, local artifact paths,
 signing keys, service account JSON, reviewer passwords, copied store-console
 payloads, or logs.
 
+The current primary mobile launch target is Android/Google Play. In
+`release/release-targets.json`, `mobile.primaryReleasePlatform` is `android`
+and `ios` is listed under `postLaunchPlatforms`. Release readiness therefore
+keeps Android production build, Android native E2E, and Google Play submission
+proof as hard launch gates, while iOS production build and App Store submission
+proof are tracked as post-launch platform evidence until the release target is
+changed to include iOS as a primary platform.
+
 For Android Detox runs, build or obtain an E2E APK, import it into the ignored
 Detox binary path, then run native E2E:
 

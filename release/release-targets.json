@@ -21,7 +21,9 @@
   "mobile": {
     "expectedAppSlug": "salary-hijacking",
     "expectedAndroidPackage": "com.salaryhijacking.mobile",
-    "expectedIosBundleIdentifier": "com.salaryhijacking.mobile"
+    "expectedIosBundleIdentifier": "com.salaryhijacking.mobile",
+    "primaryReleasePlatform": "android",
+    "postLaunchPlatforms": ["ios"]
   },
   "publicUrls": {
     "landingUrl": "https://salaryhijacking.com/",

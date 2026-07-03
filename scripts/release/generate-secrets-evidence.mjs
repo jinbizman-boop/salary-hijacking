@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const DEFAULT_PROOF_PATH = "release/secrets-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/secrets-evidence.json";
+const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
 
 export const REQUIRED_RUNTIME_SECRET_NAMES = Object.freeze([
   "DATABASE_URL",
@@ -32,12 +33,12 @@ export const DEFAULT_SECRET_STORES = Object.freeze({
   NEON_API_KEY: ["GitHub Environments"],
   NEON_PROJECT_ID: ["GitHub Environments", "release external evidence"],
   CLOUDFLARE_API_TOKEN: ["GitHub Environments", "Cloudflare account secret"],
-  CLOUDFLARE_ACCOUNT_ID: ["GitHub Environments"],
+  CLOUDFLARE_ACCOUNT_ID: ["GitHub Environments", "release external evidence"],
   CF_ADMIN_WORKER_NAME: ["GitHub Environments", "Cloudflare Worker config"],
   EXPO_TOKEN: ["GitHub Environments", "EAS secret store"],
   EAS_PROJECT_ID: ["GitHub Environments", "EAS project settings"],
   GITHUB_TOKEN: ["GitHub Actions runtime"],
-  GITHUB_REPOSITORY: ["GitHub Actions runtime"],
+  GITHUB_REPOSITORY: ["GitHub Actions runtime", "release external evidence"],
   SENTRY_DSN: ["GitHub Environments", "provider secret store"],
   SLACK_WEBHOOK_URL: ["GitHub Environments", "provider secret store"],
 });
@@ -106,6 +107,8 @@ const requiredSecretNameSet = new Set(REQUIRED_RUNTIME_SECRET_NAMES);
 const proofSecrets = (proof) =>
   isPlainObject(proof?.secrets) ? proof.secrets : {};
 
+const section = (value, key) => (isPlainObject(value?.[key]) ? value[key] : {});
+
 const stringArray = (value) =>
   Array.isArray(value)
     ? value
@@ -166,6 +169,21 @@ const validateNoSecretProof = (proof, proofPath) => {
   return proof;
 };
 
+const validateNoSecretExternalEvidence = (evidence, evidencePath) => {
+  if (!isPlainObject(evidence)) return {};
+  if (
+    evidence.schemaVersion !== 1 ||
+    evidence.secretsRedacted !== true ||
+    evidence.containsSecretValues === true ||
+    containsRawSecretValue(evidence)
+  ) {
+    throw new Error(
+      `${evidencePath} must use schemaVersion 1, secretsRedacted=true, and contain no raw secret values`,
+    );
+  }
+  return evidence;
+};
+
 const readProof = (rootDir, proofPath) => {
   const localProof = readJsonIfPresent(rootDir, proofPath);
   if (localProof) return validateNoSecretProof(localProof, proofPath);
@@ -195,16 +213,108 @@ const entryForSecret = (proof, secretName) => {
   };
 };
 
+const externalEvidenceIdentifierEntry = (externalEvidence, secretName) => {
+  const github = section(externalEvidence, "github");
+  const cloudflare = section(externalEvidence, "cloudflare");
+  const neon = section(externalEvidence, "neon");
+
+  if (
+    secretName === "GITHUB_TOKEN" &&
+    github.appInstalled === true &&
+    github.repositoryMatched === true
+  ) {
+    return {
+      verified: true,
+      stores: ["GitHub Actions runtime"],
+      note: "GITHUB_TOKEN is verified as the automatic GitHub Actions runtime token for the matched Salary Hijacking repository without storing the token value.",
+    };
+  }
+
+  if (
+    secretName === "GITHUB_REPOSITORY" &&
+    github.repositoryMatched === true &&
+    typeof github.expectedRepository === "string" &&
+    github.expectedRepository.trim().length > 0
+  ) {
+    return {
+      verified: true,
+      stores: ["release external evidence"],
+      note: "GITHUB_REPOSITORY matches the verified Salary Hijacking GitHub release target without storing a token.",
+    };
+  }
+
+  if (
+    secretName === "CLOUDFLARE_ACCOUNT_ID" &&
+    cloudflare.accountObserved === true &&
+    typeof cloudflare.observedAccountId === "string" &&
+    cloudflare.observedAccountId.trim().length > 0
+  ) {
+    return {
+      verified: true,
+      stores: ["release external evidence"],
+      note: "CLOUDFLARE_ACCOUNT_ID presence is verified from read-only Cloudflare connector account evidence without storing an API token.",
+    };
+  }
+
+  if (
+    secretName === "CF_ADMIN_WORKER_NAME" &&
+    cloudflare.adminWorkerMatched === true &&
+    typeof cloudflare.expectedAdminWorker === "string" &&
+    cloudflare.expectedAdminWorker.trim() === "salary-hijacking-admin"
+  ) {
+    return {
+      verified: true,
+      stores: ["Cloudflare Worker config"],
+      note: "CF_ADMIN_WORKER_NAME matches the verified Salary Hijacking Admin Worker target without storing secret values.",
+    };
+  }
+
+  if (
+    secretName === "NEON_PROJECT_ID" &&
+    neon.projectMatched === true &&
+    typeof neon.matchedProjectId === "string" &&
+    neon.matchedProjectId.trim().length > 0
+  ) {
+    return {
+      verified: true,
+      stores: ["release external evidence"],
+      note: "NEON_PROJECT_ID presence is verified from read-only Neon project evidence without storing a Neon API key or database URL.",
+    };
+  }
+
+  return null;
+};
+
+const entryForSecretWithExternalEvidence = ({
+  proof,
+  externalEvidence,
+  secretName,
+}) => {
+  const proofEntry = entryForSecret(proof, secretName);
+  if (proofEntry.verified) return proofEntry;
+  return (
+    externalEvidenceIdentifierEntry(externalEvidence, secretName) ?? proofEntry
+  );
+};
+
 export const buildSecretsEvidence = ({
   rootDir = process.cwd(),
   proofPath = DEFAULT_PROOF_PATH,
   now = () => new Date(),
 } = {}) => {
   const proof = readProof(rootDir, proofPath);
+  const externalEvidence = validateNoSecretExternalEvidence(
+    readJsonIfPresent(rootDir, EXTERNAL_RELEASE_EVIDENCE_PATH),
+    EXTERNAL_RELEASE_EVIDENCE_PATH,
+  );
   const secrets = Object.fromEntries(
     REQUIRED_RUNTIME_SECRET_NAMES.map((secretName) => [
       secretName,
-      entryForSecret(proof, secretName),
+      entryForSecretWithExternalEvidence({
+        externalEvidence,
+        proof,
+        secretName,
+      }),
     ]),
   );
   const unverifiedSecretNames = REQUIRED_RUNTIME_SECRET_NAMES.filter(
