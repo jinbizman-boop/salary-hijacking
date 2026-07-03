@@ -10,6 +10,7 @@ const FORBIDDEN_API_HELPERS = [
 const INTERNAL_TABS_ROUTE = /(["'`])\/\(tabs\)(?:\/[^"'`]*)?\1/g;
 const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
+const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 
 function collectAppSourceFiles(directory: string): readonly string[] {
   const files: string[] = [];
@@ -74,6 +75,18 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('routeKey === "root"');
     expect(source).toContain("shouldRouteReadyStateToHome");
     expect(source).toContain("router.replace(SALARY_HOME_ROUTE as never)");
+  });
+
+  it("keeps the onboarding route implemented for incomplete new users", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const onboarding = readFileSync(ONBOARDING_SCREEN, "utf8");
+
+    expect(rootLayout).toContain('const ONBOARDING_ROUTE = "/onboarding"');
+    expect(onboarding).toContain("OnboardingScreen");
+    expect(onboarding).toContain("/plan");
+    expect(onboarding).toContain("/salary");
+    expect(onboarding).toContain("serverAuthority=true");
+    expect(onboarding).toContain("rawFinancialData=false");
   });
 
   it("keeps reset-password available as a public auth recovery route", () => {
