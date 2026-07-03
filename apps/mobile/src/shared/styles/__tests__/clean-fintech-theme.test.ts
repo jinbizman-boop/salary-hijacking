@@ -218,6 +218,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("deleteSalaryVariableExpense");
     expect(cleanScreens).toContain(".deleteVariableExpense(");
     expect(cleanScreens).toContain("setServerVariableExpenses");
+    expect(cleanScreens).toContain("updatingVariableExpenseId !== null");
+    expect(cleanScreens).toContain("deletingVariableExpenseId !== null");
+    expect(cleanScreens).toContain("disabled={updating}");
+    expect(cleanScreens).toContain("disabled={deleting}");
   });
 
   it("keeps salary home fixed expenses hydrated from the server before static fallback", () => {

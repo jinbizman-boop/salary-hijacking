@@ -3074,8 +3074,16 @@ function VariableExpenseActionRow({
           {item.paymentMethod}
         </Text>
       </View>
-      <SmallButton label={updating ? "수정중" : "수정"} onPress={onUpdate} />
-      <SmallButton label={deleting ? "삭제중" : "삭제"} onPress={onDelete} />
+      <SmallButton
+        disabled={updating}
+        label={updating ? "수정중" : "수정"}
+        onPress={onUpdate}
+      />
+      <SmallButton
+        disabled={deleting}
+        label={deleting ? "삭제중" : "삭제"}
+        onPress={onDelete}
+      />
     </View>
   );
 }
