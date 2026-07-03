@@ -14,6 +14,7 @@ import {
 
 const DEFAULT_INPUT_PATH = "release/cloudflare-observation.local.json";
 const DEFAULT_OUTPUT_PATH = "release/cloudflare-proof.local.json";
+const DEFAULT_TARGETS_PATH = "release/release-targets.json";
 
 const resolveFromCwd = (filePath) =>
   path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
@@ -27,6 +28,25 @@ const readJsonFile = (filePath, { missingFallback } = {}) => {
   return JSON.parse(
     fs.readFileSync(absolutePath, "utf8").replace(/^\uFEFF/, ""),
   );
+};
+
+export const readCloudflareReleaseTargets = ({
+  targetsPath = DEFAULT_TARGETS_PATH,
+} = {}) => {
+  const targets = readJsonFile(targetsPath, {
+    missingFallback: () => ({ cloudflare: {} }),
+  });
+  const cloudflareTargets = isPlainObject(targets.cloudflare)
+    ? targets.cloudflare
+    : {};
+
+  return {
+    expectedWorkers: stringArray(cloudflareTargets.expectedWorkers),
+    expectedAdminWorker:
+      typeof cloudflareTargets.expectedAdminWorker === "string"
+        ? cloudflareTargets.expectedAdminWorker.trim()
+        : "",
+  };
 };
 
 const section = (value, key) => (isPlainObject(value?.[key]) ? value[key] : {});
@@ -234,7 +254,12 @@ const isCliEntrypoint = () =>
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isCliEntrypoint()) {
-  const proof = collectCloudflareProof();
+  const { expectedWorkers, expectedAdminWorker } =
+    readCloudflareReleaseTargets();
+  const proof = collectCloudflareProof({
+    expectedWorkers,
+    expectedAdminWorker,
+  });
   const verified =
     proof.workers.productionDeployVerified === true &&
     proof.workers.adminWorkerVerified === true &&

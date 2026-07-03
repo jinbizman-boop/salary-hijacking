@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { collectCloudflareProof } from "./collect-cloudflare-proof.mjs";
+import {
+  collectCloudflareProof,
+  readCloudflareReleaseTargets,
+} from "./collect-cloudflare-proof.mjs";
 
 const expectedWorkers = [
   "salary-hijacking-api",
@@ -98,6 +101,22 @@ test("normalizes no-secret Cloudflare observation into release proof booleans", 
     written,
     /cf_live_token_value|-----BEGIN [A-Z ]*PRIVATE KEY-----/i,
   );
+});
+
+test("reads expected Worker targets from release manifest for CLI proof collection", () => {
+  const rootDir = makeRoot();
+  const targetsPath = writeJson(rootDir, "release/release-targets.json", {
+    schemaVersion: 1,
+    cloudflare: {
+      expectedWorkers,
+      expectedAdminWorker: "salary-hijacking-admin",
+    },
+  });
+
+  const targets = readCloudflareReleaseTargets({ targetsPath });
+
+  assert.deepEqual(targets.expectedWorkers, expectedWorkers);
+  assert.equal(targets.expectedAdminWorker, "salary-hijacking-admin");
 });
 
 test("keeps proof false for incomplete observations", () => {

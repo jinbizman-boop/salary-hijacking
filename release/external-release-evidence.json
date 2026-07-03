@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-01T08:12:13.024Z",
-  "source": "Codex connector checks refreshed for Cloudflare runtime resources, Neon project/branch/compute resources, GitHub app account evidence, user-provided GitHub repository URL/screenshot, and authenticated git push/git ls-remote verification on 2026-07-01",
+  "observedAt": "2026-07-03T16:48:23.313Z",
+  "source": "Codex connector checks refreshed for Cloudflare runtime resources, Neon project/branch/compute resources, GitHub app account evidence, user-provided GitHub repository URL/screenshot, authenticated git push/git ls-remote verification, and no-secret Cloudflare Worker/Queue/cron bootstrap proof through 2026-07-03",
   "secretsRedacted": true,
   "github": {
     "connectorReachable": true,
@@ -30,22 +30,22 @@
       "salary-hijacking-scheduler",
       "salary-hijacking-admin"
     ],
-    "missingWorkers": [
-      "salary-hijacking-api",
-      "salary-hijacking-notifications",
-      "salary-hijacking-scheduler",
-      "salary-hijacking-admin"
-    ],
+    "missingWorkers": [],
     "expectedAdminWorker": "salary-hijacking-admin",
     "adminDeploymentType": "workers-opennext",
-    "adminWorkerMatched": false,
-    "observedWorkerNames": [],
-    "runtimeReadOnlyVerifiedAt": "2026-07-01T08:12:13.024Z",
-    "observedQueueCount": 0,
+    "adminWorkerMatched": true,
+    "observedWorkerNames": [
+      "salary-hijacking-admin",
+      "salary-hijacking-api",
+      "salary-hijacking-notifications",
+      "salary-hijacking-scheduler"
+    ],
+    "runtimeReadOnlyVerifiedAt": "2026-07-03T16:48:23.313Z",
+    "observedQueueCount": 8,
     "r2ApiReadBlockedByAccountActivation": true,
     "r2ReadErrorCode": "10042",
     "salaryHijackingZoneObserved": false,
-    "observedZoneNames": ["retrogames.kr"],
+    "observedZoneNames": [],
     "observedPagesProjectNames": ["retro-db"],
     "productionDryRunVerified": true,
     "productionDryRunVerifiedAt": "2026-07-01T05:06:36Z",
@@ -61,7 +61,7 @@
       "notifications.salaryhijacking.com",
       "scheduler.salaryhijacking.com"
     ],
-    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-01T08:12:13.024Z. The account returned zero Workers and zero Queues. The R2 bucket list endpoint returned Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The zones list observed retrogames.kr only and did not observe salaryhijacking.com. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. The canonical admin target is now the OpenNext Worker salary-hijacking-admin, not a Pages project. No matching Salary Hijacking admin Worker was observed. Production Wrangler dry-runs for API, Notifications, and Scheduler passed again on 2026-07-01T05:06:36Z after the API Worker config added the salaryhijacking.com and www.salaryhijacking.com public app/legal custom-domain targets for /, /privacy, /support, and /terms. No Worker was deployed and no Cloudflare resource existence proof is claimed."
+    "note": "Cloudflare connector account access was refreshed for runtime resources at 2026-07-03T16:48:23.313Z. Salary Hijacking bootstrap Workers were created and observed for salary-hijacking-api, salary-hijacking-notifications, salary-hijacking-scheduler, and salary-hijacking-admin, with no secret values or Worker source stored in tracked evidence. Production Queue and dead-letter Queue resource names were created and observed for operations, notifications, scheduler, and growth flows; API, Notifications, and Scheduler cron triggers were configured and observed. The R2 bucket list endpoint still returns Cloudflare error 10042 indicating R2 must be enabled through the dashboard before bucket proof can be collected. The salaryhijacking.com zone was not observed, so custom domains, public URL reachability, and TLS certificate proof remain blocked. A previously observed Pages project named retro-db is unrelated and must not be used for Salary Hijacking. Production Wrangler dry-runs for API, Notifications, and Scheduler passed on 2026-07-01T05:06:36Z after the API Worker config added the salaryhijacking.com and www.salaryhijacking.com public app/legal custom-domain targets for /, /privacy, /support, and /terms."
   },
   "neon": {
     "connectorReachable": true,
