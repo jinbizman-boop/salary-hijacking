@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import * as DocumentPicker from "expo-document-picker";
 import { useRouter } from "expo-router";
 import {
   Image,
@@ -53,6 +54,7 @@ import type {
   ProfileSnapshot,
   ProfileSupportTicketCategory,
 } from "../../features/profile/types";
+import type { UploadAttachment } from "../../features/uploads/types";
 import { mergeProfileSnapshotWithMyPageSummary } from "../../features/profile/api";
 import type {
   NotificationDevice,
@@ -73,6 +75,7 @@ import {
   createMobilePayrollApi,
   createMobilePlanCommitmentsApi,
   createMobileProfileApi,
+  createMobileUploadsApi,
 } from "../api/mobile-api";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
@@ -743,17 +746,79 @@ export function CleanFintechWriteScreen(): React.ReactElement {
     () => createMobileCommunityService(),
     [],
   );
+  const writeUploadsApi = useMemo(() => createMobileUploadsApi(), []);
   const [board, setBoard] = useState<CommunityBoard>("자유 게시판");
   const [anonymous, setAnonymous] = useState(true);
   const [question, setQuestion] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [uploadedCommunityAttachments, setUploadedCommunityAttachments] =
+    useState<readonly UploadAttachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [toast, setToast] = useState(
     "제목, 본문, 게시판을 확인한 뒤 등록할 수 있어요.",
   );
 
   const valid = title.trim().length >= 2 && body.trim().length >= 5;
+  const attachUploadedCommunityAttachments = useCallback(
+    async (postId: string): Promise<void> => {
+      await Promise.all(
+        uploadedCommunityAttachments.map((attachment) =>
+          writeUploadsApi.attachToCommunityPost(
+            attachment.attachmentId,
+            postId,
+          ),
+        ),
+      );
+    },
+    [uploadedCommunityAttachments, writeUploadsApi],
+  );
+
+  const pickCommunityAttachment = useCallback(() => {
+    if (uploadingAttachment) return;
+    setUploadingAttachment(true);
+    setToast("첨부 파일을 선택하고 서버 업로드를 준비하고 있어요.");
+    void DocumentPicker.getDocumentAsync({
+      copyToCacheDirectory: true,
+      multiple: false,
+      type: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+    })
+      .then(async (result) => {
+        if (result.canceled) {
+          setToast("첨부 선택을 취소했어요.");
+          return;
+        }
+        const asset = result.assets[0];
+        if (!asset) {
+          setToast("선택한 첨부 파일을 확인하지 못했어요.");
+          return;
+        }
+        const response = await fetch(asset.uri);
+        const bytes = await response.arrayBuffer();
+        const contentType =
+          asset.mimeType ??
+          response.headers.get("content-type") ??
+          "application/octet-stream";
+        const uploaded = await writeUploadsApi.directUploadCommunityAttachment({
+          bytes,
+          contentType,
+          fileName: asset.name || "community-attachment",
+          sizeBytes: asset.size ?? bytes.byteLength,
+        });
+        setUploadedCommunityAttachments((current) => [...current, uploaded]);
+        setToast(
+          "첨부 파일이 서버 업로드에 등록됐어요. 게시글 등록 시 연결됩니다.",
+        );
+      })
+      .catch(() => {
+        setToast(
+          "첨부 파일을 업로드하지 못했어요. 파일 형식과 네트워크를 확인해 주세요.",
+        );
+      })
+      .finally(() => setUploadingAttachment(false));
+  }, [uploadingAttachment, writeUploadsApi]);
+
   const submitCommunityPost = useCallback(() => {
     if (!valid || submitting) return;
     const draft: CommunityPostDraft = {
@@ -768,9 +833,21 @@ export function CleanFintechWriteScreen(): React.ReactElement {
     setToast("게시글을 서버 커뮤니티에 등록하는 중이에요.");
     void writeCommunityService
       .publishPost(draft)
-      .then(() => {
+      .then(async (response) => {
+        const data = communityResponseData(response);
+        const postId =
+          typeof data === "object" &&
+          data !== null &&
+          "postId" in data &&
+          typeof data.postId === "string"
+            ? data.postId
+            : null;
+        if (postId && uploadedCommunityAttachments.length > 0) {
+          await attachUploadedCommunityAttachments(postId);
+        }
         setTitle("");
         setBody("");
+        setUploadedCommunityAttachments([]);
         setToast("게시글이 서버에 등록되었습니다. 커뮤니티로 이동합니다.");
       })
       .catch(() => {
@@ -781,11 +858,13 @@ export function CleanFintechWriteScreen(): React.ReactElement {
       .finally(() => setSubmitting(false));
   }, [
     anonymous,
+    attachUploadedCommunityAttachments,
     board,
     body,
     question,
     submitting,
     title,
+    uploadedCommunityAttachments.length,
     valid,
     writeCommunityService,
   ]);
@@ -844,10 +923,18 @@ export function CleanFintechWriteScreen(): React.ReactElement {
               value={body}
             />
             <View style={styles.attachmentRow}>
-              <SmallButton label="사진" />
-              <SmallButton label="이미지" />
-              <SmallButton label="파일" />
+              <SmallButton label="사진" onPress={pickCommunityAttachment} />
+              <SmallButton label="이미지" onPress={pickCommunityAttachment} />
+              <SmallButton label="파일" onPress={pickCommunityAttachment} />
             </View>
+            {uploadedCommunityAttachments.map((attachment) => (
+              <ListRow
+                icon="📎"
+                key={attachment.attachmentId}
+                meta={`${attachment.contentType} · ${attachment.scanStatus}`}
+                title={attachment.fileName}
+              />
+            ))}
           </SectionCard>
           <SectionCard>
             <ToggleRow

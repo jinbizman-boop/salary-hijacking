@@ -2,6 +2,7 @@ import {
   createMobileAuthenticatedFetcher,
   createMobileAuthApi,
   createMobileBudgetApi,
+  createMobileUploadsApi,
 } from "../mobile-api";
 
 describe("mobile api factory", () => {
@@ -259,5 +260,52 @@ describe("mobile api factory", () => {
     expect(second.ok).toBe(true);
     expect(refreshCount).toBe(1);
     expect(calls).toHaveLength(4);
+  });
+
+  it("creates an authenticated uploads API for community attachments", async () => {
+    const calls: Request[] = [];
+    const uploadsApi = createMobileUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "mobile-upload-factory-test",
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
+        return new Response(
+          JSON.stringify({
+            data: {
+              attachmentId: "att_factory_1",
+              contentType: "image/png",
+              fileName: "proof.png",
+              scanStatus: "PENDING",
+              sizeBytes: 4,
+              status: "UPLOADED",
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        );
+      },
+      tokenStore: {
+        getItemAsync: async () => "upload.access.jwt",
+      },
+    });
+
+    await uploadsApi.directUploadCommunityAttachment({
+      bytes: new Uint8Array([1, 2, 3, 4]).buffer,
+      contentType: "image/png",
+      fileName: "proof.png",
+      sizeBytes: 4,
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/uploads/direct",
+    );
+    expect(calls[0]?.headers.get("authorization")).toBe(
+      "Bearer upload.access.jwt",
+    );
+    expect(calls[0]?.headers.get("x-upload-purpose")).toBe(
+      "COMMUNITY_ATTACHMENT",
+    );
   });
 });

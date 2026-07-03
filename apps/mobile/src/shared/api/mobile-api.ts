@@ -18,6 +18,8 @@ import { createPlanCommitmentsApi } from "../../features/plan/api";
 import type { PlanCommitmentsApiClient } from "../../features/plan/types";
 import { createProfileApi } from "../../features/profile/api";
 import type { ProfileApiClient } from "../../features/profile/types";
+import { createUploadsApi } from "../../features/uploads/api";
+import type { UploadsApiClient } from "../../features/uploads/types";
 import { readMobileApiBaseUrl } from "./api-base";
 import {
   attachMobileBearerToken,
@@ -216,6 +218,20 @@ export function createMobileProfileApi(
 ): ProfileApiClient {
   const fetcher = createMobileAuthenticatedFetcher(options);
   return createProfileApi({
+    baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
+    platform: mobileClientPlatform(),
+    fetcher,
+    ...(options.createCorrelationId
+      ? { createCorrelationId: options.createCorrelationId }
+      : {}),
+  });
+}
+
+export function createMobileUploadsApi(
+  options: MobileApiFactoryOptions = {},
+): UploadsApiClient {
+  const fetcher = createMobileAuthenticatedFetcher(options);
+  return createUploadsApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
     fetcher,
