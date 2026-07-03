@@ -1104,6 +1104,7 @@ export function CleanFintechSplashScreen(): React.ReactElement {
 }
 
 export function CleanFintechSignupScreen(): React.ReactElement {
+  const signupRouter = useRouter();
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
@@ -1132,6 +1133,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
       });
       if (response.data?.status === "AUTHENTICATED") {
         setToast("가입 요청을 서버에 등록했어요. 서버 인증이 완료됐어요.");
+        signupRouter.replace("/salary");
       } else if (response.data?.status === "EMAIL_VERIFICATION_REQUIRED") {
         setToast("가입 요청을 서버에 등록했어요. 이메일 인증을 확인해 주세요.");
       } else {
@@ -1146,7 +1148,15 @@ export function CleanFintechSignupScreen(): React.ReactElement {
     } finally {
       setSubmitting(false);
     }
-  }, [email, nickname, password, signupAuthApi, submitting, valid]);
+  }, [
+    email,
+    nickname,
+    password,
+    signupAuthApi,
+    signupRouter,
+    submitting,
+    valid,
+  ]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
