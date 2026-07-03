@@ -528,6 +528,84 @@ describe("Neon users support ticket repository", () => {
     expect(JSON.stringify(updated)).not.toContain("salary");
   });
 
+  it("loads the DB-backed profile summary without exposing owner ids or raw private payloads", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              ad_partner_accepted: true,
+              ads_financial_targeting_used: false,
+              community_comments: 4,
+              community_posts: 3,
+              content_recommendation_accepted: true,
+              current_exp: 40,
+              financial_raw_data_exposed: false,
+              latest_export_requested_at: "2026-07-03T06:00:00.000Z",
+              latest_export_status: "READY",
+              level: 18,
+              next_actions: "Profile ready; review LV UP routine",
+              notification_unread: 2,
+              privacy_export_count: 2,
+              profile_completed: true,
+              raw_personal_data_exposed: false,
+              raw_token_exposed: false,
+              self_care_score: 91,
+              sensitive_financial_targeting_accepted: false,
+              status: "ACTIVE",
+              theme: "DARK",
+              total_exp: 1740,
+              user_id: userId,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.summary(createRuntime());
+
+    expect(result).toMatchObject({
+      adPartnerAccepted: true,
+      adsFinancialTargetingUsed: false,
+      communityComments: 4,
+      communityPosts: 3,
+      contentRecommendationAccepted: true,
+      financialRawDataExposed: false,
+      latestExportRequestedAt: "2026-07-03T06:00:00.000Z",
+      latestExportStatus: "READY",
+      level: 18,
+      levelXp: 40,
+      nextActions: "Profile ready; review LV UP routine",
+      notificationUnread: 2,
+      privacyExportCount: 2,
+      profileCompleted: true,
+      rawPersonalDataExposed: false,
+      rawTokenExposed: false,
+      selfCareScore: 91,
+      sensitiveFinancialTargetingAccepted: false,
+      status: "ACTIVE",
+      theme: "DARK",
+      totalExp: 1740,
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain("salary");
+    expect(calls.map((call) => call.operationName)).toEqual(["users.summary"]);
+    expect(calls[0]?.sqlText).toContain("from public.users");
+    expect(calls[0]?.sqlText).toContain("left join public.user_profiles");
+    expect(calls[0]?.sqlText).toContain("left join public.user_settings");
+    expect(calls[0]?.sqlText).toContain("left join public.user_growth_stats");
+    expect(calls[0]?.sqlText).toContain("from public.user_consents");
+    expect(calls[0]?.sqlText).toContain("from public.user_privacy_exports");
+    expect(calls[0]?.params).toContain(userId);
+  });
+
   it("loads the DB-backed profile without returning raw email or financial data", async () => {
     const calls: Array<{
       readonly operationName: string;

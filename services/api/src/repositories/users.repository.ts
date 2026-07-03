@@ -268,9 +268,12 @@ function rowBool(row: DbRow, key: string, fallback = false): boolean {
 
 function rowNumber(row: DbRow, key: string, fallback: number): number {
   const value = row[key];
-  return typeof value === "number" && Number.isInteger(value)
-    ? value
-    : fallback;
+  if (typeof value === "number" && Number.isInteger(value)) return value;
+  if (typeof value === "string" && /^[0-9]+$/.test(value)) {
+    const parsed = Number(value);
+    if (Number.isSafeInteger(parsed)) return parsed;
+  }
+  return fallback;
 }
 
 function settingsFromRow(row: DbRow): JsonRecord {
@@ -344,6 +347,38 @@ function consentsFromAggregateRow(row: DbRow): JsonRecord {
     sensitiveFinancialTargetingAccepted: false,
     termsAccepted: rowBool(row, "terms_accepted", true),
     updatedAt: text(row.updated_at, new Date().toISOString()),
+  };
+}
+
+function summaryFromRow(row: DbRow): JsonRecord {
+  return {
+    adPartnerAccepted: rowBool(row, "ad_partner_accepted"),
+    adsFinancialTargetingUsed: false,
+    communityComments: rowNumber(row, "community_comments", 0),
+    communityPosts: rowNumber(row, "community_posts", 0),
+    contentRecommendationAccepted: rowBool(
+      row,
+      "content_recommendation_accepted",
+    ),
+    financialRawDataExposed: false,
+    latestExportRequestedAt: nullableText(row.latest_export_requested_at),
+    latestExportStatus: nullableText(row.latest_export_status),
+    level: rowNumber(row, "level", 1),
+    levelXp: rowNumber(row, "current_exp", 0),
+    nextActions: text(
+      row.next_actions,
+      "Complete profile; review LV UP routine",
+    ),
+    notificationUnread: rowNumber(row, "notification_unread", 0),
+    privacyExportCount: rowNumber(row, "privacy_export_count", 0),
+    profileCompleted: rowBool(row, "profile_completed"),
+    rawPersonalDataExposed: false,
+    rawTokenExposed: false,
+    selfCareScore: rowNumber(row, "self_care_score", 0),
+    sensitiveFinancialTargetingAccepted: false,
+    status: text(row.status, "ACTIVE"),
+    theme: text(row.theme, "SYSTEM"),
+    totalExp: rowNumber(row, "total_exp", 0),
   };
 }
 
@@ -584,18 +619,96 @@ export function createNeonUsersRepository<TEnv = unknown>(
     },
 
     async summary(runtime) {
-      return {
-        adPartnerAccepted: false,
-        contentRecommendationAccepted: false,
-        financialRawDataExposed: false,
-        level: 1,
-        nextActions: "급여계획 최신화, 일일 예산 확인, LV UP 루틴 인증",
-        profileCompleted: false,
-        sensitiveFinancialTargetingAccepted: false,
-        status: "ACTIVE",
-        theme: "SYSTEM",
-        userId: runtime.principal.userId,
-      };
+      const result = await query(
+        `
+          with latest_consents as (
+            select distinct on (consent_type)
+              consent_type,
+              granted
+            from public.user_consents
+            where user_id = $1
+            order by consent_type, created_at desc
+          ),
+          latest_export as (
+            select status, created_at
+            from public.user_privacy_exports
+            where user_id = $1
+            order by created_at desc, export_id desc
+            limit 1
+          )
+          select
+            u.status,
+            coalesce(s.theme, 'SYSTEM') as theme,
+            coalesce(g.level, 1) as level,
+            coalesce(g.current_exp, 0) as current_exp,
+            coalesce(g.total_exp, 0) as total_exp,
+            (
+              coalesce(g.reading_score, 0)
+              + coalesce(g.news_score, 0)
+              + coalesce(g.english_score, 0)
+              + coalesce(g.health_score, 0)
+              + coalesce(g.quiz_score, 0)
+              + coalesce(g.routine_score, 0)
+            ) as self_care_score,
+            (
+              coalesce(p.display_name, u.nickname) is not null
+              and p.avatar_attachment_id is not null
+            ) as profile_completed,
+            coalesce(
+              (select granted from latest_consents where consent_type = 'ADS_PARTNER'),
+              false
+            ) as ad_partner_accepted,
+            coalesce(
+              (select granted from latest_consents where consent_type = 'CONTENT_RECOMMENDATION'),
+              false
+            ) as content_recommendation_accepted,
+            (select count(*) from public.user_privacy_exports where user_id = $1) as privacy_export_count,
+            (select status from latest_export) as latest_export_status,
+            (select created_at from latest_export) as latest_export_requested_at,
+            (
+              select count(*)
+              from public.community_posts
+              where user_id = $1
+                and status <> 'DELETED'
+            ) as community_posts,
+            (
+              select count(*)
+              from public.community_comments
+              where user_id = $1
+                and status <> 'DELETED'
+            ) as community_comments,
+            (
+              select count(*)
+              from public.notifications
+              where user_id = $1
+                and status = 'SENT'
+                and read_at is null
+            ) as notification_unread,
+            case
+              when p.avatar_attachment_id is null then 'Complete profile; add avatar'
+              when coalesce(g.level, 1) <= 1 then 'Start LV UP routine'
+              else 'Profile ready; review LV UP routine'
+            end as next_actions,
+            false as financial_raw_data_exposed,
+            false as raw_personal_data_exposed,
+            false as raw_token_exposed,
+            false as ads_financial_targeting_used,
+            false as sensitive_financial_targeting_accepted
+          from public.users u
+          left join public.user_profiles p
+            on p.user_id = u.user_id
+          left join public.user_settings s
+            on s.user_id = u.user_id
+          left join public.user_growth_stats g
+            on g.user_id = u.user_id
+          where u.user_id = $1
+          limit 1
+        `,
+        [runtime.principal.userId],
+        { env: runtime.env, operationName: "users.summary" },
+      );
+      const row = result.rows[0];
+      return row ? summaryFromRow(row) : summaryFromRow({});
     },
 
     async activity(_input, page, runtime) {
