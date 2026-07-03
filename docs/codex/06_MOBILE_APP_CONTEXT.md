@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 30 suites and 113 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 30 suites and 114 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -276,6 +276,11 @@ As of 2026-07-02, Salary Home also hydrates its daily-budget base values from
 The fallback remains a non-authoritative UI preview; the `/api/v1/daily-budgets`
 server response remains the source of truth for daily limit, spent amount, and
 remaining amount.
+As of 2026-07-03, Salary Home also hydrates the fixed expense list from
+`PlanCommitmentsApiClient.getCommitments()` before using the static fixed
+expense fallback rows. The home fixed expense section now renders
+server-authoritative `/api/v1/fixed-expenses` items when available while keeping
+the existing non-authoritative fallback for offline display.
 As of 2026-07-02, Plan also uses `PayrollApiClient.getCurrent()` and
 `PayrollApiClient.recalculate()` through `/api/v1/payroll/current` and
 `/api/v1/payroll/recalculate` before falling back to the existing local preview.

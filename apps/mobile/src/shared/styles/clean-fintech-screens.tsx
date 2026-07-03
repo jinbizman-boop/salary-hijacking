@@ -1065,6 +1065,10 @@ export function CleanFintechPostDetailScreen({
 
 function SalaryHomeScreen(): React.ReactElement {
   const budgetApi = useMemo(() => createMobileBudgetApi(), []);
+  const salaryPlanCommitmentsApi = useMemo(
+    () => createMobilePlanCommitmentsApi(),
+    [],
+  );
   const [expenseDraft, setExpenseDraft] = useState("");
   const [addedExpenses, setAddedExpenses] = useState<
     readonly VariableExpenseEntry[]
@@ -1076,6 +1080,9 @@ function SalaryHomeScreen(): React.ReactElement {
   const [savingExpense, setSavingExpense] = useState(false);
   const [serverBudgetSnapshot, setServerBudgetSnapshot] =
     useState<DailyBudgetSnapshot | null>(null);
+  const [salaryFixedExpenses, setSalaryFixedExpenses] = useState<
+    readonly PlanFixedExpenseCommitment[]
+  >([]);
 
   const refreshServerBudgetSnapshot = useCallback(
     async (
@@ -1121,6 +1128,23 @@ function SalaryHomeScreen(): React.ReactElement {
     void refreshServerBudgetSnapshot();
   }, [refreshServerBudgetSnapshot]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const commitmentsPromise = salaryPlanCommitmentsApi.getCommitments();
+    void commitmentsPromise
+      .then((commitments) => {
+        if (cancelled) return;
+        setSalaryFixedExpenses(commitments.fixedExpenses);
+      })
+      .catch(() => {
+        if (!cancelled) setSalaryFixedExpenses([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [salaryPlanCommitmentsApi]);
+
   const baseDailyLimit = serverBudgetSnapshot?.dailyLimit ?? 20_000;
   const baseSpentToday = serverBudgetSnapshot?.spentToday ?? 13_000;
   const baseMonthlyExpense = serverBudgetSnapshot
@@ -1140,6 +1164,9 @@ function SalaryHomeScreen(): React.ReactElement {
   const used = preview.spentToday;
   const remaining = preview.remainingToday;
   const allVariableExpenses = [...variableExpenses, ...addedExpenses];
+  const salaryFixedExpenseRows = salaryFixedExpenses.map(
+    fixedExpenseRowFromServer,
+  );
 
   const handleAddExpense = async (): Promise<void> => {
     const amount = parseKrwInputAmount(expenseDraft);
@@ -1280,14 +1307,23 @@ function SalaryHomeScreen(): React.ReactElement {
       <Toast message={toast} />
       <SectionCard>
         <Text style={styles.sectionTitle}>오늘 빠져나간 고정지출</Text>
-        {fixedExpenses.map((item) => (
-          <ListRow
-            key={item.name}
-            icon={appIcons.subscription}
-            title={item.name}
-            meta={`${item.amount} · ${item.status}`}
-          />
-        ))}
+        {salaryFixedExpenseRows.length > 0
+          ? salaryFixedExpenseRows.map((item) => (
+              <ListRow
+                key={item.id}
+                icon={appIcons.subscription}
+                title={item.title}
+                meta={`${formatMoney(item.amountMinor)}원 · ${item.meta}`}
+              />
+            ))
+          : fixedExpenses.map((item) => (
+              <ListRow
+                key={item.name}
+                icon={appIcons.subscription}
+                title={item.name}
+                meta={`${item.amount} · ${item.status}`}
+              />
+            ))}
       </SectionCard>
       <AdSlot />
       <SectionCard>
