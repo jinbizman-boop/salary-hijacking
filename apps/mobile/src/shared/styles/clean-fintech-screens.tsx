@@ -3805,11 +3805,26 @@ function LevelScreen(): React.ReactElement {
   const level = serverGrowthDashboard?.profile.level ?? 18;
   const progress = Math.min(100, (xp / 999) * 100);
 
+  const markMissionCompleteAfterServerAck = useCallback((missionId: string) => {
+    setCompleted((current) => new Set(current).add(missionId));
+  }, []);
+
+  const revertMissionCompletionOnServerFailure = useCallback(
+    (missionId: string) => {
+      setCompleted((current) => {
+        const next = new Set(current);
+        next.delete(missionId);
+        return next;
+      });
+    },
+    [],
+  );
+
   const completeMission = useCallback(
     (mission: Mission, done: boolean) => {
       if (done) return;
-      setCompleted((current) => new Set(current).add(mission.id));
       if (!mission.serverTaskId) {
+        markMissionCompleteAfterServerAck(mission.id);
         setToast(`${mission.title} 완료! +${mission.xp} XP가 반영됐어요.`);
         return;
       }
@@ -3846,17 +3861,21 @@ function LevelScreen(): React.ReactElement {
                 }
               : current,
           );
+          markMissionCompleteAfterServerAck(mission.id);
           setToast(
             `${mission.title} 서버 기록 완료! +${result.expDelta} XP가 반영됐어요.`,
           );
         })
         .catch(() => {
-          setToast(
-            "서버 기록은 실패했지만 앱 화면에는 임시 완료로 반영했어요.",
-          );
+          revertMissionCompletionOnServerFailure(mission.id);
+          setToast("서버 기록에 실패했어요. 미션 완료는 반영하지 않았어요.");
         });
     },
-    [growthApi],
+    [
+      growthApi,
+      markMissionCompleteAfterServerAck,
+      revertMissionCompletionOnServerFailure,
+    ],
   );
   const openMission = useCallback(
     (mission: Mission, done: boolean) => {

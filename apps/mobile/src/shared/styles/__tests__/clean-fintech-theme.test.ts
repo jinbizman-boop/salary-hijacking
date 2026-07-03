@@ -559,6 +559,27 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fallbackMissions");
   });
 
+  it("keeps server-backed LV UP mission completion pending until the Growth API acknowledges it", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const completeMissionSource =
+      cleanScreens.match(
+        /const completeMission = useCallback\([\s\S]*?const openMission = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(completeMissionSource).toContain("recordTaskProgress");
+    expect(completeMissionSource).toContain(
+      "markMissionCompleteAfterServerAck",
+    );
+    expect(completeMissionSource).toContain(
+      "revertMissionCompletionOnServerFailure",
+    );
+    expect(completeMissionSource).not.toMatch(
+      /setCompleted\(\(current\) => new Set\(current\)\.add\(mission\.id\)\);\s*if \(!mission\.serverTaskId\)/u,
+    );
+  });
+
   it("keeps fallback LV UP missions navigating to their detail screens", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
