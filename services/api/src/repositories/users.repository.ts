@@ -232,6 +232,7 @@ function ticketFromRow(row: DbRow): JsonRecord {
 
 function exportFromRow(row: DbRow): JsonRecord {
   return {
+    adsFinancialTargetingUsed: row.ads_financial_targeting_used === true,
     createdAt: text(row.created_at, new Date().toISOString()),
     downloadUrl:
       typeof row.download_url === "string" && row.download_url.trim()
@@ -246,6 +247,8 @@ function exportFromRow(row: DbRow): JsonRecord {
     includeGrowth: row.include_growth === true,
     includeProfile: row.include_profile === true,
     includeSettings: row.include_settings === true,
+    rawPersonalDataIncluded: row.raw_personal_data_included === true,
+    rawTokenIncluded: row.raw_token_included === true,
     status: text(row.status, "REQUESTED"),
   };
 }
@@ -862,28 +865,71 @@ export function createNeonUsersRepository<TEnv = unknown>(
     },
 
     async getExport(exportId, runtime) {
-      return {
-        createdAt: nowIso(runtime),
-        exportId,
-        financialRawDataIncluded: false,
-        status: "READY",
-        userId: runtime.principal.userId,
-      };
+      const result = await query(
+        `
+          select
+            export_id,
+            status,
+            include_profile,
+            include_settings,
+            include_consents,
+            include_community,
+            include_growth,
+            include_financial_summary_only,
+            download_url,
+            expires_at,
+            financial_raw_data_included,
+            raw_personal_data_included,
+            raw_token_included,
+            ads_financial_targeting_used,
+            created_at
+          from public.user_privacy_exports
+          where user_id = $1
+            and export_id = $2
+          limit 1
+        `,
+        [runtime.principal.userId, exportId],
+        { env: runtime.env, operationName: "users.getExport" },
+      );
+      const row = result.rows[0];
+      return row ? exportFromRow(row) : null;
     },
 
     async listExports(page, runtime) {
-      return listResult(
-        [
-          {
-            createdAt: nowIso(runtime),
-            exportId: `uex_${runtime.requestId}`,
-            financialRawDataIncluded: false,
-            status: "READY",
-            userId: runtime.principal.userId,
-          },
-        ],
-        page,
+      const result = await query(
+        `
+          select
+            export_id,
+            status,
+            include_profile,
+            include_settings,
+            include_consents,
+            include_community,
+            include_growth,
+            include_financial_summary_only,
+            download_url,
+            expires_at,
+            financial_raw_data_included,
+            raw_personal_data_included,
+            raw_token_included,
+            ads_financial_targeting_used,
+            created_at,
+            count(*) over() as total_count
+          from public.user_privacy_exports
+          where user_id = $1
+          order by created_at desc, export_id desc
+          limit $2
+          offset $3
+        `,
+        [runtime.principal.userId, page.limit, page.offset],
+        { env: runtime.env, operationName: "users.listExports" },
       );
+      return {
+        items: result.rows.map(exportFromRow),
+        page: page.page,
+        pageSize: page.pageSize,
+        total: rowNumber(result.rows[0] ?? {}, "total_count", 0),
+      };
     },
   };
 }

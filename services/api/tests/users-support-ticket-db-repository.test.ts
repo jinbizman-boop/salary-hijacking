@@ -173,6 +173,155 @@ describe("Neon users support ticket repository", () => {
     expect(calls[0]?.params).toContain(true);
   });
 
+  it("loads a privacy export request from DB without exposing owner ids or raw request reasons", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              ads_financial_targeting_used: false,
+              created_at: "2026-07-03T06:00:00.000Z",
+              download_url: "https://downloads.example.invalid/export.json",
+              export_id: exportId,
+              expires_at: "2026-07-04T06:00:00.000Z",
+              financial_raw_data_included: false,
+              include_community: false,
+              include_consents: true,
+              include_financial_summary_only: true,
+              include_growth: true,
+              include_profile: true,
+              include_settings: true,
+              raw_personal_data_included: false,
+              raw_token_included: false,
+              reason: "contains private explanation",
+              status: "READY",
+              user_id: userId,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.getExport(exportId, createRuntime());
+
+    expect(result).toMatchObject({
+      adsFinancialTargetingUsed: false,
+      createdAt: "2026-07-03T06:00:00.000Z",
+      downloadUrl: "https://downloads.example.invalid/export.json",
+      exportId,
+      financialRawDataIncluded: false,
+      includeFinancialSummaryOnly: true,
+      rawPersonalDataIncluded: false,
+      rawTokenIncluded: false,
+      status: "READY",
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain(
+      "contains private explanation",
+    );
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "users.getExport",
+    ]);
+    expect(calls[0]?.sqlText).toContain("from public.user_privacy_exports");
+    expect(calls[0]?.params).toContain(userId);
+    expect(calls[0]?.params).toContain(exportId);
+  });
+
+  it("lists privacy export requests from DB with pagination and privacy-safe records", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const secondExportId = "55555555-5555-4555-8555-555555555555";
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              ads_financial_targeting_used: false,
+              created_at: "2026-07-03T06:00:00.000Z",
+              download_url: null,
+              export_id: exportId,
+              expires_at: "2026-07-04T06:00:00.000Z",
+              financial_raw_data_included: false,
+              include_community: true,
+              include_consents: true,
+              include_financial_summary_only: true,
+              include_growth: false,
+              include_profile: true,
+              include_settings: true,
+              raw_personal_data_included: false,
+              raw_token_included: false,
+              reason: "first private explanation",
+              status: "REQUESTED",
+              total_count: 2,
+              user_id: userId,
+            },
+            {
+              ads_financial_targeting_used: false,
+              created_at: "2026-07-02T06:00:00.000Z",
+              download_url: null,
+              export_id: secondExportId,
+              expires_at: "2026-07-03T06:00:00.000Z",
+              financial_raw_data_included: false,
+              include_community: false,
+              include_consents: true,
+              include_financial_summary_only: true,
+              include_growth: true,
+              include_profile: true,
+              include_settings: false,
+              raw_personal_data_included: false,
+              raw_token_included: false,
+              reason: "second private explanation",
+              status: "EXPIRED",
+              total_count: 2,
+              user_id: userId,
+            },
+          ],
+          rowCount: 2,
+        };
+      },
+    });
+
+    const result = await repository.listExports(
+      { limit: 20, offset: 0, page: 1, pageSize: 20 },
+      createRuntime(),
+    );
+
+    expect(result).toMatchObject({
+      page: 1,
+      pageSize: 20,
+      total: 2,
+    });
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]).toMatchObject({
+      exportId,
+      financialRawDataIncluded: false,
+      rawPersonalDataIncluded: false,
+      rawTokenIncluded: false,
+      status: "REQUESTED",
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain("private explanation");
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "users.listExports",
+    ]);
+    expect(calls[0]?.sqlText).toContain("from public.user_privacy_exports");
+    expect(calls[0]?.sqlText).toContain("count(*) over()");
+    expect(calls[0]?.params).toContain(userId);
+    expect(calls[0]?.params).toContain(20);
+    expect(calls[0]?.params).toContain(0);
+  });
+
   it("stores withdrawal requests without performing destructive withdrawal or returning the raw reason", async () => {
     const calls: Array<{
       readonly operationName: string;
