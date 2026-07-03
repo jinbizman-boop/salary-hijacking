@@ -1,5 +1,6 @@
 export const PAYROLL_API_PREFIX = "/api/v1/payroll";
 export const PAYROLL_CURRENT_PATH = `${PAYROLL_API_PREFIX}/current`;
+export const PAYROLL_PLAN_PATH = PAYROLL_API_PREFIX;
 export const PAYROLL_RECALCULATE_PATH = `${PAYROLL_API_PREFIX}/recalculate`;
 
 export const PAYROLL_SAFE_ERROR_MESSAGE =

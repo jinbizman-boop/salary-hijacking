@@ -2652,6 +2652,7 @@ function PlanScreen(): React.ReactElement {
     "서버 급여 계획이 없으면 로컬 미리보기로 계산해요.",
   );
   const [recalculatingPlan, setRecalculatingPlan] = useState(false);
+  const [savingPayrollPlan, setSavingPayrollPlan] = useState(false);
   const [planFixedExpenseTitle, setPlanFixedExpenseTitle] =
     useState("새 고정지출");
   const [planFixedExpenseAmount, setPlanFixedExpenseAmount] = useState("19000");
@@ -2765,6 +2766,54 @@ function PlanScreen(): React.ReactElement {
       serverPayrollPlan,
       target,
     ]);
+
+  const saveServerPayrollPlan = useCallback(async (): Promise<void> => {
+    const payrollAmountMinor = nonNegative(salary);
+    const fixedExpenseTotalMinor = nonNegative(expense);
+    const fixedSavingsTotalMinor = nonNegative(target);
+    if (payrollAmountMinor <= 0) {
+      setPlanToast("급여를 0보다 큰 KRW 정수로 입력해 주세요.");
+      return;
+    }
+
+    try {
+      setSavingPayrollPlan(true);
+      const saved = await payrollApi.savePlan({
+        carryOverAmountMinor: serverPayrollPlan?.carryOverAmountMinor ?? 0,
+        emergencyBufferMinor: serverPayrollPlan?.emergencyBufferMinor ?? 0,
+        firstPayrollDate: serverPayrollPlan?.firstPayrollDate ?? "2026-07-25",
+        fixedExpenseTotalMinor,
+        fixedSavingsTotalMinor,
+        incomeType: serverPayrollPlan?.incomeType ?? "NET",
+        memo: serverPayrollPlan?.memo ?? "mobile plan save",
+        payday: serverPayrollPlan?.payday ?? 25,
+        payrollAmountMinor,
+        payrollCycle: serverPayrollPlan?.payrollCycle ?? "MONTHLY",
+        periodEndDate: serverPayrollPlan?.periodEndDate ?? "2026-07-31",
+        periodStartDate: serverPayrollPlan?.periodStartDate ?? "2026-07-01",
+        planId: serverPayrollPlan?.planId ?? null,
+        reservePolicy: serverPayrollPlan?.reservePolicy ?? "ZERO_BASE",
+        title: serverPayrollPlan?.title ?? "모바일 급여 계획",
+        variableExpenseReserveMinor:
+          serverPayrollPlan?.variableExpenseReserveMinor ?? 0,
+      });
+      applyServerPayrollPlan(saved);
+      setPlanToast(
+        "급여 계획을 서버 권위 기준으로 저장했어요. rawFinancialDataExposed=false",
+      );
+    } catch {
+      setPlanToast("급여 계획 저장에 실패했어요. 다시 시도해 주세요.");
+    } finally {
+      setSavingPayrollPlan(false);
+    }
+  }, [
+    applyServerPayrollPlan,
+    expense,
+    payrollApi,
+    salary,
+    serverPayrollPlan,
+    target,
+  ]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -2963,6 +3012,31 @@ function PlanScreen(): React.ReactElement {
         </Text>
       </SectionCard>
       <Toast message={planToast} />
+      <SectionCard>
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>급여 계획 저장</Text>
+          <StatusPill label="serverAuthority" />
+        </View>
+        <Text style={styles.bodyText}>
+          급여, 고정지출, 고정저축 입력값을 서버 기준 계획으로 저장하고 응답
+          계산값으로 화면을 다시 맞춥니다.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          disabled={savingPayrollPlan}
+          onPress={() => {
+            void saveServerPayrollPlan();
+          }}
+          style={[
+            styles.primaryButton,
+            savingPayrollPlan ? styles.disabled : null,
+          ]}
+        >
+          <Text style={styles.primaryButtonText}>
+            {savingPayrollPlan ? "저장 중" : "급여 계획 서버 저장"}
+          </Text>
+        </Pressable>
+      </SectionCard>
       <PlanInputCard
         label="급여 계획"
         value={salary}

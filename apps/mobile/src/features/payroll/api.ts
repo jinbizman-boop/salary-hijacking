@@ -1,5 +1,6 @@
 import {
   PAYROLL_CURRENT_PATH,
+  PAYROLL_PLAN_PATH,
   PAYROLL_RECALCULATE_PATH,
   PAYROLL_SAFE_ERROR_MESSAGE,
 } from "./constants";
@@ -9,6 +10,7 @@ import type {
   PayrollCycle,
   PayrollIncomeType,
   PayrollPlanSnapshot,
+  PayrollPlanSaveRequest,
   PayrollPlanStatus,
   PayrollRecalculateRequest,
   PayrollRecalculateResult,
@@ -270,6 +272,38 @@ function validRecalculateRequest(value: PayrollRecalculateRequest): boolean {
   );
 }
 
+function validPayday(value: unknown): value is number | null {
+  return (
+    value === null || (isNonNegativeInteger(value) && value >= 1 && value <= 31)
+  );
+}
+
+function validSaveRequest(value: PayrollPlanSaveRequest): boolean {
+  return (
+    (value.planId === null ||
+      (typeof value.planId === "string" && value.planId.trim().length > 0)) &&
+    typeof value.title === "string" &&
+    value.title.trim().length > 0 &&
+    value.title.length <= 100 &&
+    (value.incomeType === "NET" || value.incomeType === "GROSS") &&
+    ["MONTHLY", "BIWEEKLY", "WEEKLY", "CUSTOM"].includes(value.payrollCycle) &&
+    isPositiveInteger(value.payrollAmountMinor) &&
+    validPayday(value.payday) &&
+    isDateOnly(value.firstPayrollDate) &&
+    isDateOnly(value.periodStartDate) &&
+    isDateOnly(value.periodEndDate) &&
+    value.periodStartDate <= value.periodEndDate &&
+    isNonNegativeInteger(value.fixedExpenseTotalMinor) &&
+    isNonNegativeInteger(value.fixedSavingsTotalMinor) &&
+    isNonNegativeInteger(value.variableExpenseReserveMinor) &&
+    isNonNegativeInteger(value.emergencyBufferMinor) &&
+    isNonNegativeInteger(value.carryOverAmountMinor) &&
+    ["ZERO_BASE", "CARRY_OVER", "FIXED_BUFFER"].includes(value.reservePolicy) &&
+    (value.memo === null ||
+      (typeof value.memo === "string" && value.memo.length <= 500))
+  );
+}
+
 function normalizeRecalculateResult(value: unknown): PayrollRecalculateResult {
   if (!isRecord(value) || !isRecord(value.data)) {
     throw new PayrollApiError(
@@ -361,6 +395,35 @@ export function createPayrollApi(options: PayrollApiOptions): PayrollApiClient {
         }
         throw error;
       }
+    },
+
+    async savePlan(
+      saveRequest: PayrollPlanSaveRequest,
+    ): Promise<PayrollPlanSnapshot> {
+      if (!validSaveRequest(saveRequest)) {
+        throw new PayrollApiError(
+          0,
+          "PAYROLL_INVALID_SAVE_REQUEST",
+          PAYROLL_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const { planId, ...body } = saveRequest;
+      const path =
+        planId === null
+          ? PAYROLL_PLAN_PATH
+          : `${PAYROLL_PLAN_PATH}/${encodeURIComponent(planId.trim())}`;
+      const result = await request(path, {
+        method: planId === null ? "POST" : "PATCH",
+        body: JSON.stringify({ ...body, title: body.title.trim() }),
+      });
+      if (!isRecord(result) || !("data" in result)) {
+        throw new PayrollApiError(
+          0,
+          "PAYROLL_INVALID_RESPONSE",
+          PAYROLL_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizePlan(result.data);
     },
 
     async recalculate(

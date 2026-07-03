@@ -68,6 +68,25 @@ export type PayrollRecalculateRequest = Readonly<{
   reason: string | null;
 }>;
 
+export type PayrollPlanSaveRequest = Readonly<{
+  planId: string | null;
+  title: string;
+  incomeType: PayrollIncomeType;
+  payrollCycle: PayrollCycle;
+  payrollAmountMinor: number;
+  payday: number | null;
+  firstPayrollDate: string;
+  periodStartDate: string;
+  periodEndDate: string;
+  fixedExpenseTotalMinor: number;
+  fixedSavingsTotalMinor: number;
+  variableExpenseReserveMinor: number;
+  emergencyBufferMinor: number;
+  carryOverAmountMinor: number;
+  reservePolicy: PayrollReservePolicy;
+  memo: string | null;
+}>;
+
 export type PayrollRecalculateResult = Readonly<{
   calculation: PayrollCalculation;
   updatedPlan: PayrollPlanSnapshot | null;
@@ -78,6 +97,7 @@ export type PayrollRecalculateResult = Readonly<{
 
 export type PayrollApiClient = Readonly<{
   getCurrent: () => Promise<PayrollPlanSnapshot | null>;
+  savePlan: (request: PayrollPlanSaveRequest) => Promise<PayrollPlanSnapshot>;
   recalculate: (
     request: PayrollRecalculateRequest,
   ) => Promise<PayrollRecalculateResult>;
