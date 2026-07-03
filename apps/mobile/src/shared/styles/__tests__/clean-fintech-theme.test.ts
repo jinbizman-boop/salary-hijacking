@@ -306,6 +306,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fallbackMissions");
   });
 
+  it("keeps fallback LV UP missions navigating to their detail screens", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("const levelRouter = useRouter()");
+    expect(cleanScreens).toContain("levelMissionRouteMap");
+    expect(cleanScreens).toContain('reading: "/level/reading"');
+    expect(cleanScreens).toContain('news: "/level/news"');
+    expect(cleanScreens).toContain('english: "/level/english"');
+    expect(cleanScreens).toContain('health: "/level/health"');
+    expect(cleanScreens).toContain("openMission");
+    expect(cleanScreens).toContain("levelRouter.push(route)");
+  });
+
   it("keeps MY screen hydrated from the server profile API before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

@@ -294,6 +294,18 @@ const fallbackMissions: readonly Mission[] = [
   },
 ] as const;
 
+const levelMissionRouteMap: Readonly<
+  Record<
+    string,
+    "/level/reading" | "/level/news" | "/level/english" | "/level/health"
+  >
+> = {
+  reading: "/level/reading",
+  news: "/level/news",
+  english: "/level/english",
+  health: "/level/health",
+};
+
 const fallbackProfileSnapshot: ProfileSnapshot = {
   user: {
     idHash: "sha256:fallback-profile",
@@ -1938,6 +1950,7 @@ function completedMissionIds(items: readonly Mission[]): ReadonlySet<string> {
 
 function LevelScreen(): React.ReactElement {
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
+  const levelRouter = useRouter();
   const [serverGrowthDashboard, setServerGrowthDashboard] =
     useState<GrowthDashboard | null>(null);
   const [serverGrowthTasks, setServerGrowthTasks] = useState<
@@ -2046,6 +2059,17 @@ function LevelScreen(): React.ReactElement {
     },
     [growthApi],
   );
+  const openMission = useCallback(
+    (mission: Mission, done: boolean) => {
+      const route = levelMissionRouteMap[mission.id];
+      if (route) {
+        levelRouter.push(route);
+        return;
+      }
+      completeMission(mission, done);
+    },
+    [completeMission, levelRouter],
+  );
 
   return (
     <AppScreen title="LV UP" subtitle="매일 조금씩 성장하는 루틴">
@@ -2073,7 +2097,7 @@ function LevelScreen(): React.ReactElement {
             <Pressable
               accessibilityRole="button"
               key={mission.id}
-              onPress={() => completeMission(mission, done)}
+              onPress={() => openMission(mission, done)}
               style={[styles.card, done ? styles.softGreen : null]}
             >
               <Text style={styles.cardIcon}>{mission.icon}</Text>
