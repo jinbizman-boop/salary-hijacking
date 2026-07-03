@@ -2,7 +2,7 @@ import { Platform } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 import { createAuthApi } from "../../features/auth/api";
-import type { AuthApiClient } from "../../features/auth/types";
+import type { AuthApiClient, AuthTokenStore } from "../../features/auth/types";
 import { createBudgetApi } from "../../features/budget/api";
 import type { BudgetApiClient } from "../../features/budget/types";
 import { createCommunityApi } from "../../features/community/api";
@@ -28,13 +28,16 @@ export type MobileApiFactoryOptions = Readonly<{
   baseUrl?: string;
   fetcher?: typeof fetch;
   createCorrelationId?: () => string;
-  tokenStore?: MobileBearerTokenStore;
+  tokenStore?: MobileApiTokenStore;
 }>;
 
 export type MobileAuthenticatedFetcherOptions = Readonly<{
   fetcher?: typeof fetch;
   tokenStore?: MobileBearerTokenStore;
 }>;
+
+export type MobileApiTokenStore = MobileBearerTokenStore &
+  Partial<AuthTokenStore>;
 
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
@@ -59,15 +62,24 @@ export function createMobileAuthenticatedFetcher(
 export function createMobileAuthApi(
   options: MobileApiFactoryOptions = {},
 ): AuthApiClient {
+  const tokenStore = hasAuthTokenWriter(options.tokenStore)
+    ? options.tokenStore
+    : SecureStore;
   return createAuthApi({
     baseUrl: options.baseUrl ?? readMobileApiBaseUrl(),
     platform: mobileClientPlatform(),
-    tokenStore: SecureStore,
+    tokenStore,
     ...(options.fetcher ? { fetcher: options.fetcher } : {}),
     ...(options.createCorrelationId
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
   });
+}
+
+function hasAuthTokenWriter(
+  tokenStore: MobileApiTokenStore | undefined,
+): tokenStore is MobileApiTokenStore & AuthTokenStore {
+  return typeof tokenStore?.setItemAsync === "function";
 }
 
 export function createMobileCommunityService(

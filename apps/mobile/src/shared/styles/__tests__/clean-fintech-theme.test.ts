@@ -304,6 +304,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("profileApi.getProfile");
     expect(cleanScreens).toContain("requestPrivacyExport");
     expect(cleanScreens).toContain("requestWithdrawalRequest");
+    expect(cleanScreens).toContain("profileAuthApi");
+    expect(cleanScreens).toContain(".logout()");
+    expect(cleanScreens).toContain("logoutSession");
     expect(cleanScreens).toContain("fallbackProfileSnapshot");
     expect(cleanScreens).toContain("privacyPassRate");
     expect(cleanScreens).toContain("financialDataForAds");

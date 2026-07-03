@@ -1,5 +1,6 @@
 import {
   createMobileAuthenticatedFetcher,
+  createMobileAuthApi,
   createMobileBudgetApi,
 } from "../mobile-api";
 
@@ -65,5 +66,62 @@ describe("mobile api factory", () => {
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.headers.has("authorization")).toBe(false);
+  });
+
+  it("lets the auth API factory use the provided token store for login and logout", async () => {
+    const stored: Array<readonly [string, string]> = [];
+    const deleted: string[] = [];
+    const authApi = createMobileAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        if (request.url.endsWith("/api/v1/auth/login")) {
+          return new Response(
+            JSON.stringify({
+              data: {
+                user: {
+                  userId: "usr_mobile_factory",
+                  roles: "USER",
+                  accountStatus: "ACTIVE",
+                },
+                tokens: {
+                  accessToken: "factory.access.jwt",
+                  refreshToken: "factory.refresh.cookie",
+                  accessTokenExpiresIn: 900,
+                },
+              },
+            }),
+            { headers: { "content-type": "application/json" } },
+          );
+        }
+        return new Response(JSON.stringify({ data: { revoked: true } }), {
+          headers: { "content-type": "application/json" },
+        });
+      },
+      tokenStore: {
+        getItemAsync: async () => null,
+        setItemAsync: async (key, value) => {
+          stored.push([key, value]);
+        },
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+        },
+      },
+    });
+
+    await authApi.login({
+      email: "user@example.com",
+      password: "server-password",
+    });
+    await authApi.logout();
+
+    expect(stored).toEqual([
+      ["salary-hijacking.mobile.access-token", "factory.access.jwt"],
+    ]);
+    expect(stored.map(([, value]) => value).join(" ")).not.toContain(
+      "factory.refresh.cookie",
+    );
+    expect(deleted).toEqual(["salary-hijacking.mobile.access-token"]);
   });
 });

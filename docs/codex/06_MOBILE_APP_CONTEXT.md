@@ -65,7 +65,7 @@ Do not convert large screen files to a new architecture without a scoped plan.
 Commands run on 2026-07-03:
 
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 124 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run test`: PASS, 32 suites and 125 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
 - `corepack pnpm run format:check`: PASS
 - `corepack pnpm run build`: PASS, 12 Turbo tasks
@@ -166,6 +166,11 @@ local access token when refresh is rejected by the server. The logout call
 delegates session revocation and cookie clearing to the server, then deletes the
 local access token. The mobile client still does not persist raw refresh tokens.
 
+As of 2026-07-03, `createMobileAuthApi()` also honors an injected auth token
+store in tests and runtime factories instead of hard-wiring SecureStore for all
+cases. This keeps feature API bearer attachment and auth login/refresh/logout
+storage paths testable through the same mobile factory boundary.
+
 ## Bearer Token Attachment For Feature APIs
 
 As of 2026-07-03, shared mobile API factories wrap feature API fetchers with
@@ -211,6 +216,13 @@ financial, raw push token, and ads financial targeting exposure flags, strips
 server-only identifiers from the normalized profile snapshot, and treats
 privacy export and withdrawal actions as non-destructive server requests rather
 than final local account deletion.
+
+As of 2026-07-03, the Clean Fintech MY screen also exposes a server-first logout
+action. The action calls `AuthApiClient.logout()` through
+`createMobileAuthApi()`, delegates session revocation and cookie clearing to
+`POST /api/v1/auth/logout`, clears the local profile snapshot on success, and
+routes the user back to `/(auth)/login`. It does not persist or expose raw
+refresh tokens.
 
 ## Community Feed API Hydration
 

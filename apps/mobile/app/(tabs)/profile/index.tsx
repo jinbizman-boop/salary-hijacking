@@ -3,6 +3,7 @@ import { CleanFintechScreen } from "../../../src/shared/styles/clean-fintech-scr
 const SCREEN_VERSION = "4.0.0-clean-fintech";
 const PROFILE_WITHDRAWAL_REQUEST_ENDPOINT =
   "/api/v1/users/me/withdrawal-request";
+const AUTH_LOGOUT_ENDPOINT = "/api/v1/auth/logout";
 
 export default function ProfileIndexScreen(): React.ReactElement {
   return <CleanFintechScreen kind="profile" />;
@@ -23,6 +24,8 @@ export function assertMobileProfileIndexCompleteness(): {
     "1:1 문의",
     "공지사항",
     PROFILE_WITHDRAWAL_REQUEST_ENDPOINT,
+    AUTH_LOGOUT_ENDPOINT,
+    "로그아웃",
     "adsFinancialTargeting=false",
   ] as const;
 

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 import {
   Image,
   KeyboardAvoidingView,
@@ -2126,6 +2127,8 @@ function CommunityScreen(): React.ReactElement {
 
 function ProfileScreen(): React.ReactElement {
   const profileApi = useMemo(() => createMobileProfileApi(), []);
+  const profileAuthApi = useMemo(() => createMobileAuthApi(), []);
+  const router = useRouter();
   const [serverProfileSnapshot, setServerProfileSnapshot] =
     useState<ProfileSnapshot | null>(null);
   const [profileToast, setProfileToast] = useState(
@@ -2191,6 +2194,22 @@ function ProfileScreen(): React.ReactElement {
       });
   }, [profileApi]);
 
+  const logoutSession = useCallback(() => {
+    setProfileToast("로그아웃을 서버에 요청하는 중이에요.");
+    void profileAuthApi
+      .logout()
+      .then(() => {
+        setServerProfileSnapshot(null);
+        setProfileToast("로그아웃됐어요. 다시 로그인해 주세요.");
+        router.replace("/(auth)/login");
+      })
+      .catch(() => {
+        setProfileToast(
+          "로그아웃을 완료하지 못했어요. 네트워크 상태를 확인해 주세요.",
+        );
+      });
+  }, [profileAuthApi, router]);
+
   const profileSnapshot = serverProfileSnapshot ?? fallbackProfileSnapshot;
   const profileSyncLabel = serverProfileSnapshot
     ? "서버 MY 동기화"
@@ -2224,6 +2243,7 @@ function ProfileScreen(): React.ReactElement {
           <SmallButton label="계정 설정" />
           <SmallButton label="데이터 내보내기" onPress={requestPrivacyExport} />
           <SmallButton label="탈퇴 요청" onPress={requestWithdrawal} />
+          <SmallButton label="로그아웃" onPress={logoutSession} />
         </View>
       </SectionCard>
       <MetricGrid
