@@ -378,4 +378,120 @@ describe("Neon users support ticket repository", () => {
     expect(calls[1]?.params).toContain(userId);
     expect(JSON.stringify(updated)).not.toContain("salary");
   });
+
+  it("loads the DB-backed profile without returning raw email or financial data", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              avatar_attachment_id: "att_profile_001",
+              birth_year: 1991,
+              created_at: "2026-07-01T00:00:00.000Z",
+              display_bio: "월급을 먼저 지키는 사용자",
+              display_name: "월급지킴이",
+              email: "salary-user@example.com",
+              last_login_at: "2026-07-03T05:00:00.000Z",
+              level: 18,
+              occupation_category: "OFFICE_WORKER",
+              status: "ACTIVE",
+              updated_at: "2026-07-03T06:00:00.000Z",
+              user_id: userId,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.getMe(createRuntime());
+
+    expect(result).toMatchObject({
+      avatarAttachmentId: "att_profile_001",
+      birthYear: 1991,
+      createdAt: "2026-07-01T00:00:00.000Z",
+      displayBio: "월급을 먼저 지키는 사용자",
+      emailMasked: "sa***@example.com",
+      financialRawDataExposed: false,
+      level: 18,
+      nickname: "월급지킴이",
+      occupationCategory: "OFFICE_WORKER",
+      status: "ACTIVE",
+      updatedAt: "2026-07-03T06:00:00.000Z",
+    });
+    expect(JSON.stringify(result)).not.toContain("salary-user@example.com");
+    expect(JSON.stringify(result)).not.toContain("salary");
+    expect(calls.map((call) => call.operationName)).toEqual(["users.getMe"]);
+    expect(calls[0]?.sqlText).toContain("from public.users");
+    expect(calls[0]?.sqlText).toContain("left join public.user_profiles");
+    expect(calls[0]?.params).toContain(userId);
+  });
+
+  it("upserts profile changes through users and user_profiles without echoing raw contact data", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonUsersRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              avatar_attachment_id: "att_profile_002",
+              birth_year: 1992,
+              created_at: "2026-07-01T00:00:00.000Z",
+              display_bio: "이번 달 예산을 지키는 중",
+              display_name: "예산러",
+              email: "budget-user@example.com",
+              last_login_at: null,
+              level: 2,
+              occupation_category: "CREATOR",
+              status: "ACTIVE",
+              updated_at: "2026-07-03T06:00:00.000Z",
+              user_id: userId,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.updateMe(
+      {
+        avatarAttachmentId: "att_profile_002",
+        birthYear: 1992,
+        displayBio: "이번 달 예산을 지키는 중",
+        nickname: "예산러",
+        occupationCategory: "CREATOR",
+      },
+      createRuntime(),
+    );
+
+    expect(result).toMatchObject({
+      avatarAttachmentId: "att_profile_002",
+      birthYear: 1992,
+      displayBio: "이번 달 예산을 지키는 중",
+      emailMasked: "bu***@example.com",
+      financialRawDataExposed: false,
+      nickname: "예산러",
+      occupationCategory: "CREATOR",
+      status: "ACTIVE",
+    });
+    expect(JSON.stringify(result)).not.toContain("budget-user@example.com");
+    expect(calls.map((call) => call.operationName)).toEqual(["users.updateMe"]);
+    expect(calls[0]?.sqlText).toContain("update public.users");
+    expect(calls[0]?.sqlText).toContain("insert into public.user_profiles");
+    expect(calls[0]?.sqlText).toContain("on conflict (user_id) do update");
+    expect(calls[0]?.params).toContain(userId);
+    expect(calls[0]?.params).toContain("예산러");
+    expect(calls[0]?.params).toContain("att_profile_002");
+  });
 });

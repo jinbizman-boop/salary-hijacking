@@ -108,6 +108,22 @@ function nullableText(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function nullableInteger(value: unknown): number | null {
+  return typeof value === "number" && Number.isInteger(value) ? value : null;
+}
+
+function maskEmail(value: unknown, fallbackUserId: string): string {
+  const email = text(value);
+  const at = email.indexOf("@");
+  if (at > 0 && at < email.length - 1) {
+    const local = email.slice(0, at);
+    const domain = email.slice(at + 1);
+    const prefix = local.slice(0, Math.min(2, local.length));
+    return `${prefix}***@${domain}`;
+  }
+  return `${fallbackUserId.slice(0, Math.min(4, fallbackUserId.length))}***@masked.local`;
+}
+
 function defaultUser(runtime: UsersRouteRuntime): JsonRecord {
   const userId = runtime.principal.userId;
   return {
@@ -127,6 +143,34 @@ function defaultUser(runtime: UsersRouteRuntime): JsonRecord {
     userId,
     withdrawalRequested: false,
     withdrawalRequestedAt: null,
+  };
+}
+
+function userProfileFromRow(
+  row: DbRow,
+  runtime: UsersRouteRuntime,
+): JsonRecord {
+  const userId = text(row.user_id, runtime.principal.userId);
+  const displayName = text(row.display_name, text(row.nickname, "Salary User"));
+  return {
+    adTargetingSeparated: true,
+    avatarAttachmentId: nullableText(
+      row.avatar_attachment_id ?? row.profile_image_url,
+    ),
+    birthYear: nullableInteger(row.birth_year),
+    createdAt: text(row.created_at, nowIso(runtime)),
+    displayBio: nullableText(row.display_bio ?? row.bio),
+    emailMasked: maskEmail(row.email, userId),
+    financialRawDataExposed: false,
+    lastLoginAt: nullableText(row.last_login_at),
+    level: rowNumber(row, "level", 1),
+    nickname: displayName,
+    occupationCategory: nullableText(row.occupation_category ?? row.job_title),
+    status: text(row.status, "ACTIVE"),
+    updatedAt: text(row.updated_at, nowIso(runtime)),
+    userId,
+    withdrawalRequested: rowBool(row, "withdrawal_requested"),
+    withdrawalRequestedAt: nullableText(row.withdrawal_requested_at),
   };
 }
 
@@ -309,19 +353,137 @@ export function createNeonUsersRepository<TEnv = unknown>(
     name: "neon-users-repository",
 
     async getMe(runtime) {
+      const result = await query(
+        `
+          select
+            u.user_id,
+            u.email,
+            u.nickname,
+            u.status,
+            u.last_login_at,
+            u.created_at,
+            u.updated_at,
+            coalesce(p.display_name, u.nickname) as display_name,
+            p.bio as display_bio,
+            p.profile_image_url,
+            p.avatar_attachment_id,
+            p.birth_year,
+            p.occupation_category,
+            1 as level,
+            false as withdrawal_requested,
+            null::timestamptz as withdrawal_requested_at
+          from public.users u
+          left join public.user_profiles p
+            on p.user_id = u.user_id
+          where u.user_id = $1
+          limit 1
+        `,
+        [runtime.principal.userId],
+        { env: runtime.env, operationName: "users.getMe" },
+      );
+      const row = result.rows[0];
+      const profile = row
+        ? userProfileFromRow(row, runtime)
+        : defaultUser(runtime);
       return {
-        ...defaultUser(runtime),
+        ...profile,
         consents: defaultConsents(runtime),
         settings: defaultSettings(runtime),
       };
     },
 
     async updateMe(input, runtime) {
-      return {
-        ...defaultUser(runtime),
-        ...(input as JsonRecord),
-        updatedAt: nowIso(runtime),
-      };
+      const result = await query(
+        `
+          with updated_user as (
+            update public.users
+            set
+              nickname = coalesce($2, nickname),
+              updated_at = $7::timestamptz
+            where user_id = $1
+            returning
+              user_id,
+              email,
+              nickname,
+              status,
+              last_login_at,
+              created_at,
+              updated_at
+          ),
+          upsert_profile as (
+            insert into public.user_profiles (
+              user_id,
+              display_name,
+              bio,
+              profile_image_url,
+              avatar_attachment_id,
+              birth_year,
+              occupation_category,
+              updated_at
+            )
+            select
+              $1,
+              coalesce($2, nickname),
+              $3,
+              $4,
+              $4,
+              $5,
+              $6,
+              $7::timestamptz
+            from updated_user
+            on conflict (user_id) do update
+            set
+              display_name = excluded.display_name,
+              bio = excluded.bio,
+              profile_image_url = excluded.profile_image_url,
+              avatar_attachment_id = excluded.avatar_attachment_id,
+              birth_year = excluded.birth_year,
+              occupation_category = excluded.occupation_category,
+              updated_at = excluded.updated_at
+            returning
+              user_id,
+              display_name,
+              bio as display_bio,
+              profile_image_url,
+              avatar_attachment_id,
+              birth_year,
+              occupation_category
+          )
+          select
+            u.user_id,
+            u.email,
+            u.nickname,
+            u.status,
+            u.last_login_at,
+            u.created_at,
+            u.updated_at,
+            coalesce(p.display_name, u.nickname) as display_name,
+            p.display_bio,
+            p.profile_image_url,
+            p.avatar_attachment_id,
+            p.birth_year,
+            p.occupation_category,
+            1 as level,
+            false as withdrawal_requested,
+            null::timestamptz as withdrawal_requested_at
+          from updated_user u
+          left join upsert_profile p
+            on p.user_id = u.user_id
+        `,
+        [
+          runtime.principal.userId,
+          nullableText(input.nickname),
+          nullableText(input.displayBio),
+          nullableText(input.avatarAttachmentId),
+          typeof input.birthYear === "number" ? input.birthYear : null,
+          nullableText(input.occupationCategory),
+          nowIso(runtime),
+        ],
+        { env: runtime.env, operationName: "users.updateMe" },
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Profile update returned no row.");
+      return userProfileFromRow(row, runtime);
     },
 
     async withdraw(input, runtime) {
