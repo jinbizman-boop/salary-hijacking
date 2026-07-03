@@ -145,6 +145,58 @@ describe("mobile profile API contract", () => {
     );
   });
 
+  it("routes mobile support tickets through the injected users repository", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableAuth: false,
+      enableRateLimit: false,
+      usersRoutesOptions: {
+        repository: {
+          createSupportTicket: async (input, runtime) => ({
+            adsFinancialTargetingUsed: false,
+            category: input.category,
+            createdAt: runtime.now.toISOString(),
+            id: "ticket_injected",
+            rawFinancialDataExposed: false,
+            rawPersonalDataExposed: false,
+            rawPushTokenExposed: false,
+            status: "OPEN",
+            subject: input.subject,
+          }),
+        } as never,
+      },
+      now: () => new Date("2026-07-03T06:05:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/support-tickets", {
+        method: "POST",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({
+          category: "PRIVACY",
+          subject: "개인정보 요청",
+          message: "문의 접수 상태를 확인하고 싶어요.",
+          rawFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          rawPushTokenExposed: false,
+          adsFinancialTargetingUsed: false,
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+
+    expect(response.status).toBe(202);
+    expect(body.data).toMatchObject({
+      id: "ticket_injected",
+      category: "PRIVACY",
+      status: "OPEN",
+    });
+  });
+
   it("accepts the mobile withdrawal request without performing destructive final withdrawal", async () => {
     const app = createProfileContractApp();
 

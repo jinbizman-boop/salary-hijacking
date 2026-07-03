@@ -113,9 +113,15 @@ import {
 import {
   USERS_API_PREFIX,
   assertUsersRoutesCompleteness,
+  createUsersRoutes,
   handleUsersRoutes,
+  type UsersRoutesOptions,
   usersRoutesManifest,
 } from "./routes/users.routes";
+import {
+  createNeonUsersRepository,
+  shouldUseNeonUsersRepository,
+} from "./repositories/users.repository";
 import {
   VARIABLE_EXPENSES_API_PREFIX,
   assertVariableExpensesRoutesCompleteness,
@@ -259,6 +265,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly growthRoutesOptions?: GrowthRoutesOptions<TEnv>;
   readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
   readonly notificationsRoutesOptions?: NotificationsRoutesOptions<TEnv>;
+  readonly usersRoutesOptions?: UsersRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
 
@@ -1232,6 +1239,24 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createCommunityRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "users") {
+    const baseOptions: UsersRoutesOptions<TEnv> =
+      options.usersRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonUsersRepository(routeEnv)
+            ? createNeonUsersRepository<TEnv>()
+            : undefined,
+      } satisfies UsersRoutesOptions<TEnv>);
+    const routeOptions: UsersRoutesOptions<TEnv> =
+      baseOptions.now || !options.now
+        ? baseOptions
+        : {
+            ...baseOptions,
+            now: options.now,
+          };
+    return createUsersRoutes(routeOptions)(request, env, context);
   }
   return route.handler(request, env, context);
 }

@@ -49,6 +49,10 @@ import {
   createNeonNotificationsRepository,
   shouldUseNeonNotificationsRepository,
 } from "./repositories/notifications.repository";
+import {
+  createNeonUsersRepository,
+  shouldUseNeonUsersRepository,
+} from "./repositories/users.repository";
 
 const INDEX_VERSION = "3.1.1";
 const WORKER_ENTRYPOINT_NAME = "salary-hijacking-api-worker";
@@ -217,6 +221,12 @@ const appInstance = createApp<WorkerEnv>({
     repository: (env) =>
       shouldUseNeonNotificationsRepository(env)
         ? createNeonNotificationsRepository<WorkerEnv>()
+        : undefined,
+  },
+  usersRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonUsersRepository(env)
+        ? createNeonUsersRepository<WorkerEnv>()
         : undefined,
   },
   communityRoutesOptions: {
