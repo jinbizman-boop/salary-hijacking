@@ -14,6 +14,8 @@ export type NotificationType =
 export type NotificationChannel = "IN_APP" | "PUSH" | "EMAIL";
 export type NotificationStatus = "UNREAD" | "READ" | "ARCHIVED" | "DELETED";
 export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+export type NotificationDevicePlatform = "IOS" | "ANDROID" | "WEB";
+export type NotificationDeviceStatus = "ACTIVE" | "REVOKED";
 
 export type NotificationItem = Readonly<{
   notificationId: string;
@@ -97,6 +99,25 @@ export type NotificationPreferencesUpdateRequest = Readonly<
   >
 >;
 
+export type NotificationDevice = Readonly<{
+  deviceId: string;
+  platform: NotificationDevicePlatform;
+  pushTokenHashOnly: true;
+  pushTokenPreview: string | null;
+  status: NotificationDeviceStatus;
+  registeredAt: string;
+  updatedAt: string;
+  revokedAt: string | null;
+}>;
+
+export type NotificationDeviceRegistrationRequest = Readonly<{
+  appVersion?: string | null;
+  deviceId: string;
+  locale?: string | null;
+  platform: NotificationDevicePlatform;
+  pushToken: string;
+}>;
+
 export type NotificationsApiClient = Readonly<{
   list: (options?: {
     readonly page?: number;
@@ -112,4 +133,9 @@ export type NotificationsApiClient = Readonly<{
   updatePreferences: (
     request: NotificationPreferencesUpdateRequest,
   ) => Promise<NotificationPreferences>;
+  listDevices: () => Promise<readonly NotificationDevice[]>;
+  registerDevice: (
+    request: NotificationDeviceRegistrationRequest,
+  ) => Promise<NotificationDevice>;
+  revokeDevice: (deviceId: string) => Promise<NotificationDevice>;
 }>;

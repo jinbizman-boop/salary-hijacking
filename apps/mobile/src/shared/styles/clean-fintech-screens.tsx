@@ -53,6 +53,8 @@ import type {
 } from "../../features/profile/types";
 import { mergeProfileSnapshotWithMyPageSummary } from "../../features/profile/api";
 import type {
+  NotificationDevice,
+  NotificationDeviceRegistrationRequest,
   NotificationItem,
   NotificationPreferences,
   NotificationPreferencesUpdateRequest,
@@ -120,6 +122,8 @@ type CommunityScreenPost = Readonly<{
   thumb: string;
   title: string;
 }>;
+
+const NOTIFICATION_DEVICE_ID_KEY = "salary-hijacking.notification.device-id";
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type SettingsKind = "profile" | "account";
 type LevelDetailConfig = Readonly<{
@@ -3829,6 +3833,61 @@ function popularCommunityPosts(
     .slice(0, 3);
 }
 
+function notificationPlatform(): NotificationDeviceRegistrationRequest["platform"] {
+  if (Platform.OS === "ios") return "IOS";
+  if (Platform.OS === "android") return "ANDROID";
+  return "WEB";
+}
+
+function createLocalDeviceId(): string {
+  const randomPart =
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  return `salary-hijacking-${Platform.OS}-${randomPart}`;
+}
+
+async function readOrCreateNotificationDeviceId(): Promise<string> {
+  const store = await import("expo-secure-store");
+  const cached = await store.getItemAsync(NOTIFICATION_DEVICE_ID_KEY);
+  if (cached && /^[A-Za-z0-9_.:-]+$/u.test(cached)) return cached;
+
+  const nextDeviceId = createLocalDeviceId();
+  await store.setItemAsync(NOTIFICATION_DEVICE_ID_KEY, nextDeviceId);
+  return nextDeviceId;
+}
+
+async function createNativeNotificationRegistrationRequest(): Promise<NotificationDeviceRegistrationRequest> {
+  const [{ default: Constants }, Notifications] = await Promise.all([
+    import("expo-constants"),
+    import("expo-notifications"),
+  ]);
+  const currentPermission = await Notifications.getPermissionsAsync();
+  const finalPermission = currentPermission.granted
+    ? currentPermission
+    : await Notifications.requestPermissionsAsync();
+  if (!finalPermission.granted) {
+    throw new Error("NOTIFICATION_PERMISSION_DENIED");
+  }
+
+  const easProjectId =
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId;
+  const tokenResult =
+    typeof easProjectId === "string" && easProjectId.trim()
+      ? await Notifications.getExpoPushTokenAsync({ projectId: easProjectId })
+      : await Notifications.getExpoPushTokenAsync();
+  const pushToken = tokenResult.data.trim();
+  if (!pushToken) throw new Error("NOTIFICATION_PUSH_TOKEN_UNAVAILABLE");
+
+  return {
+    appVersion: Constants.expoConfig?.version ?? null,
+    deviceId: await readOrCreateNotificationDeviceId(),
+    locale: "ko-KR",
+    platform: notificationPlatform(),
+    pushToken,
+  };
+}
+
 function NotificationsScreen(): React.ReactElement {
   const notificationsApi = useMemo(() => createMobileNotificationsApi(), []);
   const notificationRouter = useRouter();
@@ -3840,6 +3899,9 @@ function NotificationsScreen(): React.ReactElement {
   );
   const [serverNotificationPreferences, setServerNotificationPreferences] =
     useState<NotificationPreferences | null>(null);
+  const [serverNotificationDevices, setServerNotificationDevices] = useState<
+    readonly NotificationDevice[]
+  >([]);
   const [syncLabel, setSyncLabel] = useState("서버 알림을 확인하는 중이에요.");
 
   useEffect(() => {
@@ -3847,13 +3909,13 @@ function NotificationsScreen(): React.ReactElement {
 
     async function hydrateNotifications(): Promise<void> {
       try {
-        const [listResult, unreadResult, preferencesResult] = await Promise.all(
-          [
+        const [listResult, unreadResult, preferencesResult, devicesResult] =
+          await Promise.all([
             notificationsApi.list({ page: 1, pageSize: 20 }),
             notificationsApi.unreadCount(),
             notificationsApi.getPreferences(),
-          ],
-        );
+            notificationsApi.listDevices(),
+          ]);
         if (!mounted) return;
 
         const nextNotifications = listResult.items
@@ -3866,11 +3928,13 @@ function NotificationsScreen(): React.ReactElement {
         );
         setUnreadCount(unreadResult.unreadCount);
         setServerNotificationPreferences(preferencesResult);
+        setServerNotificationDevices(devicesResult);
         setSyncLabel("서버 알림 기준으로 동기화됐어요.");
       } catch {
         if (!mounted) return;
         setServerNotifications(fallbackNotifications);
         setServerNotificationPreferences(null);
+        setServerNotificationDevices([]);
         setUnreadCount(
           fallbackNotifications.filter((item) => item.status === "UNREAD")
             .length,
@@ -3892,6 +3956,10 @@ function NotificationsScreen(): React.ReactElement {
   const routineNotifications = serverNotifications.filter(
     (item) => !isImportantNotification(item),
   );
+  const activeNotificationDevices = serverNotificationDevices.filter(
+    (device) => device.status === "ACTIVE",
+  );
+  const primaryNotificationDevice = activeNotificationDevices[0] ?? null;
 
   const markRead = useCallback(
     (item: NotificationScreenItem) => {
@@ -4011,6 +4079,53 @@ function NotificationsScreen(): React.ReactElement {
     [notificationsApi, serverNotificationPreferences],
   );
 
+  const registerNotificationDevice = useCallback(() => {
+    setSyncLabel("푸시 기기 등록을 서버에 저장하고 있어요.");
+    void createNativeNotificationRegistrationRequest()
+      .then((registrationRequest) =>
+        notificationsApi.registerDevice({
+          appVersion: registrationRequest.appVersion ?? null,
+          deviceId: registrationRequest.deviceId,
+          locale: registrationRequest.locale ?? null,
+          platform: registrationRequest.platform,
+          pushToken: registrationRequest.pushToken,
+        }),
+      )
+      .then((registeredDevice) => {
+        setServerNotificationDevices((current) => [
+          registeredDevice,
+          ...current.filter(
+            (device) => device.deviceId !== registeredDevice.deviceId,
+          ),
+        ]);
+        setSyncLabel("서버에 푸시 기기 등록을 저장했어요.");
+      })
+      .catch(() => {
+        setSyncLabel("푸시 권한, Expo 설정, 또는 서버 연결을 확인해 주세요.");
+      });
+  }, [notificationsApi]);
+
+  const revokeNotificationDevice = useCallback(
+    (deviceId: string) => {
+      void notificationsApi
+        .revokeDevice(deviceId)
+        .then((revokedDevice) => {
+          setServerNotificationDevices((current) =>
+            current.map((device) =>
+              device.deviceId === revokedDevice.deviceId
+                ? revokedDevice
+                : device,
+            ),
+          );
+          setSyncLabel("서버에 푸시 기기 해제를 저장했어요.");
+        })
+        .catch(() => {
+          setSyncLabel("푸시 기기 해제를 서버에 저장하지 못했어요.");
+        });
+    },
+    [notificationsApi],
+  );
+
   return (
     <AppScreen title="알림" subtitle="새로운 알림이 있어요">
       <Toast message={`${syncLabel} · 읽지 않은 알림 ${unreadCount}개`} />
@@ -4046,6 +4161,28 @@ function NotificationsScreen(): React.ReactElement {
           </Text>
         </SectionCard>
       ) : null}
+      <SectionCard>
+        <View style={styles.between}>
+          <Text style={styles.sectionTitle}>푸시 기기</Text>
+          <StatusPill label={`${activeNotificationDevices.length} active`} />
+        </View>
+        <Text style={styles.listMeta}>
+          {primaryNotificationDevice
+            ? `${primaryNotificationDevice.platform} · ${primaryNotificationDevice.pushTokenPreview ?? "hashOnly"} · pushTokenHashOnly=${String(primaryNotificationDevice.pushTokenHashOnly)}`
+            : "기기 등록 전에는 원문 푸시 토큰을 보관하지 않아요."}
+        </Text>
+        <View style={styles.notificationActions}>
+          <SmallButton label="기기 등록" onPress={registerNotificationDevice} />
+          {primaryNotificationDevice ? (
+            <SmallButton
+              label="기기 해제"
+              onPress={() =>
+                revokeNotificationDevice(primaryNotificationDevice.deviceId)
+              }
+            />
+          ) : null}
+        </View>
+      </SectionCard>
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>중요 알림</Text>

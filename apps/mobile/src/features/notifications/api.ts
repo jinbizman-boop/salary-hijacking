@@ -1,4 +1,5 @@
 import {
+  NOTIFICATIONS_DEVICES_PATH,
   NOTIFICATIONS_PATH,
   NOTIFICATIONS_PREFERENCES_PATH,
   NOTIFICATIONS_READ_ALL_PATH,
@@ -7,6 +8,10 @@ import {
 } from "./constants";
 import type {
   NotificationChannel,
+  NotificationDevice,
+  NotificationDevicePlatform,
+  NotificationDeviceRegistrationRequest,
+  NotificationDeviceStatus,
   NotificationItem,
   NotificationListResult,
   NotificationPriority,
@@ -77,6 +82,17 @@ const NOTIFICATION_PRIORITIES = new Set<NotificationPriority>([
   "NORMAL",
   "HIGH",
   "URGENT",
+]);
+
+const NOTIFICATION_DEVICE_PLATFORMS = new Set<NotificationDevicePlatform>([
+  "IOS",
+  "ANDROID",
+  "WEB",
+]);
+
+const NOTIFICATION_DEVICE_STATUSES = new Set<NotificationDeviceStatus>([
+  "ACTIVE",
+  "REVOKED",
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -454,6 +470,97 @@ function normalizePreferences(value: unknown): NotificationPreferences {
   };
 }
 
+function normalizeDevicePlatform(value: unknown): NotificationDevicePlatform {
+  if (
+    typeof value === "string" &&
+    NOTIFICATION_DEVICE_PLATFORMS.has(value as NotificationDevicePlatform)
+  ) {
+    return value as NotificationDevicePlatform;
+  }
+  throw new NotificationsApiError(
+    0,
+    "NOTIFICATION_INVALID_RESPONSE",
+    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+  );
+}
+
+function normalizeDeviceStatus(value: unknown): NotificationDeviceStatus {
+  if (
+    typeof value === "string" &&
+    NOTIFICATION_DEVICE_STATUSES.has(value as NotificationDeviceStatus)
+  ) {
+    return value as NotificationDeviceStatus;
+  }
+  throw new NotificationsApiError(
+    0,
+    "NOTIFICATION_INVALID_RESPONSE",
+    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+  );
+}
+
+function normalizeNotificationDevice(value: unknown): NotificationDevice {
+  if (!isRecord(value)) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_RESPONSE",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  if (
+    typeof value.deviceId !== "string" ||
+    !value.deviceId ||
+    value.pushTokenHashOnly !== true ||
+    "pushToken" in value ||
+    !isIsoTimestamp(value.registeredAt) ||
+    !isIsoTimestamp(value.updatedAt)
+  ) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_RESPONSE",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+
+  return {
+    deviceId: value.deviceId,
+    platform: normalizeDevicePlatform(value.platform),
+    pushTokenHashOnly: true,
+    pushTokenPreview:
+      typeof value.pushTokenPreview === "string"
+        ? value.pushTokenPreview
+        : null,
+    status: normalizeDeviceStatus(value.status),
+    registeredAt: value.registeredAt,
+    updatedAt: value.updatedAt,
+    revokedAt: normalizeNullableTimestamp(value.revokedAt),
+  };
+}
+
+function normalizeNotificationDevices(
+  value: unknown,
+): readonly NotificationDevice[] {
+  if (!isRecord(value)) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_RESPONSE",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const rawDevices = Array.isArray(value.data)
+    ? value.data
+    : isRecord(value.data) && Array.isArray(value.data.items)
+      ? value.data.items
+      : null;
+  if (!rawDevices) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_RESPONSE",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return rawDevices.map(normalizeNotificationDevice);
+}
+
 function validPreferenceUpdate(
   request: NotificationPreferencesUpdateRequest,
 ): boolean {
@@ -476,6 +583,30 @@ function validPreferenceUpdate(
   return true;
 }
 
+function validRegistrationRequest(
+  request: NotificationDeviceRegistrationRequest,
+): boolean {
+  return (
+    isRecord(request) &&
+    typeof request.deviceId === "string" &&
+    /^[A-Za-z0-9_.:-]+$/u.test(request.deviceId) &&
+    NOTIFICATION_DEVICE_PLATFORMS.has(request.platform) &&
+    typeof request.pushToken === "string" &&
+    request.pushToken.trim().length > 0 &&
+    request.pushToken.length <= 500 &&
+    (request.appVersion === undefined ||
+      request.appVersion === null ||
+      (typeof request.appVersion === "string" &&
+        request.appVersion.trim().length > 0 &&
+        request.appVersion.length <= 80)) &&
+    (request.locale === undefined ||
+      request.locale === null ||
+      (typeof request.locale === "string" &&
+        request.locale.trim().length > 0 &&
+        request.locale.length <= 40))
+  );
+}
+
 function notificationResourcePath(notificationId: string): string {
   if (!/^[A-Za-z0-9_-]+$/u.test(notificationId)) {
     throw new NotificationsApiError(
@@ -492,6 +623,17 @@ function notificationPath(
   action: "archive" | "read",
 ): string {
   return `${notificationResourcePath(notificationId)}/${action}`;
+}
+
+function notificationDevicePath(deviceId: string): string {
+  if (!/^[A-Za-z0-9_.:-]+$/u.test(deviceId)) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_DEVICE_ID",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return `${NOTIFICATIONS_DEVICES_PATH}/${encodeURIComponent(deviceId)}`;
 }
 
 export function createNotificationsApi(
@@ -636,6 +778,50 @@ export function createNotificationsApi(
           body: JSON.stringify(preferencesRequest),
         }),
       );
+    },
+
+    async listDevices(): Promise<readonly NotificationDevice[]> {
+      return normalizeNotificationDevices(
+        await request(NOTIFICATIONS_DEVICES_PATH),
+      );
+    },
+
+    async registerDevice(
+      registrationRequest: NotificationDeviceRegistrationRequest,
+    ): Promise<NotificationDevice> {
+      if (!validRegistrationRequest(registrationRequest)) {
+        throw new NotificationsApiError(
+          0,
+          "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
+          NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+        );
+      }
+      const result = await request(NOTIFICATIONS_DEVICES_PATH, {
+        method: "POST",
+        body: JSON.stringify(registrationRequest),
+      });
+      if (!isRecord(result) || !("data" in result)) {
+        throw new NotificationsApiError(
+          0,
+          "NOTIFICATION_INVALID_RESPONSE",
+          NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeNotificationDevice(result.data);
+    },
+
+    async revokeDevice(deviceId: string): Promise<NotificationDevice> {
+      const result = await request(notificationDevicePath(deviceId), {
+        method: "DELETE",
+      });
+      if (!isRecord(result) || !("data" in result)) {
+        throw new NotificationsApiError(
+          0,
+          "NOTIFICATION_INVALID_RESPONSE",
+          NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeNotificationDevice(result.data);
     },
   };
 }
