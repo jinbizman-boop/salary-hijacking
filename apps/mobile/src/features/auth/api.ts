@@ -169,6 +169,14 @@ function assertPasswordPolicy(value: string): string {
   return password;
 }
 
+function assertLoginPassword(value: string): string {
+  const password = assertPresent(value, "AUTH_PASSWORD_REQUIRED");
+  if (password.length < 8) {
+    throw new AuthApiError(0, "AUTH_PASSWORD_INVALID", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  return password;
+}
+
 function assertNickname(value: string): string {
   const nickname = assertPresent(value, "AUTH_NICKNAME_REQUIRED");
   if (nickname.length < 2) {
@@ -559,7 +567,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     async login(request: AuthLoginRequest) {
       const body: Record<string, unknown> = {
         email: normalizeEmail(request.email),
-        password: assertPresent(request.password, "AUTH_PASSWORD_REQUIRED"),
+        password: assertLoginPassword(request.password),
       };
       appendOptional(body, "rememberMe", request.rememberMe);
       appendOptional(body, "deviceId", request.deviceId);

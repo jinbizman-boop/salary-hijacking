@@ -205,6 +205,27 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects too-short login passwords before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.login({
+        email: "user@example.com",
+        password: "short1",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_PASSWORD_INVALID" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("registers with required consents and stores the authenticated access token", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
