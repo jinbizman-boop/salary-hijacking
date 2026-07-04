@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   ActivityIndicator,
@@ -35,6 +35,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
   const [status, setStatus] = useState<VerifyEmailStatus>("PENDING");
   const [email, setEmail] = useState("");
   const [resendPending, setResendPending] = useState(false);
+  const resendEmailVerificationInFlightRef = useRef(false);
   const token = paramValue(params.token);
   const canResend = email.trim().length > 3 && !resendPending;
 
@@ -64,7 +65,8 @@ export default function VerifyEmailScreen(): React.ReactElement {
   }, [authApi, router, token]);
 
   async function resendEmailVerification(): Promise<void> {
-    if (!canResend) return;
+    if (!canResend || resendEmailVerificationInFlightRef.current) return;
+    resendEmailVerificationInFlightRef.current = true;
     setResendPending(true);
     try {
       const result = await authApi.requestEmailVerification({ email });
@@ -72,6 +74,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
     } catch {
       setStatus("FAILED");
     } finally {
+      resendEmailVerificationInFlightRef.current = false;
       setResendPending(false);
     }
   }

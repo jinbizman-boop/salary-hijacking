@@ -144,6 +144,20 @@ describe("mobile app screen API and route contracts", () => {
     expect(verifyEmail).toContain("rawPersonalData=false");
   });
 
+  it("prevents duplicate verify-email resend requests before the auth API acknowledges it", () => {
+    const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");
+
+    expect(verifyEmail).toContain("resendEmailVerificationInFlightRef");
+    expect(verifyEmail).toContain("resendEmailVerificationInFlightRef.current");
+    expect(verifyEmail).toContain(
+      "resendEmailVerificationInFlightRef.current = true",
+    );
+    expect(verifyEmail).toContain(
+      "resendEmailVerificationInFlightRef.current = false",
+    );
+    expect(verifyEmail).toContain("authApi.requestEmailVerification");
+  });
+
   it("keeps the verify-email waiting state readable for OAuth and signup email gates", () => {
     const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");
 
