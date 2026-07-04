@@ -127,11 +127,33 @@ function normalizePage(
   maximum: number,
 ): number {
   if (value === undefined) return fallback;
-  if (!Number.isSafeInteger(value) || value < 1) return fallback;
-  return Math.min(value, maximum);
+  if (!Number.isSafeInteger(value) || value < 1 || value > maximum) {
+    throw new CommunityApiError(
+      0,
+      "COMMUNITY_FEED_QUERY_INVALID",
+      "Invalid community paging options.",
+    );
+  }
+  return value;
 }
 
 function listQuery(input: CommunityFeedQuery = {}): string {
+  if (
+    !input ||
+    !hasOnlyKeys(input as Record<string, unknown>, [
+      "boardType",
+      "page",
+      "pageSize",
+      "query",
+      "sort",
+    ])
+  ) {
+    throw new CommunityApiError(
+      0,
+      "COMMUNITY_FEED_QUERY_INVALID",
+      "Invalid community feed query.",
+    );
+  }
   const params = new URLSearchParams();
   if (input.boardType) {
     if (!COMMUNITY_BOARD_TYPES.includes(input.boardType)) {

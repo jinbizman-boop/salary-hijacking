@@ -128,6 +128,36 @@ describe("community service", () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it("blocks unsafe community feed paging and unknown query fields before URL construction", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.listPosts({
+        page: 0,
+        pageSize: 20,
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+    await expect(
+      service.listPosts({
+        page: 1,
+        pageSize: 101,
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+    await expect(
+      service.listPosts({
+        page: 1,
+        pageSize: 20,
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("uses the API v1 community boundary and privacy-safe payloads", async () => {
     const request = jest
       .fn<
