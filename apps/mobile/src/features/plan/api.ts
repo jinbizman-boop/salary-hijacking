@@ -307,7 +307,9 @@ function sumSafe(values: readonly number[]): number {
 function validFixedExpenseCreate(
   value: PlanFixedExpenseCreateRequest,
 ): boolean {
+  const record = value as Record<string, unknown>;
   return (
+    hasOnlyKeys(record, ["amountMinor", "category", "paymentDay", "title"]) &&
     typeof value.title === "string" &&
     value.title.trim().length > 0 &&
     value.title.length <= 100 &&
@@ -321,7 +323,14 @@ function validFixedExpenseCreate(
 }
 
 function validSavingsGoalCreate(value: PlanSavingsGoalCreateRequest): boolean {
+  const record = value as Record<string, unknown>;
   return (
+    hasOnlyKeys(record, [
+      "fixedSaveAmountMinor",
+      "goalType",
+      "targetAmountMinor",
+      "title",
+    ]) &&
     typeof value.title === "string" &&
     value.title.trim().length > 0 &&
     value.title.length <= 100 &&

@@ -341,6 +341,40 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("rejects unknown fixed expense and savings create fields before plan payloads", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} }, 201);
+      },
+      platform: "ios",
+    });
+
+    await expect(
+      api.createFixedExpense({
+        accountNumber: "123-456-789012",
+        amountMinor: 19_000,
+        category: "SUBSCRIPTION",
+        paymentDay: 21,
+        title: "New subscription",
+      } as never),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_CREATE_REQUEST" });
+
+    await expect(
+      api.createSavingsGoal({
+        fixedSaveAmountMinor: 80_000,
+        goalType: "CUSTOM",
+        rawSalaryMemo: "salary 2,700,000",
+        targetAmountMinor: 500_000,
+        title: "New saving",
+      } as never),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_CREATE_REQUEST" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("normalizes fixed expense categories to the server enum before mutation requests", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({
