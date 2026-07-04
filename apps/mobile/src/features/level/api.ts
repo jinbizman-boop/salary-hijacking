@@ -90,6 +90,17 @@ function isDateOnly(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value);
 }
 
+function isSafeGrowthId(value: string): boolean {
+  return /^[A-Za-z0-9_-]+$/u.test(value.trim());
+}
+
+function normalizeGrowthId(value: unknown): string {
+  if (typeof value !== "string" || !isSafeGrowthId(value)) {
+    return invalidResponse();
+  }
+  return value.trim();
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `growth-${Date.now().toString(36)}`
@@ -238,8 +249,6 @@ function normalizeDashboard(value: unknown): GrowthDashboard {
 function normalizeTask(value: unknown): GrowthTask {
   if (!isRecord(value)) return invalidResponse();
   if (
-    typeof value.taskId !== "string" ||
-    !value.taskId ||
     typeof value.title !== "string" ||
     !value.title ||
     !isPositiveInteger(value.targetCount) ||
@@ -256,7 +265,7 @@ function normalizeTask(value: unknown): GrowthTask {
     return invalidResponse();
   }
   return {
-    taskId: value.taskId,
+    taskId: normalizeGrowthId(value.taskId),
     title: value.title,
     taskType: normalizeTaskType(value.taskType),
     difficulty: normalizeDifficulty(value.difficulty),
@@ -326,8 +335,6 @@ function normalizeProgress(value: unknown): GrowthTaskProgressResult {
   }
   const progress = progressValue;
   if (
-    typeof progress.progressId !== "string" ||
-    typeof progress.taskId !== "string" ||
     !isPositiveInteger(progress.progressCount) ||
     !isNonNegativeInteger(progress.expDelta) ||
     !isIsoTimestamp(progress.occurredAt) ||
@@ -340,8 +347,8 @@ function normalizeProgress(value: unknown): GrowthTaskProgressResult {
   }
   return {
     progress: {
-      progressId: progress.progressId,
-      taskId: progress.taskId,
+      progressId: normalizeGrowthId(progress.progressId),
+      taskId: normalizeGrowthId(progress.taskId),
       progressCount: progress.progressCount,
       note: normalizeNullableString(progress.note),
       occurredAt: progress.occurredAt,
@@ -369,8 +376,6 @@ function normalizeContentCompletion(
   }
   const completion = completionValue;
   if (
-    typeof completion.completionId !== "string" ||
-    typeof completion.contentId !== "string" ||
     !isNonNegativeInteger(completion.expDelta) ||
     !isIsoTimestamp(completion.completedAt) ||
     completion.recommendationUsesSensitiveFinancialData !== false ||
@@ -381,8 +386,8 @@ function normalizeContentCompletion(
   }
   return {
     completion: {
-      completionId: completion.completionId,
-      contentId: completion.contentId,
+      completionId: normalizeGrowthId(completion.completionId),
+      contentId: normalizeGrowthId(completion.contentId),
       note: normalizeNullableString(completion.note),
       expDelta: completion.expDelta,
       idempotencyKey: normalizeNullableString(completion.idempotencyKey),

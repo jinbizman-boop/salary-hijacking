@@ -245,4 +245,82 @@ describe("growth api", () => {
       note: "mobile level detail content complete",
     });
   });
+
+  it("rejects invalid growth task, progress, and content ids returned by the server", async () => {
+    const listApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [{ ...task, taskId: "../gtk_reading" }],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "web",
+    });
+    const progressApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            progress: {
+              progressId: "gpr_1\r\nAuthorization",
+              taskId: "gtk_reading",
+              progressCount: 1,
+              note: null,
+              occurredAt: "2026-07-02T09:10:00.000Z",
+              idempotencyKey: "mission-reading-1",
+              expDelta: 30,
+              createdAt: "2026-07-02T09:10:01.000Z",
+            },
+            task: { ...task, progressCount: 1 },
+            expDelta: 30,
+            badges: [],
+            idempotentReplay: false,
+          },
+        }),
+      platform: "android",
+    });
+    const contentApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            completion: {
+              completionId: "gcc_reading_1",
+              contentId: "../cnt_reading_recommendation",
+              note: null,
+              expDelta: 30,
+              idempotencyKey: "content-reading-1",
+              completedAt: "2026-07-02T09:20:00.000Z",
+              recommendationUsesSensitiveFinancialData: false,
+            },
+            badges: [],
+            idempotentReplay: false,
+          },
+        }),
+      platform: "ios",
+    });
+
+    await expect(listApi.listTasks()).rejects.toMatchObject({
+      code: "GROWTH_INVALID_RESPONSE",
+    });
+    await expect(
+      progressApi.recordTaskProgress("gtk_reading", {
+        idempotencyKey: "mission-reading-1",
+        note: null,
+        occurredAt: "2026-07-02T09:10:00.000Z",
+        progressCount: 1,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_RESPONSE" });
+    await expect(
+      contentApi.completeContent({
+        contentId: "cnt_reading_recommendation",
+        idempotencyKey: "content-reading-1",
+        note: null,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_RESPONSE" });
+  });
 });
