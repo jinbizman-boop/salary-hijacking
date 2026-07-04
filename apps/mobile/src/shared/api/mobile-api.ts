@@ -102,6 +102,8 @@ const FORBIDDEN_PUBLIC_CONFIG_VALUE_PATTERNS = [
   /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u,
   /\b(?:salary|income|expense|savings?|hijack|payroll)\b[^\d]{0,24}(?:\d{1,3}(?:,\d{3})+|\d{6,})\b/iu,
 ] as const;
+const PUBLIC_CONFIG_LINK_HOST_PATTERN =
+  /^(?:[a-z0-9-]+\.)?salaryhijacking\.com$/iu;
 
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
@@ -190,11 +192,11 @@ function normalizeMobilePublicAppConfig(input: unknown): MobilePublicAppConfig {
   const privacy = recordValue(data, "privacy");
   return {
     links: {
-      landingUrl: stringValue(links, "landingUrl"),
-      partnerBenefitsUrl: stringValue(links, "partnerBenefitsUrl"),
-      privacyUrl: stringValue(links, "privacyUrl"),
-      supportUrl: stringValue(links, "supportUrl"),
-      termsUrl: stringValue(links, "termsUrl"),
+      landingUrl: publicLinkValue(links, "landingUrl"),
+      partnerBenefitsUrl: publicLinkValue(links, "partnerBenefitsUrl"),
+      privacyUrl: publicLinkValue(links, "privacyUrl"),
+      supportUrl: publicLinkValue(links, "supportUrl"),
+      termsUrl: publicLinkValue(links, "termsUrl"),
     },
     privacy: {
       rawPayrollDataForAds: boolFalse(privacy, "rawPayrollDataForAds"),
@@ -256,6 +258,25 @@ function stringValue(
 ): string {
   const value = input[key];
   return typeof value === "string" ? value : "";
+}
+
+function publicLinkValue(
+  input: Readonly<Record<string, unknown>>,
+  key: string,
+): string {
+  const value = stringValue(input, key);
+  try {
+    const url = new URL(value);
+    if (
+      url.protocol === "https:" &&
+      PUBLIC_CONFIG_LINK_HOST_PATTERN.test(url.hostname)
+    ) {
+      return url.toString();
+    }
+  } catch {
+    // The public config surface must never silently accept malformed links.
+  }
+  throw new Error("PUBLIC_APP_CONFIG_UNSAFE_LINK");
 }
 
 function boolFalse(

@@ -140,6 +140,37 @@ describe("mobile api factory", () => {
     );
   });
 
+  it("rejects public app config links outside the Salary Hijacking HTTPS domain", async () => {
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        new Response(
+          JSON.stringify({
+            data: {
+              links: {
+                landingUrl: "https://salaryhijacking.com",
+                partnerBenefitsUrl: "https://tracking.example.test/partners",
+                privacyUrl: "https://salaryhijacking.com/privacy",
+                supportUrl: "http://salaryhijacking.com/support",
+                termsUrl: "https://salaryhijacking.com/terms",
+              },
+              privacy: {
+                rawPayrollDataForAds: false,
+                rawExpenseDataForAds: false,
+                rawSavingsDataForAds: false,
+                advertiserUserIdentifierExposure: false,
+              },
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        ),
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.toThrow(
+      "PUBLIC_APP_CONFIG_UNSAFE_LINK",
+    );
+  });
+
   it("attaches the stored access token to feature API requests without exposing refresh tokens", async () => {
     const calls: Request[] = [];
     const budgetApi = createMobileBudgetApi({
