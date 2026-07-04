@@ -2406,6 +2406,7 @@ export function CleanFintechPostDetailScreen({
         <CommunityAttachmentList attachments={activeDetail.attachments} />
         <TextInput
           accessibilityLabel="커뮤니티 게시글 제목 수정"
+          editable={!postEditing}
           onChangeText={setPostEditTitle}
           placeholder="게시글 제목"
           placeholderTextColor={theme.color.text.disabled}
@@ -2414,6 +2415,7 @@ export function CleanFintechPostDetailScreen({
         />
         <TextInput
           accessibilityLabel="커뮤니티 게시글 본문 수정"
+          editable={!postEditing}
           multiline
           onChangeText={setPostEditContent}
           placeholder="게시글 본문"
@@ -2470,6 +2472,7 @@ export function CleanFintechPostDetailScreen({
             />
             <TextInput
               accessibilityLabel="커뮤니티 댓글 수정"
+              editable={commentEditingId === null}
               multiline
               onChangeText={(value) =>
                 setCommentEditDrafts((current) => ({
