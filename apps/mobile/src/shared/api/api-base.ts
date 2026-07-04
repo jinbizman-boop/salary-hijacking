@@ -21,6 +21,8 @@ type ExpoExtra = Readonly<{
   app?: Readonly<{ environment?: unknown }>;
 }>;
 
+const PRODUCTION_API_BASE_URL = "https://api.salaryhijacking.com";
+
 export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   const candidates = [options.explicitUrl, options.configuredUrl];
 
@@ -33,7 +35,7 @@ export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
     if (normalized) return normalized;
   }
 
-  if (options.environment === "production") return "";
+  if (options.environment === "production") return PRODUCTION_API_BASE_URL;
   return options.platform === "android"
     ? "http://10.0.2.2:8787"
     : "http://localhost:8787";

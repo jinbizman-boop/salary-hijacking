@@ -32,7 +32,7 @@ describe("resolveMobileApiBaseUrl", () => {
     ).toBe("http://10.0.2.2:8787");
   });
 
-  it("falls back to the local API only outside production", () => {
+  it("falls back to local API outside production and official API in production", () => {
     expect(
       resolveMobileApiBaseUrl({
         environment: "development",
@@ -44,7 +44,7 @@ describe("resolveMobileApiBaseUrl", () => {
         environment: "production",
         platform: "ios",
       }),
-    ).toBe("");
+    ).toBe("https://api.salaryhijacking.com");
   });
 
   it("rejects insecure remote HTTP URLs", () => {

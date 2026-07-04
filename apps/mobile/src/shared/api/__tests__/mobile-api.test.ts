@@ -5,6 +5,7 @@ import {
   createMobilePublicConfigApi,
   createMobileUploadsApi,
 } from "../mobile-api";
+import { MOBILE_ACCESS_TOKEN_KEY } from "../../storage/auth-token";
 
 describe("mobile api factory", () => {
   it("loads public app links for partner benefits without bearer tokens or financial payloads", async () => {
@@ -313,6 +314,7 @@ describe("mobile api factory", () => {
     ]);
     expect(storedToken).toBe("rotated.access.jwt");
     expect(calls[1]?.credentials).toBe("include");
+    expect(calls[1]?.headers.has("authorization")).toBe(false);
   });
 
   it("shares one refresh attempt across concurrent protected requests", async () => {
@@ -357,6 +359,43 @@ describe("mobile api factory", () => {
     expect(second.ok).toBe(true);
     expect(refreshCount).toBe(1);
     expect(calls).toHaveLength(4);
+  });
+
+  it("clears the stored access token when refresh fails after a protected request", async () => {
+    const calls: Request[] = [];
+    const deleted: string[] = [];
+    const budgetApi = createMobileBudgetApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
+        return new Response(
+          JSON.stringify({ error: { code: "TOKEN_EXPIRED" } }),
+          {
+            headers: { "content-type": "application/json" },
+            status: 401,
+          },
+        );
+      },
+      tokenStore: {
+        getItemAsync: async () => "expired.access.jwt",
+        setItemAsync: async () => undefined,
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+        },
+      },
+    });
+
+    await expect(budgetApi.getToday()).rejects.toMatchObject({
+      code: "TOKEN_EXPIRED",
+    });
+
+    expect(calls.map((call) => new URL(call.url).pathname)).toEqual([
+      "/api/v1/daily-budgets/today",
+      "/api/v1/auth/refresh",
+    ]);
+    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
   });
 
   it("creates an authenticated uploads API for community attachments", async () => {
