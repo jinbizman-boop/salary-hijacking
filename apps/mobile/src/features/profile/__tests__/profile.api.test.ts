@@ -678,6 +678,40 @@ describe("profile api", () => {
     });
   });
 
+  it("rejects support ticket response subjects with raw sensitive values", async () => {
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse(
+          {
+            data: {
+              adsFinancialTargetingUsed: false,
+              category: "ACCOUNT",
+              createdAt: "2026-07-03T05:30:00.000Z",
+              id: "ticket_sensitive_subject",
+              rawFinancialDataExposed: false,
+              rawPersonalDataExposed: false,
+              rawPushTokenExposed: false,
+              status: "OPEN",
+              subject: "contact user@example.com about account 123-456-789012",
+            },
+          },
+          202,
+        ),
+      platform: "android",
+    });
+
+    await expect(
+      api.createSupportTicket({
+        category: "ACCOUNT",
+        message: "login state check needed",
+        subject: "login question",
+      }),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_RESPONSE",
+    });
+  });
+
   it("rejects invalid profile activity and support ticket ids returned by the server", async () => {
     const profileApi = createProfileApi({
       baseUrl: "https://api.salaryhijacking.com",

@@ -485,6 +485,7 @@ function normalizeSupportTicket(value: unknown): ProfileSupportTicket {
       data.status as ProfileSupportTicket["status"],
     ) ||
     !nonEmptyString(data.subject) ||
+    containsRawSensitiveProfileText(data.subject) ||
     !isIsoTimestamp(data.createdAt) ||
     data.rawFinancialDataExposed !== false ||
     data.rawPersonalDataExposed !== false ||
