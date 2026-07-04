@@ -49,6 +49,10 @@ import {
   shouldUseNeonAuthRepository,
 } from "./repositories/auth.repository";
 import {
+  createNeonUploadsRepository,
+  shouldUseNeonUploadsRepository,
+} from "./repositories/uploads.repository";
+import {
   COMMUNITY_API_PREFIX,
   assertCommunityRoutesCompleteness,
   communityRoutesManifest,
@@ -1333,12 +1337,20 @@ async function coreDispatch<TEnv>(
           };
     return createCommunityRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "uploads" && options.uploadsRoutesOptions) {
+  if (route.id === "uploads") {
+    const baseOptions: UploadsRoutesOptions<TEnv> =
+      options.uploadsRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonUploadsRepository(routeEnv)
+            ? createNeonUploadsRepository<TEnv>()
+            : undefined,
+      } satisfies UploadsRoutesOptions<TEnv>);
     const routeOptions: UploadsRoutesOptions<TEnv> =
-      options.uploadsRoutesOptions.now || !options.now
-        ? options.uploadsRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.uploadsRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createUploadsRoutes(routeOptions)(request, env, context);
