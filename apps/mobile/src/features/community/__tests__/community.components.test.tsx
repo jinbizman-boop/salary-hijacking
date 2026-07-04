@@ -1,9 +1,11 @@
 import { fireEvent, render } from "@testing-library/react-native";
 
 import { CommunityAdDisclosure } from "../components/CommunityAdDisclosure";
+import { CommunityPostCard } from "../components/CommunityPostCard";
 import { CommunityWriteForm } from "../components/CommunityWriteForm";
 import type {
   CommunityAdDisclosureModel,
+  CommunityPost,
   CommunityPostDraft,
   CommunityValidationResult,
 } from "../community.types";
@@ -20,6 +22,23 @@ const safeValidation: CommunityValidationResult = {
   valid: true,
   issues: [],
   moderationStatus: "SAFE",
+};
+
+const safePost: CommunityPost = {
+  adsFinancialTargetingUsed: false,
+  anonymousDisplayName: "익명 12",
+  boardType: "FREE",
+  bodyPreview: "생활비를 일 단위로 나누어 관리한 후기입니다.",
+  bookmarkCount: 0,
+  commentCount: 3,
+  createdAt: "2026-07-04T00:00:00.000Z",
+  id: "post_1",
+  likeCount: 7,
+  moderationStatus: "SAFE",
+  rawFinancialDataExposed: false,
+  rawPersonalDataExposed: false,
+  title: "이번 주 예산 루틴",
+  updatedAt: "2026-07-04T00:00:00.000Z",
 };
 
 describe("community components", () => {
@@ -85,5 +104,24 @@ describe("community components", () => {
     );
     fireEvent.press(screen.getByRole("button", { name: "게시글 발행" }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("community post card actions", () => {
+  it("exposes selected state on liked community post cards", () => {
+    const onLike = jest.fn();
+    const screen = render(
+      <CommunityPostCard
+        liked
+        onLike={onLike}
+        onPress={jest.fn()}
+        post={safePost}
+      />,
+    );
+    const likeButton = screen.getByRole("button", { name: "좋아요 취소" });
+
+    expect(likeButton.props.accessibilityState).toEqual({ selected: true });
+    fireEvent.press(likeButton);
+    expect(onLike).toHaveBeenCalledWith(safePost, false);
   });
 });

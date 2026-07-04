@@ -44,6 +44,7 @@ export function CommunityPostCard({
           <Pressable
             accessibilityLabel={liked ? "좋아요 취소" : "좋아요"}
             accessibilityRole="button"
+            accessibilityState={{ selected: liked }}
             onPress={() => onLike(post, !liked)}
             style={styles.likeButton}
           >
