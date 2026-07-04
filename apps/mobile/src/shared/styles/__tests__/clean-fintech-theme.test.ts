@@ -1748,6 +1748,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(
       profileSettingsSource.match(/editable=\{!profileSettingsSaving\}/gu),
     ).toHaveLength(3);
+    expect(
+      profileSettingsSource.match(
+        /accessibilityState=\{\{ disabled: profileSettingsSaving \}\}/gu,
+      ),
+    ).toHaveLength(3);
     expect(profileSettingsSource).toContain(
       "disabled={!profileSettingsValid || profileSettingsSaving}",
     );

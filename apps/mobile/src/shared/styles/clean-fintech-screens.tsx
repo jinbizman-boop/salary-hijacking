@@ -1566,6 +1566,7 @@ export function CleanFintechSettingsScreen({
           <Toast message={profileSettingsToast} />
           <TextInput
             accessibilityLabel="프로필 닉네임"
+            accessibilityState={{ disabled: profileSettingsSaving }}
             editable={!profileSettingsSaving}
             onChangeText={setProfileNickname}
             placeholder="닉네임"
@@ -1575,6 +1576,7 @@ export function CleanFintechSettingsScreen({
           />
           <TextInput
             accessibilityLabel="프로필 소개"
+            accessibilityState={{ disabled: profileSettingsSaving }}
             editable={!profileSettingsSaving}
             multiline
             onChangeText={setProfileDisplayBio}
@@ -1585,6 +1587,7 @@ export function CleanFintechSettingsScreen({
           />
           <TextInput
             accessibilityLabel="직무 또는 관심 카테고리"
+            accessibilityState={{ disabled: profileSettingsSaving }}
             editable={!profileSettingsSaving}
             onChangeText={setProfileOccupationCategory}
             placeholder="예: PRODUCT"
