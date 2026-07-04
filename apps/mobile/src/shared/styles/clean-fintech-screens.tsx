@@ -84,6 +84,7 @@ import {
   createMobilePayrollApi,
   createMobilePlanCommitmentsApi,
   createMobileProfileApi,
+  createMobilePublicConfigApi,
   createMobileUploadsApi,
 } from "../api/mobile-api";
 import { createSecureStoreRuntime } from "../storage/secure-store";
@@ -6760,13 +6761,33 @@ function SmallButton({
 }
 
 function AdSlot(): React.ReactElement {
+  const publicConfigApi = useMemo(() => createMobilePublicConfigApi(), []);
+  const [partnerBenefitsUrl, setPartnerBenefitsUrl] = useState(
+    SALARY_HIJACKING_PARTNER_BENEFITS_URL,
+  );
+
+  useEffect(() => {
+    let mounted = true;
+    publicConfigApi
+      .getPublicAppConfig()
+      .then((config) => {
+        if (!mounted) return;
+        const nextUrl = config.links.partnerBenefitsUrl;
+        if (isSafePartnerBenefitsUrl(nextUrl)) setPartnerBenefitsUrl(nextUrl);
+      })
+      .catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, [publicConfigApi]);
+
   return (
     <Pressable
       accessibilityHint="금융 금액 원문 없이 문맥형 제휴 혜택 페이지를 엽니다."
       accessibilityLabel="제휴 광고 생활비 혜택 열기"
       accessibilityRole="link"
       onPress={() => {
-        void WebBrowser.openBrowserAsync(SALARY_HIJACKING_PARTNER_BENEFITS_URL);
+        void WebBrowser.openBrowserAsync(partnerBenefitsUrl);
       }}
       style={({ pressed }) => [styles.adSlot, pressed ? styles.pressed : null]}
     >
@@ -6779,6 +6800,15 @@ function AdSlot(): React.ReactElement {
       </Text>
     </Pressable>
   );
+}
+
+function isSafePartnerBenefitsUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "salaryhijacking.com";
+  } catch {
+    return false;
+  }
 }
 
 function Toast({ message }: Readonly<{ message: string }>): React.ReactElement {

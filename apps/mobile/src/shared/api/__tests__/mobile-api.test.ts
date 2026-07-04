@@ -2,10 +2,65 @@ import {
   createMobileAuthenticatedFetcher,
   createMobileAuthApi,
   createMobileBudgetApi,
+  createMobilePublicConfigApi,
   createMobileUploadsApi,
 } from "../mobile-api";
 
 describe("mobile api factory", () => {
+  it("loads public app links for partner benefits without bearer tokens or financial payloads", async () => {
+    const calls: Request[] = [];
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
+        return new Response(
+          JSON.stringify({
+            data: {
+              links: {
+                landingUrl: "https://salaryhijacking.com",
+                partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+                privacyUrl: "https://salaryhijacking.com/privacy",
+                supportUrl: "https://salaryhijacking.com/support",
+                termsUrl: "https://salaryhijacking.com/terms",
+              },
+              privacy: {
+                rawPayrollDataForAds: false,
+                rawExpenseDataForAds: false,
+                rawSavingsDataForAds: false,
+                advertiserUserIdentifierExposure: false,
+              },
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        );
+      },
+      tokenStore: {
+        getItemAsync: async () => "must-not-be-used",
+      },
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).resolves.toMatchObject({
+      links: {
+        partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+      },
+      privacy: {
+        rawPayrollDataForAds: false,
+        rawExpenseDataForAds: false,
+      },
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/public/app-config",
+    );
+    expect(calls[0]?.headers.has("authorization")).toBe(false);
+    expect(JSON.stringify(calls[0])).not.toMatch(
+      /salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|must-not-be-used/i,
+    );
+  });
+
   it("attaches the stored access token to feature API requests without exposing refresh tokens", async () => {
     const calls: Request[] = [];
     const budgetApi = createMobileBudgetApi({

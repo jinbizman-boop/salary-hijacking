@@ -44,9 +44,61 @@ export type MobileAuthenticatedFetcherOptions = Readonly<{
 export type MobileApiTokenStore = MobileBearerTokenStore &
   Partial<AuthTokenStore>;
 
+export type MobilePublicAppLinks = Readonly<{
+  landingUrl: string;
+  partnerBenefitsUrl: string;
+  privacyUrl: string;
+  supportUrl: string;
+  termsUrl: string;
+}>;
+
+export type MobilePublicAppPrivacy = Readonly<{
+  rawPayrollDataForAds: false;
+  rawExpenseDataForAds: false;
+  rawSavingsDataForAds: false;
+  advertiserUserIdentifierExposure: false;
+}>;
+
+export type MobilePublicAppConfig = Readonly<{
+  links: MobilePublicAppLinks;
+  privacy: MobilePublicAppPrivacy;
+}>;
+
+export type MobilePublicConfigApiClient = Readonly<{
+  getPublicAppConfig: () => Promise<MobilePublicAppConfig>;
+}>;
+
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
   return "web";
+}
+
+export function createMobilePublicConfigApi(
+  options: MobileApiFactoryOptions = {},
+): MobilePublicConfigApiClient {
+  const baseUrl = options.baseUrl ?? readMobileApiBaseUrl();
+  const fetcher = options.fetcher ?? fetch;
+  const createCorrelationId =
+    options.createCorrelationId ?? (() => `mobile-public-${Date.now()}`);
+
+  return {
+    async getPublicAppConfig(): Promise<MobilePublicAppConfig> {
+      const response = await fetcher(`${baseUrl}/api/v1/public/app-config`, {
+        credentials: "include",
+        headers: {
+          accept: "application/json",
+          "x-client-platform": mobileClientPlatform(),
+          "x-correlation-id": createCorrelationId(),
+          "x-raw-financial-data-exposed": "false",
+          "x-raw-personal-data-exposed": "false",
+          "x-ad-financial-targeting-used": "false",
+        },
+      });
+      const parsed = await response.json();
+      if (!response.ok) throw new Error("PUBLIC_APP_CONFIG_REQUEST_FAILED");
+      return normalizeMobilePublicAppConfig(parsed);
+    },
+  };
 }
 
 export function createMobileAuthenticatedFetcher(
@@ -92,6 +144,59 @@ export function createMobileAuthApi(
       ? { createCorrelationId: options.createCorrelationId }
       : {}),
   });
+}
+
+function normalizeMobilePublicAppConfig(input: unknown): MobilePublicAppConfig {
+  const data = recordValue(input, "data");
+  const links = recordValue(data, "links");
+  const privacy = recordValue(data, "privacy");
+  return {
+    links: {
+      landingUrl: stringValue(links, "landingUrl"),
+      partnerBenefitsUrl: stringValue(links, "partnerBenefitsUrl"),
+      privacyUrl: stringValue(links, "privacyUrl"),
+      supportUrl: stringValue(links, "supportUrl"),
+      termsUrl: stringValue(links, "termsUrl"),
+    },
+    privacy: {
+      rawPayrollDataForAds: boolFalse(privacy, "rawPayrollDataForAds"),
+      rawExpenseDataForAds: boolFalse(privacy, "rawExpenseDataForAds"),
+      rawSavingsDataForAds: boolFalse(privacy, "rawSavingsDataForAds"),
+      advertiserUserIdentifierExposure: boolFalse(
+        privacy,
+        "advertiserUserIdentifierExposure",
+      ),
+    },
+  };
+}
+
+function recordValue(
+  input: unknown,
+  key: string,
+): Readonly<Record<string, unknown>> {
+  const candidate =
+    input && typeof input === "object"
+      ? (input as Readonly<Record<string, unknown>>)[key]
+      : null;
+  return candidate && typeof candidate === "object"
+    ? (candidate as Readonly<Record<string, unknown>>)
+    : {};
+}
+
+function stringValue(
+  input: Readonly<Record<string, unknown>>,
+  key: string,
+): string {
+  const value = input[key];
+  return typeof value === "string" ? value : "";
+}
+
+function boolFalse(
+  input: Readonly<Record<string, unknown>>,
+  key: string,
+): false {
+  if (input[key] !== false) throw new Error("PUBLIC_APP_CONFIG_PRIVACY_UNSAFE");
+  return false;
 }
 
 function hasAuthTokenWriter(
