@@ -1014,6 +1014,48 @@ jobs:
   }
 });
 
+test("fails when admin OpenNext artifact upload omits hidden files", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/deploy-admin.yml": `
+name: Deploy Admin
+on: [workflow_dispatch]
+env:
+  ADMIN_OPEN_NEXT_DIR: apps/admin/.open-next
+  CLOUDFLARE_ADMIN_WORKER_NAME: salary-hijacking-admin
+jobs:
+  verify-admin:
+    steps:
+      - run: pnpm --dir apps/admin build:cloudflare
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-opennext-\${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: \${{ env.ADMIN_OPEN_NEXT_DIR }}/**
+  deploy:
+    if: github.event_name == 'workflow_dispatch'
+    environment:
+      name: admin-preview
+    env:
+      CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - run: pnpm --dir apps/admin build:cloudflare
+      - run: pnpm --dir apps/admin exec wrangler deploy --env staging --config wrangler.jsonc
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({ rootDir });
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /include-hidden-files: true/);
+  } finally {
+    await rm(rootDir, { force: true, recursive: true });
+  }
+});
+
 test("fails when release workflow can prepare artifacts without release readiness gate", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 

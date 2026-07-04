@@ -295,6 +295,7 @@ jobs:
         with:
           name: admin-opennext-${{ github.run_attempt }}
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 14
           path: ${{ env.ADMIN_OPEN_NEXT_DIR }}/**
 

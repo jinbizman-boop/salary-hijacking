@@ -680,6 +680,20 @@ function checkWorkflowsAvoidPnpmStoreStatus(rootDir, failures) {
   }
 }
 
+function checkAdminOpenNextArtifactUpload(rootDir, failures) {
+  const relativePath = ".github/workflows/deploy-admin.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  if (!source.includes("admin-opennext-${{ github.run_attempt }}")) return;
+  if (!source.includes("apps/admin/.open-next")) return;
+  if (/include-hidden-files:\s*true\b/.test(source)) return;
+
+  failures.push(
+    `${relativePath}: admin OpenNext artifact upload must set include-hidden-files: true because apps/admin/.open-next is a hidden output directory`,
+  );
+}
+
 function readTomlStringAssignment(source, key) {
   const match = new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m").exec(source);
   return match?.[1]?.trim() ?? "";
@@ -1433,6 +1447,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkDeployWorkflowsManualOnly(rootDir, failures);
   checkPnpmActionSetupUsesPackageManager(rootDir, failures);
   checkWorkflowsAvoidPnpmStoreStatus(rootDir, failures);
+  checkAdminOpenNextArtifactUpload(rootDir, failures);
   checkCloudflareProductionWorkerNames(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
