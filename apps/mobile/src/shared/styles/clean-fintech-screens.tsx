@@ -3071,6 +3071,7 @@ function SalaryHomeScreen(): React.ReactElement {
     [],
   );
   const [expenseDraft, setExpenseDraft] = useState("");
+  const [expenseTitleDraft, setExpenseTitleDraft] = useState("");
   const [addedExpenses, setAddedExpenses] = useState<
     readonly VariableExpenseEntry[]
   >([]);
@@ -3216,6 +3217,9 @@ function SalaryHomeScreen(): React.ReactElement {
     const next = sanitizeKrwIntegerInput(value);
     if (next !== null) setExpenseDraft(next);
   }, []);
+  const setSanitizedExpenseTitleDraft = useCallback((value: string) => {
+    setExpenseTitleDraft(value.replace(/\s+/gu, " ").slice(0, 40));
+  }, []);
   const salaryHomeAmountPending = savingExpense || savingDailyBudget;
 
   const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
@@ -3333,14 +3337,15 @@ function SalaryHomeScreen(): React.ReactElement {
     }
 
     const nextIndex = addedExpenses.length + 1;
-    const title = `추가 지출 ${nextIndex}`;
+    const expenseTitle = expenseTitleDraft.trim() || `추가 지출 ${nextIndex}`;
     const offlineEntry = {
       amount,
       icon: appIcons.expense,
       id: `offline-expense-${nextIndex}-${amount}`,
-      name: title,
+      name: expenseTitle,
     } satisfies VariableExpenseEntry;
     setExpenseDraft("");
+    setExpenseTitleDraft("");
 
     try {
       expenseCreateInFlightRef.current = true;
@@ -3357,7 +3362,7 @@ function SalaryHomeScreen(): React.ReactElement {
         source: "MANUAL",
         spentAt: new Date().toISOString(),
         tags: [],
-        title,
+        title: expenseTitle,
       });
       if (result.serverAuthority !== true) {
         throw new Error("serverAuthority response required");
@@ -3558,6 +3563,19 @@ function SalaryHomeScreen(): React.ReactElement {
             : ""}
         </Text>
         <View style={styles.inputRow}>
+          <TextInput
+            accessibilityLabel="지출 추가 제목"
+            accessibilityState={{ disabled: salaryHomeAmountPending }}
+            editable={!salaryHomeAmountPending}
+            maxLength={40}
+            onChangeText={setSanitizedExpenseTitleDraft}
+            onSubmitEditing={handleAddExpense}
+            placeholder="예: 점심"
+            placeholderTextColor={theme.color.text.disabled}
+            returnKeyType="next"
+            style={styles.input}
+            value={expenseTitleDraft}
+          />
           <TextInput
             accessibilityLabel="지출 추가 금액"
             accessibilityState={{ disabled: salaryHomeAmountPending }}

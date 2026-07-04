@@ -174,6 +174,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("createVariableExpense");
     expect(cleanScreens).toContain("serverAuthority");
     expect(cleanScreens).toContain("idempotencyKey");
+    expect(cleanScreens).toContain("expenseTitleDraft");
+    expect(cleanScreens).toContain('accessibilityLabel="지출 추가 제목"');
+    expect(cleanScreens).toContain("title: expenseTitle");
     expect(cleanScreens).toContain("서버에 지출을 기록했어요");
     expect(cleanScreens).toContain("오프라인 미리보기로 반영했어요");
   });
