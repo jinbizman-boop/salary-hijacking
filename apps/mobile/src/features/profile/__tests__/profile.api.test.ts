@@ -643,4 +643,57 @@ describe("profile api", () => {
       code: "PROFILE_INVALID_RESPONSE",
     });
   });
+
+  it("rejects invalid profile activity and support ticket ids returned by the server", async () => {
+    const profileApi = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            ...profilePayload,
+            activities: [
+              {
+                ...profilePayload.activities[0],
+                id: "../activity_1",
+              },
+            ],
+          },
+        }),
+      platform: "web",
+    });
+    const supportApi = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse(
+          {
+            data: {
+              adsFinancialTargetingUsed: false,
+              category: "ACCOUNT",
+              createdAt: "2026-07-03T05:30:00.000Z",
+              id: "ticket_1\r\nAuthorization",
+              rawFinancialDataExposed: false,
+              rawPersonalDataExposed: false,
+              rawPushTokenExposed: false,
+              status: "OPEN",
+              subject: "로그인 문의",
+            },
+          },
+          202,
+        ),
+      platform: "android",
+    });
+
+    await expect(profileApi.getProfile()).rejects.toMatchObject({
+      code: "PROFILE_INVALID_RESPONSE",
+    });
+    await expect(
+      supportApi.createSupportTicket({
+        category: "ACCOUNT",
+        message: "앱 로그인 상태 확인이 필요합니다.",
+        subject: "로그인 문의",
+      }),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_RESPONSE",
+    });
+  });
 });

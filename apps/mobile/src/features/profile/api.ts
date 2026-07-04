@@ -117,6 +117,17 @@ function nonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function isSafeEntityId(value: string): boolean {
+  return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
+}
+
+function normalizeResponseEntityId(value: unknown): string {
+  if (typeof value !== "string" || !isSafeEntityId(value)) {
+    return invalidResponse();
+  }
+  return value.trim();
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `profile-${Date.now().toString(36)}`
@@ -425,7 +436,6 @@ function normalizePrivacy(value: unknown): ProfilePrivacy {
 function normalizeActivity(value: unknown): ProfileActivity {
   if (!isRecord(value)) return invalidResponse();
   if (
-    !nonEmptyString(value.id) ||
     !(value.kind === "NOTICE" || value.kind === "SECURITY") ||
     !nonEmptyString(value.title) ||
     !nonEmptyString(value.description) ||
@@ -438,7 +448,7 @@ function normalizeActivity(value: unknown): ProfileActivity {
     return invalidResponse();
   }
   return {
-    id: value.id,
+    id: normalizeResponseEntityId(value.id),
     kind: value.kind,
     title: value.title,
     description: value.description,
@@ -466,7 +476,6 @@ function normalizeSupportTicket(value: unknown): ProfileSupportTicket {
   if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
   const data = value.data;
   if (
-    !nonEmptyString(data.id) ||
     typeof data.category !== "string" ||
     !SUPPORT_TICKET_CATEGORIES.has(
       data.category as ProfileSupportTicketCategory,
@@ -489,7 +498,7 @@ function normalizeSupportTicket(value: unknown): ProfileSupportTicket {
     adsFinancialTargetingUsed: false,
     category: data.category as ProfileSupportTicketCategory,
     createdAt: data.createdAt,
-    id: data.id,
+    id: normalizeResponseEntityId(data.id),
     rawFinancialDataExposed: false,
     rawPersonalDataExposed: false,
     rawPushTokenExposed: false,
@@ -548,7 +557,7 @@ function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
   ) {
     if (
       typeof value.avatarAttachmentId !== "string" ||
-      value.avatarAttachmentId.length > 160
+      !isSafeEntityId(value.avatarAttachmentId)
     ) {
       return false;
     }
