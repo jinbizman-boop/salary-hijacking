@@ -283,6 +283,7 @@ function normalizeNotificationItem(value: unknown): NotificationItem {
     status: normalizeStatus(value.status),
     scheduledAt: normalizeNullableTimestamp(value.scheduledAt),
     expiresAt: normalizeNullableTimestamp(value.expiresAt),
+    isMandatory: value.isMandatory === true,
     metadata: normalizeMetadata(value.metadata),
     createdAt: value.createdAt,
     readAt: normalizeNullableTimestamp(value.readAt),

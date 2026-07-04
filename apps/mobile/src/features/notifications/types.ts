@@ -28,6 +28,7 @@ export type NotificationItem = Readonly<{
   status: NotificationStatus;
   scheduledAt: string | null;
   expiresAt: string | null;
+  isMandatory: boolean;
   metadata: Readonly<Record<string, unknown>>;
   createdAt: string;
   readAt: string | null;

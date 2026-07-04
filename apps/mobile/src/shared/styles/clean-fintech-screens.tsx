@@ -188,6 +188,7 @@ type NotificationScreenItem = Readonly<{
   message: string;
   type: NotificationType;
   priority: NotificationPriority;
+  isMandatory: boolean;
   status: NotificationStatus;
 }>;
 type PlanCommitmentRow = Readonly<{
@@ -251,6 +252,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "누적 납치금액 5,780,000원 달성",
     type: "SAVINGS_GOAL",
     priority: "HIGH",
+    isMandatory: false,
     status: "UNREAD",
   },
   {
@@ -261,6 +263,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "오늘 남은 예산이 0원 아래로 내려갈 수 있어요.",
     type: "BUDGET_WARNING",
     priority: "HIGH",
+    isMandatory: false,
     status: "UNREAD",
   },
   {
@@ -271,6 +274,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "납치금액 달성 이벤트 500P 지급 예정",
     type: "NOTICE",
     priority: "NORMAL",
+    isMandatory: true,
     status: "READ",
   },
   {
@@ -281,6 +285,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "오늘 추천 도서를 10분만 읽어볼까요?",
     type: "CONTENT_RECOMMENDATION",
     priority: "NORMAL",
+    isMandatory: false,
     status: "READ",
   },
   {
@@ -291,6 +296,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "경제 뉴스 3개로 하루 감각을 열어요.",
     type: "CONTENT_RECOMMENDATION",
     priority: "NORMAL",
+    isMandatory: false,
     status: "READ",
   },
   {
@@ -301,6 +307,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "출퇴근 5문장 듣기 미션이 기다려요.",
     type: "CONTENT_RECOMMENDATION",
     priority: "NORMAL",
+    isMandatory: false,
     status: "READ",
   },
   {
@@ -311,6 +318,7 @@ const fallbackNotifications: readonly NotificationScreenItem[] = [
     message: "20분 홈트로 소비 통제 체력을 채워요.",
     type: "CONTENT_RECOMMENDATION",
     priority: "NORMAL",
+    isMandatory: false,
     status: "READ",
   },
 ] as const;
@@ -4925,6 +4933,7 @@ function toNotificationScreenItem(
     message: item.message,
     type: item.type,
     priority: item.priority,
+    isMandatory: item.isMandatory === true,
     status: item.status,
   };
 }
@@ -5284,6 +5293,10 @@ function NotificationsScreen(): React.ReactElement {
   const archiveNotification = useCallback(
     (item: NotificationScreenItem) => {
       if (notificationRowActionInFlightRef.current !== null) return;
+      if (item.isMandatory) {
+        setSyncLabel("필수 알림은 보관할 수 없어요.");
+        return;
+      }
       notificationRowActionInFlightRef.current = `archive:${item.id}`;
       setNotificationRowActionPendingId(`archive:${item.id}`);
       setServerNotifications((current) =>
@@ -5322,6 +5335,10 @@ function NotificationsScreen(): React.ReactElement {
   const deleteNotification = useCallback(
     (item: NotificationScreenItem) => {
       if (notificationRowActionInFlightRef.current !== null) return;
+      if (item.isMandatory) {
+        setSyncLabel("필수 알림은 삭제할 수 없어요.");
+        return;
+      }
       notificationRowActionInFlightRef.current = `delete:${item.id}`;
       setNotificationRowActionPendingId(`delete:${item.id}`);
       setServerNotifications((current) =>
@@ -5545,20 +5562,31 @@ function NotificationsScreen(): React.ReactElement {
               trailing={
                 <View style={styles.notificationActions}>
                   <SmallButton
-                    disabled={notificationRowActionPendingId !== null}
+                    disabled={
+                      notificationRowActionPendingId !== null ||
+                      item.isMandatory
+                    }
                     label={
-                      notificationRowActionPendingId === `archive:${item.id}`
-                        ? "Archiving"
-                        : "Archive"
+                      item.isMandatory
+                        ? "필수"
+                        : notificationRowActionPendingId ===
+                            `archive:${item.id}`
+                          ? "Archiving"
+                          : "Archive"
                     }
                     onPress={() => archiveNotification(item)}
                   />
                   <SmallButton
-                    disabled={notificationRowActionPendingId !== null}
+                    disabled={
+                      notificationRowActionPendingId !== null ||
+                      item.isMandatory
+                    }
                     label={
-                      notificationRowActionPendingId === `delete:${item.id}`
-                        ? "Deleting"
-                        : "Delete"
+                      item.isMandatory
+                        ? "필수"
+                        : notificationRowActionPendingId === `delete:${item.id}`
+                          ? "Deleting"
+                          : "Delete"
                     }
                     onPress={() => deleteNotification(item)}
                   />
@@ -5589,20 +5617,31 @@ function NotificationsScreen(): React.ReactElement {
               trailing={
                 <View style={styles.notificationActions}>
                   <SmallButton
-                    disabled={notificationRowActionPendingId !== null}
+                    disabled={
+                      notificationRowActionPendingId !== null ||
+                      item.isMandatory
+                    }
                     label={
-                      notificationRowActionPendingId === `archive:${item.id}`
-                        ? "Archiving"
-                        : "Archive"
+                      item.isMandatory
+                        ? "필수"
+                        : notificationRowActionPendingId ===
+                            `archive:${item.id}`
+                          ? "Archiving"
+                          : "Archive"
                     }
                     onPress={() => archiveNotification(item)}
                   />
                   <SmallButton
-                    disabled={notificationRowActionPendingId !== null}
+                    disabled={
+                      notificationRowActionPendingId !== null ||
+                      item.isMandatory
+                    }
                     label={
-                      notificationRowActionPendingId === `delete:${item.id}`
-                        ? "Deleting"
-                        : "Delete"
+                      item.isMandatory
+                        ? "필수"
+                        : notificationRowActionPendingId === `delete:${item.id}`
+                          ? "Deleting"
+                          : "Delete"
                     }
                     onPress={() => deleteNotification(item)}
                   />

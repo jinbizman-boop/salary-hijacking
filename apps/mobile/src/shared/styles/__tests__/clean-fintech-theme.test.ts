@@ -1189,7 +1189,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       )?.[0] ?? "";
     const disabledRowCount = (
       cleanScreens.match(
-        /disabled=\{notificationRowActionPendingId !== null\}/gu,
+        /disabled=\{\s*notificationRowActionPendingId !== null(?:\s*\|\|\s*item\.isMandatory)?\s*\}/gu,
       ) ?? []
     ).length;
 
@@ -2870,6 +2870,27 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toHaveLength(2);
     expect(detailSource).toMatch(
       /likePending\s*\|\|\s*communityDetailActionBusy\s*\?\s*styles\.disabled\s*:\s*null/u,
+    );
+  });
+
+  it("keeps mandatory notifications from being archived or deleted by the app UI", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const notificationsSource =
+      cleanScreens.match(
+        /function NotificationsScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechForgotPasswordScreen/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("isMandatory: item.isMandatory === true");
+    expect(notificationsSource).toContain("if (item.isMandatory) {");
+    expect(notificationsSource).toContain("필수 알림은 보관할 수 없어요.");
+    expect(notificationsSource).toContain("필수 알림은 삭제할 수 없어요.");
+    expect(notificationsSource).toMatch(
+      /disabled=\{\s*notificationRowActionPendingId !== null\s*\|\|\s*item\.isMandatory\s*\}/u,
+    );
+    expect(notificationsSource).toMatch(
+      /label=\{\s*item\.isMandatory\s*\?\s*"필수"\s*:/u,
     );
   });
 

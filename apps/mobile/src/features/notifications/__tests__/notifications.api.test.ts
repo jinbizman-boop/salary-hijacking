@@ -83,6 +83,40 @@ describe("notifications api", () => {
     expect(JSON.stringify(result)).not.toContain("userId");
   });
 
+  it("preserves mandatory notice flags so the app can block user archive and delete", async () => {
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...serverNotification,
+                isMandatory: true,
+                priority: "URGENT",
+                type: "SECURITY",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "android",
+    });
+
+    await expect(api.list()).resolves.toMatchObject({
+      items: [
+        {
+          isMandatory: true,
+          notificationId: "ntf_budget_warning",
+          priority: "URGENT",
+          type: "SECURITY",
+        },
+      ],
+    });
+  });
+
   it("reads unread count and marks notifications read without sending raw tokens", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({
