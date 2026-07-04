@@ -1762,9 +1762,10 @@ export function CleanFintechSupportScreen(): React.ReactElement {
             <PillRow
               items={["ACCOUNT", "PAYMENT", "PRIVACY", "BUG", "OTHER"]}
               selected={supportCategory}
-              onSelect={(next) =>
-                setSupportCategory(next as ProfileSupportTicketCategory)
-              }
+              onSelect={(next) => {
+                if (!submitting)
+                  setSupportCategory(next as ProfileSupportTicketCategory);
+              }}
             />
           </SectionCard>
           <SectionCard>

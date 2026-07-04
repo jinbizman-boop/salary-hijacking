@@ -1448,6 +1448,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("supportRouter");
     expect(cleanScreens).toContain("supportTicketSubmitInFlightRef");
     expect(cleanScreens).toContain('setSupportCategory("ACCOUNT")');
+    expect(cleanScreens).toMatch(/if\s*\(!submitting\)\s*setSupportCategory/u);
     expect(cleanScreens).toContain(
       "supportTicketSubmitInFlightRef.current = true",
     );
