@@ -104,6 +104,72 @@ describe("mobile auth response adapter", () => {
     expect(JSON.stringify(normalized)).not.toContain("new.refresh.token");
   });
 
+  it("redacts refresh tokens from legacy authenticated auth payloads", () => {
+    const normalized = normalizeMobileAuthResponse({
+      data: {
+        status: "AUTHENTICATED",
+        accessToken: "legacy.access.jwt",
+        refreshToken: "legacy.refresh.token",
+        expiresAt: "2026-06-29T05:15:00.000Z",
+        user: {
+          id: "usr_legacy",
+          emailVerified: true,
+          onboardingCompleted: true,
+          role: "USER",
+        },
+      },
+    });
+
+    expect(normalized.data).toMatchObject({
+      status: "AUTHENTICATED",
+      accessToken: "legacy.access.jwt",
+      expiresAt: "2026-06-29T05:15:00.000Z",
+      user: {
+        id: "usr_legacy",
+        emailVerified: true,
+        onboardingCompleted: true,
+        role: "USER",
+      },
+    });
+    expect(JSON.stringify(normalized)).not.toContain("legacy.refresh.token");
+  });
+
+  it("redacts refresh tokens from legacy authenticated signup payloads", () => {
+    const normalized = normalizeMobileSignupResponse({
+      data: {
+        status: "AUTHENTICATED",
+        accessToken: "legacy.signup.access.jwt",
+        refreshToken: "legacy.signup.refresh.token",
+        expiresAt: "2026-06-29T05:15:00.000Z",
+        emailVerificationRequired: false,
+        onboardingRequired: false,
+        user: {
+          id: "usr_signup_legacy",
+          emailVerified: true,
+          onboardingCompleted: true,
+          role: "USER",
+        },
+      },
+    });
+
+    expect(normalized.data).toMatchObject({
+      status: "AUTHENTICATED",
+      accessToken: "legacy.signup.access.jwt",
+      expiresAt: "2026-06-29T05:15:00.000Z",
+      emailVerificationRequired: false,
+      onboardingRequired: false,
+      user: {
+        id: "usr_signup_legacy",
+        emailVerified: true,
+        onboardingCompleted: true,
+        role: "USER",
+      },
+    });
+    expect(JSON.stringify(normalized)).not.toContain(
+      "legacy.signup.refresh.token",
+    );
+  });
+
   it("keeps locked-account and pending-signup fallback copy readable", () => {
     expect(
       normalizeMobileAuthResponse({

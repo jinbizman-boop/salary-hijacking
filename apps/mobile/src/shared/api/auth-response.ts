@@ -87,7 +87,9 @@ export function normalizeMobileAuthResponse(
 ): MobileAuthResponse {
   const data = asRecord(response.data);
   if (!data) return { error: response.error };
-  if (isLegacyAuthPayload(data)) return { data };
+  if (isLegacyAuthPayload(data)) {
+    return { data: sanitizedLegacyAuthPayload(data) };
+  }
 
   const user = asRecord(data.user);
   const tokens = asRecord(data.tokens);
@@ -136,7 +138,9 @@ export function normalizeMobileSignupResponse(
 ): MobileSignupResponse {
   const data = asRecord(response.data);
   if (!data) return { error: response.error };
-  if (isLegacySignupPayload(data)) return { data };
+  if (isLegacySignupPayload(data)) {
+    return { data: sanitizedLegacySignupPayload(data) };
+  }
 
   const user = asRecord(data.user);
   const tokens = asRecord(data.tokens);
@@ -299,6 +303,36 @@ function tokenExpiresAt(
     now.getTime() +
       (ttlSeconds === null ? 900 : Math.trunc(ttlSeconds)) * 1_000,
   ).toISOString();
+}
+
+function sanitizedLegacyAuthPayload(
+  data: MobileAuthPayload,
+): MobileAuthPayload {
+  if (data.status !== "AUTHENTICATED") return data;
+
+  return {
+    status: data.status,
+    accessToken: data.accessToken,
+    expiresAt: data.expiresAt,
+    user: data.user,
+  };
+}
+
+function sanitizedLegacySignupPayload(
+  data: MobileSignupPayload,
+): MobileSignupPayload {
+  if (data.status !== "AUTHENTICATED" && data.status !== "REGISTERED") {
+    return data;
+  }
+
+  return {
+    status: data.status,
+    accessToken: data.accessToken ?? null,
+    expiresAt: data.expiresAt ?? null,
+    emailVerificationRequired: data.emailVerificationRequired,
+    onboardingRequired: data.onboardingRequired,
+    user: data.user,
+  };
 }
 
 function isLegacyAuthPayload(data: UnknownRecord): data is MobileAuthPayload {
