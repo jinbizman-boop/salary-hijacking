@@ -42,6 +42,14 @@ const PRIVACY_HEADERS = Object.freeze({
   "x-raw-push-token-exposed": "false",
   "x-ad-financial-targeting-used": "false",
 });
+const RAW_SENSITIVE_TEXT_PATTERNS = [
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu,
+  /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u,
+  /\b(?:\d{4}[-\s]?){3}\d{4}\b/u,
+  /(?:account|계좌)\s*(?:number|번호)?\s*[:：]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu,
+  /\b(?:authorization|bearer|session|refresh|push|fcm|token)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u,
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -57,6 +65,10 @@ function isPositiveInteger(value: unknown): value is number {
 
 function isDateOnly(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value);
+}
+
+function containsRawSensitiveText(value: string): boolean {
+  return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 function defaultCorrelationId(): string {
@@ -270,7 +282,9 @@ function validRecalculateRequest(value: PayrollRecalculateRequest): boolean {
     isNonNegativeInteger(value.carryOverAmountMinor) &&
     isNonNegativeInteger(value.alreadySpentAmountMinor) &&
     typeof value.overwritePlan === "boolean" &&
-    (value.reason === null || typeof value.reason === "string")
+    (value.reason === null ||
+      (typeof value.reason === "string" &&
+        !containsRawSensitiveText(value.reason)))
   );
 }
 
@@ -301,8 +315,11 @@ function validSaveRequest(value: PayrollPlanSaveRequest): boolean {
     isNonNegativeInteger(value.emergencyBufferMinor) &&
     isNonNegativeInteger(value.carryOverAmountMinor) &&
     ["ZERO_BASE", "CARRY_OVER", "FIXED_BUFFER"].includes(value.reservePolicy) &&
+    !containsRawSensitiveText(value.title) &&
     (value.memo === null ||
-      (typeof value.memo === "string" && value.memo.length <= 500))
+      (typeof value.memo === "string" &&
+        value.memo.length <= 500 &&
+        !containsRawSensitiveText(value.memo)))
   );
 }
 
