@@ -341,6 +341,67 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("rejects raw sensitive plan text before it reaches fixed expense or savings APIs", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse(
+          {
+            data: {
+              expenseId: "expense_sensitive",
+              title: "unsafe",
+              category: "SUBSCRIPTION",
+              amountMinor: 19_000,
+              paymentDay: 21,
+              status: "ACTIVE",
+              serverAuthority: true,
+              financialRawDataExposed: false,
+            },
+          },
+          201,
+        );
+      },
+      platform: "ios",
+    });
+
+    await expect(
+      api.createFixedExpense({
+        amountMinor: 19_000,
+        category: "SUBSCRIPTION",
+        paymentDay: 21,
+        title: "급여명세서 자동결제",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_CREATE_REQUEST" });
+    await expect(
+      api.createSavingsGoal({
+        fixedSaveAmountMinor: 80_000,
+        goalType: "CUSTOM",
+        targetAmountMinor: 500_000,
+        title: "계좌 110-123-456789 비상금",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_CREATE_REQUEST" });
+    await expect(
+      api.recordFixedExpensePayment("expense_chatgpt", {
+        amountMinor: 30_000,
+        idempotencyKey: "fixed-payment-sensitive-key",
+        memo: "카드 1234-5678-9012-3456로 납부",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_PAYMENT_REQUEST" });
+    await expect(
+      api.recordSavingsDeposit("goal_emergency", {
+        amountMinor: 80_000,
+        idempotencyKey: "savings-deposit-sensitive-key",
+        memo: "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+      }),
+    ).rejects.toMatchObject({
+      code: "PLAN_INVALID_SAVINGS_DEPOSIT_REQUEST",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("records fixed expense payment through the server payment API without exposing raw user fields", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({

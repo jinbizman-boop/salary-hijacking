@@ -68,6 +68,35 @@ function isSafeCommitmentId(value: string): boolean {
   return /^[A-Za-z0-9_-]+$/u.test(value.trim());
 }
 
+const RAW_EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu;
+const RAW_PHONE_PATTERN = /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u;
+const RAW_CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b/u;
+const RAW_ACCOUNT_PATTERN =
+  /(?:계좌|account)\s*(?:번호)?\s*[:：-]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu;
+const RAW_TOKEN_PATTERN =
+  /\b(token|authorization|bearer|session|refresh|push|fcm)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu;
+const RAW_JWT_PATTERN =
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u;
+const RAW_KRW_PATTERN = /\d[\d,]*(?:원|KRW|₩)/iu;
+const RAW_PLAN_TEXT_PATTERN =
+  /급여|월급|급여명세|소득|연봉|계좌|카드|대출|주민등록|전화번호|비밀번호|인증토큰/u;
+const RAW_PLAN_VALUE_PATTERNS = [
+  RAW_EMAIL_PATTERN,
+  RAW_PHONE_PATTERN,
+  RAW_CARD_PATTERN,
+  RAW_ACCOUNT_PATTERN,
+  RAW_TOKEN_PATTERN,
+  RAW_JWT_PATTERN,
+  RAW_KRW_PATTERN,
+] as const;
+
+function containsRawSensitivePlanText(value: string): boolean {
+  return (
+    RAW_PLAN_TEXT_PATTERN.test(value) ||
+    RAW_PLAN_VALUE_PATTERNS.some((pattern) => pattern.test(value))
+  );
+}
+
 function normalizeCommitmentId(value: unknown): string {
   if (typeof value !== "string" || !isSafeCommitmentId(value)) {
     throw new PlanCommitmentsApiError(
@@ -252,8 +281,10 @@ function validFixedExpenseCreate(
     typeof value.title === "string" &&
     value.title.trim().length > 0 &&
     value.title.length <= 100 &&
+    !containsRawSensitivePlanText(value.title) &&
     typeof value.category === "string" &&
     value.category.trim().length > 0 &&
+    !containsRawSensitivePlanText(value.category) &&
     isPositiveMoney(value.amountMinor) &&
     isPositiveDay(value.paymentDay)
   );
@@ -264,8 +295,10 @@ function validSavingsGoalCreate(value: PlanSavingsGoalCreateRequest): boolean {
     typeof value.title === "string" &&
     value.title.trim().length > 0 &&
     value.title.length <= 100 &&
+    !containsRawSensitivePlanText(value.title) &&
     typeof value.goalType === "string" &&
     value.goalType.trim().length > 0 &&
+    !containsRawSensitivePlanText(value.goalType) &&
     isPositiveMoney(value.targetAmountMinor) &&
     isNonNegativeInteger(value.fixedSaveAmountMinor) &&
     value.fixedSaveAmountMinor <= value.targetAmountMinor
@@ -284,10 +317,12 @@ function validFixedExpenseUpdate(
     (value.title === undefined ||
       (typeof value.title === "string" &&
         value.title.trim().length > 0 &&
-        value.title.length <= 100)) &&
+        value.title.length <= 100 &&
+        !containsRawSensitivePlanText(value.title))) &&
     (value.category === undefined ||
       (typeof value.category === "string" &&
-        value.category.trim().length > 0)) &&
+        value.category.trim().length > 0 &&
+        !containsRawSensitivePlanText(value.category))) &&
     (value.amountMinor === undefined || isPositiveMoney(value.amountMinor)) &&
     (value.paymentDay === undefined || isPositiveDay(value.paymentDay))
   );
@@ -301,10 +336,12 @@ function validSavingsGoalUpdate(value: PlanSavingsGoalUpdateRequest): boolean {
     (value.title === undefined ||
       (typeof value.title === "string" &&
         value.title.trim().length > 0 &&
-        value.title.length <= 100)) &&
+        value.title.length <= 100 &&
+        !containsRawSensitivePlanText(value.title))) &&
     (value.goalType === undefined ||
       (typeof value.goalType === "string" &&
-        value.goalType.trim().length > 0)) &&
+        value.goalType.trim().length > 0 &&
+        !containsRawSensitivePlanText(value.goalType))) &&
     (targetAmountMinor === undefined || isPositiveMoney(targetAmountMinor)) &&
     (fixedSaveAmountMinor === undefined ||
       isNonNegativeInteger(fixedSaveAmountMinor)) &&
@@ -329,7 +366,9 @@ function validFixedExpensePayment(
     value.idempotencyKey.length <= 160 &&
     (value.memo === undefined ||
       value.memo === null ||
-      (typeof value.memo === "string" && value.memo.length <= 500)) &&
+      (typeof value.memo === "string" &&
+        value.memo.length <= 500 &&
+        !containsRawSensitivePlanText(value.memo))) &&
     (value.paidAt === undefined ||
       (typeof value.paidAt === "string" &&
         !Number.isNaN(new Date(value.paidAt).getTime())))
@@ -349,7 +388,9 @@ function validSavingsDeposit(
     value.idempotencyKey.length <= 160 &&
     (value.memo === undefined ||
       value.memo === null ||
-      (typeof value.memo === "string" && value.memo.length <= 500)) &&
+      (typeof value.memo === "string" &&
+        value.memo.length <= 500 &&
+        !containsRawSensitivePlanText(value.memo))) &&
     (value.occurredAt === undefined ||
       (typeof value.occurredAt === "string" &&
         !Number.isNaN(new Date(value.occurredAt).getTime())))
