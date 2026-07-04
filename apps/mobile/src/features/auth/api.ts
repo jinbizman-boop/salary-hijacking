@@ -169,6 +169,14 @@ function assertPasswordPolicy(value: string): string {
   return password;
 }
 
+function assertNickname(value: string): string {
+  const nickname = assertPresent(value, "AUTH_NICKNAME_REQUIRED");
+  if (nickname.length < 2) {
+    throw new AuthApiError(0, "AUTH_NICKNAME_INVALID", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  return nickname;
+}
+
 function assertResetToken(value: string): string {
   const token = assertPresent(value, "AUTH_PASSWORD_RESET_TOKEN_REQUIRED");
   if (token.length < 8) {
@@ -577,7 +585,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     async register(request: AuthRegisterRequest) {
       const body: Record<string, unknown> = {
         email: normalizeEmail(request.email),
-        nickname: assertPresent(request.nickname, "AUTH_NICKNAME_REQUIRED"),
+        nickname: assertNickname(request.nickname),
         password: assertPasswordPolicy(request.password),
         privacyAccepted: assertRequiredConsent(request.privacyAccepted),
         termsAccepted: assertRequiredConsent(request.termsAccepted),

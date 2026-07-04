@@ -303,6 +303,30 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects too-short signup nicknames before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.register({
+        email: "new@example.com",
+        nickname: " 나 ",
+        password: "new-password-1",
+        privacyAccepted: true,
+        termsAccepted: true,
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_NICKNAME_INVALID" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects unsafe auth responses before storing a token", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
