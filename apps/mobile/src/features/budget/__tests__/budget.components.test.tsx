@@ -50,3 +50,48 @@ describe("budget components", () => {
     expect(screen.queryByText(/₩\d/u)).toBeNull();
   });
 });
+
+describe("daily budget action accessibility", () => {
+  it("exposes disabled state for refresh and non-actionable hints", () => {
+    const screen = render(
+      <DailyBudgetCard
+        hints={[
+          {
+            description: "서버 예산 계획에서 다시 확인하세요.",
+            eventName: "daily_budget_hint_open",
+            id: "hint-plan",
+            rawFinancialDataExposed: false,
+            route: null,
+            severity: "WARNING",
+            title: "예산 계획 확인",
+          },
+        ]}
+        onRefresh={jest.fn()}
+        refreshing
+        viewModel={viewModel}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "오늘 예산 새로고침" }).props
+        .accessibilityState,
+    ).toEqual({ disabled: true });
+    expect(
+      screen.getByLabelText("예산 계획 확인").props.accessibilityState,
+    ).toEqual({ disabled: true });
+  });
+
+  it("locks empty-state refresh while a budget refresh is already running", () => {
+    const onRefresh = jest.fn();
+    const screen = render(
+      <DailyBudgetCard onRefresh={onRefresh} refreshing viewModel={null} />,
+    );
+    const refreshButton = screen.getByRole("button", {
+      name: "오늘 예산 다시 불러오기",
+    });
+
+    expect(refreshButton.props.accessibilityState).toEqual({ disabled: true });
+    fireEvent.press(refreshButton);
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+});

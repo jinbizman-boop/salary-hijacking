@@ -48,6 +48,8 @@ export function DailyBudgetCard({
           <Pressable
             accessibilityLabel="오늘 예산 다시 불러오기"
             accessibilityRole="button"
+            accessibilityState={{ disabled: refreshing }}
+            disabled={refreshing}
             onPress={onRefresh}
             style={styles.secondaryButton}
           >
@@ -101,6 +103,7 @@ export function DailyBudgetCard({
         <Pressable
           accessibilityLabel={hint.title}
           accessibilityRole={onOpenHint ? "button" : "text"}
+          accessibilityState={{ disabled: !onOpenHint }}
           disabled={!onOpenHint}
           key={hint.id}
           onPress={() => onOpenHint?.(hint)}
@@ -115,6 +118,7 @@ export function DailyBudgetCard({
         <Pressable
           accessibilityLabel="오늘 예산 새로고침"
           accessibilityRole="button"
+          accessibilityState={{ disabled: refreshing }}
           disabled={refreshing}
           onPress={onRefresh}
           style={styles.refreshButton}
