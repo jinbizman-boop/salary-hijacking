@@ -766,6 +766,47 @@ describe("plan commitments api", () => {
     }
   });
 
+  it("rejects unknown plan update fields before they can enter server payloads", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({
+          data: {
+            expenseId: "expense_chatgpt",
+            title: "ChatGPT",
+            category: "SUBSCRIPTION",
+            amountMinor: 30_000,
+            paymentDay: 20,
+            status: "ACTIVE",
+            serverAuthority: true,
+            financialRawDataExposed: false,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.updateFixedExpense("expense_chatgpt", {
+        amountMinor: 30_000,
+        accountNumber: "123-456-7890",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PLAN_INVALID_UPDATE_REQUEST",
+    });
+    await expect(
+      api.updateSavingsGoal("goal_emergency", {
+        targetAmountMinor: 1_000_000,
+        rawAccountMemo: "account 123-456-7890",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PLAN_INVALID_UPDATE_REQUEST",
+    });
+    expect(calls).toHaveLength(0);
+  });
+
   it("blocks unsafe commitment ids before money mutation requests reach the network", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({

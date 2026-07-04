@@ -339,11 +339,20 @@ function hasDefinedValue(value: Record<string, unknown>): boolean {
   return Object.values(value).some((item) => item !== undefined);
 }
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function validFixedExpenseUpdate(
   value: PlanFixedExpenseUpdateRequest,
 ): boolean {
+  const record = value as Record<string, unknown>;
   return (
-    hasDefinedValue(value as Record<string, unknown>) &&
+    hasOnlyKeys(record, ["amountMinor", "category", "paymentDay", "title"]) &&
+    hasDefinedValue(record) &&
     (value.title === undefined ||
       (typeof value.title === "string" &&
         value.title.trim().length > 0 &&
@@ -359,10 +368,17 @@ function validFixedExpenseUpdate(
 }
 
 function validSavingsGoalUpdate(value: PlanSavingsGoalUpdateRequest): boolean {
+  const record = value as Record<string, unknown>;
   const targetAmountMinor = value.targetAmountMinor;
   const fixedSaveAmountMinor = value.fixedSaveAmountMinor;
   return (
-    hasDefinedValue(value as Record<string, unknown>) &&
+    hasOnlyKeys(record, [
+      "fixedSaveAmountMinor",
+      "goalType",
+      "targetAmountMinor",
+      "title",
+    ]) &&
+    hasDefinedValue(record) &&
     (value.title === undefined ||
       (typeof value.title === "string" &&
         value.title.trim().length > 0 &&
