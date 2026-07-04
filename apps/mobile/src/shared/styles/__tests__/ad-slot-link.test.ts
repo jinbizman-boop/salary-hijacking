@@ -63,4 +63,16 @@ describe("ad slot partner benefits URL loader", () => {
       SALARY_HIJACKING_PARTNER_BENEFITS_URL,
     );
   });
+
+  it("falls back when partner benefits URL embeds credentials", async () => {
+    const api: MobilePublicConfigApiClient = {
+      getPublicAppConfig: async () =>
+        publicConfig("https://;@salaryhijacking.com/partners"),
+    };
+    const loadPartnerBenefitsUrl = createPartnerBenefitsUrlLoader(() => api);
+
+    await expect(loadPartnerBenefitsUrl()).resolves.toBe(
+      SALARY_HIJACKING_PARTNER_BENEFITS_URL,
+    );
+  });
 });
