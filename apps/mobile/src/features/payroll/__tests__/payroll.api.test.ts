@@ -340,4 +340,58 @@ describe("payroll api", () => {
 
     expect(calls).toHaveLength(0);
   });
+
+  it("rejects unsafe payroll plan ids before network access", async () => {
+    const calls: Request[] = [];
+    const api = createPayrollApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: currentPlan });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.savePlan({
+        carryOverAmountMinor: 50_000,
+        emergencyBufferMinor: 100_000,
+        firstPayrollDate: "2026-07-25",
+        fixedExpenseTotalMinor: 650_000,
+        fixedSavingsTotalMinor: 500_000,
+        incomeType: "NET",
+        memo: null,
+        payday: 25,
+        payrollAmountMinor: 2_700_000,
+        payrollCycle: "MONTHLY",
+        periodEndDate: "2026-07-31",
+        periodStartDate: "2026-07-01",
+        planId: "plan_2026_07@example.com",
+        reservePolicy: "ZERO_BASE",
+        title: "July payroll plan",
+        variableExpenseReserveMinor: 620_000,
+      }),
+    ).rejects.toMatchObject({ code: "PAYROLL_INVALID_SAVE_REQUEST" });
+
+    await expect(
+      api.recalculate({
+        alreadySpentAmountMinor: 0,
+        carryOverAmountMinor: 50_000,
+        emergencyBufferMinor: 100_000,
+        fixedExpenseTotalMinor: 650_000,
+        fixedSavingsTotalMinor: 500_000,
+        overwritePlan: false,
+        payrollAmountMinor: 2_700_000,
+        periodEndDate: "2026-07-31",
+        periodStartDate: "2026-07-01",
+        planId: `plan_${"a".repeat(300)}`,
+        reason: null,
+        variableExpenseReserveMinor: 620_000,
+      }),
+    ).rejects.toMatchObject({
+      code: "PAYROLL_INVALID_RECALCULATE_REQUEST",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
 });

@@ -71,6 +71,10 @@ function containsRawSensitiveText(value: string): boolean {
   return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
 
+function isSafePlanId(value: string): boolean {
+  return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `payroll-${Date.now().toString(36)}`
@@ -271,7 +275,7 @@ function normalizeCurrentPlan(value: unknown): PayrollPlanSnapshot {
 function validRecalculateRequest(value: PayrollRecalculateRequest): boolean {
   return (
     (value.planId === null ||
-      (typeof value.planId === "string" && value.planId.length > 0)) &&
+      (typeof value.planId === "string" && isSafePlanId(value.planId))) &&
     isDateOnly(value.periodStartDate) &&
     isDateOnly(value.periodEndDate) &&
     isPositiveInteger(value.payrollAmountMinor) &&
@@ -297,7 +301,7 @@ function validPayday(value: unknown): value is number | null {
 function validSaveRequest(value: PayrollPlanSaveRequest): boolean {
   return (
     (value.planId === null ||
-      (typeof value.planId === "string" && value.planId.trim().length > 0)) &&
+      (typeof value.planId === "string" && isSafePlanId(value.planId))) &&
     typeof value.title === "string" &&
     value.title.trim().length > 0 &&
     value.title.length <= 100 &&
