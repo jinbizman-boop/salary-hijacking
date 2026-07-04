@@ -3139,7 +3139,7 @@ function SalaryHomeScreen(): React.ReactElement {
     }
     salaryReceiptUploadInFlightRef.current = true;
     setUploadingExpenseReceipt(true);
-    setToast("영수증 파일을 선택하고 서버 업로드를 준비하고 있어요.");
+    setToast("영수증 파일을 선택하면 서버 업로드를 바로 시작해요.");
     void DocumentPicker.getDocumentAsync({
       copyToCacheDirectory: true,
       multiple: false,
@@ -3178,7 +3178,7 @@ function SalaryHomeScreen(): React.ReactElement {
       })
       .catch(() => {
         setToast(
-          "영수증 업로드를 준비하지 못했어요. 파일 형식과 네트워크를 확인해 주세요.",
+          "영수증 업로드에 실패했어요. 파일 형식과 네트워크를 확인해 주세요.",
         );
       })
       .finally(() => {
@@ -3492,7 +3492,7 @@ function SalaryHomeScreen(): React.ReactElement {
           <SmallButton
             label={
               uploadingExpenseReceipt
-                ? "영수증 업로드 준비 중"
+                ? "영수증 서버 업로드 중"
                 : uploadedExpenseReceipt
                   ? `영수증 연결됨 · ${uploadedExpenseReceipt.fileName}`
                   : "영수증 첨부"

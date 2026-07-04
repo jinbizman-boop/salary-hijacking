@@ -2477,6 +2477,17 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(uploadsApi).toContain("VARIABLE_EXPENSE");
   });
 
+  it("shows live server upload copy for salary home receipt pending state", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("uploadingExpenseReceipt");
+    expect(cleanScreens).toContain("영수증 서버 업로드 중");
+    expect(cleanScreens).not.toContain("영수증 업로드 준비 중");
+    expect(cleanScreens).not.toContain("영수증 업로드를 준비하지 못했어요");
+  });
+
   it("prevents duplicate variable expense receipt uploads before the uploads API acknowledges it", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
