@@ -23,7 +23,56 @@ import {
   validatePostDraft,
 } from "./community.validators";
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
+function requireExpectedDraftKeys(
+  draft: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): void {
+  if (!hasOnlyKeys(draft, allowedKeys)) {
+    throw new CommunityApiError(
+      0,
+      "COMMUNITY_PAYLOAD_INVALID",
+      "커뮤니티 요청 형식을 확인해 주세요.",
+    );
+  }
+}
+
+function postBody(draft: CommunityPostDraft): CommunityPostDraft {
+  requireExpectedDraftKeys(draft as Record<string, unknown>, [
+    "anonymous",
+    "boardType",
+    "content",
+    "tags",
+    "title",
+  ]);
+  return {
+    anonymous: draft.anonymous,
+    boardType: draft.boardType,
+    content: draft.content,
+    tags: draft.tags,
+    title: draft.title,
+  };
+}
+
+function commentBody(draft: CommunityCommentDraft): CommunityCommentDraft {
+  requireExpectedDraftKeys(draft as Record<string, unknown>, [
+    "anonymous",
+    "content",
+  ]);
+  return {
+    anonymous: draft.anonymous,
+    content: draft.content,
+  };
+}
+
 function requireSafePost(draft: CommunityPostDraft): void {
+  postBody(draft);
   const result = validatePostDraft(draft);
   if (!result.valid || result.moderationStatus === "BLOCKED") {
     throw new CommunityApiError(
@@ -36,6 +85,7 @@ function requireSafePost(draft: CommunityPostDraft): void {
 }
 
 function requireSafeComment(draft: CommunityCommentDraft): void {
+  commentBody(draft);
   const result = validateCommentInput(draft);
   if (!result.valid || result.moderationStatus === "BLOCKED") {
     throw new CommunityApiError(
@@ -249,7 +299,7 @@ export function createCommunityService(
       requireSafePost(draft);
       return transport.request(`${COMMUNITY_API_PREFIX}/posts`, {
         method: "POST",
-        body: draft,
+        body: postBody(draft),
       });
     },
 
@@ -259,7 +309,7 @@ export function createCommunityService(
         `${COMMUNITY_API_PREFIX}/posts/${requireId(postId, "게시글")}`,
         {
           method: "PATCH",
-          body: draft,
+          body: postBody(draft),
         },
       );
     },
@@ -328,7 +378,7 @@ export function createCommunityService(
         `${COMMUNITY_API_PREFIX}/posts/${requireId(postId, "게시글")}/comments`,
         {
           method: "POST",
-          body: draft,
+          body: commentBody(draft),
         },
       );
     },
@@ -339,7 +389,7 @@ export function createCommunityService(
         `${COMMUNITY_API_PREFIX}/comments/${requireId(commentId, "댓글")}`,
         {
           method: "PATCH",
-          body: draft,
+          body: commentBody(draft),
         },
       );
     },

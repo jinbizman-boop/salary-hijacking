@@ -79,6 +79,34 @@ describe("community service", () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it("blocks unknown post and comment draft fields before they reach API payloads", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.publishPost({
+        anonymous: true,
+        boardType: "FREE",
+        content: "safe community routine note",
+        rawSalaryMemo: "salary 2,700,000",
+        tags: ["routine"],
+        title: "safe title",
+      } as never),
+    ).rejects.toMatchObject({ code: "COMMUNITY_PAYLOAD_INVALID" });
+    await expect(
+      service.createComment("post_1", {
+        accountNumber: "123-456-789012",
+        anonymous: true,
+        content: "safe comment",
+      } as never),
+    ).rejects.toMatchObject({ code: "COMMUNITY_PAYLOAD_INVALID" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("blocks invalid community feed filters before they reach URL logs", async () => {
     const request = jest.fn<
       ReturnType<CommunityApiTransport["request"]>,
