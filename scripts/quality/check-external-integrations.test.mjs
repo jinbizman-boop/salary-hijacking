@@ -842,6 +842,10 @@ console.log("detox", "--configuration", env);
       "export function collectDatabaseProof() { return { schemaVersion: 1 }; }\n",
     "scripts/release/collect-database-proof.test.mjs":
       "import test from 'node:test';\n\ntest('collects no-secret database command proof', () => {});\n",
+    "scripts/release/collect-staging-smoke-proof.mjs":
+      "export async function collectStagingSmokeProof() { return { schemaVersion: 1 }; }\n",
+    "scripts/release/collect-staging-smoke-proof.test.mjs":
+      "import test from 'node:test';\n\ntest('collects no-secret staging smoke proof', () => {});\n",
     "scripts/release/generate-secrets-evidence.mjs":
       "export function buildSecretsEvidence() { return { schemaVersion: 1 }; }\n",
     "scripts/release/generate-secrets-evidence.test.mjs":
