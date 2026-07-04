@@ -246,6 +246,37 @@ describe("growth api", () => {
     });
   });
 
+  it("rejects growth progress and content notes with raw sensitive data before network access", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.recordTaskProgress("gtk_reading", {
+        idempotencyKey: "mission-reading-sensitive",
+        note: "mission owner user@example.com",
+        occurredAt: "2026-07-02T09:10:00.000Z",
+        progressCount: 1,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_PROGRESS_REQUEST" });
+
+    await expect(
+      api.completeContent({
+        contentId: "cnt_reading_recommendation",
+        idempotencyKey: "content-reading-sensitive",
+        note: "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_CONTENT_ID" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects invalid growth task, progress, and content ids returned by the server", async () => {
     const listApi = createGrowthApi({
       baseUrl: "https://api.salaryhijacking.com",

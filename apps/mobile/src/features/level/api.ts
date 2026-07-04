@@ -69,6 +69,14 @@ const TASK_DIFFICULTIES = new Set<GrowthTaskDifficulty>([
   "HARD",
   "EXTREME",
 ]);
+const RAW_SENSITIVE_TEXT_PATTERNS = [
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu,
+  /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u,
+  /\b(?:\d{4}[-\s]?){3}\d{4}\b/u,
+  /(?:account|계좌)\s*(?:number|번호)?\s*[:：]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu,
+  /\b(?:authorization|bearer|session|refresh|push|fcm|token)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u,
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -88,6 +96,10 @@ function isIsoTimestamp(value: unknown): value is string {
 
 function isDateOnly(value: unknown): value is string {
   return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/u.test(value);
+}
+
+function containsRawSensitiveText(value: string): boolean {
+  return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 function isSafeGrowthId(value: string): boolean {
@@ -308,7 +320,9 @@ function validProgressRequest(value: GrowthTaskProgressRequest): boolean {
   return (
     isPositiveInteger(value.progressCount) &&
     value.progressCount <= 10_000 &&
-    (value.note === null || typeof value.note === "string") &&
+    (value.note === null ||
+      (typeof value.note === "string" &&
+        !containsRawSensitiveText(value.note))) &&
     isIsoTimestamp(value.occurredAt) &&
     (value.idempotencyKey === null || typeof value.idempotencyKey === "string")
   );
@@ -319,7 +333,9 @@ function validContentCompleteRequest(
 ): boolean {
   return (
     /^[A-Za-z0-9_-]+$/u.test(value.contentId) &&
-    (value.note === null || typeof value.note === "string") &&
+    (value.note === null ||
+      (typeof value.note === "string" &&
+        !containsRawSensitiveText(value.note))) &&
     (value.idempotencyKey === null || typeof value.idempotencyKey === "string")
   );
 }
