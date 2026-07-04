@@ -405,6 +405,107 @@ describe("budget api", () => {
     });
   });
 
+  it("normalizes variable expense enum fields before mutation requests", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              expenseId: "vex_enum_1",
+              amountMinor: 5_000,
+              category: "MEAL",
+              title: "Lunch",
+              spentAt: "2026-07-02T03:00:00.000Z",
+              paymentMethod: "CARD",
+              merchantName: null,
+              memo: null,
+              dailyBudgetId: null,
+              source: "MANUAL",
+              status: "POSTED",
+              netAmountMinor: 5_000,
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+            },
+          }),
+          { status: 201 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              expenseId: "vex_enum_1",
+              amountMinor: 5_500,
+              category: "CAFE",
+              title: "Coffee",
+              spentAt: "2026-07-02T04:00:00.000Z",
+              paymentMethod: "PAY",
+              merchantName: null,
+              memo: null,
+              dailyBudgetId: null,
+              source: "MANUAL",
+              status: "POSTED",
+              netAmountMinor: 5_500,
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.createVariableExpense({
+        amountMinor: 5_000,
+        category: "meal" as never,
+        dailyBudgetId: null,
+        idempotencyKey: "mobile-expense-enum-create",
+        memo: null,
+        merchantName: null,
+        paymentMethod: "card" as never,
+        receiptAttachmentId: null,
+        source: "manual" as never,
+        spentAt: "2026-07-02T03:00:00.000Z",
+        tags: [],
+        title: "Lunch",
+      }),
+    ).resolves.toMatchObject({
+      category: "MEAL",
+      expenseId: "vex_enum_1",
+      paymentMethod: "CARD",
+    });
+    await expect(
+      api.updateVariableExpense("vex_enum_1", {
+        amountMinor: 5_500,
+        category: "cafe" as never,
+        paymentMethod: "pay" as never,
+        title: "Coffee",
+      }),
+    ).resolves.toMatchObject({
+      category: "CAFE",
+      expenseId: "vex_enum_1",
+      paymentMethod: "PAY",
+    });
+
+    expect(JSON.parse(String(fetcher.mock.calls[0]?.[1]?.body))).toMatchObject({
+      category: "MEAL",
+      paymentMethod: "CARD",
+      source: "MANUAL",
+    });
+    expect(JSON.parse(String(fetcher.mock.calls[1]?.[1]?.body))).toMatchObject({
+      category: "CAFE",
+      paymentMethod: "PAY",
+    });
+  });
+
   it("lists server-authoritative variable expenses for salary home hydration", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

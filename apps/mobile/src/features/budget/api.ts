@@ -89,6 +89,92 @@ function isSafeEntityId(value: string): boolean {
   return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
 }
 
+const SERVER_VARIABLE_EXPENSE_CATEGORIES = [
+  "MEAL",
+  "TRANSPORT",
+  "CAFE",
+  "GROCERIES",
+  "SHOPPING",
+  "HEALTH",
+  "CONTENT",
+  "EDUCATION",
+  "FAMILY",
+  "GIFT",
+  "TRAVEL",
+  "ETC",
+] as const;
+const SERVER_VARIABLE_EXPENSE_PAYMENT_METHODS = [
+  "CASH",
+  "CARD",
+  "TRANSFER",
+  "PAY",
+  "ETC",
+] as const;
+const SERVER_VARIABLE_EXPENSE_SOURCES = [
+  "MANUAL",
+  "RECEIPT",
+  "IMPORT",
+  "SYSTEM",
+] as const;
+
+function normalizeServerEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+): T | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return allowed.includes(normalized as T) ? (normalized as T) : null;
+}
+
+function normalizeVariableExpenseCreateRequest(
+  request: VariableExpenseCreateRequest,
+): VariableExpenseCreateRequest | null {
+  const category = normalizeServerEnum(
+    request.category,
+    SERVER_VARIABLE_EXPENSE_CATEGORIES,
+  );
+  const paymentMethod = normalizeServerEnum(
+    request.paymentMethod,
+    SERVER_VARIABLE_EXPENSE_PAYMENT_METHODS,
+  );
+  const source = normalizeServerEnum(
+    request.source,
+    SERVER_VARIABLE_EXPENSE_SOURCES,
+  );
+  if (!category || !paymentMethod || !source) return null;
+  return {
+    ...request,
+    category,
+    paymentMethod,
+    source,
+  };
+}
+
+function normalizeVariableExpenseUpdateRequest(
+  request: VariableExpenseUpdateRequest,
+): VariableExpenseUpdateRequest | null {
+  const category =
+    request.category === undefined
+      ? undefined
+      : normalizeServerEnum(
+          request.category,
+          SERVER_VARIABLE_EXPENSE_CATEGORIES,
+        );
+  const paymentMethod =
+    request.paymentMethod === undefined
+      ? undefined
+      : normalizeServerEnum(
+          request.paymentMethod,
+          SERVER_VARIABLE_EXPENSE_PAYMENT_METHODS,
+        );
+  if (category === null || paymentMethod === null) return null;
+  return {
+    ...request,
+    ...(category !== undefined ? { category } : {}),
+    ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+  };
+}
+
 function normalizeResponseEntityId(value: unknown): string {
   if (typeof value !== "string" || !isSafeEntityId(value)) {
     throw new BudgetApiError(
@@ -577,7 +663,13 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
     async createVariableExpense(
       variableExpenseRequest: VariableExpenseCreateRequest,
     ): Promise<VariableExpenseCreateResult> {
-      if (!validateVariableExpenseCreateRequest(variableExpenseRequest)) {
+      const normalizedRequest = normalizeVariableExpenseCreateRequest(
+        variableExpenseRequest,
+      );
+      if (
+        normalizedRequest === null ||
+        !validateVariableExpenseCreateRequest(normalizedRequest)
+      ) {
         throw new BudgetApiError(
           0,
           "BUDGET_INVALID_VARIABLE_EXPENSE",
@@ -586,7 +678,7 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
       }
       const result = await request(VARIABLE_EXPENSE_CREATE_PATH, {
         method: "POST",
-        body: JSON.stringify(variableExpenseRequest),
+        body: JSON.stringify(normalizedRequest),
       });
       return normalizeVariableExpenseCreateResult(result);
     },
@@ -595,7 +687,12 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
       expenseId: string,
       updateRequest: VariableExpenseUpdateRequest,
     ): Promise<VariableExpenseRecord> {
-      if (!validateVariableExpenseUpdateRequest(updateRequest)) {
+      const normalizedRequest =
+        normalizeVariableExpenseUpdateRequest(updateRequest);
+      if (
+        normalizedRequest === null ||
+        !validateVariableExpenseUpdateRequest(normalizedRequest)
+      ) {
         throw new BudgetApiError(
           0,
           "BUDGET_INVALID_VARIABLE_EXPENSE_UPDATE",
@@ -604,7 +701,7 @@ export function createBudgetApi(options: BudgetApiOptions): BudgetApiClient {
       }
       const result = await request(variableExpensePath(expenseId), {
         method: "PATCH",
-        body: JSON.stringify(updateRequest),
+        body: JSON.stringify(normalizedRequest),
       });
       return normalizeVariableExpenseCreateResult(result);
     },
