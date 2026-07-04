@@ -1854,6 +1854,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <SectionCard>
             <Text style={styles.sectionTitle}>문의 유형</Text>
             <PillRow
+              disabled={submitting}
               items={["ACCOUNT", "PAYMENT", "PRIVACY", "BUG", "OTHER"]}
               selected={supportCategory}
               onSelect={(next) => {

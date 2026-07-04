@@ -1811,6 +1811,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(supportSource).toMatch(/if\s*\(submitting\)\s*return;/u);
   });
 
+  it("locks MY support inquiry category pills while the server ticket submit is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const supportSource =
+      cleanScreens.match(
+        /export function CleanFintechSupportScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechMyCommunityScreen/u,
+      )?.[0] ?? "";
+
+    expect(supportSource).toMatch(
+      /<PillRow[\s\S]*?disabled=\{submitting\}[\s\S]*?items=\{\["ACCOUNT", "PAYMENT", "PRIVACY", "BUG", "OTHER"\]\}/u,
+    );
+  });
+
   it("keeps MY community management routed to a server-backed own posts screen", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
