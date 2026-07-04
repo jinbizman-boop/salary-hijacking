@@ -34,6 +34,7 @@ import type {
 } from "./types";
 import { redactBudgetError } from "./utils";
 import {
+  containsRawSensitiveText,
   parseDailyBudgetSnapshot,
   validateRecalculateRequest,
   validateVariableExpenseCreateRequest,
@@ -435,7 +436,9 @@ function validDailyBudgetSaveRequest(value: DailyBudgetSaveRequest): boolean {
         value.budgetId.trim().length > 0)) &&
     isNonNegativeInteger(value.plannedAmountMinor) &&
     (value.memo === null ||
-      (typeof value.memo === "string" && value.memo.trim().length <= 500))
+      (typeof value.memo === "string" &&
+        value.memo.trim().length <= 500 &&
+        !containsRawSensitiveText(value.memo)))
   );
 }
 

@@ -269,6 +269,38 @@ describe("budget api", () => {
     }
   });
 
+  it("rejects daily budget memo values with raw sensitive data before network access", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.saveDailyBudget({
+        budgetDate: "2026-07-03",
+        budgetId: null,
+        memo: "budget owner user@example.com",
+        plannedAmountMinor: 25_000,
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_DAILY_BUDGET_SAVE" });
+
+    await expect(
+      api.saveDailyBudget({
+        budgetDate: "2026-07-03",
+        budgetId: "budget_today",
+        memo: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+        plannedAmountMinor: 30_000,
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_DAILY_BUDGET_SAVE" });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("creates a server-authoritative variable expense before local preview fallback", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

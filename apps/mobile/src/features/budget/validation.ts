@@ -88,7 +88,7 @@ function isIsoTimestamp(value: unknown): value is string {
   );
 }
 
-function containsRawSensitiveText(value: string): boolean {
+export function containsRawSensitiveText(value: string): boolean {
   return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
 
