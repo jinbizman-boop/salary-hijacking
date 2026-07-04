@@ -412,6 +412,60 @@ describe("notifications api", () => {
     expect(calls[1]?.headers.get("x-raw-push-token-exposed")).toBe("false");
   });
 
+  it("normalizes notification device platforms to the server enum before registration", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            deviceId: "device_android_1",
+            platform: "ANDROID",
+            pushTokenHashOnly: true,
+            pushTokenPreview: "ExponentPushToken[abc***",
+            status: "ACTIVE",
+            registeredAt: "2026-07-02T09:40:00.000Z",
+            updatedAt: "2026-07-02T09:40:00.000Z",
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.registerDevice({
+        appVersion: "1.0.0",
+        deviceId: "device_android_1",
+        locale: "ko-KR",
+        platform: " android " as never,
+        pushToken: "ExponentPushToken[abcdef123456]",
+      }),
+    ).resolves.toMatchObject({
+      deviceId: "device_android_1",
+      platform: "ANDROID",
+      status: "ACTIVE",
+    });
+    await expect(calls[0]?.clone().json()).resolves.toMatchObject({
+      platform: "ANDROID",
+    });
+
+    await expect(
+      api.registerDevice({
+        appVersion: "1.0.0",
+        deviceId: "device_android_1",
+        locale: "ko-KR",
+        platform: "desktop" as never,
+        pushToken: "ExponentPushToken[abcdef123456]",
+      }),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
+    });
+    expect(calls).toHaveLength(1);
+  });
+
   it("rejects notification device metadata with raw sensitive values before network access", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({

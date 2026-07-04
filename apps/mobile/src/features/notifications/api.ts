@@ -616,6 +616,32 @@ function validRegistrationRequest(
   );
 }
 
+function normalizeRegistrationDevicePlatform(
+  value: unknown,
+): NotificationDevicePlatform | null {
+  if (typeof value !== "string") return null;
+  const platform = value.trim().toUpperCase();
+  if (
+    NOTIFICATION_DEVICE_PLATFORMS.has(platform as NotificationDevicePlatform)
+  ) {
+    return platform as NotificationDevicePlatform;
+  }
+  return null;
+}
+
+function normalizeRegistrationRequest(
+  request: NotificationDeviceRegistrationRequest,
+): NotificationDeviceRegistrationRequest | null {
+  if (!isRecord(request)) return null;
+  const platform = normalizeRegistrationDevicePlatform(request.platform);
+  if (!platform) return null;
+  const normalizedRequest = {
+    ...request,
+    platform,
+  } as NotificationDeviceRegistrationRequest;
+  return validRegistrationRequest(normalizedRequest) ? normalizedRequest : null;
+}
+
 function notificationResourcePath(notificationId: string): string {
   const normalized = notificationId.trim();
   if (
@@ -808,7 +834,9 @@ export function createNotificationsApi(
     async registerDevice(
       registrationRequest: NotificationDeviceRegistrationRequest,
     ): Promise<NotificationDevice> {
-      if (!validRegistrationRequest(registrationRequest)) {
+      const normalizedRegistrationRequest =
+        normalizeRegistrationRequest(registrationRequest);
+      if (!normalizedRegistrationRequest) {
         throw new NotificationsApiError(
           0,
           "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
@@ -817,7 +845,7 @@ export function createNotificationsApi(
       }
       const result = await request(NOTIFICATIONS_DEVICES_PATH, {
         method: "POST",
-        body: JSON.stringify(registrationRequest),
+        body: JSON.stringify(normalizedRegistrationRequest),
       });
       if (!isRecord(result) || !("data" in result)) {
         throw new NotificationsApiError(
