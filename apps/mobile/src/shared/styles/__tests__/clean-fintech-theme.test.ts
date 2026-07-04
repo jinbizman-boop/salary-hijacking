@@ -848,6 +848,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("applyServerPayrollPlan(saved)");
   });
 
+  it("locks plan payroll input cards while payroll plan save is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planInputCardSource =
+      cleanScreens.match(
+        /function PlanInputCard\([\s\S]*?function PlanSummaryCard/u,
+      )?.[0] ?? "";
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(planInputCardSource).toContain("disabled = false");
+    expect(planInputCardSource).toContain("disabled?: boolean");
+    expect(planInputCardSource).toContain("editable={!disabled}");
+    expect(
+      planSource.match(
+        /<PlanInputCard[\s\S]*?disabled=\{savingPayrollPlan\}[\s\S]*?\/>/gu,
+      ) ?? [],
+    ).toHaveLength(3);
+  });
+
   it("keeps notification screen hydrated from the server before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

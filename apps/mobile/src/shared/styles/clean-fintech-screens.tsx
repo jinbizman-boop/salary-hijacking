@@ -4163,12 +4163,14 @@ function PlanScreen(): React.ReactElement {
       </SectionCard>
       <PlanInputCard
         label="급여 계획"
+        disabled={savingPayrollPlan}
         value={salary}
         onChange={setSalary}
         helper="급여일 매월 25일 · KRW 정수만 입력"
       />
       <PlanInputCard
         label="고정지출"
+        disabled={savingPayrollPlan}
         value={expense}
         onChange={setExpense}
         helper="월세, 구독, 통신비를 먼저 분리"
@@ -4317,6 +4319,7 @@ function PlanScreen(): React.ReactElement {
       />
       <PlanInputCard
         label="목표금액"
+        disabled={savingPayrollPlan}
         value={target}
         onChange={setTarget}
         helper="목표 달성률 재계산 기준"
@@ -6359,11 +6362,13 @@ function SectionCard({
 }
 
 function PlanInputCard({
+  disabled = false,
   label,
   value,
   helper,
   onChange,
 }: Readonly<{
+  disabled?: boolean;
   label: string;
   value: string;
   helper: string;
@@ -6377,6 +6382,7 @@ function PlanInputCard({
       </View>
       <TextInput
         accessibilityLabel={label}
+        editable={!disabled}
         inputMode="numeric"
         keyboardType="number-pad"
         onChangeText={onChange}
