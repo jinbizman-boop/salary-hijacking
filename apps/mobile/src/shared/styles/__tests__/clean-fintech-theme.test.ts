@@ -263,6 +263,34 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHomeSource).not.toContain("onChangeText={setExpenseDraft}");
   });
 
+  it("keeps salary home daily budget draft separate from variable expense drafts", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const salaryHomeSource =
+      cleanScreens.match(
+        /function SalaryHomeScreen\(\): React\.ReactElement \{[\s\S]*?function PlanScreen/u,
+      )?.[0] ?? "";
+
+    expect(salaryHomeSource).toContain("dailyBudgetDraft");
+    expect(salaryHomeSource).toContain("setSanitizedDailyBudgetDraft");
+    expect(salaryHomeSource).toContain(
+      "const dailyBudgetAmount = parseKrwInputAmount(dailyBudgetDraft)",
+    );
+    expect(salaryHomeSource).toContain("plannedAmountMinor: dailyBudgetAmount");
+    expect(salaryHomeSource).toContain('setDailyBudgetDraft("")');
+    expect(salaryHomeSource).toContain("salaryHomeDailyBudgetSubmitDisabled");
+    expect(salaryHomeSource).toMatch(
+      /accessibilityState=\{\{\s*disabled:\s*salaryHomeDailyBudgetSubmitDisabled,\s*\}\}/u,
+    );
+    expect(salaryHomeSource).toContain(
+      "disabled={salaryHomeDailyBudgetSubmitDisabled}",
+    );
+    expect(salaryHomeSource).toContain(
+      "onChangeText={setSanitizedDailyBudgetDraft}",
+    );
+  });
+
   it("locks salary home amount input while expense or daily budget save is pending", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

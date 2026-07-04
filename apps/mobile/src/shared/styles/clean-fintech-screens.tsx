@@ -3080,6 +3080,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
   const [expenseDraft, setExpenseDraft] = useState("");
   const [expenseTitleDraft, setExpenseTitleDraft] = useState("");
+  const [dailyBudgetDraft, setDailyBudgetDraft] = useState("");
   const [addedExpenses, setAddedExpenses] = useState<
     readonly VariableExpenseEntry[]
   >([]);
@@ -3228,14 +3229,20 @@ function SalaryHomeScreen(): React.ReactElement {
   const setSanitizedExpenseTitleDraft = useCallback((value: string) => {
     setExpenseTitleDraft(value.replace(/\s+/gu, " ").slice(0, 40));
   }, []);
+  const setSanitizedDailyBudgetDraft = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setDailyBudgetDraft(next);
+  }, []);
   const salaryHomeAmountPending = savingExpense || savingDailyBudget;
   const salaryHomeExpenseSubmitDisabled =
     salaryHomeAmountPending || parseKrwInputAmount(expenseDraft) === null;
+  const salaryHomeDailyBudgetSubmitDisabled =
+    savingDailyBudget || parseKrwInputAmount(dailyBudgetDraft) === null;
 
   const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
     if (dailyBudgetSaveInFlightRef.current) return;
-    const amount = parseKrwInputAmount(expenseDraft);
-    if (amount === null) {
+    const dailyBudgetAmount = parseKrwInputAmount(dailyBudgetDraft);
+    if (dailyBudgetAmount === null) {
       setToast("저장할 오늘 예산을 0보다 큰 KRW 정수로 입력해 주세요.");
       return;
     }
@@ -3247,11 +3254,11 @@ function SalaryHomeScreen(): React.ReactElement {
         budgetDate: serverBudgetSnapshot?.date ?? todayDateInSeoul(),
         budgetId: serverBudgetSnapshot?.budgetId ?? null,
         memo: "mobile salary home daily budget save",
-        plannedAmountMinor: amount,
+        plannedAmountMinor: dailyBudgetAmount,
       });
       setServerBudgetSnapshot(response.data.snapshot);
       setAddedExpenses([]);
-      setExpenseDraft("");
+      setDailyBudgetDraft("");
       setToast(
         `오늘 예산을 ${formatMoney(response.data.snapshot.dailyLimit)}원으로 서버 저장했어요.`,
       );
@@ -3261,7 +3268,7 @@ function SalaryHomeScreen(): React.ReactElement {
       dailyBudgetSaveInFlightRef.current = false;
       setSavingDailyBudget(false);
     }
-  }, [budgetApi, expenseDraft, serverBudgetSnapshot]);
+  }, [budgetApi, dailyBudgetDraft, serverBudgetSnapshot]);
 
   const pickVariableExpenseReceipt = useCallback(() => {
     if (uploadingExpenseReceipt || salaryReceiptUploadInFlightRef.current) {
@@ -3615,16 +3622,35 @@ function SalaryHomeScreen(): React.ReactElement {
               {savingExpense ? "저장 중..." : "지출 추가하기"}
             </Text>
           </Pressable>
+          <TextInput
+            accessibilityLabel="오늘 예산 저장 금액"
+            accessibilityState={{ disabled: savingDailyBudget }}
+            editable={!savingDailyBudget}
+            inputMode="numeric"
+            keyboardType="number-pad"
+            maxLength={12}
+            onChangeText={setSanitizedDailyBudgetDraft}
+            onSubmitEditing={() => {
+              void saveSalaryDailyBudget();
+            }}
+            placeholder="예: 20000"
+            placeholderTextColor={theme.color.text.disabled}
+            returnKeyType="done"
+            style={styles.input}
+            value={dailyBudgetDraft}
+          />
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: savingDailyBudget }}
-            disabled={savingDailyBudget}
+            accessibilityState={{
+              disabled: salaryHomeDailyBudgetSubmitDisabled,
+            }}
+            disabled={salaryHomeDailyBudgetSubmitDisabled}
             onPress={() => {
               void saveSalaryDailyBudget();
             }}
             style={[
               styles.primaryButton,
-              savingDailyBudget ? styles.disabled : null,
+              salaryHomeDailyBudgetSubmitDisabled ? styles.disabled : null,
             ]}
           >
             <Text style={styles.primaryButtonText}>
