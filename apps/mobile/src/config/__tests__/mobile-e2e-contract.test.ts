@@ -87,22 +87,27 @@ describe("mobile Detox E2E contract", () => {
     expect(smokeSpec).toContain("device.launchApp");
   });
 
-  it("runs an Android SDK preflight before native Detox E2E", () => {
+  it("runs CI-safe E2E by default and keeps strict Android native E2E available", () => {
     const packageJson = JSON.parse(
       readRequiredText("package.json"),
     ) as PackageJson;
     const preflight = readRequiredText("scripts/check-detox-env.mjs");
+    const ciRunner = readRequiredText("scripts/run-e2e-ci.mjs");
     const detoxRunner = readRequiredText("scripts/run-detox-android.mjs");
 
     expect(packageJson.scripts?.["test:e2e"]).toContain(
-      "node scripts/check-detox-env.mjs android.emu.debug",
+      "node scripts/run-e2e-ci.mjs android.emu.debug",
     );
-    expect(packageJson.scripts?.["test:e2e"]).toContain(
-      "node scripts/run-detox-android.mjs android.emu.debug",
+    expect(packageJson.scripts?.["test:e2e:android"]).toContain(
+      "node scripts/check-detox-env.mjs android.emu.debug",
     );
     expect(packageJson.scripts?.["test:e2e:android"]).toContain(
       "node scripts/run-detox-android.mjs android.emu.debug",
     );
+    expect(ciRunner).toContain("MOBILE_NATIVE_E2E_REQUIRED");
+    expect(ciRunner).toContain("mobile-native-observation.local.json");
+    expect(ciRunner).toContain("containsSecretValues: false");
+    expect(ciRunner).toContain("runDetoxAndroidTest");
     expect(preflight).toContain("ANDROID_SDK_ROOT");
     expect(preflight).toContain("ANDROID_HOME");
     expect(preflight).toContain("salary-hijacking-e2e.apk");
