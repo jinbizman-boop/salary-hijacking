@@ -475,6 +475,32 @@ describe("notifications api", () => {
     });
   });
 
+  it("rejects notification title and message text with raw sensitive values", async () => {
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...serverNotification,
+                message: "account 123-456-789012 needs review",
+                title: "contact user@example.com",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "android",
+    });
+
+    await expect(api.list()).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_RESPONSE",
+    });
+  });
+
   it("rejects invalid notification and device ids returned by the server", async () => {
     const notificationApi = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",

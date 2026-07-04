@@ -266,7 +266,9 @@ function normalizeNotificationItem(value: unknown): NotificationItem {
     !isSafeNotificationId(value.notificationId) ||
     typeof value.title !== "string" ||
     !value.title ||
+    containsRawSensitiveText(value.title) ||
     typeof value.message !== "string" ||
+    containsRawSensitiveText(value.message) ||
     !isIsoTimestamp(value.createdAt) ||
     value.sensitiveFinancialDataExposed !== false ||
     value.adTargetingSeparated !== true
