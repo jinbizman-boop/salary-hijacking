@@ -6524,6 +6524,7 @@ function CommunityPostRow({
 }>): React.ReactElement {
   return (
     <Pressable
+      accessibilityLabel={`${post.board} ${post.title} ${post.stats}`}
       accessibilityRole="button"
       onPress={onPress}
       style={styles.postRow}

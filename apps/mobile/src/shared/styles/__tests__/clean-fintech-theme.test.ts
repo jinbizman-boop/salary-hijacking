@@ -1959,6 +1959,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("adsFinancialTargetingUsed");
   });
 
+  it("exposes a descriptive accessibility label for community post rows", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const communityPostRowSource =
+      cleanScreens.match(
+        /function CommunityPostRow\([\s\S]*?function PillRow/u,
+      )?.[0] ?? "";
+
+    expect(communityPostRowSource).toContain('accessibilityRole="button"');
+    expect(communityPostRowSource).toContain(
+      "accessibilityLabel={`${post.board} ${post.title} ${post.stats}`}",
+    );
+  });
+
   it("keeps community FAB navigating to the write flow", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
