@@ -1,5 +1,8 @@
 import { createUploadsApi } from "../api";
 
+const fs = jest.requireActual<typeof import("node:fs")>("node:fs");
+const path = jest.requireActual<typeof import("node:path")>("node:path");
+
 function jsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify({ data }), {
     status,
@@ -8,6 +11,16 @@ function jsonResponse(data: unknown, status = 200): Response {
 }
 
 describe("uploads api", () => {
+  it("keeps upload sensitive file-name keywords readable for Korean privacy review", () => {
+    const source = fs.readFileSync(path.join(__dirname, "../api.ts"), "utf8");
+
+    expect(source).toContain("급여");
+    expect(source).toContain("계좌");
+    expect(source).toContain("카드");
+    expect(source).toContain("주민등록");
+    expect(source).not.toMatch(/[�]|\?붽|湲됱|怨꾩|移대|鍮꾨|二쇰|꾪솕|⑹튂/u);
+  });
+
   it("directly uploads community attachment bytes through the API v1 uploads boundary", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
@@ -95,6 +108,45 @@ describe("uploads api", () => {
     ).rejects.toMatchObject({
       code: "UPLOADS_SENSITIVE_FILE_NAME_FORBIDDEN",
     });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("blocks real Korean financial and identity upload file names before network access", async () => {
+    const fetcher = jest.fn<
+      ReturnType<typeof fetch>,
+      Parameters<typeof fetch>
+    >();
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-korean-sensitive",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    const sensitiveNames = [
+      "급여명세서.pdf",
+      "월급_입금내역.png",
+      "계좌번호_캡처.webp",
+      "카드_결제내역.jpg",
+      "대출상환표.pdf",
+      "주민등록증.png",
+      "전화번호_메모.png",
+    ];
+
+    for (const fileName of sensitiveNames) {
+      await expect(
+        api.directUploadCommunityAttachment({
+          bytes,
+          contentType: "image/png",
+          fileName,
+          sizeBytes: 4,
+        }),
+      ).rejects.toMatchObject({
+        code: "UPLOADS_SENSITIVE_FILE_NAME_FORBIDDEN",
+      });
+    }
 
     expect(fetcher).not.toHaveBeenCalled();
   });
@@ -188,6 +240,53 @@ describe("uploads api", () => {
         sizeBytes: 4,
       }),
     ).rejects.toMatchObject({ code: "UPLOADS_INVALID_RESPONSE" });
+  });
+
+  it("rejects upload file names whose extension does not match the declared content type", async () => {
+    const fetcher = jest.fn<
+      ReturnType<typeof fetch>,
+      Parameters<typeof fetch>
+    >();
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-extension",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName: "community-proof.pdf",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_FILE_EXTENSION_MISMATCH",
+    });
+    await expect(
+      api.directUploadVariableExpenseReceipt({
+        bytes,
+        contentType: "application/pdf",
+        fileName: "receipt.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_FILE_EXTENSION_MISMATCH",
+    });
+    await expect(
+      api.directUploadVariableExpenseReceipt({
+        bytes,
+        contentType: "image/jpeg",
+        fileName: "receipt",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_FILE_EXTENSION_REQUIRED",
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
   });
 
   it("attaches a completed upload to a community post without exposing raw file paths", async () => {

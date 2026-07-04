@@ -77,6 +77,100 @@ function normalizeContentType(value: string): string {
   return value.trim().toLowerCase();
 }
 
+const SENSITIVE_UPLOAD_FILE_NAME_TERMS = Object.freeze([
+  "salary",
+  "payslip",
+  "paycheck",
+  "payroll",
+  "income",
+  "bankbook",
+  "statement",
+  "account",
+  "card",
+  "token",
+  "secret",
+  "password",
+  "private",
+  "월급",
+  "급여",
+  "급여명세",
+  "소득",
+  "수입",
+  "연봉",
+  "계좌",
+  "계좌번호",
+  "통장",
+  "카드",
+  "토큰",
+  "비밀",
+  "비밀번호",
+  "주민",
+  "주민등록",
+  "전화",
+  "전화번호",
+  "휴대폰",
+  "대출",
+  "부채",
+  "저축",
+  "지출",
+  "금액",
+  "납치",
+  "인증",
+]);
+
+const UPLOAD_FILE_EXTENSIONS_BY_CONTENT_TYPE = Object.freeze<
+  Readonly<Record<string, readonly string[]>>
+>({
+  "application/pdf": Object.freeze(["pdf"]),
+  "image/jpeg": Object.freeze(["jpg", "jpeg"]),
+  "image/png": Object.freeze(["png"]),
+  "image/webp": Object.freeze(["webp"]),
+});
+
+function hasSensitiveFileNameTerm(value: string): boolean {
+  const normalized = value.toLocaleLowerCase("ko-KR");
+  return SENSITIVE_UPLOAD_FILE_NAME_TERMS.some((term) =>
+    normalized.includes(term),
+  );
+}
+
+function hasSensitiveFileNameShape(value: string): boolean {
+  return (
+    /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u.test(value) ||
+    /\b\d{2,6}(?:[-\s]\d{2,6}){1,4}\b/u.test(value) ||
+    /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u.test(
+      value,
+    )
+  );
+}
+
+function fileExtension(value: string): string | null {
+  const match = /\.([A-Za-z0-9]{1,12})$/u.exec(value.trim());
+  return match?.[1]?.toLocaleLowerCase("en-US") ?? null;
+}
+
+function assertFileNameMatchesContentType(
+  fileName: string,
+  contentType: string,
+): void {
+  const extension = fileExtension(fileName);
+  if (!extension) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_FILE_EXTENSION_REQUIRED",
+      "File extension is required",
+    );
+  }
+  const allowedExtensions = UPLOAD_FILE_EXTENSIONS_BY_CONTENT_TYPE[contentType];
+  if (!allowedExtensions?.includes(extension)) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_FILE_EXTENSION_MISMATCH",
+      "File extension does not match content type",
+    );
+  }
+}
+
 function safeFileName(value: string): string {
   const normalized = value
     .trim()
@@ -90,14 +184,8 @@ function safeFileName(value: string): string {
     );
   }
   if (
-    /salary|payslip|bankbook|statement|account|card|token|secret|월급|급여|계좌|카드|토큰|비밀|주민|전화|휴대폰|대출|부채|저축|지출|금액|납치/iu.test(
-      normalized,
-    ) ||
-    /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u.test(normalized) ||
-    /\b\d{2,6}(?:[-\s]\d{2,6}){1,4}\b/u.test(normalized) ||
-    /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u.test(
-      normalized,
-    )
+    hasSensitiveFileNameTerm(normalized) ||
+    hasSensitiveFileNameShape(normalized)
   ) {
     throw new UploadsApiError(
       0,
@@ -132,7 +220,9 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
       "Community attachment size is invalid",
     );
   }
-  return { contentType, fileName: safeFileName(input.fileName) };
+  const fileName = safeFileName(input.fileName);
+  assertFileNameMatchesContentType(fileName, contentType);
+  return { contentType, fileName };
 }
 
 function assertVariableExpenseReceipt(
@@ -161,7 +251,9 @@ function assertVariableExpenseReceipt(
       "Variable expense receipt size is invalid",
     );
   }
-  return { contentType, fileName: safeFileName(input.fileName) };
+  const fileName = safeFileName(input.fileName);
+  assertFileNameMatchesContentType(fileName, contentType);
+  return { contentType, fileName };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -235,10 +327,13 @@ function attachmentFromResponse(value: unknown): UploadAttachment {
   if (!attachmentId || !fileName || !contentType || sizeBytes < 1) {
     invalidUploadResponse();
   }
+  const normalizedContentType = responseContentType(contentType);
+  const normalizedFileName = safeFileName(fileName);
+  assertFileNameMatchesContentType(normalizedFileName, normalizedContentType);
   return {
     attachmentId,
-    contentType: responseContentType(contentType),
-    fileName: safeFileName(fileName),
+    contentType: normalizedContentType,
+    fileName: normalizedFileName,
     scanStatus: responseScanStatus(scanStatus),
     sizeBytes,
     status: responseStatus(status),
