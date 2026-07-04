@@ -271,6 +271,37 @@ function assertSocialProvider(value: AuthSocialProvider): AuthSocialProvider {
   return value;
 }
 
+function assertOAuthRedirectUri(value: string): string {
+  const redirectUri = assertPresent(value, "AUTH_OAUTH_REDIRECT_URI_REQUIRED");
+  let url: URL;
+  try {
+    url = new URL(redirectUri);
+  } catch {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_REDIRECT_URI_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const isAppCallback =
+    url.protocol === "salaryhijacking:" &&
+    url.hostname === "auth" &&
+    url.pathname === "/oauth/callback";
+  const isWebCallback =
+    url.protocol === "https:" &&
+    (url.hostname === "salaryhijacking.com" ||
+      url.hostname.endsWith(".salaryhijacking.com")) &&
+    url.pathname === "/auth/oauth/callback";
+  if (!isAppCallback && !isWebCallback) {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_REDIRECT_URI_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return redirectUri;
+}
+
 function optionalNonEmptyString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
@@ -651,10 +682,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
           "AUTH_OAUTH_CODE_CHALLENGE_REQUIRED",
         ),
         provider: assertSocialProvider(request.provider),
-        redirectUri: assertPresent(
-          request.redirectUri,
-          "AUTH_OAUTH_REDIRECT_URI_REQUIRED",
-        ),
+        redirectUri: assertOAuthRedirectUri(request.redirectUri),
       });
       const result = oauthStartResult(parsed);
       await persistOAuthVerifier(

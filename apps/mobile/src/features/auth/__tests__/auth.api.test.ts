@@ -788,6 +788,38 @@ describe("auth api", () => {
     );
   });
 
+  it("rejects unsafe OAuth redirect URIs before fetch", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>();
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createOAuthPkcePair: async () => ({
+        codeVerifier: "app-local-code-verifier",
+        codeChallenge: "app-local-code-challenge",
+      }),
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+      },
+    });
+
+    await expect(
+      api.startOAuth({
+        provider: "KAKAO",
+        redirectUri: "http://evil.example/auth/oauth/callback",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_OAUTH_REDIRECT_URI_INVALID" });
+
+    expect(calls).toHaveLength(0);
+    expect(stored.size).toBe(0);
+  });
+
   it("completes social OAuth callback with the stored verifier and clears it after token storage", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>([
