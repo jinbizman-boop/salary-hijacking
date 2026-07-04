@@ -4280,6 +4280,7 @@ function PlanScreen(): React.ReactElement {
         />
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled: savingPlanCommitment }}
           disabled={savingPlanCommitment}
           onPress={() => {
             void submitPlanFixedExpense();
@@ -4343,6 +4344,7 @@ function PlanScreen(): React.ReactElement {
         />
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled: savingPlanCommitment }}
           disabled={savingPlanCommitment}
           onPress={() => {
             void submitPlanSavingsGoal();
