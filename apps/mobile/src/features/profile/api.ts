@@ -500,9 +500,7 @@ function validActionRequest(value: ProfileActionRequest): boolean {
   return (
     nonEmptyString(value.reason) &&
     value.reason.length <= 120 &&
-    !/salary|income|expense|saving|hijack|token|email|phone|card|account/iu.test(
-      value.reason,
-    )
+    !containsRawSensitiveProfileText(value.reason)
   );
 }
 
@@ -879,19 +877,23 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     requestPrivacyExport(
       profileRequest: ProfileActionRequest,
     ): Promise<ProfileSnapshot> {
-      return request(PROFILE_PRIVACY_EXPORT_PATH, {
-        body: actionPayload(profileRequest),
-        method: "POST",
-      });
+      return Promise.resolve().then(() =>
+        request(PROFILE_PRIVACY_EXPORT_PATH, {
+          body: actionPayload(profileRequest),
+          method: "POST",
+        }),
+      );
     },
 
     requestWithdrawalRequest(
       profileRequest: ProfileActionRequest,
     ): Promise<ProfileSnapshot> {
-      return request(PROFILE_WITHDRAWAL_REQUEST_PATH, {
-        body: actionPayload(profileRequest),
-        method: "POST",
-      });
+      return Promise.resolve().then(() =>
+        request(PROFILE_WITHDRAWAL_REQUEST_PATH, {
+          body: actionPayload(profileRequest),
+          method: "POST",
+        }),
+      );
     },
 
     createSupportTicket(

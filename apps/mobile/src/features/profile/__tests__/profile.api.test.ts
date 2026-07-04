@@ -488,6 +488,36 @@ describe("profile api", () => {
     }
   });
 
+  it("rejects privacy export and withdrawal reasons with raw sensitive values before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: profilePayload }, 202);
+      },
+      platform: "android",
+    });
+    const unsafeReasons = [
+      "내보내기 답변은 user@example.com으로 주세요",
+      "탈퇴 확인 연락처 010-1234-5678",
+      "계좌 110-123-456789와 급여 2,700,000원 확인",
+      "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+    ];
+
+    for (const reason of unsafeReasons) {
+      await expect(api.requestPrivacyExport({ reason })).rejects.toMatchObject({
+        code: "PROFILE_INVALID_ACTION_REQUEST",
+      });
+      await expect(
+        api.requestWithdrawalRequest({ reason }),
+      ).rejects.toMatchObject({
+        code: "PROFILE_INVALID_ACTION_REQUEST",
+      });
+    }
+    expect(calls).toHaveLength(0);
+  });
+
   it("creates support tickets without raw financial or personal payloads", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({
