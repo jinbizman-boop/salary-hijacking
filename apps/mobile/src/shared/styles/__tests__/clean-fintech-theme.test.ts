@@ -233,6 +233,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(dailyBudgetSource).toContain(
       "dailyBudgetSaveInFlightRef.current = false",
     );
+    expect(cleanScreens).toContain(
+      "accessibilityState={{ disabled: savingExpense }}",
+    );
+    expect(cleanScreens).toContain(
+      "accessibilityState={{ disabled: savingDailyBudget }}",
+    );
   });
 
   it("keeps salary home expense and daily budget amount drafts sanitized as KRW integers", () => {
@@ -954,6 +960,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         /<PlanInputCard[\s\S]*?disabled=\{savingPayrollPlan\}[\s\S]*?\/>/gu,
       ) ?? [],
     ).toHaveLength(3);
+    expect(planSource).toContain(
+      "accessibilityState={{ disabled: savingPayrollPlan }}",
+    );
   });
 
   it("shows save-pending status copy on locked plan payroll input cards", () => {

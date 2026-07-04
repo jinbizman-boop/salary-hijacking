@@ -3384,6 +3384,7 @@ function SalaryHomeScreen(): React.ReactElement {
           />
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ disabled: savingExpense }}
             disabled={savingExpense}
             onPress={handleAddExpense}
             style={[
@@ -3397,6 +3398,7 @@ function SalaryHomeScreen(): React.ReactElement {
           </Pressable>
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ disabled: savingDailyBudget }}
             disabled={savingDailyBudget}
             onPress={() => {
               void saveSalaryDailyBudget();
@@ -4195,6 +4197,7 @@ function PlanScreen(): React.ReactElement {
         </Text>
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled: savingPayrollPlan }}
           disabled={savingPayrollPlan}
           onPress={() => {
             void saveServerPayrollPlan();
