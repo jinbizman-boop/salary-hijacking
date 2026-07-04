@@ -495,6 +495,18 @@ function normalizeDeviceStatus(value: unknown): NotificationDeviceStatus {
   return invalidNotificationsResponse();
 }
 
+function normalizePushTokenPreview(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (
+    typeof value !== "string" ||
+    containsRawSensitiveText(value) ||
+    /\b(?:Expo|Exponent)PushToken\[[A-Za-z0-9_-]{8,}\]/u.test(value)
+  ) {
+    return invalidNotificationsResponse();
+  }
+  return value;
+}
+
 function normalizeNotificationDevice(value: unknown): NotificationDevice {
   if (!isRecord(value)) {
     return invalidNotificationsResponse();
@@ -514,10 +526,7 @@ function normalizeNotificationDevice(value: unknown): NotificationDevice {
     deviceId: value.deviceId.trim(),
     platform: normalizeDevicePlatform(value.platform),
     pushTokenHashOnly: true,
-    pushTokenPreview:
-      typeof value.pushTokenPreview === "string"
-        ? value.pushTokenPreview
-        : null,
+    pushTokenPreview: normalizePushTokenPreview(value.pushTokenPreview),
     status: normalizeDeviceStatus(value.status),
     registeredAt: value.registeredAt,
     updatedAt: value.updatedAt,

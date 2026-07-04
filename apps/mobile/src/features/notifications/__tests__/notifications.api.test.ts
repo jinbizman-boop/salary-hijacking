@@ -547,6 +547,31 @@ describe("notifications api", () => {
     });
   });
 
+  it("rejects full push token previews returned by notification device APIs", async () => {
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: [
+            {
+              deviceId: "device_android_1",
+              platform: "ANDROID",
+              pushTokenHashOnly: true,
+              pushTokenPreview: "ExponentPushToken[abcdef1234567890]",
+              status: "ACTIVE",
+              registeredAt: "2026-07-02T09:40:00.000Z",
+              updatedAt: "2026-07-02T09:40:00.000Z",
+            },
+          ],
+        }),
+      platform: "android",
+    });
+
+    await expect(api.listDevices()).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_RESPONSE",
+    });
+  });
+
   it("rejects overlong notification and device path ids before network access", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({
