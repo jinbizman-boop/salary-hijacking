@@ -174,6 +174,7 @@ export function parseCommunityPost(value: unknown): CommunityPost {
       value.bookmarkedByMe === true ||
       value.viewerBookmarked === true ||
       value.bookmarked === true,
+    shareCount: safeInteger(value.shareCount),
     createdAt: timestamp(value.createdAt),
     updatedAt: timestamp(value.updatedAt ?? value.createdAt),
     rawFinancialDataExposed: false,

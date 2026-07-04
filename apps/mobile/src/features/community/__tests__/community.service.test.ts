@@ -77,6 +77,7 @@ describe("community service", () => {
     await service.setPostLiked("post_1", false);
     await service.setPostBookmarked("post_1", true);
     await service.setPostBookmarked("post_1", false);
+    await service.recordPostShare("post_1", "SYSTEM_SHARE");
     await service.listComments("post_1", 1, 20);
     await service.updateComment("comment_1", {
       content: "수정된 댓글",
@@ -107,6 +108,16 @@ describe("community service", () => {
           method: "POST",
           body: expect.objectContaining({
             enabled: false,
+            postId: "post_1",
+          }),
+        },
+      ],
+      [
+        "/api/v1/community/shares",
+        {
+          method: "POST",
+          body: expect.objectContaining({
+            channel: "SYSTEM_SHARE",
             postId: "post_1",
           }),
         },

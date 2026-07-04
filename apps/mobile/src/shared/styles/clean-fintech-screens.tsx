@@ -2144,8 +2144,9 @@ export function CleanFintechPostDetailScreen({
   const shareCommunityPost = useCallback((): void => {
     if (communityShareInFlightRef.current) return;
     communityShareInFlightRef.current = true;
-    const targetPostId = encodeURIComponent(activeDetail.post.id);
-    const url = `https://salaryhijacking.com/community/${targetPostId}`;
+    const targetPostId = activeDetail.post.id;
+    const encodedPostId = encodeURIComponent(targetPostId);
+    const url = `https://salaryhijacking.com/community/${encodedPostId}`;
     const title = activeDetail.post.title;
 
     setSharePending(true);
@@ -2155,6 +2156,37 @@ export function CleanFintechPostDetailScreen({
       title,
       url,
     })
+      .then(() =>
+        detailCommunityService
+          .recordPostShare(targetPostId, "SYSTEM_SHARE")
+          .then((response) => {
+            const data = communityResponseData(response);
+            const serverShareCount =
+              typeof data === "object" &&
+              data !== null &&
+              "shareCount" in data &&
+              typeof data.shareCount === "number" &&
+              Number.isSafeInteger(data.shareCount) &&
+              data.shareCount >= 0
+                ? data.shareCount
+                : null;
+            setServerCommunityDetail((current) => {
+              if (!current || current.post.id !== targetPostId) return current;
+              return {
+                ...current,
+                post: {
+                  ...current.post,
+                  shareCount:
+                    serverShareCount ?? (current.post.shareCount ?? 0) + 1,
+                },
+              };
+            });
+            setToast("공유 기록이 서버에 반영됐어요.");
+          })
+          .catch(() => {
+            setToast("공유 화면은 열렸지만 서버 기록은 반영하지 못했어요.");
+          }),
+      )
       .catch(() => {
         setToast("공유 화면을 열지 못했어요. 다시 시도해 주세요.");
       })
@@ -2162,7 +2194,7 @@ export function CleanFintechPostDetailScreen({
         communityShareInFlightRef.current = false;
         setSharePending(false);
       });
-  }, [activeDetail.post.id, activeDetail.post.title]);
+  }, [activeDetail.post.id, activeDetail.post.title, detailCommunityService]);
 
   const focusCommunityCommentInput = useCallback((): void => {
     commentInputRef.current?.focus();
@@ -4582,7 +4614,9 @@ function toCommunityScreenPost(post: CommunityPost): CommunityScreenPost {
     id: post.id,
     stats: `좋아요 ${formatCommunityCount(post.likeCount)} · 댓글 ${formatCommunityCount(
       post.commentCount,
-    )} · 북마크 ${formatCommunityCount(post.bookmarkCount)}`,
+    )} · 북마크 ${formatCommunityCount(post.bookmarkCount)} · 공유 ${formatCommunityCount(
+      post.shareCount ?? 0,
+    )}`,
     summary: post.bodyPreview,
     thumb: communityBoardThumbMap[post.boardType],
     title: post.title,

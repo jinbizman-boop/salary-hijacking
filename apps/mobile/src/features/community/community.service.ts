@@ -178,6 +178,18 @@ export function createCommunityService(
       });
     },
 
+    async recordPostShare(postId, channel): Promise<CommunityApiResponse> {
+      const safePostId = requireId(postId, "post");
+      return transport.request(`${COMMUNITY_API_PREFIX}/shares`, {
+        method: "POST",
+        body: {
+          channel,
+          idempotencyKey: idempotencyKey("share", safePostId),
+          postId: safePostId,
+        },
+      });
+    },
+
     async listComments(postId, page, pageSize): Promise<CommunityApiResponse> {
       return transport.request(
         `${COMMUNITY_API_PREFIX}/posts/${requireId(postId, "게시글")}/comments?${pageQuery(page, pageSize)}`,

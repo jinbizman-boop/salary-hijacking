@@ -88,6 +88,7 @@ describe("community parsers", () => {
       status: "VISIBLE",
       likeCount: 1,
       commentCount: 0,
+      shareCount: 2,
       createdAt: "2026-06-25T00:00:00.000Z",
       updatedAt: "2026-06-25T00:00:00.000Z",
       financialRawDataExposed: false,
@@ -95,6 +96,7 @@ describe("community parsers", () => {
 
     expect(detail.post.likedByMe).toBe(true);
     expect(detail.post.bookmarkedByMe).toBe(true);
+    expect(detail.post.shareCount).toBe(2);
     expect(detail.post).not.toHaveProperty("viewerUserId");
   });
 

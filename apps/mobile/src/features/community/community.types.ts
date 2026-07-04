@@ -9,6 +9,12 @@ export type CommunityBoardType =
   | "FREE";
 
 export type CommunitySort = "LATEST" | "POPULAR" | "COMMENTS" | "BOOKMARKED";
+export type CommunityShareChannel =
+  | "SYSTEM_SHARE"
+  | "COPY_LINK"
+  | "KAKAO"
+  | "NAVER"
+  | "OTHER";
 export type ModerationStatus =
   | "SAFE"
   | "REVIEW"
@@ -65,6 +71,7 @@ export type CommunityPost = Readonly<{
   commentCount: number;
   bookmarkCount: number;
   bookmarkedByMe?: boolean;
+  shareCount?: number;
   createdAt: string;
   updatedAt: string;
   rawFinancialDataExposed: false;
@@ -166,6 +173,10 @@ export type CommunityService = Readonly<{
   setPostBookmarked: (
     postId: string,
     bookmarked: boolean,
+  ) => Promise<CommunityApiResponse>;
+  recordPostShare: (
+    postId: string,
+    channel: CommunityShareChannel,
   ) => Promise<CommunityApiResponse>;
   listComments: (
     postId: string,

@@ -2078,6 +2078,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("Share,");
     expect(cleanScreens).toContain("shareCommunityPost");
     expect(cleanScreens).toContain("Share.share({");
+    expect(cleanScreens).toContain(
+      'recordPostShare(targetPostId, "SYSTEM_SHARE")',
+    );
+    expect(cleanScreens).toContain("serverShareCount");
+    expect(cleanScreens).toContain("shareCount");
     expect(cleanScreens).toContain("https://salaryhijacking.com/community/");
     expect(cleanScreens).toContain("sharePending");
     expect(cleanScreens).toContain("communityShareInFlightRef");
