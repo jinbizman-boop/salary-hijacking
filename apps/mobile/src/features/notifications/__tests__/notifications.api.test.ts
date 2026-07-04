@@ -520,4 +520,27 @@ describe("notifications api", () => {
       code: "NOTIFICATION_INVALID_RESPONSE",
     });
   });
+
+  it("rejects overlong notification and device path ids before network access", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: serverNotification });
+      },
+      platform: "android",
+    });
+    const overlongNotificationId = `ntf_${"a".repeat(300)}`;
+    const overlongDeviceId = `device_${"b".repeat(300)}`;
+
+    await expect(api.markRead(overlongNotificationId)).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_ID",
+    });
+    await expect(api.revokeDevice(overlongDeviceId)).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_DEVICE_ID",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
 });

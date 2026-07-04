@@ -598,14 +598,19 @@ function validRegistrationRequest(
 }
 
 function notificationResourcePath(notificationId: string): string {
-  if (!/^[A-Za-z0-9_-]+$/u.test(notificationId)) {
+  const normalized = notificationId.trim();
+  if (
+    !/^[A-Za-z0-9_-]+$/u.test(normalized) ||
+    normalized.length < 3 ||
+    normalized.length > 160
+  ) {
     throw new NotificationsApiError(
       0,
       "NOTIFICATION_INVALID_ID",
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  return `${NOTIFICATIONS_PATH}/${encodeURIComponent(notificationId)}`;
+  return `${NOTIFICATIONS_PATH}/${encodeURIComponent(normalized)}`;
 }
 
 function notificationPath(
@@ -616,14 +621,19 @@ function notificationPath(
 }
 
 function notificationDevicePath(deviceId: string): string {
-  if (!/^[A-Za-z0-9_.:-]+$/u.test(deviceId)) {
+  const normalized = deviceId.trim();
+  if (
+    !/^[A-Za-z0-9_.:-]+$/u.test(normalized) ||
+    normalized.length < 3 ||
+    normalized.length > 160
+  ) {
     throw new NotificationsApiError(
       0,
       "NOTIFICATION_INVALID_DEVICE_ID",
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  return `${NOTIFICATIONS_DEVICES_PATH}/${encodeURIComponent(deviceId)}`;
+  return `${NOTIFICATIONS_DEVICES_PATH}/${encodeURIComponent(normalized)}`;
 }
 
 export function createNotificationsApi(
