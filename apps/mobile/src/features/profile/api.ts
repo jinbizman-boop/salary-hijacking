@@ -533,8 +533,11 @@ function validActionRequest(value: ProfileActionRequest): boolean {
 function validSupportTicketRequest(
   value: ProfileSupportTicketRequest,
 ): boolean {
+  const keys = Object.keys(value);
   const text = `${value.subject} ${value.message}`;
   return (
+    keys.length === 3 &&
+    keys.every((key) => ["category", "message", "subject"].includes(key)) &&
     normalizeSupportTicketCategory(value.category) !== null &&
     nonEmptyString(value.subject) &&
     value.subject.length <= 80 &&

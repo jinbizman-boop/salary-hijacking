@@ -721,6 +721,31 @@ describe("profile api", () => {
     });
   });
 
+  it("rejects unknown support ticket fields before they can enter MY payloads", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} }, 202);
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.createSupportTicket({
+        accountNumber: "123-456-789012",
+        category: "ACCOUNT",
+        message: "Please check the account settings screen behavior.",
+        subject: "Account settings question",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_SUPPORT_TICKET_REQUEST",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects support tickets with raw personal or financial values before fetch", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({
