@@ -271,6 +271,65 @@ describe("community service", () => {
     expect(payload).toContain("[auth-redacted]");
   });
 
+  it("maps mobile-only report reasons to the server community report contract", async () => {
+    const request = jest
+      .fn<
+        ReturnType<CommunityApiTransport["request"]>,
+        Parameters<CommunityApiTransport["request"]>
+      >()
+      .mockResolvedValue({ data: {} });
+    const service = createCommunityService({ request });
+
+    await service.reportPost(
+      "post_1",
+      "RAW_FINANCIAL_DATA_EXPOSURE",
+      "민감 정보가 포함된 게시글입니다",
+    );
+    await service.reportComment(
+      "comment_1",
+      "SCAM_OR_PHISHING",
+      "사기성 홍보로 보입니다",
+    );
+    await service.reportPost(
+      "post_2",
+      "HATE_OR_DISCRIMINATION",
+      "차별적 표현이 포함되어 있습니다",
+    );
+
+    expect(request.mock.calls).toEqual([
+      [
+        "/api/v1/community/posts/post_1/report",
+        {
+          method: "POST",
+          body: {
+            reasonType: "PRIVACY",
+            reason: "민감 정보가 포함된 게시글입니다",
+          },
+        },
+      ],
+      [
+        "/api/v1/community/comments/comment_1/report",
+        {
+          method: "POST",
+          body: {
+            reasonType: "FINANCIAL_ADVICE_RISK",
+            reason: "사기성 홍보로 보입니다",
+          },
+        },
+      ],
+      [
+        "/api/v1/community/posts/post_2/report",
+        {
+          method: "POST",
+          body: {
+            reasonType: "ABUSE",
+            reason: "차별적 표현이 포함되어 있습니다",
+          },
+        },
+      ],
+    ]);
+  });
+
   it("blocks report reasons that are only sensitive raw data before moderation payloads", async () => {
     const request = jest.fn<
       ReturnType<CommunityApiTransport["request"]>,

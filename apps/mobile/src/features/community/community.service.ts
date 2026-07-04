@@ -135,6 +135,38 @@ function isCommunityReportReason(
   );
 }
 
+function serverReportReason(
+  value: (typeof COMMUNITY_REPORT_REASONS)[number],
+): string {
+  if (
+    value === "PERSONAL_INFORMATION" ||
+    value === "PRIVACY_LEAK" ||
+    value === "RAW_FINANCIAL_DATA_EXPOSURE" ||
+    value === "TOKEN_OR_SECRET_LEAK"
+  ) {
+    return "PRIVACY";
+  }
+  if (
+    value === "FINANCIAL_RISK" ||
+    value === "ILLEGAL_FINANCE" ||
+    value === "GAMBLING_OR_SPECULATION" ||
+    value === "SCAM_OR_PHISHING"
+  ) {
+    return "FINANCIAL_ADVICE_RISK";
+  }
+  if (
+    value === "HARASSMENT" ||
+    value === "HATE_OR_DISCRIMINATION" ||
+    value === "SEXUAL_CONTENT"
+  ) {
+    return "ABUSE";
+  }
+  if (value === "AD_OR_PARTNER_POLICY_VIOLATION" || value === "COPYRIGHT") {
+    return "OTHER";
+  }
+  return value;
+}
+
 function reportBody(
   reasonType: string,
   reason: string,
@@ -170,7 +202,7 @@ function reportBody(
     );
   }
   return {
-    reasonType: normalizedType,
+    reasonType: serverReportReason(normalizedType),
     reason: safeReason,
   };
 }
