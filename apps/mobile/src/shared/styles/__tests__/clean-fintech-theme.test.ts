@@ -358,6 +358,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setServerSavingsGoals");
   });
 
+  it("locks plan fixed expense and savings creation inputs while server save is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(
+      planSource.match(/editable=\{!savingPlanCommitment\}/gu) ?? [],
+    ).toHaveLength(4);
+  });
+
   it("keeps plan screen fixed expense and savings deletion persisted through server APIs", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

@@ -4216,6 +4216,7 @@ function PlanScreen(): React.ReactElement {
         ))}
         <TextInput
           accessibilityLabel="고정지출 이름"
+          editable={!savingPlanCommitment}
           onChangeText={setPlanFixedExpenseTitle}
           placeholder="예: OTT 구독"
           placeholderTextColor={theme.color.text.disabled}
@@ -4224,6 +4225,7 @@ function PlanScreen(): React.ReactElement {
         />
         <TextInput
           accessibilityLabel="고정지출 금액"
+          editable={!savingPlanCommitment}
           keyboardType="numeric"
           onChangeText={setPlanFixedExpenseAmount}
           placeholder="예: 19000"
@@ -4275,6 +4277,7 @@ function PlanScreen(): React.ReactElement {
         ))}
         <TextInput
           accessibilityLabel="고정저축 목표 이름"
+          editable={!savingPlanCommitment}
           onChangeText={setPlanSavingsGoalTitle}
           placeholder="예: 비상금"
           placeholderTextColor={theme.color.text.disabled}
@@ -4283,6 +4286,7 @@ function PlanScreen(): React.ReactElement {
         />
         <TextInput
           accessibilityLabel="고정저축 금액"
+          editable={!savingPlanCommitment}
           keyboardType="numeric"
           onChangeText={setPlanSavingsGoalAmount}
           placeholder="예: 80000"
