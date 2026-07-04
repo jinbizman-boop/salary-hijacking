@@ -269,7 +269,9 @@ function publicLinkValue(
     const url = new URL(value);
     if (
       url.protocol === "https:" &&
-      PUBLIC_CONFIG_LINK_HOST_PATTERN.test(url.hostname)
+      PUBLIC_CONFIG_LINK_HOST_PATTERN.test(url.hostname) &&
+      !url.username &&
+      !url.password
     ) {
       return url.toString();
     }
