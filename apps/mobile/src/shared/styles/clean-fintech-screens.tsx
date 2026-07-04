@@ -3872,12 +3872,10 @@ function PlanScreen(): React.ReactElement {
   const [recalculatingPlan, setRecalculatingPlan] = useState(false);
   const [savingPayrollPlan, setSavingPayrollPlan] = useState(false);
   const payrollPlanSaveInFlightRef = useRef(false);
-  const [planFixedExpenseTitle, setPlanFixedExpenseTitle] =
-    useState("새 고정지출");
-  const [planFixedExpenseAmount, setPlanFixedExpenseAmount] = useState("19000");
-  const [planSavingsGoalTitle, setPlanSavingsGoalTitle] =
-    useState("새 고정저축");
-  const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("80000");
+  const [planFixedExpenseTitle, setPlanFixedExpenseTitle] = useState("");
+  const [planFixedExpenseAmount, setPlanFixedExpenseAmount] = useState("");
+  const [planSavingsGoalTitle, setPlanSavingsGoalTitle] = useState("");
+  const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("");
   const [savingPlanCommitment, setSavingPlanCommitment] = useState(false);
   const planCommitmentSaveInFlightRef = useRef<"fixed" | "savings" | null>(
     null,

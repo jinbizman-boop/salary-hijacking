@@ -423,6 +423,37 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toHaveLength(6);
   });
 
+  it("keeps plan commitment creation fields empty until the user types real values", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(planSource).toContain(
+      'const [planFixedExpenseTitle, setPlanFixedExpenseTitle] = useState("");',
+    );
+    expect(planSource).toContain(
+      'const [planFixedExpenseAmount, setPlanFixedExpenseAmount] = useState("");',
+    );
+    expect(planSource).toContain(
+      'const [planSavingsGoalTitle, setPlanSavingsGoalTitle] = useState("");',
+    );
+    expect(planSource).toContain(
+      'const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("");',
+    );
+    expect(planSource).toContain('placeholder="예: OTT 구독"');
+    expect(planSource).toContain('placeholder="예: 19000"');
+    expect(planSource).toContain('placeholder="예: 비상금"');
+    expect(planSource).toContain('placeholder="예: 80000"');
+    expect(planSource).not.toContain('useState("새 고정지출")');
+    expect(planSource).not.toContain('useState("19000")');
+    expect(planSource).not.toContain('useState("새 고정저축")');
+    expect(planSource).not.toContain('useState("80000")');
+  });
+
   it("keeps plan fixed expense and savings amount drafts sanitized as KRW integers", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
