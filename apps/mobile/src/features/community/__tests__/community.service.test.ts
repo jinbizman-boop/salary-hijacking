@@ -206,6 +206,23 @@ describe("community service", () => {
     ]);
   });
 
+  it("blocks invalid community share channels before they reach event payloads", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.recordPostShare("post_1", "SYSTEM_SHARE\nAuthorization" as never),
+    ).rejects.toMatchObject({ code: "COMMUNITY_SHARE_CHANNEL_INVALID" });
+    await expect(
+      service.recordPostShare("post_1", "RAW_FINANCIAL_EXPORT" as never),
+    ).rejects.toMatchObject({ code: "COMMUNITY_SHARE_CHANNEL_INVALID" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("redacts sensitive report reason text before sending moderation payloads", async () => {
     const request = jest
       .fn<

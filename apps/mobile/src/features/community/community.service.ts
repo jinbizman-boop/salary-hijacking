@@ -2,6 +2,7 @@ import { CommunityApiError } from "./api";
 import {
   COMMUNITY_API_PREFIX,
   COMMUNITY_BOARD_TYPES,
+  COMMUNITY_SHARE_CHANNELS,
   COMMUNITY_SORTS,
 } from "./community.constants";
 import {
@@ -220,6 +221,13 @@ export function createCommunityService(
     },
 
     async recordPostShare(postId, channel): Promise<CommunityApiResponse> {
+      if (!COMMUNITY_SHARE_CHANNELS.includes(channel)) {
+        throw new CommunityApiError(
+          0,
+          "COMMUNITY_SHARE_CHANNEL_INVALID",
+          "커뮤니티 공유 채널을 확인해 주세요.",
+        );
+      }
       const safePostId = requireId(postId, "게시글");
       return transport.request(`${COMMUNITY_API_PREFIX}/shares`, {
         method: "POST",
