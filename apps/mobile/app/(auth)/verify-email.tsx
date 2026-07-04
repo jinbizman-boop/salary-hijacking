@@ -79,6 +79,11 @@ export default function VerifyEmailScreen(): React.ReactElement {
     }
   }
 
+  const returnToLogin = (): void => {
+    if (resendPending) return;
+    router.replace("/(auth)/login");
+  };
+
   const title =
     status === "VERIFIED"
       ? "이메일 인증이 완료됐어요."
@@ -165,6 +170,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
             accessibilityLabel="인증 메일을 다시 받을 메일 주소"
             autoCapitalize="none"
             autoCorrect={false}
+            editable={!resendPending}
             inputMode="email"
             keyboardType="email-address"
             onChangeText={setEmail}
@@ -214,10 +220,14 @@ export default function VerifyEmailScreen(): React.ReactElement {
         <Pressable
           accessibilityLabel="로그인 화면으로 이동"
           accessibilityRole="button"
-          onPress={() => router.replace("/(auth)/login")}
+          accessibilityState={{ disabled: resendPending }}
+          disabled={resendPending}
+          onPress={returnToLogin}
           style={{
             alignItems: "center",
-            backgroundColor: theme.color.brand.primary,
+            backgroundColor: resendPending
+              ? theme.color.surface.line
+              : theme.color.brand.primary,
             borderRadius: theme.radius.md,
             justifyContent: "center",
             minHeight: 48,
@@ -225,7 +235,9 @@ export default function VerifyEmailScreen(): React.ReactElement {
         >
           <Text
             style={{
-              color: theme.color.text.inverse,
+              color: resendPending
+                ? theme.color.text.muted
+                : theme.color.text.inverse,
               fontFamily: theme.font.native.bold,
               fontSize: 15,
               fontWeight: "900",

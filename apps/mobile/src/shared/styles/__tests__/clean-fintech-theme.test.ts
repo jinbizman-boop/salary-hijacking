@@ -647,6 +647,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(verifyRoute).not.toContain("濡쒓렇");
   });
 
+  it("locks verify-email resend inputs and login return while resend is pending", () => {
+    const verifyRoute = source("(auth)/verify-email.tsx");
+
+    expect(verifyRoute).toContain("resendPending");
+    expect(verifyRoute).toContain("resendEmailVerificationInFlightRef");
+    expect(verifyRoute).toContain("editable={!resendPending}");
+    expect(verifyRoute).toContain(
+      "const returnToLogin = (): void => {\n    if (resendPending) return;",
+    );
+    expect(verifyRoute).toContain("disabled={resendPending}");
+    expect(verifyRoute).toContain("onPress={returnToLogin}");
+  });
+
   it("keeps social OAuth callback copy readable and aligned with state routing", () => {
     const callbackRoute = source("auth/oauth/callback.tsx");
 
