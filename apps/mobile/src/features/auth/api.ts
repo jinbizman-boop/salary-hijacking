@@ -156,6 +156,14 @@ function assertPresent(value: string, code: string): string {
   return normalized;
 }
 
+function normalizeEmail(value: string): string {
+  const email = assertPresent(value, "AUTH_EMAIL_REQUIRED").toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) {
+    throw new AuthApiError(0, "AUTH_EMAIL_INVALID", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  return email;
+}
+
 function assertRequiredConsent(value: boolean): true {
   if (value !== true) {
     throw new AuthApiError(
@@ -505,7 +513,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   return {
     async login(request: AuthLoginRequest) {
       const body: Record<string, unknown> = {
-        email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
+        email: normalizeEmail(request.email),
         password: assertPresent(request.password, "AUTH_PASSWORD_REQUIRED"),
       };
       appendOptional(body, "rememberMe", request.rememberMe);
@@ -543,7 +551,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async register(request: AuthRegisterRequest) {
       const body: Record<string, unknown> = {
-        email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
+        email: normalizeEmail(request.email),
         nickname: assertPresent(request.nickname, "AUTH_NICKNAME_REQUIRED"),
         password: assertPresent(request.password, "AUTH_PASSWORD_REQUIRED"),
         privacyAccepted: assertRequiredConsent(request.privacyAccepted),
@@ -646,7 +654,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async requestPasswordReset(request: AuthPasswordResetRequest) {
       const parsed = await post(AUTH_PASSWORD_RESET_PATH, {
-        email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
+        email: normalizeEmail(request.email),
       });
       return passwordResetResult(parsed);
     },
@@ -674,7 +682,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async requestEmailVerification(request: AuthEmailVerificationRequest) {
       const parsed = await post(AUTH_VERIFY_EMAIL_RESEND_PATH, {
-        email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
+        email: normalizeEmail(request.email),
       });
       return emailVerificationResult(parsed);
     },

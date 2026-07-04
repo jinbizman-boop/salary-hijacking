@@ -126,6 +126,85 @@ describe("auth api", () => {
     );
   });
 
+  it("normalizes auth email inputs before sending them to the server", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            accepted: true,
+            user: {
+              accountStatus: "ACTIVE",
+              roles: "USER",
+              userId: "usr_normalized",
+            },
+            tokens: {
+              accessToken: "normalized.access.jwt",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        });
+      },
+      now: () => now,
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async () => undefined,
+      },
+    });
+
+    await api.login({
+      email: " User@Example.COM ",
+      password: "server-password",
+    });
+    await api.requestPasswordReset({ email: " Reset@Example.COM " });
+    await api.requestEmailVerification({ email: " Verify@Example.COM " });
+
+    const bodies = await Promise.all(
+      calls.map((call) => call.clone().json() as Promise<{ email?: string }>),
+    );
+    expect(bodies.map((body) => body.email)).toEqual([
+      "user@example.com",
+      "reset@example.com",
+      "verify@example.com",
+    ]);
+  });
+
+  it("rejects malformed auth email inputs before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.login({ email: "not-an-email", password: "server-password" }),
+    ).rejects.toMatchObject({ code: "AUTH_EMAIL_INVALID" });
+    await expect(
+      api.register({
+        email: "new@example",
+        nickname: "신규 사용자",
+        password: "new-password",
+        privacyAccepted: true,
+        termsAccepted: true,
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_EMAIL_INVALID" });
+    await expect(
+      api.requestPasswordReset({ email: "reset at example.com" }),
+    ).rejects.toMatchObject({ code: "AUTH_EMAIL_INVALID" });
+    await expect(
+      api.requestEmailVerification({ email: "verify@example" }),
+    ).rejects.toMatchObject({ code: "AUTH_EMAIL_INVALID" });
+    expect(calls).toHaveLength(0);
+  });
+
   it("registers with required consents and stores the authenticated access token", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
