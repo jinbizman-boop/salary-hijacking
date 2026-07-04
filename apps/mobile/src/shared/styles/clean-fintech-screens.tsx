@@ -1872,6 +1872,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <SectionCard>
             <TextInput
               accessibilityLabel="문의 제목"
+              accessibilityState={{ disabled: submitting }}
               editable={!submitting}
               onChangeText={setSupportSubject}
               placeholder="문의 제목"
@@ -1881,6 +1882,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
             />
             <TextInput
               accessibilityLabel="문의 내용"
+              accessibilityState={{ disabled: submitting }}
               editable={!submitting}
               multiline
               onChangeText={setSupportMessage}

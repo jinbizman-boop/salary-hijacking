@@ -1904,6 +1904,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       /styles\.iconButton,\s*submitting\s*\?\s*styles\.disabled\s*:\s*null/u,
     );
     expect(supportSource.match(/editable=\{!submitting\}/gu)).toHaveLength(2);
+    expect(
+      supportSource.match(
+        /accessibilityState=\{\{ disabled: submitting \}\}/gu,
+      ),
+    ).toHaveLength(2);
     expect(supportSource).toMatch(/if\s*\(submitting\)\s*return;/u);
   });
 
