@@ -1016,8 +1016,12 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <Pressable
             accessibilityLabel="커뮤니티 글쓰기 닫기"
             accessibilityRole="button"
+            disabled={submitting || uploadingAttachment}
             onPress={closeCommunityWrite}
-            style={styles.iconButton}
+            style={[
+              styles.iconButton,
+              submitting || uploadingAttachment ? styles.disabled : null,
+            ]}
           >
             <Text style={styles.iconButtonText}>×</Text>
           </Pressable>
