@@ -2172,6 +2172,7 @@ export function CleanFintechPostDetailScreen({
     readonly CommunityComment[]
   >([]);
   const [commentDraft, setCommentDraft] = useState("");
+  const [commentAnonymous, setCommentAnonymous] = useState(true);
   const [commentSubmitting, setCommentSubmitting] = useState(false);
   const communityCommentSubmitInFlightRef = useRef(false);
   const commentInputRef = useRef<TextInput | null>(null);
@@ -2507,7 +2508,7 @@ export function CleanFintechPostDetailScreen({
     setCommentSubmitting(true);
     setToast("댓글을 서버 커뮤니티에 등록하는 중이에요.");
     void detailCommunityService
-      .createComment(targetPostId, { content, anonymous: true })
+      .createComment(targetPostId, { content, anonymous: commentAnonymous })
       .then((response) => {
         const nextComment = parseCommunityComment(
           communityResponseData(response),
@@ -2538,6 +2539,7 @@ export function CleanFintechPostDetailScreen({
       });
   }, [
     activeDetail.post.id,
+    commentAnonymous,
     commentDraft,
     commentReady,
     communityDetailActionBusy,
@@ -3023,6 +3025,12 @@ export function CleanFintechPostDetailScreen({
             </View>
           </View>
         ))}
+        <ToggleRow
+          active={commentAnonymous}
+          disabled={communityDetailActionBusy || commentSubmitting}
+          label="익명 댓글"
+          onPress={() => setCommentAnonymous((current) => !current)}
+        />
         <View style={styles.inputRow}>
           <TextInput
             accessibilityLabel="커뮤니티 댓글 입력"
