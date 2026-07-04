@@ -616,6 +616,53 @@ function checkDeployWorkflowsManualOnly(rootDir, failures) {
   }
 }
 
+function checkPnpmActionSetupUsesPackageManager(rootDir, failures) {
+  const workflowsDir = path.join(rootDir, ".github", "workflows");
+  if (!fs.existsSync(workflowsDir)) return;
+
+  const packageJsonPath = path.join(rootDir, "package.json");
+  if (!fs.existsSync(packageJsonPath)) return;
+
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+  if (typeof packageJson.packageManager !== "string") return;
+
+  for (const entry of fs.readdirSync(workflowsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !/\.(ya?ml)$/i.test(entry.name)) continue;
+
+    const relativePath = toPosix(path.join(".github", "workflows", entry.name));
+    const source = readText(rootDir, relativePath);
+    if (!source.includes("pnpm/action-setup@")) continue;
+
+    const lines = source.split(/\r?\n/);
+    let inPnpmSetupStep = false;
+    let pnpmSetupIndent = 0;
+
+    for (const line of lines) {
+      const pnpmSetupMatch = line.match(
+        /^(\s*)(?:-\s+)?uses:\s*pnpm\/action-setup@/,
+      );
+      if (pnpmSetupMatch) {
+        inPnpmSetupStep = true;
+        pnpmSetupIndent = pnpmSetupMatch[1].length;
+        continue;
+      }
+
+      if (inPnpmSetupStep) {
+        const nextStepMatch = line.match(/^(\s*)-\s+/);
+        if (nextStepMatch && nextStepMatch[1].length <= pnpmSetupIndent) {
+          inPnpmSetupStep = false;
+        }
+      }
+
+      if (inPnpmSetupStep && /^\s+version:\s*.+/.test(line)) {
+        failures.push(
+          `${relativePath}: pnpm/action-setup must read the version from packageManager; remove with.version to avoid GitHub Actions ERR_PNPM_BAD_PM_VERSION conflicts`,
+        );
+      }
+    }
+  }
+}
+
 function readTomlStringAssignment(source, key) {
   const match = new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m").exec(source);
   return match?.[1]?.trim() ?? "";
@@ -1318,6 +1365,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkReleaseMetadataText(rootDir, failures);
   checkDeployWorkflowText(rootDir, failures);
   checkDeployWorkflowsManualOnly(rootDir, failures);
+  checkPnpmActionSetupUsesPackageManager(rootDir, failures);
   checkCloudflareProductionWorkerNames(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);

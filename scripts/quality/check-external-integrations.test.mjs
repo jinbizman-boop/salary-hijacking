@@ -1888,6 +1888,50 @@ test("fails when release workflow does not upload no-secret database command pro
   }
 });
 
+test("fails when workflows duplicate pnpm version outside packageManager", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "package.json": `{"packageManager":"pnpm@10.0.0"}`,
+      ".github/workflows/ci.yml": `
+name: CI
+on: [pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm test:e2e
+      - run: pnpm audit --prod --audit-level high
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      allowMissingCommands: true,
+      env: {
+        GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
+        CF_ADMIN_WORKER_NAME: "salary-hijacking-admin",
+      },
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /pnpm\/action-setup/);
+    assert.match(result.failures.join("\n"), /packageManager/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when release workflow does not collect staging smoke proof", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
