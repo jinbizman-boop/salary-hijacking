@@ -956,6 +956,7 @@ function checkDatabaseCommandProofWorkflow(rootDir, failures) {
   const source = readText(rootDir, relativePath);
   const requiredParts = [
     "corepack pnpm run db:validate",
+    "corepack pnpm run release:staging-smoke-proof",
     "corepack pnpm run release:database-proof",
     "release/database-command-proof.local.json",
     "release/database-proof.local.json",

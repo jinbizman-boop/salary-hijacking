@@ -444,6 +444,13 @@ jobs:
           path: release/cloudflare-proof.local.json
 
       - name: Collect no-secret database command proof
+        env:
+          STAGING_API_BASE_URL: ${{ vars.STAGING_API_BASE_URL || vars.API_HEALTHCHECK_URL_STAGING }}
+          STAGING_ADMIN_BASE_URL: ${{ vars.STAGING_ADMIN_BASE_URL || vars.ADMIN_HEALTHCHECK_URL_STAGING }}
+          STAGING_API_SMOKE_PATH: ${{ vars.STAGING_API_SMOKE_PATH || '/api/v1/mobile/bootstrap' }}
+          STAGING_ADMIN_SMOKE_PATH: ${{ vars.STAGING_ADMIN_SMOKE_PATH || '/' }}
+          STAGING_SERVER_AUTHORITY_SMOKE_PATH: ${{ vars.STAGING_SERVER_AUTHORITY_SMOKE_PATH || '/api/v1/mobile/bootstrap' }}
+          STAGING_PRIVACY_SMOKE_PATH: ${{ vars.STAGING_PRIVACY_SMOKE_PATH || '/api/v1/mobile/bootstrap' }}
         run: |
           set -euo pipefail
 
@@ -531,6 +538,7 @@ jobs:
           fs.writeFileSync("release/database-command-proof.local.json", `${JSON.stringify(proof, null, 2)}\n`);
           NODE
 
+          corepack pnpm run release:staging-smoke-proof || true
           corepack pnpm run release:database-proof || true
 
           node <<'NODE'
