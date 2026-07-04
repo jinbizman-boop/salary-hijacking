@@ -1560,6 +1560,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(cleanScreens).toContain("commentDraft");
     expect(cleanScreens).toContain("commentSubmitting");
+    expect(cleanScreens).toContain("communityCommentSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "!commentReady || communityCommentSubmitInFlightRef.current",
+    );
+    expect(cleanScreens).toContain(
+      "communityCommentSubmitInFlightRef.current = true",
+    );
+    expect(cleanScreens).toContain(
+      "communityCommentSubmitInFlightRef.current = false",
+    );
     expect(cleanScreens).toContain("submitCommunityComment");
     expect(cleanScreens).toContain("detailCommunityService");
     expect(cleanScreens).toContain(".createComment(targetPostId");

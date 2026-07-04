@@ -1891,6 +1891,7 @@ export function CleanFintechPostDetailScreen({
   >([]);
   const [commentDraft, setCommentDraft] = useState("");
   const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const communityCommentSubmitInFlightRef = useRef(false);
   const commentInputRef = useRef<TextInput | null>(null);
   const [postEditTitle, setPostEditTitle] = useState(
     fallbackPostDetail.post.title,
@@ -2030,7 +2031,9 @@ export function CleanFintechPostDetailScreen({
 
   const submitCommunityComment = useCallback((): void => {
     const content = commentDraft.trim();
-    if (!content || !commentReady || commentSubmitting) return;
+    if (!content || !commentReady || communityCommentSubmitInFlightRef.current)
+      return;
+    communityCommentSubmitInFlightRef.current = true;
 
     const targetPostId = activeDetail.post.id;
     setCommentSubmitting(true);
@@ -2061,12 +2064,14 @@ export function CleanFintechPostDetailScreen({
           "댓글을 등록하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
         );
       })
-      .finally(() => setCommentSubmitting(false));
+      .finally(() => {
+        communityCommentSubmitInFlightRef.current = false;
+        setCommentSubmitting(false);
+      });
   }, [
     activeDetail.post.id,
     commentDraft,
     commentReady,
-    commentSubmitting,
     detailCommunityService,
   ]);
 
