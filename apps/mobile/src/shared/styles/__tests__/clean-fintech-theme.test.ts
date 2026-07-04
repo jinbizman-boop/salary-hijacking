@@ -1795,6 +1795,36 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("blocks profile settings submission when profile fields contain sensitive raw content", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const submitProfileSource =
+      cleanScreens.match(
+        /const submitProfileSettings = useCallback\(\(\) => \{[\s\S]*?const submitAccountSettings/u,
+      )?.[0] ?? "";
+
+    expect(submitProfileSource).toContain("containsSensitiveCommunityContent");
+    expect(submitProfileSource).toMatch(
+      /containsSensitiveCommunityContent\(\s*`\$\{profileNickname\}\\n\$\{profileDisplayBio\}\\n\$\{profileOccupationCategory\}`,\s*\)/u,
+    );
+    expect(submitProfileSource).toContain(
+      "프로필에는 급여, 지출, 계좌, 카드, 연락처, 토큰 같은 민감 원문을 넣을 수 없어요.",
+    );
+
+    const sensitiveCheckIndex = submitProfileSource.indexOf(
+      "containsSensitiveCommunityContent",
+    );
+    const serverSubmitIndex = submitProfileSource.indexOf("updateProfile");
+    const returnAfterSensitiveCheck = submitProfileSource
+      .slice(sensitiveCheckIndex, serverSubmitIndex)
+      .includes("return;");
+
+    expect(sensitiveCheckIndex).toBeGreaterThan(-1);
+    expect(serverSubmitIndex).toBeGreaterThan(sensitiveCheckIndex);
+    expect(returnAfterSensitiveCheck).toBe(true);
+  });
+
   it("locks profile settings inputs while the server profile save is pending", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

@@ -1480,6 +1480,16 @@ export function CleanFintechSettingsScreen({
     ) {
       return;
     }
+    if (
+      containsSensitiveCommunityContent(
+        `${profileNickname}\n${profileDisplayBio}\n${profileOccupationCategory}`,
+      )
+    ) {
+      setProfileSettingsToast(
+        "프로필에는 급여, 지출, 계좌, 카드, 연락처, 토큰 같은 민감 원문을 넣을 수 없어요.",
+      );
+      return;
+    }
     profileSettingsSaveInFlightRef.current = true;
     setProfileSettingsSaving(true);
     setProfileSettingsToast("프로필 설정을 서버에 저장하는 중이에요.");
