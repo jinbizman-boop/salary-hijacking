@@ -1521,6 +1521,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(smallButtonSource).toContain("disabled={disabled}");
   });
 
+  it("opens ad slots through a fixed contextual partner URL without financial payloads", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const adSlotSource =
+      cleanScreens.match(
+        /function AdSlot\(\): React\.ReactElement \{[\s\S]*?function Toast/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("SALARY_HIJACKING_PARTNER_BENEFITS_URL");
+    expect(adSlotSource).toContain('accessibilityRole="link"');
+    expect(adSlotSource).toContain("WebBrowser.openBrowserAsync");
+    expect(adSlotSource).toContain("SALARY_HIJACKING_PARTNER_BENEFITS_URL");
+    expect(adSlotSource).not.toContain("salaryAmount");
+    expect(adSlotSource).not.toContain("expenseAmount");
+    expect(adSlotSource).not.toContain("savingsAmount");
+    expect(adSlotSource).not.toContain("hijackAmount");
+  });
+
   it("exposes disabled accessibility state for shared toggle rows", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

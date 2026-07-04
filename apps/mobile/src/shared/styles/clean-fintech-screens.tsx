@@ -150,6 +150,8 @@ type CommunityScreenPost = Readonly<{
 
 const NOTIFICATION_DEVICE_ID_KEY = "salary-hijacking.notification.device-id";
 const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft";
+const SALARY_HIJACKING_PARTNER_BENEFITS_URL =
+  "https://salaryhijacking.com/partners";
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type SettingsKind = "profile" | "account";
 type StoredCommunityWriteDraft = Readonly<{
@@ -6759,7 +6761,15 @@ function SmallButton({
 
 function AdSlot(): React.ReactElement {
   return (
-    <View style={styles.adSlot}>
+    <Pressable
+      accessibilityHint="금융 금액 원문 없이 문맥형 제휴 혜택 페이지를 엽니다."
+      accessibilityLabel="제휴 광고 생활비 혜택 열기"
+      accessibilityRole="link"
+      onPress={() => {
+        void WebBrowser.openBrowserAsync(SALARY_HIJACKING_PARTNER_BENEFITS_URL);
+      }}
+      style={({ pressed }) => [styles.adSlot, pressed ? styles.pressed : null]}
+    >
       <Text style={styles.adLabel}>제휴/광고</Text>
       <Text style={styles.adTitle}>
         생활비를 아끼는 혜택만 가볍게 보여드려요
@@ -6767,7 +6777,7 @@ function AdSlot(): React.ReactElement {
       <Text style={styles.adText}>
         contextual-only · 금융 금액 기반 타겟팅 금지
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -7329,6 +7339,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   disabled: { opacity: 0.45 },
+  pressed: { opacity: 0.82 },
   composeInput: {
     backgroundColor: theme.color.surface.soft,
     borderColor: theme.color.surface.line,
