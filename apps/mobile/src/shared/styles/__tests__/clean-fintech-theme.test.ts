@@ -1417,6 +1417,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps settings copy aligned with live server saves instead of deferred deployment wording", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).not.toContain("실제 수정 저장은 배포 API");
+    expect(cleanScreens).toContain("설정 저장 운영 기준");
+    expect(cleanScreens).toContain("저장은 서버 API에 즉시 요청되며");
+    expect(cleanScreens).toContain("실패하면 화면에서 다시 시도");
+    expect(cleanScreens).toContain(
+      "민감 금융 원문은 설정 저장 payload에 포함하지 않습니다",
+    );
+  });
+
   it("keeps MY support inquiry routed to a privacy-safe compose screen", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

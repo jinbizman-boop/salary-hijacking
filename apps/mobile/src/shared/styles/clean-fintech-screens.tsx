@@ -1584,10 +1584,10 @@ export function CleanFintechSettingsScreen({
         ))}
       </SectionCard>
       <SectionCard>
-        <Text style={styles.sectionTitle}>출시 전 운영 기준</Text>
+        <Text style={styles.sectionTitle}>설정 저장 운영 기준</Text>
         <Text style={styles.bodyText}>
-          실제 수정 저장은 배포 API, DB, 인증 세션, 운영 QA가 검증된 뒤 서버
-          권위 흐름으로 확정합니다.
+          저장은 서버 API에 즉시 요청되며 실패하면 화면에서 다시 시도할 수
+          있어요. 민감 금융 원문은 설정 저장 payload에 포함하지 않습니다.
         </Text>
       </SectionCard>
       <GuardBox />
