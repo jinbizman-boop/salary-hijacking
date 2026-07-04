@@ -36,6 +36,9 @@ test("removes repository generated junk while preserving dependencies, local sec
       'import "../../index.android.js";\n',
     );
     await touch(path.join(rootDir, "services", "api", ".wrangler", "state"));
+    await touch(
+      path.join(rootDir, "security-reports", "secret-like-findings.json"),
+    );
     await touch(path.join(rootDir, "release", "cloudflare-proof.local.json"));
     await touch(
       path.join(rootDir, "release", "public-url-observation.local.json"),
@@ -146,6 +149,7 @@ test("removes repository generated junk while preserving dependencies, local sec
       existsSync(path.join(rootDir, "services", "api", ".wrangler")),
       false,
     );
+    assert.equal(existsSync(path.join(rootDir, "security-reports")), false);
     assert.equal(
       existsSync(path.join(rootDir, "release", "cloudflare-proof.local.json")),
       false,

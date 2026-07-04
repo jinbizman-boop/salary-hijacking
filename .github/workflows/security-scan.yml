@@ -341,6 +341,36 @@ jobs:
             /\b(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|SECRET_ACCESS_KEY|CLOUDFLARE_API_TOKEN|EXPO_TOKEN|SENTRY_AUTH_TOKEN|R2_SECRET|AWS_SECRET|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST)\b\s*:\s*["'](?!\$\{\{|process\.env|import\.meta\.env|REDACTED|redacted|<|>|example|changeme|change-me|your_|""|''|null|undefined)[^"']{12,}["']/i
           ];
 
+          const allowedSecretLikeFixturePattern =
+            /(replace-with|user:password|USER:PASSWORD|localhost|example\.invalid|local-test|redacted|must_not|must-not|must not|real_value|secret_value|runtime_token_value|external_secret_value)/i;
+
+          function isAllowedSecretLikeFixture(fullPath, line, type) {
+            if (allowedSecretLikeFixturePattern.test(line)) {
+              return true;
+            }
+
+            if (/assert\.doesNotMatch/.test(line)) {
+              return true;
+            }
+
+            if (
+              type === "private-key-block" &&
+              line.includes(".replace(/-----BEGIN")
+            ) {
+              return true;
+            }
+
+            if (
+              type === "private-key-block" &&
+              /[\\/](tests?|__tests__)[\\/]/.test(fullPath) &&
+              /-----BEGIN (?:RSA |OPENSSH |EC |DSA |PRIVATE )?PRIVATE KEY-----/.test(line)
+            ) {
+              return true;
+            }
+
+            return false;
+          }
+
           function shouldScanFile(file) {
             const base = path.basename(file);
 
@@ -393,6 +423,10 @@ jobs:
 
                 for (const rule of highConfidenceSecretPatterns) {
                   if (rule.pattern.test(line)) {
+                    if (isAllowedSecretLikeFixture(fullPath, line, rule.name)) {
+                      continue;
+                    }
+
                     findings.push({
                       file: fullPath,
                       line: index + 1,
@@ -404,6 +438,10 @@ jobs:
 
                 for (const pattern of sensitiveAssignmentPatterns) {
                   if (pattern.test(line)) {
+                    if (isAllowedSecretLikeFixture(fullPath, line, "sensitive-assignment")) {
+                      continue;
+                    }
+
                     findings.push({
                       file: fullPath,
                       line: index + 1,

@@ -20,6 +20,7 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   "dist",
   "out",
   "playwright-report",
+  "security-reports",
   "test-results",
   "web-build",
 ]);
