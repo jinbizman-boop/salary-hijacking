@@ -68,6 +68,33 @@ export type MobilePublicConfigApiClient = Readonly<{
   getPublicAppConfig: () => Promise<MobilePublicAppConfig>;
 }>;
 
+const FORBIDDEN_PUBLIC_CONFIG_KEYS = new Set(
+  [
+    "salaryAmount",
+    "incomeAmount",
+    "expenseAmount",
+    "savingsAmount",
+    "hijackAmount",
+    "payrollAmount",
+    "accountNumber",
+    "cardNumber",
+    "loanAmount",
+    "residentNumber",
+    "email",
+    "phone",
+    "authToken",
+    "refreshToken",
+    "sessionToken",
+    "pushToken",
+    "deviceIdentifier",
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "privateKey",
+    "serviceAccount",
+    "FCM_SERVER_KEY",
+  ].map((key) => key.toLowerCase()),
+);
+
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
   return "web";
@@ -96,6 +123,9 @@ export function createMobilePublicConfigApi(
       });
       const parsed = await response.json();
       if (!response.ok) throw new Error("PUBLIC_APP_CONFIG_REQUEST_FAILED");
+      if (containsForbiddenPublicConfigPayload(parsed)) {
+        throw new Error("PUBLIC_APP_CONFIG_SENSITIVE_PAYLOAD");
+      }
       return normalizeMobilePublicAppConfig(parsed);
     },
   };
@@ -168,6 +198,25 @@ function normalizeMobilePublicAppConfig(input: unknown): MobilePublicAppConfig {
       ),
     },
   };
+}
+
+function containsForbiddenPublicConfigPayload(
+  input: unknown,
+  seen = new Set<object>(),
+): boolean {
+  if (!input || typeof input !== "object") return false;
+  if (seen.has(input)) return false;
+  seen.add(input);
+  if (Array.isArray(input)) {
+    return input.some((item) =>
+      containsForbiddenPublicConfigPayload(item, seen),
+    );
+  }
+  return Object.entries(input as Readonly<Record<string, unknown>>).some(
+    ([key, value]) =>
+      FORBIDDEN_PUBLIC_CONFIG_KEYS.has(key.toLowerCase()) ||
+      containsForbiddenPublicConfigPayload(value, seen),
+  );
 }
 
 function recordValue(

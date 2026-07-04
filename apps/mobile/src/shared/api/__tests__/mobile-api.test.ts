@@ -61,6 +61,48 @@ describe("mobile api factory", () => {
     );
   });
 
+  it("rejects public app config responses that contain sensitive raw payload keys", async () => {
+    const calls: Request[] = [];
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (input, init) => {
+        const request =
+          input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
+        return new Response(
+          JSON.stringify({
+            data: {
+              links: {
+                landingUrl: "https://salaryhijacking.com",
+                partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+                privacyUrl: "https://salaryhijacking.com/privacy",
+                supportUrl: "https://salaryhijacking.com/support",
+                termsUrl: "https://salaryhijacking.com/terms",
+              },
+              privacy: {
+                rawPayrollDataForAds: false,
+                rawExpenseDataForAds: false,
+                rawSavingsDataForAds: false,
+                advertiserUserIdentifierExposure: false,
+              },
+              salaryAmount: 2_700_000,
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        );
+      },
+      tokenStore: {
+        getItemAsync: async () => "must-not-be-used",
+      },
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.toThrow(
+      "PUBLIC_APP_CONFIG_SENSITIVE_PAYLOAD",
+    );
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.headers.has("authorization")).toBe(false);
+  });
+
   it("attaches the stored access token to feature API requests without exposing refresh tokens", async () => {
     const calls: Request[] = [];
     const budgetApi = createMobileBudgetApi({
