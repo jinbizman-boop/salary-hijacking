@@ -381,6 +381,39 @@ describe("uploads api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects control characters in upload file names before they reach headers", async () => {
+    const fetcher = jest.fn<
+      ReturnType<typeof fetch>,
+      Parameters<typeof fetch>
+    >();
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-control",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    for (const fileName of [
+      "proof\r\nx-upload-file-name: proof.png",
+      "receipt\u0000.png",
+      "proof\u2028.png",
+    ]) {
+      await expect(
+        api.directUploadCommunityAttachment({
+          bytes,
+          contentType: "image/png",
+          fileName,
+          sizeBytes: 4,
+        }),
+      ).rejects.toMatchObject({
+        code: "UPLOADS_FILE_NAME_CONTROL_FORBIDDEN",
+      });
+    }
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("attaches a completed upload to a community post without exposing raw file paths", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()

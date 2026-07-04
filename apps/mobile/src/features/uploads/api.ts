@@ -173,6 +173,13 @@ function assertFileNameMatchesContentType(
 
 function safeFileName(value: string): string {
   const trimmed = value.trim();
+  if (/[\u0000-\u001F\u007F\u2028\u2029]/u.test(trimmed)) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_FILE_NAME_CONTROL_FORBIDDEN",
+      "Control characters are not allowed in file names",
+    );
+  }
   if (/(?:file|content):\/\//iu.test(trimmed) || /[\\/]/u.test(trimmed)) {
     throw new UploadsApiError(
       0,
