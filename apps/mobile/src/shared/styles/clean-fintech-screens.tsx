@@ -6614,7 +6614,7 @@ function ToggleRow({
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked: active }}
+      accessibilityState={{ checked: active, disabled }}
       disabled={disabled}
       onPress={onPress}
       style={[styles.toggleRow, disabled ? styles.disabled : null]}
