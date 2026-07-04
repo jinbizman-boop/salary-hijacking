@@ -905,6 +905,62 @@ describe("auth api", () => {
     );
   });
 
+  it("rejects malformed stored OAuth verifiers before fetch and clears them", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>([
+      [
+        `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-bad`,
+        "bad\r\ncode-verifier",
+      ],
+    ]);
+    const deleted: string[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({
+          data: {
+            user: {
+              userId: "usr_oauth_bad",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "oauth.access.jwt",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        });
+      },
+      platform: "android",
+      tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+          stored.delete(key);
+        },
+      },
+    });
+
+    await expect(
+      api.completeOAuth({
+        state: "oauth-state-bad",
+        code: "provider-callback-code",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_OAUTH_VERIFIER_INVALID" });
+
+    expect(calls).toHaveLength(0);
+    expect(deleted).toEqual([
+      `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-bad`,
+    ]);
+    expect(
+      stored.has(`${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-bad`),
+    ).toBe(false);
+  });
+
   it("confirms password reset through the server without storing reset secrets", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

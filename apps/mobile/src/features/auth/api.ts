@@ -363,6 +363,18 @@ function oauthVerifierKey(state: string): string {
   return `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}${normalized}`;
 }
 
+function assertOAuthCodeVerifier(value: string): string {
+  const verifier = value.trim();
+  if (!verifier || verifier.length > 256 || /\s/u.test(verifier)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_OAUTH_VERIFIER_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return verifier;
+}
+
 async function persistAccessToken(
   tokenStore: AuthTokenStore | undefined,
   accessToken: string | null | undefined,
@@ -434,7 +446,7 @@ async function readOAuthVerifier(
         AUTH_SAFE_ERROR_MESSAGE,
       );
     }
-    return verifier;
+    return assertOAuthCodeVerifier(verifier);
   } catch (error) {
     if (error instanceof AuthApiError) throw error;
     throw new AuthApiError(
@@ -695,7 +707,17 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async completeOAuth(request: AuthOAuthCompleteRequest) {
       const state = assertPresent(request.state, "AUTH_OAUTH_STATE_REQUIRED");
-      const codeVerifier = await readOAuthVerifier(options.tokenStore, state);
+      let codeVerifier: string;
+      try {
+        codeVerifier = await readOAuthVerifier(options.tokenStore, state);
+      } catch (error) {
+        try {
+          await clearOAuthVerifier(options.tokenStore, state);
+        } catch {
+          // Keep the original verifier validation/missing error visible.
+        }
+        throw error;
+      }
       const body: Record<string, unknown> = {
         state,
         code: assertPresent(request.code, "AUTH_OAUTH_CODE_REQUIRED"),
