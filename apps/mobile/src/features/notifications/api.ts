@@ -724,6 +724,50 @@ function notificationDevicePath(deviceId: string): string {
   return `${NOTIFICATIONS_DEVICES_PATH}/${encodeURIComponent(normalized)}`;
 }
 
+function normalizeListOptions(options: {
+  readonly page?: number;
+  readonly pageSize?: number;
+  readonly status?: NotificationStatus;
+}): {
+  readonly page: number;
+  readonly pageSize: number;
+  readonly status?: NotificationStatus;
+} {
+  if (
+    !hasOnlyKeys(options as Record<string, unknown>, [
+      "page",
+      "pageSize",
+      "status",
+    ])
+  ) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_LIST_OPTIONS",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const page = options.page ?? 1;
+  const pageSize = options.pageSize ?? 20;
+  if (
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    page > 10_000 ||
+    !Number.isSafeInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 100 ||
+    (options.status !== undefined && !NOTIFICATION_STATUSES.has(options.status))
+  ) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_LIST_OPTIONS",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return options.status === undefined
+    ? { page, pageSize }
+    : { page, pageSize, status: options.status };
+}
+
 export function createNotificationsApi(
   options: NotificationsApiOptions,
 ): NotificationsApiClient {
@@ -775,13 +819,12 @@ export function createNotificationsApi(
 
   return {
     async list(options = {}): Promise<NotificationListResult> {
-      const page = options.page ?? 1;
-      const pageSize = options.pageSize ?? 20;
+      const { page, pageSize, status } = normalizeListOptions(options);
       const params = new URLSearchParams({
         page: String(page),
         pageSize: String(pageSize),
       });
-      if (options.status) params.set("status", options.status);
+      if (status) params.set("status", status);
       return normalizeListResult(
         await request(`${NOTIFICATIONS_PATH}?${params}`),
       );

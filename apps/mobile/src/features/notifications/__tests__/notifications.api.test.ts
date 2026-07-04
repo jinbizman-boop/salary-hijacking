@@ -83,6 +83,50 @@ describe("notifications api", () => {
     expect(JSON.stringify(result)).not.toContain("userId");
   });
 
+  it("rejects unsafe notification list options before query construction", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 20,
+            total: 0,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.list({
+        page: 1,
+        pageSize: 20,
+        pushToken: "ExponentPushToken[secret]",
+      } as never),
+    ).rejects.toMatchObject({ code: "NOTIFICATION_INVALID_LIST_OPTIONS" });
+
+    await expect(
+      api.list({
+        page: 0,
+        pageSize: 20,
+      }),
+    ).rejects.toMatchObject({ code: "NOTIFICATION_INVALID_LIST_OPTIONS" });
+
+    await expect(
+      api.list({
+        page: 1,
+        pageSize: 20,
+        status: "UNREAD\r\nAuthorization",
+      } as never),
+    ).rejects.toMatchObject({ code: "NOTIFICATION_INVALID_LIST_OPTIONS" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("preserves mandatory notice flags so the app can block user archive and delete", async () => {
     const api = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",
