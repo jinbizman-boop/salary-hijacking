@@ -1512,9 +1512,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("parseCommunityCommentPage");
     expect(cleanScreens).toContain("setPostLiked(targetPostId, nextLiked)");
     expect(cleanScreens).toContain("likePending");
-    expect(cleanScreens).toContain("if (likePending) return");
+    expect(cleanScreens).toContain("communityLikeInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (communityLikeInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain("communityLikeInFlightRef.current = true");
+    expect(cleanScreens).toContain("communityLikeInFlightRef.current = false");
     expect(cleanScreens).toContain("setLikePending(true)");
-    expect(cleanScreens).toContain("finally(() => setLikePending(false))");
+    expect(cleanScreens).toContain("setLikePending(false)");
     expect(cleanScreens).toContain("disabled={likePending}");
     expect(cleanScreens).toContain("fallbackPostDetail");
     expect(cleanScreens).toContain("rawPersonalDataExposed");
@@ -1690,9 +1695,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("Share.share({");
     expect(cleanScreens).toContain("https://salaryhijacking.com/community/");
     expect(cleanScreens).toContain("sharePending");
-    expect(cleanScreens).toContain("if (sharePending) return");
+    expect(cleanScreens).toContain("communityShareInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (communityShareInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain("communityShareInFlightRef.current = true");
+    expect(cleanScreens).toContain("communityShareInFlightRef.current = false");
     expect(cleanScreens).toContain("setSharePending(true)");
-    expect(cleanScreens).toContain("finally(() => setSharePending(false))");
+    expect(cleanScreens).toContain("setSharePending(false)");
     expect(cleanScreens).toContain("disabled={sharePending}");
     expect(cleanScreens).toContain("onPress={shareCommunityPost}");
     expect(cleanScreens).toContain("공유할 수 있는 화면을 열었어요.");
