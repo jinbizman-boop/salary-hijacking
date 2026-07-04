@@ -39,6 +39,7 @@ import type {
 import {
   calculateOfflineDailyBudgetPreview,
   parseKrwInputAmount,
+  sanitizeKrwIntegerInput,
 } from "../../features/budget/utils";
 import type {
   DailyBudgetSnapshot,
@@ -3809,6 +3810,16 @@ function PlanScreen(): React.ReactElement {
     target,
   ]);
 
+  const setSanitizedPlanFixedExpenseAmount = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setPlanFixedExpenseAmount(next);
+  }, []);
+
+  const setSanitizedPlanSavingsGoalAmount = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setPlanSavingsGoalAmount(next);
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       void refreshServerPayrollCalculation();
@@ -4241,7 +4252,7 @@ function PlanScreen(): React.ReactElement {
           accessibilityLabel="고정지출 금액"
           editable={!savingPlanCommitment}
           keyboardType="numeric"
-          onChangeText={setPlanFixedExpenseAmount}
+          onChangeText={setSanitizedPlanFixedExpenseAmount}
           placeholder="예: 19000"
           placeholderTextColor={theme.color.text.disabled}
           style={styles.input}
@@ -4302,7 +4313,7 @@ function PlanScreen(): React.ReactElement {
           accessibilityLabel="고정저축 금액"
           editable={!savingPlanCommitment}
           keyboardType="numeric"
-          onChangeText={setPlanSavingsGoalAmount}
+          onChangeText={setSanitizedPlanSavingsGoalAmount}
           placeholder="예: 80000"
           placeholderTextColor={theme.color.text.disabled}
           style={styles.input}

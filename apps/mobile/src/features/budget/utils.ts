@@ -52,6 +52,12 @@ export function parseKrwInputAmount(value: string): number | null {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
 
+export function sanitizeKrwIntegerInput(value: string): string | null {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return "";
+  return /^[0-9]+$/u.test(trimmed) ? trimmed : null;
+}
+
 export function calculateBudgetMetrics(
   dailyLimitInput: unknown,
   spentTodayInput: unknown,

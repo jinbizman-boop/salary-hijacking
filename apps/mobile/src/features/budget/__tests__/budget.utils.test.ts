@@ -5,6 +5,7 @@ import {
   normalizeKrwAmount,
   parseKrwInputAmount,
   redactBudgetError,
+  sanitizeKrwIntegerInput,
 } from "../utils";
 
 describe("budget utils", () => {
@@ -50,6 +51,14 @@ describe("budget utils", () => {
     expect(parseKrwInputAmount("12,34")).toBeNull();
     expect(parseKrwInputAmount("123,45,678")).toBeNull();
     expect(parseKrwInputAmount("1,234,567")).toBe(1_234_567);
+  });
+
+  it("sanitizes editable KRW fields without accepting negative or decimal text", () => {
+    expect(sanitizeKrwIntegerInput("19000")).toBe("19000");
+    expect(sanitizeKrwIntegerInput("")).toBe("");
+    expect(sanitizeKrwIntegerInput("-1000")).toBeNull();
+    expect(sanitizeKrwIntegerInput("1.5")).toBeNull();
+    expect(sanitizeKrwIntegerInput("abc500")).toBeNull();
   });
 
   it("calculates an offline daily-budget preview from accumulated added expenses", () => {
