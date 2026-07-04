@@ -549,6 +549,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("SOCIAL_LOGIN_LABELS");
     expect(cleanScreens).toContain("startSocialLogin");
     expect(cleanScreens).toContain("loginAuthApi.startOAuth");
+    expect(cleanScreens).toContain("socialLoginSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (socialLoginSubmitInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain(
+      "socialLoginSubmitInFlightRef.current = true",
+    );
+    expect(cleanScreens).toContain(
+      "socialLoginSubmitInFlightRef.current = false",
+    );
     expect(cleanScreens).toContain('Linking.createURL("auth/oauth/callback")');
     expect(cleanScreens).toContain("WebBrowser.openAuthSessionAsync");
     expect(cleanScreens).toContain(

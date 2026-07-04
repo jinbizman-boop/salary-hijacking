@@ -5578,6 +5578,7 @@ function LoginScreen(): React.ReactElement {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const loginSubmitInFlightRef = useRef(false);
+  const socialLoginSubmitInFlightRef = useRef(false);
   const [toast, setToast] = useState(
     "서버 권위 인증으로 급여 데이터를 안전하게 불러옵니다.",
   );
@@ -5598,7 +5599,8 @@ function LoginScreen(): React.ReactElement {
 
   const startSocialLogin = useCallback(
     async (provider: LoginSocialProvider): Promise<void> => {
-      if (submitting) return;
+      if (socialLoginSubmitInFlightRef.current) return;
+      socialLoginSubmitInFlightRef.current = true;
       setSubmitting(true);
       setToast(`${provider} server OAuth start request is in progress.`);
       try {
@@ -5620,10 +5622,11 @@ function LoginScreen(): React.ReactElement {
       } catch {
         setToast(`${provider} OAuth could not start. Please try again later.`);
       } finally {
+        socialLoginSubmitInFlightRef.current = false;
         setSubmitting(false);
       }
     },
-    [loginAuthApi, socialRedirectUri, submitting],
+    [loginAuthApi, socialRedirectUri],
   );
 
   const submitLogin = useCallback(async () => {
