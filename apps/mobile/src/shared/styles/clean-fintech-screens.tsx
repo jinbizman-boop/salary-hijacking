@@ -6639,6 +6639,7 @@ function SmallButton({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
       style={[styles.smallButton, disabled ? styles.disabled : null]}
