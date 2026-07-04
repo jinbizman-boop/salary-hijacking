@@ -5073,11 +5073,12 @@ function NotificationsScreen(): React.ReactElement {
 
   const openNotification = useCallback(
     (item: NotificationScreenItem) => {
+      if (notificationRowActionPendingId !== null) return;
       markRead(item);
       const notificationRoute = safeNotificationRoute(item);
       notificationRouter.push(notificationRoute);
     },
-    [markRead, notificationRouter],
+    [markRead, notificationRouter, notificationRowActionPendingId],
   );
 
   const restoreAllNotificationsReadOnFailure = useCallback(
@@ -5404,6 +5405,7 @@ function NotificationsScreen(): React.ReactElement {
         {importantNotifications.length ? (
           importantNotifications.map((item) => (
             <ListRow
+              disabled={notificationRowActionPendingId !== null}
               icon={item.icon}
               key={item.id}
               meta={item.message}
@@ -5447,6 +5449,7 @@ function NotificationsScreen(): React.ReactElement {
         {routineNotifications.length ? (
           routineNotifications.map((item) => (
             <ListRow
+              disabled={notificationRowActionPendingId !== null}
               icon={item.icon}
               key={item.id}
               meta={item.message}
