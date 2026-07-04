@@ -1388,6 +1388,32 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(smallButtonSource).toContain("disabled={disabled}");
   });
 
+  it("locks MY navigation while a privacy-sensitive profile action is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const profileSource =
+      cleanScreens.match(
+        /function ProfileScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechForgotPasswordScreen/u,
+      )?.[0] ?? "";
+
+    for (const handler of [
+      "openMyCommunityPosts",
+      "openMyLevelProgress",
+      "openSupportInquiry",
+      "openProfileNotices",
+      "openProfileSettings",
+      "openAccountSettings",
+    ]) {
+      expect(profileSource).toContain(`const ${handler} = useCallback(() => {
+    if (profileActionPending !== null) return;`);
+    }
+
+    expect(
+      profileSource.match(/disabled=\{profileActionPending !== null\}/gu) ?? [],
+    ).toHaveLength(9);
+  });
+
   it("keeps MY management menu entries connected to app actions", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

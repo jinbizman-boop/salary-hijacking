@@ -5721,28 +5721,34 @@ function ProfileScreen(): React.ReactElement {
   }, [profileAuthApi, profileRouter]);
 
   const openMyCommunityPosts = useCallback(() => {
+    if (profileActionPending !== null) return;
     profileRouter.push("/profile/community");
-  }, [profileRouter]);
+  }, [profileActionPending, profileRouter]);
 
   const openMyLevelProgress = useCallback(() => {
+    if (profileActionPending !== null) return;
     profileRouter.push("/profile/level");
-  }, [profileRouter]);
+  }, [profileActionPending, profileRouter]);
 
   const openSupportInquiry = useCallback(() => {
+    if (profileActionPending !== null) return;
     profileRouter.push("/profile/support");
-  }, [profileRouter]);
+  }, [profileActionPending, profileRouter]);
 
   const openProfileNotices = useCallback(() => {
+    if (profileActionPending !== null) return;
     profileRouter.push("/profile/notices");
-  }, [profileRouter]);
+  }, [profileActionPending, profileRouter]);
 
   const openProfileSettings = useCallback(() => {
+    if (profileActionPending !== null) return;
     profileRouter.push("/profile/settings");
-  }, [profileRouter]);
+  }, [profileActionPending, profileRouter]);
 
   const openAccountSettings = useCallback(() => {
+    if (profileActionPending !== null) return;
     profileRouter.push("/profile/account");
-  }, [profileRouter]);
+  }, [profileActionPending, profileRouter]);
 
   const profileSnapshot = serverProfileSnapshot ?? fallbackProfileSnapshot;
   const profileSyncLabel = serverProfileSnapshot
@@ -5773,8 +5779,16 @@ function ProfileScreen(): React.ReactElement {
           </View>
         </View>
         <View style={styles.attachmentRow}>
-          <SmallButton label="프로필 설정" onPress={openProfileSettings} />
-          <SmallButton label="계정 설정" onPress={openAccountSettings} />
+          <SmallButton
+            disabled={profileActionPending !== null}
+            label="프로필 설정"
+            onPress={openProfileSettings}
+          />
+          <SmallButton
+            disabled={profileActionPending !== null}
+            label="계정 설정"
+            onPress={openAccountSettings}
+          />
           <SmallButton
             disabled={profileActionPending !== null}
             label={
@@ -5845,24 +5859,28 @@ function ProfileScreen(): React.ReactElement {
       <SectionCard>
         <Text style={styles.sectionTitle}>관리 메뉴</Text>
         <ListRow
+          disabled={profileActionPending !== null}
           icon="📝"
           title="내 게시글 관리"
           meta={`${profileSnapshot.summary.communityPosts}개 글 · 댓글 ${profileSnapshot.summary.communityComments}개`}
           onPress={openMyCommunityPosts}
         />
         <ListRow
+          disabled={profileActionPending !== null}
           icon={appIcons.level}
           title="내 레벨업 관리"
           meta={`미션 ${profileSnapshot.summary.completedGrowthTasks}개 · XP ${profileSnapshot.summary.levelXp}/${profileSnapshot.summary.nextLevelXp}`}
           onPress={openMyLevelProgress}
         />
         <ListRow
+          disabled={profileActionPending !== null}
           icon="💬"
           meta="계정, 결제, 개인정보 문의"
           onPress={openSupportInquiry}
           title="1:1 문의"
         />
         <ListRow
+          disabled={profileActionPending !== null}
           icon="📣"
           meta="서비스 안내와 이벤트"
           onPress={openProfileNotices}
