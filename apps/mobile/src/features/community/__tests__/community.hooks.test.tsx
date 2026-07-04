@@ -5,6 +5,8 @@ import type { CommunityAnalytics } from "../community.analytics";
 import { createCommunityStore } from "../community.store";
 import type {
   CommunityApiResponse,
+  CommunityCommentDraft,
+  CommunityPostDraft,
   CommunityService,
 } from "../community.types";
 import { useCommunityActions } from "../hooks/useCommunityActions";
@@ -150,6 +152,62 @@ describe("community hooks", () => {
     expect(JSON.stringify(track.mock.calls)).not.toContain("test@example.com");
     await waitFor(() => expect(result.current.error).not.toBeNull());
     expect(result.current.error).not.toContain("test@example.com");
+    expect(result.current.pendingAction).toBeNull();
+  });
+
+  it("records privacy-safe publish and comment failures without raw drafts", async () => {
+    const rawPostDraft: CommunityPostDraft = {
+      anonymous: true,
+      boardType: "FREE",
+      content: "Authorization bearer_12345678 test@example.com",
+      tags: [],
+      title: "실패 테스트",
+    };
+    const rawCommentDraft: CommunityCommentDraft = {
+      anonymous: true,
+      content: "Authorization bearer_87654321 test@example.com",
+    };
+    const publishPost = jest.fn(async () => {
+      throw new CommunityApiError(422, "COMMUNITY_CONTENT_BLOCKED", "blocked");
+    });
+    const previewPost = jest.fn(() => ({
+      issues: [],
+      moderationStatus: "BLOCKED" as const,
+      valid: false,
+    }));
+    const createComment = jest.fn(async () => {
+      throw new CommunityApiError(422, "COMMUNITY_CONTENT_BLOCKED", "blocked");
+    });
+    const track = jest.fn<
+      ReturnType<CommunityAnalytics["track"]>,
+      Parameters<CommunityAnalytics["track"]>
+    >();
+    const service = {
+      createComment,
+      previewPost,
+      publishPost,
+    } as unknown as CommunityService;
+    const { result } = renderHook(() =>
+      useCommunityActions(service, createCommunityStore(), { track }),
+    );
+
+    await act(async () => {
+      await result.current.publishPost(rawPostDraft).catch(() => undefined);
+      await result.current
+        .createComment("post_1", rawCommentDraft)
+        .catch(() => undefined);
+    });
+
+    expect(track).toHaveBeenCalledWith("community_post_publish_result", {
+      boardType: "FREE",
+      moderationStatus: "BLOCKED",
+      result: "failure",
+    });
+    expect(track).toHaveBeenCalledWith("community_comment_publish_result", {
+      result: "failure",
+    });
+    expect(JSON.stringify(track.mock.calls)).not.toContain("test@example.com");
+    expect(JSON.stringify(track.mock.calls)).not.toContain("bearer_");
     expect(result.current.pendingAction).toBeNull();
   });
 });

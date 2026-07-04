@@ -79,19 +79,29 @@ export function useCommunityActions(
   const publishPost = useCallback(
     async (draft: CommunityPostDraft): Promise<CommunityPost> =>
       run("publish-post", async () => {
+        const preview = service.previewPost(draft);
         analytics?.track("community_post_publish_attempt", {
           boardType: draft.boardType,
-          moderationStatus: service.previewPost(draft).moderationStatus,
+          moderationStatus: preview.moderationStatus,
         });
-        const response = await service.publishPost(draft);
-        const post = parseCommunityPost(communityResponseData(response));
-        store.upsertPost(post);
-        analytics?.track("community_post_publish_result", {
-          boardType: post.boardType,
-          moderationStatus: post.moderationStatus,
-          result: "success",
-        });
-        return post;
+        try {
+          const response = await service.publishPost(draft);
+          const post = parseCommunityPost(communityResponseData(response));
+          store.upsertPost(post);
+          analytics?.track("community_post_publish_result", {
+            boardType: post.boardType,
+            moderationStatus: post.moderationStatus,
+            result: "success",
+          });
+          return post;
+        } catch (publishError) {
+          analytics?.track("community_post_publish_result", {
+            boardType: draft.boardType,
+            moderationStatus: preview.moderationStatus,
+            result: "failure",
+          });
+          throw publishError;
+        }
       }),
     [analytics, run, service, store],
   );
@@ -190,13 +200,20 @@ export function useCommunityActions(
   const createComment = useCallback(
     async (postId: string, draft: CommunityCommentDraft): Promise<void> => {
       await run(`create-comment:${postId}`, async () => {
-        const response = await service.createComment(postId, draft);
-        store.upsertComment(
-          parseCommunityComment(communityResponseData(response)),
-        );
-        analytics?.track("community_comment_publish_result", {
-          result: "success",
-        });
+        try {
+          const response = await service.createComment(postId, draft);
+          store.upsertComment(
+            parseCommunityComment(communityResponseData(response)),
+          );
+          analytics?.track("community_comment_publish_result", {
+            result: "success",
+          });
+        } catch (commentError) {
+          analytics?.track("community_comment_publish_result", {
+            result: "failure",
+          });
+          throw commentError;
+        }
       });
     },
     [analytics, run, service, store],
