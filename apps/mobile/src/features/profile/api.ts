@@ -559,6 +559,19 @@ function normalizeSupportTicketCategory(
 function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
   const keys = Object.keys(value);
   if (!keys.length) return false;
+  if (
+    !keys.every((key) =>
+      [
+        "avatarAttachmentId",
+        "birthYear",
+        "displayBio",
+        "nickname",
+        "occupationCategory",
+      ].includes(key),
+    )
+  ) {
+    return false;
+  }
   if (value.nickname !== undefined) {
     if (
       !nonEmptyString(value.nickname) ||

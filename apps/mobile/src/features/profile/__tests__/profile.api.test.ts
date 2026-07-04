@@ -317,6 +317,37 @@ describe("profile api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects unknown profile update fields before they can enter MY payloads", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: profilePayload });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.updateProfile({
+        nickname: "Salary keeper",
+        phone: "010-1234-5678",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_UPDATE_REQUEST",
+    });
+
+    await expect(
+      api.updateProfile({
+        displayBio: "quiet profile",
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_UPDATE_REQUEST",
+    });
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects credentialed profile API base URLs before any request can be created", () => {
     const calls: Request[] = [];
 
