@@ -444,6 +444,39 @@ describe("profile api", () => {
     );
   });
 
+  it("rejects account consent versions with raw sensitive values before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "ios",
+    });
+
+    for (const consentVersion of [
+      "Authorization Bearer secret_12345678",
+      "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+      "user@example.com",
+    ]) {
+      await expect(
+        api.updateAccountSettings({
+          adPartnerAccepted: false,
+          analyticsAccepted: false,
+          consentVersion,
+          contentRecommendationAccepted: true,
+          marketingAccepted: false,
+          privacyAccepted: true,
+          termsAccepted: true,
+        }),
+      ).rejects.toMatchObject({
+        code: "PROFILE_INVALID_ACCOUNT_SETTINGS_REQUEST",
+      });
+    }
+    expect(calls).toHaveLength(0);
+  });
+
   it("requests privacy export and withdrawal request without raw financial payloads", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

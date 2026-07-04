@@ -594,6 +594,8 @@ function validAccountSettingsRequest(
     typeof value.analyticsAccepted === "boolean" &&
     nonEmptyString(value.consentVersion) &&
     value.consentVersion.length <= 60 &&
+    /^[A-Za-z0-9._-]+$/u.test(value.consentVersion) &&
+    !containsRawSensitiveProfileText(value.consentVersion) &&
     typeof value.contentRecommendationAccepted === "boolean" &&
     typeof value.marketingAccepted === "boolean" &&
     value.privacyAccepted === true &&
@@ -816,6 +818,7 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
   async function requestAccountSettings(
     accountRequest: ProfileAccountSettingsRequest,
   ): Promise<ProfileAccountSettings> {
+    const body = accountSettingsPayload(accountRequest);
     const headers = new Headers({
       accept: "application/json",
       "content-type": "application/json",
@@ -828,7 +831,7 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     try {
       response = await fetcher(
         new Request(`${baseUrl}${PROFILE_CONSENTS_PATH}`, {
-          body: accountSettingsPayload(accountRequest),
+          body,
           headers,
           method: "PATCH",
           credentials: "include",
