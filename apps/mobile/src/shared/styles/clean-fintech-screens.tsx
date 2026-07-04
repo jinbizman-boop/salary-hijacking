@@ -4374,6 +4374,9 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
   const [myLevelCompletedTasks, setMyLevelCompletedTasks] = useState<
     readonly GrowthTask[]
   >([]);
+  const [myLevelSubmittingMissionId, setMyLevelSubmittingMissionId] = useState<
+    string | null
+  >(null);
   const myLevelMissionCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [toast, setToast] = useState(
     "내 레벨업 현황을 서버 기준으로 확인하는 중이에요.",
@@ -4429,6 +4432,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
       }
       if (myLevelMissionCompletionInFlightRef.current.has(mission.id)) return;
       myLevelMissionCompletionInFlightRef.current.add(mission.id);
+      setMyLevelSubmittingMissionId(mission.id);
       const occurredAt = new Date().toISOString();
       setToast("레벨업 진행을 서버에 기록하는 중이에요.");
       void myLevelGrowthApi
@@ -4471,6 +4475,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         })
         .finally(() => {
           myLevelMissionCompletionInFlightRef.current.delete(mission.id);
+          setMyLevelSubmittingMissionId(null);
         });
     },
     [myLevelGrowthApi, myLevelRouter],
@@ -4499,15 +4504,19 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
           <Text style={styles.sectionTitle}>진행 중인 미션</Text>
           <StatusPill label={`${activeMissions.length} active`} />
         </View>
-        {activeMissions.map((mission) => (
-          <ListRow
-            icon={mission.icon}
-            key={mission.id}
-            meta={`${mission.progressCount}/${mission.targetCount} · ${mission.xp} XP · rawFinancialDataExposed=false`}
-            onPress={() => completeMyLevelTask(mission)}
-            title={mission.title}
-          />
-        ))}
+        {activeMissions.map((mission) => {
+          const missionPending = myLevelSubmittingMissionId === mission.id;
+          return (
+            <ListRow
+              disabled={missionPending}
+              icon={mission.icon}
+              key={mission.id}
+              meta={`${mission.progressCount}/${mission.targetCount} · ${mission.xp} XP · rawFinancialDataExposed=false`}
+              onPress={() => completeMyLevelTask(mission)}
+              title={mission.title}
+            />
+          );
+        })}
       </SectionCard>
       <SectionCard>
         <View style={styles.between}>
