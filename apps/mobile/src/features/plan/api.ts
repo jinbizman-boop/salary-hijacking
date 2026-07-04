@@ -65,7 +65,7 @@ function isPositiveMoney(value: unknown): value is number {
 }
 
 function isSafeCommitmentId(value: string): boolean {
-  return /^[A-Za-z0-9_-]+$/u.test(value.trim());
+  return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
 }
 
 const RAW_EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu;

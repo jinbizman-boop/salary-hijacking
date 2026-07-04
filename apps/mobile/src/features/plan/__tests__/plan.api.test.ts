@@ -713,4 +713,40 @@ describe("plan commitments api", () => {
       expect(call.headers.get("x-correlation-id")).toBe("plan-update-test");
     }
   });
+
+  it("blocks unsafe commitment ids before money mutation requests reach the network", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+    const overlongId = `expense_${"a".repeat(300)}`;
+
+    await expect(
+      api.recordFixedExpensePayment("e", {
+        amountMinor: 10_000,
+        idempotencyKey: "fixed-payment-id-boundary",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_PAYMENT_REQUEST" });
+    await expect(
+      api.recordSavingsDeposit("g", {
+        amountMinor: 10_000,
+        idempotencyKey: "savings-deposit-id-boundary",
+      }),
+    ).rejects.toMatchObject({
+      code: "PLAN_INVALID_SAVINGS_DEPOSIT_REQUEST",
+    });
+    await expect(
+      api.updateFixedExpense(overlongId, { amountMinor: 10_000 }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_UPDATE_REQUEST" });
+    await expect(api.deleteSavingsGoal(overlongId)).rejects.toMatchObject({
+      code: "PLAN_INVALID_DELETE_REQUEST",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
 });
