@@ -49,6 +49,14 @@ const PRIVACY_HEADERS = Object.freeze({
   "x-raw-push-token-exposed": "false",
   "x-ad-financial-targeting-used": "false",
 });
+const RAW_SENSITIVE_TEXT_PATTERNS = [
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu,
+  /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u,
+  /\b(?:\d{4}[-\s]?){3}\d{4}\b/u,
+  /(?:account|계좌)\s*(?:number|번호)?\s*[:：]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu,
+  /\b(?:authorization|bearer|session|refresh|push|fcm|token)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u,
+] as const;
 
 const NOTIFICATION_TYPES = new Set<NotificationType>([
   "PAYDAY",
@@ -97,6 +105,10 @@ const NOTIFICATION_DEVICE_STATUSES = new Set<NotificationDeviceStatus>([
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function containsRawSensitiveText(value: string): boolean {
+  return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 function isNonNegativeInteger(value: unknown): value is number {
@@ -561,6 +573,17 @@ function validPreferenceUpdate(
 function validRegistrationRequest(
   request: NotificationDeviceRegistrationRequest,
 ): boolean {
+  const optionalSafeText = (
+    value: string | null | undefined,
+    maxLength: number,
+  ): boolean =>
+    value === undefined ||
+    value === null ||
+    (typeof value === "string" &&
+      value.trim().length > 0 &&
+      value.length <= maxLength &&
+      !containsRawSensitiveText(value));
+
   return (
     isRecord(request) &&
     typeof request.deviceId === "string" &&
@@ -569,16 +592,8 @@ function validRegistrationRequest(
     typeof request.pushToken === "string" &&
     request.pushToken.trim().length > 0 &&
     request.pushToken.length <= 500 &&
-    (request.appVersion === undefined ||
-      request.appVersion === null ||
-      (typeof request.appVersion === "string" &&
-        request.appVersion.trim().length > 0 &&
-        request.appVersion.length <= 80)) &&
-    (request.locale === undefined ||
-      request.locale === null ||
-      (typeof request.locale === "string" &&
-        request.locale.trim().length > 0 &&
-        request.locale.length <= 40))
+    optionalSafeText(request.appVersion, 80) &&
+    optionalSafeText(request.locale, 40)
   );
 }
 

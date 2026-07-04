@@ -412,6 +412,44 @@ describe("notifications api", () => {
     expect(calls[1]?.headers.get("x-raw-push-token-exposed")).toBe("false");
   });
 
+  it("rejects notification device metadata with raw sensitive values before network access", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.registerDevice({
+        appVersion: "owner-user@example.com",
+        deviceId: "device_android_1",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        pushToken: "ExponentPushToken[abcdef123456]",
+      }),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
+    });
+
+    await expect(
+      api.registerDevice({
+        appVersion: "1.0.0",
+        deviceId: "device_android_1",
+        locale: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+        platform: "ANDROID",
+        pushToken: "ExponentPushToken[abcdef123456]",
+      }),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects sensitive or invalid server payloads before the screen consumes them", async () => {
     const api = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",
