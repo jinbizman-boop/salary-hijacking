@@ -619,6 +619,24 @@ describe("auth api", () => {
     );
   });
 
+  it("rejects short email verification tokens before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(api.verifyEmail({ token: "short" })).rejects.toMatchObject({
+      code: "AUTH_EMAIL_VERIFY_TOKEN_INVALID",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("requests a new email verification token without storing delivery tokens", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

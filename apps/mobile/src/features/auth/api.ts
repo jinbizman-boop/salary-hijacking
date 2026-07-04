@@ -189,6 +189,18 @@ function assertResetToken(value: string): string {
   return token;
 }
 
+function assertEmailVerifyToken(value: string): string {
+  const token = assertPresent(value, "AUTH_EMAIL_VERIFY_TOKEN_REQUIRED");
+  if (token.length < 8) {
+    throw new AuthApiError(
+      0,
+      "AUTH_EMAIL_VERIFY_TOKEN_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return token;
+}
+
 function normalizeEmail(value: string): string {
   const email = assertPresent(value, "AUTH_EMAIL_REQUIRED").toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) {
@@ -702,7 +714,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async verifyEmail(request: AuthVerifyEmailRequest) {
       const parsed = await post(AUTH_VERIFY_EMAIL_PATH, {
-        token: assertPresent(request.token, "AUTH_EMAIL_VERIFY_TOKEN_REQUIRED"),
+        token: assertEmailVerifyToken(request.token),
       });
       return verifyEmailResult(parsed);
     },
