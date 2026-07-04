@@ -121,6 +121,9 @@ describe("mobile Detox E2E contract", () => {
     const rootLayout = readRequiredText("app/_layout.tsx");
 
     expect(rootLayout).toContain("salary-hijacking-mobile-root");
+    expect(rootLayout).toContain("IS_E2E_BUILD");
+    expect(rootLayout).toContain("readMobileE2eBuildEnabled");
+    expect(rootLayout).toContain("E2E shell ready");
   });
 
   it("blocks Android storage and overlay permissions that are not required for a finance app", () => {

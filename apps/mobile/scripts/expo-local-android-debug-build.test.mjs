@@ -263,6 +263,28 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
             "",
           ].join("\n"),
         );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainApplication.kt",
+          ),
+          [
+            "package com.salaryhijacking.mobile",
+            "class MainApplication {",
+            '  override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"',
+            "  override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG",
+            "}",
+            "",
+          ].join("\n"),
+        );
       }
       if (
         commandName.includes("gradlew") &&
@@ -389,8 +411,10 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.match(String(calls[3].command).toLowerCase(), /gradlew/);
   assert.equal(calls[3].options.env.ANDROID_HOME, sdkRoot);
   assert.equal(calls[3].options.env.ANDROID_SDK_ROOT, sdkRoot);
+  assert.equal(calls[3].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.match(String(calls[4].command).toLowerCase(), /gradlew/);
   assert.equal(calls[4].args[0], ":app:assembleDebugAndroidTest");
+  assert.equal(calls[4].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),
     /sdk\.dir=/,
@@ -529,6 +553,24 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
       "utf8",
     ),
     /SplashScreenManager/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(
+        rootDir,
+        "android",
+        "app",
+        "src",
+        "main",
+        "java",
+        "com",
+        "salaryhijacking",
+        "mobile",
+        "MainApplication.kt",
+      ),
+      "utf8",
+    ),
+    /override fun getUseDeveloperSupport\(\): Boolean = false/,
   );
   assert.match(
     fs.readFileSync(

@@ -67,6 +67,7 @@ const buildEnv = ({ env, javaHome, pathValue, sdkRoot }) => {
     ...env,
     ANDROID_HOME: sdkRoot,
     ANDROID_SDK_ROOT: sdkRoot,
+    EXPO_PUBLIC_E2E_BUILD: "true",
     JAVA_HOME: javaHome,
     [envPathKey]: [path.join(javaHome, "bin"), pathValue]
       .filter(Boolean)
@@ -455,6 +456,31 @@ const patchAndroidExpoEntrypoints = ({ mobileRootDir }) => {
       );
     if (nextSource !== source)
       fs.writeFileSync(mainActivityPath, nextSource, "utf8");
+  }
+};
+
+const patchAndroidDebugDeveloperSupport = ({ mobileRootDir }) => {
+  const mainApplicationPath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "java",
+    "com",
+    "salaryhijacking",
+    "mobile",
+    "MainApplication.kt",
+  );
+  if (!fs.existsSync(mainApplicationPath)) return;
+
+  const source = fs.readFileSync(mainApplicationPath, "utf8");
+  const nextSource = source.replace(
+    /override fun getUseDeveloperSupport\(\): Boolean = BuildConfig\.DEBUG/u,
+    "override fun getUseDeveloperSupport(): Boolean = false",
+  );
+  if (nextSource !== source) {
+    fs.writeFileSync(mainApplicationPath, nextSource, "utf8");
   }
 };
 
@@ -855,6 +881,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   ensureDetoxAndroidTestSource({ mobileRootDir });
   ensureSecureStoreBackupXmlResources({ mobileRootDir });
   patchAndroidExpoEntrypoints({ mobileRootDir });
+  patchAndroidDebugDeveloperSupport({ mobileRootDir });
 
   const packageList = spawn(
     invocations.gradleCommand,

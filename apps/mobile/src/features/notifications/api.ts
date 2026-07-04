@@ -130,7 +130,9 @@ function normalizeBaseUrl(value: string): string {
   }
 
   const localHost =
-    url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    url.hostname === "localhost" ||
+    url.hostname === "127.0.0.1" ||
+    url.hostname === "10.0.2.2";
   if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
     throw new NotificationsApiError(
       0,

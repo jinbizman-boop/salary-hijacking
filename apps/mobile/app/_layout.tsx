@@ -93,6 +93,13 @@ type SecureStoreRuntime = Readonly<{
   setItemAsync: (key: string, value: string) => Promise<void>;
   deleteItemAsync: (key: string) => Promise<void>;
 }>;
+type ConstantsRuntime = Readonly<{
+  expoConfig?: Readonly<{
+    extra?: Readonly<{
+      operations?: Readonly<{ e2eBuild?: unknown }>;
+    }>;
+  }>;
+}>;
 
 type SessionSnapshot = Readonly<{
   authenticated: boolean;
@@ -217,6 +224,7 @@ const RouterRuntimeRef = loadRouterRuntime();
 const SecureStoreRuntimeRef = loadSecureStoreRuntime();
 const FontRuntimeRef = loadFontRuntime();
 const API_BASE_URL = readMobileApiBaseUrl();
+const IS_E2E_BUILD = readMobileE2eBuildEnabled();
 
 const fallbackSession: SessionSnapshot = Object.freeze({
   authenticated: false,
@@ -276,6 +284,16 @@ export default function MobileRootLayout(): unknown {
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
+    if (IS_E2E_BUILD) {
+      setState((prev: RootState) => ({
+        ...prev,
+        payload: fallbackPayload,
+        status: "READY",
+        retrying: false,
+        toast: { kind: "success", message: "E2E shell ready" },
+      }));
+      return;
+    }
     try {
       const response = await requestJsonWithAuthRefresh<RootResponse>(
         "/api/v1/mobile/bootstrap",
@@ -786,6 +804,14 @@ function statusMessage(status: RootStatus): string {
   return "서버 권위 앱 상태를 확인하고 있어요.";
 }
 
+function readMobileE2eBuildEnabled(): boolean {
+  const mod = loadModule("expo-constants") as Partial<ConstantsRuntime> & {
+    readonly default?: Partial<ConstantsRuntime>;
+  };
+  const constants = mod.expoConfig ? mod : (mod.default ?? {});
+  return constants.expoConfig?.extra?.operations?.e2eBuild === true;
+}
+
 function h(
   type: ElementType,
   props?: Record<string, unknown> | null,
@@ -868,6 +894,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-router");
       case "expo-font":
         return require("expo-font");
+      case "expo-constants":
+        return require("expo-constants");
       case "expo-secure-store":
         return require("expo-secure-store");
       default:
@@ -1043,6 +1071,7 @@ export function assertMobileRootLayoutCompleteness(): {
     "accessibility_roles",
     "responsive_root_shell",
     "e2e_root_test_id",
+    "e2e_shell_ready_without_server",
     "runtime_chrome_hidden_for_public_launch_surfaces",
     "clean_fintech_light_shell",
     "expo_font_useFonts",

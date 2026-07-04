@@ -1,6 +1,26 @@
 import { createBudgetApi } from "../api";
 
 describe("budget api", () => {
+  it("allows the Android emulator loopback API base for native E2E fallback", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ data: null }), {
+          status: 200,
+        }),
+      );
+    const api = createBudgetApi({
+      baseUrl: "http://10.0.2.2:8787",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(api.getToday()).resolves.toBeNull();
+    expect(fetcher.mock.calls[0]?.[0]).toBe(
+      "http://10.0.2.2:8787/api/v1/daily-budgets/today",
+    );
+  });
+
   it("normalizes the server-authoritative daily budget without exposing raw data", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
