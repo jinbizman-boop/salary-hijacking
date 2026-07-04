@@ -3256,6 +3256,28 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("공유할 수 있는 화면을 열었어요.");
   });
 
+  it("sanitizes community detail share titles before native sharing", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen[\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+
+    expect(detailSource).toContain("sanitizeCommunityShareTitle");
+    expect(detailSource).toMatch(
+      /const title = sanitizeCommunityShareTitle\(activeDetail\.post\.title\);/u,
+    );
+    expect(detailSource).toMatch(
+      /containsSensitiveCommunityContent\(candidate\)/u,
+    );
+    expect(detailSource).toContain("Salary Hijacking community post");
+    expect(detailSource).not.toContain(
+      "const title = activeDetail.post.title;",
+    );
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

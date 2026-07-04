@@ -2453,7 +2453,14 @@ export function CleanFintechPostDetailScreen({
     const targetPostId = activeDetail.post.id;
     const encodedPostId = encodeURIComponent(targetPostId);
     const url = `https://salaryhijacking.com/community/${encodedPostId}`;
-    const title = activeDetail.post.title;
+    const sanitizeCommunityShareTitle = (value: string): string => {
+      const candidate = value.trim();
+      if (!candidate || containsSensitiveCommunityContent(candidate)) {
+        return "Salary Hijacking community post";
+      }
+      return candidate.slice(0, 80);
+    };
+    const title = sanitizeCommunityShareTitle(activeDetail.post.title);
 
     setSharePending(true);
     setToast("공유할 수 있는 화면을 열었어요.");
