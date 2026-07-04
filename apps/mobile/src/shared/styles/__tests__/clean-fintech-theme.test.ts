@@ -1526,15 +1526,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
     const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
+    const adSlotLink = mobileSource("src/shared/styles/ad-slot-link.ts");
     const adSlotSource =
       cleanScreens.match(
         /function AdSlot\(\): React\.ReactElement \{[\s\S]*?function Toast/u,
       )?.[0] ?? "";
 
     expect(mobileApi).toContain("createMobilePublicConfigApi");
-    expect(cleanScreens).toContain("createMobilePublicConfigApi");
+    expect(adSlotLink).toContain("createMobilePublicConfigApi");
+    expect(adSlotLink).toContain("partnerBenefitsUrlInFlight");
+    expect(adSlotLink).toContain("cachedPartnerBenefitsUrl");
+    expect(cleanScreens).toContain("loadPartnerBenefitsUrl");
     expect(cleanScreens).toContain("SALARY_HIJACKING_PARTNER_BENEFITS_URL");
-    expect(adSlotSource).toContain("getPublicAppConfig");
+    expect(adSlotSource).toContain("loadPartnerBenefitsUrl");
     expect(adSlotSource).toContain("setPartnerBenefitsUrl");
     expect(adSlotSource).toContain('accessibilityRole="link"');
     expect(adSlotSource).toContain("WebBrowser.openBrowserAsync");

@@ -84,10 +84,13 @@ import {
   createMobilePayrollApi,
   createMobilePlanCommitmentsApi,
   createMobileProfileApi,
-  createMobilePublicConfigApi,
   createMobileUploadsApi,
 } from "../api/mobile-api";
 import { createSecureStoreRuntime } from "../storage/secure-store";
+import {
+  SALARY_HIJACKING_PARTNER_BENEFITS_URL,
+  loadPartnerBenefitsUrl,
+} from "./ad-slot-link";
 import { appIcons, salaryHijackingTheme } from "./clean-fintech-theme";
 
 type ScreenKind =
@@ -151,8 +154,6 @@ type CommunityScreenPost = Readonly<{
 
 const NOTIFICATION_DEVICE_ID_KEY = "salary-hijacking.notification.device-id";
 const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft";
-const SALARY_HIJACKING_PARTNER_BENEFITS_URL =
-  "https://salaryhijacking.com/partners";
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type SettingsKind = "profile" | "account";
 type StoredCommunityWriteDraft = Readonly<{
@@ -6761,25 +6762,21 @@ function SmallButton({
 }
 
 function AdSlot(): React.ReactElement {
-  const publicConfigApi = useMemo(() => createMobilePublicConfigApi(), []);
   const [partnerBenefitsUrl, setPartnerBenefitsUrl] = useState(
     SALARY_HIJACKING_PARTNER_BENEFITS_URL,
   );
 
   useEffect(() => {
     let mounted = true;
-    publicConfigApi
-      .getPublicAppConfig()
+    loadPartnerBenefitsUrl()
       .then((config) => {
-        if (!mounted) return;
-        const nextUrl = config.links.partnerBenefitsUrl;
-        if (isSafePartnerBenefitsUrl(nextUrl)) setPartnerBenefitsUrl(nextUrl);
+        if (mounted) setPartnerBenefitsUrl(config);
       })
       .catch(() => undefined);
     return () => {
       mounted = false;
     };
-  }, [publicConfigApi]);
+  }, []);
 
   return (
     <Pressable
@@ -6800,15 +6797,6 @@ function AdSlot(): React.ReactElement {
       </Text>
     </Pressable>
   );
-}
-
-function isSafePartnerBenefitsUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" && url.hostname === "salaryhijacking.com";
-  } catch {
-    return false;
-  }
 }
 
 function Toast({ message }: Readonly<{ message: string }>): React.ReactElement {
