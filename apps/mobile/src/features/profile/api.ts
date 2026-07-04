@@ -523,7 +523,10 @@ function normalizeSupportTicket(value: unknown): ProfileSupportTicket {
 }
 
 function validActionRequest(value: ProfileActionRequest): boolean {
+  const keys = Object.keys(value);
   return (
+    keys.length === 1 &&
+    keys.every((key) => key === "reason") &&
     nonEmptyString(value.reason) &&
     value.reason.length <= 120 &&
     !containsRawSensitiveProfileText(value.reason)
@@ -632,7 +635,20 @@ function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
 function validAccountSettingsRequest(
   value: ProfileAccountSettingsRequest,
 ): boolean {
+  const keys = Object.keys(value);
   return (
+    keys.length === 7 &&
+    keys.every((key) =>
+      [
+        "adPartnerAccepted",
+        "analyticsAccepted",
+        "consentVersion",
+        "contentRecommendationAccepted",
+        "marketingAccepted",
+        "privacyAccepted",
+        "termsAccepted",
+      ].includes(key),
+    ) &&
     typeof value.adPartnerAccepted === "boolean" &&
     typeof value.analyticsAccepted === "boolean" &&
     nonEmptyString(value.consentVersion) &&

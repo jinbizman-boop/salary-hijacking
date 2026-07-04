@@ -530,6 +530,49 @@ describe("profile api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects unknown account settings and privacy action fields before MY payloads", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: profilePayload }, 202);
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.updateAccountSettings({
+        adPartnerAccepted: false,
+        analyticsAccepted: false,
+        consentVersion: "mobile-v1",
+        contentRecommendationAccepted: true,
+        debugToken: "raw-debug-token",
+        marketingAccepted: false,
+        privacyAccepted: true,
+        termsAccepted: true,
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_ACCOUNT_SETTINGS_REQUEST",
+    });
+
+    await expect(
+      api.requestPrivacyExport({
+        rawSalaryMemo: "salary 2,700,000",
+        reason: "app-my-page",
+      } as never),
+    ).rejects.toMatchObject({ code: "PROFILE_INVALID_ACTION_REQUEST" });
+
+    await expect(
+      api.requestWithdrawalRequest({
+        accountNumber: "123-456-789012",
+        reason: "app-my-page",
+      } as never),
+    ).rejects.toMatchObject({ code: "PROFILE_INVALID_ACTION_REQUEST" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("requests privacy export and withdrawal request without raw financial payloads", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({
