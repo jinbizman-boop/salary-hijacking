@@ -2235,7 +2235,17 @@ export function CleanFintechPostDetailScreen({
     postEditTitle.trim().length >= 2 && postEditContent.trim().length >= 5;
 
   const refreshCommunityDetail = useCallback(async (): Promise<void> => {
-    const safePostId = postId.trim() || fallbackPostDetail.post.id;
+    const sanitizeCommunityDetailPostId = (value: string): string => {
+      const candidate = value.trim();
+      if (
+        !/^[A-Za-z0-9_-]{3,160}$/u.test(candidate) ||
+        containsSensitiveCommunityContent(candidate)
+      ) {
+        return fallbackPostDetail.post.id;
+      }
+      return candidate;
+    };
+    const safePostId = sanitizeCommunityDetailPostId(postId);
     try {
       const [detailResponse, commentsResponse] = await Promise.all([
         detailCommunityService.getPost(safePostId),

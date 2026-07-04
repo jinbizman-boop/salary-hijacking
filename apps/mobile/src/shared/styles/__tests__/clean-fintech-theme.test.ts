@@ -3301,6 +3301,28 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("sanitizes community detail route post ids before API hydration", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen[\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+
+    expect(detailSource).toContain("sanitizeCommunityDetailPostId");
+    expect(detailSource).toMatch(
+      /const safePostId = sanitizeCommunityDetailPostId\(postId\);/u,
+    );
+    expect(detailSource).toMatch(
+      /containsSensitiveCommunityContent\(candidate\)/u,
+    );
+    expect(detailSource).toContain("fallbackPostDetail.post.id");
+    expect(detailSource).not.toContain(
+      "const safePostId = postId.trim() || fallbackPostDetail.post.id;",
+    );
+  });
+
   it("keeps salary, plan, LV UP, community, compose, and profile launch copy visible", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
