@@ -1001,6 +1001,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("signupAuthApi.register");
   });
 
+  it("keeps auth form email gating aligned with the server auth email policy", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("isServerAuthEmailCandidate(email)");
+    expect(cleanScreens).not.toContain('email.includes("@")');
+    expect(cleanScreens).not.toContain('email.trim().includes("@")');
+  });
+
   it("keeps plan screen hydrated and recalculated through the server payroll API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

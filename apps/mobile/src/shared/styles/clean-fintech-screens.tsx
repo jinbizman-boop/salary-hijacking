@@ -64,6 +64,7 @@ import type { UploadAttachment } from "../../features/uploads/types";
 import { mergeProfileSnapshotWithMyPageSummary } from "../../features/profile/api";
 import {
   AUTH_PASSWORD_POLICY_MESSAGE,
+  isServerAuthEmailCandidate,
   isServerAuthPasswordCandidate,
 } from "../../features/auth/password-policy";
 import type {
@@ -1200,7 +1201,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
   );
   const signupAuthApi = useMemo(() => createMobileAuthApi(), []);
   const valid =
-    email.includes("@") &&
+    isServerAuthEmailCandidate(email) &&
     nickname.trim().length >= 2 &&
     isServerAuthPasswordCandidate(password) &&
     signupConsentLabels.every((label) => agreed.has(label));
@@ -6289,7 +6290,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
   const [toast, setToast] = useState(
     "가입한 이메일로 비밀번호 재설정 안내를 받을 수 있어요.",
   );
-  const valid = email.trim().includes("@");
+  const valid = isServerAuthEmailCandidate(email);
 
   const submitPasswordReset = useCallback(async () => {
     if (!valid || forgotPasswordSubmitInFlightRef.current) return;
@@ -6517,7 +6518,8 @@ function LoginScreen(): React.ReactElement {
     () => Linking.createURL("auth/oauth/callback"),
     [],
   );
-  const valid = email.includes("@") && password.trim().length >= 8;
+  const valid =
+    isServerAuthEmailCandidate(email) && password.trim().length >= 8;
 
   const openSignup = useCallback((): void => {
     if (submitting) return;

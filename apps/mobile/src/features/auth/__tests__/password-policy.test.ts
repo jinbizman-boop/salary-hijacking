@@ -1,5 +1,6 @@
 import {
   AUTH_PASSWORD_POLICY_MESSAGE,
+  isServerAuthEmailCandidate,
   isServerAuthPasswordCandidate,
 } from "../password-policy";
 
@@ -9,6 +10,15 @@ describe("auth password policy", () => {
     expect(isServerAuthPasswordCandidate("longbutwithoutnumber")).toBe(false);
     expect(isServerAuthPasswordCandidate("1234567890")).toBe(false);
     expect(isServerAuthPasswordCandidate("Validpass1")).toBe(true);
+  });
+
+  it("matches the server auth email shape before auth form submission", () => {
+    expect(isServerAuthEmailCandidate(" user@example.com ")).toBe(true);
+    expect(isServerAuthEmailCandidate("user@example")).toBe(false);
+    expect(isServerAuthEmailCandidate("user at example.com")).toBe(false);
+    expect(isServerAuthEmailCandidate("user@example.com\nx-auth: token")).toBe(
+      false,
+    );
   });
 
   it("keeps a user-facing policy message without exposing tokens or financial data", () => {
