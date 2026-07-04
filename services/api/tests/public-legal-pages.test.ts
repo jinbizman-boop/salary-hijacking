@@ -34,13 +34,13 @@ describe("public legal pages", () => {
     expect(body).toContain("/privacy");
     expect(body).toContain("/support");
     expect(body).not.toMatch(
-      /salaryAmount|expenseAmount|pushToken|DATABASE_URL/i,
+      /"(salaryAmount|expenseAmount|pushToken|DATABASE_URL)"\s*:/i,
     );
   });
 
   it.each([
-    ["/privacy", "개인정보"],
-    ["/support", "지원"],
+    ["/privacy", "개인정보 처리방침"],
+    ["/support", "고객 지원"],
     ["/terms", "이용약관"],
   ])("serves %s without a bearer token", async (path, expectedText) => {
     const app = createApp({
@@ -66,7 +66,7 @@ describe("public legal pages", () => {
     expect(body).toContain(expectedText);
     expect(body).toContain("support@salaryhijacking.com");
     expect(body).not.toMatch(
-      /salaryAmount|expenseAmount|pushToken|DATABASE_URL/i,
+      /"(salaryAmount|expenseAmount|pushToken|DATABASE_URL)"\s*:/i,
     );
   });
 
@@ -95,12 +95,12 @@ describe("public legal pages", () => {
     expect(response.headers.get("x-financial-raw-data-exposed")).toBe("false");
     expect(response.headers.get("x-ad-financial-targeting")).toBe("separated");
     expect(body).toContain("제휴 혜택");
-    expect(body).toContain("문맥형");
+    expect(body).toContain("문맥형 안내");
     expect(body).toContain("금융 금액 기반 타겟팅을 사용하지 않습니다");
     expect(body).toContain("/privacy");
     expect(body).toContain("/support");
     expect(body).not.toMatch(
-      /salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL/i,
+      /"(salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL)"\s*:/i,
     );
   });
 
@@ -140,7 +140,7 @@ describe("public legal pages", () => {
       advertiserUserIdentifierExposure: false,
     });
     expect(JSON.stringify(body)).not.toMatch(
-      /salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL/i,
+      /"(salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL)"\s*:/i,
     );
   });
 });

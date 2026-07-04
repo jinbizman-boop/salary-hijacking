@@ -218,3 +218,45 @@ test("accepts explicit smoke path overrides while preserving slash normalization
     "https://api-staging.salaryhijacking.com/api/v1/app-config",
   ]);
 });
+
+test("uses unauthenticated readiness endpoints as default staging smoke targets", async () => {
+  const rootDir = makeRoot();
+  const visited = [];
+
+  await collectStagingSmokeProof({
+    rootDir,
+    env: {
+      STAGING_API_BASE_URL: "https://api-staging.salaryhijacking.com/",
+      STAGING_ADMIN_BASE_URL: "https://admin-staging.salaryhijacking.com/",
+    },
+    fetcher: async (url, init) => {
+      visited.push({
+        url,
+        authorization: new Headers(init?.headers).get("authorization"),
+      });
+      return new FakeResponse(
+        '{"serverAuthorityEnabled":true,"rawFinancialDataExposed":false,"rawPersonalDataExposed":false,"rawPushTokenExposed":false,"adsFinancialTargetingUsed":false}',
+        { headers: privacyHeaders },
+      );
+    },
+  });
+
+  assert.deepEqual(visited, [
+    {
+      url: "https://api-staging.salaryhijacking.com/api/v1/ready",
+      authorization: null,
+    },
+    {
+      url: "https://admin-staging.salaryhijacking.com/admin/api/v1/ready",
+      authorization: null,
+    },
+    {
+      url: "https://api-staging.salaryhijacking.com/api/v1/ready",
+      authorization: null,
+    },
+    {
+      url: "https://api-staging.salaryhijacking.com/api/v1/ready",
+      authorization: null,
+    },
+  ]);
+});

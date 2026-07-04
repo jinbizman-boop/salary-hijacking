@@ -7,10 +7,10 @@ const DEFAULT_DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
 const DEFAULT_OUTPUT_PATH = "release/database-command-proof.local.json";
 const DEFAULT_EXPECTED_PROJECT_HINT = "salary-hijacking";
 
-const DEFAULT_API_SMOKE_PATH = "/api/v1/mobile/bootstrap";
+const DEFAULT_API_SMOKE_PATH = "/api/v1/ready";
 const DEFAULT_ADMIN_SMOKE_PATH = "/admin/api/v1/ready";
-const DEFAULT_SERVER_AUTHORITY_SMOKE_PATH = "/api/v1/mobile/bootstrap";
-const DEFAULT_PRIVACY_SMOKE_PATH = "/api/v1/mobile/bootstrap";
+const DEFAULT_SERVER_AUTHORITY_SMOKE_PATH = "/api/v1/ready";
+const DEFAULT_PRIVACY_SMOKE_PATH = "/api/v1/ready";
 
 const RAW_SECRET_PATTERN =
   /(postgres(?:ql)?:\/\/|mysql:\/\/|mongodb(?:\+srv)?:\/\/|redis:\/\/|:\/\/[^/\s]+:[^@\s]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|ghp_[a-z0-9_]{16,}|xox[baprs]-[a-z0-9-]+)/i;

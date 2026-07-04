@@ -6,6 +6,49 @@ const testContext = Object.freeze({
 });
 
 describe("GET /api/v1/mobile/bootstrap", () => {
+  it("exposes release smoke readiness without bearer while preserving privacy and server-authority signals", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/ready"),
+      { APP_ENV: "staging" },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly status?: string;
+        readonly environment?: string;
+        readonly serverAuthorityEnabled?: boolean;
+        readonly rawFinancialDataExposed?: boolean;
+        readonly rawPersonalDataExposed?: boolean;
+        readonly rawPushTokenExposed?: boolean;
+        readonly adsFinancialTargetingUsed?: boolean;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-server-authority")).toBe("true");
+    expect(response.headers.get("x-financial-raw-data-exposed")).toBe("false");
+    expect(response.headers.get("x-raw-personal-data-exposed")).toBe("false");
+    expect(response.headers.get("x-raw-push-token-exposed")).toBe("false");
+    expect(response.headers.get("x-ad-financial-targeting")).toBe("separated");
+    expect(body.data).toMatchObject({
+      status: "ready",
+      environment: "staging",
+      serverAuthorityEnabled: true,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(JSON.stringify(body)).not.toMatch(
+      /"(salaryAmount|expenseAmount|savingsAmount|hijackAmount|email|pushToken|DATABASE_URL)"\s*:/i,
+    );
+  });
+
   it("stays protected by the auth middleware when no bearer token is present", async () => {
     const app = createApp({
       enableAuditGate: false,

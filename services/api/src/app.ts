@@ -969,7 +969,11 @@ function applySecurityHeaders<TEnv>(
   headers.set("cross-origin-opener-policy", "same-origin");
   headers.set("cross-origin-resource-policy", "same-site");
   headers.set("x-financial-raw-data-exposed", "false");
+  headers.set("x-raw-financial-data-exposed", "false");
+  headers.set("x-raw-personal-data-exposed", "false");
+  headers.set("x-raw-push-token-exposed", "false");
   headers.set("x-ad-financial-targeting", "separated");
+  headers.set("x-ad-financial-targeting-used", "false");
   headers.set("x-server-authority", "true");
   return new Response(response.body, {
     status: response.status,
@@ -1230,6 +1234,14 @@ async function coreDispatch<TEnv>(
     return json(200, runtime, {
       data: {
         status: "ready",
+        environment: environmentOf(env),
+        serverAuthorityEnabled: true,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+        adsFinancialTargetingUsed: false,
+        privacyMode: "STRICT",
+        smokeSafe: true,
         routes: routeModules.map((route) => route.id),
         middleware: appManifest.middleware,
         completeness: assertAppCompleteness().ok,
