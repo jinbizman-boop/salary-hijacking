@@ -154,9 +154,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify pnpm store integrity
-        run: pnpm store status
-
       - name: Lint
         run: pnpm lint
 

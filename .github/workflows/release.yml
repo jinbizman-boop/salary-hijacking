@@ -642,9 +642,6 @@ jobs:
           retention-days: 14
           path: release/public-url-proof.local.json
 
-      - name: Verify pnpm store integrity
-        run: pnpm store status
-
       - name: Lint
         run: pnpm lint
 

@@ -663,6 +663,23 @@ function checkPnpmActionSetupUsesPackageManager(rootDir, failures) {
   }
 }
 
+function checkWorkflowsAvoidPnpmStoreStatus(rootDir, failures) {
+  const workflowsDir = path.join(rootDir, ".github", "workflows");
+  if (!fs.existsSync(workflowsDir)) return;
+
+  for (const entry of fs.readdirSync(workflowsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !/\.(ya?ml)$/i.test(entry.name)) continue;
+
+    const relativePath = toPosix(path.join(".github", "workflows", entry.name));
+    const source = readText(rootDir, relativePath);
+    if (/\bpnpm\s+store\s+status\b/.test(source)) {
+      failures.push(
+        `${relativePath}: avoid pnpm store status in CI workflows because native postinstall packages can mutate the store after a valid frozen install`,
+      );
+    }
+  }
+}
+
 function readTomlStringAssignment(source, key) {
   const match = new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m").exec(source);
   return match?.[1]?.trim() ?? "";
@@ -1366,6 +1383,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkDeployWorkflowText(rootDir, failures);
   checkDeployWorkflowsManualOnly(rootDir, failures);
   checkPnpmActionSetupUsesPackageManager(rootDir, failures);
+  checkWorkflowsAvoidPnpmStoreStatus(rootDir, failures);
   checkCloudflareProductionWorkerNames(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);

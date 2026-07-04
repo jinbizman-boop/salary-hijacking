@@ -1932,6 +1932,46 @@ jobs:
   }
 });
 
+test("fails when workflows run pnpm store status after native postinstall packages", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      ".github/workflows/ci.yml": `
+name: CI
+on: [pull_request]
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm store status
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - run: pnpm test:e2e
+      - run: pnpm audit --prod --audit-level high
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      allowMissingCommands: true,
+      env: {
+        GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
+        CF_ADMIN_WORKER_NAME: "salary-hijacking-admin",
+      },
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /pnpm store status/);
+    assert.match(result.failures.join("\n"), /native postinstall/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when release workflow does not collect staging smoke proof", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 
