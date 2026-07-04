@@ -1,6 +1,25 @@
 import { createBudgetApi } from "../api";
+import { BUDGET_RISK_LABELS, BUDGET_SAFE_ERROR_MESSAGE } from "../constants";
+import { formatBudgetSyncTime, redactBudgetError } from "../utils";
 
 describe("budget api", () => {
+  it("keeps budget status and safe error copy readable in Korean", () => {
+    expect(BUDGET_RISK_LABELS).toEqual({
+      SAFE: "안전",
+      WATCH: "관찰 필요",
+      WARNING: "주의",
+      OVER: "예산 초과",
+    });
+    expect(BUDGET_SAFE_ERROR_MESSAGE).toBe(
+      "예산 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    );
+    expect(redactBudgetError({ status: 401 })).toBe("로그인이 필요합니다.");
+    expect(redactBudgetError({ status: 409 })).toBe(
+      "예산 상태가 변경되었습니다. 새로고침해 주세요.",
+    );
+    expect(formatBudgetSyncTime("not-a-date")).toBe("동기화 시간 확인 필요");
+  });
+
   it("allows the Android emulator loopback API base for native E2E fallback", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
@@ -392,6 +411,91 @@ describe("budget api", () => {
     expect(new Headers(init?.headers).get("x-raw-financial-data-exposed")).toBe(
       "false",
     );
+  });
+
+  it("rejects invalid variable expense ids returned by the server", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              expenseId: "../vex_123",
+              amountMinor: 5_000,
+              category: "MEAL",
+              title: "Lunch",
+              spentAt: "2026-07-02T03:00:00.000Z",
+              paymentMethod: "CARD",
+              merchantName: null,
+              memo: null,
+              dailyBudgetId: null,
+              source: "MANUAL",
+              status: "POSTED",
+              netAmountMinor: 5_000,
+              serverAuthority: true,
+              financialRawDataExposed: false,
+              adTargetingSeparated: true,
+            },
+          }),
+          { status: 201 },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            data: {
+              items: [
+                {
+                  expenseId: "vex_123\r\nAuthorization",
+                  amountMinor: 6500,
+                  category: "MEAL",
+                  title: "Lunch",
+                  spentAt: "2026-07-02T03:00:00.000Z",
+                  paymentMethod: "CARD",
+                  merchantName: null,
+                  memo: null,
+                  dailyBudgetId: null,
+                  source: "MANUAL",
+                  status: "POSTED",
+                  netAmountMinor: 6500,
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                  adTargetingSeparated: true,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.createVariableExpense({
+        amountMinor: 5_000,
+        category: "MEAL",
+        dailyBudgetId: null,
+        idempotencyKey: "mobile-expense-invalid-server-id",
+        memo: null,
+        merchantName: null,
+        paymentMethod: "CARD",
+        receiptAttachmentId: null,
+        source: "MANUAL",
+        spentAt: "2026-07-02T03:00:00.000Z",
+        tags: [],
+        title: "Lunch",
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
+    await expect(
+      api.listVariableExpenses({ page: 1, pageSize: 20 }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
   });
 
   it("updates and deletes server-authoritative variable expenses without raw financial leakage", async () => {

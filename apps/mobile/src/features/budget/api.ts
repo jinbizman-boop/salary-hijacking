@@ -84,6 +84,21 @@ function isIsoTimestamp(value: unknown): value is string {
   return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
 
+function isSafeEntityId(value: string): boolean {
+  return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
+}
+
+function normalizeResponseEntityId(value: unknown): string {
+  if (typeof value !== "string" || !isSafeEntityId(value)) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return value.trim();
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `budget-${Date.now().toString(36)}`
@@ -273,7 +288,6 @@ function normalizeVariableExpenseCreateResult(
   }
   const data = value.data;
   if (
-    typeof data.expenseId !== "string" ||
     !isNonNegativeInteger(data.amountMinor) ||
     data.amountMinor < 1 ||
     typeof data.category !== "string" ||
@@ -293,8 +307,9 @@ function normalizeVariableExpenseCreateResult(
       BUDGET_SAFE_ERROR_MESSAGE,
     );
   }
+  const expenseId = normalizeResponseEntityId(data.expenseId);
   return {
-    expenseId: data.expenseId,
+    expenseId,
     amountMinor: data.amountMinor,
     category: data.category as VariableExpenseCategory,
     title: data.title,
@@ -363,7 +378,6 @@ function normalizeVariableExpenseDeleteResult(
   }
   const data = value.data;
   if (
-    typeof data.expenseId !== "string" ||
     data.status !== "DELETED" ||
     data.serverAuthority !== true ||
     data.financialRawDataExposed !== false ||
@@ -376,7 +390,7 @@ function normalizeVariableExpenseDeleteResult(
     );
   }
   return {
-    expenseId: data.expenseId,
+    expenseId: normalizeResponseEntityId(data.expenseId),
     status: "DELETED",
     serverAuthority: true,
     financialRawDataExposed: false,
