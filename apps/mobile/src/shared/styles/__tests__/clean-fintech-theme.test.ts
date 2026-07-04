@@ -508,6 +508,36 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(planSource).not.toContain('useState("80000")');
   });
 
+  it("keeps plan screen server-authoritative copy readable in Korean", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    for (const label of [
+      "급여 계획 저장",
+      "급여 계획",
+      "고정지출",
+      "서버 고정지출 목록",
+      "고정저축",
+      "서버 고정저축 목표",
+      "생활비",
+      "목표금액",
+      "저장 중",
+      "삭제",
+      "수정",
+      "매월 25일",
+    ]) {
+      expect(planSource).toContain(label);
+    }
+
+    expect(planSource).not.toMatch(mojibakePattern);
+    expect(planSource).not.toMatch(/[�]|[?][가-힣]|[가-힣][?]/u);
+  });
+
   it("disables plan commitment submit buttons until required drafts are valid", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -529,6 +559,31 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "accessibilityState={{ disabled: planSavingsGoalSubmitDisabled }}",
     );
     expect(planSource).toContain("disabled={planSavingsGoalSubmitDisabled}");
+  });
+
+  it("blocks sensitive raw plan commitment drafts at the UI boundary", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(planSource).toContain("planFixedExpenseDraftSensitive");
+    expect(planSource).toContain("planSavingsGoalDraftSensitive");
+    expect(planSource).toMatch(
+      /containsSensitiveCommunityContent\(\s*planFixedExpenseTitle,?\s*\)/u,
+    );
+    expect(planSource).toMatch(
+      /containsSensitiveCommunityContent\(\s*planSavingsGoalTitle,?\s*\)/u,
+    );
+    expect(planSource).toMatch(
+      /const planFixedExpenseSubmitDisabled =\s*savingPlanCommitment \|\|\s*!planFixedExpenseDraftReady \|\|\s*planFixedExpenseDraftSensitive;/u,
+    );
+    expect(planSource).toMatch(
+      /const planSavingsGoalSubmitDisabled =\s*savingPlanCommitment \|\|\s*!planSavingsGoalDraftReady \|\|\s*planSavingsGoalDraftSensitive;/u,
+    );
   });
 
   it("keeps plan fixed expense and savings amount drafts sanitized as KRW integers", () => {

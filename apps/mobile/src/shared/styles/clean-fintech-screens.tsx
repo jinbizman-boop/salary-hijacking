@@ -4160,10 +4160,19 @@ function PlanScreen(): React.ReactElement {
   const planSavingsGoalDraftReady =
     planSavingsGoalTitle.trim().length > 0 &&
     parseKrwInputAmount(planSavingsGoalAmount) !== null;
+  const planFixedExpenseDraftSensitive = containsSensitiveCommunityContent(
+    planFixedExpenseTitle,
+  );
+  const planSavingsGoalDraftSensitive =
+    containsSensitiveCommunityContent(planSavingsGoalTitle);
   const planFixedExpenseSubmitDisabled =
-    savingPlanCommitment || !planFixedExpenseDraftReady;
+    savingPlanCommitment ||
+    !planFixedExpenseDraftReady ||
+    planFixedExpenseDraftSensitive;
   const planSavingsGoalSubmitDisabled =
-    savingPlanCommitment || !planSavingsGoalDraftReady;
+    savingPlanCommitment ||
+    !planSavingsGoalDraftReady ||
+    planSavingsGoalDraftSensitive;
 
   useEffect(() => {
     const timer = setTimeout(() => {
