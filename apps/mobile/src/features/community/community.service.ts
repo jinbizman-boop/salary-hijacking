@@ -47,12 +47,20 @@ function requireSafeComment(draft: CommunityCommentDraft): void {
   }
 }
 
+function containsSensitiveRouteIdSegment(value: string): boolean {
+  return /(?:^|[_-])(?:authorization|bearer|fcm|push|refresh|session|token)(?:[_-]|$)/iu.test(
+    value,
+  );
+}
+
 function requireId(value: string, name: string): string {
   const normalized = value.trim();
   if (
     normalized.length < 3 ||
     normalized.length > 160 ||
-    !/^[A-Za-z0-9_-]+$/u.test(normalized)
+    !/^[A-Za-z0-9_-]+$/u.test(normalized) ||
+    containsSensitiveCommunityContent(normalized) ||
+    containsSensitiveRouteIdSegment(normalized)
   ) {
     throw new CommunityApiError(
       0,
