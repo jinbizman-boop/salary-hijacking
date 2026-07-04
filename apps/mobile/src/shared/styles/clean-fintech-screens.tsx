@@ -2131,6 +2131,7 @@ export function CleanFintechPostDetailScreen({
       : activeDetail.comments;
   const post = toCommunityScreenPost(activeDetail.post);
   const commentReady = commentDraft.trim().length >= 2;
+  const communityDetailActionBusy = communityDetailActionPending !== null;
   const postEditReady =
     postEditTitle.trim().length >= 2 && postEditContent.trim().length >= 5;
 
@@ -2335,13 +2336,19 @@ export function CleanFintechPostDetailScreen({
   }, [activeDetail.post.id, activeDetail.post.title, detailCommunityService]);
 
   const focusCommunityCommentInput = useCallback((): void => {
+    if (communityDetailActionBusy) return;
     commentInputRef.current?.focus();
     setToast("댓글 입력칸으로 이동했어요.");
-  }, []);
+  }, [communityDetailActionBusy]);
 
   const submitCommunityComment = useCallback((): void => {
     const content = commentDraft.trim();
-    if (!content || !commentReady || communityCommentSubmitInFlightRef.current)
+    if (
+      communityDetailActionBusy ||
+      !content ||
+      !commentReady ||
+      communityCommentSubmitInFlightRef.current
+    )
       return;
     communityCommentSubmitInFlightRef.current = true;
 
@@ -2382,11 +2389,17 @@ export function CleanFintechPostDetailScreen({
     activeDetail.post.id,
     commentDraft,
     commentReady,
+    communityDetailActionBusy,
     detailCommunityService,
   ]);
 
   const updateCommunityPost = useCallback((): void => {
-    if (!postEditReady || communityPostEditInFlightRef.current) return;
+    if (
+      communityDetailActionBusy ||
+      !postEditReady ||
+      communityPostEditInFlightRef.current
+    )
+      return;
     communityPostEditInFlightRef.current = true;
     const targetPostId = activeDetail.post.id;
     const draft: CommunityPostDraft = {
@@ -2429,6 +2442,7 @@ export function CleanFintechPostDetailScreen({
       });
   }, [
     activeDetail,
+    communityDetailActionBusy,
     detailCommunityService,
     postEditContent,
     postEditReady,
@@ -2439,6 +2453,7 @@ export function CleanFintechPostDetailScreen({
     (comment: CommunityComment): void => {
       const content = (commentEditDrafts[comment.id] ?? comment.content).trim();
       if (
+        communityDetailActionBusy ||
         content.length < 2 ||
         communityCommentEditInFlightRef.current !== null
       )
@@ -2479,6 +2494,7 @@ export function CleanFintechPostDetailScreen({
       activeComments,
       activeDetail.post.id,
       commentEditDrafts,
+      communityDetailActionBusy,
       detailCommunityService,
     ],
   );
@@ -2623,14 +2639,14 @@ export function CleanFintechPostDetailScreen({
             onPress={togglePostBookmark}
           />
           <SmallButton
-            disabled={communityDetailActionPending !== null}
+            disabled={communityDetailActionBusy}
             label={
               communityDetailActionPending === "report-post" ? "신고중" : "신고"
             }
             onPress={reportCommunityPost}
           />
           <SmallButton
-            disabled={communityDetailActionPending !== null}
+            disabled={communityDetailActionBusy}
             label={
               communityDetailActionPending === "delete-post" ? "삭제중" : "삭제"
             }
@@ -2646,7 +2662,7 @@ export function CleanFintechPostDetailScreen({
         <CommunityAttachmentList attachments={activeDetail.attachments} />
         <TextInput
           accessibilityLabel="커뮤니티 게시글 제목 수정"
-          editable={!postEditing}
+          editable={!postEditing && !communityDetailActionBusy}
           onChangeText={setPostEditTitle}
           placeholder="게시글 제목"
           placeholderTextColor={theme.color.text.disabled}
@@ -2655,7 +2671,7 @@ export function CleanFintechPostDetailScreen({
         />
         <TextInput
           accessibilityLabel="커뮤니티 게시글 본문 수정"
-          editable={!postEditing}
+          editable={!postEditing && !communityDetailActionBusy}
           multiline
           onChangeText={setPostEditContent}
           placeholder="게시글 본문"
@@ -2674,7 +2690,11 @@ export function CleanFintechPostDetailScreen({
               {likePending ? "반영 중" : liked ? "좋아요 취소" : "좋아요"}
             </Text>
           </Pressable>
-          <SmallButton label="댓글" onPress={focusCommunityCommentInput} />
+          <SmallButton
+            disabled={communityDetailActionBusy}
+            label="댓글"
+            onPress={focusCommunityCommentInput}
+          />
           <SmallButton
             disabled={sharePending}
             label={sharePending ? "공유중" : "공유"}
@@ -2688,19 +2708,19 @@ export function CleanFintechPostDetailScreen({
             onPress={togglePostBookmark}
           />
           <SmallButton
-            disabled={postEditing}
+            disabled={postEditing || communityDetailActionBusy}
             label={postEditing ? "수정 중" : "수정 저장"}
             onPress={updateCommunityPost}
           />
           <SmallButton
-            disabled={communityDetailActionPending !== null}
+            disabled={communityDetailActionBusy}
             label={
               communityDetailActionPending === "report-post" ? "신고중" : "신고"
             }
             onPress={reportCommunityPost}
           />
           <SmallButton
-            disabled={communityDetailActionPending !== null}
+            disabled={communityDetailActionBusy}
             label={
               communityDetailActionPending === "delete-post" ? "삭제중" : "삭제"
             }
@@ -2719,7 +2739,7 @@ export function CleanFintechPostDetailScreen({
             />
             <TextInput
               accessibilityLabel="커뮤니티 댓글 수정"
-              editable={commentEditingId === null}
+              editable={commentEditingId === null && !communityDetailActionBusy}
               multiline
               onChangeText={(value) =>
                 setCommentEditDrafts((current) => ({
@@ -2734,14 +2754,16 @@ export function CleanFintechPostDetailScreen({
             />
             <View style={styles.attachmentRow}>
               <SmallButton
-                disabled={commentEditingId !== null}
+                disabled={
+                  commentEditingId !== null || communityDetailActionBusy
+                }
                 label={
                   commentEditingId === comment.id ? "수정 중" : "수정 저장"
                 }
                 onPress={() => updateCommunityComment(comment)}
               />
               <SmallButton
-                disabled={communityDetailActionPending !== null}
+                disabled={communityDetailActionBusy}
                 label={
                   communityDetailActionPending === "report-comment"
                     ? "신고중"
@@ -2750,7 +2772,7 @@ export function CleanFintechPostDetailScreen({
                 onPress={() => reportCommunityComment(comment)}
               />
               <SmallButton
-                disabled={communityDetailActionPending !== null}
+                disabled={communityDetailActionBusy}
                 label={
                   communityDetailActionPending === "delete-comment"
                     ? "삭제중"
@@ -2764,6 +2786,7 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.inputRow}>
           <TextInput
             accessibilityLabel="커뮤니티 댓글 입력"
+            editable={!communityDetailActionBusy && !commentSubmitting}
             multiline
             onChangeText={setCommentDraft}
             placeholder="민감 정보 없이 댓글을 입력하세요"
@@ -2774,11 +2797,15 @@ export function CleanFintechPostDetailScreen({
           />
           <Pressable
             accessibilityRole="button"
-            disabled={!commentReady || commentSubmitting}
+            disabled={
+              !commentReady || commentSubmitting || communityDetailActionBusy
+            }
             onPress={submitCommunityComment}
             style={[
               styles.primaryButton,
-              !commentReady || commentSubmitting ? styles.disabled : null,
+              !commentReady || commentSubmitting || communityDetailActionBusy
+                ? styles.disabled
+                : null,
             ]}
           >
             <Text style={styles.primaryButtonText}>

@@ -2045,9 +2045,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("commentDraft");
     expect(cleanScreens).toContain("commentSubmitting");
     expect(cleanScreens).toContain("communityCommentSubmitInFlightRef");
-    expect(cleanScreens).toContain(
-      "!commentReady || communityCommentSubmitInFlightRef.current",
-    );
+    expect(cleanScreens).toContain("communityDetailActionBusy ||");
+    expect(cleanScreens).toContain("!commentReady ||");
+    expect(cleanScreens).toContain("communityCommentSubmitInFlightRef.current");
     expect(cleanScreens).toContain(
       "communityCommentSubmitInFlightRef.current = true",
     );
@@ -2099,6 +2099,38 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("server moderation");
   });
 
+  it("locks community detail editing and comment inputs while moderation actions are pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen[\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+
+    expect(detailSource).toContain(
+      "const communityDetailActionBusy = communityDetailActionPending !== null",
+    );
+    expect(detailSource).toContain(
+      "editable={!postEditing && !communityDetailActionBusy}",
+    );
+    expect(detailSource).toContain(
+      "editable={commentEditingId === null && !communityDetailActionBusy}",
+    );
+    expect(detailSource).toContain(
+      "editable={!communityDetailActionBusy && !commentSubmitting}",
+    );
+    expect(detailSource).toContain(
+      "disabled={postEditing || communityDetailActionBusy}",
+    );
+    expect(detailSource).toMatch(
+      /disabled=\{\s*commentEditingId !== null \|\| communityDetailActionBusy\s*\}/u,
+    );
+    expect(detailSource).toMatch(
+      /disabled=\{\s*!commentReady \|\| commentSubmitting \|\| communityDetailActionBusy\s*\}/u,
+    );
+  });
+
   it("keeps community detail delete actions wired to the server moderation service", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -2140,9 +2172,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("commentEditDrafts");
     expect(cleanScreens).toContain("communityPostEditInFlightRef");
     expect(cleanScreens).toContain("communityCommentEditInFlightRef");
-    expect(cleanScreens).toContain(
-      "!postEditReady || communityPostEditInFlightRef.current",
-    );
+    expect(cleanScreens).toContain("communityDetailActionBusy ||");
+    expect(cleanScreens).toContain("!postEditReady ||");
+    expect(cleanScreens).toContain("communityPostEditInFlightRef.current");
     expect(cleanScreens).toContain(
       "communityPostEditInFlightRef.current = true",
     );
@@ -2158,9 +2190,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "communityCommentEditInFlightRef.current = null",
     );
-    expect(cleanScreens).toContain("disabled={postEditing}");
+    expect(cleanScreens).toContain(
+      "disabled={postEditing || communityDetailActionBusy}",
+    );
     expect(cleanScreens).toContain("commentEditingId !== null");
-    expect(cleanScreens).toContain("disabled={commentEditingId !== null}");
+    expect(cleanScreens).toMatch(
+      /disabled=\{\s*commentEditingId !== null \|\| communityDetailActionBusy\s*\}/u,
+    );
     expect(cleanScreens).toContain("setServerCommunityDetail((current)");
   });
 
@@ -2169,8 +2205,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
 
-    expect(cleanScreens).toContain("editable={!postEditing}");
-    expect(cleanScreens).toContain("editable={commentEditingId === null}");
+    expect(cleanScreens).toContain(
+      "editable={!postEditing && !communityDetailActionBusy}",
+    );
+    expect(cleanScreens).toContain(
+      "editable={commentEditingId === null && !communityDetailActionBusy}",
+    );
   });
 
   it("keeps community detail share action wired to the native app share sheet", () => {
