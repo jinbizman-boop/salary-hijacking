@@ -879,6 +879,27 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects short password reset tokens before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.confirmPasswordReset({
+        token: "short",
+        newPassword: "New-safe-password-1!",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_PASSWORD_RESET_TOKEN_INVALID" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("refreshes the access token through the server refresh cookie without storing refresh tokens", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

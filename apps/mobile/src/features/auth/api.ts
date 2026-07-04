@@ -169,6 +169,18 @@ function assertPasswordPolicy(value: string): string {
   return password;
 }
 
+function assertResetToken(value: string): string {
+  const token = assertPresent(value, "AUTH_PASSWORD_RESET_TOKEN_REQUIRED");
+  if (token.length < 8) {
+    throw new AuthApiError(
+      0,
+      "AUTH_PASSWORD_RESET_TOKEN_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return token;
+}
+
 function normalizeEmail(value: string): string {
   const email = assertPresent(value, "AUTH_EMAIL_REQUIRED").toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)) {
@@ -674,10 +686,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async confirmPasswordReset(request: AuthPasswordResetConfirmRequest) {
       const parsed = await post(AUTH_PASSWORD_RESET_CONFIRM_PATH, {
-        token: assertPresent(
-          request.token,
-          "AUTH_PASSWORD_RESET_TOKEN_REQUIRED",
-        ),
+        token: assertResetToken(request.token),
         newPassword: assertPasswordPolicy(request.newPassword),
       });
       return passwordResetConfirmResult(parsed);
