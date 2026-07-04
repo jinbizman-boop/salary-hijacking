@@ -420,7 +420,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       planSource.match(
         /accessibilityState=\{\{ disabled: savingPlanCommitment \}\}/gu,
       ) ?? [],
-    ).toHaveLength(6);
+    ).toHaveLength(4);
+    expect(planSource).toContain("planFixedExpenseSubmitDisabled");
+    expect(planSource).toContain("planSavingsGoalSubmitDisabled");
   });
 
   it("keeps plan commitment creation fields empty until the user types real values", () => {
@@ -452,6 +454,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(planSource).not.toContain('useState("19000")');
     expect(planSource).not.toContain('useState("새 고정저축")');
     expect(planSource).not.toContain('useState("80000")');
+  });
+
+  it("disables plan commitment submit buttons until required drafts are valid", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(planSource).toContain("planFixedExpenseDraftReady");
+    expect(planSource).toContain("planSavingsGoalDraftReady");
+    expect(planSource).toContain("const planFixedExpenseSubmitDisabled =");
+    expect(planSource).toContain("const planSavingsGoalSubmitDisabled =");
+    expect(planSource).toContain(
+      "accessibilityState={{ disabled: planFixedExpenseSubmitDisabled }}",
+    );
+    expect(planSource).toContain("disabled={planFixedExpenseSubmitDisabled}");
+    expect(planSource).toContain(
+      "accessibilityState={{ disabled: planSavingsGoalSubmitDisabled }}",
+    );
+    expect(planSource).toContain("disabled={planSavingsGoalSubmitDisabled}");
   });
 
   it("keeps plan fixed expense and savings amount drafts sanitized as KRW integers", () => {

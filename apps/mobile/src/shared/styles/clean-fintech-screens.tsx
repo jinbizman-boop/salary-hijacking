@@ -4053,6 +4053,16 @@ function PlanScreen(): React.ReactElement {
     const next = sanitizeKrwIntegerInput(value);
     if (next !== null) setPlanSavingsGoalAmount(next);
   }, []);
+  const planFixedExpenseDraftReady =
+    planFixedExpenseTitle.trim().length > 0 &&
+    parseKrwInputAmount(planFixedExpenseAmount) !== null;
+  const planSavingsGoalDraftReady =
+    planSavingsGoalTitle.trim().length > 0 &&
+    parseKrwInputAmount(planSavingsGoalAmount) !== null;
+  const planFixedExpenseSubmitDisabled =
+    savingPlanCommitment || !planFixedExpenseDraftReady;
+  const planSavingsGoalSubmitDisabled =
+    savingPlanCommitment || !planSavingsGoalDraftReady;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -4497,14 +4507,14 @@ function PlanScreen(): React.ReactElement {
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ disabled: savingPlanCommitment }}
-          disabled={savingPlanCommitment}
+          accessibilityState={{ disabled: planFixedExpenseSubmitDisabled }}
+          disabled={planFixedExpenseSubmitDisabled}
           onPress={() => {
             void submitPlanFixedExpense();
           }}
           style={[
             styles.primaryButton,
-            savingPlanCommitment ? styles.disabled : null,
+            planFixedExpenseSubmitDisabled ? styles.disabled : null,
           ]}
         >
           <Text style={styles.primaryButtonText}>
@@ -4561,14 +4571,14 @@ function PlanScreen(): React.ReactElement {
         />
         <Pressable
           accessibilityRole="button"
-          accessibilityState={{ disabled: savingPlanCommitment }}
-          disabled={savingPlanCommitment}
+          accessibilityState={{ disabled: planSavingsGoalSubmitDisabled }}
+          disabled={planSavingsGoalSubmitDisabled}
           onPress={() => {
             void submitPlanSavingsGoal();
           }}
           style={[
             styles.primaryButton,
-            savingPlanCommitment ? styles.disabled : null,
+            planSavingsGoalSubmitDisabled ? styles.disabled : null,
           ]}
         >
           <Text style={styles.primaryButtonText}>
