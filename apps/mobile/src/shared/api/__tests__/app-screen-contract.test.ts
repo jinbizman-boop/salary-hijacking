@@ -129,6 +129,20 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain("rawFinancialData=false");
   });
 
+  it("prevents duplicate onboarding completion before the profile API acknowledges it", () => {
+    const onboarding = readFileSync(ONBOARDING_SCREEN, "utf8");
+
+    expect(onboarding).toContain("onboardingCompletionInFlightRef");
+    expect(onboarding).toContain("onboardingCompletionInFlightRef.current");
+    expect(onboarding).toContain(
+      "onboardingCompletionInFlightRef.current = true",
+    );
+    expect(onboarding).toContain(
+      "onboardingCompletionInFlightRef.current = false",
+    );
+    expect(onboarding).toContain(".completeOnboarding()");
+  });
+
   it("keeps the verify-email route implemented for protected email gates", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");

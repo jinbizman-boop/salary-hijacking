@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   SafeAreaView,
@@ -24,13 +24,15 @@ export default function OnboardingScreen(): React.ReactElement {
   const [submitting, setSubmitting] = useState<"/plan" | "/salary" | null>(
     null,
   );
+  const onboardingCompletionInFlightRef = useRef(false);
   const [message, setMessage] = useState(
     "온보딩 완료는 서버 프로필 경계에 기록한 뒤 다음 화면으로 이동해요.",
   );
 
   const finishOnboarding = useCallback(
     (target: "/plan" | "/salary"): void => {
-      if (submitting) return;
+      if (submitting || onboardingCompletionInFlightRef.current) return;
+      onboardingCompletionInFlightRef.current = true;
       setSubmitting(target);
       setMessage("서버에 온보딩 완료를 기록하는 중입니다.");
       void profileApi
@@ -43,7 +45,10 @@ export default function OnboardingScreen(): React.ReactElement {
             "온보딩 완료를 서버에 기록하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.",
           );
         })
-        .finally(() => setSubmitting(null));
+        .finally(() => {
+          onboardingCompletionInFlightRef.current = false;
+          setSubmitting(null);
+        });
     },
     [profileApi, router, submitting],
   );
