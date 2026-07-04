@@ -42,6 +42,23 @@ describe("community service", () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it("blocks sensitive community search queries before they reach URL logs", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.listPosts({
+        query:
+          "find user@example.com 010-1234-5678 account 123-456-789012 token abcdefghijklmnop",
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_QUERY_BLOCKED" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("uses the API v1 community boundary and privacy-safe payloads", async () => {
     const request = jest
       .fn<

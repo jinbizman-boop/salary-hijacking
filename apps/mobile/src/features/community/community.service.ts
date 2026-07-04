@@ -1,6 +1,9 @@
 import { CommunityApiError } from "./api";
 import { COMMUNITY_API_PREFIX } from "./community.constants";
-import { redactCommunityText } from "./community.redaction";
+import {
+  containsSensitiveCommunityContent,
+  redactCommunityText,
+} from "./community.redaction";
 import type {
   CommunityApiResponse,
   CommunityApiTransport,
@@ -67,7 +70,16 @@ function listQuery(input: CommunityFeedQuery = {}): string {
   params.set("page", String(normalizePage(input.page, 1, 10_000)));
   params.set("pageSize", String(normalizePage(input.pageSize, 20, 100)));
   const query = input.query?.trim();
-  if (query) params.set("q", query.slice(0, 120));
+  if (query) {
+    if (containsSensitiveCommunityContent(query)) {
+      throw new CommunityApiError(
+        422,
+        "COMMUNITY_QUERY_BLOCKED",
+        "커뮤니티 검색어에서 민감 정보를 제외해 주세요.",
+      );
+    }
+    params.set("q", query.slice(0, 120));
+  }
   return params.toString();
 }
 
