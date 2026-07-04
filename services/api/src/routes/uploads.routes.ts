@@ -72,7 +72,13 @@ interface R2BucketLike {
       readonly httpMetadata?: { readonly contentType?: string };
     },
   ) => Promise<unknown>;
+  readonly get?: (key: string) => Promise<R2ObjectLike | null>;
   readonly delete?: (key: string) => Promise<unknown>;
+}
+interface R2ObjectLike {
+  readonly arrayBuffer?: () => Promise<ArrayBuffer>;
+  readonly body?: BodyInit | null;
+  readonly httpMetadata?: { readonly contentType?: string };
 }
 export type FetchHandler<TEnv = unknown> = (
   request: Request,
@@ -185,6 +191,10 @@ export interface UploadsRepository<TEnv = unknown> {
     attachmentId: string,
     runtime: UploadsRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
+  content(
+    attachmentId: string,
+    runtime: UploadsRouteRuntime<TEnv>,
+  ): Promise<Response>;
   attach(
     attachmentId: string,
     ownerType: UploadOwnerType,
@@ -221,6 +231,7 @@ export interface UploadEvent {
     | "upload_updated"
     | "upload_scanned"
     | "upload_download_url_issued"
+    | "upload_content_streamed"
     | "upload_attached"
     | "upload_deleted";
   readonly requestId: string;
@@ -496,6 +507,27 @@ function jsonResponse(
       },
     },
   );
+}
+
+function binaryResponse(
+  runtime: Pick<UploadsRouteRuntime, "requestId">,
+  status: number,
+  body: BodyInit,
+  contentType: string,
+): Response {
+  return new Response(body, {
+    status,
+    headers: {
+      "content-type": contentType,
+      "cache-control": "private, max-age=300",
+      "x-request-id": runtime.requestId,
+      "x-content-type-options": "nosniff",
+      "x-raw-financial-data-exposed": "false",
+      "x-raw-personal-data-exposed": "false",
+      "x-raw-push-token-exposed": "false",
+      "x-ad-financial-targeting-used": "false",
+    },
+  });
 }
 
 function errorResponse(
@@ -1149,11 +1181,44 @@ function createInMemoryUploadsRepository<
         );
       return {
         ...publicView(found),
-        downloadUrl: `r2://${String(found.storageKey)}?expires=300`,
+        downloadUrl: `${UPLOADS_API_PREFIX}/${attachmentId}/content`,
         downloadExpiresInSeconds: 300,
         bodyAvailableInMemory: blobs.has(String(found.storageKey)),
         financialRawFileAllowed: false,
       };
+    },
+    async content(attachmentId, runtime): Promise<Response> {
+      const found = findForRuntime(attachmentId, runtime);
+      if (found.status !== "AVAILABLE")
+        throw new UploadHttpError(
+          409,
+          "UPLOAD_NOT_AVAILABLE",
+          "?ъ슜 媛?ν븳 泥⑤??뚯씪???꾨떃?덈떎.",
+        );
+      const storageKey = String(found.storageKey);
+      let contentType =
+        typeof found.contentType === "string" && found.contentType
+          ? found.contentType
+          : "application/octet-stream";
+      let body: BodyInit | null = null;
+      const bucket = uploadsBucketFromEnv(runtime.env);
+      if (bucket?.get) {
+        const object = await bucket.get(storageKey);
+        if (object?.httpMetadata?.contentType)
+          contentType = object.httpMetadata.contentType;
+        if (object?.arrayBuffer) body = await object.arrayBuffer();
+        else if (object?.body !== undefined) body = object.body;
+      } else {
+        const stored = blobs.get(storageKey);
+        body = stored ? stored.slice(0) : null;
+      }
+      if (body === null)
+        throw new UploadHttpError(
+          404,
+          "UPLOAD_OBJECT_NOT_FOUND",
+          "?낅줈???뚯씪 蹂몃Ц????μ냼?먯꽌 李얠쓣 ???놁뒿?덈떎.",
+        );
+      return binaryResponse(runtime, 200, body, contentType);
     },
     async attach(
       attachmentId,
@@ -1417,6 +1482,21 @@ async function dispatchUploadsRoute<TEnv>(
     return jsonResponse(runtime, 200, { data });
   }
 
+  match = relativePath.match(/^\/([^/]+)\/content$/);
+  if (method === "GET" && match) {
+    const attachmentId = idFromMatch(match, 1);
+    const response = await repository.content(attachmentId, runtime);
+    await emit(runtime, {
+      event: "upload_content_streamed",
+      requestId: runtime.requestId,
+      userId: runtime.principal.userId,
+      attachmentId,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    return response;
+  }
+
   match = relativePath.match(/^\/([^/]+)\/attach$/);
   if (method === "POST" && match) {
     const body = await parseJsonBody(runtime.request);
@@ -1519,6 +1599,7 @@ export const uploadsRoutesManifest = Object.freeze({
     "POST /{attachmentId}/finalize",
     "POST /{attachmentId}/scan",
     "GET /{attachmentId}/download",
+    "GET /{attachmentId}/content",
     "POST /{attachmentId}/attach",
   ],
   authMiddlewareCompatible: true,
@@ -1549,6 +1630,7 @@ export function assertUploadsRoutesCompleteness(): {
     "finalize_upload",
     "scan_status_and_quarantine",
     "download_url_issuance",
+    "api_content_proxy_streaming",
     "attach_to_owner_resource",
     "profile_variable_expense_community_growth_notice_ad_support_purposes",
     "content_type_allowlist_and_size_limit",

@@ -149,6 +149,168 @@ describe("mobile uploads API contract", () => {
     );
   });
 
+  it("issues API download URLs without exposing R2 storage keys", async () => {
+    const fakeBucket = {
+      put: async () => null,
+    };
+    const app = createUploadContractApp();
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: new Uint8Array([7, 7, 7, 7]).buffer,
+        headers: {
+          ...authHeaders,
+          "content-type": "image/png",
+          "x-upload-file-name": "download-proof.png",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development", UPLOADS_BUCKET: fakeBucket },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+
+    const downloadResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/download`, {
+        headers: authHeaders,
+        method: "GET",
+      }),
+      { APP_ENV: "development", UPLOADS_BUCKET: fakeBucket },
+      context,
+    );
+    const downloadBody = (await downloadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(uploadResponse.status).toBe(201);
+    expect(downloadResponse.status).toBe(200);
+    expect(downloadBody.error?.code).toBeUndefined();
+    expect(downloadBody.data?.downloadUrl).toBe(
+      `/api/v1/uploads/${attachmentId}/content`,
+    );
+    expect(JSON.stringify(downloadBody)).not.toMatch(
+      /r2:\/\/|uploads\/user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+  });
+
+  it("streams R2-backed uploaded bytes through the API content endpoint", async () => {
+    const storedObjects = new Map<string, ArrayBuffer>();
+    const fakeBucket = {
+      put: async (
+        key: string,
+        body: ArrayBuffer,
+        _options?: {
+          readonly httpMetadata?: { readonly contentType?: string };
+        },
+      ) => {
+        storedObjects.set(key, body.slice(0));
+      },
+      get: async (key: string) => {
+        const body = storedObjects.get(key);
+        if (!body) return null;
+        return {
+          arrayBuffer: async () => body.slice(0),
+          httpMetadata: { contentType: "image/png" },
+        };
+      },
+    };
+    const app = createUploadContractApp();
+    const uploadBytes = new Uint8Array([41, 42, 43, 44]);
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: uploadBytes.buffer.slice(0),
+        headers: {
+          ...authHeaders,
+          "content-type": "image/png",
+          "x-upload-file-name": "r2-content-proof.png",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development", UPLOADS_BUCKET: fakeBucket },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+
+    const contentResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/content`, {
+        headers: authHeaders,
+        method: "GET",
+      }),
+      { APP_ENV: "development", UPLOADS_BUCKET: fakeBucket },
+      context,
+    );
+    const contentBytes = new Uint8Array(await contentResponse.arrayBuffer());
+
+    expect(uploadResponse.status).toBe(201);
+    expect(contentResponse.status).toBe(200);
+    expect(contentResponse.headers.get("content-type")).toContain("image/png");
+    expect(Array.from(contentBytes)).toEqual(Array.from(uploadBytes));
+    expect(JSON.stringify([...storedObjects.keys()])).toMatch(
+      /^.*uploads\/user_mobile_upload_contract\/att_/,
+    );
+  });
+
+  it("streams uploaded bytes through the API content endpoint", async () => {
+    const app = createUploadContractApp();
+    const uploadBytes = new Uint8Array([10, 20, 30, 40]);
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: uploadBytes.buffer.slice(0),
+        headers: {
+          ...authHeaders,
+          "content-type": "image/png",
+          "x-upload-file-name": "content-proof.png",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+
+    const contentResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/content`, {
+        headers: authHeaders,
+        method: "GET",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const contentBytes = new Uint8Array(await contentResponse.arrayBuffer());
+
+    expect(uploadResponse.status).toBe(201);
+    expect(contentResponse.status).toBe(200);
+    expect(contentResponse.headers.get("content-type")).toContain("image/png");
+    expect(Array.from(contentBytes)).toEqual(Array.from(uploadBytes));
+    expect(contentResponse.headers.get("x-raw-financial-data-exposed")).toBe(
+      "false",
+    );
+    expect(contentResponse.headers.get("x-raw-personal-data-exposed")).toBe(
+      "false",
+    );
+  });
+
   it("deduplicates retried direct uploads by user and idempotency key", async () => {
     const app = createUploadContractApp();
     const receiptBytes = new Uint8Array([9, 8, 7, 6]).buffer;
