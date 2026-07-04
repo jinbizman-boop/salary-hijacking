@@ -1991,9 +1991,9 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
         ]);
         if (!mounted) return;
 
-        const posts = parseCommunityFeedPage(
-          communityResponseData(postsResponse),
-        ).items.map(toCommunityScreenPost);
+        const posts = toCommunityScreenPosts(
+          parseCommunityFeedPage(communityResponseData(postsResponse)),
+        );
         const comments = parseCommunityCommentPage(
           communityResponseData(commentsResponse),
         ).items;
@@ -2209,7 +2209,14 @@ export function CleanFintechPostDetailScreen({
     serverCommunityComments.length > 0
       ? serverCommunityComments
       : activeDetail.comments;
-  const post = toCommunityScreenPost(activeDetail.post);
+  const post = toCommunityScreenPost(activeDetail.post) ?? {
+    board: "레벨업 인증",
+    id: fallbackPostDetail.post.id,
+    stats: "좋아요 0 · 댓글 0 · 북마크 0 · 공유 0",
+    summary: "민감 정보가 제거된 게시글입니다.",
+    thumb: "💬",
+    title: "안전한 커뮤니티 게시글",
+  };
   const commentReady = commentDraft.trim().length >= 2;
   const communityDetailActionBusy = communityDetailActionPending !== null;
   const postEditReady =
@@ -4993,13 +5000,15 @@ function formatCommunityCount(value: number): string {
   return new Intl.NumberFormat("ko-KR").format(Math.max(0, Math.trunc(value)));
 }
 
-function toCommunityScreenPost(post: CommunityPost): CommunityScreenPost {
+function toCommunityScreenPost(
+  post: CommunityPost,
+): CommunityScreenPost | null {
   if (
     post.rawFinancialDataExposed ||
     post.rawPersonalDataExposed ||
     post.adsFinancialTargetingUsed
   ) {
-    throw new Error("unsafe community post payload");
+    return null;
   }
   return {
     board: communityBoardLabelMap[post.boardType],
@@ -5019,7 +5028,10 @@ function toCommunityScreenPosts(
   serverCommunityFeed: CommunityFeedPage | null,
 ): readonly CommunityScreenPost[] {
   if (!serverCommunityFeed) return [];
-  return serverCommunityFeed.items.map(toCommunityScreenPost);
+  return serverCommunityFeed.items.flatMap((post) => {
+    const screenPost = toCommunityScreenPost(post);
+    return screenPost ? [screenPost] : [];
+  });
 }
 
 function popularCommunityPosts(

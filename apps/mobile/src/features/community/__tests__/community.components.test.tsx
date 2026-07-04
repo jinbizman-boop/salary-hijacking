@@ -1,4 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { CommunityAdDisclosure } from "../components/CommunityAdDisclosure";
 import { CommunityPostCard } from "../components/CommunityPostCard";
@@ -42,6 +44,33 @@ const safePost: CommunityPost = {
 };
 
 describe("community components", () => {
+  it("keeps write-form labels, placeholders, and actions readable in Korean", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "CommunityWriteForm.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("게시판");
+    expect(source).toContain("게시글 제목");
+    expect(source).toContain("제목을 입력하세요");
+    expect(source).toContain("개인정보와 실제 금융 금액은 입력하지 마세요");
+    expect(source).toContain("게시글 발행");
+    for (const marker of [
+      "�",
+      "湲됱",
+      "怨꾩",
+      "寃뚯",
+      "諛쒗",
+      "誘몃",
+      "媛쒖",
+      "?쒕",
+      "?댁",
+      "?듬",
+    ]) {
+      expect(source).not.toContain(marker);
+    }
+  });
+
   it("shows an explicit contextual ad disclosure", () => {
     const model: CommunityAdDisclosureModel = {
       id: "ad_1",

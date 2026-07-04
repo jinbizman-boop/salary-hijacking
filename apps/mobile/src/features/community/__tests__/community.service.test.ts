@@ -1,7 +1,26 @@
 import { createCommunityService } from "../community.service";
 import type { CommunityApiTransport } from "../community.types";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 describe("community service", () => {
+  it("keeps service validation errors and route id labels readable", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "community.service.ts"),
+      "utf8",
+    );
+
+    expect(source).toContain(
+      "커뮤니티 정책에 맞지 않는 내용이 포함되어 있습니다.",
+    );
+    expect(source).toContain("게시글");
+    expect(source).toContain("댓글");
+    expect(source).toContain("신고 사유를 확인해 주세요.");
+    for (const marker of ["�", "而ㅻ", "寃뚯", "?볤", "?좉", "?앸", "?щ"]) {
+      expect(source).not.toContain(marker);
+    }
+  });
+
   it("blocks unsafe content before it reaches the API", async () => {
     const request = jest.fn<
       ReturnType<CommunityApiTransport["request"]>,
