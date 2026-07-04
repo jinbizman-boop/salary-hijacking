@@ -2,6 +2,7 @@ import {
   createProfileApi,
   mergeProfileSnapshotWithMyPageSummary,
 } from "../api";
+import { PROFILE_SAFE_ERROR_MESSAGE } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -92,6 +93,14 @@ const myPageSummaryPayload = {
 } as const;
 
 describe("profile api", () => {
+  it("keeps the safe profile error message readable for Korean users", () => {
+    expect(PROFILE_SAFE_ERROR_MESSAGE).toBe(
+      "프로필 정보를 안전하게 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
+    );
+    expect(PROFILE_SAFE_ERROR_MESSAGE).not.toMatch(/[�]/u);
+    expect(PROFILE_SAFE_ERROR_MESSAGE).not.toContain("?꾨줈");
+  });
+
   it("loads the mobile profile payload with privacy headers and redacted identifiers", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

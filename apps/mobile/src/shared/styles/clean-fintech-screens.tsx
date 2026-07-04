@@ -1711,6 +1711,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
       .then((ticket) => {
         setSupportMessage("");
         setSupportSubject("");
+        setSupportCategory("ACCOUNT");
         setToast(`문의가 접수됐어요. 상태 ${ticket.status}`);
       })
       .catch(() => {
