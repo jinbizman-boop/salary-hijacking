@@ -1822,6 +1822,23 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("locks MY community management close while delete is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myCommunitySource =
+      cleanScreens.match(
+        /export function CleanFintechMyCommunityScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechPostDetailScreen/u,
+      )?.[0] ?? "";
+
+    expect(myCommunitySource).toContain(
+      "if (myCommunityActionPending !== null) return",
+    );
+    expect(myCommunitySource).toContain(
+      '<SmallButton\n        disabled={myCommunityActionPending !== null}\n        label="MY로 돌아가기"\n        onPress={closeMyCommunityScreen}\n      />',
+    );
+  });
+
   it("keeps community screen hydrated from the server feed service before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

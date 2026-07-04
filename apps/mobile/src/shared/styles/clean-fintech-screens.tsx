@@ -1964,8 +1964,9 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
     [myCommunityRouter],
   );
   const closeMyCommunityScreen = useCallback(() => {
+    if (myCommunityActionPending !== null) return;
     myCommunityRouter.replace("/profile");
-  }, [myCommunityRouter]);
+  }, [myCommunityActionPending, myCommunityRouter]);
 
   const deleteMyCommunityPost = useCallback(
     (post: CommunityScreenPost): void => {
@@ -2080,7 +2081,11 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
           </View>
         ))}
       </SectionCard>
-      <SmallButton label="MY로 돌아가기" onPress={closeMyCommunityScreen} />
+      <SmallButton
+        disabled={myCommunityActionPending !== null}
+        label="MY로 돌아가기"
+        onPress={closeMyCommunityScreen}
+      />
       <GuardBox />
     </AppScreen>
   );
