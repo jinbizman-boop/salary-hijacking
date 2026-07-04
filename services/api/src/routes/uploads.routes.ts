@@ -104,6 +104,7 @@ export interface UploadPrepareInput {
 
 export interface DirectUploadInput extends UploadPrepareInput {
   readonly data: ArrayBuffer;
+  readonly idempotencyKey: string | null;
 }
 export interface UploadUpdateInput {
   readonly visibility?: UploadVisibility | undefined;
@@ -346,6 +347,18 @@ function requestIdFromHeaders(request: Request): string {
   if (value && /^[a-zA-Z0-9._:\-/]{8,160}$/.test(value))
     return value.slice(0, 160);
   return globalThis.crypto?.randomUUID?.() ?? `req_${Date.now().toString(36)}`;
+}
+
+function idempotencyKeyFromHeaders(request: Request): string | null {
+  const value = header(request, "x-idempotency-key");
+  if (!value) return null;
+  if (!/^[A-Za-z0-9._:-]{16,160}$/.test(value))
+    throw new UploadHttpError(
+      400,
+      "UPLOAD_IDEMPOTENCY_KEY_INVALID",
+      "Upload idempotency key is invalid.",
+    );
+  return value;
 }
 
 function normalizeRole(value: string): UploadRole | null {
@@ -902,6 +915,7 @@ function createInMemoryUploadsRepository<
     const {
       checksumSha256: _checksumSha256,
       computedChecksumSha256: _computedChecksumSha256,
+      idempotencyKey: _idempotencyKey,
       storageKey: _storageKey,
       uploadExpiresAt: _uploadExpiresAt,
       userId: _userId,
@@ -980,6 +994,25 @@ function createInMemoryUploadsRepository<
       return publicView(record);
     },
     async directUpload(input, runtime): Promise<JsonRecord> {
+      if (input.idempotencyKey) {
+        const replayed = visibleForUser(runtime.principal.userId).find(
+          (item) => item.idempotencyKey === input.idempotencyKey,
+        );
+        if (replayed) {
+          if (
+            replayed.fileName !== input.fileName ||
+            replayed.contentType !== input.contentType ||
+            replayed.sizeBytes !== input.sizeBytes ||
+            replayed.purpose !== input.purpose
+          )
+            throw new UploadHttpError(
+              409,
+              "UPLOAD_IDEMPOTENCY_CONFLICT",
+              "Upload idempotency key was already used for a different file.",
+            );
+          return publicView({ ...replayed, idempotencyReplayed: true });
+        }
+      }
       const prepared = await this.prepare(input, runtime);
       const attachmentId = String(prepared.attachmentId);
       const record = findForRuntime(attachmentId, runtime);
@@ -994,6 +1027,8 @@ function createInMemoryUploadsRepository<
         ...record,
         checksumSha256: input.checksumSha256 ?? checksum,
         computedChecksumSha256: checksum,
+        idempotencyKey: input.idempotencyKey,
+        idempotencyReplayed: false,
         status: scanStatus === "PASSED" ? "AVAILABLE" : "SCANNING",
         scanStatus,
         uploadedAt: runtime.now.toISOString(),
@@ -1185,6 +1220,7 @@ async function directUploadInput(
     contentType,
     sizeBytes: data.byteLength,
     checksumSha256: header(request, "x-upload-checksum-sha256"),
+    idempotencyKey: idempotencyKeyFromHeaders(request),
     purpose,
     ownerType,
     ownerId: header(request, "x-upload-owner-id"),
@@ -1240,7 +1276,13 @@ async function dispatchUploadsRoute<TEnv>(
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
     });
-    return jsonResponse(runtime, 201, { data });
+    return jsonResponse(
+      runtime,
+      data.idempotencyReplayed === true ? 200 : 201,
+      {
+        data,
+      },
+    );
   }
 
   let match = relativePath.match(/^\/([^/]+)$/);

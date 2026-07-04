@@ -25,6 +25,63 @@ function createUploadContractApp() {
 }
 
 describe("mobile uploads API contract", () => {
+  it("deduplicates retried direct uploads by user and idempotency key", async () => {
+    const app = createUploadContractApp();
+    const receiptBytes = new Uint8Array([9, 8, 7, 6]).buffer;
+    const requestHeaders = {
+      ...authHeaders,
+      "content-type": "image/png",
+      "x-idempotency-key": "mobile-upload-contract-retry-key",
+      "x-upload-file-name": "retry-proof.png",
+      "x-upload-owner-type": "USER",
+      "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+      "x-upload-visibility": "AUTHENTICATED",
+    };
+
+    const firstResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: receiptBytes.slice(0),
+        headers: requestHeaders,
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const secondResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: receiptBytes.slice(0),
+        headers: requestHeaders,
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+
+    const firstBody = (await firstResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+    const secondBody = (await secondResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(firstResponse.status).toBe(201);
+    expect(secondResponse.status).toBe(200);
+    expect(firstBody.error?.code).toBeUndefined();
+    expect(secondBody.error?.code).toBeUndefined();
+    expect(firstBody.data?.attachmentId).toBe(secondBody.data?.attachmentId);
+    expect(secondBody.data).toMatchObject({
+      contentType: "image/png",
+      fileName: "retry-proof.png",
+      financialRawFileAllowed: false,
+      purpose: "COMMUNITY_ATTACHMENT",
+    });
+    expect(JSON.stringify(secondBody)).not.toMatch(
+      /user_mobile_upload_contract|mobile-upload-contract-retry-key|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+  });
+
   it("accepts variable expense receipt uploads and attaches them to the expense owner", async () => {
     const app = createUploadContractApp();
     const receiptBytes = new Uint8Array([1, 2, 3, 4]).buffer;

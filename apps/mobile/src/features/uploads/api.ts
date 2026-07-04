@@ -372,6 +372,28 @@ function errorCode(value: unknown): string {
   return "UPLOADS_REQUEST_FAILED";
 }
 
+function safeIdempotencyPart(value: string): string {
+  const normalized = value
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^-|-$/gu, "")
+    .slice(0, 80);
+  return normalized || "request";
+}
+
+function uploadIdempotencyKey(correlationId: string, scope: string): string {
+  const entropy =
+    globalThis.crypto?.randomUUID?.().replace(/-/gu, "") ??
+    Date.now().toString(36);
+  return [
+    "mobile-upload",
+    safeIdempotencyPart(correlationId),
+    safeIdempotencyPart(scope),
+    entropy,
+  ].join("-");
+}
+
 export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
   const baseUrl = normalizeBaseUrl(options.baseUrl);
   const fetcher = options.fetcher ?? fetch;
@@ -404,10 +426,15 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
   return {
     async directUploadCommunityAttachment(input) {
       const { contentType, fileName } = assertCommunityAttachment(input);
+      const correlationId = createCorrelationId();
       const headers = new Headers({
         "content-type": contentType,
         "x-client-platform": options.platform,
-        "x-correlation-id": createCorrelationId(),
+        "x-correlation-id": correlationId,
+        "x-idempotency-key": uploadIdempotencyKey(
+          correlationId,
+          "community-attachment",
+        ),
         "x-upload-file-name": fileName,
         "x-upload-owner-type": "USER",
         "x-upload-purpose": "COMMUNITY_ATTACHMENT",
@@ -425,10 +452,15 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
 
     async directUploadVariableExpenseReceipt(input) {
       const { contentType, fileName } = assertVariableExpenseReceipt(input);
+      const correlationId = createCorrelationId();
       const headers = new Headers({
         "content-type": contentType,
         "x-client-platform": options.platform,
-        "x-correlation-id": createCorrelationId(),
+        "x-correlation-id": correlationId,
+        "x-idempotency-key": uploadIdempotencyKey(
+          correlationId,
+          "variable-expense-receipt",
+        ),
         "x-upload-file-name": fileName,
         "x-upload-owner-type": "USER",
         "x-upload-purpose": "VARIABLE_EXPENSE_RECEIPT",

@@ -73,6 +73,9 @@ describe("uploads api", () => {
     expect(sent.headers.get("x-upload-purpose")).toBe("COMMUNITY_ATTACHMENT");
     expect(sent.headers.get("x-upload-owner-type")).toBe("USER");
     expect(sent.headers.get("x-upload-visibility")).toBe("AUTHENTICATED");
+    expect(sent.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-upload-upload-correlation-1-community-attachment-[A-Za-z0-9_-]{8,160}$/u,
+    );
     expect(sent.headers.get("x-client-platform")).toBe("android");
     expect(sent.headers.get("x-correlation-id")).toBe("upload-correlation-1");
     expect(sent.headers.get("x-raw-financial-data-exposed")).toBe("false");
@@ -410,6 +413,9 @@ describe("uploads api", () => {
     );
     expect(sent.headers.get("x-upload-owner-type")).toBe("USER");
     expect(sent.headers.get("x-upload-visibility")).toBe("AUTHENTICATED");
+    expect(sent.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-upload-receipt-correlation-1-variable-expense-receipt-[A-Za-z0-9_-]{8,160}$/u,
+    );
     expect(sent.headers.get("x-raw-financial-data-exposed")).toBe("false");
     expect(sent.headers.get("x-raw-personal-data-exposed")).toBe("false");
     expect(sent.headers.get("x-ad-financial-targeting-used")).toBe("false");
