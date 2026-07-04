@@ -115,15 +115,16 @@ Verified on 2026-07-03 KST:
   request before route handlers run. Runtime staging migration and auth smoke
   proof are still blocked release gates.
 - Release readiness finds `git`, Cloudflare Wrangler, Cloudflare account
-  evidence, Neon project evidence, and workspace-local EAS CLI evidence. The
+  evidence, Neon project evidence, and the `pnpm dlx eas-cli@20.4.0` mobile
+  EAS launcher path. The
   local `check:external-integrations` script currently warns only that `gh`,
   `neon`, and `neonctl` are not on PATH. Release readiness treats missing
   `gh`/Neon CLI as WARN when connector evidence proves account access.
-  Workspace-local
-  `apps/mobile/node_modules/.bin/eas.CMD` runs `eas-cli/20.4.0`. Android `adb`
-  and `emulator` are detected through Android SDK lookup; local release remains
-  blocked until the Detox E2E APK or equivalent native device-farm proof is
-  recorded without secrets.
+  EAS CLI is intentionally not installed as an `apps/mobile` dependency so
+  Expo doctor does not load incompatible local EAS transitive packages. Android
+  `adb` and `emulator` are detected through Android SDK lookup; local release
+  remains blocked until the Detox E2E APK or equivalent native device-farm proof
+  is recorded without secrets.
 
 ## Product Maturity Read
 

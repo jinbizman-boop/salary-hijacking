@@ -33,7 +33,6 @@ const writeMobileBuildFixture = (rootDir) => {
       },
     },
   });
-  touch(path.join(rootDir, "node_modules", ".bin", "eas.CMD"));
 };
 
 const existsInside = (rootDir) => (filePath) => {
@@ -55,6 +54,7 @@ test("preflight passes with local EAS CLI, Android SDK tools, and Android Studio
   );
 
   writeMobileBuildFixture(rootDir);
+  touch(path.join(rootDir, "bin", "pnpm.CMD"));
   touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
   touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
   touch(path.join(javaHome, "bin", "java.EXE"));
@@ -69,7 +69,7 @@ test("preflight passes with local EAS CLI, Android SDK tools, and Android Studio
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
-    pathValue: "",
+    pathValue: path.join(rootDir, "bin"),
     platform: "win32",
   });
 
@@ -92,6 +92,7 @@ test("preflight fails before an expensive local build when Expo auth is unavaila
   );
 
   writeMobileBuildFixture(rootDir);
+  touch(path.join(rootDir, "bin", "pnpm.CMD"));
   touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
   touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
   touch(path.join(javaHome, "bin", "java.EXE"));
@@ -105,7 +106,7 @@ test("preflight fails before an expensive local build when Expo auth is unavaila
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
-    pathValue: "",
+    pathValue: path.join(rootDir, "bin"),
     platform: "win32",
     spawn() {
       return { status: 1, stdout: "Not logged in", stderr: "" };
@@ -122,6 +123,7 @@ test("preflight fails before an expensive local build when Java is unavailable",
   const sdkRoot = path.join(localAppData, "Android", "Sdk");
 
   writeMobileBuildFixture(rootDir);
+  touch(path.join(rootDir, "bin", "pnpm.CMD"));
   touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
   touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
 
@@ -134,7 +136,7 @@ test("preflight fails before an expensive local build when Java is unavailable",
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
-    pathValue: "",
+    pathValue: path.join(rootDir, "bin"),
     platform: "win32",
   });
 
@@ -144,17 +146,21 @@ test("preflight fails before an expensive local build when Java is unavailable",
 
 test("build invocation keeps the E2E APK output path and non-interactive local EAS flags", () => {
   const rootDir = makeWorkspace();
+  touch(path.join(rootDir, "bin", "pnpm.CMD"));
   writeMobileBuildFixture(rootDir);
 
   const invocation = buildEasLocalAndroidBuildInvocation({
     mobileRootDir: rootDir,
     output: "build/e2e/android/salary-hijacking-e2e.apk",
+    pathValue: path.join(rootDir, "bin"),
     platform: "win32",
     profile: "e2e",
   });
 
-  assert.equal(path.basename(invocation.command).toLowerCase(), "eas.cmd");
+  assert.equal(path.basename(invocation.command).toLowerCase(), "pnpm.cmd");
   assert.deepEqual(invocation.args, [
+    "dlx",
+    "eas-cli@20.4.0",
     "build",
     "--platform",
     "android",
@@ -181,6 +187,7 @@ test("local build runner executes the Windows EAS command through the shell", ()
   const spawnCalls = [];
 
   writeMobileBuildFixture(rootDir);
+  touch(path.join(rootDir, "bin", "pnpm.CMD"));
   touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
   touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
   touch(path.join(javaHome, "bin", "java.EXE"));
@@ -195,7 +202,7 @@ test("local build runner executes the Windows EAS command through the shell", ()
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
-    pathValue: "",
+    pathValue: path.join(rootDir, "bin"),
     platform: "win32",
     spawn(command, args, options) {
       spawnCalls.push({ command, args, options });

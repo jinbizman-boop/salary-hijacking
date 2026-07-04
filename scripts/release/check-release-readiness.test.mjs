@@ -2072,22 +2072,21 @@ test("blocks GitHub repository evidence without write or push proof", () => {
   assert.match(report, /GitHub write or push access/);
 });
 
-test("uses workspace-local EAS CLI when eas is not on PATH", () => {
+test("uses pnpm dlx as the EAS CLI launcher when eas is not installed locally", () => {
   const rootDir = makeWorkspace();
-  write(rootDir, "apps/mobile/node_modules/.bin/eas.CMD", "@echo off\n");
 
   const result = analyzeReleaseReadiness({
     rootDir,
     env: completeEnv,
-    commandExists: (command) => command !== "eas",
+    commandExists: (command) => command !== "eas" && command !== "neon",
     gitStatus: () => ({ ok: true, output: "" }),
     gitRemote: matchingGitRemote,
   });
   const report = formatReleaseReadinessReport(result);
 
   assert.equal(result.ok, true);
-  assert.match(report, /cli:Expo EAS CLI/);
-  assert.doesNotMatch(report, /Expo EAS CLI is not available/);
+  assert.match(report, /cli:Expo EAS CLI launcher/);
+  assert.doesNotMatch(report, /Expo EAS CLI launcher is not available/);
 });
 
 test("blocks when mobile native release evidence is missing or unverified", () => {

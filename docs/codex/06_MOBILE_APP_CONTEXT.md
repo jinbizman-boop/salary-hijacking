@@ -83,14 +83,14 @@ Detox now has a repository-level execution contract:
   artifact URLs or release proof artifact paths in the repository. Run it through
   `corepack pnpm --filter @salary-hijacking/mobile run e2e:android:import-apk -- <local-apk-path>`.
 - `build:e2e:android:preflight` runs
-  `scripts/eas-local-android-build.mjs --check` and verifies local EAS CLI,
-  Expo authentication via trusted `EXPO_TOKEN` or `eas whoami`, Android SDK
-  tools, the EAS `e2e` APK profile, and a usable Java runtime without exposing
-  token values.
+  `scripts/eas-local-android-build.mjs --check` and verifies the
+  `pnpm dlx eas-cli@20.4.0` launcher path, Expo authentication via trusted
+  `EXPO_TOKEN` or `pnpm dlx eas-cli@20.4.0 whoami`, Android SDK tools, the EAS
+  `e2e` APK profile, and a usable Java runtime without exposing token values.
 - `build:e2e:android:local` runs through
   `scripts/eas-local-android-build.mjs`, which sets `JAVA_HOME`/`PATH` to the
   Android Studio bundled JBR when Java is not on the shell PATH, then invokes
-  EAS local build with `--local --output
+  `pnpm dlx eas-cli@20.4.0 build` with `--local --output
 build/e2e/android/salary-hijacking-e2e.apk`. This script is preparation only;
   native E2E proof is still false until the APK is actually built and Detox or
   equivalent no-secret device proof passes.

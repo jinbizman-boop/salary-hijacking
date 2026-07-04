@@ -91,17 +91,22 @@ export const resolveJavaHome = ({
   return "";
 };
 
-const findLocalEasCli = ({
+const EAS_CLI_PACKAGE = "eas-cli@20.4.0";
+
+const buildEasCliArgs = (args) => ["dlx", EAS_CLI_PACKAGE, ...args];
+
+const findPnpmCli = ({
   existsSync = fs.existsSync,
-  mobileRootDir = defaultMobileRootDir(),
+  pathValue = process.env.PATH ?? process.env.Path ?? "",
   platform = process.platform,
 } = {}) => {
-  const binDir = path.join(mobileRootDir, "node_modules", ".bin");
-  for (const executableName of executableNames("eas", platform)) {
-    const candidate = path.join(binDir, executableName);
-    if (existsSync(candidate)) return candidate;
+  for (const directory of splitPath(pathValue)) {
+    for (const executableName of executableNames("pnpm", platform)) {
+      const candidate = path.join(directory, executableName);
+      if (existsSync(candidate)) return candidate;
+    }
   }
-  return "";
+  return platform === "win32" ? "pnpm.CMD" : "pnpm";
 };
 
 const readJson = (filePath) =>
@@ -137,7 +142,7 @@ const checkEasAuthentication = ({
   if (hasExpoToken(env)) return { ok: true, source: "EXPO_TOKEN" };
   if (!command) return { ok: false, source: "" };
 
-  const result = spawn(command, ["whoami"], {
+  const result = spawn(command, buildEasCliArgs(["whoami"]), {
     cwd: mobileRootDir,
     encoding: "utf8",
     env,
@@ -153,12 +158,14 @@ const checkEasAuthentication = ({
 export const buildEasLocalAndroidBuildInvocation = ({
   mobileRootDir = defaultMobileRootDir(),
   output = "build/e2e/android/salary-hijacking-e2e.apk",
+  pathValue = process.env.PATH ?? process.env.Path ?? "",
   platform = process.platform,
   profile = "e2e",
 } = {}) => {
-  const command = findLocalEasCli({ mobileRootDir, platform });
+  void mobileRootDir;
+  const command = findPnpmCli({ pathValue, platform });
   return {
-    args: [
+    args: buildEasCliArgs([
       "build",
       "--platform",
       "android",
@@ -168,7 +175,7 @@ export const buildEasLocalAndroidBuildInvocation = ({
       "--output",
       output,
       "--non-interactive",
-    ],
+    ]),
     command,
   };
 };
@@ -190,12 +197,13 @@ export const checkEasLocalAndroidBuildPrerequisites = ({
   const invocation = buildEasLocalAndroidBuildInvocation({
     mobileRootDir,
     output,
+    pathValue,
     platform,
     profile,
   });
   if (!invocation.command) {
     failures.push(
-      "Workspace-local EAS CLI is missing under apps/mobile/node_modules/.bin.",
+      "pnpm is unavailable for pnpm dlx eas-cli local Android builds.",
     );
   }
 
@@ -334,6 +342,7 @@ export const runEasLocalAndroidBuild = ({
   const invocation = buildEasLocalAndroidBuildInvocation({
     mobileRootDir,
     output,
+    pathValue,
     platform,
     profile,
   });

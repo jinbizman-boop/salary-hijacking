@@ -375,16 +375,15 @@ Configure branch protection and GitHub Environments after the new repository exi
           "test:e2e:android":
             "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
           "build:e2e:android:local":
-            "eas build --platform android --profile e2e --local --output build/e2e/android/salary-hijacking-e2e.apk --non-interactive",
+            "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+          "build:e2e:android:preflight":
+            "node scripts/eas-local-android-build.mjs --check --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
           "build:e2e:android:local-debug":
             "node scripts/expo-local-android-debug-build.mjs --output build/e2e/android/salary-hijacking-e2e.apk",
           "build:e2e:android:local-debug:preflight":
             "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
           "build:production:android":
-            "eas build --platform android --profile production --non-interactive",
-        },
-        devDependencies: {
-          "eas-cli": "^20.4.0",
+            "pnpm dlx eas-cli@latest build --platform android --profile production --non-interactive",
         },
       },
       null,
@@ -435,6 +434,24 @@ const gradleArgs = ["assembleDebug"];
 const debugApkPath = "android/app/build/outputs/apk/debug/app-debug.apk";
 const outputPath = "build/e2e/android/salary-hijacking-e2e.apk";
 console.log(prebuildArgs, gradleArgs, debugApkPath, outputPath);
+`,
+    "apps/mobile/scripts/eas-local-android-build.mjs": `
+const command = "pnpm";
+const args = [
+  "dlx",
+  "eas-cli@latest",
+  "build",
+  "--platform",
+  "android",
+  "--profile",
+  "e2e",
+  "--local",
+  "--output",
+  "build/e2e/android/salary-hijacking-e2e.apk",
+  "--non-interactive",
+];
+const env = { JAVA_HOME: process.env.JAVA_HOME };
+console.log(command, args, env);
 `,
     "apps/mobile/scripts/run-detox-android.mjs": `
 const env = {
@@ -1436,9 +1453,6 @@ test("fails when mobile release metadata contains mojibake", async () => {
             "build:production:android":
               "eas build --platform android --profile production --non-interactive",
           },
-          devDependencies: {
-            "eas-cli": "^20.4.0",
-          },
         },
         null,
         2,
@@ -1496,9 +1510,6 @@ test("fails when mobile package metadata contains common Korean mojibake", async
             "build:production:android":
               "eas build --platform android --profile production --non-interactive",
           },
-          devDependencies: {
-            "eas-cli": "^20.4.0",
-          },
         },
         null,
         2,
@@ -1533,9 +1544,6 @@ test("fails when mobile local e2e APK build script is missing", async () => {
               "node scripts/check-detox-env.mjs android.emu.debug && detox test --configuration android.emu.debug",
             "build:production:android":
               "eas build --platform android --profile production --non-interactive",
-          },
-          devDependencies: {
-            "eas-cli": "^20.4.0",
           },
         },
         null,
@@ -1583,10 +1591,7 @@ test("fails when mobile Android E2E calls Detox without the SDK env runner", asy
             "build:e2e:android:local-debug:preflight":
               "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
             "build:production:android":
-              "eas build --platform android --profile production --non-interactive",
-          },
-          devDependencies: {
-            "eas-cli": "^20.4.0",
+              "pnpm dlx eas-cli@latest build --platform android --profile production --non-interactive",
           },
         },
         null,
@@ -1641,17 +1646,17 @@ test("passes when mobile local e2e APK build delegates to the guarded wrapper", 
             "build:e2e:android:local-debug:preflight":
               "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
             "build:production:android":
-              "eas build --platform android --profile production --non-interactive",
-          },
-          devDependencies: {
-            "eas-cli": "^20.4.0",
+              "pnpm dlx eas-cli@latest build --platform android --profile production --non-interactive",
           },
         },
         null,
         2,
       ),
       "apps/mobile/scripts/eas-local-android-build.mjs": `
+const command = "pnpm";
 const args = [
+  "dlx",
+  "eas-cli@latest",
   "build",
   "--platform",
   "android",
@@ -1662,7 +1667,7 @@ const args = [
   "build/e2e/android/salary-hijacking-e2e.apk",
   "--non-interactive",
 ];
-console.log(process.env.JAVA_HOME, args.join(" "));
+console.log(command, process.env.JAVA_HOME, args.join(" "));
 `,
       "apps/mobile/scripts/expo-local-android-debug-build.mjs": `
 const prebuildArgs = ["prebuild", "--platform", "android", "--no-install"];
@@ -1967,6 +1972,65 @@ jobs:
     assert.equal(result.ok, false);
     assert.match(result.failures.join("\n"), /pnpm store status/);
     assert.match(result.failures.join("\n"), /native postinstall/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when mobile package installs EAS CLI locally instead of using pnpm dlx", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "apps/mobile/package.json": JSON.stringify(
+        {
+          name: "@salary-hijacking/mobile",
+          description:
+            "급여납치 Salary Hijacking mobile app fixture with local EAS CLI dependency.",
+          scripts: {
+            "test:e2e":
+              "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
+            "test:e2e:android":
+              "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
+            "build:e2e:android:local":
+              "node scripts/eas-local-android-build.mjs --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:preflight":
+              "node scripts/eas-local-android-build.mjs --check --profile e2e --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:local-debug":
+              "node scripts/expo-local-android-debug-build.mjs --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:e2e:android:local-debug:preflight":
+              "node scripts/expo-local-android-debug-build.mjs --check --output build/e2e/android/salary-hijacking-e2e.apk",
+            "build:production:android":
+              "pnpm dlx eas-cli@latest build --platform android --profile production --non-interactive",
+          },
+          dependencies: {},
+          devDependencies: {
+            "eas-cli": "^20.4.0",
+          },
+        },
+        null,
+        2,
+      ),
+      "apps/mobile/scripts/eas-local-android-build.mjs": `
+const command = "pnpm";
+const args = ["dlx", "eas-cli@latest", "build", "--platform", "android", "--profile", "e2e", "--local", "--output", "build/e2e/android/salary-hijacking-e2e.apk", "--non-interactive"];
+const env = { JAVA_HOME: process.env.JAVA_HOME };
+console.log(command, args, env);
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      allowMissingCommands: true,
+      env: {
+        GITHUB_REPOSITORY: "jinbizman-boop/salary-hijacking",
+        CF_ADMIN_WORKER_NAME: "salary-hijacking-admin",
+      },
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /eas-cli/);
+    assert.match(result.failures.join("\n"), /pnpm dlx/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

@@ -130,14 +130,8 @@ const REQUIRED_CLI_GROUPS = [
   { label: "Cloudflare Wrangler", commands: ["wrangler"] },
   { label: "Neon CLI", commands: ["neon", "neonctl"], any: true },
   {
-    label: "Expo EAS CLI",
-    commands: ["eas"],
-    localPaths: [
-      "apps/mobile/node_modules/.bin/eas",
-      "apps/mobile/node_modules/.bin/eas.cmd",
-      "apps/mobile/node_modules/.bin/eas.CMD",
-      "apps/mobile/node_modules/.bin/eas.ps1",
-    ],
+    label: "Expo EAS CLI launcher",
+    commands: ["pnpm"],
   },
 ];
 

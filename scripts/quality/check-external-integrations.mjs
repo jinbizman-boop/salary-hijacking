@@ -236,7 +236,7 @@ const REQUIRED_TOKENS_BY_FILE = {
     "급여납치",
     "test:e2e",
     "build:production:android",
-    "eas-cli",
+    "pnpm dlx eas-cli@",
   ],
   "apps/mobile/eas.json": [
     "EXPO_PUBLIC_APP_NAME",
@@ -765,11 +765,57 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
   const debugPreflightScript =
     packageJson?.scripts?.["build:e2e:android:local-debug:preflight"];
   const preflightScript = packageJson?.scripts?.["build:e2e:android:preflight"];
+  const easRemoteScripts = [
+    "build:dev:android",
+    "build:dev:ios",
+    "build:preview:android",
+    "build:preview:ios",
+    "build:e2e:android",
+    "build:e2e:ios",
+    "build:production:android",
+    "build:production:ios",
+    "submit:staging:android",
+    "submit:production:android",
+    "update:preview",
+    "update:production",
+  ];
   const expectedOutput = "build/e2e/android/salary-hijacking-e2e.apk";
   const detoxRunnerRelativePath = "apps/mobile/scripts/run-detox-android.mjs";
   const detoxRunnerSource = fileExists(rootDir, detoxRunnerRelativePath)
     ? readText(rootDir, detoxRunnerRelativePath)
     : "";
+
+  for (const dependencyScope of [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+  ]) {
+    if (
+      !packageJson?.[dependencyScope] ||
+      typeof packageJson[dependencyScope] !== "object" ||
+      Array.isArray(packageJson[dependencyScope])
+    ) {
+      continue;
+    }
+    if (Object.hasOwn(packageJson[dependencyScope], "eas-cli")) {
+      failures.push(
+        `${relativePath}: ${dependencyScope}.eas-cli must be removed; use pnpm dlx eas-cli@<version> so Expo doctor does not load incompatible local EAS dependencies`,
+      );
+    }
+  }
+
+  for (const scriptName of easRemoteScripts) {
+    const command = packageJson?.scripts?.[scriptName];
+    if (typeof command !== "string") continue;
+
+    if (/\beas\s+(?:build|submit|update)\b/.test(command)) {
+      failures.push(
+        `${relativePath}: scripts.${scriptName} must use pnpm dlx eas-cli@<version> instead of a locally installed eas binary`,
+      );
+    }
+  }
+
   for (const [scriptName, command] of [
     ["test:e2e", testScript],
     ["test:e2e:android", androidTestScript],
@@ -824,6 +870,9 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
     ? readText(rootDir, wrapperRelativePath)
     : "";
   const wrapperRequiredParts = [
+    '"pnpm"',
+    '"dlx"',
+    '"eas-cli@',
     '"build"',
     '"--platform"',
     '"android"',
