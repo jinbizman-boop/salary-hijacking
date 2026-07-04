@@ -863,6 +863,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(planInputCardSource).toContain("disabled = false");
     expect(planInputCardSource).toContain("disabled?: boolean");
+    expect(planInputCardSource).toContain("accessibilityState={{ disabled }}");
     expect(planInputCardSource).toContain("editable={!disabled}");
     expect(
       planSource.match(

@@ -6415,6 +6415,7 @@ function PlanInputCard({
       </View>
       <TextInput
         accessibilityLabel={label}
+        accessibilityState={{ disabled }}
         editable={!disabled}
         inputMode="numeric"
         keyboardType="number-pad"
