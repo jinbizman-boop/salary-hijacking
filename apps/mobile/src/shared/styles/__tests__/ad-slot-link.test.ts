@@ -75,4 +75,23 @@ describe("ad slot partner benefits URL loader", () => {
       SALARY_HIJACKING_PARTNER_BENEFITS_URL,
     );
   });
+
+  it("falls back when partner benefits URL carries sensitive targeting payloads", async () => {
+    const unsafeUrls = [
+      "https://salaryhijacking.com/partners?salaryAmount=3000000",
+      "https://salaryhijacking.com/partners#token=raw-auth-token",
+      "https://salaryhijacking.com/partners/email/user@example.com",
+    ];
+
+    for (const unsafeUrl of unsafeUrls) {
+      const api: MobilePublicConfigApiClient = {
+        getPublicAppConfig: async () => publicConfig(unsafeUrl),
+      };
+      const loadPartnerBenefitsUrl = createPartnerBenefitsUrlLoader(() => api);
+
+      await expect(loadPartnerBenefitsUrl()).resolves.toBe(
+        SALARY_HIJACKING_PARTNER_BENEFITS_URL,
+      );
+    }
+  });
 });
