@@ -794,12 +794,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         /const markAllNotificationsRead = useCallback\([\s\S]*?const restoreNotificationOnFailure = useCallback/u,
       )?.[0] ?? "";
 
-    expect(markAllSource).toContain("notificationReadAllPending");
-    expect(markAllSource).toContain("if (notificationReadAllPending");
-    expect(markAllSource).toContain("setNotificationReadAllPending(true)");
+    expect(cleanScreens).toContain("notificationReadAllPending");
+    expect(markAllSource).toContain("notificationReadAllInFlightRef");
     expect(markAllSource).toContain(
-      "finally(() => setNotificationReadAllPending(false))",
+      "if (notificationReadAllInFlightRef.current || unreadCount <= 0) return",
     );
+    expect(markAllSource).toContain(
+      "notificationReadAllInFlightRef.current = true",
+    );
+    expect(markAllSource).toContain(
+      "notificationReadAllInFlightRef.current = false",
+    );
+    expect(markAllSource).toContain("setNotificationReadAllPending(true)");
+    expect(markAllSource).toContain("setNotificationReadAllPending(false)");
     expect(cleanScreens).toContain(
       "disabled={notificationReadAllPending || unreadCount <= 0}",
     );

@@ -4512,6 +4512,7 @@ function NotificationsScreen(): React.ReactElement {
     useState(false);
   const [notificationReadAllPending, setNotificationReadAllPending] =
     useState(false);
+  const notificationReadAllInFlightRef = useRef(false);
   const [serverNotificationDevices, setServerNotificationDevices] = useState<
     readonly NotificationDevice[]
   >([]);
@@ -4632,7 +4633,8 @@ function NotificationsScreen(): React.ReactElement {
   );
 
   const markAllNotificationsRead = useCallback(() => {
-    if (notificationReadAllPending || unreadCount <= 0) return;
+    if (notificationReadAllInFlightRef.current || unreadCount <= 0) return;
+    notificationReadAllInFlightRef.current = true;
     const previousNotifications = serverNotifications;
     const previousUnreadCount = unreadCount;
     setNotificationReadAllPending(true);
@@ -4656,9 +4658,11 @@ function NotificationsScreen(): React.ReactElement {
           "전체 읽음 처리를 서버에 저장하지 못했어요. 다시 확인해 주세요.",
         );
       })
-      .finally(() => setNotificationReadAllPending(false));
+      .finally(() => {
+        notificationReadAllInFlightRef.current = false;
+        setNotificationReadAllPending(false);
+      });
   }, [
-    notificationReadAllPending,
     notificationsApi,
     restoreAllNotificationsReadOnFailure,
     serverNotifications,
