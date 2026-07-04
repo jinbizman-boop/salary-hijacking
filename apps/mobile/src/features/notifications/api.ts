@@ -107,6 +107,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function containsRawSensitiveText(value: string): boolean {
   return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
@@ -592,6 +599,7 @@ function validPreferenceUpdate(
 function validRegistrationRequest(
   request: NotificationDeviceRegistrationRequest,
 ): boolean {
+  const record = request as Record<string, unknown>;
   const optionalSafeText = (
     value: string | null | undefined,
     maxLength: number,
@@ -605,6 +613,13 @@ function validRegistrationRequest(
 
   return (
     isRecord(request) &&
+    hasOnlyKeys(record, [
+      "appVersion",
+      "deviceId",
+      "locale",
+      "platform",
+      "pushToken",
+    ]) &&
     typeof request.deviceId === "string" &&
     /^[A-Za-z0-9_.:-]+$/u.test(request.deviceId) &&
     NOTIFICATION_DEVICE_PLATFORMS.has(request.platform) &&
@@ -633,11 +648,27 @@ function normalizeRegistrationRequest(
   request: NotificationDeviceRegistrationRequest,
 ): NotificationDeviceRegistrationRequest | null {
   if (!isRecord(request)) return null;
+  if (
+    !hasOnlyKeys(request as Record<string, unknown>, [
+      "appVersion",
+      "deviceId",
+      "locale",
+      "platform",
+      "pushToken",
+    ])
+  ) {
+    return null;
+  }
   const platform = normalizeRegistrationDevicePlatform(request.platform);
   if (!platform) return null;
   const normalizedRequest = {
-    ...request,
+    ...(request.appVersion !== undefined
+      ? { appVersion: request.appVersion }
+      : {}),
+    deviceId: request.deviceId,
+    ...(request.locale !== undefined ? { locale: request.locale } : {}),
     platform,
+    pushToken: request.pushToken,
   } as NotificationDeviceRegistrationRequest;
   return validRegistrationRequest(normalizedRequest) ? normalizedRequest : null;
 }

@@ -466,6 +466,43 @@ describe("notifications api", () => {
     expect(calls).toHaveLength(1);
   });
 
+  it("rejects unknown notification device registration fields before payload construction", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({
+          data: {
+            deviceId: "device_android_1",
+            platform: "ANDROID",
+            pushTokenHashOnly: true,
+            pushTokenPreview: "ExponentPushToken[abc***",
+            status: "ACTIVE",
+            registeredAt: "2026-07-02T09:40:00.000Z",
+            updatedAt: "2026-07-02T09:40:00.000Z",
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.registerDevice({
+        appVersion: "1.0.0",
+        deviceId: "device_android_1",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        pushToken: "ExponentPushToken[abcdef123456]",
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects notification device metadata with raw sensitive values before network access", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({
