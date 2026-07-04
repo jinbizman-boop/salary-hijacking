@@ -6000,6 +6000,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
           />
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
             onPress={submitPasswordReset}
             style={[
@@ -6128,6 +6129,7 @@ export function CleanFintechResetPasswordScreen({
               </Text>
               <Pressable
                 accessibilityRole="button"
+                accessibilityState={{ disabled: !valid || submitting }}
                 disabled={!valid || submitting}
                 onPress={submitPasswordResetConfirm}
                 style={[
