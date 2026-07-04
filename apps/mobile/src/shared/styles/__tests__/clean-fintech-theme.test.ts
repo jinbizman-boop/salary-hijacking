@@ -634,6 +634,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toBeLessThan(callbackRoute.indexOf('router.replace("/salary")'));
   });
 
+  it("exposes onboarding completion pending state to assistive technology", () => {
+    const onboardingRoute = source("onboarding.tsx");
+
+    expect(onboardingRoute).toContain("completeOnboarding");
+    expect(onboardingRoute).toContain("onboardingCompletionInFlightRef");
+    expect(
+      onboardingRoute.match(/disabled=\{submitting !== null\}/gu),
+    ).toHaveLength(2);
+    expect(
+      onboardingRoute.match(
+        /accessibilityState=\{\{\s*disabled: submitting !== null\s*\}\}/gu,
+      ) ?? [],
+    ).toHaveLength(2);
+  });
+
   it("keeps verify-email screen recoverable with server-side resend instead of a dead end", () => {
     const verifyRoute = source("(auth)/verify-email.tsx");
 

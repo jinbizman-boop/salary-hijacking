@@ -114,6 +114,7 @@ export default function OnboardingScreen(): React.ReactElement {
         <Pressable
           accessibilityLabel="목표: 급여 계획부터 설정하기"
           accessibilityRole="button"
+          accessibilityState={{ disabled: submitting !== null }}
           disabled={submitting !== null}
           onPress={() => finishOnboarding("/plan")}
           style={[styles.primaryButton, submitting ? styles.disabled : null]}
@@ -126,6 +127,7 @@ export default function OnboardingScreen(): React.ReactElement {
         <Pressable
           accessibilityLabel="목표: 이미 설정했어요"
           accessibilityRole="button"
+          accessibilityState={{ disabled: submitting !== null }}
           disabled={submitting !== null}
           onPress={() => finishOnboarding("/salary")}
           style={[styles.secondaryButton, submitting ? styles.disabled : null]}
