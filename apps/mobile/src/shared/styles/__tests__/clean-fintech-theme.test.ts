@@ -2015,6 +2015,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("sanitizes MY profile activity community route ids before navigation", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const routeSource =
+      cleanScreens.match(
+        /function safeProfileActivityRoute[\s\S]*?function isImportantNotification/u,
+      )?.[0] ?? "";
+
+    expect(routeSource).toMatch(
+      /\^\\\/community\\\/\(\[A-Za-z0-9_-\]\{3,160\}\)\$/u,
+    );
+    expect(routeSource).toMatch(
+      /containsSensitiveCommunityContent\(communityPostMatch\[1\]\)/u,
+    );
+    expect(routeSource).not.toContain("[A-Za-z0-9_-]{1,80}");
+  });
+
   it("keeps MY profile and account settings entry points routed", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

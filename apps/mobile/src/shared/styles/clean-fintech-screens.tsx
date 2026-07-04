@@ -5240,10 +5240,13 @@ function safeProfileActivityRoute(
   const aliasedRoute = profileActivityRouteAliases[route];
   if (aliasedRoute) return aliasedRoute;
 
-  const communityPostMatch = /^\/community\/([A-Za-z0-9_-]{1,80})$/u.exec(
+  const communityPostMatch = /^\/community\/([A-Za-z0-9_-]{3,160})$/u.exec(
     route,
   );
-  if (communityPostMatch?.[1]) {
+  if (
+    communityPostMatch?.[1] &&
+    !containsSensitiveCommunityContent(communityPostMatch[1])
+  ) {
     return `/community/${communityPostMatch[1]}`;
   }
 
