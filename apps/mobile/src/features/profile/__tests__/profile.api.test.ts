@@ -317,6 +317,28 @@ describe("profile api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects credentialed profile API base URLs before any request can be created", () => {
+    const calls: Request[] = [];
+
+    expect(() =>
+      createProfileApi({
+        baseUrl: "https://operator:secret@api.salaryhijacking.com",
+        fetcher: async (request) => {
+          calls.push(
+            request instanceof Request ? request : new Request(request),
+          );
+          return jsonResponse({ data: profilePayload });
+        },
+        platform: "android",
+      }),
+    ).toThrow(
+      expect.objectContaining({
+        code: "PROFILE_INVALID_BASE_URL",
+      }),
+    );
+    expect(calls).toHaveLength(0);
+  });
+
   it("completes onboarding through the server profile boundary without unsafe fields", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

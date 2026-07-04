@@ -148,6 +148,13 @@ function normalizeBaseUrl(value: string): string {
       PROFILE_SAFE_ERROR_MESSAGE,
     );
   }
+  if (url.username || url.password) {
+    throw new ProfileApiError(
+      0,
+      "PROFILE_INVALID_BASE_URL",
+      PROFILE_SAFE_ERROR_MESSAGE,
+    );
+  }
 
   const localHost =
     url.hostname === "localhost" ||
