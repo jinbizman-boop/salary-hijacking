@@ -5867,8 +5867,9 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
   }, [email, forgotPasswordAuthApi, valid]);
 
   const backToLogin = useCallback((): void => {
+    if (submitting) return;
     forgotPasswordRouter.replace("/(auth)/login");
-  }, [forgotPasswordRouter]);
+  }, [forgotPasswordRouter, submitting]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -5885,6 +5886,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
           <TextInput
             accessibilityLabel="비밀번호 재설정 이메일"
             autoCapitalize="none"
+            editable={!submitting}
             inputMode="email"
             onChangeText={setEmail}
             placeholder="가입 이메일"
@@ -5905,7 +5907,11 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
               {submitting ? "요청 중" : "재설정 메일 받기"}
             </Text>
           </Pressable>
-          <SmallButton label="로그인으로 돌아가기" onPress={backToLogin} />
+          <SmallButton
+            disabled={submitting}
+            label="로그인으로 돌아가기"
+            onPress={backToLogin}
+          />
         </SectionCard>
         <GuardBox />
       </ScrollView>
@@ -5934,8 +5940,9 @@ export function CleanFintechResetPasswordScreen({
     newPassword === confirmPassword;
 
   const backToResetLogin = useCallback(() => {
+    if (submitting) return;
     resetPasswordRouter.replace("/(auth)/login");
-  }, [resetPasswordRouter]);
+  }, [resetPasswordRouter, submitting]);
 
   const submitPasswordResetConfirm = useCallback(async () => {
     if (!valid || resetPasswordSubmitInFlightRef.current) return;
@@ -5983,6 +5990,7 @@ export function CleanFintechResetPasswordScreen({
                 이메일의 최신 비밀번호 재설정 링크로 다시 열어 주세요.
               </Text>
               <SmallButton
+                disabled={submitting}
                 label="로그인으로 돌아가기"
                 onPress={backToResetLogin}
               />
@@ -5991,6 +5999,7 @@ export function CleanFintechResetPasswordScreen({
             <>
               <TextInput
                 accessibilityLabel="새 비밀번호"
+                editable={!submitting}
                 onChangeText={setNewPassword}
                 placeholder="새 비밀번호"
                 placeholderTextColor={theme.color.text.disabled}
@@ -6000,6 +6009,7 @@ export function CleanFintechResetPasswordScreen({
               />
               <TextInput
                 accessibilityLabel="새 비밀번호 확인"
+                editable={!submitting}
                 onChangeText={setConfirmPassword}
                 placeholder="새 비밀번호 확인"
                 placeholderTextColor={theme.color.text.disabled}
@@ -6024,6 +6034,7 @@ export function CleanFintechResetPasswordScreen({
                 </Text>
               </Pressable>
               <SmallButton
+                disabled={submitting}
                 label="로그인으로 돌아가기"
                 onPress={backToResetLogin}
               />

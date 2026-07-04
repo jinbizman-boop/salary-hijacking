@@ -712,6 +712,33 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("locks password recovery inputs and login return while reset requests are pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const forgotSource =
+      cleanScreens.match(
+        /export function CleanFintechForgotPasswordScreen[\s\S]*?export function CleanFintechResetPasswordScreen/u,
+      )?.[0] ?? "";
+    const resetSource =
+      cleanScreens.match(
+        /export function CleanFintechResetPasswordScreen[\s\S]*?function LoginScreen/u,
+      )?.[0] ?? "";
+
+    expect(forgotSource).toContain("editable={!submitting}");
+    expect(forgotSource).toMatch(
+      /const backToLogin = useCallback\(\(\): void => \{\s*if\s*\(\s*submitting\s*\)\s*return;\s*forgotPasswordRouter\.replace\("\/\(auth\)\/login"\)/u,
+    );
+    expect(forgotSource).toMatch(
+      /<SmallButton\s+disabled=\{submitting\}\s+label="로그인으로 돌아가기"\s+onPress=\{backToLogin\}/u,
+    );
+    expect(resetSource.match(/editable=\{!submitting\}/gu)).toHaveLength(2);
+    expect(resetSource).toMatch(
+      /const backToResetLogin = useCallback\(\(\) => \{\s*if\s*\(\s*submitting\s*\)\s*return;\s*resetPasswordRouter\.replace\("\/\(auth\)\/login"\)/u,
+    );
+    expect(resetSource.match(/disabled=\{submitting\}/gu)).toHaveLength(2);
+  });
+
   it("keeps signup submit gating aligned with the server auth password policy", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
