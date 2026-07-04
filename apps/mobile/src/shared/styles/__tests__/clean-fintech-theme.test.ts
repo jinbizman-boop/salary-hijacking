@@ -551,6 +551,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps plan payroll summary amount inputs sanitized as KRW integers", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(planSource).toContain("setSanitizedPlanPayrollAmount");
+    expect(planSource).toContain("setSanitizedPlanFixedExpenseTotal");
+    expect(planSource).toContain("setSanitizedPlanSavingsTarget");
+    expect(planSource).toContain("onChange={setSanitizedPlanPayrollAmount}");
+    expect(planSource).toContain(
+      "onChange={setSanitizedPlanFixedExpenseTotal}",
+    );
+    expect(planSource).toContain("onChange={setSanitizedPlanSavingsTarget}");
+  });
+
   it("keeps plan screen fixed expense and savings deletion persisted through server APIs", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

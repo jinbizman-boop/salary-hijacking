@@ -4130,6 +4130,21 @@ function PlanScreen(): React.ReactElement {
     target,
   ]);
 
+  const setSanitizedPlanPayrollAmount = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setSalary(next);
+  }, []);
+
+  const setSanitizedPlanFixedExpenseTotal = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setExpense(next);
+  }, []);
+
+  const setSanitizedPlanSavingsTarget = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setTarget(next);
+  }, []);
+
   const setSanitizedPlanFixedExpenseAmount = useCallback((value: string) => {
     const next = sanitizeKrwIntegerInput(value);
     if (next !== null) setPlanFixedExpenseAmount(next);
@@ -4519,14 +4534,14 @@ function PlanScreen(): React.ReactElement {
         label="급여 계획"
         disabled={savingPayrollPlan}
         value={salary}
-        onChange={setSalary}
+        onChange={setSanitizedPlanPayrollAmount}
         helper="급여일 매월 25일 · KRW 정수만 입력"
       />
       <PlanInputCard
         label="고정지출"
         disabled={savingPayrollPlan}
         value={expense}
-        onChange={setExpense}
+        onChange={setSanitizedPlanFixedExpenseTotal}
         helper="월세, 구독, 통신비를 먼저 분리"
       />
       <SectionCard>
@@ -4681,7 +4696,7 @@ function PlanScreen(): React.ReactElement {
         label="목표금액"
         disabled={savingPayrollPlan}
         value={target}
-        onChange={setTarget}
+        onChange={setSanitizedPlanSavingsTarget}
         helper="목표 달성률 재계산 기준"
       />
       <GuardBox />
