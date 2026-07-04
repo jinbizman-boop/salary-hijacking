@@ -82,6 +82,49 @@ describe("mobile uploads API contract", () => {
     );
   });
 
+  it("rejects same-key direct upload retries when the uploaded bytes differ", async () => {
+    const app = createUploadContractApp();
+    const requestHeaders = {
+      ...authHeaders,
+      "content-type": "image/png",
+      "x-idempotency-key": "mobile-upload-contract-conflict-key",
+      "x-upload-file-name": "conflict-proof.png",
+      "x-upload-owner-type": "USER",
+      "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+      "x-upload-visibility": "AUTHENTICATED",
+    };
+
+    const firstResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: new Uint8Array([1, 1, 1, 1]).buffer,
+        headers: requestHeaders,
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const secondResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: new Uint8Array([2, 2, 2, 2]).buffer,
+        headers: requestHeaders,
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const secondBody = (await secondResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(firstResponse.status).toBe(201);
+    expect(secondResponse.status).toBe(409);
+    expect(secondBody.error?.code).toBe("UPLOAD_IDEMPOTENCY_CONFLICT");
+    expect(JSON.stringify(secondBody)).not.toMatch(
+      /mobile-upload-contract-conflict-key|user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+  });
+
   it("accepts variable expense receipt uploads and attaches them to the expense owner", async () => {
     const app = createUploadContractApp();
     const receiptBytes = new Uint8Array([1, 2, 3, 4]).buffer;

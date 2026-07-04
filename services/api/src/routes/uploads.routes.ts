@@ -994,6 +994,7 @@ function createInMemoryUploadsRepository<
       return publicView(record);
     },
     async directUpload(input, runtime): Promise<JsonRecord> {
+      const checksum = await sha256Hex(input.data);
       if (input.idempotencyKey) {
         const replayed = visibleForUser(runtime.principal.userId).find(
           (item) => item.idempotencyKey === input.idempotencyKey,
@@ -1003,7 +1004,8 @@ function createInMemoryUploadsRepository<
             replayed.fileName !== input.fileName ||
             replayed.contentType !== input.contentType ||
             replayed.sizeBytes !== input.sizeBytes ||
-            replayed.purpose !== input.purpose
+            replayed.purpose !== input.purpose ||
+            replayed.computedChecksumSha256 !== checksum
           )
             throw new UploadHttpError(
               409,
@@ -1017,7 +1019,6 @@ function createInMemoryUploadsRepository<
       const attachmentId = String(prepared.attachmentId);
       const record = findForRuntime(attachmentId, runtime);
       blobs.set(String(record.storageKey), input.data.slice(0));
-      const checksum = await sha256Hex(input.data);
       const scanStatus: UploadScanStatus = input.contentType.startsWith(
         "image/",
       )
