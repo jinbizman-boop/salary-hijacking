@@ -81,6 +81,12 @@ function pageQuery(
   }).toString();
 }
 
+function idempotencyKey(scope: string, id: string): string {
+  return `mobile-${scope}-${id}-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
+}
+
 function reportBody(
   reasonType: string,
   reason: string,
@@ -158,6 +164,18 @@ export function createCommunityService(
         `${COMMUNITY_API_PREFIX}/posts/${requireId(postId, "게시글")}/like`,
         { method: liked ? "POST" : "DELETE" },
       );
+    },
+
+    async setPostBookmarked(postId, bookmarked): Promise<CommunityApiResponse> {
+      const safePostId = requireId(postId, "post");
+      return transport.request(`${COMMUNITY_API_PREFIX}/bookmarks`, {
+        method: "POST",
+        body: {
+          enabled: bookmarked,
+          idempotencyKey: idempotencyKey("bookmark", safePostId),
+          postId: safePostId,
+        },
+      });
     },
 
     async listComments(postId, page, pageSize): Promise<CommunityApiResponse> {

@@ -64,6 +64,7 @@ export type CommunityPost = Readonly<{
   likedByMe?: boolean;
   commentCount: number;
   bookmarkCount: number;
+  bookmarkedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
   rawFinancialDataExposed: false;
@@ -161,6 +162,10 @@ export type CommunityService = Readonly<{
   setPostLiked: (
     postId: string,
     liked: boolean,
+  ) => Promise<CommunityApiResponse>;
+  setPostBookmarked: (
+    postId: string,
+    bookmarked: boolean,
   ) => Promise<CommunityApiResponse>;
   listComments: (
     postId: string,

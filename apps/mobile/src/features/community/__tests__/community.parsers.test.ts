@@ -82,6 +82,7 @@ describe("community parsers", () => {
       title: "liked post",
       content: "liked content",
       likedByMe: true,
+      bookmarkedByMe: true,
       viewerUserId: "usr_private",
       authorMasked: "usr***",
       status: "VISIBLE",
@@ -93,6 +94,7 @@ describe("community parsers", () => {
     });
 
     expect(detail.post.likedByMe).toBe(true);
+    expect(detail.post.bookmarkedByMe).toBe(true);
     expect(detail.post).not.toHaveProperty("viewerUserId");
   });
 

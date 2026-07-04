@@ -1978,6 +1978,9 @@ export function CleanFintechPostDetailScreen({
   const [liked, setLiked] = useState(false);
   const [likePending, setLikePending] = useState(false);
   const communityLikeInFlightRef = useRef(false);
+  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkPending, setBookmarkPending] = useState(false);
+  const communityBookmarkInFlightRef = useRef(false);
   const [sharePending, setSharePending] = useState(false);
   const communityShareInFlightRef = useRef(false);
   const [toast, setToast] = useState(
@@ -2010,6 +2013,7 @@ export function CleanFintechPostDetailScreen({
       setServerCommunityDetail({ ...nextDetail, comments: nextComments });
       setServerCommunityComments(nextComments);
       setLiked(nextDetail.post.likedByMe === true);
+      setBookmarked(nextDetail.post.bookmarkedByMe === true);
       setPostEditTitle(nextDetail.post.title);
       setPostEditContent(nextDetail.content || nextDetail.post.bodyPreview);
       setCommentEditDrafts(
@@ -2026,6 +2030,7 @@ export function CleanFintechPostDetailScreen({
       setServerCommunityDetail(null);
       setServerCommunityComments([]);
       setLiked(false);
+      setBookmarked(false);
       setPostEditTitle(fallbackPostDetail.post.title);
       setPostEditContent(fallbackPostDetail.content);
       setCommentEditDrafts(
@@ -2080,6 +2085,61 @@ export function CleanFintechPostDetailScreen({
         setLikePending(false);
       });
   }, [activeDetail.post.id, detailCommunityService, liked]);
+
+  const togglePostBookmark = useCallback((): void => {
+    if (communityBookmarkInFlightRef.current) return;
+    communityBookmarkInFlightRef.current = true;
+    const nextBookmarked = !bookmarked;
+    const targetPostId = activeDetail.post.id;
+    setBookmarkPending(true);
+    setBookmarked(nextBookmarked);
+    setToast(
+      nextBookmarked
+        ? "게시글을 서버 북마크에 저장하는 중이에요."
+        : "게시글 저장을 서버에서 해제하는 중이에요.",
+    );
+    void detailCommunityService
+      .setPostBookmarked(targetPostId, nextBookmarked)
+      .then((response) => {
+        const data = communityResponseData(response);
+        const serverBookmarkCount =
+          typeof data === "object" &&
+          data !== null &&
+          "bookmarkCount" in data &&
+          typeof data.bookmarkCount === "number" &&
+          Number.isSafeInteger(data.bookmarkCount) &&
+          data.bookmarkCount >= 0
+            ? data.bookmarkCount
+            : null;
+        setServerCommunityDetail((current) => {
+          if (!current || current.post.id !== targetPostId) return current;
+          const delta = nextBookmarked ? 1 : -1;
+          return {
+            ...current,
+            post: {
+              ...current.post,
+              bookmarkCount:
+                serverBookmarkCount ??
+                Math.max(0, current.post.bookmarkCount + delta),
+              bookmarkedByMe: nextBookmarked,
+            },
+          };
+        });
+        setToast(
+          nextBookmarked
+            ? "게시글이 서버 북마크에 저장됐어요."
+            : "게시글 저장이 해제됐어요.",
+        );
+      })
+      .catch(() => {
+        setBookmarked(!nextBookmarked);
+        setToast("게시글 저장 상태를 반영하지 못했어요. 다시 시도해 주세요.");
+      })
+      .finally(() => {
+        communityBookmarkInFlightRef.current = false;
+        setBookmarkPending(false);
+      });
+  }, [activeDetail.post.id, bookmarked, detailCommunityService]);
 
   const shareCommunityPost = useCallback((): void => {
     if (communityShareInFlightRef.current) return;
@@ -2386,6 +2446,13 @@ export function CleanFintechPostDetailScreen({
             onPress={shareCommunityPost}
           />
           <SmallButton
+            disabled={bookmarkPending}
+            label={
+              bookmarkPending ? "저장중" : bookmarked ? "저장 취소" : "저장"
+            }
+            onPress={togglePostBookmark}
+          />
+          <SmallButton
             disabled={communityDetailActionPending !== null}
             label={
               communityDetailActionPending === "report-post" ? "신고중" : "신고"
@@ -2442,6 +2509,13 @@ export function CleanFintechPostDetailScreen({
             disabled={sharePending}
             label={sharePending ? "공유중" : "공유"}
             onPress={shareCommunityPost}
+          />
+          <SmallButton
+            disabled={bookmarkPending}
+            label={
+              bookmarkPending ? "저장중" : bookmarked ? "저장 취소" : "저장"
+            }
+            onPress={togglePostBookmark}
           />
           <SmallButton
             disabled={postEditing}

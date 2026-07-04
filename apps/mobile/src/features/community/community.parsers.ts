@@ -170,6 +170,10 @@ export function parseCommunityPost(value: unknown): CommunityPost {
       value.liked === true,
     commentCount: safeInteger(value.commentCount),
     bookmarkCount: safeInteger(value.bookmarkCount),
+    bookmarkedByMe:
+      value.bookmarkedByMe === true ||
+      value.viewerBookmarked === true ||
+      value.bookmarked === true,
     createdAt: timestamp(value.createdAt),
     updatedAt: timestamp(value.updatedAt ?? value.createdAt),
     rawFinancialDataExposed: false,
