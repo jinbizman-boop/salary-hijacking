@@ -1259,6 +1259,7 @@ export function CleanFintechLevelDetailScreen({
   const [completedContentIds, setCompletedContentIds] = useState<
     ReadonlySet<string>
   >(() => new Set());
+  const levelDetailCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [submittingContentId, setSubmittingContentId] = useState<string | null>(
     null,
   );
@@ -1268,6 +1269,11 @@ export function CleanFintechLevelDetailScreen({
         setToast(`${card.title}: 이미 서버에 완료 기록이 있어요.`);
         return;
       }
+      if (levelDetailCompletionInFlightRef.current.has(card.contentId)) {
+        setToast(`${card.title}: 서버 기록 중이에요. 잠시만 기다려 주세요.`);
+        return;
+      }
+      levelDetailCompletionInFlightRef.current.add(card.contentId);
       setSubmittingContentId(card.contentId);
       try {
         const result = await growthDetailApi.completeContent({
@@ -1292,6 +1298,7 @@ export function CleanFintechLevelDetailScreen({
           "서버에 LV UP 콘텐츠 완료를 기록하지 못했어요. 다시 시도해 주세요.",
         );
       } finally {
+        levelDetailCompletionInFlightRef.current.delete(card.contentId);
         setSubmittingContentId(null);
       }
     },
