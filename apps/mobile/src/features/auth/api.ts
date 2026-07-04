@@ -110,6 +110,10 @@ function normalizeBaseUrl(value: string): string {
     throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
   }
 
+  if (url.username || url.password) {
+    throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
+  }
+
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||

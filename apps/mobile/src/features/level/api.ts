@@ -134,6 +134,14 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
+  if (url.username || url.password) {
+    throw new GrowthApiError(
+      0,
+      "GROWTH_INVALID_BASE_URL",
+      GROWTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||

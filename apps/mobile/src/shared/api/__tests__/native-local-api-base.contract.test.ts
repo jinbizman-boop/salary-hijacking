@@ -1,4 +1,5 @@
 import { createCommunityApi } from "../../../features/community/api";
+import { createBudgetApi } from "../../../features/budget/api";
 import { createGrowthApi } from "../../../features/level/api";
 import { createNotificationsApi } from "../../../features/notifications/api";
 import { createPayrollApi } from "../../../features/payroll/api";
@@ -8,15 +9,26 @@ import { createUploadsApi } from "../../../features/uploads/api";
 
 describe("native Android local API base contract", () => {
   const baseUrl = "http://10.0.2.2:8787";
+  const credentialedBaseUrl = "https://operator:secret@api.salaryhijacking.com";
   const createCorrelationId = () => "android-local-api-base-contract";
   const fetcher = jest.fn() as unknown as typeof fetch;
 
-  it.each([
+  const featureApiFactories = [
+    [
+      "budget",
+      (nextBaseUrl: string) =>
+        createBudgetApi({
+          baseUrl: nextBaseUrl,
+          createCorrelationId,
+          fetcher,
+          platform: "android",
+        }),
+    ],
     [
       "community",
-      () =>
+      (nextBaseUrl: string) =>
         createCommunityApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
@@ -24,9 +36,9 @@ describe("native Android local API base contract", () => {
     ],
     [
       "growth",
-      () =>
+      (nextBaseUrl: string) =>
         createGrowthApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
@@ -34,9 +46,9 @@ describe("native Android local API base contract", () => {
     ],
     [
       "notifications",
-      () =>
+      (nextBaseUrl: string) =>
         createNotificationsApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
@@ -44,9 +56,9 @@ describe("native Android local API base contract", () => {
     ],
     [
       "payroll",
-      () =>
+      (nextBaseUrl: string) =>
         createPayrollApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
@@ -54,9 +66,9 @@ describe("native Android local API base contract", () => {
     ],
     [
       "plan",
-      () =>
+      (nextBaseUrl: string) =>
         createPlanCommitmentsApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
@@ -64,9 +76,9 @@ describe("native Android local API base contract", () => {
     ],
     [
       "profile",
-      () =>
+      (nextBaseUrl: string) =>
         createProfileApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
@@ -74,15 +86,28 @@ describe("native Android local API base contract", () => {
     ],
     [
       "uploads",
-      () =>
+      (nextBaseUrl: string) =>
         createUploadsApi({
-          baseUrl,
+          baseUrl: nextBaseUrl,
           createCorrelationId,
           fetcher,
           platform: "android",
         }),
     ],
-  ])("%s API accepts the Android emulator loopback HTTP bridge", (_, build) => {
-    expect(build).not.toThrow();
-  });
+  ] as const;
+
+  it.each(featureApiFactories)(
+    "%s API accepts the Android emulator loopback HTTP bridge",
+    (_, build) => {
+      expect(() => build(baseUrl)).not.toThrow();
+    },
+  );
+
+  it.each(featureApiFactories)(
+    "%s API rejects base URLs with embedded credentials",
+    (_, build) => {
+      expect(() => build(credentialedBaseUrl)).toThrow();
+      expect(fetcher).not.toHaveBeenCalled();
+    },
+  );
 });

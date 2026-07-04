@@ -121,6 +121,14 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
+  if (url.username || url.password) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_BASE_URL",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||

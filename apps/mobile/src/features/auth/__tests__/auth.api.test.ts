@@ -50,6 +50,28 @@ describe("auth api", () => {
     );
   });
 
+  it("rejects auth API base URLs with embedded credentials before any request", () => {
+    const calls: Request[] = [];
+
+    expect(() =>
+      createAuthApi({
+        baseUrl: "https://operator:secret@api.salaryhijacking.com",
+        createCorrelationId: () => "auth-credentialed-base-url-test",
+        fetcher: async (request) => {
+          calls.push(
+            request instanceof Request ? request : new Request(request),
+          );
+          return jsonResponse({ data: {} });
+        },
+        platform: "android",
+        tokenStore: {
+          setItemAsync: async () => undefined,
+        },
+      }),
+    ).toThrow();
+    expect(calls).toHaveLength(0);
+  });
+
   it("logs in through the server auth API and stores only the access token", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();

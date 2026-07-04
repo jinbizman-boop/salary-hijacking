@@ -127,6 +127,14 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
+  if (url.username || url.password) {
+    throw new PlanCommitmentsApiError(
+      0,
+      "PLAN_INVALID_BASE_URL",
+      PLAN_SAFE_ERROR_MESSAGE,
+    );
+  }
+
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||

@@ -157,6 +157,14 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
+  if (url.username || url.password) {
+    throw new NotificationsApiError(
+      0,
+      "NOTIFICATION_INVALID_BASE_URL",
+      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+    );
+  }
+
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||

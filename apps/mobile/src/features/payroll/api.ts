@@ -96,6 +96,14 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
+  if (url.username || url.password) {
+    throw new PayrollApiError(
+      0,
+      "PAYROLL_INVALID_BASE_URL",
+      PAYROLL_SAFE_ERROR_MESSAGE,
+    );
+  }
+
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||

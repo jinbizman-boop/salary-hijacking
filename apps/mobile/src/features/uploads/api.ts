@@ -51,6 +51,9 @@ function normalizeBaseUrl(value: string): string {
   } catch {
     throw new UploadsApiError(0, "UPLOADS_INVALID_BASE_URL", "Invalid API URL");
   }
+  if (url.username || url.password) {
+    throw new UploadsApiError(0, "UPLOADS_INVALID_BASE_URL", "Invalid API URL");
+  }
   const localHost =
     url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||
