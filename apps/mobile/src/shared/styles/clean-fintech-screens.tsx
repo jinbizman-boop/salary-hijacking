@@ -798,6 +798,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const communityPostSubmitInFlightRef = useRef(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const communityAttachmentUploadInFlightRef = useRef(false);
   const [toast, setToast] = useState(
     "제목, 본문, 게시판을 확인한 뒤 등록할 수 있어요.",
   );
@@ -886,7 +887,10 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   );
 
   const pickCommunityAttachment = useCallback(() => {
-    if (uploadingAttachment) return;
+    if (uploadingAttachment || communityAttachmentUploadInFlightRef.current) {
+      return;
+    }
+    communityAttachmentUploadInFlightRef.current = true;
     setUploadingAttachment(true);
     setToast("첨부 파일을 선택하고 서버 업로드를 준비하고 있어요.");
     void DocumentPicker.getDocumentAsync({
@@ -926,7 +930,10 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           "첨부 파일을 업로드하지 못했어요. 파일 형식과 네트워크를 확인해 주세요.",
         );
       })
-      .finally(() => setUploadingAttachment(false));
+      .finally(() => {
+        communityAttachmentUploadInFlightRef.current = false;
+        setUploadingAttachment(false);
+      });
   }, [uploadingAttachment, writeUploadsApi]);
 
   const submitCommunityPost = useCallback(() => {
@@ -2509,6 +2516,7 @@ function SalaryHomeScreen(): React.ReactElement {
   const [uploadedExpenseReceipt, setUploadedExpenseReceipt] =
     useState<UploadAttachment | null>(null);
   const [uploadingExpenseReceipt, setUploadingExpenseReceipt] = useState(false);
+  const salaryReceiptUploadInFlightRef = useRef(false);
   const [serverBudgetSnapshot, setServerBudgetSnapshot] =
     useState<DailyBudgetSnapshot | null>(null);
   const [serverVariableExpenses, setServerVariableExpenses] = useState<
@@ -2667,7 +2675,10 @@ function SalaryHomeScreen(): React.ReactElement {
   }, [budgetApi, expenseDraft, serverBudgetSnapshot]);
 
   const pickVariableExpenseReceipt = useCallback(() => {
-    if (uploadingExpenseReceipt) return;
+    if (uploadingExpenseReceipt || salaryReceiptUploadInFlightRef.current) {
+      return;
+    }
+    salaryReceiptUploadInFlightRef.current = true;
     setUploadingExpenseReceipt(true);
     setToast("영수증 파일을 선택하고 서버 업로드를 준비하고 있어요.");
     void DocumentPicker.getDocumentAsync({
@@ -2711,7 +2722,10 @@ function SalaryHomeScreen(): React.ReactElement {
           "영수증 업로드를 준비하지 못했어요. 파일 형식과 네트워크를 확인해 주세요.",
         );
       })
-      .finally(() => setUploadingExpenseReceipt(false));
+      .finally(() => {
+        salaryReceiptUploadInFlightRef.current = false;
+        setUploadingExpenseReceipt(false);
+      });
   }, [salaryUploadsApi, uploadingExpenseReceipt]);
 
   const attachReceiptToCreatedExpense = useCallback(

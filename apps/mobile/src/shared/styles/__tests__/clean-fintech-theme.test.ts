@@ -1573,6 +1573,34 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(uploadsApi).toContain("x-upload-purpose");
   });
 
+  it("prevents duplicate community attachment uploads before the uploads API acknowledges it", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const pickCommunityAttachmentSource =
+      cleanScreens.match(
+        /const pickCommunityAttachment = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(pickCommunityAttachmentSource).toContain(
+      "communityAttachmentUploadInFlightRef",
+    );
+    expect(pickCommunityAttachmentSource).toContain(
+      "communityAttachmentUploadInFlightRef.current",
+    );
+    expect(pickCommunityAttachmentSource).toContain(
+      "communityAttachmentUploadInFlightRef.current = true",
+    );
+    expect(pickCommunityAttachmentSource).toContain(
+      "communityAttachmentUploadInFlightRef.current = false",
+    );
+    expect(
+      pickCommunityAttachmentSource.indexOf("DocumentPicker"),
+    ).toBeLessThan(
+      pickCommunityAttachmentSource.indexOf("directUploadCommunityAttachment"),
+    );
+  });
+
   it("keeps server-created community posts from being reported as failed when attachment linking fails", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -1614,6 +1642,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setUploadedExpenseReceipt(null)");
     expect(uploadsApi).toContain("VARIABLE_EXPENSE_RECEIPT");
     expect(uploadsApi).toContain("VARIABLE_EXPENSE");
+  });
+
+  it("prevents duplicate variable expense receipt uploads before the uploads API acknowledges it", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const pickReceiptSource =
+      cleanScreens.match(
+        /const pickVariableExpenseReceipt = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(pickReceiptSource).toContain("salaryReceiptUploadInFlightRef");
+    expect(pickReceiptSource).toContain(
+      "salaryReceiptUploadInFlightRef.current",
+    );
+    expect(pickReceiptSource).toContain(
+      "salaryReceiptUploadInFlightRef.current = true",
+    );
+    expect(pickReceiptSource).toContain(
+      "salaryReceiptUploadInFlightRef.current = false",
+    );
+    expect(pickReceiptSource.indexOf("DocumentPicker")).toBeLessThan(
+      pickReceiptSource.indexOf("directUploadVariableExpenseReceipt"),
+    );
   });
 
   it("keeps server-created expenses from falling back to offline preview when receipt attach fails", () => {
