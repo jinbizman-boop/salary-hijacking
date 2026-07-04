@@ -416,25 +416,35 @@ function normalizeContentCompletion(
 }
 
 function taskProgressPath(taskId: string): string {
-  if (!/^[A-Za-z0-9_-]+$/u.test(taskId)) {
+  const normalized = taskId.trim();
+  if (
+    !/^[A-Za-z0-9_-]+$/u.test(normalized) ||
+    normalized.length < 3 ||
+    normalized.length > 160
+  ) {
     throw new GrowthApiError(
       0,
       "GROWTH_INVALID_TASK_ID",
       GROWTH_SAFE_ERROR_MESSAGE,
     );
   }
-  return `${GROWTH_TASKS_PATH}/${encodeURIComponent(taskId)}/progress`;
+  return `${GROWTH_TASKS_PATH}/${encodeURIComponent(normalized)}/progress`;
 }
 
 function contentCompletePath(contentId: string): string {
-  if (!/^[A-Za-z0-9_-]+$/u.test(contentId)) {
+  const normalized = contentId.trim();
+  if (
+    !/^[A-Za-z0-9_-]+$/u.test(normalized) ||
+    normalized.length < 3 ||
+    normalized.length > 160
+  ) {
     throw new GrowthApiError(
       0,
       "GROWTH_INVALID_CONTENT_ID",
       GROWTH_SAFE_ERROR_MESSAGE,
     );
   }
-  return `${GROWTH_CONTENTS_PATH}/${encodeURIComponent(contentId)}/complete`;
+  return `${GROWTH_CONTENTS_PATH}/${encodeURIComponent(normalized)}/complete`;
 }
 
 export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {

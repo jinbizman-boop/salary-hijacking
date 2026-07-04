@@ -277,6 +277,37 @@ describe("growth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects overlong growth path ids before network access", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.recordTaskProgress(`gtk_${"a".repeat(300)}`, {
+        idempotencyKey: "mission-reading-1",
+        note: null,
+        occurredAt: "2026-07-02T09:10:00.000Z",
+        progressCount: 1,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_TASK_ID" });
+
+    await expect(
+      api.completeContent({
+        contentId: `cnt_${"b".repeat(300)}`,
+        idempotencyKey: "content-reading-1",
+        note: null,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_CONTENT_ID" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects invalid growth task, progress, and content ids returned by the server", async () => {
     const listApi = createGrowthApi({
       baseUrl: "https://api.salaryhijacking.com",
