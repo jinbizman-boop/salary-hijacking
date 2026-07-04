@@ -1016,6 +1016,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(profileSource).toContain("profileActionPending");
     expect(profileSource).toContain("profileActionPending !== null");
+    expect(profileSource).toContain("profileActionInFlightRef");
+    expect(profileSource).toContain(
+      "if (profileActionInFlightRef.current !== null) return",
+    );
+    expect(profileSource).toContain(
+      'profileActionInFlightRef.current = "privacy-export"',
+    );
+    expect(profileSource).toContain(
+      'profileActionInFlightRef.current = "withdrawal"',
+    );
+    expect(profileSource).toContain(
+      'profileActionInFlightRef.current = "logout"',
+    );
+    expect(profileSource).toContain("profileActionInFlightRef.current = null");
     expect(profileSource).toContain(
       'setProfileActionPending("privacy-export")',
     );

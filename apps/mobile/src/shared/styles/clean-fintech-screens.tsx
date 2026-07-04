@@ -5108,6 +5108,9 @@ function ProfileScreen(): React.ReactElement {
   const [profileActionPending, setProfileActionPending] = useState<
     "privacy-export" | "withdrawal" | "logout" | null
   >(null);
+  const profileActionInFlightRef = useRef<
+    "privacy-export" | "withdrawal" | "logout" | null
+  >(null);
   const [profileToast, setProfileToast] = useState(
     "서버 MY 정보를 확인하는 중이에요.",
   );
@@ -5145,7 +5148,8 @@ function ProfileScreen(): React.ReactElement {
   }, [profileApi]);
 
   const requestPrivacyExport = useCallback(() => {
-    if (profileActionPending !== null) return;
+    if (profileActionInFlightRef.current !== null) return;
+    profileActionInFlightRef.current = "privacy-export";
     setProfileActionPending("privacy-export");
     setProfileToast("개인정보 내보내기 요청을 서버에 전달하는 중이에요.");
     void profileApi
@@ -5162,12 +5166,14 @@ function ProfileScreen(): React.ReactElement {
         );
       })
       .finally(() => {
+        profileActionInFlightRef.current = null;
         setProfileActionPending(null);
       });
-  }, [profileActionPending, profileApi]);
+  }, [profileApi]);
 
   const requestWithdrawal = useCallback(() => {
-    if (profileActionPending !== null) return;
+    if (profileActionInFlightRef.current !== null) return;
+    profileActionInFlightRef.current = "withdrawal";
     setProfileActionPending("withdrawal");
     setProfileToast("탈퇴 요청을 서버에 전달하는 중이에요.");
     void profileApi
@@ -5184,12 +5190,14 @@ function ProfileScreen(): React.ReactElement {
         setProfileToast("탈퇴 요청을 처리하지 못했어요. 다시 시도해 주세요.");
       })
       .finally(() => {
+        profileActionInFlightRef.current = null;
         setProfileActionPending(null);
       });
-  }, [profileActionPending, profileApi]);
+  }, [profileApi]);
 
   const logoutSession = useCallback(() => {
-    if (profileActionPending !== null) return;
+    if (profileActionInFlightRef.current !== null) return;
+    profileActionInFlightRef.current = "logout";
     setProfileActionPending("logout");
     setProfileToast("로그아웃을 서버에 요청하는 중이에요.");
     void profileAuthApi
@@ -5205,9 +5213,10 @@ function ProfileScreen(): React.ReactElement {
         );
       })
       .finally(() => {
+        profileActionInFlightRef.current = null;
         setProfileActionPending(null);
       });
-  }, [profileActionPending, profileAuthApi, profileRouter]);
+  }, [profileAuthApi, profileRouter]);
 
   const openMyCommunityPosts = useCallback(() => {
     profileRouter.push("/profile/community");
