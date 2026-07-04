@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createApp } from "../src/app";
+import { createApp, type AppOptions } from "../src/app";
+import type {
+  UploadsRepository,
+  UploadsRoutesOptions,
+} from "../src/routes/uploads.routes";
 
 const context = Object.freeze({
   waitUntil: (_promise: Promise<unknown>) => undefined,
@@ -24,7 +28,77 @@ function createUploadContractApp() {
   });
 }
 
+function createMobileUploadsRepository(): UploadsRepository<unknown> {
+  const notUsed = async (): Promise<Record<string, never>> => ({});
+  return {
+    name: "mobile-contract-uploads-repository",
+    list: async () => ({
+      items: [],
+      page: 1,
+      pageSize: 20,
+      total: 0,
+    }),
+    get: async () => null,
+    prepare: notUsed,
+    directUpload: notUsed,
+    finalize: notUsed,
+    update: notUsed,
+    scan: notUsed,
+    download: notUsed,
+    content: async () => new Response(null, { status: 204 }),
+    attach: notUsed,
+    delete: notUsed,
+    quota: async () => ({
+      quotaBytes: 123_456,
+      usedBytes: 4_096,
+      remainingBytes: 119_360,
+      fileCount: 7,
+      maxDirectUploadBytes: 10 * 1024 * 1024,
+    }),
+  };
+}
+
 describe("mobile uploads API contract", () => {
+  it("lets the app gateway inject an uploads repository for DB-backed runtime wiring", async () => {
+    const options = {
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      uploadsRoutesOptions: {
+        repository: createMobileUploadsRepository(),
+        exposeRepositoryName: true,
+      },
+    } satisfies AppOptions<unknown> & {
+      readonly uploadsRoutesOptions: UploadsRoutesOptions<unknown>;
+    };
+    const app = createApp(options);
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/quota", {
+        headers: authHeaders,
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-uploads-repository")).toBe(
+      "mobile-contract-uploads-repository",
+    );
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data).toMatchObject({
+      quotaBytes: 123_456,
+      usedBytes: 4_096,
+      remainingBytes: 119_360,
+      fileCount: 7,
+      maxDirectUploadBytes: 10 * 1024 * 1024,
+    });
+  });
+
   it("stores direct upload bytes in the runtime R2 bucket without exposing storage keys", async () => {
     const putCalls: Array<{
       readonly key: string;

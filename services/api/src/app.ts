@@ -107,7 +107,9 @@ import {
 import {
   UPLOADS_API_PREFIX,
   assertUploadsRoutesCompleteness,
+  createUploadsRoutes,
   handleUploadsRoutes,
+  type UploadsRoutesOptions,
   uploadsRoutesManifest,
 } from "./routes/uploads.routes";
 import {
@@ -270,6 +272,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly growthRoutesOptions?: GrowthRoutesOptions<TEnv>;
   readonly communityRoutesOptions?: CommunityRoutesOptions<TEnv>;
   readonly notificationsRoutesOptions?: NotificationsRoutesOptions<TEnv>;
+  readonly uploadsRoutesOptions?: UploadsRoutesOptions<TEnv>;
   readonly usersRoutesOptions?: UsersRoutesOptions<TEnv>;
   readonly now?: () => Date;
 }
@@ -1329,6 +1332,16 @@ async function coreDispatch<TEnv>(
             now: options.now,
           };
     return createCommunityRoutes(routeOptions)(request, env, context);
+  }
+  if (route.id === "uploads" && options.uploadsRoutesOptions) {
+    const routeOptions: UploadsRoutesOptions<TEnv> =
+      options.uploadsRoutesOptions.now || !options.now
+        ? options.uploadsRoutesOptions
+        : {
+            ...options.uploadsRoutesOptions,
+            now: options.now,
+          };
+    return createUploadsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "users") {
     const baseOptions: UsersRoutesOptions<TEnv> =
