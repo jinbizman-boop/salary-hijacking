@@ -4526,6 +4526,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         </View>
         {completedMissions.map((mission) => (
           <ListRow
+            disabled={myLevelSubmittingMissionId !== null}
             icon={mission.icon}
             key={mission.id}
             meta={`${mission.xp} XP · adsFinancialTargetingUsed=false`}
