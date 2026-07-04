@@ -3238,12 +3238,15 @@ function PlanScreen(): React.ReactElement {
   const [deletingPlanCommitmentId, setDeletingPlanCommitmentId] = useState<
     string | null
   >(null);
+  const planCommitmentDeleteInFlightRef = useRef<string | null>(null);
   const [updatingPlanCommitmentId, setUpdatingPlanCommitmentId] = useState<
     string | null
   >(null);
+  const planCommitmentUpdateInFlightRef = useRef<string | null>(null);
   const [depositingSavingsGoalId, setDepositingSavingsGoalId] = useState<
     string | null
   >(null);
+  const planSavingsDepositInFlightRef = useRef<string | null>(null);
 
   const applyServerPayrollPlan = useCallback(
     (nextPlan: PayrollPlanSnapshot): void => {
@@ -3474,7 +3477,12 @@ function PlanScreen(): React.ReactElement {
 
   const deletePlanFixedExpense = useCallback(
     async (expenseId: string): Promise<void> => {
-      if (!planCommitmentsHydrated || deletingPlanCommitmentId !== null) return;
+      if (
+        !planCommitmentsHydrated ||
+        planCommitmentDeleteInFlightRef.current !== null
+      )
+        return;
+      planCommitmentDeleteInFlightRef.current = expenseId;
       setDeletingPlanCommitmentId(expenseId);
       setPlanToast("고정지출을 서버에서 삭제하는 중이에요.");
       try {
@@ -3492,15 +3500,21 @@ function PlanScreen(): React.ReactElement {
       } catch {
         setPlanToast("고정지출 삭제에 실패했어요. 다시 시도해 주세요.");
       } finally {
+        planCommitmentDeleteInFlightRef.current = null;
         setDeletingPlanCommitmentId(null);
       }
     },
-    [deletingPlanCommitmentId, planCommitmentsApi, planCommitmentsHydrated],
+    [planCommitmentsApi, planCommitmentsHydrated],
   );
 
   const deletePlanSavingsGoal = useCallback(
     async (goalId: string): Promise<void> => {
-      if (!planCommitmentsHydrated || deletingPlanCommitmentId !== null) return;
+      if (
+        !planCommitmentsHydrated ||
+        planCommitmentDeleteInFlightRef.current !== null
+      )
+        return;
+      planCommitmentDeleteInFlightRef.current = goalId;
       setDeletingPlanCommitmentId(goalId);
       setPlanToast("고정저축 목표를 서버에서 삭제하는 중이에요.");
       try {
@@ -3520,15 +3534,20 @@ function PlanScreen(): React.ReactElement {
       } catch {
         setPlanToast("고정저축 목표 삭제에 실패했어요. 다시 시도해 주세요.");
       } finally {
+        planCommitmentDeleteInFlightRef.current = null;
         setDeletingPlanCommitmentId(null);
       }
     },
-    [deletingPlanCommitmentId, planCommitmentsApi, planCommitmentsHydrated],
+    [planCommitmentsApi, planCommitmentsHydrated],
   );
 
   const updatePlanFixedExpense = useCallback(
     async (item: PlanCommitmentRow): Promise<void> => {
-      if (!planCommitmentsHydrated || updatingPlanCommitmentId !== null) return;
+      if (
+        !planCommitmentsHydrated ||
+        planCommitmentUpdateInFlightRef.current !== null
+      )
+        return;
       const amountMinor =
         nonNegative(planFixedExpenseAmount) || item.amountMinor;
       const title = planFixedExpenseTitle.trim() || item.title;
@@ -3537,6 +3556,7 @@ function PlanScreen(): React.ReactElement {
         return;
       }
 
+      planCommitmentUpdateInFlightRef.current = `fixed:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
       setPlanToast("고정지출을 서버 기준으로 수정하는 중이에요.");
       try {
@@ -3566,6 +3586,7 @@ function PlanScreen(): React.ReactElement {
       } catch {
         setPlanToast("고정지출 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
+        planCommitmentUpdateInFlightRef.current = null;
         setUpdatingPlanCommitmentId(null);
       }
     },
@@ -3574,13 +3595,16 @@ function PlanScreen(): React.ReactElement {
       planCommitmentsHydrated,
       planFixedExpenseAmount,
       planFixedExpenseTitle,
-      updatingPlanCommitmentId,
     ],
   );
 
   const updatePlanSavingsGoal = useCallback(
     async (item: PlanCommitmentRow): Promise<void> => {
-      if (!planCommitmentsHydrated || updatingPlanCommitmentId !== null) return;
+      if (
+        !planCommitmentsHydrated ||
+        planCommitmentUpdateInFlightRef.current !== null
+      )
+        return;
       const fixedSaveAmountMinor =
         nonNegative(planSavingsGoalAmount) || item.amountMinor;
       const currentAmountMinor = item.currentAmountMinor ?? 0;
@@ -3595,6 +3619,7 @@ function PlanScreen(): React.ReactElement {
         return;
       }
 
+      planCommitmentUpdateInFlightRef.current = `savings:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
       setPlanToast("고정저축 목표를 서버 기준으로 수정하는 중이에요.");
       try {
@@ -3621,6 +3646,7 @@ function PlanScreen(): React.ReactElement {
       } catch {
         setPlanToast("고정저축 목표 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
+        planCommitmentUpdateInFlightRef.current = null;
         setUpdatingPlanCommitmentId(null);
       }
     },
@@ -3630,13 +3656,17 @@ function PlanScreen(): React.ReactElement {
       planSavingsGoalAmount,
       planSavingsGoalTitle,
       target,
-      updatingPlanCommitmentId,
     ],
   );
 
   const recordPlanSavingsDeposit = useCallback(
     async (item: PlanCommitmentRow): Promise<void> => {
-      if (!planCommitmentsHydrated || depositingSavingsGoalId !== null) return;
+      if (
+        !planCommitmentsHydrated ||
+        planSavingsDepositInFlightRef.current !== null
+      )
+        return;
+      planSavingsDepositInFlightRef.current = item.id;
       setDepositingSavingsGoalId(item.id);
       setPlanToast("고정저축 납입을 서버에 기록하는 중이에요.");
       try {
@@ -3658,10 +3688,11 @@ function PlanScreen(): React.ReactElement {
       } catch {
         setPlanToast("고정저축 납입 기록에 실패했어요. 다시 시도해 주세요.");
       } finally {
+        planSavingsDepositInFlightRef.current = null;
         setDepositingSavingsGoalId(null);
       }
     },
-    [depositingSavingsGoalId, planCommitmentsApi, planCommitmentsHydrated],
+    [planCommitmentsApi, planCommitmentsHydrated],
   );
 
   const localExpectedHijack = Math.max(

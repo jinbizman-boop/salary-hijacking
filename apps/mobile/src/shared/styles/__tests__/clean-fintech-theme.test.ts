@@ -370,6 +370,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("deletePlanSavingsGoal");
     expect(cleanScreens).toContain("planCommitmentsApi.deleteFixedExpense");
     expect(cleanScreens).toContain("planCommitmentsApi.deleteSavingsGoal");
+    expect(cleanScreens).toContain("planCommitmentDeleteInFlightRef");
+    expect(cleanScreens).toContain("!planCommitmentsHydrated");
+    expect(cleanScreens).toContain(
+      "planCommitmentDeleteInFlightRef.current !== null",
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentDeleteInFlightRef.current = expenseId",
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentDeleteInFlightRef.current = goalId",
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentDeleteInFlightRef.current = null",
+    );
     expect(cleanScreens).toContain("setServerFixedExpenses((current) =>");
     expect(cleanScreens).toContain("setServerSavingsGoals((current) =>");
     expect(cleanScreens).toContain("planCommitmentsHydrated");
@@ -389,6 +403,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("planCommitmentsApi.updateFixedExpense");
     expect(cleanScreens).toContain("updatePlanSavingsGoal");
     expect(cleanScreens).toContain("planCommitmentsApi.updateSavingsGoal");
+    expect(cleanScreens).toContain("planCommitmentUpdateInFlightRef");
+    expect(cleanScreens).toContain("!planCommitmentsHydrated");
+    expect(cleanScreens).toContain(
+      "planCommitmentUpdateInFlightRef.current !== null",
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentUpdateInFlightRef.current = `fixed:${item.id}`",
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentUpdateInFlightRef.current = `savings:${item.id}`",
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentUpdateInFlightRef.current = null",
+    );
   });
 
   it("keeps plan screen savings deposits recorded through the server API", () => {
@@ -406,8 +434,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(planApi).toContain('transactionType: "DEPOSIT"');
     expect(cleanScreens).toContain("recordPlanSavingsDeposit");
     expect(cleanScreens).toContain(".recordSavingsDeposit(");
+    expect(cleanScreens).toContain("planSavingsDepositInFlightRef");
+    expect(cleanScreens).toContain("!planCommitmentsHydrated");
+    expect(cleanScreens).toContain(
+      "planSavingsDepositInFlightRef.current !== null",
+    );
+    expect(cleanScreens).toContain(
+      "planSavingsDepositInFlightRef.current = item.id",
+    );
+    expect(cleanScreens).toContain(
+      "planSavingsDepositInFlightRef.current = null",
+    );
     expect(cleanScreens).toContain("setDepositingSavingsGoalId");
-    expect(cleanScreens).toContain("depositingSavingsGoalId !== null");
+    expect(cleanScreens).toContain("depositingSavingsGoalId === item.id");
     expect(savingsGoalActionRow).toContain("disabled={updating}");
     expect(savingsGoalActionRow).toContain("disabled={depositing}");
     expect(savingsGoalActionRow).toContain("disabled={deleting}");
