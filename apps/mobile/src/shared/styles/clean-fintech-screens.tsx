@@ -6560,7 +6560,7 @@ function PillRow({
         {items.map((item) => (
           <Pressable
             accessibilityRole="tab"
-            accessibilityState={{ selected: item === selected }}
+            accessibilityState={{ disabled, selected: item === selected }}
             disabled={disabled}
             key={item}
             onPress={() => onSelect(item)}
