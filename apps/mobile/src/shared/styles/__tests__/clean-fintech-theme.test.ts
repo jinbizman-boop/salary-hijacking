@@ -2451,6 +2451,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps MY community management navigation behind safe community route IDs", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myCommunitySource =
+      cleanScreens.match(
+        /export function CleanFintechMyCommunityScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechPostDetailScreen/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("function safeCommunityPostDetailRoute");
+    expect(myCommunitySource).toContain(
+      "const route = safeCommunityPostDetailRoute(post.id)",
+    );
+    expect(myCommunitySource).toContain(
+      "const route = safeCommunityPostDetailRoute(comment.postId)",
+    );
+    expect(myCommunitySource).not.toContain(
+      "myCommunityRouter.push(`/community/${post.id}`)",
+    );
+    expect(myCommunitySource).not.toContain(
+      "myCommunityRouter.push(`/community/${comment.postId}`)",
+    );
+  });
+
   it("keeps community screen hydrated from the server feed service before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -2498,11 +2522,18 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
-    const postIdExpression = ["$", "{post.id}"].join("");
+    const communityScreenSource =
+      cleanScreens.match(
+        /function CommunityScreen\(\): React\.ReactElement \{[\s\S]*?function CommunityPostRow/u,
+      )?.[0] ?? "";
 
     expect(cleanScreens).toContain("openCommunityPost");
-    expect(cleanScreens).toContain(
-      ["communityRouter.push(`/community/", postIdExpression, "`)"].join(""),
+    expect(cleanScreens).toContain("function safeCommunityPostDetailRoute");
+    expect(communityScreenSource).toContain(
+      "const route = safeCommunityPostDetailRoute(post.id)",
+    );
+    expect(communityScreenSource).not.toContain(
+      "communityRouter.push(`/community/${post.id}`)",
     );
     expect(cleanScreens).toContain("onPress={onPress}");
     expect(cleanScreens).toContain("onPress={() => openCommunityPost(post)}");

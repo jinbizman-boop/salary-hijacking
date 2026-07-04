@@ -2027,7 +2027,17 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
 
   const openManagedPost = useCallback(
     (post: CommunityScreenPost): void => {
-      myCommunityRouter.push(`/community/${post.id}`);
+      const route = safeCommunityPostDetailRoute(post.id);
+      if (!route) return;
+      myCommunityRouter.push(route);
+    },
+    [myCommunityRouter],
+  );
+  const openManagedComment = useCallback(
+    (comment: CommunityComment): void => {
+      const route = safeCommunityPostDetailRoute(comment.postId);
+      if (!route) return;
+      myCommunityRouter.push(route);
     },
     [myCommunityRouter],
   );
@@ -2131,9 +2141,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
                 meta={`${formatNoticeDate(comment.createdAt)} · rawFinancialDataExposed=${String(
                   comment.rawFinancialDataExposed,
                 )}`}
-                onPress={() =>
-                  myCommunityRouter.push(`/community/${comment.postId}`)
-                }
+                onPress={() => openManagedComment(comment)}
                 title={comment.content}
               />
             </View>
@@ -5211,6 +5219,19 @@ function toNotificationScreenItem(
   };
 }
 
+function safeCommunityPostDetailRoute(
+  postId: string,
+): `/community/${string}` | null {
+  const candidate = postId.trim();
+  if (
+    !/^[A-Za-z0-9_-]{3,160}$/u.test(candidate) ||
+    containsSensitiveCommunityContent(candidate)
+  ) {
+    return null;
+  }
+  return `/community/${candidate}`;
+}
+
 function safeNotificationRoute(
   item: NotificationScreenItem,
 ): NotificationRoute {
@@ -6014,7 +6035,9 @@ function CommunityScreen(): React.ReactElement {
   }, [communityRouter]);
   const openCommunityPost = useCallback(
     (post: CommunityScreenPost) => {
-      communityRouter.push(`/community/${post.id}`);
+      const route = safeCommunityPostDetailRoute(post.id);
+      if (!route) return;
+      communityRouter.push(route);
     },
     [communityRouter],
   );
