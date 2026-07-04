@@ -26,6 +26,30 @@ describe("GET /api/v1/mobile/bootstrap", () => {
         readonly rawPersonalDataExposed?: boolean;
         readonly rawPushTokenExposed?: boolean;
         readonly adsFinancialTargetingUsed?: boolean;
+        readonly smokeContract?: {
+          readonly booleanOnlyProof?: boolean;
+          readonly rawResponsePayloadStored?: boolean;
+          readonly safeForUnauthenticatedReleaseProbe?: boolean;
+        };
+        readonly serverAuthority?: {
+          readonly sourceOfTruth?: string;
+          readonly clientRole?: string;
+          readonly krwIntegerOnly?: boolean;
+          readonly negativeMoneyAllowed?: boolean;
+          readonly fractionalMoneyAllowed?: boolean;
+        };
+        readonly calculationBoundaries?: {
+          readonly payroll?: string;
+          readonly dailyBudget?: string;
+          readonly paycheckProtection?: string;
+        };
+        readonly privacy?: {
+          readonly rawFinancialDataExposed?: boolean;
+          readonly rawPersonalDataExposed?: boolean;
+          readonly rawPushTokenExposed?: boolean;
+          readonly adsFinancialTargetingUsed?: boolean;
+          readonly contextualAdsOnly?: boolean;
+        };
       };
     };
 
@@ -43,6 +67,30 @@ describe("GET /api/v1/mobile/bootstrap", () => {
       rawPersonalDataExposed: false,
       rawPushTokenExposed: false,
       adsFinancialTargetingUsed: false,
+      smokeContract: {
+        booleanOnlyProof: true,
+        rawResponsePayloadStored: false,
+        safeForUnauthenticatedReleaseProbe: true,
+      },
+      serverAuthority: {
+        sourceOfTruth: "/api/v1",
+        clientRole: "display-input-offline-fallback",
+        krwIntegerOnly: true,
+        negativeMoneyAllowed: false,
+        fractionalMoneyAllowed: false,
+      },
+      calculationBoundaries: {
+        payroll: "server",
+        dailyBudget: "server",
+        paycheckProtection: "server",
+      },
+      privacy: {
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+        adsFinancialTargetingUsed: false,
+        contextualAdsOnly: true,
+      },
     });
     expect(JSON.stringify(body)).not.toMatch(
       /"(salaryAmount|expenseAmount|savingsAmount|hijackAmount|email|pushToken|DATABASE_URL)"\s*:/i,
