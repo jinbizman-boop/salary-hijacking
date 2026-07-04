@@ -1900,10 +1900,12 @@ export function CleanFintechPostDetailScreen({
     fallbackPostDetail.content,
   );
   const [postEditing, setPostEditing] = useState(false);
+  const communityPostEditInFlightRef = useRef(false);
   const [commentEditDrafts, setCommentEditDrafts] = useState<
     Record<string, string>
   >({});
   const [commentEditingId, setCommentEditingId] = useState<string | null>(null);
+  const communityCommentEditInFlightRef = useRef<string | null>(null);
   const [communityDetailActionPending, setCommunityDetailActionPending] =
     useState<
       "report-post" | "delete-post" | "report-comment" | "delete-comment" | null
@@ -2076,7 +2078,8 @@ export function CleanFintechPostDetailScreen({
   ]);
 
   const updateCommunityPost = useCallback((): void => {
-    if (!postEditReady || postEditing) return;
+    if (!postEditReady || communityPostEditInFlightRef.current) return;
+    communityPostEditInFlightRef.current = true;
     const targetPostId = activeDetail.post.id;
     const draft: CommunityPostDraft = {
       anonymous: true,
@@ -2112,20 +2115,27 @@ export function CleanFintechPostDetailScreen({
           "게시글 수정을 저장하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
         );
       })
-      .finally(() => setPostEditing(false));
+      .finally(() => {
+        communityPostEditInFlightRef.current = false;
+        setPostEditing(false);
+      });
   }, [
     activeDetail,
     detailCommunityService,
     postEditContent,
     postEditReady,
     postEditTitle,
-    postEditing,
   ]);
 
   const updateCommunityComment = useCallback(
     (comment: CommunityComment): void => {
       const content = (commentEditDrafts[comment.id] ?? comment.content).trim();
-      if (content.length < 2 || commentEditingId !== null) return;
+      if (
+        content.length < 2 ||
+        communityCommentEditInFlightRef.current !== null
+      )
+        return;
+      communityCommentEditInFlightRef.current = comment.id;
       const targetPostId = activeDetail.post.id;
 
       setCommentEditingId(comment.id);
@@ -2152,13 +2162,15 @@ export function CleanFintechPostDetailScreen({
             "댓글 수정을 저장하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
           );
         })
-        .finally(() => setCommentEditingId(null));
+        .finally(() => {
+          communityCommentEditInFlightRef.current = null;
+          setCommentEditingId(null);
+        });
     },
     [
       activeComments,
       activeDetail.post.id,
       commentEditDrafts,
-      commentEditingId,
       detailCommunityService,
     ],
   );
