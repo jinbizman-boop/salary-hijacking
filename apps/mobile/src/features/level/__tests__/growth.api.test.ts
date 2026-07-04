@@ -176,6 +176,30 @@ describe("growth api", () => {
     });
   });
 
+  it("rejects unknown growth progress fields before they can enter LV payloads", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.recordTaskProgress("gtk_reading", {
+        idempotencyKey: "mission-reading-unknown",
+        note: "mobile mission complete",
+        occurredAt: "2026-07-02T09:10:00.000Z",
+        progressCount: 1,
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_PROGRESS_REQUEST" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("completes level detail content through the server growth API without exposing sensitive data", async () => {
     const calls: Request[] = [];
     const api = createGrowthApi({

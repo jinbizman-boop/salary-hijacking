@@ -82,6 +82,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function isNonNegativeInteger(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 }
@@ -325,7 +332,14 @@ function normalizeTaskList(value: unknown): GrowthTaskListResult {
 }
 
 function validProgressRequest(value: GrowthTaskProgressRequest): boolean {
+  const record = value as Record<string, unknown>;
   return (
+    hasOnlyKeys(record, [
+      "idempotencyKey",
+      "note",
+      "occurredAt",
+      "progressCount",
+    ]) &&
     isPositiveInteger(value.progressCount) &&
     value.progressCount <= 10_000 &&
     (value.note === null ||
@@ -339,7 +353,9 @@ function validProgressRequest(value: GrowthTaskProgressRequest): boolean {
 function validContentCompleteRequest(
   value: GrowthContentCompleteRequest,
 ): boolean {
+  const record = value as Record<string, unknown>;
   return (
+    hasOnlyKeys(record, ["contentId", "idempotencyKey", "note"]) &&
     /^[A-Za-z0-9_-]+$/u.test(value.contentId) &&
     (value.note === null ||
       (typeof value.note === "string" &&
