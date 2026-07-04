@@ -271,4 +271,25 @@ describe("community service", () => {
 
     expect(request).not.toHaveBeenCalled();
   });
+
+  it("blocks overlong community route ids before they reach URL logs", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+    const overlongPostId = `post_${"a".repeat(300)}`;
+    const overlongCommentId = `comment_${"b".repeat(300)}`;
+
+    await expect(service.getPost(overlongPostId)).rejects.toMatchObject({
+      code: "COMMUNITY_INVALID_ID",
+    });
+    await expect(
+      service.setCommentLiked(overlongCommentId, true),
+    ).rejects.toMatchObject({
+      code: "COMMUNITY_INVALID_ID",
+    });
+
+    expect(request).not.toHaveBeenCalled();
+  });
 });
