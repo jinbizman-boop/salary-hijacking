@@ -215,6 +215,7 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
   readonly contentType: string;
   readonly fileName: string;
 } {
+  assertDirectUploadFields(input);
   const contentType = normalizeContentType(input.contentType);
   if (!UPLOADS_COMMUNITY_CONTENT_TYPES.includes(contentType)) {
     throw new UploadsApiError(
@@ -246,6 +247,7 @@ function assertVariableExpenseReceipt(
   readonly contentType: string;
   readonly fileName: string;
 } {
+  assertDirectUploadFields(input);
   const contentType = normalizeContentType(input.contentType);
   if (!UPLOADS_VARIABLE_EXPENSE_RECEIPT_CONTENT_TYPES.includes(contentType)) {
     throw new UploadsApiError(
@@ -269,6 +271,24 @@ function assertVariableExpenseReceipt(
   const fileName = safeFileName(input.fileName);
   assertFileNameMatchesContentType(fileName, contentType);
   return { contentType, fileName };
+}
+
+function assertDirectUploadFields(
+  input: DirectCommunityAttachmentUpload,
+): void {
+  const keys = Object.keys(input);
+  if (
+    keys.length !== 4 ||
+    !keys.every((key) =>
+      ["bytes", "contentType", "fileName", "sizeBytes"].includes(key),
+    )
+  ) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_UNKNOWN_FIELD_FORBIDDEN",
+      "Unknown upload fields are not allowed",
+    );
+  }
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

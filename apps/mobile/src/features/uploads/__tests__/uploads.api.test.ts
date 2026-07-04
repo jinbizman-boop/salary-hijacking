@@ -115,6 +115,47 @@ describe("uploads api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects unknown direct upload fields before bytes reach upload requests", async () => {
+    const fetcher = jest.fn<
+      ReturnType<typeof fetch>,
+      Parameters<typeof fetch>
+    >();
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-extra-fields",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName: "proof.png",
+        rawSalaryMemo: "salary 2,700,000",
+        sizeBytes: 4,
+      } as never),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_UNKNOWN_FIELD_FORBIDDEN",
+    });
+
+    await expect(
+      api.directUploadVariableExpenseReceipt({
+        accountNumber: "123-456-789012",
+        bytes,
+        contentType: "image/png",
+        fileName: "receipt.png",
+        pushToken: "ExponentPushToken[secret]",
+        sizeBytes: 4,
+      } as never),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_UNKNOWN_FIELD_FORBIDDEN",
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("blocks real Korean financial and identity upload file names before network access", async () => {
     const fetcher = jest.fn<
       ReturnType<typeof fetch>,
