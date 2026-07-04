@@ -970,12 +970,33 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(".getPreferences()");
     expect(cleanScreens).toContain(".updatePreferences({");
     expect(cleanScreens).toContain("notificationPreferencePending");
-    expect(cleanScreens).toContain("if (notificationPreferencePending) return");
-    expect(cleanScreens).toContain("setNotificationPreferencePending(true)");
     expect(cleanScreens).toContain(
-      "finally(() => setNotificationPreferencePending(false))",
+      "if (notificationPreferenceInFlightRef.current) return",
     );
+    expect(cleanScreens).toContain("setNotificationPreferencePending(true)");
+    expect(cleanScreens).toContain("setNotificationPreferencePending(false)");
     expect(cleanScreens).toContain("disabled={notificationPreferencePending}");
+  });
+
+  it("prevents duplicate notification preference saves before React state updates", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const preferenceSource =
+      cleanScreens.match(
+        /const updateNotificationPreference = useCallback\([\s\S]*?const registerNotificationDevice = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("notificationPreferenceInFlightRef");
+    expect(preferenceSource).toContain(
+      "if (notificationPreferenceInFlightRef.current) return",
+    );
+    expect(preferenceSource).toContain(
+      "notificationPreferenceInFlightRef.current = true",
+    );
+    expect(preferenceSource).toContain(
+      "notificationPreferenceInFlightRef.current = false",
+    );
   });
 
   it("keeps notification device registration and revocation wired to the server API", () => {
@@ -1001,10 +1022,35 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       'setNotificationDeviceActionPending("revoke")',
     );
     expect(cleanScreens).toContain(
-      "finally(() => setNotificationDeviceActionPending(null))",
+      "notificationDeviceActionInFlightRef.current = null",
     );
+    expect(cleanScreens).toContain("setNotificationDeviceActionPending(null)");
     expect(cleanScreens).toContain(
       "disabled={notificationDeviceActionPending !== null}",
+    );
+  });
+
+  it("prevents duplicate notification device registration and revocation before React state updates", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const deviceSource =
+      cleanScreens.match(
+        /const registerNotificationDevice = useCallback\([\s\S]*?return \(/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("notificationDeviceActionInFlightRef");
+    expect(deviceSource).toContain(
+      "if (notificationDeviceActionInFlightRef.current !== null) return",
+    );
+    expect(deviceSource).toContain(
+      'notificationDeviceActionInFlightRef.current = "register"',
+    );
+    expect(deviceSource).toContain(
+      'notificationDeviceActionInFlightRef.current = "revoke"',
+    );
+    expect(deviceSource).toContain(
+      "notificationDeviceActionInFlightRef.current = null",
     );
   });
 

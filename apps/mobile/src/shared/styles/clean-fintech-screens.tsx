@@ -4510,6 +4510,7 @@ function NotificationsScreen(): React.ReactElement {
     useState<NotificationPreferences | null>(null);
   const [notificationPreferencePending, setNotificationPreferencePending] =
     useState(false);
+  const notificationPreferenceInFlightRef = useRef(false);
   const [notificationReadAllPending, setNotificationReadAllPending] =
     useState(false);
   const notificationMarkReadInFlightRef = useRef<Set<string>>(new Set());
@@ -4519,6 +4520,9 @@ function NotificationsScreen(): React.ReactElement {
   >([]);
   const [notificationDeviceActionPending, setNotificationDeviceActionPending] =
     useState<"register" | "revoke" | null>(null);
+  const notificationDeviceActionInFlightRef = useRef<
+    "register" | "revoke" | null
+  >(null);
   const [notificationRowActionPendingId, setNotificationRowActionPendingId] =
     useState<string | null>(null);
   const notificationRowActionInFlightRef = useRef<string | null>(null);
@@ -4776,13 +4780,14 @@ function NotificationsScreen(): React.ReactElement {
 
   const updateNotificationPreference = useCallback(
     (preferencesRequest: NotificationPreferencesUpdateRequest) => {
-      if (notificationPreferencePending) return;
+      if (notificationPreferenceInFlightRef.current) return;
       const current = serverNotificationPreferences;
       if (!current) {
         setSyncLabel("서버 알림 설정을 먼저 불러와야 해요.");
         return;
       }
       const optimistic = { ...current, ...preferencesRequest };
+      notificationPreferenceInFlightRef.current = true;
       setNotificationPreferencePending(true);
       setServerNotificationPreferences(optimistic);
       void notificationsApi
@@ -4799,17 +4804,17 @@ function NotificationsScreen(): React.ReactElement {
             "알림 설정을 서버에 저장하지 못했어요. 다시 확인해 주세요.",
           );
         })
-        .finally(() => setNotificationPreferencePending(false));
+        .finally(() => {
+          notificationPreferenceInFlightRef.current = false;
+          setNotificationPreferencePending(false);
+        });
     },
-    [
-      notificationPreferencePending,
-      notificationsApi,
-      serverNotificationPreferences,
-    ],
+    [notificationsApi, serverNotificationPreferences],
   );
 
   const registerNotificationDevice = useCallback(() => {
-    if (notificationDeviceActionPending !== null) return;
+    if (notificationDeviceActionInFlightRef.current !== null) return;
+    notificationDeviceActionInFlightRef.current = "register";
     setNotificationDeviceActionPending("register");
     setSyncLabel("푸시 기기 등록을 서버에 저장하고 있어요.");
     void createNativeNotificationRegistrationRequest()
@@ -4834,12 +4839,16 @@ function NotificationsScreen(): React.ReactElement {
       .catch(() => {
         setSyncLabel("푸시 권한, Expo 설정, 또는 서버 연결을 확인해 주세요.");
       })
-      .finally(() => setNotificationDeviceActionPending(null));
-  }, [notificationDeviceActionPending, notificationsApi]);
+      .finally(() => {
+        notificationDeviceActionInFlightRef.current = null;
+        setNotificationDeviceActionPending(null);
+      });
+  }, [notificationsApi]);
 
   const revokeNotificationDevice = useCallback(
     (deviceId: string) => {
-      if (notificationDeviceActionPending !== null) return;
+      if (notificationDeviceActionInFlightRef.current !== null) return;
+      notificationDeviceActionInFlightRef.current = "revoke";
       setNotificationDeviceActionPending("revoke");
       void notificationsApi
         .revokeDevice(deviceId)
@@ -4856,9 +4865,12 @@ function NotificationsScreen(): React.ReactElement {
         .catch(() => {
           setSyncLabel("푸시 기기 해제를 서버에 저장하지 못했어요.");
         })
-        .finally(() => setNotificationDeviceActionPending(null));
+        .finally(() => {
+          notificationDeviceActionInFlightRef.current = null;
+          setNotificationDeviceActionPending(null);
+        });
     },
-    [notificationDeviceActionPending, notificationsApi],
+    [notificationsApi],
   );
 
   return (
