@@ -426,6 +426,7 @@ describe("profile api", () => {
     >;
     expect(body).toEqual({
       adPartnerAccepted: false,
+      adPartnerFinancialRawDataUsed: false,
       adsFinancialTargetingUsed: false,
       analyticsAccepted: false,
       consentVersion: "mobile-v1",

@@ -630,6 +630,7 @@ function accountSettingsPayload(
   }
   return JSON.stringify({
     adPartnerAccepted: request.adPartnerAccepted,
+    adPartnerFinancialRawDataUsed: false,
     adsFinancialTargetingUsed: false,
     analyticsAccepted: request.analyticsAccepted,
     consentVersion: request.consentVersion,
