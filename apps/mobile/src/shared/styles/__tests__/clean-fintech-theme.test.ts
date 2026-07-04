@@ -871,6 +871,20 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toHaveLength(3);
   });
 
+  it("shows save-pending status copy on locked plan payroll input cards", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planInputCardSource =
+      cleanScreens.match(
+        /function PlanInputCard\([\s\S]*?function PlanSummaryCard/u,
+      )?.[0] ?? "";
+
+    expect(planInputCardSource).toContain(
+      'label={disabled ? "저장 중" : "수정"}',
+    );
+  });
+
   it("keeps notification screen hydrated from the server before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

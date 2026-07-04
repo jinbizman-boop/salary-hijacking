@@ -6378,7 +6378,7 @@ function PlanInputCard({
     <SectionCard>
       <View style={styles.between}>
         <Text style={styles.sectionTitle}>{label}</Text>
-        <StatusPill label="수정" />
+        <StatusPill label={disabled ? "저장 중" : "수정"} />
       </View>
       <TextInput
         accessibilityLabel={label}
