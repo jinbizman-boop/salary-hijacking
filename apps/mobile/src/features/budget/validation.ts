@@ -278,7 +278,9 @@ export function validateVariableExpenseListRequest(
   }
   return (
     value.q === undefined ||
-    (typeof value.q === "string" && value.q.trim().length <= 100)
+    (typeof value.q === "string" &&
+      value.q.trim().length <= 100 &&
+      !containsRawSensitiveText(value.q))
   );
 }
 

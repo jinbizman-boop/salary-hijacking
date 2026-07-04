@@ -413,6 +413,36 @@ describe("budget api", () => {
     );
   });
 
+  it("rejects variable expense search queries with raw sensitive values before network access", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.listVariableExpenses({
+        page: 1,
+        pageSize: 20,
+        q: "find receipt from user@example.com",
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE_LIST" });
+
+    await expect(
+      api.listVariableExpenses({
+        page: 1,
+        pageSize: 20,
+        q: "010-1234-5678",
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE_LIST" });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid variable expense ids returned by the server", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
