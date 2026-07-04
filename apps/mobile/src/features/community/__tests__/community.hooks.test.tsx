@@ -6,6 +6,7 @@ import { createCommunityStore } from "../community.store";
 import type {
   CommunityApiResponse,
   CommunityCommentDraft,
+  CommunityPost,
   CommunityPostDraft,
   CommunityService,
 } from "../community.types";
@@ -26,6 +27,26 @@ function serverPost(id: string, title: string): Record<string, unknown> {
     createdAt: "2026-06-25T00:00:00.000Z",
     updatedAt: "2026-06-25T00:00:00.000Z",
     financialRawDataExposed: false,
+  };
+}
+
+function storedPost(id: string): CommunityPost {
+  return {
+    adsFinancialTargetingUsed: false,
+    anonymousDisplayName: "익명 사용자",
+    boardType: "FREE",
+    bookmarkCount: 0,
+    bodyPreview: "절약 루틴 공유",
+    commentCount: 0,
+    createdAt: "2026-06-25T00:00:00.000Z",
+    id,
+    likeCount: 7,
+    likedByMe: false,
+    moderationStatus: "SAFE",
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    title: "삭제 실패 테스트",
+    updatedAt: "2026-06-25T00:00:00.000Z",
   };
 }
 
@@ -208,6 +229,47 @@ describe("community hooks", () => {
     });
     expect(JSON.stringify(track.mock.calls)).not.toContain("test@example.com");
     expect(JSON.stringify(track.mock.calls)).not.toContain("bearer_");
+    expect(result.current.pendingAction).toBeNull();
+  });
+
+  it("records privacy-safe reaction failures without mutating cached posts", async () => {
+    const post = storedPost("post_1");
+    const store = createCommunityStore();
+    store.receiveFeed([post], { page: 1, pageSize: 20, total: 1 }, false);
+    const setPostLiked = jest.fn(async () => {
+      throw new CommunityApiError(409, "COMMUNITY_STATE_CHANGED", "stale");
+    });
+    const deletePost = jest.fn(async () => {
+      throw new CommunityApiError(403, "COMMUNITY_DELETE_DENIED", "denied");
+    });
+    const track = jest.fn<
+      ReturnType<CommunityAnalytics["track"]>,
+      Parameters<CommunityAnalytics["track"]>
+    >();
+    const service = {
+      deletePost,
+      setPostLiked,
+    } as unknown as CommunityService;
+    const { result } = renderHook(() =>
+      useCommunityActions(service, store, { track }),
+    );
+
+    await act(async () => {
+      await result.current.setPostLiked("post_1", true).catch(() => undefined);
+      await result.current.deletePost("post_1").catch(() => undefined);
+    });
+
+    expect(track).toHaveBeenCalledWith("community_post_reaction", {
+      action: "like",
+      result: "failure",
+    });
+    expect(track).toHaveBeenCalledWith("community_post_reaction", {
+      action: "delete",
+      result: "failure",
+    });
+    expect(store.getState().feed.items).toHaveLength(1);
+    expect(store.getState().feed.items[0]?.id).toBe("post_1");
+    expect(store.getState().feed.items[0]?.likeCount).toBe(7);
     expect(result.current.pendingAction).toBeNull();
   });
 });

@@ -120,12 +120,20 @@ export function useCommunityActions(
   const deletePost = useCallback(
     async (postId: string): Promise<void> => {
       await run(`delete-post:${postId}`, async () => {
-        await service.deletePost(postId);
-        store.removePost(postId);
-        analytics?.track("community_post_reaction", {
-          action: "delete",
-          result: "success",
-        });
+        try {
+          await service.deletePost(postId);
+          store.removePost(postId);
+          analytics?.track("community_post_reaction", {
+            action: "delete",
+            result: "success",
+          });
+        } catch (deleteError) {
+          analytics?.track("community_post_reaction", {
+            action: "delete",
+            result: "failure",
+          });
+          throw deleteError;
+        }
       });
     },
     [analytics, run, service, store],
@@ -134,26 +142,35 @@ export function useCommunityActions(
   const setPostLiked = useCallback(
     async (postId: string, liked: boolean): Promise<void> => {
       await run(`like-post:${postId}`, async () => {
-        const response = await service.setPostLiked(postId, liked);
-        const data = communityResponseData(response);
-        const current = store
-          .getState()
-          .feed.items.find((post) => post.id === postId);
-        if (
-          current &&
-          typeof data === "object" &&
-          data !== null &&
-          "likeCount" in data &&
-          typeof data.likeCount === "number" &&
-          Number.isSafeInteger(data.likeCount) &&
-          data.likeCount >= 0
-        ) {
-          store.upsertPost({ ...current, likeCount: data.likeCount });
+        const action = liked ? "like" : "unlike";
+        try {
+          const response = await service.setPostLiked(postId, liked);
+          const data = communityResponseData(response);
+          const current = store
+            .getState()
+            .feed.items.find((post) => post.id === postId);
+          if (
+            current &&
+            typeof data === "object" &&
+            data !== null &&
+            "likeCount" in data &&
+            typeof data.likeCount === "number" &&
+            Number.isSafeInteger(data.likeCount) &&
+            data.likeCount >= 0
+          ) {
+            store.upsertPost({ ...current, likeCount: data.likeCount });
+          }
+          analytics?.track("community_post_reaction", {
+            action,
+            result: "success",
+          });
+        } catch (likeError) {
+          analytics?.track("community_post_reaction", {
+            action,
+            result: "failure",
+          });
+          throw likeError;
         }
-        analytics?.track("community_post_reaction", {
-          action: liked ? "like" : "unlike",
-          result: "success",
-        });
       });
     },
     [analytics, run, service, store],
@@ -166,32 +183,41 @@ export function useCommunityActions(
       liked: boolean,
     ): Promise<void> => {
       await run(`like-comment:${commentId}`, async () => {
-        const response = await service.setCommentLiked(commentId, liked);
-        const data = communityResponseData(response);
-        const current = store
-          .getState()
-          .commentsByPostId[
-            postId
-          ]?.find((comment) => comment.id === commentId);
-        if (
-          current &&
-          typeof data === "object" &&
-          data !== null &&
-          "likeCount" in data &&
-          typeof data.likeCount === "number" &&
-          Number.isSafeInteger(data.likeCount) &&
-          data.likeCount >= 0
-        ) {
-          store.upsertComment({
-            ...current,
-            likedByMe: liked,
-            likeCount: data.likeCount,
+        const action = liked ? "like" : "unlike";
+        try {
+          const response = await service.setCommentLiked(commentId, liked);
+          const data = communityResponseData(response);
+          const current = store
+            .getState()
+            .commentsByPostId[
+              postId
+            ]?.find((comment) => comment.id === commentId);
+          if (
+            current &&
+            typeof data === "object" &&
+            data !== null &&
+            "likeCount" in data &&
+            typeof data.likeCount === "number" &&
+            Number.isSafeInteger(data.likeCount) &&
+            data.likeCount >= 0
+          ) {
+            store.upsertComment({
+              ...current,
+              likedByMe: liked,
+              likeCount: data.likeCount,
+            });
+          }
+          analytics?.track("community_post_reaction", {
+            action,
+            result: "success",
           });
+        } catch (likeError) {
+          analytics?.track("community_post_reaction", {
+            action,
+            result: "failure",
+          });
+          throw likeError;
         }
-        analytics?.track("community_post_reaction", {
-          action: liked ? "like" : "unlike",
-          result: "success",
-        });
       });
     },
     [analytics, run, service, store],
