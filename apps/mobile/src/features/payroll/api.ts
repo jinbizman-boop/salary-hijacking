@@ -281,7 +281,22 @@ function normalizeCurrentPlan(value: unknown): PayrollPlanSnapshot {
 }
 
 function validRecalculateRequest(value: PayrollRecalculateRequest): boolean {
+  const record = value as Record<string, unknown>;
   return (
+    hasOnlyKeys(record, [
+      "alreadySpentAmountMinor",
+      "carryOverAmountMinor",
+      "emergencyBufferMinor",
+      "fixedExpenseTotalMinor",
+      "fixedSavingsTotalMinor",
+      "overwritePlan",
+      "payrollAmountMinor",
+      "periodEndDate",
+      "periodStartDate",
+      "planId",
+      "reason",
+      "variableExpenseReserveMinor",
+    ]) &&
     (value.planId === null ||
       (typeof value.planId === "string" && isSafePlanId(value.planId))) &&
     isDateOnly(value.periodStartDate) &&
@@ -306,8 +321,34 @@ function validPayday(value: unknown): value is number | null {
   );
 }
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function validSaveRequest(value: PayrollPlanSaveRequest): boolean {
+  const record = value as Record<string, unknown>;
   return (
+    hasOnlyKeys(record, [
+      "carryOverAmountMinor",
+      "emergencyBufferMinor",
+      "firstPayrollDate",
+      "fixedExpenseTotalMinor",
+      "fixedSavingsTotalMinor",
+      "incomeType",
+      "memo",
+      "payday",
+      "payrollAmountMinor",
+      "payrollCycle",
+      "periodEndDate",
+      "periodStartDate",
+      "planId",
+      "reservePolicy",
+      "title",
+      "variableExpenseReserveMinor",
+    ]) &&
     (value.planId === null ||
       (typeof value.planId === "string" && isSafePlanId(value.planId))) &&
     typeof value.title === "string" &&
