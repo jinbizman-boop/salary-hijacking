@@ -4421,8 +4421,9 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
   const level = myLevelDashboard?.profile.level ?? 18;
   const progress = Math.min(100, (totalExp / 999) * 100);
   const closeMyLevelProgress = useCallback(() => {
+    if (myLevelSubmittingMissionId !== null) return;
     myLevelRouter.replace("/profile");
-  }, [myLevelRouter]);
+  }, [myLevelRouter, myLevelSubmittingMissionId]);
 
   const completeMyLevelTask = useCallback(
     (mission: Mission): void => {
@@ -4533,7 +4534,11 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
           />
         ))}
       </SectionCard>
-      <SmallButton label="MY로 돌아가기" onPress={closeMyLevelProgress} />
+      <SmallButton
+        disabled={myLevelSubmittingMissionId !== null}
+        label="MY로 돌아가기"
+        onPress={closeMyLevelProgress}
+      />
       <GuardBox />
     </AppScreen>
   );

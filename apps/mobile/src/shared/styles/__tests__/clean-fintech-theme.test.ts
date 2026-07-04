@@ -1420,6 +1420,23 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(myLevelSource).toContain("disabled={missionPending}");
   });
 
+  it("locks MY level progress close navigation while mission completion is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myLevelSource =
+      cleanScreens.match(
+        /export function CleanFintechMyLevelProgressScreen\(\): React\.ReactElement \{[\s\S]*?function LevelScreen\(\): React\.ReactElement/u,
+      )?.[0] ?? "";
+
+    expect(myLevelSource).toContain(
+      "if (myLevelSubmittingMissionId !== null) return;",
+    );
+    expect(myLevelSource).toMatch(
+      /<SmallButton\s+disabled=\{myLevelSubmittingMissionId !== null\}\s+label="MY로 돌아가기"\s+onPress=\{closeMyLevelProgress\}/u,
+    );
+  });
+
   it("keeps MY notices routed to a server-backed profile activity screen", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
