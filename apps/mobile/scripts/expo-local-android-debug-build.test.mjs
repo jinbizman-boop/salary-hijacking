@@ -7,6 +7,7 @@ import test from "node:test";
 
 import {
   buildExpoLocalAndroidDebugInvocations,
+  buildSameRootExpoCliGradleSource,
   checkExpoLocalAndroidDebugPrerequisites,
   runExpoLocalAndroidDebugBuild,
 } from "./expo-local-android-debug-build.mjs";
@@ -138,6 +139,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   );
   assert.deepEqual(invocations.gradleArgs, [
     "assembleDebug",
+    "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
     "-x",
@@ -145,6 +147,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   ]);
   assert.deepEqual(invocations.androidTestArgs, [
     ":app:assembleDebugAndroidTest",
+    "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
     "-x",
@@ -152,11 +155,13 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   ]);
   assert.deepEqual(invocations.packageListArgs, [
     ":app:generateAutolinkingPackageList",
+    "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
   ]);
   assert.deepEqual(invocations.reanimatedConfigureArgs, [
     ":react-native-reanimated:configureCMakeDebug[x86_64]",
+    "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
   ]);
@@ -172,6 +177,53 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     invocations.testOutputPath,
     /build[\\/]e2e[\\/]android[\\/]salary-hijacking-e2e-androidTest\.apk$/,
   );
+});
+
+test("rewrites Expo CLI Gradle path to the subst drive root on Windows", () => {
+  const source = [
+    "react {",
+    '    cliFile = new File(["node", "--print", "require.resolve(\'@expo/cli\', { paths: [require.resolve(\'expo/package.json\')] })"].execute(null, rootDir).text.trim())',
+    "}",
+    "",
+  ].join("\n");
+
+  const patched = buildSameRootExpoCliGradleSource({
+    mobileRootDir: "S:\\apps\\mobile",
+    platform: "win32",
+    realMonorepoRootDir:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+    resolvedExpoCliPath:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\@expo+cli@0.24.24\\node_modules\\@expo\\cli\\build\\bin\\cli",
+    source,
+  });
+
+  assert.match(
+    patched,
+    /cliFile = new File\("S:\/node_modules\/\.pnpm\/@expo\+cli@0\.24\.24\/node_modules\/@expo\/cli\/build\/bin\/cli"\)/,
+  );
+  assert.doesNotMatch(patched, /C:\\Users\\Telos_PC_17/);
+});
+
+test("keeps Expo CLI Gradle path dynamic when roots already match", () => {
+  const source = [
+    "react {",
+    '    cliFile = new File(["node", "--print", "require.resolve(\'@expo/cli\', { paths: [require.resolve(\'expo/package.json\')] })"].execute(null, rootDir).text.trim())',
+    "}",
+    "",
+  ].join("\n");
+
+  const patched = buildSameRootExpoCliGradleSource({
+    mobileRootDir:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\apps\\mobile",
+    platform: "win32",
+    realMonorepoRootDir:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+    resolvedExpoCliPath:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\@expo+cli@0.24.24\\node_modules\\@expo\\cli\\build\\bin\\cli",
+    source,
+  });
+
+  assert.equal(patched, source);
 });
 
 test("runner executes prebuild before Gradle and copies a verified APK to the Detox path", () => {

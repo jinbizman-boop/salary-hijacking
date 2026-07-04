@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 /* eslint-disable no-template-curly-in-string */
 import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 import {
@@ -70,6 +71,7 @@ const buildEnv = ({ env, javaHome, pathValue, sdkRoot }) => {
     ANDROID_SDK_ROOT: sdkRoot,
     EXPO_PUBLIC_E2E_BUILD: "true",
     JAVA_HOME: javaHome,
+    NODE_ENV: env.NODE_ENV || "production",
     [envPathKey]: [path.join(javaHome, "bin"), pathValue]
       .filter(Boolean)
       .join(path.delimiter),
@@ -626,6 +628,105 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
   }
 };
 
+const normalizeForPrefix = (value) =>
+  path
+    .resolve(value)
+    .replace(/[\\/]+$/u, "")
+    .toLowerCase();
+
+const toGradlePath = (value) => value.replace(/\\/gu, "/");
+
+const sameRootPathForWindowsAlias = ({
+  aliasMonorepoRootDir,
+  platform,
+  realMonorepoRootDir,
+  resolvedPath,
+}) => {
+  if (!isWindows(platform)) return resolvedPath;
+  const normalizedResolved = normalizeForPrefix(resolvedPath);
+  const normalizedRealRoot = normalizeForPrefix(realMonorepoRootDir);
+  const normalizedAliasRoot = normalizeForPrefix(aliasMonorepoRootDir);
+  if (normalizedRealRoot === normalizedAliasRoot) return resolvedPath;
+  if (
+    normalizedResolved !== normalizedRealRoot &&
+    !normalizedResolved.startsWith(`${normalizedRealRoot}${path.sep}`)
+  ) {
+    return resolvedPath;
+  }
+  return path.join(
+    aliasMonorepoRootDir,
+    path.relative(realMonorepoRootDir, resolvedPath),
+  );
+};
+
+export const buildSameRootExpoCliGradleSource = ({
+  mobileRootDir,
+  platform = process.platform,
+  realMonorepoRootDir,
+  resolvedExpoCliPath,
+  source,
+}) => {
+  if (!isWindows(platform)) return source;
+  const aliasMonorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
+  const sameRootCliPath = sameRootPathForWindowsAlias({
+    aliasMonorepoRootDir,
+    platform,
+    realMonorepoRootDir,
+    resolvedPath: resolvedExpoCliPath,
+  });
+  if (sameRootCliPath === resolvedExpoCliPath) return source;
+  const gradleCliPath = toGradlePath(sameRootCliPath).replace(/"/gu, '\\"');
+  return source.replace(
+    /^\s*cliFile\s*=\s*new File\(\["node",\s*"--print",\s*"require\.resolve\('@expo\/cli',\s*\{\s*paths:\s*\[require\.resolve\('expo\/package\.json'\)\]\s*\}\)"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\)\)\s*$/mu,
+    `    cliFile = new File("${gradleCliPath}")`,
+  );
+};
+
+const resolveExpoCliPath = ({ mobileRootDir }) => {
+  const requireFromMobile = createRequire(
+    path.join(mobileRootDir, "package.json"),
+  );
+  const expoPackagePath = requireFromMobile.resolve("expo/package.json");
+  return requireFromMobile.resolve("@expo/cli", {
+    paths: [path.dirname(expoPackagePath)],
+  });
+};
+
+const patchAndroidExpoCliSameRoot = ({ mobileRootDir, platform }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!isWindows(platform) || !fs.existsSync(appBuildGradlePath)) {
+    return () => undefined;
+  }
+
+  const originalSource = fs.readFileSync(appBuildGradlePath, "utf8");
+  let resolvedExpoCliPath = "";
+  try {
+    resolvedExpoCliPath = resolveExpoCliPath({ mobileRootDir });
+  } catch {
+    return () => undefined;
+  }
+  const nextSource = buildSameRootExpoCliGradleSource({
+    mobileRootDir,
+    platform,
+    realMonorepoRootDir: fs.realpathSync.native(
+      defaultMonorepoRootDir(mobileRootDir),
+    ),
+    resolvedExpoCliPath,
+    source: originalSource,
+  });
+
+  if (nextSource === originalSource) return () => undefined;
+  fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+  return () => {
+    fs.writeFileSync(appBuildGradlePath, originalSource, "utf8");
+  };
+};
+
 export const buildExpoLocalAndroidDebugInvocations = ({
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
@@ -646,6 +747,7 @@ export const buildExpoLocalAndroidDebugInvocations = ({
   return {
     androidTestArgs: [
       ":app:assembleDebugAndroidTest",
+      "--no-daemon",
       "-PreactNativeArchitectures=x86_64",
       "-PnewArchEnabled=false",
       "-x",
@@ -664,6 +766,7 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     expoCommand,
     gradleArgs: [
       "assembleDebug",
+      "--no-daemon",
       "-PreactNativeArchitectures=x86_64",
       "-PnewArchEnabled=false",
       "-x",
@@ -673,12 +776,14 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     outputPath: path.resolve(mobileRootDir, output),
     packageListArgs: [
       ":app:generateAutolinkingPackageList",
+      "--no-daemon",
       "-PreactNativeArchitectures=x86_64",
       "-PnewArchEnabled=false",
     ],
     prebuildArgs: ["prebuild", "--platform", "android", "--no-install"],
     reanimatedConfigureArgs: [
       ":react-native-reanimated:configureCMakeDebug[x86_64]",
+      "--no-daemon",
       "-PreactNativeArchitectures=x86_64",
       "-PnewArchEnabled=false",
     ],
@@ -883,81 +988,93 @@ export const runExpoLocalAndroidDebugBuild = ({
   ensureSecureStoreBackupXmlResources({ mobileRootDir });
   patchAndroidExpoEntrypoints({ mobileRootDir });
   patchAndroidDebugDeveloperSupport({ mobileRootDir });
-
-  const packageList = spawn(
-    invocations.gradleCommand,
-    invocations.packageListArgs,
-    {
-      cwd: path.join(mobileRootDir, "android"),
-      env: preflight.env,
-      shell: isWindows(platform),
-      stdio: "inherit",
-      windowsHide: true,
-    },
-  );
-  if ((packageList.status ?? 1) !== 0) {
-    return { ...preflight, failures, status: packageList.status ?? 1 };
-  }
-  patchReactNativePackageList({ mobileRootDir });
-
-  const reanimatedConfigure = spawn(
-    invocations.gradleCommand,
-    invocations.reanimatedConfigureArgs,
-    {
-      cwd: path.join(mobileRootDir, "android"),
-      env: preflight.env,
-      shell: isWindows(platform),
-      stdio: "inherit",
-      windowsHide: true,
-    },
-  );
-  if ((reanimatedConfigure.status ?? 1) !== 0) {
-    return { ...preflight, failures, status: reanimatedConfigure.status ?? 1 };
-  }
-
-  repairReanimatedWindowsCmakeDirectories({ mobileRootDir, platform });
-  repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
-
-  const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
-    cwd: path.join(mobileRootDir, "android"),
-    env: preflight.env,
-    shell: isWindows(platform),
-    stdio: "inherit",
-    windowsHide: true,
+  const restoreExpoCliGradlePath = patchAndroidExpoCliSameRoot({
+    mobileRootDir,
+    platform,
   });
-  if ((gradle.status ?? 1) !== 0) {
-    return { ...preflight, failures, status: gradle.status ?? 1 };
-  }
-
-  const androidTest = spawn(
-    invocations.gradleCommand,
-    invocations.androidTestArgs,
-    {
-      cwd: path.join(mobileRootDir, "android"),
-      env: preflight.env,
-      shell: isWindows(platform),
-      stdio: "inherit",
-      windowsHide: true,
-    },
-  );
-  if ((androidTest.status ?? 1) !== 0) {
-    return { ...preflight, failures, status: androidTest.status ?? 1 };
-  }
 
   try {
-    copyVerifiedApk(invocations);
-    copyVerifiedAndroidTestApk(invocations);
-  } catch (error) {
-    failures.push(error instanceof Error ? error.message : String(error));
-    return { ...preflight, failures, status: 1 };
-  }
+    const packageList = spawn(
+      invocations.gradleCommand,
+      invocations.packageListArgs,
+      {
+        cwd: path.join(mobileRootDir, "android"),
+        env: preflight.env,
+        shell: isWindows(platform),
+        stdio: "inherit",
+        windowsHide: true,
+      },
+    );
+    if ((packageList.status ?? 1) !== 0) {
+      return { ...preflight, failures, status: packageList.status ?? 1 };
+    }
+    patchReactNativePackageList({ mobileRootDir });
 
-  return {
-    ...preflight,
-    failures,
-    outputPath: invocations.outputPath,
-    status: 0,
-  };
+    const reanimatedConfigure = spawn(
+      invocations.gradleCommand,
+      invocations.reanimatedConfigureArgs,
+      {
+        cwd: path.join(mobileRootDir, "android"),
+        env: preflight.env,
+        shell: isWindows(platform),
+        stdio: "inherit",
+        windowsHide: true,
+      },
+    );
+    if ((reanimatedConfigure.status ?? 1) !== 0) {
+      return {
+        ...preflight,
+        failures,
+        status: reanimatedConfigure.status ?? 1,
+      };
+    }
+
+    repairReanimatedWindowsCmakeDirectories({ mobileRootDir, platform });
+    repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
+
+    const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
+      cwd: path.join(mobileRootDir, "android"),
+      env: preflight.env,
+      shell: isWindows(platform),
+      stdio: "inherit",
+      windowsHide: true,
+    });
+    if ((gradle.status ?? 1) !== 0) {
+      return { ...preflight, failures, status: gradle.status ?? 1 };
+    }
+
+    const androidTest = spawn(
+      invocations.gradleCommand,
+      invocations.androidTestArgs,
+      {
+        cwd: path.join(mobileRootDir, "android"),
+        env: preflight.env,
+        shell: isWindows(platform),
+        stdio: "inherit",
+        windowsHide: true,
+      },
+    );
+    if ((androidTest.status ?? 1) !== 0) {
+      return { ...preflight, failures, status: androidTest.status ?? 1 };
+    }
+
+    try {
+      copyVerifiedApk(invocations);
+      copyVerifiedAndroidTestApk(invocations);
+    } catch (error) {
+      failures.push(error instanceof Error ? error.message : String(error));
+      return { ...preflight, failures, status: 1 };
+    }
+
+    return {
+      ...preflight,
+      failures,
+      outputPath: invocations.outputPath,
+      status: 0,
+    };
+  } finally {
+    restoreExpoCliGradlePath();
+  }
 };
 
 const printPreflight = (result) => {

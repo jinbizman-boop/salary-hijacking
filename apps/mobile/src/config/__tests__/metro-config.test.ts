@@ -19,6 +19,14 @@ type MetroConfig = Readonly<{
       platform: string | null,
     ) => Resolution;
   }>;
+  __private?: Readonly<{
+    mapToWorkspaceAliasRoot: (
+      filePath: string,
+      workspaceRoot: string,
+      realWorkspaceRoot: string,
+      platform: string,
+    ) => string;
+  }>;
 }>;
 
 const metroConfig = jest.requireActual<MetroConfig>(
@@ -86,5 +94,79 @@ describe("mobile Metro dependency resolution", () => {
       "expo-router",
       "web",
     );
+  });
+
+  it("pins expo-router entry to a concrete module path for Android bundle builds", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: resolvedModuleName,
+      }),
+    );
+    const context: ResolverContext = {
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(
+      context,
+      "expo-router/entry",
+      "android",
+    );
+    const expectedEntry = require.resolve("expo-router/entry");
+
+    expect(result.filePath).toBe(expectedEntry);
+    expect(fallbackResolver).toHaveBeenCalledWith(
+      context,
+      expectedEntry,
+      "android",
+    );
+  });
+
+  it("pins Expo Router runtime dependencies to concrete module paths", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: resolvedModuleName,
+      }),
+    );
+    const context: ResolverContext = {
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(
+      context,
+      "@expo/metro-runtime",
+      "android",
+    );
+    const expectedEntry = require.resolve("@expo/metro-runtime");
+
+    expect(result.filePath).toBe(expectedEntry);
+    expect(fallbackResolver).toHaveBeenCalledWith(
+      context,
+      expectedEntry,
+      "android",
+    );
+  });
+
+  it("can map resolved pnpm junction targets back to a Windows subst workspace root", () => {
+    const helper = metroConfig.__private?.mapToWorkspaceAliasRoot;
+
+    expect(helper).toBeDefined();
+    expect(
+      helper?.(
+        "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\expo-router\\entry.js",
+        "S:\\",
+        "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+        "win32",
+      ),
+    ).toBe("S:\\node_modules\\.pnpm\\expo-router\\entry.js");
   });
 });
