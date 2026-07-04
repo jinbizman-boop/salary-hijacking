@@ -341,6 +341,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("submitPlanSavingsGoal");
     expect(cleanScreens).toContain(".createFixedExpense({");
     expect(cleanScreens).toContain(".createSavingsGoal({");
+    expect(cleanScreens).toContain("planCommitmentSaveInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (planCommitmentSaveInFlightRef.current !== null) return",
+    );
+    expect(cleanScreens).toContain(
+      'planCommitmentSaveInFlightRef.current = "fixed"',
+    );
+    expect(cleanScreens).toContain(
+      'planCommitmentSaveInFlightRef.current = "savings"',
+    );
+    expect(cleanScreens).toContain(
+      "planCommitmentSaveInFlightRef.current = null",
+    );
     expect(cleanScreens).toContain("setServerFixedExpenses");
     expect(cleanScreens).toContain("setServerSavingsGoals");
   });
@@ -636,6 +649,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(payrollApi).toContain("PAYROLL_PLAN_PATH");
     expect(cleanScreens).toContain("saveServerPayrollPlan");
     expect(cleanScreens).toContain("payrollApi.savePlan");
+    expect(cleanScreens).toContain("payrollPlanSaveInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (payrollPlanSaveInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain("payrollPlanSaveInFlightRef.current = true");
+    expect(cleanScreens).toContain(
+      "payrollPlanSaveInFlightRef.current = false",
+    );
     expect(cleanScreens).toContain("setSavingPayrollPlan");
     expect(cleanScreens).toContain("applyServerPayrollPlan(saved)");
   });

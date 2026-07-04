@@ -3224,6 +3224,7 @@ function PlanScreen(): React.ReactElement {
   );
   const [recalculatingPlan, setRecalculatingPlan] = useState(false);
   const [savingPayrollPlan, setSavingPayrollPlan] = useState(false);
+  const payrollPlanSaveInFlightRef = useRef(false);
   const [planFixedExpenseTitle, setPlanFixedExpenseTitle] =
     useState("새 고정지출");
   const [planFixedExpenseAmount, setPlanFixedExpenseAmount] = useState("19000");
@@ -3231,6 +3232,9 @@ function PlanScreen(): React.ReactElement {
     useState("새 고정저축");
   const [planSavingsGoalAmount, setPlanSavingsGoalAmount] = useState("80000");
   const [savingPlanCommitment, setSavingPlanCommitment] = useState(false);
+  const planCommitmentSaveInFlightRef = useRef<"fixed" | "savings" | null>(
+    null,
+  );
   const [deletingPlanCommitmentId, setDeletingPlanCommitmentId] = useState<
     string | null
   >(null);
@@ -3342,6 +3346,7 @@ function PlanScreen(): React.ReactElement {
     ]);
 
   const saveServerPayrollPlan = useCallback(async (): Promise<void> => {
+    if (payrollPlanSaveInFlightRef.current) return;
     const payrollAmountMinor = nonNegative(salary);
     const fixedExpenseTotalMinor = nonNegative(expense);
     const fixedSavingsTotalMinor = nonNegative(target);
@@ -3351,6 +3356,7 @@ function PlanScreen(): React.ReactElement {
     }
 
     try {
+      payrollPlanSaveInFlightRef.current = true;
       setSavingPayrollPlan(true);
       const saved = await payrollApi.savePlan({
         carryOverAmountMinor: serverPayrollPlan?.carryOverAmountMinor ?? 0,
@@ -3378,6 +3384,7 @@ function PlanScreen(): React.ReactElement {
     } catch {
       setPlanToast("급여 계획 저장에 실패했어요. 다시 시도해 주세요.");
     } finally {
+      payrollPlanSaveInFlightRef.current = false;
       setSavingPayrollPlan(false);
     }
   }, [
@@ -3398,6 +3405,7 @@ function PlanScreen(): React.ReactElement {
   }, [refreshServerPayrollCalculation]);
 
   const submitPlanFixedExpense = useCallback(async (): Promise<void> => {
+    if (planCommitmentSaveInFlightRef.current !== null) return;
     const amountMinor = nonNegative(planFixedExpenseAmount);
     const title = planFixedExpenseTitle.trim();
     if (!title || amountMinor <= 0) {
@@ -3405,6 +3413,7 @@ function PlanScreen(): React.ReactElement {
       return;
     }
     try {
+      planCommitmentSaveInFlightRef.current = "fixed";
       setSavingPlanCommitment(true);
       const created = await planCommitmentsApi.createFixedExpense({
         amountMinor,
@@ -3424,11 +3433,13 @@ function PlanScreen(): React.ReactElement {
         "고정지출 계획을 서버에 저장하지 못했어요. 다시 시도해 주세요.",
       );
     } finally {
+      planCommitmentSaveInFlightRef.current = null;
       setSavingPlanCommitment(false);
     }
   }, [planCommitmentsApi, planFixedExpenseAmount, planFixedExpenseTitle]);
 
   const submitPlanSavingsGoal = useCallback(async (): Promise<void> => {
+    if (planCommitmentSaveInFlightRef.current !== null) return;
     const fixedSaveAmountMinor = nonNegative(planSavingsGoalAmount);
     const title = planSavingsGoalTitle.trim();
     if (!title || fixedSaveAmountMinor <= 0) {
@@ -3436,6 +3447,7 @@ function PlanScreen(): React.ReactElement {
       return;
     }
     try {
+      planCommitmentSaveInFlightRef.current = "savings";
       setSavingPlanCommitment(true);
       const created = await planCommitmentsApi.createSavingsGoal({
         fixedSaveAmountMinor,
@@ -3455,6 +3467,7 @@ function PlanScreen(): React.ReactElement {
         "고정저축 목표를 서버에 저장하지 못했어요. 다시 시도해 주세요.",
       );
     } finally {
+      planCommitmentSaveInFlightRef.current = null;
       setSavingPlanCommitment(false);
     }
   }, [planCommitmentsApi, planSavingsGoalAmount, planSavingsGoalTitle, target]);
