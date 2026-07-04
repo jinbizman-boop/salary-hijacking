@@ -347,6 +347,40 @@ describe("uploads api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects raw local file paths before upload file names reach headers", async () => {
+    const fetcher = jest.fn<
+      ReturnType<typeof fetch>,
+      Parameters<typeof fetch>
+    >();
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-raw-path",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    for (const fileName of [
+      "file:///Users/telos/Desktop/proof.png",
+      "content://media/external/images/media/1.png",
+      "C:\\Users\\telos\\Desktop\\proof.png",
+      "private/proof.png",
+    ]) {
+      await expect(
+        api.directUploadCommunityAttachment({
+          bytes,
+          contentType: "image/png",
+          fileName,
+          sizeBytes: 4,
+        }),
+      ).rejects.toMatchObject({
+        code: "UPLOADS_FILE_PATH_FORBIDDEN",
+      });
+    }
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("attaches a completed upload to a community post without exposing raw file paths", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()

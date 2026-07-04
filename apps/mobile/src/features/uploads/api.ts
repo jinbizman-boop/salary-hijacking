@@ -172,10 +172,15 @@ function assertFileNameMatchesContentType(
 }
 
 function safeFileName(value: string): string {
-  const normalized = value
-    .trim()
-    .replace(/[\\/:*?"<>|]/gu, "_")
-    .slice(0, 120);
+  const trimmed = value.trim();
+  if (/(?:file|content):\/\//iu.test(trimmed) || /[\\/]/u.test(trimmed)) {
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_FILE_PATH_FORBIDDEN",
+      "Raw file paths are not allowed",
+    );
+  }
+  const normalized = trimmed.replace(/[\\/:*?"<>|]/gu, "_").slice(0, 120);
   if (!normalized) {
     throw new UploadsApiError(
       0,
