@@ -91,6 +91,13 @@ jobs:
         with:
           name: mobile-native-proof-\${{ github.run_attempt }}
           path: release/mobile-native-proof.local.json
+      - run: |
+          SECRET_VALUE_PATTERN="(postgres(ql)?://[^[:space:]\"']+|-----BEGIN [A-Z ]*PRIVATE KEY-----|eas_[A-Za-z0-9_-]{20,}|(DATABASE_URL|JWT_SECRET|SECRET_ACCESS_KEY)[\"'[:space:]]*[:=][\"'[:space:]]*[A-Za-z0-9_:/+=.@-]{12,})"
+          if grep -RInE "$SECRET_VALUE_PATTERN" "$MOBILE_DIST_DIR"; then
+            echo "::error::Potential secret value found in mobile build output."
+            exit 1
+          fi
+          echo "No known secret values found in mobile build output."
       - run: pnpm dlx eas-cli@latest build --profile preview --platform all
 `,
     ".github/workflows/release.yml": `
@@ -1769,6 +1776,42 @@ jobs:
       result.failures.join("\n"),
       /release\/mobile-native-proof\.local\.json/,
     );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when mobile output secret scan matches secret names instead of secret values", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir);
+    const workflowPath = path.join(
+      rootDir,
+      ".github/workflows/mobile-build.yml",
+    );
+    const workflow = await readFile(workflowPath, "utf8");
+    await writeFile(
+      workflowPath,
+      workflow.replace(
+        /      - run: \|\r?\n          SECRET_VALUE_PATTERN="[\s\S]*?          echo "No known secret values found in mobile build output."\r?\n/,
+        `      - run: |
+          if grep -RInE "(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|EXPO_TOKEN|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST|SENTRY_AUTH_TOKEN|CLOUDFLARE_API_TOKEN|NEON_|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY)" "$MOBILE_DIST_DIR"; then
+            echo "::error::Potential secret-like token found in mobile build output."
+            exit 1
+          fi
+`,
+      ),
+    );
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /value-shaped secrets/);
+    assert.match(result.failures.join("\n"), /identifier names alone/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

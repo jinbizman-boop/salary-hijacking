@@ -1001,6 +1001,39 @@ function checkMobileNativeProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkMobileOutputSecretScan(rootDir, failures) {
+  const relativePath = ".github/workflows/mobile-build.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const requiredParts = [
+    "SECRET_VALUE_PATTERN",
+    "postgres(ql)?://",
+    "-----BEGIN [A-Z ]*PRIVATE KEY-----",
+    "eas_[A-Za-z0-9_-]{20,}",
+    "Potential secret value found in mobile build output",
+    "No known secret values found in mobile build output",
+  ];
+
+  for (const requiredPart of requiredParts) {
+    if (source.includes(requiredPart)) continue;
+
+    failures.push(
+      `${relativePath}: mobile output secret scan must check value-shaped secrets and include ${requiredPart}`,
+    );
+  }
+
+  if (
+    /grep\s+-RInE\s+"\([^"]*DATABASE_URL[^"]*JWT_SECRET[^"]*SECRET_ACCESS_KEY[^"]*\)"/.test(
+      source,
+    )
+  ) {
+    failures.push(
+      `${relativePath}: mobile output secret scan must not fail on secret identifier names alone; scan for value-shaped secrets instead`,
+    );
+  }
+}
+
 function checkPublicUrlProofWorkflow(rootDir, failures) {
   const relativePath = ".github/workflows/release.yml";
   if (!fileExists(rootDir, relativePath)) return;
@@ -1461,6 +1494,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
+  checkMobileOutputSecretScan(rootDir, failures);
   checkCloudflareRuntimeProofWorkflow(rootDir, failures);
   checkDatabaseCommandProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);

@@ -362,12 +362,14 @@ jobs:
             exit 0
           fi
 
-          if grep -RInE "(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|EXPO_TOKEN|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST|SENTRY_AUTH_TOKEN|CLOUDFLARE_API_TOKEN|NEON_|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY)" "${SCAN_TARGETS[@]}"; then
-            echo "::error::Potential secret-like token found in mobile build output."
+          SECRET_VALUE_PATTERN="(postgres(ql)?://[^[:space:]\"']+|-----BEGIN [A-Z ]*PRIVATE KEY-----|eas_[A-Za-z0-9_-]{20,}|(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{20,}|(DATABASE_URL|JWT_SECRET|REFRESH_TOKEN_SECRET|SESSION_SECRET|PRIVATE_KEY|EXPO_TOKEN|GOOGLE_SERVICES_JSON|GOOGLE_SERVICE_INFO_PLIST|SENTRY_AUTH_TOKEN|CLOUDFLARE_API_TOKEN|NEON_[A-Z0-9_]*|R2_SECRET|AWS_SECRET|SECRET_ACCESS_KEY)[\"'[:space:]]*[:=][\"'[:space:]]*[A-Za-z0-9_:/+=.@-]{12,})"
+
+          if grep -RInE "$SECRET_VALUE_PATTERN" "${SCAN_TARGETS[@]}"; then
+            echo "::error::Potential secret value found in mobile build output."
             exit 1
           fi
 
-          echo "No known secret identifiers found in mobile build output."
+          echo "No known secret values found in mobile build output."
 
       - name: Audit production dependencies
         run: pnpm audit --prod --audit-level high
