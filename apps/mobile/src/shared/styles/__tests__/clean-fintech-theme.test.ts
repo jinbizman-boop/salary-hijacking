@@ -1245,6 +1245,27 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("prevents duplicate MY level progress mission completion before the Growth API acknowledges it", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myLevelSource =
+      cleanScreens.match(
+        /export function CleanFintechMyLevelProgressScreen\(\): React\.ReactElement \{[\s\S]*?function LevelScreen\(\): React\.ReactElement/u,
+      )?.[0] ?? "";
+
+    expect(myLevelSource).toContain("myLevelMissionCompletionInFlightRef");
+    expect(myLevelSource).toContain(
+      "myLevelMissionCompletionInFlightRef.current.has(mission.id)",
+    );
+    expect(myLevelSource).toContain(
+      "myLevelMissionCompletionInFlightRef.current.add(mission.id)",
+    );
+    expect(myLevelSource).toContain(
+      "myLevelMissionCompletionInFlightRef.current.delete(mission.id)",
+    );
+  });
+
   it("keeps MY notices routed to a server-backed profile activity screen", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

@@ -4005,6 +4005,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
   const [myLevelCompletedTasks, setMyLevelCompletedTasks] = useState<
     readonly GrowthTask[]
   >([]);
+  const myLevelMissionCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [toast, setToast] = useState(
     "내 레벨업 현황을 서버 기준으로 확인하는 중이에요.",
   );
@@ -4057,6 +4058,8 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         myLevelRouter.push("/level");
         return;
       }
+      if (myLevelMissionCompletionInFlightRef.current.has(mission.id)) return;
+      myLevelMissionCompletionInFlightRef.current.add(mission.id);
       const occurredAt = new Date().toISOString();
       setToast("레벨업 진행을 서버에 기록하는 중이에요.");
       void myLevelGrowthApi
@@ -4096,6 +4099,9 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         })
         .catch(() => {
           setToast("서버 기록에 실패했어요. LV 탭에서 다시 시도해 주세요.");
+        })
+        .finally(() => {
+          myLevelMissionCompletionInFlightRef.current.delete(mission.id);
         });
     },
     [myLevelGrowthApi, myLevelRouter],
