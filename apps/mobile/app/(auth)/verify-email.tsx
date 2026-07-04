@@ -168,6 +168,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
           </Text>
           <TextInput
             accessibilityLabel="인증 메일을 다시 받을 메일 주소"
+            accessibilityState={{ disabled: resendPending }}
             autoCapitalize="none"
             autoCorrect={false}
             editable={!resendPending}
@@ -191,6 +192,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
           <Pressable
             accessibilityLabel="인증 메일 다시 보내기"
             accessibilityRole="button"
+            accessibilityState={{ disabled: !canResend }}
             disabled={!canResend}
             onPress={resendEmailVerification}
             style={{
