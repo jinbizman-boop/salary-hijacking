@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createApp, type AppOptions } from "../src/app";
 import type {
   CommunityRepository,
@@ -58,6 +58,8 @@ function createMobileCommunityRepository(): CommunityRepository<unknown> {
     updatePost: notUsed,
     deletePost: notUsed,
     setPostReaction: notUsed,
+    setPostBookmark: notUsed,
+    recordPostShare: notUsed,
     listComments: emptyList,
     createComment: notUsed,
     updateComment: notUsed,
@@ -109,5 +111,78 @@ describe("mobile community API contract", () => {
       rawPersonalDataExposed: false,
       adsFinancialTargetingUsed: false,
     });
+  });
+
+  it("routes mobile bookmark and share actions through the community repository", async () => {
+    const setPostBookmark = vi.fn().mockResolvedValue({
+      postId: "22222222-2222-4222-8222-222222222222",
+      state: "BOOKMARKED",
+      bookmarkCount: 1,
+      serverAuthority: true,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    const recordPostShare = vi.fn().mockResolvedValue({
+      postId: "22222222-2222-4222-8222-222222222222",
+      channel: "SYSTEM_SHARE",
+      shareCount: 1,
+      serverAuthority: true,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    const repository = {
+      ...createMobileCommunityRepository(),
+      setPostBookmark,
+      recordPostShare,
+    } as unknown as CommunityRepository<unknown>;
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      communityRoutesOptions: {
+        repository,
+        exposeRepositoryName: true,
+      },
+    });
+
+    const bookmarkResponse = await app.fetch(
+      new Request("https://api.test/api/v1/community/bookmarks", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          enabled: true,
+          postId: "22222222-2222-4222-8222-222222222222",
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const shareResponse = await app.fetch(
+      new Request("https://api.test/api/v1/community/shares", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          channel: "SYSTEM_SHARE",
+          postId: "22222222-2222-4222-8222-222222222222",
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+
+    expect(bookmarkResponse.status).toBe(200);
+    expect(shareResponse.status).toBe(201);
+    expect(setPostBookmark).toHaveBeenCalledWith(
+      "22222222-2222-4222-8222-222222222222",
+      true,
+      expect.objectContaining({ path: "/api/v1/community/bookmarks" }),
+    );
+    expect(recordPostShare).toHaveBeenCalledWith(
+      "22222222-2222-4222-8222-222222222222",
+      "SYSTEM_SHARE",
+      expect.objectContaining({ path: "/api/v1/community/shares" }),
+    );
   });
 });

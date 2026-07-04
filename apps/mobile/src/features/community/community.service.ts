@@ -167,7 +167,7 @@ export function createCommunityService(
     },
 
     async setPostBookmarked(postId, bookmarked): Promise<CommunityApiResponse> {
-      const safePostId = requireId(postId, "post");
+      const safePostId = requireId(postId, "게시글");
       return transport.request(`${COMMUNITY_API_PREFIX}/bookmarks`, {
         method: "POST",
         body: {
@@ -179,7 +179,7 @@ export function createCommunityService(
     },
 
     async recordPostShare(postId, channel): Promise<CommunityApiResponse> {
-      const safePostId = requireId(postId, "post");
+      const safePostId = requireId(postId, "게시글");
       return transport.request(`${COMMUNITY_API_PREFIX}/shares`, {
         method: "POST",
         body: {

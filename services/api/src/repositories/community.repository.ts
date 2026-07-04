@@ -657,7 +657,7 @@ export function createNeonCommunityRepository<TEnv = unknown>(
                 created_by,
                 updated_by
               )
-              values ('post', $1::uuid, $2::uuid, 'like', $3, $2::uuid, $2::uuid)
+              values ('POST', $1::uuid, $2::uuid, 'LIKE', $3, $2::uuid, $2::uuid)
               on conflict (target_type, target_id, user_id, reaction_type) do nothing
               returning 1
             ),
@@ -673,10 +673,10 @@ export function createNeonCommunityRepository<TEnv = unknown>(
           : `
             with deleted as (
               delete from public.community_reactions
-              where target_type = 'post'
+              where target_type = 'POST'
                 and target_id = $1::uuid
                 and user_id = $2::uuid
-                and reaction_type = 'like'
+                and reaction_type = 'LIKE'
               returning 1
             ),
             updated_post as (
@@ -694,6 +694,97 @@ export function createNeonCommunityRepository<TEnv = unknown>(
         postId,
         state: liked ? "LIKED" : "UNLIKED",
         likeCount: toNumber(result.rows[0]?.like_count),
+        ...privacyFlags(),
+      };
+    },
+    async setPostBookmark(postId, bookmarked, runtime) {
+      const userId = requireUserId(runtime);
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "community.setPostBookmark",
+        bookmarked
+          ? `
+            with inserted as (
+              insert into public.community_reactions (
+                target_type,
+                target_id,
+                user_id,
+                reaction_type,
+                request_id,
+                created_by,
+                updated_by
+              )
+              values ('POST', $1::uuid, $2::uuid, 'BOOKMARK', $3, $2::uuid, $2::uuid)
+              on conflict (target_type, target_id, user_id, reaction_type) do nothing
+              returning 1
+            )
+            select count(*)::int as bookmark_count
+            from public.community_reactions
+            where target_type = 'POST'
+              and target_id = $1::uuid
+              and reaction_type = 'BOOKMARK'
+          `
+          : `
+            with deleted as (
+              delete from public.community_reactions
+              where target_type = 'POST'
+                and target_id = $1::uuid
+                and user_id = $2::uuid
+                and reaction_type = 'BOOKMARK'
+              returning 1
+            )
+            select count(*)::int as bookmark_count
+            from public.community_reactions
+            where target_type = 'POST'
+              and target_id = $1::uuid
+              and reaction_type = 'BOOKMARK'
+          `,
+        [assertUuid(postId, "postId"), userId, runtime.requestId],
+      );
+      return {
+        postId,
+        state: bookmarked ? "BOOKMARKED" : "UNBOOKMARKED",
+        bookmarkCount: toNumber(result.rows[0]?.bookmark_count),
+        ...privacyFlags(),
+      };
+    },
+    async recordPostShare(postId, channel, runtime) {
+      const userId = requireUserId(runtime);
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "community.recordPostShare",
+        `
+          with inserted as (
+            insert into public.community_reactions (
+              target_type,
+              target_id,
+              user_id,
+              reaction_type,
+              request_id,
+              created_by,
+              updated_by
+            )
+            values ('POST', $1::uuid, $2::uuid, 'SHARE', $3, $2::uuid, $2::uuid)
+            on conflict (target_type, target_id, user_id, reaction_type) do nothing
+            returning 1
+          ),
+          updated_post as (
+            update public.community_posts
+            set share_count = share_count + (select count(*)::int from inserted),
+                updated_at = now()
+            where post_id = $1::uuid
+            returning share_count
+          )
+          select share_count from updated_post
+        `,
+        [assertUuid(postId, "postId"), userId, runtime.requestId],
+      );
+      return {
+        postId,
+        channel,
+        shareCount: toNumber(result.rows[0]?.share_count),
         ...privacyFlags(),
       };
     },

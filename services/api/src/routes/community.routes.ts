@@ -48,6 +48,13 @@ export type CommunityReportReason =
   | "ILLEGAL"
   | "OTHER";
 export type CommunityReactionState = "LIKED" | "UNLIKED";
+export type CommunityBookmarkState = "BOOKMARKED" | "UNBOOKMARKED";
+export type CommunityShareChannel =
+  | "SYSTEM_SHARE"
+  | "COPY_LINK"
+  | "KAKAO"
+  | "NAVER"
+  | "OTHER";
 export type CommunityRole =
   | "USER"
   | "OPERATOR"
@@ -159,6 +166,16 @@ export interface CommunityRepository<TEnv = unknown> {
     liked: boolean,
     runtime: CommunityRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
+  setPostBookmark(
+    postId: string,
+    bookmarked: boolean,
+    runtime: CommunityRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  recordPostShare(
+    postId: string,
+    channel: CommunityShareChannel,
+    runtime: CommunityRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
   listComments(
     postId: string,
     page: PaginationInput,
@@ -215,10 +232,18 @@ export interface CommunitySecurityEvent {
     | "community_comment_updated"
     | "community_comment_deleted"
     | "community_post_reacted"
+    | "community_post_bookmarked"
+    | "community_post_shared"
     | "community_report_created";
   readonly requestId: string;
   readonly userId: string | null;
-  readonly targetType: "POST" | "COMMENT" | "REACTION" | "REPORT";
+  readonly targetType:
+    | "POST"
+    | "COMMENT"
+    | "REACTION"
+    | "BOOKMARK"
+    | "SHARE"
+    | "REPORT";
   readonly targetId: string | null;
   readonly path: string;
   readonly createdAt: string;
@@ -482,6 +507,19 @@ function normalizeReportReason(value: unknown): CommunityReportReason {
     400,
     "COMMUNITY_REPORT_REASON_INVALID",
     "신고 사유가 올바르지 않습니다.",
+  );
+}
+
+function normalizeShareChannel(value: unknown): CommunityShareChannel {
+  const channel = typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (
+    ["SYSTEM_SHARE", "COPY_LINK", "KAKAO", "NAVER", "OTHER"].includes(channel)
+  )
+    return channel as CommunityShareChannel;
+  throw new CommunityHttpError(
+    400,
+    "COMMUNITY_SHARE_CHANNEL_INVALID",
+    "공유 채널이 올바르지 않습니다.",
   );
 }
 
@@ -831,6 +869,26 @@ function reportInput(
   };
 }
 
+function bookmarkInput(body: Record<string, unknown>): {
+  readonly postId: string;
+  readonly enabled: boolean;
+} {
+  return {
+    postId: stringField(body, "postId"),
+    enabled: booleanField(body, "enabled"),
+  };
+}
+
+function shareInput(body: Record<string, unknown>): {
+  readonly postId: string;
+  readonly channel: CommunityShareChannel;
+} {
+  return {
+    postId: stringField(body, "postId"),
+    channel: normalizeShareChannel(body.channel),
+  };
+}
+
 async function emit<TEnv>(
   runtime: CommunityRouteRuntime<TEnv>,
   event: CommunitySecurityEvent,
@@ -858,6 +916,8 @@ function createInMemoryCommunityRepository<
   const posts = new Map<string, JsonRecord>();
   const comments = new Map<string, JsonRecord>();
   const likes = new Set<string>();
+  const bookmarks = new Set<string>();
+  const shares = new Set<string>();
   const now = new Date().toISOString();
   const seedPost: JsonRecord = {
     postId: "post_1001",
@@ -870,6 +930,8 @@ function createInMemoryCommunityRepository<
     anonymous: false,
     status: "VISIBLE",
     likeCount: 3,
+    bookmarkCount: 0,
+    shareCount: 0,
     commentCount: 1,
     reportCount: 0,
     viewCount: 12,
@@ -939,6 +1001,8 @@ function createInMemoryCommunityRepository<
         anonymous: input.anonymous,
         status,
         likeCount: 0,
+        bookmarkCount: 0,
+        shareCount: 0,
         commentCount: 0,
         reportCount: 0,
         viewCount: 0,
@@ -1013,6 +1077,59 @@ function createInMemoryCommunityRepository<
         postId,
         state: liked ? "LIKED" : "UNLIKED",
         likeCount: nextCount,
+      };
+    },
+    async setPostBookmark(postId, bookmarked, runtime): Promise<JsonRecord> {
+      const userId = requireAuth(runtime.principal);
+      const post = posts.get(postId);
+      if (!post || post.status === "DELETED")
+        throw new CommunityHttpError(
+          404,
+          "COMMUNITY_POST_NOT_FOUND",
+          "게시글을 찾을 수 없습니다.",
+        );
+      const key = `${postId}:${userId}`;
+      const currentlyBookmarked = bookmarks.has(key);
+      if (bookmarked) bookmarks.add(key);
+      else bookmarks.delete(key);
+      const delta =
+        bookmarked && !currentlyBookmarked
+          ? 1
+          : !bookmarked && currentlyBookmarked
+            ? -1
+            : 0;
+      const nextCount = Math.max(
+        0,
+        (typeof post.bookmarkCount === "number" ? post.bookmarkCount : 0) +
+          delta,
+      );
+      posts.set(postId, { ...post, bookmarkCount: nextCount });
+      return {
+        postId,
+        state: bookmarked ? "BOOKMARKED" : "UNBOOKMARKED",
+        bookmarkCount: nextCount,
+      };
+    },
+    async recordPostShare(postId, channel, runtime): Promise<JsonRecord> {
+      const userId = requireAuth(runtime.principal);
+      const post = posts.get(postId);
+      if (!post || post.status === "DELETED")
+        throw new CommunityHttpError(
+          404,
+          "COMMUNITY_POST_NOT_FOUND",
+          "게시글을 찾을 수 없습니다.",
+        );
+      const key = `${postId}:${userId}:${channel}`;
+      const firstShare = !shares.has(key);
+      shares.add(key);
+      const nextCount =
+        (typeof post.shareCount === "number" ? post.shareCount : 0) +
+        (firstShare ? 1 : 0);
+      posts.set(postId, { ...post, shareCount: nextCount });
+      return {
+        postId,
+        channel,
+        shareCount: nextCount,
       };
     },
     async listComments(postId, page): Promise<CommunityListResult> {
@@ -1248,6 +1365,44 @@ async function dispatchCommunityRoute<TEnv>(
     return jsonResponse(runtime, 200, { data });
   }
 
+  if (method === "POST" && relativePath === "/bookmarks") {
+    const input = bookmarkInput(await parseJsonBody(runtime.request));
+    const data = await repository.setPostBookmark(
+      input.postId,
+      input.enabled,
+      runtime,
+    );
+    await emit(runtime, {
+      event: "community_post_bookmarked",
+      requestId: runtime.requestId,
+      userId: runtime.principal.userId,
+      targetType: "BOOKMARK",
+      targetId: input.postId,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    return jsonResponse(runtime, 200, { data });
+  }
+
+  if (method === "POST" && relativePath === "/shares") {
+    const input = shareInput(await parseJsonBody(runtime.request));
+    const data = await repository.recordPostShare(
+      input.postId,
+      input.channel,
+      runtime,
+    );
+    await emit(runtime, {
+      event: "community_post_shared",
+      requestId: runtime.requestId,
+      userId: runtime.principal.userId,
+      targetType: "SHARE",
+      targetId: input.postId,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    return jsonResponse(runtime, 201, { data });
+  }
+
   match = matchRoute(relativePath, /^\/posts\/([^/]+)\/comments$/);
   if (method === "GET" && match) {
     return jsonResponse(runtime, 200, {
@@ -1459,6 +1614,8 @@ export const communityRoutesManifest = Object.freeze({
     "DELETE /posts/{postId}",
     "POST /posts/{postId}/like",
     "DELETE /posts/{postId}/like",
+    "POST /bookmarks",
+    "POST /shares",
     "GET /posts/{postId}/comments",
     "POST /posts/{postId}/comments",
     "PATCH /comments/{commentId}",
@@ -1491,6 +1648,7 @@ export function assertCommunityRoutesCompleteness(): {
     "post_list_detail_create_update_delete",
     "comment_list_create_update_delete",
     "like_unlike_reaction",
+    "bookmark_and_share_actions",
     "post_and_comment_report",
     "my_posts_and_my_comments",
     "auth_context_compatible",

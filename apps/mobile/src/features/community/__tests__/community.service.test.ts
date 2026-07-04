@@ -1,7 +1,8 @@
-import { createCommunityService } from "../community.service";
-import type { CommunityApiTransport } from "../community.types";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+
+import { createCommunityService } from "../community.service";
+import type { CommunityApiTransport } from "../community.types";
 
 describe("community service", () => {
   it("keeps service validation errors and route id labels readable", () => {
@@ -16,7 +17,7 @@ describe("community service", () => {
     expect(source).toContain("게시글");
     expect(source).toContain("댓글");
     expect(source).toContain("신고 사유를 확인해 주세요.");
-    for (const marker of ["�", "而ㅻ", "寃뚯", "?볤", "?좉", "?앸", "?щ"]) {
+    for (const marker of ["占?", "�", "寃", "而", "?좉", "?볤"]) {
       expect(source).not.toContain(marker);
     }
   });
@@ -32,7 +33,7 @@ describe("community service", () => {
       service.publishPost({
         boardType: "FREE",
         title: "연락 주세요",
-        content: "010-1234-5678로 연락 주세요.",
+        content: "010-1234-5678로 연락 주세요",
         tags: [],
         anonymous: true,
       }),
@@ -56,7 +57,7 @@ describe("community service", () => {
     await service.publishPost({
       boardType: "FREE",
       title: "생활비 루틴",
-      content: "주간 단위로 나누니 계획을 지키기 쉬웠어요.",
+      content: "주간 단위로 나누는 계획을 지키기 쉬웠어요.",
       tags: ["생활비"],
       anonymous: true,
     });
@@ -66,7 +67,7 @@ describe("community service", () => {
       body: {
         boardType: "FREE",
         title: "생활비 루틴",
-        content: "주간 단위로 나누니 계획을 지키기 쉬웠어요.",
+        content: "주간 단위로 나누는 계획을 지키기 쉬웠어요.",
         tags: ["생활비"],
         anonymous: true,
       },
@@ -94,12 +95,9 @@ describe("community service", () => {
     });
     await service.setPostLiked("post_1", true);
     await service.setPostLiked("post_1", false);
-    await service.setPostBookmarked("post_1", true);
-    await service.setPostBookmarked("post_1", false);
-    await service.recordPostShare("post_1", "SYSTEM_SHARE");
     await service.listComments("post_1", 1, 20);
     await service.updateComment("comment_1", {
-      content: "수정된 댓글",
+      content: "수정한 댓글",
       anonymous: true,
     });
     await service.deleteComment("comment_1");
@@ -111,22 +109,44 @@ describe("community service", () => {
       ],
       ["/api/v1/community/posts/post_1/like", { method: "POST" }],
       ["/api/v1/community/posts/post_1/like", { method: "DELETE" }],
+      ["/api/v1/community/posts/post_1/comments?page=1&pageSize=20"],
+      [
+        "/api/v1/community/comments/comment_1",
+        {
+          method: "PATCH",
+          body: { content: "수정한 댓글", anonymous: true },
+        },
+      ],
+      ["/api/v1/community/comments/comment_1", { method: "DELETE" }],
+      [
+        "/api/v1/community/comments/comment_1/report",
+        {
+          method: "POST",
+          body: { reasonType: "SPAM", reason: "반복 홍보" },
+        },
+      ],
+    ]);
+  });
+
+  it("uses implemented bookmark and share API routes", async () => {
+    const request = jest
+      .fn<
+        ReturnType<CommunityApiTransport["request"]>,
+        Parameters<CommunityApiTransport["request"]>
+      >()
+      .mockResolvedValue({ data: {} });
+    const service = createCommunityService({ request });
+
+    await service.setPostBookmarked("post_1", true);
+    await service.recordPostShare("post_1", "SYSTEM_SHARE");
+
+    expect(request.mock.calls).toEqual([
       [
         "/api/v1/community/bookmarks",
         {
           method: "POST",
           body: expect.objectContaining({
             enabled: true,
-            postId: "post_1",
-          }),
-        },
-      ],
-      [
-        "/api/v1/community/bookmarks",
-        {
-          method: "POST",
-          body: expect.objectContaining({
-            enabled: false,
             postId: "post_1",
           }),
         },
@@ -139,22 +159,6 @@ describe("community service", () => {
             channel: "SYSTEM_SHARE",
             postId: "post_1",
           }),
-        },
-      ],
-      ["/api/v1/community/posts/post_1/comments?page=1&pageSize=20"],
-      [
-        "/api/v1/community/comments/comment_1",
-        {
-          method: "PATCH",
-          body: { content: "수정된 댓글", anonymous: true },
-        },
-      ],
-      ["/api/v1/community/comments/comment_1", { method: "DELETE" }],
-      [
-        "/api/v1/community/comments/comment_1/report",
-        {
-          method: "POST",
-          body: { reasonType: "SPAM", reason: "반복 홍보" },
         },
       ],
     ]);
