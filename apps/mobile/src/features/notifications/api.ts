@@ -107,6 +107,22 @@ function isIsoTimestamp(value: unknown): value is string {
   return typeof value === "string" && !Number.isNaN(Date.parse(value));
 }
 
+function isSafeNotificationId(value: string): boolean {
+  return /^[A-Za-z0-9_-]+$/u.test(value.trim());
+}
+
+function isSafeDeviceId(value: string): boolean {
+  return /^[A-Za-z0-9_.:-]+$/u.test(value.trim());
+}
+
+function invalidNotificationsResponse(): never {
+  throw new NotificationsApiError(
+    0,
+    "NOTIFICATION_INVALID_RESPONSE",
+    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+  );
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ??
@@ -171,11 +187,7 @@ function normalizeType(value: unknown): NotificationType {
   ) {
     return value as NotificationType;
   }
-  throw new NotificationsApiError(
-    0,
-    "NOTIFICATION_INVALID_RESPONSE",
-    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-  );
+  return invalidNotificationsResponse();
 }
 
 function normalizePriority(value: unknown): NotificationPriority {
@@ -185,11 +197,7 @@ function normalizePriority(value: unknown): NotificationPriority {
   ) {
     return value as NotificationPriority;
   }
-  throw new NotificationsApiError(
-    0,
-    "NOTIFICATION_INVALID_RESPONSE",
-    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-  );
+  return invalidNotificationsResponse();
 }
 
 function normalizeStatus(value: unknown): NotificationStatus {
@@ -199,11 +207,7 @@ function normalizeStatus(value: unknown): NotificationStatus {
   ) {
     return value as NotificationStatus;
   }
-  throw new NotificationsApiError(
-    0,
-    "NOTIFICATION_INVALID_RESPONSE",
-    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-  );
+  return invalidNotificationsResponse();
 }
 
 function normalizeChannels(value: unknown): readonly NotificationChannel[] {
@@ -218,11 +222,7 @@ function normalizeChannels(value: unknown): readonly NotificationChannel[] {
       NOTIFICATION_CHANNELS.has(item as NotificationChannel),
     );
   if (!channels.length) {
-    throw new NotificationsApiError(
-      0,
-      "NOTIFICATION_INVALID_RESPONSE",
-      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-    );
+    return invalidNotificationsResponse();
   }
   return channels;
 }
@@ -230,11 +230,7 @@ function normalizeChannels(value: unknown): readonly NotificationChannel[] {
 function normalizeNullableTimestamp(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (isIsoTimestamp(value)) return value;
-  throw new NotificationsApiError(
-    0,
-    "NOTIFICATION_INVALID_RESPONSE",
-    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-  );
+  return invalidNotificationsResponse();
 }
 
 function normalizeMetadata(value: unknown): Readonly<Record<string, unknown>> {
@@ -251,15 +247,11 @@ function normalizeMetadata(value: unknown): Readonly<Record<string, unknown>> {
 
 function normalizeNotificationItem(value: unknown): NotificationItem {
   if (!isRecord(value)) {
-    throw new NotificationsApiError(
-      0,
-      "NOTIFICATION_INVALID_RESPONSE",
-      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-    );
+    return invalidNotificationsResponse();
   }
   if (
     typeof value.notificationId !== "string" ||
-    !value.notificationId ||
+    !isSafeNotificationId(value.notificationId) ||
     typeof value.title !== "string" ||
     !value.title ||
     typeof value.message !== "string" ||
@@ -267,15 +259,11 @@ function normalizeNotificationItem(value: unknown): NotificationItem {
     value.sensitiveFinancialDataExposed !== false ||
     value.adTargetingSeparated !== true
   ) {
-    throw new NotificationsApiError(
-      0,
-      "NOTIFICATION_INVALID_RESPONSE",
-      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-    );
+    return invalidNotificationsResponse();
   }
 
   return {
-    notificationId: value.notificationId,
+    notificationId: value.notificationId.trim(),
     type: normalizeType(value.type),
     title: value.title,
     message: value.message,
@@ -480,11 +468,7 @@ function normalizeDevicePlatform(value: unknown): NotificationDevicePlatform {
   ) {
     return value as NotificationDevicePlatform;
   }
-  throw new NotificationsApiError(
-    0,
-    "NOTIFICATION_INVALID_RESPONSE",
-    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-  );
+  return invalidNotificationsResponse();
 }
 
 function normalizeDeviceStatus(value: unknown): NotificationDeviceStatus {
@@ -494,38 +478,26 @@ function normalizeDeviceStatus(value: unknown): NotificationDeviceStatus {
   ) {
     return value as NotificationDeviceStatus;
   }
-  throw new NotificationsApiError(
-    0,
-    "NOTIFICATION_INVALID_RESPONSE",
-    NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-  );
+  return invalidNotificationsResponse();
 }
 
 function normalizeNotificationDevice(value: unknown): NotificationDevice {
   if (!isRecord(value)) {
-    throw new NotificationsApiError(
-      0,
-      "NOTIFICATION_INVALID_RESPONSE",
-      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-    );
+    return invalidNotificationsResponse();
   }
   if (
     typeof value.deviceId !== "string" ||
-    !value.deviceId ||
+    !isSafeDeviceId(value.deviceId) ||
     value.pushTokenHashOnly !== true ||
     "pushToken" in value ||
     !isIsoTimestamp(value.registeredAt) ||
     !isIsoTimestamp(value.updatedAt)
   ) {
-    throw new NotificationsApiError(
-      0,
-      "NOTIFICATION_INVALID_RESPONSE",
-      NOTIFICATIONS_SAFE_ERROR_MESSAGE,
-    );
+    return invalidNotificationsResponse();
   }
 
   return {
-    deviceId: value.deviceId,
+    deviceId: value.deviceId.trim(),
     platform: normalizeDevicePlatform(value.platform),
     pushTokenHashOnly: true,
     pushTokenPreview:

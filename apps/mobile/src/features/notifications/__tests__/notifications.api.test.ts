@@ -436,4 +436,50 @@ describe("notifications api", () => {
       code: "NOTIFICATION_INVALID_RESPONSE",
     });
   });
+
+  it("rejects invalid notification and device ids returned by the server", async () => {
+    const notificationApi = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...serverNotification,
+                notificationId: "../ntf_budget_warning",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "web",
+    });
+    const deviceApi = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: [
+            {
+              deviceId: "device_android_1\r\nAuthorization",
+              platform: "ANDROID",
+              pushTokenHashOnly: true,
+              pushTokenPreview: "ExponentPushToken[abc***",
+              status: "ACTIVE",
+              registeredAt: "2026-07-02T09:40:00.000Z",
+              updatedAt: "2026-07-02T09:40:00.000Z",
+            },
+          ],
+        }),
+      platform: "android",
+    });
+
+    await expect(notificationApi.list()).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_RESPONSE",
+    });
+    await expect(deviceApi.listDevices()).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_RESPONSE",
+    });
+  });
 });
