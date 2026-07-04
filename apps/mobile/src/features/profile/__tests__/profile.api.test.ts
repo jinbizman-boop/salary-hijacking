@@ -514,6 +514,50 @@ describe("profile api", () => {
     );
   });
 
+  it("rejects support tickets with raw personal or financial values before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} }, 202);
+      },
+      platform: "android",
+    });
+
+    const unsafeRequests = [
+      {
+        category: "ACCOUNT" as const,
+        subject: "연락처 확인",
+        message: "답변은 user@example.com 또는 010-1234-5678로 주세요.",
+      },
+      {
+        category: "PAYMENT" as const,
+        subject: "결제 카드 확인",
+        message: "카드 1234-5678-9012-3456로 결제했어요.",
+      },
+      {
+        category: "PRIVACY" as const,
+        subject: "급여 문의",
+        message:
+          "이번 달 급여 2,700,000원과 계좌 110-123-456789를 확인해 주세요.",
+      },
+      {
+        category: "BUG" as const,
+        subject: "토큰 문의",
+        message:
+          "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+      },
+    ];
+
+    for (const request of unsafeRequests) {
+      await expect(api.createSupportTicket(request)).rejects.toMatchObject({
+        code: "PROFILE_INVALID_SUPPORT_TICKET_REQUEST",
+      });
+    }
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects unsafe profile responses before MY screen consumes them", async () => {
     const api = createProfileApi({
       baseUrl: "https://api.salaryhijacking.com",

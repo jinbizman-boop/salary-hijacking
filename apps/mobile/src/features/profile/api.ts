@@ -71,6 +71,28 @@ const SUPPORT_TICKET_STATUSES = new Set<ProfileSupportTicket["status"]>([
   "ANSWERED",
   "CLOSED",
 ]);
+const RAW_EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu;
+const RAW_PHONE_PATTERN = /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u;
+const RAW_CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b/u;
+const RAW_ACCOUNT_PATTERN =
+  /(?:계좌|account)\s*(?:번호)?\s*[:：\-]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu;
+const RAW_KRW_PATTERN =
+  /(?:(?:급여|월급|소득|수입|지출|저축|예산|금액)\s*)?(?:₩\s*)?(?:\d{1,3}(?:,\d{3})+|\d{6,})\s*원/u;
+const RAW_TOKEN_PATTERN =
+  /\b(token|authorization|bearer|session|refresh|push|fcm)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu;
+const RAW_JWT_PATTERN =
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u;
+const SUPPORT_TEXT_FORBIDDEN_PATTERN =
+  /salary|income|expense|saving|hijack|token|email|phone|card|accountNumber/iu;
+const SUPPORT_RAW_VALUE_PATTERNS = [
+  RAW_EMAIL_PATTERN,
+  RAW_PHONE_PATTERN,
+  RAW_CARD_PATTERN,
+  RAW_ACCOUNT_PATTERN,
+  RAW_KRW_PATTERN,
+  RAW_TOKEN_PATTERN,
+  RAW_JWT_PATTERN,
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -487,9 +509,8 @@ function validSupportTicketRequest(
     value.subject.length <= 80 &&
     nonEmptyString(value.message) &&
     value.message.length <= 1_000 &&
-    !/salary|income|expense|saving|hijack|token|email|phone|card|accountNumber/iu.test(
-      text,
-    )
+    !SUPPORT_TEXT_FORBIDDEN_PATTERN.test(text) &&
+    !SUPPORT_RAW_VALUE_PATTERNS.some((pattern) => pattern.test(text))
   );
 }
 
@@ -862,10 +883,12 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     createSupportTicket(
       supportRequest: ProfileSupportTicketRequest,
     ): Promise<ProfileSupportTicket> {
-      return requestSupportTicket(PROFILE_SUPPORT_TICKETS_PATH, {
-        body: supportTicketPayload(supportRequest),
-        method: "POST",
-      });
+      return Promise.resolve().then(() =>
+        requestSupportTicket(PROFILE_SUPPORT_TICKETS_PATH, {
+          body: supportTicketPayload(supportRequest),
+          method: "POST",
+        }),
+      );
     },
   };
 }
