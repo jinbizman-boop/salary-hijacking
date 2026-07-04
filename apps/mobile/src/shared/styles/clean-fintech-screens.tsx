@@ -1243,6 +1243,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           <TextInput
             accessibilityLabel="회원가입 이메일"
             autoCapitalize="none"
+            accessibilityState={{ disabled: submitting }}
             editable={!submitting}
             inputMode="email"
             onChangeText={setEmail}
@@ -1253,6 +1254,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="회원가입 닉네임"
+            accessibilityState={{ disabled: submitting }}
             editable={!submitting}
             onChangeText={setNickname}
             placeholder="닉네임"
@@ -1262,6 +1264,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="회원가입 비밀번호"
+            accessibilityState={{ disabled: submitting }}
             editable={!submitting}
             onChangeText={setPassword}
             placeholder="비밀번호"
@@ -6254,6 +6257,7 @@ function LoginScreen(): React.ReactElement {
           <TextInput
             accessibilityLabel="이메일"
             autoCapitalize="none"
+            accessibilityState={{ disabled: submitting }}
             editable={!submitting}
             inputMode="email"
             onChangeText={setEmail}
@@ -6264,6 +6268,7 @@ function LoginScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="비밀번호"
+            accessibilityState={{ disabled: submitting }}
             editable={!submitting}
             onChangeText={setPassword}
             placeholder="비밀번호"
