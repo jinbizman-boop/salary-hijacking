@@ -3004,6 +3004,11 @@ function SalaryHomeScreen(): React.ReactElement {
     fixedExpenseRowFromServer,
   );
 
+  const setSanitizedExpenseDraft = useCallback((value: string) => {
+    const next = sanitizeKrwIntegerInput(value);
+    if (next !== null) setExpenseDraft(next);
+  }, []);
+
   const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
     if (dailyBudgetSaveInFlightRef.current) return;
     const amount = parseKrwInputAmount(expenseDraft);
@@ -3349,7 +3354,7 @@ function SalaryHomeScreen(): React.ReactElement {
             inputMode="numeric"
             keyboardType="number-pad"
             maxLength={12}
-            onChangeText={setExpenseDraft}
+            onChangeText={setSanitizedExpenseDraft}
             onSubmitEditing={handleAddExpense}
             placeholder="예: 5000"
             placeholderTextColor={theme.color.text.disabled}

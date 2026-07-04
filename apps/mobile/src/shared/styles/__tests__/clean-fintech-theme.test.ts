@@ -235,6 +235,23 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps salary home expense and daily budget amount drafts sanitized as KRW integers", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const salaryHomeSource =
+      cleanScreens.match(
+        /function SalaryHomeScreen\(\): React\.ReactElement \{[\s\S]*?function PlanScreen/u,
+      )?.[0] ?? "";
+
+    expect(salaryHomeSource).toContain("setSanitizedExpenseDraft");
+    expect(salaryHomeSource).toContain("sanitizeKrwIntegerInput(value)");
+    expect(salaryHomeSource).toContain(
+      "onChangeText={setSanitizedExpenseDraft}",
+    );
+    expect(salaryHomeSource).not.toContain("onChangeText={setExpenseDraft}");
+  });
+
   it("keeps salary home variable expenses hydrated, editable, and deletable through the server API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
