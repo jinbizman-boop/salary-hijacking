@@ -143,6 +143,20 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain(".completeOnboarding()");
   });
 
+  it("keeps onboarding focused on concrete payroll setup entries", () => {
+    const onboarding = readFileSync(ONBOARDING_SCREEN, "utf8");
+
+    expect(onboarding).toContain("ONBOARDING_SETUP_ENTRIES");
+    expect(onboarding).toContain("초기 설정 체크리스트");
+    expect(onboarding).toContain("급여일과 월급");
+    expect(onboarding).toContain("KRW 정수만 입력");
+    expect(onboarding).toContain("고정지출 먼저 분리");
+    expect(onboarding).toContain("고정저축 먼저 확보");
+    expect(onboarding).toContain("일일 예산으로 생활비 관리");
+    expect(onboarding).toContain("목표: 급여 계획부터 설정하기");
+    expect(onboarding).toContain("목표: 이미 설정했어요");
+  });
+
   it("keeps the verify-email route implemented for protected email gates", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");

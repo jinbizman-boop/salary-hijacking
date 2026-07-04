@@ -17,6 +17,24 @@ const STEPS = [
   "고정지출과 고정저축을 먼저 분리해요.",
   "일일 예산과 생활비 기준을 서버 계산으로 확인해요.",
 ] as const;
+const ONBOARDING_SETUP_ENTRIES = [
+  {
+    description: "KRW 정수만 입력하고 서버 계산으로 예상 납치금액을 확인해요.",
+    title: "급여일과 월급",
+  },
+  {
+    description: "구독, 통신비, 대출처럼 매달 빠지는 돈을 급여 직후 분리해요.",
+    title: "고정지출 먼저 분리",
+  },
+  {
+    description: "비상금과 목표 저축을 먼저 확보하고 남은 돈으로 생활해요.",
+    title: "고정저축 먼저 확보",
+  },
+  {
+    description: "다음 급여일까지 하루에 쓸 수 있는 돈을 매일 확인해요.",
+    title: "일일 예산으로 생활비 관리",
+  },
+] as const;
 
 export default function OnboardingScreen(): React.ReactElement {
   const router = useRouter();
@@ -80,8 +98,21 @@ export default function OnboardingScreen(): React.ReactElement {
           ))}
         </View>
 
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>초기 설정 체크리스트</Text>
+          {ONBOARDING_SETUP_ENTRIES.map((entry) => (
+            <View key={entry.title} style={styles.setupRow}>
+              <View style={styles.setupDot} />
+              <View style={styles.setupTextBox}>
+                <Text style={styles.setupTitle}>{entry.title}</Text>
+                <Text style={styles.setupDescription}>{entry.description}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+
         <Pressable
-          accessibilityLabel="급여 계획 설정 시작"
+          accessibilityLabel="목표: 급여 계획부터 설정하기"
           accessibilityRole="button"
           disabled={submitting !== null}
           onPress={() => finishOnboarding("/plan")}
@@ -93,7 +124,7 @@ export default function OnboardingScreen(): React.ReactElement {
         </Pressable>
 
         <Pressable
-          accessibilityLabel="급여 홈으로 이동"
+          accessibilityLabel="목표: 이미 설정했어요"
           accessibilityRole="button"
           disabled={submitting !== null}
           onPress={() => finishOnboarding("/salary")}
@@ -117,6 +148,7 @@ export function assertOnboardingScreenCompleteness(): {
     "/onboarding",
     "/plan",
     "/salary",
+    "ONBOARDING_SETUP_ENTRIES",
     "createMobileProfileApi",
     "completeOnboarding",
     "finishOnboarding",
@@ -178,6 +210,7 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 16,
   },
+  cardTitle: { color: "#202327", fontSize: 17, fontWeight: "900" },
   stepRow: { alignItems: "center", flexDirection: "row", gap: 12 },
   stepNumber: {
     alignItems: "center",
@@ -189,6 +222,17 @@ const styles = StyleSheet.create({
   },
   stepNumberText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
   stepText: { color: "#202327", flex: 1, fontSize: 15, lineHeight: 22 },
+  setupDescription: { color: "#6D737A", fontSize: 13, lineHeight: 19 },
+  setupDot: {
+    backgroundColor: "#209252",
+    borderRadius: 999,
+    height: 8,
+    marginTop: 6,
+    width: 8,
+  },
+  setupRow: { flexDirection: "row", gap: 10 },
+  setupTextBox: { flex: 1, gap: 3 },
+  setupTitle: { color: "#202327", fontSize: 15, fontWeight: "900" },
   primaryButton: {
     alignItems: "center",
     backgroundColor: "#209252",
