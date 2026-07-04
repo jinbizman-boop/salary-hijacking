@@ -1844,6 +1844,10 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
   const [toast, setToast] = useState(
     "내 게시글과 댓글을 서버 기준으로 확인하는 중이에요.",
   );
+  const [myCommunityActionPending, setMyCommunityActionPending] = useState<
+    string | null
+  >(null);
+  const myCommunityActionInFlightRef = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -1897,6 +1901,60 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
     myCommunityRouter.replace("/profile");
   }, [myCommunityRouter]);
 
+  const deleteMyCommunityPost = useCallback(
+    (post: CommunityScreenPost): void => {
+      if (myCommunityActionInFlightRef.current !== null) return;
+      myCommunityActionInFlightRef.current = `post:${post.id}`;
+      setMyCommunityActionPending(`post:${post.id}`);
+      setToast("내 게시글 삭제를 서버에 요청하는 중이에요.");
+      void myCommunityService
+        .deletePost(post.id)
+        .then(() => {
+          setMyCommunityPosts((current) =>
+            current.filter((item) => item.id !== post.id),
+          );
+          setToast("내 게시글이 서버에서 삭제됐어요.");
+        })
+        .catch(() => {
+          setToast(
+            "내 게시글을 삭제하지 못했어요. 권한과 네트워크를 확인해 주세요.",
+          );
+        })
+        .finally(() => {
+          myCommunityActionInFlightRef.current = null;
+          setMyCommunityActionPending(null);
+        });
+    },
+    [myCommunityService],
+  );
+
+  const deleteMyCommunityComment = useCallback(
+    (comment: CommunityComment): void => {
+      if (myCommunityActionInFlightRef.current !== null) return;
+      myCommunityActionInFlightRef.current = `comment:${comment.id}`;
+      setMyCommunityActionPending(`comment:${comment.id}`);
+      setToast("내 댓글 삭제를 서버에 요청하는 중이에요.");
+      void myCommunityService
+        .deleteComment(comment.id)
+        .then(() => {
+          setMyCommunityComments((current) =>
+            current.filter((item) => item.id !== comment.id),
+          );
+          setToast("내 댓글이 서버에서 삭제됐어요.");
+        })
+        .catch(() => {
+          setToast(
+            "내 댓글을 삭제하지 못했어요. 권한과 네트워크를 확인해 주세요.",
+          );
+        })
+        .finally(() => {
+          myCommunityActionInFlightRef.current = null;
+          setMyCommunityActionPending(null);
+        });
+    },
+    [myCommunityService],
+  );
+
   return (
     <AppScreen title="내 게시글 관리" subtitle="내 커뮤니티 활동">
       <Toast message={toast} />
@@ -1906,11 +1964,23 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
           <StatusPill label={`${myCommunityPosts.length} posts`} />
         </View>
         {myCommunityPosts.map((post) => (
-          <CommunityPostRow
-            key={post.id}
-            onPress={() => openManagedPost(post)}
-            post={post}
-          />
+          <View key={post.id} style={styles.detailCardRow}>
+            <View style={styles.flex}>
+              <CommunityPostRow
+                onPress={() => openManagedPost(post)}
+                post={post}
+              />
+            </View>
+            <SmallButton
+              disabled={myCommunityActionPending !== null}
+              label={
+                myCommunityActionPending === `post:${post.id}`
+                  ? "삭제 중"
+                  : "삭제"
+              }
+              onPress={() => deleteMyCommunityPost(post)}
+            />
+          </View>
         ))}
       </SectionCard>
       <SectionCard>
@@ -1919,17 +1989,29 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
           <StatusPill label={`${myCommunityComments.length} comments`} />
         </View>
         {myCommunityComments.map((comment) => (
-          <ListRow
-            icon="💬"
-            key={comment.id}
-            meta={`${formatNoticeDate(comment.createdAt)} · rawFinancialDataExposed=${String(
-              comment.rawFinancialDataExposed,
-            )}`}
-            onPress={() =>
-              myCommunityRouter.push(`/community/${comment.postId}`)
-            }
-            title={comment.content}
-          />
+          <View key={comment.id} style={styles.detailCardRow}>
+            <View style={styles.flex}>
+              <ListRow
+                icon="💬"
+                meta={`${formatNoticeDate(comment.createdAt)} · rawFinancialDataExposed=${String(
+                  comment.rawFinancialDataExposed,
+                )}`}
+                onPress={() =>
+                  myCommunityRouter.push(`/community/${comment.postId}`)
+                }
+                title={comment.content}
+              />
+            </View>
+            <SmallButton
+              disabled={myCommunityActionPending !== null}
+              label={
+                myCommunityActionPending === `comment:${comment.id}`
+                  ? "삭제 중"
+                  : "삭제"
+              }
+              onPress={() => deleteMyCommunityComment(comment)}
+            />
+          </View>
         ))}
       </SectionCard>
       <SmallButton label="MY로 돌아가기" onPress={closeMyCommunityScreen} />

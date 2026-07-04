@@ -1488,6 +1488,38 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps MY community management deletions persisted through the server API", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myCommunitySource =
+      cleanScreens.match(
+        /export function CleanFintechMyCommunityScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechPostDetailScreen/u,
+      )?.[0] ?? "";
+
+    expect(myCommunitySource).toContain("myCommunityActionPending");
+    expect(myCommunitySource).toContain("myCommunityActionInFlightRef");
+    expect(myCommunitySource).toContain("deleteMyCommunityPost");
+    expect(myCommunitySource).toContain("deleteMyCommunityComment");
+    expect(myCommunitySource).toContain(".deletePost(post.id)");
+    expect(myCommunitySource).toContain(".deleteComment(comment.id)");
+    expect(myCommunitySource).toMatch(
+      /setMyCommunityPosts\(\(current\)\s*=>\s*current\.filter/u,
+    );
+    expect(myCommunitySource).toMatch(
+      /setMyCommunityComments\(\(current\)\s*=>\s*current\.filter/u,
+    );
+    expect(myCommunitySource).toContain(
+      "myCommunityActionInFlightRef.current = `post:${post.id}`",
+    );
+    expect(myCommunitySource).toContain(
+      "myCommunityActionInFlightRef.current = `comment:${comment.id}`",
+    );
+    expect(myCommunitySource).toContain(
+      "disabled={myCommunityActionPending !== null}",
+    );
+  });
+
   it("keeps community screen hydrated from the server feed service before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
