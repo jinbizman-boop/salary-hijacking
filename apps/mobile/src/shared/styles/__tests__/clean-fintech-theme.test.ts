@@ -884,8 +884,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "setNotificationRowActionPendingId(`archive:${item.id}`)",
     );
     expect(cleanScreens).toContain(
-      "finally(() => setNotificationRowActionPendingId(null))",
+      "notificationRowActionInFlightRef.current = null",
     );
+    expect(cleanScreens).toContain("setNotificationRowActionPendingId(null)");
   });
 
   it("keeps notification delete actions persisted through the server API", () => {
@@ -908,6 +909,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(cleanScreens).toContain(
       "disabled={notificationRowActionPendingId !== null}",
+    );
+  });
+
+  it("prevents duplicate notification archive and delete mutations while one row action is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const notificationMutationSource =
+      cleanScreens.match(
+        /const archiveNotification = useCallback\([\s\S]*?const updateNotificationPreference = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("notificationRowActionInFlightRef");
+    expect(notificationMutationSource).toContain(
+      "if (notificationRowActionInFlightRef.current !== null) return",
+    );
+    expect(notificationMutationSource).toContain(
+      "notificationRowActionInFlightRef.current = `archive:${item.id}`",
+    );
+    expect(notificationMutationSource).toContain(
+      "notificationRowActionInFlightRef.current = `delete:${item.id}`",
+    );
+    expect(notificationMutationSource).toContain(
+      "notificationRowActionInFlightRef.current = null",
     );
   });
 
