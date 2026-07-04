@@ -156,6 +156,17 @@ function assertPresent(value: string, code: string): string {
   return normalized;
 }
 
+function assertRequiredConsent(value: boolean): true {
+  if (value !== true) {
+    throw new AuthApiError(
+      0,
+      "AUTH_REQUIRED_CONSENT_MISSING",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return true;
+}
+
 function hasUnsafeResponseFlag(value: unknown): boolean {
   if (!isRecord(value)) return false;
   if (UNSAFE_RESPONSE_FLAGS.some((flag) => value[flag] === true)) return true;
@@ -535,8 +546,8 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         email: assertPresent(request.email, "AUTH_EMAIL_REQUIRED"),
         nickname: assertPresent(request.nickname, "AUTH_NICKNAME_REQUIRED"),
         password: assertPresent(request.password, "AUTH_PASSWORD_REQUIRED"),
-        privacyAccepted: request.privacyAccepted === true,
-        termsAccepted: request.termsAccepted === true,
+        privacyAccepted: assertRequiredConsent(request.privacyAccepted),
+        termsAccepted: assertRequiredConsent(request.termsAccepted),
       };
       appendOptional(body, "marketingAccepted", request.marketingAccepted);
       appendOptional(body, "deviceId", request.deviceId);

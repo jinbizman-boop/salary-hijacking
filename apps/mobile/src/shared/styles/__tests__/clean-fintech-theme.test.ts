@@ -133,6 +133,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
 
     expect(tabs).toContain("급여납치 하단 탭 내비게이션");
+    expect(tabs).not.toMatch(/湲됱|怨꾪|而ㅻ|덊떚/u);
     expect(tabs).toContain("#209252");
     expect(tabs).toContain("#ADB3B8");
     expect(tabs).toContain("#FFFFFF");

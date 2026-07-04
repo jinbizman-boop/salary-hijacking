@@ -188,6 +188,42 @@ describe("auth api", () => {
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("new.access.jwt");
   });
 
+  it("rejects signup without required legal consents before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.register({
+        email: "new@example.com",
+        nickname: "신규 사용자",
+        password: "new-password",
+        privacyAccepted: true,
+        termsAccepted: false,
+      }),
+    ).rejects.toMatchObject({
+      code: "AUTH_REQUIRED_CONSENT_MISSING",
+    });
+    await expect(
+      api.register({
+        email: "new@example.com",
+        nickname: "신규 사용자",
+        password: "new-password",
+        privacyAccepted: false,
+        termsAccepted: true,
+      }),
+    ).rejects.toMatchObject({
+      code: "AUTH_REQUIRED_CONSENT_MISSING",
+    });
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects unsafe auth responses before storing a token", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
