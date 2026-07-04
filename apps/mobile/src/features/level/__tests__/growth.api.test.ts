@@ -200,6 +200,49 @@ describe("growth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects unsafe growth task list options before URL construction", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({
+          data: { items: [], page: 1, pageSize: 20, total: 0 },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.listTasks({
+        page: 0,
+        pageSize: 20,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_TASK_LIST_OPTIONS" });
+    await expect(
+      api.listTasks({
+        page: 1,
+        pageSize: 101,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_TASK_LIST_OPTIONS" });
+    await expect(
+      api.listTasks({
+        page: 1,
+        pageSize: 20,
+        status: "ACTIVE\nAuthorization" as never,
+      }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_TASK_LIST_OPTIONS" });
+    await expect(
+      api.listTasks({
+        page: 1,
+        pageSize: 20,
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_TASK_LIST_OPTIONS" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("completes level detail content through the server growth API without exposing sensitive data", async () => {
     const calls: Request[] = [];
     const api = createGrowthApi({

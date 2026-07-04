@@ -364,6 +364,32 @@ function validContentCompleteRequest(
   );
 }
 
+function normalizeTaskListOptions(
+  options: Parameters<GrowthApiClient["listTasks"]>[0] = {},
+): Readonly<{ page: number; pageSize: number; status: GrowthTaskStatus }> {
+  const record = options as Record<string, unknown>;
+  const page = options.page ?? 1;
+  const pageSize = options.pageSize ?? 20;
+  const status = options.status ?? "ACTIVE";
+  if (
+    !hasOnlyKeys(record, ["page", "pageSize", "status"]) ||
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    page > 10_000 ||
+    !Number.isSafeInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 100 ||
+    !TASK_STATUSES.has(status)
+  ) {
+    throw new GrowthApiError(
+      0,
+      "GROWTH_INVALID_TASK_LIST_OPTIONS",
+      GROWTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return { page, pageSize, status };
+}
+
 function normalizeProgress(value: unknown): GrowthTaskProgressResult {
   if (!isRecord(value) || !isRecord(value.data)) {
     return invalidResponse();
@@ -524,11 +550,12 @@ export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
     },
 
     async listTasks(options = {}): Promise<GrowthTaskListResult> {
+      const { page, pageSize, status } = normalizeTaskListOptions(options);
       const params = new URLSearchParams({
-        page: String(options.page ?? 1),
-        pageSize: String(options.pageSize ?? 20),
+        page: String(page),
+        pageSize: String(pageSize),
       });
-      params.set("status", options.status ?? "ACTIVE");
+      params.set("status", status);
       return normalizeTaskList(await request(`${GROWTH_TASKS_PATH}?${params}`));
     },
 
