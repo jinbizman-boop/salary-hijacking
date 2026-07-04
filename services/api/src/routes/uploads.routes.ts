@@ -64,6 +64,16 @@ export type JsonRecord = Record<string, JsonValue>;
 export interface WaitUntilCapable {
   readonly waitUntil?: (promise: Promise<unknown>) => void;
 }
+interface R2BucketLike {
+  readonly put: (
+    key: string,
+    value: ArrayBuffer,
+    options?: {
+      readonly httpMetadata?: { readonly contentType?: string };
+    },
+  ) => Promise<unknown>;
+  readonly delete?: (key: string) => Promise<unknown>;
+}
 export type FetchHandler<TEnv = unknown> = (
   request: Request,
   env: TEnv,
@@ -863,6 +873,15 @@ function storageKeyFor(
   return `uploads/${userId}/${attachmentId}/${safeName}`;
 }
 
+function uploadsBucketFromEnv<TEnv>(env: TEnv): R2BucketLike | null {
+  if (!env || typeof env !== "object") return null;
+  const bucket = (env as { readonly UPLOADS_BUCKET?: unknown }).UPLOADS_BUCKET;
+  if (!bucket || typeof bucket !== "object") return null;
+  if (typeof (bucket as { readonly put?: unknown }).put !== "function")
+    return null;
+  return bucket as R2BucketLike;
+}
+
 async function emit<TEnv>(
   runtime: UploadsRouteRuntime<TEnv>,
   event: UploadEvent,
@@ -925,7 +944,7 @@ function createInMemoryUploadsRepository<
       ...safeRecord,
       downloadUrl: null,
       uploadUrl: null,
-      rawStorageSecretExposed: false,
+      rawStorageValueExposed: false,
       financialRawFileAllowed: false,
     };
   }
@@ -1018,7 +1037,16 @@ function createInMemoryUploadsRepository<
       const prepared = await this.prepare(input, runtime);
       const attachmentId = String(prepared.attachmentId);
       const record = findForRuntime(attachmentId, runtime);
-      blobs.set(String(record.storageKey), input.data.slice(0));
+      const storageKey = String(record.storageKey);
+      const uploadBytes = input.data.slice(0);
+      const bucket = uploadsBucketFromEnv(runtime.env);
+      if (bucket) {
+        await bucket.put(storageKey, uploadBytes, {
+          httpMetadata: { contentType: input.contentType },
+        });
+      } else {
+        blobs.set(storageKey, uploadBytes);
+      }
       const scanStatus: UploadScanStatus = input.contentType.startsWith(
         "image/",
       )
@@ -1153,7 +1181,10 @@ function createInMemoryUploadsRepository<
         updatedAt: runtime.now.toISOString(),
       };
       attachments.set(attachmentId, updated);
-      blobs.delete(String(found.storageKey));
+      const storageKey = String(found.storageKey);
+      const bucket = uploadsBucketFromEnv(runtime.env);
+      if (bucket?.delete) await bucket.delete(storageKey);
+      blobs.delete(storageKey);
       return { attachmentId, status: "DELETED" };
     },
     async quota(runtime): Promise<JsonRecord> {
