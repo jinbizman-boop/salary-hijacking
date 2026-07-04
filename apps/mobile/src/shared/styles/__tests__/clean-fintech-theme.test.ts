@@ -604,10 +604,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       loginSource.match(/accessibilityState=\{\{ disabled: submitting \}\}/gu),
     ).toHaveLength(2);
     expect(loginSource.match(/disabled=\{submitting\}/gu)).toHaveLength(3);
+    expect(loginSource).toContain(
+      "accessibilityState={{ disabled: !valid || submitting }}",
+    );
     expect(signupSource.match(/editable=\{!submitting\}/gu)).toHaveLength(3);
     expect(
       signupSource.match(/accessibilityState=\{\{ disabled: submitting \}\}/gu),
     ).toHaveLength(3);
+    expect(signupSource).toContain(
+      "accessibilityState={{ disabled: !valid || submitting }}",
+    );
     expect(signupSource).toMatch(
       /<ToggleRow\s+active=\{agreed\.has\(label\)\}\s+disabled=\{submitting\}/u,
     );

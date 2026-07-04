@@ -1298,6 +1298,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
         </SectionCard>
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ disabled: !valid || submitting }}
           disabled={!valid || submitting}
           onPress={submitSignup}
           style={[
@@ -6295,6 +6296,7 @@ function LoginScreen(): React.ReactElement {
           />
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
             onPress={submitLogin}
             style={[
