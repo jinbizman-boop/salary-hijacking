@@ -102,6 +102,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
+function assertOnlyRequestKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): void {
+  if (!hasOnlyKeys(value, allowedKeys)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_REQUEST_PAYLOAD_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+}
+
 function defaultCorrelationId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `auth-${Date.now().toString(36)}`;
 }
@@ -636,6 +656,12 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
   return {
     async login(request: AuthLoginRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, [
+        "deviceId",
+        "email",
+        "password",
+        "rememberMe",
+      ]);
       const body: Record<string, unknown> = {
         email: normalizeEmail(request.email),
         password: assertLoginPassword(request.password),
@@ -674,6 +700,15 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async register(request: AuthRegisterRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, [
+        "deviceId",
+        "email",
+        "marketingAccepted",
+        "nickname",
+        "password",
+        "privacyAccepted",
+        "termsAccepted",
+      ]);
       const body: Record<string, unknown> = {
         email: normalizeEmail(request.email),
         nickname: assertNickname(request.nickname),
@@ -715,6 +750,10 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async startOAuth(request: AuthOAuthStartRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, [
+        "provider",
+        "redirectUri",
+      ]);
       const pkce = await createOAuthPkcePair();
       const parsed = await get(AUTH_OAUTH_START_PATH, {
         codeChallenge: assertPresent(
@@ -734,6 +773,11 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async completeOAuth(request: AuthOAuthCompleteRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, [
+        "code",
+        "deviceId",
+        "state",
+      ]);
       const state = assertPresent(request.state, "AUTH_OAUTH_STATE_REQUIRED");
       let codeVerifier: string;
       try {
@@ -784,6 +828,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async requestPasswordReset(request: AuthPasswordResetRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, ["email"]);
       const parsed = await post(AUTH_PASSWORD_RESET_PATH, {
         email: normalizeEmail(request.email),
       });
@@ -791,6 +836,10 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async confirmPasswordReset(request: AuthPasswordResetConfirmRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, [
+        "newPassword",
+        "token",
+      ]);
       const parsed = await post(AUTH_PASSWORD_RESET_CONFIRM_PATH, {
         token: assertResetToken(request.token),
         newPassword: assertPasswordPolicy(request.newPassword),
@@ -799,6 +848,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async verifyEmail(request: AuthVerifyEmailRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, ["token"]);
       const parsed = await post(AUTH_VERIFY_EMAIL_PATH, {
         token: assertEmailVerifyToken(request.token),
       });
@@ -806,6 +856,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async requestEmailVerification(request: AuthEmailVerificationRequest) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, ["email"]);
       const parsed = await post(AUTH_VERIFY_EMAIL_RESEND_PATH, {
         email: normalizeEmail(request.email),
       });
@@ -813,6 +864,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
     },
 
     async refresh(request: AuthRefreshRequest = {}) {
+      assertOnlyRequestKeys(request as Record<string, unknown>, ["deviceId"]);
       const body: Record<string, unknown> = {};
       appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
 

@@ -307,6 +307,63 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects unknown auth request fields before they can enter payloads", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>([
+      [
+        `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-unknown-field`,
+        "stored-code-verifier",
+      ],
+    ]);
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+      tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+        deleteItemAsync: async (key) => {
+          stored.delete(key);
+        },
+      },
+    });
+
+    await expect(
+      api.login({
+        email: "user@example.com",
+        password: "server-password",
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "AUTH_REQUEST_PAYLOAD_INVALID" });
+    await expect(
+      api.register({
+        accountNumber: "123-456-789012",
+        email: "new@example.com",
+        nickname: "new user",
+        password: "new-password-1",
+        privacyAccepted: true,
+        termsAccepted: true,
+      } as never),
+    ).rejects.toMatchObject({ code: "AUTH_REQUEST_PAYLOAD_INVALID" });
+    await expect(
+      api.completeOAuth({
+        code: "provider-callback-code",
+        debugToken: "raw-debug-token",
+        state: "oauth-state-unknown-field",
+      } as never),
+    ).rejects.toMatchObject({ code: "AUTH_REQUEST_PAYLOAD_INVALID" });
+    await expect(
+      api.refresh({ rawDeviceIdentifier: "device-raw" } as never),
+    ).rejects.toMatchObject({ code: "AUTH_REQUEST_PAYLOAD_INVALID" });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("registers with required consents and stores the authenticated access token", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
