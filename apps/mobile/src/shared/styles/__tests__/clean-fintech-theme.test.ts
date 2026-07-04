@@ -1682,6 +1682,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("locks settings close navigation while profile or account save is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const settingsSource =
+      cleanScreens.match(
+        /export function CleanFintechSettingsScreen[\s\S]*?export function CleanFintechSupportScreen/u,
+      )?.[0] ?? "";
+
+    expect(settingsSource).toContain("settingsSavePending");
+    expect(settingsSource).toContain(
+      "profileSettingsSaving || accountSettingsSaving",
+    );
+    expect(settingsSource).toContain("if (settingsSavePending) return");
+    expect(settingsSource).toContain(
+      '<SmallButton\n          disabled={settingsSavePending}\n          label="MY로 돌아가기"\n          onPress={closeSettingsScreen}\n        />',
+    );
+  });
+
   it("keeps settings copy aligned with live server saves instead of deferred deployment wording", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

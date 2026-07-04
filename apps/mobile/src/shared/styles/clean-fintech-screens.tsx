@@ -1448,13 +1448,15 @@ export function CleanFintechSettingsScreen({
   const [accountSettingsSaving, setAccountSettingsSaving] = useState(false);
   const profileSettingsSaveInFlightRef = useRef(false);
   const accountSettingsSaveInFlightRef = useRef(false);
+  const settingsSavePending = profileSettingsSaving || accountSettingsSaving;
   const profileSettingsValid =
     profileNickname.trim().length >= 2 &&
     profileDisplayBio.trim().length <= 300 &&
     profileOccupationCategory.trim().length >= 2;
   const closeSettingsScreen = useCallback(() => {
+    if (settingsSavePending) return;
     settingsRouter.replace("/profile");
-  }, [settingsRouter]);
+  }, [settingsRouter, settingsSavePending]);
   const submitProfileSettings = useCallback(() => {
     if (
       kind !== "profile" ||
@@ -1546,7 +1548,11 @@ export function CleanFintechSettingsScreen({
   return (
     <AppScreen title={config.title} subtitle={config.subtitle}>
       <SectionCard>
-        <SmallButton label="MY로 돌아가기" onPress={closeSettingsScreen} />
+        <SmallButton
+          disabled={settingsSavePending}
+          label="MY로 돌아가기"
+          onPress={closeSettingsScreen}
+        />
       </SectionCard>
       {kind === "profile" ? (
         <SectionCard>
