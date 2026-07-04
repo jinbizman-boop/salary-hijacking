@@ -42,7 +42,7 @@ export default function ProfileHubScreen(): React.ReactElement {
               accessibilityLabel={item.label}
               accessibilityRole="button"
               key={item.route}
-              onPress={() => router.replace(item.route as never)}
+              onPress={() => router.push(item.route as never)}
               style={styles.row}
             >
               <Text style={styles.rowTitle}>{item.label}</Text>

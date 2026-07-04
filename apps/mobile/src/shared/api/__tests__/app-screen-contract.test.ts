@@ -69,8 +69,13 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileHub).toContain("ProfileHubScreen");
     expect(profileHub).toContain("/profile/settings");
     expect(profileHub).toContain("/profile/account");
+    expect(profileHub).toContain("/profile/community");
+    expect(profileHub).toContain("/profile/level");
     expect(profileHub).toContain("/profile/support");
+    expect(profileHub).toContain("/profile/notices");
     expect(profileHub).toContain("/salary");
+    expect(profileHub).toContain("router.push(item.route as never)");
+    expect(profileHub).toContain('router.replace("/salary" as never)');
     expect(profileHub).toContain("rawFinancialData=false");
   });
 
