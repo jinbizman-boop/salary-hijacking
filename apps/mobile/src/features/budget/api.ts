@@ -401,7 +401,7 @@ function normalizeVariableExpenseDeleteResult(
 
 function variableExpensePath(expenseId: string): string {
   const id = expenseId.trim();
-  if (!id) {
+  if (!isSafeEntityId(id)) {
     throw new BudgetApiError(
       0,
       "BUDGET_INVALID_VARIABLE_EXPENSE_ID",

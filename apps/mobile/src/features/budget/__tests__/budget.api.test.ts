@@ -752,6 +752,36 @@ describe("budget api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects invalid variable expense path ids before network access", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.updateVariableExpense("vex_edit_1@example.com", {
+        memo: "mobile correction",
+      }),
+    ).rejects.toMatchObject({
+      code: "BUDGET_INVALID_VARIABLE_EXPENSE_ID",
+    });
+
+    await expect(
+      api.deleteVariableExpense("vex_edit_1\r\nAuthorization", {
+        reason: "mobile user deleted variable expense",
+      }),
+    ).rejects.toMatchObject({
+      code: "BUDGET_INVALID_VARIABLE_EXPENSE_ID",
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("records a privacy-safe checked event without financial values", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
