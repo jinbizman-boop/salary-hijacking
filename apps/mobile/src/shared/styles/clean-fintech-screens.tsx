@@ -4541,6 +4541,9 @@ function LevelScreen(): React.ReactElement {
   const [completed, setCompleted] = useState<ReadonlySet<string>>(() =>
     completedMissionIds(fallbackMissions),
   );
+  const [submittingMissionId, setSubmittingMissionId] = useState<string | null>(
+    null,
+  );
   const growthMissionCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [toast, setToast] = useState("서버 LV UP 데이터를 확인하는 중이에요.");
 
@@ -4615,6 +4618,7 @@ function LevelScreen(): React.ReactElement {
 
       if (growthMissionCompletionInFlightRef.current.has(mission.id)) return;
       growthMissionCompletionInFlightRef.current.add(mission.id);
+      setSubmittingMissionId(mission.id);
 
       const occurredAt = new Date().toISOString();
       void growthApi
@@ -4659,6 +4663,7 @@ function LevelScreen(): React.ReactElement {
         })
         .finally(() => {
           growthMissionCompletionInFlightRef.current.delete(mission.id);
+          setSubmittingMissionId(null);
         });
     },
     [
@@ -4701,12 +4706,19 @@ function LevelScreen(): React.ReactElement {
         {visibleMissions.map((mission) => {
           const done =
             completed.has(mission.id) || mission.status === "COMPLETED";
+          const missionPending = submittingMissionId === mission.id;
           return (
             <Pressable
+              accessibilityState={{ disabled: missionPending }}
               accessibilityRole="button"
+              disabled={missionPending}
               key={mission.id}
               onPress={() => openMission(mission, done)}
-              style={[styles.card, done ? styles.softGreen : null]}
+              style={[
+                styles.card,
+                done ? styles.softGreen : null,
+                missionPending ? styles.disabled : null,
+              ]}
             >
               <Text style={styles.cardIcon}>{mission.icon}</Text>
               <Text style={styles.cardTitle}>{mission.title}</Text>

@@ -1204,6 +1204,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("renders LV UP mission completion pending state on the pressed mission card", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+
+    expect(cleanScreens).toContain("submittingMissionId");
+    expect(cleanScreens).toContain("setSubmittingMissionId(mission.id)");
+    expect(cleanScreens).toContain("setSubmittingMissionId(null)");
+    expect(cleanScreens).toContain(
+      "const missionPending = submittingMissionId === mission.id;",
+    );
+    expect(cleanScreens).toContain(
+      "accessibilityState={{ disabled: missionPending }}",
+    );
+    expect(cleanScreens).toContain("disabled={missionPending}");
+    expect(cleanScreens).toContain("missionPending ? styles.disabled : null");
+  });
+
   it("keeps fallback LV UP missions navigating to their detail screens", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
