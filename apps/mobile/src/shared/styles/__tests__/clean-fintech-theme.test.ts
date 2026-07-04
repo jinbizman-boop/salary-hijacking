@@ -586,6 +586,54 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("blocks sensitive raw plan commitment update drafts before server update", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+    const updateFixedSource =
+      planSource.match(
+        /const updatePlanFixedExpense = useCallback\([\s\S]*?const updatePlanSavingsGoal = useCallback/u,
+      )?.[0] ?? "";
+    const updateSavingsSource =
+      planSource.match(
+        /const updatePlanSavingsGoal = useCallback\([\s\S]*?const recordPlanSavingsDeposit = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(updateFixedSource).toMatch(
+      /containsSensitiveCommunityContent\(\s*title,?\s*\)/u,
+    );
+    expect(updateSavingsSource).toMatch(
+      /containsSensitiveCommunityContent\(\s*title,?\s*\)/u,
+    );
+
+    const fixedSensitiveIndex = updateFixedSource.indexOf(
+      "containsSensitiveCommunityContent",
+    );
+    const fixedServerIndex = updateFixedSource.indexOf("updateFixedExpense(");
+    const fixedReturnAfterSensitiveCheck = updateFixedSource
+      .slice(fixedSensitiveIndex, fixedServerIndex)
+      .includes("return;");
+    expect(fixedSensitiveIndex).toBeGreaterThan(-1);
+    expect(fixedServerIndex).toBeGreaterThan(fixedSensitiveIndex);
+    expect(fixedReturnAfterSensitiveCheck).toBe(true);
+
+    const savingsSensitiveIndex = updateSavingsSource.indexOf(
+      "containsSensitiveCommunityContent",
+    );
+    const savingsServerIndex =
+      updateSavingsSource.indexOf("updateSavingsGoal(");
+    const savingsReturnAfterSensitiveCheck = updateSavingsSource
+      .slice(savingsSensitiveIndex, savingsServerIndex)
+      .includes("return;");
+    expect(savingsSensitiveIndex).toBeGreaterThan(-1);
+    expect(savingsServerIndex).toBeGreaterThan(savingsSensitiveIndex);
+    expect(savingsReturnAfterSensitiveCheck).toBe(true);
+  });
+
   it("keeps plan fixed expense and savings amount drafts sanitized as KRW integers", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

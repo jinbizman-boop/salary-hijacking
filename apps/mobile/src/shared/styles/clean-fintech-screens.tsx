@@ -4330,6 +4330,12 @@ function PlanScreen(): React.ReactElement {
         setPlanToast("수정할 고정지출 이름과 KRW 정수 금액을 확인해 주세요.");
         return;
       }
+      if (containsSensitiveCommunityContent(title)) {
+        setPlanToast(
+          "고정지출 이름에는 급여, 계좌, 카드, 연락처, 토큰 같은 민감 정보를 넣지 마세요.",
+        );
+        return;
+      }
 
       planCommitmentUpdateInFlightRef.current = `fixed:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
@@ -4391,6 +4397,12 @@ function PlanScreen(): React.ReactElement {
       );
       if (!title || fixedSaveAmountMinor <= 0) {
         setPlanToast("수정할 고정저축 이름과 KRW 정수 금액을 확인해 주세요.");
+        return;
+      }
+      if (containsSensitiveCommunityContent(title)) {
+        setPlanToast(
+          "고정저축 목표 이름에는 급여, 계좌, 카드, 연락처, 토큰 같은 민감 정보를 넣지 마세요.",
+        );
         return;
       }
 
