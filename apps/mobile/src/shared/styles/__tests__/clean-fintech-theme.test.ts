@@ -829,6 +829,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       )?.[0] ?? "";
 
     expect(forgotSource).toContain("editable={!submitting}");
+    expect(forgotSource).toContain(
+      "accessibilityState={{ disabled: submitting }}",
+    );
     expect(forgotSource).toMatch(
       /const backToLogin = useCallback\(\(\): void => \{\s*if\s*\(\s*submitting\s*\)\s*return;\s*forgotPasswordRouter\.replace\("\/\(auth\)\/login"\)/u,
     );
@@ -836,6 +839,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       /<SmallButton\s+disabled=\{submitting\}\s+label="로그인으로 돌아가기"\s+onPress=\{backToLogin\}/u,
     );
     expect(resetSource.match(/editable=\{!submitting\}/gu)).toHaveLength(2);
+    expect(
+      resetSource.match(/accessibilityState=\{\{ disabled: submitting \}\}/gu),
+    ).toHaveLength(2);
     expect(resetSource).toMatch(
       /const backToResetLogin = useCallback\(\(\) => \{\s*if\s*\(\s*submitting\s*\)\s*return;\s*resetPasswordRouter\.replace\("\/\(auth\)\/login"\)/u,
     );

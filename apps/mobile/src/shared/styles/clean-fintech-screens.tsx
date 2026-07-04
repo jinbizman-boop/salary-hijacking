@@ -5975,6 +5975,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
           <TextInput
             accessibilityLabel="비밀번호 재설정 이메일"
             autoCapitalize="none"
+            accessibilityState={{ disabled: submitting }}
             editable={!submitting}
             inputMode="email"
             onChangeText={setEmail}
@@ -6088,6 +6089,7 @@ export function CleanFintechResetPasswordScreen({
             <>
               <TextInput
                 accessibilityLabel="새 비밀번호"
+                accessibilityState={{ disabled: submitting }}
                 editable={!submitting}
                 onChangeText={setNewPassword}
                 placeholder="새 비밀번호"
@@ -6098,6 +6100,7 @@ export function CleanFintechResetPasswordScreen({
               />
               <TextInput
                 accessibilityLabel="새 비밀번호 확인"
+                accessibilityState={{ disabled: submitting }}
                 editable={!submitting}
                 onChangeText={setConfirmPassword}
                 placeholder="새 비밀번호 확인"
