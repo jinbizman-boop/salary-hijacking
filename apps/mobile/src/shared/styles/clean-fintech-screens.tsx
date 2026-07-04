@@ -2451,7 +2451,18 @@ export function CleanFintechPostDetailScreen({
     if (communityDetailActionBusy || communityShareInFlightRef.current) return;
     communityShareInFlightRef.current = true;
     const targetPostId = activeDetail.post.id;
-    const encodedPostId = encodeURIComponent(targetPostId);
+    const sanitizeCommunitySharePostId = (value: string): string => {
+      const candidate = value.trim();
+      if (
+        !/^[A-Za-z0-9_-]{3,160}$/u.test(candidate) ||
+        containsSensitiveCommunityContent(candidate)
+      ) {
+        return "community-post";
+      }
+      return candidate;
+    };
+    const sharePostId = sanitizeCommunitySharePostId(targetPostId);
+    const encodedPostId = encodeURIComponent(sharePostId);
     const url = `https://salaryhijacking.com/community/${encodedPostId}`;
     const sanitizeCommunityShareTitle = (value: string): string => {
       const candidate = value.trim();
