@@ -2468,6 +2468,8 @@ function SalaryHomeScreen(): React.ReactElement {
   const [prioritizeDailyBudget, setPrioritizeDailyBudget] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
   const [savingDailyBudget, setSavingDailyBudget] = useState(false);
+  const expenseCreateInFlightRef = useRef(false);
+  const dailyBudgetSaveInFlightRef = useRef(false);
   const [uploadedExpenseReceipt, setUploadedExpenseReceipt] =
     useState<UploadAttachment | null>(null);
   const [uploadingExpenseReceipt, setUploadingExpenseReceipt] = useState(false);
@@ -2598,6 +2600,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
 
   const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
+    if (dailyBudgetSaveInFlightRef.current) return;
     const amount = parseKrwInputAmount(expenseDraft);
     if (amount === null) {
       setToast("저장할 오늘 예산을 0보다 큰 KRW 정수로 입력해 주세요.");
@@ -2605,6 +2608,7 @@ function SalaryHomeScreen(): React.ReactElement {
     }
 
     try {
+      dailyBudgetSaveInFlightRef.current = true;
       setSavingDailyBudget(true);
       const response = await budgetApi.saveDailyBudget({
         budgetDate: serverBudgetSnapshot?.date ?? todayDateInSeoul(),
@@ -2621,6 +2625,7 @@ function SalaryHomeScreen(): React.ReactElement {
     } catch {
       setToast("오늘 예산 저장에 실패했어요. 서버 연결 후 다시 시도해 주세요.");
     } finally {
+      dailyBudgetSaveInFlightRef.current = false;
       setSavingDailyBudget(false);
     }
   }, [budgetApi, expenseDraft, serverBudgetSnapshot]);
@@ -2693,6 +2698,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
 
   const handleAddExpense = async (): Promise<void> => {
+    if (expenseCreateInFlightRef.current) return;
     const amount = parseKrwInputAmount(expenseDraft);
     if (amount === null) {
       setToast(
@@ -2712,6 +2718,7 @@ function SalaryHomeScreen(): React.ReactElement {
     setExpenseDraft("");
 
     try {
+      expenseCreateInFlightRef.current = true;
       setSavingExpense(true);
       const result = await budgetApi.createVariableExpense({
         amountMinor: amount,
@@ -2757,6 +2764,7 @@ function SalaryHomeScreen(): React.ReactElement {
         `${formatMoney(amount)}원 지출을 오프라인 미리보기로 반영했어요. 서버 연결 후 다시 동기화가 필요합니다.`,
       );
     } finally {
+      expenseCreateInFlightRef.current = false;
       setSavingExpense(false);
     }
   };

@@ -199,7 +199,40 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("saveSalaryDailyBudget");
     expect(cleanScreens).toContain("budgetApi.saveDailyBudget");
     expect(cleanScreens).toContain("setSavingDailyBudget");
+    expect(cleanScreens).toContain("dailyBudgetSaveInFlightRef");
+    expect(cleanScreens).toContain("dailyBudgetSaveInFlightRef.current");
     expect(cleanScreens).toContain("serverBudgetSnapshot?.budgetId ?? null");
+  });
+
+  it("prevents duplicate salary home expense create and daily budget save requests before React state updates", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const addExpenseSource =
+      cleanScreens.match(
+        /const handleAddExpense = async \(\): Promise<void> => \{[\s\S]*?const updateSalaryVariableExpense = useCallback/u,
+      )?.[0] ?? "";
+    const dailyBudgetSource =
+      cleanScreens.match(
+        /const saveSalaryDailyBudget = useCallback\([\s\S]*?const pickVariableExpenseReceipt = useCallback/u,
+      )?.[0] ?? "";
+
+    expect(addExpenseSource).toContain("expenseCreateInFlightRef");
+    expect(addExpenseSource).toContain("expenseCreateInFlightRef.current");
+    expect(addExpenseSource).toContain(
+      "expenseCreateInFlightRef.current = true",
+    );
+    expect(addExpenseSource).toContain(
+      "expenseCreateInFlightRef.current = false",
+    );
+    expect(dailyBudgetSource).toContain("dailyBudgetSaveInFlightRef");
+    expect(dailyBudgetSource).toContain("dailyBudgetSaveInFlightRef.current");
+    expect(dailyBudgetSource).toContain(
+      "dailyBudgetSaveInFlightRef.current = true",
+    );
+    expect(dailyBudgetSource).toContain(
+      "dailyBudgetSaveInFlightRef.current = false",
+    );
   });
 
   it("keeps salary home variable expenses hydrated, editable, and deletable through the server API", () => {
