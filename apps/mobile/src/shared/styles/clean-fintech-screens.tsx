@@ -2009,6 +2009,7 @@ export function CleanFintechPostDetailScreen({
 
       setServerCommunityDetail({ ...nextDetail, comments: nextComments });
       setServerCommunityComments(nextComments);
+      setLiked(nextDetail.post.likedByMe === true);
       setPostEditTitle(nextDetail.post.title);
       setPostEditContent(nextDetail.content || nextDetail.post.bodyPreview);
       setCommentEditDrafts(
@@ -2024,6 +2025,7 @@ export function CleanFintechPostDetailScreen({
     } catch {
       setServerCommunityDetail(null);
       setServerCommunityComments([]);
+      setLiked(false);
       setPostEditTitle(fallbackPostDetail.post.title);
       setPostEditContent(fallbackPostDetail.content);
       setCommentEditDrafts(
@@ -2061,6 +2063,7 @@ export function CleanFintechPostDetailScreen({
             post: {
               ...current.post,
               likeCount: Math.max(0, current.post.likeCount + delta),
+              likedByMe: nextLiked,
             },
           };
         });

@@ -75,6 +75,27 @@ describe("community parsers", () => {
     expect(comment).not.toHaveProperty("ownerUserId");
   });
 
+  it("preserves server viewer like state without exposing viewer identifiers", () => {
+    const detail = parseCommunityPostDetail({
+      postId: "post_1",
+      boardType: "FREE",
+      title: "liked post",
+      content: "liked content",
+      likedByMe: true,
+      viewerUserId: "usr_private",
+      authorMasked: "usr***",
+      status: "VISIBLE",
+      likeCount: 1,
+      commentCount: 0,
+      createdAt: "2026-06-25T00:00:00.000Z",
+      updatedAt: "2026-06-25T00:00:00.000Z",
+      financialRawDataExposed: false,
+    });
+
+    expect(detail.post.likedByMe).toBe(true);
+    expect(detail.post).not.toHaveProperty("viewerUserId");
+  });
+
   it("rejects records explicitly marked as exposing raw financial data", () => {
     expect(() =>
       parseCommunityFeedPage({

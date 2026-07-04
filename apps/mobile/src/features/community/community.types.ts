@@ -61,6 +61,7 @@ export type CommunityPost = Readonly<{
   anonymousDisplayName: string;
   moderationStatus: ModerationStatus;
   likeCount: number;
+  likedByMe?: boolean;
   commentCount: number;
   bookmarkCount: number;
   createdAt: string;

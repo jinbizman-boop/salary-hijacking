@@ -164,6 +164,10 @@ export function parseCommunityPost(value: unknown): CommunityPost {
     anonymousDisplayName,
     moderationStatus: moderationStatus(value.status ?? value.moderationStatus),
     likeCount: safeInteger(value.likeCount),
+    likedByMe:
+      value.likedByMe === true ||
+      value.viewerLiked === true ||
+      value.liked === true,
     commentCount: safeInteger(value.commentCount),
     bookmarkCount: safeInteger(value.bookmarkCount),
     createdAt: timestamp(value.createdAt),
