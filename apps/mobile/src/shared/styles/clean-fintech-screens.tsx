@@ -1598,6 +1598,9 @@ export function CleanFintechSettingsScreen({
           />
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{
+              disabled: !profileSettingsValid || profileSettingsSaving,
+            }}
             disabled={!profileSettingsValid || profileSettingsSaving}
             onPress={submitProfileSettings}
             style={[
@@ -1655,6 +1658,7 @@ export function CleanFintechSettingsScreen({
           />
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ disabled: accountSettingsSaving }}
             disabled={accountSettingsSaving}
             onPress={submitAccountSettings}
             style={[
@@ -1838,6 +1842,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <Pressable
             accessibilityLabel="MY로 돌아가기"
             accessibilityRole="button"
+            accessibilityState={{ disabled: submitting }}
             disabled={submitting}
             onPress={closeSupportInquiry}
             style={[styles.iconButton, submitting ? styles.disabled : null]}
@@ -1847,6 +1852,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <Text style={styles.composeTitle}>1:1 문의</Text>
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
             onPress={submitSupportTicket}
             style={[

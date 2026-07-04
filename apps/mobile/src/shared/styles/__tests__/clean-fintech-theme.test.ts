@@ -1774,6 +1774,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "disabled={!profileSettingsValid || profileSettingsSaving}",
     );
     expect(profileSettingsSource).toMatch(
+      /accessibilityState=\{\{\s*disabled:\s*!profileSettingsValid \|\| profileSettingsSaving,\s*\}\}/u,
+    );
+    expect(profileSettingsSource).toMatch(
       /!profileSettingsValid \|\| profileSettingsSaving\s*\?\s*styles\.disabled\s*:\s*null/u,
     );
   });
@@ -1843,6 +1846,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toHaveLength(4);
     expect(accountSettingsSource).toContain(
       "accountSettingsSaving ? styles.disabled : null",
+    );
+    expect(accountSettingsSource).toContain(
+      "accessibilityState={{ disabled: accountSettingsSaving }}",
     );
   });
 
@@ -1930,7 +1936,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       supportSource.match(
         /accessibilityState=\{\{ disabled: submitting \}\}/gu,
       ),
-    ).toHaveLength(2);
+    ).toHaveLength(3);
+    expect(supportSource).toContain(
+      "accessibilityState={{ disabled: !valid || submitting }}",
+    );
     expect(supportSource).toMatch(/if\s*\(submitting\)\s*return;/u);
   });
 
