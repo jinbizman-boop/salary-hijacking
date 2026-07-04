@@ -813,6 +813,40 @@ function listResult<TItem extends JsonRecord>(
   };
 }
 
+function isMandatoryNotification(item: JsonRecord | null): boolean {
+  if (!item) return false;
+  if (item.isMandatory === true) return true;
+  if (item.type === "SECURITY") return true;
+  const metadata = item.metadata;
+  return (
+    metadata !== null &&
+    typeof metadata === "object" &&
+    !Array.isArray(metadata) &&
+    (metadata as JsonRecord).isMandatory === true
+  );
+}
+
+async function assertNotificationCanBeHidden<TEnv>(
+  notificationId: string,
+  runtime: NotificationsRouteRuntime<TEnv>,
+): Promise<void> {
+  const existing = await runtime.repository.get(notificationId, runtime);
+  if (!existing) {
+    throw new NotificationHttpError(
+      404,
+      "NOTIFICATION_NOT_FOUND",
+      "알림을 찾을 수 없습니다.",
+    );
+  }
+  if (isMandatoryNotification(existing)) {
+    throw new NotificationHttpError(
+      409,
+      "NOTIFICATION_MANDATORY_LOCKED",
+      "필수 알림은 사용자가 임의로 삭제하거나 보관할 수 없습니다.",
+    );
+  }
+}
+
 function metadataField(input: Record<string, unknown>): JsonRecord {
   const metadata = input.metadata;
   if (!metadata || typeof metadata !== "object" || Array.isArray(metadata))
@@ -1110,6 +1144,8 @@ function createInMemoryNotificationsRepository<
         createdAt: runtime.now.toISOString(),
         readAt: null,
         archivedAt: null,
+        isMandatory:
+          input.metadata.isMandatory === true || input.type === "SECURITY",
         sensitiveFinancialDataExposed: false,
         adTargetingSeparated: true,
       };
@@ -1525,6 +1561,7 @@ async function dispatchNotificationsRoute<TEnv>(
 
   if (method === "DELETE" && match) {
     const notificationId = idFromMatch(match, 1);
+    await assertNotificationCanBeHidden(notificationId, runtime);
     const data = await repository.delete(notificationId, runtime);
     await emit(runtime, {
       event: "notification_deleted",
@@ -1555,6 +1592,7 @@ async function dispatchNotificationsRoute<TEnv>(
   match = matchRoute(relativePath, /^\/([^/]+)\/archive$/);
   if (method === "POST" && match) {
     const notificationId = idFromMatch(match, 1);
+    await assertNotificationCanBeHidden(notificationId, runtime);
     const data = await repository.archive(notificationId, runtime);
     await emit(runtime, {
       event: "notification_archived",

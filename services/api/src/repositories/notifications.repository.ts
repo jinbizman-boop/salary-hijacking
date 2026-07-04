@@ -316,9 +316,10 @@ function privacyFlags(): JsonRecord {
 
 function rowToNotification(row: DbRow): JsonRecord {
   const payload = toJsonRecord(row.payload);
+  const type = apiTypeFromDb(row.type);
   return {
     notificationId: String(row.notification_id ?? ""),
-    type: apiTypeFromDb(row.type),
+    type,
     title: String(row.title ?? ""),
     message: String(row.body ?? row.message ?? ""),
     priority: apiPriorityFromDb(row.priority),
@@ -327,6 +328,7 @@ function rowToNotification(row: DbRow): JsonRecord {
     status: apiStatusFromDb(row),
     scheduledAt: toIsoOrNull(row.scheduled_at),
     expiresAt: toIsoOrNull(row.expires_at),
+    isMandatory: payload.isMandatory === true || type === "SECURITY",
     metadata: sanitizeRecord(payload),
     createdAt: toIso(row.created_at),
     readAt: toIsoOrNull(row.read_at),

@@ -119,6 +119,36 @@ describe("Neon notifications repository", () => {
     expect(calls[0]?.params).toContain(userId);
   });
 
+  it("preserves DB mandatory notification flags for mobile archive and delete locks", async () => {
+    const repository = createNeonNotificationsRepository({
+      query: async () => ({
+        rows: [
+          notificationRow({
+            payload: {
+              deeplink: "salaryhijacking://notifications/security",
+              isMandatory: true,
+            },
+            priority: 9,
+            type: "SECURITY",
+          }),
+        ],
+        rowCount: 1,
+      }),
+    });
+
+    const result = await repository.list(
+      { status: "UNREAD", type: "SECURITY" },
+      { page: 1, pageSize: 20, offset: 0, limit: 20 },
+      createRuntime(),
+    );
+
+    expect(result.items[0]).toMatchObject({
+      isMandatory: true,
+      priority: "URGENT",
+      type: "SECURITY",
+    });
+  });
+
   it("marks a DB notification read with a server-authoritative update", async () => {
     const calls: Array<{
       readonly operationName: string;
