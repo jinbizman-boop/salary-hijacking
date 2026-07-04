@@ -615,6 +615,55 @@ describe("budget api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects variable expense text fields with raw sensitive values before network access", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.createVariableExpense({
+        amountMinor: 5_000,
+        category: "MEAL",
+        dailyBudgetId: null,
+        idempotencyKey: "sensitive-expense-create",
+        memo: "receipt owner user@example.com",
+        merchantName: null,
+        paymentMethod: "CARD",
+        receiptAttachmentId: null,
+        source: "MANUAL",
+        spentAt: "2026-07-02T03:00:00.000Z",
+        tags: ["010-1234-5678"],
+        title: "Lunch",
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE" });
+
+    await expect(
+      api.updateVariableExpense("vex_edit_1", {
+        memo: "card 1234-5678-9012-3456",
+        title: "Corrected expense",
+      }),
+    ).rejects.toMatchObject({
+      code: "BUDGET_INVALID_VARIABLE_EXPENSE_UPDATE",
+    });
+
+    await expect(
+      api.deleteVariableExpense("vex_edit_1", {
+        reason:
+          "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+      }),
+    ).rejects.toMatchObject({
+      code: "BUDGET_INVALID_VARIABLE_EXPENSE_DELETE",
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("records a privacy-safe checked event without financial values", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

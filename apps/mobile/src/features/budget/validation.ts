@@ -49,6 +49,23 @@ const VARIABLE_EXPENSE_STATUSES = new Set<VariableExpenseStatus>([
   "VOIDED",
   "DELETED",
 ]);
+const RAW_EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu;
+const RAW_PHONE_PATTERN = /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u;
+const RAW_CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b/u;
+const RAW_ACCOUNT_PATTERN =
+  /(?:account|계좌)\s*(?:number|번호)?\s*[:：]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu;
+const RAW_TOKEN_PATTERN =
+  /\b(?:authorization|bearer|session|refresh|push|fcm|token)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu;
+const RAW_JWT_PATTERN =
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u;
+const RAW_SENSITIVE_TEXT_PATTERNS = [
+  RAW_EMAIL_PATTERN,
+  RAW_PHONE_PATTERN,
+  RAW_CARD_PATTERN,
+  RAW_ACCOUNT_PATTERN,
+  RAW_TOKEN_PATTERN,
+  RAW_JWT_PATTERN,
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -69,6 +86,10 @@ function isIsoTimestamp(value: unknown): value is string {
     value.length > 0 &&
     !Number.isNaN(Date.parse(value))
   );
+}
+
+function containsRawSensitiveText(value: string): boolean {
+  return RAW_SENSITIVE_TEXT_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 export function parseDailyBudgetSnapshot(value: unknown): DailyBudgetSnapshot {
@@ -187,6 +208,7 @@ export function validateVariableExpenseCreateRequest(
     typeof value.title !== "string" ||
     value.title.trim().length < 1 ||
     value.title.trim().length > 100 ||
+    containsRawSensitiveText(value.title) ||
     !isIsoTimestamp(value.spentAt) ||
     !VARIABLE_EXPENSE_PAYMENT_METHODS.has(
       String(value.paymentMethod) as VariableExpensePaymentMethod,
@@ -195,14 +217,19 @@ export function validateVariableExpenseCreateRequest(
       String(value.source) as VariableExpenseSource,
     ) ||
     !Array.isArray(value.tags) ||
-    value.tags.some((tag) => typeof tag !== "string" || tag.length > 50)
+    value.tags.some(
+      (tag) =>
+        typeof tag !== "string" ||
+        tag.length > 50 ||
+        containsRawSensitiveText(tag),
+    )
   ) {
     return false;
   }
 
   return (
-    nullableString(value.merchantName, 100) &&
-    nullableString(value.memo, 500) &&
+    nullableSafeString(value.merchantName, 100) &&
+    nullableSafeString(value.memo, 500) &&
     nullableString(value.receiptAttachmentId, 160) &&
     nullableString(value.dailyBudgetId, 160) &&
     nullableString(value.idempotencyKey, 160)
@@ -279,7 +306,8 @@ export function validateVariableExpenseUpdateRequest(
     value.title !== undefined &&
     (typeof value.title !== "string" ||
       value.title.trim().length < 1 ||
-      value.title.trim().length > 100)
+      value.title.trim().length > 100 ||
+      containsRawSensitiveText(value.title))
   ) {
     return false;
   }
@@ -296,13 +324,18 @@ export function validateVariableExpenseUpdateRequest(
   if (
     value.tags !== undefined &&
     (!Array.isArray(value.tags) ||
-      value.tags.some((tag) => typeof tag !== "string" || tag.length > 50))
+      value.tags.some(
+        (tag) =>
+          typeof tag !== "string" ||
+          tag.length > 50 ||
+          containsRawSensitiveText(tag),
+      ))
   ) {
     return false;
   }
   return (
-    optionalNullableString(value.merchantName, 100) &&
-    optionalNullableString(value.memo, 500) &&
+    optionalNullableSafeString(value.merchantName, 100) &&
+    optionalNullableSafeString(value.memo, 500) &&
     optionalNullableString(value.receiptAttachmentId, 160) &&
     optionalNullableString(value.dailyBudgetId, 160)
   );
@@ -315,7 +348,17 @@ export function validateVariableExpenseDeleteRequest(
     isRecord(value) &&
     typeof value.reason === "string" &&
     value.reason.trim().length >= 3 &&
-    value.reason.trim().length <= 200
+    value.reason.trim().length <= 200 &&
+    !containsRawSensitiveText(value.reason)
+  );
+}
+
+function nullableSafeString(value: unknown, maxLength: number): boolean {
+  return (
+    value === null ||
+    (typeof value === "string" &&
+      value.trim().length <= maxLength &&
+      !containsRawSensitiveText(value))
   );
 }
 
@@ -328,4 +371,11 @@ function nullableString(value: unknown, maxLength: number): boolean {
 
 function optionalNullableString(value: unknown, maxLength: number): boolean {
   return value === undefined || nullableString(value, maxLength);
+}
+
+function optionalNullableSafeString(
+  value: unknown,
+  maxLength: number,
+): boolean {
+  return value === undefined || nullableSafeString(value, maxLength);
 }
