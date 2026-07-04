@@ -618,6 +618,62 @@ function legalPageBody(title: string): readonly string[] {
   ];
 }
 
+function partnerBenefitsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  const origin = canonicalOrigin(runtime);
+  const canonicalUrl = `${origin}/partners`;
+  const body = `<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>제휴 혜택 | 급여납치</title>
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  <style>
+    :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
+    body { margin: 0; background: #f7f8fa; color: #202327; }
+    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 72px; }
+    .brand { color: #209252; font-weight: 800; letter-spacing: 0; }
+    h1 { margin: 12px 0 18px; font-size: 34px; line-height: 1.2; letter-spacing: 0; }
+    p, li { font-size: 16px; line-height: 1.75; }
+    section { background: #fff; border: 1px solid #e7ebef; border-radius: 20px; padding: 26px; }
+    a { color: #12663a; font-weight: 800; }
+    .label { color: #856600; font-size: 13px; font-weight: 900; }
+    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+    .button { border: 1px solid #d9f0e3; border-radius: 999px; padding: 10px 14px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="brand">SALARY HIJACKING · 급여납치</p>
+    <section>
+      <p class="label">제휴/광고</p>
+      <h1>생활비를 아끼는 제휴 혜택</h1>
+      <p>급여납치의 제휴 혜택은 사용자가 보고 있는 화면 맥락에 맞춘 문맥형 안내를 기본으로 합니다.</p>
+      <p>급여, 지출, 저축, 납치금액, 계좌, 카드, 대출, 이메일, 전화번호, 인증 토큰, 푸시 토큰 원문은 광고·제휴·분석 payload에 포함하지 않습니다.</p>
+      <p>금융 금액 기반 타겟팅을 사용하지 않습니다. 광고 또는 제휴 콘텐츠는 명확한 라벨과 함께 표시됩니다.</p>
+      <nav class="links" aria-label="급여납치 제휴 정책 링크">
+        <a class="button" href="${origin}/privacy">개인정보 처리방침</a>
+        <a class="button" href="${origin}/support">고객 지원</a>
+        <a class="button" href="${origin}/terms">이용약관</a>
+      </nav>
+    </section>
+  </main>
+</body>
+</html>`;
+
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "text/html; charset=utf-8",
+      "content-language": "ko-KR",
+      "content-security-policy": PUBLIC_HTML_CSP,
+      "cache-control": "public, max-age=3600",
+      link: `<${canonicalUrl}>; rel="canonical"`,
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
+}
+
 function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
   const origin = canonicalOrigin(runtime);
   const canonicalUrl = `${origin}/`;
@@ -652,6 +708,7 @@ function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
       <p>급여납치는 급여, 고정지출, 저축, 생활비, 일일 예산을 분리하고 사용자가 남긴 돈을 서버 권위 기준으로 확인하도록 돕습니다.</p>
       <p class="meta">개인정보와 광고 데이터는 분리하며, 금융 금액 기반 광고 타겟팅은 사용하지 않습니다.</p>
       <nav class="links" aria-label="급여납치 공개 링크">
+        <a class="button" href="${origin}/partners">제휴 혜택</a>
         <a class="button" href="${origin}/privacy">개인정보 처리방침</a>
         <a class="button" href="${origin}/support">고객 지원</a>
         <a class="button" href="${origin}/terms">이용약관</a>
@@ -1127,6 +1184,10 @@ async function coreDispatch<TEnv>(
     return publicLandingResponse(runtime);
   }
 
+  if (path === "/partners" && (method === "GET" || method === "HEAD")) {
+    return partnerBenefitsResponse(runtime);
+  }
+
   if (["/health", "/live", "/_health", `${API_PREFIX}/health`].includes(path)) {
     return json(200, runtime, {
       data: {
@@ -1317,7 +1378,7 @@ function buildAuthOptions<TEnv>(
     {
       id: "root-manifest-public",
       pattern:
-        /^\/(manifest|health|ready|live|_health|privacy|support|terms)(?:\/|$)/,
+        /^\/(manifest|health|ready|live|_health|privacy|support|terms|partners)(?:\/|$)/,
       public: true,
     },
   ] as const;
@@ -1598,7 +1659,7 @@ export function assertAppCompleteness(): {
     "api_v1_and_admin_api_v1_prefixes",
     "health_ready_manifest_app_config_public_endpoints",
     "api_v1_mobile_bootstrap_endpoint",
-    "public_legal_privacy_support_terms_pages_ready",
+    "public_legal_privacy_support_terms_partners_pages_ready",
     "server_authority_financial_route_contract",
     "owner_boundary_and_auth_context_source_contract",
     "standard_json_response_contract",
