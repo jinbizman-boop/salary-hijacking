@@ -103,4 +103,61 @@ describe("mobile auth response adapter", () => {
       },
     });
   });
+
+  it("keeps locked-account and pending-signup fallback copy readable", () => {
+    expect(
+      normalizeMobileAuthResponse({
+        data: {
+          user: {
+            accountStatus: "LOCKED",
+            userId: "usr_locked",
+          },
+        },
+      }).data,
+    ).toMatchObject({
+      message: "계정 상태 확인이 필요합니다.",
+      status: "LOCKED",
+    });
+
+    expect(
+      normalizeMobileSignupResponse({
+        data: {
+          emailVerificationRequired: true,
+          user: { userId: "usr_pending" },
+        },
+      }).data,
+    ).toMatchObject({
+      maskedEmail: "이메일",
+      status: "EMAIL_VERIFICATION_REQUIRED",
+    });
+  });
+
+  it("throws readable safe Korean errors for malformed auth responses", () => {
+    expect(() =>
+      normalizeMobileAuthResponse({
+        data: {
+          tokens: {},
+          user: { userId: "usr_missing_token" },
+        },
+      }),
+    ).toThrow("인증 응답이 올바르지 않습니다.");
+
+    expect(() =>
+      normalizeMobileAuthResponse({
+        data: {
+          tokens: { accessToken: "bad token with spaces" },
+          user: { userId: "usr_bad_token" },
+        },
+      }),
+    ).toThrow("인증 토큰이 올바르지 않습니다.");
+
+    expect(() =>
+      normalizeMobileAuthResponse({
+        data: {
+          tokens: { accessToken: "valid.jwt" },
+          user: {},
+        },
+      }),
+    ).toThrow("인증 사용자 응답이 올바르지 않습니다.");
+  });
 });

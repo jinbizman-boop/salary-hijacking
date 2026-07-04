@@ -81,6 +81,7 @@ const LOCKED_ACCOUNT_STATUSES = [
   "WITHDRAWN",
   "DELETED",
 ] as const;
+const INVALID_AUTH_TOKEN_MESSAGE = "인증 토큰이 올바르지 않습니다.";
 
 export function normalizeMobileAuthResponse(
   response: Readonly<{ data?: unknown; error?: unknown }>,
@@ -230,13 +231,13 @@ function requiredAccessToken(
   requiredText(primary, fallback, "accessToken");
   const value =
     rawText(primary, "accessToken") ?? rawText(fallback, "accessToken");
-  if (!value) throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
+  if (!value) throw new Error(INVALID_AUTH_TOKEN_MESSAGE);
   return validAccessToken(value);
 }
 
 function validAccessToken(value: string): string {
   if (value.length > 8_192 || /\s/u.test(value)) {
-    throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
+    throw new Error(INVALID_AUTH_TOKEN_MESSAGE);
   }
   return value;
 }
@@ -296,7 +297,7 @@ function tokenExpiresAt(
     numeric(primary, "expiresIn") ??
     numeric(fallback, "expiresIn");
   if (ttlSeconds !== null && Math.trunc(ttlSeconds) < 1) {
-    throw new Error("?몄쬆 ?묐떟???щ컮瑜댁? ?딆뒿?덈떎.");
+    throw new Error(INVALID_AUTH_TOKEN_MESSAGE);
   }
   return new Date(
     now.getTime() +
