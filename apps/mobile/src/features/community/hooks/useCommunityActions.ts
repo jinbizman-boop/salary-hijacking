@@ -231,11 +231,19 @@ export function useCommunityActions(
       reason: string,
     ): Promise<void> => {
       await run(`report-post:${postId}`, async () => {
-        await service.reportPost(postId, reasonType, reason);
-        analytics?.track("community_report_result", {
-          action: "report",
-          result: "success",
-        });
+        try {
+          await service.reportPost(postId, reasonType, reason);
+          analytics?.track("community_report_result", {
+            action: "report",
+            result: "success",
+          });
+        } catch (reportError) {
+          analytics?.track("community_report_result", {
+            action: "report",
+            result: "failure",
+          });
+          throw reportError;
+        }
       });
     },
     [analytics, run, service],
@@ -248,11 +256,19 @@ export function useCommunityActions(
       reason: string,
     ): Promise<void> => {
       await run(`report-comment:${commentId}`, async () => {
-        await service.reportComment(commentId, reasonType, reason);
-        analytics?.track("community_report_result", {
-          action: "report",
-          result: "success",
-        });
+        try {
+          await service.reportComment(commentId, reasonType, reason);
+          analytics?.track("community_report_result", {
+            action: "report",
+            result: "success",
+          });
+        } catch (reportError) {
+          analytics?.track("community_report_result", {
+            action: "report",
+            result: "failure",
+          });
+          throw reportError;
+        }
       });
     },
     [analytics, run, service],

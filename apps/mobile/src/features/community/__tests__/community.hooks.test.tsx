@@ -1,10 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native";
 
+import { CommunityApiError } from "../api";
+import type { CommunityAnalytics } from "../community.analytics";
 import { createCommunityStore } from "../community.store";
 import type {
   CommunityApiResponse,
   CommunityService,
 } from "../community.types";
+import { useCommunityActions } from "../hooks/useCommunityActions";
 import { useCommunityFeed } from "../hooks/useCommunityFeed";
 import { useCommunityPost } from "../hooks/useCommunityPost";
 
@@ -105,5 +108,48 @@ describe("community hooks", () => {
     expect(result.current.detail?.tags).toEqual(["루틴", "예산"]);
     expect(result.current.comments).toHaveLength(1);
     expect(JSON.stringify(result.current)).not.toContain("usr_private");
+  });
+
+  it("records privacy-safe report failures without leaking raw reasons", async () => {
+    const rawReason = "Authorization bearer_12345678 test@example.com";
+    const reportPost = jest.fn(async () => {
+      throw new CommunityApiError(
+        0,
+        "COMMUNITY_REPORT_REASON_INVALID",
+        rawReason,
+      );
+    });
+    const track = jest.fn<
+      ReturnType<CommunityAnalytics["track"]>,
+      Parameters<CommunityAnalytics["track"]>
+    >();
+    const service = { reportPost } as unknown as CommunityService;
+    const { result } = renderHook(() =>
+      useCommunityActions(service, createCommunityStore(), { track }),
+    );
+    let thrown: unknown;
+
+    await act(async () => {
+      try {
+        await result.current.reportPost(
+          "post_1",
+          "RAW_FINANCIAL_EXPORT",
+          rawReason,
+        );
+      } catch (error) {
+        thrown = error;
+      }
+    });
+
+    expect(thrown).toMatchObject({ code: "COMMUNITY_REPORT_REASON_INVALID" });
+    expect(track).toHaveBeenCalledWith("community_report_result", {
+      action: "report",
+      result: "failure",
+    });
+    expect(JSON.stringify(track.mock.calls)).not.toContain(rawReason);
+    expect(JSON.stringify(track.mock.calls)).not.toContain("test@example.com");
+    await waitFor(() => expect(result.current.error).not.toBeNull());
+    expect(result.current.error).not.toContain("test@example.com");
+    expect(result.current.pendingAction).toBeNull();
   });
 });
