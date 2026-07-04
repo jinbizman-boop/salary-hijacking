@@ -844,6 +844,70 @@ describe("budget api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects unknown variable expense fields before they can enter budget payloads", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              adTargetingSeparated: true,
+              amountMinor: 5_000,
+              category: "MEAL",
+              dailyBudgetId: null,
+              expenseId: "vex_guard_1",
+              financialRawDataExposed: false,
+              merchantName: null,
+              memo: null,
+              netAmountMinor: 5_000,
+              paymentMethod: "CARD",
+              source: "MANUAL",
+              spentAt: "2026-07-02T03:00:00.000Z",
+              status: "POSTED",
+              title: "Lunch",
+              serverAuthority: true,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.createVariableExpense({
+        amountMinor: 5_000,
+        category: "MEAL",
+        dailyBudgetId: null,
+        idempotencyKey: "unknown-expense-create",
+        memo: null,
+        merchantName: null,
+        paymentMethod: "CARD",
+        rawSalaryMemo: "salary 2,700,000",
+        receiptAttachmentId: null,
+        source: "MANUAL",
+        spentAt: "2026-07-02T03:00:00.000Z",
+        tags: [],
+        title: "Lunch",
+      } as never),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE" });
+
+    await expect(
+      api.updateVariableExpense("vex_guard_1", {
+        amountMinor: 5_000,
+        accountNumber: "123-456-7890",
+        title: "Lunch",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "BUDGET_INVALID_VARIABLE_EXPENSE_UPDATE",
+    });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("rejects variable expense text fields with raw sensitive values before network access", async () => {
     const fetcher = jest.fn<
       Promise<Response>,

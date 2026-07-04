@@ -126,9 +126,34 @@ function normalizeServerEnum<T extends string>(
   return allowed.includes(normalized as T) ? (normalized as T) : null;
 }
 
+function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  return Object.keys(value).every((key) => allowedKeys.includes(key));
+}
+
 function normalizeVariableExpenseCreateRequest(
   request: VariableExpenseCreateRequest,
 ): VariableExpenseCreateRequest | null {
+  if (
+    !hasOnlyKeys(request as Record<string, unknown>, [
+      "amountMinor",
+      "category",
+      "dailyBudgetId",
+      "idempotencyKey",
+      "memo",
+      "merchantName",
+      "paymentMethod",
+      "receiptAttachmentId",
+      "source",
+      "spentAt",
+      "tags",
+      "title",
+    ])
+  ) {
+    return null;
+  }
   const category = normalizeServerEnum(
     request.category,
     SERVER_VARIABLE_EXPENSE_CATEGORIES,
@@ -143,16 +168,40 @@ function normalizeVariableExpenseCreateRequest(
   );
   if (!category || !paymentMethod || !source) return null;
   return {
-    ...request,
+    amountMinor: request.amountMinor,
     category,
+    dailyBudgetId: request.dailyBudgetId,
+    idempotencyKey: request.idempotencyKey,
+    memo: request.memo,
+    merchantName: request.merchantName,
     paymentMethod,
+    receiptAttachmentId: request.receiptAttachmentId,
     source,
+    spentAt: request.spentAt,
+    tags: request.tags,
+    title: request.title,
   };
 }
 
 function normalizeVariableExpenseUpdateRequest(
   request: VariableExpenseUpdateRequest,
 ): VariableExpenseUpdateRequest | null {
+  if (
+    !hasOnlyKeys(request as Record<string, unknown>, [
+      "amountMinor",
+      "category",
+      "dailyBudgetId",
+      "memo",
+      "merchantName",
+      "paymentMethod",
+      "receiptAttachmentId",
+      "spentAt",
+      "tags",
+      "title",
+    ])
+  ) {
+    return null;
+  }
   const category =
     request.category === undefined
       ? undefined
@@ -169,9 +218,24 @@ function normalizeVariableExpenseUpdateRequest(
         );
   if (category === null || paymentMethod === null) return null;
   return {
-    ...request,
+    ...(request.amountMinor !== undefined
+      ? { amountMinor: request.amountMinor }
+      : {}),
     ...(category !== undefined ? { category } : {}),
+    ...(request.dailyBudgetId !== undefined
+      ? { dailyBudgetId: request.dailyBudgetId }
+      : {}),
+    ...(request.memo !== undefined ? { memo: request.memo } : {}),
+    ...(request.merchantName !== undefined
+      ? { merchantName: request.merchantName }
+      : {}),
     ...(paymentMethod !== undefined ? { paymentMethod } : {}),
+    ...(request.receiptAttachmentId !== undefined
+      ? { receiptAttachmentId: request.receiptAttachmentId }
+      : {}),
+    ...(request.spentAt !== undefined ? { spentAt: request.spentAt } : {}),
+    ...(request.tags !== undefined ? { tags: request.tags } : {}),
+    ...(request.title !== undefined ? { title: request.title } : {}),
   };
 }
 
