@@ -158,6 +158,32 @@ describe("budget api", () => {
     });
   });
 
+  it("rejects recalculation memo values with raw sensitive data before network access", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.recalculate({
+        periodStartDate: "2026-06-25",
+        periodEndDate: "2026-07-24",
+        availableAmountMinor: 300_000,
+        alreadySpentAmountMinor: 0,
+        carryOverAmountMinor: 0,
+        overwriteExisting: false,
+        memo: "recalculate for account 123-456-789",
+      }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RECALCULATE_REQUEST" });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("saves today's daily budget through create or update without raw data exposure", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

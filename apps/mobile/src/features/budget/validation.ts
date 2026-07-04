@@ -191,7 +191,9 @@ export function validateRecalculateRequest(
 
   return (
     value.memo === null ||
-    (typeof value.memo === "string" && value.memo.trim().length <= 500)
+    (typeof value.memo === "string" &&
+      value.memo.trim().length <= 500 &&
+      !containsRawSensitiveText(value.memo))
   );
 }
 
