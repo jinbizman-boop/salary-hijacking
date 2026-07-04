@@ -64,6 +64,21 @@ function isPositiveMoney(value: unknown): value is number {
   return isNonNegativeInteger(value) && value > 0;
 }
 
+function isSafeCommitmentId(value: string): boolean {
+  return /^[A-Za-z0-9_-]+$/u.test(value.trim());
+}
+
+function normalizeCommitmentId(value: unknown): string {
+  if (typeof value !== "string" || !isSafeCommitmentId(value)) {
+    throw new PlanCommitmentsApiError(
+      0,
+      "PLAN_INVALID_RESPONSE",
+      PLAN_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return value.trim();
+}
+
 function defaultCorrelationId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `plan-${Date.now().toString(36)}`;
 }
@@ -146,8 +161,6 @@ function requireSafeMoney(
 function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
   if (
     !isRecord(value) ||
-    typeof value.expenseId !== "string" ||
-    !value.expenseId ||
     typeof value.title !== "string" ||
     !value.title ||
     typeof value.status !== "string" ||
@@ -174,7 +187,7 @@ function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
     dueDay,
     dueLabel: dueDay === null ? "매월 자동 납부" : `매월 ${dueDay}일`,
     financialRawDataExposed: false,
-    id: value.expenseId,
+    id: normalizeCommitmentId(value.expenseId),
     lastPaidAt: typeof value.lastPaidAt === "string" ? value.lastPaidAt : null,
     paidTotalMinor: isNonNegativeInteger(value.paidTotalMinor)
       ? value.paidTotalMinor
@@ -188,8 +201,6 @@ function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
 function normalizeSavingsGoal(value: unknown): PlanSavingsGoalCommitment {
   if (
     !isRecord(value) ||
-    typeof value.goalId !== "string" ||
-    !value.goalId ||
     typeof value.title !== "string" ||
     !value.title ||
     typeof value.status !== "string" ||
@@ -214,7 +225,7 @@ function normalizeSavingsGoal(value: unknown): PlanSavingsGoalCommitment {
     financialRawAccountDataExposed: false,
     fixedSaveAmountMinor: requireSafeMoney(value.fixedSaveAmountMinor),
     goalType: typeof value.goalType === "string" ? value.goalType : null,
-    id: value.goalId,
+    id: normalizeCommitmentId(value.goalId),
     serverAuthority: true,
     status: value.status,
     targetAmountMinor: requireSafeMoney(value.targetAmountMinor),
@@ -311,7 +322,7 @@ function validFixedExpensePayment(
 ): boolean {
   return (
     typeof expenseId === "string" &&
-    expenseId.trim().length > 0 &&
+    isSafeCommitmentId(expenseId) &&
     isPositiveMoney(value.amountMinor) &&
     typeof value.idempotencyKey === "string" &&
     value.idempotencyKey.trim().length > 0 &&
@@ -331,7 +342,7 @@ function validSavingsDeposit(
 ): boolean {
   return (
     typeof goalId === "string" &&
-    goalId.trim().length > 0 &&
+    isSafeCommitmentId(goalId) &&
     isPositiveMoney(value.amountMinor) &&
     typeof value.idempotencyKey === "string" &&
     value.idempotencyKey.trim().length > 0 &&
@@ -346,7 +357,7 @@ function validSavingsDeposit(
 }
 
 function validDeleteId(value: string): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+  return typeof value === "string" && isSafeCommitmentId(value);
 }
 
 function normalizeDeleteResult(
@@ -356,8 +367,6 @@ function normalizeDeleteResult(
   if (
     !isRecord(value) ||
     !isRecord(value.data) ||
-    typeof value.data[idKey] !== "string" ||
-    !value.data[idKey] ||
     value.data.status !== "DELETED"
   ) {
     throw new PlanCommitmentsApiError(
@@ -367,7 +376,7 @@ function normalizeDeleteResult(
     );
   }
   return {
-    id: value.data[idKey],
+    id: normalizeCommitmentId(value.data[idKey]),
     rawFinancialDataExposed: false,
     serverAuthority: true,
     status: "DELETED",

@@ -169,6 +169,63 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("rejects invalid fixed expense and savings goal ids returned by the server", async () => {
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        if (normalized.url.endsWith("/api/v1/fixed-expenses")) {
+          return jsonResponse({
+            data: {
+              items: [
+                {
+                  expenseId: "../expense_chatgpt",
+                  title: "ChatGPT",
+                  category: "SUBSCRIPTION",
+                  amountMinor: 30_000,
+                  paymentDay: 20,
+                  status: "ACTIVE",
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          });
+        }
+
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                goalId: "goal_emergency\r\nAuthorization",
+                title: "Emergency fund",
+                goalType: "EMERGENCY_FUND",
+                targetAmountMinor: 1_000_000,
+                currentAmountMinor: 120_000,
+                fixedSaveAmountMinor: 150_000,
+                status: "ACTIVE",
+                serverAuthority: true,
+                financialRawAccountDataExposed: false,
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.getCommitments()).rejects.toMatchObject({
+      code: "PLAN_INVALID_RESPONSE",
+    });
+  });
+
   it("creates fixed expense and savings commitments through server-authoritative APIs", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({
