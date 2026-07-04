@@ -327,11 +327,12 @@ function attachmentFromResponse(value: unknown): UploadAttachment {
   if (!attachmentId || !fileName || !contentType || sizeBytes < 1) {
     invalidUploadResponse();
   }
+  const normalizedAttachmentId = safeId(attachmentId, "attachmentId");
   const normalizedContentType = responseContentType(contentType);
   const normalizedFileName = safeFileName(fileName);
   assertFileNameMatchesContentType(normalizedFileName, normalizedContentType);
   return {
-    attachmentId,
+    attachmentId: normalizedAttachmentId,
     contentType: normalizedContentType,
     fileName: normalizedFileName,
     scanStatus: responseScanStatus(scanStatus),

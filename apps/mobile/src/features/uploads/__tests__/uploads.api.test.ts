@@ -245,6 +245,61 @@ describe("uploads api", () => {
     ).rejects.toMatchObject({ code: "UPLOADS_INVALID_RESPONSE" });
   });
 
+  it("rejects invalid attachment ids returned by direct upload responses", async () => {
+    const fetcher = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            attachmentId: "../att_community_1",
+            fileName: "proof.png",
+            contentType: "image/png",
+            sizeBytes: 4,
+            scanStatus: "PENDING",
+            status: "UPLOADED",
+          },
+          201,
+        ),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            attachmentId: "att_receipt_1\r\nAuthorization",
+            fileName: "receipt.png",
+            contentType: "image/png",
+            sizeBytes: 4,
+            scanStatus: "PENDING",
+            status: "UPLOADED",
+          },
+          201,
+        ),
+      );
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-invalid-direct-id",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes,
+        contentType: "image/png",
+        fileName: "proof.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({ code: "UPLOADS_INVALID_ID" });
+    await expect(
+      api.directUploadVariableExpenseReceipt({
+        bytes,
+        contentType: "image/png",
+        fileName: "receipt.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({ code: "UPLOADS_INVALID_ID" });
+  });
+
   it("rejects upload file names whose extension does not match the declared content type", async () => {
     const fetcher = jest.fn<
       ReturnType<typeof fetch>,
