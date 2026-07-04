@@ -412,9 +412,11 @@ function validFixedExpensePayment(
   expenseId: string,
   value: PlanFixedExpensePaymentRequest,
 ): boolean {
+  const record = value as Record<string, unknown>;
   return (
     typeof expenseId === "string" &&
     isSafeCommitmentId(expenseId) &&
+    hasOnlyKeys(record, ["amountMinor", "idempotencyKey", "memo", "paidAt"]) &&
     isPositiveMoney(value.amountMinor) &&
     typeof value.idempotencyKey === "string" &&
     value.idempotencyKey.trim().length > 0 &&
@@ -434,9 +436,16 @@ function validSavingsDeposit(
   goalId: string,
   value: PlanSavingsDepositRequest,
 ): boolean {
+  const record = value as Record<string, unknown>;
   return (
     typeof goalId === "string" &&
     isSafeCommitmentId(goalId) &&
+    hasOnlyKeys(record, [
+      "amountMinor",
+      "idempotencyKey",
+      "memo",
+      "occurredAt",
+    ]) &&
     isPositiveMoney(value.amountMinor) &&
     typeof value.idempotencyKey === "string" &&
     value.idempotencyKey.trim().length > 0 &&

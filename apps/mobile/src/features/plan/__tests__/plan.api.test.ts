@@ -638,6 +638,40 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("rejects unknown payment and deposit fields before plan money payloads", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} }, 201);
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.recordFixedExpensePayment("expense_chatgpt", {
+        accountNumber: "123-456-789012",
+        amountMinor: 30_000,
+        idempotencyKey: "fixed-payment-extra-key",
+        paidAt: "2026-07-03T00:00:00.000Z",
+      } as never),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_PAYMENT_REQUEST" });
+
+    await expect(
+      api.recordSavingsDeposit("goal_emergency", {
+        amountMinor: 80_000,
+        idempotencyKey: "savings-deposit-extra-key",
+        occurredAt: "2026-07-04T00:00:00.000Z",
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({
+      code: "PLAN_INVALID_SAVINGS_DEPOSIT_REQUEST",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("deletes fixed expenses and savings goals through server-authoritative APIs", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({
