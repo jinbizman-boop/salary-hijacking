@@ -2185,7 +2185,7 @@ export function CleanFintechPostDetailScreen({
   }, [detailCommunityService, postId]);
 
   const togglePostLike = useCallback((): void => {
-    if (communityLikeInFlightRef.current) return;
+    if (communityDetailActionBusy || communityLikeInFlightRef.current) return;
     communityLikeInFlightRef.current = true;
     const nextLiked = !liked;
     const targetPostId = activeDetail.post.id;
@@ -2223,10 +2223,16 @@ export function CleanFintechPostDetailScreen({
         communityLikeInFlightRef.current = false;
         setLikePending(false);
       });
-  }, [activeDetail.post.id, detailCommunityService, liked]);
+  }, [
+    activeDetail.post.id,
+    communityDetailActionBusy,
+    detailCommunityService,
+    liked,
+  ]);
 
   const togglePostBookmark = useCallback((): void => {
-    if (communityBookmarkInFlightRef.current) return;
+    if (communityDetailActionBusy || communityBookmarkInFlightRef.current)
+      return;
     communityBookmarkInFlightRef.current = true;
     const nextBookmarked = !bookmarked;
     const targetPostId = activeDetail.post.id;
@@ -2278,10 +2284,15 @@ export function CleanFintechPostDetailScreen({
         communityBookmarkInFlightRef.current = false;
         setBookmarkPending(false);
       });
-  }, [activeDetail.post.id, bookmarked, detailCommunityService]);
+  }, [
+    activeDetail.post.id,
+    bookmarked,
+    communityDetailActionBusy,
+    detailCommunityService,
+  ]);
 
   const shareCommunityPost = useCallback((): void => {
-    if (communityShareInFlightRef.current) return;
+    if (communityDetailActionBusy || communityShareInFlightRef.current) return;
     communityShareInFlightRef.current = true;
     const targetPostId = activeDetail.post.id;
     const encodedPostId = encodeURIComponent(targetPostId);
@@ -2333,7 +2344,12 @@ export function CleanFintechPostDetailScreen({
         communityShareInFlightRef.current = false;
         setSharePending(false);
       });
-  }, [activeDetail.post.id, activeDetail.post.title, detailCommunityService]);
+  }, [
+    activeDetail.post.id,
+    activeDetail.post.title,
+    communityDetailActionBusy,
+    detailCommunityService,
+  ]);
 
   const focusCommunityCommentInput = useCallback((): void => {
     if (communityDetailActionBusy) return;
@@ -2627,12 +2643,12 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.attachmentRow}>
           <StatusPill label={post.stats} />
           <SmallButton
-            disabled={sharePending}
+            disabled={sharePending || communityDetailActionBusy}
             label={sharePending ? "공유중" : "공유"}
             onPress={shareCommunityPost}
           />
           <SmallButton
-            disabled={bookmarkPending}
+            disabled={bookmarkPending || communityDetailActionBusy}
             label={
               bookmarkPending ? "저장중" : bookmarked ? "저장 취소" : "저장"
             }
@@ -2682,9 +2698,12 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.attachmentRow}>
           <Pressable
             accessibilityRole="button"
-            disabled={likePending}
+            disabled={likePending || communityDetailActionBusy}
             onPress={togglePostLike}
-            style={[styles.smallButton, likePending ? styles.disabled : null]}
+            style={[
+              styles.smallButton,
+              likePending || communityDetailActionBusy ? styles.disabled : null,
+            ]}
           >
             <Text style={styles.smallButtonText}>
               {likePending ? "반영 중" : liked ? "좋아요 취소" : "좋아요"}
@@ -2696,12 +2715,12 @@ export function CleanFintechPostDetailScreen({
             onPress={focusCommunityCommentInput}
           />
           <SmallButton
-            disabled={sharePending}
+            disabled={sharePending || communityDetailActionBusy}
             label={sharePending ? "공유중" : "공유"}
             onPress={shareCommunityPost}
           />
           <SmallButton
-            disabled={bookmarkPending}
+            disabled={bookmarkPending || communityDetailActionBusy}
             label={
               bookmarkPending ? "저장중" : bookmarked ? "저장 취소" : "저장"
             }

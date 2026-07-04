@@ -1981,13 +1981,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("likePending");
     expect(cleanScreens).toContain("communityLikeInFlightRef");
     expect(cleanScreens).toContain(
-      "if (communityLikeInFlightRef.current) return",
+      "if (communityDetailActionBusy || communityLikeInFlightRef.current) return",
     );
     expect(cleanScreens).toContain("communityLikeInFlightRef.current = true");
     expect(cleanScreens).toContain("communityLikeInFlightRef.current = false");
     expect(cleanScreens).toContain("setLikePending(true)");
     expect(cleanScreens).toContain("setLikePending(false)");
-    expect(cleanScreens).toContain("disabled={likePending}");
+    expect(cleanScreens).toContain(
+      "disabled={likePending || communityDetailActionBusy}",
+    );
     expect(cleanScreens).toContain("bookmarked");
     expect(cleanScreens).toContain("bookmarkPending");
     expect(cleanScreens).toContain("communityBookmarkInFlightRef");
@@ -2213,6 +2215,42 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("locks community detail like save and share actions while moderation actions are pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen[\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+
+    expect(detailSource).toMatch(
+      /if\s*\(\s*communityDetailActionBusy\s*\|\|\s*communityLikeInFlightRef\.current\s*\)\s*return;/u,
+    );
+    expect(detailSource).toMatch(
+      /if\s*\(\s*communityDetailActionBusy\s*\|\|\s*communityBookmarkInFlightRef\.current\s*\)\s*return;/u,
+    );
+    expect(detailSource).toMatch(
+      /if\s*\(\s*communityDetailActionBusy\s*\|\|\s*communityShareInFlightRef\.current\s*\)\s*return;/u,
+    );
+    expect(detailSource).toContain(
+      "disabled={likePending || communityDetailActionBusy}",
+    );
+    expect(
+      detailSource.match(
+        /disabled=\{\s*sharePending \|\| communityDetailActionBusy\s*\}/gu,
+      ),
+    ).toHaveLength(2);
+    expect(
+      detailSource.match(
+        /disabled=\{\s*bookmarkPending \|\| communityDetailActionBusy\s*\}/gu,
+      ),
+    ).toHaveLength(2);
+    expect(detailSource).toMatch(
+      /likePending\s*\|\|\s*communityDetailActionBusy\s*\?\s*styles\.disabled\s*:\s*null/u,
+    );
+  });
+
   it("keeps community detail share action wired to the native app share sheet", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -2230,13 +2268,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("sharePending");
     expect(cleanScreens).toContain("communityShareInFlightRef");
     expect(cleanScreens).toContain(
-      "if (communityShareInFlightRef.current) return",
+      "if (communityDetailActionBusy || communityShareInFlightRef.current) return",
     );
     expect(cleanScreens).toContain("communityShareInFlightRef.current = true");
     expect(cleanScreens).toContain("communityShareInFlightRef.current = false");
     expect(cleanScreens).toContain("setSharePending(true)");
     expect(cleanScreens).toContain("setSharePending(false)");
-    expect(cleanScreens).toContain("disabled={sharePending}");
+    expect(cleanScreens).toContain(
+      "disabled={sharePending || communityDetailActionBusy}",
+    );
     expect(cleanScreens).toContain("onPress={shareCommunityPost}");
     expect(cleanScreens).toContain("공유할 수 있는 화면을 열었어요.");
   });
