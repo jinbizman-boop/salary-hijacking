@@ -3229,6 +3229,8 @@ function SalaryHomeScreen(): React.ReactElement {
     setExpenseTitleDraft(value.replace(/\s+/gu, " ").slice(0, 40));
   }, []);
   const salaryHomeAmountPending = savingExpense || savingDailyBudget;
+  const salaryHomeExpenseSubmitDisabled =
+    salaryHomeAmountPending || parseKrwInputAmount(expenseDraft) === null;
 
   const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
     if (dailyBudgetSaveInFlightRef.current) return;
@@ -3601,12 +3603,12 @@ function SalaryHomeScreen(): React.ReactElement {
           />
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: savingExpense }}
-            disabled={savingExpense}
+            accessibilityState={{ disabled: salaryHomeExpenseSubmitDisabled }}
+            disabled={salaryHomeExpenseSubmitDisabled}
             onPress={handleAddExpense}
             style={[
               styles.primaryButton,
-              savingExpense ? styles.disabled : null,
+              salaryHomeExpenseSubmitDisabled ? styles.disabled : null,
             ]}
           >
             <Text style={styles.primaryButtonText}>

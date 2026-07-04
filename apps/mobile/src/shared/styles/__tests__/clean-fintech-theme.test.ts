@@ -239,7 +239,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "dailyBudgetSaveInFlightRef.current = false",
     );
     expect(cleanScreens).toContain(
-      "accessibilityState={{ disabled: savingExpense }}",
+      "accessibilityState={{ disabled: salaryHomeExpenseSubmitDisabled }}",
     );
     expect(cleanScreens).toContain(
       "accessibilityState={{ disabled: savingDailyBudget }}",
@@ -279,6 +279,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "accessibilityState={{ disabled: salaryHomeAmountPending }}",
     );
     expect(salaryHomeSource).toContain("editable={!salaryHomeAmountPending}");
+  });
+
+  it("disables salary home expense submit until the draft amount is a valid KRW integer", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const salaryHomeSource =
+      cleanScreens.match(
+        /function SalaryHomeScreen\(\): React\.ReactElement \{[\s\S]*?function NotificationsScreen/u,
+      )?.[0] ?? "";
+
+    expect(salaryHomeSource).toContain("salaryHomeExpenseSubmitDisabled");
+    expect(salaryHomeSource).toContain(
+      "parseKrwInputAmount(expenseDraft) === null",
+    );
+    expect(salaryHomeSource).toContain(
+      "accessibilityState={{ disabled: salaryHomeExpenseSubmitDisabled }}",
+    );
+    expect(salaryHomeSource).toContain(
+      "disabled={salaryHomeExpenseSubmitDisabled}",
+    );
+    expect(salaryHomeSource).toMatch(
+      /salaryHomeExpenseSubmitDisabled\s*\?\s*styles\.disabled\s*:\s*null/u,
+    );
   });
 
   it("keeps salary home variable expenses hydrated, editable, and deletable through the server API", () => {
