@@ -8,6 +8,7 @@ import type {
   CommunityPostDetail,
   ModerationStatus,
 } from "./community.types";
+import { containsSensitiveCommunityContent } from "./community.redaction";
 
 const BOARD_TYPES = new Set<CommunityBoardType>([
   "SALARY_TALK",
@@ -109,6 +110,41 @@ function tags(value: unknown): readonly string[] {
     .slice(0, 10);
 }
 
+function unsafeCommunityResponse(field: string): never {
+  throw new TypeError(`unsafe community response: ${field}`);
+}
+
+function safeAttachmentId(value: string): string {
+  const id = value.trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/u.test(id)) {
+    return unsafeCommunityResponse("attachment id");
+  }
+  return id;
+}
+
+function safeAttachmentName(value: string): string {
+  const name = value.trim();
+  if (
+    !name ||
+    name.length > 120 ||
+    /[\\/\r\n]/u.test(name) ||
+    containsSensitiveCommunityContent(name)
+  ) {
+    return unsafeCommunityResponse("attachment name");
+  }
+  return name;
+}
+
+function safeAttachmentUri(value: unknown, status: AttachmentScanStatus) {
+  if (status !== "CLEAN" || typeof value !== "string") return null;
+  const uri = value.trim();
+  if (!uri) return null;
+  if (!uri.startsWith("https://") || containsSensitiveCommunityContent(uri)) {
+    return unsafeCommunityResponse("attachment uri");
+  }
+  return uri;
+}
+
 function attachments(value: unknown): readonly CommunityAttachment[] {
   if (!Array.isArray(value)) return [];
   return value.flatMap((item): readonly CommunityAttachment[] => {
@@ -121,20 +157,16 @@ function attachments(value: unknown): readonly CommunityAttachment[] {
         : typeof item.id === "string"
           ? item.id
           : "";
-    const name = typeof item.name === "string" ? item.name.trim() : "";
-    if (!id || !name) return [];
+    if (!id || typeof item.name !== "string") return [];
+    const safeId = safeAttachmentId(id);
+    const name = safeAttachmentName(item.name);
     const mediaType = item.mediaType === "image" ? "image" : "file";
     return [
       {
-        id,
+        id: safeId,
         name,
         mediaType,
-        uri:
-          status === "CLEAN" &&
-          typeof item.uri === "string" &&
-          item.uri.startsWith("https://")
-            ? item.uri
-            : null,
+        uri: safeAttachmentUri(item.uri, status as AttachmentScanStatus),
         scanStatus: status as AttachmentScanStatus,
       },
     ];

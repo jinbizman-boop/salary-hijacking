@@ -135,6 +135,52 @@ describe("community parsers", () => {
     expect(comment.anonymous).toBe(false);
   });
 
+  it("rejects unsafe attachment ids and sensitive attachment names before public UI rendering", () => {
+    const baseDetail = {
+      postId: "post_1",
+      boardType: "FREE",
+      title: "attachment safety",
+      content: "attachment content",
+      authorMasked: "usr***",
+      status: "VISIBLE",
+      likeCount: 0,
+      commentCount: 0,
+      createdAt: "2026-06-25T00:00:00.000Z",
+      updatedAt: "2026-06-25T00:00:00.000Z",
+      financialRawDataExposed: false,
+    };
+
+    expect(() =>
+      parseCommunityPostDetail({
+        ...baseDetail,
+        attachments: [
+          {
+            attachmentId: "../private-token",
+            name: "clean.pdf",
+            mediaType: "file",
+            scanStatus: "CLEAN",
+            uri: "https://cdn.salaryhijacking.com/community/clean.pdf",
+          },
+        ],
+      }),
+    ).toThrow();
+
+    expect(() =>
+      parseCommunityPostDetail({
+        ...baseDetail,
+        attachments: [
+          {
+            attachmentId: "att_1",
+            name: "salary 3,500,000원 token abcdefghijklmnop.pdf",
+            mediaType: "file",
+            scanStatus: "CLEAN",
+            uri: "https://cdn.salaryhijacking.com/community/clean.pdf",
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
   it("rejects records explicitly marked as exposing raw financial data", () => {
     expect(() =>
       parseCommunityFeedPage({
