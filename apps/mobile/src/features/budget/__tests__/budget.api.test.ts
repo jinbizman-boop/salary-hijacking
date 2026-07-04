@@ -184,6 +184,46 @@ describe("budget api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects unknown recalculation fields before they can enter budget payloads", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              createdOrUpdatedCount: 30,
+              periodEndDate: "2026-07-24",
+              periodStartDate: "2026-06-25",
+              serverAuthority: true,
+              skippedCount: 0,
+              totalDays: 30,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "ios",
+    });
+
+    await expect(
+      api.recalculate({
+        periodStartDate: "2026-06-25",
+        periodEndDate: "2026-07-24",
+        availableAmountMinor: 300_000,
+        alreadySpentAmountMinor: 0,
+        carryOverAmountMinor: 0,
+        overwriteExisting: false,
+        memo: null,
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RECALCULATE_REQUEST" });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("saves today's daily budget through create or update without raw data exposure", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

@@ -177,6 +177,16 @@ export function validateRecalculateRequest(
   value: unknown,
 ): value is DailyBudgetRecalculateRequest {
   if (!isRecord(value)) return false;
+  const allowedKeys = new Set([
+    "alreadySpentAmountMinor",
+    "availableAmountMinor",
+    "carryOverAmountMinor",
+    "memo",
+    "overwriteExisting",
+    "periodEndDate",
+    "periodStartDate",
+  ]);
+  if (!Object.keys(value).every((key) => allowedKeys.has(key))) return false;
   if (
     !isValidDate(value.periodStartDate) ||
     !isValidDate(value.periodEndDate) ||
