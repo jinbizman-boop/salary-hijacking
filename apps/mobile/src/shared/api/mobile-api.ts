@@ -120,17 +120,21 @@ export function createMobilePublicConfigApi(
 
   return {
     async getPublicAppConfig(): Promise<MobilePublicAppConfig> {
-      const response = await fetcher(`${baseUrl}/api/v1/public/app-config`, {
-        credentials: "include",
-        headers: {
-          accept: "application/json",
-          "x-client-platform": mobileClientPlatform(),
-          "x-correlation-id": createCorrelationId(),
-          "x-raw-financial-data-exposed": "false",
-          "x-raw-personal-data-exposed": "false",
-          "x-ad-financial-targeting-used": "false",
+      const safeBaseUrl = normalizeMobileFactoryBaseUrl(baseUrl);
+      const response = await fetcher(
+        `${safeBaseUrl}/api/v1/public/app-config`,
+        {
+          credentials: "include",
+          headers: {
+            accept: "application/json",
+            "x-client-platform": mobileClientPlatform(),
+            "x-correlation-id": createCorrelationId(),
+            "x-raw-financial-data-exposed": "false",
+            "x-raw-personal-data-exposed": "false",
+            "x-ad-financial-targeting-used": "false",
+          },
         },
-      });
+      );
       const parsed = await response.json();
       if (!response.ok) throw new Error("PUBLIC_APP_CONFIG_REQUEST_FAILED");
       if (containsForbiddenPublicConfigPayload(parsed)) {
@@ -139,6 +143,19 @@ export function createMobilePublicConfigApi(
       return normalizeMobilePublicAppConfig(parsed);
     },
   };
+}
+
+function normalizeMobileFactoryBaseUrl(value: string): string {
+  const normalized = value.trim().replace(/\/+$/u, "");
+  try {
+    const url = new URL(normalized);
+    if (url.username || url.password) {
+      throw new Error("MOBILE_API_INVALID_BASE_URL");
+    }
+    return normalized;
+  } catch {
+    throw new Error("MOBILE_API_INVALID_BASE_URL");
+  }
 }
 
 export function createMobileAuthenticatedFetcher(

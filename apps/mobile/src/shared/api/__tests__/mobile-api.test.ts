@@ -202,6 +202,24 @@ describe("mobile api factory", () => {
     );
   });
 
+  it("rejects public config API base URLs with embedded credentials before fetch", async () => {
+    const calls: Request[] = [];
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://operator:secret@api.salaryhijacking.com",
+      fetcher: async (input, init) => {
+        calls.push(input instanceof Request ? input : new Request(input, init));
+        return new Response("{}", {
+          headers: { "content-type": "application/json" },
+        });
+      },
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.toThrow(
+      "MOBILE_API_INVALID_BASE_URL",
+    );
+    expect(calls).toHaveLength(0);
+  });
+
   it("attaches the stored access token to feature API requests without exposing refresh tokens", async () => {
     const calls: Request[] = [];
     const budgetApi = createMobileBudgetApi({

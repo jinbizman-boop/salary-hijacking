@@ -70,6 +70,7 @@ function normalizeApiBase(
     const localHost =
       url.hostname === "localhost" || url.hostname === "127.0.0.1";
 
+    if (url.username || url.password) return "";
     if (environment === "production" && url.protocol !== "https:") return "";
     if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
       return "";

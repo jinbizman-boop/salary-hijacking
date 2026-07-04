@@ -56,4 +56,23 @@ describe("resolveMobileApiBaseUrl", () => {
       }),
     ).toBe("http://localhost:8787");
   });
+
+  it("rejects configured API base URLs that embed credentials", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        explicitUrl: "https://operator:secret@api.salaryhijacking.com",
+        configuredUrl: "https://api.salaryhijacking.com",
+        environment: "production",
+        platform: "ios",
+      }),
+    ).toBe("https://api.salaryhijacking.com");
+
+    expect(
+      resolveMobileApiBaseUrl({
+        configuredUrl: "http://operator:secret@localhost:8787",
+        environment: "development",
+        platform: "android",
+      }),
+    ).toBe("http://10.0.2.2:8787");
+  });
 });
