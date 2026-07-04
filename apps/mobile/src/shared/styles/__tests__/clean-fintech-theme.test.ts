@@ -468,6 +468,18 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("submitSignup");
     expect(cleanScreens).toContain("loginAuthApi.login");
     expect(cleanScreens).toContain("signupAuthApi.register");
+    expect(cleanScreens).toContain("loginSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (!valid || loginSubmitInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain("loginSubmitInFlightRef.current = true");
+    expect(cleanScreens).toContain("loginSubmitInFlightRef.current = false");
+    expect(cleanScreens).toContain("signupSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (!valid || signupSubmitInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain("signupSubmitInFlightRef.current = true");
+    expect(cleanScreens).toContain("signupSubmitInFlightRef.current = false");
     expect(cleanScreens).toContain("AUTHENTICATED");
     expect(cleanScreens).toContain('loginRouter.replace("/salary")');
     expect(cleanScreens).toContain(

@@ -1114,6 +1114,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
   const [password, setPassword] = useState("");
   const [agreed, setAgreed] = useState<ReadonlySet<string>>(() => new Set());
   const [submitting, setSubmitting] = useState(false);
+  const signupSubmitInFlightRef = useRef(false);
   const [toast, setToast] = useState(
     "급여·지출·저축 정보는 민감 정보 보호 기준으로 다룹니다.",
   );
@@ -1124,7 +1125,8 @@ export function CleanFintechSignupScreen(): React.ReactElement {
     isServerAuthPasswordCandidate(password) &&
     signupConsentLabels.every((label) => agreed.has(label));
   const submitSignup = useCallback(async () => {
-    if (!valid || submitting) return;
+    if (!valid || signupSubmitInFlightRef.current) return;
+    signupSubmitInFlightRef.current = true;
     setSubmitting(true);
     try {
       const response = await signupAuthApi.register({
@@ -1163,17 +1165,10 @@ export function CleanFintechSignupScreen(): React.ReactElement {
         "회원가입 요청을 완료하지 못했어요. 입력값과 네트워크를 확인해 주세요.",
       );
     } finally {
+      signupSubmitInFlightRef.current = false;
       setSubmitting(false);
     }
-  }, [
-    email,
-    nickname,
-    password,
-    signupAuthApi,
-    signupRouter,
-    submitting,
-    valid,
-  ]);
+  }, [email, nickname, password, signupAuthApi, signupRouter, valid]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -5585,6 +5580,7 @@ function LoginScreen(): React.ReactElement {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const loginSubmitInFlightRef = useRef(false);
   const [toast, setToast] = useState(
     "서버 권위 인증으로 급여 데이터를 안전하게 불러옵니다.",
   );
@@ -5634,7 +5630,8 @@ function LoginScreen(): React.ReactElement {
   );
 
   const submitLogin = useCallback(async () => {
-    if (!valid || submitting) return;
+    if (!valid || loginSubmitInFlightRef.current) return;
+    loginSubmitInFlightRef.current = true;
     setSubmitting(true);
     try {
       const response = await loginAuthApi.login({
@@ -5665,9 +5662,10 @@ function LoginScreen(): React.ReactElement {
         "로그인 요청을 완료하지 못했어요. 이메일과 비밀번호를 확인해 주세요.",
       );
     } finally {
+      loginSubmitInFlightRef.current = false;
       setSubmitting(false);
     }
-  }, [email, loginAuthApi, loginRouter, password, submitting, valid]);
+  }, [email, loginAuthApi, loginRouter, password, valid]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
