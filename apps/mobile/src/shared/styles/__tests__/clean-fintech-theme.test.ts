@@ -2000,6 +2000,35 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("blocks MY support inquiry submission when the draft contains sensitive raw content", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const supportSource =
+      cleanScreens.match(
+        /export function CleanFintechSupportScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechMyCommunityScreen/u,
+      )?.[0] ?? "";
+
+    expect(supportSource).toContain("containsSensitiveCommunityContent");
+    expect(supportSource).toContain(
+      "containsSensitiveCommunityContent(`${supportSubject}\\n${supportMessage}`)",
+    );
+    expect(supportSource).toContain(
+      "문의에는 급여, 지출, 계좌, 카드, 연락처, 토큰 같은 민감 원문을 넣을 수 없어요.",
+    );
+    const sensitiveCheckIndex = supportSource.indexOf(
+      "containsSensitiveCommunityContent(`${supportSubject}\\n${supportMessage}`)",
+    );
+    const serverSubmitIndex = supportSource.indexOf("createSupportTicket");
+    const returnAfterSensitiveCheck = supportSource
+      .slice(sensitiveCheckIndex, serverSubmitIndex)
+      .includes("return;");
+
+    expect(sensitiveCheckIndex).toBeGreaterThan(-1);
+    expect(serverSubmitIndex).toBeGreaterThan(sensitiveCheckIndex);
+    expect(returnAfterSensitiveCheck).toBe(true);
+  });
+
   it("exposes disabled accessibility state for shared pill rows", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

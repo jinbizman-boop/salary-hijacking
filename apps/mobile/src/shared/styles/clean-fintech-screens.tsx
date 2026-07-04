@@ -1814,6 +1814,14 @@ export function CleanFintechSupportScreen(): React.ReactElement {
   }, [submitting, supportRouter]);
   const submitSupportTicket = useCallback(() => {
     if (!valid || supportTicketSubmitInFlightRef.current) return;
+    if (
+      containsSensitiveCommunityContent(`${supportSubject}\n${supportMessage}`)
+    ) {
+      setToast(
+        "문의에는 급여, 지출, 계좌, 카드, 연락처, 토큰 같은 민감 원문을 넣을 수 없어요.",
+      );
+      return;
+    }
     supportTicketSubmitInFlightRef.current = true;
     setSubmitting(true);
     setToast("1:1 문의를 서버에 접수하는 중이에요.");
