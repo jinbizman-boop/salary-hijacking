@@ -1910,6 +1910,9 @@ export function CleanFintechPostDetailScreen({
     useState<
       "report-post" | "delete-post" | "report-comment" | "delete-comment" | null
     >(null);
+  const communityDetailMutationInFlightRef = useRef<
+    "report-post" | "delete-post" | "report-comment" | "delete-comment" | null
+  >(null);
   const [liked, setLiked] = useState(false);
   const [likePending, setLikePending] = useState(false);
   const [sharePending, setSharePending] = useState(false);
@@ -2176,8 +2179,9 @@ export function CleanFintechPostDetailScreen({
   );
 
   const reportCommunityPost = useCallback((): void => {
-    if (communityDetailActionPending !== null) return;
+    if (communityDetailMutationInFlightRef.current !== null) return;
     const targetPostId = activeDetail.post.id;
+    communityDetailMutationInFlightRef.current = "report-post";
     setCommunityDetailActionPending("report-post");
     setToast("게시글 신고를 server moderation 큐에 전달하는 중이에요.");
     void detailCommunityService
@@ -2190,16 +2194,16 @@ export function CleanFintechPostDetailScreen({
           "게시글 신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
       })
-      .finally(() => setCommunityDetailActionPending(null));
-  }, [
-    activeDetail.post.id,
-    communityDetailActionPending,
-    detailCommunityService,
-  ]);
+      .finally(() => {
+        communityDetailMutationInFlightRef.current = null;
+        setCommunityDetailActionPending(null);
+      });
+  }, [activeDetail.post.id, detailCommunityService]);
 
   const reportCommunityComment = useCallback(
     (comment: CommunityComment): void => {
-      if (communityDetailActionPending !== null) return;
+      if (communityDetailMutationInFlightRef.current !== null) return;
+      communityDetailMutationInFlightRef.current = "report-comment";
       setCommunityDetailActionPending("report-comment");
       setToast("댓글 신고를 server moderation 큐에 전달하는 중이에요.");
       void detailCommunityService
@@ -2212,14 +2216,18 @@ export function CleanFintechPostDetailScreen({
             "댓글 신고를 접수하지 못했어요. 잠시 후 다시 시도해 주세요.",
           );
         })
-        .finally(() => setCommunityDetailActionPending(null));
+        .finally(() => {
+          communityDetailMutationInFlightRef.current = null;
+          setCommunityDetailActionPending(null);
+        });
     },
-    [communityDetailActionPending, detailCommunityService],
+    [detailCommunityService],
   );
 
   const deleteCommunityPost = useCallback((): void => {
-    if (communityDetailActionPending !== null) return;
+    if (communityDetailMutationInFlightRef.current !== null) return;
     const targetPostId = activeDetail.post.id;
+    communityDetailMutationInFlightRef.current = "delete-post";
     setCommunityDetailActionPending("delete-post");
     setToast("게시글 삭제를 서버 커뮤니티에 요청하는 중이에요.");
     void detailCommunityService
@@ -2235,18 +2243,17 @@ export function CleanFintechPostDetailScreen({
           "게시글을 삭제하지 못했어요. 권한과 네트워크 상태를 확인해 주세요.",
         );
       })
-      .finally(() => setCommunityDetailActionPending(null));
-  }, [
-    activeDetail.post.id,
-    communityDetailActionPending,
-    detailCommunityService,
-    detailRouter,
-  ]);
+      .finally(() => {
+        communityDetailMutationInFlightRef.current = null;
+        setCommunityDetailActionPending(null);
+      });
+  }, [activeDetail.post.id, detailCommunityService, detailRouter]);
 
   const deleteCommunityComment = useCallback(
     (comment: CommunityComment): void => {
-      if (communityDetailActionPending !== null) return;
+      if (communityDetailMutationInFlightRef.current !== null) return;
       const targetPostId = activeDetail.post.id;
+      communityDetailMutationInFlightRef.current = "delete-comment";
       setCommunityDetailActionPending("delete-comment");
       setToast("댓글 삭제를 서버 커뮤니티에 요청하는 중이에요.");
       void detailCommunityService
@@ -2277,14 +2284,12 @@ export function CleanFintechPostDetailScreen({
             "댓글을 삭제하지 못했어요. 권한과 네트워크 상태를 확인해 주세요.",
           );
         })
-        .finally(() => setCommunityDetailActionPending(null));
+        .finally(() => {
+          communityDetailMutationInFlightRef.current = null;
+          setCommunityDetailActionPending(null);
+        });
     },
-    [
-      activeComments,
-      activeDetail.post.id,
-      communityDetailActionPending,
-      detailCommunityService,
-    ],
+    [activeComments, activeDetail.post.id, detailCommunityService],
   );
 
   useEffect(() => {

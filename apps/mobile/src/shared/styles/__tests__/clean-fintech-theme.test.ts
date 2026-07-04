@@ -1587,15 +1587,26 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
 
     expect(cleanScreens).toContain("communityDetailActionPending");
+    expect(cleanScreens).toContain("communityDetailMutationInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (communityDetailMutationInFlightRef.current !== null) return",
+    );
     expect(cleanScreens).toContain(
       'setCommunityDetailActionPending("report-post")',
+    );
+    expect(cleanScreens).toContain(
+      'communityDetailMutationInFlightRef.current = "report-post"',
     );
     expect(cleanScreens).toContain(
       'setCommunityDetailActionPending("report-comment")',
     );
     expect(cleanScreens).toContain(
-      "if (communityDetailActionPending !== null) return",
+      'communityDetailMutationInFlightRef.current = "report-comment"',
     );
+    expect(cleanScreens).toContain(
+      "communityDetailMutationInFlightRef.current = null",
+    );
+    expect(cleanScreens).toContain("setCommunityDetailActionPending(null)");
     expect(cleanScreens).toContain("reportCommunityPost");
     expect(cleanScreens).toContain("reportCommunityComment");
     expect(cleanScreens).toContain(".reportPost(targetPostId");
@@ -1613,11 +1624,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       'setCommunityDetailActionPending("delete-post")',
     );
     expect(cleanScreens).toContain(
+      'communityDetailMutationInFlightRef.current = "delete-post"',
+    );
+    expect(cleanScreens).toContain(
       'setCommunityDetailActionPending("delete-comment")',
     );
     expect(cleanScreens).toContain(
-      "finally(() => setCommunityDetailActionPending(null))",
+      'communityDetailMutationInFlightRef.current = "delete-comment"',
     );
+    expect(cleanScreens).toContain("setCommunityDetailActionPending(null)");
     expect(cleanScreens).toContain("deleteCommunityPost");
     expect(cleanScreens).toContain("deleteCommunityComment");
     expect(cleanScreens).toContain(".deletePost(targetPostId");
