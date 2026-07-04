@@ -2491,6 +2491,7 @@ function SalaryHomeScreen(): React.ReactElement {
   const [deletingVariableExpenseId, setDeletingVariableExpenseId] = useState<
     string | null
   >(null);
+  const variableExpenseActionInFlightRef = useRef<string | null>(null);
 
   const refreshServerBudgetSnapshot = useCallback(
     async (
@@ -2762,7 +2763,11 @@ function SalaryHomeScreen(): React.ReactElement {
 
   const updateSalaryVariableExpense = useCallback(
     async (item: VariableExpenseRow): Promise<void> => {
-      if (item.source !== "server" || updatingVariableExpenseId !== null)
+      if (
+        item.source !== "server" ||
+        updatingVariableExpenseId !== null ||
+        variableExpenseActionInFlightRef.current !== null
+      )
         return;
       const amount = parseKrwInputAmount(expenseDraft);
       if (amount === null) {
@@ -2771,6 +2776,7 @@ function SalaryHomeScreen(): React.ReactElement {
       }
 
       try {
+        variableExpenseActionInFlightRef.current = `update:${item.id}`;
         setUpdatingVariableExpenseId(item.id);
         const updated = await budgetApi.updateVariableExpense(item.id, {
           amountMinor: amount,
@@ -2792,6 +2798,7 @@ function SalaryHomeScreen(): React.ReactElement {
           "지출 수정이 서버에 반영되지 않았어요. 연결을 확인한 뒤 다시 시도해 주세요.",
         );
       } finally {
+        variableExpenseActionInFlightRef.current = null;
         setUpdatingVariableExpenseId(null);
       }
     },
@@ -2805,10 +2812,15 @@ function SalaryHomeScreen(): React.ReactElement {
 
   const deleteSalaryVariableExpense = useCallback(
     async (item: VariableExpenseRow): Promise<void> => {
-      if (item.source !== "server" || deletingVariableExpenseId !== null)
+      if (
+        item.source !== "server" ||
+        deletingVariableExpenseId !== null ||
+        variableExpenseActionInFlightRef.current !== null
+      )
         return;
 
       try {
+        variableExpenseActionInFlightRef.current = `delete:${item.id}`;
         setDeletingVariableExpenseId(item.id);
         await budgetApi.deleteVariableExpense(item.id, {
           reason: "mobile salary home user deleted variable expense",
@@ -2823,6 +2835,7 @@ function SalaryHomeScreen(): React.ReactElement {
           "지출 삭제가 서버에 반영되지 않았어요. 연결을 확인한 뒤 다시 시도해 주세요.",
         );
       } finally {
+        variableExpenseActionInFlightRef.current = null;
         setDeletingVariableExpenseId(null);
       }
     },

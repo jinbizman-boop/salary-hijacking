@@ -220,6 +220,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setServerVariableExpenses");
     expect(cleanScreens).toContain("updatingVariableExpenseId !== null");
     expect(cleanScreens).toContain("deletingVariableExpenseId !== null");
+    expect(cleanScreens).toContain("variableExpenseActionInFlightRef");
+    expect(cleanScreens).toContain(
+      "variableExpenseActionInFlightRef.current !== null",
+    );
+    expect(cleanScreens).toContain(
+      "variableExpenseActionInFlightRef.current = `update:${item.id}`",
+    );
+    expect(cleanScreens).toContain(
+      "variableExpenseActionInFlightRef.current = `delete:${item.id}`",
+    );
+    expect(cleanScreens).toContain(
+      "variableExpenseActionInFlightRef.current = null",
+    );
     expect(cleanScreens).toContain("disabled={updating}");
     expect(cleanScreens).toContain("disabled={deleting}");
   });
