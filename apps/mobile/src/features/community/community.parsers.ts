@@ -36,6 +36,10 @@ function safeInteger(value: unknown): number {
     : 0;
 }
 
+function optionalBoolean(value: unknown): boolean | null {
+  return typeof value === "boolean" ? value : null;
+}
+
 function requiredText(value: unknown, field: string): string {
   if (typeof value !== "string" || !value.trim()) {
     throw new TypeError(`안전하지 않은 커뮤니티 응답: ${field}`);
@@ -156,11 +160,14 @@ export function parseCommunityPost(value: unknown): CommunityPost {
         ? value.anonymousDisplayName.trim()
         : "익명 사용자";
 
+  const anonymous = optionalBoolean(value.anonymous ?? value.isAnonymous);
+
   return {
     id,
     boardType: boardType(value.boardType),
     title,
     bodyPreview: content.slice(0, 180),
+    ...(anonymous !== null ? { anonymous } : {}),
     anonymousDisplayName,
     moderationStatus: moderationStatus(value.status ?? value.moderationStatus),
     likeCount: safeInteger(value.likeCount),
@@ -186,10 +193,12 @@ export function parseCommunityPost(value: unknown): CommunityPost {
 export function parseCommunityComment(value: unknown): CommunityComment {
   if (!isRecord(value)) throw new TypeError("안전하지 않은 커뮤니티 응답");
   ensurePrivacy(value);
+  const anonymous = optionalBoolean(value.anonymous ?? value.isAnonymous);
   return {
     id: requiredText(value.commentId ?? value.id, "comment id"),
     postId: requiredText(value.postId, "post id"),
     content: requiredText(value.content, "comment content"),
+    ...(anonymous !== null ? { anonymous } : {}),
     anonymousDisplayName:
       typeof value.authorMasked === "string" && value.authorMasked.trim()
         ? value.authorMasked.trim()

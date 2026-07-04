@@ -104,6 +104,37 @@ describe("community parsers", () => {
     expect(detail.post).not.toHaveProperty("viewerUserId");
   });
 
+  it("preserves server anonymity state for post and comment edits", () => {
+    const detail = parseCommunityPostDetail({
+      postId: "post_1",
+      boardType: "FREE",
+      title: "named post",
+      content: "named content",
+      anonymous: false,
+      authorMasked: "usr***",
+      status: "VISIBLE",
+      likeCount: 1,
+      commentCount: 0,
+      createdAt: "2026-06-25T00:00:00.000Z",
+      updatedAt: "2026-06-25T00:00:00.000Z",
+      financialRawDataExposed: false,
+    });
+    const comment = parseCommunityComment({
+      commentId: "comment_1",
+      postId: "post_1",
+      content: "named comment",
+      anonymous: false,
+      authorMasked: "usr***",
+      status: "VISIBLE",
+      likeCount: 0,
+      createdAt: "2026-06-25T00:00:00.000Z",
+      updatedAt: "2026-06-25T00:00:00.000Z",
+    });
+
+    expect(detail.post.anonymous).toBe(false);
+    expect(comment.anonymous).toBe(false);
+  });
+
   it("rejects records explicitly marked as exposing raw financial data", () => {
     expect(() =>
       parseCommunityFeedPage({

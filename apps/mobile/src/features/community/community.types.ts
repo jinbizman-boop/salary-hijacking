@@ -64,6 +64,7 @@ export type CommunityPost = Readonly<{
   boardType: CommunityBoardType;
   title: string;
   bodyPreview: string;
+  anonymous?: boolean;
   anonymousDisplayName: string;
   moderationStatus: ModerationStatus;
   likeCount: number;
@@ -83,6 +84,7 @@ export type CommunityComment = Readonly<{
   id: string;
   postId: string;
   content: string;
+  anonymous?: boolean;
   anonymousDisplayName: string;
   moderationStatus: ModerationStatus;
   likeCount: number;

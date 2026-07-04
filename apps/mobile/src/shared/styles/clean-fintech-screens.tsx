@@ -2253,14 +2253,19 @@ export function CleanFintechPostDetailScreen({
       setBookmarked(nextDetail.post.bookmarkedByMe === true);
       setPostEditTitle(nextDetail.post.title);
       setPostEditContent(nextDetail.content || nextDetail.post.bodyPreview);
-      setPostEditAnonymous(true);
+      setPostEditAnonymous(nextDetail.post.anonymous ?? true);
       setCommentEditDrafts(
         Object.fromEntries(
           nextComments.map((comment) => [comment.id, comment.content]),
         ),
       );
       setCommentEditAnonymousDrafts(
-        Object.fromEntries(nextComments.map((comment) => [comment.id, true])),
+        Object.fromEntries(
+          nextComments.map((comment) => [
+            comment.id,
+            comment.anonymous ?? true,
+          ]),
+        ),
       );
       setToast(
         `서버 커뮤니티 상세 동기화 · 댓글 ${formatCommunityCount(
@@ -2590,6 +2595,7 @@ export function CleanFintechPostDetailScreen({
             content: draft.content,
             post: {
               ...base.post,
+              anonymous: draft.anonymous,
               bodyPreview: draft.content.slice(0, 180),
               title: draft.title,
             },
@@ -2631,14 +2637,17 @@ export function CleanFintechPostDetailScreen({
 
       setCommentEditingId(comment.id);
       setToast("댓글 수정을 서버 커뮤니티에 저장하는 중이에요.");
+      const nextAnonymous = commentEditAnonymousDrafts[comment.id] ?? true;
       void detailCommunityService
         .updateComment(comment.id, {
           content,
-          anonymous: commentEditAnonymousDrafts[comment.id] ?? true,
+          anonymous: nextAnonymous,
         })
         .then(() => {
           const updateComment = (item: CommunityComment): CommunityComment =>
-            item.id === comment.id ? { ...item, content } : item;
+            item.id === comment.id
+              ? { ...item, anonymous: nextAnonymous, content }
+              : item;
           setServerCommunityComments((current) =>
             (current.length > 0 ? current : activeComments).map(updateComment),
           );
@@ -2651,7 +2660,7 @@ export function CleanFintechPostDetailScreen({
           });
           setCommentEditAnonymousDrafts((current) => ({
             ...current,
-            [comment.id]: commentEditAnonymousDrafts[comment.id] ?? true,
+            [comment.id]: nextAnonymous,
           }));
           setToast("댓글 수정이 서버에 저장됐어요.");
         })

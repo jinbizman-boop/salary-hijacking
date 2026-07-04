@@ -2973,10 +2973,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(detailSource).toContain("setPostEditAnonymous");
     expect(detailSource).toContain("commentEditAnonymousDrafts");
     expect(detailSource).toContain("setCommentEditAnonymousDrafts");
+    expect(detailSource).toContain(
+      "setPostEditAnonymous(nextDetail.post.anonymous ?? true)",
+    );
+    expect(detailSource).toContain("comment.anonymous ?? true");
     expect(updateSource).toContain("anonymous: postEditAnonymous");
     expect(updateSource).toContain(
-      "anonymous: commentEditAnonymousDrafts[comment.id] ?? true",
+      "const nextAnonymous = commentEditAnonymousDrafts[comment.id] ?? true",
     );
+    expect(updateSource).toContain("anonymous: nextAnonymous");
     expect(detailSource).toContain('label="익명 게시글 수정"');
     expect(detailSource).toContain('label="익명 댓글 수정"');
     expect(updateSource).not.toContain("anonymous: true");
