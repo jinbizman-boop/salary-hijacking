@@ -252,6 +252,24 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHomeSource).not.toContain("onChangeText={setExpenseDraft}");
   });
 
+  it("locks salary home amount input while expense or daily budget save is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const salaryHomeSource =
+      cleanScreens.match(
+        /function SalaryHomeScreen\(\): React\.ReactElement \{[\s\S]*?function PlanScreen/u,
+      )?.[0] ?? "";
+
+    expect(salaryHomeSource).toContain(
+      "const salaryHomeAmountPending = savingExpense || savingDailyBudget",
+    );
+    expect(salaryHomeSource).toContain(
+      "accessibilityState={{ disabled: salaryHomeAmountPending }}",
+    );
+    expect(salaryHomeSource).toContain("editable={!salaryHomeAmountPending}");
+  });
+
   it("keeps salary home variable expenses hydrated, editable, and deletable through the server API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

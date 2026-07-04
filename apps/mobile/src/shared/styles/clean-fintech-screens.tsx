@@ -3008,6 +3008,7 @@ function SalaryHomeScreen(): React.ReactElement {
     const next = sanitizeKrwIntegerInput(value);
     if (next !== null) setExpenseDraft(next);
   }, []);
+  const salaryHomeAmountPending = savingExpense || savingDailyBudget;
 
   const saveSalaryDailyBudget = useCallback(async (): Promise<void> => {
     if (dailyBudgetSaveInFlightRef.current) return;
@@ -3351,6 +3352,8 @@ function SalaryHomeScreen(): React.ReactElement {
         <View style={styles.inputRow}>
           <TextInput
             accessibilityLabel="지출 추가 금액"
+            accessibilityState={{ disabled: salaryHomeAmountPending }}
+            editable={!salaryHomeAmountPending}
             inputMode="numeric"
             keyboardType="number-pad"
             maxLength={12}
