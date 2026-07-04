@@ -1038,6 +1038,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <Pressable
             accessibilityLabel="커뮤니티 글쓰기 닫기"
             accessibilityRole="button"
+            accessibilityState={{ disabled: submitting || uploadingAttachment }}
             disabled={submitting || uploadingAttachment}
             onPress={closeCommunityWrite}
             style={[
@@ -1050,6 +1051,9 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <Text style={styles.composeTitle}>글쓰기</Text>
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{
+              disabled: !valid || submitting || uploadingAttachment,
+            }}
             disabled={!valid || submitting || uploadingAttachment}
             onPress={submitCommunityPost}
             style={[
@@ -2732,6 +2736,9 @@ export function CleanFintechPostDetailScreen({
         <View style={styles.attachmentRow}>
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{
+              disabled: likePending || communityDetailActionBusy,
+            }}
             disabled={likePending || communityDetailActionBusy}
             onPress={togglePostLike}
             style={[
@@ -2850,6 +2857,10 @@ export function CleanFintechPostDetailScreen({
           />
           <Pressable
             accessibilityRole="button"
+            accessibilityState={{
+              disabled:
+                !commentReady || commentSubmitting || communityDetailActionBusy,
+            }}
             disabled={
               !commentReady || commentSubmitting || communityDetailActionBusy
             }

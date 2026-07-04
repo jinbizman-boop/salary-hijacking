@@ -2197,6 +2197,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(writeScreenSource).toMatch(
       /submitting\s*\|\|\s*uploadingAttachment\s*\?\s*styles\.disabled\s*:\s*null/u,
     );
+    expect(writeScreenSource).toContain(
+      "accessibilityState={{ disabled: submitting || uploadingAttachment }}",
+    );
   });
 
   it("keeps community write drafts restored and cleared through safe local storage", () => {
@@ -2301,6 +2304,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(writeScreenSource).toMatch(
       /!valid\s*\|\|\s*submitting\s*\|\|\s*uploadingAttachment\s*\?\s*styles\.disabled\s*:\s*null/u,
+    );
+    expect(writeScreenSource).toMatch(
+      /accessibilityState=\{\{\s*disabled:\s*!valid \|\| submitting \|\| uploadingAttachment,\s*\}\}/u,
     );
   });
 
@@ -2720,11 +2726,17 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(detailSource).toContain(
       "disabled={likePending || communityDetailActionBusy}",
     );
+    expect(detailSource).toMatch(
+      /accessibilityState=\{\{\s*disabled:\s*likePending \|\| communityDetailActionBusy,\s*\}\}/u,
+    );
     expect(
       detailSource.match(
         /disabled=\{\s*sharePending \|\| communityDetailActionBusy\s*\}/gu,
       ),
     ).toHaveLength(2);
+    expect(detailSource).toMatch(
+      /accessibilityState=\{\{\s*disabled:\s*!commentReady \|\| commentSubmitting \|\| communityDetailActionBusy,\s*\}\}/u,
+    );
     expect(
       detailSource.match(
         /disabled=\{\s*bookmarkPending \|\| communityDetailActionBusy\s*\}/gu,
