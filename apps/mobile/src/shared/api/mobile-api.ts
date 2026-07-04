@@ -94,6 +94,14 @@ const FORBIDDEN_PUBLIC_CONFIG_KEYS = new Set(
     "FCM_SERVER_KEY",
   ].map((key) => key.toLowerCase()),
 );
+const FORBIDDEN_PUBLIC_CONFIG_VALUE_PATTERNS = [
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu,
+  /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u,
+  /\b(?:\d{4}[-\s]?){3}\d{4}\b/u,
+  /\b(?:token|authorization|bearer|session|refresh|push|fcm)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/iu,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u,
+  /\b(?:salary|income|expense|savings?|hijack|payroll)\b[^\d]{0,24}(?:\d{1,3}(?:,\d{3})+|\d{6,})\b/iu,
+] as const;
 
 export function mobileClientPlatform(): "ios" | "android" | "web" {
   if (Platform.OS === "ios" || Platform.OS === "android") return Platform.OS;
@@ -215,7 +223,17 @@ function containsForbiddenPublicConfigPayload(
   return Object.entries(input as Readonly<Record<string, unknown>>).some(
     ([key, value]) =>
       FORBIDDEN_PUBLIC_CONFIG_KEYS.has(key.toLowerCase()) ||
+      containsForbiddenPublicConfigValue(value) ||
       containsForbiddenPublicConfigPayload(value, seen),
+  );
+}
+
+function containsForbiddenPublicConfigValue(value: unknown): boolean {
+  return (
+    typeof value === "string" &&
+    FORBIDDEN_PUBLIC_CONFIG_VALUE_PATTERNS.some((pattern) =>
+      pattern.test(value),
+    )
   );
 }
 

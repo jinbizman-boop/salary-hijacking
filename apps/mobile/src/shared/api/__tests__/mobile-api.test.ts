@@ -104,6 +104,42 @@ describe("mobile api factory", () => {
     expect(calls[0]?.headers.has("authorization")).toBe(false);
   });
 
+  it("rejects public app config responses that contain sensitive raw payload values", async () => {
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        new Response(
+          JSON.stringify({
+            data: {
+              links: {
+                landingUrl: "https://salaryhijacking.com",
+                partnerBenefitsUrl:
+                  "https://salaryhijacking.com/partners?ref=user@example.com",
+                privacyUrl: "https://salaryhijacking.com/privacy",
+                supportUrl: "https://salaryhijacking.com/support",
+                termsUrl: "https://salaryhijacking.com/terms",
+              },
+              privacy: {
+                rawPayrollDataForAds: false,
+                rawExpenseDataForAds: false,
+                rawSavingsDataForAds: false,
+                advertiserUserIdentifierExposure: false,
+              },
+              notes: [
+                "salary 2700000",
+                "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+              ],
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        ),
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.toThrow(
+      "PUBLIC_APP_CONFIG_SENSITIVE_PAYLOAD",
+    );
+  });
+
   it("attaches the stored access token to feature API requests without exposing refresh tokens", async () => {
     const calls: Request[] = [];
     const budgetApi = createMobileBudgetApi({
