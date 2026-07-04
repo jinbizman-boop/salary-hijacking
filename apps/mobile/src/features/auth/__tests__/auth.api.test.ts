@@ -191,7 +191,7 @@ describe("auth api", () => {
       api.register({
         email: "new@example",
         nickname: "신규 사용자",
-        password: "new-password",
+        password: "new-password-1",
         privacyAccepted: true,
         termsAccepted: true,
       }),
@@ -218,7 +218,7 @@ describe("auth api", () => {
         );
         expect(JSON.parse(await normalized.text())).toEqual({
           email: "new@example.com",
-          password: "new-password",
+          password: "new-password-1",
           nickname: "납치러",
           termsAccepted: true,
           privacyAccepted: true,
@@ -253,7 +253,7 @@ describe("auth api", () => {
       email: "new@example.com",
       marketingAccepted: false,
       nickname: "납치러",
-      password: "new-password",
+      password: "new-password-1",
       privacyAccepted: true,
       termsAccepted: true,
     });
@@ -282,7 +282,7 @@ describe("auth api", () => {
       api.register({
         email: "new@example.com",
         nickname: "신규 사용자",
-        password: "new-password",
+        password: "new-password-1",
         privacyAccepted: true,
         termsAccepted: false,
       }),
@@ -293,7 +293,7 @@ describe("auth api", () => {
       api.register({
         email: "new@example.com",
         nickname: "신규 사용자",
-        password: "new-password",
+        password: "new-password-1",
         privacyAccepted: false,
         termsAccepted: true,
       }),
@@ -846,6 +846,37 @@ describe("auth api", () => {
     expect(result).toEqual({ completed: true });
     expect(stored.size).toBe(0);
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
+  });
+
+  it("rejects weak signup and reset passwords before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.register({
+        email: "new@example.com",
+        nickname: "new user",
+        password: "short1",
+        privacyAccepted: true,
+        termsAccepted: true,
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_PASSWORD_POLICY_INVALID" });
+
+    await expect(
+      api.confirmPasswordReset({
+        token: "reset-token-from-link",
+        newPassword: "longbutwithoutnumber",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_PASSWORD_POLICY_INVALID" });
+
+    expect(calls).toHaveLength(0);
   });
 
   it("refreshes the access token through the server refresh cookie without storing refresh tokens", async () => {

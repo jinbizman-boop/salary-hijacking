@@ -38,6 +38,7 @@ import type {
   AuthVerifyEmailRequest,
   AuthVerifyEmailResult,
 } from "./types";
+import { isServerAuthPasswordCandidate } from "./password-policy";
 
 export type AuthApiOptions = Readonly<{
   baseUrl: string;
@@ -154,6 +155,18 @@ function assertPresent(value: string, code: string): string {
     throw new AuthApiError(0, code, AUTH_SAFE_ERROR_MESSAGE);
   }
   return normalized;
+}
+
+function assertPasswordPolicy(value: string): string {
+  const password = assertPresent(value, "AUTH_PASSWORD_REQUIRED");
+  if (!isServerAuthPasswordCandidate(password)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_PASSWORD_POLICY_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return password;
 }
 
 function normalizeEmail(value: string): string {
@@ -553,7 +566,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
       const body: Record<string, unknown> = {
         email: normalizeEmail(request.email),
         nickname: assertPresent(request.nickname, "AUTH_NICKNAME_REQUIRED"),
-        password: assertPresent(request.password, "AUTH_PASSWORD_REQUIRED"),
+        password: assertPasswordPolicy(request.password),
         privacyAccepted: assertRequiredConsent(request.privacyAccepted),
         termsAccepted: assertRequiredConsent(request.termsAccepted),
       };
@@ -665,10 +678,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
           request.token,
           "AUTH_PASSWORD_RESET_TOKEN_REQUIRED",
         ),
-        newPassword: assertPresent(
-          request.newPassword,
-          "AUTH_PASSWORD_REQUIRED",
-        ),
+        newPassword: assertPasswordPolicy(request.newPassword),
       });
       return passwordResetConfirmResult(parsed);
     },
