@@ -1351,6 +1351,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("prevents duplicate profile settings saves before the profile API acknowledges it", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const submitProfileSource =
+      cleanScreens.match(
+        /const submitProfileSettings = useCallback\(\(\) => \{[\s\S]*?const submitAccountSettings/u,
+      )?.[0] ?? "";
+
+    expect(submitProfileSource).toContain("profileSettingsSaveInFlightRef");
+    expect(submitProfileSource).toContain(
+      "profileSettingsSaveInFlightRef.current",
+    );
+    expect(submitProfileSource).toContain(
+      "profileSettingsSaveInFlightRef.current = true",
+    );
+    expect(submitProfileSource).toContain(
+      "profileSettingsSaveInFlightRef.current = false",
+    );
+    expect(submitProfileSource).toMatch(
+      /profileSettingsApi\s*\.?\s*updateProfile/,
+    );
+  });
+
   it("keeps account settings saved through the server consent API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -1366,6 +1390,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("sensitiveFinancialTargetingAccepted=false");
     expect(source("profile/account.tsx")).toContain(
       'CleanFintechSettingsScreen kind="account"',
+    );
+  });
+
+  it("prevents duplicate account settings saves before the consent API acknowledges it", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const submitAccountSource =
+      cleanScreens.match(
+        /const submitAccountSettings = useCallback\(\(\) => \{[\s\S]*?return \(/u,
+      )?.[0] ?? "";
+
+    expect(submitAccountSource).toContain("accountSettingsSaveInFlightRef");
+    expect(submitAccountSource).toContain(
+      "accountSettingsSaveInFlightRef.current",
+    );
+    expect(submitAccountSource).toContain(
+      "accountSettingsSaveInFlightRef.current = true",
+    );
+    expect(submitAccountSource).toContain(
+      "accountSettingsSaveInFlightRef.current = false",
+    );
+    expect(submitAccountSource).toMatch(
+      /accountSettingsApi\s*\.?\s*updateAccountSettings/,
     );
   });
 

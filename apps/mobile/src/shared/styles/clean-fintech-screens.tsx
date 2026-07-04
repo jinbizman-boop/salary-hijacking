@@ -1389,6 +1389,8 @@ export function CleanFintechSettingsScreen({
   const [accountSettingsToast, setAccountSettingsToast] = useState(
     "계정 동의 설정은 서버 consents API 기준으로 저장됩니다.",
   );
+  const profileSettingsSaveInFlightRef = useRef(false);
+  const accountSettingsSaveInFlightRef = useRef(false);
   const profileSettingsValid =
     profileNickname.trim().length >= 2 &&
     profileDisplayBio.trim().length <= 300 &&
@@ -1397,7 +1399,14 @@ export function CleanFintechSettingsScreen({
     settingsRouter.replace("/profile");
   }, [settingsRouter]);
   const submitProfileSettings = useCallback(() => {
-    if (kind !== "profile" || !profileSettingsValid) return;
+    if (
+      kind !== "profile" ||
+      !profileSettingsValid ||
+      profileSettingsSaveInFlightRef.current
+    ) {
+      return;
+    }
+    profileSettingsSaveInFlightRef.current = true;
     setProfileSettingsToast("프로필 설정을 서버에 저장하는 중이에요.");
     void profileSettingsApi
       .updateProfile({
@@ -1417,6 +1426,9 @@ export function CleanFintechSettingsScreen({
         setProfileSettingsToast(
           "프로필 설정 저장에 실패했어요. 민감 정보 입력 여부와 네트워크 상태를 확인해 주세요.",
         );
+      })
+      .finally(() => {
+        profileSettingsSaveInFlightRef.current = false;
       });
   }, [
     kind,
@@ -1427,7 +1439,8 @@ export function CleanFintechSettingsScreen({
     profileSettingsValid,
   ]);
   const submitAccountSettings = useCallback(() => {
-    if (kind !== "account") return;
+    if (kind !== "account" || accountSettingsSaveInFlightRef.current) return;
+    accountSettingsSaveInFlightRef.current = true;
     setAccountSettingsToast("계정 동의 설정을 서버에 저장하는 중이에요.");
     void accountSettingsApi
       .updateAccountSettings({
@@ -1456,6 +1469,9 @@ export function CleanFintechSettingsScreen({
         setAccountSettingsToast(
           "계정 동의 저장에 실패했어요. 필수 약관과 네트워크 상태를 확인해 주세요.",
         );
+      })
+      .finally(() => {
+        accountSettingsSaveInFlightRef.current = false;
       });
   }, [
     accountSettingsApi,
