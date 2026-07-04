@@ -953,6 +953,20 @@ describe("auth api", () => {
         redirectUri: "http://evil.example/auth/oauth/callback",
       }),
     ).rejects.toMatchObject({ code: "AUTH_OAUTH_REDIRECT_URI_INVALID" });
+    await expect(
+      api.startOAuth({
+        provider: "KAKAO",
+        redirectUri:
+          "salaryhijacking://auth/oauth/callback?token=raw-provider-token",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_OAUTH_REDIRECT_URI_INVALID" });
+    await expect(
+      api.startOAuth({
+        provider: "KAKAO",
+        redirectUri:
+          "https://salaryhijacking.com/auth/oauth/callback#access_token=raw",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_OAUTH_REDIRECT_URI_INVALID" });
 
     expect(calls).toHaveLength(0);
     expect(stored.size).toBe(0);

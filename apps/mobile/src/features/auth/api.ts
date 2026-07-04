@@ -340,7 +340,11 @@ function assertOAuthRedirectUri(value: string): string {
     (url.hostname === "salaryhijacking.com" ||
       url.hostname.endsWith(".salaryhijacking.com")) &&
     url.pathname === "/auth/oauth/callback";
-  if (!isAppCallback && !isWebCallback) {
+  if (
+    (!isAppCallback && !isWebCallback) ||
+    url.search.length > 0 ||
+    url.hash.length > 0
+  ) {
     throw new AuthApiError(
       0,
       "AUTH_OAUTH_REDIRECT_URI_INVALID",
