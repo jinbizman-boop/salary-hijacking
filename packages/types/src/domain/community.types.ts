@@ -1091,6 +1091,16 @@ export interface DeleteCommunityCommentRequest extends CommunityTraceableMutatio
   readonly context?: CommunityRequestContext;
 }
 
+export interface LikeCommunityCommentRequest {
+  readonly commentId: UUID;
+  readonly context?: CommunityRequestContext;
+}
+
+export interface UnlikeCommunityCommentRequest {
+  readonly commentId: UUID;
+  readonly context?: CommunityRequestContext;
+}
+
 export interface ReactCommunityTargetRequest extends CommunityTraceableMutation {
   readonly targetType: Extract<
     CommunityReportTargetType,
@@ -1178,6 +1188,16 @@ export interface CommunityReactionResult {
   readonly reactions: CommunityReactionSummary;
 }
 
+export interface CommunityCommentLikeResult {
+  readonly commentId: UUID;
+  readonly state: "LIKED" | "UNLIKED";
+  readonly likeCount: number;
+  readonly serverAuthority: true;
+  readonly financialRawDataExposed: false;
+  readonly rawPersonalDataExposed: false;
+  readonly adsFinancialTargetingUsed: false;
+}
+
 export interface CommunityBookmarkResult {
   readonly postId: UUID;
   readonly enabled: boolean;
@@ -1218,6 +1238,10 @@ export type UpdateCommunityCommentResponse =
   CommunityMutationResponse<CommunityComment>;
 export type DeleteCommunityCommentResponse =
   CommunityMutationResponse<CommunityDeleteResult>;
+export type LikeCommunityCommentResponse =
+  CommunityMutationResponse<CommunityCommentLikeResult>;
+export type UnlikeCommunityCommentResponse =
+  CommunityMutationResponse<CommunityCommentLikeResult>;
 export type ReactCommunityTargetResponse =
   CommunityMutationResponse<CommunityReactionResult>;
 export type BookmarkCommunityPostResponse =
@@ -1242,6 +1266,8 @@ export type CommunityMutationOperation =
   | "CREATE_COMMENT"
   | "UPDATE_COMMENT"
   | "DELETE_COMMENT"
+  | "LIKE_COMMENT"
+  | "UNLIKE_COMMENT"
   | "REACT_TARGET"
   | "BOOKMARK_POST"
   | "SHARE_POST"
@@ -1263,6 +1289,8 @@ export const COMMUNITY_API_PATHS = Object.freeze({
   createComment: "/community/posts/:postId/comments",
   updateComment: "/community/comments/:commentId",
   deleteComment: "/community/comments/:commentId",
+  likeComment: "/community/comments/:commentId/like",
+  unlikeComment: "/community/comments/:commentId/like",
   reactTarget: "/community/reactions",
   bookmarkPost: "/community/bookmarks",
   sharePost: "/community/shares",
@@ -1333,6 +1361,14 @@ export interface CommunityEndpointTypes {
   readonly deleteComment: CommunityEndpointDescriptor<
     DeleteCommunityCommentRequest,
     DeleteCommunityCommentResponse
+  >;
+  readonly likeComment: CommunityEndpointDescriptor<
+    LikeCommunityCommentRequest,
+    LikeCommunityCommentResponse
+  >;
+  readonly unlikeComment: CommunityEndpointDescriptor<
+    UnlikeCommunityCommentRequest,
+    UnlikeCommunityCommentResponse
   >;
   readonly reactTarget: CommunityEndpointDescriptor<
     ReactCommunityTargetRequest,
@@ -1616,6 +1652,8 @@ export const getCommunityTypesCompletenessReport =
       "deletePost",
       "listComments",
       "createComment",
+      "likeComment",
+      "unlikeComment",
       "reactTarget",
       "bookmarkPost",
       "sharePost",

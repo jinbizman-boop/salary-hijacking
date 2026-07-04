@@ -625,6 +625,20 @@ export const DeleteCommunityCommentRequestSchema = z
   })
   .strict();
 
+export const LikeCommunityCommentRequestSchema = z
+  .object({
+    commentId: UuidSchema,
+    context: CommunityRequestContextSchema.optional(),
+  })
+  .strict();
+
+export const UnlikeCommunityCommentRequestSchema = z
+  .object({
+    commentId: UuidSchema,
+    context: CommunityRequestContextSchema.optional(),
+  })
+  .strict();
+
 export const ReactCommunityTargetRequestSchema = z
   .object({
     targetType: z.enum(["POST", "COMMENT"]),
@@ -725,6 +739,18 @@ export const CommunityReactionResultSchema = z
   })
   .strict();
 
+export const CommunityCommentLikeResultSchema = z
+  .object({
+    commentId: UuidSchema,
+    state: z.enum(["LIKED", "UNLIKED"]),
+    likeCount: z.number().int().min(0),
+    serverAuthority: z.literal(true),
+    financialRawDataExposed: z.literal(false),
+    rawPersonalDataExposed: z.literal(false),
+    adsFinancialTargetingUsed: z.literal(false),
+  })
+  .strict();
+
 export const CommunityBookmarkResultSchema = z
   .object({
     postId: UuidSchema,
@@ -794,6 +820,13 @@ export const ReactCommunityTargetResponseSchema = createMutationResponseSchema(
   CommunityReactionResultSchema,
 );
 
+export const LikeCommunityCommentResponseSchema = createMutationResponseSchema(
+  CommunityCommentLikeResultSchema,
+);
+
+export const UnlikeCommunityCommentResponseSchema =
+  createMutationResponseSchema(CommunityCommentLikeResultSchema);
+
 export const BookmarkCommunityPostResponseSchema = createMutationResponseSchema(
   CommunityBookmarkResultSchema,
 );
@@ -836,6 +869,8 @@ export const COMMUNITY_API_PATHS = Object.freeze({
   createComment: "/community/posts/:postId/comments",
   updateComment: "/community/comments/:commentId",
   deleteComment: "/community/comments/:commentId",
+  likeComment: "/community/comments/:commentId/like",
+  unlikeComment: "/community/comments/:commentId/like",
   reactTarget: "/community/reactions",
   bookmarkPost: "/community/bookmarks",
   sharePost: "/community/shares",
@@ -912,6 +947,18 @@ export const CommunityEndpointContract = Object.freeze({
     path: COMMUNITY_API_PATHS.deleteComment,
     request: DeleteCommunityCommentRequestSchema,
     response: DeleteCommunityCommentResponseSchema,
+  },
+  likeComment: {
+    method: "POST",
+    path: COMMUNITY_API_PATHS.likeComment,
+    request: LikeCommunityCommentRequestSchema,
+    response: LikeCommunityCommentResponseSchema,
+  },
+  unlikeComment: {
+    method: "DELETE",
+    path: COMMUNITY_API_PATHS.unlikeComment,
+    request: UnlikeCommunityCommentRequestSchema,
+    response: UnlikeCommunityCommentResponseSchema,
   },
   reactTarget: {
     method: "POST",
@@ -1034,6 +1081,8 @@ export const CommunitySchemas = Object.freeze({
     CreateCommunityCommentRequestSchema,
     UpdateCommunityCommentRequestSchema,
     DeleteCommunityCommentRequestSchema,
+    LikeCommunityCommentRequestSchema,
+    UnlikeCommunityCommentRequestSchema,
     ReactCommunityTargetRequestSchema,
     BookmarkCommunityPostRequestSchema,
     ShareCommunityPostRequestSchema,
@@ -1046,6 +1095,7 @@ export const CommunitySchemas = Object.freeze({
   result: {
     CommunityDeleteResultSchema,
     CommunityReactionResultSchema,
+    CommunityCommentLikeResultSchema,
     CommunityBookmarkResultSchema,
     CommunityShareResultSchema,
     CommunityModerationResultSchema,
@@ -1061,6 +1111,8 @@ export const CommunitySchemas = Object.freeze({
     CreateCommunityCommentResponseSchema,
     UpdateCommunityCommentResponseSchema,
     DeleteCommunityCommentResponseSchema,
+    LikeCommunityCommentResponseSchema,
+    UnlikeCommunityCommentResponseSchema,
     ReactCommunityTargetResponseSchema,
     BookmarkCommunityPostResponseSchema,
     ShareCommunityPostResponseSchema,
@@ -1215,6 +1267,12 @@ export type UpdateCommunityCommentRequest = z.infer<
 export type DeleteCommunityCommentRequest = z.infer<
   typeof DeleteCommunityCommentRequestSchema
 >;
+export type LikeCommunityCommentRequest = z.infer<
+  typeof LikeCommunityCommentRequestSchema
+>;
+export type UnlikeCommunityCommentRequest = z.infer<
+  typeof UnlikeCommunityCommentRequestSchema
+>;
 export type ReactCommunityTargetRequest = z.infer<
   typeof ReactCommunityTargetRequestSchema
 >;
@@ -1243,6 +1301,9 @@ export type GetCommunityMetricsAdminRequest = z.infer<
 export type CommunityDeleteResult = z.infer<typeof CommunityDeleteResultSchema>;
 export type CommunityReactionResult = z.infer<
   typeof CommunityReactionResultSchema
+>;
+export type CommunityCommentLikeResult = z.infer<
+  typeof CommunityCommentLikeResultSchema
 >;
 export type CommunityBookmarkResult = z.infer<
   typeof CommunityBookmarkResultSchema
