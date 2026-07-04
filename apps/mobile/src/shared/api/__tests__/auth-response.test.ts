@@ -29,7 +29,6 @@ describe("mobile auth response adapter", () => {
     expect(normalized.data).toMatchObject({
       status: "AUTHENTICATED",
       accessToken: "access.jwt",
-      refreshToken: "refresh.token",
       expiresAt: "2026-06-29T05:15:00.000Z",
       user: {
         id: "usr_123",
@@ -38,6 +37,7 @@ describe("mobile auth response adapter", () => {
         role: "USER",
       },
     });
+    expect(JSON.stringify(normalized)).not.toContain("refresh.token");
   });
 
   it("keeps MFA-required API responses in the mobile MFA shape", () => {
@@ -91,7 +91,6 @@ describe("mobile auth response adapter", () => {
     expect(normalized.data).toMatchObject({
       status: "AUTHENTICATED",
       accessToken: "new.access.jwt",
-      refreshToken: "new.refresh.token",
       expiresAt: "2026-06-29T05:15:00.000Z",
       emailVerificationRequired: true,
       onboardingRequired: false,
@@ -102,6 +101,7 @@ describe("mobile auth response adapter", () => {
         role: "USER",
       },
     });
+    expect(JSON.stringify(normalized)).not.toContain("new.refresh.token");
   });
 
   it("keeps locked-account and pending-signup fallback copy readable", () => {

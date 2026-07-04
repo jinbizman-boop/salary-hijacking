@@ -98,13 +98,13 @@ describe("auth api", () => {
     expect(result.data).toMatchObject({
       status: "AUTHENTICATED",
       accessToken: "access.jwt.token",
-      refreshToken: "refresh.cookie.token",
       expiresAt: "2026-07-03T00:15:00.000Z",
       user: {
         id: "usr_1",
         role: "USER",
       },
     });
+    expect(JSON.stringify(result)).not.toContain("refresh.cookie.token");
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("access.jwt.token");
     expect(Array.from(stored.values()).join(" ")).not.toContain(
       "refresh.cookie.token",

@@ -6,7 +6,6 @@ type UnknownRecord = Record<string, unknown>;
 export type MobileAuthSuccessPayload = Readonly<{
   status: "AUTHENTICATED";
   accessToken: string;
-  refreshToken?: string | null;
   expiresAt: string;
   user: Readonly<{
     id: string;
@@ -41,7 +40,6 @@ export type MobileAuthResponse = Readonly<{
 export type MobileSignupSuccessPayload = Readonly<{
   status: "REGISTERED" | "AUTHENTICATED";
   accessToken?: string | null;
-  refreshToken?: string | null;
   expiresAt?: string | null;
   emailVerificationRequired: boolean;
   onboardingRequired: boolean;
@@ -126,7 +124,6 @@ export function normalizeMobileAuthResponse(
     data: {
       status: "AUTHENTICATED",
       accessToken: requiredAccessToken(data, tokens),
-      refreshToken: text(data, "refreshToken") ?? text(tokens, "refreshToken"),
       expiresAt: tokenExpiresAt(data, tokens, now),
       user: mobileUser(user, data, false),
     },
@@ -164,7 +161,6 @@ export function normalizeMobileSignupResponse(
     data: {
       status: hasAccessToken ? "AUTHENTICATED" : "REGISTERED",
       accessToken: hasAccessToken ? optionalAccessToken(data, tokens) : null,
-      refreshToken: text(data, "refreshToken") ?? text(tokens, "refreshToken"),
       expiresAt: hasAccessToken ? tokenExpiresAt(data, tokens, now) : null,
       emailVerificationRequired,
       onboardingRequired,
