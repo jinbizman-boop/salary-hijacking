@@ -1,6 +1,7 @@
 import { fireEvent, render } from "@testing-library/react-native";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { Pressable } from "react-native";
 
 import { CommunityAdDisclosure } from "../components/CommunityAdDisclosure";
 import { CommunityPostCard } from "../components/CommunityPostCard";
@@ -89,6 +90,30 @@ describe("community components", () => {
     expect(
       screen.getByText("개인 금융정보를 사용하지 않은 문맥형 광고"),
     ).toBeTruthy();
+  });
+
+  it("does not expose credentialed contextual ad URLs as pressable links", () => {
+    const onPress = jest.fn();
+    const model: CommunityAdDisclosureModel = {
+      id: "ad_credentialed",
+      label: "광고",
+      title: "unsafe ad",
+      description: "credentialed URL must not be opened",
+      destinationUrl: "https://partner:secret@salaryhijacking.com/community-ad",
+      contextualOnly: true,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    };
+
+    const screen = render(
+      <CommunityAdDisclosure model={model} onPress={onPress} />,
+    );
+
+    expect(screen.queryByLabelText("광고 unsafe ad ?닿린")).toBeNull();
+    expect(screen.UNSAFE_queryAllByType(Pressable)).toHaveLength(0);
+    expect(screen.getByText("unsafe ad")).toBeTruthy();
+    expect(onPress).not.toHaveBeenCalled();
   });
 
   it("disables publishing when moderation blocks the draft", () => {

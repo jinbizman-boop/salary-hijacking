@@ -7,6 +7,27 @@ export type CommunityAdDisclosureProps = Readonly<{
   onPress?: (model: CommunityAdDisclosureModel) => void;
 }>;
 
+function isSafeAdDestinationUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" && url.username === "" && url.password === ""
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isSafePressableAd(model: CommunityAdDisclosureModel): boolean {
+  return (
+    model.contextualOnly === true &&
+    model.rawFinancialDataExposed === false &&
+    model.rawPersonalDataExposed === false &&
+    model.adsFinancialTargetingUsed === false &&
+    isSafeAdDestinationUrl(model.destinationUrl)
+  );
+}
+
 export function CommunityAdDisclosure({
   model,
   onPress,
@@ -24,7 +45,7 @@ export function CommunityAdDisclosure({
     </>
   );
 
-  if (!onPress) {
+  if (!onPress || !isSafePressableAd(model)) {
     return (
       <View
         accessibilityLabel={`${model.label} ${model.title}`}
