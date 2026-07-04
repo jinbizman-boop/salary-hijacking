@@ -367,6 +367,57 @@ describe("budget api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects unknown daily budget save fields before they can enter budget payloads", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              availableAmountMinor: 25_000,
+              budgetDate: "2026-07-03",
+              budgetId: "budget_today",
+              plannedAmountMinor: 25_000,
+              remainingAmountMinor: 20_000,
+              serverAuthority: true,
+              spentAmountMinor: 5_000,
+              status: "ACTIVE",
+              updatedAt: "2026-07-03T01:00:00.000Z",
+              usageRate: 0.2,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.saveDailyBudget({
+        budgetDate: "2026-07-03",
+        budgetId: null,
+        memo: "mobile daily budget create",
+        plannedAmountMinor: 25_000,
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_DAILY_BUDGET_SAVE" });
+
+    await expect(
+      api.saveDailyBudget({
+        accountNumber: "123-456-789012",
+        budgetDate: "2026-07-03",
+        budgetId: "budget_today",
+        memo: "mobile daily budget update",
+        plannedAmountMinor: 30_000,
+      } as never),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_DAILY_BUDGET_SAVE" });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("creates a server-authoritative variable expense before local preview fallback", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

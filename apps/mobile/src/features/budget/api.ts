@@ -587,7 +587,12 @@ function isDateOnly(value: unknown): value is string {
 }
 
 function validDailyBudgetSaveRequest(value: DailyBudgetSaveRequest): boolean {
+  const keys = Object.keys(value);
   return (
+    keys.length === 4 &&
+    keys.every((key) =>
+      ["budgetDate", "budgetId", "memo", "plannedAmountMinor"].includes(key),
+    ) &&
     isDateOnly(value.budgetDate) &&
     (value.budgetId === null ||
       (typeof value.budgetId === "string" &&
