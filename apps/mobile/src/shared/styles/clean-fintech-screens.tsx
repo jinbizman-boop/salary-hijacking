@@ -796,6 +796,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   const [uploadedCommunityAttachments, setUploadedCommunityAttachments] =
     useState<readonly UploadAttachment[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const communityPostSubmitInFlightRef = useRef(false);
   const [uploadingAttachment, setUploadingAttachment] = useState(false);
   const [toast, setToast] = useState(
     "제목, 본문, 게시판을 확인한 뒤 등록할 수 있어요.",
@@ -929,7 +930,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   }, [uploadingAttachment, writeUploadsApi]);
 
   const submitCommunityPost = useCallback(() => {
-    if (!valid || submitting) return;
+    if (!valid || communityPostSubmitInFlightRef.current) return;
     const draft: CommunityPostDraft = {
       anonymous,
       boardType: communityBoardApiMap[board] ?? "FREE",
@@ -938,6 +939,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
       title: title.trim(),
     };
 
+    communityPostSubmitInFlightRef.current = true;
     setSubmitting(true);
     setToast("게시글을 서버 커뮤니티에 등록하는 중이에요.");
     void writeCommunityService
@@ -972,14 +974,16 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           "게시글을 등록하지 못했어요. 민감 정보와 네트워크 상태를 확인해 주세요.",
         );
       })
-      .finally(() => setSubmitting(false));
+      .finally(() => {
+        communityPostSubmitInFlightRef.current = false;
+        setSubmitting(false);
+      });
   }, [
     anonymous,
     attachUploadedCommunityAttachments,
     board,
     body,
     question,
-    submitting,
     title,
     uploadedCommunityAttachments.length,
     valid,
