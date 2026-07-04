@@ -2222,6 +2222,46 @@ export function CleanFintechPostDetailScreen({
     }
   }, [detailCommunityService, postId]);
 
+  const restoreCommunityLikeState = useCallback(
+    (targetPostId: string, previousLiked: boolean): void => {
+      setLiked(previousLiked);
+      setServerCommunityDetail((current) => {
+        if (!current || current.post.id !== targetPostId) return current;
+        if (current.post.likedByMe === previousLiked) return current;
+        const delta = previousLiked ? 1 : -1;
+        return {
+          ...current,
+          post: {
+            ...current.post,
+            likedByMe: previousLiked,
+            likeCount: Math.max(0, current.post.likeCount + delta),
+          },
+        };
+      });
+    },
+    [],
+  );
+
+  const restoreCommunityBookmarkState = useCallback(
+    (targetPostId: string, previousBookmarked: boolean): void => {
+      setBookmarked(previousBookmarked);
+      setServerCommunityDetail((current) => {
+        if (!current || current.post.id !== targetPostId) return current;
+        if (current.post.bookmarkedByMe === previousBookmarked) return current;
+        const delta = previousBookmarked ? 1 : -1;
+        return {
+          ...current,
+          post: {
+            ...current.post,
+            bookmarkedByMe: previousBookmarked,
+            bookmarkCount: Math.max(0, current.post.bookmarkCount + delta),
+          },
+        };
+      });
+    },
+    [],
+  );
+
   const togglePostLike = useCallback((): void => {
     if (communityDetailActionBusy || communityLikeInFlightRef.current) return;
     communityLikeInFlightRef.current = true;
@@ -2254,7 +2294,7 @@ export function CleanFintechPostDetailScreen({
         );
       })
       .catch(() => {
-        setLiked(!nextLiked);
+        restoreCommunityLikeState(targetPostId, !nextLiked);
         setToast("좋아요를 서버에 반영하지 못했어요. 다시 시도해 주세요.");
       })
       .finally(() => {
@@ -2266,6 +2306,7 @@ export function CleanFintechPostDetailScreen({
     communityDetailActionBusy,
     detailCommunityService,
     liked,
+    restoreCommunityLikeState,
   ]);
 
   const togglePostBookmark = useCallback((): void => {
@@ -2315,7 +2356,7 @@ export function CleanFintechPostDetailScreen({
         );
       })
       .catch(() => {
-        setBookmarked(!nextBookmarked);
+        restoreCommunityBookmarkState(targetPostId, !nextBookmarked);
         setToast("게시글 저장 상태를 반영하지 못했어요. 다시 시도해 주세요.");
       })
       .finally(() => {
@@ -2327,6 +2368,7 @@ export function CleanFintechPostDetailScreen({
     bookmarked,
     communityDetailActionBusy,
     detailCommunityService,
+    restoreCommunityBookmarkState,
   ]);
 
   const shareCommunityPost = useCallback((): void => {

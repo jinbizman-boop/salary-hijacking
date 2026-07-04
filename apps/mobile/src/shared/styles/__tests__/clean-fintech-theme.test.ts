@@ -2747,6 +2747,31 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("restores community detail like and bookmark state when server toggles fail", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen[\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+
+    expect(detailSource).toContain("restoreCommunityLikeState");
+    expect(detailSource).toContain("restoreCommunityBookmarkState");
+    expect(detailSource).toMatch(
+      /restoreCommunityLikeState\(targetPostId,\s*!nextLiked\);/u,
+    );
+    expect(detailSource).toMatch(
+      /restoreCommunityBookmarkState\(targetPostId,\s*!nextBookmarked\);/u,
+    );
+    expect(detailSource).toMatch(
+      /likedByMe:\s*previousLiked,\s*likeCount:\s*Math\.max\(0,\s*current\.post\.likeCount \+ delta\)/u,
+    );
+    expect(detailSource).toMatch(
+      /bookmarkedByMe:\s*previousBookmarked,\s*bookmarkCount:\s*Math\.max\(0,\s*current\.post\.bookmarkCount \+ delta\)/u,
+    );
+  });
+
   it("keeps community detail share action wired to the native app share sheet", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
