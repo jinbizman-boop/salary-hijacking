@@ -635,6 +635,61 @@ describe("profile api", () => {
     );
   });
 
+  it("normalizes support ticket categories to the server contract before sending", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse(
+          {
+            data: {
+              adsFinancialTargetingUsed: false,
+              category: "PRIVACY",
+              createdAt: "2026-07-03T05:30:00.000Z",
+              id: "ticket_privacy_1",
+              rawFinancialDataExposed: false,
+              rawPersonalDataExposed: false,
+              rawPushTokenExposed: false,
+              status: "OPEN",
+              subject: "Privacy settings question",
+            },
+          },
+          202,
+        );
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.createSupportTicket({
+        category: "privacy" as never,
+        message: "Please check the privacy settings screen behavior.",
+        subject: "Privacy settings question",
+      }),
+    ).resolves.toMatchObject({
+      category: "PRIVACY",
+      id: "ticket_privacy_1",
+      rawPersonalDataExposed: false,
+    });
+    await expect(
+      api.createSupportTicket({
+        category: "billing" as never,
+        message: "Unsupported category should be rejected.",
+        subject: "Unsupported category",
+      }),
+    ).rejects.toMatchObject({
+      code: "PROFILE_INVALID_SUPPORT_TICKET_REQUEST",
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(JSON.parse(await calls[0]!.clone().text())).toMatchObject({
+      category: "PRIVACY",
+    });
+  });
+
   it("rejects support tickets with raw personal or financial values before fetch", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

@@ -65,6 +65,13 @@ const SUPPORT_TICKET_CATEGORIES = new Set<ProfileSupportTicketCategory>([
   "BUG",
   "OTHER",
 ]);
+const SUPPORT_TICKET_CATEGORY_VALUES = [
+  "ACCOUNT",
+  "PAYMENT",
+  "PRIVACY",
+  "BUG",
+  "OTHER",
+] as const;
 const SUPPORT_TICKET_STATUSES = new Set<ProfileSupportTicket["status"]>([
   "OPEN",
   "IN_PROGRESS",
@@ -528,13 +535,25 @@ function validSupportTicketRequest(
 ): boolean {
   const text = `${value.subject} ${value.message}`;
   return (
-    SUPPORT_TICKET_CATEGORIES.has(value.category) &&
+    normalizeSupportTicketCategory(value.category) !== null &&
     nonEmptyString(value.subject) &&
     value.subject.length <= 80 &&
     nonEmptyString(value.message) &&
     value.message.length <= 1_000 &&
     !containsRawSensitiveProfileText(text)
   );
+}
+
+function normalizeSupportTicketCategory(
+  value: unknown,
+): ProfileSupportTicketCategory | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toUpperCase();
+  return SUPPORT_TICKET_CATEGORY_VALUES.includes(
+    normalized as ProfileSupportTicketCategory,
+  )
+    ? (normalized as ProfileSupportTicketCategory)
+    : null;
 }
 
 function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
@@ -689,9 +708,17 @@ function supportTicketPayload(request: ProfileSupportTicketRequest): string {
       PROFILE_SAFE_ERROR_MESSAGE,
     );
   }
+  const category = normalizeSupportTicketCategory(request.category);
+  if (category === null) {
+    throw new ProfileApiError(
+      0,
+      "PROFILE_INVALID_SUPPORT_TICKET_REQUEST",
+      PROFILE_SAFE_ERROR_MESSAGE,
+    );
+  }
   return JSON.stringify({
     adsFinancialTargetingUsed: false,
-    category: request.category,
+    category,
     message: request.message.trim(),
     rawFinancialDataExposed: false,
     rawPersonalDataExposed: false,
