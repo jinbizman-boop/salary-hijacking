@@ -292,4 +292,21 @@ describe("community service", () => {
 
     expect(request).not.toHaveBeenCalled();
   });
+
+  it("blocks too-short community route ids before they reach URL logs", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(service.getPost("p")).rejects.toMatchObject({
+      code: "COMMUNITY_INVALID_ID",
+    });
+    await expect(service.setCommentLiked("c", true)).rejects.toMatchObject({
+      code: "COMMUNITY_INVALID_ID",
+    });
+
+    expect(request).not.toHaveBeenCalled();
+  });
 });

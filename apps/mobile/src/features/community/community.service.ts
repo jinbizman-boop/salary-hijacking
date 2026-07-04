@@ -50,7 +50,7 @@ function requireSafeComment(draft: CommunityCommentDraft): void {
 function requireId(value: string, name: string): string {
   const normalized = value.trim();
   if (
-    !normalized ||
+    normalized.length < 3 ||
     normalized.length > 160 ||
     !/^[A-Za-z0-9_-]+$/u.test(normalized)
   ) {
