@@ -1058,9 +1058,21 @@ export function CleanFintechWriteScreen(): React.ReactElement {
               value={body}
             />
             <View style={styles.attachmentRow}>
-              <SmallButton label="사진" onPress={pickCommunityAttachment} />
-              <SmallButton label="이미지" onPress={pickCommunityAttachment} />
-              <SmallButton label="파일" onPress={pickCommunityAttachment} />
+              <SmallButton
+                disabled={uploadingAttachment}
+                label="사진"
+                onPress={pickCommunityAttachment}
+              />
+              <SmallButton
+                disabled={uploadingAttachment}
+                label="이미지"
+                onPress={pickCommunityAttachment}
+              />
+              <SmallButton
+                disabled={uploadingAttachment}
+                label="파일"
+                onPress={pickCommunityAttachment}
+              />
             </View>
             {uploadedCommunityAttachments.map((attachment) => (
               <ListRow

@@ -1641,6 +1641,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
+    const writeScreenSource =
+      cleanScreens.match(
+        /export function CleanFintechWriteScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechSplashScreen/u,
+      )?.[0] ?? "";
     const pickCommunityAttachmentSource =
       cleanScreens.match(
         /const pickCommunityAttachment = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
@@ -1662,6 +1666,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       pickCommunityAttachmentSource.indexOf("DocumentPicker"),
     ).toBeLessThan(
       pickCommunityAttachmentSource.indexOf("directUploadCommunityAttachment"),
+    );
+    expect(writeScreenSource).toMatch(
+      /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="사진"/u,
+    );
+    expect(writeScreenSource).toMatch(
+      /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="이미지"/u,
+    );
+    expect(writeScreenSource).toMatch(
+      /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="파일"/u,
     );
   });
 
