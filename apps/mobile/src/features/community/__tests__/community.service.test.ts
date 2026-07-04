@@ -251,6 +251,28 @@ describe("community service", () => {
     expect(payload).toContain("[auth-redacted]");
   });
 
+  it("blocks report reasons that are only sensitive raw data before moderation payloads", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+    const rawJwt = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signatureABC";
+
+    await expect(
+      service.reportPost(
+        "post_1",
+        "ABUSE",
+        `010-1234-5678 ${rawJwt} 123-456-789012`,
+      ),
+    ).rejects.toMatchObject({ code: "COMMUNITY_REPORT_REASON_UNSAFE" });
+    await expect(
+      service.reportComment("comment_1", "SPAM", "user@example.com"),
+    ).rejects.toMatchObject({ code: "COMMUNITY_REPORT_REASON_UNSAFE" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("blocks invalid community report reasons before moderation payloads", async () => {
     const request = jest.fn<
       ReturnType<CommunityApiTransport["request"]>,

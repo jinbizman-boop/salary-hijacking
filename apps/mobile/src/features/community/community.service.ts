@@ -143,8 +143,8 @@ function reportBody(
   reason: string;
 }> {
   const normalizedType = reasonType.trim().toUpperCase();
-  const safeReason = reason.trim().slice(0, 500);
-  if (!safeReason) {
+  const trimmedReason = reason.trim().slice(0, 500);
+  if (!trimmedReason) {
     throw new CommunityApiError(
       0,
       "COMMUNITY_REPORT_REASON_REQUIRED",
@@ -158,10 +158,27 @@ function reportBody(
       "커뮤니티 신고 사유를 확인해 주세요.",
     );
   }
+  const safeReason = redactCommunityText(trimmedReason);
+  if (
+    !hasMeaningfulReportText(safeReason) ||
+    containsSensitiveCommunityContent(safeReason)
+  ) {
+    throw new CommunityApiError(
+      422,
+      "COMMUNITY_REPORT_REASON_UNSAFE",
+      "신고 사유에서 민감 정보를 제외해 주세요.",
+    );
+  }
   return {
     reasonType: normalizedType,
-    reason: redactCommunityText(safeReason),
+    reason: safeReason,
   };
+}
+
+function hasMeaningfulReportText(value: string): boolean {
+  const redactionRemoved = value.replace(/\[[^\]]+\]/gu, " ");
+  const lettersOnly = redactionRemoved.replace(/[^\p{L}]+/gu, "");
+  return lettersOnly.length >= 4;
 }
 
 export function createCommunityService(
