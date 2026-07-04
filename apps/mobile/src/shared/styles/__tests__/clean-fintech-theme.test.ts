@@ -1535,6 +1535,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
     const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
+    const submitSource =
+      cleanScreens.match(
+        /const submitCommunityPost = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
 
     expect(mobileApi).toContain("createMobileCommunityService");
     expect(cleanScreens).toContain("writeCommunityService");
@@ -1543,9 +1547,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('communityBoardApiMap[board] ?? "FREE"');
     expect(cleanScreens).toContain('tags: question ? ["질문"] : []');
     expect(cleanScreens).toContain("communityPostSubmitInFlightRef");
-    expect(cleanScreens).toContain(
-      "if (!valid || communityPostSubmitInFlightRef.current) return",
-    );
+    expect(submitSource).toContain("!valid");
+    expect(submitSource).toContain("communityPostSubmitInFlightRef.current");
     expect(cleanScreens).toContain(
       "communityPostSubmitInFlightRef.current = true",
     );
@@ -1675,6 +1678,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(writeScreenSource).toMatch(
       /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="파일"/u,
+    );
+  });
+
+  it("prevents community post submission while an attachment upload is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const writeScreenSource =
+      cleanScreens.match(
+        /export function CleanFintechWriteScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechSplashScreen/u,
+      )?.[0] ?? "";
+    const submitSource =
+      cleanScreens.match(
+        /const submitCommunityPost = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(submitSource).toMatch(
+      /uploadingAttachment\s*\|\|\s*communityAttachmentUploadInFlightRef\.current/u,
+    );
+    expect(writeScreenSource).toContain(
+      "disabled={!valid || submitting || uploadingAttachment}",
+    );
+    expect(writeScreenSource).toMatch(
+      /!valid\s*\|\|\s*submitting\s*\|\|\s*uploadingAttachment\s*\?\s*styles\.disabled\s*:\s*null/u,
     );
   });
 

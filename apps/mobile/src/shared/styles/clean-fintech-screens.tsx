@@ -937,7 +937,13 @@ export function CleanFintechWriteScreen(): React.ReactElement {
   }, [uploadingAttachment, writeUploadsApi]);
 
   const submitCommunityPost = useCallback(() => {
-    if (!valid || communityPostSubmitInFlightRef.current) return;
+    if (
+      !valid ||
+      uploadingAttachment ||
+      communityAttachmentUploadInFlightRef.current ||
+      communityPostSubmitInFlightRef.current
+    )
+      return;
     const draft: CommunityPostDraft = {
       anonymous,
       boardType: communityBoardApiMap[board] ?? "FREE",
@@ -992,6 +998,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
     body,
     question,
     title,
+    uploadingAttachment,
     uploadedCommunityAttachments.length,
     valid,
     writeCommunityService,
@@ -1017,11 +1024,13 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <Text style={styles.composeTitle}>글쓰기</Text>
           <Pressable
             accessibilityRole="button"
-            disabled={!valid || submitting}
+            disabled={!valid || submitting || uploadingAttachment}
             onPress={submitCommunityPost}
             style={[
               styles.doneButton,
-              !valid || submitting ? styles.disabled : null,
+              !valid || submitting || uploadingAttachment
+                ? styles.disabled
+                : null,
             ]}
           >
             <Text style={styles.doneButtonText}>
