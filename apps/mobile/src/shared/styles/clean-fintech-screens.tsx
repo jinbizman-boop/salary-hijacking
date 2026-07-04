@@ -1440,6 +1440,8 @@ export function CleanFintechSettingsScreen({
   const [accountSettingsToast, setAccountSettingsToast] = useState(
     "계정 동의 설정은 서버 consents API 기준으로 저장됩니다.",
   );
+  const [profileSettingsSaving, setProfileSettingsSaving] = useState(false);
+  const [accountSettingsSaving, setAccountSettingsSaving] = useState(false);
   const profileSettingsSaveInFlightRef = useRef(false);
   const accountSettingsSaveInFlightRef = useRef(false);
   const profileSettingsValid =
@@ -1458,6 +1460,7 @@ export function CleanFintechSettingsScreen({
       return;
     }
     profileSettingsSaveInFlightRef.current = true;
+    setProfileSettingsSaving(true);
     setProfileSettingsToast("프로필 설정을 서버에 저장하는 중이에요.");
     void profileSettingsApi
       .updateProfile({
@@ -1480,6 +1483,7 @@ export function CleanFintechSettingsScreen({
       })
       .finally(() => {
         profileSettingsSaveInFlightRef.current = false;
+        setProfileSettingsSaving(false);
       });
   }, [
     kind,
@@ -1492,6 +1496,7 @@ export function CleanFintechSettingsScreen({
   const submitAccountSettings = useCallback(() => {
     if (kind !== "account" || accountSettingsSaveInFlightRef.current) return;
     accountSettingsSaveInFlightRef.current = true;
+    setAccountSettingsSaving(true);
     setAccountSettingsToast("계정 동의 설정을 서버에 저장하는 중이에요.");
     void accountSettingsApi
       .updateAccountSettings({
@@ -1523,6 +1528,7 @@ export function CleanFintechSettingsScreen({
       })
       .finally(() => {
         accountSettingsSaveInFlightRef.current = false;
+        setAccountSettingsSaving(false);
       });
   }, [
     accountSettingsApi,
@@ -1544,6 +1550,7 @@ export function CleanFintechSettingsScreen({
           <Toast message={profileSettingsToast} />
           <TextInput
             accessibilityLabel="프로필 닉네임"
+            editable={!profileSettingsSaving}
             onChangeText={setProfileNickname}
             placeholder="닉네임"
             placeholderTextColor={theme.color.text.disabled}
@@ -1552,6 +1559,7 @@ export function CleanFintechSettingsScreen({
           />
           <TextInput
             accessibilityLabel="프로필 소개"
+            editable={!profileSettingsSaving}
             multiline
             onChangeText={setProfileDisplayBio}
             placeholder="커뮤니티에 표시할 자기소개"
@@ -1561,6 +1569,7 @@ export function CleanFintechSettingsScreen({
           />
           <TextInput
             accessibilityLabel="직무 또는 관심 카테고리"
+            editable={!profileSettingsSaving}
             onChangeText={setProfileOccupationCategory}
             placeholder="예: PRODUCT"
             placeholderTextColor={theme.color.text.disabled}
@@ -1569,11 +1578,13 @@ export function CleanFintechSettingsScreen({
           />
           <Pressable
             accessibilityRole="button"
-            disabled={!profileSettingsValid}
+            disabled={!profileSettingsValid || profileSettingsSaving}
             onPress={submitProfileSettings}
             style={[
               styles.primaryButton,
-              !profileSettingsValid ? styles.disabled : null,
+              !profileSettingsValid || profileSettingsSaving
+                ? styles.disabled
+                : null,
             ]}
           >
             <Text style={styles.primaryButtonText}>저장하기</Text>
@@ -1586,38 +1597,50 @@ export function CleanFintechSettingsScreen({
           <Toast message={accountSettingsToast} />
           <ToggleRow
             active={contentRecommendationAccepted}
+            disabled={accountSettingsSaving}
             label="LV UP 콘텐츠 추천 받기"
-            onPress={() =>
+            onPress={() => {
+              if (accountSettingsSaving) return;
               setContentRecommendationAccepted(
                 (currentAccepted) => !currentAccepted,
-              )
-            }
+              );
+            }}
           />
           <ToggleRow
             active={marketingAccepted}
+            disabled={accountSettingsSaving}
             label="마케팅 알림 받기"
-            onPress={() =>
-              setMarketingAccepted((currentAccepted) => !currentAccepted)
-            }
+            onPress={() => {
+              if (accountSettingsSaving) return;
+              setMarketingAccepted((currentAccepted) => !currentAccepted);
+            }}
           />
           <ToggleRow
             active={analyticsAccepted}
+            disabled={accountSettingsSaving}
             label="서비스 개선 분석 허용"
-            onPress={() =>
-              setAnalyticsAccepted((currentAccepted) => !currentAccepted)
-            }
+            onPress={() => {
+              if (accountSettingsSaving) return;
+              setAnalyticsAccepted((currentAccepted) => !currentAccepted);
+            }}
           />
           <ToggleRow
             active={adPartnerAccepted}
+            disabled={accountSettingsSaving}
             label="제휴 혜택 받기"
-            onPress={() =>
-              setAdPartnerAccepted((currentAccepted) => !currentAccepted)
-            }
+            onPress={() => {
+              if (accountSettingsSaving) return;
+              setAdPartnerAccepted((currentAccepted) => !currentAccepted);
+            }}
           />
           <Pressable
             accessibilityRole="button"
+            disabled={accountSettingsSaving}
             onPress={submitAccountSettings}
-            style={styles.primaryButton}
+            style={[
+              styles.primaryButton,
+              accountSettingsSaving ? styles.disabled : null,
+            ]}
           >
             <Text style={styles.primaryButtonText}>동의 설정 저장</Text>
           </Pressable>

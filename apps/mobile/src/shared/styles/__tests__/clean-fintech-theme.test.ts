@@ -1381,6 +1381,27 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("locks profile settings inputs while the server profile save is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const profileSettingsSource =
+      cleanScreens.match(
+        /kind === "profile" \? \([\s\S]*?\{kind === "account" \? \(/u,
+      )?.[0] ?? "";
+
+    expect(profileSettingsSource).toContain("profileSettingsSaving");
+    expect(
+      profileSettingsSource.match(/editable=\{!profileSettingsSaving\}/gu),
+    ).toHaveLength(3);
+    expect(profileSettingsSource).toContain(
+      "disabled={!profileSettingsValid || profileSettingsSaving}",
+    );
+    expect(profileSettingsSource).toMatch(
+      /!profileSettingsValid \|\| profileSettingsSaving\s*\?\s*styles\.disabled\s*:\s*null/u,
+    );
+  });
+
   it("keeps account settings saved through the server consent API", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -1420,6 +1441,32 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(submitAccountSource).toMatch(
       /accountSettingsApi\s*\.?\s*updateAccountSettings/,
+    );
+  });
+
+  it("locks account settings toggles while the server consent save is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const accountSettingsStart = cleanScreens.indexOf('kind === "account" ? (');
+    const accountSettingsEnd = cleanScreens.indexOf(
+      "<Text style={styles.sectionTitle}>설정 항목",
+      accountSettingsStart,
+    );
+    const accountSettingsSource = cleanScreens.slice(
+      accountSettingsStart,
+      accountSettingsEnd,
+    );
+
+    expect(accountSettingsSource).toContain("accountSettingsSaving");
+    expect(
+      accountSettingsSource.match(/disabled=\{accountSettingsSaving\}/gu),
+    ).toHaveLength(5);
+    expect(
+      accountSettingsSource.match(/if \(accountSettingsSaving\) return;/gu),
+    ).toHaveLength(4);
+    expect(accountSettingsSource).toContain(
+      "accountSettingsSaving ? styles.disabled : null",
     );
   });
 
