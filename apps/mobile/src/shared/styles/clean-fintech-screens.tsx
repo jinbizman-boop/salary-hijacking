@@ -4512,6 +4512,7 @@ function NotificationsScreen(): React.ReactElement {
     useState(false);
   const [notificationReadAllPending, setNotificationReadAllPending] =
     useState(false);
+  const notificationMarkReadInFlightRef = useRef<Set<string>>(new Set());
   const notificationReadAllInFlightRef = useRef(false);
   const [serverNotificationDevices, setServerNotificationDevices] = useState<
     readonly NotificationDevice[]
@@ -4596,6 +4597,8 @@ function NotificationsScreen(): React.ReactElement {
   const markRead = useCallback(
     (item: NotificationScreenItem) => {
       if (item.status !== "UNREAD") return;
+      if (notificationMarkReadInFlightRef.current.has(item.id)) return;
+      notificationMarkReadInFlightRef.current.add(item.id);
       setServerNotifications((current) =>
         current.map((candidate) =>
           candidate.id === item.id
@@ -4604,10 +4607,15 @@ function NotificationsScreen(): React.ReactElement {
         ),
       );
       setUnreadCount((current) => Math.max(0, current - 1));
-      void notificationsApi.markRead(item.id).catch(() => {
-        restoreNotificationReadOnFailure(item);
-        setSyncLabel("읽음 처리는 서버 연결 후 다시 확인해 주세요.");
-      });
+      void notificationsApi
+        .markRead(item.id)
+        .finally(() => {
+          notificationMarkReadInFlightRef.current.delete(item.id);
+        })
+        .catch(() => {
+          restoreNotificationReadOnFailure(item);
+          setSyncLabel("읽음 처리는 서버 연결 후 다시 확인해 주세요.");
+        });
     },
     [notificationsApi, restoreNotificationReadOnFailure],
   );
