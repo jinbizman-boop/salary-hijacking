@@ -90,6 +90,15 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("keeps the root bootstrap gate copy tied to server-authoritative status checks", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("서버 권위 앱 상태 확인 중");
+    expect(source).toContain("서버 권위 앱 상태를 확인하고 있어요.");
+    expect(source).toContain("/api/v1/mobile/bootstrap");
+    expect(source).not.toContain("앱을 준비 중입니다");
+  });
+
   it("does not let cached offline sessions bypass verify-email, onboarding, or MFA gates", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

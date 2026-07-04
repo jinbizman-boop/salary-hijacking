@@ -463,7 +463,7 @@ function renderGate(
           ? "온보딩을 완료하세요"
           : status === "ERROR"
             ? "앱 시작 실패"
-            : "앱을 준비 중입니다";
+            : "서버 권위 앱 상태 확인 중";
   const message =
     status === "AUTH_REQUIRED"
       ? "안전한 세션 확인 후 급여·예산 데이터를 불러옵니다."
@@ -783,7 +783,7 @@ function statusMessage(status: RootStatus): string {
   if (status === "ONBOARDING") return "온보딩 화면으로 이동합니다.";
   if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
   if (status === "ERROR") return "서비스 점검 상태입니다.";
-  return "앱을 준비 중입니다.";
+  return "서버 권위 앱 상태를 확인하고 있어요.";
 }
 
 function h(
