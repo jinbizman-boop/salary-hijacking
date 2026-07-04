@@ -1404,29 +1404,40 @@ export function CleanFintechLevelDetailScreen({
       <Toast message={toast} />
       <SectionCard>
         <Text style={styles.sectionTitle}>콘텐츠 리스트</Text>
-        {config.cards.map((card) => (
-          <Pressable
-            accessibilityRole="button"
-            key={card.title}
-            onPress={() => {
-              void completeLevelContent(card);
-            }}
-            style={styles.detailCardRow}
-          >
-            <Text style={styles.listIcon}>{card.icon}</Text>
-            <View style={styles.flex}>
-              <Text style={styles.listTitle}>{card.title}</Text>
-              <Text style={styles.listMeta}>{card.meta}</Text>
-            </View>
-            <Text style={styles.linkText}>
-              {submittingContentId === card.contentId
-                ? "기록 중"
-                : completedContentIds.has(card.contentId)
-                  ? "완료됨"
-                  : card.action}
-            </Text>
-          </Pressable>
-        ))}
+        {config.cards.map((card) => {
+          const contentActionLocked =
+            submittingContentId === card.contentId ||
+            completedContentIds.has(card.contentId);
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ disabled: contentActionLocked }}
+              disabled={contentActionLocked}
+              key={card.title}
+              onPress={() => {
+                void completeLevelContent(card);
+              }}
+              style={
+                contentActionLocked
+                  ? [styles.detailCardRow, styles.disabled]
+                  : styles.detailCardRow
+              }
+            >
+              <Text style={styles.listIcon}>{card.icon}</Text>
+              <View style={styles.flex}>
+                <Text style={styles.listTitle}>{card.title}</Text>
+                <Text style={styles.listMeta}>{card.meta}</Text>
+              </View>
+              <Text style={styles.linkText}>
+                {submittingContentId === card.contentId
+                  ? "기록 중"
+                  : completedContentIds.has(card.contentId)
+                    ? "완료됨"
+                    : card.action}
+              </Text>
+            </Pressable>
+          );
+        })}
       </SectionCard>
       <AdSlot />
       <GuardBox />

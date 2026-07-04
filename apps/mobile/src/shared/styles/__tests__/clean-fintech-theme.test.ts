@@ -1446,6 +1446,28 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("submittingContentId === card.contentId");
   });
 
+  it("disables completed or pending LV UP detail content cards at the UI boundary", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const levelDetailSource =
+      cleanScreens.match(
+        /export function CleanFintechLevelDetailScreen[\s\S]*?export function CleanFintechSettingsScreen/u,
+      )?.[0] ?? "";
+
+    expect(levelDetailSource).toContain("const contentActionLocked");
+    expect(levelDetailSource).toMatch(
+      /submittingContentId === card\.contentId\s*\|\|\s*completedContentIds\.has\(card\.contentId\)/u,
+    );
+    expect(levelDetailSource).toContain(
+      "accessibilityState={{ disabled: contentActionLocked }}",
+    );
+    expect(levelDetailSource).toContain("disabled={contentActionLocked}");
+    expect(levelDetailSource).toMatch(
+      /contentActionLocked\s*\?\s*\[styles\.detailCardRow,\s*styles\.disabled\]\s*:\s*styles\.detailCardRow/u,
+    );
+  });
+
   it("keeps MY screen hydrated from the server profile API before static fallback", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
