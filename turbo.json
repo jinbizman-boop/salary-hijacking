@@ -137,12 +137,12 @@
       ]
     },
     "test:unit": {
-      "dependsOn": ["^build", "^test:unit"],
+      "dependsOn": ["build", "^build", "^test:unit"],
       "outputs": ["coverage/**", "test-results/unit/**", ".turbo/test-unit/**"],
       "env": ["NODE_ENV", "APP_ENV", "TZ"]
     },
     "test:integration": {
-      "dependsOn": ["^build", "^test:unit"],
+      "dependsOn": ["build", "^build", "^test:unit"],
       "outputs": [
         "coverage/**",
         "test-results/integration/**",

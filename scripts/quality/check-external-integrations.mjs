@@ -830,19 +830,27 @@ function checkMobileLocalE2eBuildScript(rootDir, failures) {
     }
   }
 
-  for (const [scriptName, command] of [
-    ["test:e2e", testScript],
-    ["test:e2e:android", androidTestScript],
-  ]) {
-    if (
-      typeof command !== "string" ||
-      !command.includes("scripts/check-detox-env.mjs android.emu.debug") ||
-      !command.includes("scripts/run-detox-android.mjs android.emu.debug")
-    ) {
-      failures.push(
-        `${relativePath}: scripts.${scriptName} must run check-detox-env and then ${detoxRunnerRelativePath} so Android SDK env reaches Detox`,
-      );
-    }
+  if (
+    typeof testScript !== "string" ||
+    !testScript.includes("scripts/run-e2e-ci.mjs android.emu.debug")
+  ) {
+    failures.push(
+      `${relativePath}: scripts.test:e2e must run apps/mobile/scripts/run-e2e-ci.mjs so CI can record no-secret native observation when APK proof is unavailable`,
+    );
+  }
+
+  if (
+    typeof androidTestScript !== "string" ||
+    !androidTestScript.includes(
+      "scripts/check-detox-env.mjs android.emu.debug",
+    ) ||
+    !androidTestScript.includes(
+      "scripts/run-detox-android.mjs android.emu.debug",
+    )
+  ) {
+    failures.push(
+      `${relativePath}: scripts.test:e2e:android must run check-detox-env and then ${detoxRunnerRelativePath} so Android SDK env reaches Detox for strict native E2E enforcement`,
+    );
   }
   for (const requiredPart of [
     "ANDROID_SDK_ROOT",

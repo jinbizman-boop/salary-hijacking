@@ -370,8 +370,7 @@ Configure branch protection and GitHub Environments after the new repository exi
         description:
           "급여납치 모바일 앱: 급여, 예산, 지출, 저축, 알림, LV UP, 커뮤니티를 서버 권위로 연결하는 Expo 앱",
         scripts: {
-          "test:e2e":
-            "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
+          "test:e2e": "node scripts/run-e2e-ci.mjs android.emu.debug",
           "test:e2e:android":
             "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
           "build:e2e:android:local":
@@ -1675,8 +1674,7 @@ test("passes when mobile local e2e APK build delegates to the guarded wrapper", 
           description:
             "급여납치 Salary Hijacking mobile app fixture with guarded local e2e wrapper.",
           scripts: {
-            "test:e2e":
-              "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
+            "test:e2e": "node scripts/run-e2e-ci.mjs android.emu.debug",
             "test:e2e:android":
               "node scripts/check-detox-env.mjs android.emu.debug && node scripts/run-detox-android.mjs android.emu.debug",
             "build:e2e:android:local":
