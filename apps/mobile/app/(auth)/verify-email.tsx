@@ -1,3 +1,4 @@
+/* eslint-disable require-atomic-updates */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {

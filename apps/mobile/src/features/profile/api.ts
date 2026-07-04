@@ -75,7 +75,7 @@ const RAW_EMAIL_PATTERN = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu;
 const RAW_PHONE_PATTERN = /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u;
 const RAW_CARD_PATTERN = /\b(?:\d{4}[-\s]?){3}\d{4}\b/u;
 const RAW_ACCOUNT_PATTERN =
-  /(?:계좌|account)\s*(?:번호)?\s*[:：\-]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu;
+  /(?:계좌|account)\s*(?:번호)?\s*[:：-]?\s*\d{2,6}(?:[-\s]\d{2,6}){1,4}/iu;
 const RAW_KRW_PATTERN =
   /(?:(?:급여|월급|소득|수입|지출|저축|예산|금액)\s*)?(?:₩\s*)?(?:\d{1,3}(?:,\d{3})+|\d{6,})\s*원/u;
 const RAW_TOKEN_PATTERN =

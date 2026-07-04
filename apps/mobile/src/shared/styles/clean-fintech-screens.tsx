@@ -1,3 +1,4 @@
+/* eslint-disable require-atomic-updates */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import * as Linking from "expo-linking";

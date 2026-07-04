@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+/* eslint-disable no-template-curly-in-string */
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 

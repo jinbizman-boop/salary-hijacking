@@ -27,6 +27,10 @@ test("creates pnpm shims and prepends them to PATH", async () => {
       "utf8",
     );
     const unixShimSource = await readFile(path.join(binDir, "pnpm"), "utf8");
+    const unixCorepackShimSource = await readFile(
+      path.join(binDir, "corepack"),
+      "utf8",
+    );
     const env = buildCorepackPnpmEnv({
       rootDir,
       binDir,
@@ -40,6 +44,10 @@ test("creates pnpm shims and prepends them to PATH", async () => {
     assert.match(windowsShimSource, /pnpm\\10\.0\.0\\bin\\pnpm\.cjs/);
     assert.match(windowsCorepackShimSource, /pnpm\\10\.0\.0\\bin\\pnpm\.cjs/);
     assert.match(unixShimSource, /pnpm\/10\.0\.0\/bin\/pnpm\.cjs/);
+    assert.match(unixShimSource, /PATH_WITHOUT_SHIM/);
+    assert.match(unixShimSource, /command -v pnpm/);
+    assert.match(unixCorepackShimSource, /PATH_WITHOUT_SHIM/);
+    assert.match(unixCorepackShimSource, /exec corepack pnpm/);
     assert.equal(env.PATH?.split(path.delimiter)[0], binDir);
     assert.equal(env.Path?.split(path.delimiter)[0], binDir);
   } finally {

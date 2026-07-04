@@ -1,3 +1,4 @@
+/* eslint-disable no-template-curly-in-string */
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
