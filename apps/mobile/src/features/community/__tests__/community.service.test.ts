@@ -95,6 +95,8 @@ describe("community service", () => {
     });
     await service.setPostLiked("post_1", true);
     await service.setPostLiked("post_1", false);
+    await service.setCommentLiked("comment_1", true);
+    await service.setCommentLiked("comment_1", false);
     await service.listComments("post_1", 1, 20);
     await service.updateComment("comment_1", {
       content: "수정한 댓글",
@@ -109,6 +111,8 @@ describe("community service", () => {
       ],
       ["/api/v1/community/posts/post_1/like", { method: "POST" }],
       ["/api/v1/community/posts/post_1/like", { method: "DELETE" }],
+      ["/api/v1/community/comments/comment_1/like", { method: "POST" }],
+      ["/api/v1/community/comments/comment_1/like", { method: "DELETE" }],
       ["/api/v1/community/posts/post_1/comments?page=1&pageSize=20"],
       [
         "/api/v1/community/comments/comment_1",

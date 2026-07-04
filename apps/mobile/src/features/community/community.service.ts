@@ -166,6 +166,13 @@ export function createCommunityService(
       );
     },
 
+    async setCommentLiked(commentId, liked): Promise<CommunityApiResponse> {
+      return transport.request(
+        `${COMMUNITY_API_PREFIX}/comments/${requireId(commentId, "댓글")}/like`,
+        { method: liked ? "POST" : "DELETE" },
+      );
+    },
+
     async setPostBookmarked(postId, bookmarked): Promise<CommunityApiResponse> {
       const safePostId = requireId(postId, "게시글");
       return transport.request(`${COMMUNITY_API_PREFIX}/bookmarks`, {

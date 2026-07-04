@@ -765,6 +765,8 @@ const fallbackPostDetail: CommunityPostDetail = {
     content,
     createdAt: `2026-07-03T00:0${index}:00.000Z`,
     id: `fallback-comment-${index + 1}`,
+    likeCount: index + 2,
+    likedByMe: false,
     moderationStatus: "SAFE",
     postId: "fallback-level-proof",
     rawFinancialDataExposed: false,
@@ -2196,6 +2198,10 @@ export function CleanFintechPostDetailScreen({
   const [liked, setLiked] = useState(false);
   const [likePending, setLikePending] = useState(false);
   const communityLikeInFlightRef = useRef(false);
+  const [commentLikePendingId, setCommentLikePendingId] = useState<
+    string | null
+  >(null);
+  const commentLikeInFlightRef = useRef<string | null>(null);
   const [bookmarked, setBookmarked] = useState(false);
   const [bookmarkPending, setBookmarkPending] = useState(false);
   const communityBookmarkInFlightRef = useRef(false);
@@ -2690,6 +2696,78 @@ export function CleanFintechPostDetailScreen({
     [detailCommunityService],
   );
 
+  const toggleCommunityCommentLike = useCallback(
+    (comment: CommunityComment): void => {
+      if (
+        commentLikeInFlightRef.current !== null ||
+        communityDetailMutationInFlightRef.current !== null
+      )
+        return;
+      const nextLiked = comment.likedByMe !== true;
+      const optimistic = (item: CommunityComment): CommunityComment =>
+        item.id === comment.id
+          ? {
+              ...item,
+              likedByMe: nextLiked,
+              likeCount: Math.max(0, item.likeCount + (nextLiked ? 1 : -1)),
+            }
+          : item;
+      commentLikeInFlightRef.current = comment.id;
+      setCommentLikePendingId(comment.id);
+      setServerCommunityComments((current) =>
+        (current.length > 0 ? current : activeComments).map(optimistic),
+      );
+      setToast(
+        nextLiked
+          ? "댓글 좋아요를 서버에 저장하는 중이에요."
+          : "댓글 좋아요 취소를 서버에 저장하는 중이에요.",
+      );
+      void detailCommunityService
+        .setCommentLiked(comment.id, nextLiked)
+        .then((response) => {
+          const data = communityResponseData(response);
+          const likeCount =
+            typeof data === "object" &&
+            data !== null &&
+            "likeCount" in data &&
+            typeof data.likeCount === "number"
+              ? data.likeCount
+              : null;
+          setServerCommunityComments((current) =>
+            (current.length > 0 ? current : activeComments).map((item) =>
+              item.id === comment.id
+                ? {
+                    ...item,
+                    likedByMe: nextLiked,
+                    likeCount: likeCount ?? item.likeCount,
+                  }
+                : item,
+            ),
+          );
+          setToast(
+            nextLiked
+              ? "댓글 좋아요를 저장했어요."
+              : "댓글 좋아요를 취소했어요.",
+          );
+        })
+        .catch(() => {
+          setServerCommunityComments((current) =>
+            (current.length > 0 ? current : activeComments).map((item) =>
+              item.id === comment.id ? comment : item,
+            ),
+          );
+          setToast(
+            "댓글 좋아요를 저장하지 못했어요. 잠시 후 다시 시도해 주세요.",
+          );
+        })
+        .finally(() => {
+          commentLikeInFlightRef.current = null;
+          setCommentLikePendingId(null);
+        });
+    },
+    [activeComments, detailCommunityService],
+  );
+
   const deleteCommunityPost = useCallback((): void => {
     if (communityDetailMutationInFlightRef.current !== null) return;
     const targetPostId = activeDetail.post.id;
@@ -2904,6 +2982,17 @@ export function CleanFintechPostDetailScreen({
               value={commentEditDrafts[comment.id] ?? comment.content}
             />
             <View style={styles.attachmentRow}>
+              <SmallButton
+                disabled={
+                  commentLikePendingId !== null || communityDetailActionBusy
+                }
+                label={
+                  commentLikePendingId === comment.id
+                    ? "좋아요 저장중"
+                    : `좋아요 ${formatCommunityCount(comment.likeCount)}`
+                }
+                onPress={() => toggleCommunityCommentLike(comment)}
+              />
               <SmallButton
                 disabled={
                   commentEditingId !== null || communityDetailActionBusy

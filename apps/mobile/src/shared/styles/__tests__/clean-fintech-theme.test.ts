@@ -2872,6 +2872,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(detailSource).toMatch(
       /if\s*\(\s*communityDetailActionBusy\s*\|\|\s*communityShareInFlightRef\.current\s*\)\s*return;/u,
     );
+    expect(detailSource).toContain("setCommentLiked(comment.id, nextLiked)");
+    expect(detailSource).toContain("commentLikePendingId");
+    expect(detailSource).toContain("좋아요 저장중");
+    expect(detailSource).toContain(
+      "`좋아요 ${formatCommunityCount(comment.likeCount)}`",
+    );
     expect(detailSource).toContain(
       "disabled={likePending || communityDetailActionBusy}",
     );

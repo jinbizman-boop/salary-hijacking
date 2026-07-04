@@ -25,6 +25,11 @@ export type CommunityActions = Readonly<{
   ) => Promise<CommunityPost>;
   deletePost: (postId: string) => Promise<void>;
   setPostLiked: (postId: string, liked: boolean) => Promise<void>;
+  setCommentLiked: (
+    postId: string,
+    commentId: string,
+    liked: boolean,
+  ) => Promise<void>;
   createComment: (
     postId: string,
     draft: CommunityCommentDraft,
@@ -144,6 +149,44 @@ export function useCommunityActions(
     [analytics, run, service, store],
   );
 
+  const setCommentLiked = useCallback(
+    async (
+      postId: string,
+      commentId: string,
+      liked: boolean,
+    ): Promise<void> => {
+      await run(`like-comment:${commentId}`, async () => {
+        const response = await service.setCommentLiked(commentId, liked);
+        const data = communityResponseData(response);
+        const current = store
+          .getState()
+          .commentsByPostId[
+            postId
+          ]?.find((comment) => comment.id === commentId);
+        if (
+          current &&
+          typeof data === "object" &&
+          data !== null &&
+          "likeCount" in data &&
+          typeof data.likeCount === "number" &&
+          Number.isSafeInteger(data.likeCount) &&
+          data.likeCount >= 0
+        ) {
+          store.upsertComment({
+            ...current,
+            likedByMe: liked,
+            likeCount: data.likeCount,
+          });
+        }
+        analytics?.track("community_post_reaction", {
+          action: liked ? "like" : "unlike",
+          result: "success",
+        });
+      });
+    },
+    [analytics, run, service, store],
+  );
+
   const createComment = useCallback(
     async (postId: string, draft: CommunityCommentDraft): Promise<void> => {
       await run(`create-comment:${postId}`, async () => {
@@ -222,6 +265,7 @@ export function useCommunityActions(
     updatePost,
     deletePost,
     setPostLiked,
+    setCommentLiked,
     createComment,
     updateComment,
     deleteComment,

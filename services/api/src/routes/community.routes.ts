@@ -166,6 +166,11 @@ export interface CommunityRepository<TEnv = unknown> {
     liked: boolean,
     runtime: CommunityRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
+  setCommentReaction(
+    commentId: string,
+    liked: boolean,
+    runtime: CommunityRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
   setPostBookmark(
     postId: string,
     bookmarked: boolean,
@@ -232,6 +237,7 @@ export interface CommunitySecurityEvent {
     | "community_comment_updated"
     | "community_comment_deleted"
     | "community_post_reacted"
+    | "community_comment_reacted"
     | "community_post_bookmarked"
     | "community_post_shared"
     | "community_report_created";
@@ -1079,6 +1085,32 @@ function createInMemoryCommunityRepository<
         likeCount: nextCount,
       };
     },
+    async setCommentReaction(commentId, liked, runtime): Promise<JsonRecord> {
+      const userId = requireAuth(runtime.principal);
+      const comment = comments.get(commentId);
+      if (!comment || comment.status === "DELETED")
+        throw new CommunityHttpError(
+          404,
+          "COMMUNITY_COMMENT_NOT_FOUND",
+          "댓글을 찾을 수 없습니다.",
+        );
+      const key = `comment:${commentId}:${userId}`;
+      const currentlyLiked = likes.has(key);
+      if (liked) likes.add(key);
+      else likes.delete(key);
+      const delta =
+        liked && !currentlyLiked ? 1 : !liked && currentlyLiked ? -1 : 0;
+      const nextCount = Math.max(
+        0,
+        (typeof comment.likeCount === "number" ? comment.likeCount : 0) + delta,
+      );
+      comments.set(commentId, { ...comment, likeCount: nextCount });
+      return {
+        commentId,
+        state: liked ? "LIKED" : "UNLIKED",
+        likeCount: nextCount,
+      };
+    },
     async setPostBookmark(postId, bookmarked, runtime): Promise<JsonRecord> {
       const userId = requireAuth(runtime.principal);
       const post = posts.get(postId);
@@ -1365,6 +1397,26 @@ async function dispatchCommunityRoute<TEnv>(
     return jsonResponse(runtime, 200, { data });
   }
 
+  match = matchRoute(relativePath, /^\/comments\/([^/]+)\/like$/);
+  if ((method === "POST" || method === "DELETE") && match) {
+    const commentId = idFromMatch(match, 1);
+    const data = await repository.setCommentReaction(
+      commentId,
+      method === "POST",
+      runtime,
+    );
+    await emit(runtime, {
+      event: "community_comment_reacted",
+      requestId: runtime.requestId,
+      userId: runtime.principal.userId,
+      targetType: "REACTION",
+      targetId: commentId,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    return jsonResponse(runtime, 200, { data });
+  }
+
   if (method === "POST" && relativePath === "/bookmarks") {
     const input = bookmarkInput(await parseJsonBody(runtime.request));
     const data = await repository.setPostBookmark(
@@ -1614,6 +1666,8 @@ export const communityRoutesManifest = Object.freeze({
     "DELETE /posts/{postId}",
     "POST /posts/{postId}/like",
     "DELETE /posts/{postId}/like",
+    "POST /comments/{commentId}/like",
+    "DELETE /comments/{commentId}/like",
     "POST /bookmarks",
     "POST /shares",
     "GET /posts/{postId}/comments",
@@ -1647,7 +1701,8 @@ export function assertCommunityRoutesCompleteness(): {
     "board_catalog_salary_budget_expense_savings_levelup_sidehustle_health_free",
     "post_list_detail_create_update_delete",
     "comment_list_create_update_delete",
-    "like_unlike_reaction",
+    "post_like_unlike_reaction",
+    "comment_like_unlike_reaction",
     "bookmark_and_share_actions",
     "post_and_comment_report",
     "my_posts_and_my_comments",

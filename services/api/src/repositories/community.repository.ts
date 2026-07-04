@@ -697,6 +697,66 @@ export function createNeonCommunityRepository<TEnv = unknown>(
         ...privacyFlags(),
       };
     },
+    async setCommentReaction(commentId, liked, runtime) {
+      const userId = requireUserId(runtime);
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "community.setCommentReaction",
+        liked
+          ? `
+            with inserted as (
+              insert into public.community_reactions (
+                target_type,
+                target_id,
+                user_id,
+                reaction_type,
+                request_id,
+                created_by,
+                updated_by
+              )
+              values ('COMMENT', $1::uuid, $2::uuid, 'LIKE', $3, $2::uuid, $2::uuid)
+              on conflict (target_type, target_id, user_id, reaction_type) do nothing
+              returning 1
+            ),
+            updated_comment as (
+              update public.community_comments
+              set like_count = like_count + (select count(*)::int from inserted),
+                  updated_at = now()
+              where comment_id = $1::uuid
+                and status <> 'deleted'
+              returning like_count
+            )
+            select like_count from updated_comment
+          `
+          : `
+            with deleted as (
+              delete from public.community_reactions
+              where target_type = 'COMMENT'
+                and target_id = $1::uuid
+                and user_id = $2::uuid
+                and reaction_type = 'LIKE'
+              returning 1
+            ),
+            updated_comment as (
+              update public.community_comments
+              set like_count = greatest(like_count - (select count(*)::int from deleted), 0),
+                  updated_at = now()
+              where comment_id = $1::uuid
+                and status <> 'deleted'
+              returning like_count
+            )
+            select like_count from updated_comment
+          `,
+        [assertUuid(commentId, "commentId"), userId, runtime.requestId],
+      );
+      return {
+        commentId,
+        state: liked ? "LIKED" : "UNLIKED",
+        likeCount: toNumber(result.rows[0]?.like_count),
+        ...privacyFlags(),
+      };
+    },
     async setPostBookmark(postId, bookmarked, runtime) {
       const userId = requireUserId(runtime);
       const result = await queryText(

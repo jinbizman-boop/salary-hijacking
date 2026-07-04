@@ -85,6 +85,8 @@ export type CommunityComment = Readonly<{
   content: string;
   anonymousDisplayName: string;
   moderationStatus: ModerationStatus;
+  likeCount: number;
+  likedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
   rawFinancialDataExposed: false;
@@ -168,6 +170,10 @@ export type CommunityService = Readonly<{
   deletePost: (postId: string) => Promise<CommunityApiResponse>;
   setPostLiked: (
     postId: string,
+    liked: boolean,
+  ) => Promise<CommunityApiResponse>;
+  setCommentLiked: (
+    commentId: string,
     liked: boolean,
   ) => Promise<CommunityApiResponse>;
   setPostBookmarked: (

@@ -195,6 +195,8 @@ export function parseCommunityComment(value: unknown): CommunityComment {
         ? value.authorMasked.trim()
         : "익명 사용자",
     moderationStatus: moderationStatus(value.status ?? value.moderationStatus),
+    likeCount: safeInteger(value.likeCount),
+    likedByMe: value.likedByMe === true,
     createdAt: timestamp(value.createdAt),
     updatedAt: timestamp(value.updatedAt ?? value.createdAt),
     rawFinancialDataExposed: false,

@@ -198,7 +198,7 @@ describe("Neon community repository", () => {
     expect(calls[0]?.params).toContain(userId);
   });
 
-  it("records DB-backed bookmark and share reactions without returning owner identifiers", async () => {
+  it("records DB-backed bookmark, share, and comment like reactions without returning owner identifiers", async () => {
     const calls: Array<{
       readonly operationName: string;
       readonly sqlText: string;
@@ -223,6 +223,12 @@ describe("Neon community repository", () => {
             rowCount: 1,
           };
         }
+        if (options.operationName === "community.setCommentReaction") {
+          return {
+            rows: [{ like_count: "3" }],
+            rowCount: 1,
+          };
+        }
         throw new Error(`Unexpected operation: ${options.operationName}`);
       },
     });
@@ -236,6 +242,11 @@ describe("Neon community repository", () => {
       postId,
       "SYSTEM_SHARE",
       createRuntime("/api/v1/community/shares"),
+    );
+    const commentLiked = await repository.setCommentReaction(
+      commentId,
+      true,
+      createRuntime(`/api/v1/community/comments/${commentId}/like`),
     );
 
     expect(bookmarked).toMatchObject({
@@ -256,14 +267,29 @@ describe("Neon community repository", () => {
       rawPersonalDataExposed: false,
       adsFinancialTargetingUsed: false,
     });
-    expect(JSON.stringify([bookmarked, shared])).not.toContain(userId);
+    expect(commentLiked).toMatchObject({
+      commentId,
+      state: "LIKED",
+      likeCount: 3,
+      serverAuthority: true,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(JSON.stringify([bookmarked, shared, commentLiked])).not.toContain(
+      userId,
+    );
     expect(calls.map((call) => call.operationName)).toEqual([
       "community.setPostBookmark",
       "community.recordPostShare",
+      "community.setCommentReaction",
     ]);
     expect(calls[0]?.sqlText).toContain("BOOKMARK");
     expect(calls[1]?.sqlText).toContain("SHARE");
+    expect(calls[2]?.sqlText).toContain("'COMMENT'");
+    expect(calls[2]?.sqlText).toContain("'LIKE'");
     expect(calls[0]?.params).toEqual([postId, userId, expect.any(String)]);
     expect(calls[1]?.params).toEqual([postId, userId, expect.any(String)]);
+    expect(calls[2]?.params).toEqual([commentId, userId, expect.any(String)]);
   });
 });

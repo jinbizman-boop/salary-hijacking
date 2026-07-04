@@ -65,6 +65,8 @@ describe("community parsers", () => {
       ownerUserId: "usr_private",
       authorMasked: "익명 사용자",
       content: "좋은 방법입니다.",
+      likeCount: 3,
+      likedByMe: true,
       status: "VISIBLE",
       createdAt: "2026-06-25T00:00:00.000Z",
       updatedAt: "2026-06-25T00:00:00.000Z",
@@ -73,6 +75,8 @@ describe("community parsers", () => {
     expect(detail.tags).toEqual(["예산", "루틴"]);
     expect(detail.post).not.toHaveProperty("ownerUserId");
     expect(comment).not.toHaveProperty("ownerUserId");
+    expect(comment.likeCount).toBe(3);
+    expect(comment.likedByMe).toBe(true);
   });
 
   it("preserves server viewer like state without exposing viewer identifiers", () => {
