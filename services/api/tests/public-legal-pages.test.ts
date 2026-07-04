@@ -103,4 +103,44 @@ describe("public legal pages", () => {
       /salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL/i,
     );
   });
+
+  it("exposes the partner benefits URL through public app config without sensitive targeting data", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+    });
+
+    const response = await app.fetch(
+      new Request("https://salaryhijacking.com/api/v1/public/app-config"),
+      {
+        APP_ENV: "production",
+        APP_PUBLIC_BASE_URL: "https://salaryhijacking.com",
+      },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly links?: Record<string, unknown>;
+        readonly privacy?: Record<string, unknown>;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.data?.links).toMatchObject({
+      landingUrl: "https://salaryhijacking.com",
+      partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+      privacyUrl: "https://salaryhijacking.com/privacy",
+      supportUrl: "https://salaryhijacking.com/support",
+      termsUrl: "https://salaryhijacking.com/terms",
+    });
+    expect(body.data?.privacy).toMatchObject({
+      rawPayrollDataForAds: false,
+      rawExpenseDataForAds: false,
+      rawSavingsDataForAds: false,
+      advertiserUserIdentifierExposure: false,
+    });
+    expect(JSON.stringify(body)).not.toMatch(
+      /salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL/i,
+    );
+  });
 });

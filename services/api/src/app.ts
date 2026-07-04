@@ -174,7 +174,12 @@ const DEFAULT_ALLOWED_HEADERS = [
   "x-upload-visibility",
   "x-upload-checksum-sha256",
 ].join(", ");
-const LEGAL_PAGE_PATHS = ["/privacy", "/support", "/terms"] as const;
+const LEGAL_PAGE_PATHS = [
+  "/privacy",
+  "/support",
+  "/terms",
+  "/partners",
+] as const;
 const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
 const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
 const LEGAL_LAST_UPDATED = "2026-07-01";
@@ -483,6 +488,7 @@ export const appManifest = Object.freeze({
   publicLegalPages: Object.freeze({
     paths: LEGAL_PAGE_PATHS,
     landingUrl: "https://salaryhijacking.com",
+    partnerBenefitsUrl: "https://salaryhijacking.com/partners",
     privacyUrl: "https://salaryhijacking.com/privacy",
     supportUrl: "https://salaryhijacking.com/support",
     termsUrl: "https://salaryhijacking.com/terms",
@@ -968,6 +974,7 @@ function applySecurityHeaders<TEnv>(
 function publicAppConfig<TEnv>(
   runtime: AppRuntime<TEnv>,
 ): Record<string, unknown> {
+  const origin = canonicalOrigin(runtime);
   return {
     service: APP_SERVICE_NAME,
     version: APP_VERSION,
@@ -996,6 +1003,13 @@ function publicAppConfig<TEnv>(
       rawExpenseDataForAds: false,
       rawSavingsDataForAds: false,
       advertiserUserIdentifierExposure: false,
+    },
+    links: {
+      landingUrl: origin,
+      partnerBenefitsUrl: `${origin}/partners`,
+      privacyUrl: `${origin}/privacy`,
+      supportUrl: `${origin}/support`,
+      termsUrl: `${origin}/terms`,
     },
   };
 }
