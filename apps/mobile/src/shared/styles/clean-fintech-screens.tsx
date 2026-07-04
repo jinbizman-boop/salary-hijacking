@@ -2182,10 +2182,14 @@ export function CleanFintechPostDetailScreen({
   const [postEditContent, setPostEditContent] = useState(
     fallbackPostDetail.content,
   );
+  const [postEditAnonymous, setPostEditAnonymous] = useState(true);
   const [postEditing, setPostEditing] = useState(false);
   const communityPostEditInFlightRef = useRef(false);
   const [commentEditDrafts, setCommentEditDrafts] = useState<
     Record<string, string>
+  >({});
+  const [commentEditAnonymousDrafts, setCommentEditAnonymousDrafts] = useState<
+    Record<string, boolean>
   >({});
   const [commentEditingId, setCommentEditingId] = useState<string | null>(null);
   const communityCommentEditInFlightRef = useRef<string | null>(null);
@@ -2249,10 +2253,14 @@ export function CleanFintechPostDetailScreen({
       setBookmarked(nextDetail.post.bookmarkedByMe === true);
       setPostEditTitle(nextDetail.post.title);
       setPostEditContent(nextDetail.content || nextDetail.post.bodyPreview);
+      setPostEditAnonymous(true);
       setCommentEditDrafts(
         Object.fromEntries(
           nextComments.map((comment) => [comment.id, comment.content]),
         ),
+      );
+      setCommentEditAnonymousDrafts(
+        Object.fromEntries(nextComments.map((comment) => [comment.id, true])),
       );
       setToast(
         `서버 커뮤니티 상세 동기화 · 댓글 ${formatCommunityCount(
@@ -2266,12 +2274,18 @@ export function CleanFintechPostDetailScreen({
       setBookmarked(false);
       setPostEditTitle(fallbackPostDetail.post.title);
       setPostEditContent(fallbackPostDetail.content);
+      setPostEditAnonymous(true);
       setCommentEditDrafts(
         Object.fromEntries(
           fallbackPostDetail.comments.map((comment) => [
             comment.id,
             comment.content,
           ]),
+        ),
+      );
+      setCommentEditAnonymousDrafts(
+        Object.fromEntries(
+          fallbackPostDetail.comments.map((comment) => [comment.id, true]),
         ),
       );
       setToast("서버 연결 전까지 안전한 예시 상세 화면을 보여드려요.");
@@ -2556,7 +2570,7 @@ export function CleanFintechPostDetailScreen({
     communityPostEditInFlightRef.current = true;
     const targetPostId = activeDetail.post.id;
     const draft: CommunityPostDraft = {
-      anonymous: true,
+      anonymous: postEditAnonymous,
       boardType: activeDetail.post.boardType,
       content: postEditContent.trim(),
       tags: activeDetail.tags,
@@ -2598,6 +2612,7 @@ export function CleanFintechPostDetailScreen({
     communityDetailActionBusy,
     detailCommunityService,
     postEditContent,
+    postEditAnonymous,
     postEditReady,
     postEditTitle,
   ]);
@@ -2617,7 +2632,10 @@ export function CleanFintechPostDetailScreen({
       setCommentEditingId(comment.id);
       setToast("댓글 수정을 서버 커뮤니티에 저장하는 중이에요.");
       void detailCommunityService
-        .updateComment(comment.id, { content, anonymous: true })
+        .updateComment(comment.id, {
+          content,
+          anonymous: commentEditAnonymousDrafts[comment.id] ?? true,
+        })
         .then(() => {
           const updateComment = (item: CommunityComment): CommunityComment =>
             item.id === comment.id ? { ...item, content } : item;
@@ -2631,6 +2649,10 @@ export function CleanFintechPostDetailScreen({
               comments: current.comments.map(updateComment),
             };
           });
+          setCommentEditAnonymousDrafts((current) => ({
+            ...current,
+            [comment.id]: commentEditAnonymousDrafts[comment.id] ?? true,
+          }));
           setToast("댓글 수정이 서버에 저장됐어요.");
         })
         .catch(() => {
@@ -2646,6 +2668,7 @@ export function CleanFintechPostDetailScreen({
     [
       activeComments,
       activeDetail.post.id,
+      commentEditAnonymousDrafts,
       commentEditDrafts,
       communityDetailActionBusy,
       detailCommunityService,
@@ -2904,6 +2927,12 @@ export function CleanFintechPostDetailScreen({
           style={[styles.input, styles.composeBody]}
           value={postEditContent}
         />
+        <ToggleRow
+          active={postEditAnonymous}
+          disabled={postEditing || communityDetailActionBusy}
+          label="익명 게시글 수정"
+          onPress={() => setPostEditAnonymous((current) => !current)}
+        />
         <View style={styles.attachmentRow}>
           <Pressable
             accessibilityRole="button"
@@ -2982,6 +3011,17 @@ export function CleanFintechPostDetailScreen({
               placeholderTextColor={theme.color.text.disabled}
               style={styles.input}
               value={commentEditDrafts[comment.id] ?? comment.content}
+            />
+            <ToggleRow
+              active={commentEditAnonymousDrafts[comment.id] ?? true}
+              disabled={commentEditingId !== null || communityDetailActionBusy}
+              label="익명 댓글 수정"
+              onPress={() =>
+                setCommentEditAnonymousDrafts((current) => ({
+                  ...current,
+                  [comment.id]: !(current[comment.id] ?? true),
+                }))
+              }
             />
             <View style={styles.attachmentRow}>
               <SmallButton

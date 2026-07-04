@@ -2956,6 +2956,32 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setServerCommunityDetail((current)");
   });
 
+  it("keeps community detail edit anonymity controlled by the visible edit toggles", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen[\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+    const updateSource =
+      detailSource.match(
+        /const updateCommunityPost[\s\S]*?const deleteCommunityPost/u,
+      )?.[0] ?? "";
+
+    expect(detailSource).toContain("postEditAnonymous");
+    expect(detailSource).toContain("setPostEditAnonymous");
+    expect(detailSource).toContain("commentEditAnonymousDrafts");
+    expect(detailSource).toContain("setCommentEditAnonymousDrafts");
+    expect(updateSource).toContain("anonymous: postEditAnonymous");
+    expect(updateSource).toContain(
+      "anonymous: commentEditAnonymousDrafts[comment.id] ?? true",
+    );
+    expect(detailSource).toContain('label="익명 게시글 수정"');
+    expect(detailSource).toContain('label="익명 댓글 수정"');
+    expect(updateSource).not.toContain("anonymous: true");
+  });
+
   it("locks community detail edit inputs while server saves are pending", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
