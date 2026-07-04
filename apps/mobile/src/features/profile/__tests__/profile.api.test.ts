@@ -282,6 +282,41 @@ describe("profile api", () => {
     );
   });
 
+  it("rejects profile updates with raw personal or financial values before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: profilePayload });
+      },
+      platform: "ios",
+    });
+
+    const unsafeRequests = [
+      {
+        displayBio: "연락은 user@example.com 또는 010-1234-5678로 주세요.",
+        nickname: "안전유저",
+      },
+      {
+        displayBio: "이번 달 급여 2,700,000원 관리 중",
+        nickname: "월급러",
+      },
+      {
+        displayBio:
+          "Authorization Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+        nickname: "토큰러",
+      },
+    ];
+
+    for (const request of unsafeRequests) {
+      await expect(api.updateProfile(request)).rejects.toMatchObject({
+        code: "PROFILE_INVALID_UPDATE_REQUEST",
+      });
+    }
+    expect(calls).toHaveLength(0);
+  });
+
   it("completes onboarding through the server profile boundary without unsafe fields", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

@@ -94,6 +94,13 @@ const SUPPORT_RAW_VALUE_PATTERNS = [
   RAW_JWT_PATTERN,
 ] as const;
 
+function containsRawSensitiveProfileText(value: string): boolean {
+  return (
+    SUPPORT_TEXT_FORBIDDEN_PATTERN.test(value) ||
+    SUPPORT_RAW_VALUE_PATTERNS.some((pattern) => pattern.test(value))
+  );
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -509,8 +516,7 @@ function validSupportTicketRequest(
     value.subject.length <= 80 &&
     nonEmptyString(value.message) &&
     value.message.length <= 1_000 &&
-    !SUPPORT_TEXT_FORBIDDEN_PATTERN.test(text) &&
-    !SUPPORT_RAW_VALUE_PATTERNS.some((pattern) => pattern.test(text))
+    !containsRawSensitiveProfileText(text)
   );
 }
 
@@ -521,13 +527,18 @@ function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
     if (
       !nonEmptyString(value.nickname) ||
       value.nickname.length < 2 ||
-      value.nickname.length > 40
+      value.nickname.length > 40 ||
+      containsRawSensitiveProfileText(value.nickname)
     ) {
       return false;
     }
   }
   if (value.displayBio !== undefined && value.displayBio !== null) {
-    if (typeof value.displayBio !== "string" || value.displayBio.length > 300) {
+    if (
+      typeof value.displayBio !== "string" ||
+      value.displayBio.length > 300 ||
+      containsRawSensitiveProfileText(value.displayBio)
+    ) {
       return false;
     }
   }
@@ -557,7 +568,8 @@ function validProfileUpdateRequest(value: ProfileUpdateRequest): boolean {
   ) {
     if (
       typeof value.occupationCategory !== "string" ||
-      value.occupationCategory.length > 80
+      value.occupationCategory.length > 80 ||
+      containsRawSensitiveProfileText(value.occupationCategory)
     ) {
       return false;
     }
@@ -849,10 +861,12 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     updateProfile(
       profileRequest: ProfileUpdateRequest,
     ): Promise<ProfileSnapshot> {
-      return request(PROFILE_PATH, {
-        body: profileUpdatePayload(profileRequest),
-        method: "PATCH",
-      });
+      return Promise.resolve().then(() =>
+        request(PROFILE_PATH, {
+          body: profileUpdatePayload(profileRequest),
+          method: "PATCH",
+        }),
+      );
     },
 
     completeOnboarding(): Promise<ProfileSnapshot> {
