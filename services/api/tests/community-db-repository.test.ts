@@ -197,4 +197,73 @@ describe("Neon community repository", () => {
     expect(calls[0]?.sqlText).toContain("update public.community_posts");
     expect(calls[0]?.params).toContain(userId);
   });
+
+  it("records DB-backed bookmark and share reactions without returning owner identifiers", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.setPostBookmark") {
+          return {
+            rows: [{ bookmark_count: "7" }],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "community.recordPostShare") {
+          return {
+            rows: [{ share_count: "4" }],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const bookmarked = await repository.setPostBookmark(
+      postId,
+      true,
+      createRuntime("/api/v1/community/bookmarks"),
+    );
+    const shared = await repository.recordPostShare(
+      postId,
+      "SYSTEM_SHARE",
+      createRuntime("/api/v1/community/shares"),
+    );
+
+    expect(bookmarked).toMatchObject({
+      postId,
+      state: "BOOKMARKED",
+      bookmarkCount: 7,
+      serverAuthority: true,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(shared).toMatchObject({
+      postId,
+      channel: "SYSTEM_SHARE",
+      shareCount: 4,
+      serverAuthority: true,
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+      adsFinancialTargetingUsed: false,
+    });
+    expect(JSON.stringify([bookmarked, shared])).not.toContain(userId);
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "community.setPostBookmark",
+      "community.recordPostShare",
+    ]);
+    expect(calls[0]?.sqlText).toContain("BOOKMARK");
+    expect(calls[1]?.sqlText).toContain("SHARE");
+    expect(calls[0]?.params).toEqual([postId, userId, expect.any(String)]);
+    expect(calls[1]?.params).toEqual([postId, userId, expect.any(String)]);
+  });
 });
