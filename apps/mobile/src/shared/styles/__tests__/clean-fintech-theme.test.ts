@@ -1189,6 +1189,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("rawFinancialData=false");
     expect(cleanScreens).toContain("rawPersonalData=false");
     expect(cleanScreens).toContain("supportRouter");
+    expect(cleanScreens).toContain("supportTicketSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "supportTicketSubmitInFlightRef.current = true",
+    );
+    expect(cleanScreens).toContain(
+      "supportTicketSubmitInFlightRef.current = false",
+    );
     expect(cleanScreens).toContain("closeSupportInquiry");
     expect(cleanScreens).toContain('supportRouter.replace("/profile")');
     expect(cleanScreens).toContain('accessibilityLabel="MY로 돌아가기"');

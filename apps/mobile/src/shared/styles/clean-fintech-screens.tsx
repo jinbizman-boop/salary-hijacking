@@ -1658,6 +1658,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
   const [supportSubject, setSupportSubject] = useState("");
   const [supportMessage, setSupportMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const supportTicketSubmitInFlightRef = useRef(false);
   const [toast, setToast] = useState(
     "문의 내용을 서버에 안전하게 접수할 준비가 됐어요.",
   );
@@ -1667,7 +1668,8 @@ export function CleanFintechSupportScreen(): React.ReactElement {
     supportRouter.replace("/profile");
   }, [supportRouter]);
   const submitSupportTicket = useCallback(() => {
-    if (!valid || submitting) return;
+    if (!valid || supportTicketSubmitInFlightRef.current) return;
+    supportTicketSubmitInFlightRef.current = true;
     setSubmitting(true);
     setToast("1:1 문의를 서버에 접수하는 중이에요.");
     void supportApi
@@ -1686,15 +1688,11 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           "문의 접수에 실패했어요. 민감한 금융 원문은 문의에 적지 마세요.",
         );
       })
-      .finally(() => setSubmitting(false));
-  }, [
-    submitting,
-    supportApi,
-    supportCategory,
-    supportMessage,
-    supportSubject,
-    valid,
-  ]);
+      .finally(() => {
+        supportTicketSubmitInFlightRef.current = false;
+        setSubmitting(false);
+      });
+  }, [supportApi, supportCategory, supportMessage, supportSubject, valid]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
