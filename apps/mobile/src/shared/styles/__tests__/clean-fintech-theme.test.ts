@@ -2277,6 +2277,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(writeScreenSource).toContain("<PillRow");
     expect(writeScreenSource).toContain("disabled={submitting}");
     expect(writeScreenSource).toContain("editable={!submitting}");
+    expect(
+      writeScreenSource.match(
+        /accessibilityState=\{\{ disabled: submitting \}\}/gu,
+      ),
+    ).toHaveLength(2);
     expect(writeScreenSource).toMatch(
       /<ToggleRow\s+active=\{question\}\s+disabled=\{submitting\}/u,
     );

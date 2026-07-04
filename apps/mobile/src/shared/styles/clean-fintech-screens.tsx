@@ -1078,6 +1078,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <SectionCard>
             <TextInput
               accessibilityLabel="제목"
+              accessibilityState={{ disabled: submitting }}
               editable={!submitting}
               onChangeText={setTitle}
               placeholder="제목"
@@ -1087,6 +1088,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
             />
             <TextInput
               accessibilityLabel="본문"
+              accessibilityState={{ disabled: submitting }}
               multiline
               editable={!submitting}
               onChangeText={setBody}
