@@ -1044,6 +1044,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
             <Text style={styles.sectionTitle}>게시판</Text>
             <PillRow
               items={["자유 게시판", "레벨업 인증", "취미 게시판"]}
+              disabled={submitting}
               selected={board}
               onSelect={(next) => setBoard(next as CommunityBoard)}
             />
@@ -1051,6 +1052,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <SectionCard>
             <TextInput
               accessibilityLabel="제목"
+              editable={!submitting}
               onChangeText={setTitle}
               placeholder="제목"
               placeholderTextColor={theme.color.text.disabled}
@@ -1060,6 +1062,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
             <TextInput
               accessibilityLabel="본문"
               multiline
+              editable={!submitting}
               onChangeText={setBody}
               placeholder="본문을 입력하세요. 급여, 지출, 계좌, 연락처 같은 민감 정보는 공개하지 마세요."
               placeholderTextColor={theme.color.text.disabled}
@@ -1068,17 +1071,17 @@ export function CleanFintechWriteScreen(): React.ReactElement {
             />
             <View style={styles.attachmentRow}>
               <SmallButton
-                disabled={uploadingAttachment}
+                disabled={uploadingAttachment || submitting}
                 label="사진"
                 onPress={pickCommunityAttachment}
               />
               <SmallButton
-                disabled={uploadingAttachment}
+                disabled={uploadingAttachment || submitting}
                 label="이미지"
                 onPress={pickCommunityAttachment}
               />
               <SmallButton
-                disabled={uploadingAttachment}
+                disabled={uploadingAttachment || submitting}
                 label="파일"
                 onPress={pickCommunityAttachment}
               />
@@ -1095,11 +1098,13 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           <SectionCard>
             <ToggleRow
               active={question}
+              disabled={submitting}
               label="질문"
               onPress={() => setQuestion((value) => !value)}
             />
             <ToggleRow
               active={anonymous}
+              disabled={submitting}
               label="익명"
               onPress={() => setAnonymous((value) => !value)}
             />
@@ -6113,10 +6118,12 @@ function CommunityPostRow({
 }
 
 function PillRow({
+  disabled = false,
   items,
   selected,
   onSelect,
 }: Readonly<{
+  disabled?: boolean;
   items: readonly string[];
   selected: string;
   onSelect: (value: string) => void;
@@ -6128,9 +6135,14 @@ function PillRow({
           <Pressable
             accessibilityRole="tab"
             accessibilityState={{ selected: item === selected }}
+            disabled={disabled}
             key={item}
             onPress={() => onSelect(item)}
-            style={[styles.pill, item === selected ? styles.pillActive : null]}
+            style={[
+              styles.pill,
+              item === selected ? styles.pillActive : null,
+              disabled ? styles.disabled : null,
+            ]}
           >
             <Text
               style={[

@@ -1671,13 +1671,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       pickCommunityAttachmentSource.indexOf("directUploadCommunityAttachment"),
     );
     expect(writeScreenSource).toMatch(
-      /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="사진"/u,
+      /<SmallButton\s+disabled=\{uploadingAttachment\s*\|\|\s*submitting\}\s+label="사진"/u,
     );
     expect(writeScreenSource).toMatch(
-      /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="이미지"/u,
+      /<SmallButton\s+disabled=\{uploadingAttachment\s*\|\|\s*submitting\}\s+label="이미지"/u,
     );
     expect(writeScreenSource).toMatch(
-      /<SmallButton\s+disabled=\{uploadingAttachment\}\s+label="파일"/u,
+      /<SmallButton\s+disabled=\{uploadingAttachment\s*\|\|\s*submitting\}\s+label="파일"/u,
     );
   });
 
@@ -1702,6 +1702,32 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(writeScreenSource).toMatch(
       /!valid\s*\|\|\s*submitting\s*\|\|\s*uploadingAttachment\s*\?\s*styles\.disabled\s*:\s*null/u,
+    );
+  });
+
+  it("locks community write inputs while post submission is pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const writeScreenSource =
+      cleanScreens.match(
+        /export function CleanFintechWriteScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechSplashScreen/u,
+      )?.[0] ?? "";
+    const pillRowSource =
+      cleanScreens.match(
+        /function PillRow\([\s\S]*?function StatusPill/u,
+      )?.[0] ?? "";
+
+    expect(pillRowSource).toContain("disabled?: boolean");
+    expect(pillRowSource).toContain("disabled={disabled}");
+    expect(writeScreenSource).toContain("<PillRow");
+    expect(writeScreenSource).toContain("disabled={submitting}");
+    expect(writeScreenSource).toContain("editable={!submitting}");
+    expect(writeScreenSource).toMatch(
+      /<ToggleRow\s+active=\{question\}\s+disabled=\{submitting\}/u,
+    );
+    expect(writeScreenSource).toMatch(
+      /<ToggleRow\s+active=\{anonymous\}\s+disabled=\{submitting\}/u,
     );
   });
 
