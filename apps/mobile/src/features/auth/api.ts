@@ -84,6 +84,13 @@ const UNSAFE_RESPONSE_FLAGS = [
   "adsFinancialTargetingUsed",
 ] as const;
 
+const SENSITIVE_DEVICE_ID_PATTERNS = [
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu,
+  /\b01[016789][-\s]?\d{3,4}[-\s]?\d{4}\b/u,
+  /\b(?:authorization|bearer|session|refresh|push|fcm|token)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{4,}/iu,
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/u,
+] as const;
+
 const SOCIAL_PROVIDERS = new Set<AuthSocialProvider>([
   "KAKAO",
   "NAVER",
@@ -211,6 +218,23 @@ function assertEmailVerifyToken(value: string): string {
     );
   }
   return token;
+}
+
+function normalizeDeviceId(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const deviceId = assertPresent(value, "AUTH_DEVICE_ID_INVALID");
+  if (
+    deviceId.length > 128 ||
+    !/^[A-Za-z0-9._:-]+$/u.test(deviceId) ||
+    SENSITIVE_DEVICE_ID_PATTERNS.some((pattern) => pattern.test(deviceId))
+  ) {
+    throw new AuthApiError(
+      0,
+      "AUTH_DEVICE_ID_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return deviceId;
 }
 
 function normalizeEmail(value: string): string {
@@ -617,7 +641,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         password: assertLoginPassword(request.password),
       };
       appendOptional(body, "rememberMe", request.rememberMe);
-      appendOptional(body, "deviceId", request.deviceId);
+      appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
 
       const parsed = await post(AUTH_LOGIN_PATH, body);
       let normalized;
@@ -658,7 +682,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         termsAccepted: assertRequiredConsent(request.termsAccepted),
       };
       appendOptional(body, "marketingAccepted", request.marketingAccepted);
-      appendOptional(body, "deviceId", request.deviceId);
+      appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
 
       const parsed = await post(AUTH_REGISTER_PATH, body);
       let normalized;
@@ -727,7 +751,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         code: assertPresent(request.code, "AUTH_OAUTH_CODE_REQUIRED"),
         codeVerifier,
       };
-      appendOptional(body, "deviceId", request.deviceId);
+      appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
 
       let parsed: unknown;
       try {
@@ -790,7 +814,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
 
     async refresh(request: AuthRefreshRequest = {}) {
       const body: Record<string, unknown> = {};
-      appendOptional(body, "deviceId", request.deviceId);
+      appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
 
       let parsed: unknown;
       try {

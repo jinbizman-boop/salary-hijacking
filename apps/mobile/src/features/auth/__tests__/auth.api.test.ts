@@ -248,6 +248,65 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("rejects sensitive auth device identifiers before they can enter payloads", async () => {
+    const calls: Request[] = [];
+    const stored = new Map<string, string>([
+      [
+        `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-sensitive-device`,
+        "stored-code-verifier",
+      ],
+    ]);
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+      tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
+        },
+        deleteItemAsync: async (key) => {
+          stored.delete(key);
+        },
+      },
+    });
+
+    await expect(
+      api.login({
+        deviceId: "Bearer raw-device-token",
+        email: "user@example.com",
+        password: "server-password",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_DEVICE_ID_INVALID" });
+    await expect(
+      api.register({
+        deviceId: "device owner user@example.com",
+        email: "new@example.com",
+        nickname: "new user",
+        password: "new-password-1",
+        privacyAccepted: true,
+        termsAccepted: true,
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_DEVICE_ID_INVALID" });
+    await expect(
+      api.completeOAuth({
+        code: "provider-callback-code",
+        deviceId: "010-1234-5678",
+        state: "oauth-state-sensitive-device",
+      }),
+    ).rejects.toMatchObject({ code: "AUTH_DEVICE_ID_INVALID" });
+    await expect(
+      api.refresh({ deviceId: "bad\r\ndevice" }),
+    ).rejects.toMatchObject({
+      code: "AUTH_DEVICE_ID_INVALID",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("registers with required consents and stores the authenticated access token", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
