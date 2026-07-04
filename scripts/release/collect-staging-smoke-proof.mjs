@@ -23,6 +23,17 @@ const EMAIL_VALUE_PATTERN = /[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i;
 const JWT_VALUE_PATTERN =
   /\beyJ[a-zA-Z0-9_-]{12,}\.[a-zA-Z0-9_-]{12,}\.[a-zA-Z0-9_-]{12,}\b/;
 
+const SENSITIVE_RESPONSE_HEADERS = new Set([
+  "authorization",
+  "cookie",
+  "proxy-authorization",
+  "set-cookie",
+  "x-api-key",
+  "x-auth-token",
+  "x-refresh-token",
+  "x-session-token",
+]);
+
 const isPlainObject = (value) =>
   Boolean(value) && typeof value === "object" && !Array.isArray(value);
 
@@ -78,6 +89,9 @@ const normalizeHttpsBaseUrl = (value, label) => {
   if (url.protocol !== "https:") {
     throw new Error(`${label} must use https for staging smoke proof`);
   }
+  if (url.username || url.password) {
+    throw new Error(`${label} must not include credentials`);
+  }
   url.hash = "";
   url.search = "";
   url.pathname = url.pathname.replace(/\/+$/, "");
@@ -91,6 +105,21 @@ const responseHasSensitiveRawData = (text) =>
   RAW_RESPONSE_DATA_PATTERN.test(text) ||
   EMAIL_VALUE_PATTERN.test(text) ||
   JWT_VALUE_PATTERN.test(text);
+
+const responseHeadersHaveSensitiveRawData = (headers) => {
+  for (const [key, value] of headers.entries()) {
+    const normalizedKey = key.toLowerCase();
+    if (SENSITIVE_RESPONSE_HEADERS.has(normalizedKey)) return true;
+    if (
+      RAW_SECRET_PATTERN.test(value) ||
+      EMAIL_VALUE_PATTERN.test(value) ||
+      JWT_VALUE_PATTERN.test(value)
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
 
 const headerValue = (headers, key) =>
   headers.get(key)?.trim().toLowerCase() ?? "";
@@ -150,7 +179,9 @@ const safeFetchText = async ({ url, fetcher, bearer, timeoutMs }) => {
     status: response.status,
     headers: responseHeaders,
     text,
-    safe: !responseHasSensitiveRawData(text),
+    safe:
+      !responseHasSensitiveRawData(text) &&
+      !responseHeadersHaveSensitiveRawData(responseHeaders),
   };
 };
 

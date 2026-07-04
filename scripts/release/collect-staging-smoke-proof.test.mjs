@@ -155,6 +155,24 @@ test("requires HTTPS staging URLs and rejects local HTTP smoke targets", async (
   );
 });
 
+test("rejects staging smoke URLs that embed credentials", async () => {
+  const rootDir = makeRoot();
+
+  await assert.rejects(
+    () =>
+      collectStagingSmokeProof({
+        rootDir,
+        env: {
+          STAGING_API_BASE_URL:
+            "https://operator:secret@api-staging.salaryhijacking.com",
+          STAGING_ADMIN_BASE_URL: "https://admin-staging.salaryhijacking.com",
+        },
+        fetcher: async () => new FakeResponse("ok"),
+      }),
+    /must not include credentials/i,
+  );
+});
+
 test("marks a smoke command false when the response contains sensitive raw data", async () => {
   const rootDir = makeRoot();
 
@@ -186,6 +204,46 @@ test("marks a smoke command false when the response contains sensitive raw data"
   );
   assert.equal(written.containsSecretValues, false);
   assert.equal(written.commands.stagingApiSmoke.noRawPayloadStored, true);
+});
+
+test("marks smoke commands false when response headers expose raw cookie or token fields", async () => {
+  const rootDir = makeRoot();
+
+  const proof = await collectStagingSmokeProof({
+    rootDir,
+    env: {
+      STAGING_API_BASE_URL: "https://api-staging.salaryhijacking.com",
+      STAGING_ADMIN_BASE_URL: "https://admin-staging.salaryhijacking.com",
+    },
+    fetcher: async (url) => {
+      if (url.includes("admin-staging")) {
+        return new FakeResponse('{"status":"ready"}', {
+          headers: privacyHeaders,
+        });
+      }
+      return new FakeResponse(
+        '{"serverAuthorityEnabled":true,"rawFinancialDataExposed":false,"rawPersonalDataExposed":false,"rawPushTokenExposed":false,"adsFinancialTargetingUsed":false}',
+        {
+          headers: {
+            ...privacyHeaders,
+            "set-cookie": "session=raw-session-cookie",
+            "x-session-token": "copied-session-token",
+          },
+        },
+      );
+    },
+  });
+
+  assert.equal(proof.commands.stagingApiSmoke.verified, false);
+  assert.equal(proof.commands.serverAuthoritySmoke.verified, false);
+  assert.equal(proof.commands.privacySmoke.verified, false);
+  assert.equal(proof.commands.adminSmoke.verified, true);
+
+  const written = fs.readFileSync(
+    path.join(rootDir, "release/database-command-proof.local.json"),
+    "utf8",
+  );
+  assert.doesNotMatch(written, /raw-session-cookie|copied-session-token/i);
 });
 
 test("accepts explicit smoke path overrides while preserving slash normalization", async () => {
