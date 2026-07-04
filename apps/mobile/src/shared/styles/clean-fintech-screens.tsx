@@ -1242,6 +1242,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           <TextInput
             accessibilityLabel="회원가입 이메일"
             autoCapitalize="none"
+            editable={!submitting}
             inputMode="email"
             onChangeText={setEmail}
             placeholder="이메일"
@@ -1251,6 +1252,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="회원가입 닉네임"
+            editable={!submitting}
             onChangeText={setNickname}
             placeholder="닉네임"
             placeholderTextColor={theme.color.text.disabled}
@@ -1259,6 +1261,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="회원가입 비밀번호"
+            editable={!submitting}
             onChangeText={setPassword}
             placeholder="비밀번호"
             placeholderTextColor={theme.color.text.disabled}
@@ -1273,6 +1276,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           {signupConsentLabels.map((label) => (
             <ToggleRow
               active={agreed.has(label)}
+              disabled={submitting}
               key={label}
               label={label}
               onPress={() =>
@@ -6050,16 +6054,22 @@ function LoginScreen(): React.ReactElement {
   const valid = email.includes("@") && password.trim().length >= 8;
 
   const openSignup = useCallback((): void => {
+    if (submitting) return;
     loginRouter.push("/(auth)/signup");
-  }, [loginRouter]);
+  }, [loginRouter, submitting]);
 
   const openForgotPassword = useCallback((): void => {
+    if (submitting) return;
     loginRouter.push("/(auth)/forgot-password");
-  }, [loginRouter]);
+  }, [loginRouter, submitting]);
 
   const startSocialLogin = useCallback(
     async (provider: LoginSocialProvider): Promise<void> => {
-      if (socialLoginSubmitInFlightRef.current) return;
+      if (
+        socialLoginSubmitInFlightRef.current ||
+        loginSubmitInFlightRef.current
+      )
+        return;
       socialLoginSubmitInFlightRef.current = true;
       setSubmitting(true);
       setToast(`${provider} server OAuth start request is in progress.`);
@@ -6090,7 +6100,12 @@ function LoginScreen(): React.ReactElement {
   );
 
   const submitLogin = useCallback(async () => {
-    if (!valid || loginSubmitInFlightRef.current) return;
+    if (
+      !valid ||
+      loginSubmitInFlightRef.current ||
+      socialLoginSubmitInFlightRef.current
+    )
+      return;
     loginSubmitInFlightRef.current = true;
     setSubmitting(true);
     try {
@@ -6142,6 +6157,7 @@ function LoginScreen(): React.ReactElement {
           <TextInput
             accessibilityLabel="이메일"
             autoCapitalize="none"
+            editable={!submitting}
             inputMode="email"
             onChangeText={setEmail}
             placeholder="이메일"
@@ -6151,6 +6167,7 @@ function LoginScreen(): React.ReactElement {
           />
           <TextInput
             accessibilityLabel="비밀번호"
+            editable={!submitting}
             onChangeText={setPassword}
             placeholder="비밀번호"
             placeholderTextColor={theme.color.text.disabled}
@@ -6171,11 +6188,20 @@ function LoginScreen(): React.ReactElement {
               {submitting ? "로그인 중" : "로그인"}
             </Text>
           </Pressable>
-          <SmallButton label="회원가입" onPress={openSignup} />
-          <SmallButton label="비밀번호 찾기" onPress={openForgotPassword} />
+          <SmallButton
+            disabled={submitting}
+            label="회원가입"
+            onPress={openSignup}
+          />
+          <SmallButton
+            disabled={submitting}
+            label="비밀번호 찾기"
+            onPress={openForgotPassword}
+          />
           <View style={styles.attachmentRow}>
             {SOCIAL_LOGIN_LABELS.map(({ label, provider }) => (
               <SmallButton
+                disabled={submitting}
                 key={provider}
                 label={label}
                 onPress={() => startSocialLogin(provider)}

@@ -469,8 +469,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("loginAuthApi.login");
     expect(cleanScreens).toContain("signupAuthApi.register");
     expect(cleanScreens).toContain("loginSubmitInFlightRef");
-    expect(cleanScreens).toContain(
-      "if (!valid || loginSubmitInFlightRef.current) return",
+    expect(cleanScreens).toMatch(
+      /if\s*\(\s*!valid\s*\|\|\s*loginSubmitInFlightRef\.current\s*\|\|\s*socialLoginSubmitInFlightRef\.current\s*\)\s*return;/u,
     );
     expect(cleanScreens).toContain("loginSubmitInFlightRef.current = true");
     expect(cleanScreens).toContain("loginSubmitInFlightRef.current = false");
@@ -500,6 +500,39 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("locks login and signup auth inputs while server auth requests are pending", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const signupSource =
+      cleanScreens.match(
+        /export function CleanFintechSignupScreen[\s\S]*?export function CleanFintechLevelDetailScreen/u,
+      )?.[0] ?? "";
+    const loginSource =
+      cleanScreens.match(
+        /function LoginScreen[\s\S]*?function AppScreen/u,
+      )?.[0] ?? "";
+
+    expect(loginSource).toMatch(
+      /if\s*\(\s*submitting\s*\)\s*return;\s*loginRouter\.push\("\/\(auth\)\/signup"\)/u,
+    );
+    expect(loginSource).toMatch(
+      /if\s*\(\s*submitting\s*\)\s*return;\s*loginRouter\.push\("\/\(auth\)\/forgot-password"\)/u,
+    );
+    expect(loginSource).toMatch(
+      /if\s*\(\s*socialLoginSubmitInFlightRef\.current\s*\|\|\s*loginSubmitInFlightRef\.current\s*\)\s*return;/u,
+    );
+    expect(loginSource).toMatch(
+      /if\s*\(\s*!valid\s*\|\|\s*loginSubmitInFlightRef\.current\s*\|\|\s*socialLoginSubmitInFlightRef\.current\s*\)\s*return;/u,
+    );
+    expect(loginSource.match(/editable=\{!submitting\}/gu)).toHaveLength(2);
+    expect(loginSource.match(/disabled=\{submitting\}/gu)).toHaveLength(3);
+    expect(signupSource.match(/editable=\{!submitting\}/gu)).toHaveLength(3);
+    expect(signupSource).toMatch(
+      /<ToggleRow\s+active=\{agreed\.has\(label\)\}\s+disabled=\{submitting\}/u,
+    );
+  });
+
   it("keeps login screen routed to the signup flow instead of leaving signup as a no-op", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -508,7 +541,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("loginRouter");
     expect(cleanScreens).toContain("openSignup");
     expect(cleanScreens).toContain('loginRouter.push("/(auth)/signup")');
-    expect(cleanScreens).toContain('SmallButton label="회원가입"');
+    expect(cleanScreens).toMatch(
+      /<SmallButton\s+disabled=\{submitting\}\s+label="회원가입"\s+onPress=\{openSignup\}/u,
+    );
     expect(cleanScreens).toContain("onPress={openSignup}");
   });
 
@@ -535,7 +570,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "forgotPasswordSubmitInFlightRef.current = false",
     );
-    expect(cleanScreens).toContain('SmallButton label="비밀번호 찾기"');
+    expect(cleanScreens).toMatch(
+      /<SmallButton\s+disabled=\{submitting\}\s+label="비밀번호 찾기"\s+onPress=\{openForgotPassword\}/u,
+    );
     expect(cleanScreens).toContain("onPress={openForgotPassword}");
   });
 
@@ -550,8 +587,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("startSocialLogin");
     expect(cleanScreens).toContain("loginAuthApi.startOAuth");
     expect(cleanScreens).toContain("socialLoginSubmitInFlightRef");
-    expect(cleanScreens).toContain(
-      "if (socialLoginSubmitInFlightRef.current) return",
+    expect(cleanScreens).toMatch(
+      /if\s*\(\s*socialLoginSubmitInFlightRef\.current\s*\|\|\s*loginSubmitInFlightRef\.current\s*\)\s*return;/u,
     );
     expect(cleanScreens).toContain(
       "socialLoginSubmitInFlightRef.current = true",
