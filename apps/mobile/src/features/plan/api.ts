@@ -64,6 +64,28 @@ function isPositiveMoney(value: unknown): value is number {
   return isNonNegativeInteger(value) && value > 0;
 }
 
+const SERVER_FIXED_EXPENSE_CATEGORIES = Object.freeze([
+  "HOUSING",
+  "TELECOM",
+  "UTILITY",
+  "INSURANCE",
+  "SUBSCRIPTION",
+  "LOAN_REPAYMENT",
+  "TRANSPORT",
+  "EDUCATION",
+  "HEALTHCARE",
+  "FAMILY",
+  "TAX",
+  "ETC",
+]);
+
+function normalizeFixedExpenseCategory(value: string): string | null {
+  const normalized = value.trim().toUpperCase();
+  return SERVER_FIXED_EXPENSE_CATEGORIES.includes(normalized)
+    ? normalized
+    : null;
+}
+
 function isSafeCommitmentId(value: string): boolean {
   return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
 }
@@ -291,7 +313,7 @@ function validFixedExpenseCreate(
     value.title.length <= 100 &&
     !containsRawSensitivePlanText(value.title) &&
     typeof value.category === "string" &&
-    value.category.trim().length > 0 &&
+    normalizeFixedExpenseCategory(value.category) !== null &&
     !containsRawSensitivePlanText(value.category) &&
     isPositiveMoney(value.amountMinor) &&
     isPositiveDay(value.paymentDay)
@@ -329,7 +351,7 @@ function validFixedExpenseUpdate(
         !containsRawSensitivePlanText(value.title))) &&
     (value.category === undefined ||
       (typeof value.category === "string" &&
-        value.category.trim().length > 0 &&
+        normalizeFixedExpenseCategory(value.category) !== null &&
         !containsRawSensitivePlanText(value.category))) &&
     (value.amountMinor === undefined || isPositiveMoney(value.amountMinor)) &&
     (value.paymentDay === undefined || isPositiveDay(value.paymentDay))
@@ -525,7 +547,7 @@ export function createPlanCommitmentsApi(
           affectsDailyBudget: true,
           amountMinor: createRequest.amountMinor,
           autoPay: true,
-          category: createRequest.category,
+          category: normalizeFixedExpenseCategory(createRequest.category),
           frequency: "MONTHLY",
           paymentDay: createRequest.paymentDay,
           title: createRequest.title.trim(),
@@ -605,7 +627,11 @@ export function createPlanCommitmentsApi(
               ? { title: updateRequest.title.trim() }
               : {}),
             ...(updateRequest.category !== undefined
-              ? { category: updateRequest.category.trim() }
+              ? {
+                  category: normalizeFixedExpenseCategory(
+                    updateRequest.category,
+                  ),
+                }
               : {}),
           }),
         },

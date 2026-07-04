@@ -341,6 +341,58 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("normalizes fixed expense categories to the server enum before mutation requests", async () => {
+    const calls: Request[] = [];
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+
+        return jsonResponse(
+          {
+            data: {
+              expenseId: "expense_subscription",
+              title: "Subscription",
+              category: "SUBSCRIPTION",
+              amountMinor: 19_000,
+              paymentDay: 21,
+              status: "ACTIVE",
+              serverAuthority: true,
+              financialRawDataExposed: false,
+            },
+          },
+          201,
+        );
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.createFixedExpense({
+        amountMinor: 19_000,
+        category: "subscription",
+        paymentDay: 21,
+        title: "Subscription",
+      }),
+    ).resolves.toMatchObject({
+      category: "SUBSCRIPTION",
+      id: "expense_subscription",
+      serverAuthority: true,
+    });
+    await expect(
+      api.updateFixedExpense("expense_subscription", {
+        category: "not_a_server_category",
+      }),
+    ).rejects.toMatchObject({ code: "PLAN_INVALID_UPDATE_REQUEST" });
+
+    expect(calls).toHaveLength(1);
+    expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
+      category: "SUBSCRIPTION",
+    });
+  });
+
   it("rejects raw sensitive plan text before it reaches fixed expense or savings APIs", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({
