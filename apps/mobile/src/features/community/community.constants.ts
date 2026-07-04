@@ -1,5 +1,6 @@
 import type {
   CommunityBoardType,
+  CommunityReportReason,
   CommunityShareChannel,
   CommunitySort,
 } from "./community.types";
@@ -32,6 +33,28 @@ export const COMMUNITY_SORTS: readonly CommunitySort[] = Object.freeze([
 
 export const COMMUNITY_SHARE_CHANNELS: readonly CommunityShareChannel[] =
   Object.freeze(["SYSTEM_SHARE", "COPY_LINK", "KAKAO", "NAVER", "OTHER"]);
+
+export const COMMUNITY_REPORT_REASONS: readonly CommunityReportReason[] =
+  Object.freeze([
+    "SPAM",
+    "ABUSE",
+    "HARASSMENT",
+    "HATE_OR_DISCRIMINATION",
+    "SEXUAL_CONTENT",
+    "MISINFORMATION",
+    "FINANCIAL_RISK",
+    "ILLEGAL_FINANCE",
+    "GAMBLING_OR_SPECULATION",
+    "SCAM_OR_PHISHING",
+    "PERSONAL_INFORMATION",
+    "PRIVACY_LEAK",
+    "RAW_FINANCIAL_DATA_EXPOSURE",
+    "TOKEN_OR_SECRET_LEAK",
+    "AD_OR_PARTNER_POLICY_VIOLATION",
+    "COPYRIGHT",
+    "ILLEGAL",
+    "OTHER",
+  ]);
 
 export const COMMUNITY_PRIVACY_HEADERS = Object.freeze({
   "x-raw-financial-data-exposed": "false",

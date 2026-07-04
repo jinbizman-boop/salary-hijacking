@@ -250,4 +250,25 @@ describe("community service", () => {
     expect(payload).not.toContain("123-456-789012");
     expect(payload).toContain("[auth-redacted]");
   });
+
+  it("blocks invalid community report reasons before moderation payloads", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.reportPost("post_1", "RAW_FINANCIAL_EXPORT", "invalid reason"),
+    ).rejects.toMatchObject({ code: "COMMUNITY_REPORT_REASON_INVALID" });
+    await expect(
+      service.reportComment(
+        "comment_1",
+        "SPAM\nAuthorization",
+        "invalid reason",
+      ),
+    ).rejects.toMatchObject({ code: "COMMUNITY_REPORT_REASON_INVALID" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
 });

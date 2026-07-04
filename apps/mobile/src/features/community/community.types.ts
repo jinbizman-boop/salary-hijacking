@@ -15,6 +15,25 @@ export type CommunityShareChannel =
   | "KAKAO"
   | "NAVER"
   | "OTHER";
+export type CommunityReportReason =
+  | "SPAM"
+  | "ABUSE"
+  | "HARASSMENT"
+  | "HATE_OR_DISCRIMINATION"
+  | "SEXUAL_CONTENT"
+  | "MISINFORMATION"
+  | "FINANCIAL_RISK"
+  | "ILLEGAL_FINANCE"
+  | "GAMBLING_OR_SPECULATION"
+  | "SCAM_OR_PHISHING"
+  | "PERSONAL_INFORMATION"
+  | "PRIVACY_LEAK"
+  | "RAW_FINANCIAL_DATA_EXPOSURE"
+  | "TOKEN_OR_SECRET_LEAK"
+  | "AD_OR_PARTNER_POLICY_VIOLATION"
+  | "COPYRIGHT"
+  | "ILLEGAL"
+  | "OTHER";
 export type ModerationStatus =
   | "SAFE"
   | "REVIEW"

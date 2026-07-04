@@ -2,6 +2,7 @@ import { CommunityApiError } from "./api";
 import {
   COMMUNITY_API_PREFIX,
   COMMUNITY_BOARD_TYPES,
+  COMMUNITY_REPORT_REASONS,
   COMMUNITY_SHARE_CHANNELS,
   COMMUNITY_SORTS,
 } from "./community.constants";
@@ -122,6 +123,14 @@ function idempotencyKey(scope: string, id: string): string {
     .slice(2, 10)}`;
 }
 
+function isCommunityReportReason(
+  value: string,
+): value is (typeof COMMUNITY_REPORT_REASONS)[number] {
+  return COMMUNITY_REPORT_REASONS.includes(
+    value as (typeof COMMUNITY_REPORT_REASONS)[number],
+  );
+}
+
 function reportBody(
   reasonType: string,
   reason: string,
@@ -131,11 +140,18 @@ function reportBody(
 }> {
   const normalizedType = reasonType.trim().toUpperCase();
   const safeReason = reason.trim().slice(0, 500);
-  if (!/^[A-Z][A-Z0-9_]{1,39}$/u.test(normalizedType) || !safeReason) {
+  if (!safeReason) {
     throw new CommunityApiError(
       0,
       "COMMUNITY_REPORT_REASON_REQUIRED",
       "신고 사유를 확인해 주세요.",
+    );
+  }
+  if (!isCommunityReportReason(normalizedType)) {
+    throw new CommunityApiError(
+      0,
+      "COMMUNITY_REPORT_REASON_INVALID",
+      "커뮤니티 신고 사유를 확인해 주세요.",
     );
   }
   return {
