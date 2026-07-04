@@ -525,6 +525,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(cleanScreens).toContain("requestPasswordReset");
     expect(cleanScreens).toContain("forgotPasswordAuthApi");
+    expect(cleanScreens).toContain("forgotPasswordSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (!valid || forgotPasswordSubmitInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain(
+      "forgotPasswordSubmitInFlightRef.current = true",
+    );
+    expect(cleanScreens).toContain(
+      "forgotPasswordSubmitInFlightRef.current = false",
+    );
     expect(cleanScreens).toContain('SmallButton label="비밀번호 찾기"');
     expect(cleanScreens).toContain("onPress={openForgotPassword}");
   });
@@ -614,6 +624,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("confirmPasswordReset");
     expect(cleanScreens).toContain("resetPasswordAuthApi");
     expect(cleanScreens).toContain("submitPasswordResetConfirm");
+    expect(cleanScreens).toContain("resetPasswordSubmitInFlightRef");
+    expect(cleanScreens).toContain(
+      "if (!valid || resetPasswordSubmitInFlightRef.current) return",
+    );
+    expect(cleanScreens).toContain(
+      "resetPasswordSubmitInFlightRef.current = true",
+    );
+    expect(cleanScreens).toContain(
+      "resetPasswordSubmitInFlightRef.current = false",
+    );
     expect(cleanScreens).toContain("isServerAuthPasswordCandidate");
     expect(cleanScreens).toContain("AUTH_PASSWORD_POLICY_MESSAGE");
     expect(cleanScreens).toContain(

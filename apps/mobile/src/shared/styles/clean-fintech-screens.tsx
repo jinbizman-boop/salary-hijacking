@@ -5371,13 +5371,15 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
   const forgotPasswordAuthApi = useMemo(() => createMobileAuthApi(), []);
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const forgotPasswordSubmitInFlightRef = useRef(false);
   const [toast, setToast] = useState(
     "가입한 이메일로 비밀번호 재설정 안내를 받을 수 있어요.",
   );
   const valid = email.trim().includes("@");
 
   const submitPasswordReset = useCallback(async () => {
-    if (!valid || submitting) return;
+    if (!valid || forgotPasswordSubmitInFlightRef.current) return;
+    forgotPasswordSubmitInFlightRef.current = true;
     setSubmitting(true);
     try {
       const result = await forgotPasswordAuthApi.requestPasswordReset({
@@ -5395,9 +5397,10 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
         "비밀번호 재설정 요청을 완료하지 못했어요. 이메일과 네트워크를 확인해 주세요.",
       );
     } finally {
+      forgotPasswordSubmitInFlightRef.current = false;
       setSubmitting(false);
     }
-  }, [email, forgotPasswordAuthApi, submitting, valid]);
+  }, [email, forgotPasswordAuthApi, valid]);
 
   const backToLogin = useCallback((): void => {
     forgotPasswordRouter.replace("/(auth)/login");
@@ -5454,6 +5457,7 @@ export function CleanFintechResetPasswordScreen({
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const resetPasswordSubmitInFlightRef = useRef(false);
   const missingResetToken = token.trim().length < 8;
   const [toast, setToast] = useState(
     missingResetToken
@@ -5470,7 +5474,8 @@ export function CleanFintechResetPasswordScreen({
   }, [resetPasswordRouter]);
 
   const submitPasswordResetConfirm = useCallback(async () => {
-    if (!valid || submitting) return;
+    if (!valid || resetPasswordSubmitInFlightRef.current) return;
+    resetPasswordSubmitInFlightRef.current = true;
     setSubmitting(true);
     try {
       const result = await resetPasswordAuthApi.confirmPasswordReset({
@@ -5488,16 +5493,10 @@ export function CleanFintechResetPasswordScreen({
         "비밀번호 변경을 완료하지 못했어요. 링크와 입력값을 확인해 주세요.",
       );
     } finally {
+      resetPasswordSubmitInFlightRef.current = false;
       setSubmitting(false);
     }
-  }, [
-    newPassword,
-    resetPasswordAuthApi,
-    resetPasswordRouter,
-    submitting,
-    token,
-    valid,
-  ]);
+  }, [newPassword, resetPasswordAuthApi, resetPasswordRouter, token, valid]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
