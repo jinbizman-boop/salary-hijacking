@@ -4166,6 +4166,7 @@ function LevelScreen(): React.ReactElement {
   const [completed, setCompleted] = useState<ReadonlySet<string>>(() =>
     completedMissionIds(fallbackMissions),
   );
+  const growthMissionCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [toast, setToast] = useState("서버 LV UP 데이터를 확인하는 중이에요.");
 
   useEffect(() => {
@@ -4237,6 +4238,9 @@ function LevelScreen(): React.ReactElement {
         return;
       }
 
+      if (growthMissionCompletionInFlightRef.current.has(mission.id)) return;
+      growthMissionCompletionInFlightRef.current.add(mission.id);
+
       const occurredAt = new Date().toISOString();
       void growthApi
         .recordTaskProgress(mission.serverTaskId, {
@@ -4277,6 +4281,9 @@ function LevelScreen(): React.ReactElement {
         .catch(() => {
           revertMissionCompletionOnServerFailure(mission.id);
           setToast("서버 기록에 실패했어요. 미션 완료는 반영하지 않았어요.");
+        })
+        .finally(() => {
+          growthMissionCompletionInFlightRef.current.delete(mission.id);
         });
     },
     [
