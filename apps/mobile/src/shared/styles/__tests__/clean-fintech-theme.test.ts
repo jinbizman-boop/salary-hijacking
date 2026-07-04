@@ -405,6 +405,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(
       planSource.match(/editable=\{!savingPlanCommitment\}/gu) ?? [],
     ).toHaveLength(4);
+    expect(
+      planSource.match(
+        /accessibilityState=\{\{ disabled: savingPlanCommitment \}\}/gu,
+      ) ?? [],
+    ).toHaveLength(4);
   });
 
   it("keeps plan fixed expense and savings amount drafts sanitized as KRW integers", () => {
