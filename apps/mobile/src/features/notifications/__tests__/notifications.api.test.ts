@@ -320,6 +320,35 @@ describe("notifications api", () => {
     expect(JSON.stringify(preferences)).not.toContain("userId");
   });
 
+  it("rejects sensitive notification preference timezone values before payload construction", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.updatePreferences({
+        timezone: "owner user@example.com",
+      }),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_PREFERENCES_UPDATE",
+    });
+    await expect(
+      api.updatePreferences({
+        timezone: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
+      }),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_PREFERENCES_UPDATE",
+    });
+
+    expect(calls).toHaveLength(0);
+  });
+
   it("registers, lists, and revokes notification devices without exposing raw push tokens", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({

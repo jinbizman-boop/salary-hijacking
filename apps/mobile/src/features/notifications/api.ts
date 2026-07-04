@@ -437,6 +437,19 @@ function normalizeTimeWindow(value: unknown): string | null {
   );
 }
 
+function isSafeTimezone(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  const timezone = value.trim();
+  return (
+    timezone.length >= 3 &&
+    timezone.length <= 64 &&
+    /^[A-Za-z]+(?:[._-]?[A-Za-z0-9]+)*(?:\/[A-Za-z]+(?:[._-]?[A-Za-z0-9]+)*){0,3}$/u.test(
+      timezone,
+    ) &&
+    !containsRawSensitiveText(timezone)
+  );
+}
+
 function normalizePreferences(value: unknown): NotificationPreferences {
   if (!isRecord(value) || !isRecord(value.data)) {
     throw new NotificationsApiError(
@@ -447,8 +460,7 @@ function normalizePreferences(value: unknown): NotificationPreferences {
   }
   const data = value.data;
   if (
-    typeof data.timezone !== "string" ||
-    !data.timezone ||
+    !isSafeTimezone(data.timezone) ||
     !isIsoTimestamp(data.updatedAt) ||
     data.sensitiveFinancialTargetingConsent !== false
   ) {
@@ -588,7 +600,7 @@ function validPreferenceUpdate(
       continue;
     }
     if (key === "timezone") {
-      if (typeof value !== "string" || !value.trim()) return false;
+      if (!isSafeTimezone(value)) return false;
       continue;
     }
     return false;
