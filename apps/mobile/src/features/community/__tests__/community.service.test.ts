@@ -59,6 +59,26 @@ describe("community service", () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it("blocks sensitive community tags before they reach API payloads", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.publishPost({
+        boardType: "FREE",
+        title: "safe title",
+        content: "safe community routine note",
+        tags: ["routine", "010-1234-5678", "token=abcdefghijklmnop"],
+        anonymous: true,
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_CONTENT_BLOCKED" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("blocks invalid community feed filters before they reach URL logs", async () => {
     const request = jest.fn<
       ReturnType<CommunityApiTransport["request"]>,

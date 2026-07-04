@@ -7,6 +7,7 @@ import {
   COMMUNITY_MAX_TITLE_LENGTH,
 } from "./community.constants";
 import { moderateCommunityText } from "./community.moderation";
+import { containsSensitiveCommunityContent } from "./community.redaction";
 import type {
   CommunityCommentDraft,
   CommunityPostDraft,
@@ -62,6 +63,12 @@ export function validatePostDraft(
     )
   ) {
     issues.push(issue("INVALID_TAG", "tags", "태그 형식을 확인해 주세요."));
+  }
+
+  if (draft.tags.some((tag) => containsSensitiveCommunityContent(tag.trim()))) {
+    issues.push(
+      issue("PERSONAL_DATA", "tags", "태그에서 민감 정보를 제외해 주세요."),
+    );
   }
 
   if (issues.length > 0) {
