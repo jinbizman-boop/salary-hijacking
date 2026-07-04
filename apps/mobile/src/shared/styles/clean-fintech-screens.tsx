@@ -1777,8 +1777,9 @@ export function CleanFintechSupportScreen(): React.ReactElement {
   const valid =
     supportSubject.trim().length >= 2 && supportMessage.trim().length >= 5;
   const closeSupportInquiry = useCallback(() => {
+    if (submitting) return;
     supportRouter.replace("/profile");
-  }, [supportRouter]);
+  }, [submitting, supportRouter]);
   const submitSupportTicket = useCallback(() => {
     if (!valid || supportTicketSubmitInFlightRef.current) return;
     supportTicketSubmitInFlightRef.current = true;
@@ -1817,8 +1818,9 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <Pressable
             accessibilityLabel="MY로 돌아가기"
             accessibilityRole="button"
+            disabled={submitting}
             onPress={closeSupportInquiry}
-            style={styles.iconButton}
+            style={[styles.iconButton, submitting ? styles.disabled : null]}
           >
             <Text style={styles.iconButtonText}>×</Text>
           </Pressable>
@@ -1853,6 +1855,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <SectionCard>
             <TextInput
               accessibilityLabel="문의 제목"
+              editable={!submitting}
               onChangeText={setSupportSubject}
               placeholder="문의 제목"
               placeholderTextColor={theme.color.text.disabled}
@@ -1861,6 +1864,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
             />
             <TextInput
               accessibilityLabel="문의 내용"
+              editable={!submitting}
               multiline
               onChangeText={setSupportMessage}
               placeholder="문의 내용을 입력하세요. 급여, 지출, 계좌, 카드, 토큰 같은 민감 원문은 제외해 주세요."
