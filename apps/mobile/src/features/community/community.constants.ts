@@ -1,4 +1,4 @@
-import type { CommunityBoardType } from "./community.types";
+import type { CommunityBoardType, CommunitySort } from "./community.types";
 
 export const COMMUNITY_API_PREFIX = "/api/v1/community";
 export const COMMUNITY_MAX_TITLE_LENGTH = 120;
@@ -18,6 +18,13 @@ export const COMMUNITY_BOARD_TYPES: readonly CommunityBoardType[] =
     "HEALTH_ROUTINE",
     "FREE",
   ]);
+
+export const COMMUNITY_SORTS: readonly CommunitySort[] = Object.freeze([
+  "LATEST",
+  "POPULAR",
+  "COMMENTS",
+  "BOOKMARKED",
+]);
 
 export const COMMUNITY_PRIVACY_HEADERS = Object.freeze({
   "x-raw-financial-data-exposed": "false",

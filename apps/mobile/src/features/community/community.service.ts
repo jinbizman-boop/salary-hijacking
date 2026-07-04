@@ -1,5 +1,9 @@
 import { CommunityApiError } from "./api";
-import { COMMUNITY_API_PREFIX } from "./community.constants";
+import {
+  COMMUNITY_API_PREFIX,
+  COMMUNITY_BOARD_TYPES,
+  COMMUNITY_SORTS,
+} from "./community.constants";
 import {
   containsSensitiveCommunityContent,
   redactCommunityText,
@@ -65,8 +69,26 @@ function normalizePage(
 
 function listQuery(input: CommunityFeedQuery = {}): string {
   const params = new URLSearchParams();
-  if (input.boardType) params.set("boardType", input.boardType);
-  if (input.sort) params.set("sort", input.sort);
+  if (input.boardType) {
+    if (!COMMUNITY_BOARD_TYPES.includes(input.boardType)) {
+      throw new CommunityApiError(
+        0,
+        "COMMUNITY_FEED_QUERY_INVALID",
+        "커뮤니티 필터를 확인해 주세요.",
+      );
+    }
+    params.set("boardType", input.boardType);
+  }
+  if (input.sort) {
+    if (!COMMUNITY_SORTS.includes(input.sort)) {
+      throw new CommunityApiError(
+        0,
+        "COMMUNITY_FEED_QUERY_INVALID",
+        "커뮤니티 정렬을 확인해 주세요.",
+      );
+    }
+    params.set("sort", input.sort);
+  }
   params.set("page", String(normalizePage(input.page, 1, 10_000)));
   params.set("pageSize", String(normalizePage(input.pageSize, 20, 100)));
   const query = input.query?.trim();

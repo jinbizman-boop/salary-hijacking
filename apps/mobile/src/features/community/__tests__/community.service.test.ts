@@ -59,6 +59,27 @@ describe("community service", () => {
     expect(request).not.toHaveBeenCalled();
   });
 
+  it("blocks invalid community feed filters before they reach URL logs", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.listPosts({
+        boardType: "FREE&token=raw-secret" as never,
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+    await expect(
+      service.listPosts({
+        sort: "LATEST\nAuthorization" as never,
+      }),
+    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+
+    expect(request).not.toHaveBeenCalled();
+  });
+
   it("uses the API v1 community boundary and privacy-safe payloads", async () => {
     const request = jest
       .fn<
