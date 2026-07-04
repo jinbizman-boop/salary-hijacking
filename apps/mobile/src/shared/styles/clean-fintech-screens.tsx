@@ -386,6 +386,15 @@ type NotificationRoute =
   | "/notifications"
   | "/profile";
 
+type ProfileActivityRoute =
+  | NotificationRoute
+  | "/profile/account"
+  | "/profile/community"
+  | "/profile/level"
+  | "/profile/notices"
+  | "/profile/settings"
+  | "/profile/support";
+
 const notificationRouteByType: Readonly<
   Record<NotificationType, NotificationRoute>
 > = {
@@ -424,6 +433,18 @@ const notificationRouteAliases: Readonly<Record<string, NotificationRoute>> = {
   plan: "/plan",
   profile: "/profile",
   salary: "/salary",
+};
+
+const profileActivityRouteAliases: Readonly<
+  Record<string, ProfileActivityRoute>
+> = {
+  ...notificationRouteAliases,
+  "/profile/account": "/profile/account",
+  "/profile/community": "/profile/community",
+  "/profile/level": "/profile/level",
+  "/profile/notices": "/profile/notices",
+  "/profile/settings": "/profile/settings",
+  "/profile/support": "/profile/support",
 };
 
 const fallbackProfileSnapshot: ProfileSnapshot = {
@@ -1676,6 +1697,13 @@ export function CleanFintechProfileNoticesScreen(): React.ReactElement {
   const closeProfileNotices = useCallback(() => {
     profileNoticesRouter.replace("/profile");
   }, [profileNoticesRouter]);
+  const openProfileActivity = useCallback(
+    (activity: ProfileActivity): void => {
+      const route = safeProfileActivityRoute(activity);
+      profileNoticesRouter.push(route);
+    },
+    [profileNoticesRouter],
+  );
 
   return (
     <AppScreen title="공지사항" subtitle="MY 활동과 서비스 안내">
@@ -1694,6 +1722,7 @@ export function CleanFintechProfileNoticesScreen(): React.ReactElement {
               )} · adsFinancialTargetingUsed=${String(
                 activity.adsFinancialTargetingUsed,
               )}`}
+              onPress={() => openProfileActivity(activity)}
               title={activity.title}
             />
           ))
@@ -4663,6 +4692,23 @@ function safeNotificationRoute(
   }
 
   return notificationRouteByType[item.type];
+}
+
+function safeProfileActivityRoute(
+  activity: ProfileActivity,
+): ProfileActivityRoute {
+  const route = activity.route.trim();
+  const aliasedRoute = profileActivityRouteAliases[route];
+  if (aliasedRoute) return aliasedRoute;
+
+  const communityPostMatch = /^\/community\/([A-Za-z0-9_-]{1,80})$/u.exec(
+    route,
+  );
+  if (communityPostMatch?.[1]) {
+    return `/community/${communityPostMatch[1]}`;
+  }
+
+  return activity.kind === "SECURITY" ? "/profile" : "/notifications";
 }
 
 function isImportantNotification(item: NotificationScreenItem): boolean {

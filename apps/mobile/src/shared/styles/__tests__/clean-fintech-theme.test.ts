@@ -1305,6 +1305,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("closeProfileNotices");
     expect(cleanScreens).toContain('profileNoticesRouter.replace("/profile")');
     expect(cleanScreens).toContain("onPress={closeProfileNotices}");
+    expect(cleanScreens).toContain("safeProfileActivityRoute");
+    expect(cleanScreens).toContain("openProfileActivity");
+    expect(cleanScreens).toContain("profileNoticesRouter.push(route)");
+    expect(cleanScreens).toContain(
+      "onPress={() => openProfileActivity(activity)}",
+    );
     expect(source("profile/notices.tsx")).toContain(
       "<CleanFintechProfileNoticesScreen />",
     );
