@@ -130,7 +130,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
             fontWeight: "900",
           }}
         >
-          serverAuthority=true · rawPersonalData=false
+          개인정보 원문 없이 서버에서 인증 상태를 확인해요.
         </Text>
         {status === "PENDING" ? (
           <ActivityIndicator color={theme.color.brand.primary} />
@@ -271,7 +271,7 @@ export function assertMobileVerifyEmailCompleteness(): {
     "resendEmailVerification",
     'router.replace("/salary")',
     'router.replace("/(auth)/login")',
-    "rawPersonalData=false",
+    "personalDataNotRendered",
     "tokenNotRendered",
   ] as const;
 

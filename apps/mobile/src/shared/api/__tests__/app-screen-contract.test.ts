@@ -202,7 +202,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(verifyEmail).toContain("/api/v1/auth/verify-email");
     expect(verifyEmail).toContain("/salary");
     expect(verifyEmail).toContain("/(auth)/login");
-    expect(verifyEmail).toContain("rawPersonalData=false");
+    expect(verifyEmail).toContain(
+      "개인정보 원문 없이 서버에서 인증 상태를 확인해요.",
+    );
+    expect(verifyEmail).not.toContain("serverAuthority=true");
+    expect(verifyEmail).not.toContain("rawPersonalData=false");
   });
 
   it("prevents duplicate verify-email resend requests before the auth API acknowledges it", () => {
