@@ -34,6 +34,31 @@ function defaultCorrelationId(): string {
   );
 }
 
+function safeIdempotencyPart(value: string): string {
+  const normalized = value
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^-|-$/gu, "")
+    .slice(0, 80);
+  return normalized || "request";
+}
+
+function communityIdempotencyKey(
+  correlationId: string,
+  method: string,
+): string {
+  const entropy =
+    globalThis.crypto?.randomUUID?.().replace(/-/gu, "") ??
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return [
+    "mobile-community",
+    safeIdempotencyPart(correlationId),
+    safeIdempotencyPart(method.toLowerCase()),
+    entropy,
+  ].join("-");
+}
+
 function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
@@ -110,17 +135,26 @@ export function createCommunityApi(
         );
       }
 
+      const method = requestOptions.method ?? "GET";
+      const correlationId = createCorrelationId();
       const headers = new Headers({
         accept: "application/json",
         "x-client-platform": options.platform,
-        "x-correlation-id": createCorrelationId(),
+        "x-correlation-id": correlationId,
         ...COMMUNITY_PRIVACY_HEADERS,
       });
       const init: RequestInit = {
-        method: requestOptions.method ?? "GET",
+        method,
         headers,
         credentials: "include",
       };
+
+      if (method.toUpperCase() !== "GET") {
+        headers.set(
+          "x-idempotency-key",
+          communityIdempotencyKey(correlationId, method),
+        );
+      }
 
       if (requestOptions.body !== undefined) {
         headers.set("content-type", "application/json");

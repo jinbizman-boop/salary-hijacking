@@ -2,6 +2,51 @@ import { createCommunityApi } from "../api";
 import { createCommunityService } from "../community.service";
 
 describe("community integration", () => {
+  it("keeps client-side API error messages readable in Korean", async () => {
+    expect(() =>
+      createCommunityApi({
+        baseUrl: "https://user:password@api.example.test",
+        fetcher: jest.fn(),
+        platform: "android",
+      }),
+    ).toThrow("커뮤니티 API 주소를 확인해 주세요.");
+
+    expect(() =>
+      createCommunityApi({
+        baseUrl: "http://api.example.test",
+        fetcher: jest.fn(),
+        platform: "android",
+      }),
+    ).toThrow("안전한 커뮤니티 API 연결이 필요합니다.");
+
+    const api = createCommunityApi({
+      baseUrl: "https://api.example.test",
+      fetcher: jest.fn(),
+      platform: "android",
+    });
+
+    await expect(api.request("/api/v1/payroll")).rejects.toMatchObject({
+      message: "허용되지 않은 커뮤니티 API 경로입니다.",
+    });
+
+    const invalidResponseApi = createCommunityApi({
+      baseUrl: "https://api.example.test",
+      fetcher: jest.fn().mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+      platform: "android",
+    });
+
+    await expect(
+      invalidResponseApi.request("/api/v1/community/posts"),
+    ).rejects.toMatchObject({
+      message: "일시적인 오류입니다. 다시 시도해 주세요.",
+    });
+  });
+
   it("previews locally, then publishes through a privacy-safe fetch request", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
@@ -44,6 +89,9 @@ describe("community integration", () => {
     );
     expect(new Headers(init?.headers).get("x-raw-personal-data-exposed")).toBe(
       "false",
+    );
+    expect(new Headers(init?.headers).get("x-idempotency-key")).toMatch(
+      /^mobile-community-correlation-1-post-[A-Za-z0-9_-]{8,160}$/u,
     );
     expect(
       new Headers(init?.headers).get("x-ad-financial-targeting-used"),

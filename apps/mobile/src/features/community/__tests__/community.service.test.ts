@@ -493,4 +493,47 @@ describe("community service", () => {
 
     expect(request).not.toHaveBeenCalled();
   });
+
+  it("keeps service-side validation errors readable in Korean", async () => {
+    const request = jest.fn<
+      ReturnType<CommunityApiTransport["request"]>,
+      Parameters<CommunityApiTransport["request"]>
+    >();
+    const service = createCommunityService({ request });
+
+    await expect(
+      service.publishPost({
+        anonymous: true,
+        boardType: "FREE",
+        content: "safe community routine note",
+        rawSalaryMemo: "salary 2,700,000",
+        tags: ["routine"],
+        title: "safe title",
+      } as never),
+    ).rejects.toMatchObject({
+      message: "커뮤니티 요청 형식을 확인해 주세요.",
+    });
+
+    await expect(service.getPost("p")).rejects.toMatchObject({
+      message: "게시글 식별자가 올바르지 않습니다.",
+    });
+
+    await expect(service.setCommentLiked("c", true)).rejects.toMatchObject({
+      message: "댓글 식별자가 올바르지 않습니다.",
+    });
+
+    await expect(
+      service.recordPostShare("post_1", "RAW_FINANCIAL_EXPORT" as never),
+    ).rejects.toMatchObject({
+      message: "커뮤니티 공유 채널을 확인해 주세요.",
+    });
+
+    await expect(
+      service.reportPost("post_1", "SPAM", ""),
+    ).rejects.toMatchObject({
+      message: "신고 사유를 확인해 주세요.",
+    });
+
+    expect(request).not.toHaveBeenCalled();
+  });
 });
