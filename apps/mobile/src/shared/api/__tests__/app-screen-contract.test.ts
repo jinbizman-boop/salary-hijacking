@@ -158,8 +158,10 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain("finishOnboarding");
     expect(onboarding).toContain("/plan");
     expect(onboarding).toContain("/salary");
-    expect(onboarding).toContain("serverAuthority=true");
-    expect(onboarding).toContain("rawFinancialData=false");
+    expect(onboarding).toContain("서버 기준으로 급여 계획을 저장해요.");
+    expect(onboarding).toContain("금융 원문은 광고나 분석에 쓰지 않아요.");
+    expect(onboarding).not.toContain("serverAuthority=true");
+    expect(onboarding).not.toContain("rawFinancialData=false");
   });
 
   it("prevents duplicate onboarding completion before the profile API acknowledges it", () => {

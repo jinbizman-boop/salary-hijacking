@@ -75,8 +75,12 @@ export default function OnboardingScreen(): React.ReactElement {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>serverAuthority=true</Text>
-          <Text style={styles.badgeText}>rawFinancialData=false</Text>
+          <Text style={styles.badgeText}>
+            서버 기준으로 급여 계획을 저장해요.
+          </Text>
+          <Text style={styles.badgeText}>
+            금융 원문은 광고나 분석에 쓰지 않아요.
+          </Text>
         </View>
 
         <Text style={styles.kicker}>SALARY HIJACKING</Text>
@@ -154,8 +158,8 @@ export function assertOnboardingScreenCompleteness(): {
     "createMobileProfileApi",
     "completeOnboarding",
     "finishOnboarding",
-    "serverAuthority=true",
-    "rawFinancialData=false",
+    "server-authoritative onboarding completion",
+    "financial raw data not used for ads or analytics",
     "KRW integer guidance",
     "payroll plan entry",
     "fixed expense entry",
