@@ -91,6 +91,7 @@ const APPROVED_SECRET_STORE_LABELS = new Set([
   "GitHub Environments",
   "Cloudflare Worker secret",
   "Neon",
+  "Neon connector credential",
   "release external evidence",
   "Cloudflare account secret",
   "Cloudflare Worker config",

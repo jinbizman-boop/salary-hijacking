@@ -1037,6 +1037,32 @@ test("allows required secret names in evidence next steps without treating them 
   assert.doesNotMatch(report, /raw secret values may be present/);
 });
 
+test("allows no-secret Neon connector credential label for Neon management proof", () => {
+  const rootDir = makeWorkspace();
+  writeSecretsEvidence(rootDir, {
+    secrets: {
+      NEON_API_KEY: {
+        verified: true,
+        stores: ["Neon connector credential"],
+        note: "Neon management access verified by connector project and branch proof without token values.",
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: {},
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.match(report, /PASS secrets-evidence:store-labels/);
+  assert.match(report, /env-runtime:NEON_API_KEY: verified in secret evidence/);
+  assert.doesNotMatch(report, /NEON_API_KEY: Neon connector credential/);
+});
+
 test("blocks secret evidence that contains raw values", () => {
   const rootDir = makeWorkspace();
   writeSecretsEvidence(rootDir, {

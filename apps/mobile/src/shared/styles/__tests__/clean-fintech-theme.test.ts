@@ -3086,6 +3086,35 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ).toBeLessThan(submitSource.indexOf("setTitle"));
   });
 
+  it("lets community detail reports use an explicit safe user-selected reason", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const detailSource =
+      cleanScreens.match(
+        /export function CleanFintechPostDetailScreen\([\s\S]*?function SalaryHomeScreen/u,
+      )?.[0] ?? "";
+    const reportPostSource =
+      detailSource.match(
+        /const reportCommunityPost = useCallback\(\(\): void => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("COMMUNITY_DETAIL_REPORT_REASON_OPTIONS");
+    expect(detailSource).toContain("selectedReportReason");
+    expect(detailSource).toContain("reportReasonText");
+    expect(detailSource).toContain("커뮤니티 신고 사유");
+    expect(detailSource).toContain("커뮤니티 신고 상세 사유");
+    expect(detailSource).toContain("민감 정보 없이 신고 사유를 입력하세요");
+    expect(reportPostSource).toMatch(
+      /selectedReportReason\.value,\s*reportReasonText\.trim\(\)/u,
+    );
+    expect(detailSource).toMatch(
+      /\.reportComment\(\s*comment\.id,\s*selectedReportReason\.value,\s*reportReasonText\.trim\(\)/u,
+    );
+    expect(detailSource).not.toContain("mobile community detail report");
+    expect(detailSource).not.toContain("mobile community comment report");
+  });
+
   it("drops unsafe community feed items without discarding the whole server feed", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -3342,9 +3371,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setCommunityDetailActionPending(null)");
     expect(cleanScreens).toContain("reportCommunityPost");
     expect(cleanScreens).toContain("reportCommunityComment");
-    expect(cleanScreens).toContain(".reportPost(targetPostId");
-    expect(cleanScreens).toContain(".reportComment(comment.id");
-    expect(cleanScreens).toContain("ABUSE");
+    expect(cleanScreens).toMatch(/\.reportPost\(\s*targetPostId/u);
+    expect(cleanScreens).toMatch(/\.reportComment\(\s*comment\.id/u);
+    expect(cleanScreens).toContain("selectedReportReason.value");
+    expect(cleanScreens).toContain("reportReasonText.trim()");
+    expect(cleanScreens).not.toContain("mobile community detail report");
+    expect(cleanScreens).not.toContain("mobile community comment report");
     expect(cleanScreens).toContain("서버 검토 큐");
     expect(cleanScreens).not.toContain("server moderation");
   });

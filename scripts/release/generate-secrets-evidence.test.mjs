@@ -178,6 +178,51 @@ test("uses no-secret external release evidence for runtime identifier names", ()
   );
 });
 
+test("uses no-secret external connector management proof for provider API credentials", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/external-release-evidence.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        cloudflare: {
+          connectorReachable: true,
+          accountObserved: true,
+          apiWriteAccessProven: true,
+          workerUploadVerified: true,
+          workerUploadVerifiedAt: "2026-07-06T00:00:00.000Z",
+        },
+        neon: {
+          connectorReachable: true,
+          organizationObserved: true,
+          projectMatched: true,
+          mainBranchReady: true,
+          stagingBranchReady: true,
+          computeCount: 2,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const evidence = buildSecretsEvidence({ rootDir });
+
+  assert.equal(evidence.secrets.CLOUDFLARE_API_TOKEN.verified, true);
+  assert.deepEqual(evidence.secrets.CLOUDFLARE_API_TOKEN.stores, [
+    "Cloudflare account secret",
+  ]);
+  assert.equal(evidence.secrets.NEON_API_KEY.verified, true);
+  assert.deepEqual(evidence.secrets.NEON_API_KEY.stores, [
+    "Neon connector credential",
+  ]);
+  assert.equal(evidence.secrets.DATABASE_URL.verified, false);
+  assert.doesNotMatch(JSON.stringify(evidence), /postgres(?:ql)?:\/\//i);
+});
+
 test("rejects proof files that contain raw secret values", () => {
   const rootDir = makeWorkspace();
   const proofPath = path.join(rootDir, "release", "secrets-proof.local.json");

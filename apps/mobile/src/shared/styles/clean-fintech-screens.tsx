@@ -36,6 +36,7 @@ import type {
   CommunityPost,
   CommunityPostDetail,
   CommunityPostDraft,
+  CommunityReportReason,
 } from "../../features/community/community.types";
 import {
   calculateOfflineDailyBudgetPreview,
@@ -154,6 +155,23 @@ type CommunityScreenPost = Readonly<{
   thumb: string;
   title: string;
 }>;
+type CommunityDetailReportReasonOption = Readonly<{
+  label: string;
+  value: CommunityReportReason;
+}>;
+
+const DEFAULT_COMMUNITY_DETAIL_REPORT_REASON_OPTION: CommunityDetailReportReasonOption =
+  { label: "스팸/광고", value: "SPAM" };
+
+const COMMUNITY_DETAIL_REPORT_REASON_OPTIONS: readonly CommunityDetailReportReasonOption[] =
+  Object.freeze([
+    DEFAULT_COMMUNITY_DETAIL_REPORT_REASON_OPTION,
+    { label: "욕설/괴롭힘", value: "HARASSMENT" },
+    { label: "금융 사기", value: "SCAM_OR_PHISHING" },
+    { label: "개인정보 노출", value: "PERSONAL_INFORMATION" },
+    { label: "민감 금융정보", value: "RAW_FINANCIAL_DATA_EXPOSURE" },
+    { label: "기타", value: "OTHER" },
+  ]);
 
 const NOTIFICATION_DEVICE_ID_KEY = "salary-hijacking.notification.device-id";
 const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft";
@@ -2228,6 +2246,11 @@ export function CleanFintechPostDetailScreen({
   const communityBookmarkInFlightRef = useRef(false);
   const [sharePending, setSharePending] = useState(false);
   const communityShareInFlightRef = useRef(false);
+  const [selectedReportReasonLabel, setSelectedReportReasonLabel] = useState(
+    DEFAULT_COMMUNITY_DETAIL_REPORT_REASON_OPTION.label,
+  );
+  const [reportReasonText, setReportReasonText] =
+    useState("운영 정책 위반으로 신고합니다.");
   const [toast, setToast] = useState(
     "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
   );
@@ -2248,6 +2271,13 @@ export function CleanFintechPostDetailScreen({
   const communityDetailActionBusy = communityDetailActionPending !== null;
   const postEditReady =
     postEditTitle.trim().length >= 2 && postEditContent.trim().length >= 5;
+  const selectedReportReason =
+    COMMUNITY_DETAIL_REPORT_REASON_OPTIONS.find(
+      (option) => option.label === selectedReportReasonLabel,
+    ) ?? DEFAULT_COMMUNITY_DETAIL_REPORT_REASON_OPTION;
+  const reportReasonReady =
+    reportReasonText.trim().length >= 4 &&
+    !containsSensitiveCommunityContent(reportReasonText);
 
   const refreshCommunityDetail = useCallback(async (): Promise<void> => {
     const sanitizeCommunityDetailPostId = (value: string): string => {
@@ -2730,12 +2760,20 @@ export function CleanFintechPostDetailScreen({
 
   const reportCommunityPost = useCallback((): void => {
     if (communityDetailMutationInFlightRef.current !== null) return;
+    if (!reportReasonReady) {
+      setToast("신고 사유에서 민감 정보를 제외하고 4자 이상 입력해 주세요.");
+      return;
+    }
     const targetPostId = activeDetail.post.id;
     communityDetailMutationInFlightRef.current = "report-post";
     setCommunityDetailActionPending("report-post");
     setToast("게시글 신고를 서버 검토 큐에 전달하는 중이에요.");
     void detailCommunityService
-      .reportPost(targetPostId, "ABUSE", "mobile community detail report")
+      .reportPost(
+        targetPostId,
+        selectedReportReason.value,
+        reportReasonText.trim(),
+      )
       .then(() => {
         setToast("게시글 신고가 접수됐어요. 운영 정책에 따라 검토할게요.");
       })
@@ -2748,16 +2786,30 @@ export function CleanFintechPostDetailScreen({
         communityDetailMutationInFlightRef.current = null;
         setCommunityDetailActionPending(null);
       });
-  }, [activeDetail.post.id, detailCommunityService]);
+  }, [
+    activeDetail.post.id,
+    detailCommunityService,
+    reportReasonReady,
+    reportReasonText,
+    selectedReportReason.value,
+  ]);
 
   const reportCommunityComment = useCallback(
     (comment: CommunityComment): void => {
       if (communityDetailMutationInFlightRef.current !== null) return;
+      if (!reportReasonReady) {
+        setToast("신고 사유에서 민감 정보를 제외하고 4자 이상 입력해 주세요.");
+        return;
+      }
       communityDetailMutationInFlightRef.current = "report-comment";
       setCommunityDetailActionPending("report-comment");
       setToast("댓글 신고를 서버 검토 큐에 전달하는 중이에요.");
       void detailCommunityService
-        .reportComment(comment.id, "ABUSE", "mobile community comment report")
+        .reportComment(
+          comment.id,
+          selectedReportReason.value,
+          reportReasonText.trim(),
+        )
         .then(() => {
           setToast("댓글 신고가 접수됐어요. 운영 정책에 따라 검토할게요.");
         })
@@ -2771,7 +2823,12 @@ export function CleanFintechPostDetailScreen({
           setCommunityDetailActionPending(null);
         });
     },
-    [detailCommunityService],
+    [
+      detailCommunityService,
+      reportReasonReady,
+      reportReasonText,
+      selectedReportReason.value,
+    ],
   );
 
   const toggleCommunityCommentLike = useCallback(
@@ -2940,7 +2997,7 @@ export function CleanFintechPostDetailScreen({
             onPress={togglePostBookmark}
           />
           <SmallButton
-            disabled={communityDetailActionBusy}
+            disabled={communityDetailActionBusy || !reportReasonReady}
             label={
               communityDetailActionPending === "report-post" ? "신고중" : "신고"
             }
@@ -3026,7 +3083,7 @@ export function CleanFintechPostDetailScreen({
             onPress={updateCommunityPost}
           />
           <SmallButton
-            disabled={communityDetailActionBusy}
+            disabled={communityDetailActionBusy || !reportReasonReady}
             label={
               communityDetailActionPending === "report-post" ? "신고중" : "신고"
             }
@@ -3040,6 +3097,30 @@ export function CleanFintechPostDetailScreen({
             onPress={deleteCommunityPost}
           />
         </View>
+      </SectionCard>
+      <SectionCard>
+        <Text style={styles.sectionTitle}>커뮤니티 신고 사유</Text>
+        <Text style={styles.bodyText}>
+          신고에는 급여, 지출, 계좌, 연락처, 토큰 같은 민감 원문을 넣지 마세요.
+        </Text>
+        <PillRow
+          disabled={communityDetailActionBusy}
+          items={COMMUNITY_DETAIL_REPORT_REASON_OPTIONS.map(
+            (option) => option.label,
+          )}
+          onSelect={setSelectedReportReasonLabel}
+          selected={selectedReportReason.label}
+        />
+        <TextInput
+          accessibilityLabel="커뮤니티 신고 상세 사유"
+          editable={!communityDetailActionBusy}
+          multiline
+          onChangeText={setReportReasonText}
+          placeholder="민감 정보 없이 신고 사유를 입력하세요"
+          placeholderTextColor={theme.color.text.disabled}
+          style={[styles.input, styles.composeBody]}
+          value={reportReasonText}
+        />
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>댓글</Text>
@@ -3098,7 +3179,7 @@ export function CleanFintechPostDetailScreen({
                 onPress={() => updateCommunityComment(comment)}
               />
               <SmallButton
-                disabled={communityDetailActionBusy}
+                disabled={communityDetailActionBusy || !reportReasonReady}
                 label={
                   communityDetailActionPending === "report-comment"
                     ? "신고중"

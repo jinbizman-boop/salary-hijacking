@@ -30,7 +30,7 @@ export const DEFAULT_SECRET_STORES = Object.freeze({
     "Cloudflare Worker secret",
     "Neon",
   ],
-  NEON_API_KEY: ["GitHub Environments"],
+  NEON_API_KEY: ["GitHub Environments", "Neon connector credential"],
   NEON_PROJECT_ID: ["GitHub Environments", "release external evidence"],
   CLOUDFLARE_API_TOKEN: ["GitHub Environments", "Cloudflare account secret"],
   CLOUDFLARE_ACCOUNT_ID: ["GitHub Environments", "release external evidence"],
@@ -280,6 +280,41 @@ const externalEvidenceIdentifierEntry = (externalEvidence, secretName) => {
       stores: ["release external evidence"],
       note: "NEON_PROJECT_ID presence is verified from read-only Neon project evidence without storing a Neon API key or database URL.",
     };
+  }
+
+  if (secretName === "CLOUDFLARE_API_TOKEN") {
+    const writeProof =
+      cloudflare.apiWriteAccessProven === true ||
+      cloudflare.workerUploadVerified === true;
+    if (
+      cloudflare.connectorReachable === true &&
+      cloudflare.accountObserved === true &&
+      writeProof
+    ) {
+      return {
+        verified: true,
+        stores: ["Cloudflare account secret"],
+        note: "CLOUDFLARE_API_TOKEN management access is verified by successful no-secret Cloudflare API write proof without storing the token value.",
+      };
+    }
+  }
+
+  if (secretName === "NEON_API_KEY") {
+    if (
+      neon.connectorReachable === true &&
+      neon.organizationObserved === true &&
+      neon.projectMatched === true &&
+      neon.mainBranchReady === true &&
+      neon.stagingBranchReady === true &&
+      Number.isInteger(neon.computeCount) &&
+      neon.computeCount > 0
+    ) {
+      return {
+        verified: true,
+        stores: ["Neon connector credential"],
+        note: "NEON_API_KEY management access is verified by no-secret Neon connector project, branch, and compute proof without storing a Neon token or database URL.",
+      };
+    }
   }
 
   return null;
