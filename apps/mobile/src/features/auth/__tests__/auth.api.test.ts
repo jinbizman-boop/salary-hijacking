@@ -1,6 +1,9 @@
 import { MOBILE_ACCESS_TOKEN_KEY } from "../../../shared/storage/auth-token";
 import { createAuthApi } from "../api";
-import { AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX } from "../constants";
+import {
+  AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX,
+  AUTH_SAFE_ERROR_MESSAGE,
+} from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -70,6 +73,29 @@ describe("auth api", () => {
       }),
     ).toThrow();
     expect(calls).toHaveLength(0);
+  });
+
+  it("wraps unreadable response bodies in a safe auth API error", async () => {
+    const response = jsonResponse({ data: {} });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw auth stream internal detail");
+      },
+    });
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async () => undefined,
+      },
+    });
+
+    await expect(api.refresh()).rejects.toMatchObject({
+      code: "AUTH_INVALID_RESPONSE",
+      message: AUTH_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
   });
 
   it("logs in through the server auth API and stores only the access token", async () => {
