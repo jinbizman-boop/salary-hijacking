@@ -324,7 +324,7 @@ export default function MobileRootLayout(): unknown {
           retrying: false,
           toast: {
             kind: "error",
-            message: error.message,
+            message: safeBootstrapErrorMessage("auth-expired"),
           },
         }));
         return;
@@ -338,10 +338,7 @@ export default function MobileRootLayout(): unknown {
         retrying: false,
         toast: {
           kind: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "앱 시작 정보를 불러오지 못했습니다.",
+          message: safeBootstrapErrorMessage("offline-fallback"),
         },
       }));
     }
@@ -838,6 +835,14 @@ function statusMessage(status: RootStatus): string {
   if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
   if (status === "ERROR") return "서비스 점검 상태입니다.";
   return "서버 권위 앱 상태를 확인하고 있어요.";
+}
+
+function safeBootstrapErrorMessage(
+  reason: "auth-expired" | "offline-fallback",
+): string {
+  if (reason === "auth-expired")
+    return "세션이 만료되어 다시 로그인이 필요합니다.";
+  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했어요.";
 }
 
 function readMobileE2eBuildEnabled(): boolean {

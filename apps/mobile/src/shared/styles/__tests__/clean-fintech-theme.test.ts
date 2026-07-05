@@ -125,6 +125,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
   });
 
+  it("keeps root bootstrap failure toasts free from raw exception messages", () => {
+    const rootLayout = source("_layout.tsx");
+
+    expect(rootLayout).toContain("safeBootstrapErrorMessage");
+    expect(rootLayout).not.toContain("message: error.message");
+    expect(rootLayout).not.toContain("error instanceof Error");
+    expect(rootLayout).not.toContain("String(error");
+  });
+
   it("keeps the bottom navigation on the approved five-tab IA", () => {
     const tabs = source("(tabs)/_layout.tsx");
 
