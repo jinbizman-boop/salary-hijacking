@@ -226,6 +226,95 @@ describe("plan commitments api", () => {
     });
   });
 
+  it("rejects raw sensitive fixed expense and savings response titles before display", async () => {
+    const fixedExpenseApi = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        if (normalized.url.endsWith("/api/v1/fixed-expenses")) {
+          return jsonResponse({
+            data: {
+              items: [
+                {
+                  expenseId: "expense_sensitive_title",
+                  title: "card 1234-5678-9012-3456",
+                  category: "SUBSCRIPTION",
+                  amountMinor: 30_000,
+                  paymentDay: 20,
+                  status: "ACTIVE",
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          });
+        }
+
+        return jsonResponse({
+          data: {
+            items: [],
+            page: 1,
+            pageSize: 20,
+            total: 0,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(fixedExpenseApi.getCommitments()).rejects.toMatchObject({
+      code: "PLAN_INVALID_RESPONSE",
+    });
+
+    const savingsApi = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        if (normalized.url.endsWith("/api/v1/fixed-expenses")) {
+          return jsonResponse({
+            data: {
+              items: [],
+              page: 1,
+              pageSize: 20,
+              total: 0,
+            },
+          });
+        }
+
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                goalId: "goal_sensitive_title",
+                title: "owner user@example.com",
+                goalType: "CUSTOM",
+                targetAmountMinor: 1_000_000,
+                currentAmountMinor: 0,
+                fixedSaveAmountMinor: 100_000,
+                status: "ACTIVE",
+                serverAuthority: true,
+                financialRawAccountDataExposed: false,
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        });
+      },
+      platform: "ios",
+    });
+
+    await expect(savingsApi.getCommitments()).rejects.toMatchObject({
+      code: "PLAN_INVALID_RESPONSE",
+    });
+  });
+
   it("creates fixed expense and savings commitments through server-authoritative APIs", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({

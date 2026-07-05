@@ -119,6 +119,29 @@ function containsRawSensitivePlanText(value: string): boolean {
   );
 }
 
+function normalizeResponseTitle(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new PlanCommitmentsApiError(
+      0,
+      "PLAN_INVALID_RESPONSE",
+      PLAN_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const title = value.trim();
+  if (
+    title.length === 0 ||
+    title.length > 100 ||
+    containsRawSensitivePlanText(title)
+  ) {
+    throw new PlanCommitmentsApiError(
+      0,
+      "PLAN_INVALID_RESPONSE",
+      PLAN_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return title;
+}
+
 function normalizeCommitmentId(value: unknown): string {
   if (typeof value !== "string" || !isSafeCommitmentId(value)) {
     throw new PlanCommitmentsApiError(
@@ -220,8 +243,6 @@ function requireSafeMoney(
 function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
   if (
     !isRecord(value) ||
-    typeof value.title !== "string" ||
-    !value.title ||
     typeof value.status !== "string" ||
     value.serverAuthority !== true
   ) {
@@ -239,6 +260,7 @@ function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
     );
   }
 
+  const title = normalizeResponseTitle(value.title);
   const dueDay = isPositiveDay(value.paymentDay) ? value.paymentDay : null;
   return {
     amountMinor: requireSafeMoney(value.amountMinor),
@@ -253,15 +275,13 @@ function normalizeFixedExpense(value: unknown): PlanFixedExpenseCommitment {
       : 0,
     serverAuthority: true,
     status: value.status,
-    title: value.title,
+    title,
   };
 }
 
 function normalizeSavingsGoal(value: unknown): PlanSavingsGoalCommitment {
   if (
     !isRecord(value) ||
-    typeof value.title !== "string" ||
-    !value.title ||
     typeof value.status !== "string" ||
     value.serverAuthority !== true
   ) {
@@ -279,6 +299,7 @@ function normalizeSavingsGoal(value: unknown): PlanSavingsGoalCommitment {
     );
   }
 
+  const title = normalizeResponseTitle(value.title);
   return {
     currentAmountMinor: requireSafeMoney(value.currentAmountMinor),
     financialRawAccountDataExposed: false,
@@ -288,7 +309,7 @@ function normalizeSavingsGoal(value: unknown): PlanSavingsGoalCommitment {
     serverAuthority: true,
     status: value.status,
     targetAmountMinor: requireSafeMoney(value.targetAmountMinor),
-    title: value.title,
+    title,
   };
 }
 
