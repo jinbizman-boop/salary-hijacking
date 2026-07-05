@@ -1925,6 +1925,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps MY level progress visible copy free from internal privacy flags", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myLevelSource =
+      cleanScreens.match(
+        /export function CleanFintechMyLevelProgressScreen\(\): React\.ReactElement \{[\s\S]*?function LevelScreen\(\): React\.ReactElement/u,
+      )?.[0] ?? "";
+
+    expect(myLevelSource).toContain("서버 기준으로 최신 현황을 확인했어요.");
+    expect(myLevelSource).toContain("안전한 성장 루틴");
+    expect(myLevelSource).toContain("완료된 성장 루틴");
+    expect(myLevelSource).not.toContain("rawFinancialDataExposed=false");
+    expect(myLevelSource).not.toContain("serverAuthority=true");
+    expect(myLevelSource).not.toContain("adsFinancialTargetingUsed=false");
+    expect(myLevelSource).not.toContain(
+      "label={`${activeMissions.length} active`}",
+    );
+    expect(myLevelSource).not.toContain(
+      "label={`${completedMissions.length} completed`}",
+    );
+  });
+
   it("prevents duplicate MY level progress mission completion before the Growth API acknowledges it", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

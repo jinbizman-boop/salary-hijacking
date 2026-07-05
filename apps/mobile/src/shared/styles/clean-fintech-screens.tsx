@@ -4859,7 +4859,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
       setMyLevelActiveTasks(activeTasks.items);
       setMyLevelCompletedTasks(completedTasks.items);
       setToast(
-        `${dashboard.todaySuggestion} · serverAuthority=true · rawFinancialDataExposed=false`,
+        `${dashboard.todaySuggestion} · 서버 기준으로 최신 현황을 확인했어요.`,
       );
     } catch {
       setMyLevelDashboard(null);
@@ -4930,7 +4930,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
             ),
           );
           setToast(
-            `${mission.title} 서버 기록 완료 · +${result.expDelta} XP · rawFinancialDataExposed=false`,
+            `${mission.title} 서버 기록 완료 · +${result.expDelta} XP가 반영됐어요.`,
           );
         })
         .catch(() => {
@@ -4958,14 +4958,14 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         </View>
         <ProgressBar value={progress} />
         <Text style={styles.bodyText}>
-          {formatMoney(totalExp)} / 999 XP · serverAuthority=true
+          {formatMoney(totalExp)} / 999 XP · 서버 기준
         </Text>
       </SectionCard>
       <Toast message={toast} />
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>진행 중인 미션</Text>
-          <StatusPill label={`${activeMissions.length} active`} />
+          <StatusPill label={`진행 ${activeMissions.length}`} />
         </View>
         {activeMissions.map((mission) => {
           const missionPending = myLevelSubmittingMissionId === mission.id;
@@ -4974,7 +4974,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
               disabled={missionPending}
               icon={mission.icon}
               key={mission.id}
-              meta={`${mission.progressCount}/${mission.targetCount} · ${mission.xp} XP · rawFinancialDataExposed=false`}
+              meta={`${mission.progressCount}/${mission.targetCount} · ${mission.xp} XP · 안전한 성장 루틴`}
               onPress={() => completeMyLevelTask(mission)}
               title={mission.title}
             />
@@ -4984,14 +4984,14 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>완료한 미션</Text>
-          <StatusPill label={`${completedMissions.length} completed`} />
+          <StatusPill label={`완료 ${completedMissions.length}`} />
         </View>
         {completedMissions.map((mission) => (
           <ListRow
             disabled={myLevelSubmittingMissionId !== null}
             icon={mission.icon}
             key={mission.id}
-            meta={`${mission.xp} XP · adsFinancialTargetingUsed=false`}
+            meta={`${mission.xp} XP · 완료된 성장 루틴`}
             onPress={() => myLevelRouter.push("/level")}
             title={mission.title}
           />
