@@ -18,7 +18,7 @@ export function assertMobileLoginScreenCompleteness(): {
     "이메일",
     "비밀번호",
     "소셜 로그인",
-    "serverAuthority=true",
+    "서버 기준 로그인",
   ] as const;
 
   return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };

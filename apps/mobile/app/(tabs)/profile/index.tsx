@@ -26,7 +26,7 @@ export function assertMobileProfileIndexCompleteness(): {
     PROFILE_WITHDRAWAL_REQUEST_ENDPOINT,
     AUTH_LOGOUT_ENDPOINT,
     "로그아웃",
-    "adsFinancialTargeting=false",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };

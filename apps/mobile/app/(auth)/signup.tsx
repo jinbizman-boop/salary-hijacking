@@ -20,10 +20,10 @@ export function assertMobileSignupScreenCompleteness(): {
     "약관 동의",
     "민감 정보 보호",
     "/api/v1/auth/register",
-    "serverAuthority=true",
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "adsFinancialTargeting=false",
+    "서버 기준 회원가입",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

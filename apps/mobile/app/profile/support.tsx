@@ -15,9 +15,9 @@ export function assertMobileProfileSupportCompleteness(): Readonly<{
     "Salary Hijacking Clean Fintech v1",
     "support_ticket_entry",
     "server_first_support_ticket",
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "rawPushToken=false",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "푸시 토큰 원문 미노출",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

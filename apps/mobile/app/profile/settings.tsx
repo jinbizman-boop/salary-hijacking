@@ -17,7 +17,7 @@ export function assertMobileProfileSettingsCompleteness(): Readonly<{
     "community_display_name",
     "level_title",
     "ads_financial_targeting=false",
-    "rawFinancialData=false",
+    "금융 원문 미노출",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

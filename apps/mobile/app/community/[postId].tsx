@@ -34,10 +34,10 @@ export function assertMobileCommunityPostCompleteness(): {
     "댓글",
     "공유",
     "익명 사용자",
-    "serverAuthority=true",
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "adsFinancialTargeting=false",
+    "서버 기준 게시글 확인",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

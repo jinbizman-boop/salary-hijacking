@@ -17,8 +17,8 @@ export function assertMobileNotificationsIndexCompleteness(): {
     "중요 알림",
     "루틴 알림",
     "unread_green_dot",
-    "rawPushToken=false",
-    "adsFinancialTargeting=false",
+    "푸시 토큰 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };

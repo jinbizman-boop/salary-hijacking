@@ -558,13 +558,13 @@ function renderToast(
 
 function renderRuntimeGuard(payload: RootPayload): unknown {
   const items = [
-    "serverAuthority=true",
+    "서버 기준 상태 확인",
     `maintenance=${payload.config.maintenanceMode}`,
     `push=${payload.push.consent}`,
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "rawPushToken=false",
-    "adsFinancialTargeting=false",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "푸시 토큰 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
     "strictPrivacy=true",
   ] as const;
   return h(

@@ -17,7 +17,7 @@ export function assertMobileAccountSettingsCompleteness(): Readonly<{
     "server_session_security",
     "notification_consent",
     "privacy_request",
-    "rawPushToken=false",
+    "푸시 토큰 원문 미노출",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

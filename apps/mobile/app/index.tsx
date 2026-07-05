@@ -20,11 +20,11 @@ export function assertMobileIndexCompleteness(): {
     "1.2초",
     "로그인",
     "급여 홈",
-    "serverAuthority=true",
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "rawPushToken=false",
-    "adsFinancialTargeting=false",
+    "서버 기준 상태 확인",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "푸시 토큰 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

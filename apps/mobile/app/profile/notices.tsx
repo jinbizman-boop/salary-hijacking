@@ -15,9 +15,9 @@ export function assertMobileProfileNoticesCompleteness(): Readonly<{
     "Salary Hijacking Clean Fintech v1",
     "profile_notices_entry",
     "server_profile_activity_feed",
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "adsFinancialTargeting=false",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

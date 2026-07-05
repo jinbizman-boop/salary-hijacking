@@ -34,7 +34,7 @@ export function assertMobileLevelIndexCompleteness(): {
     "mission_completion_toast",
     "xp_progress",
     "community_proof_ready",
-    "adsFinancialTargeting=false",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };

@@ -20,7 +20,7 @@ export function assertMobileCommunityIndexCompleteness(): Readonly<{
     "글쓰기",
     "#209252",
     "anonymous_community_boundary",
-    "adsFinancialTargeting=false",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 9, version: SCREEN_VERSION, checks };

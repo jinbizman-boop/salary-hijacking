@@ -23,8 +23,8 @@ export function assertMobileSalaryIndexCompleteness(): {
     "고정지출",
     "변동지출",
     "제휴/광고",
-    "serverAuthority=true",
-    "adsFinancialTargeting=false",
+    "서버 기준 급여 계산",
+    "금융 금액 광고 타겟팅 금지",
     "krw_integer_only_preview",
     "accessibility_numeric_input",
   ] as const;

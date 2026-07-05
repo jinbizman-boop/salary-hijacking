@@ -21,9 +21,9 @@ export function assertMobileReadingLevelCompleteness(): {
     "기타",
     "추천 도서",
     "내 역량/진행률",
-    "serverAuthority=true",
-    "rawFinancialData=false",
-    "adsFinancialTargeting=false",
+    "서버 기준 성장 기록",
+    "금융 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

@@ -16,8 +16,8 @@ export function assertMobileProfileCommunityCompleteness(): Readonly<{
     "profile_my_community_entry",
     "server_my_posts_feed",
     "server_my_comments_feed",
-    "rawFinancialData=false",
-    "adsFinancialTargeting=false",
+    "금융 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

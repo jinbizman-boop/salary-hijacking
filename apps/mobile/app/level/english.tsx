@@ -21,9 +21,9 @@ export function assertMobileEnglishLevelCompleteness(): {
     "일자별 문장 학습",
     "문장 학습",
     "말하기 연습",
-    "serverAuthority=true",
-    "rawFinancialData=false",
-    "adsFinancialTargeting=false",
+    "서버 기준 성장 기록",
+    "금융 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

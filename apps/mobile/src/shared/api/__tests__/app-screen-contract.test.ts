@@ -14,6 +14,13 @@ const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
+const INTERNAL_DIAGNOSTIC_MARKERS = [
+  "serverAuthority=true",
+  "rawFinancialData=false",
+  "rawPersonalData=false",
+  "rawPushToken=false",
+  "adsFinancialTargeting=false",
+] as const;
 
 function collectAppSourceFiles(directory: string): readonly string[] {
   const files: string[] = [];
@@ -49,6 +56,17 @@ describe("mobile app screen API and route contracts", () => {
       return Array.from(source.matchAll(INTERNAL_TABS_ROUTE)).map(
         (match) => `${relative(process.cwd(), path)} contains ${match[0]}`,
       );
+    });
+
+    expect(violations).toEqual([]);
+  });
+
+  it("keeps app route files free from internal diagnostic privacy markers", () => {
+    const violations = collectAppSourceFiles(APP_ROOT).flatMap((path) => {
+      const source = readFileSync(path, "utf8");
+      return INTERNAL_DIAGNOSTIC_MARKERS.filter((marker) =>
+        source.includes(marker),
+      ).map((marker) => `${relative(process.cwd(), path)} contains ${marker}`);
     });
 
     expect(violations).toEqual([]);

@@ -22,10 +22,10 @@ export function assertMobileResetPasswordScreenCompleteness(): {
     "Salary Hijacking Clean Fintech v1",
     "reset-password",
     "/api/v1/auth/password-reset/confirm",
-    "serverAuthority=true",
-    "rawFinancialData=false",
-    "rawPersonalData=false",
-    "adsFinancialTargeting=false",
+    "서버 기준 비밀번호 재설정",
+    "금융 원문 미노출",
+    "개인 원문 미노출",
+    "금융 금액 광고 타겟팅 금지",
   ] as const;
 
   return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };
