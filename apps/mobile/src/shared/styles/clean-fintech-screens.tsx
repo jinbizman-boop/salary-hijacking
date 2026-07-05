@@ -5806,20 +5806,20 @@ function NotificationsScreen(): React.ReactElement {
             }
           />
           <Text style={styles.listMeta}>
-            Quiet {serverNotificationPreferences.quietHoursStart ?? "--:--"}-
-            {serverNotificationPreferences.quietHoursEnd ?? "--:--"} · financial
-            targeting off
+            방해 금지 {serverNotificationPreferences.quietHoursStart ?? "--:--"}
+            -{serverNotificationPreferences.quietHoursEnd ?? "--:--"} · 금융
+            금액 기반 알림 타겟팅은 사용하지 않아요.
           </Text>
         </SectionCard>
       ) : null}
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>푸시 기기</Text>
-          <StatusPill label={`${activeNotificationDevices.length} active`} />
+          <StatusPill label={`${activeNotificationDevices.length}대 사용 중`} />
         </View>
         <Text style={styles.listMeta}>
           {primaryNotificationDevice
-            ? `${primaryNotificationDevice.platform} · ${primaryNotificationDevice.pushTokenPreview ?? "hashOnly"} · pushTokenHashOnly=${String(primaryNotificationDevice.pushTokenHashOnly)}`
+            ? `${primaryNotificationDevice.platform} · ${primaryNotificationDevice.pushTokenPreview ?? "해시만 보관"} · 푸시 토큰 원문 없이 해시 기준으로만 관리해요.`
             : "기기 등록 전에는 원문 푸시 토큰을 보관하지 않아요."}
         </Text>
         <View style={styles.notificationActions}>

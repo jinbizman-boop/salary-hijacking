@@ -1537,6 +1537,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setNotificationPreferencePending(true)");
     expect(cleanScreens).toContain("setNotificationPreferencePending(false)");
     expect(cleanScreens).toContain("disabled={notificationPreferencePending}");
+    expect(cleanScreens).toContain("방해 금지");
+    expect(cleanScreens).toContain("금융 금액");
+    expect(cleanScreens).toContain("기반 알림 타겟팅은 사용하지 않아요.");
+    expect(cleanScreens).not.toContain("financial\n            targeting off");
   });
 
   it("prevents duplicate notification preference saves before React state updates", () => {
@@ -1589,6 +1593,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "disabled={notificationDeviceActionPending !== null}",
     );
+    expect(cleanScreens).toContain("사용 중");
+    expect(cleanScreens).toContain(
+      "푸시 토큰 원문 없이 해시 기준으로만 관리해요.",
+    );
+    expect(cleanScreens).not.toContain("pushTokenHashOnly=");
   });
 
   it("prevents duplicate notification device registration and revocation before React state updates", () => {
