@@ -90,6 +90,25 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("clears root auth cache instead of using offline session fallback when refresh rejects a 401", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("RootAuthExpiredError");
+    expect(source).toContain("clearRootAuthenticatedSession");
+    expect(source).toContain(
+      "await SecureStoreRuntimeRef.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
+    );
+    expect(source).toContain(
+      "await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY)",
+    );
+    expect(source).toContain('status: isPublic ? "READY" : "AUTH_REQUIRED"');
+    expect(source).toContain("router.replace(AUTH_LOGIN_ROUTE as never)");
+    expect(source).toContain("error instanceof RootAuthExpiredError");
+    expect(source).not.toContain(
+      'const cachedStatus = cached.authenticated ? "OFFLINE" : "AUTH_REQUIRED"',
+    );
+  });
+
   it("keeps the root bootstrap gate copy tied to server-authoritative status checks", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

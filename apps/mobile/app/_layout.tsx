@@ -262,6 +262,13 @@ const fallbackPayload: RootPayload = Object.freeze({
   push: fallbackPush,
 });
 
+class RootAuthExpiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RootAuthExpiredError";
+  }
+}
+
 export default function MobileRootLayout(): unknown {
   const [fontsLoaded] = FontRuntimeRef.useFonts(FONT_ASSETS);
   const router = RouterRuntimeRef.useRouter();
@@ -309,6 +316,19 @@ export default function MobileRootLayout(): unknown {
         toast: { kind: "success", message: statusMessage(nextStatus) },
       }));
     } catch (error) {
+      if (error instanceof RootAuthExpiredError) {
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: { ...prev.payload, session: fallbackSession },
+          status: isPublic ? "READY" : "AUTH_REQUIRED",
+          retrying: false,
+          toast: {
+            kind: "error",
+            message: error.message,
+          },
+        }));
+        return;
+      }
       const cached = await readCachedSessionStatus();
       const cachedStatus = offlineStatusFromCachedSession(cached, isPublic);
       setState((prev: RootState) => ({
@@ -583,8 +603,14 @@ async function requestJsonWithAuthRefresh<T>(
       const retryResponse = await fetchJson(path, init);
       const retryParsed = await parseJsonResponse(retryResponse);
       if (retryResponse.ok) return retryParsed as T;
+      if (retryResponse.status === 401) {
+        await clearRootAuthenticatedSession();
+        throw new RootAuthExpiredError(errorMessage(retryParsed, 401));
+      }
       throw new Error(errorMessage(retryParsed, retryResponse.status));
     }
+    await clearRootAuthenticatedSession();
+    throw new RootAuthExpiredError(errorMessage(parsed, 401));
   }
 
   throw new Error(errorMessage(parsed, response.status));
@@ -625,10 +651,20 @@ async function refreshRootAccessToken(): Promise<boolean> {
       platform: rootAuthPlatform(),
       tokenStore: SecureStoreRuntimeRef,
     }).refresh();
-    await SecureStoreRuntimeRef.getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
-    return true;
+    const token = await SecureStoreRuntimeRef.getItemAsync(
+      MOBILE_ACCESS_TOKEN_KEY,
+    );
+    return Boolean(token?.trim());
   } catch {
     return false;
+  }
+}
+
+async function clearRootAuthenticatedSession(): Promise<void> {
+  try {
+    await SecureStoreRuntimeRef.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+  } finally {
+    await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY);
   }
 }
 
