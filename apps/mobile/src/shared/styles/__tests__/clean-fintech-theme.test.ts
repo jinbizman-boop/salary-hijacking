@@ -562,6 +562,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(planSource).not.toContain("adsFinancialTargetingUsed=false");
   });
 
+  it("keeps plan server-save status pill readable for users", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    expect(planSource).toContain('<StatusPill label="서버 저장" />');
+    expect(planSource).not.toContain('<StatusPill label="serverAuthority" />');
+  });
+
   it("disables plan commitment submit buttons until required drafts are valid", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -1600,6 +1613,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).not.toContain("pushTokenHashOnly=");
   });
 
+  it("keeps notification unread count status pill localized", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const notificationsSource =
+      cleanScreens.match(
+        /function NotificationsScreen\(\): React\.ReactElement \{[\s\S]*?function CommunityScreen/u,
+      )?.[0] ?? "";
+
+    expect(notificationsSource).toContain("label={`안 읽음 ${unreadCount}`}");
+    expect(notificationsSource).not.toContain(
+      "label={`${unreadCount} unread`}",
+    );
+  });
+
   it("prevents duplicate notification device registration and revocation before React state updates", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -2552,6 +2580,29 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "meta={formatNoticeDate(comment.createdAt)}",
     );
     expect(myCommunitySource).not.toContain("rawFinancialDataExposed=");
+  });
+
+  it("keeps MY community count status pills localized", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myCommunitySource =
+      cleanScreens.match(
+        /export function CleanFintechMyCommunityScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechPostDetailScreen/u,
+      )?.[0] ?? "";
+
+    expect(myCommunitySource).toContain(
+      "label={`게시글 ${myCommunityPosts.length}`}",
+    );
+    expect(myCommunitySource).toContain(
+      "label={`댓글 ${myCommunityComments.length}`}",
+    );
+    expect(myCommunitySource).not.toContain(
+      "label={`${myCommunityPosts.length} posts`}",
+    );
+    expect(myCommunitySource).not.toContain(
+      "label={`${myCommunityComments.length} comments`}",
+    );
   });
 
   it("locks MY community management close while delete is pending", () => {

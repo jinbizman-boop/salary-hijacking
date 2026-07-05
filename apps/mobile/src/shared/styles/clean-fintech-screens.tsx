@@ -2114,7 +2114,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>내 게시글</Text>
-          <StatusPill label={`${myCommunityPosts.length} posts`} />
+          <StatusPill label={`게시글 ${myCommunityPosts.length}`} />
         </View>
         {myCommunityPosts.map((post) => (
           <View key={post.id} style={styles.detailCardRow}>
@@ -2139,7 +2139,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>내 댓글</Text>
-          <StatusPill label={`${myCommunityComments.length} comments`} />
+          <StatusPill label={`댓글 ${myCommunityComments.length}`} />
         </View>
         {myCommunityComments.map((comment) => (
           <View key={comment.id} style={styles.detailCardRow}>
@@ -4565,7 +4565,7 @@ function PlanScreen(): React.ReactElement {
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>급여 계획 저장</Text>
-          <StatusPill label="serverAuthority" />
+          <StatusPill label="서버 저장" />
         </View>
         <Text style={styles.bodyText}>
           급여, 고정지출, 고정저축 입력값을 서버 기준 계획으로 저장하고 응답
@@ -5850,7 +5850,7 @@ function NotificationsScreen(): React.ReactElement {
       <SectionCard>
         <View style={styles.between}>
           <Text style={styles.sectionTitle}>중요 알림</Text>
-          <StatusPill label={`${unreadCount} unread`} />
+          <StatusPill label={`안 읽음 ${unreadCount}`} />
         </View>
         <SmallButton
           disabled={notificationReadAllPending || unreadCount <= 0}
