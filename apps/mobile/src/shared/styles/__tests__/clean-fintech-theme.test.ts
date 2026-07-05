@@ -1863,6 +1863,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(adSlotSource).toContain('accessibilityRole="link"');
     expect(adSlotSource).toContain("WebBrowser.openBrowserAsync");
     expect(adSlotSource).toContain("SALARY_HIJACKING_PARTNER_BENEFITS_URL");
+    expect(adSlotSource).toContain("문맥형 광고로만 보여드려요.");
+    expect(adSlotSource).toContain("금융 금액으로 맞춤 타겟팅하지 않아요.");
+    expect(adSlotSource).not.toContain("contextual-only");
     expect(adSlotSource).not.toContain("salaryAmount");
     expect(adSlotSource).not.toContain("expenseAmount");
     expect(adSlotSource).not.toContain("savingsAmount");

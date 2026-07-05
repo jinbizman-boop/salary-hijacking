@@ -7172,7 +7172,7 @@ function AdSlot(): React.ReactElement {
         생활비를 아끼는 혜택만 가볍게 보여드려요
       </Text>
       <Text style={styles.adText}>
-        contextual-only · 금융 금액 기반 타겟팅 금지
+        문맥형 광고로만 보여드려요. 금융 금액으로 맞춤 타겟팅하지 않아요.
       </Text>
     </Pressable>
   );
