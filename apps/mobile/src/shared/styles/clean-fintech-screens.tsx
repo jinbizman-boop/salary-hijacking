@@ -1817,13 +1817,7 @@ export function CleanFintechProfileNoticesScreen(): React.ReactElement {
             <ListRow
               icon={activity.kind === "SECURITY" ? "🔐" : appIcons.notification}
               key={activity.id}
-              meta={`${activity.description} · ${formatNoticeDate(
-                activity.createdAt,
-              )} · rawFinancialDataExposed=${String(
-                activity.rawFinancialDataExposed,
-              )} · adsFinancialTargetingUsed=${String(
-                activity.adsFinancialTargetingUsed,
-              )}`}
+              meta={`${activity.description} · ${formatNoticeDate(activity.createdAt)}`}
               onPress={() => openProfileActivity(activity)}
               title={activity.title}
             />

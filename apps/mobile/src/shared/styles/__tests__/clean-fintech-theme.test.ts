@@ -2070,6 +2070,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps MY notices visible activity rows free from internal privacy flags", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const profileNoticesSource =
+      cleanScreens.match(
+        /export function CleanFintechProfileNoticesScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechSupportScreen/u,
+      )?.[0] ?? "";
+
+    expect(profileNoticesSource).toContain(
+      "서버 공지사항을 개인정보 보호 기준으로 동기화했어요.",
+    );
+    expect(profileNoticesSource).toContain(
+      "meta={`${activity.description} · ${formatNoticeDate(activity.createdAt)}`}",
+    );
+    expect(profileNoticesSource).not.toContain("rawFinancialDataExposed=");
+    expect(profileNoticesSource).not.toContain("adsFinancialTargetingUsed=");
+  });
+
   it("sanitizes MY profile activity community route ids before navigation", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
