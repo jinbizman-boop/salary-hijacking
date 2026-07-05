@@ -273,6 +273,29 @@ function normalizeResponseTitle(value: unknown): string {
   return title;
 }
 
+function normalizeNullableResponseText(
+  value: unknown,
+  maxLength: number,
+): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const text = value.trim();
+  if (text.length > maxLength || containsRawSensitiveText(text)) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return text;
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `budget-${Date.now().toString(36)}`
@@ -496,9 +519,8 @@ function normalizeVariableExpenseCreateResult(
     title: normalizeResponseTitle(data.title),
     spentAt: data.spentAt,
     paymentMethod: data.paymentMethod as VariableExpensePaymentMethod,
-    merchantName:
-      typeof data.merchantName === "string" ? data.merchantName : null,
-    memo: typeof data.memo === "string" ? data.memo : null,
+    merchantName: normalizeNullableResponseText(data.merchantName, 100),
+    memo: normalizeNullableResponseText(data.memo, 500),
     dailyBudgetId:
       typeof data.dailyBudgetId === "string" ? data.dailyBudgetId : null,
     source: data.source as VariableExpenseSource,

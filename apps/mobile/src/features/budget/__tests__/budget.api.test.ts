@@ -853,6 +853,84 @@ describe("budget api", () => {
     ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
   });
 
+  it("rejects variable expense response merchant and memo text with raw sensitive values", async () => {
+    const merchantApi = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher: async () =>
+        new Response(
+          JSON.stringify({
+            data: {
+              items: [
+                {
+                  expenseId: "vex_sensitive_merchant",
+                  amountMinor: 6500,
+                  category: "MEAL",
+                  title: "Lunch",
+                  spentAt: "2026-07-02T03:00:00.000Z",
+                  paymentMethod: "CARD",
+                  merchantName: "owner user@example.com",
+                  memo: null,
+                  dailyBudgetId: null,
+                  source: "MANUAL",
+                  status: "POSTED",
+                  netAmountMinor: 6500,
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                  adTargetingSeparated: true,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          }),
+          { status: 200 },
+        ),
+      platform: "android",
+    });
+    const memoApi = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher: async () =>
+        new Response(
+          JSON.stringify({
+            data: {
+              items: [
+                {
+                  expenseId: "vex_sensitive_memo",
+                  amountMinor: 6500,
+                  category: "MEAL",
+                  title: "Lunch",
+                  spentAt: "2026-07-02T03:00:00.000Z",
+                  paymentMethod: "CARD",
+                  merchantName: null,
+                  memo: "card 1234-5678-9012-3456",
+                  dailyBudgetId: null,
+                  source: "MANUAL",
+                  status: "POSTED",
+                  netAmountMinor: 6500,
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                  adTargetingSeparated: true,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          }),
+          { status: 200 },
+        ),
+      platform: "ios",
+    });
+
+    await expect(
+      merchantApi.listVariableExpenses({ page: 1, pageSize: 20 }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
+    await expect(
+      memoApi.listVariableExpenses({ page: 1, pageSize: 20 }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
+  });
+
   it("updates and deletes server-authoritative variable expenses without raw financial leakage", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
