@@ -21,6 +21,40 @@ describe("uploads api", () => {
     expect(source).not.toMatch(/[�]|\?붽|湲됱|怨꾩|移대|鍮꾨|二쇰|꾪솕|⑹튂/u);
   });
 
+  it("keeps upload validation and request failure messages readable in Korean", () => {
+    const source = fs.readFileSync(path.join(__dirname, "../api.ts"), "utf8");
+
+    for (const message of [
+      "업로드 API 주소가 올바르지 않습니다.",
+      "첨부파일 이름이 필요합니다.",
+      "민감한 정보가 포함된 파일명은 사용할 수 없습니다.",
+      "업로드 요청에 실패했습니다.",
+    ]) {
+      expect(source).toContain(message);
+    }
+    for (const englishMessage of [
+      "Invalid API URL",
+      "Uploads API requires HTTPS",
+      "is invalid",
+      "File extension is required",
+      "File extension does not match content type",
+      "Control characters are not allowed in file names",
+      "Raw file paths are not allowed",
+      "File name is required",
+      "Sensitive file names are not allowed",
+      "Unsupported community attachment type",
+      "Community attachment size is invalid",
+      "Unsupported variable expense receipt type",
+      "Variable expense receipt size is invalid",
+      "Unknown upload fields are not allowed",
+      "Invalid uploads response",
+      "Invalid uploads API path",
+      "Uploads request failed",
+    ]) {
+      expect(source).not.toContain(englishMessage);
+    }
+  });
+
   it("directly uploads community attachment bytes through the API v1 uploads boundary", async () => {
     const fetcher = jest
       .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()

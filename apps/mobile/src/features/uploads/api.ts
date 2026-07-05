@@ -49,10 +49,18 @@ function normalizeBaseUrl(value: string): string {
   try {
     url = new URL(normalized);
   } catch {
-    throw new UploadsApiError(0, "UPLOADS_INVALID_BASE_URL", "Invalid API URL");
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_INVALID_BASE_URL",
+      "업로드 API 주소가 올바르지 않습니다.",
+    );
   }
   if (url.username || url.password) {
-    throw new UploadsApiError(0, "UPLOADS_INVALID_BASE_URL", "Invalid API URL");
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_INVALID_BASE_URL",
+      "업로드 API 주소가 올바르지 않습니다.",
+    );
   }
   const localHost =
     url.hostname === "localhost" ||
@@ -62,7 +70,7 @@ function normalizeBaseUrl(value: string): string {
     throw new UploadsApiError(
       0,
       "UPLOADS_INSECURE_BASE_URL",
-      "Uploads API requires HTTPS",
+      "업로드 API는 HTTPS 또는 로컬 개발 주소만 사용할 수 있습니다.",
     );
   }
   return normalized;
@@ -71,7 +79,11 @@ function normalizeBaseUrl(value: string): string {
 function safeId(value: string, name: string): string {
   const normalized = value.trim();
   if (!/^[A-Za-z0-9_-]{3,160}$/u.test(normalized)) {
-    throw new UploadsApiError(0, "UPLOADS_INVALID_ID", `${name} is invalid`);
+    throw new UploadsApiError(
+      0,
+      "UPLOADS_INVALID_ID",
+      `${name} 식별자가 올바르지 않습니다.`,
+    );
   }
   return encodeURIComponent(normalized);
 }
@@ -161,7 +173,7 @@ function assertFileNameMatchesContentType(
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_EXTENSION_REQUIRED",
-      "File extension is required",
+      "첨부파일 확장자가 필요합니다.",
     );
   }
   const allowedExtensions = UPLOAD_FILE_EXTENSIONS_BY_CONTENT_TYPE[contentType];
@@ -169,7 +181,7 @@ function assertFileNameMatchesContentType(
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_EXTENSION_MISMATCH",
-      "File extension does not match content type",
+      "첨부파일 확장자가 콘텐츠 형식과 맞지 않습니다.",
     );
   }
 }
@@ -180,14 +192,14 @@ function safeFileName(value: string): string {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_NAME_CONTROL_FORBIDDEN",
-      "Control characters are not allowed in file names",
+      "첨부파일 이름에는 제어 문자를 사용할 수 없습니다.",
     );
   }
   if (/(?:file|content):\/\//iu.test(trimmed) || /[\\/]/u.test(trimmed)) {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_PATH_FORBIDDEN",
-      "Raw file paths are not allowed",
+      "첨부파일 이름에는 원본 파일 경로를 넣을 수 없습니다.",
     );
   }
   const normalized = trimmed.replace(/[\\/:*?"<>|]/gu, "_").slice(0, 120);
@@ -195,7 +207,7 @@ function safeFileName(value: string): string {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_NAME_REQUIRED",
-      "File name is required",
+      "첨부파일 이름이 필요합니다.",
     );
   }
   if (
@@ -205,7 +217,7 @@ function safeFileName(value: string): string {
     throw new UploadsApiError(
       0,
       "UPLOADS_SENSITIVE_FILE_NAME_FORBIDDEN",
-      "Sensitive file names are not allowed",
+      "민감한 정보가 포함된 파일명은 사용할 수 없습니다.",
     );
   }
   return normalized;
@@ -221,7 +233,7 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
     throw new UploadsApiError(
       0,
       "UPLOADS_CONTENT_TYPE_FORBIDDEN",
-      "Unsupported community attachment type",
+      "지원하지 않는 커뮤니티 첨부파일 형식입니다.",
     );
   }
   if (
@@ -233,7 +245,7 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
     throw new UploadsApiError(
       0,
       "UPLOADS_SIZE_FORBIDDEN",
-      "Community attachment size is invalid",
+      "커뮤니티 첨부파일 크기가 올바르지 않습니다.",
     );
   }
   const fileName = safeFileName(input.fileName);
@@ -253,7 +265,7 @@ function assertVariableExpenseReceipt(
     throw new UploadsApiError(
       0,
       "UPLOADS_CONTENT_TYPE_FORBIDDEN",
-      "Unsupported variable expense receipt type",
+      "지원하지 않는 변동지출 영수증 형식입니다.",
     );
   }
   if (
@@ -265,7 +277,7 @@ function assertVariableExpenseReceipt(
     throw new UploadsApiError(
       0,
       "UPLOADS_SIZE_FORBIDDEN",
-      "Variable expense receipt size is invalid",
+      "변동지출 영수증 크기가 올바르지 않습니다.",
     );
   }
   const fileName = safeFileName(input.fileName);
@@ -286,7 +298,7 @@ function assertDirectUploadFields(
     throw new UploadsApiError(
       0,
       "UPLOADS_UNKNOWN_FIELD_FORBIDDEN",
-      "Unknown upload fields are not allowed",
+      "업로드 요청에 허용되지 않은 필드가 포함되어 있습니다.",
     );
   }
 }
@@ -321,7 +333,7 @@ function invalidUploadResponse(): never {
   throw new UploadsApiError(
     0,
     "UPLOADS_INVALID_RESPONSE",
-    "Invalid uploads response",
+    "업로드 응답 형식이 올바르지 않습니다.",
   );
 }
 
@@ -444,7 +456,7 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       throw new UploadsApiError(
         0,
         "UPLOADS_API_BOUNDARY_VIOLATION",
-        "Invalid uploads API path",
+        "업로드 API 경로가 올바르지 않습니다.",
       );
     }
     const response = await fetcher(new Request(`${baseUrl}${path}`, init));
@@ -453,7 +465,7 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       throw new UploadsApiError(
         response.status,
         errorCode(parsed),
-        "Uploads request failed",
+        "업로드 요청에 실패했습니다.",
       );
     }
     return parsed;
