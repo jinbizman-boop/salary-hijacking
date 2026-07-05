@@ -60,6 +60,7 @@ const DEFAULT_FAVICON = "./assets/favicon.png";
 const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
+const PLACEHOLDER_EAS_PROJECT_ID = "00000000-0000-4000-8000-000000000000";
 const FORBIDDEN_ENV_KEYWORDS = [
   "SECRET",
   "PRIVATE",
@@ -107,10 +108,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
   );
   const updatesUrl = optionalHttpsUrlEnv("EXPO_UPDATES_URL");
   const owner = optionalPlainEnv("EXPO_OWNER");
-  const easProjectId = uuidEnv(
-    "EAS_PROJECT_ID",
-    "00000000-0000-4000-8000-000000000000",
-  );
+  const easProjectId = easProjectIdEnv("EAS_PROJECT_ID", environment);
   const buildNumber = numericStringEnv("IOS_BUILD_NUMBER", "1");
   const versionCode = positiveIntEnv("ANDROID_VERSION_CODE", 1);
   const appVersion = semverEnv("APP_VERSION", DEFAULT_VERSION);
@@ -543,14 +541,23 @@ function semverEnv(key: string, fallback: string): string {
     : fallback;
 }
 
-function uuidEnv(key: string, fallback: string): string {
+function easProjectIdEnv(key: string, environment: EnvironmentName): string {
   const raw = process.env?.[key]?.trim();
-  return raw &&
+  const valid =
+    raw &&
+    raw !== PLACEHOLDER_EAS_PROJECT_ID &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       raw,
     )
-    ? raw
-    : fallback;
+      ? raw
+      : "";
+  if (valid) return valid;
+  if (environment === "production") {
+    throw new Error(
+      "EAS_PROJECT_ID must be a real Expo project UUID for production builds.",
+    );
+  }
+  return PLACEHOLDER_EAS_PROJECT_ID;
 }
 
 function plainEnv(key: string, fallback: string): string {

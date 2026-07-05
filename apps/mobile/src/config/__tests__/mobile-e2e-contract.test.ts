@@ -1,3 +1,5 @@
+import appConfig from "../../../app.config";
+
 type FileSystemLike = Readonly<{
   existsSync: (path: string) => boolean;
   readFileSync: (path: string, encoding: "utf8") => string;
@@ -41,6 +43,15 @@ type PackageJson = Readonly<{
 const fs = jest.requireActual<FileSystemLike>("node:fs");
 const path = jest.requireActual<PathLike>("node:path");
 const mobileRoot = path.resolve(__dirname, "../../..");
+const productionApiBaseUrl = "https://api.salaryhijacking.com";
+const placeholderEasProjectId = "00000000-0000-4000-8000-000000000000";
+const validEasProjectId = "11111111-1111-4111-8111-111111111111";
+const originalEnv = process.env;
+
+afterEach(() => {
+  process.env = { ...originalEnv };
+  jest.resetModules();
+});
 
 function readRequiredText(relativePath: string): string {
   const absolutePath = path.join(mobileRoot, relativePath);
@@ -142,5 +153,33 @@ describe("mobile Detox E2E contract", () => {
     for (const permission of blockedPermissions) {
       expect(appConfig).toContain(`"${permission}"`);
     }
+  });
+
+  it("fails production app config when the EAS project id is missing or still the placeholder", () => {
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: "",
+      EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
+    };
+    expect(() => appConfig({ config: {} })).toThrow(/EAS_PROJECT_ID/u);
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: placeholderEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
+    };
+    expect(() => appConfig({ config: {} })).toThrow(/EAS_PROJECT_ID/u);
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: validEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
+    };
+    expect(appConfig({ config: {} }).extra.eas).toEqual({
+      projectId: validEasProjectId,
+    });
   });
 });
