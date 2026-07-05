@@ -1,4 +1,5 @@
 import { createNotificationsApi } from "../api";
+import { NOTIFICATIONS_SAFE_ERROR_MESSAGE } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -27,6 +28,15 @@ const serverNotification = {
 };
 
 describe("notifications api", () => {
+  it("keeps the safe fallback error message readable in Korean", () => {
+    expect(NOTIFICATIONS_SAFE_ERROR_MESSAGE).toBe(
+      "알림을 잠시 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    );
+    expect(NOTIFICATIONS_SAFE_ERROR_MESSAGE).not.toMatch(
+      /Notifications|temporarily unavailable|try again later/u,
+    );
+  });
+
   it("lists server notifications with privacy-safe mobile headers", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({

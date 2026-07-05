@@ -1,4 +1,5 @@
 import { createGrowthApi } from "../api";
+import { GROWTH_SAFE_ERROR_MESSAGE } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -43,6 +44,15 @@ const task = {
 };
 
 describe("growth api", () => {
+  it("keeps the safe fallback error message readable in Korean", () => {
+    expect(GROWTH_SAFE_ERROR_MESSAGE).toBe(
+      "LV UP 데이터를 잠시 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    );
+    expect(GROWTH_SAFE_ERROR_MESSAGE).not.toMatch(
+      /Growth data|temporarily unavailable|try again later/u,
+    );
+  });
+
   it("loads the server-authoritative dashboard and active tasks with privacy headers", async () => {
     const calls: Request[] = [];
     const api = createGrowthApi({

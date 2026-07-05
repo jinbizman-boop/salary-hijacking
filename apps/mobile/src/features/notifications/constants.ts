@@ -6,4 +6,4 @@ export const NOTIFICATIONS_PREFERENCES_PATH =
   "/api/v1/notifications/preferences";
 export const NOTIFICATIONS_DEVICES_PATH = "/api/v1/notifications/devices";
 export const NOTIFICATIONS_SAFE_ERROR_MESSAGE =
-  "Notifications are temporarily unavailable. Please try again later.";
+  "알림을 잠시 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.";
