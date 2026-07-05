@@ -7,6 +7,7 @@ import {
   redactBudgetError,
   sanitizeKrwIntegerInput,
 } from "../utils";
+import { BUDGET_SAFE_ERROR_MESSAGE } from "../constants";
 
 describe("budget utils", () => {
   it("calculates remaining and overspent amounts with a capped usage rate", () => {
@@ -93,6 +94,20 @@ describe("budget utils", () => {
     expect(redacted).not.toContain("secret-token");
     expect(redacted).toBe(
       "예산 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    );
+  });
+
+  it("does not trust raw Error.message strings as user-facing budget copy", () => {
+    const statusDerivedCopy = redactBudgetError({ status: 401 });
+
+    expect(redactBudgetError(new Error(statusDerivedCopy))).toBe(
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+    expect(redactBudgetError({ message: statusDerivedCopy })).toBe(
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+    expect(redactBudgetError({ status: 401, message: statusDerivedCopy })).toBe(
+      statusDerivedCopy,
     );
   });
 });

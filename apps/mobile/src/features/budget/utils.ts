@@ -139,7 +139,7 @@ export function redactBudgetError(error: unknown): string {
   if (status === 401) return "로그인이 필요합니다.";
   if (status === 409) return "예산 상태가 변경되었습니다. 새로고침해 주세요.";
 
-  const message = error instanceof Error ? error.message : String(error ?? "");
+  const message = typeof error === "string" ? error : "";
   if (
     !message ||
     SENSITIVE_ERROR_PATTERN.test(message) ||
