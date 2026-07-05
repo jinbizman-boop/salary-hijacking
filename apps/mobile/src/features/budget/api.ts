@@ -250,6 +250,29 @@ function normalizeResponseEntityId(value: unknown): string {
   return value.trim();
 }
 
+function normalizeResponseTitle(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const title = value.trim();
+  if (
+    title.length === 0 ||
+    title.length > 100 ||
+    containsRawSensitiveText(title)
+  ) {
+    throw new BudgetApiError(
+      0,
+      "BUDGET_INVALID_RESPONSE",
+      BUDGET_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return title;
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `budget-${Date.now().toString(36)}`
@@ -450,7 +473,6 @@ function normalizeVariableExpenseCreateResult(
     !isNonNegativeInteger(data.amountMinor) ||
     data.amountMinor < 1 ||
     typeof data.category !== "string" ||
-    typeof data.title !== "string" ||
     !isIsoTimestamp(data.spentAt) ||
     typeof data.paymentMethod !== "string" ||
     typeof data.source !== "string" ||
@@ -471,7 +493,7 @@ function normalizeVariableExpenseCreateResult(
     expenseId,
     amountMinor: data.amountMinor,
     category: data.category as VariableExpenseCategory,
-    title: data.title,
+    title: normalizeResponseTitle(data.title),
     spentAt: data.spentAt,
     paymentMethod: data.paymentMethod as VariableExpensePaymentMethod,
     merchantName:

@@ -808,6 +808,51 @@ describe("budget api", () => {
     ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
   });
 
+  it("rejects variable expense response titles with raw sensitive values", async () => {
+    const fetcher = jest
+      .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            data: {
+              items: [
+                {
+                  expenseId: "vex_sensitive_title",
+                  amountMinor: 6500,
+                  category: "MEAL",
+                  title: "card 1234-5678-9012-3456",
+                  spentAt: "2026-07-02T03:00:00.000Z",
+                  paymentMethod: "CARD",
+                  merchantName: null,
+                  memo: null,
+                  dailyBudgetId: null,
+                  source: "MANUAL",
+                  status: "POSTED",
+                  netAmountMinor: 6500,
+                  serverAuthority: true,
+                  financialRawDataExposed: false,
+                  adTargetingSeparated: true,
+                },
+              ],
+              page: 1,
+              pageSize: 20,
+              total: 1,
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.listVariableExpenses({ page: 1, pageSize: 20 }),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_RESPONSE" });
+  });
+
   it("updates and deletes server-authoritative variable expenses without raw financial leakage", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
