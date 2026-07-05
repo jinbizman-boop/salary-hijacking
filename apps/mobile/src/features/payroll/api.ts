@@ -115,6 +115,28 @@ function defaultCorrelationId(): string {
   );
 }
 
+function safeIdempotencyPart(value: string): string {
+  const normalized = value
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^-|-$/gu, "")
+    .slice(0, 80);
+  return normalized || "request";
+}
+
+function payrollIdempotencyKey(correlationId: string, method: string): string {
+  const entropy =
+    globalThis.crypto?.randomUUID?.().replace(/-/gu, "") ??
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return [
+    "mobile-payroll",
+    safeIdempotencyPart(correlationId),
+    safeIdempotencyPart(method.toLowerCase()),
+    entropy,
+  ].join("-");
+}
+
 function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
@@ -448,14 +470,22 @@ export function createPayrollApi(options: PayrollApiOptions): PayrollApiClient {
     path: string,
     init: RequestInit = {},
   ): Promise<unknown> {
+    const correlationId = createCorrelationId();
+    const method = (init.method ?? "GET").toUpperCase();
     const headers = new Headers({
       accept: "application/json",
       "x-client-platform": options.platform,
-      "x-correlation-id": createCorrelationId(),
+      "x-correlation-id": correlationId,
       ...PRIVACY_HEADERS,
     });
     if (init.body !== undefined)
       headers.set("content-type", "application/json");
+    if (method !== "GET") {
+      headers.set(
+        "x-idempotency-key",
+        payrollIdempotencyKey(correlationId, method),
+      );
+    }
 
     let response: Response;
     try {
@@ -464,6 +494,7 @@ export function createPayrollApi(options: PayrollApiOptions): PayrollApiClient {
           ...init,
           headers,
           credentials: "include",
+          method,
         }),
       );
     } catch {

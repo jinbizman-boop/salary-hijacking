@@ -92,6 +92,7 @@ describe("payroll api", () => {
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
     );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toBeNull();
     expect(JSON.stringify(result)).not.toContain("userId");
   });
 
@@ -168,6 +169,7 @@ describe("payroll api", () => {
     const calls: Request[] = [];
     const api = createPayrollApi({
       baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "payroll-recalculate-test",
       fetcher: async (request) => {
         const normalized =
           request instanceof Request ? request : new Request(request);
@@ -231,6 +233,9 @@ describe("payroll api", () => {
       "https://api.salaryhijacking.com/api/v1/payroll/recalculate",
     );
     expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-payroll-payroll-recalculate-test-post-[a-z0-9]+$/u,
+    );
   });
 
   it("saves a payroll plan through create or update without exposing raw data", async () => {
@@ -329,6 +334,11 @@ describe("payroll api", () => {
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
     );
+    for (const call of calls) {
+      expect(call.headers.get("x-idempotency-key")).toMatch(
+        /^mobile-payroll-payroll-save-test-(post|patch)-[a-z0-9]+$/u,
+      );
+    }
     expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
       payrollAmountMinor: 2_700_000,
       payrollCycle: "MONTHLY",
