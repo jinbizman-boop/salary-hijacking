@@ -47,6 +47,35 @@ describe("community integration", () => {
     });
   });
 
+  it("wraps unreadable response bodies in a safe community API error", async () => {
+    const unreadableResponse = new Response(
+      JSON.stringify({
+        data: { posts: [] },
+        meta: { requestId: "req_1" },
+      }),
+      { status: 200, headers: { "content-type": "application/json" } },
+    );
+    Object.defineProperty(unreadableResponse, "text", {
+      value: async () => {
+        throw new Error("raw community stream token=secret_internal_detail");
+      },
+    });
+    const unreadableApi = createCommunityApi({
+      baseUrl: "https://api.example.test",
+      fetcher: jest.fn().mockResolvedValue(unreadableResponse),
+      platform: "android",
+    });
+    const request = unreadableApi.request("/api/v1/community/posts");
+
+    await expect(request).rejects.toMatchObject({
+      code: "COMMUNITY_INVALID_RESPONSE",
+      status: 200,
+    });
+    await expect(request).rejects.not.toThrow(
+      "raw community stream token=secret_internal_detail",
+    );
+  });
+
   it("previews locally, then publishes through a privacy-safe fetch request", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()

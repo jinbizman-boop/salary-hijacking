@@ -173,7 +173,16 @@ export function createCommunityApi(
       }
 
       let parsed: unknown = {};
-      const text = await response.text();
+      let text: string;
+      try {
+        text = await response.text();
+      } catch {
+        throw new CommunityApiError(
+          response.status,
+          "COMMUNITY_INVALID_RESPONSE",
+          redactCommunityError({ status: response.status }),
+        );
+      }
       if (text) {
         try {
           parsed = JSON.parse(text) as unknown;
