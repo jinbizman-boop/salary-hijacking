@@ -264,6 +264,9 @@ describe("profile api", () => {
     expect(calls[0]?.headers.get("x-correlation-id")).toBe(
       "profile-update-correlation-1",
     );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-profile-profile-update-correlation-1-patch-[A-Za-z0-9_-]{8,160}$/u,
+    );
     const body = JSON.parse(await calls[0]!.clone().text()) as Record<
       string,
       unknown

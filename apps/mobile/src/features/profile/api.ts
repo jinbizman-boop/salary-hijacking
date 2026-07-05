@@ -141,6 +141,28 @@ function defaultCorrelationId(): string {
   );
 }
 
+function safeIdempotencyPart(value: string): string {
+  const normalized = value
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^-|-$/gu, "")
+    .slice(0, 80);
+  return normalized || "request";
+}
+
+function profileIdempotencyKey(correlationId: string, method: string): string {
+  const entropy =
+    globalThis.crypto?.randomUUID?.().replace(/-/gu, "") ??
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return [
+    "mobile-profile",
+    safeIdempotencyPart(correlationId),
+    safeIdempotencyPart(method.toLowerCase()),
+    entropy,
+  ].join("-");
+}
+
 function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
@@ -769,12 +791,20 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     path: string,
     init: RequestInit = {},
   ): Promise<ProfileSnapshot> {
+    const method = init.method ?? "GET";
+    const correlationId = createCorrelationId();
     const headers = new Headers({
       accept: "application/json",
       "x-client-platform": options.platform,
-      "x-correlation-id": createCorrelationId(),
+      "x-correlation-id": correlationId,
       ...PRIVACY_HEADERS,
     });
+    if (method.toUpperCase() !== "GET") {
+      headers.set(
+        "x-idempotency-key",
+        profileIdempotencyKey(correlationId, method),
+      );
+    }
     if (init.body !== undefined) {
       headers.set("content-type", "application/json");
     }
@@ -811,13 +841,21 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     path: string,
     init: RequestInit,
   ): Promise<ProfileSupportTicket> {
+    const method = init.method ?? "POST";
+    const correlationId = createCorrelationId();
     const headers = new Headers({
       accept: "application/json",
       "x-client-platform": options.platform,
-      "x-correlation-id": createCorrelationId(),
+      "x-correlation-id": correlationId,
       ...PRIVACY_HEADERS,
     });
     headers.set("content-type", "application/json");
+    if (method.toUpperCase() !== "GET") {
+      headers.set(
+        "x-idempotency-key",
+        profileIdempotencyKey(correlationId, method),
+      );
+    }
 
     let response: Response;
     try {
@@ -886,11 +924,13 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     accountRequest: ProfileAccountSettingsRequest,
   ): Promise<ProfileAccountSettings> {
     const body = accountSettingsPayload(accountRequest);
+    const correlationId = createCorrelationId();
     const headers = new Headers({
       accept: "application/json",
       "content-type": "application/json",
       "x-client-platform": options.platform,
-      "x-correlation-id": createCorrelationId(),
+      "x-correlation-id": correlationId,
+      "x-idempotency-key": profileIdempotencyKey(correlationId, "PATCH"),
       ...PRIVACY_HEADERS,
     });
 
