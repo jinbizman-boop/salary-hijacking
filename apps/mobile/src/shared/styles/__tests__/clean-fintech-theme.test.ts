@@ -1016,7 +1016,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(verifyRoute).toContain("resendEmailVerification");
     expect(verifyRoute).toContain("인증 메일 다시 보내기");
     expect(verifyRoute).toContain("메일 주소");
-    expect(verifyRoute).toContain("rawPersonalData=false");
+    expect(verifyRoute).toContain(
+      "개인정보 원문 없이 서버에서 인증 상태를 확인해요.",
+    );
+    expect(verifyRoute).not.toContain("rawPersonalData=false");
     expect(verifyRoute).not.toContain("?대찓");
     expect(verifyRoute).not.toContain("濡쒓렇");
   });
@@ -2357,8 +2360,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('profileRouter.push("/profile/support")');
     expect(cleanScreens).toContain("support@salaryhijacking.com");
     expect(cleanScreens).toContain("민감한 금융 원문은 문의에 적지 마세요.");
-    expect(cleanScreens).toContain("rawFinancialData=false");
-    expect(cleanScreens).toContain("rawPersonalData=false");
+    expect(cleanScreens).toContain("급여, 지출, 계좌,");
+    expect(cleanScreens).toContain("카드,");
+    expect(cleanScreens).toContain(
+      "토큰 같은 민감 정보는 제외하고 접수합니다.",
+    );
+    expect(cleanScreens).not.toContain(
+      "rawFinancialData=false ·\n              rawPersonalData=false",
+    );
     expect(cleanScreens).toContain("supportRouter");
     expect(cleanScreens).toContain("supportTicketSubmitInFlightRef");
     expect(cleanScreens).toContain('setSupportCategory("ACCOUNT")');

@@ -1962,8 +1962,8 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           <SectionCard>
             <Text style={styles.sectionTitle}>개인정보 보호 기준</Text>
             <Text style={styles.bodyText}>
-              민감한 금융 원문은 문의에 적지 마세요. rawFinancialData=false ·
-              rawPersonalData=false · rawPushToken=false 기준으로만 접수합니다.
+              민감한 금융 원문은 문의에 적지 마세요. 급여, 지출, 계좌, 카드,
+              토큰 같은 민감 정보는 제외하고 접수합니다.
             </Text>
             <Text style={styles.listMeta}>support@salaryhijacking.com</Text>
           </SectionCard>
