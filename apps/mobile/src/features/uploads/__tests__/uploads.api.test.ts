@@ -121,6 +121,50 @@ describe("uploads api", () => {
     );
   });
 
+  it("wraps unreadable response bodies in a safe uploads API error", async () => {
+    const response = jsonResponse(
+      {
+        attachmentId: "att_community_1",
+        fileName: "proof.png",
+        contentType: "image/png",
+        sizeBytes: 4,
+        scanStatus: "PENDING",
+        status: "UPLOADED",
+      },
+      201,
+    );
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw upload stream internal detail");
+      },
+    });
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes: new Uint8Array([1, 2, 3, 4]).buffer,
+        contentType: "image/png",
+        fileName: "proof.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_INVALID_RESPONSE",
+      status: 201,
+    });
+    await expect(
+      api.directUploadCommunityAttachment({
+        bytes: new Uint8Array([1, 2, 3, 4]).buffer,
+        contentType: "image/png",
+        fileName: "proof.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.not.toThrow("raw upload stream internal detail");
+  });
+
   it("blocks sensitive Korean, identifier, and token-like upload file names before network access", async () => {
     const fetcher = jest.fn<
       ReturnType<typeof fetch>,

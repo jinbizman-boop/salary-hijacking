@@ -400,7 +400,16 @@ function attachmentIdFromAttachResponse(
 }
 
 async function parseJson(response: Response): Promise<unknown> {
-  const text = await response.text();
+  let text: string;
+  try {
+    text = await response.text();
+  } catch {
+    throw new UploadsApiError(
+      response.status,
+      "UPLOADS_INVALID_RESPONSE",
+      "?낅줈???묐떟 ?뺤떇???щ컮瑜댁? ?딆뒿?덈떎.",
+    );
+  }
   if (!text) return {};
   try {
     return JSON.parse(text) as unknown;
