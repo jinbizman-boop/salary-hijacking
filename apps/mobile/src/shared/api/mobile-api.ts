@@ -159,6 +159,13 @@ function normalizeMobileFactoryBaseUrl(value: string): string {
     if (url.username || url.password) {
       throw new Error("MOBILE_API_INVALID_BASE_URL");
     }
+    const localHost =
+      url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "10.0.2.2";
+    if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+      throw new Error("MOBILE_API_INVALID_BASE_URL");
+    }
     return normalized;
   } catch {
     throw new Error("MOBILE_API_INVALID_BASE_URL");
