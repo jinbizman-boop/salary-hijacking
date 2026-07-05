@@ -217,8 +217,16 @@ function dbCategoryFromApi(value: string): string {
   );
 }
 
-function apiStatusFromDb(value: unknown): string {
+function apiStatusFromDb(value: unknown, row?: DbRow): string {
   const status = String(value ?? "ACTIVE").toUpperCase();
+  if (
+    status === "CANCELLED" &&
+    row &&
+    toNumber(row.refund_amount) > 0 &&
+    toNumber(row.refund_amount) >= toNumber(row.amount)
+  ) {
+    return "REFUNDED";
+  }
   return (
     apiStatusByDbStatus[status as keyof typeof apiStatusByDbStatus] ?? "POSTED"
   );
@@ -231,12 +239,12 @@ function dbStatusFromApi(value: string): string {
 }
 
 function rowToExpense(row: DbRow, extra: JsonRecord = {}): JsonRecord {
-  const status = apiStatusFromDb(row.status);
   const amountMinor = toNumber(row.amount);
   const refundAmountMinor = Math.min(
     amountMinor,
     Math.max(0, toNumber(row.refund_amount)),
   );
+  const status = apiStatusFromDb(row.status, row);
   const title =
     toText(row.merchant_name) ??
     toText(row.memo) ??

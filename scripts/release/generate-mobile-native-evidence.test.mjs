@@ -224,6 +224,7 @@ test("preserves existing no-secret mobile native evidence when local proof is ab
           productionArtifactType: "aab",
           nativeE2eVerified: false,
           nativeE2eConfiguration: "android.emu.debug",
+          note: "Tracked Android release evidence note is preserved without local proof.",
         },
         ios: {
           productionBuildVerified: false,
@@ -248,6 +249,10 @@ test("preserves existing no-secret mobile native evidence when local proof is ab
 
   assert.equal(evidence.android.productionBuildVerified, true);
   assert.equal(evidence.android.nativeE2eVerified, false);
+  assert.equal(
+    evidence.android.note,
+    "Tracked Android release evidence note is preserved without local proof.",
+  );
   assert.equal(evidence.ios.productionBuildVerified, false);
 });
 

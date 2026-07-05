@@ -341,7 +341,7 @@ export const buildMobileNativeEvidence = ({
       "android.emu.debug",
     ),
     note: noteFrom(
-      proofSource === "local" ? proofAndroid : {},
+      proofSource === "none" ? {} : proofAndroid,
       "note",
       androidNoteFallback,
     ),

@@ -204,4 +204,63 @@ describe("Neon variable expense repository", () => {
     expect(calls[1]?.params).toContain("mobile-variable-refund-contract-1");
     expect(JSON.stringify(refunded)).not.toContain(userId);
   });
+
+  it("returns full refunds as refunded instead of voided for mobile expense state", async () => {
+    const repository = createNeonVariableExpensesRepository({
+      query: async (_sqlText, _params, options) => {
+        if (options.operationName.endsWith(".findByIdempotency")) {
+          return { rows: [], rowCount: 0 };
+        }
+        if (options.operationName.endsWith(".refund")) {
+          return {
+            rows: [
+              {
+                variable_expense_id: expenseId,
+                daily_budget_id: dailyBudgetId,
+                spent_at: "2026-07-02T03:00:00.000Z",
+                category: "CAFE",
+                merchant_name: "Local cafe",
+                memo: "mobile quick add",
+                amount: "5000",
+                refund_amount: "5000",
+                status: "CANCELLED",
+                idempotency_key: "mobile-variable-expense-contract-1",
+                last_refund_idempotency_key:
+                  "mobile-variable-refund-contract-2",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:02:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const refunded = await repository.refund(
+      expenseId,
+      {
+        refundAmountMinor: 5000,
+        refundedAt: "2026-07-02T03:02:00.000Z",
+        reason: "full merchant refund",
+        idempotencyKey: "mobile-variable-refund-contract-2",
+      },
+      createRuntime(),
+    );
+
+    expect(refunded).toMatchObject({
+      expense: {
+        expenseId,
+        amountMinor: 5000,
+        refundAmountMinor: 5000,
+        netAmountMinor: 0,
+        status: "REFUNDED",
+        serverAuthority: true,
+        financialRawDataExposed: false,
+      },
+      idempotentReplay: false,
+    });
+    expect(JSON.stringify(refunded)).not.toContain(userId);
+  });
 });
