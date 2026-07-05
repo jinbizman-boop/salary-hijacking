@@ -233,6 +233,10 @@ function dbStatusFromApi(value: string): string {
 function rowToExpense(row: DbRow, extra: JsonRecord = {}): JsonRecord {
   const status = apiStatusFromDb(row.status);
   const amountMinor = toNumber(row.amount);
+  const refundAmountMinor = Math.min(
+    amountMinor,
+    Math.max(0, toNumber(row.refund_amount)),
+  );
   const title =
     toText(row.merchant_name) ??
     toText(row.memo) ??
@@ -251,11 +255,12 @@ function rowToExpense(row: DbRow, extra: JsonRecord = {}): JsonRecord {
     receiptAttachmentId: null,
     source: "MANUAL",
     idempotencyKey: toText(row.idempotency_key),
-    refundAmountMinor: status === "POSTED" ? 0 : amountMinor,
+    refundAmountMinor: status === "POSTED" ? refundAmountMinor : amountMinor,
     status,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
-    netAmountMinor: status === "POSTED" ? amountMinor : 0,
+    netAmountMinor:
+      status === "POSTED" ? Math.max(0, amountMinor - refundAmountMinor) : 0,
     serverAuthority: true,
     financialRawDataExposed: false,
     adTargetingSeparated: true,
@@ -618,15 +623,29 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
         "variableExpenses.refund",
         `
           update public.variable_expenses
-          set status = 'CANCELLED', cancelled_at = now(), updated_at = now()
+          set
+            refund_amount = least(amount, refund_amount + $3::bigint),
+            last_refund_idempotency_key = coalesce($4, last_refund_idempotency_key),
+            status = case
+              when least(amount, refund_amount + $3::bigint) >= amount then 'CANCELLED'
+              else 'ACTIVE'
+            end,
+            cancelled_at = case
+              when least(amount, refund_amount + $3::bigint) >= amount then now()
+              else cancelled_at
+            end,
+            updated_at = now()
           where variable_expense_id = $1::uuid
             and user_id = $2::uuid
             and status = 'ACTIVE'
+            and refund_amount + $3::bigint <= amount
           returning *
         `,
         [
           assertUuid(expenseId, "expenseId"),
           assertUuid(runtime.principal.userId, "principal.userId"),
+          assertKrw(input.refundAmountMinor, "refundAmountMinor"),
+          input.idempotencyKey,
         ],
       );
       if (!result.rows[0]) throw new Error("Variable expense not found.");
