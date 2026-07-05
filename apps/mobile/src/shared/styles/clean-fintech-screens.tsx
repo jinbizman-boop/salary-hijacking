@@ -156,6 +156,12 @@ type CommunityScreenPost = Readonly<{
 
 const NOTIFICATION_DEVICE_ID_KEY = "salary-hijacking.notification.device-id";
 const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft";
+const UPLOAD_FILE_EXTENSION_BY_CONTENT_TYPE = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+} as const;
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type SettingsKind = "profile" | "account";
 type StoredCommunityWriteDraft = Readonly<{
@@ -955,7 +961,11 @@ export function CleanFintechWriteScreen(): React.ReactElement {
         const uploaded = await writeUploadsApi.directUploadCommunityAttachment({
           bytes,
           contentType,
-          fileName: asset.name || "community-attachment",
+          fileName: uploadFileName(
+            asset.name,
+            contentType,
+            "community-attachment",
+          ),
           sizeBytes: asset.size ?? bytes.byteLength,
         });
         setUploadedCommunityAttachments((current) => [...current, uploaded]);
@@ -3390,7 +3400,11 @@ function SalaryHomeScreen(): React.ReactElement {
           await salaryUploadsApi.directUploadVariableExpenseReceipt({
             bytes,
             contentType,
-            fileName: asset.name || "variable-expense-receipt",
+            fileName: uploadFileName(
+              asset.name,
+              contentType,
+              "variable-expense-receipt",
+            ),
             sizeBytes: asset.size ?? bytes.byteLength,
           });
 
@@ -7246,6 +7260,24 @@ function todayDateInSeoul(): string {
     timeZone: "Asia/Seoul",
     year: "numeric",
   }).format(new Date());
+}
+
+function uploadFileName(
+  assetName: string | null | undefined,
+  contentType: string,
+  fallbackBaseName: string,
+): string {
+  const trimmedName = assetName?.trim();
+  if (trimmedName && /\.[A-Za-z0-9]{1,12}$/u.test(trimmedName)) {
+    return trimmedName;
+  }
+  const extension =
+    UPLOAD_FILE_EXTENSION_BY_CONTENT_TYPE[
+      contentType
+        .trim()
+        .toLowerCase() as keyof typeof UPLOAD_FILE_EXTENSION_BY_CONTENT_TYPE
+    ] ?? "bin";
+  return `${trimmedName || fallbackBaseName}.${extension}`;
 }
 
 const theme = salaryHijackingTheme;

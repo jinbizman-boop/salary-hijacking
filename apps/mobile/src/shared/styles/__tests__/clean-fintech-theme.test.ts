@@ -2669,6 +2669,34 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(uploadsApi).toContain("x-upload-purpose");
   });
 
+  it("derives safe attachment filenames when native picker omits asset names", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const writeSource =
+      cleanScreens.match(
+        /const pickCommunityAttachment = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+    const receiptSource =
+      cleanScreens.match(
+        /const pickVariableExpenseReceipt = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("function uploadFileName(");
+    expect(cleanScreens).toContain('"image/jpeg": "jpg"');
+    expect(cleanScreens).toContain('"application/pdf": "pdf"');
+    expect(writeSource).toMatch(
+      /fileName:\s*uploadFileName\(\s*asset\.name,\s*contentType,\s*"community-attachment",\s*\)/u,
+    );
+    expect(receiptSource).toMatch(
+      /fileName:\s*uploadFileName\(\s*asset\.name,\s*contentType,\s*"variable-expense-receipt",\s*\)/u,
+    );
+    expect(writeSource).not.toContain('asset.name || "community-attachment"');
+    expect(receiptSource).not.toContain(
+      'asset.name || "variable-expense-receipt"',
+    );
+  });
+
   it("prevents duplicate community attachment uploads before the uploads API acknowledges it", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
