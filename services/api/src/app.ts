@@ -61,6 +61,10 @@ import {
   type CommunityRoutesOptions,
 } from "./routes/community.routes";
 import {
+  createNeonCommunityRepository,
+  shouldUseNeonCommunityRepository,
+} from "./repositories/community.repository";
+import {
   DAILY_BUDGETS_API_PREFIX,
   assertDailyBudgetsRoutesCompleteness,
   createDailyBudgetsRoutes,
@@ -68,6 +72,10 @@ import {
   handleDailyBudgetsRoutes,
   type DailyBudgetsRoutesOptions,
 } from "./routes/daily-budgets.routes";
+import {
+  createNeonDailyBudgetsRepository,
+  shouldUseNeonDailyBudgetsRepository,
+} from "./repositories/daily-budgets.repository";
 import {
   FIXED_EXPENSES_API_PREFIX,
   assertFixedExpensesRoutesCompleteness,
@@ -77,6 +85,10 @@ import {
   type FixedExpensesRoutesOptions,
 } from "./routes/fixed-expenses.routes";
 import {
+  createNeonFixedExpensesRepository,
+  shouldUseNeonFixedExpensesRepository,
+} from "./repositories/fixed-expenses.repository";
+import {
   GROWTH_API_PREFIX,
   assertGrowthRoutesCompleteness,
   createGrowthRoutes,
@@ -84,6 +96,10 @@ import {
   growthRoutesManifest,
   handleGrowthRoutes,
 } from "./routes/growth.routes";
+import {
+  createNeonGrowthRepository,
+  shouldUseNeonGrowthRepository,
+} from "./repositories/growth.repository";
 import {
   NOTIFICATIONS_API_PREFIX,
   assertNotificationsRoutesCompleteness,
@@ -93,6 +109,10 @@ import {
   type NotificationsRoutesOptions,
 } from "./routes/notifications.routes";
 import {
+  createNeonNotificationsRepository,
+  shouldUseNeonNotificationsRepository,
+} from "./repositories/notifications.repository";
+import {
   PAYROLL_API_PREFIX,
   assertPayrollRoutesCompleteness,
   createPayrollRoutes,
@@ -101,6 +121,10 @@ import {
   payrollRoutesManifest,
 } from "./routes/payroll.routes";
 import {
+  createNeonPayrollRepository,
+  shouldUseNeonPayrollRepository,
+} from "./repositories/payroll.repository";
+import {
   SAVINGS_API_PREFIX,
   assertSavingsRoutesCompleteness,
   createSavingsRoutes,
@@ -108,6 +132,10 @@ import {
   type SavingsRoutesOptions,
   savingsRoutesManifest,
 } from "./routes/savings.routes";
+import {
+  createNeonSavingsRepository,
+  shouldUseNeonSavingsRepository,
+} from "./repositories/savings.repository";
 import {
   UPLOADS_API_PREFIX,
   assertUploadsRoutesCompleteness,
@@ -136,6 +164,10 @@ import {
   type VariableExpensesRoutesOptions,
   variableExpensesRoutesManifest,
 } from "./routes/variable-expenses.routes";
+import {
+  createNeonVariableExpensesRepository,
+  shouldUseNeonVariableExpensesRepository,
+} from "./repositories/variable-expenses.repository";
 
 export const APP_VERSION = "3.1.0";
 export const APP_SERVICE_NAME = "salary-hijacking-api";
@@ -1346,85 +1378,146 @@ async function coreDispatch<TEnv>(
 
   const route = selectRoute(path);
   if (!route) return notFound(runtime);
-  if (route.id === "payroll" && options.payrollRoutesOptions) {
+  if (route.id === "payroll") {
+    const baseOptions: PayrollRoutesOptions<TEnv> =
+      options.payrollRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonPayrollRepository(routeEnv)
+            ? createNeonPayrollRepository<TEnv>()
+            : undefined,
+      } satisfies PayrollRoutesOptions<TEnv>);
     const routeOptions: PayrollRoutesOptions<TEnv> =
-      options.payrollRoutesOptions.now || !options.now
-        ? options.payrollRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.payrollRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createPayrollRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "daily-budgets" && options.dailyBudgetsRoutesOptions) {
+  if (route.id === "daily-budgets") {
+    const baseOptions: DailyBudgetsRoutesOptions<TEnv> =
+      options.dailyBudgetsRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonDailyBudgetsRepository(routeEnv)
+            ? createNeonDailyBudgetsRepository<TEnv>()
+            : undefined,
+      } satisfies DailyBudgetsRoutesOptions<TEnv>);
     const routeOptions: DailyBudgetsRoutesOptions<TEnv> =
-      options.dailyBudgetsRoutesOptions.now || !options.now
-        ? options.dailyBudgetsRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.dailyBudgetsRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createDailyBudgetsRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "fixed-expenses" && options.fixedExpensesRoutesOptions) {
+  if (route.id === "fixed-expenses") {
+    const baseOptions: FixedExpensesRoutesOptions<TEnv> =
+      options.fixedExpensesRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonFixedExpensesRepository(routeEnv)
+            ? createNeonFixedExpensesRepository<TEnv>()
+            : undefined,
+      } satisfies FixedExpensesRoutesOptions<TEnv>);
     const routeOptions: FixedExpensesRoutesOptions<TEnv> =
-      options.fixedExpensesRoutesOptions.now || !options.now
-        ? options.fixedExpensesRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.fixedExpensesRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createFixedExpensesRoutes(routeOptions)(request, env, context);
   }
-  if (
-    route.id === "variable-expenses" &&
-    options.variableExpensesRoutesOptions
-  ) {
+  if (route.id === "variable-expenses") {
+    const baseOptions: VariableExpensesRoutesOptions<TEnv> =
+      options.variableExpensesRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonVariableExpensesRepository(routeEnv)
+            ? createNeonVariableExpensesRepository<TEnv>()
+            : undefined,
+      } satisfies VariableExpensesRoutesOptions<TEnv>);
     const routeOptions: VariableExpensesRoutesOptions<TEnv> =
-      options.variableExpensesRoutesOptions.now || !options.now
-        ? options.variableExpensesRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.variableExpensesRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createVariableExpensesRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "savings" && options.savingsRoutesOptions) {
+  if (route.id === "savings") {
+    const baseOptions: SavingsRoutesOptions<TEnv> =
+      options.savingsRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonSavingsRepository(routeEnv)
+            ? createNeonSavingsRepository<TEnv>()
+            : undefined,
+      } satisfies SavingsRoutesOptions<TEnv>);
     const routeOptions: SavingsRoutesOptions<TEnv> =
-      options.savingsRoutesOptions.now || !options.now
-        ? options.savingsRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.savingsRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createSavingsRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "growth" && options.growthRoutesOptions) {
+  if (route.id === "growth") {
+    const baseOptions: GrowthRoutesOptions<TEnv> =
+      options.growthRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonGrowthRepository(routeEnv)
+            ? createNeonGrowthRepository<TEnv>()
+            : undefined,
+      } satisfies GrowthRoutesOptions<TEnv>);
     const routeOptions: GrowthRoutesOptions<TEnv> =
-      options.growthRoutesOptions.now || !options.now
-        ? options.growthRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.growthRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createGrowthRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "notifications" && options.notificationsRoutesOptions) {
+  if (route.id === "notifications") {
+    const baseOptions: NotificationsRoutesOptions<TEnv> =
+      options.notificationsRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonNotificationsRepository(routeEnv)
+            ? createNeonNotificationsRepository<TEnv>()
+            : undefined,
+      } satisfies NotificationsRoutesOptions<TEnv>);
     const routeOptions: NotificationsRoutesOptions<TEnv> =
-      options.notificationsRoutesOptions.now || !options.now
-        ? options.notificationsRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.notificationsRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createNotificationsRoutes(routeOptions)(request, env, context);
   }
-  if (route.id === "community" && options.communityRoutesOptions) {
+  if (route.id === "community") {
+    const baseOptions: CommunityRoutesOptions<TEnv> =
+      options.communityRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonCommunityRepository(routeEnv)
+            ? createNeonCommunityRepository<TEnv>()
+            : undefined,
+      } satisfies CommunityRoutesOptions<TEnv>);
     const routeOptions: CommunityRoutesOptions<TEnv> =
-      options.communityRoutesOptions.now || !options.now
-        ? options.communityRoutesOptions
+      baseOptions.now || !options.now
+        ? baseOptions
         : {
-            ...options.communityRoutesOptions,
+            ...baseOptions,
             now: options.now,
           };
     return createCommunityRoutes(routeOptions)(request, env, context);
