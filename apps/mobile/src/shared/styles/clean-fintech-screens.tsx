@@ -4171,9 +4171,7 @@ function PlanScreen(): React.ReactElement {
           serverPayrollPlan?.variableExpenseReserveMinor ?? 0,
       });
       applyServerPayrollPlan(saved);
-      setPlanToast(
-        "급여 계획을 서버 권위 기준으로 저장했어요. rawFinancialDataExposed=false",
-      );
+      setPlanToast("급여 계획을 서버 기준으로 저장했어요.");
     } catch {
       setPlanToast("급여 계획 저장에 실패했어요. 다시 시도해 주세요.");
     } finally {
@@ -4328,9 +4326,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(
-          "고정지출을 삭제했어요. serverAuthority=true · rawFinancialDataExposed=false",
-        );
+        setPlanToast("고정지출을 삭제했어요.");
       } catch {
         setPlanToast("고정지출 삭제에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4362,9 +4358,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(
-          "고정저축 목표를 삭제했어요. serverAuthority=true · rawFinancialDataExposed=false",
-        );
+        setPlanToast("고정저축 목표를 삭제했어요.");
       } catch {
         setPlanToast("고정저축 목표 삭제에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4420,9 +4414,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(
-          `${updated.title} 고정지출을 서버 기준으로 수정했어요. rawFinancialDataExposed=false`,
-        );
+        setPlanToast(`${updated.title} 고정지출을 서버 기준으로 수정했어요.`);
       } catch {
         setPlanToast("고정지출 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4486,9 +4478,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(
-          `${updated.title} 저축 목표를 서버 기준으로 수정했어요. rawFinancialDataExposed=false`,
-        );
+        setPlanToast(`${updated.title} 저축 목표를 서버 기준으로 수정했어요.`);
       } catch {
         setPlanToast("고정저축 목표 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {

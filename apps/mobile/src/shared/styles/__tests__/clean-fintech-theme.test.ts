@@ -538,6 +538,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(planSource).not.toMatch(/[�]|[?][가-힣]|[가-힣][?]/u);
   });
 
+  it("keeps plan completion toasts free from internal privacy flags", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const planSource =
+      cleanScreens.match(
+        /function PlanScreen\(\): React\.ReactElement \{[\s\S]*?function growthTaskIcon/u,
+      )?.[0] ?? "";
+
+    for (const visibleCopy of [
+      "급여 계획을 서버 기준으로 저장했어요.",
+      "고정지출을 삭제했어요.",
+      "고정저축 목표를 삭제했어요.",
+      "고정지출을 서버 기준으로 수정했어요.",
+      "저축 목표를 서버 기준으로 수정했어요.",
+    ]) {
+      expect(planSource).toContain(visibleCopy);
+    }
+
+    expect(planSource).not.toContain("rawFinancialDataExposed=false");
+    expect(planSource).not.toContain("serverAuthority=true");
+    expect(planSource).not.toContain("adsFinancialTargetingUsed=false");
+  });
+
   it("disables plan commitment submit buttons until required drafts are valid", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -702,8 +726,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("setServerFixedExpenses((current) =>");
     expect(cleanScreens).toContain("setServerSavingsGoals((current) =>");
     expect(cleanScreens).toContain("planCommitmentsHydrated");
-    expect(cleanScreens).toContain("serverAuthority=true");
-    expect(cleanScreens).toContain("rawFinancialDataExposed=false");
+    expect(cleanScreens).toContain("고정지출을 삭제했어요.");
+    expect(cleanScreens).toContain("고정저축 목표를 삭제했어요.");
   });
 
   it("keeps plan screen fixed expense and savings updates persisted through server APIs", () => {
@@ -1918,8 +1942,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("closeMyLevelProgress");
     expect(cleanScreens).toContain('myLevelRouter.replace("/profile")');
     expect(cleanScreens).toContain("onPress={closeMyLevelProgress}");
-    expect(cleanScreens).toContain("serverAuthority=true");
-    expect(cleanScreens).toContain("rawFinancialDataExposed=false");
+    expect(cleanScreens).toContain("서버 기준으로 최신 현황을 확인했어요.");
+    expect(cleanScreens).toContain("안전한 성장 루틴");
     expect(source("profile/level.tsx")).toContain(
       "<CleanFintechMyLevelProgressScreen />",
     );
