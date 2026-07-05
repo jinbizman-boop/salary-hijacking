@@ -131,7 +131,7 @@ function normalizePage(
     throw new CommunityApiError(
       0,
       "COMMUNITY_FEED_QUERY_INVALID",
-      "Invalid community paging options.",
+      "커뮤니티 목록 페이지를 확인해 주세요.",
     );
   }
   return value;
@@ -151,7 +151,7 @@ function listQuery(input: CommunityFeedQuery = {}): string {
     throw new CommunityApiError(
       0,
       "COMMUNITY_FEED_QUERY_INVALID",
-      "Invalid community feed query.",
+      "커뮤니티 피드 검색 조건을 확인해 주세요.",
     );
   }
   const params = new URLSearchParams();

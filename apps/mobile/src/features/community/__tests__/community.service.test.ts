@@ -17,6 +17,10 @@ describe("community service", () => {
     expect(source).toContain("게시글");
     expect(source).toContain("댓글");
     expect(source).toContain("신고 사유를 확인해 주세요.");
+    expect(source).toContain("커뮤니티 목록 페이지를 확인해 주세요.");
+    expect(source).toContain("커뮤니티 피드 검색 조건을 확인해 주세요.");
+    expect(source).not.toContain("Invalid community paging options.");
+    expect(source).not.toContain("Invalid community feed query.");
     for (const marker of ["占?", "�", "寃", "而", "?좉", "?볤"]) {
       expect(source).not.toContain(marker);
     }
@@ -140,20 +144,29 @@ describe("community service", () => {
         page: 0,
         pageSize: 20,
       }),
-    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+    ).rejects.toMatchObject({
+      code: "COMMUNITY_FEED_QUERY_INVALID",
+      message: "커뮤니티 목록 페이지를 확인해 주세요.",
+    });
     await expect(
       service.listPosts({
         page: 1,
         pageSize: 101,
       }),
-    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+    ).rejects.toMatchObject({
+      code: "COMMUNITY_FEED_QUERY_INVALID",
+      message: "커뮤니티 목록 페이지를 확인해 주세요.",
+    });
     await expect(
       service.listPosts({
         page: 1,
         pageSize: 20,
         rawSalaryMemo: "salary 2,700,000",
       } as never),
-    ).rejects.toMatchObject({ code: "COMMUNITY_FEED_QUERY_INVALID" });
+    ).rejects.toMatchObject({
+      code: "COMMUNITY_FEED_QUERY_INVALID",
+      message: "커뮤니티 피드 검색 조건을 확인해 주세요.",
+    });
 
     expect(request).not.toHaveBeenCalled();
   });
