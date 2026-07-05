@@ -103,6 +103,9 @@ describe("growth api", () => {
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
     );
+    for (const call of calls) {
+      expect(call.headers.get("x-idempotency-key")).toBeNull();
+    }
     expect(JSON.stringify(await api.getDashboard())).not.toContain(
       "usr_private",
     );
@@ -112,6 +115,7 @@ describe("growth api", () => {
     const calls: Request[] = [];
     const api = createGrowthApi({
       baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "growth-progress-1",
       fetcher: async (request) => {
         const normalized =
           request instanceof Request ? request : new Request(request);
@@ -167,6 +171,9 @@ describe("growth api", () => {
       "https://api.salaryhijacking.com/api/v1/growth/tasks/gtk_reading/progress",
     );
     expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-growth-growth-progress-1-post-[a-z0-9]+$/u,
+    );
     const body = await calls[0]?.clone().text();
     expect(JSON.parse(body ?? "{}")).toEqual({
       idempotencyKey: "mission-reading-1",
@@ -305,6 +312,9 @@ describe("growth api", () => {
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
+    );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-growth-growth-content-1-post-[a-z0-9]+$/u,
     );
     const body = await calls[0]?.clone().text();
     expect(JSON.parse(body ?? "{}")).toEqual({
