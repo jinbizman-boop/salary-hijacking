@@ -475,6 +475,9 @@ describe("uploads api", () => {
     );
     expect(sent.method).toBe("POST");
     expect(sent.headers.get("content-type")).toBe("application/json");
+    expect(sent.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-upload-upload-correlation-2-community-attach-[A-Za-z0-9_-]{8,160}$/u,
+    );
     expect(await sent.json()).toEqual({
       ownerId: "post_1",
       ownerType: "COMMUNITY_POST",
@@ -608,6 +611,9 @@ describe("uploads api", () => {
     );
     expect(sent.method).toBe("POST");
     expect(sent.headers.get("content-type")).toBe("application/json");
+    expect(sent.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-upload-receipt-correlation-2-variable-expense-attach-[A-Za-z0-9_-]{8,160}$/u,
+    );
     expect(await sent.json()).toEqual({
       ownerId: "vex_1",
       ownerType: "VARIABLE_EXPENSE",

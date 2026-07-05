@@ -514,6 +514,7 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
 
     async attachToCommunityPost(attachmentId, postId) {
       const safeAttachmentId = safeId(attachmentId, "attachmentId");
+      const correlationId = createCorrelationId();
       const body = {
         ownerId: safeId(postId, "postId"),
         ownerType: "COMMUNITY_POST",
@@ -521,7 +522,11 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       const headers = new Headers({
         "content-type": "application/json",
         "x-client-platform": options.platform,
-        "x-correlation-id": createCorrelationId(),
+        "x-correlation-id": correlationId,
+        "x-idempotency-key": uploadIdempotencyKey(
+          correlationId,
+          "community-attach",
+        ),
         ...UPLOADS_PRIVACY_HEADERS,
       });
       const parsed = await send(
@@ -540,6 +545,7 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
 
     async attachToVariableExpense(attachmentId, expenseId) {
       const safeAttachmentId = safeId(attachmentId, "attachmentId");
+      const correlationId = createCorrelationId();
       const body = {
         ownerId: safeId(expenseId, "expenseId"),
         ownerType: "VARIABLE_EXPENSE",
@@ -547,7 +553,11 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
       const headers = new Headers({
         "content-type": "application/json",
         "x-client-platform": options.platform,
-        "x-correlation-id": createCorrelationId(),
+        "x-correlation-id": correlationId,
+        "x-idempotency-key": uploadIdempotencyKey(
+          correlationId,
+          "variable-expense-attach",
+        ),
         ...UPLOADS_PRIVACY_HEADERS,
       });
       const parsed = await send(
