@@ -8,6 +8,8 @@ const RAW_KRW_PATTERN =
   /(?:(?:급여|월급|연봉|수입|소득|지출|저축|예산|금액)\s*)?(?:₩\s*)?(?:\d{1,3}(?:,\d{3})+|\d{6,})\s*원?/gu;
 const TOKEN_PATTERN =
   /\b(token|authorization|bearer|session|refresh|push|fcm)\b\s*[:=]?\s*[A-Z0-9._~+/=-]{8,}/giu;
+const RAW_FINANCIAL_AMOUNT_PATTERN =
+  /\b(?:salary|income|expense|savings?|hijack|payroll|amount|krw|won)\b[^\d\r\n]{0,24}(?:\d{1,3}(?:,\d{3})+|\d{6,})\b|\b(?:\d{1,3}(?:,\d{3})+|\d{6,})\s*(?:krw|won)\b/giu;
 const JWT_PATTERN =
   /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/gu;
 
@@ -18,6 +20,7 @@ const SENSITIVE_PATTERNS = [
   CARD_PATTERN,
   ACCOUNT_PATTERN,
   RAW_KRW_PATTERN,
+  RAW_FINANCIAL_AMOUNT_PATTERN,
   TOKEN_PATTERN,
   JWT_PATTERN,
 ] as const;

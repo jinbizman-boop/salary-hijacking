@@ -48,6 +48,24 @@ function requiredText(value: unknown, field: string): string {
   return value.trim();
 }
 
+function safeDisplayText(value: unknown, field: string): string {
+  const text = requiredText(value, field);
+  if (containsSensitiveCommunityContent(text)) {
+    return unsafeCommunityResponse(field);
+  }
+  return text;
+}
+
+function safeOptionalDisplayText(value: unknown, field: string): string {
+  if (typeof value !== "string") return "";
+  const text = value.trim();
+  if (!text) return "";
+  if (containsSensitiveCommunityContent(text)) {
+    return unsafeCommunityResponse(field);
+  }
+  return text;
+}
+
 function timestamp(value: unknown): string {
   const text = requiredText(value, "timestamp");
   if (Number.isNaN(Date.parse(text))) {
@@ -105,7 +123,7 @@ function tags(value: unknown): readonly string[] {
       : [];
   return source
     .filter((tag): tag is string => typeof tag === "string")
-    .map((tag) => tag.trim())
+    .map((tag) => safeOptionalDisplayText(tag, "tag"))
     .filter(Boolean)
     .slice(0, 10);
 }
@@ -177,19 +195,19 @@ export function parseCommunityPost(value: unknown): CommunityPost {
   if (!isRecord(value)) throw new TypeError("안전하지 않은 커뮤니티 응답");
   ensurePrivacy(value);
   const id = requiredText(value.postId ?? value.id, "post id");
-  const title = requiredText(value.title, "title");
+  const title = safeDisplayText(value.title, "title");
   const content =
     typeof value.content === "string"
-      ? value.content.trim()
+      ? safeOptionalDisplayText(value.content, "content")
       : typeof value.bodyPreview === "string"
-        ? value.bodyPreview.trim()
+        ? safeOptionalDisplayText(value.bodyPreview, "body preview")
         : "";
   const anonymousDisplayName =
     typeof value.authorMasked === "string" && value.authorMasked.trim()
-      ? value.authorMasked.trim()
+      ? safeDisplayText(value.authorMasked, "author")
       : typeof value.anonymousDisplayName === "string" &&
           value.anonymousDisplayName.trim()
-        ? value.anonymousDisplayName.trim()
+        ? safeDisplayText(value.anonymousDisplayName, "author")
         : "익명 사용자";
 
   const anonymous = optionalBoolean(value.anonymous ?? value.isAnonymous);
@@ -229,11 +247,11 @@ export function parseCommunityComment(value: unknown): CommunityComment {
   return {
     id: requiredText(value.commentId ?? value.id, "comment id"),
     postId: requiredText(value.postId, "post id"),
-    content: requiredText(value.content, "comment content"),
+    content: safeDisplayText(value.content, "comment content"),
     ...(anonymous !== null ? { anonymous } : {}),
     anonymousDisplayName:
       typeof value.authorMasked === "string" && value.authorMasked.trim()
-        ? value.authorMasked.trim()
+        ? safeDisplayText(value.authorMasked, "comment author")
         : "익명 사용자",
     moderationStatus: moderationStatus(value.status ?? value.moderationStatus),
     likeCount: safeInteger(value.likeCount),
@@ -265,7 +283,10 @@ export function parseCommunityPostDetail(value: unknown): CommunityPostDetail {
   if (!isRecord(value)) throw new TypeError("안전하지 않은 커뮤니티 응답");
   return {
     post: parseCommunityPost(value),
-    content: typeof value.content === "string" ? value.content.trim() : "",
+    content:
+      typeof value.content === "string"
+        ? safeOptionalDisplayText(value.content, "detail content")
+        : "",
     tags: tags(value.tags),
     attachments: attachments(value.attachments),
     comments: [],

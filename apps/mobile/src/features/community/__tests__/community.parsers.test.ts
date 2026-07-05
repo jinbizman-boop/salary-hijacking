@@ -205,4 +205,66 @@ describe("community parsers", () => {
       }),
     ).toThrow("안전하지 않은 커뮤니티 응답");
   });
+
+  it("rejects sensitive raw text even when server exposure flags are missing", () => {
+    const basePost = {
+      postId: "post_1",
+      boardType: "FREE",
+      authorMasked: "usr***",
+      status: "VISIBLE",
+      likeCount: 0,
+      commentCount: 0,
+      createdAt: "2026-06-25T00:00:00.000Z",
+      updatedAt: "2026-06-25T00:00:00.000Z",
+    };
+
+    expect(() =>
+      parseCommunityFeedPage({
+        items: [
+          {
+            ...basePost,
+            title: "salary 3,500,000 won exposed",
+            content: "community raw amount exposure test",
+          },
+        ],
+        page: 1,
+        pageSize: 20,
+        total: 1,
+      }),
+    ).toThrow("unsafe community response");
+
+    expect(() =>
+      parseCommunityPostDetail({
+        ...basePost,
+        title: "safe title",
+        content: "send details to user@example.com",
+      }),
+    ).toThrow("unsafe community response");
+
+    expect(() =>
+      parseCommunityComment({
+        commentId: "comment_1",
+        postId: "post_1",
+        content: "call me at 010-1234-5678",
+        authorMasked: "usr***",
+        status: "VISIBLE",
+        likeCount: 0,
+        createdAt: "2026-06-25T00:00:00.000Z",
+        updatedAt: "2026-06-25T00:00:00.000Z",
+      }),
+    ).toThrow("unsafe community response");
+
+    expect(() =>
+      parseCommunityComment({
+        commentId: "comment_2",
+        postId: "post_1",
+        content: "safe comment",
+        authorMasked: "user@example.com",
+        status: "VISIBLE",
+        likeCount: 0,
+        createdAt: "2026-06-25T00:00:00.000Z",
+        updatedAt: "2026-06-25T00:00:00.000Z",
+      }),
+    ).toThrow("unsafe community response");
+  });
 });
