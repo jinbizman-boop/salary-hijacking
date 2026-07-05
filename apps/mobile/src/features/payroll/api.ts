@@ -186,7 +186,16 @@ function errorCode(value: unknown): string {
 }
 
 async function parseJson(response: Response): Promise<unknown> {
-  const text = await response.text();
+  let text: string;
+  try {
+    text = await response.text();
+  } catch {
+    throw new PayrollApiError(
+      response.status,
+      "PAYROLL_INVALID_RESPONSE",
+      PAYROLL_SAFE_ERROR_MESSAGE,
+    );
+  }
   if (!text) return {};
   try {
     return JSON.parse(text) as unknown;

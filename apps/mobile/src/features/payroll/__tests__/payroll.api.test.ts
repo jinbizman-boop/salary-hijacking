@@ -1,4 +1,5 @@
 import { createPayrollApi } from "../api";
+import { PAYROLL_SAFE_ERROR_MESSAGE } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -94,6 +95,26 @@ describe("payroll api", () => {
     );
     expect(calls[0]?.headers.get("x-idempotency-key")).toBeNull();
     expect(JSON.stringify(result)).not.toContain("userId");
+  });
+
+  it("wraps unreadable response bodies in a safe payroll API error", async () => {
+    const response = jsonResponse({ data: currentPlan });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw payroll stream internal detail");
+      },
+    });
+    const api = createPayrollApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(api.getCurrent()).rejects.toMatchObject({
+      code: "PAYROLL_INVALID_RESPONSE",
+      message: PAYROLL_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
   });
 
   it("rejects unsafe payroll plan ids returned by the server", async () => {
