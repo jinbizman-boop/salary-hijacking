@@ -8,6 +8,10 @@ import { fileURLToPath } from "node:url";
 import { resolveAndroidSdkRoot } from "../../../scripts/release/android-sdk-tools.mjs";
 import { resolveJavaHome } from "./eas-local-android-build.mjs";
 
+const placeholderEasProjectId = "00000000-0000-4000-8000-000000000000";
+const easProjectIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+
 const defaultMobileRootDir = () =>
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -266,6 +270,11 @@ const hasAndroid35Platform = ({ existsSync, sdkRoot }) =>
     existsSync(path.join(sdkRoot, "platforms", "android-35", "android.jar")),
   );
 
+const hasProductionEasProjectId = (env) => {
+  const value = env.EAS_PROJECT_ID?.trim() ?? "";
+  return value !== placeholderEasProjectId && easProjectIdPattern.test(value);
+};
+
 export const checkExpoLocalAndroidProductionPrerequisites = ({
   androidToolHomeDir,
   env = process.env,
@@ -290,6 +299,11 @@ export const checkExpoLocalAndroidProductionPrerequisites = ({
   }
   if (!existsSync(path.join(mobileRootDir, "app.config.ts"))) {
     failures.push("Expo app.config.ts is missing.");
+  }
+  if (!hasProductionEasProjectId(env)) {
+    failures.push(
+      "EAS_PROJECT_ID must be a real Expo project UUID before building the production Android AAB.",
+    );
   }
 
   const javaHome = resolveJavaHome({

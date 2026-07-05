@@ -23,13 +23,22 @@ const writeMobileFixture = (rootDir) => {
   touch(path.join(rootDir, "node_modules", ".bin", "expo.CMD"));
 };
 
+const baseProductionEnv = ({ javaHome, localAppData, rootDir }) => ({
+  APP_ENV: "production",
+  EAS_PROJECT_ID: "11111111-1111-4111-8111-111111111111",
+  LOCALAPPDATA: localAppData,
+  PATHEXT: ".EXE;.CMD;.BAT;.COM",
+  PROGRAMFILES: path.join(rootDir, "Program Files"),
+  JAVA_HOME: javaHome,
+});
+
 const existsInside = (rootDir) => (filePath) => {
   const relative = path.relative(rootDir, path.resolve(filePath));
   if (relative.startsWith("..") || path.isAbsolute(relative)) return false;
   return fs.existsSync(filePath);
 };
 
-test("production AAB preflight passes without Expo account auth when local build tools exist", () => {
+test("production AAB preflight passes without Expo account auth when local build tools and EAS project identity exist", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
   const sdkRoot = path.join(localAppData, "Android", "Sdk");
@@ -47,11 +56,7 @@ test("production AAB preflight passes without Expo account auth when local build
 
   const result = checkExpoLocalAndroidProductionPrerequisites({
     androidToolHomeDir: rootDir,
-    env: {
-      LOCALAPPDATA: localAppData,
-      PATHEXT: ".EXE;.CMD;.BAT;.COM",
-      PROGRAMFILES: path.join(rootDir, "Program Files"),
-    },
+    env: baseProductionEnv({ javaHome, localAppData, rootDir }),
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
     pathValue: "",
@@ -64,6 +69,40 @@ test("production AAB preflight passes without Expo account auth when local build
   assert.equal(result.env.JAVA_HOME, javaHome);
   assert.equal(result.env.ANDROID_HOME, sdkRoot);
   assert.equal(result.env.ANDROID_SDK_ROOT, sdkRoot);
+});
+
+test("production AAB preflight rejects missing or placeholder EAS project identity", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platforms", "android-35", "android.jar"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  for (const easProjectId of ["", "00000000-0000-4000-8000-000000000000"]) {
+    const result = checkExpoLocalAndroidProductionPrerequisites({
+      androidToolHomeDir: rootDir,
+      env: {
+        ...baseProductionEnv({ javaHome, localAppData, rootDir }),
+        EAS_PROJECT_ID: easProjectId,
+      },
+      existsSync: existsInside(rootDir),
+      mobileRootDir: rootDir,
+      pathValue: "",
+      platform: "win32",
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /EAS_PROJECT_ID/u);
+  }
 });
 
 test("production AAB invocations use Expo prebuild and Gradle bundleRelease", () => {
@@ -132,11 +171,7 @@ test("production AAB runner copies only a verified AAB archive to the release pa
 
   const result = runExpoLocalAndroidProductionBuild({
     androidToolHomeDir: rootDir,
-    env: {
-      LOCALAPPDATA: localAppData,
-      PATHEXT: ".EXE;.CMD;.BAT;.COM",
-      PROGRAMFILES: path.join(rootDir, "Program Files"),
-    },
+    env: baseProductionEnv({ javaHome, localAppData, rootDir }),
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
     monorepoRootDir: rootDir,
