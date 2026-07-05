@@ -2518,6 +2518,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps MY community comment rows free from internal privacy flags", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const myCommunitySource =
+      cleanScreens.match(
+        /export function CleanFintechMyCommunityScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechPostDetailScreen/u,
+      )?.[0] ?? "";
+
+    expect(myCommunitySource).toContain(
+      "meta={formatNoticeDate(comment.createdAt)}",
+    );
+    expect(myCommunitySource).not.toContain("rawFinancialDataExposed=");
+  });
+
   it("locks MY community management close while delete is pending", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

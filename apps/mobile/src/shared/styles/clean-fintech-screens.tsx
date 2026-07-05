@@ -2146,9 +2146,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
             <View style={styles.flex}>
               <ListRow
                 icon="💬"
-                meta={`${formatNoticeDate(comment.createdAt)} · rawFinancialDataExposed=${String(
-                  comment.rawFinancialDataExposed,
-                )}`}
+                meta={formatNoticeDate(comment.createdAt)}
                 onPress={() => openManagedComment(comment)}
                 title={comment.content}
               />
