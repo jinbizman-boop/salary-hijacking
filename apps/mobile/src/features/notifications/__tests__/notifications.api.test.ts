@@ -165,6 +165,7 @@ describe("notifications api", () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({
       baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "notification-correlation-read",
       fetcher: async (request) => {
         const normalized =
           request instanceof Request ? request : new Request(request);
@@ -217,6 +218,10 @@ describe("notifications api", () => {
       "https://api.salaryhijacking.com/api/v1/notifications/ntf_budget_warning/read",
     );
     expect(calls[1]?.method).toBe("POST");
+    expect(calls[0]?.headers.get("x-idempotency-key")).toBeNull();
+    expect(calls[1]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-notifications-notification-correlation-read-post-[A-Za-z0-9_-]{8,160}$/u,
+    );
     expect(String(calls[1]?.body)).not.toMatch(/pushToken|deviceId|token/i);
   });
 
