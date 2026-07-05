@@ -2697,6 +2697,34 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("derives upload content types from picker file extensions when mime metadata is generic", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const writeSource =
+      cleanScreens.match(
+        /const pickCommunityAttachment = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+    const receiptSource =
+      cleanScreens.match(
+        /const pickVariableExpenseReceipt = useCallback\(\(\) => \{[\s\S]*?\}, \[/u,
+      )?.[0] ?? "";
+
+    expect(cleanScreens).toContain("const UPLOAD_CONTENT_TYPE_BY_EXTENSION");
+    expect(cleanScreens).toMatch(/jpeg:\s*"image\/jpeg"/u);
+    expect(cleanScreens).toContain("function uploadContentType(");
+    expect(writeSource).toMatch(
+      /uploadContentType\(\s*asset\.mimeType,\s*response\.headers\.get/u,
+    );
+    expect(receiptSource).toMatch(
+      /uploadContentType\(\s*asset\.mimeType,\s*response\.headers\.get/u,
+    );
+    expect(writeSource).toMatch(/asset\.name\s*\?\?\s*asset\.uri/u);
+    expect(receiptSource).toMatch(/asset\.name\s*\?\?\s*asset\.uri/u);
+    expect(writeSource).not.toContain('"application/octet-stream"');
+    expect(receiptSource).not.toContain('"application/octet-stream"');
+  });
+
   it("prevents duplicate community attachment uploads before the uploads API acknowledges it", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",

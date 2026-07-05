@@ -162,6 +162,13 @@ const UPLOAD_FILE_EXTENSION_BY_CONTENT_TYPE = {
   "image/png": "png",
   "image/webp": "webp",
 } as const;
+const UPLOAD_CONTENT_TYPE_BY_EXTENSION = {
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  pdf: "application/pdf",
+  png: "image/png",
+  webp: "image/webp",
+} as const;
 type LevelDetailKind = "reading" | "news" | "english" | "health";
 type SettingsKind = "profile" | "account";
 type StoredCommunityWriteDraft = Readonly<{
@@ -954,10 +961,11 @@ export function CleanFintechWriteScreen(): React.ReactElement {
         }
         const response = await fetch(asset.uri);
         const bytes = await response.arrayBuffer();
-        const contentType =
-          asset.mimeType ??
-          response.headers.get("content-type") ??
-          "application/octet-stream";
+        const contentType = uploadContentType(
+          asset.mimeType,
+          response.headers.get("content-type"),
+          asset.name ?? asset.uri,
+        );
         const uploaded = await writeUploadsApi.directUploadCommunityAttachment({
           bytes,
           contentType,
@@ -3392,10 +3400,11 @@ function SalaryHomeScreen(): React.ReactElement {
 
         const response = await fetch(asset.uri);
         const bytes = await response.arrayBuffer();
-        const contentType =
-          asset.mimeType ??
-          response.headers.get("content-type") ??
-          "application/octet-stream";
+        const contentType = uploadContentType(
+          asset.mimeType,
+          response.headers.get("content-type"),
+          asset.name ?? asset.uri,
+        );
         const uploaded =
           await salaryUploadsApi.directUploadVariableExpenseReceipt({
             bytes,
@@ -7260,6 +7269,27 @@ function todayDateInSeoul(): string {
     timeZone: "Asia/Seoul",
     year: "numeric",
   }).format(new Date());
+}
+
+function uploadContentType(
+  pickerMimeType: string | null | undefined,
+  responseContentType: string | null | undefined,
+  assetName: string | null | undefined,
+): string {
+  const directType = [pickerMimeType, responseContentType]
+    .map((value) => value?.split(";")[0]?.trim().toLowerCase())
+    .find((value) => value && value !== "application/octet-stream");
+  if (directType) return directType;
+
+  const extension = assetName
+    ?.trim()
+    .match(/\.([A-Za-z0-9]{1,12})$/u)?.[1]
+    ?.toLowerCase();
+  return extension
+    ? (UPLOAD_CONTENT_TYPE_BY_EXTENSION[
+        extension as keyof typeof UPLOAD_CONTENT_TYPE_BY_EXTENSION
+      ] ?? "application/octet-stream")
+    : "application/octet-stream";
 }
 
 function uploadFileName(
