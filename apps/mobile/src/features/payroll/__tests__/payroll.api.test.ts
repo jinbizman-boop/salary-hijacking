@@ -113,6 +113,57 @@ describe("payroll api", () => {
     });
   });
 
+  it("rejects payroll response title and memo values with raw sensitive data", async () => {
+    const currentApi = createPayrollApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            ...currentPlan,
+            title: "card 1234-5678-9012-3456 payroll",
+          },
+        }),
+      platform: "android",
+    });
+    const recalculationApi = createPayrollApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            calculation: currentPlan.calculation,
+            updatedPlan: {
+              ...currentPlan,
+              memo: "owner user@example.com",
+            },
+            overwritePlan: true,
+            reason: "mobile plan preview",
+            serverAuthority: true,
+          },
+        }),
+      platform: "ios",
+    });
+
+    await expect(currentApi.getCurrent()).rejects.toMatchObject({
+      code: "PAYROLL_INVALID_RESPONSE",
+    });
+    await expect(
+      recalculationApi.recalculate({
+        alreadySpentAmountMinor: 0,
+        carryOverAmountMinor: 50_000,
+        emergencyBufferMinor: 100_000,
+        fixedExpenseTotalMinor: 650_000,
+        fixedSavingsTotalMinor: 500_000,
+        overwritePlan: true,
+        payrollAmountMinor: 2_700_000,
+        periodEndDate: "2026-07-31",
+        periodStartDate: "2026-07-01",
+        planId: "plan_2026_07",
+        reason: "mobile plan preview",
+        variableExpenseReserveMinor: 620_000,
+      }),
+    ).rejects.toMatchObject({ code: "PAYROLL_INVALID_RESPONSE" });
+  });
+
   it("posts a valid recalculation request and rejects invalid money before network access", async () => {
     const calls: Request[] = [];
     const api = createPayrollApi({

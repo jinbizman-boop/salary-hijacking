@@ -75,6 +75,40 @@ function isSafePlanId(value: string): boolean {
   return /^[A-Za-z0-9_-]{3,160}$/u.test(value.trim());
 }
 
+function invalidResponse(): never {
+  throw new PayrollApiError(
+    0,
+    "PAYROLL_INVALID_RESPONSE",
+    PAYROLL_SAFE_ERROR_MESSAGE,
+  );
+}
+
+function normalizeResponseTitle(value: unknown): string {
+  if (typeof value !== "string") return invalidResponse();
+  const title = value.trim();
+  if (
+    title.length === 0 ||
+    title.length > 100 ||
+    containsRawSensitiveText(title)
+  ) {
+    return invalidResponse();
+  }
+  return title;
+}
+
+function normalizeNullableResponseText(
+  value: unknown,
+  maxLength: number,
+): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string") return invalidResponse();
+  const text = value.trim();
+  if (text.length > maxLength || containsRawSensitiveText(text)) {
+    return invalidResponse();
+  }
+  return text;
+}
+
 function defaultCorrelationId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ?? `payroll-${Date.now().toString(36)}`
@@ -212,7 +246,6 @@ function normalizePlan(value: unknown): PayrollPlanSnapshot {
   if (
     typeof value.planId !== "string" ||
     !isSafePlanId(value.planId) ||
-    typeof value.title !== "string" ||
     typeof value.incomeType !== "string" ||
     typeof value.payrollCycle !== "string" ||
     !isPositiveInteger(value.payrollAmountMinor) ||
@@ -231,7 +264,6 @@ function normalizePlan(value: unknown): PayrollPlanSnapshot {
     !isNonNegativeInteger(value.emergencyBufferMinor) ||
     !isNonNegativeInteger(value.carryOverAmountMinor) ||
     typeof value.reservePolicy !== "string" ||
-    !(value.memo === null || typeof value.memo === "string") ||
     typeof value.status !== "string" ||
     value.serverAuthority !== true ||
     value.financialRawDataExposed !== false ||
@@ -246,7 +278,7 @@ function normalizePlan(value: unknown): PayrollPlanSnapshot {
 
   return {
     planId: value.planId,
-    title: value.title,
+    title: normalizeResponseTitle(value.title),
     incomeType: value.incomeType as PayrollIncomeType,
     payrollCycle: value.payrollCycle as PayrollCycle,
     payrollAmountMinor: value.payrollAmountMinor,
@@ -260,7 +292,7 @@ function normalizePlan(value: unknown): PayrollPlanSnapshot {
     emergencyBufferMinor: value.emergencyBufferMinor,
     carryOverAmountMinor: value.carryOverAmountMinor,
     reservePolicy: value.reservePolicy as PayrollReservePolicy,
-    memo: value.memo,
+    memo: normalizeNullableResponseText(value.memo, 500),
     status: value.status as PayrollPlanStatus,
     calculation: normalizeCalculation(value.calculation),
     serverAuthority: true,
