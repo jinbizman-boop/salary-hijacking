@@ -51,7 +51,8 @@ export default function VerifyEmailScreen(): React.ReactElement {
 
       try {
         const result = await authApi.verifyEmail({ token });
-        if (!result.verified) throw new Error("Email was not verified.");
+        if (!result.verified)
+          throw new Error("이메일 인증 결과가 확인되지 않았습니다.");
         if (active) setStatus("VERIFIED");
         router.replace("/salary");
       } catch {

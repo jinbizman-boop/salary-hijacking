@@ -233,6 +233,13 @@ describe("mobile app screen API and route contracts", () => {
     expect(verifyEmail).not.toMatch(/[?][가-힣]|[가-힣][?]|�/u);
   });
 
+  it("keeps verify-email verification failure copy readable in Korean", () => {
+    const verifyEmail = readFileSync(VERIFY_EMAIL_SCREEN, "utf8");
+
+    expect(verifyEmail).toContain("이메일 인증 결과가 확인되지 않았습니다.");
+    expect(verifyEmail).not.toContain("Email was not verified.");
+  });
+
   it("keeps reset-password available as a public auth recovery route", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
