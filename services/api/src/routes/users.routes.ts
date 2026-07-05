@@ -1447,6 +1447,27 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
   if (method === "GET" && relativePath === "/me/privacy-exports") {
     return out(rt, 200, { data: await mobilePrivacyExportList(rt) });
   }
+  const mobileExportMatch = relativePath.match(
+    /^\/me\/privacy-exports\/([^/]+)$/,
+  );
+  if (method === "GET" && mobileExportMatch) {
+    const exportId = routeId(mobileExportMatch, 1);
+    if (!/^[A-Za-z0-9_-]{3,160}$/u.test(exportId)) {
+      throw new UserHttpError(
+        400,
+        "USER_EXPORT_ID_INVALID",
+        "?대낫?닿린 ?앸퀎?먭? ?щ컮瑜댁? ?딆뒿?덈떎.",
+      );
+    }
+    const data = await repository.getExport(exportId, rt);
+    if (!data)
+      throw new UserHttpError(
+        404,
+        "USER_EXPORT_NOT_FOUND",
+        "媛쒖씤?뺣낫 ?대낫?닿린 ?붿껌??李얠쓣 ???놁뒿?덈떎.",
+      );
+    return out(rt, 200, { data: mobilePrivacyExportRecord(data, rt.now) });
+  }
   if (method === "POST" && relativePath === "/me/support-tickets") {
     const input = supportTicketInput(await body(rt.request));
     const data =
@@ -1696,6 +1717,7 @@ export const usersRoutesManifest = Object.freeze({
     "POST /me/restore",
     "POST /me/privacy-export",
     "GET /me/privacy-exports",
+    "GET /me/privacy-exports/{exportId}",
     "GET /settings",
     "PUT|PATCH /settings",
     "GET /consents",

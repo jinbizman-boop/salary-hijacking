@@ -6199,10 +6199,21 @@ function ProfileScreen(): React.ReactElement {
     profileActionInFlightRef.current = "privacy-export-download";
     setProfileActionPending("privacy-export-download");
     setProfileToast("개인정보 내보내기 파일을 여는 중이에요.");
-    void WebBrowser.openBrowserAsync(latestPrivacyExport.downloadUrl)
-      .then(() => {
-        setProfileToast("개인정보 내보내기 파일을 안전한 브라우저로 열었어요.");
-      })
+    void (async () => {
+      const refreshedExport = await profileApi.getPrivacyExport(
+        latestPrivacyExport.exportId,
+      );
+      if (refreshedExport.status !== "READY" || !refreshedExport.downloadUrl) {
+        setLatestPrivacyExport(
+          refreshedExport.status === "READY" ? refreshedExport : null,
+        );
+        setProfileToast("내보내기 파일이 아직 준비되지 않았어요.");
+        return;
+      }
+      setLatestPrivacyExport(refreshedExport);
+      await WebBrowser.openBrowserAsync(refreshedExport.downloadUrl);
+      setProfileToast("개인정보 내보내기 파일을 안전한 브라우저로 열었어요.");
+    })()
       .catch(() => {
         setProfileToast("내보내기 파일을 열지 못했어요. 다시 시도해 주세요.");
       })
@@ -6210,7 +6221,7 @@ function ProfileScreen(): React.ReactElement {
         profileActionInFlightRef.current = null;
         setProfileActionPending(null);
       });
-  }, [latestPrivacyExport]);
+  }, [latestPrivacyExport, profileApi]);
 
   const requestWithdrawal = useCallback(() => {
     if (profileActionInFlightRef.current !== null) return;

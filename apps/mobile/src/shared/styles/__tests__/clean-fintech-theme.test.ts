@@ -1839,12 +1839,16 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       )?.[0] ?? "";
 
     expect(profileSource).toContain("profileApi.listPrivacyExports");
+    expect(profileSource).toContain("profileApi.getPrivacyExport");
     expect(profileSource).toContain(
       'item.status === "READY" && item.downloadUrl',
     );
     expect(profileSource).toContain("openPrivacyExportDownload");
     expect(profileSource).toContain(
-      "void WebBrowser.openBrowserAsync(latestPrivacyExport.downloadUrl)",
+      "const refreshedExport = await profileApi.getPrivacyExport(",
+    );
+    expect(profileSource).toContain(
+      "await WebBrowser.openBrowserAsync(refreshedExport.downloadUrl)",
     );
     expect(profileSource).toContain(
       'profileActionInFlightRef.current = "privacy-export-download"',

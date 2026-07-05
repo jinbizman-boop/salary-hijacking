@@ -166,6 +166,7 @@ export type ProfileApiClient = Readonly<{
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;
   listPrivacyExports: () => Promise<readonly ProfilePrivacyExportRecord[]>;
+  getPrivacyExport: (exportId: string) => Promise<ProfilePrivacyExportRecord>;
   requestWithdrawalRequest: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;

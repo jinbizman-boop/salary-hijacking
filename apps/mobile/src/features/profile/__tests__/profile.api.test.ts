@@ -678,6 +678,64 @@ describe("profile api", () => {
     );
   });
 
+  it("loads one privacy export by safe id before opening the download", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            adsFinancialTargetingUsed: false,
+            downloadUrl:
+              "https://api.salaryhijacking.com/api/v1/users/privacy/export/uex_mobile_1/download",
+            expiresAt: "2026-07-06T06:00:00.000Z",
+            exportId: "uex_mobile_1",
+            financialRawDataIncluded: false,
+            rawFinancialDataExposed: false,
+            rawPersonalDataExposed: false,
+            rawPushTokenExposed: false,
+            requestedAt: "2026-07-05T06:00:00.000Z",
+            status: "READY",
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.getPrivacyExport("uex_mobile_1")).resolves.toMatchObject({
+      downloadUrl:
+        "https://api.salaryhijacking.com/api/v1/users/privacy/export/uex_mobile_1/download",
+      exportId: "uex_mobile_1",
+      financialRawDataIncluded: false,
+      status: "READY",
+    });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/me/privacy-exports/uex_mobile_1",
+    );
+  });
+
+  it("rejects unsafe privacy export ids before fetch", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(api.getPrivacyExport("../raw-token")).rejects.toMatchObject({
+      code: "PROFILE_INVALID_EXPORT_ID",
+    });
+    expect(calls).toHaveLength(0);
+  });
+
   it("rejects privacy export records with unsafe download URLs or raw fields", async () => {
     const api = createProfileApi({
       baseUrl: "https://api.salaryhijacking.com",

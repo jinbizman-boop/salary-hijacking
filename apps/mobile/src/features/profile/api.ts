@@ -611,6 +611,19 @@ function normalizePrivacyExportList(
   return items.map(normalizePrivacyExportRecord);
 }
 
+function privacyExportDetailPath(exportId: string): string {
+  if (!isSafeEntityId(exportId)) {
+    throw new ProfileApiError(
+      0,
+      "PROFILE_INVALID_EXPORT_ID",
+      PROFILE_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return `${PROFILE_PRIVACY_EXPORTS_PATH}/${encodeURIComponent(
+    exportId.trim(),
+  )}`;
+}
+
 function validActionRequest(value: ProfileActionRequest): boolean {
   const keys = Object.keys(value);
   return (
@@ -1024,6 +1037,45 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     return normalizePrivacyExportList(parsed);
   }
 
+  async function getPrivacyExport(
+    exportId: string,
+  ): Promise<ProfilePrivacyExportRecord> {
+    const path = privacyExportDetailPath(exportId);
+    const headers = new Headers({
+      accept: "application/json",
+      "x-client-platform": options.platform,
+      "x-correlation-id": createCorrelationId(),
+      ...PRIVACY_HEADERS,
+    });
+
+    let response: Response;
+    try {
+      response = await fetcher(
+        new Request(`${baseUrl}${path}`, {
+          headers,
+          credentials: "include",
+        }),
+      );
+    } catch {
+      throw new ProfileApiError(
+        0,
+        "PROFILE_NETWORK_ERROR",
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+
+    const parsed = await parseJson(response);
+    if (!response.ok) {
+      throw new ProfileApiError(
+        response.status,
+        errorCode(parsed),
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+    if (!isRecord(parsed) || !isRecord(parsed.data)) return invalidResponse();
+    return normalizePrivacyExportRecord(parsed.data);
+  }
+
   async function requestAccountSettings(
     accountRequest: ProfileAccountSettingsRequest,
   ): Promise<ProfileAccountSettings> {
@@ -1101,6 +1153,8 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     },
 
     listPrivacyExports,
+
+    getPrivacyExport,
 
     requestPrivacyExport(
       profileRequest: ProfileActionRequest,

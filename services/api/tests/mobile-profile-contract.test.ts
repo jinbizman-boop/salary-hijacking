@@ -351,6 +351,62 @@ describe("mobile profile API contract", () => {
     );
   });
 
+  it("serves one mobile privacy export by id without raw request reasons", async () => {
+    const exportId = "uex_mobile_contract";
+    const app = createApp({
+      enableAuditGate: false,
+      enableAuth: false,
+      enableRateLimit: false,
+      usersRoutesOptions: {
+        repository: {
+          getExport: async (requestedExportId, runtime) =>
+            requestedExportId === exportId
+              ? {
+                  createdAt: runtime.now.toISOString(),
+                  downloadUrl:
+                    "https://api.salaryhijacking.com/api/v1/users/privacy/export/uex_mobile_contract/download",
+                  exportId,
+                  expiresAt: "2026-07-06T05:00:00.000Z",
+                  financialRawDataIncluded: false,
+                  reason: "app-my-page",
+                  status: "READY",
+                  userId: runtime.principal.userId,
+                }
+              : null,
+        } as never,
+      },
+      now: () => new Date("2026-07-05T05:00:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request(
+        `https://api.test/api/v1/users/me/privacy-exports/${exportId}`,
+        {
+          headers: authHeaders,
+        },
+      ),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: Record<string, unknown>;
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data).toMatchObject({
+      adsFinancialTargetingUsed: false,
+      exportId,
+      financialRawDataIncluded: false,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+    });
+    expect(body.data).not.toHaveProperty("userId");
+    expect(body.data).not.toHaveProperty("reason");
+  });
+
   it("accepts a privacy-safe mobile support ticket without echoing sensitive raw data", async () => {
     const app = createProfileContractApp();
 
