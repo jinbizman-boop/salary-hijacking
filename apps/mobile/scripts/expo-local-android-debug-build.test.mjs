@@ -165,6 +165,12 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
   ]);
+  assert.deepEqual(invocations.expoModulesCoreConfigureArgs, [
+    ":expo-modules-core:configureCMakeDebug[x86_64]",
+    "--no-daemon",
+    "-PreactNativeArchitectures=x86_64",
+    "-PnewArchEnabled=false",
+  ]);
   assert.match(
     invocations.debugApkPath,
     /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]debug[\\/]app-debug\.apk$/,
@@ -412,6 +418,47 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
             "placeholder.txt",
           ),
         );
+        const expoModulesCoreObjectOutput = [
+          "CMakeFiles/expo-modules-core.dir",
+          ...path
+            .resolve(
+              rootDir,
+              "..",
+              "..",
+              "node_modules",
+              ".pnpm",
+              "expo-modules-core@2.5.0",
+              "node_modules",
+              "expo-modules-core",
+              "common",
+              "cpp",
+              "ObjectDeallocator.cpp.o",
+            )
+            .replace(/\\/gu, "/")
+            .replace(/^([A-Za-z]):\//u, "$1_/")
+            .split("/")
+            .filter(Boolean),
+        ].join("/");
+        touch(
+          path.join(
+            rootDir,
+            "node_modules",
+            ".pnpm",
+            "expo-modules-core@2.5.0",
+            "node_modules",
+            "expo-modules-core",
+            "android",
+            ".cxx",
+            "Debug",
+            "hash",
+            "x86_64",
+            "build.ninja",
+          ),
+          [
+            `build ${expoModulesCoreObjectOutput}: CXX_COMPILER source.cpp`,
+            "",
+          ].join("\n"),
+        );
       }
       if (
         commandName.includes("gradlew") &&
@@ -455,19 +502,28 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   });
 
   assert.equal(result.status, 0, result.failures.join("\n"));
-  assert.equal(calls.length, 5);
+  assert.equal(calls.length, 6);
   assert.match(String(calls[0].command).toLowerCase(), /expo/);
   assert.match(String(calls[1].command).toLowerCase(), /gradlew/);
   assert.equal(calls[1].args[0], ":app:generateAutolinkingPackageList");
   assert.match(String(calls[2].command).toLowerCase(), /gradlew/);
-  assert.match(String(calls[2].args[0]), /configureCMakeDebug/);
+  assert.equal(
+    calls[2].args[0],
+    ":react-native-reanimated:configureCMakeDebug[x86_64]",
+  );
   assert.match(String(calls[3].command).toLowerCase(), /gradlew/);
-  assert.equal(calls[3].options.env.ANDROID_HOME, sdkRoot);
-  assert.equal(calls[3].options.env.ANDROID_SDK_ROOT, sdkRoot);
-  assert.equal(calls[3].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
+  assert.equal(
+    calls[3].args[0],
+    ":expo-modules-core:configureCMakeDebug[x86_64]",
+  );
   assert.match(String(calls[4].command).toLowerCase(), /gradlew/);
-  assert.equal(calls[4].args[0], ":app:assembleDebugAndroidTest");
+  assert.equal(calls[4].args[0], "assembleDebug");
+  assert.equal(calls[4].options.env.ANDROID_HOME, sdkRoot);
+  assert.equal(calls[4].options.env.ANDROID_SDK_ROOT, sdkRoot);
   assert.equal(calls[4].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
+  assert.match(String(calls[5].command).toLowerCase(), /gradlew/);
+  assert.equal(calls[5].args[0], ":app:assembleDebugAndroidTest");
+  assert.equal(calls[5].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),
     /sdk\.dir=/,
@@ -741,7 +797,18 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
         "CMakeFiles",
         "expo-modules-core.dir",
         ...path
-          .resolve(rootDir, "..", "..", "node_modules")
+          .resolve(
+            rootDir,
+            "..",
+            "..",
+            "node_modules",
+            ".pnpm",
+            "expo-modules-core@2.5.0",
+            "node_modules",
+            "expo-modules-core",
+            "common",
+            "cpp",
+          )
           .replace(/\\/gu, "/")
           .replace(/^([A-Za-z]):\//u, "$1_/")
           .split("/")
@@ -769,5 +836,274 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
       "utf8",
     ),
     "PK\u0003\u0004",
+  );
+});
+
+test("runner repairs and retries Expo modules core CMake configure once on Windows", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const calls = [];
+  let expoModulesCoreConfigureAttempts = 0;
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args) {
+      calls.push({ command, args });
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainActivity.kt",
+          ),
+          "package com.salaryhijacking.mobile\nclass MainActivity {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) ===
+          ":react-native-reanimated:configureCMakeDebug[x86_64]"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "node_modules",
+            "react-native-reanimated",
+            "android",
+            ".cxx",
+            "Debug",
+            "hash",
+            "x86_64",
+            "src",
+            "main",
+            "cpp",
+            "worklets",
+            "CMakeFiles",
+            "worklets.dir",
+            "placeholder.txt",
+          ),
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":expo-modules-core:configureCMakeDebug[x86_64]"
+      ) {
+        expoModulesCoreConfigureAttempts += 1;
+        const expoModulesCoreObjectOutput = [
+          "CMakeFiles/expo-modules-core.dir",
+          ...path
+            .resolve(
+              rootDir,
+              "..",
+              "..",
+              "node_modules",
+              ".pnpm",
+              "expo-modules-core@2.5.0",
+              "node_modules",
+              "expo-modules-core",
+              "common",
+              "cpp",
+              "ObjectDeallocator.cpp.o",
+            )
+            .replace(/\\/gu, "/")
+            .replace(/^([A-Za-z]):\//u, "$1_/")
+            .split("/")
+            .filter(Boolean),
+        ].join("/");
+        touch(
+          path.join(
+            rootDir,
+            "..",
+            "..",
+            "node_modules",
+            ".pnpm",
+            "expo-modules-core@2.5.0",
+            "node_modules",
+            "expo-modules-core",
+            "android",
+            ".cxx",
+            "Debug",
+            "hash",
+            "x86_64",
+            "CMakeFiles",
+            "expo-modules-core.dir",
+            "placeholder.txt",
+          ),
+        );
+        touch(
+          path.join(
+            rootDir,
+            "..",
+            "..",
+            "node_modules",
+            ".pnpm",
+            "expo-modules-core@2.5.0",
+            "node_modules",
+            "expo-modules-core",
+            "android",
+            ".cxx",
+            "Debug",
+            "hash",
+            "x86_64",
+            "build.ninja",
+          ),
+          [
+            `build ${expoModulesCoreObjectOutput}: CXX_COMPILER source.cpp`,
+            "",
+          ].join("\n"),
+        );
+        return { status: expoModulesCoreConfigureAttempts === 1 ? 1 : 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "debug",
+            "app-debug.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "androidTest",
+            "debug",
+            "app-debug-androidTest.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(expoModulesCoreConfigureAttempts, 2);
+  assert.equal(
+    calls.filter(
+      (call) =>
+        String(call.args[0]) ===
+        ":expo-modules-core:configureCMakeDebug[x86_64]",
+    ).length,
+    2,
+  );
+  assert.equal(
+    fs.existsSync(
+      path.join(
+        rootDir,
+        "..",
+        "..",
+        "node_modules",
+        ".pnpm",
+        "expo-modules-core@2.5.0",
+        "node_modules",
+        "expo-modules-core",
+        "android",
+        ".cxx",
+        "Debug",
+        "hash",
+        "x86_64",
+        "CMakeFiles",
+        "expo-modules-core.dir",
+        ...path
+          .resolve(rootDir, "..", "..", "node_modules")
+          .replace(/\\/gu, "/")
+          .replace(/^([A-Za-z]):\//u, "$1_/")
+          .split("/")
+          .filter(Boolean),
+      ),
+    ),
+    true,
   );
 });

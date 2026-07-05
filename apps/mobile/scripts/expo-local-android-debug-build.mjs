@@ -513,6 +513,23 @@ const collectDirectories = (rootDir) => {
   return directories;
 };
 
+const collectCmakeObjectOutputParentDirectories = (buildNinjaPath) => {
+  if (!fs.existsSync(buildNinjaPath)) return [];
+  const buildDir = path.dirname(buildNinjaPath);
+  const source = fs.readFileSync(buildNinjaPath, "utf8");
+  const parentDirectories = [];
+  for (const line of source.split(/\r?\n/u)) {
+    const match = line.match(/^build\s+(.+?\.o):\s/u);
+    if (!match?.[1]) continue;
+    for (const output of match[1].split(/\s+/u).filter(Boolean)) {
+      parentDirectories.push(
+        path.dirname(path.join(buildDir, output.replace(/\//gu, path.sep))),
+      );
+    }
+  }
+  return parentDirectories;
+};
+
 const repairReanimatedWindowsCmakeDirectories = ({
   mobileRootDir,
   platform,
@@ -624,6 +641,16 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
     );
     for (const directory of cmakeFileDirs) {
       mkdirSyncLongPath(path.join(directory, ...sourceSegments));
+    }
+    const buildNinjaPaths = collectDirectories(debugRoot)
+      .map((directory) => path.join(directory, "build.ninja"))
+      .filter((candidate) => fs.existsSync(candidate));
+    for (const buildNinjaPath of buildNinjaPaths) {
+      for (const directory of collectCmakeObjectOutputParentDirectories(
+        buildNinjaPath,
+      )) {
+        mkdirSyncLongPath(directory);
+      }
     }
   }
 };
@@ -783,6 +810,12 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     prebuildArgs: ["prebuild", "--platform", "android", "--no-install"],
     reanimatedConfigureArgs: [
       ":react-native-reanimated:configureCMakeDebug[x86_64]",
+      "--no-daemon",
+      "-PreactNativeArchitectures=x86_64",
+      "-PnewArchEnabled=false",
+    ],
+    expoModulesCoreConfigureArgs: [
+      ":expo-modules-core:configureCMakeDebug[x86_64]",
       "--no-daemon",
       "-PreactNativeArchitectures=x86_64",
       "-PnewArchEnabled=false",
@@ -1030,6 +1063,40 @@ export const runExpoLocalAndroidDebugBuild = ({
     }
 
     repairReanimatedWindowsCmakeDirectories({ mobileRootDir, platform });
+
+    let expoModulesCoreConfigure = spawn(
+      invocations.gradleCommand,
+      invocations.expoModulesCoreConfigureArgs,
+      {
+        cwd: path.join(mobileRootDir, "android"),
+        env: preflight.env,
+        shell: isWindows(platform),
+        stdio: "inherit",
+        windowsHide: true,
+      },
+    );
+    if ((expoModulesCoreConfigure.status ?? 1) !== 0 && isWindows(platform)) {
+      repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
+      expoModulesCoreConfigure = spawn(
+        invocations.gradleCommand,
+        invocations.expoModulesCoreConfigureArgs,
+        {
+          cwd: path.join(mobileRootDir, "android"),
+          env: preflight.env,
+          shell: true,
+          stdio: "inherit",
+          windowsHide: true,
+        },
+      );
+    }
+    if ((expoModulesCoreConfigure.status ?? 1) !== 0) {
+      return {
+        ...preflight,
+        failures,
+        status: expoModulesCoreConfigure.status ?? 1,
+      };
+    }
+
     repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
 
     const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
