@@ -2744,7 +2744,7 @@ export function CleanFintechPostDetailScreen({
     const targetPostId = activeDetail.post.id;
     communityDetailMutationInFlightRef.current = "report-post";
     setCommunityDetailActionPending("report-post");
-    setToast("게시글 신고를 server moderation 큐에 전달하는 중이에요.");
+    setToast("게시글 신고를 서버 검토 큐에 전달하는 중이에요.");
     void detailCommunityService
       .reportPost(targetPostId, "ABUSE", "mobile community detail report")
       .then(() => {
@@ -2766,7 +2766,7 @@ export function CleanFintechPostDetailScreen({
       if (communityDetailMutationInFlightRef.current !== null) return;
       communityDetailMutationInFlightRef.current = "report-comment";
       setCommunityDetailActionPending("report-comment");
-      setToast("댓글 신고를 server moderation 큐에 전달하는 중이에요.");
+      setToast("댓글 신고를 서버 검토 큐에 전달하는 중이에요.");
       void detailCommunityService
         .reportComment(comment.id, "ABUSE", "mobile community comment report")
         .then(() => {

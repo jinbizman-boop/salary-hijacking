@@ -3115,7 +3115,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(".reportPost(targetPostId");
     expect(cleanScreens).toContain(".reportComment(comment.id");
     expect(cleanScreens).toContain("ABUSE");
-    expect(cleanScreens).toContain("server moderation");
+    expect(cleanScreens).toContain("서버 검토 큐");
+    expect(cleanScreens).not.toContain("server moderation");
   });
 
   it("locks community detail editing and comment inputs while moderation actions are pending", () => {
