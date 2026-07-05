@@ -5878,8 +5878,8 @@ function NotificationsScreen(): React.ReactElement {
                         ? "필수"
                         : notificationRowActionPendingId ===
                             `archive:${item.id}`
-                          ? "Archiving"
-                          : "Archive"
+                          ? "보관 중"
+                          : "보관"
                     }
                     onPress={() => archiveNotification(item)}
                   />
@@ -5892,8 +5892,8 @@ function NotificationsScreen(): React.ReactElement {
                       item.isMandatory
                         ? "필수"
                         : notificationRowActionPendingId === `delete:${item.id}`
-                          ? "Deleting"
-                          : "Delete"
+                          ? "삭제 중"
+                          : "삭제"
                     }
                     onPress={() => deleteNotification(item)}
                   />
@@ -5933,8 +5933,8 @@ function NotificationsScreen(): React.ReactElement {
                         ? "필수"
                         : notificationRowActionPendingId ===
                             `archive:${item.id}`
-                          ? "Archiving"
-                          : "Archive"
+                          ? "보관 중"
+                          : "보관"
                     }
                     onPress={() => archiveNotification(item)}
                   />
@@ -5947,8 +5947,8 @@ function NotificationsScreen(): React.ReactElement {
                       item.isMandatory
                         ? "필수"
                         : notificationRowActionPendingId === `delete:${item.id}`
-                          ? "Deleting"
-                          : "Delete"
+                          ? "삭제 중"
+                          : "삭제"
                     }
                     onPress={() => deleteNotification(item)}
                   />

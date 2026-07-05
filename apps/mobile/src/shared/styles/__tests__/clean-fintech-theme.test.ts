@@ -1628,6 +1628,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
+  it("keeps notification archive and delete row actions localized", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const notificationsSource =
+      cleanScreens.match(
+        /function NotificationsScreen\(\): React\.ReactElement \{[\s\S]*?function CommunityScreen/u,
+      )?.[0] ?? "";
+
+    expect(notificationsSource).toContain('? "보관 중"');
+    expect(notificationsSource).toContain(': "보관"');
+    expect(notificationsSource).toContain('? "삭제 중"');
+    expect(notificationsSource).toContain(': "삭제"');
+    expect(notificationsSource).not.toContain('"Archiving"');
+    expect(notificationsSource).not.toContain('"Archive"');
+    expect(notificationsSource).not.toContain('"Deleting"');
+    expect(notificationsSource).not.toContain('"Delete"');
+  });
+
   it("prevents duplicate notification device registration and revocation before React state updates", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
