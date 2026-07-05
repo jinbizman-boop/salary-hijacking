@@ -137,7 +137,12 @@ export function createMobilePublicConfigApi(
       } catch {
         throw new Error("PUBLIC_APP_CONFIG_NETWORK_ERROR");
       }
-      const parsed = await response.json();
+      let parsed: unknown;
+      try {
+        parsed = await response.json();
+      } catch {
+        throw new Error("PUBLIC_APP_CONFIG_INVALID_RESPONSE");
+      }
       if (!response.ok) throw new Error("PUBLIC_APP_CONFIG_REQUEST_FAILED");
       if (containsForbiddenPublicConfigPayload(parsed)) {
         throw new Error("PUBLIC_APP_CONFIG_SENSITIVE_PAYLOAD");

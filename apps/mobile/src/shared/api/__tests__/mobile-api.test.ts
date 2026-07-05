@@ -80,6 +80,24 @@ describe("mobile api factory", () => {
     );
   });
 
+  it("redacts malformed public app config JSON before it reaches the UI", async () => {
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        new Response(
+          "<html>salary 2700000 token=raw-public-config-token</html>",
+          { headers: { "content-type": "text/html" } },
+        ),
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.toThrow(
+      "PUBLIC_APP_CONFIG_INVALID_RESPONSE",
+    );
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.not.toThrow(
+      /Unexpected token|raw-public-config-token|salary 2700000/u,
+    );
+  });
+
   it("rejects public app config responses that contain sensitive raw payload keys", async () => {
     const calls: Request[] = [];
     const publicConfigApi = createMobilePublicConfigApi({
