@@ -636,8 +636,18 @@ async function fetchJson(
 }
 
 async function parseJsonResponse(response: Response): Promise<unknown> {
-  const text = await response.text();
-  return text ? (JSON.parse(text) as unknown) : {};
+  let text: string;
+  try {
+    text = await response.text();
+  } catch {
+    throw new Error("ROOT_BOOTSTRAP_INVALID_RESPONSE");
+  }
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    throw new Error("ROOT_BOOTSTRAP_INVALID_RESPONSE");
+  }
 }
 
 async function refreshRootAccessToken(): Promise<boolean> {

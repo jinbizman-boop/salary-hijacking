@@ -112,6 +112,16 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("wraps unreadable root bootstrap response bodies before fallback handling", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("ROOT_BOOTSTRAP_INVALID_RESPONSE");
+    expect(source).toMatch(
+      /try\s*\{\s*text = await response\.text\(\);\s*\}\s*catch\s*\{\s*throw new Error\("ROOT_BOOTSTRAP_INVALID_RESPONSE"\);\s*\}/u,
+    );
+    expect(source).not.toContain("const text = await response.text();");
+  });
+
   it("clears root auth cache instead of using offline session fallback when refresh rejects a 401", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
