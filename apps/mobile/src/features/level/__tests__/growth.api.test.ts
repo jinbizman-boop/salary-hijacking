@@ -53,6 +53,26 @@ describe("growth api", () => {
     );
   });
 
+  it("wraps unreadable response bodies in a safe growth API error", async () => {
+    const response = jsonResponse({ data: dashboard });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw growth stream internal detail");
+      },
+    });
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(api.getDashboard()).rejects.toMatchObject({
+      code: "GROWTH_INVALID_RESPONSE",
+      message: GROWTH_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
+  });
+
   it("loads the server-authoritative dashboard and active tasks with privacy headers", async () => {
     const calls: Request[] = [];
     const api = createGrowthApi({
