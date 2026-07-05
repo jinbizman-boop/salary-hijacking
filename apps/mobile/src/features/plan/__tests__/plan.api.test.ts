@@ -1,4 +1,5 @@
 import { createPlanCommitmentsApi } from "../api";
+import { PLAN_SAFE_ERROR_MESSAGE } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -8,6 +9,26 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 describe("plan commitments api", () => {
+  it("wraps unreadable response bodies in a safe plan API error", async () => {
+    const response = jsonResponse({ data: { items: [] } });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw plan stream internal detail");
+      },
+    });
+    const api = createPlanCommitmentsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(api.getCommitments()).rejects.toMatchObject({
+      code: "PLAN_INVALID_RESPONSE",
+      message: PLAN_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
+  });
+
   it("hydrates fixed expense and savings commitments through server-authoritative APIs", async () => {
     const calls: Request[] = [];
     const api = createPlanCommitmentsApi({
