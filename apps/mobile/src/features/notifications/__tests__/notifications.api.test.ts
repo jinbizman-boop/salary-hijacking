@@ -37,6 +37,26 @@ describe("notifications api", () => {
     );
   });
 
+  it("wraps unreadable response bodies in a safe notification API error", async () => {
+    const response = jsonResponse({ data: { unreadCount: 1 } });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw stream failure with internal details");
+      },
+    });
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(api.unreadCount()).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_RESPONSE",
+      message: NOTIFICATIONS_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
+  });
+
   it("lists server notifications with privacy-safe mobile headers", async () => {
     const calls: Request[] = [];
     const api = createNotificationsApi({
