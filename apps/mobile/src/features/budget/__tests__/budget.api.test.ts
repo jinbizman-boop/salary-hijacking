@@ -332,6 +332,9 @@ describe("budget api", () => {
       const headers = new Headers(init?.headers);
       expect(headers.get("x-raw-financial-data-exposed")).toBe("false");
       expect(headers.get("x-ad-financial-targeting-used")).toBe("false");
+      expect(headers.get("x-idempotency-key")).toMatch(
+        /^mobile-budget-daily-budget-save-test-(post|patch)-[A-Za-z0-9_-]{8,160}$/u,
+      );
     }
   });
 
