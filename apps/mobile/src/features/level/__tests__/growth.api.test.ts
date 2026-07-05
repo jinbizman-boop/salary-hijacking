@@ -452,4 +452,52 @@ describe("growth api", () => {
       }),
     ).rejects.toMatchObject({ code: "GROWTH_INVALID_RESPONSE" });
   });
+
+  it("rejects growth task response title and note values with raw sensitive data", async () => {
+    const titleApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...task,
+                taskId: "gtk_sensitive_title",
+                title: "card 1234-5678-9012-3456",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "android",
+    });
+    const noteApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...task,
+                taskId: "gtk_sensitive_note",
+                note: "mission owner user@example.com",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "ios",
+    });
+
+    await expect(titleApi.listTasks()).rejects.toMatchObject({
+      code: "GROWTH_INVALID_RESPONSE",
+    });
+    await expect(noteApi.listTasks()).rejects.toMatchObject({
+      code: "GROWTH_INVALID_RESPONSE",
+    });
+  });
 });

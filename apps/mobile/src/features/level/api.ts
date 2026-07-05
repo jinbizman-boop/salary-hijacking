@@ -237,6 +237,27 @@ function normalizeNullableString(value: unknown): string | null {
   return invalidResponse();
 }
 
+function normalizeDisplayText(value: unknown, maxLength: number): string {
+  if (typeof value !== "string") return invalidResponse();
+  const normalized = value.trim();
+  if (
+    normalized.length === 0 ||
+    normalized.length > maxLength ||
+    containsRawSensitiveText(normalized)
+  ) {
+    return invalidResponse();
+  }
+  return normalized;
+}
+
+function normalizeNullableSafeText(
+  value: unknown,
+  maxLength: number,
+): string | null {
+  if (value === null || value === undefined) return null;
+  return normalizeDisplayText(value, maxLength);
+}
+
 function normalizeDashboard(value: unknown): GrowthDashboard {
   if (!isRecord(value) || !isRecord(value.data)) {
     return invalidResponse();
@@ -276,8 +297,6 @@ function normalizeDashboard(value: unknown): GrowthDashboard {
 function normalizeTask(value: unknown): GrowthTask {
   if (!isRecord(value)) return invalidResponse();
   if (
-    typeof value.title !== "string" ||
-    !value.title ||
     !isPositiveInteger(value.targetCount) ||
     !isNonNegativeInteger(value.progressCount) ||
     !isNonNegativeInteger(value.expReward) ||
@@ -293,7 +312,7 @@ function normalizeTask(value: unknown): GrowthTask {
   }
   return {
     taskId: normalizeGrowthId(value.taskId),
-    title: value.title,
+    title: normalizeDisplayText(value.title, 100),
     taskType: normalizeTaskType(value.taskType),
     difficulty: normalizeDifficulty(value.difficulty),
     targetCount: value.targetCount,
@@ -301,7 +320,7 @@ function normalizeTask(value: unknown): GrowthTask {
     expReward: value.expReward,
     startDate: value.startDate,
     endDate: normalizeNullableDate(value.endDate),
-    note: normalizeNullableString(value.note),
+    note: normalizeNullableSafeText(value.note, 500),
     publicShareEnabled: value.publicShareEnabled,
     status: normalizeTaskStatus(value.status),
     createdAt: value.createdAt,
