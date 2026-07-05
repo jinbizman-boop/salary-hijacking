@@ -1542,11 +1542,7 @@ export function CleanFintechSettingsScreen({
       })
       .then((snapshot) => {
         setProfileNickname(snapshot.user.nickname);
-        setProfileSettingsToast(
-          `프로필 설정 저장 완료 · rawFinancialDataExposed=false · adsFinancialTargetingUsed=${String(
-            snapshot.user.adsFinancialTargetingUsed,
-          )}`,
-        );
+        setProfileSettingsToast("프로필 설정을 서버 기준으로 저장했어요.");
       })
       .catch(() => {
         setProfileSettingsToast(

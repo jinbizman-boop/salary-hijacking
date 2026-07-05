@@ -2116,6 +2116,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
     const profileApi = mobileSource("src/features/profile/api.ts");
+    const profileSettingsSource =
+      cleanScreens.match(
+        /const submitProfileSettings = useCallback\([\s\S]*?const submitAccountSettings = useCallback/u,
+      )?.[0] ?? "";
 
     expect(profileApi).toContain("updateProfile");
     expect(cleanScreens).toMatch(/profileSettingsApi\s*\.?\s*updateProfile/);
@@ -2123,7 +2127,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("profileDisplayBio");
     expect(cleanScreens).toContain("profileOccupationCategory");
     expect(cleanScreens).toContain("submitProfileSettings");
-    expect(cleanScreens).toContain("rawFinancialDataExposed=false");
+    expect(profileSettingsSource).toContain(
+      "프로필 설정을 서버 기준으로 저장했어요.",
+    );
+    expect(profileSettingsSource).not.toContain(
+      "rawFinancialDataExposed=false",
+    );
+    expect(profileSettingsSource).not.toContain("adsFinancialTargetingUsed=");
     expect(source("profile/settings.tsx")).toContain(
       'CleanFintechSettingsScreen kind="profile"',
     );
