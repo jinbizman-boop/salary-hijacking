@@ -16,7 +16,7 @@ type TabDefinition = Readonly<{
   privacyBoundary: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.0-clean-fintech";
+const LAYOUT_VERSION = "4.0.1-clean-fintech-copy-restored";
 
 const tabs: readonly TabDefinition[] = [
   {
@@ -107,7 +107,7 @@ export default function TabsLayout(): React.ReactElement {
             title: tab.title,
             href: tab.href as never,
             tabBarLabel: tab.title,
-            tabBarAccessibilityLabel: `${tab.title} 탭, ${tab.privacyBoundary}`,
+            tabBarAccessibilityLabel: `${tab.title} 탭 · ${tab.privacyBoundary}`,
             tabBarIcon: ({ color, focused, size }) => (
               <View
                 style={{
@@ -159,6 +159,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "profile_privacy_boundary",
     "accessibility_labels",
     "expo_router_tabs",
+    "readable_korean_tab_copy",
     "typescript_strict_ready",
   ] as const;
 

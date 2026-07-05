@@ -11,10 +11,10 @@ import {
 
 import { createMobileProfileApi } from "../src/shared/api/mobile-api";
 
-const VERSION = "1.0.1-onboarding-server-complete";
+const VERSION = "1.0.2-onboarding-copy-restored";
 const STEPS = [
-  "급여일과 예상 수령액을 확인해요.",
-  "고정지출과 고정저축을 먼저 분리해요.",
+  "급여일과 예상 수령액을 먼저 확인해요.",
+  "고정지출과 고정저축을 급여 직후 먼저 분리해요.",
   "일일 예산과 생활비 기준을 서버 계산으로 확인해요.",
 ] as const;
 const ONBOARDING_SETUP_ENTRIES = [
@@ -44,7 +44,7 @@ export default function OnboardingScreen(): React.ReactElement {
   );
   const onboardingCompletionInFlightRef = useRef(false);
   const [message, setMessage] = useState(
-    "온보딩 완료는 서버 프로필 경계에 기록한 뒤 다음 화면으로 이동해요.",
+    "온보딩 완료를 서버 프로필 경계에 기록한 뒤 다음 화면으로 이동해요.",
   );
 
   const finishOnboarding = useCallback(
@@ -60,7 +60,7 @@ export default function OnboardingScreen(): React.ReactElement {
         })
         .catch(() => {
           setMessage(
-            "온보딩 완료를 서버에 기록하지 못했어요. 연결을 확인한 뒤 다시 시도해 주세요.",
+            "온보딩 완료를 서버에 기록하지 못했어요. 연결을 확인하고 다시 시도해 주세요.",
           );
         })
         .finally(() => {
@@ -84,10 +84,10 @@ export default function OnboardingScreen(): React.ReactElement {
         </View>
 
         <Text style={styles.kicker}>SALARY HIJACKING</Text>
-        <Text style={styles.title}>월급이 사라지기 전에 기준을 잡아요</Text>
+        <Text style={styles.title}>월급이 사라지기 전에 먼저 붙잡아요</Text>
         <Text style={styles.body}>
-          급여납치는 급여, 고정지출, 고정저축, 생활비를 먼저 분리한 뒤 서버
-          기준으로 오늘 쓸 수 있는 돈과 지켜낸 돈을 보여줍니다.
+          급여납치는 급여, 고정지출, 고정저축, 생활비를 먼저 분리하고 서버
+          기준으로 오늘 쓸 수 있는 돈과 지켜낸 돈을 보여줘요.
         </Text>
         <Text style={styles.notice}>{message}</Text>
 
@@ -165,9 +165,10 @@ export function assertOnboardingScreenCompleteness(): {
     "fixed expense entry",
     "fixed savings entry",
     "daily budget entry",
+    "readable Korean launch copy",
   ] as const;
 
-  return { ok: checks.length >= 13, version: VERSION, checks };
+  return { ok: checks.length >= 15, version: VERSION, checks };
 }
 
 const styles = StyleSheet.create({

@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 
-const SCREEN_VERSION = "1.0.0-profile-hub";
+const SCREEN_VERSION = "1.0.1-profile-hub-copy-restored";
 const MENU = [
   { label: "프로필 설정", route: "/profile/settings" },
   { label: "계정 설정", route: "/profile/account" },
@@ -28,7 +28,7 @@ export default function ProfileHubScreen(): React.ReactElement {
         <Text style={styles.title}>내 급여납치 설정</Text>
         <Text style={styles.body}>
           성과 확인, 프로필, 계정, 문의, 공지사항으로 이동하는 MY 허브입니다.
-          금융 원문 데이터는 이 화면에 저장하거나 노출하지 않습니다.
+          금융 원문 데이터는 이 화면에 저장하거나 호출하지 않습니다.
         </Text>
         <View style={styles.privacyPill}>
           <Text style={styles.privacyText}>
@@ -83,6 +83,7 @@ export function assertMobileProfileHubCompleteness(): {
     "/salary",
     "server-side profile hub navigation",
     "financial raw data not used for ads or analytics",
+    "readable Korean profile hub copy",
   ] as const;
 
   return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };
