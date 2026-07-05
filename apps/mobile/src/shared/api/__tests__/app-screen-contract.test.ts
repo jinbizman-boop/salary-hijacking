@@ -20,6 +20,7 @@ const INTERNAL_DIAGNOSTIC_MARKERS = [
   "rawPersonalData=false",
   "rawPushToken=false",
   "adsFinancialTargeting=false",
+  "ads_financial_targeting=false",
 ] as const;
 
 function collectAppSourceFiles(directory: string): readonly string[] {

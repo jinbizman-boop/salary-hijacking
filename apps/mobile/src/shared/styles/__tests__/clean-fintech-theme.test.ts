@@ -2328,7 +2328,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(cleanScreens).toContain("marketingAccepted");
     expect(cleanScreens).toContain("contentRecommendationAccepted");
-    expect(cleanScreens).toContain("sensitiveFinancialTargetingAccepted=false");
+    expect(cleanScreens).toContain("계정 동의 저장 완료");
+    expect(cleanScreens).toContain(
+      "금융 원문 없이 광고·제휴 동의를 분리해 저장했어요.",
+    );
+    expect(cleanScreens).not.toContain(
+      "sensitiveFinancialTargetingAccepted=false",
+    );
+    expect(cleanScreens).not.toContain("adPartnerFinancialRawDataUsed=");
     expect(source("profile/account.tsx")).toContain(
       'CleanFintechSettingsScreen kind="account"',
     );

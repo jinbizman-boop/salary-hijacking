@@ -16,7 +16,7 @@ export function assertMobileProfileSettingsCompleteness(): Readonly<{
     "profile_settings_entry",
     "community_display_name",
     "level_title",
-    "ads_financial_targeting=false",
+    "금융 금액 광고 타겟팅 금지",
     "금융 원문 미노출",
   ] as const;
 

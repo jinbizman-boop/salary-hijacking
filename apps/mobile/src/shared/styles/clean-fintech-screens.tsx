@@ -1585,9 +1585,9 @@ export function CleanFintechSettingsScreen({
         setAdPartnerAccepted(settings.adPartnerAccepted);
         setAnalyticsAccepted(settings.analyticsAccepted);
         setAccountSettingsToast(
-          `계정 동의 저장 완료 · sensitiveFinancialTargetingAccepted=false · adPartnerFinancialRawDataUsed=${String(
-            settings.adPartnerFinancialRawDataUsed,
-          )}`,
+          settings.adPartnerFinancialRawDataUsed
+            ? "계정 동의 저장 완료 · 광고·제휴 설정을 다시 확인해 주세요."
+            : "계정 동의 저장 완료 · 금융 원문 없이 광고·제휴 동의를 분리해 저장했어요.",
         );
       })
       .catch(() => {
