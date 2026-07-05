@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const DEFAULT_PROOF_PATH = "release/database-proof.local.json";
+const DEFAULT_COMMAND_PROOF_PATH = "release/database-command-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/database-evidence.json";
 
 const RAW_SECRET_PATTERN =
@@ -106,6 +107,14 @@ const boolFrom = (source, key, fallback = false) =>
 const proofSection = (proof, key) =>
   isPlainObject(proof?.[key]) ? proof[key] : {};
 
+const commandVerified = (commands, key) =>
+  isPlainObject(commands?.[key]) && commands[key].verified === true;
+
+const commandNoRawPayloadStored = (commands, key) =>
+  isPlainObject(commands?.[key]) &&
+  commands[key].verified === true &&
+  commands[key].noRawPayloadStored === true;
+
 const readExpectedProjectHint = (rootDir) => {
   const targets = readJsonIfPresent(rootDir, RELEASE_TARGETS_PATH);
   const hint = targets?.neon?.expectedProjectHint;
@@ -190,6 +199,19 @@ const readProof = (rootDir, proofPath, expectedProjectHint) => {
     });
   }
 
+  const commandProof =
+    proofPath === DEFAULT_PROOF_PATH
+      ? readJsonIfPresent(rootDir, DEFAULT_COMMAND_PROOF_PATH)
+      : null;
+  if (commandProof) {
+    return validateProof({
+      proof: commandProof,
+      proofPath: DEFAULT_COMMAND_PROOF_PATH,
+      expectedProjectHint,
+      requireExpectedProjectHint: true,
+    });
+  }
+
   const fallback =
     proofPath === DEFAULT_PROOF_PATH
       ? readJsonIfPresent(rootDir, DEFAULT_OUTPUT_PATH)
@@ -213,6 +235,7 @@ export const buildDatabaseEvidence = ({
   const seeds = proofSection(proof, "seeds");
   const smoke = proofSection(proof, "smoke");
   const rollback = proofSection(proof, "rollback");
+  const commands = proofSection(proof, "commands");
   const migrationFileCount = countMigrationFiles(rootDir);
 
   return {
@@ -232,45 +255,50 @@ export const buildDatabaseEvidence = ({
     migrations: {
       migrationFilesVerified: migrationFileCount > 0,
       migrationFileCount,
-      migrationValidationVerified: boolFrom(
-        migrations,
-        "migrationValidationVerified",
-      ),
-      stagingMigrationExecuted: boolFrom(
-        migrations,
-        "stagingMigrationExecuted",
-      ),
-      productionMigrationDryRunVerified: boolFrom(
-        migrations,
-        "productionMigrationDryRunVerified",
-      ),
+      migrationValidationVerified:
+        boolFrom(migrations, "migrationValidationVerified") ||
+        commandVerified(commands, "migrationValidation"),
+      stagingMigrationExecuted:
+        boolFrom(migrations, "stagingMigrationExecuted") ||
+        commandVerified(commands, "stagingMigration"),
+      productionMigrationDryRunVerified:
+        boolFrom(migrations, "productionMigrationDryRunVerified") ||
+        commandVerified(commands, "productionMigrationDryRun"),
       note: "Migration execution proof must come from a safe validation target, staging execution, and production dry-run, not from committed database URLs.",
     },
     seeds: {
-      stagingSeedExecuted: boolFrom(seeds, "stagingSeedExecuted"),
+      stagingSeedExecuted:
+        boolFrom(seeds, "stagingSeedExecuted") ||
+        commandVerified(commands, "stagingSeed"),
       productionSeedExecuted: false,
       destructiveProductionSeedBlocked: true,
       note: "Only staging synthetic seed proof may be recorded. Production seed execution remains blocked.",
     },
     smoke: {
-      stagingApiSmokeVerified: boolFrom(smoke, "stagingApiSmokeVerified"),
-      adminSmokeVerified: boolFrom(smoke, "adminSmokeVerified"),
-      serverAuthoritySmokeVerified: boolFrom(
-        smoke,
-        "serverAuthoritySmokeVerified",
-      ),
-      privacySmokeVerified: boolFrom(smoke, "privacySmokeVerified"),
-      noRawFinancialDataInSmokePayloads: boolFrom(
-        smoke,
-        "noRawFinancialDataInSmokePayloads",
-      ),
+      stagingApiSmokeVerified:
+        boolFrom(smoke, "stagingApiSmokeVerified") ||
+        commandVerified(commands, "stagingApiSmoke"),
+      adminSmokeVerified:
+        boolFrom(smoke, "adminSmokeVerified") ||
+        commandVerified(commands, "adminSmoke"),
+      serverAuthoritySmokeVerified:
+        boolFrom(smoke, "serverAuthoritySmokeVerified") ||
+        commandVerified(commands, "serverAuthoritySmoke"),
+      privacySmokeVerified:
+        boolFrom(smoke, "privacySmokeVerified") ||
+        commandVerified(commands, "privacySmoke"),
+      noRawFinancialDataInSmokePayloads:
+        boolFrom(smoke, "noRawFinancialDataInSmokePayloads") ||
+        (commandNoRawPayloadStored(commands, "stagingApiSmoke") &&
+          commandNoRawPayloadStored(commands, "adminSmoke") &&
+          commandNoRawPayloadStored(commands, "serverAuthoritySmoke") &&
+          commandNoRawPayloadStored(commands, "privacySmoke")),
       note: "Smoke proof must be based on deployed staging API/Admin responses with sensitive payloads redacted.",
     },
     rollback: {
-      rollbackRehearsalVerified: boolFrom(
-        rollback,
-        "rollbackRehearsalVerified",
-      ),
+      rollbackRehearsalVerified:
+        boolFrom(rollback, "rollbackRehearsalVerified") ||
+        commandVerified(commands, "rollbackRehearsal"),
       note: "Rollback proof must be a rehearsal or documented recovery validation, not a destructive production rollback.",
     },
     nextEvidenceRequired: [

@@ -128,6 +128,84 @@ test("uses a local proof file to mark verified database release gates", () => {
   assert.equal(evidence.rollback.rollbackRehearsalVerified, true);
 });
 
+test("uses staging smoke command proof by default when database proof file is absent", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/database-command-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        neon: {
+          expectedProjectHint: "salary-hijacking",
+          projectMatched: true,
+          mainBranchReady: true,
+          stagingBranchReady: true,
+        },
+        commands: {
+          migrationValidation: { verified: true, exitCode: 0 },
+          stagingMigration: { verified: true, exitCode: 0 },
+          productionMigrationDryRun: {
+            verified: true,
+            exitCode: 0,
+            dryRun: true,
+          },
+          stagingSeed: {
+            verified: true,
+            exitCode: 0,
+            syntheticDataOnly: true,
+          },
+          rollbackRehearsal: { verified: true, exitCode: 0 },
+          stagingApiSmoke: {
+            verified: true,
+            exitCode: 0,
+            noRawPayloadStored: true,
+          },
+          adminSmoke: {
+            verified: true,
+            exitCode: 0,
+            noRawPayloadStored: true,
+          },
+          serverAuthoritySmoke: {
+            verified: true,
+            exitCode: 0,
+            noRawPayloadStored: true,
+          },
+          privacySmoke: {
+            verified: true,
+            exitCode: 0,
+            noRawPayloadStored: true,
+          },
+        },
+        seeds: {
+          productionSeedExecuted: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const evidence = buildDatabaseEvidence({
+    rootDir,
+    now: () => new Date("2026-07-01T05:45:00.000Z"),
+  });
+
+  assert.equal(evidence.neon.projectMatched, true);
+  assert.equal(evidence.migrations.migrationValidationVerified, true);
+  assert.equal(evidence.migrations.stagingMigrationExecuted, true);
+  assert.equal(evidence.migrations.productionMigrationDryRunVerified, true);
+  assert.equal(evidence.seeds.stagingSeedExecuted, true);
+  assert.equal(evidence.smoke.stagingApiSmokeVerified, true);
+  assert.equal(evidence.smoke.adminSmokeVerified, true);
+  assert.equal(evidence.smoke.serverAuthoritySmokeVerified, true);
+  assert.equal(evidence.smoke.privacySmokeVerified, true);
+  assert.equal(evidence.smoke.noRawFinancialDataInSmokePayloads, true);
+  assert.equal(evidence.rollback.rollbackRehearsalVerified, true);
+});
+
 test("preserves existing no-secret database evidence when local proof is absent", () => {
   const rootDir = makeWorkspace();
   write(
