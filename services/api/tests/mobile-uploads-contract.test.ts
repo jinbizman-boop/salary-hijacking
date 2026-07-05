@@ -274,6 +274,54 @@ describe("mobile uploads API contract", () => {
     );
   });
 
+  it("returns readable Korean errors when a download URL is requested before scan completion", async () => {
+    const app = createUploadContractApp();
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: new Uint8Array([21, 22, 23, 24]).buffer,
+        headers: {
+          ...authHeaders,
+          "content-type": "application/pdf",
+          "x-upload-file-name": "pending-download-proof.pdf",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+
+    const downloadResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/download`, {
+        headers: authHeaders,
+        method: "GET",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const downloadBody = (await downloadResponse.json()) as {
+      readonly error?: { readonly code?: string; readonly message?: string };
+    };
+
+    expect(uploadResponse.status).toBe(201);
+    expect(uploadBody.data?.status).toBe("SCANNING");
+    expect(downloadResponse.status).toBe(409);
+    expect(downloadBody.error).toMatchObject({
+      code: "UPLOAD_NOT_AVAILABLE",
+      message: "사용 가능한 첨부파일이 아닙니다.",
+    });
+    expect(JSON.stringify(downloadBody)).not.toMatch(
+      /[�]|\\?ъ슜|\\?낅줈|uploads\/user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+  });
+
   it("streams R2-backed uploaded bytes through the API content endpoint", async () => {
     const storedObjects = new Map<string, ArrayBuffer>();
     const fakeBucket = {
@@ -335,6 +383,105 @@ describe("mobile uploads API contract", () => {
     expect(Array.from(contentBytes)).toEqual(Array.from(uploadBytes));
     expect(JSON.stringify([...storedObjects.keys()])).toMatch(
       /^.*uploads\/user_mobile_upload_contract\/att_/,
+    );
+  });
+
+  it("returns readable Korean errors when uploaded content is unavailable from storage", async () => {
+    const fakeBucket = {
+      put: async () => null,
+      get: async () => null,
+    };
+    const app = createUploadContractApp();
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: new Uint8Array([31, 32, 33, 34]).buffer,
+        headers: {
+          ...authHeaders,
+          "content-type": "image/png",
+          "x-upload-file-name": "missing-content-proof.png",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development", UPLOADS_BUCKET: fakeBucket },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+
+    const contentResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/content`, {
+        headers: authHeaders,
+        method: "GET",
+      }),
+      { APP_ENV: "development", UPLOADS_BUCKET: fakeBucket },
+      context,
+    );
+    const contentBody = (await contentResponse.json()) as {
+      readonly error?: { readonly code?: string; readonly message?: string };
+    };
+
+    expect(uploadResponse.status).toBe(201);
+    expect(contentResponse.status).toBe(404);
+    expect(contentBody.error).toMatchObject({
+      code: "UPLOAD_OBJECT_NOT_FOUND",
+      message: "업로드 파일 본문을 저장소에서 찾을 수 없습니다.",
+    });
+    expect(JSON.stringify(contentBody)).not.toMatch(
+      /[�]|\\?ъ슜|\\?낅줈|uploads\/user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
+    );
+  });
+
+  it("returns readable Korean errors when the uploaded attachment is not yet available", async () => {
+    const app = createUploadContractApp();
+
+    const uploadResponse = await app.fetch(
+      new Request("https://api.test/api/v1/uploads/direct", {
+        body: new Uint8Array([51, 52, 53, 54]).buffer,
+        headers: {
+          ...authHeaders,
+          "content-type": "application/pdf",
+          "x-upload-file-name": "pending-content-proof.pdf",
+          "x-upload-owner-type": "USER",
+          "x-upload-purpose": "COMMUNITY_ATTACHMENT",
+          "x-upload-visibility": "AUTHENTICATED",
+        },
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const uploadBody = (await uploadResponse.json()) as {
+      readonly data?: Record<string, unknown>;
+    };
+    const attachmentId = String(uploadBody.data?.attachmentId ?? "");
+
+    const contentResponse = await app.fetch(
+      new Request(`https://api.test/api/v1/uploads/${attachmentId}/content`, {
+        headers: authHeaders,
+        method: "GET",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const contentBody = (await contentResponse.json()) as {
+      readonly error?: { readonly code?: string; readonly message?: string };
+    };
+
+    expect(uploadResponse.status).toBe(201);
+    expect(uploadBody.data?.status).toBe("SCANNING");
+    expect(contentResponse.status).toBe(409);
+    expect(contentBody.error).toMatchObject({
+      code: "UPLOAD_NOT_AVAILABLE",
+      message: "사용 가능한 첨부파일이 아닙니다.",
+    });
+    expect(JSON.stringify(contentBody)).not.toMatch(
+      /[�]|\\?ъ슜|\\?낅줈|uploads\/user_mobile_upload_contract|salaryAmount|accountNumber|cardNumber|token/i,
     );
   });
 

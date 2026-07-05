@@ -1193,7 +1193,7 @@ function createInMemoryUploadsRepository<
         throw new UploadHttpError(
           409,
           "UPLOAD_NOT_AVAILABLE",
-          "?ъ슜 媛?ν븳 泥⑤??뚯씪???꾨떃?덈떎.",
+          "사용 가능한 첨부파일이 아닙니다.",
         );
       const storageKey = String(found.storageKey);
       let contentType =
@@ -1216,7 +1216,7 @@ function createInMemoryUploadsRepository<
         throw new UploadHttpError(
           404,
           "UPLOAD_OBJECT_NOT_FOUND",
-          "?낅줈???뚯씪 蹂몃Ц????μ냼?먯꽌 李얠쓣 ???놁뒿?덈떎.",
+          "업로드 파일 본문을 저장소에서 찾을 수 없습니다.",
         );
       return binaryResponse(runtime, 200, body, contentType);
     },
