@@ -252,6 +252,22 @@ export function validateVariableExpenseListRequest(
   value: unknown,
 ): value is VariableExpenseListRequest {
   if (!isRecord(value)) return false;
+  const keys = Object.keys(value);
+  if (
+    !keys.every((key) =>
+      [
+        "category",
+        "endDate",
+        "page",
+        "pageSize",
+        "q",
+        "startDate",
+        "status",
+      ].includes(key),
+    )
+  ) {
+    return false;
+  }
   const { page, pageSize } = value;
   if (
     !isNonNegativeKrw(page) ||

@@ -693,6 +693,36 @@ describe("budget api", () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
+  it("rejects unknown variable expense list fields before URL construction", async () => {
+    const fetcher = jest.fn<
+      Promise<Response>,
+      [input: URL | RequestInfo, init?: RequestInit]
+    >();
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher,
+      platform: "android",
+    });
+
+    await expect(
+      api.listVariableExpenses({
+        page: 1,
+        pageSize: 20,
+        accountNumber: "123-456-789012",
+      } as never),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE_LIST" });
+
+    await expect(
+      api.listVariableExpenses({
+        page: 1,
+        pageSize: 20,
+        rawSalaryMemo: "salary 2,700,000",
+      } as never),
+    ).rejects.toMatchObject({ code: "BUDGET_INVALID_VARIABLE_EXPENSE_LIST" });
+
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("rejects invalid variable expense ids returned by the server", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
