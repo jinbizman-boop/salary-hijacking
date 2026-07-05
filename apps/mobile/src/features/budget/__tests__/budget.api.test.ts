@@ -40,6 +40,28 @@ describe("budget api", () => {
     );
   });
 
+  it("wraps unreadable response bodies in a safe budget API error", async () => {
+    const response = new Response(JSON.stringify({ data: null }), {
+      status: 200,
+    });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw budget stream internal detail");
+      },
+    });
+    const api = createBudgetApi({
+      baseUrl: "https://api.example.test",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(api.getToday()).rejects.toMatchObject({
+      code: "BUDGET_INVALID_RESPONSE",
+      message: BUDGET_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
+  });
+
   it("normalizes the server-authoritative daily budget without exposing raw data", async () => {
     const fetcher = jest
       .fn<Promise<Response>, [input: URL | RequestInfo, init?: RequestInit]>()
