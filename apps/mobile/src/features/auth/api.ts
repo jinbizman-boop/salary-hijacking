@@ -126,6 +126,28 @@ function defaultCorrelationId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `auth-${Date.now().toString(36)}`;
 }
 
+function safeIdempotencyPart(value: string): string {
+  const normalized = value
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/gu, "-")
+    .replace(/-+/gu, "-")
+    .replace(/^-|-$/gu, "")
+    .slice(0, 80);
+  return normalized || "request";
+}
+
+function authIdempotencyKey(correlationId: string, method: string): string {
+  const entropy =
+    globalThis.crypto?.randomUUID?.().replace(/-/gu, "") ??
+    `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  return [
+    "mobile-auth",
+    safeIdempotencyPart(correlationId),
+    safeIdempotencyPart(method.toLowerCase()),
+    entropy,
+  ].join("-");
+}
+
 function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
@@ -586,7 +608,9 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
   const now = options.now ?? (() => new Date());
 
   async function post(path: string, body: Record<string, unknown>) {
-    const headers = authHeaders(options.platform, createCorrelationId(), true);
+    const correlationId = createCorrelationId();
+    const headers = authHeaders(options.platform, correlationId, true);
+    headers.set("x-idempotency-key", authIdempotencyKey(correlationId, "POST"));
 
     let response: Response;
     try {

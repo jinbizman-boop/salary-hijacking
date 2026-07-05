@@ -146,6 +146,9 @@ describe("auth api", () => {
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
     );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-auth-auth-login-test-post-[a-z0-9]+$/u,
+    );
   });
 
   it("normalizes auth email inputs before sending them to the server", async () => {
@@ -924,6 +927,7 @@ describe("auth api", () => {
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
     );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toBeNull();
   });
 
   it("rejects unsafe OAuth redirect URIs before fetch", async () => {
