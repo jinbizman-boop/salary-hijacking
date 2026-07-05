@@ -116,6 +116,7 @@ describe("plan commitments api", () => {
       expect(call.headers.get("x-correlation-id")).toBe(
         "plan-commitments-test",
       );
+      expect(call.headers.get("x-idempotency-key")).toBeNull();
       expect(call.headers.get("x-client-platform")).toBe("android");
       expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
       expect(call.headers.get("x-raw-personal-data-exposed")).toBe("false");
@@ -410,6 +411,9 @@ describe("plan commitments api", () => {
     for (const call of calls) {
       expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
       expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
+      expect(call.headers.get("x-idempotency-key")).toMatch(
+        /^mobile-plan-plan-create-test-post-[a-z0-9]+$/u,
+      );
     }
     expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
       affectsDailyBudget: true,
@@ -644,6 +648,9 @@ describe("plan commitments api", () => {
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
     );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-plan-fixed-payment-test-post-[a-z0-9]+$/u,
+    );
     expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
       idempotencyKey: "fixed-payment-test-key",
       paidAmountMinor: 30_000,
@@ -718,6 +725,9 @@ describe("plan commitments api", () => {
     expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
     expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
       "false",
+    );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toMatch(
+      /^mobile-plan-savings-deposit-test-post-[a-z0-9]+$/u,
     );
     expect(JSON.parse((await calls[0]?.clone().text()) ?? "{}")).toMatchObject({
       amountMinor: 80_000,
@@ -811,6 +821,9 @@ describe("plan commitments api", () => {
       expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
       expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
       expect(call.headers.get("x-correlation-id")).toBe("plan-delete-test");
+      expect(call.headers.get("x-idempotency-key")).toMatch(
+        /^mobile-plan-plan-delete-test-delete-[a-z0-9]+$/u,
+      );
     }
   });
 
@@ -920,6 +933,9 @@ describe("plan commitments api", () => {
       expect(call.headers.get("x-raw-financial-data-exposed")).toBe("false");
       expect(call.headers.get("x-ad-financial-targeting-used")).toBe("false");
       expect(call.headers.get("x-correlation-id")).toBe("plan-update-test");
+      expect(call.headers.get("x-idempotency-key")).toMatch(
+        /^mobile-plan-plan-update-test-patch-[a-z0-9]+$/u,
+      );
     }
   });
 
