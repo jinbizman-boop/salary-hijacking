@@ -32,7 +32,10 @@ export default function ProfileHubScreen(): React.ReactElement {
         </Text>
         <View style={styles.privacyPill}>
           <Text style={styles.privacyText}>
-            serverAuthority=true · rawFinancialData=false
+            서버 기준으로 MY 데이터를 확인해요.
+          </Text>
+          <Text style={styles.privacyText}>
+            금융 원문은 광고나 분석에 쓰지 않아요.
           </Text>
         </View>
 
@@ -78,8 +81,8 @@ export function assertMobileProfileHubCompleteness(): {
     "/profile/support",
     "/profile/notices",
     "/salary",
-    "serverAuthority=true",
-    "rawFinancialData=false",
+    "server-side profile hub navigation",
+    "financial raw data not used for ads or analytics",
   ] as const;
 
   return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };

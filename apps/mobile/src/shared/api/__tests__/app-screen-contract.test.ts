@@ -76,7 +76,10 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileHub).toContain("/salary");
     expect(profileHub).toContain("router.push(item.route as never)");
     expect(profileHub).toContain('router.replace("/salary" as never)');
-    expect(profileHub).toContain("rawFinancialData=false");
+    expect(profileHub).toContain("서버 기준으로 MY 데이터를 확인해요.");
+    expect(profileHub).toContain("금융 원문은 광고나 분석에 쓰지 않아요.");
+    expect(profileHub).not.toContain("serverAuthority=true");
+    expect(profileHub).not.toContain("rawFinancialData=false");
   });
 
   it("refreshes the root bootstrap access token before falling back from a 401", () => {
