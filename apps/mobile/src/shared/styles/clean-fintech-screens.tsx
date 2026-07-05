@@ -6656,7 +6656,7 @@ function LoginScreen(): React.ReactElement {
         return;
       socialLoginSubmitInFlightRef.current = true;
       setSubmitting(true);
-      setToast(`${provider} server OAuth start request is in progress.`);
+      setToast(`${provider} OAuth 로그인을 시작하는 중입니다.`);
       try {
         const result = await loginAuthApi.startOAuth({
           provider,
@@ -6667,14 +6667,16 @@ function LoginScreen(): React.ReactElement {
             result.authorizationUrl,
             socialRedirectUri,
           );
-          setToast(`${provider} OAuth browser session was opened.`);
+          setToast(`${provider} OAuth 인증 창을 열었어요.`);
           return;
         }
         setToast(
-          `${provider} OAuth state is ready. Provider authorization URL is waiting for server configuration.`,
+          `${provider} OAuth 상태가 준비됐어요. 서버의 인증 URL 설정을 기다리고 있습니다.`,
         );
       } catch {
-        setToast(`${provider} OAuth could not start. Please try again later.`);
+        setToast(
+          `${provider} OAuth 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.`,
+        );
       } finally {
         socialLoginSubmitInFlightRef.current = false;
         setSubmitting(false);

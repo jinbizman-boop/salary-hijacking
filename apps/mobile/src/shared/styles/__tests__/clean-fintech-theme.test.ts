@@ -928,6 +928,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "onPress={() => startSocialLogin(provider)}",
     );
+    expect(cleanScreens).toContain("OAuth 로그인을 시작하는 중입니다.");
+    expect(cleanScreens).toContain("OAuth 인증 창을 열었어요.");
+    expect(cleanScreens).toContain(
+      "OAuth 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    );
+    expect(cleanScreens).not.toMatch(
+      /OAuth could not start|Please try again later|browser session was opened|server OAuth start request is in progress/u,
+    );
   });
 
   it("keeps social OAuth callback routed through the server before entering the app", () => {
