@@ -85,6 +85,16 @@ test("collects staging API/Admin/server-authority/privacy smoke booleans without
             rawPersonalDataExposed: false,
             rawPushTokenExposed: false,
             adsFinancialTargetingUsed: false,
+            syntheticKrwIntegerCalculation: {
+              verified: true,
+              sourceOfTruth: "/api/v1",
+              krwIntegerOnly: true,
+              negativeMoneyRejected: true,
+              fractionalMoneyRejected: true,
+              dailyBudgetDistributionVerified: true,
+              paycheckProtectionFormulaVerified: true,
+              rawAmountsReturned: false,
+            },
           },
         }),
         { headers: privacyHeaders },
@@ -277,7 +287,7 @@ test("accepts explicit smoke path overrides while preserving slash normalization
   ]);
 });
 
-test("uses unauthenticated readiness endpoints as default staging smoke targets", async () => {
+test("uses unauthenticated readiness and synthetic server-authority endpoints as default staging smoke targets", async () => {
   const rootDir = makeRoot();
   const visited = [];
 
@@ -293,7 +303,7 @@ test("uses unauthenticated readiness endpoints as default staging smoke targets"
         authorization: new Headers(init?.headers).get("authorization"),
       });
       return new FakeResponse(
-        '{"serverAuthorityEnabled":true,"rawFinancialDataExposed":false,"rawPersonalDataExposed":false,"rawPushTokenExposed":false,"adsFinancialTargetingUsed":false}',
+        '{"serverAuthorityEnabled":true,"rawFinancialDataExposed":false,"rawPersonalDataExposed":false,"rawPushTokenExposed":false,"adsFinancialTargetingUsed":false,"syntheticKrwIntegerCalculation":{"verified":true,"sourceOfTruth":"/api/v1","krwIntegerOnly":true,"negativeMoneyRejected":true,"fractionalMoneyRejected":true,"dailyBudgetDistributionVerified":true,"paycheckProtectionFormulaVerified":true,"rawAmountsReturned":false}}',
         { headers: privacyHeaders },
       );
     },
@@ -309,12 +319,33 @@ test("uses unauthenticated readiness endpoints as default staging smoke targets"
       authorization: null,
     },
     {
-      url: "https://api-staging.salaryhijacking.com/api/v1/ready",
+      url: "https://api-staging.salaryhijacking.com/api/v1/public/server-authority-smoke",
       authorization: null,
     },
     {
-      url: "https://api-staging.salaryhijacking.com/api/v1/ready",
+      url: "https://api-staging.salaryhijacking.com/api/v1/public/server-authority-smoke",
       authorization: null,
     },
   ]);
+});
+
+test("requires synthetic KRW calculation proof for server-authority smoke", async () => {
+  const rootDir = makeRoot();
+
+  const proof = await collectStagingSmokeProof({
+    rootDir,
+    env: {
+      STAGING_API_BASE_URL: "https://api-staging.salaryhijacking.com/",
+      STAGING_ADMIN_BASE_URL: "https://admin-staging.salaryhijacking.com/",
+    },
+    fetcher: async () =>
+      new FakeResponse(
+        '{"serverAuthorityEnabled":true,"rawFinancialDataExposed":false,"rawPersonalDataExposed":false,"rawPushTokenExposed":false,"adsFinancialTargetingUsed":false}',
+        { headers: privacyHeaders },
+      ),
+  });
+
+  assert.equal(proof.commands.stagingApiSmoke.verified, true);
+  assert.equal(proof.commands.serverAuthoritySmoke.verified, false);
+  assert.equal(proof.commands.privacySmoke.verified, true);
 });

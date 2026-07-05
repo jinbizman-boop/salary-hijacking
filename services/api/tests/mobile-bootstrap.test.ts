@@ -6,6 +6,67 @@ const testContext = Object.freeze({
 });
 
 describe("GET /api/v1/mobile/bootstrap", () => {
+  it("exposes a public synthetic server-authority smoke proof without raw finance payloads", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/public/server-authority-smoke"),
+      { APP_ENV: "staging" },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly status?: string;
+        readonly serverAuthorityEnabled?: boolean;
+        readonly rawFinancialDataExposed?: boolean;
+        readonly rawPersonalDataExposed?: boolean;
+        readonly rawPushTokenExposed?: boolean;
+        readonly adsFinancialTargetingUsed?: boolean;
+        readonly syntheticKrwIntegerCalculation?: {
+          readonly verified?: boolean;
+          readonly sourceOfTruth?: string;
+          readonly krwIntegerOnly?: boolean;
+          readonly negativeMoneyRejected?: boolean;
+          readonly fractionalMoneyRejected?: boolean;
+          readonly dailyBudgetDistributionVerified?: boolean;
+          readonly paycheckProtectionFormulaVerified?: boolean;
+          readonly rawAmountsReturned?: boolean;
+        };
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("x-server-authority")).toBe("true");
+    expect(response.headers.get("x-financial-raw-data-exposed")).toBe("false");
+    expect(response.headers.get("x-raw-personal-data-exposed")).toBe("false");
+    expect(response.headers.get("x-raw-push-token-exposed")).toBe("false");
+    expect(response.headers.get("x-ad-financial-targeting")).toBe("separated");
+    expect(body.data).toMatchObject({
+      status: "server_authority_smoke_ready",
+      serverAuthorityEnabled: true,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+      syntheticKrwIntegerCalculation: {
+        verified: true,
+        sourceOfTruth: "/api/v1",
+        krwIntegerOnly: true,
+        negativeMoneyRejected: true,
+        fractionalMoneyRejected: true,
+        dailyBudgetDistributionVerified: true,
+        paycheckProtectionFormulaVerified: true,
+        rawAmountsReturned: false,
+      },
+    });
+    expect(JSON.stringify(body)).not.toMatch(
+      /"(salaryAmount|salary|incomeAmount|income|expenseAmount|expense|savingsAmount|savings|hijackAmount|hijack|email|pushToken|DATABASE_URL)"\s*:/i,
+    );
+  });
+
   it("exposes release smoke readiness without bearer while preserving privacy and server-authority signals", async () => {
     const app = createApp({
       enableAuditGate: false,

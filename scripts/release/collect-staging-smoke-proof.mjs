@@ -9,8 +9,9 @@ const DEFAULT_EXPECTED_PROJECT_HINT = "salary-hijacking";
 
 const DEFAULT_API_SMOKE_PATH = "/api/v1/ready";
 const DEFAULT_ADMIN_SMOKE_PATH = "/admin/api/v1/ready";
-const DEFAULT_SERVER_AUTHORITY_SMOKE_PATH = "/api/v1/ready";
-const DEFAULT_PRIVACY_SMOKE_PATH = "/api/v1/ready";
+const DEFAULT_SERVER_AUTHORITY_SMOKE_PATH =
+  "/api/v1/public/server-authority-smoke";
+const DEFAULT_PRIVACY_SMOKE_PATH = "/api/v1/public/server-authority-smoke";
 
 const RAW_SECRET_PATTERN =
   /(postgres(?:ql)?:\/\/|mysql:\/\/|mongodb(?:\+srv)?:\/\/|redis:\/\/|:\/\/[^/\s]+:[^@\s]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|ghp_[a-z0-9_]{16,}|xox[baprs]-[a-z0-9-]+)/i;
@@ -125,11 +126,22 @@ const headerValue = (headers, key) =>
   headers.get(key)?.trim().toLowerCase() ?? "";
 
 const hasServerAuthorityProof = (headers, text) => {
-  if (headerValue(headers, "x-server-authority") === "true") return true;
-  return (
+  const serverAuthorityDeclared =
+    headerValue(headers, "x-server-authority") === "true" ||
     /"?serverAuthorityEnabled"?\s*:\s*true/i.test(text) ||
-    /"?serverAuthority"?\s*:\s*true/i.test(text)
-  );
+    /"?serverAuthority"?\s*:\s*true/i.test(text);
+  const syntheticCalculationVerified =
+    /"?syntheticKrwIntegerCalculation"?\s*:\s*\{/i.test(text) &&
+    /"?verified"?\s*:\s*true/i.test(text) &&
+    /"?sourceOfTruth"?\s*:\s*"\/api\/v1"/i.test(text) &&
+    /"?krwIntegerOnly"?\s*:\s*true/i.test(text) &&
+    /"?negativeMoneyRejected"?\s*:\s*true/i.test(text) &&
+    /"?fractionalMoneyRejected"?\s*:\s*true/i.test(text) &&
+    /"?dailyBudgetDistributionVerified"?\s*:\s*true/i.test(text) &&
+    /"?paycheckProtectionFormulaVerified"?\s*:\s*true/i.test(text) &&
+    /"?rawAmountsReturned"?\s*:\s*false/i.test(text);
+
+  return serverAuthorityDeclared && syntheticCalculationVerified;
 };
 
 const hasPrivacyProof = (headers, text) => {

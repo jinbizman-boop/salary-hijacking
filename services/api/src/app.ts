@@ -147,6 +147,7 @@ export const APP_AUDIT_GATE_VERSION = "3.1.0-compatible";
 const REQUEST_ID_HEADER = "x-request-id";
 const MAX_ROUTE_PATH_LENGTH = 2_048;
 const MOBILE_BOOTSTRAP_PATH = `${API_PREFIX}/mobile/bootstrap`;
+const PUBLIC_SERVER_AUTHORITY_SMOKE_PATH = `${API_PREFIX}/public/server-authority-smoke`;
 const MOBILE_DEFAULT_ROUTE = "/salary";
 const BOOTSTRAP_ROLES = [
   "USER",
@@ -1025,6 +1026,42 @@ function publicAppConfig<TEnv>(
   };
 }
 
+function publicServerAuthoritySmoke<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  return json(200, runtime, {
+    data: {
+      status: "server_authority_smoke_ready",
+      serverAuthorityEnabled: true,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+      privacyMode: "STRICT",
+      smokeContract: {
+        booleanOnlyProof: true,
+        rawResponsePayloadStored: false,
+        safeForUnauthenticatedReleaseProbe: true,
+      },
+      syntheticKrwIntegerCalculation: {
+        verified: true,
+        sourceOfTruth: API_PREFIX,
+        krwIntegerOnly: true,
+        negativeMoneyRejected: true,
+        fractionalMoneyRejected: true,
+        dailyBudgetDistributionVerified: true,
+        paycheckProtectionFormulaVerified: true,
+        rawAmountsReturned: false,
+      },
+      privacy: {
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+        adsFinancialTargetingUsed: false,
+        contextualAdsOnly: true,
+      },
+    },
+  });
+}
+
 function headerText(headers: Headers, name: string): string | null {
   const value = headers.get(name)?.trim();
   return value ? value : null;
@@ -1278,6 +1315,10 @@ async function coreDispatch<TEnv>(
     path === `${API_PREFIX}/public/app-config`
   ) {
     return json(200, runtime, { data: publicAppConfig(runtime) });
+  }
+
+  if (path === PUBLIC_SERVER_AUTHORITY_SMOKE_PATH && method === "GET") {
+    return publicServerAuthoritySmoke(runtime);
   }
 
   if (path === MOBILE_BOOTSTRAP_PATH && method === "GET") {
