@@ -1016,6 +1016,21 @@ function publicAppConfig<TEnv>(
       rawSavingsDataForAds: false,
       advertiserUserIdentifierExposure: false,
     },
+    ads: {
+      contextualOnly: true,
+      adLabelRequired: true,
+      financialTargetingUsed: false,
+      sensitiveFinancialTargetingAllowed: false,
+      partnerDisclosureRequired: true,
+    },
+    serverAuthority: {
+      apiPrefix: API_PREFIX,
+      payrollBudgetExpenseSavingsSource: "server",
+      clientMayCalculateAuthoritativeMoney: false,
+      krwIntegerOnly: true,
+      negativeMoneyAllowed: false,
+      fractionalMoneyAllowed: false,
+    },
     links: {
       landingUrl: origin,
       partnerBenefitsUrl: `${origin}/partners`,

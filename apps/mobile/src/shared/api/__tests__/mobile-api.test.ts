@@ -32,6 +32,21 @@ describe("mobile api factory", () => {
                 rawSavingsDataForAds: false,
                 advertiserUserIdentifierExposure: false,
               },
+              ads: {
+                contextualOnly: true,
+                adLabelRequired: true,
+                financialTargetingUsed: false,
+                sensitiveFinancialTargetingAllowed: false,
+                partnerDisclosureRequired: true,
+              },
+              serverAuthority: {
+                apiPrefix: "/api/v1",
+                payrollBudgetExpenseSavingsSource: "server",
+                clientMayCalculateAuthoritativeMoney: false,
+                krwIntegerOnly: true,
+                negativeMoneyAllowed: false,
+                fractionalMoneyAllowed: false,
+              },
             },
           }),
           { headers: { "content-type": "application/json" } },
@@ -49,6 +64,14 @@ describe("mobile api factory", () => {
       privacy: {
         rawPayrollDataForAds: false,
         rawExpenseDataForAds: false,
+      },
+      ads: {
+        contextualOnly: true,
+        financialTargetingUsed: false,
+      },
+      serverAuthority: {
+        apiPrefix: "/api/v1",
+        krwIntegerOnly: true,
       },
     });
 
@@ -138,6 +161,52 @@ describe("mobile api factory", () => {
     );
     expect(calls).toHaveLength(1);
     expect(calls[0]?.headers.has("authorization")).toBe(false);
+  });
+
+  it("rejects public app config responses without contextual ads and server-authority safeguards", async () => {
+    const publicConfigApi = createMobilePublicConfigApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        new Response(
+          JSON.stringify({
+            data: {
+              links: {
+                landingUrl: "https://salaryhijacking.com",
+                partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+                privacyUrl: "https://salaryhijacking.com/privacy",
+                supportUrl: "https://salaryhijacking.com/support",
+                termsUrl: "https://salaryhijacking.com/terms",
+              },
+              privacy: {
+                rawPayrollDataForAds: false,
+                rawExpenseDataForAds: false,
+                rawSavingsDataForAds: false,
+                advertiserUserIdentifierExposure: false,
+              },
+              ads: {
+                contextualOnly: false,
+                adLabelRequired: true,
+                financialTargetingUsed: true,
+                sensitiveFinancialTargetingAllowed: true,
+                partnerDisclosureRequired: true,
+              },
+              serverAuthority: {
+                apiPrefix: "/api/v1",
+                payrollBudgetExpenseSavingsSource: "client",
+                clientMayCalculateAuthoritativeMoney: true,
+                krwIntegerOnly: true,
+                negativeMoneyAllowed: false,
+                fractionalMoneyAllowed: false,
+              },
+            },
+          }),
+          { headers: { "content-type": "application/json" } },
+        ),
+    });
+
+    await expect(publicConfigApi.getPublicAppConfig()).rejects.toThrow(
+      "PUBLIC_APP_CONFIG_UNSAFE_POLICY",
+    );
   });
 
   it("rejects public app config responses that contain sensitive raw payload values", async () => {

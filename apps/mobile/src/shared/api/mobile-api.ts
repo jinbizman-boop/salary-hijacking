@@ -59,9 +59,28 @@ export type MobilePublicAppPrivacy = Readonly<{
   advertiserUserIdentifierExposure: false;
 }>;
 
+export type MobilePublicAppAds = Readonly<{
+  contextualOnly: true;
+  adLabelRequired: true;
+  financialTargetingUsed: false;
+  sensitiveFinancialTargetingAllowed: false;
+  partnerDisclosureRequired: true;
+}>;
+
+export type MobilePublicAppServerAuthority = Readonly<{
+  apiPrefix: "/api/v1";
+  payrollBudgetExpenseSavingsSource: "server";
+  clientMayCalculateAuthoritativeMoney: false;
+  krwIntegerOnly: true;
+  negativeMoneyAllowed: false;
+  fractionalMoneyAllowed: false;
+}>;
+
 export type MobilePublicAppConfig = Readonly<{
   links: MobilePublicAppLinks;
   privacy: MobilePublicAppPrivacy;
+  ads: MobilePublicAppAds;
+  serverAuthority: MobilePublicAppServerAuthority;
 }>;
 
 export type MobilePublicConfigApiClient = Readonly<{
@@ -221,6 +240,8 @@ function normalizeMobilePublicAppConfig(input: unknown): MobilePublicAppConfig {
   const data = recordValue(input, "data");
   const links = recordValue(data, "links");
   const privacy = recordValue(data, "privacy");
+  const ads = recordValue(data, "ads");
+  const serverAuthority = recordValue(data, "serverAuthority");
   return {
     links: {
       landingUrl: publicLinkValue(links, "landingUrl"),
@@ -236,6 +257,37 @@ function normalizeMobilePublicAppConfig(input: unknown): MobilePublicAppConfig {
       advertiserUserIdentifierExposure: boolFalse(
         privacy,
         "advertiserUserIdentifierExposure",
+      ),
+    },
+    ads: {
+      contextualOnly: boolTrue(ads, "contextualOnly"),
+      adLabelRequired: boolTrue(ads, "adLabelRequired"),
+      financialTargetingUsed: policyBoolFalse(ads, "financialTargetingUsed"),
+      sensitiveFinancialTargetingAllowed: policyBoolFalse(
+        ads,
+        "sensitiveFinancialTargetingAllowed",
+      ),
+      partnerDisclosureRequired: boolTrue(ads, "partnerDisclosureRequired"),
+    },
+    serverAuthority: {
+      apiPrefix: literalString(serverAuthority, "apiPrefix", "/api/v1"),
+      payrollBudgetExpenseSavingsSource: literalString(
+        serverAuthority,
+        "payrollBudgetExpenseSavingsSource",
+        "server",
+      ),
+      clientMayCalculateAuthoritativeMoney: policyBoolFalse(
+        serverAuthority,
+        "clientMayCalculateAuthoritativeMoney",
+      ),
+      krwIntegerOnly: boolTrue(serverAuthority, "krwIntegerOnly"),
+      negativeMoneyAllowed: policyBoolFalse(
+        serverAuthority,
+        "negativeMoneyAllowed",
+      ),
+      fractionalMoneyAllowed: policyBoolFalse(
+        serverAuthority,
+        "fractionalMoneyAllowed",
       ),
     },
   };
@@ -318,6 +370,29 @@ function boolFalse(
 ): false {
   if (input[key] !== false) throw new Error("PUBLIC_APP_CONFIG_PRIVACY_UNSAFE");
   return false;
+}
+
+function boolTrue(input: Readonly<Record<string, unknown>>, key: string): true {
+  if (input[key] !== true) throw new Error("PUBLIC_APP_CONFIG_UNSAFE_POLICY");
+  return true;
+}
+
+function policyBoolFalse(
+  input: Readonly<Record<string, unknown>>,
+  key: string,
+): false {
+  if (input[key] !== false) throw new Error("PUBLIC_APP_CONFIG_UNSAFE_POLICY");
+  return false;
+}
+
+function literalString<const TValue extends string>(
+  input: Readonly<Record<string, unknown>>,
+  key: string,
+  expected: TValue,
+): TValue {
+  if (input[key] !== expected)
+    throw new Error("PUBLIC_APP_CONFIG_UNSAFE_POLICY");
+  return expected;
 }
 
 function hasAuthTokenWriter(

@@ -21,6 +21,21 @@ function publicConfig(
       rawSavingsDataForAds: false,
       advertiserUserIdentifierExposure: false,
     },
+    ads: {
+      contextualOnly: true,
+      adLabelRequired: true,
+      financialTargetingUsed: false,
+      sensitiveFinancialTargetingAllowed: false,
+      partnerDisclosureRequired: true,
+    },
+    serverAuthority: {
+      apiPrefix: "/api/v1",
+      payrollBudgetExpenseSavingsSource: "server",
+      clientMayCalculateAuthoritativeMoney: false,
+      krwIntegerOnly: true,
+      negativeMoneyAllowed: false,
+      fractionalMoneyAllowed: false,
+    },
   };
 }
 

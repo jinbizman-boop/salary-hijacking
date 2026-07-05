@@ -143,4 +143,43 @@ describe("public legal pages", () => {
       /"(salaryAmount|expenseAmount|savingsAmount|hijackAmount|pushToken|DATABASE_URL)"\s*:/i,
     );
   });
+
+  it("exposes server authority and contextual-only ads policy through public app config", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+    });
+
+    const response = await app.fetch(
+      new Request("https://salaryhijacking.com/api/v1/public/app-config"),
+      {
+        APP_ENV: "production",
+        APP_PUBLIC_BASE_URL: "https://salaryhijacking.com",
+      },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly ads?: Record<string, unknown>;
+        readonly serverAuthority?: Record<string, unknown>;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.data?.ads).toMatchObject({
+      contextualOnly: true,
+      adLabelRequired: true,
+      financialTargetingUsed: false,
+      sensitiveFinancialTargetingAllowed: false,
+      partnerDisclosureRequired: true,
+    });
+    expect(body.data?.serverAuthority).toMatchObject({
+      apiPrefix: "/api/v1",
+      payrollBudgetExpenseSavingsSource: "server",
+      clientMayCalculateAuthoritativeMoney: false,
+      krwIntegerOnly: true,
+      negativeMoneyAllowed: false,
+      fractionalMoneyAllowed: false,
+    });
+  });
 });
