@@ -121,9 +121,9 @@ export function createMobilePublicConfigApi(
   return {
     async getPublicAppConfig(): Promise<MobilePublicAppConfig> {
       const safeBaseUrl = normalizeMobileFactoryBaseUrl(baseUrl);
-      const response = await fetcher(
-        `${safeBaseUrl}/api/v1/public/app-config`,
-        {
+      let response: Response;
+      try {
+        response = await fetcher(`${safeBaseUrl}/api/v1/public/app-config`, {
           credentials: "include",
           headers: {
             accept: "application/json",
@@ -133,8 +133,10 @@ export function createMobilePublicConfigApi(
             "x-raw-personal-data-exposed": "false",
             "x-ad-financial-targeting-used": "false",
           },
-        },
-      );
+        });
+      } catch {
+        throw new Error("PUBLIC_APP_CONFIG_NETWORK_ERROR");
+      }
       const parsed = await response.json();
       if (!response.ok) throw new Error("PUBLIC_APP_CONFIG_REQUEST_FAILED");
       if (containsForbiddenPublicConfigPayload(parsed)) {
