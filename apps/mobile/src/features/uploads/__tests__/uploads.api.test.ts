@@ -375,6 +375,44 @@ describe("uploads api", () => {
     ).rejects.toMatchObject({ code: "UPLOADS_INVALID_ID" });
   });
 
+  it("wraps upload network failures in a privacy-safe Korean error", async () => {
+    const fetcher = jest
+      .fn<ReturnType<typeof fetch>, Parameters<typeof fetch>>()
+      .mockRejectedValue(
+        new Error(
+          "network failed for https://api.salaryhijacking.com/upload?salaryAmount=2700000&token=raw",
+        ),
+      );
+    const api = createUploadsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "upload-correlation-network",
+      fetcher,
+      platform: "android",
+    });
+    const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
+
+    await expect(
+      api.directUploadVariableExpenseReceipt({
+        bytes,
+        contentType: "image/png",
+        fileName: "receipt.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.toMatchObject({
+      code: "UPLOADS_NETWORK_ERROR",
+      message: "업로드 요청에 실패했습니다.",
+      status: 0,
+    });
+    await expect(
+      api.directUploadVariableExpenseReceipt({
+        bytes,
+        contentType: "image/png",
+        fileName: "receipt.png",
+        sizeBytes: 4,
+      }),
+    ).rejects.not.toThrow(/salaryAmount|token=raw|2700000/iu);
+  });
+
   it("rejects upload file names whose extension does not match the declared content type", async () => {
     const fetcher = jest.fn<
       ReturnType<typeof fetch>,

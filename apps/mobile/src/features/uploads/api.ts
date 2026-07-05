@@ -459,7 +459,16 @@ export function createUploadsApi(options: UploadsApiOptions): UploadsApiClient {
         "업로드 API 경로가 올바르지 않습니다.",
       );
     }
-    const response = await fetcher(new Request(`${baseUrl}${path}`, init));
+    let response: Response;
+    try {
+      response = await fetcher(new Request(`${baseUrl}${path}`, init));
+    } catch {
+      throw new UploadsApiError(
+        0,
+        "UPLOADS_NETWORK_ERROR",
+        "업로드 요청에 실패했습니다.",
+      );
+    }
     const parsed = await parseJson(response);
     if (!response.ok) {
       throw new UploadsApiError(
