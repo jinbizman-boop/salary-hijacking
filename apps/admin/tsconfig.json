@@ -110,6 +110,8 @@
     ".next/types/**/*.ts",
     "*.config.ts",
     "*.config.mts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
     "vitest.setup.ts",
     "middleware.ts"
   ],
@@ -123,11 +125,6 @@
     ".wrangler",
     "playwright-report",
     "test-results",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "**/__tests__/**",
     "**/__mocks__/**"
   ],
   "references": []

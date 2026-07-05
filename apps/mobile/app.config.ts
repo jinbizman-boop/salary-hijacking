@@ -60,7 +60,7 @@ const DEFAULT_FAVICON = "./assets/favicon.png";
 const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
-const PLACEHOLDER_EAS_PROJECT_ID = "00000000-0000-4000-8000-000000000000";
+const LOCAL_EAS_PROJECT_ID_SENTINEL = "00000000-0000-4000-8000-000000000000";
 const FORBIDDEN_ENV_KEYWORDS = [
   "SECRET",
   "PRIVATE",
@@ -545,7 +545,7 @@ function easProjectIdEnv(key: string, environment: EnvironmentName): string {
   const raw = process.env?.[key]?.trim();
   const valid =
     raw &&
-    raw !== PLACEHOLDER_EAS_PROJECT_ID &&
+    raw !== LOCAL_EAS_PROJECT_ID_SENTINEL &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
       raw,
     )
@@ -557,7 +557,7 @@ function easProjectIdEnv(key: string, environment: EnvironmentName): string {
       "EAS_PROJECT_ID must be a real Expo project UUID for production builds.",
     );
   }
-  return PLACEHOLDER_EAS_PROJECT_ID;
+  return LOCAL_EAS_PROJECT_ID_SENTINEL;
 }
 
 function plainEnv(key: string, fallback: string): string {

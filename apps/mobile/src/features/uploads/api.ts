@@ -141,6 +141,21 @@ const UPLOAD_FILE_EXTENSIONS_BY_CONTENT_TYPE = Object.freeze<
   "image/png": Object.freeze(["png"]),
   "image/webp": Object.freeze(["webp"]),
 });
+function hasForbiddenFileNameControlCharacter(value: string): boolean {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    if (
+      codePoint !== undefined &&
+      (codePoint <= 0x1f ||
+        codePoint === 0x7f ||
+        codePoint === 0x2028 ||
+        codePoint === 0x2029)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 
 function hasSensitiveFileNameTerm(value: string): boolean {
   const normalized = value.toLocaleLowerCase("ko-KR");
@@ -188,7 +203,7 @@ function assertFileNameMatchesContentType(
 
 function safeFileName(value: string): string {
   const trimmed = value.trim();
-  if (/[\u0000-\u001F\u007F\u2028\u2029]/u.test(trimmed)) {
+  if (hasForbiddenFileNameControlCharacter(trimmed)) {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_NAME_CONTROL_FORBIDDEN",

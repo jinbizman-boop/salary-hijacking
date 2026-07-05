@@ -1,15 +1,15 @@
-import type {
-  JsonRecord,
-  PaginationInput,
-  UploadFinalizeInput,
-  UploadScanInput,
-  UploadUpdateInput,
-  UploadsRepository,
-  UploadsRouteRuntime,
-  UploadPrepareInput,
-  UploadListResult,
+import {
+  UPLOADS_API_PREFIX,
+  type JsonRecord,
+  type PaginationInput,
+  type UploadFinalizeInput,
+  type UploadListResult,
+  type UploadPrepareInput,
+  type UploadScanInput,
+  type UploadUpdateInput,
+  type UploadsRepository,
+  type UploadsRouteRuntime,
 } from "../routes/uploads.routes";
-import { UPLOADS_API_PREFIX } from "../routes/uploads.routes";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];

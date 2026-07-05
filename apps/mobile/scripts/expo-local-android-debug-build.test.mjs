@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   buildExpoLocalAndroidDebugInvocations,
   buildSameRootExpoCliGradleSource,
+  buildWindowsSubstAliasPlan,
   checkExpoLocalAndroidDebugPrerequisites,
   runExpoLocalAndroidDebugBuild,
 } from "./expo-local-android-debug-build.mjs";
@@ -76,6 +77,7 @@ test("preflight passes without Expo account auth when Expo CLI, Java, and Androi
   assert.equal(result.env.JAVA_HOME, javaHome);
   assert.equal(result.env.ANDROID_HOME, sdkRoot);
   assert.equal(result.env.ANDROID_SDK_ROOT, sdkRoot);
+  assert.equal(result.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
 });
 
 test("preflight fails when the Expo app config is missing", () => {
@@ -112,6 +114,31 @@ test("preflight fails when the Expo app config is missing", () => {
   assert.match(result.failures.join("\n"), /app\.config\.ts/);
 });
 
+test("plans a short subst build root for long Windows workspace paths", () => {
+  const mobileRootDir =
+    "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\apps\\mobile";
+
+  const plan = buildWindowsSubstAliasPlan({
+    env: {},
+    existsSync(candidate) {
+      return candidate !== "Z:\\";
+    },
+    mobileRootDir,
+    platform: "win32",
+    preferredDriveLetters: ["Z"],
+    rootLengthThreshold: 10,
+  });
+
+  assert.deepEqual(plan, {
+    aliasMobileRootDir: "Z:\\apps\\mobile",
+    aliasRootDir: "Z:\\",
+    aliasScriptPath:
+      "Z:\\apps\\mobile\\scripts\\expo-local-android-debug-build.mjs",
+    drive: "Z",
+    targetRootDir: "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+  });
+});
+
 test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy paths", () => {
   const rootDir = makeWorkspace();
   writeMobileFixture(rootDir);
@@ -142,6 +169,10 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
+    "-Pkotlin.incremental=false",
+    "-Pksp.incremental=false",
+    "-Pksp.incremental.intermodule=false",
+    "-Dkotlin.compiler.execution.strategy=in-process",
     "-x",
     ":app:generateAutolinkingPackageList",
   ]);
@@ -150,6 +181,10 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
+    "-Pkotlin.incremental=false",
+    "-Pksp.incremental=false",
+    "-Pksp.incremental.intermodule=false",
+    "-Dkotlin.compiler.execution.strategy=in-process",
     "-x",
     ":app:generateAutolinkingPackageList",
   ]);
@@ -158,6 +193,10 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "--no-daemon",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
+    "-Pkotlin.incremental=false",
+    "-Pksp.incremental=false",
+    "-Pksp.incremental.intermodule=false",
+    "-Dkotlin.compiler.execution.strategy=in-process",
   ]);
   assert.deepEqual(invocations.reanimatedConfigureArgs, [
     ":react-native-reanimated:configureCMakeDebug[x86_64]",
@@ -232,6 +271,32 @@ test("keeps Expo CLI Gradle path dynamic when roots already match", () => {
   assert.equal(patched, source);
 });
 
+test("pins Expo CLI Gradle path to the canonical root when Metro uses canonical roots on Windows", () => {
+  const source = [
+    "react {",
+    '    cliFile = new File(["node", "--print", "require.resolve(\'@expo/cli\', { paths: [require.resolve(\'expo/package.json\')] })"].execute(null, rootDir).text.trim())',
+    "}",
+    "",
+  ].join("\n");
+
+  const patched = buildSameRootExpoCliGradleSource({
+    canonicalMetroRoot: true,
+    mobileRootDir: "S:\\apps\\mobile",
+    platform: "win32",
+    realMonorepoRootDir:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+    resolvedExpoCliPath:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\@expo+cli@0.24.24\\node_modules\\@expo\\cli\\build\\bin\\cli",
+    source,
+  });
+
+  assert.match(
+    patched,
+    /cliFile = new File\("C:\/Users\/Telos_PC_17\/Desktop\/salary-hijacking-platform\/node_modules\/\.pnpm\/@expo\+cli@0\.24\.24\/node_modules\/@expo\/cli\/build\/bin\/cli"\)/,
+  );
+  assert.doesNotMatch(patched, /S:\//);
+});
+
 test("runner executes prebuild before Gradle and copies a verified APK to the Detox path", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
@@ -279,10 +344,34 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
           ].join("\n"),
         );
         touch(
+          path.join(rootDir, "android", "settings.gradle"),
+          [
+            "pluginManagement {",
+            "  def reactNativeGradlePlugin = new File(",
+            "    providers.exec {",
+            "      workingDir(rootDir)",
+            '      commandLine("node", "--print", "require.resolve(\'@react-native/gradle-plugin/package.json\', { paths: [require.resolve(\'react-native/package.json\')] })")',
+            "    }.standardOutput.asText.get().trim()",
+            "  ).getParentFile().absolutePath",
+            "  def expoPluginsPath = new File(",
+            "    providers.exec {",
+            "      workingDir(rootDir)",
+            '      commandLine("node", "--print", "require.resolve(\'expo-modules-autolinking/package.json\', { paths: [require.resolve(\'expo/package.json\')] })")',
+            "    }.standardOutput.asText.get().trim(),",
+            '    "../android/expo-gradle-plugin"',
+            "  ).absolutePath",
+            "}",
+            "includeBuild(expoAutolinking.reactNativeGradlePlugin)",
+            "",
+          ].join("\n"),
+        );
+        touch(
           path.join(rootDir, "android", "app", "build.gradle"),
           [
+            'def projectRoot = "C:/stale/canonical/mobile-root"',
             "react {",
             '    root = file("../../")',
+            "    root = file(projectRoot)",
             '    entryFile = file("${projectRoot}/apps/mobile/index.android.js")',
             "}",
             "",
@@ -521,9 +610,11 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.equal(calls[4].options.env.ANDROID_HOME, sdkRoot);
   assert.equal(calls[4].options.env.ANDROID_SDK_ROOT, sdkRoot);
   assert.equal(calls[4].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
+  assert.equal(calls[4].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
   assert.match(String(calls[5].command).toLowerCase(), /gradlew/);
   assert.equal(calls[5].args[0], ":app:assembleDebugAndroidTest");
   assert.equal(calls[5].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
+  assert.equal(calls[5].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),
     /sdk\.dir=/,
@@ -554,14 +645,63 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
       path.join(rootDir, "android", "app", "build.gradle"),
       "utf8",
     ),
-    /root = file\("\.\.\/\.\.\/"\)/,
+    /root = file\(projectRoot\)/,
   );
   assert.match(
     fs.readFileSync(
       path.join(rootDir, "android", "app", "build.gradle"),
       "utf8",
     ),
-    /entryFile = file\("\$\{projectRoot\}\/apps\/mobile\/index\.android\.js"\)/,
+    /entryFile = file\("\$\{projectRoot\}\/index\.android\.js"\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /def projectRoot = ".+[\\/]salary-expo-android-.+"/,
+  );
+  assert.doesNotMatch(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /C:\/stale\/canonical\/mobile-root/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /canonicalReactBuildDir/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /jsBundleDir\.set\(new File\(canonicalReactBuildDir, "generated\/assets\/react\/debug"\)\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /resourcesDir\.set\(new File\(canonicalReactBuildDir, "generated\/res\/react\/debug"\)\)/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /createDebugUpdatesResources/,
+  );
+  assert.match(
+    fs.readFileSync(
+      path.join(rootDir, "android", "app", "build.gradle"),
+      "utf8",
+    ),
+    /debuggableVariant\.set\(true\)/,
   );
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
@@ -577,6 +717,18 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "build.gradle"), "utf8"),
     /maven \{ url "\$rootDir\/\.\.\/node_modules\/detox\/Detox-android" \}/,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "android", "settings.gradle"), "utf8"),
+    /environment\("NODE_OPTIONS", ""\)/,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "android", "settings.gradle"), "utf8"),
+    /SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS/,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "android", "settings.gradle"), "utf8"),
+    /salaryHijackingSameRootPath/,
   );
   assert.match(
     fs.readFileSync(
