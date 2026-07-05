@@ -211,7 +211,7 @@ function normalizePlan(value: unknown): PayrollPlanSnapshot {
 
   if (
     typeof value.planId !== "string" ||
-    !value.planId ||
+    !isSafePlanId(value.planId) ||
     typeof value.title !== "string" ||
     typeof value.incomeType !== "string" ||
     typeof value.payrollCycle !== "string" ||

@@ -95,6 +95,24 @@ describe("payroll api", () => {
     expect(JSON.stringify(result)).not.toContain("userId");
   });
 
+  it("rejects unsafe payroll plan ids returned by the server", async () => {
+    const api = createPayrollApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            ...currentPlan,
+            planId: "../plan_2026_07",
+          },
+        }),
+      platform: "android",
+    });
+
+    await expect(api.getCurrent()).rejects.toMatchObject({
+      code: "PAYROLL_INVALID_RESPONSE",
+    });
+  });
+
   it("posts a valid recalculation request and rejects invalid money before network access", async () => {
     const calls: Request[] = [];
     const api = createPayrollApi({
