@@ -101,6 +101,26 @@ describe("profile api", () => {
     expect(PROFILE_SAFE_ERROR_MESSAGE).not.toContain("?꾨줈");
   });
 
+  it("wraps unreadable response bodies in a safe profile API error", async () => {
+    const response = jsonResponse({ data: profilePayload });
+    Object.defineProperty(response, "text", {
+      value: async () => {
+        throw new Error("raw profile stream internal detail");
+      },
+    });
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () => response,
+      platform: "android",
+    });
+
+    await expect(api.getProfile()).rejects.toMatchObject({
+      code: "PROFILE_INVALID_RESPONSE",
+      message: PROFILE_SAFE_ERROR_MESSAGE,
+      status: 200,
+    });
+  });
+
   it("loads the mobile profile payload with privacy headers and redacted identifiers", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({
