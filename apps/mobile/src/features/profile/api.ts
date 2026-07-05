@@ -4,6 +4,7 @@ import {
   PROFILE_ONBOARDING_COMPLETE_PATH,
   PROFILE_PATH,
   PROFILE_PRIVACY_EXPORT_PATH,
+  PROFILE_PRIVACY_EXPORTS_PATH,
   PROFILE_SAFE_ERROR_MESSAGE,
   PROFILE_SUPPORT_TICKETS_PATH,
   PROFILE_WITHDRAWAL_REQUEST_PATH,
@@ -17,6 +18,7 @@ import type {
   ProfileExportStatus,
   ProfileMyPageSummary,
   ProfilePrivacy,
+  ProfilePrivacyExportRecord,
   ProfileSnapshot,
   ProfileSupportTicket,
   ProfileSupportTicketCategory,
@@ -100,6 +102,11 @@ const SUPPORT_RAW_VALUE_PATTERNS = [
   RAW_TOKEN_PATTERN,
   RAW_JWT_PATTERN,
 ] as const;
+const SAFE_EXPORT_DOWNLOAD_HOSTS = new Set([
+  "api.salaryhijacking.com",
+  "salaryhijacking.com",
+  "www.salaryhijacking.com",
+]);
 
 function containsRawSensitiveProfileText(value: string): boolean {
   return (
@@ -242,6 +249,26 @@ function normalizeNullableTimestamp(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (isIsoTimestamp(value)) return value;
   return invalidResponse();
+}
+
+function normalizeSafeExportDownloadUrl(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value !== "string" || !value.trim()) return invalidResponse();
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return invalidResponse();
+  }
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    !SAFE_EXPORT_DOWNLOAD_HOSTS.has(url.hostname)
+  ) {
+    return invalidResponse();
+  }
+  return url.toString();
 }
 
 function normalizeUser(value: unknown): ProfileUser {
@@ -542,6 +569,46 @@ function normalizeSupportTicket(value: unknown): ProfileSupportTicket {
     status: data.status as ProfileSupportTicket["status"],
     subject: data.subject,
   };
+}
+
+function normalizePrivacyExportRecord(
+  value: unknown,
+): ProfilePrivacyExportRecord {
+  if (!isRecord(value)) return invalidResponse();
+  if (
+    value.rawFinancialDataExposed !== false ||
+    value.rawPersonalDataExposed !== false ||
+    value.rawPushTokenExposed !== false ||
+    value.adsFinancialTargetingUsed !== false ||
+    value.financialRawDataIncluded !== false ||
+    value.reason !== undefined ||
+    value.userId !== undefined
+  ) {
+    return invalidResponse();
+  }
+  return {
+    adsFinancialTargetingUsed: false,
+    downloadUrl: normalizeSafeExportDownloadUrl(value.downloadUrl),
+    expiresAt: normalizeNullableTimestamp(value.expiresAt),
+    exportId: normalizeResponseEntityId(value.exportId),
+    financialRawDataIncluded: false,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    requestedAt: isIsoTimestamp(value.requestedAt)
+      ? value.requestedAt
+      : invalidResponse(),
+    status: normalizeExportStatus(value.status),
+  };
+}
+
+function normalizePrivacyExportList(
+  value: unknown,
+): readonly ProfilePrivacyExportRecord[] {
+  if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
+  const items = value.data.items;
+  if (!Array.isArray(items)) return invalidResponse();
+  return items.map(normalizePrivacyExportRecord);
 }
 
 function validActionRequest(value: ProfileActionRequest): boolean {
@@ -920,6 +987,43 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
     return normalizeMyPageSummary(parsed);
   }
 
+  async function listPrivacyExports(): Promise<
+    readonly ProfilePrivacyExportRecord[]
+  > {
+    const headers = new Headers({
+      accept: "application/json",
+      "x-client-platform": options.platform,
+      "x-correlation-id": createCorrelationId(),
+      ...PRIVACY_HEADERS,
+    });
+
+    let response: Response;
+    try {
+      response = await fetcher(
+        new Request(`${baseUrl}${PROFILE_PRIVACY_EXPORTS_PATH}`, {
+          headers,
+          credentials: "include",
+        }),
+      );
+    } catch {
+      throw new ProfileApiError(
+        0,
+        "PROFILE_NETWORK_ERROR",
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+
+    const parsed = await parseJson(response);
+    if (!response.ok) {
+      throw new ProfileApiError(
+        response.status,
+        errorCode(parsed),
+        PROFILE_SAFE_ERROR_MESSAGE,
+      );
+    }
+    return normalizePrivacyExportList(parsed);
+  }
+
   async function requestAccountSettings(
     accountRequest: ProfileAccountSettingsRequest,
   ): Promise<ProfileAccountSettings> {
@@ -995,6 +1099,8 @@ export function createProfileApi(options: ProfileApiOptions): ProfileApiClient {
         method: "POST",
       });
     },
+
+    listPrivacyExports,
 
     requestPrivacyExport(
       profileRequest: ProfileActionRequest,

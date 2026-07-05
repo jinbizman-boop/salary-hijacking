@@ -930,6 +930,61 @@ function exportStatusFromRecord(
   return "REQUESTED";
 }
 
+function mobileSafeExportDownloadUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value.trim()) return null;
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return null;
+  }
+  if (
+    url.protocol !== "https:" ||
+    url.username ||
+    url.password ||
+    ![
+      "api.salaryhijacking.com",
+      "salaryhijacking.com",
+      "www.salaryhijacking.com",
+    ].includes(url.hostname)
+  ) {
+    return null;
+  }
+  return url.toString();
+}
+
+function mobilePrivacyExportRecord(record: JsonRecord, now: Date): JsonRecord {
+  return {
+    adsFinancialTargetingUsed: false,
+    downloadUrl: mobileSafeExportDownloadUrl(record.downloadUrl),
+    expiresAt: safeOptionalString(record.expiresAt),
+    exportId: safeString(record.exportId, ""),
+    financialRawDataIncluded: false,
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    rawPushTokenExposed: false,
+    requestedAt: safeString(record.createdAt, now.toISOString()),
+    status: exportStatusFromRecord(record, now),
+  };
+}
+
+async function mobilePrivacyExportList<TEnv>(
+  rt: UsersRouteRuntime<TEnv>,
+): Promise<JsonRecord> {
+  const exportsList = await rt.repository.listExports(
+    { page: 1, pageSize: 20, offset: 0, limit: 20 },
+    rt,
+  );
+  return {
+    items: exportsList.items.map((item) =>
+      mobilePrivacyExportRecord(item, rt.now),
+    ),
+    page: safeNumber(exportsList.page, 1),
+    pageSize: safeNumber(exportsList.pageSize, 20),
+    total: safeNumber(exportsList.total, exportsList.items.length),
+  };
+}
+
 async function mobileProfilePayload<TEnv>(
   rt: UsersRouteRuntime<TEnv>,
   privacyOverride: Partial<{
@@ -1389,6 +1444,9 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
       }),
     });
   }
+  if (method === "GET" && relativePath === "/me/privacy-exports") {
+    return out(rt, 200, { data: await mobilePrivacyExportList(rt) });
+  }
   if (method === "POST" && relativePath === "/me/support-tickets") {
     const input = supportTicketInput(await body(rt.request));
     const data =
@@ -1637,6 +1695,7 @@ export const usersRoutesManifest = Object.freeze({
     "POST /me/withdraw",
     "POST /me/restore",
     "POST /me/privacy-export",
+    "GET /me/privacy-exports",
     "GET /settings",
     "PUT|PATCH /settings",
     "GET /consents",

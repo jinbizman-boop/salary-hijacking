@@ -298,6 +298,59 @@ describe("mobile profile API contract", () => {
     });
   });
 
+  it("lists mobile privacy exports without raw request reasons or financial payloads", async () => {
+    const app = createProfileContractApp();
+
+    const requestResponse = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/privacy-export", {
+        method: "POST",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({
+          reason: "app-my-page",
+          rawFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          rawPushTokenExposed: false,
+          adsFinancialTargetingUsed: false,
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    expect(requestResponse.status).toBe(202);
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/privacy-exports", {
+        headers: authHeaders,
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly items?: readonly Record<string, unknown>[];
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(Array.isArray(body.data?.items)).toBe(true);
+    for (const item of body.data?.items ?? []) {
+      expect(item).toMatchObject({
+        adsFinancialTargetingUsed: false,
+        financialRawDataIncluded: false,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+      });
+      expect(item).not.toHaveProperty("userId");
+      expect(item).not.toHaveProperty("reason");
+    }
+    expect(JSON.stringify(body.data)).not.toMatch(
+      /app-my-page|salary|expense|saving|hijack|phone|card|account|token/iu,
+    );
+  });
+
   it("accepts a privacy-safe mobile support ticket without echoing sensitive raw data", async () => {
     const app = createProfileContractApp();
 

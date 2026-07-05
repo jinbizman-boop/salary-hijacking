@@ -57,6 +57,7 @@ import type {
 } from "../../features/plan/types";
 import type {
   ProfileActivity,
+  ProfilePrivacyExportRecord,
   ProfileSnapshot,
   ProfileSupportTicketCategory,
 } from "../../features/profile/types";
@@ -6089,11 +6090,21 @@ function ProfileScreen(): React.ReactElement {
   const profileRouter = useRouter();
   const [serverProfileSnapshot, setServerProfileSnapshot] =
     useState<ProfileSnapshot | null>(null);
+  const [latestPrivacyExport, setLatestPrivacyExport] =
+    useState<ProfilePrivacyExportRecord | null>(null);
   const [profileActionPending, setProfileActionPending] = useState<
-    "privacy-export" | "withdrawal" | "logout" | null
+    | "privacy-export"
+    | "privacy-export-download"
+    | "withdrawal"
+    | "logout"
+    | null
   >(null);
   const profileActionInFlightRef = useRef<
-    "privacy-export" | "withdrawal" | "logout" | null
+    | "privacy-export"
+    | "privacy-export-download"
+    | "withdrawal"
+    | "logout"
+    | null
   >(null);
   const [profileToast, setProfileToast] = useState(
     "서버 MY 정보를 확인하는 중이에요.",
@@ -6104,9 +6115,10 @@ function ProfileScreen(): React.ReactElement {
 
     async function hydrateProfile(): Promise<void> {
       try {
-        const [snapshot, myPageSummary] = await Promise.all([
+        const [snapshot, myPageSummary, privacyExports] = await Promise.all([
           profileApi.getProfile(),
           profileApi.getMyPageSummary().catch(() => null),
+          profileApi.listPrivacyExports().catch(() => []),
         ]);
         if (!mounted) return;
         const mergedSnapshot = mergeProfileSnapshotWithMyPageSummary(
@@ -6114,12 +6126,18 @@ function ProfileScreen(): React.ReactElement {
           myPageSummary,
         );
         setServerProfileSnapshot(mergedSnapshot);
+        setLatestPrivacyExport(
+          privacyExports.find(
+            (item) => item.status === "READY" && item.downloadUrl,
+          ) ?? null,
+        );
         setProfileToast(
           `서버 MY 동기화 · 개인정보 보호율 ${snapshot.summary.privacyPassRate}`,
         );
       } catch {
         if (!mounted) return;
         setServerProfileSnapshot(null);
+        setLatestPrivacyExport(null);
         setProfileToast("서버 연결 전이라 앱 기본 MY 정보를 보여줘요.");
       }
     }
@@ -6143,6 +6161,18 @@ function ProfileScreen(): React.ReactElement {
         setProfileToast(
           `내보내기 요청 접수 · 상태 ${snapshot.privacy.exportStatus}`,
         );
+        void profileApi
+          .listPrivacyExports()
+          .then((exportsList) => {
+            setLatestPrivacyExport(
+              exportsList.find(
+                (item) => item.status === "READY" && item.downloadUrl,
+              ) ?? null,
+            );
+          })
+          .catch(() => {
+            setLatestPrivacyExport(null);
+          });
       })
       .catch(() => {
         setProfileToast(
@@ -6154,6 +6184,33 @@ function ProfileScreen(): React.ReactElement {
         setProfileActionPending(null);
       });
   }, [profileApi]);
+
+  const openPrivacyExportDownload = useCallback(() => {
+    if (profileActionInFlightRef.current !== null || !latestPrivacyExport) {
+      return;
+    }
+    if (
+      latestPrivacyExport.status !== "READY" ||
+      !latestPrivacyExport.downloadUrl
+    ) {
+      setProfileToast("내보내기 파일이 아직 준비되지 않았어요.");
+      return;
+    }
+    profileActionInFlightRef.current = "privacy-export-download";
+    setProfileActionPending("privacy-export-download");
+    setProfileToast("개인정보 내보내기 파일을 여는 중이에요.");
+    void WebBrowser.openBrowserAsync(latestPrivacyExport.downloadUrl)
+      .then(() => {
+        setProfileToast("개인정보 내보내기 파일을 안전한 브라우저로 열었어요.");
+      })
+      .catch(() => {
+        setProfileToast("내보내기 파일을 열지 못했어요. 다시 시도해 주세요.");
+      })
+      .finally(() => {
+        profileActionInFlightRef.current = null;
+        setProfileActionPending(null);
+      });
+  }, [latestPrivacyExport]);
 
   const requestWithdrawal = useCallback(() => {
     if (profileActionInFlightRef.current !== null) return;
@@ -6337,6 +6394,17 @@ function ProfileScreen(): React.ReactElement {
           title="개인정보 내보내기"
           meta={`상태 ${profileSnapshot.privacy.exportStatus} · 보호율 ${profileSnapshot.summary.privacyPassRate}`}
         />
+        {latestPrivacyExport ? (
+          <SmallButton
+            disabled={profileActionPending !== null}
+            label={
+              profileActionPending === "privacy-export-download"
+                ? "파일 여는 중"
+                : "내보내기 파일 열기"
+            }
+            onPress={openPrivacyExportDownload}
+          />
+        ) : null}
       </SectionCard>
       <SectionCard>
         <Text style={styles.sectionTitle}>관리 메뉴</Text>

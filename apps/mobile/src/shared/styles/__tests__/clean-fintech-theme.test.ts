@@ -1814,6 +1814,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("serverProfileSnapshot");
     expect(cleanScreens).toContain("profileApi.getProfile");
     expect(cleanScreens).toContain("profileApi.getMyPageSummary");
+    expect(cleanScreens).toContain("profileApi.listPrivacyExports");
+    expect(cleanScreens).toContain("latestPrivacyExport");
+    expect(cleanScreens).toContain("openPrivacyExportDownload");
+    expect(cleanScreens).toContain("WebBrowser.openBrowserAsync");
     expect(cleanScreens).toContain("mergeProfileSnapshotWithMyPageSummary");
     expect(cleanScreens).toContain("requestPrivacyExport");
     expect(cleanScreens).toContain("requestWithdrawalRequest");
@@ -1823,6 +1827,30 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("fallbackProfileSnapshot");
     expect(cleanScreens).toContain("privacyPassRate");
     expect(cleanScreens).toContain("financialDataForAds");
+  });
+
+  it("keeps MY privacy export download available only for safe ready exports", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const profileSource =
+      cleanScreens.match(
+        /function ProfileScreen\(\): React\.ReactElement \{[\s\S]*?export function CleanFintechForgotPasswordScreen/u,
+      )?.[0] ?? "";
+
+    expect(profileSource).toContain("profileApi.listPrivacyExports");
+    expect(profileSource).toContain(
+      'item.status === "READY" && item.downloadUrl',
+    );
+    expect(profileSource).toContain("openPrivacyExportDownload");
+    expect(profileSource).toContain(
+      "void WebBrowser.openBrowserAsync(latestPrivacyExport.downloadUrl)",
+    );
+    expect(profileSource).toContain(
+      'profileActionInFlightRef.current = "privacy-export-download"',
+    );
+    expect(profileSource).not.toContain("export://");
+    expect(profileSource).not.toContain("rawReason");
   });
 
   it("prevents duplicate privacy-sensitive MY actions while one server request is pending", () => {
@@ -1947,7 +1975,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(
       profileSource.match(/disabled=\{profileActionPending !== null\}/gu) ?? [],
-    ).toHaveLength(9);
+    ).toHaveLength(10);
   });
 
   it("keeps MY management menu entries connected to app actions", () => {

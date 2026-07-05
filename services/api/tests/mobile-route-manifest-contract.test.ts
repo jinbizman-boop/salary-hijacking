@@ -38,6 +38,7 @@ describe("mobile route manifest contract", () => {
         "/api/v1/users POST /me/onboarding-complete",
         "/api/v1/users GET /me/my-page-summary",
         "/api/v1/users POST /me/privacy-export",
+        "/api/v1/users GET /me/privacy-exports",
         "/api/v1/users POST /me/support-tickets",
         "/api/v1/users POST /me/withdrawal-request",
         "/api/v1/users POST /me/withdraw",

@@ -68,6 +68,19 @@ export type ProfilePrivacy = Readonly<{
   tokenHashOnly: true;
 }>;
 
+export type ProfilePrivacyExportRecord = Readonly<{
+  adsFinancialTargetingUsed: false;
+  downloadUrl: string | null;
+  expiresAt: string | null;
+  exportId: string;
+  financialRawDataIncluded: false;
+  rawFinancialDataExposed: false;
+  rawPersonalDataExposed: false;
+  rawPushTokenExposed: false;
+  requestedAt: string;
+  status: ProfileExportStatus;
+}>;
+
 export type ProfileActivity = Readonly<{
   id: string;
   kind: "NOTICE" | "SECURITY";
@@ -152,6 +165,7 @@ export type ProfileApiClient = Readonly<{
   requestPrivacyExport: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;
+  listPrivacyExports: () => Promise<readonly ProfilePrivacyExportRecord[]>;
   requestWithdrawalRequest: (
     request: ProfileActionRequest,
   ) => Promise<ProfileSnapshot>;

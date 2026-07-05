@@ -621,6 +621,94 @@ describe("profile api", () => {
     }
   });
 
+  it("lists privacy exports with only safe download links and no raw reasons", async () => {
+    const calls: Request[] = [];
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                adsFinancialTargetingUsed: false,
+                downloadUrl:
+                  "https://api.salaryhijacking.com/api/v1/users/privacy/export/uex_mobile_1/download",
+                expiresAt: "2026-07-06T06:00:00.000Z",
+                exportId: "uex_mobile_1",
+                financialRawDataIncluded: false,
+                rawFinancialDataExposed: false,
+                rawPersonalDataExposed: false,
+                rawPushTokenExposed: false,
+                requestedAt: "2026-07-05T06:00:00.000Z",
+                status: "READY",
+              },
+            ],
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(api.listPrivacyExports()).resolves.toEqual([
+      {
+        adsFinancialTargetingUsed: false,
+        downloadUrl:
+          "https://api.salaryhijacking.com/api/v1/users/privacy/export/uex_mobile_1/download",
+        expiresAt: "2026-07-06T06:00:00.000Z",
+        exportId: "uex_mobile_1",
+        financialRawDataIncluded: false,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        rawPushTokenExposed: false,
+        requestedAt: "2026-07-05T06:00:00.000Z",
+        status: "READY",
+      },
+    ]);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("GET");
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/users/me/privacy-exports",
+    );
+    expect(JSON.stringify(calls)).not.toMatch(
+      /salary|expense|saving|hijack|token|email|phone|card|account/iu,
+    );
+  });
+
+  it("rejects privacy export records with unsafe download URLs or raw fields", async () => {
+    const api = createProfileApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                adsFinancialTargetingUsed: false,
+                downloadUrl: "export://user/raw-export.json",
+                expiresAt: "2026-07-06T06:00:00.000Z",
+                exportId: "uex_mobile_1",
+                financialRawDataIncluded: false,
+                rawFinancialDataExposed: false,
+                rawPersonalDataExposed: false,
+                rawPushTokenExposed: false,
+                reason: "salary 2700000",
+                requestedAt: "2026-07-05T06:00:00.000Z",
+                status: "READY",
+              },
+            ],
+          },
+        }),
+      platform: "android",
+    });
+
+    await expect(api.listPrivacyExports()).rejects.toMatchObject({
+      code: "PROFILE_INVALID_RESPONSE",
+    });
+  });
+
   it("rejects privacy export and withdrawal reasons with raw sensitive values before fetch", async () => {
     const calls: Request[] = [];
     const api = createProfileApi({

@@ -4,6 +4,7 @@ export const PROFILE_MY_PAGE_SUMMARY_PATH = "/api/v1/users/me/my-page-summary";
 export const PROFILE_ONBOARDING_COMPLETE_PATH =
   "/api/v1/users/me/onboarding-complete";
 export const PROFILE_PRIVACY_EXPORT_PATH = "/api/v1/users/me/privacy-export";
+export const PROFILE_PRIVACY_EXPORTS_PATH = "/api/v1/users/me/privacy-exports";
 export const PROFILE_WITHDRAWAL_REQUEST_PATH =
   "/api/v1/users/me/withdrawal-request";
 export const PROFILE_SUPPORT_TICKETS_PATH = "/api/v1/users/me/support-tickets";
