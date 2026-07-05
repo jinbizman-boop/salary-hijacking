@@ -23,10 +23,15 @@ export function BudgetProgressBar({
   const normalized = Number.isFinite(usageRate)
     ? Math.max(0, Math.min(100, usageRate))
     : 0;
+  const readableUsageRate = Math.round(Math.max(0, usageRate));
+  const readableLabel =
+    readableUsageRate > 100
+      ? `${accessibilityLabel} ${readableUsageRate}%, 예산 초과로 막대는 100%까지 표시`
+      : `${accessibilityLabel} ${readableUsageRate}%`;
 
   return (
     <View
-      accessibilityLabel={`${accessibilityLabel} ${Math.round(Math.max(0, usageRate))}%`}
+      accessibilityLabel={readableLabel}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(normalized) }}
       style={styles.track}

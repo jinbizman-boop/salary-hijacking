@@ -44,6 +44,19 @@ describe("budget components", () => {
     expect(onOpenPlan).toHaveBeenCalledTimes(1);
   });
 
+  it("explains capped progress display when today's budget is overspent", () => {
+    const screen = render(<DailyBudgetCard viewModel={viewModel} />);
+    const progress = screen.getByLabelText(
+      "오늘 예산 사용률 120%, 예산 초과로 막대는 100%까지 표시",
+    );
+
+    expect(progress.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 100,
+    });
+  });
+
   it("renders a stable loading skeleton without fake financial values", () => {
     const screen = render(<DailyBudgetCard loading />);
     expect(screen.getByLabelText("오늘 예산을 불러오는 중")).toBeTruthy();
