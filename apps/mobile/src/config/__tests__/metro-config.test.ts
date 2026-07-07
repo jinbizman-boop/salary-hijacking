@@ -66,6 +66,11 @@ type MetroConfig = Readonly<{
 const metroConfig = jest.requireActual<MetroConfig>(
   "../../../metro.config.cjs",
 );
+const testWorkspaceRoot = nodePath.resolve(__dirname, "../../../../..");
+const testMobileAppEntry = nodePath.resolve(
+  __dirname,
+  "../../../index.android.js",
+);
 
 describe("mobile Metro dependency resolution", () => {
   it.each(["react", "react/jsx-runtime", "react-dom/client"])(
@@ -697,12 +702,7 @@ describe("mobile Metro dependency resolution", () => {
     ).toBe("metro-runtime/src/polyfills/require.js");
   });
 
-  it.each([
-    "Y:\\.",
-    "Y:\\/.",
-    "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\.",
-    nodePath.resolve(__dirname, "../../../../..", "."),
-  ])(
+  it.each(["Y:\\.", "Y:\\/.", nodePath.join(testWorkspaceRoot, ".")])(
     "resolves Expo embed's Android entry request from %s to the mobile app entry",
     (originModulePath) => {
       const fallbackResolver = jest.fn(
@@ -726,9 +726,7 @@ describe("mobile Metro dependency resolution", () => {
         "android",
       );
 
-      expect(result.filePath).toBe(
-        nodePath.resolve(__dirname, "../../../index.android.js"),
-      );
+      expect(result.filePath).toBe(testMobileAppEntry);
       expect(fallbackResolver).not.toHaveBeenCalled();
     },
   );
@@ -827,5 +825,50 @@ describe("mobile Metro dependency resolution", () => {
       "Y:\\node_modules\\.pnpm\\react-native@0.79.6_@babel+_25298183c8e6628aad67694d9b4d5b80\\node_modules\\react-native\\Libraries\\Core\\InitializeCore.js",
       "Y:\\node_modules\\.pnpm\\expo@53.0.27_@babel+core@7._58972726df8949216eb9f197e4fc2390\\node_modules\\expo\\src\\winter\\index.ts",
     ]);
+  });
+
+  it("keeps Windows subst Android entry fallback working when loaded on a Linux CI runner", () => {
+    const originalPlatform = process.platform;
+
+    jest.resetModules();
+    Object.defineProperty(process, "platform", {
+      configurable: true,
+      value: "linux",
+    });
+
+    try {
+      const linuxLoadedMetroConfig = jest.requireActual<MetroConfig>(
+        "../../../metro.config.cjs",
+      );
+      const fallbackResolver = jest.fn(
+        (
+          _context: ResolverContext,
+          resolvedModuleName: string,
+          _platform: string | null,
+        ): Resolution => ({
+          type: "sourceFile",
+          filePath: resolvedModuleName,
+        }),
+      );
+      const context: ResolverContext = {
+        originModulePath: "Y:\\.",
+        resolveRequest: fallbackResolver,
+      };
+
+      const result = linuxLoadedMetroConfig.resolver.resolveRequest(
+        context,
+        "./index.android.js",
+        "android",
+      );
+
+      expect(result.filePath).toBe(testMobileAppEntry);
+      expect(fallbackResolver).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(process, "platform", {
+        configurable: true,
+        value: originalPlatform,
+      });
+      jest.resetModules();
+    }
   });
 });

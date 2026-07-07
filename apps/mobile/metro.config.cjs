@@ -39,8 +39,8 @@ function shouldAppendCanonicalNodeModules(
 ) {
   if (platform !== "win32") return true;
   return (
-    normalizeForPrefix(aliasWorkspaceRoot) ===
-    normalizeForPrefix(canonicalWorkspaceRoot)
+    normalizeForPrefix(aliasWorkspaceRoot, platform) ===
+    normalizeForPrefix(canonicalWorkspaceRoot, platform)
   );
 }
 
@@ -246,8 +246,12 @@ function isReactNativeRuntimeDependency(moduleName) {
   );
 }
 
-function normalizeForPrefix(value) {
-  return path
+function pathForPlatform(platform = process.platform) {
+  return platform === "win32" ? path.win32 : path;
+}
+
+function normalizeForPrefix(value, platform = process.platform) {
+  return pathForPlatform(platform)
     .resolve(value)
     .replace(/[\\/]+$/u, "")
     .toLowerCase();
@@ -259,21 +263,25 @@ function mapToWorkspaceAliasRoot(
   canonicalWorkspaceRoot,
   platform = process.platform,
 ) {
-  if (!path.isAbsolute(filePath)) return filePath;
+  const pathApi = pathForPlatform(platform);
+  if (!pathApi.isAbsolute(filePath)) return filePath;
   if (platform !== "win32") return filePath;
-  const normalizedFilePath = normalizeForPrefix(filePath);
-  const normalizedAliasRoot = normalizeForPrefix(aliasWorkspaceRoot);
-  const normalizedCanonicalRoot = normalizeForPrefix(canonicalWorkspaceRoot);
+  const normalizedFilePath = normalizeForPrefix(filePath, platform);
+  const normalizedAliasRoot = normalizeForPrefix(aliasWorkspaceRoot, platform);
+  const normalizedCanonicalRoot = normalizeForPrefix(
+    canonicalWorkspaceRoot,
+    platform,
+  );
   if (normalizedAliasRoot === normalizedCanonicalRoot) return filePath;
   if (
     normalizedFilePath !== normalizedCanonicalRoot &&
-    !normalizedFilePath.startsWith(`${normalizedCanonicalRoot}${path.sep}`)
+    !normalizedFilePath.startsWith(`${normalizedCanonicalRoot}${pathApi.sep}`)
   ) {
     return filePath;
   }
-  return path.join(
+  return pathApi.join(
     aliasWorkspaceRoot,
-    path.relative(canonicalWorkspaceRoot, filePath),
+    pathApi.relative(canonicalWorkspaceRoot, filePath),
   );
 }
 
@@ -283,21 +291,25 @@ function mapToCanonicalWorkspaceRoot(
   canonicalWorkspaceRoot,
   platform = process.platform,
 ) {
-  if (!path.isAbsolute(filePath)) return filePath;
+  const pathApi = pathForPlatform(platform);
+  if (!pathApi.isAbsolute(filePath)) return filePath;
   if (platform !== "win32") return filePath;
-  const normalizedFilePath = normalizeForPrefix(filePath);
-  const normalizedAliasRoot = normalizeForPrefix(aliasWorkspaceRoot);
-  const normalizedCanonicalRoot = normalizeForPrefix(canonicalWorkspaceRoot);
+  const normalizedFilePath = normalizeForPrefix(filePath, platform);
+  const normalizedAliasRoot = normalizeForPrefix(aliasWorkspaceRoot, platform);
+  const normalizedCanonicalRoot = normalizeForPrefix(
+    canonicalWorkspaceRoot,
+    platform,
+  );
   if (normalizedAliasRoot === normalizedCanonicalRoot) return filePath;
   if (
     normalizedFilePath !== normalizedAliasRoot &&
-    !normalizedFilePath.startsWith(`${normalizedAliasRoot}${path.sep}`)
+    !normalizedFilePath.startsWith(`${normalizedAliasRoot}${pathApi.sep}`)
   ) {
     return filePath;
   }
-  return path.join(
+  return pathApi.join(
     canonicalWorkspaceRoot,
-    path.relative(aliasWorkspaceRoot, filePath),
+    pathApi.relative(aliasWorkspaceRoot, filePath),
   );
 }
 
@@ -506,10 +518,13 @@ function isWindowsDriveRootOrigin(
   originModulePath,
   platform = process.platform,
 ) {
-  if (platform !== "win32" || !originModulePath) return false;
+  if (!originModulePath) return false;
   const normalizedOrigin = originModulePath
     .replace(/[\\/]+/gu, "\\")
     .replace(/\\\.$/u, "\\");
+  if (platform !== "win32" && !/^[A-Za-z]:/u.test(normalizedOrigin)) {
+    return false;
+  }
   return /^[A-Za-z]:\\?$/u.test(normalizedOrigin);
 }
 
