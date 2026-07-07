@@ -47,6 +47,8 @@ test("creates pnpm shims and prepends them to PATH", async () => {
     assert.match(unixShimSource, /PATH_WITHOUT_SHIM/);
     assert.match(unixShimSource, /command -v pnpm/);
     assert.match(unixCorepackShimSource, /PATH_WITHOUT_SHIM/);
+    assert.match(unixCorepackShimSource, /command -v pnpm/);
+    assert.match(unixCorepackShimSource, /exec pnpm "\$@"/);
     assert.match(unixCorepackShimSource, /exec corepack pnpm/);
     assert.equal(env.PATH?.split(path.delimiter)[0], binDir);
     assert.equal(env.Path?.split(path.delimiter)[0], binDir);

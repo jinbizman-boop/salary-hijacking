@@ -223,7 +223,7 @@ describe("mobile Metro dependency resolution", () => {
     const context: ResolverContext = {
       resolveRequest: fallbackResolver,
     };
-    const absoluteMetroConfigEntry = require.resolve("@expo/metro-config");
+    const absoluteMetroConfigEntry = require.resolve("expo/metro-config");
 
     const result = metroConfig.resolver.resolveRequest(
       context,
@@ -442,7 +442,6 @@ describe("mobile Metro dependency resolution", () => {
     "expo-json-utils",
     "expo-keep-awake",
     "expo-manifests",
-    "expo-modules-core",
     "expo-updates-interface",
     "@expo/image-utils",
     "@ide/backoff",
@@ -494,8 +493,6 @@ describe("mobile Metro dependency resolution", () => {
 
   it.each([
     "@expo/schema-utils",
-    "@expo/metro-config",
-    "@expo/metro-config/package.json",
     "@expo/server",
     "@radix-ui/react-compose-refs",
     "@radix-ui/react-slot",

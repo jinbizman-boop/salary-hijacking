@@ -93,7 +93,6 @@ function isExpoRouterRuntime(moduleName) {
 }
 
 const expoRouterDependencyPackages = new Set([
-  "@expo/metro-config",
   "@expo/schema-utils",
   "@expo/server",
   "@radix-ui/react-compose-refs",
@@ -148,7 +147,6 @@ const expoCoreRuntimePackages = new Set([
   "expo-json-utils",
   "expo-keep-awake",
   "expo-manifests",
-  "expo-modules-core",
   "expo-updates-interface",
   "@expo/image-utils",
   "@ide/backoff",
