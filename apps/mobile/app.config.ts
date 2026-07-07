@@ -58,6 +58,8 @@ const DEFAULT_SPLASH = "./assets/splash.png";
 const DEFAULT_ADAPTIVE_ICON = "./assets/adaptive-icon.png";
 const DEFAULT_FAVICON = "./assets/favicon.png";
 const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
+const DEFAULT_ANDROID_GOOGLE_SERVICES_FILE =
+  "./secrets/firebase/google-services.json";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
 const LOCAL_EAS_PROJECT_ID_SENTINEL = "00000000-0000-4000-8000-000000000000";
@@ -211,6 +213,10 @@ function androidConfig(versionCode: number): JsonRecord {
   return {
     package: plainEnv("ANDROID_PACKAGE", DEFAULT_ANDROID_PACKAGE),
     versionCode,
+    googleServicesFile: localFilePathEnv(
+      "GOOGLE_SERVICES_FILE",
+      DEFAULT_ANDROID_GOOGLE_SERVICES_FILE,
+    ),
     adaptiveIcon: {
       foregroundImage: assetPathEnv(
         "EXPO_PUBLIC_ANDROID_ADAPTIVE_ICON",
@@ -446,6 +452,7 @@ function assertAppConfigCompleteness(config: ExpoConfig): void {
     config.version,
     config.ios.bundleIdentifier,
     config.android.package,
+    config.android.googleServicesFile,
     config.extra.api,
     config.extra.privacy,
     config.extra.ads,
@@ -578,6 +585,19 @@ function assetPathEnv(key: string, fallback: string): string {
     raw.startsWith("https://")
     ? raw
     : fallback;
+}
+
+function localFilePathEnv(key: string, fallback: string): string {
+  const raw = process.env?.[key]?.trim();
+  const value = raw ? raw.replace(/\\/g, "/") : fallback;
+  const safe =
+    !value.includes("\0") &&
+    !/[\r\n\t]/u.test(value) &&
+    !value.includes("://") &&
+    (value.startsWith("./") ||
+      value.startsWith("../") ||
+      value.startsWith("/"));
+  return safe ? value.slice(0, 240) : fallback;
 }
 
 function httpsUrlEnv(key: string, fallback: string): string {

@@ -155,6 +155,31 @@ describe("mobile Detox E2E contract", () => {
     }
   });
 
+  it("keeps Android Firebase google-services configuration on a local ignored file path", () => {
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "development",
+      GOOGLE_SERVICES_FILE: "https://example.com/google-services.json",
+    };
+    const defaultConfig = appConfig({ config: {} });
+
+    expect(defaultConfig.android.googleServicesFile).toBe(
+      "./secrets/firebase/google-services.json",
+    );
+    expect(readRequiredText(".gitignore")).toContain("**/google-services.json");
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "development",
+      GOOGLE_SERVICES_FILE: "./secrets/firebase/google-services.staging.json",
+    };
+    const overriddenConfig = appConfig({ config: {} });
+
+    expect(overriddenConfig.android.googleServicesFile).toBe(
+      "./secrets/firebase/google-services.staging.json",
+    );
+  });
+
   it("fails production app config when the EAS project id is missing or still the placeholder", () => {
     process.env = {
       ...originalEnv,
