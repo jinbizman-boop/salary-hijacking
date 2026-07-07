@@ -55,6 +55,14 @@
     "deploy:api": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy:api",
     "deploy:admin": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy:admin",
     "deploy:mobile": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run deploy:mobile",
+    "deploy:cloudflare-api": "corepack pnpm --filter @salary-hijacking/api run deploy:production",
+    "deploy:cloudflare-notifications": "corepack pnpm --filter @salary-hijacking/notifications run deploy:production",
+    "deploy:cloudflare-scheduler": "corepack pnpm --filter @salary-hijacking/scheduler run deploy:production",
+    "deploy:cloudflare-workers": "corepack pnpm run deploy:cloudflare-api && corepack pnpm run deploy:cloudflare-notifications && corepack pnpm run deploy:cloudflare-scheduler",
+    "deploy:cloudflare-api:dry-run": "corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml",
+    "deploy:cloudflare-notifications:dry-run": "corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml",
+    "deploy:cloudflare-scheduler:dry-run": "corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml",
+    "deploy:cloudflare-workers:dry-run": "corepack pnpm run deploy:cloudflare-api:dry-run && corepack pnpm run deploy:cloudflare-notifications:dry-run && corepack pnpm run deploy:cloudflare-scheduler:dry-run",
     "release": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run release",
     "release:database-evidence": "node scripts/release/generate-database-evidence.mjs",
     "release:database-proof": "node scripts/release/collect-database-proof.mjs",
@@ -100,7 +108,8 @@
     "rimraf": "^6.0.1",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.2"
+    "vitest": "^3.2.2",
+    "wrangler": "^4.107.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -71,6 +71,132 @@ function usesCorepackPnpmShimRunner(script) {
   return script.includes("scripts/dev/run-with-corepack-pnpm.mjs turbo run");
 }
 
+const CLOUDFLARE_DEPLOY_SCRIPT_REQUIREMENTS = {
+  "deploy:cloudflare-api": [
+    "--filter @salary-hijacking/api",
+    "run deploy:production",
+  ],
+  "deploy:cloudflare-notifications": [
+    "--filter @salary-hijacking/notifications",
+    "run deploy:production",
+  ],
+  "deploy:cloudflare-scheduler": [
+    "--filter @salary-hijacking/scheduler",
+    "run deploy:production",
+  ],
+};
+
+const CLOUDFLARE_DRY_RUN_SCRIPT_REQUIREMENTS = {
+  "deploy:cloudflare-api:dry-run": [
+    "--filter @salary-hijacking/api",
+    "exec wrangler deploy --dry-run --env production --config wrangler.toml",
+  ],
+  "deploy:cloudflare-notifications:dry-run": [
+    "--filter @salary-hijacking/notifications",
+    "exec wrangler deploy --dry-run --env production --config wrangler.toml",
+  ],
+  "deploy:cloudflare-scheduler:dry-run": [
+    "--filter @salary-hijacking/scheduler",
+    "exec wrangler deploy --dry-run --env production --config wrangler.toml",
+  ],
+};
+
+function checkRootCloudflareDeployEntrypoints(
+  relativePath,
+  packageJson,
+  failures,
+) {
+  if (relativePath !== "package.json") return;
+
+  const keywords = Array.isArray(packageJson.keywords)
+    ? packageJson.keywords.filter((keyword) => typeof keyword === "string")
+    : [];
+  const isSalaryHijackingRoot =
+    packageJson.name === "salary-hijacking-platform" ||
+    (keywords.includes("salary-hijacking") &&
+      keywords.includes("cloudflare-workers"));
+  if (!isSalaryHijackingRoot) return;
+
+  const scripts = packageJson.scripts ?? {};
+  const devDependencies = packageJson.devDependencies ?? {};
+
+  if (typeof devDependencies.wrangler !== "string") {
+    failures.push(
+      `${relativePath}: root devDependencies.wrangler is required so Cloudflare build images can resolve Wrangler without npx fallback`,
+    );
+  }
+
+  for (const [scriptName, requiredParts] of Object.entries({
+    ...CLOUDFLARE_DEPLOY_SCRIPT_REQUIREMENTS,
+    ...CLOUDFLARE_DRY_RUN_SCRIPT_REQUIREMENTS,
+  })) {
+    const scriptValue = scripts[scriptName];
+    if (typeof scriptValue !== "string") {
+      failures.push(
+        `${relativePath} scripts.${scriptName}: missing Cloudflare Worker deploy script`,
+      );
+      continue;
+    }
+
+    for (const requiredPart of requiredParts) {
+      if (scriptValue.includes(requiredPart)) continue;
+      failures.push(
+        `${relativePath} scripts.${scriptName}: must include "${requiredPart}"`,
+      );
+    }
+  }
+
+  const aggregateDeploy = scripts["deploy:cloudflare-workers"];
+  if (typeof aggregateDeploy !== "string") {
+    failures.push(
+      `${relativePath} scripts.deploy:cloudflare-workers: missing aggregate Worker deploy script`,
+    );
+  } else {
+    for (const scriptName of Object.keys(
+      CLOUDFLARE_DEPLOY_SCRIPT_REQUIREMENTS,
+    )) {
+      if (aggregateDeploy.includes(`run ${scriptName}`)) continue;
+      failures.push(
+        `${relativePath} scripts.deploy:cloudflare-workers: must delegate to ${scriptName}`,
+      );
+    }
+
+    if (
+      /npx\s+wrangler\s+deploy|(?:^|&&|\|\||;|\()\s*wrangler\s+deploy/.test(
+        aggregateDeploy,
+      )
+    ) {
+      failures.push(
+        `${relativePath} scripts.deploy:cloudflare-workers: must not run a single root wrangler deploy; delegate to Worker-specific scripts`,
+      );
+    }
+  }
+
+  const aggregateDryRun = scripts["deploy:cloudflare-workers:dry-run"];
+  if (typeof aggregateDryRun !== "string") {
+    failures.push(
+      `${relativePath} scripts.deploy:cloudflare-workers:dry-run: missing aggregate Worker dry-run deploy script`,
+    );
+  } else {
+    for (const scriptName of Object.keys(
+      CLOUDFLARE_DRY_RUN_SCRIPT_REQUIREMENTS,
+    )) {
+      if (aggregateDryRun.includes(`run ${scriptName}`)) continue;
+      failures.push(
+        `${relativePath} scripts.deploy:cloudflare-workers:dry-run: must delegate to ${scriptName}`,
+      );
+    }
+  }
+
+  for (const [scriptName, scriptValue] of Object.entries(scripts)) {
+    if (typeof scriptValue !== "string") continue;
+    if (!/npx\s+wrangler\s+deploy/.test(scriptValue)) continue;
+    failures.push(
+      `${relativePath} scripts.${scriptName}: npx wrangler deploy is not allowed; use pnpm exec wrangler through Worker-specific scripts`,
+    );
+  }
+}
+
 export function runPackageManagerScriptCheck(options = {}) {
   const rootDir = options.rootDir ?? process.cwd();
   const failures = [];
@@ -114,6 +240,8 @@ export function runPackageManagerScriptCheck(options = {}) {
         );
       }
     }
+
+    checkRootCloudflareDeployEntrypoints(relativePath, packageJson, failures);
   }
 
   return {

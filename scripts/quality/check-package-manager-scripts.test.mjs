@@ -146,8 +146,91 @@ test("passes when root turbo scripts use the corepack pnpm shim runner", async (
   try {
     await writeJson(path.join(rootDir, "package.json"), {
       packageManager: "pnpm@10.0.0",
+      devDependencies: {
+        wrangler: "^4.0.0",
+      },
       scripts: {
         build: "node scripts/dev/run-with-corepack-pnpm.mjs turbo run build",
+        "deploy:cloudflare-api":
+          "corepack pnpm --filter @salary-hijacking/api run deploy:production",
+        "deploy:cloudflare-notifications":
+          "corepack pnpm --filter @salary-hijacking/notifications run deploy:production",
+        "deploy:cloudflare-scheduler":
+          "corepack pnpm --filter @salary-hijacking/scheduler run deploy:production",
+        "deploy:cloudflare-workers":
+          "corepack pnpm run deploy:cloudflare-api && corepack pnpm run deploy:cloudflare-notifications && corepack pnpm run deploy:cloudflare-scheduler",
+        "deploy:cloudflare-api:dry-run":
+          "corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml",
+        "deploy:cloudflare-notifications:dry-run":
+          "corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml",
+        "deploy:cloudflare-scheduler:dry-run":
+          "corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml",
+        "deploy:cloudflare-workers:dry-run":
+          "corepack pnpm run deploy:cloudflare-api:dry-run && corepack pnpm run deploy:cloudflare-notifications:dry-run && corepack pnpm run deploy:cloudflare-scheduler:dry-run",
+      },
+    });
+
+    const result = runPackageManagerScriptCheck({ rootDir });
+
+    assert.equal(result.ok, true, result.failures.join("\n"));
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when root Cloudflare Worker deploy entrypoints are missing", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
+
+  try {
+    await writeJson(path.join(rootDir, "package.json"), {
+      packageManager: "pnpm@10.0.0",
+      name: "salary-hijacking-platform",
+      scripts: {
+        deploy: "npx wrangler deploy",
+      },
+    });
+
+    const result = runPackageManagerScriptCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /root devDependencies\.wrangler/);
+    assert.match(result.failures.join("\n"), /deploy:cloudflare-workers/);
+    assert.match(
+      result.failures.join("\n"),
+      /npx wrangler deploy is not allowed/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("passes when root Cloudflare Worker deploy entrypoints are split by Worker", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
+
+  try {
+    await writeJson(path.join(rootDir, "package.json"), {
+      packageManager: "pnpm@10.0.0",
+      name: "salary-hijacking-platform",
+      devDependencies: {
+        wrangler: "^4.0.0",
+      },
+      scripts: {
+        "deploy:cloudflare-api":
+          "corepack pnpm --filter @salary-hijacking/api run deploy:production",
+        "deploy:cloudflare-notifications":
+          "corepack pnpm --filter @salary-hijacking/notifications run deploy:production",
+        "deploy:cloudflare-scheduler":
+          "corepack pnpm --filter @salary-hijacking/scheduler run deploy:production",
+        "deploy:cloudflare-workers":
+          "corepack pnpm run deploy:cloudflare-api && corepack pnpm run deploy:cloudflare-notifications && corepack pnpm run deploy:cloudflare-scheduler",
+        "deploy:cloudflare-api:dry-run":
+          "corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml",
+        "deploy:cloudflare-notifications:dry-run":
+          "corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml",
+        "deploy:cloudflare-scheduler:dry-run":
+          "corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml",
+        "deploy:cloudflare-workers:dry-run":
+          "corepack pnpm run deploy:cloudflare-api:dry-run && corepack pnpm run deploy:cloudflare-notifications:dry-run && corepack pnpm run deploy:cloudflare-scheduler:dry-run",
       },
     });
 

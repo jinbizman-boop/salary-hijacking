@@ -86,6 +86,30 @@ corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-ru
 corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --dry-run --env production --config wrangler.jsonc
 ```
 
+For Cloudflare connected-repository deployments that execute from the monorepo
+root, do not use `npx wrangler deploy` or a single root `wrangler deploy`.
+There is no root Worker config, and each runtime Worker has its own
+`wrangler.toml`. The root deploy command for API, notifications, and scheduler
+Workers is:
+
+```sh
+pnpm run deploy:cloudflare-workers
+```
+
+The matching no-write validation command is:
+
+```sh
+pnpm run deploy:cloudflare-workers:dry-run
+```
+
+Those root scripts delegate to:
+
+```powershell
+corepack pnpm --filter @salary-hijacking/api run deploy:production
+corepack pnpm --filter @salary-hijacking/notifications run deploy:production
+corepack pnpm --filter @salary-hijacking/scheduler run deploy:production
+```
+
 Admin OpenNext dry-run requires a successful local OpenNext build first:
 
 ```powershell

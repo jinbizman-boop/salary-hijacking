@@ -48,9 +48,9 @@
   },
   "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "dev": "wrangler dev --local --persist-to ../../.wrangler/state --config wrangler.toml",
+    "dev": "corepack pnpm exec wrangler dev --local --persist-to ../../.wrangler/state --config wrangler.toml",
     "start": "corepack pnpm run dev",
-    "preview": "wrangler dev --remote --config wrangler.toml",
+    "preview": "corepack pnpm exec wrangler dev --remote --config wrangler.toml",
     "build": "corepack pnpm run clean:dist && corepack pnpm run typecheck && corepack pnpm run build:js && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run build:verify",
     "build:notifications": "corepack pnpm run build",
     "build:js": "tsc --project tsconfig.json --noEmit false --incremental false",
@@ -74,15 +74,15 @@
     "privacy:check": "node -e \"const pkg=require('./package.json'); const text=JSON.stringify(pkg); for (const marker of ['token-hash-only','raw-financial-data-not-logged','ads-financial-targeting-forbidden']) if(!text.includes(marker)) throw new Error('privacy marker missing: '+marker); console.log('notifications privacy contract ok')\"",
     "security:scan": "node ../../scripts/security/offline-package-security-scan.mjs",
     "security:audit": "corepack pnpm audit --audit-level=high --prod=false",
-    "wrangler:types": "wrangler types src/worker-configuration.d.ts --config wrangler.toml",
-    "deploy": "corepack pnpm run build && wrangler deploy --config wrangler.toml",
+    "wrangler:types": "corepack pnpm exec wrangler types src/worker-configuration.d.ts --config wrangler.toml",
+    "deploy": "corepack pnpm run build && corepack pnpm exec wrangler deploy --config wrangler.toml",
     "deploy:notifications": "corepack pnpm run deploy",
-    "deploy:staging": "corepack pnpm run build && wrangler deploy --env staging --config wrangler.toml",
-    "deploy:production": "corepack pnpm run build && wrangler deploy --env production --config wrangler.toml",
-    "tail": "wrangler tail --config wrangler.toml",
+    "deploy:staging": "corepack pnpm run build && corepack pnpm exec wrangler deploy --env staging --config wrangler.toml",
+    "deploy:production": "corepack pnpm run build && corepack pnpm exec wrangler deploy --env production --config wrangler.toml",
+    "tail": "corepack pnpm exec wrangler tail --config wrangler.toml",
     "clean": "rimraf dist coverage .turbo test-results .wrangler/tmp tsconfig.tsbuildinfo",
     "clean:dist": "rimraf dist",
-    "doctor": "node --version && corepack pnpm --version && wrangler --version && corepack pnpm run typecheck:strict && corepack pnpm run privacy:check"
+    "doctor": "node --version && corepack pnpm --version && corepack pnpm exec wrangler --version && corepack pnpm run typecheck:strict && corepack pnpm run privacy:check"
   },
   "dependencies": {},
   "devDependencies": {
