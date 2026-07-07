@@ -64,6 +64,59 @@ test("api bootstrap worker exposes release-safe ready and server-authority smoke
   assert.match(smokeText, /"rawAmountsReturned":false/);
 });
 
+test("api bootstrap worker exposes public app and legal HTML pages for store review proof", async () => {
+  const mod = await importGeneratedWorker("salary-hijacking-api");
+  const worker = mod.default;
+
+  const cases = [
+    [
+      "/",
+      ["급여납치", "이번 달 내가 지켜낸 돈", "/privacy", "/support", "/terms"],
+    ],
+    ["/privacy", ["급여납치", "개인정보"]],
+    ["/support", ["급여납치", "지원"]],
+    ["/terms", ["급여납치", "이용약관"]],
+  ];
+
+  for (const [path, requiredText] of cases) {
+    const response = await worker.fetch(
+      new Request(`https://salaryhijacking.com${path}`, {
+        headers: { accept: "text/html" },
+      }),
+      {},
+      {},
+    );
+    const text = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(
+      response.headers.get("content-type") ?? "",
+      /text\/html; charset=utf-8/,
+    );
+    assert.match(
+      response.headers.get("content-security-policy") ?? "",
+      /default-src 'self'/,
+    );
+    assert.equal(response.headers.get("x-financial-raw-data-exposed"), "false");
+    assert.equal(response.headers.get("x-ad-financial-targeting"), "separated");
+    assert.equal(response.headers.has("x-server-authority"), false);
+    assert.equal(response.headers.has("permissions-policy"), false);
+    assert.equal(response.headers.has("x-raw-push-token-exposed"), false);
+    assert.doesNotMatch(text, /noindex/i);
+    assert.doesNotMatch(
+      text,
+      /salaryAmount|expenseAmount|savingAmount|hijackAmount|authToken|refreshToken|sessionToken|pushToken|DATABASE_URL|JWT_SECRET|PRIVATE_KEY/i,
+    );
+
+    for (const item of requiredText) {
+      assert.match(
+        text,
+        new RegExp(item.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      );
+    }
+  }
+});
+
 test("admin bootstrap worker exposes admin ready path with RBAC and audit boundary proof", async () => {
   const mod = await importGeneratedWorker("salary-hijacking-admin");
   const worker = mod.default;
