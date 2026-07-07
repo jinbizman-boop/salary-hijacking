@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 const ADMIN_SERVICE_NAME = "salary-hijacking-admin";
 const ADMIN_API_PREFIX = "/admin/api/v1";

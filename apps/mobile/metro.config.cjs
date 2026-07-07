@@ -546,6 +546,16 @@ function tryResolveWindowsDriveRootEntry(moduleName, originModulePath) {
   return fs.existsSync(entryFilePath) ? entryFilePath : null;
 }
 
+function isReactNativeModuleRequest(moduleName) {
+  return (
+    moduleName === "react-native" || moduleName.startsWith("react-native/")
+  );
+}
+
+function shouldDelegateReactNativeWebResolution(moduleName, platform) {
+  return platform === "web" && isReactNativeModuleRequest(moduleName);
+}
+
 function resolveReactNativePlatformModule(moduleName, platform) {
   if (
     !platform ||
@@ -600,6 +610,12 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   );
   if (windowsDriveRootEntry !== null) {
     return toWorkspaceSourceFile(windowsDriveRootEntry);
+  }
+
+  if (shouldDelegateReactNativeWebResolution(moduleName, platform)) {
+    return toWorkspaceResolution(
+      context.resolveRequest(context, moduleName, platform),
+    );
   }
 
   const originResolvedModule = tryResolveFromOriginModule(
@@ -678,6 +694,7 @@ Object.defineProperty(config, "__private", {
     patchMetroSerializerPolyfills,
     tryResolveWindowsDriveRootEntry,
     shouldAppendCanonicalNodeModules,
+    shouldDelegateReactNativeWebResolution,
   },
 });
 

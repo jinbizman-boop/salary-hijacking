@@ -126,6 +126,36 @@ describe("mobile Metro dependency resolution", () => {
     expect(fallbackResolver).toHaveBeenCalledWith(context, "zod", "web");
   });
 
+  it("delegates React Native package resolution on web so Expo can alias react-native-web", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: `${resolvedModuleName}:from-expo-web-resolver`,
+      }),
+    );
+    const context: ResolverContext = {
+      originModulePath: require.resolve("expo-router/entry"),
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(
+      context,
+      "react-native",
+      "web",
+    );
+
+    expect(result.filePath).toBe("react-native:from-expo-web-resolver");
+    expect(fallbackResolver).toHaveBeenCalledWith(
+      context,
+      "react-native",
+      "web",
+    );
+  });
+
   it("keeps delegated fallback source files valid when no Windows subst root is active", () => {
     const fallbackResolver = jest.fn(
       (

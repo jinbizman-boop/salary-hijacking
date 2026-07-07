@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { GET } from "../../src/app/api/v1/ready/route";
+import { GET, runtime } from "../../src/app/api/v1/ready/route";
 
 describe("GET /admin/api/v1/ready", () => {
+  it("uses the OpenNext-compatible Node.js runtime", () => {
+    expect(runtime).toBe("nodejs");
+  });
+
   it("returns a bearer-free admin smoke payload with privacy and server-authority signals", async () => {
     const response = await GET(
       new Request("https://admin.salaryhijacking.com/admin/api/v1/ready", {
