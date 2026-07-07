@@ -124,32 +124,36 @@ normalized with:
 - `corepack pnpm run release:cloudflare-proof`
 
 The proof collector reads `release/cloudflare-observation.local.json` and writes
-only booleans to `release/cloudflare-proof.local.json`. The local observation
-file is ignored by Git and may contain only expected Worker names, resource
-presence flags, observed Queue counts, expected hostnames, certificate status
-flags, and non-secret notes. It must not contain Cloudflare credentials, Worker
-script bodies, binding values, certificate material, private keys, API response
-payloads, or copied provider logs. The collector rejects observed custom-domain
-and TLS certificate hostnames outside the Salary Hijacking custom-domain set
-before writing local proof. If the ignored local observation file is absent, the
-collector writes a blocked no-secret proof with all runtime booleans false so
-automation can continue to tracked evidence generation without making a false
-runtime readiness claim.
+booleans plus Worker secret binding names to
+`release/cloudflare-proof.local.json`. The local observation file is ignored by
+Git and may contain only expected Worker names, expected Worker secret names,
+resource presence flags, observed Queue counts, expected hostnames, certificate
+status flags, and non-secret notes. It must not contain Cloudflare credentials,
+Worker script bodies, binding values, certificate material, private keys, API
+response payloads, or copied provider logs. The collector rejects observed
+custom-domain and TLS certificate hostnames outside the Salary Hijacking
+custom-domain set, and it rejects raw Worker secret payload keys such as `text`
+or `value`, before writing local proof. If the ignored local observation file is
+absent, the collector writes a blocked no-secret proof with all runtime booleans
+false so automation can continue to tracked evidence generation without making a
+false runtime readiness claim.
 
 The command creates or refreshes `release/cloudflare-runtime-evidence.json`
 from release targets and optional `release/cloudflare-proof.local.json`
-booleans. The local proof file is ignored by Git and may contain only Worker
-names, resource presence flags, domain/certificate flags, and non-secret notes.
-It must not contain Cloudflare tokens, Worker secret values, database URLs,
-private keys, certificates, service accounts, or copied runtime payloads.
-The generator rejects proof `networking.expectedDomains` values outside the
-Salary Hijacking custom-domain set before writing tracked evidence. Release
-readiness independently blocks tracked Cloudflare runtime evidence when
-`observedWorkers` contains Worker names outside the Salary Hijacking release
-target set, or when `workers.expectedWorkers` drifts from
-`release/release-targets.json`. It also blocks tracked Cloudflare runtime
-evidence when `networking.expectedDomains` contains unrelated domains outside
-the Salary Hijacking custom-domain set:
+booleans and Worker secret binding names. The local proof file is ignored by Git
+and may contain only Worker names, Worker secret names, resource presence flags,
+domain/certificate flags, and non-secret notes. It must not contain Cloudflare
+tokens, Worker secret values, database URLs, private keys, certificates, service
+accounts, or copied runtime payloads. The generator rejects proof
+`networking.expectedDomains` values outside the Salary Hijacking custom-domain
+set before writing tracked evidence. Release readiness independently blocks
+tracked Cloudflare runtime evidence when `observedWorkers` contains Worker names
+outside the Salary Hijacking release target set, when `workers.expectedWorkers`
+drifts from `release/release-targets.json`, or when
+`resources.workerSecretBindingsVerified` is true without complete Worker secret
+name coverage from `release/release-targets.json`. It also blocks tracked
+Cloudflare runtime evidence when `networking.expectedDomains` contains unrelated
+domains outside the Salary Hijacking custom-domain set:
 `salaryhijacking.com`, `www.salaryhijacking.com`, `api.salaryhijacking.com`,
 `notifications.salaryhijacking.com`, `scheduler.salaryhijacking.com`, and
 `admin.salaryhijacking.com`.

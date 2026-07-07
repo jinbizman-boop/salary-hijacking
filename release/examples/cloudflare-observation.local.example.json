@@ -16,11 +16,12 @@
     "observedQueueCount": 0,
     "deadLetterQueuesVerified": false,
     "cronTriggersVerified": false,
+    "workerSecretBindings": {},
     "workerSecretBindingsVerified": false
   },
   "networking": {
     "observedDomains": [],
     "activeTlsCertificates": []
   },
-  "note": "Only expected Salary Hijacking Worker names and booleans belong here. Do not include retro-db, unrelated projects, raw responses, tokens, secrets, private keys, or certificates."
+  "note": "Only expected Salary Hijacking Worker names, Worker secret names, and booleans belong here. Do not include retro-db, unrelated projects, raw responses, tokens, secret values, private keys, or certificates."
 }

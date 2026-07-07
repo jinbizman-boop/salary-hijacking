@@ -46,6 +46,21 @@ export const readCloudflareReleaseTargets = ({
       typeof cloudflareTargets.expectedAdminWorker === "string"
         ? cloudflareTargets.expectedAdminWorker.trim()
         : "",
+    expectedWorkerSecrets: isPlainObject(
+      cloudflareTargets.expectedWorkerSecrets,
+    )
+      ? Object.fromEntries(
+          Object.entries(cloudflareTargets.expectedWorkerSecrets)
+            .map(([workerName, secretNames]) => [
+              workerName.trim(),
+              uniqueStrings(secretNames),
+            ])
+            .filter(
+              ([workerName, secretNames]) =>
+                workerName.length > 0 && secretNames.length > 0,
+            ),
+        )
+      : {},
   };
 };
 
@@ -68,6 +83,25 @@ const hasAll = (observed, expected) => {
 const normalizeExpectedWorkers = (expectedWorkers) =>
   uniqueStrings(expectedWorkers).filter(Boolean);
 
+const normalizeExpectedWorkerSecrets = (
+  expectedWorkerSecrets,
+  expectedWorkers,
+) => {
+  if (!isPlainObject(expectedWorkerSecrets)) return {};
+  const expectedWorkerSet = new Set(expectedWorkers);
+  return Object.fromEntries(
+    Object.entries(expectedWorkerSecrets)
+      .map(([workerName, secretNames]) => [
+        workerName.trim(),
+        uniqueStrings(secretNames),
+      ])
+      .filter(
+        ([workerName, secretNames]) =>
+          expectedWorkerSet.has(workerName) && secretNames.length > 0,
+      ),
+  );
+};
+
 const normalizeExpectedDomains = (expectedDomains) =>
   uniqueStrings([...DEFAULT_EXPECTED_DOMAINS, ...stringArray(expectedDomains)]);
 
@@ -88,6 +122,7 @@ const buildDefaultBlockedObservation = () => ({
     deadLetterQueuesVerified: false,
     cronTriggersVerified: false,
     workerSecretBindingsVerified: false,
+    workerSecretBindings: {},
   },
   networking: {
     observedDomains: [],
@@ -100,15 +135,15 @@ const validateObservation = (
   inputPath,
   expectedWorkers,
   expectedDomains,
+  expectedWorkerSecrets = {},
 ) => {
   if (
     observation.schemaVersion !== 1 ||
     observation.secretsRedacted !== true ||
-    observation.containsSecretValues !== false ||
-    containsRawSecretValue(observation)
+    observation.containsSecretValues !== false
   ) {
     throw new Error(
-      `${inputPath} must use schemaVersion 1, secretsRedacted=true, containsSecretValues=false, and contain no raw secret values`,
+      `${inputPath} must use schemaVersion 1, secretsRedacted=true, and containsSecretValues=false`,
     );
   }
 
@@ -134,6 +169,135 @@ const validateObservation = (
     label: "Cloudflare TLS certificate domains",
     expectedDomains,
   });
+
+  validateWorkerSecretBindings({
+    bindings: section(observation, "resources").workerSecretBindings,
+    expectedWorkers,
+    expectedWorkerSecrets,
+    inputPath,
+  });
+
+  if (containsRawSecretValue(observation)) {
+    throw new Error(`${inputPath} must contain no raw secret values`);
+  }
+};
+
+const observedSecretNameArray = (value, inputPath) => {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => {
+    if (typeof item === "string") return item.trim();
+    if (isPlainObject(item)) {
+      const keys = Object.keys(item);
+      const hasRawPayloadKey = keys.some((key) =>
+        /^(text|value|rawValue|secretValue|bindingValue|key_base64|key_jwk|privateKey|serviceAccountJson)$/i.test(
+          key,
+        ),
+      );
+      if (hasRawPayloadKey) {
+        throw new Error(
+          `${inputPath} contains raw Worker secret binding values; store only secret names`,
+        );
+      }
+      if (typeof item.name === "string") return item.name.trim();
+    }
+    return "";
+  });
+};
+
+const validateWorkerSecretBindings = ({
+  bindings,
+  expectedWorkers,
+  expectedWorkerSecrets,
+  inputPath,
+}) => {
+  if (bindings === undefined) return;
+  if (!isPlainObject(bindings)) {
+    throw new Error(
+      `${inputPath} workerSecretBindings must be an object keyed by expected Worker name`,
+    );
+  }
+
+  const expectedWorkerSet = new Set(expectedWorkers);
+  const expectedSecretSetByWorker = new Map(
+    Object.entries(expectedWorkerSecrets).map(([workerName, secretNames]) => [
+      workerName,
+      new Set(secretNames),
+    ]),
+  );
+
+  for (const [workerName, observedSecretNames] of Object.entries(bindings)) {
+    if (!expectedWorkerSet.has(workerName)) {
+      throw new Error(
+        `${inputPath} contains unexpected Cloudflare Worker secret binding names for ${workerName}`,
+      );
+    }
+    const expectedSecretSet = expectedSecretSetByWorker.get(workerName);
+    const unexpectedSecretNames = observedSecretNameArray(
+      observedSecretNames,
+      inputPath,
+    ).filter(
+      (secretName) =>
+        secretName.length > 0 &&
+        expectedSecretSet &&
+        !expectedSecretSet.has(secretName),
+    );
+    if (unexpectedSecretNames.length > 0) {
+      throw new Error(
+        `${inputPath} contains unexpected Worker secret names for ${workerName}: ${unexpectedSecretNames.join(", ")}`,
+      );
+    }
+  }
+};
+
+const normalizeWorkerSecretBindings = ({
+  bindings,
+  expectedWorkerSecrets,
+  inputPath,
+}) => {
+  if (!isPlainObject(bindings)) return {};
+
+  return Object.fromEntries(
+    Object.entries(expectedWorkerSecrets)
+      .map(([workerName, expectedSecretNames]) => {
+        const observedSecretNames = uniqueStrings(
+          observedSecretNameArray(bindings[workerName], inputPath),
+        ).filter((secretName) => expectedSecretNames.includes(secretName));
+        return [workerName, observedSecretNames];
+      })
+      .filter(([, observedSecretNames]) => observedSecretNames.length > 0),
+  );
+};
+
+const missingWorkerSecretBindings = ({
+  observedWorkerSecretBindings,
+  expectedWorkerSecrets,
+}) =>
+  Object.fromEntries(
+    Object.entries(expectedWorkerSecrets)
+      .map(([workerName, expectedSecretNames]) => {
+        const observedSecretSet = new Set(
+          observedWorkerSecretBindings[workerName] ?? [],
+        );
+        return [
+          workerName,
+          expectedSecretNames.filter(
+            (secretName) => !observedSecretSet.has(secretName),
+          ),
+        ];
+      })
+      .filter(([, missingSecretNames]) => missingSecretNames.length > 0),
+  );
+
+const hasExpectedWorkerSecretBindings = ({
+  observedWorkerSecretBindings,
+  expectedWorkerSecrets,
+}) => {
+  const expectedEntries = Object.entries(expectedWorkerSecrets);
+  if (expectedEntries.length === 0) return false;
+  return expectedEntries.every(([workerName, expectedSecretNames]) =>
+    hasAll(observedWorkerSecretBindings[workerName] ?? [], expectedSecretNames),
+  );
 };
 
 export const buildCloudflareProof = ({
@@ -142,15 +306,21 @@ export const buildCloudflareProof = ({
   expectedWorkers = [],
   expectedAdminWorker = "",
   expectedDomains = DEFAULT_EXPECTED_DOMAINS,
+  expectedWorkerSecrets = {},
   now = () => new Date(),
 } = {}) => {
   const normalizedExpectedWorkers = normalizeExpectedWorkers(expectedWorkers);
   const normalizedExpectedDomains = normalizeExpectedDomains(expectedDomains);
+  const normalizedExpectedWorkerSecrets = normalizeExpectedWorkerSecrets(
+    expectedWorkerSecrets,
+    normalizedExpectedWorkers,
+  );
   validateObservation(
     observation,
     inputPath,
     normalizedExpectedWorkers,
     normalizedExpectedDomains,
+    normalizedExpectedWorkerSecrets,
   );
 
   const workersInput = section(observation, "workers");
@@ -163,6 +333,19 @@ export const buildCloudflareProof = ({
   const activeTlsCertificates = uniqueStrings(
     networkingInput.activeTlsCertificates,
   );
+  const workerSecretBindings = normalizeWorkerSecretBindings({
+    bindings: resourcesInput.workerSecretBindings,
+    expectedWorkerSecrets: normalizedExpectedWorkerSecrets,
+    inputPath,
+  });
+  const missingWorkerSecrets = missingWorkerSecretBindings({
+    observedWorkerSecretBindings: workerSecretBindings,
+    expectedWorkerSecrets: normalizedExpectedWorkerSecrets,
+  });
+  const workerSecretBindingsVerified = hasExpectedWorkerSecretBindings({
+    observedWorkerSecretBindings: workerSecretBindings,
+    expectedWorkerSecrets: normalizedExpectedWorkerSecrets,
+  });
   const adminWorkerVerified =
     expectedAdminWorker.length > 0 &&
     observedWorkers.includes(expectedAdminWorker) &&
@@ -197,11 +380,10 @@ export const buildCloudflareProof = ({
         "deadLetterQueuesVerified",
       ),
       cronTriggersVerified: boolFrom(resourcesInput, "cronTriggersVerified"),
-      workerSecretBindingsVerified: boolFrom(
-        resourcesInput,
-        "workerSecretBindingsVerified",
-      ),
-      note: "Resource proof records only R2, Queue, cron, and binding presence booleans. No secret binding values or copied resource payloads are stored.",
+      workerSecretBindings,
+      missingWorkerSecretBindings: missingWorkerSecrets,
+      workerSecretBindingsVerified,
+      note: "Resource proof records only R2, Queue, cron, and Worker secret binding presence by secret name. No secret binding values or copied resource payloads are stored.",
     },
     networking: {
       customDomainsVerified: hasAll(observedDomains, normalizedExpectedDomains),
@@ -221,6 +403,7 @@ export const collectCloudflareProof = ({
   expectedWorkers = [],
   expectedAdminWorker = "",
   expectedDomains = DEFAULT_EXPECTED_DOMAINS,
+  expectedWorkerSecrets = {},
   now = () => new Date(),
   writeFile = true,
 } = {}) => {
@@ -233,6 +416,7 @@ export const collectCloudflareProof = ({
     expectedWorkers,
     expectedAdminWorker,
     expectedDomains,
+    expectedWorkerSecrets,
     now,
   });
 
@@ -254,11 +438,12 @@ const isCliEntrypoint = () =>
   path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isCliEntrypoint()) {
-  const { expectedWorkers, expectedAdminWorker } =
+  const { expectedWorkers, expectedAdminWorker, expectedWorkerSecrets } =
     readCloudflareReleaseTargets();
   const proof = collectCloudflareProof({
     expectedWorkers,
     expectedAdminWorker,
+    expectedWorkerSecrets,
   });
   const verified =
     proof.workers.productionDeployVerified === true &&

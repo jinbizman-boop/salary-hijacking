@@ -122,10 +122,111 @@ const readCloudflareTargets = (rootDir) => {
       typeof cloudflare.expectedAdminWorker === "string"
         ? cloudflare.expectedAdminWorker.trim()
         : "",
+    expectedWorkerSecrets: normalizeWorkerSecretMap(
+      cloudflare.expectedWorkerSecrets,
+      stringArray(cloudflare.expectedWorkers),
+    ),
   };
 };
 
-const validateNoSecretProof = (proof, proofPath, expectedWorkers) => {
+const observedSecretNameArray = (value, proofPath) => {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => {
+    if (typeof item === "string") return item.trim();
+    if (isPlainObject(item)) {
+      const hasRawPayloadKey = Object.keys(item).some((key) =>
+        /^(text|value|rawValue|secretValue|bindingValue|key_base64|key_jwk|privateKey|serviceAccountJson)$/i.test(
+          key,
+        ),
+      );
+      if (hasRawPayloadKey) {
+        throw new Error(
+          `${proofPath} contains raw Worker secret binding values; store only secret names`,
+        );
+      }
+      if (typeof item.name === "string") return item.name.trim();
+    }
+    return "";
+  });
+};
+
+const normalizeWorkerSecretMap = (value, expectedWorkers) => {
+  if (!isPlainObject(value)) return {};
+  const expectedWorkerSet = new Set(expectedWorkers);
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([workerName, secretNames]) => [
+        workerName.trim(),
+        uniqueStrings(secretNames),
+      ])
+      .filter(
+        ([workerName, secretNames]) =>
+          expectedWorkerSet.has(workerName) && secretNames.length > 0,
+      ),
+  );
+};
+
+const normalizeWorkerSecretProofMap = ({
+  value,
+  proofPath,
+  expectedWorkers,
+  expectedWorkerSecrets,
+}) => {
+  if (!isPlainObject(value)) return {};
+  const expectedWorkerSet = new Set(expectedWorkers);
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([workerName, secretNames]) => {
+        if (!expectedWorkerSet.has(workerName)) {
+          throw new Error(
+            `${proofPath} contains unexpected Cloudflare Worker secret binding names for ${workerName}`,
+          );
+        }
+        const expectedSecretSet = new Set(expectedWorkerSecrets[workerName]);
+        const observedSecretNames = uniqueStrings(
+          observedSecretNameArray(secretNames, proofPath),
+        ).filter((secretName) => {
+          if (!expectedSecretSet.has(secretName)) {
+            throw new Error(
+              `${proofPath} contains unexpected Worker secret names for ${workerName}: ${secretName}`,
+            );
+          }
+          return true;
+        });
+        return [workerName, observedSecretNames];
+      })
+      .filter(([, secretNames]) => secretNames.length > 0),
+  );
+};
+
+const buildMissingWorkerSecretBindings = ({
+  observedWorkerSecretBindings,
+  expectedWorkerSecrets,
+}) =>
+  Object.fromEntries(
+    Object.entries(expectedWorkerSecrets)
+      .map(([workerName, expectedSecretNames]) => {
+        const observedSecretSet = new Set(
+          observedWorkerSecretBindings[workerName] ?? [],
+        );
+        return [
+          workerName,
+          expectedSecretNames.filter(
+            (secretName) => !observedSecretSet.has(secretName),
+          ),
+        ];
+      })
+      .filter(([, missingSecretNames]) => missingSecretNames.length > 0),
+  );
+
+const validateNoSecretProof = (
+  proof,
+  proofPath,
+  expectedWorkers,
+  expectedWorkerSecrets = {},
+) => {
   if (!isPlainObject(proof)) return {};
 
   if (
@@ -154,13 +255,30 @@ const validateNoSecretProof = (proof, proofPath, expectedWorkers) => {
     proofPath,
   });
 
+  normalizeWorkerSecretProofMap({
+    value: proofSection(proof, "resources").workerSecretBindings,
+    proofPath,
+    expectedWorkers,
+    expectedWorkerSecrets,
+  });
+
   return proof;
 };
 
-const readProof = (rootDir, proofPath, expectedWorkers) => {
+const readProof = (
+  rootDir,
+  proofPath,
+  expectedWorkers,
+  expectedWorkerSecrets,
+) => {
   const localProof = readJsonIfPresent(rootDir, proofPath);
   if (localProof) {
-    return validateNoSecretProof(localProof, proofPath, expectedWorkers);
+    return validateNoSecretProof(
+      localProof,
+      proofPath,
+      expectedWorkers,
+      expectedWorkerSecrets,
+    );
   }
 
   const fallback =
@@ -172,6 +290,7 @@ const readProof = (rootDir, proofPath, expectedWorkers) => {
       fallback,
       DEFAULT_OUTPUT_PATH,
       expectedWorkers,
+      expectedWorkerSecrets,
     );
   }
 
@@ -249,9 +368,14 @@ export const buildCloudflareRuntimeEvidence = ({
   proofPath = DEFAULT_PROOF_PATH,
   now = () => new Date(),
 } = {}) => {
-  const { expectedWorkers, expectedAdminWorker } =
+  const { expectedWorkers, expectedAdminWorker, expectedWorkerSecrets } =
     readCloudflareTargets(rootDir);
-  const proof = readProof(rootDir, proofPath, expectedWorkers);
+  const proof = readProof(
+    rootDir,
+    proofPath,
+    expectedWorkers,
+    expectedWorkerSecrets,
+  );
   const proofWorkers = proofSection(proof, "workers");
   const proofResources = proofSection(proof, "resources");
   const proofNetworking = proofSection(proof, "networking");
@@ -265,6 +389,25 @@ export const buildCloudflareRuntimeEvidence = ({
     expectedAdminWorker.length > 0 &&
     observedWorkerSet.has(expectedAdminWorker) &&
     boolFrom(proofWorkers, "adminWorkerVerified");
+  const workerSecretBindings = normalizeWorkerSecretProofMap({
+    value: proofResources.workerSecretBindings,
+    proofPath,
+    expectedWorkers,
+    expectedWorkerSecrets,
+  });
+  const missingWorkerSecretBindings =
+    isPlainObject(proofResources.missingWorkerSecretBindings) &&
+    Object.keys(proofResources.missingWorkerSecretBindings).length > 0
+      ? normalizeWorkerSecretProofMap({
+          value: proofResources.missingWorkerSecretBindings,
+          proofPath,
+          expectedWorkers,
+          expectedWorkerSecrets,
+        })
+      : buildMissingWorkerSecretBindings({
+          observedWorkerSecretBindings: workerSecretBindings,
+          expectedWorkerSecrets,
+        });
 
   const workers = {
     expectedWorkers,
@@ -292,6 +435,8 @@ export const buildCloudflareRuntimeEvidence = ({
       "deadLetterQueuesVerified",
     ),
     cronTriggersVerified: boolFrom(proofResources, "cronTriggersVerified"),
+    workerSecretBindings,
+    missingWorkerSecretBindings,
     workerSecretBindingsVerified: boolFrom(
       proofResources,
       "workerSecretBindingsVerified",

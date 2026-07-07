@@ -30,6 +30,33 @@ const expectedDomains = [
   "admin.salaryhijacking.com",
 ];
 
+const expectedWorkerSecrets = {
+  "salary-hijacking-api": [
+    "AUDIT_HASH_SECRET",
+    "AUTH_JWT_SECRET",
+    "DATABASE_URL",
+    "HASH_SECRET",
+    "JWT_SECRET",
+    "OPERATION_WEBHOOK_TOKEN",
+    "RATE_LIMIT_HASH_SECRET",
+    "SENTRY_DSN",
+    "SLACK_WEBHOOK_URL",
+  ],
+  "salary-hijacking-notifications": [
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN",
+    "NOTIFICATIONS_SERVICE_TOKEN_SHA256",
+    "SENTRY_DSN",
+  ],
+  "salary-hijacking-scheduler": [
+    "API_INTERNAL_SERVICE_TOKEN",
+    "SCHEDULER_OPERATION_WEBHOOK_TOKEN",
+    "SCHEDULER_SERVICE_TOKEN_SHA256",
+    "SENTRY_DSN",
+  ],
+  "salary-hijacking-admin": ["SENTRY_DSN"],
+};
+
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-cloudflare-evidence-"),
@@ -44,6 +71,7 @@ const makeWorkspace = () => {
           expectedWorkers,
           expectedAdminWorker: "salary-hijacking-admin",
           adminDeploymentType: "workers-opennext",
+          expectedWorkerSecrets,
         },
       },
       null,
@@ -70,6 +98,10 @@ test("builds blocked no-secret Cloudflare runtime evidence by default", () => {
   assert.equal(evidence.workers.productionDeployVerified, false);
   assert.equal(evidence.workers.adminWorkerVerified, false);
   assert.equal(evidence.resources.r2BucketsVerified, false);
+  assert.deepEqual(evidence.resources.workerSecretBindings, {});
+  assert.deepEqual(evidence.resources.missingWorkerSecretBindings, {
+    ...expectedWorkerSecrets,
+  });
   assert.equal(evidence.networking.customDomainsVerified, false);
   assert.deepEqual(evidence.networking.expectedDomains, expectedDomains);
   assert.ok(evidence.nextEvidenceRequired.length > 0);
@@ -101,6 +133,8 @@ test("uses a local proof file to mark Cloudflare runtime gates verified", () => 
           queuesVerified: true,
           deadLetterQueuesVerified: true,
           cronTriggersVerified: true,
+          workerSecretBindings: expectedWorkerSecrets,
+          missingWorkerSecretBindings: {},
           workerSecretBindingsVerified: true,
         },
         networking: {
@@ -127,9 +161,73 @@ test("uses a local proof file to mark Cloudflare runtime gates verified", () => 
   assert.equal(evidence.resources.deadLetterQueuesVerified, true);
   assert.equal(evidence.resources.cronTriggersVerified, true);
   assert.equal(evidence.resources.workerSecretBindingsVerified, true);
+  assert.deepEqual(
+    evidence.resources.workerSecretBindings,
+    expectedWorkerSecrets,
+  );
+  assert.deepEqual(evidence.resources.missingWorkerSecretBindings, {});
   assert.equal(evidence.networking.customDomainsVerified, true);
   assert.equal(evidence.networking.certificatesVerified, true);
   assert.deepEqual(evidence.nextEvidenceRequired, []);
+});
+
+test("keeps Worker secret binding evidence blocked when proof misses required secret names", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "cloudflare-proof.local.json",
+  );
+  write(
+    rootDir,
+    "release/cloudflare-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        workers: {
+          observedWorkers: expectedWorkers,
+          productionDeployVerified: true,
+          adminWorkerVerified: true,
+        },
+        resources: {
+          r2BucketsVerified: true,
+          queuesVerified: true,
+          deadLetterQueuesVerified: true,
+          cronTriggersVerified: true,
+          workerSecretBindings: {
+            ...expectedWorkerSecrets,
+            "salary-hijacking-api": expectedWorkerSecrets[
+              "salary-hijacking-api"
+            ].filter((secretName) => secretName !== "DATABASE_URL"),
+          },
+          missingWorkerSecretBindings: {
+            "salary-hijacking-api": ["DATABASE_URL"],
+          },
+          workerSecretBindingsVerified: false,
+        },
+        networking: {
+          customDomainsVerified: true,
+          certificatesVerified: true,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const evidence = buildCloudflareRuntimeEvidence({ rootDir, proofPath });
+
+  assert.equal(evidence.resources.workerSecretBindingsVerified, false);
+  assert.deepEqual(evidence.resources.missingWorkerSecretBindings, {
+    "salary-hijacking-api": ["DATABASE_URL"],
+  });
+  assert.ok(
+    evidence.nextEvidenceRequired.includes(
+      "Worker secret binding presence proof without values",
+    ),
+  );
 });
 
 test("preserves existing no-secret Cloudflare evidence when local proof is absent", () => {

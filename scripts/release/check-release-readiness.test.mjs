@@ -276,6 +276,32 @@ Quality gates:
 `;
 
 const writeReleaseTargets = (rootDir, overrides = {}) => {
+  const expectedWorkerSecrets = {
+    "salary-hijacking-api": [
+      "AUDIT_HASH_SECRET",
+      "AUTH_JWT_SECRET",
+      "DATABASE_URL",
+      "HASH_SECRET",
+      "JWT_SECRET",
+      "OPERATION_WEBHOOK_TOKEN",
+      "RATE_LIMIT_HASH_SECRET",
+      "SENTRY_DSN",
+      "SLACK_WEBHOOK_URL",
+    ],
+    "salary-hijacking-notifications": [
+      "GOOGLE_SERVICE_ACCOUNT_JSON",
+      "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN",
+      "NOTIFICATIONS_SERVICE_TOKEN_SHA256",
+      "SENTRY_DSN",
+    ],
+    "salary-hijacking-scheduler": [
+      "API_INTERNAL_SERVICE_TOKEN",
+      "SCHEDULER_OPERATION_WEBHOOK_TOKEN",
+      "SCHEDULER_SERVICE_TOKEN_SHA256",
+      "SENTRY_DSN",
+    ],
+    "salary-hijacking-admin": ["SENTRY_DSN"],
+  };
   const targets = {
     schemaVersion: 1,
     github: {
@@ -292,6 +318,7 @@ const writeReleaseTargets = (rootDir, overrides = {}) => {
       ],
       expectedAdminWorker: "salary-hijacking-admin",
       adminDeploymentType: "workers-opennext",
+      expectedWorkerSecrets,
     },
     neon: {
       expectedProjectHint: "salary-hijacking",
@@ -445,6 +472,32 @@ const writeSecretsEvidence = (rootDir, overrides = {}) => {
 };
 
 const writeCloudflareRuntimeEvidence = (rootDir, overrides = {}) => {
+  const workerSecretBindings = {
+    "salary-hijacking-api": [
+      "AUDIT_HASH_SECRET",
+      "AUTH_JWT_SECRET",
+      "DATABASE_URL",
+      "HASH_SECRET",
+      "JWT_SECRET",
+      "OPERATION_WEBHOOK_TOKEN",
+      "RATE_LIMIT_HASH_SECRET",
+      "SENTRY_DSN",
+      "SLACK_WEBHOOK_URL",
+    ],
+    "salary-hijacking-notifications": [
+      "GOOGLE_SERVICE_ACCOUNT_JSON",
+      "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN",
+      "NOTIFICATIONS_SERVICE_TOKEN_SHA256",
+      "SENTRY_DSN",
+    ],
+    "salary-hijacking-scheduler": [
+      "API_INTERNAL_SERVICE_TOKEN",
+      "SCHEDULER_OPERATION_WEBHOOK_TOKEN",
+      "SCHEDULER_SERVICE_TOKEN_SHA256",
+      "SENTRY_DSN",
+    ],
+    "salary-hijacking-admin": ["SENTRY_DSN"],
+  };
   const evidence = {
     schemaVersion: 1,
     observedAt: new Date().toISOString(),
@@ -472,6 +525,8 @@ const writeCloudflareRuntimeEvidence = (rootDir, overrides = {}) => {
       queuesVerified: true,
       deadLetterQueuesVerified: true,
       cronTriggersVerified: true,
+      workerSecretBindings,
+      missingWorkerSecretBindings: {},
       workerSecretBindingsVerified: true,
     },
     networking: {
@@ -1314,6 +1369,87 @@ test("blocks Cloudflare runtime evidence that includes unrelated Workers", () =>
   assert.equal(result.ok, false);
   assert.match(report, /cloudflare-runtime:worker-scope/);
   assert.match(report, /unexpected Worker names observed: retro-db/);
+});
+
+test("blocks Cloudflare runtime evidence that claims Worker secret bindings without names", () => {
+  const rootDir = makeWorkspace();
+  writeCloudflareRuntimeEvidence(rootDir, {
+    resources: {
+      r2BucketsVerified: true,
+      queuesVerified: true,
+      deadLetterQueuesVerified: true,
+      cronTriggersVerified: true,
+      workerSecretBindingsVerified: true,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /cloudflare-runtime:worker-secret-bindings/);
+  assert.match(report, /missing Worker secret bindings/);
+  assert.match(report, /DATABASE_URL/);
+});
+
+test("blocks Cloudflare runtime evidence that includes unrelated Worker secret binding names", () => {
+  const rootDir = makeWorkspace();
+  writeCloudflareRuntimeEvidence(rootDir, {
+    resources: {
+      r2BucketsVerified: true,
+      queuesVerified: true,
+      deadLetterQueuesVerified: true,
+      cronTriggersVerified: true,
+      workerSecretBindings: {
+        "salary-hijacking-api": [
+          "AUDIT_HASH_SECRET",
+          "AUTH_JWT_SECRET",
+          "DATABASE_URL",
+          "HASH_SECRET",
+          "JWT_SECRET",
+          "OPERATION_WEBHOOK_TOKEN",
+          "RATE_LIMIT_HASH_SECRET",
+          "SENTRY_DSN",
+          "SLACK_WEBHOOK_URL",
+        ],
+        "salary-hijacking-notifications": [
+          "GOOGLE_SERVICE_ACCOUNT_JSON",
+          "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN",
+          "NOTIFICATIONS_SERVICE_TOKEN_SHA256",
+          "SENTRY_DSN",
+        ],
+        "salary-hijacking-scheduler": [
+          "API_INTERNAL_SERVICE_TOKEN",
+          "SCHEDULER_OPERATION_WEBHOOK_TOKEN",
+          "SCHEDULER_SERVICE_TOKEN_SHA256",
+          "SENTRY_DSN",
+        ],
+        "salary-hijacking-admin": ["SENTRY_DSN"],
+        "retro-db": ["DATABASE_URL"],
+      },
+      missingWorkerSecretBindings: {},
+      workerSecretBindingsVerified: true,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /cloudflare-runtime:worker-secret-bindings/);
+  assert.match(report, /unexpected Worker secret bindings: retro-db:\*/);
 });
 
 test("blocks Cloudflare runtime evidence whose expected Workers drift from release targets", () => {

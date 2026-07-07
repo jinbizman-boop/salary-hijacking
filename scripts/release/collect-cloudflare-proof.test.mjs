@@ -25,6 +25,33 @@ const expectedDomains = [
   "admin.salaryhijacking.com",
 ];
 
+const expectedWorkerSecrets = {
+  "salary-hijacking-api": [
+    "AUDIT_HASH_SECRET",
+    "AUTH_JWT_SECRET",
+    "DATABASE_URL",
+    "HASH_SECRET",
+    "JWT_SECRET",
+    "OPERATION_WEBHOOK_TOKEN",
+    "RATE_LIMIT_HASH_SECRET",
+    "SENTRY_DSN",
+    "SLACK_WEBHOOK_URL",
+  ],
+  "salary-hijacking-notifications": [
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+    "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN",
+    "NOTIFICATIONS_SERVICE_TOKEN_SHA256",
+    "SENTRY_DSN",
+  ],
+  "salary-hijacking-scheduler": [
+    "API_INTERNAL_SERVICE_TOKEN",
+    "SCHEDULER_OPERATION_WEBHOOK_TOKEN",
+    "SCHEDULER_SERVICE_TOKEN_SHA256",
+    "SENTRY_DSN",
+  ],
+  "salary-hijacking-admin": ["SENTRY_DSN"],
+};
+
 const writeJson = (rootDir, filePath, value) => {
   const target = path.join(rootDir, filePath);
   fs.mkdirSync(path.dirname(target), { recursive: true });
@@ -49,7 +76,7 @@ const completeObservation = {
     observedQueueCount: 6,
     deadLetterQueuesVerified: true,
     cronTriggersVerified: true,
-    workerSecretBindingsVerified: true,
+    workerSecretBindings: expectedWorkerSecrets,
   },
   networking: {
     observedDomains: expectedDomains,
@@ -76,6 +103,7 @@ test("normalizes no-secret Cloudflare observation into release proof booleans", 
     expectedWorkers,
     expectedAdminWorker: "salary-hijacking-admin",
     expectedDomains,
+    expectedWorkerSecrets,
     now: () => new Date("2026-07-01T17:00:00.000Z"),
   });
 
@@ -92,6 +120,8 @@ test("normalizes no-secret Cloudflare observation into release proof booleans", 
   assert.equal(proof.resources.deadLetterQueuesVerified, true);
   assert.equal(proof.resources.cronTriggersVerified, true);
   assert.equal(proof.resources.workerSecretBindingsVerified, true);
+  assert.deepEqual(proof.resources.workerSecretBindings, expectedWorkerSecrets);
+  assert.deepEqual(proof.resources.missingWorkerSecretBindings, {});
   assert.equal(proof.networking.customDomainsVerified, true);
   assert.equal(proof.networking.certificatesVerified, true);
   assert.deepEqual(proof.networking.expectedDomains, expectedDomains);
@@ -110,6 +140,7 @@ test("reads expected Worker targets from release manifest for CLI proof collecti
     cloudflare: {
       expectedWorkers,
       expectedAdminWorker: "salary-hijacking-admin",
+      expectedWorkerSecrets,
     },
   });
 
@@ -117,6 +148,7 @@ test("reads expected Worker targets from release manifest for CLI proof collecti
 
   assert.deepEqual(targets.expectedWorkers, expectedWorkers);
   assert.equal(targets.expectedAdminWorker, "salary-hijacking-admin");
+  assert.deepEqual(targets.expectedWorkerSecrets, expectedWorkerSecrets);
 });
 
 test("keeps proof false for incomplete observations", () => {
@@ -149,6 +181,7 @@ test("keeps proof false for incomplete observations", () => {
     expectedWorkers,
     expectedAdminWorker: "salary-hijacking-admin",
     expectedDomains,
+    expectedWorkerSecrets,
     writeFile: false,
   });
 
@@ -159,8 +192,79 @@ test("keeps proof false for incomplete observations", () => {
   assert.equal(proof.resources.r2ApiReadBlockedByAccountActivation, true);
   assert.equal(proof.resources.r2ReadErrorCode, "10042");
   assert.equal(proof.resources.queuesVerified, false);
+  assert.equal(proof.resources.workerSecretBindingsVerified, false);
+  assert.deepEqual(proof.resources.workerSecretBindings, {});
   assert.equal(proof.networking.customDomainsVerified, false);
   assert.equal(proof.networking.certificatesVerified, false);
+});
+
+test("keeps Worker secret binding proof false when an expected secret name is missing", () => {
+  const rootDir = makeRoot();
+  const incompleteWorkerSecrets = {
+    ...expectedWorkerSecrets,
+    "salary-hijacking-api": expectedWorkerSecrets[
+      "salary-hijacking-api"
+    ].filter((secretName) => secretName !== "DATABASE_URL"),
+  };
+  const inputPath = writeJson(
+    rootDir,
+    "release/cloudflare-observation.local.json",
+    {
+      ...completeObservation,
+      resources: {
+        ...completeObservation.resources,
+        workerSecretBindings: incompleteWorkerSecrets,
+      },
+    },
+  );
+
+  const proof = collectCloudflareProof({
+    inputPath,
+    expectedWorkers,
+    expectedAdminWorker: "salary-hijacking-admin",
+    expectedDomains,
+    expectedWorkerSecrets,
+    writeFile: false,
+  });
+
+  assert.equal(proof.resources.workerSecretBindingsVerified, false);
+  assert.deepEqual(proof.resources.missingWorkerSecretBindings, {
+    "salary-hijacking-api": ["DATABASE_URL"],
+  });
+});
+
+test("rejects Worker secret binding observations with raw secret payload keys", () => {
+  const rootDir = makeRoot();
+  const inputPath = writeJson(
+    rootDir,
+    "release/cloudflare-observation.local.json",
+    {
+      ...completeObservation,
+      resources: {
+        ...completeObservation.resources,
+        workerSecretBindings: {
+          "salary-hijacking-api": [
+            {
+              name: "DATABASE_URL",
+              text: "postgres://user:password@example.invalid/db",
+            },
+          ],
+        },
+      },
+    },
+  );
+
+  assert.throws(
+    () =>
+      collectCloudflareProof({
+        inputPath,
+        expectedWorkers,
+        expectedDomains,
+        expectedWorkerSecrets,
+        writeFile: false,
+      }),
+    /raw Worker secret binding values/i,
+  );
 });
 
 test("writes blocked no-secret proof when Cloudflare observation file is missing", () => {

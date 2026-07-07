@@ -2071,6 +2071,59 @@ const checkCloudflareRuntimeEvidence = (
   );
 
   const resources = isPlainObject(evidence.resources) ? evidence.resources : {};
+  const expectedWorkerSecrets = isPlainObject(
+    targetCloudflare.expectedWorkerSecrets,
+  )
+    ? targetCloudflare.expectedWorkerSecrets
+    : {};
+  const observedWorkerSecretBindings = isPlainObject(
+    resources.workerSecretBindings,
+  )
+    ? resources.workerSecretBindings
+    : {};
+  const declaredMissingWorkerSecretBindings = isPlainObject(
+    resources.missingWorkerSecretBindings,
+  )
+    ? resources.missingWorkerSecretBindings
+    : {};
+  const missingWorkerSecretBindings = [];
+  const unexpectedWorkerSecretBindings = [];
+
+  for (const worker of Object.keys(observedWorkerSecretBindings)) {
+    if (!expectedWorkers.includes(worker)) {
+      unexpectedWorkerSecretBindings.push(`${worker}:*`);
+    }
+  }
+
+  for (const worker of expectedWorkers) {
+    const expectedSecretNames = sortedStrings(expectedWorkerSecrets[worker]);
+    const observedSecretNames = sortedStrings(
+      observedWorkerSecretBindings[worker],
+    );
+    const declaredMissingSecretNames = sortedStrings(
+      declaredMissingWorkerSecretBindings[worker],
+    );
+    for (const secretName of expectedSecretNames) {
+      if (!observedSecretNames.includes(secretName)) {
+        missingWorkerSecretBindings.push(`${worker}:${secretName}`);
+      }
+    }
+    for (const secretName of declaredMissingSecretNames) {
+      if (!missingWorkerSecretBindings.includes(`${worker}:${secretName}`)) {
+        missingWorkerSecretBindings.push(`${worker}:${secretName}`);
+      }
+    }
+    for (const secretName of observedSecretNames) {
+      if (!expectedSecretNames.includes(secretName)) {
+        unexpectedWorkerSecretBindings.push(`${worker}:${secretName}`);
+      }
+    }
+  }
+
+  const workerSecretBindingNamesComplete =
+    Object.keys(expectedWorkerSecrets).length > 0 &&
+    missingWorkerSecretBindings.length === 0 &&
+    unexpectedWorkerSecretBindings.length === 0;
   const resourceChecks = [
     {
       key: "r2BucketsVerified",
@@ -2112,13 +2165,27 @@ const checkCloudflareRuntimeEvidence = (
     },
   ];
   for (const resourceCheck of resourceChecks) {
-    const ok = resources[resourceCheck.key] === true;
+    const ok =
+      resourceCheck.key === "workerSecretBindingsVerified"
+        ? resources[resourceCheck.key] === true &&
+          workerSecretBindingNamesComplete
+        : resources[resourceCheck.key] === true;
+    const workerSecretBindingFailureDetail =
+      missingWorkerSecretBindings.length > 0
+        ? `missing Worker secret bindings: ${missingWorkerSecretBindings.join(", ")}`
+        : unexpectedWorkerSecretBindings.length > 0
+          ? `unexpected Worker secret bindings: ${unexpectedWorkerSecretBindings.join(", ")}`
+          : resourceCheck.fail;
     addCloudflareRuntimeCheck(
       checks,
       blockers,
       ok ? "PASS" : "BLOCKED",
       resourceCheck.name,
-      ok ? resourceCheck.pass : resourceCheck.fail,
+      ok
+        ? resourceCheck.pass
+        : resourceCheck.key === "workerSecretBindingsVerified"
+          ? workerSecretBindingFailureDetail
+          : resourceCheck.fail,
       resourceCheck.blocker,
     );
   }

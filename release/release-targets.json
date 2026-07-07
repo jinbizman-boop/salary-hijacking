@@ -13,7 +13,33 @@
       "salary-hijacking-admin"
     ],
     "expectedAdminWorker": "salary-hijacking-admin",
-    "adminDeploymentType": "workers-opennext"
+    "adminDeploymentType": "workers-opennext",
+    "expectedWorkerSecrets": {
+      "salary-hijacking-api": [
+        "AUDIT_HASH_SECRET",
+        "AUTH_JWT_SECRET",
+        "DATABASE_URL",
+        "HASH_SECRET",
+        "JWT_SECRET",
+        "OPERATION_WEBHOOK_TOKEN",
+        "RATE_LIMIT_HASH_SECRET",
+        "SENTRY_DSN",
+        "SLACK_WEBHOOK_URL"
+      ],
+      "salary-hijacking-notifications": [
+        "GOOGLE_SERVICE_ACCOUNT_JSON",
+        "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN",
+        "NOTIFICATIONS_SERVICE_TOKEN_SHA256",
+        "SENTRY_DSN"
+      ],
+      "salary-hijacking-scheduler": [
+        "API_INTERNAL_SERVICE_TOKEN",
+        "SCHEDULER_OPERATION_WEBHOOK_TOKEN",
+        "SCHEDULER_SERVICE_TOKEN_SHA256",
+        "SENTRY_DSN"
+      ],
+      "salary-hijacking-admin": ["SENTRY_DSN"]
+    }
   },
   "neon": {
     "expectedProjectHint": "salary-hijacking"
