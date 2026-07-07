@@ -89,20 +89,31 @@ corepack pnpm --filter @salary-hijacking/admin exec wrangler deploy --dry-run --
 For Cloudflare connected-repository deployments that execute from the monorepo
 root, do not use `npx wrangler deploy` or a single root `wrangler deploy`.
 There is no root Worker config, and each runtime Worker has its own
-`wrangler.toml`. The root deploy command for API, notifications, and scheduler
-Workers is:
+`wrangler.toml`. Configure each connected Worker build with the matching
+Worker-specific deploy command:
+
+```sh
+pnpm run deploy:cloudflare-api
+pnpm run deploy:cloudflare-notifications
+pnpm run deploy:cloudflare-scheduler
+```
+
+The matching no-write validation commands are:
+
+```sh
+pnpm run deploy:cloudflare-api:dry-run
+pnpm run deploy:cloudflare-notifications:dry-run
+pnpm run deploy:cloudflare-scheduler:dry-run
+```
+
+For a neutral CI runner or local operator that intentionally deploys all three
+runtime Workers, the aggregate command is:
 
 ```sh
 pnpm run deploy:cloudflare-workers
 ```
 
-The matching no-write validation command is:
-
-```sh
-pnpm run deploy:cloudflare-workers:dry-run
-```
-
-Those root scripts delegate to:
+The aggregate script delegates to:
 
 ```powershell
 corepack pnpm --filter @salary-hijacking/api run deploy:production
