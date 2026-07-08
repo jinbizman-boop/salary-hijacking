@@ -60,6 +60,7 @@
       "env": {
         "APP_ENV": "staging",
         "ANDROID_PACKAGE": "com.salaryhijacking.mobile",
+        "EXPO_USE_COMMUNITY_AUTOLINKING": "1",
         "EXPO_PUBLIC_API_BASE_URL": "https://api-staging.salaryhijacking.com",
         "EXPO_PUBLIC_DEEPLINK_HOST": "staging.salaryhijacking.com",
         "EXPO_PUBLIC_RELEASE_CHANNEL": "preview",
