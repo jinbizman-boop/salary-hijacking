@@ -214,7 +214,7 @@ function androidConfig(versionCode: number): JsonRecord {
     package: plainEnv("ANDROID_PACKAGE", DEFAULT_ANDROID_PACKAGE),
     versionCode,
     googleServicesFile: localFilePathEnv(
-      "GOOGLE_SERVICES_FILE",
+      "GOOGLE_SERVICES_JSON",
       DEFAULT_ANDROID_GOOGLE_SERVICES_FILE,
     ),
     adaptiveIcon: {
