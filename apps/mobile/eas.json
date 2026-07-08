@@ -53,6 +53,8 @@
     },
     "preview": {
       "extends": "base",
+      "corepack": true,
+      "pnpm": "10.0.0",
       "distribution": "internal",
       "channel": "preview",
       "env": {
