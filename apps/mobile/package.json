@@ -19,6 +19,7 @@
     "web": "expo start --web",
     "prebuild": "expo prebuild",
     "prebuild:clean": "expo prebuild --clean",
+    "eas-build-pre-install": "corepack prepare pnpm@10.0.0 --activate && corepack pnpm --version",
     "doctor": "npx expo-doctor@latest",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
