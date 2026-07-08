@@ -10,6 +10,7 @@ const FORBIDDEN_API_HELPERS = [
 const INTERNAL_TABS_ROUTE = /(["'`])\/\(tabs\)(?:\/[^"'`]*)?\1/g;
 const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
 const PROFILE_HUB_SCREEN = join(APP_ROOT, "profile", "index.tsx");
+const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
@@ -177,6 +178,29 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('routeKey === "root"');
     expect(source).toContain("shouldRouteReadyStateToHome");
     expect(source).toContain("router.replace(SALARY_HOME_ROUTE as never)");
+  });
+
+  it("does not leave the launch route stuck on a static splash screen", () => {
+    const source = readFileSync(INDEX_SCREEN, "utf8");
+
+    expect(source).toContain("SplashScreen.hideAsync");
+    expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 1200");
+    expect(source).toContain("resolveInitialRoute");
+    expect(source).toContain("MOBILE_ACCESS_TOKEN_KEY");
+    expect(source).toContain('router.replace("/salary" as never)');
+    expect(source).toContain('router.replace("/(auth)/login" as never)');
+    expect(source).toContain("setTimeout");
+    expect(source).not.toMatch(
+      /export default function MobileIndexScreen\(\): React\.ReactElement \{\s*return <CleanFintechSplashScreen \/>;\s*\}/u,
+    );
+  });
+
+  it("hides the native splash once the React root is ready to render", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("loadSplashScreenRuntime");
+    expect(source).toContain("SplashScreenRuntimeRef.hideAsync");
+    expect(source).toContain("fontsLoaded");
   });
 
   it("keeps the onboarding route implemented for incomplete new users", () => {

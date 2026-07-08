@@ -88,6 +88,10 @@ type FontRuntime = Readonly<{
     fontMap: Readonly<Record<string, unknown>>,
   ) => readonly [boolean, Error | null];
 }>;
+type SplashScreenRuntime = Readonly<{
+  hideAsync: () => Promise<boolean>;
+  preventAutoHideAsync: () => Promise<boolean>;
+}>;
 type SecureStoreRuntime = Readonly<{
   getItemAsync: (key: string) => Promise<string | null>;
   setItemAsync: (key: string, value: string) => Promise<void>;
@@ -223,8 +227,11 @@ const NativeRuntimeRef = loadNativeRuntime();
 const RouterRuntimeRef = loadRouterRuntime();
 const SecureStoreRuntimeRef = loadSecureStoreRuntime();
 const FontRuntimeRef = loadFontRuntime();
+const SplashScreenRuntimeRef = loadSplashScreenRuntime();
 const API_BASE_URL = readMobileApiBaseUrl();
 const IS_E2E_BUILD = readMobileE2eBuildEnabled();
+
+void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
 
 const fallbackSession: SessionSnapshot = Object.freeze({
   authenticated: false,
@@ -347,6 +354,10 @@ export default function MobileRootLayout(): unknown {
   ReactRuntimeRef.useEffect((): void => {
     void bootstrap();
   }, [bootstrap]);
+
+  ReactRuntimeRef.useEffect((): void => {
+    if (fontsLoaded) void SplashScreenRuntimeRef.hideAsync().catch(() => false);
+  }, [fontsLoaded]);
 
   ReactRuntimeRef.useEffect((): void => {
     const next = state.status;
@@ -930,6 +941,19 @@ function loadFontRuntime(): FontRuntime {
         : (): readonly [boolean, Error | null] => [true, null],
   };
 }
+function loadSplashScreenRuntime(): SplashScreenRuntime {
+  const mod = loadModule("expo-splash-screen") as Partial<SplashScreenRuntime>;
+  return {
+    hideAsync:
+      typeof mod.hideAsync === "function"
+        ? mod.hideAsync
+        : async (): Promise<boolean> => false,
+    preventAutoHideAsync:
+      typeof mod.preventAutoHideAsync === "function"
+        ? mod.preventAutoHideAsync
+        : async (): Promise<boolean> => false,
+  };
+}
 function loadSecureStoreRuntime(): SecureStoreRuntime {
   const mod = loadModule("expo-secure-store") as Partial<SecureStoreRuntime>;
   return createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod);
@@ -945,6 +969,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-router");
       case "expo-font":
         return require("expo-font");
+      case "expo-splash-screen":
+        return require("expo-splash-screen");
       case "expo-constants":
         return require("expo-constants");
       case "expo-secure-store":
@@ -1126,6 +1152,7 @@ export function assertMobileRootLayoutCompleteness(): {
     "runtime_chrome_hidden_for_public_launch_surfaces",
     "clean_fintech_light_shell",
     "expo_font_useFonts",
+    "expo_splash_screen_hideAsync",
     "Freesentation-4Regular.ttf",
     "Freesentation-9Black.ttf",
     "typescript_strict_ready",
