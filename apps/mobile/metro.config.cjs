@@ -618,6 +618,16 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     );
   }
 
+  if (isReactSingleton(moduleName)) {
+    const mobileEntry = tryResolveWorkspaceModule(moduleName, platform);
+    if (mobileEntry === null) {
+      return toWorkspaceResolution(
+        context.resolveRequest(context, moduleName, platform),
+      );
+    }
+    return toWorkspaceSourceFile(mobileEntry);
+  }
+
   const originResolvedModule = tryResolveFromOriginModule(
     moduleName,
     context.originModulePath,
@@ -628,16 +638,6 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 
   if (moduleName === "expo-router/entry") {
     return toWorkspaceSourceFile(resolveWorkspaceModule(moduleName));
-  }
-
-  if (isReactSingleton(moduleName)) {
-    const mobileEntry = tryResolveWorkspaceModule(moduleName, platform);
-    if (mobileEntry === null) {
-      return toWorkspaceResolution(
-        context.resolveRequest(context, moduleName, platform),
-      );
-    }
-    return toWorkspaceSourceFile(mobileEntry);
   }
 
   if (isExpoRouterRuntime(moduleName)) {

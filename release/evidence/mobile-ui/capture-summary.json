@@ -1,0 +1,172 @@
+{
+  "ok": true,
+  "generatedAt": "2026-07-10T21:30:23.882Z",
+  "screenshotDir": "release\\screenshots",
+  "mobileUiEvidenceDir": "release\\evidence\\mobile-ui",
+  "count": 23,
+  "storeCount": 6,
+  "mobileUiEvidenceCount": 17,
+  "summary": [
+    {
+      "group": "store",
+      "file": "01_home_salary.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 66070
+    },
+    {
+      "group": "store",
+      "file": "02_daily_budget.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 61016
+    },
+    {
+      "group": "store",
+      "file": "03_plan_setting.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 61463
+    },
+    {
+      "group": "store",
+      "file": "04_notifications.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 80359
+    },
+    {
+      "group": "store",
+      "file": "05_level_up.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 59357
+    },
+    {
+      "group": "store",
+      "file": "feature_graphic_google_play.png",
+      "width": 1024,
+      "height": 500,
+      "bytes": 81918
+    },
+    {
+      "group": "mobile-ui",
+      "file": "01_splash.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27883
+    },
+    {
+      "group": "mobile-ui",
+      "file": "02_login.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40532
+    },
+    {
+      "group": "mobile-ui",
+      "file": "03_signup.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 54263
+    },
+    {
+      "group": "mobile-ui",
+      "file": "04_onboarding.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 44726
+    },
+    {
+      "group": "mobile-ui",
+      "file": "05_salary_home.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 66070
+    },
+    {
+      "group": "mobile-ui",
+      "file": "06_daily_budget.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 61016
+    },
+    {
+      "group": "mobile-ui",
+      "file": "07_plan_setting.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 61463
+    },
+    {
+      "group": "mobile-ui",
+      "file": "08_notifications.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 80359
+    },
+    {
+      "group": "mobile-ui",
+      "file": "09_level_hub.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 59357
+    },
+    {
+      "group": "mobile-ui",
+      "file": "10_level_reading.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 73738
+    },
+    {
+      "group": "mobile-ui",
+      "file": "11_level_news.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 74070
+    },
+    {
+      "group": "mobile-ui",
+      "file": "12_level_english.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 77456
+    },
+    {
+      "group": "mobile-ui",
+      "file": "13_level_health.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 74456
+    },
+    {
+      "group": "mobile-ui",
+      "file": "14_community.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 99251
+    },
+    {
+      "group": "mobile-ui",
+      "file": "15_community_write.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29599
+    },
+    {
+      "group": "mobile-ui",
+      "file": "16_profile.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 68604
+    },
+    {
+      "group": "mobile-ui",
+      "file": "17_profile_level.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 54492
+    }
+  ]
+}

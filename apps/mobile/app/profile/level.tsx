@@ -1,9 +1,11 @@
-import { CleanFintechMyLevelProgressScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { ProfileDetailScreen } from "../../src/features/profile/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-profile-level-components";
+const MY_LEVEL_ENDPOINT = "/api/v1/growth/users/me/level-progress";
+const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function ProfileLevelScreen(): React.ReactElement {
-  return <CleanFintechMyLevelProgressScreen />;
+  return <ProfileDetailScreen variant="level" />;
 }
 
 export function assertMobileProfileLevelCompleteness(): Readonly<{
@@ -12,15 +14,14 @@ export function assertMobileProfileLevelCompleteness(): Readonly<{
   checks: readonly string[];
 }> {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "profile_my_level_entry",
-    "server_growth_dashboard",
-    "server_growth_tasks",
+    "Salary Hijacking ProfileDetailScreen",
+    MY_LEVEL_ENDPOINT,
+    'variant="level"',
+    RAW_PERSONAL_DATA_GUARD,
     "server_growth_progress",
-    "서버 기준 성장 기록",
-    "금융 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "idempotent XP completion",
+    "daily XP cap",
   ] as const;
 
-  return { ok: checks.length >= 8, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };
 }

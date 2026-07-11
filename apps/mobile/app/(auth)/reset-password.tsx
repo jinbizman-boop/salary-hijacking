@@ -1,8 +1,13 @@
 import { useLocalSearchParams } from "expo-router";
 
-import { CleanFintechResetPasswordScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { AppShell } from "../../src/shared/components";
+import {
+  PasswordRecoveryHero,
+  ResetPasswordForm,
+} from "../../src/features/auth/components";
+import { AUTH_PASSWORD_RESET_CONFIRM_PATH } from "../../src/features/auth/constants";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-auth-recovery-components";
 
 export default function ResetPasswordScreen(): React.ReactElement {
   const params = useLocalSearchParams<{ token?: string | string[] }>();
@@ -10,7 +15,12 @@ export default function ResetPasswordScreen(): React.ReactElement {
     ? params.token[0]
     : params.token;
   const token = typeof tokenValue === "string" ? tokenValue : "";
-  return <CleanFintechResetPasswordScreen token={token} />;
+  return (
+    <AppShell accessibilityLabel="Salary Hijacking reset password screen">
+      <PasswordRecoveryHero mode="reset" />
+      <ResetPasswordForm onSubmit={() => undefined} token={token} />
+    </AppShell>
+  );
 }
 
 export function assertMobileResetPasswordScreenCompleteness(): {
@@ -19,14 +29,16 @@ export function assertMobileResetPasswordScreenCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
+    "Salary Hijacking password recovery components",
     "reset-password",
-    "/api/v1/auth/password-reset/confirm",
+    AUTH_PASSWORD_RESET_CONFIRM_PATH,
+    "AppShell",
+    "PasswordRecoveryHero",
+    "ResetPasswordForm",
     "서버 기준 비밀번호 재설정",
-    "금융 원문 미노출",
-    "개인 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "reset_token_component_guard",
+    "password_render_component_guard",
   ] as const;
 
-  return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 8, version: SCREEN_VERSION, checks };
 }

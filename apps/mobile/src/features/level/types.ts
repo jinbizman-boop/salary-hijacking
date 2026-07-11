@@ -17,6 +17,17 @@ export type GrowthTaskStatus =
 
 export type GrowthTaskDifficulty = "EASY" | "NORMAL" | "HARD" | "EXTREME";
 
+export type GrowthContentType =
+  | "READING"
+  | "NEWS"
+  | "ENGLISH"
+  | "HEALTH"
+  | "ARTICLE"
+  | "VIDEO"
+  | "CHECKLIST"
+  | "ROUTINE"
+  | "COURSE";
+
 export type GrowthDashboard = Readonly<{
   profile: Readonly<{
     level: number;
@@ -52,6 +63,44 @@ export type GrowthTask = Readonly<{
 
 export type GrowthTaskListResult = Readonly<{
   items: readonly GrowthTask[];
+  page: number;
+  pageSize: number;
+  total: number;
+}>;
+
+export type GrowthContentItem = Readonly<{
+  contentId: string;
+  contentType: GrowthContentType;
+  title: string;
+  subtitle: string | null;
+  category: string;
+  difficulty: GrowthTaskDifficulty;
+  estimatedMinutes: number;
+  topics: readonly string[];
+  summary: string;
+  missionPrompt: string;
+  recordQuestion: string;
+  sourceTitle: string;
+  sourceAuthor: string | null;
+  sourceName: string | null;
+  sourceUrl: string;
+  licenseType: string;
+  safetyLevel: string;
+  viewpointTag: string | null;
+  xpReward: number;
+  status: "PUBLISHED";
+  publishedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  fullTextStored: false;
+  serverAuthority: true;
+  financialRawDataExposed: false;
+  recommendationUsesSensitiveFinancialData: false;
+  adTargetingSeparated: true;
+}>;
+
+export type GrowthContentListResult = Readonly<{
+  items: readonly GrowthContentItem[];
   page: number;
   pageSize: number;
   total: number;
@@ -108,6 +157,11 @@ export type GrowthApiClient = Readonly<{
     readonly pageSize?: number;
     readonly status?: GrowthTaskStatus;
   }) => Promise<GrowthTaskListResult>;
+  listContents: (options?: {
+    readonly page?: number;
+    readonly pageSize?: number;
+    readonly contentType?: GrowthContentType;
+  }) => Promise<GrowthContentListResult>;
   recordTaskProgress: (
     taskId: string,
     request: GrowthTaskProgressRequest,

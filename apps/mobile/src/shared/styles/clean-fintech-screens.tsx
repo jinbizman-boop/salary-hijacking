@@ -47,7 +47,12 @@ import type {
   DailyBudgetSnapshot,
   VariableExpenseRecord,
 } from "../../features/budget/types";
-import type { GrowthDashboard, GrowthTask } from "../../features/level/types";
+import type {
+  GrowthContentItem,
+  GrowthContentType,
+  GrowthDashboard,
+  GrowthTask,
+} from "../../features/level/types";
 import type {
   PayrollCalculation,
   PayrollPlanSnapshot,
@@ -198,19 +203,22 @@ type StoredCommunityWriteDraft = Readonly<{
   title: string;
   body: string;
 }>;
+type LevelDetailCard = Readonly<{
+  title: string;
+  meta: string;
+  action: string;
+  icon: string;
+  contentId: string;
+  recordQuestion: string;
+  sourceLabel?: string;
+}>;
 type LevelDetailConfig = Readonly<{
   title: string;
   subtitle: string;
   icon: string;
   tabs: readonly string[];
   metrics: readonly MoneyMetric[];
-  cards: readonly Readonly<{
-    title: string;
-    meta: string;
-    action: string;
-    icon: string;
-    contentId: string;
-  }>[];
+  cards: readonly LevelDetailCard[];
   progressLabel: string;
   progressValue: number;
 }>;
@@ -676,6 +684,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "추천 도서 읽기",
           icon: "📘",
           contentId: "cnt_reading_recommendation",
+          recordQuestion: "What did you learn from this reading?",
         },
         {
           title: "월급 이후의 현금흐름",
@@ -683,6 +692,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "생각 남기기",
           icon: "📗",
           contentId: "cnt_reading_note",
+          recordQuestion: "Which idea will you test today?",
         },
       ],
       progressLabel: "오늘 독서 루틴",
@@ -705,6 +715,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "요약 보기",
           icon: "📰",
           contentId: "cnt_news_summary",
+          recordQuestion: "What fact changed your view?",
         },
         {
           title: "구독 경제와 자동결제 관리 트렌드",
@@ -712,6 +723,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "북마크",
           icon: "📌",
           contentId: "cnt_news_bookmark",
+          recordQuestion: "Which source should you compare next?",
         },
       ],
       progressLabel: "오늘 뉴스 루틴",
@@ -735,6 +747,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "문장 학습",
           icon: "🎧",
           contentId: "cnt_english_sentence",
+          recordQuestion: "Write one sentence you practiced.",
         },
         {
           title: "생활비를 줄였어요",
@@ -742,6 +755,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "말하기 연습",
           icon: "🗣️",
           contentId: "cnt_english_speaking",
+          recordQuestion: "Write the expression you spoke.",
         },
       ],
       progressLabel: "오늘 영어 루틴",
@@ -765,6 +779,7 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "홈트 완료",
           icon: "🏃",
           contentId: "cnt_health_homeworkout",
+          recordQuestion: "How did your body feel after the routine?",
         },
         {
           title: "물 1,500ml 채우기",
@@ -772,12 +787,37 @@ const levelDetailConfigs: Readonly<Record<LevelDetailKind, LevelDetailConfig>> =
           action: "물 마심 기록",
           icon: "💧",
           contentId: "cnt_health_water",
+          recordQuestion: "What healthy action did you complete?",
         },
       ],
       progressLabel: "오늘 건강 루틴",
       progressValue: 60,
     },
   };
+
+const levelContentTypeByKind: Readonly<
+  Record<LevelDetailKind, GrowthContentType>
+> = {
+  reading: "READING",
+  news: "NEWS",
+  english: "ENGLISH",
+  health: "HEALTH",
+};
+
+function levelDetailCardFromContent(
+  item: GrowthContentItem,
+  icon: string,
+): LevelDetailCard {
+  return {
+    action: "기록하기",
+    contentId: item.contentId,
+    icon,
+    meta: `${item.category} · ${item.estimatedMinutes}분 · XP ${item.xpReward} · server-content`,
+    recordQuestion: item.recordQuestion,
+    sourceLabel: "server-content",
+    title: item.title,
+  };
+}
 
 const signupConsentLabels = [
   "약관 동의",
@@ -1385,14 +1425,53 @@ export function CleanFintechLevelDetailScreen({
   const [completedContentIds, setCompletedContentIds] = useState<
     ReadonlySet<string>
   >(() => new Set());
+  const [levelDetailRecordDrafts, setLevelDetailRecordDrafts] = useState<
+    Readonly<Record<string, string>>
+  >({});
+  const [levelDetailServerCards, setLevelDetailServerCards] = useState<
+    readonly LevelDetailCard[]
+  >([]);
   const levelDetailCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [submittingContentId, setSubmittingContentId] = useState<string | null>(
     null,
   );
+  const levelDetailCompletionAuditLabel =
+    "mobile level detail content complete";
+  useEffect(() => {
+    let cancelled = false;
+    setLevelDetailServerCards([]);
+    void growthDetailApi
+      .listContents({
+        contentType: levelContentTypeByKind[kind],
+        page: 1,
+        pageSize: 20,
+      })
+      .then((result) => {
+        if (cancelled) return;
+        setLevelDetailServerCards(
+          result.items.map((item) =>
+            levelDetailCardFromContent(item, config.icon),
+          ),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setLevelDetailServerCards([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [config.icon, growthDetailApi, kind]);
+
   const completeLevelContent = useCallback(
-    async (card: LevelDetailConfig["cards"][number]): Promise<void> => {
+    async (card: LevelDetailCard): Promise<void> => {
+      const recordDraft = levelDetailRecordDrafts[card.contentId] ?? "";
       if (completedContentIds.has(card.contentId)) {
         setToast(`${card.title}: 이미 서버에 완료 기록이 있어요.`);
+        return;
+      }
+      if (!recordDraft.trim()) {
+        setToast(`${card.title}: private LV UP record를 먼저 남겨 주세요.`);
         return;
       }
       if (levelDetailCompletionInFlightRef.current.has(card.contentId)) {
@@ -1407,7 +1486,7 @@ export function CleanFintechLevelDetailScreen({
           idempotencyKey: `mobile-${card.contentId}-${new Date()
             .toISOString()
             .slice(0, 10)}`,
-          note: "mobile level detail content complete",
+          note: recordDraft.trim(),
         });
         if (result.completion.recommendationUsesSensitiveFinancialData) {
           setToast("민감 금융정보가 포함된 추천은 완료 처리하지 않아요.");
@@ -1428,8 +1507,10 @@ export function CleanFintechLevelDetailScreen({
         setSubmittingContentId(null);
       }
     },
-    [completedContentIds, growthDetailApi],
+    [completedContentIds, growthDetailApi, levelDetailRecordDrafts],
   );
+  const detailCards =
+    levelDetailServerCards.length > 0 ? levelDetailServerCards : config.cards;
 
   return (
     <AppScreen title={config.title} subtitle={config.subtitle}>
@@ -1453,12 +1534,18 @@ export function CleanFintechLevelDetailScreen({
       <Toast message={toast} />
       <SectionCard>
         <Text style={styles.sectionTitle}>콘텐츠 리스트</Text>
-        {config.cards.map((card) => {
+        {detailCards.map((card) => {
+          const recordDraft = levelDetailRecordDrafts[card.contentId] ?? "";
+          const recordRequired =
+            !completedContentIds.has(card.contentId) &&
+            recordDraft.trim().length === 0;
           const contentActionLocked =
             submittingContentId === card.contentId ||
-            completedContentIds.has(card.contentId);
+            completedContentIds.has(card.contentId) ||
+            recordRequired;
           return (
             <Pressable
+              accessibilityLabel={`${card.title} ${card.recordQuestion} private LV UP record required`}
               accessibilityRole="button"
               accessibilityState={{ disabled: contentActionLocked }}
               disabled={contentActionLocked}
@@ -1471,11 +1558,32 @@ export function CleanFintechLevelDetailScreen({
                   ? [styles.detailCardRow, styles.disabled]
                   : styles.detailCardRow
               }
+              testID={`${levelDetailCompletionAuditLabel}-${card.contentId}`}
             >
               <Text style={styles.listIcon}>{card.icon}</Text>
               <View style={styles.flex}>
                 <Text style={styles.listTitle}>{card.title}</Text>
                 <Text style={styles.listMeta}>{card.meta}</Text>
+                <Text style={styles.listMeta}>
+                  {card.sourceLabel ?? "offline-preview"} ·{" "}
+                  {card.recordQuestion}
+                </Text>
+                <TextInput
+                  accessibilityLabel={`${card.title} private LV UP record`}
+                  editable={
+                    submittingContentId !== card.contentId &&
+                    !completedContentIds.has(card.contentId)
+                  }
+                  onChangeText={(nextValue) =>
+                    setLevelDetailRecordDrafts((current) => ({
+                      ...current,
+                      [card.contentId]: nextValue,
+                    }))
+                  }
+                  placeholder="private LV UP record"
+                  style={styles.input}
+                  value={recordDraft}
+                />
               </View>
               <Text style={styles.linkText}>
                 {submittingContentId === card.contentId

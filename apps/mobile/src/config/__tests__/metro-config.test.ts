@@ -105,6 +105,32 @@ describe("mobile Metro dependency resolution", () => {
     },
   );
 
+  it("pins React singleton requests before resolving from a root Next.js issuer", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: resolvedModuleName,
+      }),
+    );
+    const nextIssuer = require.resolve("next/package.json", {
+      paths: [testWorkspaceRoot],
+    });
+    const context: ResolverContext = {
+      originModulePath: nextIssuer,
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(context, "react", "web");
+
+    expect(result.filePath).toBe(require.resolve("react"));
+    expect(result.filePath).toContain("react@19.0.0");
+    expect(fallbackResolver).not.toHaveBeenCalled();
+  });
+
   it("delegates unrelated packages without rewriting the request", () => {
     const fallbackResolver = jest.fn(
       (

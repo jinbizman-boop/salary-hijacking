@@ -8,6 +8,9 @@ import type {
   GrowthApiClient,
   GrowthContentCompleteRequest,
   GrowthContentCompleteResult,
+  GrowthContentItem,
+  GrowthContentListResult,
+  GrowthContentType,
   GrowthDashboard,
   GrowthTask,
   GrowthTaskDifficulty,
@@ -68,6 +71,27 @@ const TASK_DIFFICULTIES = new Set<GrowthTaskDifficulty>([
   "NORMAL",
   "HARD",
   "EXTREME",
+]);
+
+const CONTENT_TYPES = new Set<GrowthContentType>([
+  "READING",
+  "NEWS",
+  "ENGLISH",
+  "HEALTH",
+  "ARTICLE",
+  "VIDEO",
+  "CHECKLIST",
+  "ROUTINE",
+  "COURSE",
+]);
+
+const FORBIDDEN_CONTENT_BODY_KEYS = new Set([
+  "articleBody",
+  "body",
+  "bookText",
+  "fullText",
+  "rawArticle",
+  "transcript",
 ]);
 const RAW_SENSITIVE_TEXT_PATTERNS = [
   /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/iu,
@@ -230,6 +254,16 @@ function normalizeTaskType(value: unknown): GrowthTaskType {
   return invalidResponse();
 }
 
+function normalizeContentType(value: unknown): GrowthContentType {
+  if (
+    typeof value === "string" &&
+    CONTENT_TYPES.has(value as GrowthContentType)
+  ) {
+    return value as GrowthContentType;
+  }
+  return invalidResponse();
+}
+
 function normalizeTaskStatus(value: unknown): GrowthTaskStatus {
   if (
     typeof value === "string" &&
@@ -381,6 +415,95 @@ function normalizeTaskList(value: unknown): GrowthTaskListResult {
   };
 }
 
+function normalizeSourceUrl(value: unknown): string {
+  if (typeof value !== "string") return invalidResponse();
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return invalidResponse();
+  }
+  if (url.protocol !== "https:" || url.username || url.password) {
+    return invalidResponse();
+  }
+  return url.toString();
+}
+
+function hasForbiddenContentBody(value: Record<string, unknown>): boolean {
+  return Object.keys(value).some((key) => FORBIDDEN_CONTENT_BODY_KEYS.has(key));
+}
+
+function normalizeContentItem(value: unknown): GrowthContentItem {
+  if (!isRecord(value) || hasForbiddenContentBody(value)) {
+    return invalidResponse();
+  }
+  if (
+    !isPositiveInteger(value.estimatedMinutes) ||
+    !Array.isArray(value.topics) ||
+    !isNonNegativeInteger(value.xpReward) ||
+    value.status !== "PUBLISHED" ||
+    !isIsoTimestamp(value.publishedAt) ||
+    !isIsoTimestamp(value.createdAt) ||
+    !isIsoTimestamp(value.updatedAt) ||
+    value.fullTextStored !== false ||
+    value.serverAuthority !== true ||
+    value.financialRawDataExposed !== false ||
+    value.recommendationUsesSensitiveFinancialData !== false ||
+    value.adTargetingSeparated !== true
+  ) {
+    return invalidResponse();
+  }
+  return {
+    contentId: normalizeGrowthId(value.contentId),
+    contentType: normalizeContentType(value.contentType),
+    title: normalizeDisplayText(value.title, 120),
+    subtitle: normalizeNullableSafeText(value.subtitle, 120),
+    category: normalizeDisplayText(value.category, 80),
+    difficulty: normalizeDifficulty(value.difficulty),
+    estimatedMinutes: value.estimatedMinutes,
+    topics: value.topics.map((topic) => normalizeDisplayText(topic, 40)),
+    summary: normalizeDisplayText(value.summary, 900),
+    missionPrompt: normalizeDisplayText(value.missionPrompt, 300),
+    recordQuestion: normalizeDisplayText(value.recordQuestion, 180),
+    sourceTitle: normalizeDisplayText(value.sourceTitle, 160),
+    sourceAuthor: normalizeNullableSafeText(value.sourceAuthor, 120),
+    sourceName: normalizeNullableSafeText(value.sourceName, 120),
+    sourceUrl: normalizeSourceUrl(value.sourceUrl),
+    licenseType: normalizeDisplayText(value.licenseType, 80),
+    safetyLevel: normalizeDisplayText(value.safetyLevel, 80),
+    viewpointTag: normalizeNullableSafeText(value.viewpointTag, 80),
+    xpReward: value.xpReward,
+    status: "PUBLISHED",
+    publishedAt: value.publishedAt,
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt,
+    fullTextStored: false,
+    serverAuthority: true,
+    financialRawDataExposed: false,
+    recommendationUsesSensitiveFinancialData: false,
+    adTargetingSeparated: true,
+  };
+}
+
+function normalizeContentList(value: unknown): GrowthContentListResult {
+  if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
+  const data = value.data;
+  if (
+    !Array.isArray(data.items) ||
+    !isNonNegativeInteger(data.page) ||
+    !isNonNegativeInteger(data.pageSize) ||
+    !isNonNegativeInteger(data.total)
+  ) {
+    return invalidResponse();
+  }
+  return {
+    items: data.items.map(normalizeContentItem),
+    page: data.page,
+    pageSize: data.pageSize,
+    total: data.total,
+  };
+}
+
 function validProgressRequest(value: GrowthTaskProgressRequest): boolean {
   const record = value as Record<string, unknown>;
   return (
@@ -438,6 +561,36 @@ function normalizeTaskListOptions(
     );
   }
   return { page, pageSize, status };
+}
+
+function normalizeContentListOptions(
+  options: Parameters<GrowthApiClient["listContents"]>[0] = {},
+): Readonly<{
+  page: number;
+  pageSize: number;
+  contentType: GrowthContentType | null;
+}> {
+  const record = options as Record<string, unknown>;
+  const page = options.page ?? 1;
+  const pageSize = options.pageSize ?? 20;
+  const contentType = options.contentType ?? null;
+  if (
+    !hasOnlyKeys(record, ["page", "pageSize", "contentType"]) ||
+    !Number.isSafeInteger(page) ||
+    page < 1 ||
+    page > 10_000 ||
+    !Number.isSafeInteger(pageSize) ||
+    pageSize < 1 ||
+    pageSize > 100 ||
+    (contentType !== null && !CONTENT_TYPES.has(contentType))
+  ) {
+    throw new GrowthApiError(
+      0,
+      "GROWTH_INVALID_CONTENT_LIST_OPTIONS",
+      GROWTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return { page, pageSize, contentType };
 }
 
 function normalizeProgress(value: unknown): GrowthTaskProgressResult {
@@ -616,6 +769,19 @@ export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
       });
       params.set("status", status);
       return normalizeTaskList(await request(`${GROWTH_TASKS_PATH}?${params}`));
+    },
+
+    async listContents(options = {}): Promise<GrowthContentListResult> {
+      const { page, pageSize, contentType } =
+        normalizeContentListOptions(options);
+      const params = new URLSearchParams({
+        page: String(page),
+        pageSize: String(pageSize),
+      });
+      if (contentType) params.set("contentType", contentType);
+      return normalizeContentList(
+        await request(`${GROWTH_CONTENTS_PATH}?${params}`),
+      );
     },
 
     async recordTaskProgress(

@@ -3,10 +3,14 @@ import * as SplashScreen from "expo-splash-screen";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 
+import { SplashLaunchScreen } from "../src/features/auth/components";
+import {
+  CapturePreviewScreen,
+  type CapturePreviewKind,
+} from "../src/features/capture";
 import { MOBILE_ACCESS_TOKEN_KEY } from "../src/shared/storage/auth-token";
-import { CleanFintechSplashScreen } from "../src/shared/styles/clean-fintech-screens";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-launch-components";
 const SPLASH_ROUTE_DELAY_MS = 1200;
 const LOGIN_ROUTE = "/(auth)/login";
 const SALARY_HOME_ROUTE = "/salary";
@@ -17,12 +21,34 @@ type ExpoExtra = Readonly<{
   operations?: Readonly<{ e2eBuild?: unknown; releaseChannel?: unknown }>;
 }>;
 
+const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
+  Object.freeze({
+    community: "community",
+    "community-write": "community-write",
+    english: "english",
+    health: "health",
+    level: "level",
+    news: "news",
+    notifications: "notifications",
+    plan: "plan",
+    profile: "profile",
+    "profile-level": "profile-level",
+    reading: "reading",
+    salary: "salary",
+  });
+
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function MobileIndexScreen(): React.ReactElement {
   const router = useRouter();
+  const captureScreenKind = readCaptureScreenKind();
 
   useEffect(() => {
+    if (captureScreenKind) {
+      void SplashScreen.hideAsync().catch(() => undefined);
+      return undefined;
+    }
+
     let mounted = true;
     void SplashScreen.hideAsync().catch(() => undefined);
     const timer = setTimeout(() => {
@@ -41,9 +67,13 @@ export default function MobileIndexScreen(): React.ReactElement {
       mounted = false;
       clearTimeout(timer);
     };
-  }, [router]);
+  }, [captureScreenKind, router]);
 
-  return <CleanFintechSplashScreen />;
+  if (captureScreenKind) {
+    return <CapturePreviewScreen kind={captureScreenKind} />;
+  }
+
+  return <SplashLaunchScreen routeDelayMs={SPLASH_ROUTE_DELAY_MS} />;
 }
 
 export async function resolveInitialRoute(): Promise<InitialRoute> {
@@ -65,6 +95,26 @@ function isPreviewFallbackLaunch(): boolean {
     releaseChannel === "preview" ||
     environment === "staging"
   );
+}
+
+function readCaptureScreenKind(): CapturePreviewKind | null {
+  if (typeof window === "undefined") return null;
+  return resolveCaptureScreenKindForUrl(window.location.href);
+}
+
+export function resolveCaptureScreenKindForUrl(
+  href: string,
+): CapturePreviewKind | null {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
+  }
+  if (!url.searchParams.has("capture")) return null;
+  const parts = url.pathname.split("/").filter(Boolean);
+  if (parts[0] !== "capture") return null;
+  return captureScreens[parts[1] ?? ""] ?? null;
 }
 
 function isUsableAccessToken(value: string | null): boolean {
@@ -89,22 +139,21 @@ export function assertMobileIndexCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
+    "Salary Hijacking launch components",
     "SALARY HIJACKING",
-    "급여납치",
-    "월급이 사라지기 전에 먼저 붙잡아요",
-    "Splash",
-    "1.2초",
+    "SplashLaunchScreen",
+    "CapturePreviewScreen",
     "SplashScreen.hideAsync",
-    "로그인",
-    "급여 홈",
+    "SPLASH_ROUTE_DELAY_MS = 1200",
+    LOGIN_ROUTE,
+    SALARY_HOME_ROUTE,
     "preview QA fallback",
     "resolveInitialRoute",
-    "서버 기준 상태 확인",
-    "금융 원문 미노출",
-    "개인 원문 미노출",
-    "푸시 토큰 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "server authoritative session check",
+    "financial raw data hidden",
+    "personal raw data hidden",
+    "token raw data hidden",
+    "financial amount ad targeting prohibited",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

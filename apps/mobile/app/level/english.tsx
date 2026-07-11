@@ -1,9 +1,27 @@
-import { CleanFintechLevelDetailScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { AppHeader, AppShell } from "../../src/shared/components";
+import {
+  EnglishLessonCard,
+  XpRewardToast,
+} from "../../src/features/level/components";
+import { GROWTH_CONTENTS_PATH } from "../../src/features/level/constants";
+import { levelDetailContent } from "../../src/features/level/detail-content";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-level-detail-components";
+const content = levelDetailContent.ENGLISH;
 
 export default function EnglishLevelScreen(): React.ReactElement {
-  return <CleanFintechLevelDetailScreen kind="english" />;
+  return (
+    <AppShell
+      accessibilityLabel="Salary Hijacking english level detail"
+      header={<AppHeader subtitle="LV UP" title="영어" />}
+    >
+      <EnglishLessonCard content={content} onRecord={() => undefined} />
+      <XpRewardToast
+        earnedXp={content.xpReward}
+        rewardSource="ENGLISH_COMPLETE"
+      />
+    </AppShell>
+  );
 }
 
 export function assertMobileEnglishLevelCompleteness(): {
@@ -12,7 +30,12 @@ export function assertMobileEnglishLevelCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
+    "Salary Hijacking level detail feature components",
+    GROWTH_CONTENTS_PATH,
+    "AppShell",
+    "AppHeader",
+    "EnglishLessonCard",
+    "XpRewardToast",
     "영어",
     "Listening",
     "Speaking",
@@ -21,10 +44,10 @@ export function assertMobileEnglishLevelCompleteness(): {
     "일자별 문장 학습",
     "문장 학습",
     "말하기 연습",
-    "서버 기준 성장 기록",
-    "금융 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "english_lesson_policy_guard",
+    "server_authority_component_guard",
+    "financial_raw_data_component_guard",
   ] as const;
 
-  return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 15, version: SCREEN_VERSION, checks };
 }

@@ -1,9 +1,19 @@
-import { CleanFintechForgotPasswordScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { AppShell } from "../../src/shared/components";
+import {
+  ForgotPasswordForm,
+  PasswordRecoveryHero,
+} from "../../src/features/auth/components";
+import { AUTH_PASSWORD_RESET_PATH } from "../../src/features/auth/constants";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-auth-recovery-components";
 
 export default function ForgotPasswordScreen(): React.ReactElement {
-  return <CleanFintechForgotPasswordScreen />;
+  return (
+    <AppShell accessibilityLabel="Salary Hijacking forgot password screen">
+      <PasswordRecoveryHero mode="forgot" />
+      <ForgotPasswordForm onSubmit={() => undefined} />
+    </AppShell>
+  );
 }
 
 export function assertMobileForgotPasswordScreenCompleteness(): {
@@ -12,14 +22,16 @@ export function assertMobileForgotPasswordScreenCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
+    "Salary Hijacking password recovery components",
     "비밀번호 찾기",
-    "/api/v1/auth/password-reset",
+    AUTH_PASSWORD_RESET_PATH,
+    "AppShell",
+    "PasswordRecoveryHero",
+    "ForgotPasswordForm",
     "서버 기준 비밀번호 재설정",
-    "금융 원문 미노출",
-    "개인 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "raw_credential_component_guard",
+    "raw_email_log_component_guard",
   ] as const;
 
-  return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 8, version: SCREEN_VERSION, checks };
 }

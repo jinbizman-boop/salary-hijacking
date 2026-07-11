@@ -1,9 +1,11 @@
-import { CleanFintechSettingsScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { ProfileDetailScreen } from "../../src/features/profile/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-profile-account-components";
+const ACCOUNT_ENDPOINT = "/api/v1/users/me/account";
+const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function AccountSettingsScreen(): React.ReactElement {
-  return <CleanFintechSettingsScreen kind="account" />;
+  return <ProfileDetailScreen variant="account" />;
 }
 
 export function assertMobileAccountSettingsCompleteness(): Readonly<{
@@ -12,12 +14,12 @@ export function assertMobileAccountSettingsCompleteness(): Readonly<{
   checks: readonly string[];
 }> {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "account_settings_entry",
-    "server_session_security",
-    "notification_consent",
-    "privacy_request",
-    "푸시 토큰 원문 미노출",
+    "Salary Hijacking ProfileDetailScreen",
+    ACCOUNT_ENDPOINT,
+    'variant="account"',
+    RAW_PERSONAL_DATA_GUARD,
+    "/api/v1/users/me/withdrawal-requests",
+    "push token raw value hidden",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

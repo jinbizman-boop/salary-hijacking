@@ -159,7 +159,7 @@ describe("mobile Detox E2E contract", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_FILE: "https://example.com/google-services.json",
+      GOOGLE_SERVICES_JSON: "https://example.com/google-services.json",
     };
     const defaultConfig = appConfig({ config: {} });
 
@@ -171,7 +171,7 @@ describe("mobile Detox E2E contract", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_FILE: "./secrets/firebase/google-services.staging.json",
+      GOOGLE_SERVICES_JSON: "./secrets/firebase/google-services.staging.json",
     };
     const overriddenConfig = appConfig({ config: {} });
 

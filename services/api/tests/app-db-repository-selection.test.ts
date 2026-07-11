@@ -8,6 +8,12 @@ const appSource = readFileSync(
 
 const routeRepositoryContracts = [
   {
+    label: "admin",
+    routeOption: "options.adminRoutesOptions ??",
+    shouldUse: "shouldUseNeonAdminRepository(routeEnv)",
+    create: "createNeonAdminRepository<TEnv>()",
+  },
+  {
     label: "payroll",
     routeOption: "options.payrollRoutesOptions ??",
     shouldUse: "shouldUseNeonPayrollRepository(routeEnv)",

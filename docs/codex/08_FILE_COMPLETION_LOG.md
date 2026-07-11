@@ -9,6 +9,57 @@ last_verified: 2026-07-01
 
 This log records observed status. It is not a marketing completion sheet.
 
+## 2026-07-11 Commercialization Git Branch Verification And Turbo Clean Recovery
+
+Area: Git-tracked commercialization branch and release gates.
+
+Paths:
+`package.json`, `turbo.json`, `apps/admin/package.json`,
+`packages/api-contract/package.json`, `packages/db/package.json`,
+`packages/security/package.json`, `packages/types/package.json`,
+`packages/ui/package.json`, `packages/utils/package.json`,
+`services/api/package.json`, `services/notifications/package.json`,
+`services/scheduler/package.json`, and
+`docs/codex/08_FILE_COMPLETION_LOG.md`.
+
+Status: Verified PASS in
+`C:\Users\PC\Desktop\salary-hijacking-commercialization-100` on branch
+`codex/commercialization-100`.
+
+Verification:
+`git clone --branch main https://github.com/jinbizman-boop/salary-hijacking.git C:\Users\PC\Desktop\salary-hijacking-commercialization-100`
+PASS; `git switch -c codex/commercialization-100` PASS;
+`corepack pnpm install --frozen-lockfile` PASS;
+`corepack pnpm run api:contract` PASS, 15/15 Turbo tasks;
+`corepack pnpm run quality` PASS, 86/86 Turbo tasks;
+`corepack pnpm run build` PASS, 12/12 Turbo tasks;
+`corepack pnpm run test:e2e` PASS, 33/33 Turbo tasks with mobile native E2E
+recorded as a no-secret skipped observation because no local Android Detox APK
+was present; `corepack pnpm run test:qa` PASS, 80/80 Turbo tasks;
+`corepack pnpm run format:check` PASS; `corepack pnpm run security:scan` PASS,
+16/16 Turbo tasks; `corepack pnpm run privacy:check` PASS, 25/25 Turbo tasks;
+`corepack pnpm run check:release-readiness -- --soft` PASS with release
+readiness `READY`; `corepack pnpm run clean:junk` removed 29 generated paths
+and freed 103.5 MB; post-clean `corepack pnpm run format:check` PASS; post-clean
+`corepack pnpm run check:release-readiness -- --soft` PASS with release
+readiness `READY`.
+
+Notes: `C:\Users\PC\Desktop\salary-hijacking-main` was not a Git repository, so
+release readiness could not prove Git status there. The verified working
+repository is the fresh clone above. Package-level `clean` scripts no longer
+delete package-local `.turbo` folders while Turbo is orchestrating tasks; root
+`clean` removes Turbo caches only after `turbo run clean` finishes. `turbo.json`
+now makes `api:contract` wait for same-package `build`, and
+`packages/api-contract` contract assertion no longer starts a second concurrent
+build that can delete `dist` mid-validation. Remaining local warnings are
+environmental: `gh` and Neon CLI are not on PATH, connector evidence is present,
+and the repository has expected local changes before commit. File-level
+document/theoretical completeness is updated for the touched scripts/configs;
+file-level verified completeness is PASS for the commands above; project-wide
+operational readiness is represented by the observed release-readiness script
+result and tracked no-secret evidence, not by a new live production deployment
+in this shell.
+
 ## 2026-07-08 Android Preview Splash Entry Recovery
 
 | Area                                  | Path                                                                                                                                                                   | Status                                      | Verification                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |

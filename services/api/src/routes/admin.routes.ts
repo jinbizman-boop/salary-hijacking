@@ -73,6 +73,11 @@ export type AdminMutationAction =
   | "PAUSE_AD_CAMPAIGN"
   | "CREATE_GROWTH_TASK"
   | "UPDATE_GROWTH_TASK"
+  | "CREATE_GROWTH_CONTENT"
+  | "UPDATE_GROWTH_CONTENT"
+  | "REVIEW_GROWTH_CONTENT"
+  | "PUBLISH_GROWTH_CONTENT"
+  | "ARCHIVE_GROWTH_CONTENT"
   | "UPDATE_ROLE_MEMBER";
 
 export type JsonPrimitive = null | boolean | number | string;
@@ -248,6 +253,35 @@ export interface AdminRepository<TEnv = unknown> {
   ): Promise<JsonRecord>;
   updateGrowthTask(
     taskId: string,
+    input: JsonRecord,
+    runtime: AdminRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  listGrowthContents(
+    input: JsonRecord,
+    pagination: PaginationInput,
+    runtime: AdminRouteRuntime<TEnv>,
+  ): Promise<AdminListResult>;
+  createGrowthContent(
+    input: JsonRecord,
+    runtime: AdminRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  updateGrowthContent(
+    contentId: string,
+    input: JsonRecord,
+    runtime: AdminRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  reviewGrowthContent(
+    contentId: string,
+    input: JsonRecord,
+    runtime: AdminRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  publishGrowthContent(
+    contentId: string,
+    input: JsonRecord,
+    runtime: AdminRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  archiveGrowthContent(
+    contentId: string,
     input: JsonRecord,
     runtime: AdminRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
@@ -1050,6 +1084,101 @@ function createInMemoryAdminRepository<
         updatedAt: new Date().toISOString(),
       };
     },
+    async listGrowthContents(_input, page): Promise<AdminListResult> {
+      return listResult(
+        [
+          {
+            contentId: "gci_1001",
+            contentType: "READING",
+            title: "Money habit reading",
+            status: "REVIEW",
+            sourceName: "Publisher catalog",
+            sourceUrl: "https://publisher.example/books/money-habit",
+            licenseType: "CURATED_LINK",
+            safetyLevel: "GENERAL",
+            xpReward: 15,
+            auditReasonRequired: true,
+            serverAuthority: true,
+            fullTextStored: false,
+            financialRawDataExposed: false,
+            adTargetingEligible: false,
+          },
+        ],
+        page,
+      );
+    },
+    async createGrowthContent(input, runtime): Promise<JsonRecord> {
+      assertNoForbiddenGrowthContentPayload(input);
+      return {
+        contentId: `gci_${Date.now()}`,
+        ...input,
+        status: input.status ?? "DRAFT",
+        auditReasonRequired: true,
+        serverAuthority: true,
+        fullTextStored: false,
+        financialRawDataExposed: false,
+        adTargetingEligible: false,
+        reason: requireReason(input, runtime.request),
+        createdBy: runtime.principal.adminId,
+        createdAt: new Date().toISOString(),
+      };
+    },
+    async updateGrowthContent(contentId, input, runtime): Promise<JsonRecord> {
+      assertNoForbiddenGrowthContentPayload(input);
+      return {
+        contentId,
+        ...input,
+        auditReasonRequired: true,
+        serverAuthority: true,
+        fullTextStored: false,
+        financialRawDataExposed: false,
+        adTargetingEligible: false,
+        reason: requireReason(input, runtime.request),
+        updatedBy: runtime.principal.adminId,
+        updatedAt: new Date().toISOString(),
+      };
+    },
+    async reviewGrowthContent(contentId, input, runtime): Promise<JsonRecord> {
+      assertNoForbiddenGrowthContentPayload(input);
+      return {
+        contentId,
+        status: "REVIEW",
+        auditReasonRequired: true,
+        serverAuthority: true,
+        fullTextStored: false,
+        financialRawDataExposed: false,
+        adTargetingEligible: false,
+        reason: requireReason(input, runtime.request),
+        reviewedBy: runtime.principal.adminId,
+        reviewedAt: new Date().toISOString(),
+      };
+    },
+    async publishGrowthContent(contentId, input, runtime): Promise<JsonRecord> {
+      assertGrowthContentPublishPolicy(input);
+      return {
+        contentId,
+        status: "PUBLISHED",
+        auditReasonRequired: true,
+        serverAuthority: true,
+        fullTextStored: false,
+        financialRawDataExposed: false,
+        adTargetingEligible: false,
+        reason: requireReason(input, runtime.request),
+        publishedBy: runtime.principal.adminId,
+        publishedAt: new Date().toISOString(),
+      };
+    },
+    async archiveGrowthContent(contentId, input, runtime): Promise<JsonRecord> {
+      return {
+        contentId,
+        status: "ARCHIVED",
+        auditReasonRequired: true,
+        serverAuthority: true,
+        reason: requireReason(input, runtime.request),
+        archivedBy: runtime.principal.adminId,
+        archivedAt: new Date().toISOString(),
+      };
+    },
     async listAuditLogs(_input, page): Promise<AdminListResult> {
       return listResult(
         [
@@ -1109,6 +1238,84 @@ function assertAdPolicy(input: JsonRecord): void {
       "AD_FINANCIAL_TARGETING_FORBIDDEN",
       "광고 캠페인에는 급여·대출·저축·소비 원천 데이터 기반 타겟팅을 사용할 수 없습니다.",
       { field: found },
+    );
+  }
+}
+
+function stringValue(input: JsonRecord, field: string): string {
+  const value = input[field];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function booleanValue(input: JsonRecord, field: string): boolean {
+  return input[field] === true;
+}
+
+function assertNoForbiddenGrowthContentPayload(input: JsonRecord): void {
+  const forbiddenFields = [
+    "articleBody",
+    "articleHtml",
+    "bodyText",
+    "bookText",
+    "copiedText",
+    "fullArticle",
+    "fullBody",
+    "fullText",
+    "rawArticle",
+    "rawBook",
+    "transcript",
+  ];
+  const found = forbiddenFields.find((field) => Object.hasOwn(input, field));
+  if (
+    found ||
+    input.fullTextStored === true ||
+    input.adTargetingEligible === true
+  ) {
+    throw new AdminHttpError(
+      400,
+      "ADMIN_GROWTH_CONTENT_POLICY_BLOCKED",
+      "LV UP content operations cannot store full copyrighted text or enable ad targeting.",
+      {
+        field:
+          found ??
+          (input.fullTextStored === true
+            ? "fullTextStored"
+            : "adTargetingEligible"),
+      },
+    );
+  }
+}
+
+function assertGrowthContentPublishPolicy(input: JsonRecord): void {
+  assertNoForbiddenGrowthContentPayload(input);
+  const missing: string[] = [];
+  const contentType = stringValue(input, "contentType").toUpperCase();
+  const allowedContentTypes = ["READING", "NEWS", "ENGLISH", "HEALTH"];
+
+  if (!allowedContentTypes.includes(contentType)) missing.push("contentType");
+  if (!/^https:\/\/[^\s]+$/i.test(stringValue(input, "sourceUrl")))
+    missing.push("sourceUrl");
+  if (!stringValue(input, "licenseType")) missing.push("licenseType");
+  if (!stringValue(input, "safetyLevel")) missing.push("safetyLevel");
+
+  if (contentType === "NEWS") {
+    if (!stringValue(input, "sourceName")) missing.push("sourceName");
+    if (!stringValue(input, "viewpointTag")) missing.push("viewpointTag");
+  }
+
+  if (contentType === "HEALTH") {
+    if (!booleanValue(input, "beginnerSafe")) missing.push("beginnerSafe");
+    if (!booleanValue(input, "painStopNotice")) missing.push("painStopNotice");
+    if (!booleanValue(input, "medicalDisclaimer"))
+      missing.push("medicalDisclaimer");
+  }
+
+  if (missing.length) {
+    throw new AdminHttpError(
+      400,
+      "ADMIN_GROWTH_CONTENT_PUBLISH_BLOCKED",
+      "LV UP content cannot be published until source, license, and safety policy fields are complete.",
+      { missing },
     );
   }
 }
@@ -1452,6 +1659,76 @@ async function dispatchAdminRoute<TEnv>(
     });
   }
 
+  if (method === "GET" && relativePath === "/growth/contents") {
+    requirePermission(runtime.principal, ["growth:read", "growth:manage"]);
+    return jsonResponse(runtime, 200, {
+      data: await repository.listGrowthContents(query, page, runtime),
+    });
+  }
+
+  if (method === "POST" && relativePath === "/growth/contents") {
+    requirePermission(runtime.principal, ["growth:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertNoForbiddenGrowthContentPayload(input);
+    return jsonResponse(runtime, 201, {
+      data: await repository.createGrowthContent(input, runtime),
+    });
+  }
+
+  match = matchRoute(relativePath, /^\/growth\/contents\/([^/]+)$/);
+  if (method === "PATCH" && match) {
+    requirePermission(runtime.principal, ["growth:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertNoForbiddenGrowthContentPayload(input);
+    return jsonResponse(runtime, 200, {
+      data: await repository.updateGrowthContent(
+        idFromMatch(match, 1),
+        input,
+        runtime,
+      ),
+    });
+  }
+
+  match = matchRoute(relativePath, /^\/growth\/contents\/([^/]+)\/review$/);
+  if (method === "POST" && match) {
+    requirePermission(runtime.principal, ["growth:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertNoForbiddenGrowthContentPayload(input);
+    return jsonResponse(runtime, 200, {
+      data: await repository.reviewGrowthContent(
+        idFromMatch(match, 1),
+        input,
+        runtime,
+      ),
+    });
+  }
+
+  match = matchRoute(relativePath, /^\/growth\/contents\/([^/]+)\/publish$/);
+  if (method === "POST" && match) {
+    requirePermission(runtime.principal, ["growth:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertGrowthContentPublishPolicy(input);
+    return jsonResponse(runtime, 200, {
+      data: await repository.publishGrowthContent(
+        idFromMatch(match, 1),
+        input,
+        runtime,
+      ),
+    });
+  }
+
+  match = matchRoute(relativePath, /^\/growth\/contents\/([^/]+)\/archive$/);
+  if (method === "POST" && match) {
+    requirePermission(runtime.principal, ["growth:manage"]);
+    return jsonResponse(runtime, 200, {
+      data: await repository.archiveGrowthContent(
+        idFromMatch(match, 1),
+        await parseJsonBody(runtime.request),
+        runtime,
+      ),
+    });
+  }
+
   if (method === "GET" && relativePath === "/audit-logs") {
     requirePermission(runtime.principal, ["audit:read:minimal", "*"]);
     return jsonResponse(runtime, 200, {
@@ -1575,6 +1852,12 @@ export const adminRoutesManifest = Object.freeze({
     "GET /growth/tasks",
     "POST /growth/tasks",
     "PATCH /growth/tasks/{taskId}",
+    "GET /growth/contents",
+    "POST /growth/contents",
+    "PATCH /growth/contents/{contentId}",
+    "POST /growth/contents/{contentId}/review",
+    "POST /growth/contents/{contentId}/publish",
+    "POST /growth/contents/{contentId}/archive",
     "GET /audit-logs",
     "GET /admin-role-members",
     "PATCH /admin-role-members/{adminId}",
@@ -1604,6 +1887,8 @@ export function assertAdminRoutesCompleteness(): {
     "ad_campaign_crud_activate_pause_reports",
     "ad_financial_targeting_forbidden",
     "growth_task_list_create_update",
+    "growth_content_create_edit_review_publish_archive",
+    "growth_content_source_license_safety_policy_gate",
     "dashboard_metrics",
     "audit_log_list",
     "admin_role_member_list_update",

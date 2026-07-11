@@ -85,7 +85,7 @@
     "#tokens/*": "./src/tokens/*.ts"
   },
   "scripts": {
-    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','.turbo','coverage','tsconfig.ui.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','tsconfig.ui.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
     "prepare:barrels": "node scripts/prepare-ui.mjs --barrels",
     "prepare:tsconfig": "node scripts/prepare-ui.mjs --tsconfig",
     "prepare:ui": "corepack pnpm run prepare:barrels && corepack pnpm run prepare:tsconfig",
