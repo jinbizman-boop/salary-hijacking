@@ -81,7 +81,7 @@
     "disk:report:json": "node scripts/dev/report-workspace-disk-usage.mjs --json",
     "clean:junk": "node scripts/dev/clean-generated-junk.mjs",
     "clean:junk:dry-run": "node scripts/dev/clean-generated-junk.mjs --dry-run",
-    "clean": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run clean && rimraf .turbo node_modules apps/*/node_modules services/*/node_modules packages/*/node_modules tools/*/node_modules",
+    "clean": "node scripts/dev/run-with-corepack-pnpm.mjs turbo run clean && rimraf .turbo apps/*/.turbo services/*/.turbo packages/*/.turbo tools/*/.turbo node_modules apps/*/node_modules services/*/node_modules packages/*/node_modules tools/*/node_modules",
     "doctor": "corepack pnpm --version && node --version && turbo --version && corepack pnpm run db:validate && corepack pnpm run api:contract && corepack pnpm run privacy:check"
   },
   "keywords": [

@@ -4,6 +4,7 @@
  */
 
 import { createAuthApi } from "../src/features/auth/api";
+import { CapturePreviewScreen } from "../src/features/capture";
 import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
 import {
   attachMobileBearerToken,
@@ -104,6 +105,22 @@ type ConstantsRuntime = Readonly<{
     }>;
   }>;
 }>;
+type CaptureScreenKind =
+  | "salary"
+  | "plan"
+  | "level"
+  | "notifications"
+  | "community"
+  | "community-write"
+  | "profile"
+  | "profile-level"
+  | "login"
+  | "signup"
+  | "splash"
+  | "reading"
+  | "news"
+  | "english"
+  | "health";
 
 type SessionSnapshot = Readonly<{
   authenticated: boolean;
@@ -221,6 +238,24 @@ const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
 });
 const OFFICIAL_BI_LOGO =
   require("../assets/brand/salary-hijacking-platform-logo.png") as unknown;
+const CAPTURE_SCREENS: Readonly<Record<string, CaptureScreenKind>> =
+  Object.freeze({
+    community: "community",
+    "community-write": "community-write",
+    english: "english",
+    health: "health",
+    level: "level",
+    login: "login",
+    news: "news",
+    notifications: "notifications",
+    plan: "plan",
+    profile: "profile",
+    "profile-level": "profile-level",
+    reading: "reading",
+    salary: "salary",
+    signup: "signup",
+    splash: "splash",
+  });
 
 const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
@@ -230,6 +265,7 @@ const FontRuntimeRef = loadFontRuntime();
 const SplashScreenRuntimeRef = loadSplashScreenRuntime();
 const API_BASE_URL = readMobileApiBaseUrl();
 const IS_E2E_BUILD = readMobileE2eBuildEnabled();
+const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
 
 void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
 
@@ -280,6 +316,7 @@ export default function MobileRootLayout(): unknown {
   const [fontsLoaded] = FontRuntimeRef.useFonts(FONT_ASSETS);
   const router = RouterRuntimeRef.useRouter();
   const segments = RouterRuntimeRef.useSegments();
+  const captureScreenKind = INITIAL_CAPTURE_SCREEN_KIND;
   const [state, setState] = ReactRuntimeRef.useState<RootState>({
     status: "BOOTSTRAPPING",
     payload: fallbackPayload,
@@ -361,6 +398,8 @@ export default function MobileRootLayout(): unknown {
 
   ReactRuntimeRef.useEffect((): void => {
     const next = state.status;
+    if (next === "READY" && captureScreenKind) return;
+    if (next === "READY" && isCaptureBrowserPath()) return;
     if (next === "READY" && shouldRouteReadyStateToHome(currentRouteKey))
       router.replace(SALARY_HOME_ROUTE as never);
     if (next === "AUTH_REQUIRED" && !isPublic)
@@ -369,10 +408,13 @@ export default function MobileRootLayout(): unknown {
       router.replace(AUTH_VERIFY_ROUTE as never);
     if (next === "ONBOARDING" && currentRouteKey !== "onboarding")
       router.replace(ONBOARDING_ROUTE as never);
-  }, [currentRouteKey, isPublic, router, state.status]);
+  }, [captureScreenKind, currentRouteKey, isPublic, router, state.status]);
 
   const shouldRenderSlot =
-    state.status === "READY" || state.status === "OFFLINE" || isPublic;
+    captureScreenKind !== null ||
+    state.status === "READY" ||
+    state.status === "OFFLINE" ||
+    isPublic;
   const shouldShowRuntimeChrome = !shouldRenderSlot;
 
   if (!fontsLoaded) {
@@ -428,11 +470,17 @@ export default function MobileRootLayout(): unknown {
       ? h(
           NativeRuntimeRef.View,
           { style: styles.slotHost },
-          h(RouterRuntimeRef.Slot, { key: currentRouteKey }),
+          captureScreenKind
+            ? renderCaptureScreen(captureScreenKind)
+            : h(RouterRuntimeRef.Slot, { key: currentRouteKey }),
         )
       : renderGate(state.status, state.retrying, bootstrap),
     shouldShowRuntimeChrome ? renderRuntimeGuard(state.payload) : null,
   );
+}
+
+function renderCaptureScreen(kind: CaptureScreenKind): unknown {
+  return h(CapturePreviewScreen, { kind });
 }
 
 function renderGlobalHeader(
@@ -821,11 +869,39 @@ async function readCachedSessionStatus(): Promise<SessionSnapshot> {
 
 function isPublicRoute(segments: readonly string[]): boolean {
   const clean = normalizeSegments(segments);
+  if (INITIAL_CAPTURE_SCREEN_KIND) return true;
+  if (isCaptureBrowserPath()) return true;
   if (clean.length === 0) return false;
+  if (clean[0] === "capture") return true;
   if (clean.join("/") === "auth/oauth/callback") return true;
   return clean.some((segment: string) =>
     PUBLIC_SEGMENTS.includes(segment as (typeof PUBLIC_SEGMENTS)[number]),
   );
+}
+
+function isCaptureBrowserPath(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.location.pathname.split("/").filter(Boolean)[0] === "capture";
+}
+
+function readInitialCaptureScreenKind(): CaptureScreenKind | null {
+  if (typeof window === "undefined") return null;
+  return resolveCaptureScreenKindForUrl(window.location.href);
+}
+
+function resolveCaptureScreenKindForUrl(
+  href: string,
+): CaptureScreenKind | null {
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
+  }
+  if (!url.searchParams.has("capture")) return null;
+  const parts = url.pathname.split("/").filter(Boolean);
+  if (parts[0] !== "capture") return null;
+  return CAPTURE_SCREENS[parts[1] ?? ""] ?? null;
 }
 
 function isAuthenticatedAuthRoute(routeKey: string): boolean {

@@ -161,7 +161,7 @@
   },
   "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','.turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",

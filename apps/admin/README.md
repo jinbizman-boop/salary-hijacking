@@ -97,6 +97,7 @@ apps/admin/
 │   │   ├── notices/page.tsx
 │   │   ├── banners/page.tsx
 │   │   ├── metrics/page.tsx
+│   │   ├── growth-content/page.tsx
 │   │   └── events/page.tsx
 │   ├── components/
 │   │   └── README.md
@@ -219,7 +220,14 @@ apps/admin/
 - redacted export
 - raw 데이터 비노출
 
-### 5.10 `/admin/events`
+### 5.10 `/admin/growth-content`
+
+LV UP 콘텐츠 운영 콘솔이다. 독서, 영어, 운동, 뉴스 콘텐츠를 `/admin/api/v1/growth/contents`
+경계에서 생성, 편집, 검토, 게시, 보관하며 모든 변경에는 관리자 사유와 감사 로그를 요구한다.
+출처 URL, 라이선스, 저작권 상태, 원문 전체 저장 금지, 운동 안전 문구, 뉴스 관점 태그,
+광고 금융 타겟팅 분리, raw push token 비노출을 운영 화면에서 함께 확인한다.
+
+### 5.11 `/admin/events`
 
 감사·운영 이벤트 화면이다.
 
@@ -257,6 +265,7 @@ GET  /admin/api/v1/reports
 GET  /admin/api/v1/notices
 GET  /admin/api/v1/banners
 GET  /admin/api/v1/metrics
+GET  /admin/api/v1/growth/contents
 GET  /admin/api/v1/events
 ```
 

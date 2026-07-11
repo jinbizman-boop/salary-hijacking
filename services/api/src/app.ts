@@ -35,7 +35,9 @@ import {
   ADMIN_AUTH_PREFIX,
   adminRoutesManifest,
   assertAdminRoutesCompleteness,
+  createAdminRoutes,
   handleAdminRoutes,
+  type AdminRoutesOptions,
 } from "./routes/admin.routes";
 import {
   AUTH_API_PREFIX,
@@ -48,6 +50,10 @@ import {
   createNeonAuthSessionResolver,
   shouldUseNeonAuthRepository,
 } from "./repositories/auth.repository";
+import {
+  createNeonAdminRepository,
+  shouldUseNeonAdminRepository,
+} from "./repositories/admin.repository";
 import {
   createNeonUploadsRepository,
   shouldUseNeonUploadsRepository,
@@ -301,6 +307,7 @@ export interface AppOptions<TEnv = unknown> {
   readonly errorOptions?: ErrorMiddlewareOptions<TEnv>;
   readonly rateLimitOptions?: RateLimitMiddlewareOptions<TEnv>;
   readonly auditOptions?: AppAuditOptions<TEnv>;
+  readonly adminRoutesOptions?: AdminRoutesOptions<TEnv>;
   readonly payrollRoutesOptions?: PayrollRoutesOptions<TEnv>;
   readonly dailyBudgetsRoutesOptions?: DailyBudgetsRoutesOptions<TEnv>;
   readonly fixedExpensesRoutesOptions?: FixedExpensesRoutesOptions<TEnv>;
@@ -1378,6 +1385,24 @@ async function coreDispatch<TEnv>(
 
   const route = selectRoute(path);
   if (!route) return notFound(runtime);
+  if (route.id === "admin") {
+    const baseOptions: AdminRoutesOptions<TEnv> =
+      options.adminRoutesOptions ??
+      ({
+        repository: (routeEnv) =>
+          shouldUseNeonAdminRepository(routeEnv)
+            ? createNeonAdminRepository<TEnv>()
+            : undefined,
+      } satisfies AdminRoutesOptions<TEnv>);
+    const routeOptions: AdminRoutesOptions<TEnv> =
+      baseOptions.now || !options.now
+        ? baseOptions
+        : {
+            ...baseOptions,
+            now: options.now,
+          };
+    return createAdminRoutes(routeOptions)(request, env, context);
+  }
   if (route.id === "payroll") {
     const baseOptions: PayrollRoutesOptions<TEnv> =
       options.payrollRoutesOptions ??

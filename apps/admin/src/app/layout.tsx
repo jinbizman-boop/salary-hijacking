@@ -15,6 +15,7 @@ const ADMIN_ROUTES = [
   ["/admin/notices", "Notices"],
   ["/admin/banners", "Banners"],
   ["/admin/metrics", "Metrics"],
+  ["/admin/growth-content", "LV UP"],
   ["/admin/events", "Events"],
 ] as const;
 const SECURITY_MARKERS = [
@@ -315,7 +316,7 @@ function assertAdminLayoutCompleteness(): {
     "reduced_motion_supported",
     "no_client_secret_in_layout",
     "no_external_script_dependency",
-    "admin_routes_dashboard_users_posts_reports_notices_banners_metrics_events",
+    "admin_routes_dashboard_users_posts_reports_notices_banners_metrics_growth_content_events",
     "typescript_strict_ready",
     "root_children_preserved",
   ] as const;

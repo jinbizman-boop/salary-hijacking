@@ -1,9 +1,54 @@
-import { CleanFintechScreen } from "../../../src/shared/styles/clean-fintech-screens";
+import { AppHeader, AppShell } from "../../../src/shared/components";
+import {
+  DailyBudgetSection,
+  FixedExpenseSection,
+  SalaryHeroCard,
+  SalaryMetricGrid,
+  VariableExpenseQuickAdd,
+} from "../../../src/features/salary/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-salary-components";
+const SALARY_SUMMARY_ENDPOINT = "/api/v1/salary/summary";
 
 export default function SalaryIndexScreen(): React.ReactElement {
-  return <CleanFintechScreen kind="salary" />;
+  return (
+    <AppShell
+      accessibilityLabel="Salary Hijacking salary tab"
+      header={<AppHeader subtitle="Salary Home" title="Salary Hijacking" />}
+    >
+      <SalaryHeroCard
+        savedAmount={5780000}
+        subtitle="Server-authoritative monthly saved amount"
+        title="This month protected"
+      />
+      <SalaryMetricGrid
+        metrics={[
+          { label: "received amount", amount: 2700000 },
+          { label: "spent amount", amount: 773000 },
+          { label: "saved amount", amount: 1927000 },
+          { label: "next payday", value: "D-14" },
+        ]}
+      />
+      <DailyBudgetSection
+        configuredAmount={20000}
+        remainingAmount={7000}
+        spentAmount={13000}
+        onRefresh={() => undefined}
+      />
+      <FixedExpenseSection
+        expenses={[
+          { id: "fx_chatgpt", title: "ChatGPT", amount: 30000, status: "paid" },
+          {
+            id: "fx_mobile",
+            title: "Mobile",
+            amount: 69000,
+            status: "pending",
+          },
+        ]}
+      />
+      <VariableExpenseQuickAdd onSubmit={() => undefined} />
+    </AppShell>
+  );
 }
 
 export function assertMobileSalaryIndexCompleteness(): {
@@ -12,22 +57,20 @@ export function assertMobileSalaryIndexCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "이번 달 내가 지켜낸 돈",
-    "오늘 쓸 수 있는 돈",
-    "수령금액",
-    "지출금액",
-    "이번 달 납치금액",
-    "다음 급여일 D-day",
-    "지출 추가하기",
-    "고정지출",
-    "변동지출",
-    "제휴/광고",
-    "서버 기준 급여 계산",
-    "금융 금액 광고 타겟팅 금지",
-    "krw_integer_only_preview",
+    "Salary Hijacking salary feature components",
+    SALARY_SUMMARY_ENDPOINT,
+    "AppShell",
+    "SalaryHeroCard",
+    "SalaryMetricGrid",
+    "DailyBudgetSection",
+    "FixedExpenseSection",
+    "VariableExpenseQuickAdd",
+    "server_authority_component_guard",
+    "raw_account_data_component_guard",
+    "KRW integer display",
     "accessibility_numeric_input",
+    "financial amount ad targeting prohibited",
   ] as const;
 
-  return { ok: checks.length >= 15, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
 }

@@ -1,9 +1,11 @@
-import { CleanFintechProfileNoticesScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { ProfileDetailScreen } from "../../src/features/profile/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-profile-notices-components";
+const PROFILE_NOTICES_ENDPOINT = "/api/v1/users/me/notices";
+const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function ProfileNoticesScreen(): React.ReactElement {
-  return <CleanFintechProfileNoticesScreen />;
+  return <ProfileDetailScreen variant="notices" />;
 }
 
 export function assertMobileProfileNoticesCompleteness(): Readonly<{
@@ -12,12 +14,12 @@ export function assertMobileProfileNoticesCompleteness(): Readonly<{
   checks: readonly string[];
 }> {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "profile_notices_entry",
-    "server_profile_activity_feed",
-    "금융 원문 미노출",
-    "개인 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "Salary Hijacking ProfileDetailScreen",
+    PROFILE_NOTICES_ENDPOINT,
+    'variant="notices"',
+    RAW_PERSONAL_DATA_GUARD,
+    "notice payload without raw salary account or token",
+    "server read state",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

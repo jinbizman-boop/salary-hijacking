@@ -11,6 +11,29 @@ This plan defines the minimum store screenshot set for the Salary Hijacking mobi
 - `05_level_up.png`: LV UP hub for reading, news, English, and health routines.
 - `feature_graphic_google_play.png`: Google Play feature graphic with brand copy and a real mobile UI composition.
 
+## Mobile UI Evidence Files
+
+The release evidence copy is generated under `release/evidence/mobile-ui`.
+
+- `01_splash.png`
+- `02_login.png`
+- `03_signup.png`
+- `04_onboarding.png`
+- `05_salary_home.png`
+- `06_daily_budget.png`
+- `07_plan_setting.png`
+- `08_notifications.png`
+- `09_level_hub.png`
+- `10_level_reading.png`
+- `11_level_news.png`
+- `12_level_english.png`
+- `13_level_health.png`
+- `14_community.png`
+- `15_community_write.png`
+- `16_profile.png`
+- `17_profile_level.png`
+- `capture-summary.json`
+
 ## Safety Rules
 
 - Use real app UI only.

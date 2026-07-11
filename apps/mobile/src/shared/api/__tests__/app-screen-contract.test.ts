@@ -180,6 +180,67 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("router.replace(SALARY_HOME_ROUTE as never)");
   });
 
+  it("preserves screenshot capture routes before Expo Router rewrites them", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
+
+    expect(rootLayout).toContain("INITIAL_CAPTURE_SCREEN_KIND");
+    expect(rootLayout).toContain("readInitialCaptureScreenKind");
+    expect(rootLayout).toContain("CapturePreviewScreen");
+    expect(rootLayout).not.toContain("CleanFintechScreen");
+    expect(rootLayout).not.toContain("CleanFintechLevelDetailScreen");
+    expect(rootLayout).not.toContain("CleanFintechMyLevelProgressScreen");
+    expect(rootLayout).not.toContain("CleanFintechSplashScreen");
+    expect(rootLayout).not.toContain("CleanFintechSignupScreen");
+    expect(rootLayout).not.toContain("CleanFintechWriteScreen");
+    expect(rootLayout).toContain("renderCaptureScreen");
+    expect(rootLayout).toMatch(
+      /captureScreenKind\s*\?\s*renderCaptureScreen\(captureScreenKind\)/u,
+    );
+    expect(rootLayout).toContain(
+      'if (next === "READY" && captureScreenKind) return',
+    );
+    expect(indexScreen).toContain("resolveCaptureScreenKindForUrl");
+    expect(indexScreen).toContain("CapturePreviewScreen");
+    expect(indexScreen).toContain("SplashLaunchScreen");
+    expect(indexScreen).toContain(
+      "return resolveCaptureScreenKindForUrl(window.location.href)",
+    );
+
+    const screenshotScript = readFileSync(
+      join(
+        process.cwd(),
+        "..",
+        "..",
+        "scripts",
+        "release",
+        "capture-mobile-clean-fintech-screenshots.mjs",
+      ),
+      "utf8",
+    );
+    expect(screenshotScript).toContain('["/capture/splash", "01_splash.png"]');
+    expect(screenshotScript).toContain('["/capture/login", "02_login.png"]');
+    expect(screenshotScript).toContain('["/capture/signup", "03_signup.png"]');
+    expect(screenshotScript).toContain(
+      '["/capture/reading", "10_level_reading.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/news", "11_level_news.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/english", "12_level_english.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/health", "13_level_health.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/community-write", "15_community_write.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/profile-level", "17_profile_level.png"]',
+    );
+  });
+
   it("does not leave the launch route stuck on a static splash screen", () => {
     const source = readFileSync(INDEX_SCREEN, "utf8");
 
@@ -190,9 +251,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('router.replace("/salary" as never)');
     expect(source).toContain('router.replace("/(auth)/login" as never)');
     expect(source).toContain("setTimeout");
+    expect(source).toContain("SplashLaunchScreen");
     expect(source).not.toMatch(
       /export default function MobileIndexScreen\(\): React\.ReactElement \{\s*return <CleanFintechSplashScreen \/>;\s*\}/u,
     );
+    expect(source).not.toContain("CleanFintechSplashScreen");
   });
 
   it("hides the native splash once the React root is ready to render", () => {

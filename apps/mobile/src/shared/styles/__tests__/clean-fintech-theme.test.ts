@@ -926,7 +926,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     const forgotRoute = mobileSource("app/(auth)/forgot-password.tsx");
 
-    expect(forgotRoute).toContain("CleanFintechForgotPasswordScreen");
+    expect(forgotRoute).toContain("PasswordRecoveryHero");
+    expect(forgotRoute).toContain("ForgotPasswordForm");
     expect(cleanScreens).toContain("openForgotPassword");
     expect(cleanScreens).toContain(
       'loginRouter.push("/(auth)/forgot-password")',
@@ -1083,7 +1084,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     const resetRoute = mobileSource("app/(auth)/reset-password.tsx");
 
-    expect(resetRoute).toContain("CleanFintechResetPasswordScreen");
+    expect(resetRoute).toContain("PasswordRecoveryHero");
+    expect(resetRoute).toContain("ResetPasswordForm");
     expect(resetRoute).toContain("useLocalSearchParams");
     expect(resetRoute).toContain("token={token}");
     expect(cleanScreens).toContain("confirmPasswordReset");
@@ -1785,6 +1787,21 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("recommendationUsesSensitiveFinancialData");
   });
 
+  it("hydrates LV UP detail cards from server curated content before offline preview fallback", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const growthApi = mobileSource("src/features/level/api.ts");
+
+    expect(growthApi).toContain("listContents");
+    expect(cleanScreens).toContain("levelContentTypeByKind");
+    expect(cleanScreens).toContain("levelDetailServerCards");
+    expect(cleanScreens).toContain("growthDetailApi");
+    expect(cleanScreens).toContain(".listContents({");
+    expect(cleanScreens).toContain("server-content");
+    expect(cleanScreens).toContain("offline-preview");
+  });
+
   it("prevents duplicate LV UP detail content completion before the Growth API acknowledges it", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
@@ -1829,6 +1846,23 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(levelDetailSource).toMatch(
       /contentActionLocked\s*\?\s*\[styles\.detailCardRow,\s*styles\.disabled\]\s*:\s*styles\.detailCardRow/u,
     );
+  });
+
+  it("requires a private LV UP record before detail content completion and labels offline preview content", () => {
+    const cleanScreens = mobileSource(
+      "src/shared/styles/clean-fintech-screens.tsx",
+    );
+    const levelDetailSource =
+      cleanScreens.match(
+        /export function CleanFintechLevelDetailScreen[\s\S]*?export function CleanFintechSettingsScreen/u,
+      )?.[0] ?? "";
+
+    expect(levelDetailSource).toContain("levelDetailRecordDrafts");
+    expect(levelDetailSource).toContain("recordQuestion");
+    expect(levelDetailSource).toContain("offline-preview");
+    expect(levelDetailSource).toContain("recordRequired");
+    expect(levelDetailSource).toContain("private LV UP record");
+    expect(levelDetailSource).toMatch(/note:\s*recordDraft\.trim\(\)/u);
   });
 
   it("keeps MY screen hydrated from the server profile API before static fallback", () => {
@@ -2048,7 +2082,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("서버 기준으로 최신 현황을 확인했어요.");
     expect(cleanScreens).toContain("안전한 성장 루틴");
     expect(source("profile/level.tsx")).toContain(
-      "<CleanFintechMyLevelProgressScreen />",
+      '<ProfileDetailScreen variant="level" />',
     );
   });
 
@@ -2169,7 +2203,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "onPress={() => openProfileActivity(activity)}",
     );
     expect(source("profile/notices.tsx")).toContain(
-      "<CleanFintechProfileNoticesScreen />",
+      '<ProfileDetailScreen variant="notices" />',
     );
   });
 
@@ -2226,10 +2260,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("closeSettingsScreen");
     expect(cleanScreens).toContain('settingsRouter.replace("/profile")');
     expect(source("profile/settings.tsx")).toContain(
-      'CleanFintechSettingsScreen kind="profile"',
+      '<ProfileDetailScreen variant="settings" />',
     );
     expect(source("profile/account.tsx")).toContain(
-      'CleanFintechSettingsScreen kind="account"',
+      '<ProfileDetailScreen variant="account" />',
     );
   });
 
@@ -2257,7 +2291,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(profileSettingsSource).not.toContain("adsFinancialTargetingUsed=");
     expect(source("profile/settings.tsx")).toContain(
-      'CleanFintechSettingsScreen kind="profile"',
+      '<ProfileDetailScreen variant="settings" />',
     );
   });
 
@@ -2365,7 +2399,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(cleanScreens).not.toContain("adPartnerFinancialRawDataUsed=");
     expect(source("profile/account.tsx")).toContain(
-      'CleanFintechSettingsScreen kind="account"',
+      '<ProfileDetailScreen variant="account" />',
     );
   });
 
@@ -2489,7 +2523,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('supportRouter.replace("/profile")');
     expect(cleanScreens).toContain('accessibilityLabel="MY로 돌아가기"');
     expect(source("profile/support.tsx")).toContain(
-      "<CleanFintechSupportScreen />",
+      '<ProfileDetailScreen variant="support" />',
     );
   });
 
@@ -2598,7 +2632,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("rawFinancialDataExposed");
     expect(cleanScreens).toContain("adsFinancialTargetingUsed");
     expect(source("profile/community.tsx")).toContain(
-      "<CleanFintechMyCommunityScreen />",
+      '<ProfileDetailScreen variant="community" />',
     );
   });
 
@@ -3241,7 +3275,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(mobileApi).toContain("createMobileCommunityService");
     expect(postRoute).toContain("useLocalSearchParams");
-    expect(postRoute).toContain("postId={postId}");
+    expect(postRoute).toContain(
+      "useCommunityPost(communityPostService, postId)",
+    );
+    expect(postRoute).toContain("CommunityPostCard");
+    expect(postRoute).toContain("CommunityCommentItem");
     expect(cleanScreens).toContain("detailCommunityService");
     expect(cleanScreens).toContain("serverCommunityDetail");
     expect(cleanScreens).toContain("serverCommunityComments");

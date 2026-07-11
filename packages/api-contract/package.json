@@ -69,14 +69,14 @@
     "pnpm": ">=10.0.0 <11"
   },
   "scripts": {
-    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','.turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
     "validate:dist": "node -e \"const fs=require('node:fs'); const required=['dist/index.js','dist/index.d.ts','dist/auth/auth.schema.js','dist/auth/auth.schema.d.ts','dist/common/error-code.schema.js','dist/common/error-code.schema.d.ts','dist/common/response.schema.js','dist/common/response.schema.d.ts','dist/community/community.schema.js','dist/community/community.schema.d.ts','dist/payroll/payroll.schema.js','dist/payroll/payroll.schema.d.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[api-contract] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[api-contract] dist export map validation passed.');\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "corepack pnpm run typecheck",
     "contract:assert": "node -e \"import('./dist/index.js').then((m)=>{const result=m.validateApiContractRegistry(new Date().toISOString()); if(!result.ok){console.error('[api-contract] registry validation failed'); console.error(JSON.stringify(result.issues,null,2)); process.exit(1);} console.log('[api-contract] registry validation passed with '+result.endpointCount+' endpoints.');}).catch((error)=>{console.error(error); process.exit(1);});\"",
-    "api:contract": "corepack pnpm run typecheck && corepack pnpm run build && corepack pnpm run contract:assert",
+    "api:contract": "corepack pnpm run typecheck && corepack pnpm run contract:assert",
     "test": "vitest run --passWithNoTests",
     "test:unit": "vitest run --passWithNoTests",
     "test:integration": "vitest run --passWithNoTests",

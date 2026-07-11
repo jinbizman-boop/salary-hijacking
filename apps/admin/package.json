@@ -60,7 +60,7 @@
     "deploy:staging": "corepack pnpm run build:cloudflare && wrangler deploy --env staging",
     "deploy:production": "corepack pnpm run build:cloudflare && wrangler deploy --env production",
     "tail": "wrangler tail --env production",
-    "clean": "rimraf .next .open-next .vercel/output .wrangler coverage test-results playwright-report .turbo tsconfig.tsbuildinfo",
+    "clean": "rimraf .next .open-next .vercel/output .wrangler coverage test-results playwright-report tsconfig.tsbuildinfo",
     "clean:next": "rimraf .next .vercel/output",
     "clean:cloudflare": "rimraf .open-next .wrangler",
     "doctor": "node --version && corepack pnpm --version && corepack pnpm run validate:package && corepack pnpm run validate:env && corepack pnpm run typecheck:strict && corepack pnpm run policy:check"
@@ -172,6 +172,7 @@
       "/admin/notices",
       "/admin/banners",
       "/admin/metrics",
+      "/admin/growth-content",
       "/admin/events"
     ],
     "domains": [

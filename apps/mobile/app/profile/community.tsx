@@ -1,9 +1,11 @@
-import { CleanFintechMyCommunityScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { ProfileDetailScreen } from "../../src/features/profile/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-profile-community-components";
+const MY_COMMUNITY_ENDPOINT = "/api/v1/community/users/me/posts";
+const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function ProfileCommunityScreen(): React.ReactElement {
-  return <CleanFintechMyCommunityScreen />;
+  return <ProfileDetailScreen variant="community" />;
 }
 
 export function assertMobileProfileCommunityCompleteness(): Readonly<{
@@ -12,12 +14,12 @@ export function assertMobileProfileCommunityCompleteness(): Readonly<{
   checks: readonly string[];
 }> {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "profile_my_community_entry",
+    "Salary Hijacking ProfileDetailScreen",
+    MY_COMMUNITY_ENDPOINT,
+    'variant="community"',
+    RAW_PERSONAL_DATA_GUARD,
     "server_my_posts_feed",
-    "server_my_comments_feed",
-    "금융 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "financial raw data not used for ads",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };

@@ -260,6 +260,61 @@ function rowToTask(row: DbRow): JsonRecord {
   };
 }
 
+function toStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+  if (typeof value === "string" && value.trim()) {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+  }
+  return [];
+}
+
+function rowToContent(row: DbRow): JsonRecord {
+  const expReward = assertNonNegativeInteger(
+    toNumber(row.exp_reward),
+    "xpReward",
+  );
+  return {
+    contentId: String(row.content_id ?? ""),
+    contentType: String(row.content_type ?? row.type ?? "READING"),
+    title: String(row.title ?? ""),
+    subtitle: toText(row.subtitle),
+    category: String(row.category ?? "OTHER"),
+    difficulty: String(row.difficulty ?? "NORMAL"),
+    estimatedMinutes: Math.max(1, toNumber(row.estimated_minutes) || 1),
+    topics: toStringArray(row.topics),
+    summary: String(row.summary ?? ""),
+    missionPrompt: String(row.mission_prompt ?? ""),
+    recordQuestion: String(row.record_question ?? ""),
+    sourceTitle: String(row.source_title ?? ""),
+    sourceAuthor: toText(row.source_author),
+    sourceName: toText(row.source_name),
+    sourceUrl: String(row.source_url ?? ""),
+    licenseType: String(row.license_type ?? ""),
+    safetyLevel: String(row.safety_level ?? "GENERAL"),
+    viewpointTag: toText(row.viewpoint_tag),
+    xpReward: expReward,
+    status: String(row.status ?? "PUBLISHED"),
+    publishedAt: toIso(row.published_at ?? row.created_at),
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at ?? row.created_at),
+    fullTextStored: false,
+    serverAuthority: true,
+    financialRawDataExposed: false,
+    recommendationUsesSensitiveFinancialData: false,
+    adTargetingSeparated: true,
+  };
+}
+
 function listResult<TItem extends JsonRecord>(
   rows: readonly DbRow[],
   page: PaginationInput,
@@ -322,6 +377,22 @@ function taskWhere(
     clauses.push("gt.status = 'ARCHIVED'");
   }
 
+  return { sql: clauses.join(" and "), params };
+}
+
+function contentWhere(input: JsonRecord): {
+  readonly sql: string;
+  readonly params: DbValue[];
+} {
+  const params: DbValue[] = [];
+  const clauses = ["gci.status = 'PUBLISHED'"];
+  const contentType = (toText(input.contentType) ?? toText(input.type))
+    ?.trim()
+    .toUpperCase();
+  if (contentType) {
+    params.push(contentType);
+    clauses.push(`gci.content_type = $${params.length}`);
+  }
   return { sql: clauses.join(" and "), params };
 }
 
@@ -674,21 +745,140 @@ export function createNeonGrowthRepository<TEnv = unknown>(
     async completeChallenge(challengeId) {
       return { challengeId, status: "COMPLETED", expDelta: 0, badges: [] };
     },
-    async listContents(_input, page) {
-      return { items: [], page: page.page, pageSize: page.pageSize, total: 0 };
+    async listContents(input, page, runtime) {
+      const where = contentWhere(input);
+      const params = [...where.params, page.limit, page.offset];
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "growth.listContents",
+        `
+          select
+            gci.*,
+            count(*) over() as total_count
+          from public.growth_content_items gci
+          where ${where.sql}
+          order by gci.published_at desc nulls last,
+                   gci.created_at desc,
+                   gci.content_id desc
+          limit $${params.length - 1}::int
+          offset $${params.length}::int
+        `,
+        params,
+      );
+      return listResult(result.rows, page, rowToContent);
     },
     async completeContent(input, runtime) {
+      const recordText = input.note?.trim() ?? "";
+      if (!recordText)
+        throw new Error("LV UP content completion requires a record note.");
+      const completedAt = runtime.now.toISOString();
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "growth.completeContent",
+        `
+          with selected_content as (
+            select
+              gci.content_id,
+              gci.exp_reward
+            from public.growth_content_items gci
+            where gci.content_id = $2::uuid
+              and gci.status = 'PUBLISHED'
+            limit 1
+          ),
+          saved_progress as (
+            insert into public.user_level_content_progress (
+              user_id,
+              content_id,
+              completion_date,
+              record_text,
+              earned_exp,
+              idempotency_key,
+              status,
+              completed_at
+            )
+            select
+              $1::uuid,
+              selected_content.content_id,
+              (($4::timestamptz at time zone 'Asia/Seoul')::date),
+              $3,
+              selected_content.exp_reward,
+              $5,
+              'COMPLETED',
+              $4::timestamptz
+            from selected_content
+            on conflict (user_id, content_id, completion_date)
+              where status = 'COMPLETED'
+            do update
+              set record_text = excluded.record_text,
+                  earned_exp = excluded.earned_exp,
+                  idempotency_key = coalesce(excluded.idempotency_key, public.user_level_content_progress.idempotency_key),
+                  completed_at = excluded.completed_at,
+                  updated_at = now()
+            returning *, (xmax = 0) as newly_completed
+          ),
+          updated_profile as (
+            insert into public.user_growth_stats (
+              user_id,
+              total_exp,
+              current_exp,
+              level,
+              updated_at
+            )
+            select
+              $1::uuid,
+              saved_progress.earned_exp,
+              saved_progress.earned_exp,
+              1,
+              now()
+            from saved_progress
+            where saved_progress.newly_completed
+            on conflict (user_id)
+            do update
+              set total_exp = public.user_growth_stats.total_exp + excluded.total_exp,
+                  current_exp = public.user_growth_stats.current_exp + excluded.current_exp,
+                  level = greatest(public.user_growth_stats.level, 1),
+                  updated_at = now()
+            returning user_id
+          )
+          select
+            saved_progress.progress_id,
+            saved_progress.content_id,
+            saved_progress.record_text,
+            saved_progress.earned_exp,
+            saved_progress.idempotency_key,
+            saved_progress.completed_at,
+            saved_progress.created_at,
+            not saved_progress.newly_completed as idempotent_replay
+          from saved_progress
+          left join updated_profile on true
+        `,
+        [
+          userIdFromRuntime(runtime),
+          assertUuid(input.contentId, "contentId"),
+          recordText,
+          completedAt,
+          input.idempotencyKey,
+        ],
+      );
+      const completion = result.rows[0];
+      if (!completion) throw new Error("Growth content not found.");
       return {
         completion: {
-          completionId: null,
-          contentId: input.contentId,
-          note: input.note,
-          expDelta: 0,
-          completedAt: runtime.now.toISOString(),
+          completionId: String(completion.progress_id ?? ""),
+          contentId: String(completion.content_id ?? input.contentId),
+          note: toText(completion.record_text),
+          expDelta:
+            completion.newly_completed === false
+              ? 0
+              : toNumber(completion.earned_exp),
+          idempotencyKey: toText(completion.idempotency_key),
+          completedAt: toIso(completion.completed_at ?? completedAt),
           recommendationUsesSensitiveFinancialData: false,
         },
         badges: [],
-        idempotentReplay: false,
+        idempotentReplay: completion.idempotent_replay === true,
       };
     },
     async listBadges() {

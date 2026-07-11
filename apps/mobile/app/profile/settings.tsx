@@ -1,9 +1,11 @@
-import { CleanFintechSettingsScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { ProfileDetailScreen } from "../../src/features/profile/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.1.0-profile-settings-components";
+const PROFILE_SETTINGS_ENDPOINT = "/api/v1/users/me/profile-settings";
+const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function ProfileSettingsScreen(): React.ReactElement {
-  return <CleanFintechSettingsScreen kind="profile" />;
+  return <ProfileDetailScreen variant="settings" />;
 }
 
 export function assertMobileProfileSettingsCompleteness(): Readonly<{
@@ -12,12 +14,12 @@ export function assertMobileProfileSettingsCompleteness(): Readonly<{
   checks: readonly string[];
 }> {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "profile_settings_entry",
+    "Salary Hijacking ProfileDetailScreen",
+    PROFILE_SETTINGS_ENDPOINT,
+    'variant="settings"',
+    RAW_PERSONAL_DATA_GUARD,
     "community_display_name",
-    "level_title",
-    "금융 금액 광고 타겟팅 금지",
-    "금융 원문 미노출",
+    "financial amount ad targeting prohibited",
   ] as const;
 
   return { ok: checks.length >= 6, version: SCREEN_VERSION, checks };
