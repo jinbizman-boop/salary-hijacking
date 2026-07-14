@@ -139,6 +139,8 @@ export function PlanReferenceScreen({
   const [planError, setPlanError] = useState<string | null>(null);
   const [planItemSavePending, setPlanItemSavePending] = useState(false);
   const planItemSaveInFlightRef = React.useRef(false);
+  const [livingItemSavePending, setLivingItemSavePending] = useState(false);
+  const livingItemSaveInFlightRef = React.useRef(false);
   const serverPlanCommitmentsApi = useMemo(
     () =>
       planCommitmentsApi ??
@@ -363,6 +365,7 @@ export function PlanReferenceScreen({
   }
 
   async function saveLivingItem(): Promise<void> {
+    if (livingItemSaveInFlightRef.current) return;
     setPlanError(null);
     const amount = parseKrwInput(draft.amount);
     const content = draft.content.trim();
@@ -375,8 +378,10 @@ export function PlanReferenceScreen({
       content,
       id: editingId ?? `daily-plan-${Date.now()}`,
     };
-    if (serverBudgetApi?.recalculate !== undefined) {
-      try {
+    livingItemSaveInFlightRef.current = true;
+    setLivingItemSavePending(true);
+    try {
+      if (serverBudgetApi?.recalculate !== undefined) {
         await serverBudgetApi.recalculate(
           buildDailyLivingItemsRecalculateRequest(
             nextDailyLivingItems(state.dailyItems, nextItem),
@@ -386,13 +391,15 @@ export function PlanReferenceScreen({
         sync(saveDailyLivingItemInPreview(nextItem));
         clearDraft();
         return;
-      } catch {
-        setPlanError(PLAN_SAVE_ERROR);
-        return;
       }
+      sync(saveDailyLivingItemInPreview(nextItem));
+      clearDraft();
+    } catch {
+      setPlanError(PLAN_SAVE_ERROR);
+    } finally {
+      livingItemSaveInFlightRef.current = false;
+      setLivingItemSavePending(false);
     }
-    sync(saveDailyLivingItemInPreview(nextItem));
-    clearDraft();
   }
 
   async function updateDailyLimit(value: string): Promise<void> {
@@ -804,6 +811,7 @@ export function PlanReferenceScreen({
               setDraft={setDraft}
               onSave={saveLivingItem}
               onDelete={editingId ? deleteEditingItem : undefined}
+              savePending={livingItemSavePending}
             />
           ) : null}
         </PlanSection>

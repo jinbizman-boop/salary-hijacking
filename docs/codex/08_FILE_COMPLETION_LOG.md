@@ -4329,3 +4329,15 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run format:check`: PASS.
   - `git diff --check`: PASS.
 - Remaining: This reduces a code-level P1 duplicate-submit risk but does not replace physical Android phone install/cold-start/navigation/persistence/keyboard/safe-area/no-fatal-logcat QA.
+
+# 2026-07-14 KST - Iteration 116 Daily Living Plan Duplicate Submission Guard
+
+- Files: `apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx`, `apps/mobile/src/features/plan/__tests__/plan.components.test.tsx`, `docs/codex/100-completion/125_ITERATION_116_DAILY_LIVING_DEDUPING.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added a daily living plan in-flight guard and disabled save-button state so repeated taps cannot submit duplicate server-authoritative daily budget recalculation requests while the first save is pending.
+- Verified:
+  - RED `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand`: failed before implementation because `recalculate` was called twice.
+  - GREEN `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand`: PASS, 13 tests.
+  - Related regression `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/plan/__tests__/plan.components.test.tsx src/features/salary/__tests__/salary.components.test.tsx src/features/preview/__tests__/interactive-state.test.ts --runInBand`: PASS, 47 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+- Remaining: This reduces a code-level P1 duplicate-submit risk for daily living plan saves but does not replace physical Android phone install/cold-start/navigation/persistence/keyboard/safe-area/no-fatal-logcat QA. Current-source APK evidence must be refreshed after this source change.

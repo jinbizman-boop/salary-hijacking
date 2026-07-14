@@ -351,6 +351,39 @@ describe("plan reference screen interactions", () => {
     await waitFor(() => expect(screen.getByText("점심 샐러드")).toBeTruthy());
   });
 
+  it("blocks duplicate daily living recalculations while the server save is pending", async () => {
+    const recalculationResult = {
+      adTargetingSeparated: true,
+      affectedBudgetCount: 30,
+      financialRawDataExposed: false,
+      periodEndDate: "2026-07-14",
+      periodStartDate: "2026-07-13",
+      recalculatedDailyAmountMinor: 12_000,
+      serverAuthority: true,
+    };
+    const pendingRecalculation = createDeferred<typeof recalculationResult>();
+    const recalculate = jest.fn().mockReturnValue(pendingRecalculation.promise);
+    const screen = render(<PlanReferenceScreen budgetApi={{ recalculate }} />);
+
+    fireEvent.press(screen.getByTestId("living-section-settings-button"));
+    fireEvent.press(screen.getByTestId("living-section-add-button"));
+    fillPlanItem(screen, {
+      amount: "12000",
+      category: "food",
+      content: "Plan dinner",
+      day: "1",
+    });
+
+    fireEvent.press(screen.getByTestId("plan-item-save-button"));
+    fireEvent.press(screen.getByTestId("plan-item-save-button"));
+
+    expect(recalculate).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      pendingRecalculation.resolve(recalculationResult);
+      await pendingRecalculation.promise;
+    });
+  });
+
   it("deletes daily living plan rows without deleting actual variable expenses", async () => {
     const deleteVariableExpense = jest.fn().mockResolvedValue({
       adTargetingSeparated: true,
