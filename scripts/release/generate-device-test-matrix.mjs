@@ -4,6 +4,8 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 
 const OUTPUT_PATH = "docs/codex/100-completion/07_DEVICE_TEST_MATRIX.md";
+const PHYSICAL_PHONE_HANDOFF_PATH =
+  "docs/qa/100-completion/physical-phone-qa-handoff.md";
 
 export function buildDeviceTestMatrix({
   rootDir = process.cwd(),
@@ -96,7 +98,7 @@ export function buildDeviceTestMatrix({
       android.physicalPhoneVerified ? "PASS" : "BLOCKED",
       android.physicalPhoneVerified
         ? "`release/mobile-preview-phone-proof.local.json`"
-        : "`release/mobile-preview-evidence.json`",
+        : `\`release/mobile-preview-evidence.json\`; handoff: \`${PHYSICAL_PHONE_HANDOFF_PATH}\``,
       android.physicalPhoneVerified
         ? "Physical phone install, cold-start, and no-secret logcat proof are verified."
         : physicalBlocker,
@@ -106,7 +108,7 @@ export function buildDeviceTestMatrix({
       android.physicalPhoneVerified ? "PASS" : "BLOCKED",
       android.physicalPhoneVerified
         ? "`release/mobile-preview-phone-proof.local.json`"
-        : "`release/mobile-preview-evidence.json`",
+        : `\`release/mobile-preview-evidence.json\`; handoff: \`${PHYSICAL_PHONE_HANDOFF_PATH}\``,
       android.physicalPhoneVerified
         ? "Physical keyboard and safe-area proof are verified."
         : "Emulator keyboard path and source contracts are covered, but all-screen/all-field physical safe-area and keyboard proof still requires a phone or device-farm run.",

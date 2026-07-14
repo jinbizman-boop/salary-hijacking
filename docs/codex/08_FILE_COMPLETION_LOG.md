@@ -4248,3 +4248,13 @@ When completing a work slice, append or update a row with:
   - GREEN `node --test scripts\release\generate-physical-phone-qa-handoff.test.mjs`: PASS, 2 tests.
   - `node scripts\release\generate-physical-phone-qa-handoff.mjs`: PASS, wrote `docs/qa/100-completion/physical-phone-qa-handoff.md`.
 - Remaining: This improves the phone QA handoff only. Physical Android phone QA remains BLOCKED until a real phone is attached and `release/mobile-preview-phone-proof.local.json` proves install, 20 cold starts, 20 background/foreground runs, persistence, keyboard/safe-area, navigation, zero fatal markers, and raw-logcat redaction.
+
+# 2026-07-14 KST - Iteration 108 Device Matrix Phone Handoff Link
+
+- Files: `scripts/release/generate-device-test-matrix.mjs`, `scripts/release/generate-device-test-matrix.test.mjs`, `docs/codex/100-completion/07_DEVICE_TEST_MATRIX.md`, `docs/codex/100-completion/117_ITERATION_108_DEVICE_MATRIX_PHONE_HANDOFF_LINK.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Linked the physical Android phone BLOCKED rows in `07_DEVICE_TEST_MATRIX.md` to `docs/qa/100-completion/physical-phone-qa-handoff.md` so the exact proof-collection handoff is discoverable from the release device matrix.
+- Verified:
+  - RED `node --test scripts\release\generate-device-test-matrix.test.mjs`: failed before implementation because the handoff path was missing from blocked physical-phone evidence.
+  - GREEN `node --test scripts\release\generate-device-test-matrix.test.mjs`: PASS, 2 tests.
+  - `node scripts\release\generate-device-test-matrix.mjs`: PASS, rewrote the device test matrix.
+- Remaining: This still does not prove physical Android phone QA. A real phone run must produce a passing `release/mobile-preview-phone-proof.local.json`.

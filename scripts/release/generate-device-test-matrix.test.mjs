@@ -75,6 +75,10 @@ test("builds the device matrix from current mobile preview and native evidence",
     );
     assert.match(matrix, /## Android physical device cold start \/ logcat/u);
     assert.match(matrix, /- Status: BLOCKED/u);
+    assert.match(
+      matrix,
+      /docs\/qa\/100-completion\/physical-phone-qa-handoff\.md/u,
+    );
     assert.doesNotMatch(matrix, /\| Device\/Environment \|/u);
     assert.match(matrix, /No physical Android phone is attached/u);
     assert.doesNotMatch(matrix, /example\.invalid/u);

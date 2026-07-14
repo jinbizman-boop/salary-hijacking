@@ -35,11 +35,11 @@ Updated: 2026-07-14 KST
 ## Android physical device cold start / logcat
 
 - Status: BLOCKED
-- Evidence: `release/mobile-preview-evidence.json`
+- Evidence: `release/mobile-preview-evidence.json`; handoff: `docs/qa/100-completion/physical-phone-qa-handoff.md`
 - Notes: No physical Android phone is attached to this Codex Windows environment at observation time.
 
 ## Android physical keyboard/safe-area matrix
 
 - Status: BLOCKED
-- Evidence: `release/mobile-preview-evidence.json`
+- Evidence: `release/mobile-preview-evidence.json`; handoff: `docs/qa/100-completion/physical-phone-qa-handoff.md`
 - Notes: Emulator keyboard path and source contracts are covered, but all-screen/all-field physical safe-area and keyboard proof still requires a phone or device-farm run.
