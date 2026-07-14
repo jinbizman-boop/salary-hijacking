@@ -4124,3 +4124,15 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
   - `corepack pnpm run disk:report -- --top 5`: PASS, `removable generated paths: none`.
 - Remaining: physical Android phone QA, real-device persistence/recurrence proof, safe-area/keyboard matrix, production AAB approval, Play submission approval, and market publication remain unresolved. This does not prove launch-ready 100%.
+
+# 2026-07-14 KST - Iteration 096 Salary Home And Plan Regression Recheck
+
+- Scope: `docs/codex/100-completion/05_GAP_REGISTER.md`, `docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md`, `docs/codex/100-completion/106_ITERATION_096_HOME_PLAN_REGRESSION_RECHECK.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`, `apps/mobile/src/features/salary`, `apps/mobile/src/features/plan`, `services/api/tests`.
+- Completed: Reverified current-head Salary Home and Plan server-first save/update/delete behavior, preview rollback on server rejection, KST/payday guards, recurrence preview visibility, and screen wiring.
+- Completed: Reverified API finance contract/repository coverage from the current source tree.
+- Verified:
+  - Salary/Plan component and launch-readiness tests: PASS, 4 suites and 32 tests.
+  - Plan API plus Salary/Plan screen-wiring tests: PASS, 3 suites and 18 tests.
+  - Mobile typecheck: PASS.
+  - API test invocation for daily-budget and variable-expense coverage ran the package suite: PASS, 30 files and 119 tests.
+- Remaining: GAP-004 and GAP-005 remain PARTIAL because physical Android phone relaunch/persistence and real installed-app recurrence lifecycle QA are still unavailable. This does not prove launch-ready 100%.
