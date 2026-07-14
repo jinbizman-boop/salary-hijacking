@@ -4292,3 +4292,15 @@ When completing a work slice, append or update a row with:
   - `node scripts/release/generate-physical-phone-qa-handoff.mjs`: PASS.
 - APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration110/salary-hijacking-phone-arm64-iteration110-debug.apk`.
 - Remaining: This is a debug/pre-release APK evidence refresh, not production AAB or Play submission. Physical Android phone QA remains blocked until a real phone provides install/cold-start/navigation/persistence/keyboard/safe-area/no-fatal-logcat proof.
+
+# 2026-07-14 KST - Iteration 112 Storage Drive Audit
+
+- Files: `docs/codex/100-completion/121_ITERATION_112_STORAGE_DRIVE_AUDIT.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rechecked the user-reported five-drive storage view. The current Codex Windows process sees only `C:` and `D:` filesystem drives; `X:`, `Y:`, and `Z:` are not mounted or accessible here. Confirmed the canonical platform checkout is about 1.288 GB, legacy `salary-hijacking-main` and `salary-hijacking-work` paths are about 0 GB, active APK artifacts are about 0.130 GB, and the preserved Android/JDK/Gradle toolchain is about 8.871 GB on `D:`.
+- Verified:
+  - `git rev-parse --show-toplevel`: PASS, canonical path is `C:/Users/PC/Desktop/salary-hijacking-platform`.
+  - `Get-PSDrive`, `Win32_LogicalDisk`, and `fsutil fsinfo drives`: PASS, only `C:` and `D:` are visible as filesystem drives.
+  - `Test-Path X:\`, `Y:\`, `Z:\`: PASS, all false in this Codex process.
+  - Junction audit: PASS, `.tools` points to `D:\salary-hijacking-local-tools\.tools`; `C:\Users\PC\.gradle` points to `D:\salary-hijacking-local-tools\user-dot-gradle`.
+  - `corepack pnpm run clean:junk`: PASS, removed regenerated `v8-compile-cache` and freed 873.3 KB.
+- Remaining: If Windows Explorer still shows `X/Y/Z`, they must be inspected from the same interactive Windows session or Disk Management because they are not visible to Codex as accessible filesystem drives. The active local build toolchain is intentionally preserved for APK generation.
