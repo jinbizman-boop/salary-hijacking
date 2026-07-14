@@ -212,7 +212,7 @@ export function updatePreviewState(
   if (!nextState) return previewState;
 
   previewState = nextState;
-  void persistPreviewState(previewState);
+  void persistPreviewState(previewState).catch(() => undefined);
   return previewState;
 }
 

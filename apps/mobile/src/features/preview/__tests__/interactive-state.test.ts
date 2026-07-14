@@ -233,6 +233,34 @@ describe("interactive preview state secure persistence", () => {
     ).toBe(false);
     expect(await storage.getItemAsync(PREVIEW_STATE_STORAGE_KEY)).toBeNull();
   });
+
+  it("keeps in-memory preview state when secure persistence rejects", async () => {
+    const storage = createRejectingSecureStorage();
+    configurePreviewStatePersistence(storage);
+
+    const after = updatePreviewState((previous) => ({
+      ...previous,
+      variableExpenses: [
+        ...previous.variableExpenses,
+        {
+          amount: 7777,
+          category: "湲고?",
+          content: "Persistence retry",
+          id: "variable-persistence-reject",
+        },
+      ],
+    }));
+
+    await Promise.resolve();
+
+    expect(after.variableExpenses).toContainEqual({
+      amount: 7777,
+      category: "湲고?",
+      content: "Persistence retry",
+      id: "variable-persistence-reject",
+    });
+    expect(getPreviewState()).toBe(after);
+  });
 });
 
 describe("interactive preview recurring plan reminders", () => {
@@ -333,6 +361,16 @@ function createMemorySecureStorage(): PreviewStateSecureStorage {
       values.get(key) ?? null,
     setItemAsync: async (key: string, value: string): Promise<void> => {
       values.set(key, value);
+    },
+  };
+}
+
+function createRejectingSecureStorage(): PreviewStateSecureStorage {
+  return {
+    deleteItemAsync: async (): Promise<void> => undefined,
+    getItemAsync: async (): Promise<string | null> => null,
+    setItemAsync: async (): Promise<void> => {
+      throw new Error("secure store unavailable");
     },
   };
 }

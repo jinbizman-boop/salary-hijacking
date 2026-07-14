@@ -4258,3 +4258,23 @@ When completing a work slice, append or update a row with:
   - GREEN `node --test scripts\release\generate-device-test-matrix.test.mjs`: PASS, 2 tests.
   - `node scripts\release\generate-device-test-matrix.mjs`: PASS, rewrote the device test matrix.
 - Remaining: This still does not prove physical Android phone QA. A real phone run must produce a passing `release/mobile-preview-phone-proof.local.json`.
+
+# 2026-07-14 KST - Iteration 109 Preview Persistence Failure Guard
+
+- Files: `apps/mobile/src/features/preview/interactive-state.ts`, `apps/mobile/src/features/preview/__tests__/interactive-state.test.ts`, `docs/codex/100-completion/118_ITERATION_109_PREVIEW_PERSISTENCE_FAILURE_GUARD.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Guarded the shared Salary Home / Plan preview persistence boundary so rejected SecureStore writes do not become unhandled promise rejections while the in-memory app state remains updated.
+- Verified:
+  - RED `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/preview/__tests__/interactive-state.test.ts --runInBand`: failed before implementation with `Error: secure store unavailable`.
+  - GREEN `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/preview/__tests__/interactive-state.test.ts --runInBand`: PASS, 13 tests.
+  - Related regression `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/preview/__tests__/interactive-state.test.ts src/features/salary/__tests__/salary.components.test.tsx src/features/plan/__tests__/plan.components.test.tsx src/features/plan/__tests__/plan.launch-readiness.test.tsx --runInBand`: PASS, 45 tests.
+- Remaining: This improves persistence stability evidence but does not replace physical Android phone relaunch/persistence/logcat QA.
+
+# 2026-07-14 KST - Iteration 110 Storage Cache Cleanup
+
+- Files: `D:\salary-hijacking-toolchain-cache`, `docs/codex/100-completion/119_ITERATION_110_STORAGE_CACHE_CLEANUP.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rechecked the reported duplicate-drive storage issue and removed stale duplicate Android/JDK/Gradle cache payloads that were not active junction targets. Preserved the active local APK build tooling under `D:\salary-hijacking-local-tools`, protected `node_modules`, tracked evidence, and APK artifacts.
+- Verified:
+  - `Win32_LogicalDisk`, `Get-PSDrive`, `subst`, `net use`, and `Test-Path X:\`, `Y:\`, `Z:\`: current Codex Windows process sees only real `C:` and `D:` filesystem drives; `X/Y/Z` are not accessible here.
+  - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
+  - Removed stale `D:\salary-hijacking-toolchain-cache\user-dot-gradle`, old `salary-hijacking-platform-dottools`, and two downloaded toolchain ZIPs; estimated reclaimed duplicate cache space about 1.56 GB.
+- Remaining: `D:\salary-hijacking-local-tools` is still about 9.08 GB because it is the active local Android/JDK/Gradle build toolchain for APK generation. It is intentionally preserved unless a replacement build environment is established.
