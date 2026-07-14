@@ -51,6 +51,7 @@ export function AuthVisualFrame({
       <ScrollView
         accessibilityLabel={accessibilityLabel}
         alwaysBounceVertical={false}
+        automaticallyAdjustKeyboardInsets
         bounces={false}
         contentContainerStyle={[
           styles.frameContent,
@@ -61,6 +62,7 @@ export function AuthVisualFrame({
             paddingTop: Math.max(insets.top, 0),
           },
         ]}
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         style={styles.frame}

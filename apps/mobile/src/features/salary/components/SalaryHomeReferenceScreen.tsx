@@ -564,6 +564,7 @@ export function SalaryHomeReferenceScreen({
       <ScrollView
         ref={scrollRef}
         accessibilityLabel="급여납치 급여 메인 화면"
+        automaticallyAdjustKeyboardInsets
         bounces={false}
         contentContainerStyle={[
           styles.content,
@@ -574,6 +575,7 @@ export function SalaryHomeReferenceScreen({
           },
         ]}
         contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

@@ -36,7 +36,9 @@ export function AppShell({
           styles.content,
           { paddingBottom: 96 + insets.bottom },
         ]}
+        automaticallyAdjustKeyboardInsets
         contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
       >
         {header}

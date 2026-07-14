@@ -26,10 +26,57 @@ describe("shared mobile components", () => {
     const source = readFileSync(join(__dirname, "..", "AppShell.tsx"), "utf8");
 
     expect(source).toContain("KeyboardAvoidingView");
+    expect(source).toContain("automaticallyAdjustKeyboardInsets");
+    expect(source).toContain('keyboardDismissMode="interactive"');
     expect(source).toContain('keyboardShouldPersistTaps="handled"');
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
     expect(source).toContain("paddingBottom: 96 + insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
+  });
+
+  it("keeps every launch-critical input shell on the keyboard-safe contract", () => {
+    const inputShells = [
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "features",
+        "auth",
+        "components",
+        "AuthVisualFrame.tsx",
+      ),
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "features",
+        "salary",
+        "components",
+        "SalaryHomeReferenceScreen.tsx",
+      ),
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "features",
+        "plan",
+        "components",
+        "PlanReferenceScreen.tsx",
+      ),
+    ];
+
+    for (const filePath of inputShells) {
+      const source = readFileSync(filePath, "utf8");
+
+      expect(source).toContain("KeyboardAvoidingView");
+      expect(source).toContain("automaticallyAdjustKeyboardInsets");
+      expect(source).toContain('keyboardDismissMode="interactive"');
+      expect(source).toContain('keyboardShouldPersistTaps="handled"');
+      expect(source).toContain("keyboardVerticalOffset");
+    }
   });
 
   it("renders mobile shell, header, cards, and tab navigation with accessible controls", () => {

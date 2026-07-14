@@ -4151,3 +4151,10 @@ When completing a work slice, append or update a row with:
   - `node scripts/release/classify-merge-conflict-archive.mjs` after archive removal: PASS, `cleanupComplete: true`.
   - `corepack pnpm run disk:report -- --top 20`: PASS, removable generated paths: none; platform total about 1.25 GB, mostly protected `node_modules`.
 - Remaining: Strict release readiness is still blocked by physical Android phone QA, unresolved launch gaps, and production/Play approvals set to NO. This cleanup does not prove launch-ready 100%.
+
+# 2026-07-14 KST - Iteration 098 Keyboard Inset Contract
+
+- Files: `apps/mobile/src/shared/components/AppShell.tsx`, `apps/mobile/src/features/auth/components/AuthVisualFrame.tsx`, `apps/mobile/src/features/salary/components/SalaryHomeReferenceScreen.tsx`, `apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx`, `apps/mobile/src/shared/components/__tests__/shared-components.contract.test.tsx`, `docs/codex/100-completion/108_ITERATION_098_KEYBOARD_INSET_CONTRACT.md`, traceability/gap/release-gate docs.
+- Completed: Added and verified a launch-critical keyboard/safe-area source contract requiring `KeyboardAvoidingView`, `automaticallyAdjustKeyboardInsets`, `keyboardDismissMode="interactive"`, handled keyboard taps, and keyboard vertical offsets across shared AppShell, auth/login, Salary Home, and Plan input shells.
+- Verification: RED confirmed before implementation for the shared component keyboard contract. GREEN after implementation: shared component contract PASS, 1 suite and 5 tests; auth/salary/plan screen regression PASS, 3 suites and 31 tests; mobile typecheck PASS.
+- Remaining: GAP-006 remains BLOCKED for final launch readiness because a physical Android phone or device farm is still required for all-screen/all-field safe-area, keyboard, system navigation, font-scale, relaunch persistence, and logcat proof. This does not prove launch-ready 100%.

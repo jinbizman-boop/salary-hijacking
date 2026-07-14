@@ -531,6 +531,7 @@ export function PlanReferenceScreen({
     >
       <ScrollView
         accessibilityLabel="\uAE09\uC5EC\uB0A9\uCE58 \uACC4\uD68D \uD654\uBA74"
+        automaticallyAdjustKeyboardInsets
         bounces={false}
         contentContainerStyle={[
           styles.content,
@@ -541,6 +542,7 @@ export function PlanReferenceScreen({
           },
         ]}
         contentInsetAdjustmentBehavior="never"
+        keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
