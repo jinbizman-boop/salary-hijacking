@@ -266,6 +266,61 @@ const normalizeAndroidArchitectures = (architecture) => {
   return architectures.length > 0 ? [...new Set(architectures)] : ["x86_64"];
 };
 
+export const repairGradleTransformTemporaryWorkspaces = ({
+  gradleUserHome,
+}) => {
+  const cachesRoot = path.join(gradleUserHome, "caches");
+  if (!fs.existsSync(cachesRoot)) return { moved: 0, removed: 0 };
+
+  let moved = 0;
+  let removed = 0;
+  const tempTransformPattern =
+    /^([0-9a-f]{32})-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
+  for (const cacheVersion of fs.readdirSync(cachesRoot, {
+    withFileTypes: true,
+  })) {
+    if (!cacheVersion.isDirectory()) continue;
+    const transformsRoot = path.join(
+      cachesRoot,
+      cacheVersion.name,
+      "transforms",
+    );
+    if (!fs.existsSync(transformsRoot)) continue;
+
+    for (const entry of fs.readdirSync(transformsRoot, {
+      withFileTypes: true,
+    })) {
+      if (!entry.isDirectory()) continue;
+      const match = tempTransformPattern.exec(entry.name);
+      if (!match) continue;
+
+      const temporaryPath = path.join(transformsRoot, entry.name);
+      const immutablePath = path.join(transformsRoot, match[1]);
+      if (fs.existsSync(immutablePath)) {
+        try {
+          fs.rmSync(temporaryPath, { force: true, recursive: true });
+          removed += 1;
+        } catch {
+          // Windows may still hold nested transform files briefly; retrying
+          // Gradle is safe even if this duplicate temporary folder remains.
+        }
+        continue;
+      }
+
+      try {
+        fs.renameSync(temporaryPath, immutablePath);
+        moved += 1;
+      } catch {
+        // If Gradle or Windows Defender races this repair, leave the folder
+        // untouched and let the next Gradle invocation decide.
+      }
+    }
+  }
+
+  return { moved, removed };
+};
+
 const buildEnv = ({
   env,
   javaHome,
@@ -277,7 +332,9 @@ const buildEnv = ({
   const envPathKey = pathKey(env);
   const gradleUserHome =
     env.GRADLE_USER_HOME ??
-    (isWindows(platform) ? path.join(mobileRootDir, ".gradle") : undefined);
+    (isWindows(platform)
+      ? path.join(mobileRootDir, ".gradle-local-debug")
+      : undefined);
   return {
     ...env,
     ANDROID_HOME: sdkRoot,
@@ -1587,6 +1644,8 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     gradleWrapperName(platform),
   );
   const stableLocalDebugGradleArgs = [
+    "--max-workers=1",
+    "--no-parallel",
     `-PreactNativeArchitectures=${architectureList}`,
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
@@ -1902,19 +1961,26 @@ export const runExpoLocalAndroidDebugBuild = ({
     mobileRootDir,
     platform,
   });
+  const runGradleInvocation = (args) => {
+    const options = {
+      cwd: path.join(mobileRootDir, "android"),
+      env: preflight.env,
+      shell: isWindows(platform),
+      stdio: "inherit",
+      windowsHide: true,
+    };
+    let result = spawn(invocations.gradleCommand, args, options);
+    if ((result.status ?? 1) !== 0 && isWindows(platform)) {
+      repairGradleTransformTemporaryWorkspaces({
+        gradleUserHome: preflight.env.GRADLE_USER_HOME,
+      });
+      result = spawn(invocations.gradleCommand, args, options);
+    }
+    return result;
+  };
 
   try {
-    const packageList = spawn(
-      invocations.gradleCommand,
-      invocations.packageListArgs,
-      {
-        cwd: path.join(mobileRootDir, "android"),
-        env: preflight.env,
-        shell: isWindows(platform),
-        stdio: "inherit",
-        windowsHide: true,
-      },
-    );
+    const packageList = runGradleInvocation(invocations.packageListArgs);
     if ((packageList.status ?? 1) !== 0) {
       return { ...preflight, failures, status: packageList.status ?? 1 };
     }
@@ -1926,16 +1992,8 @@ export const runExpoLocalAndroidDebugBuild = ({
 
     if (shouldRunWindowsCmakeWarmup) {
       for (const reanimatedConfigureArgs of invocations.reanimatedConfigureArgSets) {
-        const reanimatedConfigure = spawn(
-          invocations.gradleCommand,
+        const reanimatedConfigure = runGradleInvocation(
           reanimatedConfigureArgs,
-          {
-            cwd: path.join(mobileRootDir, "android"),
-            env: preflight.env,
-            shell: isWindows(platform),
-            stdio: "inherit",
-            windowsHide: true,
-          },
         );
         if ((reanimatedConfigure.status ?? 1) !== 0) {
           return {
@@ -2002,28 +2060,12 @@ export const runExpoLocalAndroidDebugBuild = ({
       });
     }
 
-    const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
-      cwd: path.join(mobileRootDir, "android"),
-      env: preflight.env,
-      shell: isWindows(platform),
-      stdio: "inherit",
-      windowsHide: true,
-    });
+    const gradle = runGradleInvocation(invocations.gradleArgs);
     if ((gradle.status ?? 1) !== 0) {
       return { ...preflight, failures, status: gradle.status ?? 1 };
     }
 
-    const androidTest = spawn(
-      invocations.gradleCommand,
-      invocations.androidTestArgs,
-      {
-        cwd: path.join(mobileRootDir, "android"),
-        env: preflight.env,
-        shell: isWindows(platform),
-        stdio: "inherit",
-        windowsHide: true,
-      },
-    );
+    const androidTest = runGradleInvocation(invocations.androidTestArgs);
     if ((androidTest.status ?? 1) !== 0) {
       return { ...preflight, failures, status: androidTest.status ?? 1 };
     }

@@ -9,6 +9,7 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   ".expo",
   ".expo-shared",
   ".gradle",
+  ".gradle-local-debug",
   ".metro-cache",
   ".next",
   ".open-next",

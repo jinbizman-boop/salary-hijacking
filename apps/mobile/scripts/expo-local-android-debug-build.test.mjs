@@ -14,6 +14,7 @@ import {
   ensureAndroidDebugNdkAbiFilters,
   expoModulesCoreCmakeDebugRoot,
   parseWindowsSubstMappings,
+  repairGradleTransformTemporaryWorkspaces,
   regenerateMissingReanimatedWindowsCmakeRules,
   repairReanimatedWindowsCmakeDirectories,
   repairWindowsCmakeExistingInputPhonyEdges,
@@ -225,6 +226,57 @@ test("parses Windows subst mappings without treating unrelated drives as project
       ["Z", "C:\\Users\\PC\\Desktop\\salary-hijacking-platform"],
       ["Y", "D:\\unrelated-workspace"],
     ],
+  );
+});
+
+test("repairs Gradle transform temporary workspaces before retrying Windows builds", () => {
+  const rootDir = makeWorkspace();
+  const transformsRoot = path.join(
+    rootDir,
+    ".gradle-local-debug",
+    "caches",
+    "8.13",
+    "transforms",
+  );
+  const missingTargetHash = "12ac58ebd481dcbd7474580e70f1bb56";
+  const existingTargetHash = "7ff2914485e9d0f88f0062d7e12ea5b5";
+  const missingTargetTemp = `${missingTargetHash}-49def955-f0fa-4e7f-a3f0-70391d888fa6`;
+  const existingTargetTemp = `${existingTargetHash}-abe2af0e-a1d6-489d-a3e2-39102e18510b`;
+
+  touch(
+    path.join(transformsRoot, missingTargetTemp, "transformed", "module.json"),
+    "{}",
+  );
+  touch(
+    path.join(transformsRoot, existingTargetHash, "transformed", "module.json"),
+    "{}",
+  );
+  touch(
+    path.join(transformsRoot, existingTargetTemp, "transformed", "module.json"),
+    "{}",
+  );
+
+  const result = repairGradleTransformTemporaryWorkspaces({
+    gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
+  });
+
+  assert.equal(result.moved, 1);
+  assert.equal(result.removed, 1);
+  assert.equal(
+    fs.existsSync(path.join(transformsRoot, missingTargetHash)),
+    true,
+  );
+  assert.equal(
+    fs.existsSync(path.join(transformsRoot, missingTargetTemp)),
+    false,
+  );
+  assert.equal(
+    fs.existsSync(path.join(transformsRoot, existingTargetHash)),
+    true,
+  );
+  assert.equal(
+    fs.existsSync(path.join(transformsRoot, existingTargetTemp)),
+    false,
   );
 });
 
@@ -610,6 +662,8 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   assert.deepEqual(invocations.gradleArgs, [
     "assembleDebug",
     "--no-daemon",
+    "--max-workers=1",
+    "--no-parallel",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
@@ -624,6 +678,8 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   assert.deepEqual(invocations.androidTestArgs, [
     ":app:assembleDebugAndroidTest",
     "--no-daemon",
+    "--max-workers=1",
+    "--no-parallel",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
@@ -638,6 +694,8 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   assert.deepEqual(invocations.packageListArgs, [
     ":app:generateAutolinkingPackageList",
     "--no-daemon",
+    "--max-workers=1",
+    "--no-parallel",
     "-PreactNativeArchitectures=x86_64",
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
@@ -906,6 +964,7 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
     "jbr",
   );
   const calls = [];
+  let assembleDebugAttempts = 0;
 
   writeMobileFixture(rootDir);
   touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
@@ -1172,6 +1231,10 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
         commandName.includes("gradlew") &&
         String(args[0]) === "assembleDebug"
       ) {
+        assembleDebugAttempts += 1;
+        if (assembleDebugAttempts === 1) {
+          return { status: 1 };
+        }
         touch(
           path.join(
             rootDir,
@@ -1210,7 +1273,8 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   });
 
   assert.equal(result.status, 0, result.failures.join("\n"));
-  assert.equal(calls.length, 6);
+  assert.equal(assembleDebugAttempts, 2);
+  assert.equal(calls.length, 7);
   assert.match(String(calls[0].command).toLowerCase(), /expo/);
   assert.match(String(calls[1].command).toLowerCase(), /gradlew/);
   assert.equal(calls[1].args[0], ":app:generateAutolinkingPackageList");
@@ -1232,15 +1296,17 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.equal(calls[4].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
   assert.equal(
     calls[4].options.env.GRADLE_USER_HOME,
-    path.join(rootDir, ".gradle"),
+    path.join(rootDir, ".gradle-local-debug"),
   );
   assert.match(String(calls[5].command).toLowerCase(), /gradlew/);
-  assert.equal(calls[5].args[0], ":app:assembleDebugAndroidTest");
-  assert.equal(calls[5].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
-  assert.equal(calls[5].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
+  assert.equal(calls[5].args[0], "assembleDebug");
+  assert.match(String(calls[6].command).toLowerCase(), /gradlew/);
+  assert.equal(calls[6].args[0], ":app:assembleDebugAndroidTest");
+  assert.equal(calls[6].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
+  assert.equal(calls[6].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
   assert.equal(
-    calls[5].options.env.GRADLE_USER_HOME,
-    path.join(rootDir, ".gradle"),
+    calls[6].options.env.GRADLE_USER_HOME,
+    path.join(rootDir, ".gradle-local-debug"),
   );
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),

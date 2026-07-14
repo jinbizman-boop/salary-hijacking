@@ -4341,3 +4341,18 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
   - `corepack pnpm run format:check`: PASS.
 - Remaining: This reduces a code-level P1 duplicate-submit risk for daily living plan saves but does not replace physical Android phone install/cold-start/navigation/persistence/keyboard/safe-area/no-fatal-logcat QA. Current-source APK evidence must be refreshed after this source change.
+
+# 2026-07-14 KST - Iteration 117 Android Gradle Cache Isolation And Cleanup
+
+- Files: `apps/mobile/scripts/expo-local-android-debug-build.mjs`, `apps/mobile/scripts/expo-local-android-debug-build.test.mjs`, `scripts/dev/clean-generated-junk.mjs`, `docs/codex/08_FILE_COMPLETION_LOG.md`, `D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/salary-hijacking-phone-arm64-iteration117-debug.apk`.
+- Completed: Isolated Windows local Android debug builds into a repository-local `.gradle-local-debug` cache, added serialized Gradle flags and a best-effort Gradle transform workspace repair/retry path, preserved the generated current-head phone APK on `D:`, and expanded `clean:junk` so `.gradle-local-debug` is treated as generated junk.
+- Cleaned: Removed regenerated Expo/Android/Gradle/Metro temp outputs, then manually removed the remaining `.gradle-local-debug` cache after preserving the APK artifact. C: free space was rechecked at 32.22 GB; current Codex process still sees only filesystem drives `C:` and `D:`.
+- Verified:
+  - `node --test apps\mobile\scripts\expo-local-android-debug-build.test.mjs`: PASS, 22 tests.
+  - `node --test scripts\dev\clean-generated-junk.test.mjs`: PASS, 10 tests.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+  - `apksigner verify --verbose --print-certs`: PASS for APK Signature Scheme v2.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35.
+- APK SHA256: `4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36`.
+- Remaining: The APK is a local debug/pre-release artifact preserved on `D:`; it is not production AAB, not Play submission, and physical Android phone QA/logcat evidence is still required before any 100% launch-readiness claim.
