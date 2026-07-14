@@ -122,6 +122,7 @@ export function SalaryHomeReferenceScreen({
     content: "",
   });
   const [variableFormOpen, setVariableFormOpen] = useState(false);
+  const variableSaveInFlightRef = useRef(false);
   const [editingVariableId, setEditingVariableId] = useState<string | null>(
     null,
   );
@@ -130,6 +131,7 @@ export function SalaryHomeReferenceScreen({
     category: "",
     content: "",
   });
+  const [variableSavePending, setVariableSavePending] = useState(false);
   const [salaryError, setSalaryError] = useState<string | null>(null);
   const serverVariableExpenseApi = useMemo(
     () =>
@@ -432,26 +434,61 @@ export function SalaryHomeReferenceScreen({
 
   async function saveVariableExpense(): Promise<void> {
     setSalaryError(null);
+    if (variableSaveInFlightRef.current) return;
     const amount = parseKrwInput(variableDraft.amount);
     const content = variableDraft.content.trim();
     if (amount <= 0 || !content) return;
-    const category = variableDraft.category.trim() || "변동 지출";
+    variableSaveInFlightRef.current = true;
+    setVariableSavePending(true);
+    try {
+      const category = variableDraft.category.trim() || "변동 지출";
 
-    if (editingVariableId !== null) {
+      if (editingVariableId !== null) {
+        const localExpense: VariableExpenseItem = {
+          amount,
+          category,
+          content,
+          id: editingVariableId,
+        };
+        if (serverVariableExpenseApi?.updateVariableExpense !== undefined) {
+          try {
+            const saved = await serverVariableExpenseApi.updateVariableExpense(
+              editingVariableId,
+              buildVariableExpenseUpdateRequest({ amount, category, content }),
+            );
+            sync(
+              replaceVariableExpense({
+                amount: saved.netAmountMinor,
+                category,
+                content: saved.title,
+                id: saved.expenseId,
+              }),
+            );
+            closeVariableForm();
+            return;
+          } catch {
+            setSalaryError(SALARY_SAVE_ERROR);
+            return;
+          }
+        }
+        sync(replaceVariableExpense(localExpense));
+        closeVariableForm();
+        return;
+      }
+
       const localExpense: VariableExpenseItem = {
         amount,
         category,
         content,
-        id: editingVariableId,
+        id: `variable-${Date.now()}-${state.variableExpenses.length}`,
       };
-      if (serverVariableExpenseApi?.updateVariableExpense !== undefined) {
+      if (serverVariableExpenseApi?.createVariableExpense !== undefined) {
         try {
-          const saved = await serverVariableExpenseApi.updateVariableExpense(
-            editingVariableId,
-            buildVariableExpenseUpdateRequest({ amount, category, content }),
+          const saved = await serverVariableExpenseApi.createVariableExpense(
+            buildVariableExpenseCreateRequest({ amount, category, content }),
           );
           sync(
-            replaceVariableExpense({
+            appendVariableExpense({
               amount: saved.netAmountMinor,
               category,
               content: saved.title,
@@ -465,39 +502,12 @@ export function SalaryHomeReferenceScreen({
           return;
         }
       }
-      sync(replaceVariableExpense(localExpense));
+      sync(appendVariableExpense(localExpense));
       closeVariableForm();
-      return;
+    } finally {
+      variableSaveInFlightRef.current = false;
+      setVariableSavePending(false);
     }
-
-    const localExpense: VariableExpenseItem = {
-      amount,
-      category,
-      content,
-      id: `variable-${Date.now()}-${state.variableExpenses.length}`,
-    };
-    if (serverVariableExpenseApi?.createVariableExpense !== undefined) {
-      try {
-        const saved = await serverVariableExpenseApi.createVariableExpense(
-          buildVariableExpenseCreateRequest({ amount, category, content }),
-        );
-        sync(
-          appendVariableExpense({
-            amount: saved.netAmountMinor,
-            category,
-            content: saved.title,
-            id: saved.expenseId,
-          }),
-        );
-        closeVariableForm();
-        return;
-      } catch {
-        setSalaryError(SALARY_SAVE_ERROR);
-        return;
-      }
-    }
-    sync(appendVariableExpense(localExpense));
-    closeVariableForm();
   }
 
   async function saveVariableExpenseCreateOnly(): Promise<void> {
@@ -888,12 +898,17 @@ export function SalaryHomeReferenceScreen({
               <Pressable
                 accessibilityLabel="변동 지출 저장"
                 accessibilityRole="button"
+                accessibilityState={{ disabled: variableSavePending }}
+                disabled={variableSavePending}
                 onPress={saveVariableExpense}
-                style={styles.saveButton}
+                style={[
+                  styles.saveButton,
+                  variableSavePending ? styles.disabledButton : null,
+                ]}
                 testID="variable-expense-save-button"
               >
                 <Text allowFontScaling={false} style={styles.saveButtonText}>
-                  저장
+                  {variableSavePending ? "저장 중" : "저장"}
                 </Text>
               </Pressable>
             </View>
@@ -1613,6 +1628,9 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: "space-between",
     minHeight: 38,
+  },
+  disabledButton: {
+    opacity: 0.62,
   },
   editRowMain: {
     alignItems: "center",

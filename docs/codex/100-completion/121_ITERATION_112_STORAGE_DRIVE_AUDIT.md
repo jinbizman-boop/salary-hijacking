@@ -18,23 +18,23 @@ Rechecked the user-reported Windows Explorer view that appeared to show Salary H
 
 The Codex Windows process currently sees only these filesystem drives:
 
-| Drive | Size | Free | Notes |
-| --- | ---: | ---: | --- |
-| `C:` | 110.76 GB | 29.53 GB | Main Windows disk and canonical platform checkout location. |
-| `D:` | 465.13 GB | 455.65 GB | Large data/tooling volume used for offloaded artifacts and build tools. |
+| Drive |      Size |      Free | Notes                                                                   |
+| ----- | --------: | --------: | ----------------------------------------------------------------------- |
+| `C:`  | 110.76 GB |  29.53 GB | Main Windows disk and canonical platform checkout location.             |
+| `D:`  | 465.13 GB | 455.65 GB | Large data/tooling volume used for offloaded artifacts and build tools. |
 
 `fsutil fsinfo drives`, `Get-PSDrive`, and `Win32_LogicalDisk` show no accessible `X:`, `Y:`, or `Z:` drives in this process. `Test-Path X:\`, `Y:\`, and `Z:\` all returned false.
 
 ## Project Footprint
 
-| Path | Size | Decision |
-| --- | ---: | --- |
-| `C:\Users\PC\Desktop\salary-hijacking-platform` | about 1.288 GB | Active canonical checkout. Preserve. |
-| `C:\Users\PC\Desktop\salary-hijacking-main` | about 0 GB | Empty legacy path. Ignore per current objective. |
-| `C:\Users\PC\Desktop\salary-hijacking-work` | about 0 GB | Empty legacy path. Ignore per current objective. |
-| `D:\salary-hijacking-artifacts` | about 0.130 GB | Current APK/evidence artifacts. Preserve. |
-| `D:\salary-hijacking-local-tools` | about 8.871 GB | Active local Android/JDK/Gradle build toolchain. Preserve. |
-| `D:\salary-hijacking-toolchain-cache` | about 0 GB | Stale duplicate cache already removed in Iteration 110. |
+| Path                                            |           Size | Decision                                                   |
+| ----------------------------------------------- | -------------: | ---------------------------------------------------------- |
+| `C:\Users\PC\Desktop\salary-hijacking-platform` | about 1.288 GB | Active canonical checkout. Preserve.                       |
+| `C:\Users\PC\Desktop\salary-hijacking-main`     |     about 0 GB | Empty legacy path. Ignore per current objective.           |
+| `C:\Users\PC\Desktop\salary-hijacking-work`     |     about 0 GB | Empty legacy path. Ignore per current objective.           |
+| `D:\salary-hijacking-artifacts`                 | about 0.130 GB | Current APK/evidence artifacts. Preserve.                  |
+| `D:\salary-hijacking-local-tools`               | about 8.871 GB | Active local Android/JDK/Gradle build toolchain. Preserve. |
+| `D:\salary-hijacking-toolchain-cache`           |     about 0 GB | Stale duplicate cache already removed in Iteration 110.    |
 
 ## Active Junctions
 

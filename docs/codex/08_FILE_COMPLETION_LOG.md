@@ -4304,3 +4304,16 @@ When completing a work slice, append or update a row with:
   - Junction audit: PASS, `.tools` points to `D:\salary-hijacking-local-tools\.tools`; `C:\Users\PC\.gradle` points to `D:\salary-hijacking-local-tools\user-dot-gradle`.
   - `corepack pnpm run clean:junk`: PASS, removed regenerated `v8-compile-cache` and freed 873.3 KB.
 - Remaining: If Windows Explorer still shows `X/Y/Z`, they must be inspected from the same interactive Windows session or Disk Management because they are not visible to Codex as accessible filesystem drives. The active local build toolchain is intentionally preserved for APK generation.
+
+# 2026-07-14 KST - Iteration 113 Variable Expense Duplicate Submission Guard
+
+- Files: `apps/mobile/src/features/salary/components/SalaryHomeReferenceScreen.tsx`, `apps/mobile/src/features/salary/__tests__/salary.components.test.tsx`, `docs/codex/100-completion/05_GAP_REGISTER.md`, `docs/codex/100-completion/122_ITERATION_113_VARIABLE_EXPENSE_DEDUPING.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added a Salary Home in-flight guard and disabled pending state so repeated taps on the variable-expense save button cannot submit duplicate server-authoritative create/update requests before the first API call resolves.
+- Verified:
+  - RED `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand`: failed before implementation because `createVariableExpense` was called twice.
+  - GREEN `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand`: PASS, 21 tests.
+  - Related regression `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/salary/__tests__/salary.components.test.tsx src/features/plan/__tests__/plan.components.test.tsx src/features/preview/__tests__/interactive-state.test.ts --runInBand`: PASS, 45 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+- Remaining: This reduces a code-level P1 duplicate-submit risk but does not replace physical Android phone install/cold-start/navigation/persistence/keyboard/safe-area/no-fatal-logcat QA.

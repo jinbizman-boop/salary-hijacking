@@ -463,6 +463,67 @@ describe("salary reference screen interactions", () => {
     expect(screen.getByLabelText("변동 지출 합계 27,000원")).toBeTruthy();
   });
 
+  it("blocks duplicate variable expense submissions while the server save is pending", async () => {
+    const saveRef: {
+      resolve?: ((value: VariableExpenseRecord) => void) | undefined;
+    } = {};
+    const createVariableExpense = jest.fn(
+      () =>
+        new Promise<VariableExpenseRecord>((resolve) => {
+          saveRef.resolve = resolve;
+        }),
+    );
+    const screen = render(
+      <SalaryHomeReferenceScreen
+        variableExpenseApi={{ createVariableExpense }}
+      />,
+    );
+
+    fireEvent.press(screen.getByRole("button", { name: "변동 지출 추가하기" }));
+    fireEvent.changeText(
+      screen.getByTestId("variable-expense-category-input"),
+      "외식",
+    );
+    fireEvent.changeText(
+      screen.getByTestId("variable-expense-content-input"),
+      "중복 방지 점심",
+    );
+    fireEvent.changeText(
+      screen.getByTestId("variable-expense-amount-input"),
+      "12000",
+    );
+
+    fireEvent.press(screen.getByTestId("variable-expense-save-button"));
+    fireEvent.press(screen.getByTestId("variable-expense-save-button"));
+
+    expect(createVariableExpense).toHaveBeenCalledTimes(1);
+
+    const finishSave = saveRef.resolve;
+    if (!finishSave) {
+      throw new Error("Variable expense save resolver was not captured");
+    }
+    finishSave({
+      adTargetingSeparated: true,
+      amountMinor: 12000,
+      category: "MEAL",
+      dailyBudgetId: null,
+      expenseId: "server-variable-dedupe",
+      financialRawDataExposed: false,
+      memo: null,
+      merchantName: "외식",
+      netAmountMinor: 12000,
+      paymentMethod: "ETC",
+      serverAuthority: true,
+      source: "MANUAL",
+      spentAt: "2026-07-13T01:00:00.000Z",
+      status: "POSTED",
+      title: "중복 방지 점심",
+    });
+    await waitFor(() =>
+      expect(screen.getByText("중복 방지 점심")).toBeTruthy(),
+    );
+  });
+
   it("keeps variable expense drafts unsaved when the server-authoritative API rejects", async () => {
     const createVariableExpense = jest
       .fn()
