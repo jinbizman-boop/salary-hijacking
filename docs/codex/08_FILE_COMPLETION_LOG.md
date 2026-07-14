@@ -4136,3 +4136,18 @@ When completing a work slice, append or update a row with:
   - Mobile typecheck: PASS.
   - API test invocation for daily-budget and variable-expense coverage ran the package suite: PASS, 30 files and 119 tests.
 - Remaining: GAP-004 and GAP-005 remain PARTIAL because physical Android phone relaunch/persistence and real installed-app recurrence lifecycle QA are still unavailable. This does not prove launch-ready 100%.
+
+# 2026-07-14 KST - Iteration 097 Storage And Merge Archive Cleanup
+
+- Scope: `.merged-from-salary-hijacking-main`, `D:/salary-hijacking-artifacts/20260714/iteration-064-recurring-reminders-arm64`, `scripts/release/classify-merge-conflict-archive.mjs`, `scripts/release/classify-merge-conflict-archive.test.mjs`, `docs/codex/100-completion/06_IMPLEMENTATION_PLAN.md`, `docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md`, `docs/codex/100-completion/107_ITERATION_097_STORAGE_AND_ARCHIVE_CLEANUP.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Verified only `C:` and `D:` are active logical drives in this Codex Windows session; `salary-hijacking-platform` is the only non-empty Salary Hijacking workspace on Desktop.
+- Completed: Confirmed `salary-hijacking-main` and `salary-hijacking-work` are hidden `0 B` shell directories, not storage-consuming repositories.
+- Completed: Removed the ignored 5.43 MB `.merged-from-salary-hijacking-main` historical archive after the merge decision register showed `REVIEW_REQUIRED: 0`.
+- Completed: Removed the obsolete iteration 064 ARM64 APK artifact from `D:/salary-hijacking-artifacts` while retaining the latest iteration 094 phone APK in both artifact storage and Downloads.
+- Completed: Updated the merge conflict classifier so reruns after archive deletion report `cleanupComplete: true` from retained register/decision evidence.
+- Verified:
+  - `node scripts/release/classify-merge-conflict-archive.mjs` before archive removal: PASS, `CURRENT_ACCEPTED: 92`, `REVIEW_REQUIRED: 0`, `EXCLUDE_RUNTIME: 26`, `SUPERSEDED_BY_CURRENT_EVIDENCE: 14`.
+  - `node --test scripts/release/classify-merge-conflict-archive.test.mjs`: PASS, 6 tests.
+  - `node scripts/release/classify-merge-conflict-archive.mjs` after archive removal: PASS, `cleanupComplete: true`.
+  - `corepack pnpm run disk:report -- --top 20`: PASS, removable generated paths: none; platform total about 1.25 GB, mostly protected `node_modules`.
+- Remaining: Strict release readiness is still blocked by physical Android phone QA, unresolved launch gaps, and production/Play approvals set to NO. This cleanup does not prove launch-ready 100%.

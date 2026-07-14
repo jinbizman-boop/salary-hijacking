@@ -13,6 +13,8 @@ const DEFAULT_DECISION_OVERRIDE_PATH = path.join(
   DEFAULT_OUTPUT_DIR,
   "85_MERGE_CONFLICT_PORT_DECISIONS.json",
 );
+const CLEANUP_COMPLETE_MESSAGE =
+  "Merge conflict archive has already been removed; retained registers are the cleanup evidence.";
 
 const SOURCE_OR_CONFIG_CATEGORIES = new Set([
   "admin-source",
@@ -146,6 +148,41 @@ export function writeMergeConflictArchiveRegister(
   fs.writeFileSync(csvPath, formatCsv(register), "utf8");
   fs.writeFileSync(markdownPath, formatMarkdown(register), "utf8");
   return { csvPath, markdownPath, register };
+}
+
+export function getMergeConflictArchiveCleanupStatus(
+  rootDir = process.cwd(),
+  { outputDir = path.join(rootDir, DEFAULT_OUTPUT_DIR) } = {},
+) {
+  const archiveDir = path.join(rootDir, ARCHIVE_DIR);
+  const manifestPath = path.join(rootDir, MANIFEST_PATH);
+  const csvPath = path.join(outputDir, DEFAULT_CSV_NAME);
+  const markdownPath = path.join(outputDir, DEFAULT_MD_NAME);
+  const decisionOverridePath = path.join(
+    outputDir,
+    "85_MERGE_CONFLICT_PORT_DECISIONS.json",
+  );
+  const archivePresent = fs.existsSync(archiveDir);
+  const manifestPresent = fs.existsSync(manifestPath);
+  const registerExists = fs.existsSync(csvPath) && fs.existsSync(markdownPath);
+  const decisionOverridesExist = fs.existsSync(decisionOverridePath);
+
+  return {
+    archiveDir: ARCHIVE_DIR,
+    archivePresent,
+    manifestPresent,
+    registerExists,
+    decisionOverridesExist,
+    cleanupComplete:
+      !archivePresent &&
+      !manifestPresent &&
+      registerExists &&
+      decisionOverridesExist,
+    csvPath,
+    markdownPath,
+    decisionOverridePath,
+    message: CLEANUP_COMPLETE_MESSAGE,
+  };
 }
 
 function readManifest(rootDir) {
@@ -301,18 +338,26 @@ const isMain = () => {
 };
 
 if (isMain()) {
-  const { csvPath, markdownPath, register } = writeMergeConflictArchiveRegister(
-    process.cwd(),
-  );
-  console.log(
-    JSON.stringify(
-      {
-        csvPath,
-        markdownPath,
-        summary: register.summary,
-      },
-      null,
-      2,
-    ),
-  );
+  const cleanupStatus = getMergeConflictArchiveCleanupStatus(process.cwd());
+  if (!cleanupStatus.manifestPresent) {
+    console.log(JSON.stringify(cleanupStatus, null, 2));
+    if (!cleanupStatus.cleanupComplete) {
+      process.exitCode = 1;
+    }
+  } else {
+    const { csvPath, markdownPath, register } =
+      writeMergeConflictArchiveRegister(process.cwd());
+
+    console.log(
+      JSON.stringify(
+        {
+          csvPath,
+          markdownPath,
+          summary: register.summary,
+        },
+        null,
+        2,
+      ),
+    );
+  }
 }

@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   buildMergeConflictArchiveRegister,
   classifyMergeConflictPath,
+  getMergeConflictArchiveCleanupStatus,
   writeMergeConflictArchiveRegister,
 } from "./classify-merge-conflict-archive.mjs";
 
@@ -214,6 +215,40 @@ test("applies reviewed semantic decisions from an override file", () => {
       "Current root package scripts are verified by tests.",
     );
     assert.equal(register.summary.countsByDecision.CURRENT_ACCEPTED, 1);
+  } finally {
+    fs.rmSync(tempDir, { force: true, recursive: true });
+  }
+});
+
+test("treats a removed archive with retained registers as cleanup-complete evidence", () => {
+  const tempDir = fs.mkdtempSync(
+    path.join(os.tmpdir(), "salary-merge-cleanup-"),
+  );
+  try {
+    const outputDir = path.join(tempDir, "docs", "codex", "100-completion");
+    fs.mkdirSync(outputDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(outputDir, "85_MERGE_CONFLICT_PORT_DECISION_REGISTER.csv"),
+      "relativePath,decision\npackage.json,CURRENT_ACCEPTED\n",
+    );
+    fs.writeFileSync(
+      path.join(outputDir, "85_MERGE_CONFLICT_PORT_DECISION_REGISTER.md"),
+      "# Merge Conflict Port Decision Register\n",
+    );
+    fs.writeFileSync(
+      path.join(outputDir, "85_MERGE_CONFLICT_PORT_DECISIONS.json"),
+      JSON.stringify({ decisions: [] }),
+    );
+
+    const status = getMergeConflictArchiveCleanupStatus(tempDir, {
+      outputDir,
+    });
+
+    assert.equal(status.archivePresent, false);
+    assert.equal(status.manifestPresent, false);
+    assert.equal(status.registerExists, true);
+    assert.equal(status.decisionOverridesExist, true);
+    assert.equal(status.cleanupComplete, true);
   } finally {
     fs.rmSync(tempDir, { force: true, recursive: true });
   }
