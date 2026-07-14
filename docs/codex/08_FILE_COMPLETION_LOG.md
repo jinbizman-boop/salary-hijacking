@@ -4217,3 +4217,13 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
 - APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration104/salary-hijacking-phone-arm64-iteration104-debug.apk`.
 - Remaining: GAP-004/GAP-005 remain PARTIAL until physical Android phone relaunch/persistence and installed-app recurrence lifecycle QA are proven. GAP-008 production AAB/Play approvals remain blocked.
+
+# 2026-07-14 KST - Iteration 105 Requirements Traceability Generator
+
+- Files: `scripts/release/generate-requirements-traceability.mjs`, `scripts/release/generate-requirements-traceability.test.mjs`, `package.json`, `docs/codex/100-completion/02_REQUIREMENTS_TRACEABILITY_MATRIX.csv`, `docs/codex/100-completion/03_REQUIREMENTS_TRACEABILITY_MATRIX.md`, `docs/codex/100-completion/06_IMPLEMENTATION_PLAN.md`, `docs/codex/100-completion/114_ITERATION_105_REQUIREMENTS_TRACEABILITY_GENERATOR.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added deterministic source-document traceability generation so the launch-readiness matrix is no longer limited to seed rows. The generator indexes source document paths, classifies Codex/final/root document groups, preserves retained non-document launch requirements, and avoids copying document bodies or secret-like raw artifacts.
+- Verified:
+  - RED `node --test scripts\release\generate-requirements-traceability.test.mjs`: failed before implementation because the generator module was missing.
+  - GREEN `node --test scripts\release\generate-requirements-traceability.test.mjs`: PASS, 3 tests.
+  - `node scripts\release\generate-requirements-traceability.mjs`: PASS, regenerated 305 matrix rows including 284 source-document rows and 21 retained non-document requirements.
+- Remaining: This improves requirements traceability evidence only. Physical Android phone QA and production/Play approval gates remain unresolved.
