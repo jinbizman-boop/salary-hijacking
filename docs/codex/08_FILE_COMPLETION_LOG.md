@@ -4238,3 +4238,13 @@ When completing a work slice, append or update a row with:
   - GREEN `node --test scripts\release\generate-device-test-matrix.test.mjs`: PASS, 2 tests.
   - `node scripts\release\generate-device-test-matrix.mjs`: PASS, rewrote the device test matrix from current evidence.
 - Remaining: This does not replace physical Android phone QA. Strict launch readiness still requires phone install/cold-start/persistence/keyboard/safe-area/no-secret logcat proof, and production/Play approvals remain NO.
+
+# 2026-07-14 KST - Iteration 107 Physical Phone QA Handoff
+
+- Files: `scripts/release/generate-physical-phone-qa-handoff.mjs`, `scripts/release/generate-physical-phone-qa-handoff.test.mjs`, `docs/qa/100-completion/physical-phone-qa-handoff.md`, `docs/codex/100-completion/116_ITERATION_107_PHYSICAL_PHONE_QA_HANDOFF.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added a deterministic no-secret physical phone QA handoff generator from current preview APK evidence. The generated handoff records the latest APK downloads path, artifact path, SHA256, package, ABI, the exact `collect-mobile-preview-phone-proof.mjs --runs 20` command, and the strict readiness proof requirements without copying temporary artifact URLs or raw logcat.
+- Verified:
+  - RED `node --test scripts\release\generate-physical-phone-qa-handoff.test.mjs`: failed before implementation because the generator module was missing.
+  - GREEN `node --test scripts\release\generate-physical-phone-qa-handoff.test.mjs`: PASS, 2 tests.
+  - `node scripts\release\generate-physical-phone-qa-handoff.mjs`: PASS, wrote `docs/qa/100-completion/physical-phone-qa-handoff.md`.
+- Remaining: This improves the phone QA handoff only. Physical Android phone QA remains BLOCKED until a real phone is attached and `release/mobile-preview-phone-proof.local.json` proves install, 20 cold starts, 20 background/foreground runs, persistence, keyboard/safe-area, navigation, zero fatal markers, and raw-logcat redaction.
