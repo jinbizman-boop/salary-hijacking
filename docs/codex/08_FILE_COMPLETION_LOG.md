@@ -4166,3 +4166,12 @@ When completing a work slice, append or update a row with:
 - Verification: Targeted stale packaged-HEAD test failed before implementation and passed after implementation. Full `node --test scripts\release\check-release-readiness.test.mjs` passed with 85 tests.
 - Current strict result: `node scripts\release\check-release-readiness.mjs --strict` is BLOCKED as intended because the retained APK evidence was packaged from `cabb4e8c7fed...`, while current local HEAD is `11abca29bf64...`.
 - Remaining: A fresh Android preview/debug APK from the current HEAD is required before APK evidence can be treated as current. Physical Android phone QA and production/Play approval gates remain unresolved.
+
+# 2026-07-14 KST - Iteration 100 Current HEAD APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/110_ITERATION_100_CURRENT_HEAD_APK_REFRESH.md`, `docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`, plus ignored APK artifacts under `apps/mobile/build/phone/android`, `D:/salary-hijacking-artifacts/20260714/iteration-100-current-head-arm64`, and `C:/Users/PC/Downloads`.
+- Completed: Built a fresh arm64-v8a debug APK from current HEAD `aed3ba9a6fe7bf1dcbfc55dc85bece2efb11882b` and updated preview evidence so the APK HEAD gate no longer relies on stale `cabb4e8...` evidence.
+- Artifact: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration100/salary-hijacking-phone-arm64-iteration100-debug.apk`
+- SHA256: `4FAB0126C48258C92DF90DABD1CDBAB8D6C76664F667EB37071B461DF1F6A6BF`.
+- Verification: Android debug build PASS; `apksigner verify --verbose --print-certs` PASS with APK Signature Scheme v2; `aapt dump badging` confirms package `com.salaryhijacking.mobile`, label `급여납치`, versionName `1.0.0`, versionCode `1`, minSdk `24`, targetSdk `35`, native-code `arm64-v8a`; raw GitHub URL HEAD check returned HTTP 200 and content length `64825201`.
+- Remaining: This is a debug QA APK, not a production AAB or Play submission. Physical Android phone install/cold-start/navigation/persistence/keyboard/safe-area/no-secret logcat QA remains BLOCKED because no phone is attached to this Codex Windows environment.
