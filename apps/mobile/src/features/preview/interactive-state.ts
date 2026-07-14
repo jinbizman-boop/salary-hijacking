@@ -19,6 +19,7 @@ export type DailyBudgetItem = Readonly<{
   completed: boolean;
   content: string;
   id: string;
+  usedDateKey?: string;
 }>;
 
 export type VariableExpenseItem = Readonly<{
@@ -247,6 +248,7 @@ export function parseKrwInput(value: string): number {
 }
 
 export function getKstParts(now = new Date()): {
+  dateKey: string;
   day: number;
   month: number;
   monthKey: string;
@@ -264,12 +266,23 @@ export function getKstParts(now = new Date()): {
   const day = Number(parts.find((part) => part.type === "day")?.value ?? 0);
 
   return {
+    dateKey: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`,
     day,
     month,
     monthKey: `${year}-${String(month).padStart(2, "0")}`,
     text: `${year}년 ${month}월 ${day}일`,
     year,
   };
+}
+
+export function isDailyBudgetItemCompletedOnDate(
+  item: DailyBudgetItem,
+  dateKey: string,
+): boolean {
+  return (
+    item.completed &&
+    (item.usedDateKey === undefined || item.usedDateKey === dateKey)
+  );
 }
 
 export function iconForCategory(category: string): ImageSourcePropType {
@@ -346,6 +359,11 @@ function sanitizeDailyBudgetItem(value: unknown): DailyBudgetItem | null {
   const content = sanitizeText(value.content);
   const id = sanitizePreviewId(value.id);
   if (!content || !id) return null;
+  const usedDateKey =
+    value.usedDateKey === undefined
+      ? undefined
+      : sanitizeDateKey(value.usedDateKey);
+  if (value.usedDateKey !== undefined && !usedDateKey) return null;
 
   return {
     amount: value.amount,
@@ -353,6 +371,7 @@ function sanitizeDailyBudgetItem(value: unknown): DailyBudgetItem | null {
     completed: value.completed,
     content,
     id,
+    ...(usedDateKey ? { usedDateKey } : {}),
   };
 }
 
@@ -434,6 +453,11 @@ function sanitizePreviewId(value: unknown): string | null {
 function sanitizeMonthKey(value: unknown): string | null {
   if (typeof value !== "string") return null;
   return /^\d{4}-\d{2}$/.test(value) ? value : null;
+}
+
+function sanitizeDateKey(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

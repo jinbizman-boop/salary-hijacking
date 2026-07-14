@@ -4195,3 +4195,19 @@ When completing a work slice, append or update a row with:
 - Guard: `mobile:preview:latest-source-apk` now allows a packaged HEAD mismatch only when `git diff --name-only packagedHead..localHead` contains no package, lockfile, mobile app, or shared package source paths. Mobile runtime/source changes after packaging remain BLOCKED.
 - Storage cleanup: `corepack pnpm run clean:junk` freed 1.68 GB, then an additional 873.3 KB; follow-up `disk:report` showed platform top-level size 1.28 GB and no removable generated paths.
 - Verification: RED test `passes latest-source preview APK evidence when only evidence docs changed after packaging` failed before implementation and passed after implementation. Full readiness regression and strict readiness must be re-run after this log entry is committed.
+
+# 2026-07-14 KST - Iteration 104 Daily Budget Completion Date Key
+
+- Files: `apps/mobile/src/features/preview/interactive-state.ts`, `apps/mobile/src/features/preview/__tests__/interactive-state.test.ts`, `apps/mobile/src/features/salary/components/SalaryHomeReferenceScreen.tsx`, `apps/mobile/src/features/salary/__tests__/salary.components.test.tsx`, `docs/codex/100-completion/113_ITERATION_104_DAILY_BUDGET_DATE_KEY.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added KST `usedDateKey` tracking for Salary Home daily budget rows so yesterday's completed row returns to `사용 예정` on the next KST day while legacy rows without a date key remain compatible.
+- Completed: Rechecked storage hygiene after the user's multi-drive warning. Windows reports only `C:` and `D:` logical drives; `subst` has no mappings; `salary-hijacking-main` and `salary-hijacking-work` are empty hidden shell directories but immediate deletion is blocked by another Windows/Codex process handle.
+- Verified:
+  - RED Salary Home component test failed before implementation because yesterday's completed row still rendered as completed.
+  - `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand`: PASS, 20 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/preview/__tests__/interactive-state.test.ts src/features/salary/__tests__/salary.components.test.tsx --runInBand`: PASS, 32 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/preview/__tests__/interactive-state.test.ts src/features/salary/__tests__/salary.components.test.tsx src/features/plan/__tests__/plan.components.test.tsx src/features/plan/__tests__/plan.launch-readiness.test.tsx --runInBand`: PASS, 44 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+  - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
+- Remaining: GAP-004/GAP-005 remain PARTIAL until physical Android phone relaunch/persistence and installed-app recurrence lifecycle QA are proven. GAP-008 production AAB/Play approvals remain blocked.

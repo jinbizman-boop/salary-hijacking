@@ -7,6 +7,7 @@ import {
   getVisiblePlanReminderItems,
   hydratePreviewStateFromStorage,
   iconForCategory,
+  isDailyBudgetItemCompletedOnDate,
   resetPreviewStateForTests,
   updatePreviewState,
   type PlanItem,
@@ -42,6 +43,43 @@ describe("interactive preview state Korean copy", () => {
     expect(iconForCategory("카페")).toBeTruthy();
     expect(iconForCategory("담배")).toBeTruthy();
     expect(iconForCategory("구독")).toBeTruthy();
+  });
+});
+
+describe("interactive preview daily budget completion dates", () => {
+  beforeEach(() => {
+    resetPreviewStateForTests();
+  });
+
+  it("keeps legacy completed daily rows completed when no date key exists", () => {
+    const item = getPreviewState().dailyItems.find((row) => row.completed);
+    if (!item) {
+      throw new Error("Seeded completed daily item is required");
+    }
+
+    expect(isDailyBudgetItemCompletedOnDate(item, "2026-07-14")).toBe(true);
+  });
+
+  it("treats a completed daily row as scheduled on a different KST date", () => {
+    const seeded = getPreviewState();
+    const category = seeded.dailyItems[0]?.category;
+    if (!category) {
+      throw new Error("Seeded daily category is required");
+    }
+
+    expect(
+      isDailyBudgetItemCompletedOnDate(
+        {
+          amount: 2000,
+          category,
+          completed: true,
+          content: "DailyResetCoffee",
+          id: "daily-reset-coffee",
+          usedDateKey: "2026-07-13",
+        },
+        "2026-07-14",
+      ),
+    ).toBe(false);
   });
 });
 
@@ -102,6 +140,40 @@ describe("interactive preview state secure persistence", () => {
 
     expect(restored.dailyLimit).toBe(20000);
     expect(restored.dailyItems).toHaveLength(5);
+  });
+
+  it("rejects persisted daily rows with malformed completion date keys", async () => {
+    const storage = createMemorySecureStorage();
+    const seeded = getPreviewState();
+    const category = seeded.dailyItems[0]?.category;
+    if (!category) {
+      throw new Error("Seeded daily category is required");
+    }
+    await storage.setItemAsync(
+      PREVIEW_STATE_STORAGE_KEY,
+      JSON.stringify({
+        schemaVersion: 1,
+        state: {
+          ...seeded,
+          dailyItems: [
+            {
+              amount: 2000,
+              category,
+              completed: true,
+              content: "DailyResetCoffee",
+              id: "daily-reset-coffee",
+              usedDateKey: "2026/07/13",
+            },
+          ],
+        },
+      }),
+    );
+    configurePreviewStatePersistence(storage);
+
+    const restored = await hydratePreviewStateFromStorage();
+
+    expect(restored.dailyItems).toHaveLength(5);
+    expect(await storage.getItemAsync(PREVIEW_STATE_STORAGE_KEY)).toBeNull();
   });
 
   it("rejects persisted preview rows that contain sensitive personal data", async () => {

@@ -155,6 +155,39 @@ describe("salary reference screen interactions", () => {
     );
   });
 
+  it("resets yesterday's completed daily budget rows to scheduled on the next KST day", () => {
+    jest.useFakeTimers({ now: new Date("2026-07-14T03:00:00.000Z") });
+    const seeded = getPreviewState();
+    const category = seeded.dailyItems[0]?.category;
+    if (!category) {
+      throw new Error("Seeded daily category is required");
+    }
+    updatePreviewState((previous) => ({
+      ...previous,
+      dailyItems: [
+        {
+          amount: 2000,
+          category,
+          completed: true,
+          content: "DailyResetCoffee",
+          id: "daily-reset-coffee",
+          usedDateKey: "2026-07-13",
+        } as never,
+      ],
+    }));
+
+    const screen = render(<SalaryHomeReferenceScreen />);
+    const resetRowButton = screen.getByRole("button", {
+      name: /DailyResetCoffee/u,
+    });
+
+    expect(resetRowButton.props.style).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ backgroundColor: "#209252" }),
+      ]),
+    );
+  });
+
   it("lets users edit and add daily budget detail items from the setting panel", () => {
     const screen = render(<SalaryHomeReferenceScreen />);
 

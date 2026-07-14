@@ -43,6 +43,7 @@ import {
   getVisiblePlanReminderItems,
   hydratePreviewStateFromStorage,
   iconForCategory,
+  isDailyBudgetItemCompletedOnDate,
   parseKrwInput,
   resetPreviewStateForTests,
   updatePreviewState,
@@ -166,7 +167,15 @@ export function SalaryHomeReferenceScreen({
     () => getSalaryCyclePaydayLabels(new Date()),
     [tick],
   );
-  const dailySpent = state.dailyItems
+  const dailyItemsForToday = useMemo(
+    () =>
+      state.dailyItems.map((item) => ({
+        ...item,
+        completed: isDailyBudgetItemCompletedOnDate(item, kst.dateKey),
+      })),
+    [kst.dateKey, state.dailyItems],
+  );
+  const dailySpent = dailyItemsForToday
     .filter((item) => item.completed)
     .reduce((total, item) => total + item.amount, 0);
   const variableTotal = state.variableExpenses.reduce(
@@ -245,6 +254,7 @@ export function SalaryHomeReferenceScreen({
             completed: true,
             content: saved.title,
             id: saved.expenseId,
+            usedDateKey: kst.dateKey,
           }),
         );
         setDailyDraft({ amount: "", category: "", content: "" });
@@ -263,9 +273,15 @@ export function SalaryHomeReferenceScreen({
       const nextItem: DailyBudgetItem = {
         amount,
         category,
-        completed: previousItem?.completed ?? false,
+        completed: previousItem
+          ? isDailyBudgetItemCompletedOnDate(previousItem, kst.dateKey)
+          : false,
         content,
         id: editingDailyId ?? `daily-${Date.now()}`,
+        ...(previousItem &&
+        isDailyBudgetItemCompletedOnDate(previousItem, kst.dateKey)
+          ? { usedDateKey: kst.dateKey }
+          : {}),
       };
       return {
         ...previous,
@@ -300,6 +316,7 @@ export function SalaryHomeReferenceScreen({
             completed: true,
             content: saved.title,
             id: saved.expenseId,
+            usedDateKey: kst.dateKey,
           }),
         );
       } catch {
@@ -314,9 +331,10 @@ export function SalaryHomeReferenceScreen({
         await serverVariableExpenseApi.deleteVariableExpense(item.id, {
           reason: "USER_REVERTED_DAILY_BUDGET_COMPLETION",
         });
+        const { usedDateKey: _usedDateKey, ...scheduledItem } = item;
         sync(
           replaceDailyBudgetItem(item.id, {
-            ...item,
+            ...scheduledItem,
             completed: false,
           }),
         );
@@ -331,7 +349,21 @@ export function SalaryHomeReferenceScreen({
       updatePreviewState((previous) => ({
         ...previous,
         dailyItems: previous.dailyItems.map((row) =>
-          row.id === item.id ? { ...row, completed: !row.completed } : row,
+          row.id === item.id
+            ? !item.completed
+              ? {
+                  ...row,
+                  completed: true,
+                  usedDateKey: kst.dateKey,
+                }
+              : (() => {
+                  const { usedDateKey: _usedDateKey, ...scheduledRow } = row;
+                  return {
+                    ...scheduledRow,
+                    completed: false,
+                  };
+                })()
+            : row,
         ),
       })),
     );
@@ -782,7 +814,7 @@ export function SalaryHomeReferenceScreen({
               ) : null}
             </View>
           ) : null}
-          {state.dailyItems.map((item) => (
+          {dailyItemsForToday.map((item) => (
             <DailyBudgetRow
               item={item}
               key={item.id}
