@@ -33,6 +33,19 @@ Strengthened the Salary Home and Plan synchronization contract for recurring fix
 - `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand`: PASS, 19 tests
 - `corepack pnpm --filter @salary-hijacking/mobile test -- src/features/preview/__tests__/interactive-state.test.ts src/features/salary/__tests__/salary.components.test.tsx src/features/plan/__tests__/plan.components.test.tsx src/features/plan/__tests__/plan.launch-readiness.test.tsx --runInBand`: PASS, 40 tests
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
+- `corepack pnpm run format:check`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug`: PASS, generated a current-source arm64-v8a debug APK after commit `9f340cbf89d4c0ade96fe6a232f8a31c29850a53`.
+- `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+- `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+- GitHub raw APK download HEAD and full download verification: PASS, HTTP 200, SHA256 matched local APK.
+
+## APK Evidence
+
+- APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration103/salary-hijacking-phone-arm64-iteration103-debug.apk`
+- SHA256: `85E30CEAC9873633B2128C36F5FAC2A0D9AD344044FA9698D191DADB1C7A4E7B`
+- Artifact path: `D:/salary-hijacking-artifacts/20260714/iteration-103-date-gated-plan-reminders/salary-hijacking-phone-arm64-iteration103-debug.apk`
+- Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration103-debug.apk`
+- Evidence summary: `D:/salary-hijacking-artifacts/20260714/iteration-103-date-gated-plan-reminders/apk-summary.json`
 
 ## Remaining Blockers
 
