@@ -1230,10 +1230,18 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.equal(calls[4].options.env.ANDROID_SDK_ROOT, sdkRoot);
   assert.equal(calls[4].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.equal(calls[4].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
+  assert.equal(
+    calls[4].options.env.GRADLE_USER_HOME,
+    path.join(rootDir, ".gradle"),
+  );
   assert.match(String(calls[5].command).toLowerCase(), /gradlew/);
   assert.equal(calls[5].args[0], ":app:assembleDebugAndroidTest");
   assert.equal(calls[5].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.equal(calls[5].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
+  assert.equal(
+    calls[5].options.env.GRADLE_USER_HOME,
+    path.join(rootDir, ".gradle"),
+  );
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),
     /sdk\.dir=/,

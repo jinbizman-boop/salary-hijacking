@@ -266,13 +266,24 @@ const normalizeAndroidArchitectures = (architecture) => {
   return architectures.length > 0 ? [...new Set(architectures)] : ["x86_64"];
 };
 
-const buildEnv = ({ env, javaHome, pathValue, sdkRoot }) => {
+const buildEnv = ({
+  env,
+  javaHome,
+  mobileRootDir,
+  pathValue,
+  platform = process.platform,
+  sdkRoot,
+}) => {
   const envPathKey = pathKey(env);
+  const gradleUserHome =
+    env.GRADLE_USER_HOME ??
+    (isWindows(platform) ? path.join(mobileRootDir, ".gradle") : undefined);
   return {
     ...env,
     ANDROID_HOME: sdkRoot,
     ANDROID_SDK_ROOT: sdkRoot,
     EXPO_PUBLIC_E2E_BUILD: "true",
+    ...(gradleUserHome ? { GRADLE_USER_HOME: gradleUserHome } : {}),
     JAVA_HOME: javaHome,
     SALARY_HIJACKING_METRO_CANONICAL_ROOT:
       env.SALARY_HIJACKING_METRO_CANONICAL_ROOT ?? "1",
@@ -1748,7 +1759,14 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
     ...invocations,
     env:
       javaHome && sdkRoot
-        ? buildEnv({ env: toolEnv, javaHome, pathValue, sdkRoot })
+        ? buildEnv({
+            env: toolEnv,
+            javaHome,
+            mobileRootDir,
+            pathValue,
+            platform,
+            sdkRoot,
+          })
         : { ...toolEnv },
     failures,
     javaHome,
