@@ -137,6 +137,8 @@ export function PlanReferenceScreen({
     day: "",
   });
   const [planError, setPlanError] = useState<string | null>(null);
+  const [planItemSavePending, setPlanItemSavePending] = useState(false);
+  const planItemSaveInFlightRef = React.useRef(false);
   const serverPlanCommitmentsApi = useMemo(
     () =>
       planCommitmentsApi ??
@@ -227,18 +229,21 @@ export function PlanReferenceScreen({
   }
 
   async function savePlanItem(section: "fixed" | "saving"): Promise<void> {
+    if (planItemSaveInFlightRef.current) return;
     setPlanError(null);
     const amount = parseKrwInput(draft.amount);
     const content = draft.content.trim();
     if (amount <= 0 || !content) return;
     const category = normalizeCategory(draft.category);
     const day = clamp(parseKrwInput(draft.day) || 25, 1, 31);
-    if (
-      section === "fixed" &&
-      editingId &&
-      serverPlanCommitmentsApi?.updateFixedExpense !== undefined
-    ) {
-      try {
+    planItemSaveInFlightRef.current = true;
+    setPlanItemSavePending(true);
+    try {
+      if (
+        section === "fixed" &&
+        editingId &&
+        serverPlanCommitmentsApi?.updateFixedExpense !== undefined
+      ) {
         const saved = await serverPlanCommitmentsApi.updateFixedExpense(
           editingId,
           buildFixedExpenseUpdateRequest({
@@ -260,17 +265,12 @@ export function PlanReferenceScreen({
         );
         clearDraft();
         return;
-      } catch {
-        setPlanError(PLAN_SAVE_ERROR);
-        return;
       }
-    }
-    if (
-      section === "saving" &&
-      editingId &&
-      serverPlanCommitmentsApi?.updateSavingsGoal !== undefined
-    ) {
-      try {
+      if (
+        section === "saving" &&
+        editingId &&
+        serverPlanCommitmentsApi?.updateSavingsGoal !== undefined
+      ) {
         const saved = await serverPlanCommitmentsApi.updateSavingsGoal(
           editingId,
           buildSavingsGoalUpdateRequest({
@@ -291,17 +291,12 @@ export function PlanReferenceScreen({
         );
         clearDraft();
         return;
-      } catch {
-        setPlanError(PLAN_SAVE_ERROR);
-        return;
       }
-    }
-    if (
-      section === "fixed" &&
-      !editingId &&
-      serverPlanCommitmentsApi?.createFixedExpense !== undefined
-    ) {
-      try {
+      if (
+        section === "fixed" &&
+        !editingId &&
+        serverPlanCommitmentsApi?.createFixedExpense !== undefined
+      ) {
         const saved = await serverPlanCommitmentsApi.createFixedExpense(
           buildFixedExpenseCreateRequest({
             amount,
@@ -322,17 +317,12 @@ export function PlanReferenceScreen({
         );
         clearDraft();
         return;
-      } catch {
-        setPlanError(PLAN_SAVE_ERROR);
-        return;
       }
-    }
-    if (
-      section === "saving" &&
-      !editingId &&
-      serverPlanCommitmentsApi?.createSavingsGoal !== undefined
-    ) {
-      try {
+      if (
+        section === "saving" &&
+        !editingId &&
+        serverPlanCommitmentsApi?.createSavingsGoal !== undefined
+      ) {
         const saved = await serverPlanCommitmentsApi.createSavingsGoal(
           buildSavingsGoalCreateRequest({
             amount,
@@ -352,22 +342,24 @@ export function PlanReferenceScreen({
         );
         clearDraft();
         return;
-      } catch {
-        setPlanError(PLAN_SAVE_ERROR);
-        return;
       }
+      sync(
+        savePlanItemInPreview({
+          amount,
+          category,
+          content,
+          day,
+          id: editingId ?? `plan-${section}-${Date.now()}`,
+          section,
+        }),
+      );
+      clearDraft();
+    } catch {
+      setPlanError(PLAN_SAVE_ERROR);
+    } finally {
+      planItemSaveInFlightRef.current = false;
+      setPlanItemSavePending(false);
     }
-    sync(
-      savePlanItemInPreview({
-        amount,
-        category,
-        content,
-        day,
-        id: editingId ?? `plan-${section}-${Date.now()}`,
-        section,
-      }),
-    );
-    clearDraft();
   }
 
   async function saveLivingItem(): Promise<void> {
@@ -703,6 +695,7 @@ export function PlanReferenceScreen({
           onOpenEditor={openEditor}
           onDelete={deleteEditingItem}
           onSave={() => savePlanItem("fixed")}
+          savePending={planItemSavePending}
           draft={draft}
           setDraft={setDraft}
         />
@@ -717,6 +710,7 @@ export function PlanReferenceScreen({
           onOpenEditor={openEditor}
           onDelete={deleteEditingItem}
           onSave={() => savePlanItem("saving")}
+          savePending={planItemSavePending}
           draft={draft}
           setDraft={setDraft}
         />
@@ -1109,6 +1103,7 @@ function EditablePlanSection({
   onOpenEditor,
   onSave,
   open,
+  savePending,
   section,
   setDraft,
   settingLabel,
@@ -1121,6 +1116,7 @@ function EditablePlanSection({
   onOpenEditor: (section: SectionKey, item?: PlanItem) => void;
   onSave: () => void;
   open: boolean;
+  savePending: boolean;
   section: "fixed" | "saving";
   setDraft: (draft: Draft) => void;
   settingLabel: string;
@@ -1175,6 +1171,7 @@ function EditablePlanSection({
           draft={draft}
           setDraft={setDraft}
           onSave={onSave}
+          savePending={savePending}
           onDelete={editingId ? onDelete : undefined}
         />
       ) : null}
@@ -1232,11 +1229,13 @@ function PlanItemForm({
   draft,
   onDelete,
   onSave,
+  savePending = false,
   setDraft,
 }: Readonly<{
   draft: Draft;
   onDelete?: (() => void) | undefined;
   onSave: () => Promise<void> | void;
+  savePending?: boolean;
   setDraft: (draft: Draft) => void;
 }>) {
   return (
@@ -1280,10 +1279,15 @@ function PlanItemForm({
       <Pressable
         accessibilityLabel="계획 항목 저장"
         accessibilityRole="button"
+        accessibilityState={{ disabled: savePending }}
+        disabled={savePending}
         onPress={() => {
           void onSave();
         }}
-        style={styles.saveButton}
+        style={[
+          styles.saveButton,
+          savePending ? styles.saveButtonDisabled : null,
+        ]}
         testID="plan-item-save-button"
       >
         <Text allowFontScaling={false} style={styles.saveButtonText}>
@@ -1509,6 +1513,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: 14,
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#A8B0B6",
   },
   saveButtonText: {
     color: "#FFFFFF",

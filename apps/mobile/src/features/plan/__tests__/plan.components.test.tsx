@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from "@testing-library/react-native";
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 
 import type { VariableExpenseRecord } from "../../budget/types";
 import type {
@@ -72,6 +72,40 @@ describe("plan reference screen interactions", () => {
     });
     await waitFor(() => expect(screen.getByText("ChatGPT Team")).toBeTruthy());
     expect(screen.getAllByText(/45,000/u).length).toBeGreaterThan(0);
+  });
+
+  it("blocks duplicate fixed expense submissions while the server save is pending", async () => {
+    const pendingSave = createDeferred<PlanFixedExpenseCommitment>();
+    const createFixedExpense = jest.fn().mockReturnValue(pendingSave.promise);
+    const screen = render(
+      <PlanReferenceScreen planCommitmentsApi={{ createFixedExpense }} />,
+    );
+
+    fireEvent.press(screen.getByTestId("fixed-section-settings-button"));
+    fireEvent.press(screen.getByTestId("fixed-section-add-button"));
+    fillPlanItem(screen, {
+      amount: "45000",
+      category: "\uAE30\uD0C0",
+      content: "ChatGPT Team",
+      day: "10",
+    });
+
+    fireEvent.press(screen.getByTestId("plan-item-save-button"));
+    fireEvent.press(screen.getByTestId("plan-item-save-button"));
+
+    expect(createFixedExpense).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      pendingSave.resolve(
+        fixedExpenseCommitment({
+          amountMinor: 45_000,
+          category: "subscription",
+          dueDay: 10,
+          id: "server-fixed-chatgpt-team",
+          title: "ChatGPT Team",
+        }),
+      );
+      await pendingSave.promise;
+    });
   });
 
   it("keeps fixed expense drafts unsaved when the server-authoritative plan API rejects", async () => {
@@ -469,6 +503,20 @@ describe("plan reference screen interactions", () => {
     }
   });
 });
+
+function createDeferred<T>(): {
+  promise: Promise<T>;
+  reject: (reason?: unknown) => void;
+  resolve: (value: T) => void;
+} {
+  let reject!: (reason?: unknown) => void;
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, reject, resolve };
+}
 
 function fillPlanItem(
   screen: ReturnType<typeof render>,
