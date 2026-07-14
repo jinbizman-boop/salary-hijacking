@@ -60,7 +60,8 @@ Strengthened the Salary Home daily budget reminder contract. Daily budget detail
 - `cmd /c subst`: no mapped drive letters.
 - `salary-hijacking-platform`: about 1.284 GB on C: excluding D-backed tool cache.
 - `salary-hijacking-main` and `salary-hijacking-work`: hidden empty shell directories, 0 children, 0 GB. Immediate deletion is blocked by another Windows/Codex process handle.
-- `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
+- `corepack pnpm run clean:junk`: PASS, removed 36 regenerated Android/Metro/temp paths and freed 1.62 GB.
+- `corepack pnpm run disk:report -- --top 10`: PASS, platform top-level total 1.29 GB, removable generated paths: none.
 
 ## Remaining Blockers
 

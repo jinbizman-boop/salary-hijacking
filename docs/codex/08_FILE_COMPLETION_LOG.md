@@ -4133,7 +4133,8 @@ When completing a work slice, append or update a row with:
 - Completed: Rechecked storage hygiene. Windows reports only `C:` and `D:` logical drives; `salary-hijacking-platform` is the only active work repository; old `salary-hijacking-main` and `salary-hijacking-work` shells are empty `0 B` directories but are locked by another Windows/Codex process.
 - Verified:
   - `node scripts\release\check-release-readiness.mjs --strict`: BLOCKED only by unresolved launch gaps `GAP-003`, `GAP-004`, `GAP-005`, `GAP-006`, `GAP-008`, plus physical phone QA.
-  - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
+  - `corepack pnpm run clean:junk`: PASS, removed 36 regenerated Android/Metro/temp paths and freed 1.62 GB.
+  - `corepack pnpm run disk:report -- --top 10`: PASS, platform top-level total 1.29 GB, removable generated paths: none, sibling `salary-hijacking-main` and `salary-hijacking-work` remain 0 B locked shells.
   - `corepack pnpm run disk:report -- --top 5`: PASS, `removable generated paths: none`.
 - Remaining: physical Android phone QA, real-device persistence/recurrence proof, safe-area/keyboard matrix, production AAB approval, Play submission approval, and market publication remain unresolved. This does not prove launch-ready 100%.
 
