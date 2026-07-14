@@ -4227,3 +4227,14 @@ When completing a work slice, append or update a row with:
   - GREEN `node --test scripts\release\generate-requirements-traceability.test.mjs`: PASS, 3 tests.
   - `node scripts\release\generate-requirements-traceability.mjs`: PASS, regenerated 305 matrix rows including 284 source-document rows and 21 retained non-document requirements.
 - Remaining: This improves requirements traceability evidence only. Physical Android phone QA and production/Play approval gates remain unresolved.
+
+# 2026-07-14 KST - Iteration 106 Device Test Matrix Generator
+
+- Files: `scripts/release/generate-device-test-matrix.mjs`, `scripts/release/generate-device-test-matrix.test.mjs`, `docs/codex/100-completion/07_DEVICE_TEST_MATRIX.md`, `docs/codex/100-completion/115_ITERATION_106_DEVICE_TEST_MATRIX_GENERATOR.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added a deterministic no-secret device-test matrix generator so `07_DEVICE_TEST_MATRIX.md` reflects current mobile preview/native evidence instead of stale APK/test-count rows.
+- Updated evidence: current phone-target debug APK SHA256 `5E9CC86ECA43F41327FF3C8B4392F5F8F08479C58EC1EB7ED204CF7356ADCDB0`, root release tooling test count `318`, and current physical phone cold-start/logcat plus keyboard/safe-area BLOCKED status.
+- Verified:
+  - RED `node --test scripts\release\generate-device-test-matrix.test.mjs`: failed before implementation because the generator module was missing.
+  - GREEN `node --test scripts\release\generate-device-test-matrix.test.mjs`: PASS, 2 tests.
+  - `node scripts\release\generate-device-test-matrix.mjs`: PASS, rewrote the device test matrix from current evidence.
+- Remaining: This does not replace physical Android phone QA. Strict launch readiness still requires phone install/cold-start/persistence/keyboard/safe-area/no-secret logcat proof, and production/Play approvals remain NO.
