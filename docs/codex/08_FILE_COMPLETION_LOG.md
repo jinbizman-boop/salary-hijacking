@@ -4278,3 +4278,17 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
   - Removed stale `D:\salary-hijacking-toolchain-cache\user-dot-gradle`, old `salary-hijacking-platform-dottools`, and two downloaded toolchain ZIPs; estimated reclaimed duplicate cache space about 1.56 GB.
 - Remaining: `D:\salary-hijacking-local-tools` is still about 9.08 GB because it is the active local Android/JDK/Gradle build toolchain for APK generation. It is intentionally preserved unless a replacement build environment is established.
+
+# 2026-07-14 KST - Iteration 111 Current-Head Phone APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/07_DEVICE_TEST_MATRIX.md`, `docs/qa/100-completion/physical-phone-qa-handoff.md`, `docs/codex/100-completion/120_ITERATION_111_CURRENT_HEAD_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`, `D:/salary-hijacking-artifacts/20260714/iteration-110-preview-persistence-storage-cleanup/salary-hijacking-phone-arm64-iteration110-debug.apk`, `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration110-debug.apk`.
+- Completed: Rebuilt the current-head arm64-v8a Android phone-target debug APK from HEAD `b2e165962af57a376d1add190ea230276b52d2b0`, copied it to Downloads, published a raw GitHub artifact branch, and refreshed no-secret mobile preview evidence plus phone QA handoff docs.
+- Verified:
+  - Phone-target local debug build: PASS.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - `aapt dump badging`: PASS for `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - Raw GitHub APK URL download: PASS, HTTP 200, content length `64,826,333`, SHA256 `C5659256EB93A747F5D8632FE093725BB69882531775227D69D556A83B93CCE3`.
+  - `node scripts/release/generate-device-test-matrix.mjs`: PASS.
+  - `node scripts/release/generate-physical-phone-qa-handoff.mjs`: PASS.
+- APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration110/salary-hijacking-phone-arm64-iteration110-debug.apk`.
+- Remaining: This is a debug/pre-release APK evidence refresh, not production AAB or Play submission. Physical Android phone QA remains blocked until a real phone provides install/cold-start/navigation/persistence/keyboard/safe-area/no-fatal-logcat proof.

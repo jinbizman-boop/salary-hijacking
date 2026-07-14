@@ -23,7 +23,7 @@ Updated: 2026-07-14 KST
 ## Latest-source ARM64 phone debug APK
 
 - Status: PASS
-- Evidence: Artifact: `D:/salary-hijacking-artifacts/20260714/iteration-104-daily-budget-date-key/salary-hijacking-phone-arm64-iteration104-debug.apk`; Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration104-debug.apk`; SHA256 `5E9CC86ECA43F41327FF3C8B4392F5F8F08479C58EC1EB7ED204CF7356ADCDB0`; ABI arm64-v8a
+- Evidence: Artifact: `D:/salary-hijacking-artifacts/20260714/iteration-110-preview-persistence-storage-cleanup/salary-hijacking-phone-arm64-iteration110-debug.apk`; Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration110-debug.apk`; SHA256 `C5659256EB93A747F5D8632FE093725BB69882531775227D69D556A83B93CCE3`; ABI arm64-v8a
 - Notes: APK build, signing, download verification, ABI filter, and Expo native library proof are recorded without copying temporary artifact URLs.
 
 ## Android emulator cold start / route smoke
