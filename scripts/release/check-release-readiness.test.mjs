@@ -2799,6 +2799,35 @@ test("passes latest-source preview APK evidence when dirty mobile source snapsho
   );
 });
 
+test("blocks latest-source preview APK evidence when packaged HEAD is stale", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourcePackagedHead: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /preview APK evidence was packaged from HEAD 111111111111/,
+  );
+});
+
 test("blocks latest-source preview APK evidence when a dirty mobile file changes after packaging", () => {
   const rootDir = makeWorkspace();
   const dirtyStatus =

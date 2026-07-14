@@ -3519,6 +3519,7 @@ const checkMobilePreviewEvidence = (
   checks,
   blockers,
   gitStatusResult,
+  gitHeadResult,
 ) => {
   const evidence = readJsonIfPresent(rootDir, MOBILE_PREVIEW_EVIDENCE_PATH);
   if (!evidence) {
@@ -3628,8 +3629,13 @@ const checkMobilePreviewEvidence = (
     typeof android.latestSourceGitStatusSha256 === "string" &&
     android.latestSourceGitStatusSha256.toUpperCase() ===
       currentSourceStatusSha256;
+  const packagedHead = parseGitSha(android.latestSourcePackagedHead);
+  const localHead = gitHeadResult?.ok ? parseGitSha(gitHeadResult.output) : "";
+  const packagedHeadMatchesCurrent =
+    !packagedHead || (Boolean(localHead) && packagedHead === localHead);
   const latestSourcePreviewApkOk =
     latestSourceChangesPackaged &&
+    packagedHeadMatchesCurrent &&
     (dirtyMobilePreviewSourcePaths.length === 0 || dirtySourceMatchesEvidence);
   addMobileCheck(
     checks,
@@ -3642,7 +3648,9 @@ const checkMobilePreviewEvidence = (
         : "latest source changes are not marked as excluded from the preview APK"
       : !latestSourceChangesPackaged
         ? "latest source changes are test-verified but not packaged into a fresh Android preview APK"
-        : `uncommitted mobile source changes exist after the latest preview APK evidence: ${dirtyMobilePreviewSourcePaths.slice(0, 5).join(", ")}`,
+        : !packagedHeadMatchesCurrent
+          ? `preview APK evidence was packaged from HEAD ${shortGitSha(packagedHead)} but local HEAD is ${localHead ? shortGitSha(localHead) : "unverified"}`
+          : `uncommitted mobile source changes exist after the latest preview APK evidence: ${dirtyMobilePreviewSourcePaths.slice(0, 5).join(", ")}`,
     "latest source changes must be packaged into a fresh Android preview APK before the artifact can be treated as launch QA ready",
   );
 
@@ -3806,6 +3814,7 @@ const checkMobileReleaseReadiness = (
   blockers,
   commandExists,
   gitStatusResult,
+  gitHead,
 ) => {
   const mobileRoot = path.join(rootDir, "apps", "mobile");
   for (const assetName of REQUIRED_MOBILE_ASSETS) {
@@ -4051,6 +4060,7 @@ const checkMobileReleaseReadiness = (
     checks,
     blockers,
     gitStatusResult,
+    gitHead(),
   );
 };
 
@@ -4282,6 +4292,7 @@ export const analyzeReleaseReadiness = ({
     blockers,
     commandExists,
     git,
+    gitHead,
   );
 
   for (const group of REQUIRED_CLI_GROUPS) {

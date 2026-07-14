@@ -4158,3 +4158,11 @@ When completing a work slice, append or update a row with:
 - Completed: Added and verified a launch-critical keyboard/safe-area source contract requiring `KeyboardAvoidingView`, `automaticallyAdjustKeyboardInsets`, `keyboardDismissMode="interactive"`, handled keyboard taps, and keyboard vertical offsets across shared AppShell, auth/login, Salary Home, and Plan input shells.
 - Verification: RED confirmed before implementation for the shared component keyboard contract. GREEN after implementation: shared component contract PASS, 1 suite and 5 tests; auth/salary/plan screen regression PASS, 3 suites and 31 tests; mobile typecheck PASS.
 - Remaining: GAP-006 remains BLOCKED for final launch readiness because a physical Android phone or device farm is still required for all-screen/all-field safe-area, keyboard, system navigation, font-scale, relaunch persistence, and logcat proof. This does not prove launch-ready 100%.
+
+# 2026-07-14 KST - Iteration 099 Preview APK HEAD Gate
+
+- Files: `scripts/release/check-release-readiness.mjs`, `scripts/release/check-release-readiness.test.mjs`, `docs/codex/100-completion/109_ITERATION_099_PREVIEW_APK_HEAD_GATE.md`, `docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added RED/GREEN readiness coverage so a clean working tree is not enough to pass `mobile:preview:latest-source-apk` when the retained APK evidence was packaged from an older Git HEAD.
+- Verification: Targeted stale packaged-HEAD test failed before implementation and passed after implementation. Full `node --test scripts\release\check-release-readiness.test.mjs` passed with 85 tests.
+- Current strict result: `node scripts\release\check-release-readiness.mjs --strict` is BLOCKED as intended because the retained APK evidence was packaged from `cabb4e8c7fed...`, while current local HEAD is `11abca29bf64...`.
+- Remaining: A fresh Android preview/debug APK from the current HEAD is required before APK evidence can be treated as current. Physical Android phone QA and production/Play approval gates remain unresolved.
