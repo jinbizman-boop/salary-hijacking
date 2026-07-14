@@ -11,5 +11,14 @@
     "expectedAbis":  [
                          "arm64-v8a"
                      ],
-    "notes":  "Phone-target Android debug APK for Iteration 103 date-gated plan reminders; no secrets or signing keys are stored."
+    "notes":  "Phone-target Android debug APK for Iteration 103 date-gated plan reminders; no secrets or signing keys are stored.",
+    "downloadUrl":  "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration103/salary-hijacking-phone-arm64-iteration103-debug.apk",
+    "downloadVerified":  true,
+    "signedWithApkSignatureSchemeV2":  true,
+    "verifiedNativeLibs":  [
+                               "lib/arm64-v8a/libexpo-modules-core.so",
+                               "lib/arm64-v8a/libhermes.so",
+                               "lib/arm64-v8a/libreactnative.so",
+                               "lib/arm64-v8a/libreanimated.so"
+                           ]
 }
