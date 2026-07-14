@@ -1,4 +1,4 @@
-﻿{
+{
   "schemaVersion": 1,
   "observedAt": "2026-07-14T09:02:37.599Z",
   "source": "Local Android preview/debug QA evidence for iteration 104: current HEAD 9ff4ab36511ce8f93e17d7a5c3fd99a9e676817d is packaged in a fresh arm64-v8a phone-target debug APK after daily budget KST completion date-key fix. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
