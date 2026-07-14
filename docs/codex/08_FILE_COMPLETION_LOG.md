@@ -4175,3 +4175,11 @@ When completing a work slice, append or update a row with:
 - SHA256: `4FAB0126C48258C92DF90DABD1CDBAB8D6C76664F667EB37071B461DF1F6A6BF`.
 - Verification: Android debug build PASS; `apksigner verify --verbose --print-certs` PASS with APK Signature Scheme v2; `aapt dump badging` confirms package `com.salaryhijacking.mobile`, label `급여납치`, versionName `1.0.0`, versionCode `1`, minSdk `24`, targetSdk `35`, native-code `arm64-v8a`; raw GitHub URL HEAD check returned HTTP 200 and content length `64825201`.
 - Remaining: This is a debug QA APK, not a production AAB or Play submission. Physical Android phone install/cold-start/navigation/persistence/keyboard/safe-area/no-secret logcat QA remains BLOCKED because no phone is attached to this Codex Windows environment.
+
+# 2026-07-14 KST - Iteration 101 Preview APK Evidence HEAD Guard
+
+- Files: `scripts/release/check-release-readiness.mjs`, `scripts/release/check-release-readiness.test.mjs`, `docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Fixed the release-readiness bootstrap loop where committing APK evidence/docs after a successful APK build advanced Git HEAD and made the fresh APK appear stale again.
+- Guard: `mobile:preview:latest-source-apk` now allows a packaged HEAD mismatch only when `git diff --name-only packagedHead..localHead` contains no package, lockfile, mobile app, or shared package source paths. Mobile runtime/source changes after packaging remain BLOCKED.
+- Storage cleanup: `corepack pnpm run clean:junk` freed 1.68 GB, then an additional 873.3 KB; follow-up `disk:report` showed platform top-level size 1.28 GB and no removable generated paths.
+- Verification: RED test `passes latest-source preview APK evidence when only evidence docs changed after packaging` failed before implementation and passed after implementation. Full readiness regression and strict readiness must be re-run after this log entry is committed.

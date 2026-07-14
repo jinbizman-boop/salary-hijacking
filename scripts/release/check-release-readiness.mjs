@@ -480,6 +480,22 @@ const defaultGitHead = (rootDir) => {
   };
 };
 
+const defaultGitChangedFiles = (rootDir, fromSha, toSha) => {
+  const result = spawnSync(
+    "git",
+    ["diff", "--name-only", `${fromSha}..${toSha}`],
+    {
+      cwd: rootDir,
+      encoding: "utf8",
+      shell: false,
+    },
+  );
+  return {
+    ok: result.status === 0,
+    output: `${result.stdout ?? ""}${result.stderr ?? ""}`.trim(),
+  };
+};
+
 const defaultGitRemoteHead = (rootDir) => {
   const result = spawnSync("git", ["ls-remote", "origin", "refs/heads/main"], {
     cwd: rootDir,
@@ -3520,6 +3536,7 @@ const checkMobilePreviewEvidence = (
   blockers,
   gitStatusResult,
   gitHeadResult,
+  gitChangedFiles,
 ) => {
   const evidence = readJsonIfPresent(rootDir, MOBILE_PREVIEW_EVIDENCE_PATH);
   if (!evidence) {
@@ -3631,8 +3648,28 @@ const checkMobilePreviewEvidence = (
       currentSourceStatusSha256;
   const packagedHead = parseGitSha(android.latestSourcePackagedHead);
   const localHead = gitHeadResult?.ok ? parseGitSha(gitHeadResult.output) : "";
+  const packagedHeadChangedFilesResult =
+    packagedHead && localHead && packagedHead !== localHead
+      ? gitChangedFiles(packagedHead, localHead)
+      : { ok: true, output: "" };
+  const mobileSourceChangedAfterPackaging = packagedHeadChangedFilesResult.ok
+    ? String(packagedHeadChangedFilesResult.output ?? "")
+        .split(/\r?\n/u)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .filter(isMobilePreviewSourcePath)
+    : [];
   const packagedHeadMatchesCurrent =
-    !packagedHead || (Boolean(localHead) && packagedHead === localHead);
+    !packagedHead ||
+    (Boolean(localHead) && packagedHead === localHead) ||
+    (packagedHeadChangedFilesResult.ok &&
+      mobileSourceChangedAfterPackaging.length === 0);
+  const packagedHeadAllowedByNonMobileChanges =
+    Boolean(packagedHead) &&
+    Boolean(localHead) &&
+    packagedHead !== localHead &&
+    packagedHeadChangedFilesResult.ok &&
+    mobileSourceChangedAfterPackaging.length === 0;
   const latestSourcePreviewApkOk =
     latestSourceChangesPackaged &&
     packagedHeadMatchesCurrent &&
@@ -3645,11 +3682,15 @@ const checkMobilePreviewEvidence = (
     latestSourcePreviewApkOk
       ? dirtySourceMatchesEvidence
         ? "dirty mobile source snapshot matches preview APK evidence"
-        : "latest source changes are not marked as excluded from the preview APK"
+        : packagedHeadAllowedByNonMobileChanges
+          ? "only non-mobile evidence or documentation changed after APK packaging"
+          : "latest source changes are not marked as excluded from the preview APK"
       : !latestSourceChangesPackaged
         ? "latest source changes are test-verified but not packaged into a fresh Android preview APK"
         : !packagedHeadMatchesCurrent
-          ? `preview APK evidence was packaged from HEAD ${shortGitSha(packagedHead)} but local HEAD is ${localHead ? shortGitSha(localHead) : "unverified"}`
+          ? packagedHeadChangedFilesResult.ok
+            ? `preview APK evidence was packaged from HEAD ${shortGitSha(packagedHead)} but local HEAD is ${localHead ? shortGitSha(localHead) : "unverified"}; mobile preview source changed after packaging: ${mobileSourceChangedAfterPackaging.slice(0, 5).join(", ")}`
+            : `preview APK evidence was packaged from HEAD ${shortGitSha(packagedHead)} but local HEAD is ${localHead ? shortGitSha(localHead) : "unverified"}`
           : `uncommitted mobile source changes exist after the latest preview APK evidence: ${dirtyMobilePreviewSourcePaths.slice(0, 5).join(", ")}`,
     "latest source changes must be packaged into a fresh Android preview APK before the artifact can be treated as launch QA ready",
   );
@@ -3815,6 +3856,7 @@ const checkMobileReleaseReadiness = (
   commandExists,
   gitStatusResult,
   gitHead,
+  gitChangedFiles,
 ) => {
   const mobileRoot = path.join(rootDir, "apps", "mobile");
   for (const assetName of REQUIRED_MOBILE_ASSETS) {
@@ -4061,6 +4103,7 @@ const checkMobileReleaseReadiness = (
     blockers,
     gitStatusResult,
     gitHead(),
+    gitChangedFiles,
   );
 };
 
@@ -4071,6 +4114,8 @@ export const analyzeReleaseReadiness = ({
   gitStatus = () => defaultGitStatus(rootDir),
   gitRemote = () => defaultGitRemote(rootDir),
   gitHead = () => defaultGitHead(rootDir),
+  gitChangedFiles = (fromSha, toSha) =>
+    defaultGitChangedFiles(rootDir, fromSha, toSha),
   gitRemoteHead = () => defaultGitRemoteHead(rootDir),
   gitRemoteTrackingHead = () => defaultGitRemoteTrackingHead(rootDir),
 } = {}) => {
@@ -4293,6 +4338,7 @@ export const analyzeReleaseReadiness = ({
     commandExists,
     git,
     gitHead,
+    gitChangedFiles,
   );
 
   for (const group of REQUIRED_CLI_GROUPS) {
