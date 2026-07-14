@@ -40,6 +40,19 @@ Strengthened the Salary Home daily budget reminder contract. Daily budget detail
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
 - `corepack pnpm run format:check`: PASS
 - `git diff --check`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug`: PASS, generated a current-source arm64-v8a debug APK after commit `9ff4ab36511ce8f93e17d7a5c3fd99a9e676817d`.
+- `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+- `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+- GitHub raw APK download HEAD and full download verification: PASS, HTTP 200, SHA256 matched local APK.
+
+## APK Evidence
+
+- APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration104/salary-hijacking-phone-arm64-iteration104-debug.apk`
+- SHA256: `5E9CC86ECA43F41327FF3C8B4392F5F8F08479C58EC1EB7ED204CF7356ADCDB0`
+- Artifact path: `D:/salary-hijacking-artifacts/20260714/iteration-104-daily-budget-date-key/salary-hijacking-phone-arm64-iteration104-debug.apk`
+- Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration104-debug.apk`
+- Evidence summary: `D:/salary-hijacking-artifacts/20260714/iteration-104-daily-budget-date-key/apk-summary.json`
+- Artifact branch: `codex-apk-artifacts-20260714-iteration104`
 
 ## Storage Hygiene
 
