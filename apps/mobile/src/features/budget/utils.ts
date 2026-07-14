@@ -92,7 +92,7 @@ export function calculateOfflineDailyBudgetPreview(
     0,
   );
   const spentToday = baseSpentToday + addedExpenseTotal;
-  const remainingToday = dailyLimit - spentToday;
+  const remainingToday = Math.max(0, dailyLimit - spentToday);
   const usageRate =
     dailyLimit > 0
       ? Math.min(

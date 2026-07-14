@@ -115,6 +115,41 @@ const commandNoRawPayloadStored = (commands, key) =>
   commands[key].verified === true &&
   commands[key].noRawPayloadStored === true;
 
+const databaseNextEvidenceRequired = (evidence) => {
+  const missing = [];
+  if (!evidence.migrations.migrationValidationVerified) {
+    missing.push("Safe migration validation against a non-production target");
+  }
+  if (!evidence.migrations.stagingMigrationExecuted) {
+    missing.push("Staging migration execution proof");
+  }
+  if (!evidence.seeds.stagingSeedExecuted) {
+    missing.push("Staging seed execution proof with synthetic data only");
+  }
+  if (!evidence.migrations.productionMigrationDryRunVerified) {
+    missing.push("Production migration dry-run proof");
+  }
+  if (!evidence.smoke.stagingApiSmokeVerified) {
+    missing.push("API smoke proof against migrated staging data");
+  }
+  if (!evidence.smoke.adminSmokeVerified) {
+    missing.push("Admin smoke proof against migrated staging data");
+  }
+  if (!evidence.smoke.serverAuthoritySmokeVerified) {
+    missing.push("Server-authority payroll/budget smoke proof");
+  }
+  if (
+    !evidence.smoke.privacySmokeVerified ||
+    !evidence.smoke.noRawFinancialDataInSmokePayloads
+  ) {
+    missing.push("Privacy/redaction smoke proof");
+  }
+  if (!evidence.rollback.rollbackRehearsalVerified) {
+    missing.push("Database rollback rehearsal proof");
+  }
+  return missing;
+};
+
 const readExpectedProjectHint = (rootDir) => {
   const targets = readJsonIfPresent(rootDir, RELEASE_TARGETS_PATH);
   const hint = targets?.neon?.expectedProjectHint;
@@ -238,7 +273,7 @@ export const buildDatabaseEvidence = ({
   const commands = proofSection(proof, "commands");
   const migrationFileCount = countMigrationFiles(rootDir);
 
-  return {
+  const evidence = {
     schemaVersion: 1,
     observedAt: now().toISOString(),
     source:
@@ -301,17 +336,10 @@ export const buildDatabaseEvidence = ({
         commandVerified(commands, "rollbackRehearsal"),
       note: "Rollback proof must be a rehearsal or documented recovery validation, not a destructive production rollback.",
     },
-    nextEvidenceRequired: [
-      "Safe migration validation against a non-production target",
-      "Staging migration execution proof",
-      "Staging seed execution proof with synthetic data only",
-      "Production migration dry-run proof",
-      "API smoke proof against migrated staging data",
-      "Admin smoke proof against migrated staging data",
-      "Server-authority payroll/budget smoke proof",
-      "Privacy/redaction smoke proof",
-      "Database rollback rehearsal proof",
-    ],
+  };
+  return {
+    ...evidence,
+    nextEvidenceRequired: databaseNextEvidenceRequired(evidence),
   };
 };
 

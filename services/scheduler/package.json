@@ -85,7 +85,7 @@
     "deploy:staging": "corepack pnpm run build && corepack pnpm exec wrangler deploy --env staging --config wrangler.toml",
     "deploy:production": "corepack pnpm run build && corepack pnpm exec wrangler deploy --env production --config wrangler.toml",
     "tail": "corepack pnpm exec wrangler tail --config wrangler.toml",
-    "clean": "rimraf dist coverage .turbo test-results .wrangler/tmp tsconfig.tsbuildinfo",
+    "clean": "rimraf dist coverage test-results .wrangler/tmp tsconfig.tsbuildinfo",
     "clean:dist": "rimraf dist",
     "doctor": "node --version && corepack pnpm --version && corepack pnpm exec wrangler --version && corepack pnpm run typecheck:strict && corepack pnpm run privacy:check"
   },

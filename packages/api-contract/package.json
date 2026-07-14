@@ -69,7 +69,7 @@
     "pnpm": ">=10.0.0 <11"
   },
   "scripts": {
-    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','.turbo','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
     "validate:dist": "node -e \"const fs=require('node:fs'); const required=['dist/index.js','dist/index.d.ts','dist/auth/auth.schema.js','dist/auth/auth.schema.d.ts','dist/common/error-code.schema.js','dist/common/error-code.schema.d.ts','dist/common/response.schema.js','dist/common/response.schema.d.ts','dist/community/community.schema.js','dist/community/community.schema.d.ts','dist/payroll/payroll.schema.js','dist/payroll/payroll.schema.d.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[api-contract] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[api-contract] dist export map validation passed.');\"",

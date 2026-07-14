@@ -1,9 +1,8 @@
-import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { existsSync } from "node:fs";
-import { readFile, stat } from "node:fs/promises";
+import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const rootDir = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -12,11 +11,20 @@ const rootDir = path.resolve(
 );
 const distDir = path.join(rootDir, "apps", "mobile", "dist");
 const screenshotDir = path.join(rootDir, "release", "screenshots");
+const mobileUiEvidenceDir = path.join(
+  rootDir,
+  "release",
+  "evidence",
+  "mobile-ui",
+);
 const officialLogoPath = path.join(
   rootDir,
   "apps",
   "mobile",
+  "src",
+  "shared",
   "assets",
+  "images",
   "brand",
   "salary-hijacking-platform-logo.png",
 );
@@ -24,15 +32,66 @@ const webPort = 4175;
 const apiPort = 8787;
 const phoneViewport = "506,1096";
 const phoneScale = "0.85";
+const storePhoneScale = "2";
 
-const captures = [
-  ["/salary", "01_home_salary.png"],
-  ["/salary?focus=daily-budget", "02_daily_budget.png"],
-  ["/plan", "03_plan_setting.png"],
-  ["/notifications", "04_notifications.png"],
-  ["/level", "05_level_up.png"],
+const storeCaptures = [
+  ["/capture/salary", "01_home_salary.png", phoneViewport, storePhoneScale],
+  [
+    "/capture/salary?focus=daily-budget",
+    "02_daily_budget.png",
+    phoneViewport,
+    storePhoneScale,
+  ],
+  ["/capture/plan", "03_plan_setting.png", phoneViewport, storePhoneScale],
+  [
+    "/capture/notifications",
+    "04_notifications.png",
+    phoneViewport,
+    storePhoneScale,
+  ],
+  ["/capture/level", "05_level_up.png", phoneViewport, storePhoneScale],
   ["/__feature-graphic", "feature_graphic_google_play.png", "1024,500", "1"],
 ];
+
+const mobileUiEvidenceCaptures = [
+  ["/capture/splash", "01_splash.png"],
+  ["/capture/login", "02_login.png"],
+  ["/capture/signup", "03_signup.png"],
+  ["/onboarding", "04_onboarding.png"],
+  ["/capture/salary", "05_salary_home.png"],
+  ["/capture/salary?focus=daily-budget", "06_daily_budget.png"],
+  ["/capture/plan", "07_plan_setting.png"],
+  ["/capture/notifications", "08_notifications.png"],
+  ["/capture/level", "09_level_hub.png"],
+  ["/capture/reading", "10_level_reading.png"],
+  ["/capture/news", "11_level_news.png"],
+  ["/capture/english", "12_level_english.png"],
+  ["/capture/health", "13_level_health.png"],
+  ["/capture/community", "14_community.png"],
+  ["/capture/community-write", "15_community_write.png"],
+  ["/capture/profile", "16_profile.png"],
+  ["/capture/profile-level", "17_profile_level.png"],
+];
+
+const responsiveCheckRoutes = [
+  "/capture/splash",
+  "/capture/login",
+  "/capture/signup",
+  "/capture/salary",
+  "/capture/salary?focus=daily-budget",
+  "/capture/plan",
+  "/capture/notifications",
+  "/capture/level",
+  "/capture/reading",
+  "/capture/news",
+  "/capture/english",
+  "/capture/health",
+  "/capture/community",
+  "/capture/community-write",
+  "/capture/profile",
+];
+
+const responsiveViewportWidths = [320, 360, 375, 390, 393, 412, 430];
 
 const contentTypes = new Map([
   [".html", "text/html; charset=utf-8"],
@@ -50,38 +109,98 @@ const chrome = findChrome();
 const apiServer = createApiServer();
 const webServer = createWebServer();
 
+await ensureWebExportReady();
 await listen(apiServer, apiPort);
 await listen(webServer, webPort);
 
+let browser = null;
 try {
+  const { chromium } = await loadPlaywright();
+  browser = await chromium.launch({
+    executablePath: chrome,
+    headless: true,
+  });
+
+  await mkdir(screenshotDir, { recursive: true });
+  await mkdir(mobileUiEvidenceDir, { recursive: true });
+
   for (const [
     route,
     fileName,
     viewport = phoneViewport,
     scale = phoneScale,
-  ] of captures) {
+  ] of storeCaptures) {
     const outputPath = path.join(screenshotDir, fileName);
-    await capture(route, outputPath, viewport, scale);
+    await capture(browser, route, outputPath, viewport, scale);
+  }
+
+  const responsiveChecks = [];
+  for (const route of responsiveCheckRoutes) {
+    for (const width of responsiveViewportWidths) {
+      responsiveChecks.push(await checkResponsive(browser, route, width));
+    }
+  }
+
+  for (const [
+    route,
+    fileName,
+    viewport = phoneViewport,
+    scale = phoneScale,
+  ] of mobileUiEvidenceCaptures) {
+    const outputPath = path.join(mobileUiEvidenceDir, fileName);
+    await capture(browser, route, outputPath, viewport, scale);
   }
 
   const summary = [];
-  for (const [, fileName] of captures) {
+  for (const [, fileName] of storeCaptures) {
     const filePath = path.join(screenshotDir, fileName);
     const png = await readFile(filePath);
-    summary.push({ file: fileName, ...pngSize(png), bytes: png.length });
+    summary.push({
+      group: "store",
+      file: fileName,
+      ...pngSize(png),
+      bytes: png.length,
+    });
   }
-  console.log(JSON.stringify({ ok: true, summary }, null, 2));
+  for (const [, fileName] of mobileUiEvidenceCaptures) {
+    const filePath = path.join(mobileUiEvidenceDir, fileName);
+    const png = await readFile(filePath);
+    summary.push({
+      group: "mobile-ui",
+      file: fileName,
+      ...pngSize(png),
+      bytes: png.length,
+    });
+  }
+  await writeFile(
+    path.join(mobileUiEvidenceDir, "capture-summary.json"),
+    `${JSON.stringify(
+      {
+        ok: true,
+        generatedAt: new Date().toISOString(),
+        screenshotDir: path.relative(rootDir, screenshotDir),
+        mobileUiEvidenceDir: path.relative(rootDir, mobileUiEvidenceDir),
+        count: summary.length,
+        storeCount: storeCaptures.length,
+        mobileUiEvidenceCount: mobileUiEvidenceCaptures.length,
+        responsiveCheckCount: responsiveChecks.length,
+        responsiveChecks,
+        summary,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  console.log(JSON.stringify({ ok: true, responsiveChecks, summary }, null, 2));
 } finally {
+  if (browser !== null) await browser.close();
   await close(webServer);
   await close(apiServer);
 }
 
 function createApiServer() {
   return createServer((request, response) => {
-    response.setHeader("access-control-allow-origin", "*");
-    response.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
-    response.setHeader("access-control-allow-headers", "*");
-    response.setHeader("cache-control", "no-store");
+    setApiCorsHeaders(request, response);
 
     if (request.method === "OPTIONS") {
       response.writeHead(204);
@@ -90,6 +209,104 @@ function createApiServer() {
     }
 
     const url = new URL(request.url ?? "/", `http://127.0.0.1:${apiPort}`);
+    if (url.pathname === "/api/v1/growth/contents") {
+      json(response, 200, {
+        data: {
+          items: mockGrowthContents(
+            url.searchParams.get("contentType") ?? "READING",
+          ),
+          page: 1,
+          pageSize: 20,
+          total: 1,
+        },
+      });
+      return;
+    }
+
+    if (url.pathname === "/api/v1/public/app-config") {
+      json(response, 200, mockPublicAppConfig());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/daily-budgets/today") {
+      json(response, 200, mockDailyBudget());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/variable-expenses") {
+      json(response, 200, mockVariableExpenses());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/fixed-expenses") {
+      json(response, 200, mockFixedExpenses());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/savings") {
+      json(response, 200, mockSavingsGoals());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/payroll/current") {
+      json(response, 200, mockCurrentPayroll());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/notifications") {
+      json(response, 200, mockNotifications());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/notifications/unread-count") {
+      json(response, 200, { data: { unreadCount: 2, serverAuthority: true } });
+      return;
+    }
+
+    if (url.pathname === "/api/v1/notifications/preferences") {
+      json(response, 200, mockNotificationPreferences());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/notifications/devices") {
+      json(response, 200, mockNotificationDevices());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/users/me/profile") {
+      json(response, 200, mockUserProfile());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/users/me/my-page-summary") {
+      json(response, 200, mockMyPageSummary());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/users/me/privacy-exports") {
+      json(response, 200, {
+        data: { items: [], page: 1, pageSize: 20, total: 0 },
+      });
+      return;
+    }
+
+    if (url.pathname === "/api/v1/users/consents") {
+      json(response, 200, mockUserConsents());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/community/posts") {
+      json(response, 200, mockCommunityPosts());
+      return;
+    }
+
+    if (url.pathname === "/api/v1/community/bookmarks") {
+      json(response, 200, {
+        data: { items: [], page: 1, pageSize: 20, total: 0 },
+      });
+      return;
+    }
+
     if (url.pathname !== "/api/v1/mobile/bootstrap") {
       json(response, 404, { error: { message: "mock route not found" } });
       return;
@@ -143,6 +360,539 @@ function createApiServer() {
   });
 }
 
+function setApiCorsHeaders(request, response) {
+  const origin = request.headers.origin ?? `http://127.0.0.1:${webPort}`;
+  response.setHeader("access-control-allow-origin", origin);
+  response.setHeader("access-control-allow-credentials", "true");
+  response.setHeader(
+    "access-control-allow-methods",
+    "GET,POST,PATCH,DELETE,OPTIONS",
+  );
+  response.setHeader("access-control-allow-headers", "*");
+  response.setHeader("vary", "origin");
+  response.setHeader("cache-control", "no-store");
+}
+
+function mockPublicAppConfig() {
+  return {
+    data: {
+      links: {
+        landingUrl: "https://salaryhijacking.com/",
+        partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+        privacyUrl: "https://salaryhijacking.com/privacy",
+        supportUrl: "https://salaryhijacking.com/support",
+        termsUrl: "https://salaryhijacking.com/terms",
+      },
+      privacy: {
+        rawPayrollDataForAds: false,
+        rawExpenseDataForAds: false,
+        rawSavingsDataForAds: false,
+        advertiserUserIdentifierExposure: false,
+      },
+      ads: {
+        contextualOnly: true,
+        adLabelRequired: true,
+        financialTargetingUsed: false,
+        sensitiveFinancialTargetingAllowed: false,
+        partnerDisclosureRequired: true,
+      },
+      serverAuthority: {
+        apiPrefix: "/api/v1",
+        payrollBudgetExpenseSavingsSource: "server",
+        clientMayCalculateAuthoritativeMoney: false,
+        krwIntegerOnly: true,
+        negativeMoneyAllowed: false,
+        fractionalMoneyAllowed: false,
+      },
+    },
+  };
+}
+
+function mockDailyBudget() {
+  return {
+    data: {
+      budgetDate: "2026-07-11",
+      plannedAmountMinor: 30000,
+      adjustmentAmountMinor: 0,
+      availableAmountMinor: 30000,
+      spentAmountMinor: 23000,
+      remainingAmountMinor: 7000,
+      usageRate: 0.77,
+      status: "WATCH",
+      updatedAt: "2026-07-10T18:00:00.000Z",
+      serverAuthority: true,
+    },
+  };
+}
+
+function mockVariableExpenses() {
+  return {
+    data: {
+      items: [
+        {
+          expenseId: "vex_lunch",
+          title: "Lunch",
+          category: "FOOD",
+          amountMinor: 12000,
+          spentAt: "2026-07-11T03:20:00.000Z",
+          memo: null,
+          serverAuthority: true,
+          financialRawDataExposed: false,
+        },
+        {
+          expenseId: "vex_coffee",
+          title: "Coffee",
+          category: "CAFE",
+          amountMinor: 4500,
+          spentAt: "2026-07-11T05:10:00.000Z",
+          memo: null,
+          serverAuthority: true,
+          financialRawDataExposed: false,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 2,
+    },
+  };
+}
+
+function mockFixedExpenses() {
+  return {
+    data: {
+      items: [
+        {
+          expenseId: "expense_subscription",
+          title: "Subscription",
+          category: "SUBSCRIPTION",
+          amountMinor: 30000,
+          frequency: "MONTHLY",
+          paymentDay: 20,
+          status: "ACTIVE",
+          serverAuthority: true,
+          financialRawDataExposed: false,
+        },
+        {
+          expenseId: "expense_utility",
+          title: "Utility",
+          category: "UTILITY",
+          amountMinor: 70000,
+          frequency: "MONTHLY",
+          paymentDay: 25,
+          status: "ACTIVE",
+          serverAuthority: true,
+          financialRawDataExposed: false,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 2,
+    },
+  };
+}
+
+function mockSavingsGoals() {
+  return {
+    data: {
+      items: [
+        {
+          goalId: "goal_emergency",
+          title: "Emergency reserve",
+          goalType: "EMERGENCY_FUND",
+          targetAmountMinor: 1000000,
+          currentAmountMinor: 120000,
+          fixedSaveAmountMinor: 150000,
+          status: "ACTIVE",
+          serverAuthority: true,
+          financialRawAccountDataExposed: false,
+        },
+        {
+          goalId: "goal_growth",
+          title: "Growth fund",
+          goalType: "CUSTOM",
+          targetAmountMinor: 2000000,
+          currentAmountMinor: 500000,
+          fixedSaveAmountMinor: 200000,
+          status: "ACTIVE",
+          serverAuthority: true,
+          financialRawAccountDataExposed: false,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 2,
+    },
+  };
+}
+
+function mockCurrentPayroll() {
+  return {
+    data: {
+      planId: "plan_2026_07",
+      title: "July payroll plan",
+      incomeType: "NET",
+      payrollCycle: "MONTHLY",
+      payrollAmountMinor: 2700000,
+      payday: 25,
+      firstPayrollDate: "2026-07-25",
+      periodStartDate: "2026-07-01",
+      periodEndDate: "2026-07-31",
+      fixedExpenseTotalMinor: 650000,
+      fixedSavingsTotalMinor: 500000,
+      variableExpenseReserveMinor: 620000,
+      emergencyBufferMinor: 100000,
+      carryOverAmountMinor: 50000,
+      reservePolicy: "ZERO_BASE",
+      memo: null,
+      status: "ACTIVE",
+      calculation: {
+        periodStartDate: "2026-07-01",
+        periodEndDate: "2026-07-31",
+        dayCount: 31,
+        payrollAmountMinor: 2700000,
+        fixedExpenseTotalMinor: 650000,
+        fixedSavingsTotalMinor: 500000,
+        variableExpenseReserveMinor: 620000,
+        emergencyBufferMinor: 100000,
+        carryOverAmountMinor: 50000,
+        alreadySpentAmountMinor: 0,
+        totalDeductionsMinor: 1870000,
+        availableBeforeSpentMinor: 880000,
+        availableForDailyBudgetMinor: 880000,
+        recommendedDailyBudgetMinor: 28387,
+        remainderMinor: 3,
+        hijackRate: 0.6926,
+        serverAuthority: true,
+        financialRawDataExposed: false,
+      },
+      serverAuthority: true,
+      financialRawDataExposed: false,
+      adTargetingSeparated: true,
+    },
+  };
+}
+
+function mockNotifications() {
+  return {
+    data: {
+      items: [
+        {
+          notificationId: "ntf_budget_warning",
+          type: "BUDGET_WARNING",
+          title: "Budget watch",
+          message: "Today's remaining budget is low. Check before spending.",
+          priority: "HIGH",
+          channels: "IN_APP,PUSH",
+          deeplink: "/salary",
+          status: "UNREAD",
+          scheduledAt: null,
+          expiresAt: null,
+          metadata: { category: "budget" },
+          createdAt: "2026-07-10T23:00:00.000Z",
+          readAt: null,
+          archivedAt: null,
+          sensitiveFinancialDataExposed: false,
+          adTargetingSeparated: true,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+    },
+  };
+}
+
+function mockNotificationPreferences() {
+  return {
+    data: {
+      inAppEnabled: true,
+      pushEnabled: true,
+      emailEnabled: false,
+      paydayEnabled: true,
+      paymentDueEnabled: true,
+      budgetWarningEnabled: true,
+      budgetExceededEnabled: true,
+      savingsGoalEnabled: true,
+      levelUpEnabled: true,
+      communityEnabled: true,
+      securityEnabled: true,
+      contentRecommendationEnabled: false,
+      adPartnerEnabled: false,
+      quietHoursStart: "22:00",
+      quietHoursEnd: "08:00",
+      timezone: "Asia/Seoul",
+      sensitiveFinancialTargetingConsent: false,
+      updatedAt: "2026-07-10T23:10:00.000Z",
+    },
+  };
+}
+
+function mockNotificationDevices() {
+  return {
+    data: {
+      items: [
+        {
+          deviceId: "device_preview_web",
+          platform: "web",
+          pushProvider: "EXPO",
+          status: "ACTIVE",
+          registeredAt: "2026-07-10T23:10:00.000Z",
+          lastSeenAt: "2026-07-10T23:20:00.000Z",
+          rawPushTokenExposed: false,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+    },
+  };
+}
+
+function mockUserProfile() {
+  return {
+    data: {
+      user: {
+        idHash: "sha256:1234567890abcdef1234567890abcdef",
+        nickname: "Salary Guardian",
+        role: "USER",
+        emailVerified: true,
+        onboardingCompleted: true,
+        joinedAt: "2026-07-02T09:00:00.000Z",
+        level: 18,
+        title: "Salary Guardian",
+        avatarEmoji: "SH",
+        marketingConsent: false,
+        notificationConsent: true,
+        communityDisplayName: "Guardian",
+        rawEmailExposed: false,
+        rawPhoneExposed: false,
+        rawFinancialDataExposed: false,
+        rawPushTokenExposed: false,
+        adsFinancialTargetingUsed: false,
+      },
+      summary: {
+        totalHijackSaved: 5780000,
+        currentMonthHijack: 1927000,
+        currentLevel: 18,
+        levelXp: 420,
+        nextLevelXp: 999,
+        selfCareScore: 91,
+        completedGrowthTasks: 11,
+        communityPosts: 3,
+        communityComments: 4,
+        notificationUnread: 2,
+        privacyPassRate: "100.00%",
+      },
+      privacy: {
+        exportStatus: "NONE",
+        exportRequestedAt: null,
+        withdrawalRequested: false,
+        adPersonalization: false,
+        financialDataForAds: false,
+        rawPushTokenLogging: false,
+        tokenHashOnly: true,
+      },
+      activities: [
+        {
+          id: "activity_profile_viewed",
+          kind: "NOTICE",
+          title: "PROFILE_VIEWED",
+          description: "Account activity processed by the server.",
+          createdAt: "2026-07-10T23:10:00.000Z",
+          route: "/profile",
+          rawFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          adsFinancialTargetingUsed: false,
+        },
+      ],
+    },
+  };
+}
+
+function mockMyPageSummary() {
+  return {
+    data: {
+      adPartnerAccepted: false,
+      adsFinancialTargetingUsed: false,
+      communityComments: 4,
+      communityPosts: 3,
+      contentRecommendationAccepted: true,
+      financialRawDataExposed: false,
+      latestExportRequestedAt: "2026-07-03T06:00:00.000Z",
+      latestExportStatus: "READY",
+      level: 18,
+      levelXp: 420,
+      nextActions: "Profile ready; review LV UP routine",
+      notificationUnread: 2,
+      privacyExportCount: 2,
+      profileCompleted: true,
+      rawPersonalDataExposed: false,
+      rawTokenExposed: false,
+      selfCareScore: 91,
+      sensitiveFinancialTargetingAccepted: false,
+      status: "ACTIVE",
+      theme: "DARK",
+      totalExp: 1740,
+    },
+  };
+}
+
+function mockUserConsents() {
+  return {
+    data: {
+      marketingConsent: false,
+      notificationConsent: true,
+      adPersonalizationConsent: false,
+      sensitiveFinancialTargetingConsent: false,
+      updatedAt: "2026-07-10T23:10:00.000Z",
+    },
+  };
+}
+
+function mockCommunityPosts() {
+  return {
+    data: {
+      items: [
+        {
+          postId: "post_preview_1",
+          boardType: "FREE",
+          title: "Budget routine check",
+          excerpt: "Share one small routine that helped this week.",
+          authorDisplayName: "Guardian",
+          likeCount: 12,
+          commentCount: 3,
+          bookmarked: false,
+          liked: false,
+          createdAt: "2026-07-10T23:10:00.000Z",
+          sensitiveFinancialDataExposed: false,
+          rawPersonalDataExposed: false,
+          adsFinancialTargetingUsed: false,
+        },
+      ],
+      page: 1,
+      pageSize: 20,
+      total: 1,
+    },
+  };
+}
+
+function mockGrowthContents(contentType) {
+  const normalized = String(contentType).toUpperCase();
+  const itemByType = {
+    READING: {
+      contentId: "00000000-0000-4000-8000-000000002501",
+      contentType: "READING",
+      title: "Money habit checklist reading",
+      subtitle: "Read an operator summary and choose one habit to test.",
+      category: "ECONOMY_BUSINESS",
+      difficulty: "EASY",
+      estimatedMinutes: 8,
+      topics: ["budget", "habit", "reflection"],
+      summary:
+        "Owned operator summary about noticing one repeat spending habit before payday.",
+      missionPrompt:
+        "Choose one budget habit from the summary and write how you will test it today.",
+      recordQuestion: "Which one spending habit will you observe today?",
+      sourceTitle: "Salary Hijacking owned reading brief",
+      sourceAuthor: "Salary Hijacking Editorial",
+      sourceName: "Salary Hijacking",
+      sourceUrl:
+        "https://salaryhijacking.com/level/reading/money-habit-checklist",
+      licenseType: "OWNED_CONTENT",
+      safetyLevel: "GENERAL",
+      viewpointTag: null,
+      xpReward: 20,
+      status: "PUBLISHED",
+    },
+    NEWS: {
+      contentId: "00000000-0000-4000-8000-000000002502",
+      contentType: "NEWS",
+      title: "Balanced money news brief",
+      subtitle: "Practice source-centered reading without political labels.",
+      category: "NEWS_LITERACY",
+      difficulty: "NORMAL",
+      estimatedMinutes: 10,
+      topics: ["news", "source", "budget"],
+      summary:
+        "Owned brief about comparing facts, uncertainty, and source evidence before budget decisions.",
+      missionPrompt:
+        "Write one fact, one uncertainty, and one budget action you would delay.",
+      recordQuestion: "What fact did the source actually support?",
+      sourceTitle: "Salary Hijacking source balance method",
+      sourceAuthor: "Salary Hijacking Editorial",
+      sourceName: "Salary Hijacking",
+      sourceUrl: "https://salaryhijacking.com/level/news/source-balance-method",
+      licenseType: "OWNED_CONTENT",
+      safetyLevel: "GENERAL",
+      viewpointTag: "FACT_BRIEF",
+      xpReward: 25,
+      status: "PUBLISHED",
+    },
+    ENGLISH: {
+      contentId: "00000000-0000-4000-8000-000000002503",
+      contentType: "ENGLISH",
+      title: "Payday five sentence practice",
+      subtitle: "Listen, read, speak, and write five owned sentences.",
+      category: "ENGLISH_FINANCE",
+      difficulty: "EASY",
+      estimatedMinutes: 7,
+      topics: ["english", "payday", "sentence"],
+      summary:
+        "Owned English practice with five salary and budget sentences for private learning.",
+      missionPrompt:
+        "Practice the five sentences, then write one sentence about your next payday plan.",
+      recordQuestion: "Which sentence was easiest to say aloud?",
+      sourceTitle: "Salary Hijacking owned English set",
+      sourceAuthor: "Salary Hijacking Editorial",
+      sourceName: "Salary Hijacking",
+      sourceUrl:
+        "https://salaryhijacking.com/level/english/payday-five-sentences",
+      licenseType: "OWNED_CONTENT",
+      safetyLevel: "GENERAL",
+      viewpointTag: null,
+      xpReward: 20,
+      status: "PUBLISHED",
+    },
+    HEALTH: {
+      contentId: "00000000-0000-4000-8000-000000002504",
+      contentType: "HEALTH",
+      title: "Desk recovery starter routine",
+      subtitle: "A beginner safe timer checklist for light movement.",
+      category: "HEALTH_ROUTINE",
+      difficulty: "EASY",
+      estimatedMinutes: 9,
+      topics: ["health", "timer", "recovery"],
+      summary:
+        "Owned beginner routine for gentle desk recovery. Stop if pain appears.",
+      missionPrompt:
+        "Run the timer checklist once and record whether any movement felt uncomfortable.",
+      recordQuestion: "Did any movement cause pain or discomfort?",
+      sourceTitle: "Salary Hijacking owned desk recovery routine",
+      sourceAuthor: "Salary Hijacking Editorial",
+      sourceName: "Salary Hijacking",
+      sourceUrl:
+        "https://salaryhijacking.com/level/health/desk-recovery-routine",
+      licenseType: "OWNED_CONTENT",
+      safetyLevel: "BEGINNER_SAFE",
+      viewpointTag: null,
+      xpReward: 20,
+      status: "PUBLISHED",
+    },
+  };
+  const item = itemByType[normalized] ?? itemByType.READING;
+  return [
+    {
+      ...item,
+      fullTextStored: false,
+      adTargetingSeparated: true,
+      recommendationUsesSensitiveFinancialData: false,
+      financialRawDataExposed: false,
+      serverAuthority: true,
+      auditReasonRequired: true,
+    },
+  ];
+}
+
 function createWebServer() {
   return createServer(async (request, response) => {
     try {
@@ -191,31 +941,181 @@ function createWebServer() {
   });
 }
 
-async function capture(route, outputPath, viewport, scale) {
-  const profileDir = path.join(
-    rootDir,
-    ".tmp",
-    `chrome-clean-fintech-${path.basename(outputPath, ".png")}-${Date.now()}`,
-  );
+async function capture(browser, route, outputPath, viewport, scale) {
   const [routeWithoutHash, hash = ""] = route.split("#");
   const separator = routeWithoutHash.includes("?") ? "&" : "?";
   const url =
     `http://127.0.0.1:${webPort}${routeWithoutHash}${separator}capture=${Date.now()}` +
     (hash ? `#${hash}` : "");
-  await run(chrome, [
-    "--headless=new",
-    "--disable-application-cache",
-    "--no-sandbox",
-    "--disable-gpu",
-    "--disable-dev-shm-usage",
-    "--hide-scrollbars",
-    `--force-device-scale-factor=${scale}`,
-    `--window-size=${viewport}`,
-    "--virtual-time-budget=9000",
-    `--user-data-dir=${profileDir}`,
-    `--screenshot=${outputPath}`,
-    url,
-  ]);
+  const [width, height] = viewport.split(",").map((value) => Number(value));
+  const page = await browser.newPage({
+    viewport: { width, height },
+    deviceScaleFactor: Number(scale),
+  });
+  const pageErrors = [];
+  page.on("pageerror", (error) => {
+    pageErrors.push(error instanceof Error ? error.message : String(error));
+  });
+
+  try {
+    const response = await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
+    if (response !== null && response.status() >= 400) {
+      throw new Error(
+        `HTTP ${response.status()} while capturing ${route}. Run export:web before capture if apps/mobile/dist/index.html is missing.`,
+      );
+    }
+    await page
+      .waitForFunction(() => document.body.innerText.trim().length > 0, null, {
+        timeout: 15000,
+      })
+      .catch(() => undefined);
+    await page.waitForTimeout(1200);
+    const bodyText = await page.evaluate(() => document.body.innerText);
+    if (isServerErrorText(bodyText)) {
+      throw new Error(
+        `Server error page while capturing ${route}: ${bodyText.slice(0, 240)}`,
+      );
+    }
+    if (pageErrors.length > 0) {
+      throw new Error(
+        `Page errors while capturing ${route}: ${pageErrors.join("; ")}`,
+      );
+    }
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: false,
+      path: outputPath,
+    });
+  } finally {
+    await page.close();
+  }
+}
+
+async function checkResponsive(browser, route, width) {
+  const routeWithoutHash = route.split("#")[0] ?? route;
+  const separator = routeWithoutHash.includes("?") ? "&" : "?";
+  const url = `http://127.0.0.1:${webPort}${routeWithoutHash}${separator}responsive=${width}`;
+  const page = await browser.newPage({
+    viewport: { width, height: 932 },
+    deviceScaleFactor: 1,
+  });
+  const pageErrors = [];
+  page.on("pageerror", (error) => {
+    pageErrors.push(error instanceof Error ? error.message : String(error));
+  });
+
+  try {
+    const response = await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: 20000,
+    });
+    if (response !== null && response.status() >= 400) {
+      throw new Error(`HTTP ${response.status()} while checking ${route}`);
+    }
+    await page
+      .waitForFunction(() => document.body.innerText.trim().length > 0, null, {
+        timeout: 15000,
+      })
+      .catch(() => undefined);
+    await page.waitForTimeout(500);
+    const metrics = await page.evaluate(() => {
+      const body = document.body;
+      const root = document.documentElement;
+      const maxRight = Math.max(
+        body.scrollWidth,
+        root.scrollWidth,
+        ...[...document.querySelectorAll("*")].map((element) => {
+          const rect = element.getBoundingClientRect();
+          return Number.isFinite(rect.right) ? rect.right : 0;
+        }),
+      );
+      const minLeft = Math.min(
+        0,
+        ...[...document.querySelectorAll("*")].map((element) => {
+          const rect = element.getBoundingClientRect();
+          return Number.isFinite(rect.left) ? rect.left : 0;
+        }),
+      );
+      return {
+        bodyTextLength: body.innerText.trim().length,
+        maxRight,
+        minLeft,
+        scrollHeight: Math.max(body.scrollHeight, root.scrollHeight),
+        scrollWidth: Math.max(body.scrollWidth, root.scrollWidth),
+        viewportWidth: window.innerWidth,
+      };
+    });
+    const horizontalOverflow =
+      metrics.scrollWidth > width + 2 ||
+      metrics.maxRight > width + 2 ||
+      metrics.minLeft < -2;
+    if (pageErrors.length > 0 || metrics.bodyTextLength === 0) {
+      throw new Error(
+        `Responsive check failed for ${route} at ${width}: ${pageErrors.join("; ")}`,
+      );
+    }
+    return {
+      horizontalOverflow,
+      ok: !horizontalOverflow,
+      route,
+      width,
+      ...metrics,
+    };
+  } finally {
+    await page.close();
+  }
+}
+
+async function ensureWebExportReady() {
+  const indexPath = path.join(distDir, "index.html");
+  if (!(await existsFile(indexPath))) {
+    throw new Error(
+      `Missing Expo web export at apps/mobile/dist/index.html. Run export:web before capture.`,
+    );
+  }
+}
+
+function isServerErrorText(text) {
+  return /ENOENT|server error|apps[/\\]mobile[/\\]dist[/\\]index\.html/i.test(
+    text,
+  );
+}
+
+async function loadPlaywright() {
+  try {
+    return await import("playwright");
+  } catch (error) {
+    if (!(error instanceof Error) || !error.message.includes("playwright")) {
+      throw error;
+    }
+  }
+
+  const pnpmDir = path.join(rootDir, "node_modules", ".pnpm");
+  const entries = await readdir(pnpmDir, { withFileTypes: true });
+  const playwrightEntry = entries
+    .filter(
+      (entry) => entry.isDirectory() && entry.name.startsWith("playwright@"),
+    )
+    .map((entry) => entry.name)
+    .sort()
+    .at(-1);
+  if (!playwrightEntry) {
+    throw new Error("Unable to locate Playwright in node_modules/.pnpm.");
+  }
+  return import(
+    pathToFileURL(
+      path.join(
+        pnpmDir,
+        playwrightEntry,
+        "node_modules",
+        "playwright",
+        "index.mjs",
+      ),
+    ).href
+  );
 }
 
 function officialFeatureGraphicHtml() {
@@ -270,17 +1170,6 @@ function listen(server, port) {
 
 function close(server) {
   return new Promise((resolve) => server.close(() => resolve()));
-}
-
-function run(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: "ignore" });
-    child.once("error", reject);
-    child.once("exit", (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`${path.basename(command)} exited with ${code}`));
-    });
-  });
 }
 
 function findChrome() {

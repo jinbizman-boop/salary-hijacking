@@ -62,7 +62,7 @@ describe("budget utils", () => {
     expect(sanitizeKrwIntegerInput("abc500")).toBeNull();
   });
 
-  it("calculates an offline daily-budget preview from accumulated added expenses", () => {
+  it("calculates an offline daily-budget preview without showing a negative remaining budget", () => {
     expect(
       calculateOfflineDailyBudgetPreview({
         addedExpenseAmounts: [5_000, 3_500, -1, 1.25],
@@ -77,7 +77,7 @@ describe("budget utils", () => {
       monthHijack: 1_918_500,
       monthlyExpense: 781_500,
       overspentAmount: 1_500,
-      remainingToday: -1_500,
+      remainingToday: 0,
       spentToday: 21_500,
       usageRate: 107.5,
     });

@@ -1,9 +1,25 @@
-import { CleanFintechScreen } from "../../../src/shared/styles/clean-fintech-screens";
+import { router } from "expo-router";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+import { SalaryHomeReferenceScreen } from "../../../src/features/salary/components";
+
+const SCREEN_VERSION = "4.2.0-salary-reference-ui";
+const SALARY_SUMMARY_ENDPOINT = "/api/v1/salary/summary";
+const GOOGLE_AD_SLOT_LABEL = "Google 광고 영역";
+const SALARY_VISIBLE_COPY_CONTRACT = [
+  "SALARY HIJACKING",
+  "내 급여 납치 현황",
+  "전체 누적 납치 금액",
+  "홍길동님이 설정한 금일 고정 지출",
+  "홍길동님이 설정한 일일 사용 예산",
+  "홍길동님이 사용한 금일 변동 지출",
+] as const;
 
 export default function SalaryIndexScreen(): React.ReactElement {
-  return <CleanFintechScreen kind="salary" />;
+  return (
+    <SalaryHomeReferenceScreen
+      onOpenNotifications={() => router.push("/notifications")}
+    />
+  );
 }
 
 export function assertMobileSalaryIndexCompleteness(): {
@@ -12,22 +28,16 @@ export function assertMobileSalaryIndexCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "이번 달 내가 지켜낸 돈",
-    "오늘 쓸 수 있는 돈",
-    "수령금액",
-    "지출금액",
-    "이번 달 납치금액",
-    "다음 급여일 D-day",
-    "지출 추가하기",
-    "고정지출",
-    "변동지출",
-    "제휴/광고",
-    "서버 기준 급여 계산",
-    "금융 금액 광고 타겟팅 금지",
-    "krw_integer_only_preview",
-    "accessibility_numeric_input",
+    "SalaryHomeReferenceScreen",
+    SALARY_SUMMARY_ENDPOINT,
+    GOOGLE_AD_SLOT_LABEL,
+    ...SALARY_VISIBLE_COPY_CONTRACT,
+    "server_authority_component_guard",
+    "responsive_salary_home_reference_guard",
+    "raw_account_data_component_guard",
+    "KRW integer display",
+    "financial amount ad targeting prohibited",
   ] as const;
 
-  return { ok: checks.length >= 15, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
 }

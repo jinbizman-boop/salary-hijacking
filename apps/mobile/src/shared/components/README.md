@@ -22,23 +22,24 @@
 ```text
 shared/components/
   README.md
+  index.ts
+  tokens.ts
+  __tests__/
+  AccessibilityMoneyAnnouncer.tsx
+  AdBannerSlot.tsx
+  AppHeader.tsx
   AppShell.tsx
-  SafeScreen.tsx
-  Header.tsx
-  Card.tsx
-  Button.tsx
-  FormField.tsx
-  AmountText.tsx
-  ProgressRing.tsx
-  StatusBadge.tsx
+  BottomTabBar.tsx
   EmptyState.tsx
   ErrorState.tsx
-  OfflineBanner.tsx
-  PrivacyGuard.tsx
-  AdDisclosure.tsx
-  ListItem.tsx
-  ConfirmSheet.tsx
-  __tests__/
+  LoadingSkeleton.tsx
+  MoneyText.tsx
+  PillTabs.tsx
+  PrimaryButton.tsx
+  ProgressBar.tsx
+  RecordInputCard.tsx
+  SurfaceCard.tsx
+  XpToast.tsx
 ```
 
 ## 핵심 컴포넌트 계약

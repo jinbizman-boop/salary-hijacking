@@ -31,12 +31,12 @@ describe("createSecureStoreRuntime", () => {
       getItemAsync: jest.fn(async (): Promise<string | null> => "native-value"),
       setItemAsync: jest.fn(async (): Promise<void> => undefined),
       deleteItemAsync: jest.fn(async (): Promise<void> => undefined),
-      WHEN_UNLOCKED_THIS_DEVICE_ONLY: "WHEN_UNLOCKED_THIS_DEVICE_ONLY",
+      WHEN_UNLOCKED_THIS_DEVICE_ONLY: 1,
     };
     const store = createSecureStoreRuntime("ios", nativeStore);
 
     await store.setItemAsync("test.native.session", "native-value", {
-      keychainAccessible: "WHEN_UNLOCKED_THIS_DEVICE_ONLY",
+      keychainAccessible: 1,
     });
     await expect(store.getItemAsync("test.native.session")).resolves.toBe(
       "native-value",
@@ -46,9 +46,7 @@ describe("createSecureStoreRuntime", () => {
     expect(nativeStore.setItemAsync).toHaveBeenCalledTimes(1);
     expect(nativeStore.getItemAsync).toHaveBeenCalledTimes(1);
     expect(nativeStore.deleteItemAsync).toHaveBeenCalledTimes(1);
-    expect(store.WHEN_UNLOCKED_THIS_DEVICE_ONLY).toBe(
-      "WHEN_UNLOCKED_THIS_DEVICE_ONLY",
-    );
+    expect(store.WHEN_UNLOCKED_THIS_DEVICE_ONLY).toBe(1);
   });
 
   it("falls back to memory when the native module is unavailable", async () => {

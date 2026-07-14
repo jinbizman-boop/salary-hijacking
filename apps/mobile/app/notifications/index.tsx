@@ -1,25 +1,23 @@
-import { CleanFintechScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { useRouter } from "expo-router";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+import {
+  NotificationReferenceScreen,
+  assertMobileNotificationsIndexCompleteness,
+  type NotificationReferenceHref,
+} from "../../src/features/notifications/components";
 
 export default function NotificationsIndexScreen(): React.ReactElement {
-  return <CleanFintechScreen kind="notifications" />;
+  const router = useRouter();
+
+  return (
+    <NotificationReferenceScreen
+      onBack={() => router.back()}
+      onOpenHref={(href: NotificationReferenceHref) =>
+        router.push(href as never)
+      }
+      onSettings={() => router.push("/profile/settings")}
+    />
+  );
 }
 
-export function assertMobileNotificationsIndexCompleteness(): {
-  readonly ok: boolean;
-  readonly version: string;
-  readonly checks: readonly string[];
-} {
-  const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "새로운 알림이 있어요",
-    "중요 알림",
-    "루틴 알림",
-    "unread_green_dot",
-    "푸시 토큰 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
-  ] as const;
-
-  return { ok: checks.length >= 7, version: SCREEN_VERSION, checks };
-}
+export { assertMobileNotificationsIndexCompleteness };

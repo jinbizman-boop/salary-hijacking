@@ -1,0 +1,926 @@
+{
+  "schemaVersion": 1,
+  "generatedFor": ".merged-from-salary-hijacking-main",
+  "decisions": [
+    {
+      "relativePath": ".gitignore",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current platform ignore policy. The current file adds local-only exclusions for consolidated attachments, merge archives, generated QA dumps, release/evidence dumps, and local Android evidence without removing source tracking requirements.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/.gitignore .gitignore",
+        "corepack pnpm run clean:junk",
+        "git diff --check"
+      ]
+    },
+    {
+      "relativePath": ".prettierignore",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current platform formatting ignore policy. It preserves the archive as a historical non-runtime comparison input while source files remain formatted through targeted checks.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/.prettierignore .prettierignore",
+        "corepack pnpm exec prettier --write targeted files",
+        "git diff --check"
+      ]
+    },
+    {
+      "relativePath": "package.json",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current root package manifest. It is a verified superset for the current release workflow and adds the mobile preview phone proof script required by the physical-device QA gate.",
+      "evidence": [
+        "node --test scripts/release/check-release-readiness.test.mjs",
+        "corepack pnpm run check:package-manager-scripts",
+        "corepack pnpm run clean:junk"
+      ]
+    },
+    {
+      "relativePath": "pnpm-lock.yaml",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current lockfile because it matches the current package manifests and has passed frozen install and security audit evidence in this consolidated platform workspace.",
+      "evidence": [
+        "corepack pnpm install --frozen-lockfile",
+        "corepack pnpm audit --audit-level=high --prod=false --json",
+        "release/security-audit-evidence.json"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/package.json",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current mobile package manifest. It preserves the Android phone debug build script and mobile QA scripts used by the latest preview APK and physical phone proof workflow.",
+      "evidence": [
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck",
+        "corepack pnpm --filter @salary-hijacking/mobile test -- focused Salary/Plan/Preview suites",
+        "node --test apps/mobile/scripts/expo-local-android-debug-build.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "scripts/release/capture-mobile-clean-fintech-screenshots.mjs",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current screenshot capture script. It is a verified superset of the archive version and adds 320-430px responsive overflow checks plus deterministic 17-screen mobile UI evidence capture.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/scripts/release/capture-mobile-clean-fintech-screenshots.mjs scripts/release/capture-mobile-clean-fintech-screenshots.mjs",
+        "node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs",
+        "node scripts/release/capture-mobile-clean-fintech-screenshots.mjs"
+      ]
+    },
+    {
+      "relativePath": "scripts/release/check-release-readiness.mjs",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current release readiness gate. It supersedes the archive version with current-head preview APK evidence, physical phone proof checks, strict-mode blockers, CleanFintech fallback detection, mock-only production path detection, and mobile runtime TODO/FIXME blocking.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/scripts/release/check-release-readiness.mjs scripts/release/check-release-readiness.mjs",
+        "node --test scripts/release/check-release-readiness.test.mjs",
+        "node scripts/release/check-release-readiness.mjs --soft"
+      ]
+    },
+    {
+      "relativePath": "scripts/release/check-release-readiness.test.mjs",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current release readiness tests. They cover the current strict gates for physical phone QA, latest-source preview APK evidence, mock-only paths, CleanFintech fallback dependencies, runtime TODO/FIXME markers, and unresolved P0/P1/P2 gap register entries.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/scripts/release/check-release-readiness.test.mjs scripts/release/check-release-readiness.test.mjs",
+        "node --test scripts/release/check-release-readiness.test.mjs",
+        "node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "services/api/src/repositories/growth.repository.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Growth repository. It supersedes the archive copy by selecting `saved_progress.newly_completed` and treating either explicit idempotent replay or `newly_completed === false` as zero-XP replay, preventing duplicate LV UP content rewards when replay metadata is partial.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/services/api/src/repositories/growth.repository.ts services/api/src/repositories/growth.repository.ts",
+        "corepack pnpm --filter @salary-hijacking/api test -- growth-db-repository.test.ts",
+        "corepack pnpm --filter @salary-hijacking/api exec vitest run tests/growth-db-repository.test.ts"
+      ]
+    },
+    {
+      "relativePath": "services/api/tests/growth-db-repository.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Growth DB repository test. It asserts the SQL selects `saved_progress.newly_completed` and allows the replay fixture to rely on `idempotent_replay`, matching the hardened repository behavior.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/services/api/tests/growth-db-repository.test.ts services/api/tests/growth-db-repository.test.ts",
+        "corepack pnpm --filter @salary-hijacking/api test -- growth-db-repository.test.ts",
+        "corepack pnpm --filter @salary-hijacking/api exec vitest run tests/growth-db-repository.test.ts"
+      ]
+    },
+    {
+      "relativePath": "apps/admin/src/app/growth-content/page.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Admin LV UP content page. It supersedes the archive copy by using the current `READING/NEWS/ENGLISH/HEALTH`, `DRAFT/REVIEW/PUBLISHED/ARCHIVED`, and `EASY/NORMAL/HARD/EXTREME` taxonomy instead of the older `EXERCISE`, `IN_REVIEW`, `APPROVED`, and beginner/intermediate/advanced labels.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/admin/src/app/growth-content/page.tsx apps/admin/src/app/growth-content/page.tsx",
+        "corepack pnpm --filter @salary-hijacking/admin test -- growth-content-page.test.ts",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/admin/tests/unit/growth-content-page.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Admin growth-content page test. It is stricter than the archive test and prevents the older content type/status/difficulty taxonomy from returning.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/admin/tests/unit/growth-content-page.test.ts apps/admin/tests/unit/growth-content-page.test.ts",
+        "corepack pnpm --filter @salary-hijacking/admin test -- growth-content-page.test.ts",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/uploads/api.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current mobile Uploads API after porting the archive-only sensitive filename terms `연봉` and `휴대폰` into the current broader privacy guard, preserving current `은행`, `이메일`, safe Korean error copy, HTTPS-only base URL validation, no raw path headers, unknown-field rejection, and server-echo sanitization.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/uploads/api.ts apps/mobile/src/features/uploads/api.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/uploads/__tests__/uploads.api.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/uploads/__tests__/uploads.api.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current mobile Uploads API regression test after extending its sensitive Korean filename coverage with `연봉`, `은행`, `휴대폰`, and `이메일`, ensuring the archive-only privacy terms remain protected without losing the current additional terms.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/uploads/__tests__/uploads.api.test.ts apps/mobile/src/features/uploads/__tests__/uploads.api.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/uploads/__tests__/uploads.api.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/scripts/expo-local-android-debug-build.mjs",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Expo local Android debug build script. It supersedes the archive copy with bundled `.tools` JDK/Android SDK discovery, stale Windows `subst` alias cleanup for `X/Y/Z`, ABI normalization, Expo PackageList patch hardening, Windows CMake prefab repair, and Reanimated CMake regeneration helpers used by the latest preview APK workflow.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/scripts/expo-local-android-debug-build.mjs apps/mobile/scripts/expo-local-android-debug-build.mjs",
+        "node --test apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Expo local Android debug build tests. They verify `.tools` discovery, stale `subst` cleanup, Windows CMake prefab repair, Reanimated CMake regeneration, ABI-filtered debug output, and no-secret local APK evidence behavior that are absent from the archive copy.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/scripts/expo-local-android-debug-build.test.mjs apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+        "node --test apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app.config.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Expo app config. It supersedes the archive copy by using a white splash/adaptive-icon background that matches the provided Salary Hijacking launch design and by removing the stale `host: app` custom-scheme deep link so Expo Router paths open directly instead of under an obsolete `/app` prefix.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app.config.ts apps/mobile/app.config.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/config/__tests__/mobile-e2e-contract.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/config/__tests__/mobile-e2e-contract.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current mobile E2E contract test. It extends the archive copy with regressions for Expo PackageList patching, direct custom-scheme Router paths, and the Android post-splash window background so cold-start and native splash regressions are caught before APK QA.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/config/__tests__/mobile-e2e-contract.test.ts apps/mobile/src/config/__tests__/mobile-e2e-contract.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/config/__tests__/mobile-e2e-contract.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/shared/styles/clean-fintech-screens.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Clean Fintech screen implementation. It supersedes the archive copy by using the shared static image asset registry for the platform logo and by replacing archive English LV UP private-record prompts with Korean UX copy and accessibility labels.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/shared/styles/clean-fintech-screens.tsx apps/mobile/src/shared/styles/clean-fintech-screens.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/styles/__tests__/clean-fintech-theme.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Clean Fintech design contract test. It follows the new `src/shared/assets/images/brand` registry path and asserts the Korean private LV UP record copy instead of the older English placeholder text.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/styles/__tests__/clean-fintech-theme.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/shared/components/AppHeader.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current shared AppHeader implementation. It supersedes the archive copy by rendering the official Salary Hijacking BI through the static image asset registry, preserving the `SALARY HIJACKING` brand label, and keeping a compact accessible header contract for the PDF-derived mobile screens.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/shared/components/AppHeader.tsx apps/mobile/src/shared/components/AppHeader.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/components/__tests__/shared-components.contract.test.tsx --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/shared/components/AppShell.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current shared AppShell implementation. It supersedes the archive copy with KeyboardAvoidingView, safe-area inset padding, handled keyboard taps, automatic content inset adjustment, and bottom padding that prevents shared screens and bottom tabs from colliding with Android/iOS system navigation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/shared/components/AppShell.tsx apps/mobile/src/shared/components/AppShell.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/components/__tests__/shared-components.contract.test.tsx --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Salary Home component regression test. It supersedes the archive copy with KST salary-cycle checks, requested planned/completed reminder labels, overdue warning behavior, daily budget settings CRUD, variable expense persistence, server-authoritative variable-expense mutations, fixed-plan completion hiding, and fixed-savings recording coverage.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/salary/__tests__/salary.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Salary screen wiring test. It guards the route against falling back to the older Clean Fintech shell and requires the server-authority component marker used by the current Salary Home reference implementation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/salary/__tests__/salary.screen-wiring.test.ts apps/mobile/src/features/salary/__tests__/salary.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.screen-wiring.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/salary/components/DailyBudgetSection.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current DailyBudgetSection. It supersedes the archive copy by allowing the PDF-derived daily-budget title, displaying configured and remaining amounts side by side, labeling overspend as a danger state, and preserving KRW integer progress/accessibility through shared components.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/salary/components/DailyBudgetSection.tsx apps/mobile/src/features/salary/components/DailyBudgetSection.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/salary/components/FixedExpenseSection.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current FixedExpenseSection. It preserves the current privacy guard copy that shows payment status only, while the richer fixed-payment completion behavior is covered by the current Salary Home reference screen and tests.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/salary/components/FixedExpenseSection.tsx apps/mobile/src/features/salary/components/FixedExpenseSection.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/salary/components/index.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Salary component barrel. It exports the current DailyBudgetSection, FixedExpenseSection, and SalaryHeroCard APIs used by the route and current screen regression tests.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/salary/components/index.ts apps/mobile/src/features/salary/components/index.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.screen-wiring.test.ts --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/salary/components/SalaryHeroCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current SalaryHeroCard. It supersedes the archive copy by matching the green PDF hero treatment, showing the cumulative protected amount with the money icon asset, and retaining an accessible server-calculation label instead of the older generic SurfaceCard summary.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/salary/components/SalaryHeroCard.tsx apps/mobile/src/features/salary/components/SalaryHeroCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.components.test.tsx --runInBand",
+        "node --test scripts/release/classify-merge-conflict-archive.test.mjs scripts/release/check-release-readiness.test.mjs"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/profile/__tests__/profile-detail-routes.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current profile detail route wiring test. It supersedes the archive copy by requiring the AppShell/AppHeader/SurfaceCard profile detail boundary, Korean user-facing server-record copy, and the no-financial-raw-data advertising guard instead of older English marker strings.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/profile/__tests__/profile-detail-routes.screen-wiring.test.ts apps/mobile/src/features/profile/__tests__/profile-detail-routes.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/profile/__tests__/profile-detail-routes.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/profile/__tests__/profile.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current profile component test. It supersedes the archive copy by asserting the PDF-derived Korean MY page labels, 18Lv profile summary, masked personal-data copy, accessible menu actions, and the financial raw-data guard visible to Korean users.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/profile/__tests__/profile.components.test.tsx apps/mobile/src/features/profile/__tests__/profile.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/profile/__tests__/profile.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ProfileDetailScreen. It supersedes the archive copy with Korean profile, account, community, level, notices, settings, and support copy while preserving the server-authoritative endpoint map and privacy/ads guardrails required for MY detail screens.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/profile/__tests__/profile-detail-routes.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/profile/components/ProfileHeader.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ProfileHeader. It supersedes the archive copy by replacing raw boolean debug text with the Korean masked-personal-data assurance while retaining the explicit `rawPersonalDataExposed: false` prop contract.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/profile/components/ProfileHeader.tsx apps/mobile/src/features/profile/components/ProfileHeader.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/profile/__tests__/profile.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/profile/components/ProfileMenuCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ProfileMenuCard. It supersedes the archive copy by matching the PDF MY-page row-card menu structure, Korean labels, accessible management buttons, and a visible guard that raw financial data is not shown in MY menus.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/profile/components/ProfileMenuCard.tsx apps/mobile/src/features/profile/components/ProfileMenuCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/profile/__tests__/profile.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/profile/components/ProfileStatGrid.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ProfileStatGrid. It supersedes the archive copy by rendering the Korean MY-page stat labels, `18Lv` style level value, normalized self-care score, and server-based performance copy while preserving shared MoneyText and ProgressBar formatting.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/profile/components/ProfileStatGrid.tsx apps/mobile/src/features/profile/components/ProfileStatGrid.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/profile/__tests__/profile.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Plan component regression test. It supersedes the archive copy by proving editable section settings, fixed expense CRUD, fixed savings CRUD, daily living plan CRUD, server-authoritative payroll saves, rejected-server-save rollback, budget recalculation before preview sync, and KST month-end payday clamping.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.launch-readiness.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Plan screen wiring test. It supersedes the archive copy by requiring the actual PlanReferenceScreen route boundary plus server-authority, responsive plan, and safe-area guards instead of the older fallback card-only component checks.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/plan/components/index.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Plan component barrel. It preserves the archive component exports and additionally exports `PlanReferenceScreen`, which is the current PDF-derived, interactive, server-bound plan implementation used by the route and launch-readiness tests.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/plan/components/index.ts apps/mobile/src/features/plan/components/index.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/plan/components/PlanActionList.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current PlanActionList. It supersedes the archive copy by replacing an internal debug marker with Korean copy that tells users saved edits are recalculated by the server while preserving explicit edit/add action buttons.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/plan/components/PlanActionList.tsx apps/mobile/src/features/plan/components/PlanActionList.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/plan/components/PlanBreakdownSection.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current PlanBreakdownSection. It supersedes the archive copy by retaining the same plan breakdown data contract while replacing raw marker text with Korean privacy and no-financial-ad-targeting assurances.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/plan/components/PlanBreakdownSection.tsx apps/mobile/src/features/plan/components/PlanBreakdownSection.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.launch-readiness.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/plan/components/PlanProgressCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current PlanProgressCard. It supersedes the archive copy by preserving KRW integer money/progress display and replacing debug guard strings with Korean server-save and sensitive-money advertising separation copy.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/plan/components/PlanProgressCard.tsx apps/mobile/src/features/plan/components/PlanProgressCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/notifications/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current notifications route. It supersedes the archive copy by delegating to the independent `NotificationReferenceScreen`, wiring back/settings actions through Expo Router, and opening notification deep links with `router.push(href as never)` instead of keeping a static in-route list.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/notifications/index.tsx apps/mobile/app/notifications/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.launch-readiness.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/notifications/__tests__/notifications.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current notification component test. It supersedes the archive copy by asserting Korean privacy copy, rejecting debug marker text, preserving safe deeplink press behavior, and confirming raw push token strings are absent from rendered notification components.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/notifications/__tests__/notifications.components.test.tsx apps/mobile/src/features/notifications/__tests__/notifications.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.launch-readiness.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/notifications/__tests__/notifications.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current notification screen wiring test. It supersedes the archive copy by guarding the user-provided independent Korean notification stack, no bottom navigation, deep-link route strings, and sensitive financial data component guard.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/notifications/__tests__/notifications.screen-wiring.test.ts apps/mobile/src/features/notifications/__tests__/notifications.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.launch-readiness.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/notifications/components/index.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current notification component barrel. It preserves the archive component exports and additionally exports `NotificationReferenceScreen` and its typed href contract used by the current independent notification route.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/notifications/components/index.ts apps/mobile/src/features/notifications/components/index.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.components.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/notifications/components/NotificationList.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current NotificationList. It supersedes the archive copy by preserving unread/deeplink row behavior while replacing debug privacy markers with Korean assurances that sensitive financial amounts are not included in notifications and advertising targeting is separated.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/notifications/components/NotificationList.tsx apps/mobile/src/features/notifications/components/NotificationList.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/notifications/components/NotificationPreferenceStrip.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current NotificationPreferenceStrip. It supersedes the archive copy with simpler Korean push/marketing state labels and the accessible `모두 읽음` action expected by the current component tests.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/notifications/components/NotificationPreferenceStrip.tsx apps/mobile/src/features/notifications/components/NotificationPreferenceStrip.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.launch-readiness.test.tsx --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/notifications/components/NotificationSummaryCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current NotificationSummaryCard. It supersedes the archive copy by matching the compact Korean summary design, preserving unread/important counts, and replacing the raw push-token debug marker with user-facing no-raw-push-token copy.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/notifications/components/NotificationSummaryCard.tsx apps/mobile/src/features/notifications/components/NotificationSummaryCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/notifications/__tests__/notifications.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current mobile root launch route. It supersedes the archive copy by adding cold-start deep link preservation, typed launch-target resolution, screenshot capture handling, native splash hide protection, preview fallback routing, and safe login fallback without exposing raw session, token, personal, or financial data.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/index.tsx apps/mobile/app/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(auth)/login.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current login route. It supersedes the archive AppShell-only route with the PDF-derived AuthVisualFrame layout, responsive vertical spacing, reference Salary Hijacking brand lockup, social login icons, signup navigation, Eureka World mark, and keyboard/safe-area aware screen wiring.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(auth)/login.tsx apps/mobile/app/(auth)/login.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(auth)/signup.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current signup route. It supersedes the archive AppShell-only route with the same responsive AuthVisualFrame reference layout, Salary Hijacking brand system, signup form, agreement status, and Eureka World mark required for the first-run auth flow.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(auth)/signup.tsx apps/mobile/app/(auth)/signup.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/__tests__/login.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current login component test. It supersedes the archive copy by asserting the Korean reference brand lockup, Eureka World image mark, icon-based Naver/Kakao/Google social login actions, Facebook visual-only state, auto-login checkbox, and no raw token rendering.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/__tests__/login.components.test.tsx apps/mobile/src/features/auth/__tests__/login.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/__tests__/login.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current login screen wiring test. It guards against the older Clean Fintech fallback and requires AuthVisualFrame, keyboard avoidance, safe-area padding, reference brand components, and signup navigation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/__tests__/login.screen-wiring.test.ts apps/mobile/src/features/auth/__tests__/login.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/__tests__/password-recovery.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current password recovery component test. It verifies Korean recovery copy, server recovery action submission, reset token handling, and no raw credential or token text rendering.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/__tests__/password-recovery.components.test.tsx apps/mobile/src/features/auth/__tests__/password-recovery.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/password-recovery.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/__tests__/signup.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current signup component test. It supersedes the archive copy by asserting the Korean reference brand system, signup title, nickname/password submission, required consent flags, and contextual marketing opt-in default.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/__tests__/signup.components.test.tsx apps/mobile/src/features/auth/__tests__/signup.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/__tests__/signup.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current signup screen wiring test. It requires the actual auth signup components and prevents fallback-only signup wiring from returning.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/__tests__/signup.screen-wiring.test.ts apps/mobile/src/features/auth/__tests__/signup.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/ForgotPasswordForm.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ForgotPasswordForm. It preserves server recovery submission while using the current Korean AuthVisualFrame styling and password recovery component contract covered by the focused recovery tests.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/ForgotPasswordForm.tsx apps/mobile/src/features/auth/components/ForgotPasswordForm.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/password-recovery.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/index.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current auth component barrel. It preserves the archive exports and additionally exports AuthVisualFrame, AuthBrandLogo, EurekaWorldMark, auth visual colors, and clampValue used by the current reference splash/login/signup routes.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/index.ts apps/mobile/src/features/auth/components/index.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/LoginCredentialForm.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current LoginCredentialForm. It supersedes the archive card form by matching the provided login reference with compact id/password fields, hidden password entry, trimmed id submission, default remember-me submission, and no rendered raw credentials.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/LoginCredentialForm.tsx apps/mobile/src/features/auth/components/LoginCredentialForm.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/LoginHero.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current LoginHero. It supersedes the archive SurfaceCard text block with the compact official Salary Hijacking brand lockup required by the user-provided login design.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/LoginHero.tsx apps/mobile/src/features/auth/components/LoginHero.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/PasswordRecoveryHero.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current PasswordRecoveryHero. It preserves Korean recovery instructions and privacy-safe copy used by the current password recovery tests instead of the older generic card treatment.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/PasswordRecoveryHero.tsx apps/mobile/src/features/auth/components/PasswordRecoveryHero.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/password-recovery.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/ResetPasswordForm.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ResetPasswordForm. It preserves reset token and new-password submission without rendering raw token text, matching the current password recovery security test contract.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/ResetPasswordForm.tsx apps/mobile/src/features/auth/components/ResetPasswordForm.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/password-recovery.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/SignupAgreementCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current SignupAgreementCard. It supersedes the archive SurfaceCard with the compact reference-layout agreement row while preserving required terms/privacy state and marketing opt-in separation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/SignupAgreementCard.tsx apps/mobile/src/features/auth/components/SignupAgreementCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/SignupForm.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current SignupForm. It supersedes the archive card form with reference-style id/nickname/password fields, required consent flags, marketing false by default, and password-safe submission behavior.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/SignupForm.tsx apps/mobile/src/features/auth/components/SignupForm.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/SignupHero.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current SignupHero. It supersedes the archive generic card with the compact Salary Hijacking brand lockup plus Korean signup title used by the reference signup screen.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/SignupHero.tsx apps/mobile/src/features/auth/components/SignupHero.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/signup.screen-wiring.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/SocialLoginButtons.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current SocialLoginButtons. It supersedes the archive text-button list with icon-based Naver, Kakao, Facebook visual-only, and Google buttons, plus signup and auto-login controls that match the provided login reference while preserving provider routing safety.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/SocialLoginButtons.tsx apps/mobile/src/features/auth/components/SocialLoginButtons.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/auth/__tests__/login.components.test.tsx --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current SplashLaunchScreen. It supersedes the archive diagnostic card with the user-requested white launch screen, official Salary Hijacking brand lockup, Eureka World mark, responsive spacing, and no visible developer guard markers.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "node auth UTF-8 integrity check for CJK/replacement characters"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/_layout.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current root layout. It supersedes the archive copy with guarded native splash hiding, auth/bootstrap fallback handling, deep-link preservation, capture-route handling, and a safe retry UI instead of a blank app on render failure.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/_layout.tsx apps/mobile/app/_layout.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(tabs)/_layout.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current tabs layout. It preserves the verified Expo Router child route names, safe-area-aware tab height, static bottom-tab image assets, Korean visible labels, and privacy-boundary accessibility labels; a new contract guard keeps Korean tab copy from regressing.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(tabs)/_layout.tsx apps/mobile/app/(tabs)/_layout.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand --testNamePattern \"primary tab visible copy\"",
+        "corepack pnpm --filter @salary-hijacking/mobile run export:web"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(tabs)/salary/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Salary tab route. It routes to SalaryHomeReferenceScreen with the PDF-derived salary home contract and keeps the salary summary API boundary instead of restoring the older route-local fallback implementation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(tabs)/salary/index.tsx apps/mobile/app/(tabs)/salary/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/salary/__tests__/salary.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run export:web"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(tabs)/plan/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Plan tab route. It delegates to PlanReferenceScreen and preserves the fixed-expense/savings API boundaries and current reference UI contract rather than the archive route-local table implementation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(tabs)/plan/index.tsx apps/mobile/app/(tabs)/plan/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/plan/__tests__/plan.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run export:web"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(tabs)/level/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current LV UP tab route. It renders the current feature components and growth dashboard normalization boundary, preserving action navigation and XP feedback wiring that are absent or older in the archive copy.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(tabs)/level/index.tsx apps/mobile/app/(tabs)/level/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/level.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(tabs)/community/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Community tab route. It preserves the current board tab state, compose bottom sheet, popular post section, validation flow, and write-route navigation instead of reverting to the older archive feed wiring.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(tabs)/community/index.tsx apps/mobile/app/(tabs)/community/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/(tabs)/profile/index.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current MY tab route. It preserves ProfileHeader/ProfileStatGrid/ProfileMenuCard wiring, profile privacy API boundaries, logout/withdrawal request routing, and current Korean profile surface contracts.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/(tabs)/profile/index.tsx apps/mobile/app/(tabs)/profile/index.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/capture/[screen].tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current capture route. It preserves the typed 17-screen capture registry and rejects unsupported capture params so screenshot evidence routes remain deterministic.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/capture/[screen].tsx apps/mobile/app/capture/[screen].tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run export:web"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/capture/CapturePreviewScreen.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current CapturePreviewScreen. It is a current superset for deterministic mobile visual evidence and includes the reference splash/login/salary/plan/notification/LV/community/profile capture surfaces used by release screenshot automation.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/capture/CapturePreviewScreen.tsx apps/mobile/src/features/capture/CapturePreviewScreen.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run export:web"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/shared/api/__tests__/app-screen-contract.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current app screen contract test after adding an explicit Korean bottom-tab copy regression guard. It now protects route names, splash unsticking, capture routes, safe error fallback, auth gates, and readable Korean tab labels.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/shared/api/__tests__/app-screen-contract.test.ts apps/mobile/src/shared/api/__tests__/app-screen-contract.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/shared/api/__tests__/app-screen-contract.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run export:web"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/level/__tests__/growth.api.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current Growth API test. It supersedes the archive copy with coverage for content completion, idempotency keys, raw financial/personal/push-token non-exposure headers, safe Korean fallback errors, invalid identifier rejection, and sensitive note rejection before network access.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/level/__tests__/growth.api.test.ts apps/mobile/src/features/level/__tests__/growth.api.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/growth.api.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/growth.api.test.ts src/features/level/__tests__/level.components.test.tsx src/features/level/__tests__/level.screen-wiring.test.ts src/shared/api/__tests__/level-dashboard-normalization.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/level/__tests__/level.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current LV UP component tests. They match the current Korean component labels and XP reward behavior, including current source/action labels and the duplicate-safe reward toast contract.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/level/__tests__/level.components.test.tsx apps/mobile/src/features/level/__tests__/level.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/level.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/level/__tests__/level.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current LV UP screen wiring test. It prevents the route from falling back to CleanFintech screens and requires the current feature components, dashboard normalization boundary, and XP reward toast wiring.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/level/__tests__/level.screen-wiring.test.ts apps/mobile/src/features/level/__tests__/level.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/level.screen-wiring.test.ts --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/growth.api.test.ts src/features/level/__tests__/level.components.test.tsx src/features/level/__tests__/level.screen-wiring.test.ts src/shared/api/__tests__/level-dashboard-normalization.test.ts --runInBand"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/level/components/LevelHeroCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current LevelHeroCard. It preserves server-based XP summary copy, Korean accessibility labels, total XP formatting, and shared ProgressBar behavior used by the current LV UP reference route.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/level/components/LevelHeroCard.tsx apps/mobile/src/features/level/components/LevelHeroCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/level.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/level/components/ReadingContentCard.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ReadingContentCard. It preserves source/license/XP policy pills, Korean start/record actions, accessibility labels, and the current content policy boundary.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/level/components/ReadingContentCard.tsx apps/mobile/src/features/level/components/ReadingContentCard.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/level.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/level/components/XpRewardToast.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current XpRewardToast. It supersedes the archive copy with Korean reward-source labels and a visible duplicate-safe completion guard for one-time XP reflection.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/level/components/XpRewardToast.tsx apps/mobile/src/features/level/components/XpRewardToast.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/level/__tests__/level.components.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/community.constants.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current community constants. They preserve the expanded board taxonomy, Korean board labels, tab order, report reasons, and policy limits used by the current API-backed community screens.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/community.constants.ts apps/mobile/src/features/community/community.constants.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/__tests__/community.components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current component tests. They verify readable Korean write-form copy, contextual ad disclosure, moderation blocking, safe publish submission, and like cancellation behavior that are stronger than the archive copy.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/__tests__/community.components.test.tsx apps/mobile/src/features/community/__tests__/community.components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/__tests__/community.feature-components.test.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current feature-component tests. They cover board tabs, popular posts, accessible compose bottom sheet behavior, and ad disclosure/privacy boundaries for the current screen components.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/__tests__/community.feature-components.test.tsx apps/mobile/src/features/community/__tests__/community.feature-components.test.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/__tests__/community.screen-wiring.test.ts",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current community screen wiring test. It guards the tab route against the old clean-fintech fallback and verifies the current community feature entrypoint.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/__tests__/community.screen-wiring.test.ts apps/mobile/src/features/community/__tests__/community.screen-wiring.test.ts",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/components/CommunityTabBar.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current CommunityTabBar. It preserves the board-tab radio semantics, selected-state accessibility, and current Korean board labels used by the PDF-aligned community tabs.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/components/CommunityTabBar.tsx apps/mobile/src/features/community/components/CommunityTabBar.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/components/CommunityWriteForm.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current CommunityWriteForm. It supports board selection, title/body/tags, anonymous publishing, moderation feedback, preview/submit actions, and privacy-safe Korean guidance.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/components/CommunityWriteForm.tsx apps/mobile/src/features/community/components/CommunityWriteForm.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/components/ComposeBottomSheet.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current ComposeBottomSheet. It wraps the write form in an accessible modal-like compose surface with close/preview/submit wiring and the current privacy guard copy.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/components/ComposeBottomSheet.tsx apps/mobile/src/features/community/components/ComposeBottomSheet.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/src/features/community/components/PopularPostSection.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current PopularPostSection. It preserves clickable popular post cards with board, anonymous author, preview, like/comment/bookmark counts, and a no-sensitive-amount display guard.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/src/features/community/components/PopularPostSection.tsx apps/mobile/src/features/community/components/PopularPostSection.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/community/write.tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current community write route. It uses AppShell/AppHeader, CommunityWriteForm, useCommunityWrite, SecureStore-backed draft persistence, authenticated mobile API publishing, idempotency guard, and raw financial data guard.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/community/write.tsx apps/mobile/app/community/write.tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    },
+    {
+      "relativePath": "apps/mobile/app/community/[postId].tsx",
+      "decision": "CURRENT_ACCEPTED",
+      "action": "Keep the current community detail route. It uses the authenticated mobile community service, no route-local sample data, post/comment components, contextual ad disclosure, report-policy guard, and API-backed likes/comments/reports.",
+      "evidence": [
+        "git diff --no-index --stat .merged-from-salary-hijacking-main/conflicts/apps/mobile/app/community/[postId].tsx apps/mobile/app/community/[postId].tsx",
+        "corepack pnpm --filter @salary-hijacking/mobile run test -- src/features/community/__tests__/community.components.test.tsx src/features/community/__tests__/community.feature-components.test.tsx src/features/community/__tests__/community.screen-wiring.test.ts src/features/community/__tests__/community-detail-routes.screen-wiring.test.ts src/features/community/__tests__/community.write-hook.test.tsx --runInBand",
+        "corepack pnpm --filter @salary-hijacking/mobile run typecheck"
+      ]
+    }
+  ]
+}

@@ -172,6 +172,7 @@
       "/admin/notices",
       "/admin/banners",
       "/admin/metrics",
+      "/admin/growth-content",
       "/admin/events"
     ],
     "domains": [

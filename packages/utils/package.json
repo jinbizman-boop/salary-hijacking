@@ -54,7 +54,7 @@
     "#utils/*": "./src/*.ts"
   },
   "scripts": {
-    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','.turbo','coverage','tsconfig.utils.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
+    "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','tsconfig.utils.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
     "prepare:barrels": "node scripts/prepare-utils.mjs --barrels",
     "prepare:tsconfig": "node scripts/prepare-utils.mjs --tsconfig",
     "prepare:utils": "corepack pnpm run prepare:barrels && corepack pnpm run prepare:tsconfig",

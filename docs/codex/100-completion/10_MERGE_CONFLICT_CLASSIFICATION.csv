@@ -1,0 +1,133 @@
+Archived path,Archived bytes,Current path exists,Classification,Reason
+.gitignore,7151,True,REVIEW_REQUIRED,Different file requires manual classification.
+.prettierignore,237,True,REVIEW_REQUIRED,Different file requires manual classification.
+100_PERCENT_READINESS.md,1174,True,REVIEW_REQUIRED,Different file requires manual classification.
+apps/admin/src/app/growth-content/page.tsx,33687,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/admin/tests/unit/growth-content-page.test.ts,1942,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(auth)/login.tsx,1297,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(auth)/signup.tsx,1330,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(tabs)/_layout.tsx,4398,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(tabs)/community/index.tsx,3368,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(tabs)/level/index.tsx,2761,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(tabs)/plan/index.tsx,3371,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(tabs)/profile/index.tsx,2345,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/(tabs)/salary/index.tsx,2225,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/_layout.tsx,41960,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/capture/[screen].tsx,1694,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/community/[postId].tsx,8871,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/community/write.tsx,5483,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/index.tsx,4716,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app/notifications/index.tsx,3152,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/app.config.ts,20723,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/assets/adaptive-icon.png,58633,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/assets/favicon.png,3419,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/assets/icon.png,58633,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/assets/notification-icon.png,8537,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/assets/splash.png,356642,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/package.json,10785,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/scripts/expo-local-android-debug-build.mjs,52722,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/scripts/expo-local-android-debug-build.test.mjs,34928,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/config/__tests__/mobile-e2e-contract.test.ts,7649,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/__tests__/login.components.test.tsx,1776,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/__tests__/login.screen-wiring.test.ts,699,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/__tests__/password-recovery.components.test.tsx,1897,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/__tests__/signup.components.test.tsx,1893,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/__tests__/signup.screen-wiring.test.ts,709,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/ForgotPasswordForm.tsx,1831,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/index.ts,816,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/LoginCredentialForm.tsx,3166,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/LoginHero.tsx,1169,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/PasswordRecoveryHero.tsx,1465,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/ResetPasswordForm.tsx,1981,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/SignupAgreementCard.tsx,1335,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/SignupForm.tsx,2664,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/SignupHero.tsx,1094,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/SocialLoginButtons.tsx,1404,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx,2020,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/capture/CapturePreviewScreen.tsx,5958,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/__tests__/community.components.test.tsx,5640,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/__tests__/community.feature-components.test.tsx,4042,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/__tests__/community.screen-wiring.test.ts,817,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/community.constants.ts,1693,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/components/CommunityTabBar.tsx,2295,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/components/CommunityWriteForm.tsx,6816,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/components/ComposeBottomSheet.tsx,2470,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/community/components/PopularPostSection.tsx,2669,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/level/__tests__/growth.api.test.ts,21241,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/level/__tests__/level.components.test.tsx,4930,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/level/__tests__/level.screen-wiring.test.ts,799,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/level/components/LevelHeroCard.tsx,1772,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/level/components/ReadingContentCard.tsx,3225,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/level/components/XpRewardToast.tsx,744,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/notifications/__tests__/notifications.components.test.tsx,3145,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/notifications/__tests__/notifications.screen-wiring.test.ts,880,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/notifications/components/index.ts,318,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/notifications/components/NotificationList.tsx,3961,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/notifications/components/NotificationPreferenceStrip.tsx,1441,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/notifications/components/NotificationSummaryCard.tsx,1871,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/plan/__tests__/plan.components.test.tsx,3578,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts,853,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/plan/components/index.ts,293,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/plan/components/PlanActionList.tsx,1867,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/plan/components/PlanBreakdownSection.tsx,4100,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/plan/components/PlanProgressCard.tsx,1810,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/profile/__tests__/profile-detail-routes.screen-wiring.test.ts,2422,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/profile/__tests__/profile.components.test.tsx,2602,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx,7217,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/profile/components/ProfileHeader.tsx,2019,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/profile/components/ProfileMenuCard.tsx,1864,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/profile/components/ProfileStatGrid.tsx,2080,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/salary/__tests__/salary.components.test.tsx,3031,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/salary/__tests__/salary.screen-wiring.test.ts,918,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/salary/components/DailyBudgetSection.tsx,2016,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/salary/components/FixedExpenseSection.tsx,1634,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/salary/components/index.ts,540,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/salary/components/SalaryHeroCard.tsx,1040,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/uploads/__tests__/uploads.api.test.ts,24061,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/features/uploads/api.ts,17644,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/shared/api/__tests__/app-screen-contract.test.ts,16891,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/shared/components/AppHeader.tsx,1058,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/shared/components/AppShell.tsx,997,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts,159679,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+apps/mobile/src/shared/styles/clean-fintech-screens.tsx,272007,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+COMPLETION_REPORT.md,1566,True,REVIEW_REQUIRED,Different file requires manual classification.
+docs/codex/08_FILE_COMPLETION_LOG.md,1972878,True,DOC_REVIEW_REQUIRED,Documentation differs; review before porting claims.
+docs/codex/15_UI_UX_REFERENCE.md,14844,True,DOC_REVIEW_REQUIRED,Documentation differs; review before porting claims.
+docs/final-documents/LEVEL_UP_CONTENT_OPERATIONS_POLICY.md,2558,True,DOC_REVIEW_REQUIRED,Documentation differs; review before porting claims.
+package.json,9842,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+pnpm-lock.yaml,679922,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+release/evidence/build-artifacts.json,2004,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/checksums.txt,240,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/commands.json,1999,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/external-blockers.json,1023,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/final-validation-report.md,1670,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-native-build-failure.md,989,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/01_splash.png,27883,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/02_login.png,40532,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/03_signup.png,54263,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/05_salary_home.png,66070,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/06_daily_budget.png,61016,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/07_plan_setting.png,61463,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/08_notifications.png,80359,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/09_level_hub.png,59357,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/10_level_reading.png,73738,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/11_level_news.png,74070,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/12_level_english.png,77456,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/13_level_health.png,74456,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/14_community.png,99251,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/15_community_write.png,29599,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/16_profile.png,68604,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/17_profile_level.png,54492,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/capture-summary.json,3423,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/evidence/mobile-ui/design-implementation-checklist.md,6565,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/screenshots/01_home_salary.png,66070,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/screenshots/02_daily_budget.png,61016,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/screenshots/03_plan_setting.png,61463,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/screenshots/04_notifications.png,80359,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/screenshots/05_level_up.png,59357,True,EVIDENCE_ARCHIVE_REVIEW,Release evidence/screenshot differs; do not overwrite current evidence without freshness check.
+release/security-audit-evidence.json,987,True,REVIEW_REQUIRED,Different file requires manual classification.
+scripts/release/capture-mobile-clean-fintech-screenshots.mjs,32740,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+scripts/release/check-release-readiness.mjs,117974,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+scripts/release/check-release-readiness.test.mjs,80077,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+services/api/src/repositories/growth.repository.ts,29265,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.
+services/api/tests/growth-db-repository.test.ts,11779,True,CODE_REVIEW_REQUIRED,Code/config differs; compare with current tested implementation before porting.

@@ -1,94 +1,87 @@
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { Image, View, type ImageSourcePropType } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import {
-  appIcons,
-  salaryHijackingTheme,
-} from "../../src/shared/styles/clean-fintech-theme";
+import { appIconAssets } from "../../src/shared/assets/icons";
+import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
-type TabName = "salary" | "plan" | "level" | "community" | "profile";
+type TabName =
+  | "salary/index"
+  | "plan/index"
+  | "level/index"
+  | "community/index"
+  | "profile/index";
 
 type TabDefinition = Readonly<{
-  name: `${TabName}/index`;
-  title: string;
-  icon: string;
   href: string;
+  icon: ImageSourcePropType;
+  name: TabName;
   privacyBoundary: string;
+  title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.1-clean-fintech-copy-restored";
+const LAYOUT_VERSION = "4.0.3-router-index-tabs-korean-labels";
 
 const tabs: readonly TabDefinition[] = [
   {
-    name: "salary/index",
-    title: "급여",
-    icon: appIcons.salary,
     href: "/salary",
+    icon: appIconAssets.bottomTabs.salary,
+    name: "salary/index",
     privacyBoundary: "payroll_home",
+    title: "급여",
   },
   {
-    name: "plan/index",
-    title: "계획",
-    icon: appIcons.plan,
     href: "/plan",
+    icon: appIconAssets.bottomTabs.plan,
+    name: "plan/index",
     privacyBoundary: "payroll_plan",
+    title: "계획",
   },
   {
-    name: "level/index",
-    title: "LV",
-    icon: appIcons.level,
     href: "/level",
+    icon: appIconAssets.bottomTabs.level,
+    name: "level/index",
     privacyBoundary: "growth",
+    title: "LV",
   },
   {
-    name: "community/index",
-    title: "커뮤니티",
-    icon: appIcons.community,
     href: "/community",
+    icon: appIconAssets.bottomTabs.community,
+    name: "community/index",
     privacyBoundary: "anonymous_community",
+    title: "커뮤니티",
   },
   {
-    name: "profile/index",
-    title: "MY",
-    icon: appIcons.my,
     href: "/profile",
+    icon: appIconAssets.bottomTabs.profile,
+    name: "profile/index",
     privacyBoundary: "profile_privacy",
+    title: "MY",
   },
 ] as const;
 
 export default function TabsLayout(): React.ReactElement {
+  const insets = useOptionalSafeAreaInsets();
+  const tabBarHeight =
+    salaryHijackingTheme.layout.bottomTabHeight + Math.max(insets.bottom, 0);
+
   return (
     <Tabs
       initialRouteName="salary/index"
       screenOptions={{
+        freezeOnBlur: true,
         headerShown: false,
         lazy: true,
-        freezeOnBlur: true,
         sceneStyle: { backgroundColor: salaryHijackingTheme.color.surface.app },
-        tabBarHideOnKeyboard: true,
+        tabBarAccessibilityLabel: "급여납치 하단 탭 내비게이션",
         tabBarActiveTintColor: "#209252",
+        tabBarHideOnKeyboard: true,
         tabBarInactiveTintColor: "#ADB3B8",
-        tabBarStyle: {
-          height: salaryHijackingTheme.layout.bottomTabHeight,
-          left: 0,
-          right: 0,
-          width: "100%",
-          paddingTop: 8,
-          paddingBottom: 10,
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#EEF0F2",
-          borderTopWidth: 1,
-          elevation: 8,
-          shadowColor: "#0F2319",
-          shadowOpacity: 0.06,
-          shadowRadius: 18,
-          shadowOffset: { width: 0, height: -8 },
-        },
         tabBarItemStyle: {
           borderRadius: salaryHijackingTheme.radius.md,
+          marginHorizontal: 0,
           minHeight: salaryHijackingTheme.layout.touchTarget,
           minWidth: 0,
-          marginHorizontal: 0,
           paddingHorizontal: 0,
         },
         tabBarLabelStyle: {
@@ -96,7 +89,22 @@ export default function TabsLayout(): React.ReactElement {
           fontWeight: "800",
           letterSpacing: 0,
         },
-        tabBarAccessibilityLabel: "급여납치 하단 탭 내비게이션",
+        tabBarStyle: {
+          backgroundColor: "#FFFFFF",
+          borderTopColor: "#EEF0F2",
+          borderTopWidth: 1,
+          elevation: 8,
+          height: tabBarHeight,
+          left: 0,
+          paddingBottom: Math.max(insets.bottom, 10),
+          paddingTop: 8,
+          right: 0,
+          shadowColor: "#0F2319",
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: 0.06,
+          shadowRadius: 18,
+          width: "100%",
+        },
       }}
     >
       {tabs.map((tab) => (
@@ -104,32 +112,34 @@ export default function TabsLayout(): React.ReactElement {
           key={tab.name}
           name={tab.name}
           options={{
-            title: tab.title,
             href: tab.href as never,
-            tabBarLabel: tab.title,
-            tabBarAccessibilityLabel: `${tab.title} 탭 · ${tab.privacyBoundary}`,
+            tabBarAccessibilityLabel: `${tab.title} 탭 ${tab.privacyBoundary}`,
             tabBarIcon: ({ color, focused, size }) => (
               <View
                 style={{
                   alignItems: "center",
+                  backgroundColor: focused ? "#EAF6EF" : "transparent",
+                  borderRadius: salaryHijackingTheme.radius.full,
+                  height: 30,
                   justifyContent: "center",
                   width: 32,
-                  height: 30,
-                  borderRadius: salaryHijackingTheme.radius.full,
-                  backgroundColor: focused ? "#EAF6EF" : "transparent",
                 }}
               >
-                <Text
+                <Image
+                  accessibilityIgnoresInvertColors
+                  resizeMode="contain"
+                  source={tab.icon}
                   style={{
-                    color,
-                    fontSize: Math.max(16, Math.min(22, size - 2)),
-                    fontWeight: "800",
+                    height: Math.max(20, Math.min(26, size)),
+                    opacity: focused ? 1 : 0.46,
+                    tintColor: focused ? color : "#ADB3B8",
+                    width: Math.max(20, Math.min(26, size)),
                   }}
-                >
-                  {tab.icon}
-                </Text>
+                />
               </View>
             ),
+            tabBarLabel: tab.title,
+            title: tab.title,
           }}
         />
       ))}
@@ -137,10 +147,18 @@ export default function TabsLayout(): React.ReactElement {
   );
 }
 
+function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
+  try {
+    return useSafeAreaInsets();
+  } catch {
+    return { bottom: 0, left: 0, right: 0, top: 0 };
+  }
+}
+
 export function assertMobileTabsLayoutCompleteness(): {
+  readonly checks: readonly string[];
   readonly ok: boolean;
   readonly version: string;
-  readonly checks: readonly string[];
 } {
   const checks = [
     "clean_fintech_v1_theme",
@@ -158,10 +176,10 @@ export function assertMobileTabsLayoutCompleteness(): {
     "anonymous_community_boundary",
     "profile_privacy_boundary",
     "accessibility_labels",
-    "expo_router_tabs",
+    "expo_router_index_tabs",
     "readable_korean_tab_copy",
     "typescript_strict_ready",
   ] as const;
 
-  return { ok: checks.length >= 15, version: LAYOUT_VERSION, checks };
+  return { checks, ok: checks.length >= 15, version: LAYOUT_VERSION };
 }

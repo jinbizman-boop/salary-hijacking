@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { COMMUNITY_BOARD_TYPES } from "../community.constants";
 import type {
+  CommunityBoardType,
   CommunityPostDraft,
   CommunityValidationResult,
 } from "../community.types";
@@ -15,6 +16,17 @@ export type CommunityWriteFormProps = Readonly<{
   onPreview?: () => void;
   onSubmit: () => void;
 }>;
+
+const boardLabels: Readonly<Record<CommunityBoardType, string>> = {
+  BUDGET_TIP: "예산 팁",
+  EXPENSE_CUT: "지출 줄이기",
+  FREE: "자유 게시판",
+  HEALTH_ROUTINE: "취미 게시판",
+  LEVEL_CERTIFICATION: "레벨업 인증",
+  SALARY_TALK: "급여 이야기",
+  SAVINGS_GOAL: "저축 목표",
+  SIDE_HUSTLE: "부업",
+};
 
 export function CommunityWriteForm({
   draft,
@@ -31,13 +43,13 @@ export function CommunityWriteForm({
 
   return (
     <View style={styles.form}>
-      <Text style={styles.label}>게시판</Text>
+      <Text style={styles.label}>게시판 유형</Text>
       <View accessibilityRole="radiogroup" style={styles.boardOptions}>
         {COMMUNITY_BOARD_TYPES.map((boardType) => {
           const selected = draft.boardType === boardType;
           return (
             <Pressable
-              accessibilityLabel={`${boardType} 게시판`}
+              accessibilityLabel={`${boardLabels[boardType]} 게시판`}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               key={boardType}
@@ -53,7 +65,7 @@ export function CommunityWriteForm({
                   selected && styles.boardLabelSelected,
                 ]}
               >
-                {boardType}
+                {boardLabels[boardType]}
               </Text>
             </Pressable>
           );
@@ -70,9 +82,9 @@ export function CommunityWriteForm({
         value={draft.title}
       />
 
-      <Text style={styles.label}>내용</Text>
+      <Text style={styles.label}>본문</Text>
       <TextInput
-        accessibilityLabel="게시글 내용"
+        accessibilityLabel="게시글 본문"
         maxLength={10_000}
         multiline
         onChangeText={(content) => onChange({ ...draft, content })}
@@ -145,7 +157,7 @@ export function CommunityWriteForm({
           style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
         >
           <Text style={styles.submitButtonLabel}>
-            {submitting ? "발행 중" : "발행"}
+            {submitting ? "완료 중" : "완료"}
           </Text>
         </Pressable>
       </View>

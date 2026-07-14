@@ -133,7 +133,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
     splash: {
       image: assetPathEnv("EXPO_PUBLIC_SPLASH_IMAGE", DEFAULT_SPLASH),
       resizeMode: "contain",
-      backgroundColor: "#F7F8FA",
+      backgroundColor: "#FFFFFF",
     },
     assetBundlePatterns: ["assets/**/*", "app/**/*", "src/**/*"],
     ios: iosConfig(buildNumber),
@@ -222,7 +222,7 @@ function androidConfig(versionCode: number): JsonRecord {
         "EXPO_PUBLIC_ANDROID_ADAPTIVE_ICON",
         DEFAULT_ADAPTIVE_ICON,
       ),
-      backgroundColor: "#F7F8FA",
+      backgroundColor: "#FFFFFF",
     },
     permissions: [
       "POST_NOTIFICATIONS",
@@ -252,7 +252,7 @@ function androidConfig(versionCode: number): JsonRecord {
             host: plainEnv("EXPO_PUBLIC_DEEPLINK_HOST", "salaryhijacking.com"),
             pathPrefix: "/",
           },
-          { scheme: DEFAULT_SCHEME, host: "app", pathPrefix: "/" },
+          { scheme: DEFAULT_SCHEME, pathPrefix: "/" },
         ],
         category: ["BROWSABLE", "DEFAULT"],
       },

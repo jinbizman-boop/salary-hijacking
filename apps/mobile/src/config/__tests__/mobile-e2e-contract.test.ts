@@ -142,6 +142,17 @@ describe("mobile Detox E2E contract", () => {
     expect(rootLayout).toContain("E2E shell ready");
   });
 
+  it("patches stale Expo PackageList imports before local Android debug builds", () => {
+    const debugBuildScript = readRequiredText(
+      "scripts/expo-local-android-debug-build.mjs",
+    );
+
+    expect(debugBuildScript).toContain("patchReactNativePackageList");
+    expect(debugBuildScript).toContain("expo\\.core\\.ExpoModulesPackage");
+    expect(debugBuildScript).toContain("expo.modules.ExpoModulesPackage");
+    expect(debugBuildScript).toContain(":app:generateAutolinkingPackageList");
+  });
+
   it("blocks Android storage and overlay permissions that are not required for a finance app", () => {
     const appConfig = readRequiredText("app.config.ts");
     const blockedPermissions = [
@@ -155,11 +166,31 @@ describe("mobile Detox E2E contract", () => {
     }
   });
 
+  it("keeps Android custom scheme deep links on Expo Router paths instead of an /app prefix", () => {
+    const config = appConfig({ config: {} });
+    const intentFilters = config.android.intentFilters as ReadonlyArray<{
+      readonly data?: ReadonlyArray<Readonly<Record<string, unknown>>>;
+    }>;
+    const customSchemeEntries = intentFilters.flatMap((filter) =>
+      Array.from(filter.data ?? []).filter(
+        (entry) => entry.scheme === "salaryhijacking",
+      ),
+    );
+
+    expect(customSchemeEntries).toContainEqual({
+      scheme: "salaryhijacking",
+      pathPrefix: "/",
+    });
+    expect(customSchemeEntries).not.toContainEqual(
+      expect.objectContaining({ host: "app" }),
+    );
+  });
+
   it("keeps Android Firebase google-services configuration on a local ignored file path", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_FILE: "https://example.com/google-services.json",
+      GOOGLE_SERVICES_JSON: "https://example.com/google-services.json",
     };
     const defaultConfig = appConfig({ config: {} });
 
@@ -171,12 +202,40 @@ describe("mobile Detox E2E contract", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_FILE: "./secrets/firebase/google-services.staging.json",
+      GOOGLE_SERVICES_JSON: "./secrets/firebase/google-services.staging.json",
     };
     const overriddenConfig = appConfig({ config: {} });
 
     expect(overriddenConfig.android.googleServicesFile).toBe(
       "./secrets/firebase/google-services.staging.json",
+    );
+  });
+
+  it("keeps Android post-splash window background on the brand splash layer", () => {
+    const styles = readRequiredText(
+      "android/app/src/main/res/values/styles.xml",
+    );
+    const launcherBackground = readRequiredText(
+      "android/app/src/main/res/drawable/ic_launcher_background.xml",
+    );
+    const mainActivity = readRequiredText(
+      "android/app/src/main/java/com/salaryhijacking/mobile/MainActivity.kt",
+    );
+
+    expect(styles).toContain(
+      '<item name="android:windowBackground">@drawable/ic_launcher_background</item>',
+    );
+    expect(styles).toContain(
+      '<item name="windowSplashScreenAnimatedIcon">@drawable/splashscreen_logo</item>',
+    );
+    expect(launcherBackground).toContain("@color/splashscreen_background");
+    expect(launcherBackground).toContain("@drawable/splashscreen_logo");
+    expect(mainActivity).toContain("import com.facebook.react.ReactRootView");
+    expect(mainActivity).toContain("override fun createRootView()");
+    expect(mainActivity).toContain("ReactRootView(this@MainActivity)");
+    expect(mainActivity).not.toContain("super.createRootView()!!");
+    expect(mainActivity).toContain(
+      "setBackgroundResource(R.drawable.ic_launcher_background)",
     );
   });
 

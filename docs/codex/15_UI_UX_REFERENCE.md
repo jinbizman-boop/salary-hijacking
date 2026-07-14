@@ -4,130 +4,143 @@ priority: P0
 scope: apps/mobile
 applies_to:
   - apps/mobile/app/**
-  - apps/mobile/src/shared/styles/**
-  - apps/mobile/assets/brand/**
-  - apps/mobile/assets/fonts/**
+  - apps/mobile/src/shared/**
+  - apps/mobile/assets/**
+  - release/evidence/mobile-ui/**
   - release/screenshots/**
-last_verified: 2026-07-01
+last_verified: 2026-07-12
 ---
 
 # Mobile UI/UX Reference
 
-This document connects the user-provided Salary Hijacking design references to
-the current mobile app implementation. Use it before changing launch screens,
-bottom tabs, Clean Fintech components, store screenshots, brand assets, or
-mobile UI copy.
+This document maps the user-provided Salary Hijacking mobile UI/UX references
+to the current React Native/Expo implementation and release evidence. Use it
+before changing mobile screens, bottom tabs, launch assets, icon registries,
+store screenshots, or user-facing Korean copy.
 
 ## Source References
 
-| Source                   | Observed path                                                                                                                 | Verification                                                                                                  |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Official BI logo         | `C:\Users\Telos_PC_17\Downloads\salary-hijacking-platform-logo.png`                                                           | SHA256 `EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466`                                     |
-| Bundled BI logo          | `apps/mobile/assets/brand/salary-hijacking-platform-logo.png`                                                                 | SHA256 `EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466`                                     |
-| Freesentation source zip | `C:\Users\Telos_PC_17\Downloads\Freesentation-2.001.zip`                                                                      | SHA256 `73C859C944C97DAC6392DA5520A303414126B77EA522358E3CE513EF31AACD84`                                     |
-| Clean Fintech prototype  | `C:\Users\Telos_PC_17\Desktop\salary-hijacking-ui-prototype.html`                                                             | SHA256 `7CCCBCA75950997BDE7F357ECB81BFCEE83C779F13AC369445A6215AFF7FF267`                                     |
-| Design PDF               | `C:\Users\Telos_PC_17\Desktop\오피스 문서\김진원 개인자료\02. 플랫폼 모음\02_급여납치\급여납치 어플리케이션 디자인.pdf`       | SHA256 `9B07E3AB3B10C7C3CE276C35C51317B4B9D0CAC334B82645EB1CD9F8A797E26F`; 17 pages; page size 248.88 x 540.0 |
-| Planning HTML            | `C:\Users\Telos_PC_17\Desktop\오피스 문서\김진원 개인자료\02. 플랫폼 모음\02_급여납치\급여납치 화면 및 기능 설계 기획안.html` | SHA256 `B64A5EB75F5B734D56A1CA49DDC2F1159EABDC6FBDF735E10BDCDB9AC07EFB08`                                     |
+| Source                         | Current observed path                                                                     | Purpose                                                                                     |
+| ------------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Salary home HTML prototype     | `C:\Users\PC\Downloads\salary_hijacking_salary_home_ui_function_prototype.html`           | Salary home layout, protected amount hero, fixed/variable expense sections, ad separation   |
+| Notifications HTML prototype   | `C:\Users\PC\Downloads\salary_hijacking_notifications_ui_function_prototype.html`         | Notification list, unread/important/routine alert structure                                 |
+| Plan/settings HTML prototype   | `C:\Users\PC\Downloads\salary_hijacking_plan_settings_ui_function_prototype.html`         | Payroll plan, fixed expense, fixed savings, living budget planning                          |
+| LV UP main HTML prototype      | `C:\Users\PC\Downloads\salary_hijacking_level_main_ui_function_prototype.html`            | LV hub, XP/level progress, reading/news/English/health entry points                         |
+| Reading LV HTML prototype      | `C:\Users\PC\Downloads\salary_hijacking_reading_level_ui_function_prototype.html`         | Reading category pills, book cards, private record flow                                     |
+| News LV HTML prototype         | `C:\Users\PC\Downloads\salary_hijacking_news_level_ui_function_prototype.html`            | News list and balanced information routine                                                  |
+| English LV HTML prototype      | `C:\Users\PC\Downloads\salary_hijacking_english_level_ui_function_prototype.html`         | Listening/speaking/reading/writing routine                                                  |
+| Health LV HTML prototype       | `C:\Users\PC\Downloads\salary_hijacking_health_level_ui_function_prototype.html`          | Beginner-safe workout routine and weekly pills                                              |
+| Community write HTML prototype | `C:\Users\PC\Downloads\salary_hijacking_community_write_ui_function_prototype.html`       | Title/body/attachment/question/anonymous/board controls                                     |
+| Profile/MY HTML prototype      | `C:\Users\PC\Downloads\salary_hijacking_profile_mypage_ui_function_prototype.html`        | MY page profile, saved amount, level, self-management cards                                 |
+| Design JPG slides              | `C:\Users\PC\Desktop\급여납치 어플리케이션 디자인\슬라이드1.JPG` through `슬라이드17.JPG` | Visual source for splash, login, salary, notifications, plan, LV, community, write, profile |
+| Runtime app evidence           | `release\evidence\mobile-ui\01_splash.png` through `17_profile_level.png`                 | Local web-rendered mobile UI proof                                                          |
+| Native startup evidence        | `release\evidence\mobile-ui\18_native_startup_fixed.png`                                  | Emulator proof that the real native APK reaches Salary Home                                 |
 
 The private ChatGPT project share link remains inaccessible from this Codex
 workspace unless the user provides exported contents. Treat the local files
-above and repository files as the verified UI source of truth.
+above, repository files, screenshots, and command output as the verified UI
+source of truth.
 
 ## Verified Design Intent
 
-The Salary Hijacking app is a mobile-first finance and self-development product
-that helps users separate payroll, fixed expenses, savings, living money, and
-daily spending right after payday. The central value message is not "expense
-tracking" but "how much money the user protected."
+Salary Hijacking is a mobile-first finance and self-development app. The core
+message is not simple expense tracking; it is showing how much money the user
+protected after salary day.
 
-The launch UI direction is `Salary Hijacking Clean Fintech v1`:
+The launch UI direction is:
 
-- Use a clear green fintech identity built around `#209252`.
-- Show the user value first: `이번 달 내가 지켜낸 돈`.
-- Keep the home screen understandable within a few seconds: protected money,
-  daily remaining budget, this-month hijack amount, and next payday.
-- Convert dense tables into readable cards and compact rows on mobile.
-- Keep community and LV UP friendly, routine-oriented, and lightweight.
-- Keep ads and partners below core financial information and label them as
-  `제휴/광고`.
-- Never place raw salary, expense, savings, hijack amount, account, card, loan,
-  email, phone, token, push token, or raw device identifier into ads, analytics,
-  logs, push payloads, or partner targeting.
+- White background, green brand color, black text, card-based mobile layout.
+- Expose the most important money state first: cumulative protected amount,
+  received salary, spent amount, hijacked/protected amount, daily budget, and
+  next payday.
+- Keep bottom tabs as `급여 / 계획 / LV / 커뮤니티 / MY`.
+- Keep LV UP as four practical routines: reading, news, English, and health.
+- Keep community as `전체 / 자유 / 레벨업 인증 / 취미`.
+- Keep write flow complete: title, body, attachment, question, anonymous,
+  board type, and completion action.
+- Keep ads/partners labeled and separated from raw financial data.
+- Never expose raw salary, expense, savings, hijack amount, account, card,
+  loan, phone, email, token, push token, or raw device identifier to ads,
+  analytics, logs, push payloads, community payloads, or partner targeting.
 
 ## App Implementation Map
 
-| Requirement                             | Current implementation anchor                                                                                                                           |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Official BI in app surfaces             | `apps/mobile/assets/brand/salary-hijacking-platform-logo.png`, `apps/mobile/app/_layout.tsx`, `apps/mobile/src/shared/styles/clean-fintech-screens.tsx` |
-| Official BI in release screenshots      | `scripts/release/capture-mobile-clean-fintech-screenshots.mjs`                                                                                          |
-| Freesentation font loading              | `apps/mobile/app/_layout.tsx` loads `Freesentation-4Regular.ttf` through `Freesentation-9Black.ttf`                                                     |
-| Freesentation release guard             | `scripts/release/check-release-readiness.mjs` blocks missing, invalid, or undersized Freesentation font assets                                          |
-| Launch asset release guard              | `scripts/release/check-release-readiness.mjs` blocks placeholder-sized icon, splash, adaptive icon, notification icon, and favicon PNG assets           |
-| Launch asset config guard               | `scripts/release/check-release-readiness.mjs` blocks `apps/mobile/app.config.ts` if Expo launch asset fallbacks drift from the checked PNG assets       |
-| Clean Fintech design tokens             | `apps/mobile/src/shared/styles/clean-fintech-theme.ts`                                                                                                  |
-| Shared Clean Fintech screen system      | `apps/mobile/src/shared/styles/clean-fintech-screens.tsx`                                                                                               |
-| Five-tab IA                             | `apps/mobile/app/(tabs)/_layout.tsx` with `급여`, `계획`, `LV`, `커뮤니티`, `MY`                                                                        |
-| Salary home route                       | `apps/mobile/app/(tabs)/salary/index.tsx`                                                                                                               |
-| Plan route                              | `apps/mobile/app/(tabs)/plan/index.tsx`                                                                                                                 |
-| LV UP route and detail routes           | `apps/mobile/app/(tabs)/level/index.tsx`, `apps/mobile/app/level/reading.tsx`, `news.tsx`, `english.tsx`, `health.tsx`                                  |
-| Notifications route                     | `apps/mobile/app/notifications/index.tsx`                                                                                                               |
-| Community route and write/detail routes | `apps/mobile/app/(tabs)/community/index.tsx`, `apps/mobile/app/community/write.tsx`, `apps/mobile/app/community/[postId].tsx`                           |
-| Profile route                           | `apps/mobile/app/(tabs)/profile/index.tsx`                                                                                                              |
-| UI contract test                        | `apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts`                                                                                   |
-| Store screenshot candidates             | `release/screenshots/*.png`                                                                                                                             |
+| Requirement                        | Current implementation anchor                                                                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Expo launch assets                 | `apps/mobile/assets/icon.png`, `splash.png`, `adaptive-icon.png`, `notification-icon.png`, `favicon.png`                                                                   |
+| Runtime icon registry              | `apps/mobile/src/shared/assets/icons/index.ts`                                                                                                                             |
+| Runtime image registry             | `apps/mobile/src/shared/assets/images/index.ts`                                                                                                                            |
+| Splash/root startup                | `apps/mobile/app/_layout.tsx`, `apps/mobile/app/index.tsx`                                                                                                                 |
+| Five-tab IA                        | `apps/mobile/app/(tabs)/_layout.tsx`                                                                                                                                       |
+| Salary home route                  | `apps/mobile/app/(tabs)/salary/index.tsx`                                                                                                                                  |
+| Plan route                         | `apps/mobile/app/(tabs)/plan/index.tsx`                                                                                                                                    |
+| LV UP route and detail routes      | `apps/mobile/app/(tabs)/level/index.tsx`, `apps/mobile/app/level/reading.tsx`, `news.tsx`, `english.tsx`, `health.tsx`                                                     |
+| Notifications route                | `apps/mobile/app/notifications/index.tsx`                                                                                                                                  |
+| Community list/write/detail routes | `apps/mobile/app/(tabs)/community/index.tsx`, `apps/mobile/app/community/write.tsx`, `apps/mobile/app/community/[postId].tsx`                                              |
+| Profile/MY route and detail routes | `apps/mobile/app/(tabs)/profile/index.tsx`, `apps/mobile/app/profile/*.tsx`                                                                                                |
+| UI contract tests                  | `apps/mobile/src/shared/api/__tests__/app-screen-contract.test.ts`, `prototype-ui-contract.test.ts`, `apps/mobile/src/shared/styles/__tests__/clean-fintech-theme.test.ts` |
+| Store/mobile screenshot evidence   | `release/screenshots/*.png`, `release/evidence/mobile-ui/*.png`                                                                                                            |
+| Native APK startup evidence        | `release/evidence/mobile-ui/latest-universal-debug-apk.json`, `18_native_startup_fixed.png`, `mobile-preview-startup-logcat-fixed.txt`                                     |
 
 ## Screen Coverage Checklist
 
-| Source screen group | Required UI behavior                                                                                                                                                                     | Implementation expectation                                                                                                      |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Splash and login    | Center official BI, show `SALARY HIJACKING`, use Freesentation, explain that salary is protected before it disappears                                                                    | Splash/login components keep BI and brand copy visible                                                                          |
-| Salary home         | Show protected money first, then received amount, spent amount, monthly hijack amount, D-day, daily budget, fixed expenses, variable expenses, and ad/partner slot below finance summary | `CleanFintechScreen` salary mode keeps `이번 달 내가 지켜낸 돈`, `오늘 쓸 수 있는 돈`, `지출 추가하기`, and `제휴/광고` markers |
-| Plan                | Replace table-heavy layout with goal progress and cards for payroll plan, fixed expense, fixed savings, and living money                                                                 | Plan mode keeps `목표 달성률`, `급여 계획`, `고정지출`, `고정저축`, `생활비` markers                                            |
-| Notifications       | Separate important alerts from routine alerts, use unread state, link to relevant screens                                                                                                | Notification mode keeps `중요 알림` and `루틴 알림` sections                                                                    |
-| LV UP               | Show current level, XP progress, and four mission cards for reading, news, English, and health                                                                                           | Level mode keeps `현재 레벨`, `독서하기`, `뉴스보기`, `영어연습`, `홈트하기`                                                    |
-| LV detail           | Use pill tabs, progress summary, and content lists for reading, news, English, and health                                                                                                | Detail routes keep `AI 추천`, `Listening`, `Speaking`, `Reading`, `Writing`, and weekday markers                                |
-| Community           | Keep friendly board tabs, popular/list cards, safe anonymous participation, and a write entry                                                                                            | Community mode keeps `전체 게시판`, `자유 게시판`, `레벨업 인증`, `취미 게시판`, and `글쓰기`                                   |
-| Write post          | Validate title, body, board, anonymous/question options, and show a completion toast                                                                                                     | Write screen keeps `제목`, `본문`, `익명`, and post success copy                                                                |
-| My page             | Show profile, cumulative hijack amount, level-up status, self-management performance, and management menu                                                                                | Profile mode keeps `누적 납치금액`, `레벨업 현황`, `자기관리 성과`, `내 게시글 관리`                                            |
+| Source screen   | Expected behavior                                                                                           | Current evidence status                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Splash          | Brand logo/name, clean white screen, automatic transition                                                   | PASS in `01_splash.png`; native animation timing still not full E2E                                                      |
+| Login           | ID/password, social login, signup, auto-login/privacy copy                                                  | PASS in `02_login.png`; real OAuth provider flow not exercised                                                           |
+| Salary Home     | Protected amount hero, salary/spent/protected metrics, daily budget, fixed/variable expenses, ad separation | PASS in `05_salary_home.png` and native `18_native_startup_fixed.png`; production API smoke is separate release evidence |
+| Notifications   | Important/routine alerts, unread/read structure, deep-link-ready rows                                       | PASS in `08_notifications.png`; live push delivery not exercised                                                         |
+| Plan            | Goal progress, salary plan, fixed expenses, fixed savings, living budget                                    | PASS in `07_plan_setting.png`; live DB persistence not proven by screenshot                                              |
+| LV UP main      | Reading/news/English/health cards, XP/level progress, ad separation                                         | PASS in `09_level_hub.png`; full native tab tapping E2E not run                                                          |
+| Reading level   | Category pills, book cards, private completion record                                                       | PASS in `10_level_reading.png`                                                                                           |
+| News level      | Balanced news routine, list/cards, completion action                                                        | PASS in `11_level_news.png`; external news ingestion not proven                                                          |
+| English level   | Listening/speaking/reading/writing routine                                                                  | PASS in `12_level_english.png`; audio/speech native APIs not proven                                                      |
+| Health level    | Weekday pills, safe beginner workout routines                                                               | PASS in `13_level_health.png`; timer/workout native flow not proven                                                      |
+| Community list  | Board tabs, popular posts, safe anonymous participation                                                     | PASS in `14_community.png`; live moderation queue not proven by screenshot                                               |
+| Community write | Title, body, attachment, question, anonymous, board type, completion                                        | PASS in `15_community_write.png`; server submit/moderation E2E not proven                                                |
+| Profile/MY      | Profile summary, cumulative protected amount, level, self-management, menu                                  | PASS in `16_profile.png` and `17_profile_level.png`                                                                      |
 
-## Design Tokens To Preserve
+## Asset Path Policy
 
-| Token                | Value                                                                                                                              |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Theme name           | `Salary Hijacking Clean Fintech v1`                                                                                                |
-| Brand primary        | `#209252`                                                                                                                          |
-| Brand secondary      | `#2FA86A`                                                                                                                          |
-| Soft green           | `#EAF6EF`                                                                                                                          |
-| App surface          | `#F7F8FA`                                                                                                                          |
-| Card surface         | `#FFFFFF`                                                                                                                          |
-| Danger               | `#D74B4B`                                                                                                                          |
-| Bottom tab height    | `76`                                                                                                                               |
-| Minimum touch target | `44`                                                                                                                               |
-| Font family          | `var(--font-presentation), "Presentation", "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif` |
-| Native font map      | `Freesentation-4Regular` through `Freesentation-9Black`                                                                            |
+| Asset category                          | Required location                               |
+| --------------------------------------- | ----------------------------------------------- |
+| Expo app config assets                  | `apps/mobile/assets/` only                      |
+| Runtime icons                           | `apps/mobile/src/shared/assets/icons/`          |
+| Runtime images/brand/banners/thumbnails | `apps/mobile/src/shared/assets/images/`         |
+| Static icon registry                    | `apps/mobile/src/shared/assets/icons/index.ts`  |
+| Static image registry                   | `apps/mobile/src/shared/assets/images/index.ts` |
+
+Do not add runtime app icons to `android/`, `ios/`, `release/screenshots/`,
+`release/evidence/`, or `docs/`. Generated native resources may exist under
+Expo/Android build output, but source runtime assets belong in the folders
+above.
 
 ## Validation Contract
 
-When changing the mobile UI reference or Clean Fintech UI, run the closest
-available checks:
+Run the closest relevant checks after mobile UI changes:
 
 ```powershell
-corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts
-corepack pnpm --filter @salary-hijacking/mobile typecheck
-corepack pnpm --filter @salary-hijacking/mobile format:check
-corepack pnpm run format:check
-corepack pnpm run check:release-readiness -- --soft
+corepack pnpm --filter @salary-hijacking/mobile run format:check
+corepack pnpm --filter @salary-hijacking/mobile run typecheck
+corepack pnpm --filter @salary-hijacking/mobile run test
+corepack pnpm --filter @salary-hijacking/mobile run export:web
+node scripts\release\capture-mobile-clean-fintech-screenshots.mjs
 git diff --check
 ```
 
-Use `Get-Content -Encoding UTF8` or `rg` when inspecting Korean source files in
-Windows PowerShell. Plain `Get-Content` can display valid UTF-8 Korean as
-mojibake on some shells.
+For native APK startup changes, also run or update:
+
+```powershell
+corepack pnpm --filter @salary-hijacking/mobile exec node --test scripts\expo-local-android-debug-build.test.mjs
+corepack pnpm exec node scripts\expo-local-android-debug-build.mjs --architecture "arm64-v8a,x86_64" --output build\e2e\android\salary-hijacking-universal-debug.apk
+adb install -r apps\mobile\build\e2e\android\salary-hijacking-universal-debug.apk
+adb shell monkey -p com.salaryhijacking.mobile 1
+```
 
 ## Current Limits
 
-This document verifies local UI reference mapping and static mobile contract
-coverage. It is not proof of production readiness. Project-wide operational
-completion still requires native EAS builds, native E2E, store submission
-dry-runs, production API/DB smoke tests, Cloudflare resource proof, runtime
-secret proof, and release QA.
+Current evidence proves source/test/build/web screenshot coverage and local
+emulator startup for the latest debug APK. It does not prove physical phone QA,
+full Detox/native interaction E2E, production AAB, EAS submit, Google Play
+submission, new EAS project creation, new keystore creation, Firebase reset, DB
+destructive migration, or secret changes.

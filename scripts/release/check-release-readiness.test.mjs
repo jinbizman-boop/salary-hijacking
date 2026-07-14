@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import test from "node:test";
+import test, { afterEach } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
   analyzeReleaseReadiness,
   formatReleaseReadinessReport,
+  resolveReleaseReadinessExitCode,
 } from "./check-release-readiness.mjs";
 import { DEFAULT_SECRET_STORES } from "./generate-secrets-evidence.mjs";
 
@@ -17,7 +18,7 @@ const repoRoot = path.resolve(
   "..",
 );
 const officialBrandLogoPath =
-  "apps/mobile/assets/brand/salary-hijacking-platform-logo.png";
+  "apps/mobile/src/shared/assets/images/brand/salary-hijacking-platform-logo.png";
 const officialBrandLogoSource = path.join(repoRoot, officialBrandLogoPath);
 const requiredFreesentationFontNames = [
   "Freesentation-4Regular.ttf",
@@ -43,6 +44,23 @@ const requiredMobileAssetNames = [
   "notification-icon.png",
   "favicon.png",
 ];
+const fixtureWorkspaces = new Set();
+
+const cleanupWorkspaces = () => {
+  for (const rootDir of fixtureWorkspaces) {
+    fs.rmSync(rootDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 3,
+      retryDelay: 100,
+    });
+    fixtureWorkspaces.delete(rootDir);
+  }
+};
+
+afterEach(() => {
+  cleanupWorkspaces();
+});
 
 const singleQuotedValues = (source) =>
   [...source.matchAll(/'([^']+)'/g)].map((match) => match[1]);
@@ -428,6 +446,61 @@ const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
   );
 };
 
+const writeMobilePreviewEvidence = (rootDir, overrides = {}) => {
+  const baseEvidence = {
+    schemaVersion: 1,
+    observedAt: new Date().toISOString(),
+    source: "test-fixture",
+    secretsRedacted: true,
+    containsSecretValues: false,
+    appIdentity: {
+      appSlug: "salary-hijacking",
+      androidPackage: "com.salaryhijacking.mobile",
+      iosBundleIdentifier: "com.salaryhijacking.mobile",
+    },
+    android: {
+      debugApkBuilt: true,
+      debugApkSigned: true,
+      debugApkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      downloadVerified: true,
+      emulatorInstallVerified: true,
+      coldStartRuns: 5,
+      coldStartFatalCount: 0,
+      navigationSmokeVerified: true,
+      backgroundForegroundVerified: true,
+      notificationNoBottomTabVerified: true,
+      physicalPhoneVerified: false,
+    },
+    privacy: {
+      containsEasToken: false,
+      containsStoreCredential: false,
+      containsSigningKey: false,
+      containsReviewerPassword: false,
+      containsRawLogcat: false,
+      containsSecretValues: false,
+    },
+  };
+  const evidence = {
+    ...baseEvidence,
+    ...overrides,
+    android: {
+      ...baseEvidence.android,
+      ...(overrides.android ?? {}),
+    },
+    privacy: {
+      ...baseEvidence.privacy,
+      ...(overrides.privacy ?? {}),
+    },
+  };
+
+  write(
+    rootDir,
+    "release/mobile-preview-evidence.json",
+    JSON.stringify(evidence, null, 2),
+  );
+};
+
 const requiredRuntimeSecretNames = [
   "DATABASE_URL",
   "STAGING_DATABASE_URL",
@@ -669,6 +742,7 @@ const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(
     path.join(os.tmpdir(), "salary-release-ready-"),
   );
+  fixtureWorkspaces.add(rootDir);
 
   write(
     rootDir,
@@ -706,6 +780,7 @@ const makeWorkspace = () => {
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   writeMobileNativeEvidence(rootDir);
+  writeMobilePreviewEvidence(rootDir);
   writeSecretsEvidence(rootDir);
   writeCloudflareRuntimeEvidence(rootDir);
   writeDatabaseEvidence(rootDir);
@@ -760,6 +835,24 @@ const makeWorkspace = () => {
     'name = "notifications"\n',
   );
   write(rootDir, "services/scheduler/wrangler.toml", 'name = "scheduler"\n');
+  write(
+    rootDir,
+    "apps/mobile/package.json",
+    JSON.stringify(
+      {
+        name: "@salary-hijacking/mobile",
+        version: "1.0.0",
+        private: true,
+        scripts: {
+          typecheck: "tsc --noEmit",
+          test: "jest",
+          "export:web": "expo export --platform web",
+        },
+      },
+      null,
+      2,
+    ),
+  );
   write(rootDir, "apps/mobile/app.config.ts", validMobileAppConfig);
   write(
     rootDir,
@@ -906,6 +999,33 @@ test("passes when release files, scripts, env names, and tools are present", () 
   );
 });
 
+test("cleans generated release readiness fixture workspaces", () => {
+  const rootDir = makeWorkspace();
+  assert.equal(fs.existsSync(rootDir), true);
+
+  cleanupWorkspaces();
+
+  assert.equal(fs.existsSync(rootDir), false);
+});
+
+test("blocks invalid mobile package json before release readiness", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, "apps/mobile/package.json", "{ invalid json\n");
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile package\.json/);
+  assert.match(report, /package\.json failed to parse/);
+});
+
 test("blocks when the local release commit is not pushed to origin main", () => {
   const rootDir = makeWorkspace();
   writeExternalEvidence(rootDir, {
@@ -1016,14 +1136,35 @@ test("uses connector evidence as an account-access fallback for GitHub, Cloudfla
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.blockers, []);
-  assert.ok(result.warnings.some((warning) => warning.includes("GitHub CLI")));
-  assert.ok(
-    result.warnings.some((warning) => warning.includes("Cloudflare Wrangler")),
-  );
-  assert.ok(result.warnings.some((warning) => warning.includes("Neon CLI")));
-  assert.match(report, /WARN cli:GitHub CLI/);
-  assert.match(report, /WARN cli:Cloudflare Wrangler/);
-  assert.match(report, /WARN cli:Neon CLI/);
+  assert.deepEqual(result.warnings, []);
+  assert.match(report, /PASS cli:GitHub CLI/);
+  assert.match(report, /connector evidence observed/);
+  assert.match(report, /PASS cli:Cloudflare Wrangler/);
+  assert.match(report, /PASS cli:Neon CLI/);
+  assert.doesNotMatch(report, /WARN cli:GitHub CLI/);
+  assert.doesNotMatch(report, /WARN cli:Cloudflare Wrangler/);
+  assert.doesNotMatch(report, /WARN cli:Neon CLI/);
+});
+
+test("strict readiness does not block connector-backed CLI fallbacks", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  const rootDir = makeWorkspace();
+  const softResult = readinessModule.analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: (command) =>
+      !["gh", "wrangler", "neon", "neonctl"].includes(command),
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+
+  const strictResult =
+    readinessModule.applyStrictReleaseReadinessGates(softResult);
+  const report = readinessModule.formatReleaseReadinessReport(strictResult);
+
+  assert.doesNotMatch(report, /strict:warning/);
+  assert.doesNotMatch(report, /GitHub CLI is not available on PATH/);
+  assert.doesNotMatch(report, /Neon CLI is not available on PATH/);
 });
 
 test("blocks external evidence that contains raw secret values", () => {
@@ -2251,6 +2392,48 @@ test("uses pnpm dlx as the EAS CLI launcher when eas is not installed locally", 
   assert.doesNotMatch(report, /Expo EAS CLI launcher is not available/);
 });
 
+test("uses workspace-local Wrangler when the global wrangler command is not on PATH", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, "node_modules/.bin/wrangler.cmd");
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: (command) => command !== "wrangler",
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /cli:Cloudflare Wrangler/);
+  assert.match(report, /available locally: node_modules\/\.bin\/wrangler\.cmd/);
+  assert.doesNotMatch(report, /Cloudflare Wrangler is not available on PATH/);
+});
+
+test("uses workspace-local GitHub and Neon CLIs when global commands are not on PATH", () => {
+  const rootDir = makeWorkspace();
+  write(rootDir, ".tools/gh/bin/gh.exe");
+  write(rootDir, "node_modules/.bin/neonctl.cmd");
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: (command) => !["gh", "neon", "neonctl"].includes(command),
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /cli:GitHub CLI/);
+  assert.match(report, /available locally: \.tools\/gh\/bin\/gh\.exe/);
+  assert.match(report, /cli:Neon CLI/);
+  assert.match(report, /available locally: node_modules\/\.bin\/neonctl\.cmd/);
+  assert.doesNotMatch(report, /GitHub CLI is not available on PATH/);
+  assert.doesNotMatch(report, /Neon CLI is not available on PATH/);
+});
+
 test("blocks when mobile native release evidence is missing or unverified", () => {
   const rootDir = makeWorkspace();
   fs.rmSync(path.join(rootDir, "release", "mobile-native-evidence.json"), {
@@ -2269,6 +2452,449 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.equal(result.ok, false);
   assert.match(report, /mobile-native-evidence\.json/);
   assert.match(report, /mobile:native:evidence/);
+});
+
+test("blocks when current-head mobile preview evidence is missing", () => {
+  const rootDir = makeWorkspace();
+  fs.rmSync(path.join(rootDir, "release", "mobile-preview-evidence.json"), {
+    force: true,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile-preview-evidence\.json/);
+  assert.match(report, /mobile:preview:evidence/);
+});
+
+test("passes current-head mobile preview evidence without treating physical phone QA as complete", () => {
+  const rootDir = makeWorkspace();
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:apk/);
+  assert.match(report, /mobile:preview:emulator-qa/);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /Physical phone preview QA remains tracked as pending/);
+});
+
+test("uses local no-secret physical phone proof when present", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          physicalPhoneVerified: true,
+          installVerified: true,
+          coldStartRuns: 20,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 20,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(
+    report,
+    /Physical phone preview QA is verified by local no-secret proof/,
+  );
+});
+
+test("blocks physical phone proof that lacks persistence and keyboard safe-area QA", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          physicalPhoneVerified: true,
+          installVerified: true,
+          coldStartRuns: 20,
+          backgroundForegroundRuns: 20,
+          coldStartFatalCount: 0,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /persistence, keyboard\/safe-area/);
+});
+
+test("blocks physical phone proof below the required 20-run cold-start and background QA", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          physicalPhoneVerified: true,
+          installVerified: true,
+          coldStartRuns: 5,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 5,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /20 cold-start and background\/foreground runs/);
+});
+
+test("passes current-head mobile preview evidence with phone-target APK proof", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      phoneTargetDebugApkBuilt: true,
+      phoneTargetDebugApkSigned: true,
+      phoneTargetDebugApkSha256:
+        "10C3FC2ED13C90F19DEFDE57062B88ED220D74623B3EC251C6CE03BBCC8101D8",
+      phoneTargetDebugApkDownloadVerified: true,
+      phoneTargetDebugApkAbis: ["arm64-v8a"],
+      phoneTargetDebugApkAbiFilterVerified: true,
+      phoneTargetDebugApkExpoCoreLibs: [
+        "lib/arm64-v8a/libexpo-modules-core.so",
+      ],
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:phone-target-apk/);
+  assert.match(
+    report,
+    /10C3FC2ED13C90F19DEFDE57062B88ED220D74623B3EC251C6CE03BBCC8101D8/,
+  );
+});
+
+test("blocks when mobile preview APK does not package the latest source changes", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourceChangesPackaged: false,
+      latestSourceChangesPackageBlocker:
+        "Local Android toolchain and EAS authentication are unavailable.",
+      latestSourceChangesEvidence: [
+        "apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+      ],
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /latest source changes must be packaged into a fresh Android preview APK/,
+  );
+});
+
+test("blocks latest-source preview APK evidence when mobile source has uncommitted changes", () => {
+  const rootDir = makeWorkspace();
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({
+      ok: true,
+      output:
+        " M apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /uncommitted mobile source changes exist after the latest preview APK evidence/,
+  );
+});
+
+test("passes latest-source preview APK evidence when dirty mobile source snapshot matches evidence", () => {
+  const rootDir = makeWorkspace();
+  const dirtyStatus =
+    " M apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx\n";
+  write(
+    rootDir,
+    "apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx",
+    "export const planReferenceVersion = 'packaged';\n",
+  );
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourceGitStatusSha256:
+        "44FD6517D9594DDFDABC7E944C257570E1EBB7CB27951789AE0EBF3E9E1B892A",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({
+      ok: true,
+      output: dirtyStatus,
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /dirty mobile source snapshot matches preview APK evidence/,
+  );
+});
+
+test("blocks latest-source preview APK evidence when a dirty mobile file changes after packaging", () => {
+  const rootDir = makeWorkspace();
+  const dirtyStatus =
+    " M apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx\n";
+  write(
+    rootDir,
+    "apps/mobile/src/features/plan/components/PlanReferenceScreen.tsx",
+    "export const planReferenceVersion = 'changed-after-apk';\n",
+  );
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourceGitStatusSha256:
+        "44FD6517D9594DDFDABC7E944C257570E1EBB7CB27951789AE0EBF3E9E1B892A",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({
+      ok: true,
+      output: dirtyStatus,
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /uncommitted mobile source changes exist after the latest preview APK evidence/,
+  );
+});
+
+test("blocks when phone-target mobile preview APK evidence is incomplete", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      phoneTargetDebugApkBuilt: true,
+      phoneTargetDebugApkSigned: true,
+      phoneTargetDebugApkSha256: "not-a-sha",
+      phoneTargetDebugApkDownloadVerified: true,
+      phoneTargetDebugApkAbis: ["x86_64"],
+      phoneTargetDebugApkAbiFilterVerified: true,
+      phoneTargetDebugApkExpoCoreLibs: ["lib/x86_64/libexpo-modules-core.so"],
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:phone-target-apk/);
+  assert.match(
+    report,
+    /phone-target preview\/debug APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256/,
+  );
+  assert.doesNotMatch(report, /not-a-sha/);
+});
+
+test("blocks when mobile preview evidence embeds unsafe local QA data", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    privacy: {
+      containsEasToken: false,
+      containsStoreCredential: false,
+      containsSigningKey: true,
+      containsReviewerPassword: false,
+      containsRawLogcat: false,
+      containsSecretValues: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:privacy-flags/);
+  assert.match(
+    report,
+    /mobile-preview-evidence\.json must not declare unsafe preview QA privacy flags/,
+  );
 });
 
 test("treats iOS native evidence as post-launch when Android is the primary release platform", () => {
@@ -2584,4 +3210,371 @@ test("blocks when git remote origin points to a different repository", () => {
   assert.match(report, /git remote origin/i);
   assert.match(report, /expected GitHub repository/i);
   assert.match(report, /jinbizman-boop\/salary-hijacking/);
+});
+
+test("strict exit code fails READY results that still contain warnings", () => {
+  const readyWithWarnings = {
+    ok: true,
+    status: "READY",
+    version: "test",
+    checkedAt: "2026-07-12T00:00:00.000Z",
+    checks: [],
+    blockers: [],
+    warnings: ["git repository has local changes"],
+  };
+
+  assert.equal(
+    resolveReleaseReadinessExitCode(readyWithWarnings, {
+      soft: false,
+      strict: false,
+    }),
+    0,
+  );
+  assert.equal(
+    resolveReleaseReadinessExitCode(readyWithWarnings, {
+      soft: true,
+      strict: true,
+    }),
+    0,
+  );
+  assert.equal(
+    resolveReleaseReadinessExitCode(readyWithWarnings, {
+      soft: false,
+      strict: true,
+    }),
+    1,
+  );
+});
+
+test("strict exit code fails READY results when physical phone preview QA is still pending", () => {
+  const readyWithPendingPhysicalPhone = {
+    ok: true,
+    status: "READY",
+    version: "test",
+    checkedAt: "2026-07-12T00:00:00.000Z",
+    checks: [
+      {
+        status: "PASS",
+        name: "mobile:preview:physical-phone",
+        detail: "Physical phone preview QA remains tracked as pending",
+      },
+    ],
+    blockers: [],
+    warnings: [],
+  };
+
+  assert.equal(
+    resolveReleaseReadinessExitCode(readyWithPendingPhysicalPhone, {
+      soft: false,
+      strict: false,
+    }),
+    0,
+  );
+  assert.equal(
+    resolveReleaseReadinessExitCode(readyWithPendingPhysicalPhone, {
+      soft: true,
+      strict: true,
+    }),
+    0,
+  );
+  assert.equal(
+    resolveReleaseReadinessExitCode(readyWithPendingPhysicalPhone, {
+      soft: false,
+      strict: true,
+    }),
+    1,
+  );
+});
+
+test("strict gate projection marks pending physical phone READY results as BLOCKED", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  assert.equal(
+    typeof readinessModule.applyStrictReleaseReadinessGates,
+    "function",
+  );
+  const readyWithPendingPhysicalPhone = {
+    ok: true,
+    status: "READY",
+    version: "test",
+    checkedAt: "2026-07-12T00:00:00.000Z",
+    checks: [
+      {
+        status: "PASS",
+        name: "mobile:preview:physical-phone",
+        detail: "Physical phone preview QA remains tracked as pending",
+      },
+    ],
+    blockers: [],
+    warnings: [],
+  };
+
+  const strictResult = readinessModule.applyStrictReleaseReadinessGates(
+    readyWithPendingPhysicalPhone,
+  );
+  const report = formatReleaseReadinessReport(strictResult);
+
+  assert.equal(strictResult.ok, false);
+  assert.equal(strictResult.status, "BLOCKED");
+  assert.match(report, /strict:physical-phone/);
+  assert.match(report, /physical phone preview QA remains pending/i);
+});
+
+test("strict readiness blocks production diagnostic, RC, and mock-only mobile paths", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "apps/mobile/app/(tabs)/stable-home.tsx",
+    "export default function StableHomeDiagnostic() { return null; }\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/src/features/salary/rc-shell.tsx",
+    "export const rcShell = 'release candidate shell';\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/src/shared/api/mock-only-production.ts",
+    "export const mockOnlyProductionPath = true;\n",
+  );
+
+  const softResult = readinessModule.analyzeReleaseReadiness({
+    rootDir,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({
+      ok: true,
+      output:
+        "origin https://github.com/jinbizman-boop/salary-hijacking.git (fetch)\norigin https://github.com/jinbizman-boop/salary-hijacking.git (push)\n",
+    }),
+    gitHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteTrackingHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+  });
+  const strictResult =
+    readinessModule.applyStrictReleaseReadinessGates(softResult);
+  const report = formatReleaseReadinessReport(strictResult);
+
+  assert.equal(strictResult.ok, false);
+  assert.equal(strictResult.status, "BLOCKED");
+  assert.match(report, /strict:mobile-temporary-runtime-path/);
+  assert.match(report, /stable-home\.tsx/);
+  assert.match(report, /rc-shell\.tsx/);
+  assert.match(report, /mock-only-production\.ts/);
+});
+
+test("strict readiness blocks mobile route dependencies on CleanFintech fallback screens", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "apps/mobile/app/(tabs)/level/index.tsx",
+    "import { normalizeGrowthDashboardForCleanFintech } from '../../../src/shared/styles/clean-fintech-screens';\nexport default function LevelScreen() { return null; }\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/app/(tabs)/salary/index.tsx",
+    "export default function SalaryScreen() { return <CleanFintechSalaryScreen />; }\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/app/community/[postId].tsx",
+    "function response(value) { return { ok: true, data: value }; }\nexport default function CommunityDetail() { return null; }\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/app/community/sample-fallback.tsx",
+    "const sampleDetail = { id: 'fake-post' };\nconst sampleComments = [];\nexport default function SampleFallback() { return sampleDetail.id; }\n",
+  );
+
+  const softResult = readinessModule.analyzeReleaseReadiness({
+    rootDir,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({
+      ok: true,
+      output: "https://github.com/jinbizman-boop/salary-hijacking.git",
+    }),
+    gitHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteTrackingHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+  });
+  const strictResult =
+    readinessModule.applyStrictReleaseReadinessGates(softResult);
+  const report = formatReleaseReadinessReport(strictResult);
+
+  assert.equal(strictResult.ok, false);
+  assert.equal(strictResult.status, "BLOCKED");
+  assert.match(report, /strict:mobile-route-fallback-boundary/);
+  assert.match(report, /level\/index\.tsx/);
+  assert.match(report, /salary\/index\.tsx/);
+  assert.match(report, /community\/\[postId\]\.tsx/);
+  assert.match(report, /community\/sample-fallback\.tsx/);
+  assert.match(report, /clean-fintech-screens/);
+  assert.match(report, /CleanFintechSalaryScreen/);
+  assert.match(report, /function response/);
+  assert.match(report, /sampleDetail/);
+  assert.match(report, /sampleComments/);
+});
+
+test("strict readiness blocks mobile feature dependencies on CleanFintech fallback screens", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "apps/mobile/src/features/profile/components/ProfileHub.tsx",
+    "import { CleanFintechScreen } from '../../../shared/styles/clean-fintech-screens';\nexport function ProfileHub() { return <CleanFintechScreen />; }\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/src/features/community/components/Detail.tsx",
+    "const sampleDetail = { id: 'fake' };\nexport function Detail() { return sampleDetail.id; }\n",
+  );
+
+  const softResult = readinessModule.analyzeReleaseReadiness({
+    rootDir,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({
+      ok: true,
+      output: "https://github.com/jinbizman-boop/salary-hijacking.git",
+    }),
+    gitHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteTrackingHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+  });
+  const strictResult =
+    readinessModule.applyStrictReleaseReadinessGates(softResult);
+  const report = formatReleaseReadinessReport(strictResult);
+
+  assert.equal(strictResult.ok, false);
+  assert.equal(strictResult.status, "BLOCKED");
+  assert.match(report, /strict:mobile-feature-fallback-boundary/);
+  assert.match(report, /ProfileHub\.tsx/);
+  assert.match(report, /Detail\.tsx/);
+  assert.match(report, /CleanFintechScreen/);
+  assert.match(report, /sampleDetail/);
+});
+
+test("strict readiness blocks TODO and FIXME markers in mobile runtime source", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "apps/mobile/app/(tabs)/salary/index.tsx",
+    "export default function SalaryScreen() { // TODO replace RC shell\n  return null;\n}\n",
+  );
+  write(
+    rootDir,
+    "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+    "export const PlanScreen = () => {\n  // FIXME server sync gap\n  return null;\n};\n",
+  );
+
+  const softResult = readinessModule.analyzeReleaseReadiness({
+    rootDir,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({
+      ok: true,
+      output: "https://github.com/jinbizman-boop/salary-hijacking.git",
+    }),
+    gitHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteTrackingHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+  });
+  const strictResult =
+    readinessModule.applyStrictReleaseReadinessGates(softResult);
+  const report = formatReleaseReadinessReport(strictResult);
+
+  assert.equal(strictResult.ok, false);
+  assert.equal(strictResult.status, "BLOCKED");
+  assert.match(report, /strict:mobile-runtime-incomplete-marker/);
+  assert.match(report, /salary\/index\.tsx/);
+  assert.match(report, /PlanScreen\.tsx/);
+});
+
+test("strict readiness blocks unresolved P0/P1/P2 gap register entries", async () => {
+  const readinessModule = await import("./check-release-readiness.mjs");
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "docs/codex/100-completion/05_GAP_REGISTER.md",
+    `# Gap Register
+
+| Gap ID | Severity | Area | Description | Required Evidence | Status |
+| --- | --- | --- | --- | --- | --- |
+| GAP-001 | P0 | Release source | Dirty tree | clean tree | FAIL |
+| GAP-002 | P1 | Dependencies | Frozen install | install log | PASS |
+| GAP-003 | P1 | Mobile startup | Phone QA | physical phone report | BLOCKED |
+| GAP-004 | P2 | UI | Responsive matrix | screenshots | PARTIAL |
+`,
+  );
+
+  const softResult = readinessModule.analyzeReleaseReadiness({
+    rootDir,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: () => ({
+      ok: true,
+      output: "https://github.com/jinbizman-boop/salary-hijacking.git",
+    }),
+    gitHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+    gitRemoteTrackingHead: () => ({
+      ok: true,
+      output: "cabb4e8c7fed64e3eae4d4bd6266c9002d4371fb",
+    }),
+  });
+  const strictResult =
+    readinessModule.applyStrictReleaseReadinessGates(softResult);
+  const report = formatReleaseReadinessReport(strictResult);
+
+  assert.equal(strictResult.ok, false);
+  assert.equal(strictResult.status, "BLOCKED");
+  assert.match(report, /BLOCKED docs:gap-register/);
+  assert.doesNotMatch(
+    report,
+    /strict:warning.*unresolved launch-blocking gaps/s,
+  );
+  assert.match(report, /GAP-001/);
+  assert.match(report, /GAP-003/);
+  assert.match(report, /GAP-004/);
+  assert.doesNotMatch(report, /GAP-002.*strict:gap-register/s);
 });

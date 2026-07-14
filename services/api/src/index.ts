@@ -53,6 +53,14 @@ import {
   createNeonUsersRepository,
   shouldUseNeonUsersRepository,
 } from "./repositories/users.repository";
+import {
+  createNeonUploadsRepository,
+  shouldUseNeonUploadsRepository,
+} from "./repositories/uploads.repository";
+import {
+  createNeonAdminRepository,
+  shouldUseNeonAdminRepository,
+} from "./repositories/admin.repository";
 
 const INDEX_VERSION = "3.1.1";
 const WORKER_ENTRYPOINT_NAME = "salary-hijacking-api-worker";
@@ -181,6 +189,12 @@ const appInstance = createApp<WorkerEnv>({
       });
     },
   },
+  adminRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonAdminRepository(env)
+        ? createNeonAdminRepository<WorkerEnv>()
+        : undefined,
+  },
   payrollRoutesOptions: {
     repository: (env) =>
       shouldUseNeonPayrollRepository(env)
@@ -227,6 +241,12 @@ const appInstance = createApp<WorkerEnv>({
     repository: (env) =>
       shouldUseNeonUsersRepository(env)
         ? createNeonUsersRepository<WorkerEnv>()
+        : undefined,
+  },
+  uploadsRoutesOptions: {
+    repository: (env) =>
+      shouldUseNeonUploadsRepository(env)
+        ? createNeonUploadsRepository<WorkerEnv>()
         : undefined,
   },
   communityRoutesOptions: {

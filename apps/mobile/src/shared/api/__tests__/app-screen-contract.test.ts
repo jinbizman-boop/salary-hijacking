@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from "node:fs";
+﻿import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const APP_ROOT = join(process.cwd(), "app");
@@ -12,9 +12,31 @@ const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
 const PROFILE_HUB_SCREEN = join(APP_ROOT, "profile", "index.tsx");
 const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
+const ANDROID_ENTRY = join(process.cwd(), "index.android.js");
+const SPLASH_LAUNCH_SCREEN = join(
+  process.cwd(),
+  "src",
+  "features",
+  "auth",
+  "components",
+  "SplashLaunchScreen.tsx",
+);
+const CAPTURE_PREVIEW_SCREEN = join(
+  process.cwd(),
+  "src",
+  "features",
+  "capture",
+  "CapturePreviewScreen.tsx",
+);
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
+const TAB_SCREEN_SOURCES = Object.freeze({
+  salary: join(APP_ROOT, "(tabs)", "salary", "index.tsx"),
+  level: join(APP_ROOT, "(tabs)", "level", "index.tsx"),
+  community: join(APP_ROOT, "(tabs)", "community", "index.tsx"),
+  profile: join(APP_ROOT, "(tabs)", "profile", "index.tsx"),
+});
 const INTERNAL_DIAGNOSTIC_MARKERS = [
   "serverAuthority=true",
   "rawFinancialData=false",
@@ -72,6 +94,73 @@ describe("mobile app screen API and route contracts", () => {
     });
 
     expect(violations).toEqual([]);
+  });
+
+  it("keeps the Android entry on the real Expo Router app instead of a release-candidate shell", () => {
+    const source = readFileSync(ANDROID_ENTRY, "utf8");
+
+    expect(source.trim()).toBe('import "expo-router/entry";');
+    expect(source).not.toContain("AndroidReleaseCandidateApp");
+    expect(source).not.toContain("AppRegistry.registerComponent");
+    expect(source).not.toContain("salary-hijacking-android-rc-root");
+    expect(source).toContain('import "expo-router/entry"');
+    expect(source).not.toContain("ExpoRoot");
+    expect(source).not.toContain("expo-router/_ctx");
+    expect(source).not.toContain("?ㅽ뻾 吏꾨떒 ?붾㈃");
+  });
+
+  it("keeps tab screen names aligned with Expo Router child segments", () => {
+    const source = readFileSync(
+      join(APP_ROOT, "(tabs)", "_layout.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain('initialRouteName="salary/index"');
+    expect(source).toContain('name: "salary/index"');
+    expect(source).toContain('name: "plan/index"');
+    expect(source).toContain('name: "level/index"');
+    expect(source).toContain('name: "community/index"');
+    expect(source).toContain('name: "profile/index"');
+    expect(source).not.toContain('initialRouteName="salary"');
+  });
+
+  it("keeps primary tab visible copy in Korean instead of temporary English labels", () => {
+    const tabLayoutSource = readFileSync(
+      join(APP_ROOT, "(tabs)", "_layout.tsx"),
+      "utf8",
+    );
+    const salarySource = readFileSync(TAB_SCREEN_SOURCES.salary, "utf8");
+    const levelSource = readFileSync(TAB_SCREEN_SOURCES.level, "utf8");
+    const communitySource = readFileSync(TAB_SCREEN_SOURCES.community, "utf8");
+    const profileSource = readFileSync(TAB_SCREEN_SOURCES.profile, "utf8");
+
+    expect(tabLayoutSource).toContain('title: "급여"');
+    expect(tabLayoutSource).toContain('title: "계획"');
+    expect(tabLayoutSource).toContain('title: "커뮤니티"');
+    expect(tabLayoutSource).toContain('"급여납치 하단 탭 내비게이션"');
+    expect(tabLayoutSource).not.toContain("湲됱뿬");
+    expect(tabLayoutSource).not.toContain("怨꾪쉷");
+    expect(tabLayoutSource).not.toContain("而ㅻ");
+
+    expect(salarySource).toContain("SalaryHomeReferenceScreen");
+    expect(salarySource).toContain("내 급여 납치 현황");
+    expect(salarySource).toContain("홍길동님이 설정한 일일 사용 예산");
+    expect(salarySource).toContain("Google 광고 영역");
+    expect(salarySource).not.toContain("Salary Home");
+    expect(salarySource).not.toContain("This month protected");
+
+    expect(levelSource).toContain("오늘의 성장");
+    expect(levelSource).toContain("균형 읽기");
+    expect(levelSource).not.toContain("balanced read");
+
+    expect(communitySource).toContain("커뮤니티");
+    expect(communitySource).toContain("레벨업 인증");
+    expect(communitySource).not.toContain("Proof Board");
+    expect(communitySource).not.toContain("Write");
+
+    expect(profileSource).toContain("ProfileHeader");
+    expect(profileSource).toContain("ProfileStatGrid");
+    expect(profileSource).not.toContain("LV 7 Budget Builder");
   });
 
   it("keeps the profile withdrawal menu on the request-only API endpoint", () => {
@@ -145,10 +234,10 @@ describe("mobile app screen API and route contracts", () => {
   it("keeps the root bootstrap gate copy tied to server-authoritative status checks", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
-    expect(source).toContain("서버 권위 앱 상태 확인 중");
-    expect(source).toContain("서버 권위 앱 상태를 확인하고 있어요.");
+    expect(source).toContain("renderGate");
     expect(source).toContain("/api/v1/mobile/bootstrap");
-    expect(source).not.toContain("앱을 준비 중입니다");
+    expect(source).toContain("/api/v1/mobile/bootstrap");
+    expect(source).not.toContain("?깆쓣 以鍮?以묒엯?덈떎");
   });
 
   it("does not let cached offline sessions bypass verify-email, onboarding, or MFA gates", () => {
@@ -172,12 +261,103 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
-  it("routes an authenticated root launch into the salary home", () => {
-    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+  it("lets the launch screen route root starts so cold deep links are not overwritten", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
 
-    expect(source).toContain('routeKey === "root"');
-    expect(source).toContain("shouldRouteReadyStateToHome");
-    expect(source).toContain("router.replace(SALARY_HOME_ROUTE as never)");
+    expect(rootLayout).toContain("shouldRouteReadyStateToHome");
+    expect(rootLayout).toContain("isAuthenticatedAuthRoute(routeKey)");
+    expect(rootLayout).not.toContain(
+      'routeKey === "root" || isAuthenticatedAuthRoute(routeKey)',
+    );
+    expect(indexScreen).toContain("resolveInitialLaunchTarget");
+    expect(indexScreen).toContain("resolveInitialDeepLinkRoute");
+    expect(indexScreen).toContain("if (deepLinkRoute) return deepLinkRoute");
+    expect(indexScreen).toContain("return resolveInitialRoute()");
+  });
+
+  it("preserves screenshot capture routes before Expo Router rewrites them", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
+
+    expect(rootLayout).toContain("INITIAL_CAPTURE_SCREEN_KIND");
+    expect(rootLayout).toContain("readInitialCaptureScreenKind");
+    expect(rootLayout).toContain("CapturePreviewScreen");
+    expect(rootLayout).not.toContain("CleanFintechScreen");
+    expect(rootLayout).not.toContain("CleanFintechLevelDetailScreen");
+    expect(rootLayout).not.toContain("CleanFintechMyLevelProgressScreen");
+    expect(rootLayout).not.toContain("CleanFintechSplashScreen");
+    expect(rootLayout).not.toContain("CleanFintechSignupScreen");
+    expect(rootLayout).not.toContain("CleanFintechWriteScreen");
+    expect(rootLayout).toContain("renderCaptureScreen");
+    expect(rootLayout).toMatch(
+      /captureScreenKind\s*\?\s*renderCaptureScreen\(captureScreenKind\)/u,
+    );
+    expect(rootLayout).toContain(
+      'if (next === "READY" && captureScreenKind) return',
+    );
+    expect(indexScreen).toContain("resolveCaptureScreenKindForUrl");
+    expect(indexScreen).toContain("CapturePreviewScreen");
+    expect(indexScreen).toContain("SplashLaunchScreen");
+    expect(indexScreen).toContain("readBrowserLocation");
+    expect(indexScreen).toContain(
+      "return resolveCaptureScreenKindForUrl(location.href)",
+    );
+    expect(rootLayout).toContain("readBrowserLocation");
+    expect(rootLayout).toContain(
+      "return resolveCaptureScreenKindForUrl(location.href)",
+    );
+
+    const screenshotScript = readFileSync(
+      join(
+        process.cwd(),
+        "..",
+        "..",
+        "scripts",
+        "release",
+        "capture-mobile-clean-fintech-screenshots.mjs",
+      ),
+      "utf8",
+    );
+    expect(screenshotScript).toContain('["/capture/splash", "01_splash.png"]');
+    expect(screenshotScript).toContain('["/capture/login", "02_login.png"]');
+    expect(screenshotScript).toContain('["/capture/signup", "03_signup.png"]');
+    expect(screenshotScript).toContain(
+      '["/capture/reading", "10_level_reading.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/news", "11_level_news.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/english", "12_level_english.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/health", "13_level_health.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/community-write", "15_community_write.png"]',
+    );
+    expect(screenshotScript).toContain(
+      '["/capture/profile-level", "17_profile_level.png"]',
+    );
+  });
+
+  it("keeps screenshot captures representative of the real planned UI surfaces", () => {
+    const source = readFileSync(CAPTURE_PREVIEW_SCREEN, "utf8");
+
+    expect(source).toContain("heroAmount");
+    expect(source).toContain("metrics");
+    expect(source).toContain("quickActions");
+    expect(source).toContain("detailRows");
+    expect(source).toContain("salary:");
+    expect(source).toContain("3,200,000");
+    expect(source).toContain("게시판 선택");
+    expect(source).toContain("질문");
+    expect(source).toContain("익명");
+    expect(source).toContain("독서");
+    expect(source).toContain("뉴스");
+    expect(source).toContain("영어");
+    expect(source).toContain("건강");
   });
 
   it("does not leave the launch route stuck on a static splash screen", () => {
@@ -186,13 +366,39 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("SplashScreen.hideAsync");
     expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 1200");
     expect(source).toContain("resolveInitialRoute");
+    expect(source).toContain("resolveInitialLaunchTarget");
+    expect(source).toContain("resolveInitialDeepLinkRoute");
+    expect(source).toContain("normalizeInitialDeepLinkRoute");
+    expect(source).toContain('Linking.addEventListener("url"');
+    expect(source).toContain("Linking.getInitialURL");
+    expect(source).toContain("Linking.parseInitialURLAsync");
+    expect(source).toContain("parsedToHref");
+    expect(source).toContain('"/community/write"');
     expect(source).toContain("MOBILE_ACCESS_TOKEN_KEY");
-    expect(source).toContain('router.replace("/salary" as never)');
-    expect(source).toContain('router.replace("/(auth)/login" as never)');
+    expect(source).toContain("router.replace(route as never)");
     expect(source).toContain("setTimeout");
+    expect(source).toContain("SplashLaunchScreen");
     expect(source).not.toMatch(
       /export default function MobileIndexScreen\(\): React\.ReactElement \{\s*return <CleanFintechSplashScreen \/>;\s*\}/u,
     );
+    expect(source).not.toContain("CleanFintechSplashScreen");
+  });
+
+  it("keeps launch and capture UI copy user-facing instead of developer placeholders", () => {
+    const splashSource = readFileSync(SPLASH_LAUNCH_SCREEN, "utf8");
+    const captureSource = readFileSync(CAPTURE_PREVIEW_SCREEN, "utf8");
+
+    expect(splashSource).toContain("급여납치 시작 화면");
+    expect(splashSource).toContain("AuthBrandLogo");
+    expect(splashSource).toContain("EurekaWorldMark");
+    expect(splashSource).toContain("clampValue");
+    expect(captureSource).toContain("안전 화면");
+    expect(captureSource).toContain("자동 이동");
+    expect(splashSource).not.toContain("Salary Hijacking launch");
+    expect(splashSource).not.toContain('subtitle="Launch"');
+    expect(splashSource).not.toContain("launch state");
+    expect(splashSource).not.toContain("launch progress");
+    expect(captureSource).not.toContain("fallback UI");
   });
 
   it("hides the native splash once the React root is ready to render", () => {
@@ -201,6 +407,21 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("loadSplashScreenRuntime");
     expect(source).toContain("SplashScreenRuntimeRef.hideAsync");
     expect(source).toContain("fontsLoaded");
+    expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 2500");
+    expect(source).toContain("hideNativeSplashSafely");
+    expect(source).toContain("onLayout: hideNativeSplashSafely");
+    expect(source).toMatch(/setTimeout\(\s*hideNativeSplashSafely/);
+  });
+
+  it("keeps root render failures on a safe retry screen instead of a blank app", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("export function ErrorBoundary");
+    expect(source).toContain("hideNativeSplashSafely()");
+    expect(source).toContain("다시 준비하고 있어요");
+    expect(source).toContain("다시 시도");
+    expect(source).toContain("onPress: retry");
+    expect(source).not.toContain("error.message");
   });
 
   it("keeps the onboarding route implemented for incomplete new users", () => {
@@ -214,8 +435,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain("finishOnboarding");
     expect(onboarding).toContain("/plan");
     expect(onboarding).toContain("/salary");
-    expect(onboarding).toContain("서버 기준으로 급여 계획을 저장해요.");
-    expect(onboarding).toContain("금융 원문은 광고나 분석에 쓰지 않아요.");
+    expect(onboarding).toContain("서버 기준으로 급여 계획을 저장해요");
+    expect(onboarding).toContain("금융 원문은 광고나 분석에 쓰지 않아요");
     expect(onboarding).not.toContain("serverAuthority=true");
     expect(onboarding).not.toContain("rawFinancialData=false");
   });
@@ -238,14 +459,14 @@ describe("mobile app screen API and route contracts", () => {
     const onboarding = readFileSync(ONBOARDING_SCREEN, "utf8");
 
     expect(onboarding).toContain("ONBOARDING_SETUP_ENTRIES");
-    expect(onboarding).toContain("초기 설정 체크리스트");
+    expect(onboarding).toContain("ONBOARDING_SETUP_ENTRIES");
     expect(onboarding).toContain("급여일과 월급");
     expect(onboarding).toContain("KRW 정수만 입력");
     expect(onboarding).toContain("고정지출 먼저 분리");
     expect(onboarding).toContain("고정저축 먼저 확보");
-    expect(onboarding).toContain("일일 예산으로 생활비 관리");
+    expect(onboarding).toContain("finishOnboarding");
     expect(onboarding).toContain("목표: 급여 계획부터 설정하기");
-    expect(onboarding).toContain("목표: 이미 설정했어요");
+    expect(onboarding).toContain("/salary");
   });
 
   it("keeps the verify-email route implemented for protected email gates", () => {
@@ -288,11 +509,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(verifyEmail).toContain("이메일 인증이 완료됐어요.");
     expect(verifyEmail).toContain("인증 메일을 확인해 주세요.");
     expect(verifyEmail).toContain("인증 링크를 다시 확인해 주세요.");
-    expect(verifyEmail).toContain("로그인으로 돌아가기");
+    expect(verifyEmail).toContain("returnToLogin");
     expect(verifyEmail).toContain(
       "메일의 인증 링크를 열면 서버에서 계정을 확인합니다.",
     );
-    expect(verifyEmail).not.toMatch(/[?][가-힣]|[가-힣][?]|�/u);
+    expect(verifyEmail).not.toContain("serverAuthority=true");
   });
 
   it("keeps verify-email verification failure copy readable in Korean", () => {

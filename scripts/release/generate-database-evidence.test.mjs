@@ -2,12 +2,30 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import test from "node:test";
+import test, { afterEach } from "node:test";
 
 import {
   buildDatabaseEvidence,
   writeDatabaseEvidenceFile,
 } from "./generate-database-evidence.mjs";
+
+const fixtureWorkspaces = new Set();
+
+const cleanupWorkspaces = () => {
+  for (const rootDir of fixtureWorkspaces) {
+    fs.rmSync(rootDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 3,
+      retryDelay: 100,
+    });
+    fixtureWorkspaces.delete(rootDir);
+  }
+};
+
+afterEach(() => {
+  cleanupWorkspaces();
+});
 
 const write = (rootDir, filePath, content = "") => {
   const target = path.join(rootDir, filePath);
@@ -17,6 +35,7 @@ const write = (rootDir, filePath, content = "") => {
 
 const makeWorkspace = () => {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "salary-db-evidence-"));
+  fixtureWorkspaces.add(rootDir);
   write(
     rootDir,
     "release/release-targets.json",
@@ -61,6 +80,15 @@ test("builds blocked database evidence from checked-in migrations without secret
   assert.equal(evidence.smoke.noRawFinancialDataInSmokePayloads, false);
   assert.equal(evidence.rollback.rollbackRehearsalVerified, false);
   assert.doesNotMatch(JSON.stringify(evidence), /postgres(?:ql)?:\/\//i);
+});
+
+test("cleans generated database evidence fixture workspaces", () => {
+  const rootDir = makeWorkspace();
+  assert.equal(fs.existsSync(rootDir), true);
+
+  cleanupWorkspaces();
+
+  assert.equal(fs.existsSync(rootDir), false);
 });
 
 test("uses a local proof file to mark verified database release gates", () => {
@@ -126,6 +154,7 @@ test("uses a local proof file to mark verified database release gates", () => {
   assert.equal(evidence.smoke.privacySmokeVerified, true);
   assert.equal(evidence.smoke.noRawFinancialDataInSmokePayloads, true);
   assert.equal(evidence.rollback.rollbackRehearsalVerified, true);
+  assert.deepEqual(evidence.nextEvidenceRequired, []);
 });
 
 test("uses staging smoke command proof by default when database proof file is absent", () => {

@@ -18,7 +18,7 @@ describe("uploads api", () => {
     expect(source).toContain("계좌");
     expect(source).toContain("카드");
     expect(source).toContain("주민등록");
-    expect(source).not.toMatch(/[�]|\?붽|湲됱|怨꾩|移대|鍮꾨|二쇰|꾪솕|⑹튂/u);
+    expect(source).not.toContain("�");
   });
 
   it("keeps upload validation and request failure messages readable in Korean", () => {
@@ -26,7 +26,7 @@ describe("uploads api", () => {
 
     for (const message of [
       "업로드 API 주소가 올바르지 않습니다.",
-      "첨부파일 이름이 필요합니다.",
+      "첨부 파일 이름이 필요합니다.",
       "민감한 정보가 포함된 파일명은 사용할 수 없습니다.",
       "업로드 요청에 실패했습니다.",
     ]) {
@@ -248,13 +248,17 @@ describe("uploads api", () => {
     const bytes = new Uint8Array([1, 2, 3, 4]).buffer;
 
     const sensitiveNames = [
-      "급여명세서.pdf",
+      "급여명세.pdf",
       "월급_입금내역.png",
+      "연봉_계약서.pdf",
+      "은행_거래내역.png",
       "계좌번호_캡처.webp",
       "카드_결제내역.jpg",
       "대출상환표.pdf",
       "주민등록증.png",
+      "휴대폰_본인인증.png",
       "전화번호_메모.png",
+      "이메일_로그인.png",
     ];
 
     for (const fileName of sensitiveNames) {

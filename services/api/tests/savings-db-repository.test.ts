@@ -201,4 +201,69 @@ describe("Neon savings repository", () => {
     expect(calls[0]?.sqlText).toContain("update public.savings_plans");
     expect(calls[0]?.params).toContain(userId);
   });
+
+  it("generates month-end adjusted upcoming occurrences for DB-backed monthly savings goals", async () => {
+    const repository = createNeonSavingsRepository({
+      query: async (_sqlText, _params, options) => {
+        if (options.operationName === "savings.upcoming") {
+          return {
+            rows: [
+              {
+                savings_plan_id: goalId,
+                payroll_plan_id: payrollPlanId,
+                saving_day: 31,
+                category: "ETC",
+                name: "Month-end travel fund",
+                amount: "200000",
+                recurrence_type: "MONTHLY",
+                status: "SCHEDULED",
+                transferred_at: null,
+                created_at: "2026-01-31T00:00:00.000Z",
+                updated_at: "2026-01-31T00:00:00.000Z",
+                cancelled_at: null,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const result = await repository.upcoming(
+      { fromDate: "2026-02-01", toDate: "2026-03-31" },
+      createRuntime("/api/v1/savings/upcoming"),
+    );
+
+    expect(result).toMatchObject({
+      fromDate: "2026-02-01",
+      toDate: "2026-03-31",
+      count: 2,
+      totalAmountMinor: 400_000,
+      serverAuthority: true,
+      financialRawAccountDataExposed: false,
+    });
+    expect(result.items).toEqual([
+      {
+        goalId,
+        title: "Month-end travel fund",
+        goalType: "CUSTOM",
+        dueDate: "2026-02-28",
+        amountMinor: 200_000,
+        autoSave: true,
+        status: "SCHEDULED",
+      },
+      {
+        goalId,
+        title: "Month-end travel fund",
+        goalType: "CUSTOM",
+        dueDate: "2026-03-31",
+        amountMinor: 200_000,
+        autoSave: true,
+        status: "SCHEDULED",
+      },
+    ]);
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain(payrollPlanId);
+  });
 });

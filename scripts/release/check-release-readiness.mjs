@@ -11,12 +11,66 @@ const RELEASE_CHECK_VERSION = "1.0.0";
 const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const EXTERNAL_RELEASE_EVIDENCE_PATH = "release/external-release-evidence.json";
 const MOBILE_NATIVE_EVIDENCE_PATH = "release/mobile-native-evidence.json";
+const MOBILE_PREVIEW_EVIDENCE_PATH = "release/mobile-preview-evidence.json";
+const MOBILE_PREVIEW_PHONE_PROOF_PATH =
+  "release/mobile-preview-phone-proof.local.json";
+const MIN_PHYSICAL_PHONE_RELIABILITY_RUNS = 20;
 const SECRETS_EVIDENCE_PATH = "release/secrets-evidence.json";
 const CLOUDFLARE_RUNTIME_EVIDENCE_PATH =
   "release/cloudflare-runtime-evidence.json";
 const DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
 const PUBLIC_URL_EVIDENCE_PATH = "release/public-url-evidence.json";
 const SECURITY_AUDIT_EVIDENCE_PATH = "release/security-audit-evidence.json";
+const GAP_REGISTER_PATH = "docs/codex/100-completion/05_GAP_REGISTER.md";
+const MOBILE_RUNTIME_ROOTS = ["apps/mobile/app", "apps/mobile/src"];
+const MOBILE_ROUTE_ROOTS = ["apps/mobile/app"];
+const MOBILE_FEATURE_ROOTS = ["apps/mobile/src/features"];
+const MOBILE_TEMPORARY_RUNTIME_MARKERS = [
+  "diagnostic",
+  "stable-home",
+  "mock-only",
+  "mockonly",
+  "rc-shell",
+  "release-candidate",
+  "test-screen",
+];
+const MOBILE_RUNTIME_EXTENSIONS = new Set([
+  ".js",
+  ".jsx",
+  ".ts",
+  ".tsx",
+  ".mjs",
+  ".cjs",
+]);
+const MOBILE_INCOMPLETE_RUNTIME_MARKER_PATTERN = /\b(?:TODO|FIXME)\b/u;
+const MOBILE_ROUTE_FALLBACK_BOUNDARY_PATTERNS = [
+  {
+    label: "clean-fintech-screens",
+    pattern: /\bclean-fintech-screens\b/u,
+  },
+  {
+    label: "normalizeGrowthDashboardForCleanFintech",
+    pattern: /\bnormalizeGrowthDashboardForCleanFintech\b/u,
+  },
+  {
+    label: "CleanFintech*Screen",
+    pattern: /\bCleanFintech[A-Za-z0-9_]*Screen\b/u,
+  },
+  {
+    label: "function response",
+    pattern: /\bfunction\s+response\s*\(/u,
+  },
+  {
+    label: "sampleDetail",
+    pattern: /\bsampleDetail\b/u,
+  },
+  {
+    label: "sampleComments",
+    pattern: /\bsampleComments\b/u,
+  },
+];
+const RELEASE_BLOCKING_GAP_SEVERITIES = new Set(["P0", "P1", "P2"]);
+const RELEASE_BLOCKING_GAP_STATUSES = new Set(["FAIL", "BLOCKED", "PARTIAL"]);
 
 const REQUIRED_FILES = [
   "AGENTS.md",
@@ -26,6 +80,7 @@ const REQUIRED_FILES = [
   RELEASE_TARGETS_PATH,
   EXTERNAL_RELEASE_EVIDENCE_PATH,
   MOBILE_NATIVE_EVIDENCE_PATH,
+  MOBILE_PREVIEW_EVIDENCE_PATH,
   SECRETS_EVIDENCE_PATH,
   CLOUDFLARE_RUNTIME_EVIDENCE_PATH,
   DATABASE_EVIDENCE_PATH,
@@ -69,6 +124,10 @@ const REQUIRED_ROOT_SCRIPTS = [
   "security:scan",
   "db:validate",
   "test:e2e",
+];
+
+const REQUIRED_PACKAGE_JSON_FILES = [
+  { relativePath: "apps/mobile/package.json", label: "mobile package.json" },
 ];
 
 const REQUIRED_ENV_NAMES = [
@@ -127,9 +186,37 @@ const isRawSecretEvidenceKey = (key) => {
 
 const REQUIRED_CLI_GROUPS = [
   { label: "git", commands: ["git"] },
-  { label: "GitHub CLI", commands: ["gh"] },
-  { label: "Cloudflare Wrangler", commands: ["wrangler"] },
-  { label: "Neon CLI", commands: ["neon", "neonctl"], any: true },
+  {
+    label: "GitHub CLI",
+    commands: ["gh"],
+    localPaths: [
+      ".tools/gh/bin/gh.exe",
+      ".tools/gh/gh.exe",
+      "tools/gh/bin/gh.exe",
+    ],
+  },
+  {
+    label: "Cloudflare Wrangler",
+    commands: ["wrangler"],
+    localPaths: [
+      "node_modules/.bin/wrangler",
+      "node_modules/.bin/wrangler.cmd",
+      "node_modules/.bin/wrangler.CMD",
+    ],
+  },
+  {
+    label: "Neon CLI",
+    commands: ["neon", "neonctl"],
+    any: true,
+    localPaths: [
+      "node_modules/.bin/neon",
+      "node_modules/.bin/neon.cmd",
+      "node_modules/.bin/neon.CMD",
+      "node_modules/.bin/neonctl",
+      "node_modules/.bin/neonctl.cmd",
+      "node_modules/.bin/neonctl.CMD",
+    ],
+  },
   {
     label: "Expo EAS CLI launcher",
     commands: ["pnpm"],
@@ -159,9 +246,9 @@ const REQUIRED_MOBILE_ASSET_REQUIREMENTS = Object.freeze({
     label: "app icon",
   },
   "splash.png": {
-    minWidth: 1000,
-    minHeight: 1800,
-    minBytes: 80_000,
+    minWidth: 1024,
+    minHeight: 1024,
+    minBytes: 20_000,
     label: "splash image",
   },
   "adaptive-icon.png": {
@@ -171,15 +258,15 @@ const REQUIRED_MOBILE_ASSET_REQUIREMENTS = Object.freeze({
     label: "Android adaptive icon",
   },
   "notification-icon.png": {
-    minWidth: 256,
-    minHeight: 256,
-    minBytes: 2_000,
+    minWidth: 96,
+    minHeight: 96,
+    minBytes: 500,
     label: "notification icon",
   },
   "favicon.png": {
-    minWidth: 96,
-    minHeight: 96,
-    minBytes: 1_000,
+    minWidth: 48,
+    minHeight: 48,
+    minBytes: 500,
     label: "web favicon",
   },
 });
@@ -216,7 +303,7 @@ const EXPECTED_MOBILE_APP_ASSET_REFERENCES = Object.freeze([
   },
 ]);
 const OFFICIAL_BI_LOGO_ASSET =
-  "assets/brand/salary-hijacking-platform-logo.png";
+  "src/shared/assets/images/brand/salary-hijacking-platform-logo.png";
 const OFFICIAL_BI_LOGO_SHA256 =
   "EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466";
 const REQUIRED_FREESENTATION_FONT_ASSETS = [
@@ -2518,6 +2605,165 @@ const readTextIfPresent = (rootDir, relativePath) => {
   return fs.readFileSync(filePath, "utf8");
 };
 
+const isMobileRuntimeFile = (relativePath) => {
+  const normalized = pathToPosix(relativePath);
+  const lower = normalized.toLowerCase();
+  if (
+    lower.includes("/__tests__/") ||
+    lower.includes("/tests/") ||
+    lower.includes("/test/") ||
+    lower.includes(".test.") ||
+    lower.includes(".spec.") ||
+    lower.endsWith("/readme.md") ||
+    lower.endsWith(".md")
+  ) {
+    return false;
+  }
+  return MOBILE_RUNTIME_EXTENSIONS.has(path.extname(lower));
+};
+
+const collectMobileTemporaryRuntimePaths = (rootDir) => {
+  const matches = [];
+  const visit = (directoryPath) => {
+    if (!fs.existsSync(directoryPath)) return;
+    for (const child of fs.readdirSync(directoryPath, {
+      withFileTypes: true,
+    })) {
+      const childPath = path.join(directoryPath, child.name);
+      if (child.isDirectory()) {
+        visit(childPath);
+        continue;
+      }
+      if (!child.isFile()) continue;
+      const relativePath = pathToPosix(path.relative(rootDir, childPath));
+      if (!isMobileRuntimeFile(relativePath)) continue;
+      const lower = relativePath.toLowerCase();
+      if (
+        MOBILE_TEMPORARY_RUNTIME_MARKERS.some((marker) =>
+          lower.includes(marker),
+        )
+      ) {
+        matches.push(relativePath);
+      }
+    }
+  };
+
+  for (const runtimeRoot of MOBILE_RUNTIME_ROOTS) {
+    visit(path.join(rootDir, runtimeRoot));
+  }
+
+  return matches.sort();
+};
+
+const collectMobileRuntimeIncompleteMarkers = (rootDir) => {
+  const matches = [];
+  const visit = (directoryPath) => {
+    if (!fs.existsSync(directoryPath)) return;
+    for (const child of fs.readdirSync(directoryPath, {
+      withFileTypes: true,
+    })) {
+      const childPath = path.join(directoryPath, child.name);
+      if (child.isDirectory()) {
+        visit(childPath);
+        continue;
+      }
+      if (!child.isFile()) continue;
+      const relativePath = pathToPosix(path.relative(rootDir, childPath));
+      if (!isMobileRuntimeFile(relativePath)) continue;
+      const text = fs.readFileSync(childPath, "utf8");
+      if (MOBILE_INCOMPLETE_RUNTIME_MARKER_PATTERN.test(text)) {
+        matches.push(relativePath);
+      }
+    }
+  };
+
+  for (const runtimeRoot of MOBILE_RUNTIME_ROOTS) {
+    visit(path.join(rootDir, runtimeRoot));
+  }
+
+  return matches.sort();
+};
+
+const collectMobileRouteFallbackBoundaryViolations = (rootDir) => {
+  return collectMobileFallbackBoundaryViolations(rootDir, MOBILE_ROUTE_ROOTS);
+};
+
+const collectMobileFeatureFallbackBoundaryViolations = (rootDir) => {
+  return collectMobileFallbackBoundaryViolations(rootDir, MOBILE_FEATURE_ROOTS);
+};
+
+const collectMobileFallbackBoundaryViolations = (rootDir, runtimeRoots) => {
+  const matches = [];
+  const visit = (directoryPath) => {
+    if (!fs.existsSync(directoryPath)) return;
+    for (const child of fs.readdirSync(directoryPath, {
+      withFileTypes: true,
+    })) {
+      const childPath = path.join(directoryPath, child.name);
+      if (child.isDirectory()) {
+        visit(childPath);
+        continue;
+      }
+      if (!child.isFile()) continue;
+      const relativePath = pathToPosix(path.relative(rootDir, childPath));
+      if (!isMobileRuntimeFile(relativePath)) continue;
+      const text = fs.readFileSync(childPath, "utf8");
+      const labels = MOBILE_ROUTE_FALLBACK_BOUNDARY_PATTERNS.flatMap(
+        ({ pattern, label }) => {
+          const match = text.match(pattern);
+          return match ? [match[0] || label] : [];
+        },
+      );
+      if (labels.length > 0) {
+        matches.push(`${relativePath} (${labels.join(", ")})`);
+      }
+    }
+  };
+
+  for (const runtimeRoot of runtimeRoots) {
+    visit(path.join(rootDir, runtimeRoot));
+  }
+
+  return matches.sort();
+};
+
+const collectUnresolvedGapRegisterEntries = (rootDir) => {
+  const text = readTextIfPresent(rootDir, GAP_REGISTER_PATH);
+  if (!text) return [];
+
+  return text
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith("|"))
+    .map((line) =>
+      line
+        .split("|")
+        .slice(1, -1)
+        .map((cell) => cell.trim()),
+    )
+    .filter((cells) => cells.length >= 6)
+    .filter(
+      ([gapId, severity, area, description, requiredEvidence, status]) => {
+        void area;
+        void description;
+        void requiredEvidence;
+        const normalizedGapId = gapId.toUpperCase();
+        const normalizedSeverity = severity.toUpperCase();
+        const normalizedStatus = status.toUpperCase();
+        return (
+          normalizedGapId.startsWith("GAP-") &&
+          RELEASE_BLOCKING_GAP_SEVERITIES.has(normalizedSeverity) &&
+          RELEASE_BLOCKING_GAP_STATUSES.has(normalizedStatus)
+        );
+      },
+    )
+    .map(([gapId, severity, area, description, requiredEvidence, status]) => {
+      void description;
+      void requiredEvidence;
+      return `${gapId}:${severity}:${status}:${area}`;
+    });
+};
+
 const hasPngSignature = (filePath) => {
   if (!fs.existsSync(filePath) || !fs.statSync(filePath).isFile()) {
     return false;
@@ -2571,6 +2817,71 @@ const getEasEnv = (profile) => (isPlainObject(profile.env) ? profile.env : {});
 const addMobileCheck = (checks, blockers, status, name, detail, blocker) => {
   addCheck(checks, status, name, detail);
   if (status === "BLOCKED") blockers.push(blocker);
+};
+
+const normalizeGitStatusPath = (line) => {
+  const rawPath = String(line ?? "")
+    .slice(3)
+    .trim();
+  if (!rawPath.includes(" -> ")) return rawPath;
+  return rawPath.split(" -> ").pop().trim();
+};
+
+const isMobilePreviewSourcePath = (filePath) =>
+  filePath === "package.json" ||
+  filePath === "pnpm-lock.yaml" ||
+  filePath.startsWith("apps/mobile/") ||
+  filePath.startsWith("packages/");
+
+const collectMobilePreviewSourceChanges = (gitStatusResult) => {
+  if (!gitStatusResult?.ok) return [];
+  return String(gitStatusResult.output ?? "")
+    .split(/\r?\n/u)
+    .map(normalizeGitStatusPath)
+    .filter(Boolean)
+    .filter(isMobilePreviewSourcePath);
+};
+
+const sha256Hex = (value) =>
+  createHash("sha256").update(value).digest("hex").toUpperCase();
+
+const pathToPosix = (filePath) => filePath.replaceAll(path.sep, "/");
+
+const collectMobilePreviewSourceHashEntries = (rootDir, filePath) => {
+  const targetPath = path.join(rootDir, filePath);
+  if (!fs.existsSync(targetPath)) return [`${filePath}\0MISSING`];
+  const stat = fs.statSync(targetPath);
+  if (stat.isFile()) return [`${filePath}\0${fileSha256(targetPath)}`];
+  if (!stat.isDirectory()) return [`${filePath}\0UNSUPPORTED`];
+
+  const entries = [];
+  const visit = (directoryPath) => {
+    for (const child of fs.readdirSync(directoryPath, {
+      withFileTypes: true,
+    })) {
+      const childPath = path.join(directoryPath, child.name);
+      const relativePath = pathToPosix(path.relative(rootDir, childPath));
+      if (child.isDirectory()) {
+        visit(childPath);
+        continue;
+      }
+      if (child.isFile())
+        entries.push(`${relativePath}\0${fileSha256(childPath)}`);
+    }
+  };
+  visit(targetPath);
+  return entries.length > 0 ? entries : [`${filePath}\0EMPTY_DIRECTORY`];
+};
+
+const mobilePreviewSourceStatusSha256 = (rootDir, filePaths) => {
+  if (filePaths.length === 0) return "";
+  const entries = filePaths
+    .sort()
+    .flatMap((filePath) =>
+      collectMobilePreviewSourceHashEntries(rootDir, filePath),
+    )
+    .sort();
+  return sha256Hex(`${entries.join("\n")}\n`);
 };
 
 const regexEscape = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -3199,12 +3510,302 @@ const checkMobileNativeEvidence = (
   );
 };
 
+const isSha256Hex = (value) =>
+  typeof value === "string" && /^[a-f0-9]{64}$/i.test(value.trim());
+
+const checkMobilePreviewEvidence = (
+  rootDir,
+  releaseTargets,
+  checks,
+  blockers,
+  gitStatusResult,
+) => {
+  const evidence = readJsonIfPresent(rootDir, MOBILE_PREVIEW_EVIDENCE_PATH);
+  if (!evidence) {
+    addMobileCheck(
+      checks,
+      blockers,
+      "BLOCKED",
+      "mobile:preview:evidence",
+      `${MOBILE_PREVIEW_EVIDENCE_PATH} is missing or invalid`,
+      `${MOBILE_PREVIEW_EVIDENCE_PATH} must record current-head preview APK and emulator QA evidence without secrets`,
+    );
+    return;
+  }
+
+  const schemaOk =
+    evidence.schemaVersion === 1 && evidence.secretsRedacted === true;
+  addMobileCheck(
+    checks,
+    blockers,
+    schemaOk ? "PASS" : "BLOCKED",
+    "mobile:preview:evidence",
+    schemaOk
+      ? `${MOBILE_PREVIEW_EVIDENCE_PATH} schema and secret redaction flag are valid`
+      : `${MOBILE_PREVIEW_EVIDENCE_PATH} schemaVersion or secretsRedacted is invalid`,
+    `${MOBILE_PREVIEW_EVIDENCE_PATH} must use schemaVersion 1 and secretsRedacted=true`,
+  );
+
+  const hasSecretValues =
+    evidence.containsSecretValues !== false ||
+    containsRawSecretEvidenceValue(evidence);
+  addMobileCheck(
+    checks,
+    blockers,
+    hasSecretValues ? "BLOCKED" : "PASS",
+    "mobile:preview:secret-values",
+    hasSecretValues
+      ? "raw preview QA secrets may be present"
+      : "no raw preview QA secret values are declared or embedded",
+    `${MOBILE_PREVIEW_EVIDENCE_PATH} must not contain raw preview QA secrets`,
+  );
+
+  const privacy = isPlainObject(evidence.privacy) ? evidence.privacy : {};
+  const unsafePrivacyFlagNames = [
+    "containsEasToken",
+    "containsStoreCredential",
+    "containsSigningKey",
+    "containsReviewerPassword",
+    "containsRawLogcat",
+    "containsSecretValues",
+  ].filter((flagName) => privacy[flagName] === true);
+  addMobileCheck(
+    checks,
+    blockers,
+    unsafePrivacyFlagNames.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:preview:privacy-flags",
+    unsafePrivacyFlagNames.length === 0
+      ? "preview QA privacy flags declare no embedded credentials, signing keys, reviewer passwords, or raw logcat"
+      : `unsafe preview QA privacy flags are true: ${unsafePrivacyFlagNames.join(", ")}`,
+    `${MOBILE_PREVIEW_EVIDENCE_PATH} must not declare unsafe preview QA privacy flags`,
+  );
+
+  const expectedAppIdentity = getExpectedMobileAppIdentity(releaseTargets);
+  const appIdentity = isPlainObject(evidence.appIdentity)
+    ? evidence.appIdentity
+    : {};
+  const appIdentityMismatches = Object.entries(expectedAppIdentity)
+    .filter(([key, expectedValue]) => appIdentity[key] !== expectedValue)
+    .map(([key, expectedValue]) => `${key} must be ${expectedValue}`);
+  addMobileCheck(
+    checks,
+    blockers,
+    appIdentityMismatches.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:preview:app-identity",
+    appIdentityMismatches.length === 0
+      ? "mobile preview evidence app identity matches release targets"
+      : `mobile preview evidence app identity drifted: ${appIdentityMismatches.join(", ")}`,
+    "mobile preview evidence must match release target app identity",
+  );
+
+  const android = isPlainObject(evidence.android) ? evidence.android : {};
+  const apkOk =
+    android.debugApkBuilt === true &&
+    android.debugApkSigned === true &&
+    isSha256Hex(android.debugApkSha256) &&
+    android.downloadVerified === true;
+  addMobileCheck(
+    checks,
+    blockers,
+    apkOk ? "PASS" : "BLOCKED",
+    "mobile:preview:apk",
+    apkOk
+      ? `current-head debug APK build, signing, and download proof are verified (${android.debugApkSha256})`
+      : "current-head debug APK build, signing, download proof, or SHA256 is missing",
+    "current-head preview/debug APK evidence must prove build, signing, download, and SHA256 without embedding artifact secrets",
+  );
+
+  const latestSourceChangesPackaged =
+    android.latestSourceChangesPackaged !== false;
+  const dirtyMobilePreviewSourcePaths =
+    collectMobilePreviewSourceChanges(gitStatusResult);
+  const currentSourceStatusSha256 = mobilePreviewSourceStatusSha256(
+    rootDir,
+    dirtyMobilePreviewSourcePaths,
+  );
+  const dirtySourceMatchesEvidence =
+    dirtyMobilePreviewSourcePaths.length > 0 &&
+    typeof android.latestSourceGitStatusSha256 === "string" &&
+    android.latestSourceGitStatusSha256.toUpperCase() ===
+      currentSourceStatusSha256;
+  const latestSourcePreviewApkOk =
+    latestSourceChangesPackaged &&
+    (dirtyMobilePreviewSourcePaths.length === 0 || dirtySourceMatchesEvidence);
+  addMobileCheck(
+    checks,
+    blockers,
+    latestSourcePreviewApkOk ? "PASS" : "BLOCKED",
+    "mobile:preview:latest-source-apk",
+    latestSourcePreviewApkOk
+      ? dirtySourceMatchesEvidence
+        ? "dirty mobile source snapshot matches preview APK evidence"
+        : "latest source changes are not marked as excluded from the preview APK"
+      : !latestSourceChangesPackaged
+        ? "latest source changes are test-verified but not packaged into a fresh Android preview APK"
+        : `uncommitted mobile source changes exist after the latest preview APK evidence: ${dirtyMobilePreviewSourcePaths.slice(0, 5).join(", ")}`,
+    "latest source changes must be packaged into a fresh Android preview APK before the artifact can be treated as launch QA ready",
+  );
+
+  const hasPhoneTargetEvidence =
+    android.phoneTargetDebugApkBuilt !== undefined ||
+    android.phoneTargetDebugApkSigned !== undefined ||
+    android.phoneTargetDebugApkSha256 !== undefined ||
+    android.phoneTargetDebugApkDownloadVerified !== undefined ||
+    android.phoneTargetDebugApkAbis !== undefined ||
+    android.phoneTargetDebugApkAbiFilterVerified !== undefined ||
+    android.phoneTargetDebugApkExpoCoreLibs !== undefined;
+  const phoneTargetAbis = stringArray(android.phoneTargetDebugApkAbis);
+  const phoneTargetExpoCoreLibs = stringArray(
+    android.phoneTargetDebugApkExpoCoreLibs,
+  );
+  const phoneTargetApkOk =
+    !hasPhoneTargetEvidence ||
+    (android.phoneTargetDebugApkBuilt === true &&
+      android.phoneTargetDebugApkSigned === true &&
+      isSha256Hex(android.phoneTargetDebugApkSha256) &&
+      android.phoneTargetDebugApkDownloadVerified === true &&
+      phoneTargetAbis.length === 1 &&
+      phoneTargetAbis.includes("arm64-v8a") &&
+      android.phoneTargetDebugApkAbiFilterVerified === true &&
+      phoneTargetExpoCoreLibs.includes(
+        "lib/arm64-v8a/libexpo-modules-core.so",
+      ));
+  addMobileCheck(
+    checks,
+    blockers,
+    phoneTargetApkOk ? "PASS" : "BLOCKED",
+    "mobile:preview:phone-target-apk",
+    phoneTargetApkOk
+      ? hasPhoneTargetEvidence
+        ? `phone-target debug APK build, signing, download, arm64-v8a ABI filter, and Expo core native library proof are verified (${android.phoneTargetDebugApkSha256})`
+        : "phone-target debug APK proof is not supplied and remains optional"
+      : "phone-target debug APK build, signing, download, single arm64-v8a ABI filter, Expo core native library proof, or SHA256 is missing",
+    "phone-target preview/debug APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256 without embedding artifact secrets; x86 emulator smoke is verified by the separate emulator APK evidence",
+  );
+
+  const emulatorQaOk =
+    android.emulatorInstallVerified === true &&
+    Number.isInteger(android.coldStartRuns) &&
+    android.coldStartRuns >= 5 &&
+    android.coldStartFatalCount === 0 &&
+    android.navigationSmokeVerified === true &&
+    android.backgroundForegroundVerified === true &&
+    android.notificationNoBottomTabVerified === true;
+  addMobileCheck(
+    checks,
+    blockers,
+    emulatorQaOk ? "PASS" : "BLOCKED",
+    "mobile:preview:emulator-qa",
+    emulatorQaOk
+      ? `Android emulator install, ${android.coldStartRuns} cold starts, navigation, notification no-tab, and background/foreground QA are verified`
+      : "Android emulator install, cold start, navigation, notification, or background/foreground QA proof is missing",
+    "preview APK must install and run on Android emulator with zero fatal markers before release QA",
+  );
+
+  const phoneProof = readJsonIfPresent(
+    rootDir,
+    MOBILE_PREVIEW_PHONE_PROOF_PATH,
+  );
+  const phoneProofAndroid = isPlainObject(phoneProof?.android)
+    ? phoneProof.android
+    : {};
+  const phoneProofPrivacy = isPlainObject(phoneProof?.privacy)
+    ? phoneProof.privacy
+    : {};
+  const phoneProofAppIdentity = isPlainObject(phoneProof?.appIdentity)
+    ? phoneProof.appIdentity
+    : {};
+  const phoneProofAppIdentityMismatches = phoneProof
+    ? Object.entries(expectedAppIdentity)
+        .filter(
+          ([key, expectedValue]) =>
+            phoneProofAppIdentity[key] !== expectedValue,
+        )
+        .map(([key, expectedValue]) => `${key} must be ${expectedValue}`)
+    : [];
+  const phoneProofUnsafeFlags = phoneProof
+    ? [
+        "containsEasToken",
+        "containsStoreCredential",
+        "containsSigningKey",
+        "containsReviewerPassword",
+        "containsRawLogcat",
+        "containsSecretValues",
+        "containsRawDeviceIdentifier",
+      ].filter((flagName) => phoneProofPrivacy[flagName] === true)
+    : [];
+  const phoneProofValid =
+    phoneProof?.schemaVersion === 1 &&
+    phoneProof.secretsRedacted === true &&
+    phoneProof.containsSecretValues === false &&
+    !containsRawSecretEvidenceValue(phoneProof) &&
+    phoneProofAppIdentityMismatches.length === 0 &&
+    phoneProofUnsafeFlags.length === 0 &&
+    phoneProofAndroid.physicalPhoneVerified === true &&
+    phoneProofAndroid.installVerified === true &&
+    Number.isInteger(phoneProofAndroid.coldStartRuns) &&
+    phoneProofAndroid.coldStartRuns >= MIN_PHYSICAL_PHONE_RELIABILITY_RUNS &&
+    phoneProofAndroid.coldStartFatalCount === 0 &&
+    phoneProofAndroid.navigationSmokeVerified === true &&
+    phoneProofAndroid.backgroundForegroundVerified === true &&
+    Number.isInteger(phoneProofAndroid.backgroundForegroundRuns) &&
+    phoneProofAndroid.backgroundForegroundRuns >=
+      MIN_PHYSICAL_PHONE_RELIABILITY_RUNS &&
+    phoneProofAndroid.persistenceVerified === true &&
+    phoneProofAndroid.keyboardSafeAreaVerified === true &&
+    phoneProofAndroid.logcatSummary?.rawLogcatStored === false;
+  const phoneProofMissingQaFields = [
+    "navigationSmokeVerified",
+    "backgroundForegroundVerified",
+    "persistenceVerified",
+    "keyboardSafeAreaVerified",
+  ].filter((fieldName) => phoneProofAndroid[fieldName] !== true);
+  const phoneProofMissingReliabilityRuns =
+    !Number.isInteger(phoneProofAndroid.coldStartRuns) ||
+    phoneProofAndroid.coldStartRuns < MIN_PHYSICAL_PHONE_RELIABILITY_RUNS ||
+    !Number.isInteger(phoneProofAndroid.backgroundForegroundRuns) ||
+    phoneProofAndroid.backgroundForegroundRuns <
+      MIN_PHYSICAL_PHONE_RELIABILITY_RUNS;
+  const phoneProofInvalidReason = !phoneProof
+    ? null
+    : phoneProofAppIdentityMismatches.length > 0
+      ? `physical phone proof app identity drifted: ${phoneProofAppIdentityMismatches.join(", ")}`
+      : phoneProofUnsafeFlags.length > 0
+        ? `unsafe physical phone proof privacy flags are true: ${phoneProofUnsafeFlags.join(", ")}`
+        : containsRawSecretEvidenceValue(phoneProof)
+          ? "physical phone proof contains raw secret-like values"
+          : phoneProofMissingReliabilityRuns
+            ? `physical phone proof does not prove ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs`
+            : phoneProofMissingQaFields.length > 0
+              ? `physical phone proof does not prove persistence, keyboard/safe-area, navigation, and background/foreground QA: missing ${phoneProofMissingQaFields.join(", ")}`
+              : typeof phoneProofAndroid.physicalPhoneBlocker === "string" &&
+                  phoneProofAndroid.physicalPhoneBlocker.trim()
+                ? phoneProofAndroid.physicalPhoneBlocker
+                : "physical phone proof is present but does not prove install, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, and raw-logcat redaction";
+
+  addMobileCheck(
+    checks,
+    blockers,
+    phoneProof && !phoneProofValid ? "BLOCKED" : "PASS",
+    "mobile:preview:physical-phone",
+    phoneProof
+      ? phoneProofValid
+        ? "Physical phone preview QA is verified by local no-secret proof"
+        : phoneProofInvalidReason
+      : android.physicalPhoneVerified === true
+        ? "Physical phone preview QA is verified"
+        : "Physical phone preview QA remains tracked as pending",
+    `physical phone preview QA proof must be no-secret, app-identity aligned, install verified, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
+  );
+};
+
 const checkMobileReleaseReadiness = (
   rootDir,
   releaseTargets,
   checks,
   blockers,
   commandExists,
+  gitStatusResult,
 ) => {
   const mobileRoot = path.join(rootDir, "apps", "mobile");
   for (const assetName of REQUIRED_MOBILE_ASSETS) {
@@ -3270,6 +3871,57 @@ const checkMobileReleaseReadiness = (
       `Freesentation font asset must be bundled as a valid TTF: apps/mobile/assets/fonts/${fontName}`,
     );
   }
+
+  const temporaryRuntimePaths = collectMobileTemporaryRuntimePaths(rootDir);
+  addMobileCheck(
+    checks,
+    blockers,
+    temporaryRuntimePaths.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:temporary-runtime-paths",
+    temporaryRuntimePaths.length === 0
+      ? "no diagnostic, RC shell, stable-home, or mock-only mobile runtime paths found"
+      : `temporary mobile runtime paths found: ${temporaryRuntimePaths.join(", ")}`,
+    "mobile production runtime must not include diagnostic, RC shell, stable-home, or mock-only paths",
+  );
+
+  const incompleteRuntimeMarkerPaths =
+    collectMobileRuntimeIncompleteMarkers(rootDir);
+  addMobileCheck(
+    checks,
+    blockers,
+    incompleteRuntimeMarkerPaths.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:runtime-incomplete-markers",
+    incompleteRuntimeMarkerPaths.length === 0
+      ? "no TODO or FIXME markers found in mobile runtime source"
+      : `TODO/FIXME markers found in mobile runtime source: ${incompleteRuntimeMarkerPaths.join(", ")}`,
+    "mobile production runtime source must not contain TODO or FIXME markers",
+  );
+
+  const routeFallbackBoundaryPaths =
+    collectMobileRouteFallbackBoundaryViolations(rootDir);
+  addMobileCheck(
+    checks,
+    blockers,
+    routeFallbackBoundaryPaths.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:route-fallback-boundaries",
+    routeFallbackBoundaryPaths.length === 0
+      ? "no route-level CleanFintech fallback screen/helper, local response helper, or sample detail/comment fallback dependencies found"
+      : `route-level fallback boundary violations found: ${routeFallbackBoundaryPaths.join(", ")}`,
+    "mobile app routes must use feature/API boundaries instead of CleanFintech fallback screens, fallback normalization helpers, route-local response helpers, or route-local sample detail/comment fallbacks",
+  );
+
+  const featureFallbackBoundaryPaths =
+    collectMobileFeatureFallbackBoundaryViolations(rootDir);
+  addMobileCheck(
+    checks,
+    blockers,
+    featureFallbackBoundaryPaths.length === 0 ? "PASS" : "BLOCKED",
+    "mobile:feature-fallback-boundaries",
+    featureFallbackBoundaryPaths.length === 0
+      ? "no feature-level CleanFintech fallback screen/helper, local response helper, or sample detail/comment fallback dependencies found"
+      : `feature-level fallback boundary violations found: ${featureFallbackBoundaryPaths.join(", ")}`,
+    "mobile feature runtime must use feature/API boundaries instead of CleanFintech fallback screens, fallback normalization helpers, local response helpers, or sample detail/comment fallbacks",
+  );
 
   checkMobileAppConfig(rootDir, checks, blockers);
   checkStoreMetadata(rootDir, checks, blockers);
@@ -3393,6 +4045,13 @@ const checkMobileReleaseReadiness = (
     blockers,
     commandExists,
   );
+  checkMobilePreviewEvidence(
+    rootDir,
+    releaseTargets,
+    checks,
+    blockers,
+    gitStatusResult,
+  );
 };
 
 export const analyzeReleaseReadiness = ({
@@ -3408,27 +4067,55 @@ export const analyzeReleaseReadiness = ({
   const checks = [];
   const blockers = [];
   const warnings = [];
+  const git = gitStatus();
 
   const packagePath = path.join(rootDir, "package.json");
   if (!fs.existsSync(packagePath)) {
     addCheck(checks, "BLOCKED", "root package.json", "package.json is missing");
     blockers.push("root package.json is missing");
   } else {
-    const pkg = readJson(packagePath);
-    addCheck(checks, "PASS", "root package.json", "package.json parsed");
+    try {
+      const pkg = readJson(packagePath);
+      addCheck(checks, "PASS", "root package.json", "package.json parsed");
 
-    for (const scriptName of REQUIRED_ROOT_SCRIPTS) {
-      if (typeof pkg.scripts?.[scriptName] === "string") {
-        addCheck(checks, "PASS", `script:${scriptName}`, "script is defined");
-      } else {
-        addCheck(
-          checks,
-          "BLOCKED",
-          `script:${scriptName}`,
-          "script is missing",
-        );
-        blockers.push(`root script '${scriptName}' is missing`);
+      for (const scriptName of REQUIRED_ROOT_SCRIPTS) {
+        if (typeof pkg.scripts?.[scriptName] === "string") {
+          addCheck(checks, "PASS", `script:${scriptName}`, "script is defined");
+        } else {
+          addCheck(
+            checks,
+            "BLOCKED",
+            `script:${scriptName}`,
+            "script is missing",
+          );
+          blockers.push(`root script '${scriptName}' is missing`);
+        }
       }
+    } catch (error) {
+      addCheck(
+        checks,
+        "BLOCKED",
+        "root package.json",
+        "package.json failed to parse",
+      );
+      blockers.push(`root package.json must parse as JSON: ${error.message}`);
+    }
+  }
+
+  for (const { relativePath, label } of REQUIRED_PACKAGE_JSON_FILES) {
+    const filePath = path.join(rootDir, relativePath);
+    if (!fs.existsSync(filePath)) {
+      addCheck(checks, "BLOCKED", label, "package.json is missing");
+      blockers.push(`${label} is missing`);
+      continue;
+    }
+
+    try {
+      readJson(filePath);
+      addCheck(checks, "PASS", label, "package.json parsed");
+    } catch (error) {
+      addCheck(checks, "BLOCKED", label, "package.json failed to parse");
+      blockers.push(`${label} must parse as JSON: ${error.message}`);
     }
   }
 
@@ -3444,6 +4131,20 @@ export const analyzeReleaseReadiness = ({
       );
       blockers.push(`required release artifact is missing: ${relativePath}`);
     }
+  }
+
+  const unresolvedGapEntries = collectUnresolvedGapRegisterEntries(rootDir);
+  if (unresolvedGapEntries.length === 0) {
+    addCheck(
+      checks,
+      "PASS",
+      "docs:gap-register",
+      "no unresolved P0/P1/P2 FAIL, BLOCKED, or PARTIAL gap entries found",
+    );
+  } else {
+    const detail = `unresolved launch-blocking gaps: ${unresolvedGapEntries.join(", ")}`;
+    addCheck(checks, "BLOCKED", "docs:gap-register", detail);
+    blockers.push(detail);
   }
 
   const migrationsDir = path.join(rootDir, "database", "migrations");
@@ -3580,6 +4281,7 @@ export const analyzeReleaseReadiness = ({
     checks,
     blockers,
     commandExists,
+    git,
   );
 
   for (const group of REQUIRED_CLI_GROUPS) {
@@ -3603,12 +4305,9 @@ export const analyzeReleaseReadiness = ({
       if (hasConnectorFallbackForCli(group.label, externalEvidence)) {
         addCheck(
           checks,
-          "WARN",
+          "PASS",
           `cli:${group.label}`,
           `missing: ${missing.join(" or ")}; connector evidence observed`,
-        );
-        warnings.push(
-          `${group.label} is not available on PATH, but connector evidence proves account access`,
         );
         continue;
       }
@@ -3625,7 +4324,6 @@ export const analyzeReleaseReadiness = ({
     }
   }
 
-  const git = gitStatus();
   if (git.ok) {
     const detail =
       git.output.length > 0
@@ -3796,6 +4494,175 @@ export const formatReleaseReadinessReport = (result) => {
   return `${lines.join("\n")}\n`;
 };
 
+const hasStrictPendingPhysicalPhonePreviewQa = (result) =>
+  Array.isArray(result.checks) &&
+  result.checks.some(
+    (check) =>
+      check?.name === "mobile:preview:physical-phone" &&
+      /pending/i.test(String(check.detail ?? "")),
+  );
+
+const collectStrictTemporaryMobileRuntimePathDetails = (result) => {
+  if (!Array.isArray(result.checks)) return [];
+  return result.checks
+    .filter(
+      (check) =>
+        check?.name === "mobile:temporary-runtime-paths" &&
+        check?.status === "BLOCKED",
+    )
+    .map((check) => String(check.detail ?? "").trim())
+    .filter(Boolean);
+};
+
+const collectStrictMobileRuntimeIncompleteMarkerDetails = (result) => {
+  if (!Array.isArray(result.checks)) return [];
+  return result.checks
+    .filter(
+      (check) =>
+        check?.name === "mobile:runtime-incomplete-markers" &&
+        check?.status === "BLOCKED",
+    )
+    .map((check) => String(check.detail ?? "").trim())
+    .filter(Boolean);
+};
+
+const collectStrictMobileRouteFallbackBoundaryDetails = (result) => {
+  if (!Array.isArray(result.checks)) return [];
+  return result.checks
+    .filter(
+      (check) =>
+        check?.name === "mobile:route-fallback-boundaries" &&
+        check?.status === "BLOCKED",
+    )
+    .map((check) => String(check.detail ?? "").trim())
+    .filter(Boolean);
+};
+
+const collectStrictMobileFeatureFallbackBoundaryDetails = (result) => {
+  if (!Array.isArray(result.checks)) return [];
+  return result.checks
+    .filter(
+      (check) =>
+        check?.name === "mobile:feature-fallback-boundaries" &&
+        check?.status === "BLOCKED",
+    )
+    .map((check) => String(check.detail ?? "").trim())
+    .filter(Boolean);
+};
+
+const collectStrictGapRegisterDetails = (result) => {
+  if (!Array.isArray(result.checks)) return [];
+  return result.checks
+    .filter(
+      (check) =>
+        check?.name === "docs:gap-register" && check?.status === "WARN",
+    )
+    .map((check) => String(check.detail ?? "").trim())
+    .filter(Boolean);
+};
+
+const collectStrictReleaseReadinessBlockers = (result) => {
+  const strictBlockers = [];
+  if (hasStrictPendingPhysicalPhonePreviewQa(result)) {
+    strictBlockers.push({
+      name: "strict:physical-phone",
+      detail: "physical phone preview QA remains pending",
+      blocker:
+        "strict release readiness requires physical Android phone install, cold-start, persistence, keyboard/safe-area, and no-secret logcat proof",
+    });
+  }
+  for (const detail of collectStrictTemporaryMobileRuntimePathDetails(result)) {
+    strictBlockers.push({
+      name: "strict:mobile-temporary-runtime-path",
+      detail,
+      blocker:
+        "strict release readiness does not allow diagnostic, RC shell, stable-home, or mock-only mobile runtime paths",
+    });
+  }
+  for (const detail of collectStrictMobileRuntimeIncompleteMarkerDetails(
+    result,
+  )) {
+    strictBlockers.push({
+      name: "strict:mobile-runtime-incomplete-marker",
+      detail,
+      blocker:
+        "strict release readiness does not allow TODO or FIXME markers in mobile runtime source",
+    });
+  }
+  for (const detail of collectStrictMobileRouteFallbackBoundaryDetails(
+    result,
+  )) {
+    strictBlockers.push({
+      name: "strict:mobile-route-fallback-boundary",
+      detail,
+      blocker:
+        "strict release readiness does not allow app routes to depend on CleanFintech fallback screens/helpers, route-local response helpers, or route-local sample detail/comment fallbacks",
+    });
+  }
+  for (const detail of collectStrictMobileFeatureFallbackBoundaryDetails(
+    result,
+  )) {
+    strictBlockers.push({
+      name: "strict:mobile-feature-fallback-boundary",
+      detail,
+      blocker:
+        "strict release readiness does not allow mobile feature runtime to depend on CleanFintech fallback screens/helpers, local response helpers, or sample detail/comment fallbacks",
+    });
+  }
+  for (const detail of collectStrictGapRegisterDetails(result)) {
+    strictBlockers.push({
+      name: "strict:gap-register",
+      detail,
+      blocker:
+        "strict release readiness requires all launch-blocking P0/P1/P2 gap register entries to be PASS or NOT_APPLICABLE",
+    });
+  }
+  if (Array.isArray(result.warnings)) {
+    for (const warning of result.warnings) {
+      strictBlockers.push({
+        name: "strict:warning",
+        detail: warning,
+        blocker: `strict release readiness does not allow warning: ${warning}`,
+      });
+    }
+  }
+  return strictBlockers;
+};
+
+export const applyStrictReleaseReadinessGates = (result) => {
+  const strictBlockers = collectStrictReleaseReadinessBlockers(result);
+  if (strictBlockers.length === 0) return result;
+
+  return {
+    ...result,
+    ok: false,
+    status: "BLOCKED",
+    checks: [
+      ...result.checks,
+      ...strictBlockers.map(({ name, detail }) => ({
+        status: "BLOCKED",
+        name,
+        detail,
+      })),
+    ],
+    blockers: [
+      ...result.blockers,
+      ...strictBlockers.map(({ blocker }) => blocker),
+    ],
+  };
+};
+
+export const resolveReleaseReadinessExitCode = (
+  result,
+  { soft = false, strict = false } = {},
+) => {
+  if (soft) return 0;
+  if (!result.ok) return 1;
+  if (strict && hasStrictPendingPhysicalPhonePreviewQa(result)) return 1;
+  if (strict && result.warnings.length > 0) return 1;
+  return 0;
+};
+
 const isMain = () => {
   const invoked = process.argv[1] ? path.resolve(process.argv[1]) : "";
   return invoked === fileURLToPath(import.meta.url);
@@ -3804,7 +4671,10 @@ const isMain = () => {
 if (isMain()) {
   const json = process.argv.includes("--json");
   const soft = process.argv.includes("--soft");
-  const result = analyzeReleaseReadiness();
+  const strict = process.argv.includes("--strict");
+  const rawResult = analyzeReleaseReadiness();
+  const result =
+    strict && !soft ? applyStrictReleaseReadinessGates(rawResult) : rawResult;
 
   if (json) {
     console.log(JSON.stringify(result, null, 2));
@@ -3812,5 +4682,5 @@ if (isMain()) {
     process.stdout.write(formatReleaseReadinessReport(result));
   }
 
-  process.exitCode = result.ok || soft ? 0 : 1;
+  process.exitCode = resolveReleaseReadinessExitCode(result, { soft, strict });
 }

@@ -83,3 +83,34 @@ test("accepts pnpm run argument separator before CLI options", async () => {
     await rm(rootDir, { recursive: true, force: true });
   }
 });
+
+test("reports sibling salary hijacking workspaces that can confuse Codex work", async () => {
+  const parentDir = await mkdtemp(path.join(tmpdir(), "salary-disk-parent-"));
+  const rootDir = path.join(parentDir, "salary-hijacking-platform");
+
+  try {
+    await touch(path.join(rootDir, "package.json"), 2);
+    await touch(path.join(parentDir, "salary-hijacking-main", "README.md"), 3);
+    await touch(path.join(parentDir, "salary-hijacking-work", "README.md"), 4);
+    await touch(path.join(parentDir, "unrelated-project", "README.md"), 5);
+
+    const report = await collectWorkspaceDiskUsage({
+      rootDir,
+      topLevelLimit: 5,
+    });
+
+    assert.deepEqual(
+      report.siblingSalaryWorkspaces.map((entry) => entry.name).sort(),
+      ["salary-hijacking-main", "salary-hijacking-work"],
+    );
+    assert.equal(report.siblingSalaryWorkspaces[0]?.rootDir, parentDir);
+    assert.equal(
+      report.siblingSalaryWorkspaces.some(
+        (entry) => entry.name === "salary-hijacking-platform",
+      ),
+      false,
+    );
+  } finally {
+    await rm(parentDir, { recursive: true, force: true });
+  }
+});

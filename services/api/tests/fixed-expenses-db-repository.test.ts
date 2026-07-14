@@ -205,4 +205,68 @@ describe("Neon fixed expenses repository", () => {
     expect(calls[0]?.sqlText).toContain("update public.fixed_expenses");
     expect(calls[0]?.params).toContain(userId);
   });
+
+  it("generates month-end adjusted upcoming occurrences for DB-backed monthly fixed expenses", async () => {
+    const repository = createNeonFixedExpensesRepository({
+      query: async (_sqlText, _params, options) => {
+        if (options.operationName === "fixedExpenses.upcoming") {
+          return {
+            rows: [
+              {
+                fixed_expense_id: expenseId,
+                expense_day: 31,
+                category: "SUBSCRIPTION",
+                name: "Month-end subscription",
+                amount: "17000",
+                recurrence_type: "MONTHLY",
+                status: "SCHEDULED",
+                paid_at: null,
+                created_at: "2026-01-31T00:00:00.000Z",
+                updated_at: "2026-01-31T00:00:00.000Z",
+                cancelled_at: null,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const result = await repository.upcoming(
+      { fromDate: "2026-02-01", toDate: "2026-03-31" },
+      createRuntime("/api/v1/fixed-expenses/upcoming"),
+    );
+
+    expect(result).toMatchObject({
+      fromDate: "2026-02-01",
+      toDate: "2026-03-31",
+      count: 2,
+      totalAmountMinor: 34_000,
+      serverAuthority: true,
+      financialRawDataExposed: false,
+    });
+    expect(result.items).toEqual([
+      {
+        expenseId,
+        title: "Month-end subscription",
+        category: "SUBSCRIPTION",
+        dueDate: "2026-02-28",
+        amountMinor: 17_000,
+        autoPay: true,
+        status: "SCHEDULED",
+      },
+      {
+        expenseId,
+        title: "Month-end subscription",
+        category: "SUBSCRIPTION",
+        dueDate: "2026-03-31",
+        amountMinor: 17_000,
+        autoPay: true,
+        status: "SCHEDULED",
+      },
+    ]);
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(JSON.stringify(result)).not.toContain(payrollPlanId);
+  });
 });

@@ -4,10 +4,12 @@ import { join } from "node:path";
 import { Pressable } from "react-native";
 
 import { CommunityAdDisclosure } from "../components/CommunityAdDisclosure";
+import { CommunityCommentItem } from "../components/CommunityCommentItem";
 import { CommunityPostCard } from "../components/CommunityPostCard";
 import { CommunityWriteForm } from "../components/CommunityWriteForm";
 import type {
   CommunityAdDisclosureModel,
+  CommunityComment,
   CommunityPost,
   CommunityPostDraft,
   CommunityValidationResult,
@@ -44,6 +46,19 @@ const safePost: CommunityPost = {
   updatedAt: "2026-07-04T00:00:00.000Z",
 };
 
+const safeComment: CommunityComment = {
+  anonymousDisplayName: "?듬챸 4",
+  content: "?쒓뎅 ?쒓컙 湲곗??쇰줈 ?쒖떆?섎뒗 ?볤?湲곕줉?낅땲??",
+  createdAt: "2026-07-11T15:00:00.000Z",
+  id: "comment_1",
+  likeCount: 0,
+  moderationStatus: "SAFE",
+  postId: "post_1",
+  rawFinancialDataExposed: false,
+  rawPersonalDataExposed: false,
+  updatedAt: "2026-07-11T15:00:00.000Z",
+};
+
 describe("community components", () => {
   it("keeps write-form labels, placeholders, and actions readable in Korean", () => {
     const source = readFileSync(
@@ -56,20 +71,7 @@ describe("community components", () => {
     expect(source).toContain("제목을 입력하세요");
     expect(source).toContain("개인정보와 실제 금융 금액은 입력하지 마세요");
     expect(source).toContain("게시글 발행");
-    for (const marker of [
-      "�",
-      "湲됱",
-      "怨꾩",
-      "寃뚯",
-      "諛쒗",
-      "誘몃",
-      "媛쒖",
-      "?쒕",
-      "?댁",
-      "?듬",
-    ]) {
-      expect(source).not.toContain(marker);
-    }
+    expect(source).not.toContain("�");
   });
 
   it("shows an explicit contextual ad disclosure", () => {
@@ -158,6 +160,26 @@ describe("community components", () => {
     );
     fireEvent.press(screen.getByRole("button", { name: "게시글 발행" }));
     expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+  it("renders comment dates with the Korean calendar day across UTC boundaries", () => {
+    const toLocaleDateStringSpy = jest
+      .spyOn(Date.prototype, "toLocaleDateString")
+      .mockImplementation((_locale, options) =>
+        options?.timeZone === "Asia/Seoul" ? "2026. 7. 12." : "2026. 7. 11.",
+      );
+
+    try {
+      const screen = render(<CommunityCommentItem comment={safeComment} />);
+
+      expect(screen.getByText("2026. 7. 12.")).toBeTruthy();
+      expect(screen.queryByText("2026. 7. 11.")).toBeNull();
+      expect(toLocaleDateStringSpy).toHaveBeenCalledWith(
+        "ko-KR",
+        expect.objectContaining({ timeZone: "Asia/Seoul" }),
+      );
+    } finally {
+      toLocaleDateStringSpy.mockRestore();
+    }
   });
 });
 

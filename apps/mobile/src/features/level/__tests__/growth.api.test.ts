@@ -43,6 +43,36 @@ const task = {
   financialRawDataExposed: false,
 };
 
+const content = {
+  contentId: "cnt_reading_finance_habit",
+  contentType: "READING",
+  title: "Money habit reading",
+  subtitle: "One curated mission",
+  category: "ECONOMY_BUSINESS",
+  difficulty: "NORMAL",
+  estimatedMinutes: 12,
+  topics: ["budget", "habit", "reflection"],
+  summary:
+    "Operator-written summary that introduces the book without storing full text.",
+  missionPrompt: "Read the source context and write one private note.",
+  recordQuestion: "What budget habit will you test today?",
+  sourceTitle: "Publisher information page",
+  sourceAuthor: "Salary Hijacking content desk",
+  sourceUrl: "https://publisher.example/books/money-habit",
+  licenseType: "CURATED_LINK",
+  safetyLevel: "GENERAL",
+  xpReward: 30,
+  status: "PUBLISHED",
+  publishedAt: "2026-07-03T00:00:00.000Z",
+  createdAt: "2026-07-01T00:00:00.000Z",
+  updatedAt: "2026-07-02T00:00:00.000Z",
+  serverAuthority: true,
+  financialRawDataExposed: false,
+  recommendationUsesSensitiveFinancialData: false,
+  fullTextStored: false,
+  adTargetingSeparated: true,
+};
+
 describe("growth api", () => {
   it("keeps the safe fallback error message readable in Korean", () => {
     expect(GROWTH_SAFE_ERROR_MESSAGE).toBe(
@@ -278,6 +308,169 @@ describe("growth api", () => {
     ).rejects.toMatchObject({ code: "GROWTH_INVALID_TASK_LIST_OPTIONS" });
 
     expect(calls).toHaveLength(0);
+  });
+
+  it("lists curated LV UP content with source, license, and safety metadata", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "growth-content-list-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            items: [content],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.listContents({
+        contentType: "READING",
+        page: 1,
+        pageSize: 20,
+      }),
+    ).resolves.toMatchObject({
+      items: [
+        {
+          contentId: "cnt_reading_finance_habit",
+          contentType: "READING",
+          sourceUrl: "https://publisher.example/books/money-habit",
+          licenseType: "CURATED_LINK",
+          safetyLevel: "GENERAL",
+          fullTextStored: false,
+          adTargetingSeparated: true,
+          recommendationUsesSensitiveFinancialData: false,
+        },
+      ],
+      total: 1,
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/growth/contents?page=1&pageSize=20&contentType=READING",
+    );
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+  });
+
+  it("lists health LV UP content through the HEALTH content contract", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "growth-health-content-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                ...content,
+                contentId: "cnt_health_stretching",
+                contentType: "HEALTH",
+                title: "Safe stretching routine",
+                category: "HEALTH_ROUTINE",
+                sourceTitle: "Internal wellness safety checklist",
+                sourceUrl: "https://salaryhijacking.com/wellness-safety",
+                safetyLevel: "GENERAL",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.listContents({
+        contentType: "HEALTH",
+      }),
+    ).resolves.toMatchObject({
+      items: [
+        {
+          contentId: "cnt_health_stretching",
+          contentType: "HEALTH",
+          sourceUrl: "https://salaryhijacking.com/wellness-safety",
+          fullTextStored: false,
+          adTargetingSeparated: true,
+          recommendationUsesSensitiveFinancialData: false,
+        },
+      ],
+      total: 1,
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/growth/contents?page=1&pageSize=20&contentType=HEALTH",
+    );
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+  });
+
+  it("rejects LV UP content responses that store full article/body text or omit required trust flags", async () => {
+    const fullTextApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...content,
+                contentId: "cnt_news_full_text",
+                contentType: "NEWS",
+                fullTextStored: true,
+                articleBody: "copied full article body",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "web",
+    });
+    const unsafeApi = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...content,
+                sourceUrl: null,
+                licenseType: null,
+                safetyLevel: null,
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "ios",
+    });
+
+    await expect(
+      fullTextApi.listContents({ contentType: "NEWS" }),
+    ).rejects.toMatchObject({ code: "GROWTH_INVALID_RESPONSE" });
+    await expect(unsafeApi.listContents()).rejects.toMatchObject({
+      code: "GROWTH_INVALID_RESPONSE",
+    });
   });
 
   it("completes level detail content through the server growth API without exposing sensitive data", async () => {

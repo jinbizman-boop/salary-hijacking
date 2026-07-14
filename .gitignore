@@ -26,6 +26,7 @@ node_modules/
 .yarn/unplugged/
 .yarn/build-state.yml
 .yarn/install-state.gz
+.tools/
 
 # ------------------------------------------------------------------------------
 # 2. Environment variables and secrets
@@ -312,6 +313,20 @@ cyclonedx.json
 # ------------------------------------------------------------------------------
 # 13. Salary Hijacking project-specific protection
 # ------------------------------------------------------------------------------
+
+# Codex/user attachment mirrors and historical merge archives are local-only
+# investigation material. Keep source assets under apps/mobile/assets or
+# apps/mobile/src/shared/assets instead.
+.codex-remote-attachments/
+.merged-from-salary-hijacking-main/
+
+# Mobile QA repack outputs and raw evidence dumps are local-only. Keep final,
+# redacted release summaries under docs/codex or release/evidence/final-100.
+apps/mobile/docs/qa/
+docs/qa/
+release/evidence/
+!release/evidence/final-100/
+!release/evidence/final-100/**
 
 # Never commit production exports, real user data, or raw financial datasets.
 production-export/

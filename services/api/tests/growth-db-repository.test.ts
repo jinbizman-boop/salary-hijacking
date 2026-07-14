@@ -8,6 +8,8 @@ import type { GrowthRouteRuntime } from "../src/routes/growth.routes";
 const userId = "11111111-1111-4111-8111-111111111111";
 const taskId = "22222222-2222-4222-8222-222222222222";
 const completionId = "33333333-3333-4333-8333-333333333333";
+const contentId = "44444444-4444-4444-8444-444444444444";
+const contentProgressId = "55555555-5555-4555-8555-555555555555";
 
 function createRuntime(
   path = "/api/v1/growth/tasks",
@@ -48,6 +50,38 @@ function taskRow(extra: Record<string, unknown> = {}): Record<string, unknown> {
     created_at: "2026-07-01T00:00:00.000Z",
     updated_at: "2026-07-01T00:00:00.000Z",
     progress_count: "0",
+    total_count: "1",
+    ...extra,
+  };
+}
+
+function contentRow(
+  extra: Record<string, unknown> = {},
+): Record<string, unknown> {
+  return {
+    content_id: contentId,
+    content_type: "READING",
+    title: "Money habit reading",
+    subtitle: "One operator-written reading mission",
+    category: "ECONOMY_BUSINESS",
+    difficulty: "NORMAL",
+    estimated_minutes: 12,
+    topics: ["budget", "habit", "reflection"],
+    summary:
+      "Operator curated summary that explains the book without storing full text.",
+    mission_prompt:
+      "Read the linked source context and write one private note.",
+    record_question: "What budget habit will you test today?",
+    source_title: "Publisher information page",
+    source_author: "Salary Hijacking content desk",
+    source_url: "https://publisher.example/books/money-habit",
+    license_type: "CURATED_LINK",
+    safety_level: "GENERAL",
+    exp_reward: 30,
+    status: "PUBLISHED",
+    published_at: "2026-07-03T00:00:00.000Z",
+    created_at: "2026-07-01T00:00:00.000Z",
+    updated_at: "2026-07-01T00:00:00.000Z",
     total_count: "1",
     ...extra,
   };
@@ -179,5 +213,150 @@ describe("Neon growth repository", () => {
       "insert into public.growth_task_completions",
     );
     expect(calls[0]?.params).toContain(userId);
+  });
+
+  it("lists published LV UP content from the database with source and safety metadata", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonGrowthRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return { rows: [contentRow()], rowCount: 1 };
+      },
+    });
+
+    const result = await repository.listContents(
+      { contentType: "READING" },
+      { page: 1, pageSize: 20, offset: 0, limit: 20 },
+      createRuntime("/api/v1/growth/contents?contentType=READING"),
+    );
+
+    expect(result).toMatchObject({
+      page: 1,
+      pageSize: 20,
+      total: 1,
+      items: [
+        {
+          contentId,
+          contentType: "READING",
+          title: "Money habit reading",
+          category: "ECONOMY_BUSINESS",
+          estimatedMinutes: 12,
+          topics: ["budget", "habit", "reflection"],
+          sourceUrl: "https://publisher.example/books/money-habit",
+          licenseType: "CURATED_LINK",
+          safetyLevel: "GENERAL",
+          xpReward: 30,
+          status: "PUBLISHED",
+          fullTextStored: false,
+          serverAuthority: true,
+          financialRawDataExposed: false,
+          recommendationUsesSensitiveFinancialData: false,
+          adTargetingSeparated: true,
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(calls[0]?.operationName).toBe("growth.listContents");
+    expect(calls[0]?.sqlText).toContain("public.growth_content_items");
+    expect(calls[0]?.params).toContain("READING");
+  });
+
+  it("completes LV UP content through user content progress with server XP and idempotency", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonGrowthRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              progress_id: contentProgressId,
+              content_id: contentId,
+              record_text: "I will try one budget habit today.",
+              earned_exp: 30,
+              idempotency_key: "content-reading-1",
+              completed_at: "2026-07-03T04:00:00.000Z",
+              created_at: "2026-07-03T04:00:00.000Z",
+              newly_completed: true,
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.completeContent(
+      {
+        contentId,
+        note: "I will try one budget habit today.",
+        idempotencyKey: "content-reading-1",
+      },
+      createRuntime(`/api/v1/growth/contents/${contentId}/complete`),
+    );
+
+    expect(result).toMatchObject({
+      completion: {
+        completionId: contentProgressId,
+        contentId,
+        note: "I will try one budget habit today.",
+        expDelta: 30,
+        idempotencyKey: "content-reading-1",
+        completedAt: "2026-07-03T04:00:00.000Z",
+        recommendationUsesSensitiveFinancialData: false,
+      },
+      badges: [],
+      idempotentReplay: false,
+    });
+    expect(JSON.stringify(result)).not.toContain(userId);
+    expect(calls[0]?.operationName).toBe("growth.completeContent");
+    expect(calls[0]?.sqlText).toContain("public.growth_content_items");
+    expect(calls[0]?.sqlText).toContain("public.user_level_content_progress");
+    expect(calls[0]?.sqlText).toContain("saved_progress.newly_completed");
+    expect(calls[0]?.params).toContain(userId);
+    expect(calls[0]?.params).toContain(contentId);
+  });
+
+  it("does not award duplicate XP when a same-day LV UP content completion is replayed", async () => {
+    const repository = createNeonGrowthRepository({
+      query: async () => ({
+        rows: [
+          {
+            progress_id: contentProgressId,
+            content_id: contentId,
+            record_text: "I already recorded this mission.",
+            earned_exp: 30,
+            idempotency_key: "content-reading-1",
+            completed_at: "2026-07-03T04:00:00.000Z",
+            created_at: "2026-07-03T04:00:00.000Z",
+            idempotent_replay: true,
+          },
+        ],
+        rowCount: 1,
+      }),
+    });
+
+    const result = await repository.completeContent(
+      {
+        contentId,
+        note: "I already recorded this mission.",
+        idempotencyKey: "content-reading-1",
+      },
+      createRuntime(`/api/v1/growth/contents/${contentId}/complete`),
+    );
+
+    expect(result).toMatchObject({
+      completion: {
+        contentId,
+        expDelta: 0,
+      },
+      idempotentReplay: true,
+    });
   });
 });

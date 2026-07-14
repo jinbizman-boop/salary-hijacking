@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
@@ -44,7 +45,26 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^salaryhijacking/i,
   /^salary-clean-temp/i,
   /^salary-junk-/i,
+  /^salary-expo-android-/i,
+  /^salary-release-ready-/i,
+  /^salary-android-sdk-tools-/i,
+  /^salary-cloudflare-(?:evidence|proof)-/i,
+  /^salary-database-proof-/i,
+  /^salary-db-evidence-/i,
+  /^salary-mobile-(?:native-evidence|native-proof|phone-proof)-/i,
+  /^salary-public-url-(?:evidence|proof)-/i,
+  /^salary-secrets-(?:evidence|proof)-/i,
+  /^salary-security-audit-evidence-/i,
+  /^salary-staging-smoke-/i,
   /^chrome-clean-fintech/i,
+  /^metro-cache$/i,
+  /^metro-file-map-/i,
+  /^haste-map-/i,
+  /^jest_/i,
+  /^native-platform\d+dir$/i,
+  /^node-compile-cache$/i,
+  /^v8-compile-cache$/i,
+  /^hsperfdata_/i,
   /^paycheck-accounting/i,
   /^node-test-run-/i,
 ];
@@ -54,6 +74,15 @@ const REMOVE_RETRY_OPTIONS = {
   recursive: true,
   retryDelay: 250,
 };
+
+function spawnSubst(command, args) {
+  return spawnSync(command, args, {
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe",
+    windowsHide: true,
+  });
+}
 
 function toPosix(filePath) {
   return filePath.split(path.sep).join("/");
@@ -101,6 +130,9 @@ function isRepositoryJunkFile(relativePath) {
 
   return (
     /^release\/[^/]+-(?:proof|observation)\.local\.jsonc?$/.test(posixPath) ||
+    /^apps\/mobile\/build\/phone\/android\/salary-hijacking-phone-arm64-iteration\d+-debug\.apk$/.test(
+      posixPath,
+    ) ||
     /\.tsbuildinfo$/.test(fileName) ||
     /\.(?:log|tmp|temp)$/.test(fileName) ||
     fileName === ".DS_Store" ||
@@ -120,6 +152,58 @@ function isTempJunkDirectory(entryName) {
   return TEMP_JUNK_DIRECTORY_PATTERNS.some((pattern) =>
     pattern.test(entryName),
   );
+}
+
+function normalizeWindowsPath(filePath) {
+  return removeTrailingSeparator(path.resolve(filePath)).toLowerCase();
+}
+
+export function parseSubstMappings(output) {
+  return String(output ?? "")
+    .split(/\r?\n/u)
+    .map((line) => {
+      const match = /^\s*([a-z]):\\:\s*=>\s*(.+?)\s*$/iu.exec(line);
+      if (!match) return null;
+      return {
+        aliasRoot: `${match[1].toUpperCase()}:\\`,
+        drive: match[1].toUpperCase(),
+        targetRootDir: match[2],
+      };
+    })
+    .filter(Boolean);
+}
+
+export function collectStaleSubstTargets({
+  platform = process.platform,
+  rootDir = process.cwd(),
+  spawn = spawnSubst,
+} = {}) {
+  if (platform !== "win32") return [];
+
+  const result = spawn("subst", []);
+  if ((result.status ?? 0) !== 0) return [];
+
+  const normalizedRoot = normalizeWindowsPath(rootDir);
+  return parseSubstMappings(result.stdout)
+    .filter(
+      (mapping) =>
+        normalizeWindowsPath(mapping.targetRootDir) === normalizedRoot,
+    )
+    .map((mapping) => ({
+      kind: "subst",
+      path: mapping.aliasRoot,
+      ...mapping,
+    }));
+}
+
+function removeSubstTarget(target, spawn = spawnSubst) {
+  const result = spawn("subst", [`${target.drive}:`, "/D"]);
+  if ((result.status ?? 0) !== 0) {
+    const errorText = String(result.stderr || result.stdout || "").trim();
+    throw new Error(
+      errorText || `Failed to remove subst mapping ${target.aliasRoot}`,
+    );
+  }
 }
 
 async function pathExists(targetPath) {
@@ -233,11 +317,14 @@ async function collectDependencyNativeJunkTargets(rootDir) {
   return targets;
 }
 
-function defaultTempRoots() {
+export function defaultTempRoots() {
+  const windowsCodexTempRoots =
+    process.platform === "win32" ? ["D:\\codex-temp", "D:\\codex-tmp"] : [];
   const candidates = [
     process.env.TEMP,
     process.env.TMP,
     process.env.TMPDIR,
+    ...windowsCodexTempRoots,
     "D:\\codex-temp\\salary-hijacking",
   ];
 
@@ -261,7 +348,7 @@ async function collectTempJunkTargets(tempRoots) {
       withFileTypes: true,
     });
     for (const entry of entries) {
-      if (!entry.isDirectory()) continue;
+      if (!entry.isDirectory() && !entry.isFile()) continue;
       if (!isTempJunkDirectory(entry.name)) continue;
 
       const fullPath = assertInsideRoot(
@@ -278,10 +365,13 @@ async function collectTempJunkTargets(tempRoots) {
 export async function cleanGeneratedJunk(options = {}) {
   const rootDir = path.resolve(options.rootDir ?? process.cwd());
   const dryRun = Boolean(options.dryRun);
+  const platform = options.platform ?? process.platform;
+  const spawn = options.spawnSubst ?? spawnSubst;
   const tempRoots =
     options.tempRoots === undefined ? defaultTempRoots() : options.tempRoots;
 
   const planned = [
+    ...collectStaleSubstTargets({ platform, rootDir, spawn }),
     ...(await collectRepositoryJunkTargets(rootDir)),
     ...(await collectDependencyNativeJunkTargets(rootDir)),
     ...(await collectTempJunkTargets(
@@ -307,9 +397,14 @@ export async function cleanGeneratedJunk(options = {}) {
 
   for (const target of deduped) {
     try {
-      const bytes = await measurePathBytes(target.path);
+      const bytes =
+        target.kind === "subst" ? 0 : await measurePathBytes(target.path);
       if (!dryRun) {
-        await fs.promises.rm(target.path, REMOVE_RETRY_OPTIONS);
+        if (target.kind === "subst") {
+          removeSubstTarget(target, spawn);
+        } else {
+          await fs.promises.rm(target.path, REMOVE_RETRY_OPTIONS);
+        }
         removed.push({ ...target, bytes });
         bytesFreed += bytes;
       }
@@ -385,15 +480,21 @@ async function main() {
           ...result,
           planned: result.planned.map((target) => ({
             ...target,
-            path: toPosix(
-              path.relative(path.resolve(options.rootDir), target.path),
-            ),
+            path:
+              target.kind === "subst"
+                ? target.path
+                : toPosix(
+                    path.relative(path.resolve(options.rootDir), target.path),
+                  ),
           })),
           removed: result.removed.map((target) => ({
             ...target,
-            path: toPosix(
-              path.relative(path.resolve(options.rootDir), target.path),
-            ),
+            path:
+              target.kind === "subst"
+                ? target.path
+                : toPosix(
+                    path.relative(path.resolve(options.rootDir), target.path),
+                  ),
           })),
         },
         null,

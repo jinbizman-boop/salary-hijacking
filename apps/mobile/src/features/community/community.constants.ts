@@ -24,6 +24,17 @@ export const COMMUNITY_BOARD_TYPES: readonly CommunityBoardType[] =
     "FREE",
   ]);
 
+export const COMMUNITY_BOARD_LABELS = Object.freeze({
+  SALARY_TALK: "급여 이야기",
+  BUDGET_TIP: "예산 팁",
+  EXPENSE_CUT: "지출 줄이기",
+  SAVINGS_GOAL: "저축 목표",
+  LEVEL_CERTIFICATION: "레벨업 인증",
+  SIDE_HUSTLE: "부업",
+  HEALTH_ROUTINE: "취미 게시판",
+  FREE: "자유 게시판",
+} satisfies Readonly<Record<CommunityBoardType, string>>);
+
 export const COMMUNITY_SORTS: readonly CommunitySort[] = Object.freeze([
   "LATEST",
   "POPULAR",

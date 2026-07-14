@@ -100,6 +100,41 @@ async function collectTopLevel(rootDir, limit) {
     .slice(0, limit);
 }
 
+async function collectSiblingSalaryWorkspaces(rootDir) {
+  const resolvedRoot = path.resolve(rootDir);
+  const parentDir = path.dirname(resolvedRoot);
+  const currentName = path.basename(resolvedRoot).toLowerCase();
+
+  let entries;
+  try {
+    entries = await fs.promises.readdir(parentDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const siblings = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+
+    const lowerName = entry.name.toLowerCase();
+    if (lowerName === currentName) continue;
+    if (!lowerName.startsWith("salary-hijacking-")) continue;
+
+    const siblingPath = path.join(parentDir, entry.name);
+    siblings.push({
+      bytes: await measurePathBytes(siblingPath),
+      name: entry.name,
+      path: siblingPath,
+      rootDir: parentDir,
+    });
+  }
+
+  return siblings.sort(
+    (left, right) =>
+      right.bytes - left.bytes || left.name.localeCompare(right.name),
+  );
+}
+
 export async function collectWorkspaceDiskUsage(options = {}) {
   const rootDir = path.resolve(options.rootDir ?? process.cwd());
   const topLevelLimit = Math.max(1, Number(options.topLevelLimit ?? 20));
@@ -120,6 +155,7 @@ export async function collectWorkspaceDiskUsage(options = {}) {
     generatedPaths,
     protectedPaths: protectedPaths.filter((entry) => entry.exists),
     rootDir,
+    siblingSalaryWorkspaces: await collectSiblingSalaryWorkspaces(rootDir),
     topLevel,
     totalBytes: topLevel.reduce((sum, entry) => sum + entry.bytes, 0),
   };
@@ -193,6 +229,17 @@ function printHumanReport(report) {
     (left, right) => right.bytes - left.bytes,
   )) {
     console.log(`- ${entry.path}: ${formatBytes(entry.bytes)}`);
+  }
+
+  console.log("[disk:report] sibling salary workspaces:");
+  if (report.siblingSalaryWorkspaces.length === 0) {
+    console.log("- none");
+  } else {
+    for (const entry of report.siblingSalaryWorkspaces) {
+      console.log(
+        `- ${entry.name}: ${formatBytes(entry.bytes)} (${entry.path})`,
+      );
+    }
   }
 }
 

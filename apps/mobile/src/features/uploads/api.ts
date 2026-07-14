@@ -112,6 +112,7 @@ const SENSITIVE_UPLOAD_FILE_NAME_TERMS = Object.freeze([
   "소득",
   "수입",
   "연봉",
+  "은행",
   "계좌",
   "계좌번호",
   "통장",
@@ -124,6 +125,7 @@ const SENSITIVE_UPLOAD_FILE_NAME_TERMS = Object.freeze([
   "전화",
   "전화번호",
   "휴대폰",
+  "이메일",
   "대출",
   "부채",
   "저축",
@@ -188,7 +190,7 @@ function assertFileNameMatchesContentType(
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_EXTENSION_REQUIRED",
-      "첨부파일 확장자가 필요합니다.",
+      "첨부 파일 확장자가 필요합니다.",
     );
   }
   const allowedExtensions = UPLOAD_FILE_EXTENSIONS_BY_CONTENT_TYPE[contentType];
@@ -196,7 +198,7 @@ function assertFileNameMatchesContentType(
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_EXTENSION_MISMATCH",
-      "첨부파일 확장자가 콘텐츠 형식과 맞지 않습니다.",
+      "첨부 파일 확장자가 콘텐츠 형식과 맞지 않습니다.",
     );
   }
 }
@@ -207,14 +209,14 @@ function safeFileName(value: string): string {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_NAME_CONTROL_FORBIDDEN",
-      "첨부파일 이름에는 제어 문자를 사용할 수 없습니다.",
+      "첨부 파일 이름에는 제어 문자를 사용할 수 없습니다.",
     );
   }
   if (/(?:file|content):\/\//iu.test(trimmed) || /[\\/]/u.test(trimmed)) {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_PATH_FORBIDDEN",
-      "첨부파일 이름에는 원본 파일 경로를 넣을 수 없습니다.",
+      "첨부 파일 이름에는 원본 파일 경로를 넣을 수 없습니다.",
     );
   }
   const normalized = trimmed.replace(/[\\/:*?"<>|]/gu, "_").slice(0, 120);
@@ -222,7 +224,7 @@ function safeFileName(value: string): string {
     throw new UploadsApiError(
       0,
       "UPLOADS_FILE_NAME_REQUIRED",
-      "첨부파일 이름이 필요합니다.",
+      "첨부 파일 이름이 필요합니다.",
     );
   }
   if (
@@ -248,7 +250,7 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
     throw new UploadsApiError(
       0,
       "UPLOADS_CONTENT_TYPE_FORBIDDEN",
-      "지원하지 않는 커뮤니티 첨부파일 형식입니다.",
+      "지원하지 않는 첨부 파일 형식입니다.",
     );
   }
   if (
@@ -260,7 +262,7 @@ function assertCommunityAttachment(input: DirectCommunityAttachmentUpload): {
     throw new UploadsApiError(
       0,
       "UPLOADS_SIZE_FORBIDDEN",
-      "커뮤니티 첨부파일 크기가 올바르지 않습니다.",
+      "첨부 파일 크기가 올바르지 않습니다.",
     );
   }
   const fileName = safeFileName(input.fileName);
@@ -280,7 +282,7 @@ function assertVariableExpenseReceipt(
     throw new UploadsApiError(
       0,
       "UPLOADS_CONTENT_TYPE_FORBIDDEN",
-      "지원하지 않는 변동지출 영수증 형식입니다.",
+      "지원하지 않는 첨부 파일 형식입니다.",
     );
   }
   if (
@@ -292,7 +294,7 @@ function assertVariableExpenseReceipt(
     throw new UploadsApiError(
       0,
       "UPLOADS_SIZE_FORBIDDEN",
-      "변동지출 영수증 크기가 올바르지 않습니다.",
+      "첨부 파일 크기가 올바르지 않습니다.",
     );
   }
   const fileName = safeFileName(input.fileName);
@@ -313,7 +315,7 @@ function assertDirectUploadFields(
     throw new UploadsApiError(
       0,
       "UPLOADS_UNKNOWN_FIELD_FORBIDDEN",
-      "업로드 요청에 허용되지 않은 필드가 포함되어 있습니다.",
+      "업로드 요청에 허용되지 않는 필드가 포함되어 있습니다.",
     );
   }
 }
@@ -422,7 +424,7 @@ async function parseJson(response: Response): Promise<unknown> {
     throw new UploadsApiError(
       response.status,
       "UPLOADS_INVALID_RESPONSE",
-      "?낅줈???묐떟 ?뺤떇???щ컮瑜댁? ?딆뒿?덈떎.",
+      "업로드 응답 형식이 올바르지 않습니다.",
     );
   }
   if (!text) return {};

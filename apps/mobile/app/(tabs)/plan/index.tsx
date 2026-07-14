@@ -1,9 +1,11 @@
-import { CleanFintechScreen } from "../../../src/shared/styles/clean-fintech-screens";
+import { PlanReferenceScreen } from "../../../src/features/plan/components";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.2.0-plan-reference-ui";
+const PLAN_FIXED_EXPENSES_ENDPOINT = "/api/v1/fixed-expenses";
+const PLAN_SAVINGS_ENDPOINT = "/api/v1/savings";
 
 export default function PlanIndexScreen(): React.ReactElement {
-  return <CleanFintechScreen kind="plan" />;
+  return <PlanReferenceScreen />;
 }
 
 export function assertMobilePlanIndexCompleteness(): {
@@ -12,18 +14,25 @@ export function assertMobilePlanIndexCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
-    "목표 달성률",
-    "급여 계획",
-    "고정지출",
-    "고정저축",
-    "생활비",
-    "목표금액",
-    "server_authority_recalculation_label",
-    "krw_integer_only_input",
-    "card_based_plan_ui",
-    "progress_bar",
+    "PlanReferenceScreen",
+    "SALARY HIJACKING",
+    PLAN_FIXED_EXPENSES_ENDPOINT,
+    PLAN_SAVINGS_ENDPOINT,
+    "홍길동님의 급여 납치 목표 달성률",
+    "목표 달성률 88%",
+    "내 급여 납치 계획/설정",
+    "월별 고정 지출 계획/설정",
+    "월별 고정 적금 계획/설정",
+    "월별 생활비 계획/설정",
+    "server_authority_component_guard",
+    "server_recalculation_component_guard",
+    "raw_financial_data_component_guard",
+    "raw_personal_data_component_guard",
+    "ads_financial_targeting_component_guard",
+    "krw_integer_display",
+    "responsive_plan_reference_guard",
+    "safe_area_top_bottom_guard",
   ] as const;
 
-  return { ok: checks.length >= 10, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 16, version: SCREEN_VERSION, checks };
 }

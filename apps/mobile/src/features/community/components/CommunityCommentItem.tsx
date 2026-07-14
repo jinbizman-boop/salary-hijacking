@@ -19,9 +19,7 @@ export function CommunityCommentItem({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.author}>{comment.anonymousDisplayName}</Text>
-        <Text style={styles.date}>
-          {new Date(comment.createdAt).toLocaleDateString("ko-KR")}
-        </Text>
+        <Text style={styles.date}>{formatCommentDate(comment.createdAt)}</Text>
       </View>
       <Text style={styles.content}>{comment.content}</Text>
       <View style={styles.actions}>
@@ -46,6 +44,12 @@ export function CommunityCommentItem({
       </View>
     </View>
   );
+}
+
+function formatCommentDate(value: string): string {
+  return new Date(value).toLocaleDateString("ko-KR", {
+    timeZone: "Asia/Seoul",
+  });
 }
 
 const styles = StyleSheet.create({

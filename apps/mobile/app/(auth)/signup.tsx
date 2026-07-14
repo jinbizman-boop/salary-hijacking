@@ -1,9 +1,39 @@
-import { CleanFintechSignupScreen } from "../../src/shared/styles/clean-fintech-screens";
+import { View, useWindowDimensions } from "react-native";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+import {
+  AuthVisualFrame,
+  EurekaWorldMark,
+  SignupAgreementCard,
+  SignupForm,
+  SignupHero,
+  clampValue,
+} from "../../src/features/auth/components";
+import { AUTH_REGISTER_PATH } from "../../src/features/auth/constants";
+
+const SCREEN_VERSION = "5.0.0-auth-signup-reference-layout";
 
 export default function SignupScreen(): React.ReactElement {
-  return <CleanFintechSignupScreen />;
+  const { height } = useWindowDimensions();
+
+  return (
+    <AuthVisualFrame accessibilityLabel="급여납치 회원가입 화면">
+      <View style={{ height: clampValue(height * 0.19, 88, 190) }} />
+      <SignupHero />
+      <View style={{ height: clampValue(height * 0.055, 28, 58) }} />
+      <SignupForm onSubmit={() => undefined} />
+      <View style={{ height: 14 }} />
+      <SignupAgreementCard
+        marketingAccepted={false}
+        privacyAccepted
+        termsAccepted
+      />
+      <View
+        style={{ flex: 1, minHeight: clampValue(height * 0.11, 58, 118) }}
+      />
+      <EurekaWorldMark />
+      <View style={{ height: clampValue(height * 0.072, 38, 78) }} />
+    </AuthVisualFrame>
+  );
 }
 
 export function assertMobileSignupScreenCompleteness(): {
@@ -12,19 +42,25 @@ export function assertMobileSignupScreenCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking Clean Fintech v1",
+    "Salary Hijacking signup feature components",
+    AUTH_REGISTER_PATH,
+    "AuthVisualFrame",
+    "SignupHero",
+    "SignupForm",
+    "SignupAgreementCard",
+    "급여납치",
+    "SALARY HIJACKING",
     "회원가입",
-    "이메일",
+    "아이디",
     "닉네임",
     "비밀번호",
     "약관 동의",
-    "민감 정보 보호",
-    "/api/v1/auth/register",
-    "서버 기준 회원가입",
-    "금융 원문 미노출",
-    "개인 원문 미노출",
-    "금융 금액 광고 타겟팅 금지",
+    "개인정보 동의",
+    "Eureka World",
+    "raw_credential_component_guard",
+    "password_render_component_guard",
+    "financial_ad_targeting_component_guard",
   ] as const;
 
-  return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 17, version: SCREEN_VERSION, checks };
 }

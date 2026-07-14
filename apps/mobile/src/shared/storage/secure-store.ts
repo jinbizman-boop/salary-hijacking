@@ -1,9 +1,9 @@
 export type SecureStoreOptions = Readonly<{
-  keychainAccessible?: string;
+  keychainAccessible?: number;
 }>;
 
 export type NativeSecureStore = Readonly<{
-  WHEN_UNLOCKED_THIS_DEVICE_ONLY?: string;
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY?: number;
   getItemAsync?: (
     key: string,
     options?: SecureStoreOptions,
@@ -20,7 +20,7 @@ export type NativeSecureStore = Readonly<{
 }>;
 
 export type SecureStoreRuntime = Readonly<{
-  WHEN_UNLOCKED_THIS_DEVICE_ONLY?: string;
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY?: number;
   getItemAsync: (
     key: string,
     options?: SecureStoreOptions,
@@ -92,7 +92,7 @@ export function createSecureStoreRuntime(
     },
   };
 
-  return typeof nativeStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY === "string"
+  return typeof nativeStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY === "number"
     ? {
         ...runtime,
         WHEN_UNLOCKED_THIS_DEVICE_ONLY:
