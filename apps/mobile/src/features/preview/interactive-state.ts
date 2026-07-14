@@ -193,10 +193,13 @@ export function getPreviewState(): PreviewState {
 export function getVisiblePlanReminderItems(
   planItems: readonly PlanItem[],
   currentMonthKey: string,
+  currentDay = 31,
 ): readonly PlanItem[] {
+  const dueDay = Math.max(1, Math.min(31, Math.trunc(currentDay)));
   return planItems.filter(
     (item) =>
       (item.section === "fixed" || item.section === "saving") &&
+      item.day <= dueDay &&
       item.usedMonthKey !== currentMonthKey,
   );
 }

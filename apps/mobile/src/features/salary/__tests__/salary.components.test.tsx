@@ -7,6 +7,11 @@ import type {
   VariableExpenseUpdateRequest,
 } from "../../budget/types";
 import {
+  getPreviewState,
+  updatePreviewState,
+  type PlanItem,
+} from "../../preview/interactive-state";
+import {
   resetSalaryHomePreviewCacheForTests,
   SalaryHomeReferenceScreen,
 } from "../components";
@@ -555,6 +560,48 @@ describe("salary reference screen interactions", () => {
     expect(screen.queryByText("ChatGPT")).toBeNull();
   });
 
+  it("does not show future-dated fixed or savings reminders before their scheduled KST day", () => {
+    jest.useFakeTimers({ now: new Date("2026-07-14T03:00:00.000Z") });
+    const seeded = getPreviewState();
+    const fixedCategory = seeded.planItems.find(
+      (item) => item.section === "fixed",
+    )?.category;
+    const savingCategory = seeded.planItems.find(
+      (item) => item.section === "saving",
+    )?.category;
+    if (!fixedCategory || !savingCategory) {
+      throw new Error("Seeded fixed and saving categories are required");
+    }
+    const rows: readonly PlanItem[] = [
+      {
+        amount: 32000,
+        category: fixedCategory,
+        content: "TodayDue",
+        day: 10,
+        id: "fixed-today-due",
+        section: "fixed",
+      },
+      {
+        amount: 200000,
+        category: savingCategory,
+        content: "FutureSaving",
+        day: 25,
+        id: "saving-future-hidden",
+        section: "saving",
+      },
+    ];
+    updatePreviewState((previous) => ({
+      ...previous,
+      planItems: rows,
+    }));
+
+    const screen = render(<SalaryHomeReferenceScreen />);
+
+    expect(screen.getByText("TodayDue")).toBeTruthy();
+    expect(screen.queryByText("FutureSaving")).toBeNull();
+    jest.useRealTimers();
+  });
+
   it("records fixed plan reminder completion through the server-authoritative plan API before hiding it", async () => {
     const recordFixedExpensePayment = jest.fn().mockResolvedValue({
       amountMinor: 32000,
@@ -598,6 +645,7 @@ describe("salary reference screen interactions", () => {
   });
 
   it("records fixed savings reminders through the server-authoritative savings API before hiding them", async () => {
+    jest.useFakeTimers({ now: new Date("2026-07-25T03:00:00.000Z") });
     const recordSavingsDeposit = jest.fn().mockResolvedValue({
       currentAmountMinor: 200000,
       financialRawAccountDataExposed: false,

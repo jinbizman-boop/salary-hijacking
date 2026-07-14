@@ -211,6 +211,44 @@ describe("interactive preview recurring plan reminders", () => {
       getVisiblePlanReminderItems(rows, "2026-08").map((item) => item.id),
     ).toEqual(["fixed-current", "fixed-open", "saving-previous"]);
   });
+
+  it("does not expose future-dated fixed or savings occurrences on salary home", () => {
+    const seeded = getPreviewState();
+    const fixedCategory = seeded.planItems.find(
+      (item) => item.section === "fixed",
+    )?.category;
+    const savingCategory = seeded.planItems.find(
+      (item) => item.section === "saving",
+    )?.category;
+    if (!fixedCategory || !savingCategory) {
+      throw new Error("Seeded fixed and saving plan categories are required");
+    }
+    const rows: readonly PlanItem[] = [
+      {
+        amount: 32000,
+        category: fixedCategory,
+        content: "ChatGPT",
+        day: 10,
+        id: "fixed-overdue",
+        section: "fixed",
+      },
+      {
+        amount: 200000,
+        category: savingCategory,
+        content: "Travel",
+        day: 25,
+        id: "saving-future",
+        section: "saving",
+      },
+    ];
+
+    expect(
+      getVisiblePlanReminderItems(rows, "2026-07", 14).map((item) => item.id),
+    ).toEqual(["fixed-overdue"]);
+    expect(
+      getVisiblePlanReminderItems(rows, "2026-07", 25).map((item) => item.id),
+    ).toEqual(["fixed-overdue", "saving-future"]);
+  });
 });
 
 function createMemorySecureStorage(): PreviewStateSecureStorage {

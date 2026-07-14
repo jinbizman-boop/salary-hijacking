@@ -670,16 +670,18 @@ export function SalaryHomeReferenceScreen({
           <Text allowFontScaling={false} style={styles.cardTitle}>
             홍길동님이 설정한 금일 고정 지출
           </Text>
-          {getVisiblePlanReminderItems(state.planItems, kst.monthKey).map(
-            (item) => (
-              <PlanReminderRow
-                key={item.id}
-                item={item}
-                kstDay={kst.day}
-                onComplete={() => void completePlanReminder(item)}
-              />
-            ),
-          )}
+          {getVisiblePlanReminderItems(
+            state.planItems,
+            kst.monthKey,
+            kst.day,
+          ).map((item) => (
+            <PlanReminderRow
+              key={item.id}
+              item={item}
+              kstDay={kst.day}
+              onComplete={() => void completePlanReminder(item)}
+            />
+          ))}
         </View>
 
         <View style={styles.card}>
