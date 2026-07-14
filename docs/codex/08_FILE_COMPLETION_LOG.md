@@ -4112,3 +4112,15 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run clean:junk`: PASS, removed regenerated `.turbo`, package `dist`, TypeScript build info, and temp cache paths.
   - `corepack pnpm run disk:report -- --top 10`: PASS, `removable generated paths: none`; only protected dependency/source/evidence paths remain.
 - Remaining: GAP-003/GAP-006 physical-phone QA, GAP-004/GAP-005 real-device persistence/recurrence proof, and GAP-008 production AAB/Play approval remain unresolved. This consolidation does not prove full mobile E2E, physical Android phone QA, production AAB, Play submission, or market publication.
+
+# 2026-07-14 KST - Iteration 095 Clean Source And Phone Blocker Recheck
+
+- Scope: `docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md`, `docs/codex/100-completion/104_ITERATION_094_LATEST_SOURCE_ARM64_APK_REFRESH.md`, `docs/codex/100-completion/105_ITERATION_095_CLEAN_SOURCE_AND_PHONE_BLOCKER_RECHECK.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rechecked strict readiness after the clean-source consolidation commit and updated current-state docs so `GAP-001` is no longer listed as an active blocker.
+- Completed: Confirmed current HEAD `e0fa3bba99ac8d84e238071d77cf4e0d92c837ab` matches `origin/main`, and `git status --porcelain=v1` is clean before this docs-only refresh.
+- Completed: Rechecked storage hygiene. Windows reports only `C:` and `D:` logical drives; `salary-hijacking-platform` is the only active work repository; old `salary-hijacking-main` and `salary-hijacking-work` shells are empty `0 B` directories but are locked by another Windows/Codex process.
+- Verified:
+  - `node scripts\release\check-release-readiness.mjs --strict`: BLOCKED only by unresolved launch gaps `GAP-003`, `GAP-004`, `GAP-005`, `GAP-006`, `GAP-008`, plus physical phone QA.
+  - `corepack pnpm run clean:junk`: PASS, removed regenerated temp cache.
+  - `corepack pnpm run disk:report -- --top 5`: PASS, `removable generated paths: none`.
+- Remaining: physical Android phone QA, real-device persistence/recurrence proof, safe-area/keyboard matrix, production AAB approval, Play submission approval, and market publication remain unresolved. This does not prove launch-ready 100%.

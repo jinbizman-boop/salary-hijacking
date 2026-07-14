@@ -48,5 +48,11 @@ Date: 2026-07-14 KST
 ## Remaining Blockers
 
 - Physical Android phone QA remains BLOCKED because no physical phone is attached to this Codex Windows environment.
-- Strict release readiness remains BLOCKED by unresolved launch gaps, physical phone QA, and dirty working tree warnings.
+- Strict release readiness remains BLOCKED by unresolved launch gaps and physical phone QA.
 - Production AAB and Play submission remain BLOCKED by explicit approval values set to NO.
+
+## Post-Consolidation Note
+
+- Iteration 095 later consolidated the dirty release-source snapshot into the canonical branch at `e0fa3bba99ac8d84e238071d77cf4e0d92c837ab` and pushed it to `origin/main`.
+- The current strict readiness gate now reports git status and `origin/main` alignment as PASS.
+- Remaining strict blockers are unresolved launch gaps `GAP-003`, `GAP-004`, `GAP-005`, `GAP-006`, `GAP-008`, plus physical Android phone QA.
