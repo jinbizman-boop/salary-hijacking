@@ -4356,3 +4356,16 @@ When completing a work slice, append or update a row with:
   - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35.
 - APK SHA256: `4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36`.
 - Remaining: The APK is a local debug/pre-release artifact preserved on `D:`; it is not production AAB, not Play submission, and physical Android phone QA/logcat evidence is still required before any 100% launch-readiness claim.
+
+# 2026-07-15 KST - Iteration 118 Current-Head APK Evidence Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/126_ITERATION_118_CURRENT_HEAD_APK_EVIDENCE_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`, `D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/apk-summary.json`.
+- Completed: Refreshed tracked mobile preview evidence so the current-source APK gates point at HEAD `52acb8961bdeafac31b6004ae78c2982b00e116c` and APK SHA256 `4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36`.
+- Corrected: Removed the accidentally oversized APK artifact branch created during this iteration and republished a clean artifact branch containing only `salary-hijacking-phone-arm64-iteration117-debug.apk`.
+- Verified:
+  - Raw GitHub APK URL download: PASS, size `64,827,573`, SHA256 matched.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `corepack pnpm run check:release-readiness -- --strict`: current-source APK checks PASS (`mobile:preview:apk`, `mobile:preview:latest-source-apk`, `mobile:preview:phone-target-apk`).
+- APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration117/salary-hijacking-phone-arm64-iteration117-debug.apk`.
+- Remaining: Strict readiness is still BLOCKED by unresolved launch gaps, local branch not merged to `origin/main`, and missing physical Android phone QA/logcat proof. This remains a debug/pre-release APK, not production AAB or Play submission.

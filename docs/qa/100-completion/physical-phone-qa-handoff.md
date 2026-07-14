@@ -1,12 +1,12 @@
 # Physical Android Phone QA Handoff
 
-Updated: 2026-07-14 KST
+Updated: 2026-07-15 KST
 
 ## Current APK
 
-- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration115-debug.apk`
-- Artifact APK: `D:/salary-hijacking-artifacts/20260714/iteration-115-plan-dedupe-current-head-apk/salary-hijacking-phone-arm64-iteration115-debug.apk`
-- SHA256: `DC1BF6CBDD61C7710BD64AE1BC8C536F5704EB9375F96C1CBFB34D821FEF5FE0`
+- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration117-debug.apk`
+- Artifact APK: `D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/salary-hijacking-phone-arm64-iteration117-debug.apk`
+- SHA256: `4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36`
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 
@@ -28,7 +28,7 @@ Updated: 2026-07-14 KST
 
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
-node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration115-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
+node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration117-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
 ```
 
 ## What The Collector Must Prove
