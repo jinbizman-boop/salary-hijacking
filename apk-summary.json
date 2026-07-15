@@ -1,0 +1,15 @@
+﻿{
+    "schemaVersion":  1,
+    "observedAt":  "2026-07-15T00:53:47.1568347Z",
+    "sourceHead":  "01f43d59daaa299b8a002d326e2243794ff73809",
+    "appApk":  "D:\\salary-hijacking-artifacts\\20260715\\iteration-119-current-head-apk\\salary-hijacking-phone-arm64-iteration119-debug.apk",
+    "sha256":  "0E7EF02948845AE12AC0F2A7AD080A01344C56A176CC920A1DAF282462EB9109",
+    "bytes":  64827757,
+    "androidTestApk":  "D:\\salary-hijacking-artifacts\\20260715\\iteration-119-current-head-apk\\salary-hijacking-e2e-androidTest-iteration119.apk",
+    "androidTestBytes":  4481666,
+    "abis":  [
+                 "arm64-v8a"
+             ],
+    "secretsRedacted":  true,
+    "containsSecretValues":  false
+}
