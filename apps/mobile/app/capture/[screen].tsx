@@ -1,4 +1,5 @@
-import { useLocalSearchParams, usePathname } from "expo-router";
+import { Redirect, useLocalSearchParams, usePathname } from "expo-router";
+import { Platform } from "react-native";
 
 import {
   CapturePreviewScreen,
@@ -25,6 +26,8 @@ const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
   });
 
 export default function CaptureScreen(): React.ReactElement {
+  if (Platform.OS !== "web") return <Redirect href="/salary" />;
+
   const params = useLocalSearchParams();
   const pathname = usePathname();
   const paramScreen = params.screen;

@@ -28,6 +28,7 @@ const CAPTURE_PREVIEW_SCREEN = join(
   "capture",
   "CapturePreviewScreen.tsx",
 );
+const CAPTURE_ROUTE_SCREEN = join(APP_ROOT, "capture", "[screen].tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
@@ -339,6 +340,17 @@ describe("mobile app screen API and route contracts", () => {
     );
     expect(screenshotScript).toContain(
       '["/capture/profile-level", "17_profile_level.png"]',
+    );
+  });
+
+  it("keeps screenshot capture routes web-only so native production cannot show preview screens", () => {
+    const source = readFileSync(CAPTURE_ROUTE_SCREEN, "utf8");
+
+    expect(source).toContain('import { Platform } from "react-native"');
+    expect(source).toContain('Platform.OS !== "web"');
+    expect(source).toContain('<Redirect href="/salary" />');
+    expect(source.indexOf('Platform.OS !== "web"')).toBeLessThan(
+      source.indexOf("<CapturePreviewScreen"),
     );
   });
 
