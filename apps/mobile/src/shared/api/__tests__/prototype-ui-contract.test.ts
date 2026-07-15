@@ -31,16 +31,11 @@ describe("mobile prototype UI contract", () => {
   it("keeps primary screen copy readable and aligned to the supplied HTML/JPG prototypes", () => {
     const salary = [
       readApp("(tabs)", "salary", "index.tsx"),
-      readSrc(
-        "features",
-        "salary",
-        "components",
-        "SalaryHomeReferenceScreen.tsx",
-      ),
+      readSrc("features", "salary", "components", "SalaryHomeScreen.tsx"),
     ].join("\n");
     const plan = [
       readApp("(tabs)", "plan", "index.tsx"),
-      readSrc("features", "plan", "components", "PlanReferenceScreen.tsx"),
+      readSrc("features", "plan", "components", "PlanScreen.tsx"),
     ].join("\n");
     const notifications = [
       readApp("notifications", "index.tsx"),
@@ -48,7 +43,7 @@ describe("mobile prototype UI contract", () => {
         "features",
         "notifications",
         "components",
-        "NotificationReferenceScreen.tsx",
+        "NotificationScreen.tsx",
       ),
     ].join("\n");
 
@@ -83,18 +78,13 @@ describe("mobile prototype UI contract", () => {
       readApp("(tabs)", "salary", "index.tsx"),
       readApp("(tabs)", "plan", "index.tsx"),
       readApp("notifications", "index.tsx"),
-      readSrc(
-        "features",
-        "salary",
-        "components",
-        "SalaryHomeReferenceScreen.tsx",
-      ),
-      readSrc("features", "plan", "components", "PlanReferenceScreen.tsx"),
+      readSrc("features", "salary", "components", "SalaryHomeScreen.tsx"),
+      readSrc("features", "plan", "components", "PlanScreen.tsx"),
       readSrc(
         "features",
         "notifications",
         "components",
-        "NotificationReferenceScreen.tsx",
+        "NotificationScreen.tsx",
       ),
       readSrc("features", "preview", "interactive-state.ts"),
     ];

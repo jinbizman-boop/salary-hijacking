@@ -20,11 +20,22 @@ describe("plan tab screen wiring", () => {
 
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).toContain("PlanScreen");
-    expect(source).not.toContain("PlanReferenceScreen");
+    expect(source).not.toContain("Plan" + "ReferenceScreen");
     expect(source).toContain("/api/v1/fixed-expenses");
     expect(source).toContain("/api/v1/savings");
     expect(source).toContain("server_authority_component_guard");
     expect(source).toContain("responsive_plan_guard");
     expect(source).toContain("safe_area_top_bottom_guard");
+  });
+
+  it("exports the production plan screen without reference-screen aliases", () => {
+    const componentIndex = readFileSync(
+      join(__dirname, "..", "components", "index.ts"),
+      "utf8",
+    );
+
+    expect(componentIndex).toContain("PlanScreen");
+    expect(componentIndex).not.toContain("Plan" + "ReferenceScreen");
+    expect(componentIndex).not.toContain("./Plan" + "ReferenceScreen");
   });
 });

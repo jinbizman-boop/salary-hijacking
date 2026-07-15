@@ -16,14 +16,14 @@ import {
   NOTIFICATIONS_UNREAD_COUNT_PATH,
 } from "../constants";
 
-const SCREEN_VERSION = "5.2.0-reference-notifications-no-bottom-nav";
+const SCREEN_VERSION = "5.2.0-notifications-no-bottom-nav";
 const BRAND_LABEL = "SALARY HIJACKING";
 const TEXT_BLACK = "#191B1F";
 const MUTED = "#6D737A";
 const SOFT_GREEN = "#EAF8EF";
 const BLUE = "#2E83C8";
 
-export type NotificationReferenceHref =
+export type NotificationHref =
   | "/salary"
   | "/level"
   | "/level/reading"
@@ -31,8 +31,8 @@ export type NotificationReferenceHref =
   | "/level/english"
   | "/level/health";
 
-type ReferenceNotification = Readonly<{
-  href: NotificationReferenceHref;
+type NotificationItem = Readonly<{
+  href: NotificationHref;
   icon: ImageSourcePropType;
   id: string;
   subtitle: string;
@@ -41,13 +41,13 @@ type ReferenceNotification = Readonly<{
   tone: "highlight" | "normal";
 }>;
 
-export type NotificationReferenceScreenProps = Readonly<{
+export type NotificationScreenProps = Readonly<{
   onBack?: () => void;
-  onOpenHref?: (href: NotificationReferenceHref) => void;
+  onOpenHref?: (href: NotificationHref) => void;
   onSettings?: () => void;
 }>;
 
-const notificationItems: readonly ReferenceNotification[] = [
+const notificationItems: readonly NotificationItem[] = [
   {
     href: "/salary",
     icon: appIconAssets.money.coins,
@@ -113,11 +113,11 @@ const notificationItems: readonly ReferenceNotification[] = [
   },
 ];
 
-export function NotificationReferenceScreen({
+export function NotificationScreen({
   onBack,
   onOpenHref,
   onSettings,
-}: NotificationReferenceScreenProps): React.ReactElement {
+}: NotificationScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 430);

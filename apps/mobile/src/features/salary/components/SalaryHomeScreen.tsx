@@ -71,7 +71,7 @@ type ItemDraft = Readonly<{
   content: string;
 }>;
 
-export type SalaryHomeReferenceScreenProps = Readonly<{
+export type SalaryHomeScreenProps = Readonly<{
   onOpenNotifications?: (() => void) | undefined;
   planCommitmentsApi?:
     | Partial<
@@ -100,11 +100,11 @@ export function resetSalaryHomePreviewCacheForTests(): void {
   resetPreviewStateForTests();
 }
 
-export function SalaryHomeReferenceScreen({
+export function SalaryHomeScreen({
   onOpenNotifications,
   planCommitmentsApi,
   variableExpenseApi,
-}: SalaryHomeReferenceScreenProps): React.ReactElement {
+}: SalaryHomeScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
   const scrollRef = useRef<ScrollView | null>(null);

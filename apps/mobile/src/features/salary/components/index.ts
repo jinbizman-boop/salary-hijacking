@@ -15,9 +15,9 @@ export {
 } from "./SalaryMetricGrid";
 export {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
-  SalaryHomeReferenceScreen as SalaryHomeScreen,
-} from "./SalaryHomeReferenceScreen";
+  SalaryHomeScreen,
+  type SalaryHomeScreenProps,
+} from "./SalaryHomeScreen";
 export {
   VariableExpenseQuickAdd,
   type VariableExpenseDraft,

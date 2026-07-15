@@ -77,7 +77,7 @@ type PayrollDraft = Readonly<{
   payrollAmount: string;
 }>;
 
-export type PlanReferenceScreenProps = Readonly<{
+export type PlanScreenProps = Readonly<{
   budgetApi?:
     | Partial<
         Pick<
@@ -111,11 +111,11 @@ export type PlanReferenceScreenProps = Readonly<{
     | undefined;
 }>;
 
-export function PlanReferenceScreen({
+export function PlanScreen({
   budgetApi,
   planCommitmentsApi,
   payrollApi,
-}: PlanReferenceScreenProps = {}): React.ReactElement {
+}: PlanScreenProps = {}): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 430);

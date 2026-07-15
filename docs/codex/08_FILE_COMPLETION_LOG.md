@@ -4400,3 +4400,16 @@ When completing a work slice, append or update a row with:
   - Core native library inspection: Expo Modules Core, Hermes, React Native, and Reanimated native libraries present under `lib/arm64-v8a/`.
   - GitHub raw APK URL HEAD request: HTTP 200, `Content-Length=64827757`.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This is a QA debug APK, not a production AAB or Google Play submission.
+
+# 2026-07-15 KST - Iteration 121 Product Screen Component Names
+
+- Files: `apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx`, `apps/mobile/src/features/plan/components/PlanScreen.tsx`, `apps/mobile/src/features/notifications/components/NotificationScreen.tsx`, related component barrels, capture screen, screen-wiring/component/launch-readiness/contract tests, `docs/codex/100-completion/129_ITERATION_121_PRODUCT_SCREEN_COMPONENT_NAMES.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Renamed the feature-level Salary, Plan, and Notifications production screen components away from `*ReferenceScreen` names and removed reference-screen aliases from public feature barrels while preserving current UI behavior.
+- Verified:
+  - RED targeted screen-wiring tests failed because component barrels still exported direct `*ReferenceScreen` aliases and the Notification product screen file did not exist.
+  - GREEN targeted screen-wiring tests PASS, 6 tests.
+  - Broader mobile impact suite PASS, 80 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - Production runtime search excluding tests for `ReferenceScreen`, `NotificationReferenceHref`, `SalaryHomeReference`, `PlanReference`, and `NotificationReference`: no matches.
+  - `git diff --check`: PASS.
+- Remaining: Shared interactive state is still named as preview state and needs a separate cleanup/data-flow slice. A fresh preview APK/evidence refresh is required after this source commit because mobile source changed.

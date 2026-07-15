@@ -24,9 +24,9 @@ import {
   componentSpacing,
   componentTypography,
 } from "../../shared/components";
-import { SalaryHomeReferenceScreen } from "../salary/components";
-import { PlanReferenceScreen } from "../plan/components";
-import { NotificationReferenceScreen } from "../notifications/components";
+import { SalaryHomeScreen } from "../salary/components";
+import { PlanScreen } from "../plan/components";
+import { NotificationScreen } from "../notifications/components";
 
 export type CapturePreviewKind =
   | "salary"
@@ -345,15 +345,15 @@ export function CapturePreviewScreen({
   }
 
   if (kind === "salary") {
-    return <SalaryHomeReferenceScreen />;
+    return <SalaryHomeScreen />;
   }
 
   if (kind === "plan") {
-    return <PlanReferenceScreen />;
+    return <PlanScreen />;
   }
 
   if (kind === "notifications") {
-    return <NotificationReferenceScreen />;
+    return <NotificationScreen />;
   }
 
   const content = contentByKind[kind];

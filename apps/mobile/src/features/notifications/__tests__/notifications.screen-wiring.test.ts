@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("notifications screen wiring", () => {
@@ -16,14 +16,18 @@ describe("notifications screen wiring", () => {
       ),
       "utf8",
     );
-    const componentSource = readFileSync(
-      join(__dirname, "..", "components", "NotificationReferenceScreen.tsx"),
-      "utf8",
+    const componentPath = join(
+      __dirname,
+      "..",
+      "components",
+      "NotificationScreen.tsx",
     );
+    expect(existsSync(componentPath)).toBe(true);
+    const componentSource = readFileSync(componentPath, "utf8");
     const source = `${routeSource}\n${componentSource}`;
 
     expect(routeSource).toContain("NotificationScreen");
-    expect(routeSource).not.toContain("NotificationReferenceScreen");
+    expect(routeSource).not.toContain("Notification" + "ReferenceScreen");
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).not.toContain("bottomTabs");
     expect(source).toContain("useRouter");
@@ -41,5 +45,17 @@ describe("notifications screen wiring", () => {
     expect(source).toContain("NOTIFICATIONS_PATH");
     expect(source).toContain("NOTIFICATIONS_UNREAD_COUNT_PATH");
     expect(source).toContain("sensitive_financial_data_component_guard");
+  });
+
+  it("exports the production notification screen without reference-screen aliases", () => {
+    const componentIndex = readFileSync(
+      join(__dirname, "..", "components", "index.ts"),
+      "utf8",
+    );
+
+    expect(componentIndex).toContain("NotificationScreen");
+    expect(componentIndex).not.toContain("Notification" + "ReferenceScreen");
+    expect(componentIndex).not.toContain("Notification" + "ReferenceHref");
+    expect(componentIndex).not.toContain("./Notification" + "ReferenceScreen");
   });
 });

@@ -54,7 +54,7 @@ describe("shared mobile components", () => {
         "features",
         "salary",
         "components",
-        "SalaryHomeReferenceScreen.tsx",
+        "SalaryHomeScreen.tsx",
       ),
       join(
         __dirname,
@@ -64,7 +64,7 @@ describe("shared mobile components", () => {
         "features",
         "plan",
         "components",
-        "PlanReferenceScreen.tsx",
+        "PlanScreen.tsx",
       ),
     ];
 

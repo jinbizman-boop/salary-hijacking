@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 
 import {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
+  SalaryHomeScreen,
 } from "../components";
 
 describe("salary launch readiness interactions", () => {
@@ -11,7 +11,7 @@ describe("salary launch readiness interactions", () => {
   });
 
   it("renders Korean launch copy and keeps planned/completed reminder direction", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
     expect(screen.getByText("내 급여 납치 현황")).toBeTruthy();
     expect(screen.getByText("전체 누적 납치 금액")).toBeTruthy();
@@ -29,7 +29,7 @@ describe("salary launch readiness interactions", () => {
   });
 
   it("keeps the variable expense form above the saved table and persists rows across remounts", () => {
-    const first = render(<SalaryHomeReferenceScreen />);
+    const first = render(<SalaryHomeScreen />);
 
     fireEvent.press(first.getByRole("button", { name: "변동 지출 추가하기" }));
     expect(
@@ -53,7 +53,7 @@ describe("salary launch readiness interactions", () => {
     expect(first.getByText("필드센스 파스콘 구입")).toBeTruthy();
     first.unmount();
 
-    const second = render(<SalaryHomeReferenceScreen />);
+    const second = render(<SalaryHomeScreen />);
     expect(second.getByText("필드센스 파스콘 구입")).toBeTruthy();
     expect(second.getByLabelText("변동 지출 합계 30,000원")).toBeTruthy();
   });
