@@ -4541,3 +4541,20 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
   - `corepack pnpm run format:check`: PASS.
 - Remaining: This narrows GATE-052 for Profile but does not complete server-backed my-page summary runtime loading, physical Android phone QA/logcat proof, or strict launch readiness. The Iteration 129 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit.
+
+# 2026-07-15 KST - Iteration 131 Profile Empty Stats APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/139_ITERATION_131_PROFILE_EMPTY_STATS_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Recovered, verified, copied, and republished the arm64-v8a Android debug APK for current source HEAD `b1adb4ffae364e97e85919b9d0410299e9d34ca7` after the Profile empty-stats runtime boundary cleanup.
+- Build note: the local wrapper timed out after Gradle produced `apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk`; the APK was recovered from that Gradle output and independently verified.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration131-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration131/salary-hijacking-phone-arm64-iteration131-debug.apk`.
+- SHA256: `A85CE1A3018552944C389A4F2B5CE035FE00E377CAFF07AE47F88CCDDA10FE0E`.
+- Verified:
+  - APK header: PASS.
+  - APK ABI inspection: only `arm64-v8a`.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - GitHub raw APK download request: HTTP 200.
+  - Downloaded APK SHA256 matched local APK.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
