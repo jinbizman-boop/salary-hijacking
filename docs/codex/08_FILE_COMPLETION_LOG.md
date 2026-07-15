@@ -4413,3 +4413,18 @@ When completing a work slice, append or update a row with:
   - Production runtime search excluding tests for `ReferenceScreen`, `NotificationReferenceHref`, `SalaryHomeReference`, `PlanReference`, and `NotificationReference`: no matches.
   - `git diff --check`: PASS.
 - Remaining: Shared interactive state is still named as preview state and needs a separate cleanup/data-flow slice. A fresh preview APK/evidence refresh is required after this source commit because mobile source changed.
+
+# 2026-07-15 KST - Iteration 122 Product Screen Names APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/130_ITERATION_122_PRODUCT_SCREEN_NAMES_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt and republished the arm64-v8a phone-target Android debug APK after source commit `a507293a2e4ff24a8d6e872972315b4b7db3eb45`, copied it to D-drive artifact storage and Downloads, published a GitHub raw artifact branch, and refreshed mobile preview evidence.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration122-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration122/salary-hijacking-phone-arm64-iteration122-debug.apk`.
+- SHA256: `5547EB794469D08E089E1A9AA604069EACAAE89454A8895CB68110F35E2DF522`.
+- Verified:
+  - `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local-debug:preflight`: PASS.
+  - Android Gradle local debug build produced the phone APK.
+  - APK ABI inspection: only `arm64-v8a`.
+  - Core native library inspection: Expo Modules Core, Hermes, React Native, and Reanimated native libraries present under `lib/arm64-v8a/`.
+  - GitHub raw APK URL HEAD request: HTTP 200, `Content-Length=64827505`.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
