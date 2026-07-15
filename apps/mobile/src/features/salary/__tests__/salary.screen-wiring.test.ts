@@ -49,4 +49,15 @@ describe("salary tab screen wiring", () => {
     expect(source).not.toContain("get" + "PreviewState");
     expect(source).not.toContain("update" + "PreviewState");
   });
+
+  it("does not hardcode production salary hero amounts in the screen component", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toMatch(
+      /5,780,000|2,700,000|1,927,000|773,000|2700000|773000/u,
+    );
+  });
 });

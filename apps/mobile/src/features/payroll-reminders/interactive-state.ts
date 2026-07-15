@@ -39,9 +39,16 @@ export type PlanItem = Readonly<{
   usedMonthKey?: string;
 }>;
 
+export type PayrollFinancialSummary = Readonly<{
+  cumulativeHijacked: number;
+  fixedExpenseBaseline: number;
+  receivedAmount: number;
+}>;
+
 export type PayrollReminderState = Readonly<{
   dailyItems: readonly DailyBudgetItem[];
   dailyLimit: number;
+  financialSummary: PayrollFinancialSummary;
   livingDays: number;
   planItems: readonly PlanItem[];
   variableExpenses: readonly VariableExpenseItem[];
@@ -74,8 +81,14 @@ const SENSITIVE_TEXT_PATTERNS: readonly RegExp[] = [
   /\b(?:token|secret|password|passwd|jwt|api[_-]?key)\b/iu,
   /(?:계좌|카드|주민|비밀번호|토큰|시크릿)/u,
 ];
+const DEFAULT_FINANCIAL_SUMMARY: PayrollFinancialSummary = {
+  cumulativeHijacked: 0,
+  fixedExpenseBaseline: 0,
+  receivedAmount: 0,
+};
 const initialState: PayrollReminderState = {
   dailyLimit: 20000,
+  financialSummary: DEFAULT_FINANCIAL_SUMMARY,
   livingDays: 30,
   dailyItems: [
     {
@@ -341,6 +354,11 @@ function sanitizePayrollReminderState(
   if (!isRecord(value)) return null;
   if (!isNonNegativeInteger(value.dailyLimit)) return null;
   if (!isPositiveDayCount(value.livingDays)) return null;
+  const financialSummary =
+    value.financialSummary === undefined
+      ? DEFAULT_FINANCIAL_SUMMARY
+      : sanitizeFinancialSummary(value.financialSummary);
+  if (!financialSummary) return null;
 
   const dailyItems = sanitizeArray(value.dailyItems, sanitizeDailyBudgetItem);
   const planItems = sanitizeArray(value.planItems, sanitizePlanItem);
@@ -353,9 +371,24 @@ function sanitizePayrollReminderState(
   return {
     dailyItems,
     dailyLimit: value.dailyLimit,
+    financialSummary,
     livingDays: value.livingDays,
     planItems,
     variableExpenses,
+  };
+}
+
+function sanitizeFinancialSummary(
+  value: unknown,
+): PayrollFinancialSummary | null {
+  if (!isRecord(value)) return null;
+  if (!isNonNegativeInteger(value.cumulativeHijacked)) return null;
+  if (!isNonNegativeInteger(value.fixedExpenseBaseline)) return null;
+  if (!isNonNegativeInteger(value.receivedAmount)) return null;
+  return {
+    cumulativeHijacked: value.cumulativeHijacked,
+    fixedExpenseBaseline: value.fixedExpenseBaseline,
+    receivedAmount: value.receivedAmount,
   };
 }
 

@@ -190,8 +190,12 @@ export function SalaryHomeScreen({
     0,
   );
   const dailyRemaining = Math.max(0, state.dailyLimit - dailySpent);
-  const currentSpent = 773000 + dailySpent + variableTotal;
-  const currentHijacked = Math.max(0, 2700000 - currentSpent);
+  const currentSpent =
+    state.financialSummary.fixedExpenseBaseline + dailySpent + variableTotal;
+  const currentHijacked = Math.max(
+    0,
+    state.financialSummary.receivedAmount - currentSpent,
+  );
 
   function sync(next: ReturnType<typeof getPayrollReminderState>): void {
     setState(next);
@@ -686,7 +690,7 @@ export function SalaryHomeScreen({
               전체 누적 납치 금액
             </Text>
             <Text allowFontScaling={false} style={styles.heroAmount}>
-              5,780,000원
+              {formatKrw(state.financialSummary.cumulativeHijacked)}
             </Text>
           </View>
           <View style={styles.heroRight}>
@@ -701,7 +705,10 @@ export function SalaryHomeScreen({
                 value={salaryCycle.nextLabel}
               />
             </View>
-            <HeroMetric label="수령 금액" value="2,700,000원" />
+            <HeroMetric
+              label="수령 금액"
+              value={formatKrw(state.financialSummary.receivedAmount)}
+            />
             <HeroMetric label="지출 금액" value={formatKrw(currentSpent)} />
             <HeroMetric
               emphasized

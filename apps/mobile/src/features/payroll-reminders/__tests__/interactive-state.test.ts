@@ -44,6 +44,15 @@ describe("interactive preview state Korean copy", () => {
     expect(iconForCategory("담배")).toBeTruthy();
     expect(iconForCategory("구독")).toBeTruthy();
   });
+  it("does not seed prototype salary amounts into the production financial summary", () => {
+    const state = getPayrollReminderState();
+
+    expect(state.financialSummary).toEqual({
+      cumulativeHijacked: 0,
+      fixedExpenseBaseline: 0,
+      receivedAmount: 0,
+    });
+  });
 });
 
 describe("interactive preview daily budget completion dates", () => {

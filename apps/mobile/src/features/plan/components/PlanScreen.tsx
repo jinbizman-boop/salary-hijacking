@@ -190,6 +190,16 @@ export function PlanScreen({
 
   function applyPayrollPlanSnapshot(snapshot: PayrollPlanSnapshot): void {
     setPayrollDraft(payrollDraftFromSnapshot(snapshot));
+    sync(
+      updatePayrollReminderState((previous) => ({
+        ...previous,
+        financialSummary: {
+          ...previous.financialSummary,
+          fixedExpenseBaseline: snapshot.fixedExpenseTotalMinor,
+          receivedAmount: snapshot.payrollAmountMinor,
+        },
+      })),
+    );
   }
 
   function openEditor(section: SectionKey, item?: PlanItem): void {
@@ -233,6 +243,16 @@ export function PlanScreen({
       payday: String(payday),
       payrollAmount: String(payrollAmount),
     });
+    sync(
+      updatePayrollReminderState((previous) => ({
+        ...previous,
+        financialSummary: {
+          ...previous.financialSummary,
+          fixedExpenseBaseline: fixedExpenseTotal,
+          receivedAmount: payrollAmount,
+        },
+      })),
+    );
   }
 
   async function savePlanItem(section: "fixed" | "saving"): Promise<void> {

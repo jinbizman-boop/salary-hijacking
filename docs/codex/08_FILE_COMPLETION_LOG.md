@@ -4558,3 +4558,18 @@ When completing a work slice, append or update a row with:
   - GitHub raw APK download request: HTTP 200.
   - Downloaded APK SHA256 matched local APK.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
+
+# 2026-07-15 KST - Iteration 132 Salary Home Financial Summary Boundary
+
+- Files: `apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx`, `apps/mobile/src/features/salary/__tests__/salary.screen-wiring.test.ts`, `apps/mobile/src/features/payroll-reminders/interactive-state.ts`, `apps/mobile/src/features/payroll-reminders/__tests__/interactive-state.test.ts`, `apps/mobile/src/features/plan/components/PlanScreen.tsx`, `docs/codex/100-completion/140_ITERATION_132_SALARY_HOME_FINANCIAL_SUMMARY_BOUNDARY.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Removed Salary Home hero hardcoded financial display values from the runtime screen component, added a shared `financialSummary` boundary, made the default financial summary zero-valued instead of prototype salary totals, preserved legacy persisted state compatibility, and synced Plan payroll saves into the shared Salary Home financial summary.
+- Verified:
+  - RED `salary.screen-wiring.test.ts` failed before implementation because `SalaryHomeScreen.tsx` still contained hardcoded salary hero amounts/constants.
+  - GREEN salary screen-wiring test PASS.
+  - RED `interactive-state.test.ts` failed before default summary cleanup because the state still seeded prototype salary totals.
+  - GREEN interactive-state test PASS.
+  - Salary/Plan/payroll-reminder regression suite PASS, 4 suites and 54 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+- Remaining: GATE-052 is narrowed but not complete because prototype/reference and notification surfaces still contain sample amounts that need separate cleanup/contract decisions. The Iteration 131 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.
