@@ -158,8 +158,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(communitySource).not.toContain("Proof Board");
     expect(communitySource).not.toContain("Write");
 
-    expect(profileSource).toContain("ProfileHeader");
-    expect(profileSource).toContain("ProfileStatGrid");
+    expect(profileSource).toContain("ProfileScreen");
+    expect(profileSource).toContain("/api/v1/users/me/my-page-summary");
     expect(profileSource).not.toContain("LV 7 Budget Builder");
   });
 
