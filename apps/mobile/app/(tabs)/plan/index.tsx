@@ -18,7 +18,7 @@ export function assertMobilePlanIndexCompleteness(): {
     "SALARY HIJACKING",
     PLAN_FIXED_EXPENSES_ENDPOINT,
     PLAN_SAVINGS_ENDPOINT,
-    "홍길동님의 급여 납치 목표 달성률",
+    "사용자님의 급여 납치 목표 달성률",
     "목표 달성률 88%",
     "내 급여 납치 계획/설정",
     "월별 고정 지출 계획/설정",

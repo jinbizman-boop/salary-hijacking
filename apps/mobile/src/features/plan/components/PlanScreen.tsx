@@ -112,10 +112,12 @@ export type PlanScreenProps = Readonly<{
     | Partial<Pick<PayrollApiClient, "getCurrent" | "savePlan">>
     | null
     | undefined;
+  displayName?: string | undefined;
 }>;
 
 export function PlanScreen({
   budgetApi,
+  displayName = "\uC0AC\uC6A9\uC790",
   planCommitmentsApi,
   payrollApi,
 }: PlanScreenProps = {}): React.ReactElement {
@@ -585,7 +587,7 @@ export function PlanScreen({
         <View style={styles.goalCard}>
           <View style={styles.goalCopy}>
             <Text allowFontScaling={false} style={styles.goalTitle}>
-              홍길동님의 급여 납치 목표 달성률
+              {displayName}님의 급여 납치 목표 달성률
             </Text>
             <View style={styles.goalMetaRow}>
               <View style={styles.goalMeta}>

@@ -4469,3 +4469,15 @@ When completing a work slice, append or update a row with:
   - GitHub raw APK URL HEAD request: HTTP 200, `Content-Length=64827637`.
   - Downloaded APK SHA256 matched local APK.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
+
+# 2026-07-15 KST - Iteration 126 Salary/Plan Display Name Boundary
+
+- Files: `apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx`, `apps/mobile/src/features/plan/components/PlanScreen.tsx`, Salary/Plan component and launch-readiness tests, app-screen/prototype UI contract tests, route-level Salary/Plan visible-copy contracts, `docs/codex/100-completion/134_ITERATION_126_SALARY_PLAN_DISPLAY_NAME_BOUNDARY.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Removed the previous `홍길동` fixture name from Salary Home and Plan user-owned headings by adding `displayName` props with neutral `사용자` fallbacks and updating visible-copy contracts to match the production boundary.
+- Verified:
+  - RED targeted Salary/Plan component tests failed before implementation because the screens still rendered `홍길동` fixture copy.
+  - GREEN targeted regression suite PASS, 7 suites and 76 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+- Remaining: Profile and Community route fixtures still contain `홍길동` demo copy and need a separate cleanup slice. The Iteration 125 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.

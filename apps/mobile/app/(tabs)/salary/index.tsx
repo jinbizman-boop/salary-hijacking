@@ -9,9 +9,9 @@ const SALARY_VISIBLE_COPY_CONTRACT = [
   "SALARY HIJACKING",
   "내 급여 납치 현황",
   "전체 누적 납치 금액",
-  "홍길동님이 설정한 금일 고정 지출",
-  "홍길동님이 설정한 일일 사용 예산",
-  "홍길동님이 사용한 금일 변동 지출",
+  "사용자님이 설정한 금일 고정 지출",
+  "사용자님이 설정한 일일 사용 예산",
+  "사용자님이 사용한 금일 변동 지출",
 ] as const;
 
 export default function SalaryIndexScreen(): React.ReactElement {

@@ -25,6 +25,28 @@ describe("salary reference screen interactions", () => {
     jest.useRealTimers();
   });
 
+  it("renders user-owned salary sections from the provided display name", () => {
+    const displayName = "\uAE40\uD14C\uC2A4\uD2B8";
+    const screen = render(<SalaryHomeScreen displayName={displayName} />);
+
+    expect(
+      screen.getByText(
+        `${displayName}\uB2D8\uC774 \uC124\uC815\uD55C \uAE08\uC77C \uACE0\uC815 \uC9C0\uCD9C`,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        `${displayName}\uB2D8\uC774 \uC124\uC815\uD55C \uC77C\uC77C \uC0AC\uC6A9 \uC608\uC0B0`,
+      ),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(
+        `${displayName}\uB2D8\uC774 \uC0AC\uC6A9\uD55C \uAE08\uC77C \uBCC0\uB3D9 \uC9C0\uCD9C`,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/^\uD64D\uAE38\uB3D9/u)).toBeNull();
+  });
+
   it("uses KST date copy and keeps reminder labels in the requested direction", () => {
     const screen = render(<SalaryHomeScreen />);
 

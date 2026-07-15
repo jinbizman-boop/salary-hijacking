@@ -144,7 +144,7 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(salarySource).toContain("SalaryHomeScreen");
     expect(salarySource).toContain("내 급여 납치 현황");
-    expect(salarySource).toContain("홍길동님이 설정한 일일 사용 예산");
+    expect(salarySource).toContain("사용자님이 설정한 일일 사용 예산");
     expect(salarySource).toContain("Google 광고 영역");
     expect(salarySource).not.toContain("Salary Home");
     expect(salarySource).not.toContain("This month protected");

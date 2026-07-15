@@ -15,7 +15,11 @@ describe("salary launch readiness interactions", () => {
 
     expect(screen.getByText("내 급여 납치 현황")).toBeTruthy();
     expect(screen.getByText("전체 누적 납치 금액")).toBeTruthy();
-    expect(screen.getByText("홍길동님이 설정한 일일 사용 예산")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "\uC0AC\uC6A9\uC790\uB2D8\uC774 \uC124\uC815\uD55C \uC77C\uC77C \uC0AC\uC6A9 \uC608\uC0B0",
+      ),
+    ).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
 

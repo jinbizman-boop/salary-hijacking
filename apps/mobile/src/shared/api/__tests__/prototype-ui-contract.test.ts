@@ -53,12 +53,12 @@ describe("mobile prototype UI contract", () => {
 
     expect(salary).toContain("내 급여 납치 현황");
     expect(salary).toContain("전체 누적 납치 금액");
-    expect(salary).toContain("홍길동님이 설정한 금일 고정 지출");
-    expect(salary).toContain("홍길동님이 설정한 일일 사용 예산");
+    expect(salary).toContain("사용자님이 설정한 금일 고정 지출");
+    expect(salary).toContain("사용자님이 설정한 일일 사용 예산");
     expect(salary).toContain("사용 예정");
     expect(salary).toContain("사용 완료");
 
-    expect(plan).toContain("홍길동님의 급여 납치 목표 달성률");
+    expect(plan).toContain("사용자님의 급여 납치 목표 달성률");
     expect(plan).toContain("내 급여 납치 계획/설정");
     expect(plan).toContain("월별 고정 지출 계획/설정");
     expect(plan).toContain("월별 고정 적금 계획/설정");
@@ -86,7 +86,7 @@ describe("mobile prototype UI contract", () => {
         "components",
         "NotificationScreen.tsx",
       ),
-      readSrc("features", "preview", "interactive-state.ts"),
+      readSrc("features", "payroll-reminders", "interactive-state.ts"),
     ];
 
     for (const source of sources) {

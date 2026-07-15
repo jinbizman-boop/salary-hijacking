@@ -75,6 +75,7 @@ type ItemDraft = Readonly<{
 }>;
 
 export type SalaryHomeScreenProps = Readonly<{
+  displayName?: string | undefined;
   onOpenNotifications?: (() => void) | undefined;
   planCommitmentsApi?:
     | Partial<
@@ -104,6 +105,7 @@ export function resetSalaryHomePreviewCacheForTests(): void {
 }
 
 export function SalaryHomeScreen({
+  displayName = "\uC0AC\uC6A9\uC790",
   onOpenNotifications,
   planCommitmentsApi,
   variableExpenseApi,
@@ -713,7 +715,7 @@ export function SalaryHomeScreen({
 
         <View style={styles.card}>
           <Text allowFontScaling={false} style={styles.cardTitle}>
-            홍길동님이 설정한 금일 고정 지출
+            {displayName}님이 설정한 금일 고정 지출
           </Text>
           {getVisiblePlanReminderItems(
             state.planItems,
@@ -732,7 +734,7 @@ export function SalaryHomeScreen({
         <View style={styles.card}>
           <View style={styles.titleRow}>
             <Text allowFontScaling={false} style={styles.cardTitle}>
-              홍길동님이 설정한 일일 사용 예산
+              {displayName}님이 설정한 일일 사용 예산
             </Text>
             <Pressable
               accessibilityLabel="일일 사용 예산 설정하기"
@@ -839,7 +841,7 @@ export function SalaryHomeScreen({
         <View style={styles.card}>
           <View style={styles.variableHeader}>
             <Text allowFontScaling={false} style={styles.cardTitle}>
-              홍길동님이 사용한 금일 변동 지출
+              {displayName}님이 사용한 금일 변동 지출
             </Text>
             <View
               accessibilityLabel={`변동 지출 합계 ${formatKrw(variableTotal)}`}

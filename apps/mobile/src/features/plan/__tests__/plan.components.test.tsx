@@ -18,6 +18,18 @@ describe("plan reference screen interactions", () => {
     jest.clearAllMocks();
   });
 
+  it("renders the goal card from the provided display name", () => {
+    const displayName = "\uAE40\uD14C\uC2A4\uD2B8";
+    const screen = render(<PlanScreen displayName={displayName} />);
+
+    expect(
+      screen.getByText(
+        `${displayName}\uB2D8\uC758 \uAE09\uC5EC \uB0A9\uCE58 \uBAA9\uD45C \uB2EC\uC131\uB960`,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/^\uD64D\uAE38\uB3D9/u)).toBeNull();
+  });
+
   it("opens section settings and exposes editable plan controls", () => {
     const screen = render(<PlanScreen />);
 

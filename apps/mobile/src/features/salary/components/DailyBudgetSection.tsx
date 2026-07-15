@@ -21,7 +21,7 @@ export function DailyBudgetSection({
   spentAmount,
   remainingAmount,
   onRefresh,
-  title = "홍길동님이 설정한 일일 사용 예산",
+  title = "사용자님이 설정한 일일 사용 예산",
 }: DailyBudgetSectionProps): React.ReactElement {
   const usageRate =
     configuredAmount > 0
