@@ -4451,3 +4451,21 @@ When completing a work slice, append or update a row with:
   - `node --test apps\mobile\scripts\expo-local-android-debug-build.test.mjs`: PASS, 23 tests.
   - `corepack pnpm run format:check`: PASS.
 - Remaining: This is a build stability source change only. A fresh current-source APK/evidence refresh is still required after this commit, and physical Android phone QA/logcat proof remains pending.
+
+# 2026-07-15 KST - Iteration 125 Current HEAD Phone APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/133_ITERATION_125_CURRENT_HEAD_PHONE_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt and republished the arm64-v8a phone-target Android debug APK for current source HEAD `d8b2381635e39502520a3fd9a903010f38c916ff`, copied it to D-drive artifact storage and Downloads, published a GitHub raw artifact branch, and refreshed mobile preview evidence.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration125-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration125/salary-hijacking-phone-arm64-iteration125-debug.apk`.
+- SHA256: `DB1003E7E602F5073B866C8D1786F5041F3E898965163E9295BF30DF02F77CE2`.
+- Verified:
+  - `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local-debug:preflight`: PASS.
+  - `corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug`: PASS, exit code 0.
+  - APK header: PASS.
+  - APK ABI inspection: only `arm64-v8a`.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - GitHub raw APK URL HEAD request: HTTP 200, `Content-Length=64827637`.
+  - Downloaded APK SHA256 matched local APK.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
