@@ -1700,6 +1700,176 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   );
 });
 
+test("runner reports Gradle timeout as a build timeout instead of a generic failure", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const calls = [];
+  const timeoutError = new Error("spawnSync gradlew ETIMEDOUT");
+  timeoutError.code = "ETIMEDOUT";
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+      SALARY_HIJACKING_ANDROID_BUILD_GRADLE_TIMEOUT_MS: "1000",
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args, options) {
+      calls.push({ command, args, options });
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          [
+            "allprojects {",
+            "  repositories {",
+            "    google()",
+            "    mavenCentral()",
+            "  }",
+            "}",
+            "",
+          ].join("\n"),
+        );
+        touch(
+          path.join(rootDir, "android", "settings.gradle"),
+          [
+            "pluginManagement {",
+            "  def reactNativeGradlePlugin = new File(",
+            "    providers.exec {",
+            "      workingDir(rootDir)",
+            '      commandLine("node", "--print", "require.resolve(\'@react-native/gradle-plugin/package.json\', { paths: [require.resolve(\'react-native/package.json\')] })")',
+            "    }.standardOutput.asText.get().trim()",
+            "  ).getParentFile().absolutePath",
+            "}",
+            "includeBuild(expoAutolinking.reactNativeGradlePlugin)",
+            "",
+          ].join("\n"),
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          [
+            'def projectRoot = "C:/stale/canonical/mobile-root"',
+            "react {",
+            '    root = file("../../")',
+            "    root = file(projectRoot)",
+            '    entryFile = file("${projectRoot}/apps/mobile/index.android.js")',
+            "}",
+            "",
+            "android {",
+            "    defaultConfig {",
+            "    }",
+            "}",
+            "",
+          ].join("\n"),
+        );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainActivity.kt",
+          ),
+          [
+            "package com.salaryhijacking.mobile",
+            "import expo.modules.splashscreen.SplashScreenManager",
+            "class MainActivity {",
+            "  fun onCreate() {",
+            "    // setTheme(R.style.AppTheme);",
+            "    SplashScreenManager.registerOnActivity(this)",
+            "  }",
+            "}",
+            "",
+          ].join("\n"),
+        );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainApplication.kt",
+          ),
+          [
+            "package com.salaryhijacking.mobile",
+            "class MainApplication {",
+            '  override fun getJSMainModuleName(): String = ".expo/.virtual-metro-entry"',
+            "  override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG",
+            "}",
+            "",
+          ].join("\n"),
+        );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "res",
+            "values",
+            "styles.xml",
+          ),
+          [
+            '<resources xmlns:tools="http://schemas.android.com/tools">',
+            '  <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">',
+            '    <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>',
+            '    <item name="colorPrimary">@color/colorPrimary</item>',
+            '    <item name="android:statusBarColor">#F7F8FA</item>',
+            "  </style>",
+            "</resources>",
+            "",
+          ].join("\n"),
+        );
+      }
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        return { error: timeoutError, signal: "SIGTERM", status: null };
+      }
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 124);
+  assert.match(result.failures.join("\n"), /Gradle step timed out/);
+  assert.match(
+    result.failures.join("\n"),
+    /:app:generateAutolinkingPackageList/,
+  );
+  assert.equal(calls[1].options.timeout, 1000);
+});
+
 test("runner repairs and retries Expo modules core CMake configure once on Windows", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");

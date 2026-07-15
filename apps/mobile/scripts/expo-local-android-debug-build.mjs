@@ -36,8 +36,20 @@ const isWindows = (platform) => platform === "win32";
 const substAliasEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS";
 const substAliasDisableEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_DISABLE";
 const substTargetEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_TARGET";
+const gradleTimeoutEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_GRADLE_TIMEOUT_MS";
+const gradleTimeoutExitStatus = 124;
 const substRootLengthThreshold = 40;
 const substPreferredDriveLetters = ["Z", "Y", "X", "W", "V", "U", "T", "S"];
+
+const parsePositiveIntegerEnv = (value) => {
+  if (value === undefined || value === null || value === "") return 0;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const isSpawnTimeout = (result) =>
+  result?.error?.code === "ETIMEDOUT" ||
+  String(result?.error?.message ?? "").includes("ETIMEDOUT");
 
 const executableNames = (command, platform) =>
   isWindows(platform)
@@ -1961,7 +1973,10 @@ export const runExpoLocalAndroidDebugBuild = ({
     mobileRootDir,
     platform,
   });
-  const runGradleInvocation = (args) => {
+  const gradleTimeoutMs = parsePositiveIntegerEnv(
+    preflight.env[gradleTimeoutEnvKey],
+  );
+  const buildGradleSpawnOptions = () => {
     const options = {
       cwd: path.join(mobileRootDir, "android"),
       env: preflight.env,
@@ -1969,12 +1984,34 @@ export const runExpoLocalAndroidDebugBuild = ({
       stdio: "inherit",
       windowsHide: true,
     };
-    let result = spawn(invocations.gradleCommand, args, options);
+    if (gradleTimeoutMs > 0) {
+      options.timeout = gradleTimeoutMs;
+      options.killSignal = "SIGTERM";
+    }
+    return options;
+  };
+  const normalizeGradleResult = (args, result) => {
+    if (!isSpawnTimeout(result)) return result;
+    failures.push(
+      `Gradle step timed out after ${gradleTimeoutMs}ms: ${args.join(" ")}`,
+    );
+    return { ...result, status: gradleTimeoutExitStatus };
+  };
+  const runGradleInvocation = (args) => {
+    const options = buildGradleSpawnOptions();
+    let result = normalizeGradleResult(
+      args,
+      spawn(invocations.gradleCommand, args, options),
+    );
+    if (result.status === gradleTimeoutExitStatus) return result;
     if ((result.status ?? 1) !== 0 && isWindows(platform)) {
       repairGradleTransformTemporaryWorkspaces({
         gradleUserHome: preflight.env.GRADLE_USER_HOME,
       });
-      result = spawn(invocations.gradleCommand, args, options);
+      result = normalizeGradleResult(
+        args,
+        spawn(invocations.gradleCommand, args, options),
+      );
     }
     return result;
   };
@@ -2016,15 +2053,14 @@ export const runExpoLocalAndroidDebugBuild = ({
         let expoModulesCoreConfigure = spawn(
           invocations.gradleCommand,
           expoModulesCoreConfigureArgs,
-          {
-            cwd: path.join(mobileRootDir, "android"),
-            env: preflight.env,
-            shell: isWindows(platform),
-            stdio: "inherit",
-            windowsHide: true,
-          },
+          buildGradleSpawnOptions(),
+        );
+        expoModulesCoreConfigure = normalizeGradleResult(
+          expoModulesCoreConfigureArgs,
+          expoModulesCoreConfigure,
         );
         if (
+          expoModulesCoreConfigure.status !== gradleTimeoutExitStatus &&
           (expoModulesCoreConfigure.status ?? 1) !== 0 &&
           isWindows(platform)
         ) {
@@ -2035,13 +2071,11 @@ export const runExpoLocalAndroidDebugBuild = ({
           expoModulesCoreConfigure = spawn(
             invocations.gradleCommand,
             expoModulesCoreConfigureArgs,
-            {
-              cwd: path.join(mobileRootDir, "android"),
-              env: preflight.env,
-              shell: true,
-              stdio: "inherit",
-              windowsHide: true,
-            },
+            { ...buildGradleSpawnOptions(), shell: true },
+          );
+          expoModulesCoreConfigure = normalizeGradleResult(
+            expoModulesCoreConfigureArgs,
+            expoModulesCoreConfigure,
           );
         }
         if ((expoModulesCoreConfigure.status ?? 1) !== 0) {

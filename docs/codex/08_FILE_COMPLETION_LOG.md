@@ -4440,3 +4440,14 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run format:check`: PASS.
   - Runtime search excluding tests for `PreviewState`, `PreviewCategory`, `features/preview/interactive-state`, `qa-preview-state`, and old preview state helper names: no matches.
 - Remaining: This narrows GATE-051 but does not close full server-authoritative data flow, physical Android phone QA, or strict release readiness. A fresh current-source APK/evidence refresh is required after this source commit.
+
+# 2026-07-15 KST - Iteration 124 Android Local Build Timeout Guard
+
+- Files: `apps/mobile/scripts/expo-local-android-debug-build.mjs`, `apps/mobile/scripts/expo-local-android-debug-build.test.mjs`, `docs/codex/100-completion/132_ITERATION_124_ANDROID_BUILD_TIMEOUT_GUARD.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Added Gradle timeout handling to the local Android debug build wrapper through `SALARY_HIJACKING_ANDROID_BUILD_GRADLE_TIMEOUT_MS`, returning status `124` with the timed-out Gradle task instead of masking the failure as a generic status `1`.
+- Verified:
+  - RED targeted timeout test failed before implementation with `1 !== 124`.
+  - GREEN targeted timeout test PASS.
+  - `node --test apps\mobile\scripts\expo-local-android-debug-build.test.mjs`: PASS, 23 tests.
+  - `corepack pnpm run format:check`: PASS.
+- Remaining: This is a build stability source change only. A fresh current-source APK/evidence refresh is still required after this commit, and physical Android phone QA/logcat proof remains pending.
