@@ -259,6 +259,8 @@ temp/
 .AppleDouble
 .LSOverride
 Icon?
+!apps/mobile/src/shared/assets/icons/
+!apps/mobile/src/shared/assets/icons/**
 ._*
 .Spotlight-V100
 .Trashes
