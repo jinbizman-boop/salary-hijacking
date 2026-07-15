@@ -1,0 +1,14 @@
+﻿{
+    "schemaVersion":  1,
+    "sourceHead":  "ce42621f976a341eeba72a866abab70c5d03a421",
+    "branch":  "codex/payroll-reminder-launch-ready-100-20260714",
+    "apkFile":  "salary-hijacking-phone-arm64-iteration133-debug.apk",
+    "packageName":  "com.salaryhijacking.mobile",
+    "apkSha256":  "50CC6C77B7B7F60B037A9F90073563258B71B8AAFC838644DBBAD240833007BD",
+    "apkSizeBytes":  64828405,
+    "apkSigning":  "debug v2 signature verified with apksigner",
+    "nativeCode":  "arm64-v8a",
+    "targetSdkVersion":  35,
+    "physicalDeviceQa":  "not verified; adb devices returned no attached device",
+    "buildNote":  "Local debug wrapper exited 0 and produced final APK; Gradle output included intermediate cache move failures before final BUILD SUCCESSFUL, so final APK was independently verified by hash, aapt, and apksigner."
+}
