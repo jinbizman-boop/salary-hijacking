@@ -964,6 +964,7 @@ function readBrowserLocation(): Readonly<{
   href: string;
   pathname: string;
 }> | null {
+  if (NativeRuntimeRef.Platform.OS !== "web") return null;
   if (typeof window === "undefined") return null;
   const location = window.location;
   if (

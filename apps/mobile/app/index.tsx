@@ -3,6 +3,7 @@ import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 import { SplashLaunchScreen } from "../src/features/auth/components";
 import {
@@ -207,6 +208,7 @@ function isUsableAccessToken(value: string | null): boolean {
 }
 
 function readBrowserLocation(): Readonly<{ href: string }> | null {
+  if (Platform.OS !== "web") return null;
   if (typeof window === "undefined") return null;
   const location = window.location;
   if (!location || typeof location.href !== "string") return null;

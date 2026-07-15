@@ -354,6 +354,20 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
+  it("keeps root and launch capture preview rendering behind a web platform guard", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
+
+    expect(rootLayout).toContain('NativeRuntimeRef.Platform.OS !== "web"');
+    expect(rootLayout).toMatch(
+      /function readBrowserLocation\(\):[\s\S]*?NativeRuntimeRef\.Platform\.OS !== "web"[\s\S]*?window\.location/u,
+    );
+    expect(indexScreen).toContain('import { Platform } from "react-native"');
+    expect(indexScreen).toMatch(
+      /function readBrowserLocation\(\):[\s\S]*?Platform\.OS !== "web"[\s\S]*?window\.location/u,
+    );
+  });
+
   it("keeps screenshot captures representative of the real planned UI surfaces", () => {
     const source = readFileSync(CAPTURE_PREVIEW_SCREEN, "utf8");
 
