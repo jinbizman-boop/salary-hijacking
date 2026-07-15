@@ -1,20 +1,18 @@
 import { useRouter } from "expo-router";
 
 import {
-  NotificationReferenceScreen,
+  NotificationScreen,
   assertMobileNotificationsIndexCompleteness,
-  type NotificationReferenceHref,
+  type NotificationHref,
 } from "../../src/features/notifications/components";
 
 export default function NotificationsIndexScreen(): React.ReactElement {
   const router = useRouter();
 
   return (
-    <NotificationReferenceScreen
+    <NotificationScreen
       onBack={() => router.back()}
-      onOpenHref={(href: NotificationReferenceHref) =>
-        router.push(href as never)
-      }
+      onOpenHref={(href: NotificationHref) => router.push(href as never)}
       onSettings={() => router.push("/profile/settings")}
     />
   );

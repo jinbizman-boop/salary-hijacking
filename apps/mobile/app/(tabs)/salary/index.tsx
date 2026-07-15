@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 
-import { SalaryHomeReferenceScreen } from "../../../src/features/salary/components";
+import { SalaryHomeScreen } from "../../../src/features/salary/components";
 
-const SCREEN_VERSION = "4.2.0-salary-reference-ui";
+const SCREEN_VERSION = "4.3.0-salary-home-ui";
 const SALARY_SUMMARY_ENDPOINT = "/api/v1/salary/summary";
 const GOOGLE_AD_SLOT_LABEL = "Google 광고 영역";
 const SALARY_VISIBLE_COPY_CONTRACT = [
@@ -16,7 +16,7 @@ const SALARY_VISIBLE_COPY_CONTRACT = [
 
 export default function SalaryIndexScreen(): React.ReactElement {
   return (
-    <SalaryHomeReferenceScreen
+    <SalaryHomeScreen
       onOpenNotifications={() => router.push("/notifications")}
     />
   );
@@ -28,12 +28,12 @@ export function assertMobileSalaryIndexCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "SalaryHomeReferenceScreen",
+    "SalaryHomeScreen",
     SALARY_SUMMARY_ENDPOINT,
     GOOGLE_AD_SLOT_LABEL,
     ...SALARY_VISIBLE_COPY_CONTRACT,
     "server_authority_component_guard",
-    "responsive_salary_home_reference_guard",
+    "responsive_salary_home_guard",
     "raw_account_data_component_guard",
     "KRW integer display",
     "financial amount ad targeting prohibited",

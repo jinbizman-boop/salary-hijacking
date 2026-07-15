@@ -16,6 +16,7 @@ export {
 export {
   resetSalaryHomePreviewCacheForTests,
   SalaryHomeReferenceScreen,
+  SalaryHomeReferenceScreen as SalaryHomeScreen,
 } from "./SalaryHomeReferenceScreen";
 export {
   VariableExpenseQuickAdd,

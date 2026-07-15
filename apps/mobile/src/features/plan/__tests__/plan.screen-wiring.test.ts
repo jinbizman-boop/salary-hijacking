@@ -19,11 +19,12 @@ describe("plan tab screen wiring", () => {
     );
 
     expect(source).not.toContain("CleanFintechScreen");
-    expect(source).toContain("PlanReferenceScreen");
+    expect(source).toContain("PlanScreen");
+    expect(source).not.toContain("PlanReferenceScreen");
     expect(source).toContain("/api/v1/fixed-expenses");
     expect(source).toContain("/api/v1/savings");
     expect(source).toContain("server_authority_component_guard");
-    expect(source).toContain("responsive_plan_reference_guard");
+    expect(source).toContain("responsive_plan_guard");
     expect(source).toContain("safe_area_top_bottom_guard");
   });
 });

@@ -12,7 +12,9 @@ export {
 } from "./NotificationSummaryCard";
 export {
   NotificationReferenceScreen,
+  NotificationReferenceScreen as NotificationScreen,
   assertMobileNotificationsIndexCompleteness,
   type NotificationReferenceHref,
+  type NotificationReferenceHref as NotificationHref,
   type NotificationReferenceScreenProps,
 } from "./NotificationReferenceScreen";

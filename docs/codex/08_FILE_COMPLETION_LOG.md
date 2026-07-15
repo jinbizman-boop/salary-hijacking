@@ -4369,3 +4369,18 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run check:release-readiness -- --strict`: current-source APK checks PASS (`mobile:preview:apk`, `mobile:preview:latest-source-apk`, `mobile:preview:phone-target-apk`).
 - APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration117/salary-hijacking-phone-arm64-iteration117-debug.apk`.
 - Remaining: Strict readiness is still BLOCKED by unresolved launch gaps, local branch not merged to `origin/main`, and missing physical Android phone QA/logcat proof. This remains a debug/pre-release APK, not production AAB or Play submission.
+
+# 2026-07-15 KST - Iteration 119 Production Route Screen Entrypoints
+
+- Files: `apps/mobile/app/(tabs)/salary/index.tsx`, `apps/mobile/app/(tabs)/plan/index.tsx`, `apps/mobile/app/notifications/index.tsx`, `apps/mobile/src/features/salary/components/index.ts`, `apps/mobile/src/features/plan/components/index.ts`, `apps/mobile/src/features/notifications/components/index.ts`, route screen-wiring tests, `docs/codex/100-completion/127_ITERATION_119_PRODUCTION_ROUTE_SCREEN_ENTRYPOINTS.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Moved the production Salary, Plan, and Notifications route entrypoints from direct `*ReferenceScreen` names to product screen names (`SalaryHomeScreen`, `PlanScreen`, `NotificationScreen`) while preserving internal implementation compatibility.
+- Verified:
+  - RED targeted route-wiring test: failed before implementation because the production route files still imported direct `*ReferenceScreen` names.
+  - GREEN targeted route-wiring test: PASS, 3 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+  - `rg -n "ReferenceScreen" apps/mobile/app -g "*.tsx"`: no matches.
+  - `rg -n "PreviewState" apps/mobile/app -g "*.tsx"`: no matches.
+  - `corepack pnpm run check:release-readiness -- --strict`: BLOCKED by existing launch gaps, stale preview APK evidence for the new source changes, unmerged feature branch state, and pending physical Android phone QA/logcat proof.
+- Remaining: Internal feature implementation files still contain preview/reference names and state helpers. Those need later server-authoritative data and naming cleanup slices before GATE-051/GATE-052 can be considered complete. A fresh preview APK/evidence refresh must be done in a separate commit after this source change.

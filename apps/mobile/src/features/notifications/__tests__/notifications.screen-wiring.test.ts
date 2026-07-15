@@ -22,6 +22,8 @@ describe("notifications screen wiring", () => {
     );
     const source = `${routeSource}\n${componentSource}`;
 
+    expect(routeSource).toContain("NotificationScreen");
+    expect(routeSource).not.toContain("NotificationReferenceScreen");
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).not.toContain("bottomTabs");
     expect(source).toContain("useRouter");
