@@ -22,6 +22,30 @@ const DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
 const PUBLIC_URL_EVIDENCE_PATH = "release/public-url-evidence.json";
 const SECURITY_AUDIT_EVIDENCE_PATH = "release/security-audit-evidence.json";
 const GAP_REGISTER_PATH = "docs/codex/100-completion/05_GAP_REGISTER.md";
+const FINAL_RELEASE_REPORT_PATHS = [
+  "docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md",
+  "docs/codex/100-completion/FINAL_ANDROID_DEVICE_REPORT.md",
+  "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+];
+const STALE_MOBILE_APK_REPORT_REFERENCES = [
+  {
+    label: "old latest-source APK filename",
+    pattern: /salary-hijacking-phone-arm64-latest-source-debug\.apk/iu,
+  },
+  {
+    label: "old iteration APK filename",
+    pattern: /salary-hijacking-phone-arm64-iteration(?:007|094|100)-debug\.apk/iu,
+  },
+  {
+    label: "old APK artifact branch",
+    pattern: /codex-apk-artifacts-2026071[34]-iteration(?:007|094|100)/iu,
+  },
+  {
+    label: "old APK SHA256",
+    pattern:
+      /(?:4B23C8C5560BA3BBF1748FFAC72740B171F2149B1464E88B4DC53F851811F97F|073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91|4FAB0126C48258C92DF90DABD1CDBAB8D6C76664F667EB37071B461DF1F6A6BF|4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36)/iu,
+  },
+];
 const MOBILE_RUNTIME_ROOTS = ["apps/mobile/app", "apps/mobile/src"];
 const MOBILE_ROUTE_ROOTS = ["apps/mobile/app"];
 const MOBILE_FEATURE_ROOTS = ["apps/mobile/src/features"];
@@ -2620,6 +2644,51 @@ const readTextIfPresent = (rootDir, relativePath) => {
   if (!fs.existsSync(filePath)) return null;
   return fs.readFileSync(filePath, "utf8");
 };
+const checkFinalReleaseReportApkReferences = (rootDir, checks, blockers) => {
+  const missingReports = [];
+  const staleMatches = [];
+
+  for (const reportPath of FINAL_RELEASE_REPORT_PATHS) {
+    const text = readTextIfPresent(rootDir, reportPath);
+    if (typeof text !== "string") {
+      missingReports.push(reportPath);
+      continue;
+    }
+
+    for (const staleReference of STALE_MOBILE_APK_REPORT_REFERENCES) {
+      staleReference.pattern.lastIndex = 0;
+      if (staleReference.pattern.test(text)) {
+        staleMatches.push(`${reportPath}: ${staleReference.label}`);
+      }
+    }
+  }
+
+  const ok = missingReports.length === 0 && staleMatches.length === 0;
+  const detail = ok
+    ? "final release reports do not reference stale preview APK artifacts"
+    : [
+        missingReports.length > 0
+          ? `missing final release reports: ${missingReports.join(", ")}`
+          : "",
+        staleMatches.length > 0
+          ? `stale APK references found in final reports: ${staleMatches.join(", ")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
+
+  addCheck(
+    checks,
+    ok ? "PASS" : "BLOCKED",
+    "docs:final-report-apk-references",
+    detail,
+  );
+  if (!ok) {
+    blockers.push(
+      "final release reports must point at current mobile preview APK evidence without stale APK artifact names or hashes",
+    );
+  }
+};
 
 const isMobileRuntimeFile = (relativePath) => {
   const normalized = pathToPosix(relativePath);
@@ -4201,6 +4270,7 @@ export const analyzeReleaseReadiness = ({
     addCheck(checks, "BLOCKED", "docs:gap-register", detail);
     blockers.push(detail);
   }
+  checkFinalReleaseReportApkReferences(rootDir, checks, blockers);
 
   const migrationsDir = path.join(rootDir, "database", "migrations");
   const migrationCount = fs.existsSync(migrationsDir)

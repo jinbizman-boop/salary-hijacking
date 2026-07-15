@@ -9,6 +9,12 @@ last_verified: 2026-07-01
 
 This log records observed status. It is not a marketing completion sheet.
 
+
+## 2026-07-16 Iteration 141 Final Report Stale APK Readiness Guard
+
+| Area | Path | Status | Verification | Notes |
+| --- | --- | --- | --- | --- |
+| Final report APK stale-reference guard | `scripts/release/check-release-readiness.mjs`, `scripts/release/check-release-readiness.test.mjs`, `docs/codex/100-completion/150_ITERATION_141_FINAL_REPORT_STALE_APK_READINESS_GUARD.md` | Release-readiness regression PASS | RED focused test failed before implementation because stale final report APK references were not blocked. GREEN focused test PASS. Full `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 87 tests. Current soft readiness shows `PASS docs:final-report-apk-references`. `node scripts/dev/clean-generated-junk.mjs`: PASS, removed 0 generated paths. | This prevents final gate/device/readiness reports from quietly reverting to older APK artifact names or hashes. Existing launch blockers remain GAP-003, GAP-004, GAP-005, GAP-006, GAP-008, physical phone QA, production AAB approval, Play submission approval, and the origin/main release gate. |
 ## 2026-07-15 Iteration 139 Physical Phone QA Handoff Refresh
 
 | Area                               | Path                                                                                                                                                                                                                   | Status                                                | Verification                                                                                                                                                                                                                                                                                                                                                                                                                                 | Notes                                                                                                                                                                                                                                                                                                                                                                |

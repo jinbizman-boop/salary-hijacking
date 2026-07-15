@@ -776,7 +776,21 @@ const makeWorkspace = () => {
     "docs/codex/09_VALIDATION_PROTOCOL.md",
     "# Validation Protocol\n",
   );
-  write(rootDir, "release/README.md", "# Release\n");
+  write(
+    rootDir,
+    "docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md",
+    "# Release Gate Matrix\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_ANDROID_DEVICE_REPORT.md",
+    "# Final Android Device Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+    "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );  write(rootDir, "release/README.md", "# Release\n");
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   writeMobileNativeEvidence(rootDir);
@@ -2454,6 +2468,29 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.match(report, /mobile:native:evidence/);
 });
 
+
+test("blocks stale APK references in final release reports", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+    "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration094-debug.apk\nSHA256: 073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91\n",
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /docs:final-report-apk-references/);
+  assert.match(report, /stale APK references/);
+  assert.doesNotMatch(report, /073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91/);
+});
 test("blocks when current-head mobile preview evidence is missing", () => {
   const rootDir = makeWorkspace();
   fs.rmSync(path.join(rootDir, "release", "mobile-preview-evidence.json"), {
