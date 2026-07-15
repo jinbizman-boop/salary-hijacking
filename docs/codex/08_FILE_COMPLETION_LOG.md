@@ -4528,3 +4528,16 @@ When completing a work slice, append or update a row with:
   - GitHub raw APK download request: HTTP 200.
   - Downloaded APK SHA256 matched local APK.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
+
+# 2026-07-15 KST - Iteration 130 Profile Empty Stats Boundary
+
+- Files: `apps/mobile/app/(tabs)/profile/index.tsx`, `apps/mobile/src/features/profile/__tests__/profile.screen-wiring.test.ts`, `docs/codex/100-completion/138_ITERATION_130_PROFILE_EMPTY_STATS_BOUNDARY.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Removed real-looking hardcoded Profile tab achievement values from the runtime route by replacing the old fixed `totalHijackSaved`, `levelXp`, and `selfCareScore` data with an empty stats boundary until `/api/v1/users/me/my-page-summary` is wired into live runtime data.
+- Verified:
+  - RED targeted profile screen-wiring test failed before implementation because the route still contained `totalHijackSaved: 5780000`, `levelXp: 880`, and `selfCareScore: 84`.
+  - GREEN targeted profile screen-wiring test PASS.
+  - Profile regression suite PASS, 2 suites and 4 tests.
+  - Runtime search found no matching hardcoded Profile route values outside profile tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+- Remaining: This narrows GATE-052 for Profile but does not complete server-backed my-page summary runtime loading, physical Android phone QA/logcat proof, or strict launch readiness. The Iteration 129 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit.

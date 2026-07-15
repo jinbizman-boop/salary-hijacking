@@ -6,6 +6,7 @@ import {
   ProfileMenuCard,
   ProfileStatGrid,
   type ProfileMenuKey,
+  type ProfileStats,
 } from "../../../src/features/profile/components";
 
 const SCREEN_VERSION = "4.2.0-prototype-profile";
@@ -20,6 +21,14 @@ const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
   SUPPORT: "/profile/support",
   NOTICES: "/profile/notices",
   ACCOUNT_SETTINGS: "/profile/settings",
+};
+
+const emptyProfileStats: ProfileStats = {
+  totalHijackSaved: 0,
+  currentLevel: 0,
+  levelXp: 0,
+  nextLevelXp: 1000,
+  selfCareScore: 0,
 };
 
 export default function ProfileIndexScreen(): React.ReactElement {
@@ -39,19 +48,11 @@ export default function ProfileIndexScreen(): React.ReactElement {
       <ProfileHeader
         avatarEmoji="SH"
         displayName="사용자 기획자님"
-        levelTitle="급여지킴이 18Lv"
+        levelTitle={`급여지킴이 ${emptyProfileStats.currentLevel}Lv`}
         maskedEmail="오늘도 당신의 성장을 응원합니다!"
         rawPersonalDataExposed={false}
       />
-      <ProfileStatGrid
-        stats={{
-          totalHijackSaved: 5780000,
-          currentLevel: 18,
-          levelXp: 880,
-          nextLevelXp: 1000,
-          selfCareScore: 84,
-        }}
-      />
+      <ProfileStatGrid stats={emptyProfileStats} />
       <ProfileMenuCard
         onSelect={(key) => {
           router.push(profileMenuRoutes[key]);

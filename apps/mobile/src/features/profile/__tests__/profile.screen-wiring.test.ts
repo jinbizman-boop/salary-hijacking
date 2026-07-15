@@ -27,5 +27,8 @@ describe("profile tab screen wiring", () => {
     expect(source).toContain("/api/v1/users/me/my-page-summary");
     expect(source).toContain("rawPersonalDataExposed={false}");
     expect(source).not.toContain(forbiddenFixtureName);
+    expect(source).not.toMatch(
+      /totalHijackSaved:\s*5780000|levelXp:\s*880|selfCareScore:\s*84/u,
+    );
   });
 });
