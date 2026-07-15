@@ -1,6 +1,6 @@
 # Device Test Matrix
 
-Updated: 2026-07-14 KST
+Updated: 2026-07-15 KST
 
 ## Jest React Native and release tooling runtime
 
@@ -23,7 +23,7 @@ Updated: 2026-07-14 KST
 ## Latest-source ARM64 phone debug APK
 
 - Status: PASS
-- Evidence: Artifact: `D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/salary-hijacking-phone-arm64-iteration117-debug.apk`; Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration117-debug.apk`; SHA256 `4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36`; ABI arm64-v8a
+- Evidence: Artifact: `D:/salary-hijacking-artifacts/20260715/iteration-138-root-capture-web-guard-apk/salary-hijacking-phone-arm64-iteration138-debug.apk`; Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration138-debug.apk`; SHA256 `79E68CC7B6C0532B9672CCE4F2654BB9ADEF2814AC3A68B4652160DE9E33E879`; ABI arm64-v8a
 - Notes: APK build, signing, download verification, ABI filter, and Expo native library proof are recorded without copying temporary artifact URLs.
 
 ## Android emulator cold start / route smoke
@@ -36,7 +36,7 @@ Updated: 2026-07-14 KST
 
 - Status: BLOCKED
 - Evidence: `release/mobile-preview-evidence.json`; handoff: `docs/qa/100-completion/physical-phone-qa-handoff.md`
-- Notes: No physical Android phone is attached to this Codex Windows environment at observation time.
+- Notes: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device.
 
 ## Android physical keyboard/safe-area matrix
 
