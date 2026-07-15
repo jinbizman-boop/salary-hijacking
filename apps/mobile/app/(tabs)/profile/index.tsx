@@ -38,7 +38,7 @@ export default function ProfileIndexScreen(): React.ReactElement {
     >
       <ProfileHeader
         avatarEmoji="SH"
-        displayName="홍길동 기획자님"
+        displayName="사용자 기획자님"
         levelTitle="급여지킴이 18Lv"
         maskedEmail="오늘도 당신의 성장을 응원합니다!"
         rawPersonalDataExposed={false}
@@ -72,7 +72,7 @@ export function assertMobileProfileIndexCompleteness(): {
     "ProfileHeader",
     "ProfileStatGrid",
     "ProfileMenuCard",
-    "홍길동 기획자님",
+    "사용자 기획자님",
     "누적 납치 금액",
     "레벨 업 현황",
     "자기 관리 성과",

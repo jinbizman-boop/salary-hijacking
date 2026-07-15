@@ -7,20 +7,20 @@ describe("profile feature components", () => {
     const screen = render(
       <ProfileHeader
         avatarEmoji="SH"
-        displayName="홍길동 기획자님"
+        displayName="사용자 기획자님"
         levelTitle="18Lv"
         maskedEmail="sa***@example.com"
         rawPersonalDataExposed={false}
       />,
     );
 
-    expect(screen.getByText("홍길동 기획자님")).toBeTruthy();
+    expect(screen.getByText("사용자 기획자님")).toBeTruthy();
     expect(screen.getByText("18Lv")).toBeTruthy();
     expect(screen.getByText("sa***@example.com")).toBeTruthy();
     expect(screen.getByText("개인정보는 마스킹되어 표시돼요")).toBeTruthy();
     expect(screen.queryByText("salary_saver@example.com")).toBeNull();
     expect(
-      screen.getByLabelText("profile header for 홍길동 기획자님"),
+      screen.getByLabelText("profile header for 사용자 기획자님"),
     ).toBeTruthy();
   });
 

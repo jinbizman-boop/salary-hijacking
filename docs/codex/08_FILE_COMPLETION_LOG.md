@@ -4499,3 +4499,16 @@ When completing a work slice, append or update a row with:
   - GitHub raw APK download request: HTTP 200, `Content-Length=64827725`.
   - Downloaded APK SHA256 matched local APK.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
+
+# 2026-07-15 KST - Iteration 128 Profile/Community Demo Name Cleanup
+
+- Files: `apps/mobile/app/(tabs)/profile/index.tsx`, `apps/mobile/app/(tabs)/community/index.tsx`, profile/community screen-wiring and component tests, `docs/codex/100-completion/136_ITERATION_128_PROFILE_COMMUNITY_DEMO_NAME_CLEANUP.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Removed remaining real-looking `홍길동` fixture copy from Profile and Community runtime routes, replaced it with neutral user/anonymous copy, and added route wiring guards against reintroduction.
+- Verified:
+  - RED targeted screen-wiring tests failed before implementation because Profile and Community routes still contained the `홍길동` fixture.
+  - GREEN targeted regression suite PASS, 4 suites and 9 tests.
+  - Runtime/source fixture search for `홍길동|김철수|이영희|박영희|김테스트|실명` under `apps/mobile/app` and `apps/mobile/src`: no matches.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - `git diff --check`: PASS.
+- Remaining: The Iteration 127 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.

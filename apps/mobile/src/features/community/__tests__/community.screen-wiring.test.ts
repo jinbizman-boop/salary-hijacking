@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 describe("community tab screen wiring", () => {
   it("uses community feature components instead of the clean fintech fallback", () => {
+    const forbiddenFixtureName = ["홍", "길동"].join("");
     const source = readFileSync(
       join(
         __dirname,
@@ -25,5 +26,6 @@ describe("community tab screen wiring", () => {
     expect(source).toContain("ComposeBottomSheet");
     expect(source).toContain("/api/v1/community/posts");
     expect(source).toContain("personal_raw_data_hidden");
+    expect(source).not.toContain(forbiddenFixtureName);
   });
 });
