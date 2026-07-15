@@ -4605,3 +4605,20 @@ When completing a work slice, append or update a row with:
   - Runtime search found no matching notification sample values in `NotificationScreen.tsx`.
   - Runtime search found no matching plan prototype financial defaults in `PlanScreen.tsx`.
 - Remaining: `apps/mobile/src/shared/styles/clean-fintech-screens.tsx` still contains prototype/reference sample values, but current non-test route/runtime imports do not use those `CleanFintech*` exports. The Iteration 133 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.
+
+# 2026-07-15 KST - Iteration 135 Plan/Notification Cleanup APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/143_ITERATION_135_PLAN_NOTIFICATION_CLEANUP_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt, verified, copied, and republished the arm64-v8a Android debug APK for current source HEAD `3b4ef0c4c7aae3d66696ae47a60b3ecf7064137d` after the Plan/Notification runtime sample amount cleanup.
+- Build note: the local debug wrapper exited 0 and produced a final APK. Gradle output included intermediate cache move failures before final success, so the final APK was independently verified with `aapt`, `apksigner`, ABI/hash checks, and raw URL SHA matching.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration135-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration135/salary-hijacking-phone-arm64-iteration135-debug.apk`.
+- SHA256: `5051C85AE5C2071D2D312A9495B876CA1E7F67E7335D99059F3F3F305438310B`.
+- Verified:
+  - APK header: PASS, `50 4B 03 04`.
+  - APK ABI inspection: only `arm64-v8a`.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - GitHub raw APK download request: HTTP 200.
+  - Downloaded APK SHA256 matched local APK.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission. `apps/mobile/src/shared/styles/clean-fintech-screens.tsx` still contains prototype/reference sample values and needs a separate dead-code removal or quarantine decision.
