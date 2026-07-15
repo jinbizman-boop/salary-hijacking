@@ -1,0 +1,27 @@
+{
+    "schemaVersion":  1,
+    "generatedAtKst":  "2026-07-15T15:11:42+09:00",
+    "sourceHead":  "c0f6f918aa8816b28abc7e0b4fa5ed56fd15503f",
+    "sourceBranch":  "codex/payroll-reminder-launch-ready-100-20260714",
+    "apkPath":  "D:\\salary-hijacking-artifacts\\20260715\\iteration-129-current-head-apk\\salary-hijacking-phone-arm64-iteration129-debug.apk",
+    "downloadsPath":  "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration129-debug.apk",
+    "sha256":  "F71C2B6FB0F7CA984EB74D9DCFE15C72F48328CF1334638D6506110388FDF9CB",
+    "sizeBytes":  64827717,
+    "packageName":  "com.salaryhijacking.mobile",
+    "versionCode":  "1",
+    "versionName":  "1.0.0",
+    "appLabel":  "Korean app label verified by aapt: salary hijacking",
+    "minSdk":  "24",
+    "targetSdk":  "35",
+    "abis":  [
+                 "arm64-v8a"
+             ],
+    "zipHeader":  "50 4B 03 04",
+    "signatureVerified":  true,
+    "signatureScheme":  "APK Signature Scheme v2",
+    "signer":  "Android Debug",
+    "physicalPhoneVerified":  false,
+    "physicalPhoneBlocker":  "No physical Android phone is attached to this Codex Windows environment at observation time.",
+    "secretsRedacted":  true,
+    "containsSecretValues":  false
+}
