@@ -50,4 +50,13 @@ describe("plan tab screen wiring", () => {
     expect(source).not.toContain("get" + "PreviewState");
     expect(source).not.toContain("update" + "PreviewState");
   });
+
+  it("does not seed production plan financial UI from prototype amounts", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "PlanScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toMatch(/500000|700000|2000000|2700000|2,500,000|88%/u);
+  });
 });

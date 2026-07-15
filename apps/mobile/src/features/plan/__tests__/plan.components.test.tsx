@@ -523,6 +523,7 @@ describe("plan reference screen interactions", () => {
       const plan = render(<PlanScreen payrollApi={{ savePlan }} />);
 
       fireEvent.press(plan.getByTestId("payroll-section-settings-button"));
+      fireEvent.changeText(plan.getByLabelText("payroll-amount-input"), "1");
       fireEvent.changeText(plan.getByLabelText("payroll-payday-input"), "31");
       fireEvent.press(
         plan.getByRole("button", { name: "payroll-plan-save-button" }),

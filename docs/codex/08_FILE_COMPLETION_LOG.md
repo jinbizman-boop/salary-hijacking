@@ -4589,3 +4589,19 @@ When completing a work slice, append or update a row with:
   - GitHub raw APK download request: HTTP 200.
   - Downloaded APK SHA256 matched local APK.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission. GATE-052 is still not closed because prototype/reference and notification sample amount surfaces require separate cleanup or contract decisions.
+
+# 2026-07-15 KST - Iteration 134 Plan/Notification Runtime Sample Amount Cleanup
+
+- Files: `apps/mobile/src/features/notifications/components/NotificationScreen.tsx`, `apps/mobile/src/features/notifications/__tests__/notifications.screen-wiring.test.ts`, `apps/mobile/src/features/plan/components/PlanScreen.tsx`, `apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts`, `apps/mobile/src/features/plan/__tests__/plan.components.test.tsx`, `docs/codex/100-completion/142_ITERATION_134_PLAN_NOTIFICATION_RUNTIME_SAMPLE_AMOUNT_CLEANUP.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Removed prototype financial/reward sample values from the production notification and plan runtime components. Notification copy no longer hardcodes `5,780,000`, `5,500,000`, `500P`, or `Today, Business Conversation`; Plan no longer seeds prototype payroll/expense/hijack/monthly-target values or displays hardcoded cumulative `2,500,000원` and `88%`.
+- Verified:
+  - RED notification screen-wiring test failed before implementation on the existing sample values.
+  - GREEN notification screen-wiring test PASS.
+  - RED plan screen-wiring test failed before implementation on the existing prototype defaults.
+  - GREEN plan screen-wiring test PASS.
+  - Notification component/wiring suite PASS, 2 suites and 6 tests.
+  - Plan component/wiring suite PASS, 2 suites and 18 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - Runtime search found no matching notification sample values in `NotificationScreen.tsx`.
+  - Runtime search found no matching plan prototype financial defaults in `PlanScreen.tsx`.
+- Remaining: `apps/mobile/src/shared/styles/clean-fintech-screens.tsx` still contains prototype/reference sample values, but current non-test route/runtime imports do not use those `CleanFintech*` exports. The Iteration 133 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.

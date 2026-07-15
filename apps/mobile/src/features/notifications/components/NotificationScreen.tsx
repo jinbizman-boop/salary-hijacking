@@ -54,7 +54,7 @@ const notificationItems: readonly NotificationItem[] = [
     id: "goal-total",
     subtitle: "누적납치금액 신기록 달성",
     time: "1일전",
-    title: "내 급여 납치 현황 5,780,000원 달성",
+    title: "내 급여 납치 현황 목표 달성",
     tone: "highlight",
   },
   {
@@ -63,7 +63,7 @@ const notificationItems: readonly NotificationItem[] = [
     id: "goal-point",
     subtitle: "납치 금액달성 이벤트",
     time: "1일전",
-    title: "내 급여 납치 5,500,000원 달성 시 포인트 500P 지급",
+    title: "내 급여 납치 목표 달성 보상 지급 예정",
     tone: "highlight",
   },
   {
@@ -90,7 +90,7 @@ const notificationItems: readonly NotificationItem[] = [
     id: "english-business",
     subtitle: "오늘의 레벨업, 오늘의 영어회화를 가져왔어요",
     time: "8시간전",
-    title: "Today, Business Conversation",
+    title: "오늘의 영어 회화 루틴 확인하기",
     tone: "normal",
   },
   {
@@ -245,9 +245,9 @@ export function assertMobileNotificationsIndexCompleteness(): {
     NOTIFICATIONS_PATH,
     NOTIFICATIONS_UNREAD_COUNT_PATH,
     "새로운 알림이 있어요",
-    "내 급여 납치 현황 5,780,000원 달성",
+    "내 급여 납치 현황 목표 달성",
     "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
-    "Today, Business Conversation",
+    "오늘의 영어 회화 루틴 확인하기",
     "/level/reading",
     "/level/news",
     "/level/english",

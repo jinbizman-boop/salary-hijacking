@@ -126,12 +126,12 @@ export function PlanScreen({
   const contentWidth = Math.min(width, 430);
   const scale = clamp(width / 393, 0.9, 1.08);
   const [state, setState] = useState(getPayrollReminderState());
-  const [monthlyTarget, setMonthlyTarget] = useState(500000);
+  const [monthlyTarget, setMonthlyTarget] = useState(0);
   const [payrollDraft, setPayrollDraft] = useState<PayrollDraft>({
-    expenseAmount: "700000",
-    hijackAmount: "2000000",
+    expenseAmount: "",
+    hijackAmount: "",
     payday: "25",
-    payrollAmount: "2700000",
+    payrollAmount: "",
   });
   const [openSection, setOpenSection] = useState<SectionKey | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -170,6 +170,11 @@ export function PlanScreen({
     (item) => item.section === "saving",
   );
   const livingTotal = state.dailyLimit * state.livingDays;
+  const cumulativeHijacked = state.financialSummary.cumulativeHijacked;
+  const goalPercent =
+    monthlyTarget > 0
+      ? clamp(Math.round((cumulativeHijacked / monthlyTarget) * 100), 0, 100)
+      : 0;
 
   useEffect(() => {
     let mounted = true;
@@ -623,13 +628,13 @@ export function PlanScreen({
                   총 누적 납치 금액
                 </Text>
                 <Text allowFontScaling={false} style={styles.metaRed}>
-                  2,500,000원
+                  {formatKrw(cumulativeHijacked)}
                 </Text>
               </View>
             </View>
           </View>
           <Text allowFontScaling={false} style={styles.goalPercent}>
-            88%
+            {goalPercent}%
           </Text>
         </View>
 
