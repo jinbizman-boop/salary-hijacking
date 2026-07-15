@@ -66,7 +66,7 @@ describe("mobile prototype UI contract", () => {
     expect(plan).toContain("수정하기");
 
     expect(notifications).toContain("새로운 알림이 있어요");
-    expect(notifications).toContain("내 급여 납치 현황 5,780,000원 달성");
+    expect(notifications).toContain("내 급여 납치 현황 목표 달성");
     expect(notifications).toContain(
       "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
     );

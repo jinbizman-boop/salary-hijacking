@@ -1,3 +1,64 @@
+# 사용자 사전 승인 및 무중단 자동 실행 규칙
+
+본 목표 문서에 정의된 모든 내부 개발 작업은 사용자가 사전 승인했다.
+
+다음 항목은 이미 승인된 것으로 간주한다.
+
+- 제품 방향
+- 설계
+- 구현 계획
+- TDD 시작
+- 테스트 작성
+- 코드 수정
+- 리팩터링
+- 버그 수정
+- 의존성 설치
+- 로컬 빌드
+- preview APK 빌드
+- feature branch 생성
+- 논리 커밋
+- feature branch push
+- Pull Request 생성 및 갱신
+- GitHub Actions 재실행
+- 안전한 정크 파일 정리
+- 문서 및 evidence 갱신
+
+brainstorming, writing-plans, test-driven-development, systematic-debugging 및 기타 skill이 사용자 승인을 요구하더라도 본 문서가 해당 승인을 미리 충족한다.
+
+다음 질문을 사용자에게 하지 마라.
+
+- 승인해 주세요
+- approved라고 답해 주세요
+- 계속 진행할까요?
+- 다음 단계로 넘어갈까요?
+- 어떤 슬라이스부터 할까요?
+- 설계를 승인해 주세요
+
+여러 구현안이 가능한 경우에는 다음 기준으로 자동 선택한다.
+
+1. 사용자의 최신 요구사항
+2. 급여납치 제품 북극성
+3. MASTER_SPEC
+4. 서버 권위, 보안, 개인정보
+5. 기존 저장소 아키텍처
+6. 가장 안전하고 되돌리기 쉬운 구현
+
+선택 결과는 decision log에 기록하고, 실패 테스트, 구현, 검증, 논리 커밋, feature branch push, PR 갱신 순서로 자동 진행한다.
+
+다음 작업만 별도 승인 대상으로 유지한다.
+
+- production 인프라 배포
+- production DB migration
+- production AAB
+- Google Play 업로드 및 제출
+- 새 keystore
+- secret rotation
+- destructive migration
+- force push
+- history rewrite
+- main 직접 push
+- PR merge
+
 # AGENTS.md - Salary Hijacking Codex Rules
 
 ## Purpose

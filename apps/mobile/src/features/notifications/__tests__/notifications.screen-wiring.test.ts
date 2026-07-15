@@ -27,7 +27,7 @@ describe("notifications screen wiring", () => {
     const source = `${routeSource}\n${componentSource}`;
 
     expect(routeSource).toContain("NotificationScreen");
-    expect(routeSource).not.toContain("Notification" + "ReferenceScreen");
+    expect(routeSource).not.toContain("NotificationReferenceScreen");
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).not.toContain("bottomTabs");
     expect(source).toContain("useRouter");
@@ -68,8 +68,8 @@ describe("notifications screen wiring", () => {
     );
 
     expect(componentIndex).toContain("NotificationScreen");
-    expect(componentIndex).not.toContain("Notification" + "ReferenceScreen");
-    expect(componentIndex).not.toContain("Notification" + "ReferenceHref");
-    expect(componentIndex).not.toContain("./Notification" + "ReferenceScreen");
+    expect(componentIndex).not.toContain("NotificationReferenceScreen");
+    expect(componentIndex).not.toContain("NotificationReferenceHref");
+    expect(componentIndex).not.toContain("./NotificationReferenceScreen");
   });
 });

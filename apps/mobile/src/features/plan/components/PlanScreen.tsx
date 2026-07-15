@@ -144,8 +144,14 @@ export function PlanScreen({
   const [planError, setPlanError] = useState<string | null>(null);
   const [planItemSavePending, setPlanItemSavePending] = useState(false);
   const planItemSaveInFlightRef = React.useRef(false);
+  const setPlanItemSaveInFlight = React.useCallback((value: boolean) => {
+    planItemSaveInFlightRef.current = value;
+  }, []);
   const [livingItemSavePending, setLivingItemSavePending] = useState(false);
   const livingItemSaveInFlightRef = React.useRef(false);
+  const setLivingItemSaveInFlight = React.useCallback((value: boolean) => {
+    livingItemSaveInFlightRef.current = value;
+  }, []);
   const serverPlanCommitmentsApi = useMemo(
     () =>
       planCommitmentsApi ??
@@ -268,7 +274,7 @@ export function PlanScreen({
     if (amount <= 0 || !content) return;
     const category = normalizeCategory(draft.category);
     const day = clamp(parseKrwInput(draft.day) || 25, 1, 31);
-    planItemSaveInFlightRef.current = true;
+    setPlanItemSaveInFlight(true);
     setPlanItemSavePending(true);
     try {
       if (
@@ -389,7 +395,7 @@ export function PlanScreen({
     } catch {
       setPlanError(PLAN_SAVE_ERROR);
     } finally {
-      planItemSaveInFlightRef.current = false;
+      setPlanItemSaveInFlight(false);
       setPlanItemSavePending(false);
     }
   }
@@ -408,7 +414,7 @@ export function PlanScreen({
       content,
       id: editingId ?? `daily-plan-${Date.now()}`,
     };
-    livingItemSaveInFlightRef.current = true;
+    setLivingItemSaveInFlight(true);
     setLivingItemSavePending(true);
     try {
       if (serverBudgetApi?.recalculate !== undefined) {
@@ -427,7 +433,7 @@ export function PlanScreen({
     } catch {
       setPlanError(PLAN_SAVE_ERROR);
     } finally {
-      livingItemSaveInFlightRef.current = false;
+      setLivingItemSaveInFlight(false);
       setLivingItemSavePending(false);
     }
   }

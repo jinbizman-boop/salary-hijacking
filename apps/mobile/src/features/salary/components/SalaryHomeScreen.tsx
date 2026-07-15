@@ -128,6 +128,9 @@ export function SalaryHomeScreen({
   });
   const [variableFormOpen, setVariableFormOpen] = useState(false);
   const variableSaveInFlightRef = useRef(false);
+  const setVariableSaveInFlight = React.useCallback((value: boolean) => {
+    variableSaveInFlightRef.current = value;
+  }, []);
   const [editingVariableId, setEditingVariableId] = useState<string | null>(
     null,
   );
@@ -447,7 +450,7 @@ export function SalaryHomeScreen({
     const amount = parseKrwInput(variableDraft.amount);
     const content = variableDraft.content.trim();
     if (amount <= 0 || !content) return;
-    variableSaveInFlightRef.current = true;
+    setVariableSaveInFlight(true);
     setVariableSavePending(true);
     try {
       const category = variableDraft.category.trim() || "변동 지출";
@@ -514,7 +517,7 @@ export function SalaryHomeScreen({
       sync(appendVariableExpense(localExpense));
       closeVariableForm();
     } finally {
-      variableSaveInFlightRef.current = false;
+      setVariableSaveInFlight(false);
       setVariableSavePending(false);
     }
   }

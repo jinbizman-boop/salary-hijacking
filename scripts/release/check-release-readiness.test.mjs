@@ -790,7 +790,8 @@ const makeWorkspace = () => {
     rootDir,
     "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
     "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
-  );  write(rootDir, "release/README.md", "# Release\n");
+  );
+  write(rootDir, "release/README.md", "# Release\n");
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
   writeMobileNativeEvidence(rootDir);
@@ -2468,7 +2469,6 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.match(report, /mobile:native:evidence/);
 });
 
-
 test("blocks stale APK references in final release reports", () => {
   const rootDir = makeWorkspace();
   write(
@@ -2489,7 +2489,10 @@ test("blocks stale APK references in final release reports", () => {
   assert.equal(result.ok, false);
   assert.match(report, /docs:final-report-apk-references/);
   assert.match(report, /stale APK references/);
-  assert.doesNotMatch(report, /073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91/);
+  assert.doesNotMatch(
+    report,
+    /073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91/,
+  );
 });
 test("blocks when current-head mobile preview evidence is missing", () => {
   const rootDir = makeWorkspace();
@@ -2546,7 +2549,8 @@ test("uses local no-secret physical phone proof when present", () => {
           iosBundleIdentifier: "com.salaryhijacking.mobile",
         },
         android: {
-          apkSha256: "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+          apkSha256:
+            "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
           physicalPhoneVerified: true,
           installVerified: true,
           coldStartRuns: 20,
@@ -2594,7 +2598,6 @@ test("uses local no-secret physical phone proof when present", () => {
     /Physical phone preview QA is verified by local no-secret proof/,
   );
 });
-
 
 test("blocks physical phone proof for a stale APK hash", () => {
   const rootDir = makeWorkspace();

@@ -172,7 +172,7 @@ export const parseWindowsSubstMappings = (stdout) => {
 const normalizeSubstTarget = (value) =>
   path
     .resolve(String(value ?? ""))
-    .replace(/[\\\/]+$/u, "")
+    .replace(/[\\/]+$/u, "")
     .toLowerCase();
 
 export const cleanupStaleWindowsSubstAliases = ({

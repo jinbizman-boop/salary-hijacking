@@ -2,11 +2,11 @@
   "name": "@salary-hijacking/mobile",
   "version": "1.0.0",
   "private": true,
-  "description": "Salary Hijacking Expo React Native mobile app.",
+  "description": "급여납치 Salary Hijacking Expo React Native mobile app.",
   "license": "UNLICENSED",
   "type": "module",
   "main": "expo-router/entry",
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@10.24.0",
   "engines": {
     "node": ">=20.11.0",
     "pnpm": ">=10.0.0 <11"

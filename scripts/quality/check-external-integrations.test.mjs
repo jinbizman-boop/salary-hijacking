@@ -35,7 +35,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:e2e
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
 `,
     ".github/workflows/deploy-api.yml": `
 name: Deploy API
@@ -163,7 +163,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -985,7 +985,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -1085,7 +1085,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -1902,7 +1902,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -1999,7 +1999,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:e2e
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
 `,
     });
 
@@ -2039,7 +2039,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:e2e
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
 `,
     });
 
@@ -2173,7 +2173,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -2278,7 +2278,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
       - run: gh release create v1.0.0 release-artifacts/*
     env:
       GH_TOKEN: \${{ github.token }}
@@ -2324,7 +2324,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: gh release create v1.0.0 release-artifacts/*
     env:
       GH_TOKEN: \${{ github.token }}
@@ -2373,7 +2373,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4

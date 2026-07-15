@@ -20,7 +20,7 @@ describe("plan tab screen wiring", () => {
 
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).toContain("PlanScreen");
-    expect(source).not.toContain("Plan" + "ReferenceScreen");
+    expect(source).not.toContain("PlanReferenceScreen");
     expect(source).toContain("/api/v1/fixed-expenses");
     expect(source).toContain("/api/v1/savings");
     expect(source).toContain("server_authority_component_guard");
@@ -35,8 +35,8 @@ describe("plan tab screen wiring", () => {
     );
 
     expect(componentIndex).toContain("PlanScreen");
-    expect(componentIndex).not.toContain("Plan" + "ReferenceScreen");
-    expect(componentIndex).not.toContain("./Plan" + "ReferenceScreen");
+    expect(componentIndex).not.toContain("PlanReferenceScreen");
+    expect(componentIndex).not.toContain("./PlanReferenceScreen");
   });
 
   it("does not wire the production plan screen to preview-state runtime boundaries", () => {
@@ -47,8 +47,8 @@ describe("plan tab screen wiring", () => {
 
     expect(source).not.toContain("../../preview/interactive-state");
     expect(source).not.toContain("PreviewState");
-    expect(source).not.toContain("get" + "PreviewState");
-    expect(source).not.toContain("update" + "PreviewState");
+    expect(source).not.toContain("getPreviewState");
+    expect(source).not.toContain("updatePreviewState");
   });
 
   it("does not seed production plan financial UI from prototype amounts", () => {

@@ -20,7 +20,7 @@ describe("salary tab screen wiring", () => {
 
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).toContain("SalaryHomeScreen");
-    expect(source).not.toContain("SalaryHome" + "ReferenceScreen");
+    expect(source).not.toContain("SalaryHomeReferenceScreen");
     expect(source).toContain("/api/v1/salary/summary");
     expect(source).toContain("Google 광고 영역");
     expect(source).toContain("server_authority_component_guard");
@@ -34,8 +34,8 @@ describe("salary tab screen wiring", () => {
     );
 
     expect(componentIndex).toContain("SalaryHomeScreen");
-    expect(componentIndex).not.toContain("SalaryHome" + "ReferenceScreen");
-    expect(componentIndex).not.toContain("./SalaryHome" + "ReferenceScreen");
+    expect(componentIndex).not.toContain("SalaryHomeReferenceScreen");
+    expect(componentIndex).not.toContain("./SalaryHomeReferenceScreen");
   });
 
   it("does not wire the production salary screen to preview-state runtime boundaries", () => {
@@ -46,8 +46,8 @@ describe("salary tab screen wiring", () => {
 
     expect(source).not.toContain("../../preview/interactive-state");
     expect(source).not.toContain("PreviewState");
-    expect(source).not.toContain("get" + "PreviewState");
-    expect(source).not.toContain("update" + "PreviewState");
+    expect(source).not.toContain("getPreviewState");
+    expect(source).not.toContain("updatePreviewState");
   });
 
   it("does not hardcode production salary hero amounts in the screen component", () => {

@@ -13,7 +13,10 @@ const sha256 = (value) =>
   createHash("sha256").update(String(value)).digest("hex").toUpperCase();
 
 const fileSha256 = (targetPath) =>
-  createHash("sha256").update(fs.readFileSync(targetPath)).digest("hex").toUpperCase();
+  createHash("sha256")
+    .update(fs.readFileSync(targetPath))
+    .digest("hex")
+    .toUpperCase();
 
 const isPhysicalDeviceLine = (line) => {
   const trimmed = line.trim();

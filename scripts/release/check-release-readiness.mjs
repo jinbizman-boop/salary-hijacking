@@ -34,7 +34,8 @@ const STALE_MOBILE_APK_REPORT_REFERENCES = [
   },
   {
     label: "old iteration APK filename",
-    pattern: /salary-hijacking-phone-arm64-iteration(?:007|094|100)-debug\.apk/iu,
+    pattern:
+      /salary-hijacking-phone-arm64-iteration(?:007|094|100)-debug\.apk/iu,
   },
   {
     label: "old APK artifact branch",
@@ -3912,9 +3913,9 @@ const checkMobilePreviewEvidence = (
               : !phoneProofApkMatchesEvidence
                 ? "physical phone proof APK SHA256 does not match the current preview APK evidence"
                 : typeof phoneProofAndroid.physicalPhoneBlocker === "string" &&
-                  phoneProofAndroid.physicalPhoneBlocker.trim()
-                ? phoneProofAndroid.physicalPhoneBlocker
-                : "physical phone proof is present but does not prove install, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, and raw-logcat redaction";
+                    phoneProofAndroid.physicalPhoneBlocker.trim()
+                  ? phoneProofAndroid.physicalPhoneBlocker
+                  : "physical phone proof is present but does not prove install, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, and raw-logcat redaction";
 
   addMobileCheck(
     checks,

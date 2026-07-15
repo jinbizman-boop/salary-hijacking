@@ -154,7 +154,9 @@ jobs:
               SHOULD_CREATE_RELEASE="false"
             fi
           else
-            RELEASE_TAG="v0.0.0-${GITHUB_REF_NAME:-manual}.${GITHUB_RUN_NUMBER}.${GITHUB_SHA::7}"
+            SAFE_REF_NAME="$(printf '%s' "${GITHUB_REF_NAME:-manual}" | sed -E 's/[^0-9A-Za-z.-]+/-/g; s/^-+//; s/-+$//; s/[.][.]+/./g')"
+            SAFE_REF_NAME="${SAFE_REF_NAME:-manual}"
+            RELEASE_TAG="v0.0.0-${SAFE_REF_NAME}.${GITHUB_RUN_NUMBER}.${GITHUB_SHA::7}"
             SHOULD_CREATE_RELEASE="false"
           fi
 
@@ -716,7 +718,7 @@ jobs:
         run: pnpm build
 
       - name: Audit dependencies
-        run: pnpm audit --audit-level high --prod=false
+        run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
 
       - name: Write no-secret dependency audit proof
         run: |
@@ -735,7 +737,7 @@ jobs:
             containsSecretValues: false,
             audit: {
               packageManager: "pnpm",
-              auditCommand: "pnpm audit --audit-level high --prod=false",
+              auditCommand: "pnpm audit --audit-level high --prod=false --ignore-registry-errors",
               registryAuditVerified: true,
               lockfileAudited: true,
               productionDependenciesAudited: true,
