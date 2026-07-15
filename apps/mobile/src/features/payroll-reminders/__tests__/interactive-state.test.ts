@@ -1,22 +1,22 @@
 import {
-  PREVIEW_STATE_STORAGE_KEY,
-  configurePreviewStatePersistence,
+  PAYROLL_REMINDER_STATE_STORAGE_KEY,
+  configurePayrollReminderStatePersistence,
   formatKrw,
   getKstParts,
-  getPreviewState,
+  getPayrollReminderState,
   getVisiblePlanReminderItems,
-  hydratePreviewStateFromStorage,
+  hydratePayrollReminderStateFromStorage,
   iconForCategory,
   isDailyBudgetItemCompletedOnDate,
-  resetPreviewStateForTests,
-  updatePreviewState,
+  resetPayrollReminderStateForTests,
+  updatePayrollReminderState,
   type PlanItem,
-  type PreviewStateSecureStorage,
+  type PayrollReminderStateSecureStorage,
 } from "../interactive-state";
 
 describe("interactive preview state Korean copy", () => {
   beforeEach(() => {
-    resetPreviewStateForTests();
+    resetPayrollReminderStateForTests();
   });
 
   it("keeps money and KST date labels in readable Korean", () => {
@@ -27,7 +27,7 @@ describe("interactive preview state Korean copy", () => {
   });
 
   it("keeps seeded salary and plan rows free of mojibake copy", () => {
-    const state = getPreviewState();
+    const state = getPayrollReminderState();
     const serialized = JSON.stringify(state);
 
     expect(serialized).toContain("빽다방 아이스 아메리카노");
@@ -48,11 +48,13 @@ describe("interactive preview state Korean copy", () => {
 
 describe("interactive preview daily budget completion dates", () => {
   beforeEach(() => {
-    resetPreviewStateForTests();
+    resetPayrollReminderStateForTests();
   });
 
   it("keeps legacy completed daily rows completed when no date key exists", () => {
-    const item = getPreviewState().dailyItems.find((row) => row.completed);
+    const item = getPayrollReminderState().dailyItems.find(
+      (row) => row.completed,
+    );
     if (!item) {
       throw new Error("Seeded completed daily item is required");
     }
@@ -61,7 +63,7 @@ describe("interactive preview daily budget completion dates", () => {
   });
 
   it("treats a completed daily row as scheduled on a different KST date", () => {
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const category = seeded.dailyItems[0]?.category;
     if (!category) {
       throw new Error("Seeded daily category is required");
@@ -85,14 +87,14 @@ describe("interactive preview daily budget completion dates", () => {
 
 describe("interactive preview state secure persistence", () => {
   beforeEach(() => {
-    resetPreviewStateForTests();
+    resetPayrollReminderStateForTests();
   });
 
   it("hydrates saved preview state after in-memory state is reset", async () => {
     const storage = createMemorySecureStorage();
-    configurePreviewStatePersistence(storage);
+    configurePayrollReminderStatePersistence(storage);
 
-    updatePreviewState((previous) => ({
+    updatePayrollReminderState((previous) => ({
       ...previous,
       variableExpenses: [
         ...previous.variableExpenses,
@@ -105,19 +107,19 @@ describe("interactive preview state secure persistence", () => {
       ],
     }));
 
-    expect(await storage.getItemAsync(PREVIEW_STATE_STORAGE_KEY)).toContain(
-      "variable-persisted",
-    );
-
-    resetPreviewStateForTests();
-    configurePreviewStatePersistence(storage);
     expect(
-      getPreviewState().variableExpenses.some(
+      await storage.getItemAsync(PAYROLL_REMINDER_STATE_STORAGE_KEY),
+    ).toContain("variable-persisted");
+
+    resetPayrollReminderStateForTests();
+    configurePayrollReminderStatePersistence(storage);
+    expect(
+      getPayrollReminderState().variableExpenses.some(
         (item) => item.id === "variable-persisted",
       ),
     ).toBe(false);
 
-    const restored = await hydratePreviewStateFromStorage();
+    const restored = await hydratePayrollReminderStateFromStorage();
 
     expect(restored.variableExpenses).toContainEqual({
       amount: 12345,
@@ -125,18 +127,18 @@ describe("interactive preview state secure persistence", () => {
       content: "테스트 결제 저장",
       id: "variable-persisted",
     });
-    expect(getPreviewState()).toBe(restored);
+    expect(getPayrollReminderState()).toBe(restored);
   });
 
   it("ignores malformed persisted payloads without replacing the seeded state", async () => {
     const storage = createMemorySecureStorage();
     await storage.setItemAsync(
-      PREVIEW_STATE_STORAGE_KEY,
+      PAYROLL_REMINDER_STATE_STORAGE_KEY,
       JSON.stringify({ schemaVersion: 1, state: { dailyLimit: -1 } }),
     );
-    configurePreviewStatePersistence(storage);
+    configurePayrollReminderStatePersistence(storage);
 
-    const restored = await hydratePreviewStateFromStorage();
+    const restored = await hydratePayrollReminderStateFromStorage();
 
     expect(restored.dailyLimit).toBe(20000);
     expect(restored.dailyItems).toHaveLength(5);
@@ -144,13 +146,13 @@ describe("interactive preview state secure persistence", () => {
 
   it("rejects persisted daily rows with malformed completion date keys", async () => {
     const storage = createMemorySecureStorage();
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const category = seeded.dailyItems[0]?.category;
     if (!category) {
       throw new Error("Seeded daily category is required");
     }
     await storage.setItemAsync(
-      PREVIEW_STATE_STORAGE_KEY,
+      PAYROLL_REMINDER_STATE_STORAGE_KEY,
       JSON.stringify({
         schemaVersion: 1,
         state: {
@@ -168,22 +170,24 @@ describe("interactive preview state secure persistence", () => {
         },
       }),
     );
-    configurePreviewStatePersistence(storage);
+    configurePayrollReminderStatePersistence(storage);
 
-    const restored = await hydratePreviewStateFromStorage();
+    const restored = await hydratePayrollReminderStateFromStorage();
 
     expect(restored.dailyItems).toHaveLength(5);
-    expect(await storage.getItemAsync(PREVIEW_STATE_STORAGE_KEY)).toBeNull();
+    expect(
+      await storage.getItemAsync(PAYROLL_REMINDER_STATE_STORAGE_KEY),
+    ).toBeNull();
   });
 
   it("rejects persisted preview rows that contain sensitive personal data", async () => {
     const storage = createMemorySecureStorage();
     await storage.setItemAsync(
-      PREVIEW_STATE_STORAGE_KEY,
+      PAYROLL_REMINDER_STATE_STORAGE_KEY,
       JSON.stringify({
         schemaVersion: 1,
         state: {
-          ...getPreviewState(),
+          ...getPayrollReminderState(),
           variableExpenses: [
             {
               amount: 1000,
@@ -195,24 +199,26 @@ describe("interactive preview state secure persistence", () => {
         },
       }),
     );
-    configurePreviewStatePersistence(storage);
+    configurePayrollReminderStatePersistence(storage);
 
-    const restored = await hydratePreviewStateFromStorage();
+    const restored = await hydratePayrollReminderStateFromStorage();
 
     expect(
       restored.variableExpenses.some(
         (item) => item.id === "variable-sensitive",
       ),
     ).toBe(false);
-    expect(await storage.getItemAsync(PREVIEW_STATE_STORAGE_KEY)).toBeNull();
+    expect(
+      await storage.getItemAsync(PAYROLL_REMINDER_STATE_STORAGE_KEY),
+    ).toBeNull();
   });
 
   it("does not write sensitive preview rows into secure storage", async () => {
     const storage = createMemorySecureStorage();
-    configurePreviewStatePersistence(storage);
+    configurePayrollReminderStatePersistence(storage);
 
-    const before = getPreviewState();
-    const after = updatePreviewState((previous) => ({
+    const before = getPayrollReminderState();
+    const after = updatePayrollReminderState((previous) => ({
       ...previous,
       variableExpenses: [
         ...previous.variableExpenses,
@@ -227,18 +233,20 @@ describe("interactive preview state secure persistence", () => {
 
     expect(after).toBe(before);
     expect(
-      getPreviewState().variableExpenses.some(
+      getPayrollReminderState().variableExpenses.some(
         (item) => item.id === "variable-sensitive-write",
       ),
     ).toBe(false);
-    expect(await storage.getItemAsync(PREVIEW_STATE_STORAGE_KEY)).toBeNull();
+    expect(
+      await storage.getItemAsync(PAYROLL_REMINDER_STATE_STORAGE_KEY),
+    ).toBeNull();
   });
 
   it("keeps in-memory preview state when secure persistence rejects", async () => {
     const storage = createRejectingSecureStorage();
-    configurePreviewStatePersistence(storage);
+    configurePayrollReminderStatePersistence(storage);
 
-    const after = updatePreviewState((previous) => ({
+    const after = updatePayrollReminderState((previous) => ({
       ...previous,
       variableExpenses: [
         ...previous.variableExpenses,
@@ -259,13 +267,13 @@ describe("interactive preview state secure persistence", () => {
       content: "Persistence retry",
       id: "variable-persistence-reject",
     });
-    expect(getPreviewState()).toBe(after);
+    expect(getPayrollReminderState()).toBe(after);
   });
 });
 
 describe("interactive preview recurring plan reminders", () => {
   it("hides only the completed current-month occurrence and exposes the next month again", () => {
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const fixedCategory = seeded.planItems.find(
       (item) => item.section === "fixed",
     )?.category;
@@ -313,7 +321,7 @@ describe("interactive preview recurring plan reminders", () => {
   });
 
   it("does not expose future-dated fixed or savings occurrences on salary home", () => {
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const fixedCategory = seeded.planItems.find(
       (item) => item.section === "fixed",
     )?.category;
@@ -351,7 +359,7 @@ describe("interactive preview recurring plan reminders", () => {
   });
 });
 
-function createMemorySecureStorage(): PreviewStateSecureStorage {
+function createMemorySecureStorage(): PayrollReminderStateSecureStorage {
   const values = new Map<string, string>();
   return {
     deleteItemAsync: async (key: string): Promise<void> => {
@@ -365,7 +373,7 @@ function createMemorySecureStorage(): PreviewStateSecureStorage {
   };
 }
 
-function createRejectingSecureStorage(): PreviewStateSecureStorage {
+function createRejectingSecureStorage(): PayrollReminderStateSecureStorage {
   return {
     deleteItemAsync: async (): Promise<void> => undefined,
     getItemAsync: async (): Promise<string | null> => null,

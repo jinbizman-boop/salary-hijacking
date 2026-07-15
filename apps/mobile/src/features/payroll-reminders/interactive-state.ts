@@ -3,7 +3,7 @@ import type { ImageSourcePropType } from "react-native";
 import { appIconAssets } from "../../shared/assets/icons";
 import type { SecureStoreOptions } from "../../shared/storage/secure-store";
 
-export type PreviewCategory =
+export type ReminderCategory =
   | "음식"
   | "카페"
   | "담배"
@@ -15,7 +15,7 @@ export type PreviewCategory =
 
 export type DailyBudgetItem = Readonly<{
   amount: number;
-  category: PreviewCategory;
+  category: ReminderCategory;
   completed: boolean;
   content: string;
   id: string;
@@ -31,7 +31,7 @@ export type VariableExpenseItem = Readonly<{
 
 export type PlanItem = Readonly<{
   amount: number;
-  category: PreviewCategory;
+  category: ReminderCategory;
   content: string;
   day: number;
   id: string;
@@ -39,7 +39,7 @@ export type PlanItem = Readonly<{
   usedMonthKey?: string;
 }>;
 
-export type PreviewState = Readonly<{
+export type PayrollReminderState = Readonly<{
   dailyItems: readonly DailyBudgetItem[];
   dailyLimit: number;
   livingDays: number;
@@ -47,7 +47,7 @@ export type PreviewState = Readonly<{
   variableExpenses: readonly VariableExpenseItem[];
 }>;
 
-export type PreviewStateSecureStorage = Readonly<{
+export type PayrollReminderStateSecureStorage = Readonly<{
   WHEN_UNLOCKED_THIS_DEVICE_ONLY?: number;
   deleteItemAsync: (key: string, options?: SecureStoreOptions) => Promise<void>;
   getItemAsync: (
@@ -61,10 +61,11 @@ export type PreviewStateSecureStorage = Readonly<{
   ) => Promise<void>;
 }>;
 
-export const PREVIEW_STATE_STORAGE_KEY = "salary-hijacking.qa-preview-state.v1";
+export const PAYROLL_REMINDER_STATE_STORAGE_KEY =
+  "salary-hijacking.payroll-reminder-state.v1";
 
-const PERSISTED_PREVIEW_SCHEMA_VERSION = 1;
-const MAX_PREVIEW_ROWS = 100;
+const PERSISTED_PAYROLL_REMINDER_SCHEMA_VERSION = 1;
+const MAX_PAYROLL_REMINDER_ROWS = 100;
 const MAX_TEXT_LENGTH = 80;
 const SENSITIVE_TEXT_PATTERNS: readonly RegExp[] = [
   /\b01[016789][-\s.]?\d{3,4}[-\s.]?\d{4}\b/u,
@@ -73,7 +74,7 @@ const SENSITIVE_TEXT_PATTERNS: readonly RegExp[] = [
   /\b(?:token|secret|password|passwd|jwt|api[_-]?key)\b/iu,
   /(?:계좌|카드|주민|비밀번호|토큰|시크릿)/u,
 ];
-const initialState: PreviewState = {
+const initialState: PayrollReminderState = {
   dailyLimit: 20000,
   livingDays: 30,
   dailyItems: [
@@ -173,22 +174,23 @@ const initialState: PreviewState = {
   ],
 };
 
-let previewState: PreviewState = initialState;
-let previewStateStorage: PreviewStateSecureStorage | null = null;
+let payrollReminderState: PayrollReminderState = initialState;
+let payrollReminderStateStorage: PayrollReminderStateSecureStorage | null =
+  null;
 
-export function resetPreviewStateForTests(): void {
-  previewState = initialState;
-  previewStateStorage = null;
+export function resetPayrollReminderStateForTests(): void {
+  payrollReminderState = initialState;
+  payrollReminderStateStorage = null;
 }
 
-export function configurePreviewStatePersistence(
-  storage: PreviewStateSecureStorage | null,
+export function configurePayrollReminderStatePersistence(
+  storage: PayrollReminderStateSecureStorage | null,
 ): void {
-  previewStateStorage = storage;
+  payrollReminderStateStorage = storage;
 }
 
-export function getPreviewState(): PreviewState {
-  return previewState;
+export function getPayrollReminderState(): PayrollReminderState {
+  return payrollReminderState;
 }
 
 export function getVisiblePlanReminderItems(
@@ -205,37 +207,37 @@ export function getVisiblePlanReminderItems(
   );
 }
 
-export function updatePreviewState(
-  updater: (state: PreviewState) => PreviewState,
-): PreviewState {
-  const nextState = sanitizePreviewState(updater(previewState));
-  if (!nextState) return previewState;
+export function updatePayrollReminderState(
+  updater: (state: PayrollReminderState) => PayrollReminderState,
+): PayrollReminderState {
+  const nextState = sanitizePayrollReminderState(updater(payrollReminderState));
+  if (!nextState) return payrollReminderState;
 
-  previewState = nextState;
-  void persistPreviewState(previewState).catch(() => undefined);
-  return previewState;
+  payrollReminderState = nextState;
+  void persistPayrollReminderState(payrollReminderState).catch(() => undefined);
+  return payrollReminderState;
 }
 
-export async function hydratePreviewStateFromStorage(): Promise<PreviewState> {
-  if (!previewStateStorage) return previewState;
+export async function hydratePayrollReminderStateFromStorage(): Promise<PayrollReminderState> {
+  if (!payrollReminderStateStorage) return payrollReminderState;
 
-  const raw = await previewStateStorage.getItemAsync(
-    PREVIEW_STATE_STORAGE_KEY,
-    secureStoreOptions(previewStateStorage),
+  const raw = await payrollReminderStateStorage.getItemAsync(
+    PAYROLL_REMINDER_STATE_STORAGE_KEY,
+    secureStoreOptions(payrollReminderStateStorage),
   );
-  if (!raw) return previewState;
+  if (!raw) return payrollReminderState;
 
-  const restored = parsePersistedPreviewState(raw);
+  const restored = parsePersistedPayrollReminderState(raw);
   if (!restored) {
-    await previewStateStorage.deleteItemAsync(
-      PREVIEW_STATE_STORAGE_KEY,
-      secureStoreOptions(previewStateStorage),
+    await payrollReminderStateStorage.deleteItemAsync(
+      PAYROLL_REMINDER_STATE_STORAGE_KEY,
+      secureStoreOptions(payrollReminderStateStorage),
     );
-    return previewState;
+    return payrollReminderState;
   }
 
-  previewState = restored;
-  return previewState;
+  payrollReminderState = restored;
+  return payrollReminderState;
 }
 
 export function formatKrw(value: number): string {
@@ -297,38 +299,45 @@ export function iconForCategory(category: string): ImageSourcePropType {
   return appIconAssets.money.coins;
 }
 
-async function persistPreviewState(state: PreviewState): Promise<void> {
-  if (!previewStateStorage) return;
-  await previewStateStorage.setItemAsync(
-    PREVIEW_STATE_STORAGE_KEY,
+async function persistPayrollReminderState(
+  state: PayrollReminderState,
+): Promise<void> {
+  if (!payrollReminderStateStorage) return;
+  await payrollReminderStateStorage.setItemAsync(
+    PAYROLL_REMINDER_STATE_STORAGE_KEY,
     JSON.stringify({
-      schemaVersion: PERSISTED_PREVIEW_SCHEMA_VERSION,
+      schemaVersion: PERSISTED_PAYROLL_REMINDER_SCHEMA_VERSION,
       state,
     }),
-    secureStoreOptions(previewStateStorage),
+    secureStoreOptions(payrollReminderStateStorage),
   );
 }
 
 function secureStoreOptions(
-  storage: PreviewStateSecureStorage,
+  storage: PayrollReminderStateSecureStorage,
 ): SecureStoreOptions | undefined {
   return typeof storage.WHEN_UNLOCKED_THIS_DEVICE_ONLY === "number"
     ? { keychainAccessible: storage.WHEN_UNLOCKED_THIS_DEVICE_ONLY }
     : undefined;
 }
 
-function parsePersistedPreviewState(raw: string): PreviewState | null {
+function parsePersistedPayrollReminderState(
+  raw: string,
+): PayrollReminderState | null {
   try {
     const parsed: unknown = JSON.parse(raw);
     if (!isRecord(parsed)) return null;
-    if (parsed.schemaVersion !== PERSISTED_PREVIEW_SCHEMA_VERSION) return null;
-    return sanitizePreviewState(parsed.state);
+    if (parsed.schemaVersion !== PERSISTED_PAYROLL_REMINDER_SCHEMA_VERSION)
+      return null;
+    return sanitizePayrollReminderState(parsed.state);
   } catch {
     return null;
   }
 }
 
-function sanitizePreviewState(value: unknown): PreviewState | null {
+function sanitizePayrollReminderState(
+  value: unknown,
+): PayrollReminderState | null {
   if (!isRecord(value)) return null;
   if (!isNonNegativeInteger(value.dailyLimit)) return null;
   if (!isPositiveDayCount(value.livingDays)) return null;
@@ -352,12 +361,12 @@ function sanitizePreviewState(value: unknown): PreviewState | null {
 
 function sanitizeDailyBudgetItem(value: unknown): DailyBudgetItem | null {
   if (!isRecord(value)) return null;
-  const category = sanitizePreviewCategory(value.category);
+  const category = sanitizeReminderCategory(value.category);
   if (!category) return null;
   if (!isNonNegativeInteger(value.amount)) return null;
   if (typeof value.completed !== "boolean") return null;
   const content = sanitizeText(value.content);
-  const id = sanitizePreviewId(value.id);
+  const id = sanitizeReminderId(value.id);
   if (!content || !id) return null;
   const usedDateKey =
     value.usedDateKey === undefined
@@ -382,7 +391,7 @@ function sanitizeVariableExpenseItem(
   if (!isNonNegativeInteger(value.amount)) return null;
   const category = sanitizeText(value.category);
   const content = sanitizeText(value.content);
-  const id = sanitizePreviewId(value.id);
+  const id = sanitizeReminderId(value.id);
   if (!category || !content || !id) return null;
 
   return {
@@ -395,13 +404,13 @@ function sanitizeVariableExpenseItem(
 
 function sanitizePlanItem(value: unknown): PlanItem | null {
   if (!isRecord(value)) return null;
-  const category = sanitizePreviewCategory(value.category);
+  const category = sanitizeReminderCategory(value.category);
   if (!category) return null;
   if (!isNonNegativeInteger(value.amount)) return null;
   if (!isCalendarDay(value.day)) return null;
   if (value.section !== "fixed" && value.section !== "saving") return null;
   const content = sanitizeText(value.content);
-  const id = sanitizePreviewId(value.id);
+  const id = sanitizeReminderId(value.id);
   if (!content || !id) return null;
   const usedMonthKey =
     value.usedMonthKey === undefined
@@ -424,14 +433,15 @@ function sanitizeArray<T>(
   value: unknown,
   mapper: (row: unknown) => T | null,
 ): readonly T[] | null {
-  if (!Array.isArray(value) || value.length > MAX_PREVIEW_ROWS) return null;
+  if (!Array.isArray(value) || value.length > MAX_PAYROLL_REMINDER_ROWS)
+    return null;
   const rows = value.map(mapper);
   return rows.every((row): row is T => row !== null) ? rows : null;
 }
 
-function sanitizePreviewCategory(value: unknown): PreviewCategory | null {
+function sanitizeReminderCategory(value: unknown): ReminderCategory | null {
   const text = sanitizeText(value);
-  return text ? (text as PreviewCategory) : null;
+  return text ? (text as ReminderCategory) : null;
 }
 
 function sanitizeText(value: unknown): string | null {
@@ -443,7 +453,7 @@ function sanitizeText(value: unknown): string | null {
     : text;
 }
 
-function sanitizePreviewId(value: unknown): string | null {
+function sanitizeReminderId(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const text = value.trim();
   if (text.length === 0 || text.length > 120) return null;

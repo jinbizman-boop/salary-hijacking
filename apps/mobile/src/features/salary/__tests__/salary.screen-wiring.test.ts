@@ -37,4 +37,16 @@ describe("salary tab screen wiring", () => {
     expect(componentIndex).not.toContain("SalaryHome" + "ReferenceScreen");
     expect(componentIndex).not.toContain("./SalaryHome" + "ReferenceScreen");
   });
+
+  it("does not wire the production salary screen to preview-state runtime boundaries", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("../../preview/interactive-state");
+    expect(source).not.toContain("PreviewState");
+    expect(source).not.toContain("get" + "PreviewState");
+    expect(source).not.toContain("update" + "PreviewState");
+  });
 });

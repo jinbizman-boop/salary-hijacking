@@ -38,4 +38,16 @@ describe("plan tab screen wiring", () => {
     expect(componentIndex).not.toContain("Plan" + "ReferenceScreen");
     expect(componentIndex).not.toContain("./Plan" + "ReferenceScreen");
   });
+
+  it("does not wire the production plan screen to preview-state runtime boundaries", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "PlanScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("../../preview/interactive-state");
+    expect(source).not.toContain("PreviewState");
+    expect(source).not.toContain("get" + "PreviewState");
+    expect(source).not.toContain("update" + "PreviewState");
+  });
 });

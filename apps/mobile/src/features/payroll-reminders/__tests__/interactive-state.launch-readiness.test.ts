@@ -1,6 +1,6 @@
 import { formatKrw, getKstParts, parseKrwInput } from "../interactive-state";
 
-describe("preview interactive state launch readiness helpers", () => {
+describe("payroll reminder state launch readiness helpers", () => {
   it("formats and parses KRW as non-negative integer display values", () => {
     expect(formatKrw(0)).toBe("0원");
     expect(formatKrw(15000.9)).toBe("15,000원");
@@ -11,6 +11,7 @@ describe("preview interactive state launch readiness helpers", () => {
 
   it("derives Korean calendar text from Asia/Seoul timezone across UTC date boundaries", () => {
     expect(getKstParts(new Date("2026-07-11T15:00:00.000Z"))).toEqual({
+      dateKey: "2026-07-12",
       day: 12,
       month: 7,
       monthKey: "2026-07",
@@ -18,6 +19,7 @@ describe("preview interactive state launch readiness helpers", () => {
       year: 2026,
     });
     expect(getKstParts(new Date("2028-02-28T15:00:00.000Z"))).toEqual({
+      dateKey: "2028-02-29",
       day: 29,
       month: 2,
       monthKey: "2028-02",

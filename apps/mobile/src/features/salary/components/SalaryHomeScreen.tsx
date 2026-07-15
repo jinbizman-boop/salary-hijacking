@@ -36,22 +36,22 @@ import {
 } from "../../../shared/api/mobile-api";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
-  configurePreviewStatePersistence,
+  configurePayrollReminderStatePersistence,
   formatKrw,
   getKstParts,
-  getPreviewState,
+  getPayrollReminderState,
   getVisiblePlanReminderItems,
-  hydratePreviewStateFromStorage,
+  hydratePayrollReminderStateFromStorage,
   iconForCategory,
   isDailyBudgetItemCompletedOnDate,
   parseKrwInput,
-  resetPreviewStateForTests,
-  updatePreviewState,
+  resetPayrollReminderStateForTests,
+  updatePayrollReminderState,
   type DailyBudgetItem,
   type PlanItem,
-  type PreviewCategory,
+  type ReminderCategory,
   type VariableExpenseItem,
-} from "../../preview/interactive-state";
+} from "../../payroll-reminders/interactive-state";
 
 const BRAND_GREEN = "#209252";
 const HERO_GREEN = "#259849";
@@ -63,7 +63,10 @@ const MONEY_YELLOW = "#F8F439";
 const DANGER_RED = "#B92133";
 const SALARY_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
-const previewSecureStore = createSecureStoreRuntime(Platform.OS, SecureStore);
+const payrollReminderSecureStore = createSecureStoreRuntime(
+  Platform.OS,
+  SecureStore,
+);
 
 type ItemDraft = Readonly<{
   amount: string;
@@ -97,7 +100,7 @@ export type SalaryHomeScreenProps = Readonly<{
 }>;
 
 export function resetSalaryHomePreviewCacheForTests(): void {
-  resetPreviewStateForTests();
+  resetPayrollReminderStateForTests();
 }
 
 export function SalaryHomeScreen({
@@ -112,7 +115,7 @@ export function SalaryHomeScreen({
   const contentWidth = Math.min(width, 430);
   const scale = clamp(width / 393, 0.9, 1.08);
   const [tick, setTick] = useState(0);
-  const [state, setState] = useState(getPreviewState());
+  const [state, setState] = useState(getPayrollReminderState());
   const [dailySettingsOpen, setDailySettingsOpen] = useState(false);
   const [dailyEditorOpen, setDailyEditorOpen] = useState(false);
   const [editingDailyId, setEditingDailyId] = useState<string | null>(null);
@@ -153,10 +156,10 @@ export function SalaryHomeScreen({
 
   useEffect(() => {
     let mounted = true;
-    const current = getPreviewState();
-    configurePreviewStatePersistence(previewSecureStore);
+    const current = getPayrollReminderState();
+    configurePayrollReminderStatePersistence(payrollReminderSecureStore);
     if (process.env.JEST_WORKER_ID) return undefined;
-    void hydratePreviewStateFromStorage().then((restored) => {
+    void hydratePayrollReminderStateFromStorage().then((restored) => {
       if (mounted && restored !== current) setState(restored);
     });
     return () => {
@@ -188,7 +191,7 @@ export function SalaryHomeScreen({
   const currentSpent = 773000 + dailySpent + variableTotal;
   const currentHijacked = Math.max(0, 2700000 - currentSpent);
 
-  function sync(next: ReturnType<typeof getPreviewState>): void {
+  function sync(next: ReturnType<typeof getPayrollReminderState>): void {
     setState(next);
   }
 
@@ -212,7 +215,7 @@ export function SalaryHomeScreen({
       }
     }
     sync(
-      updatePreviewState((previous) => ({
+      updatePayrollReminderState((previous) => ({
         ...previous,
         dailyLimit,
       })),
@@ -268,7 +271,7 @@ export function SalaryHomeScreen({
         return;
       }
     }
-    const next = updatePreviewState((previous) => {
+    const next = updatePayrollReminderState((previous) => {
       const previousItem = previous.dailyItems.find(
         (item) => item.id === editingDailyId,
       );
@@ -348,7 +351,7 @@ export function SalaryHomeScreen({
     }
 
     sync(
-      updatePreviewState((previous) => ({
+      updatePayrollReminderState((previous) => ({
         ...previous,
         dailyItems: previous.dailyItems.map((row) =>
           row.id === item.id
@@ -423,7 +426,7 @@ export function SalaryHomeScreen({
     }
 
     sync(
-      updatePreviewState((previous) => ({
+      updatePayrollReminderState((previous) => ({
         ...previous,
         planItems: previous.planItems.map((row) =>
           row.id === item.id ? { ...row, usedMonthKey: kst.monthKey } : row,
@@ -939,8 +942,8 @@ export function SalaryHomeScreen({
 
 function appendVariableExpense(
   expense: VariableExpenseItem,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     variableExpenses: [...previous.variableExpenses, expense],
   }));
@@ -949,8 +952,8 @@ function appendVariableExpense(
 function replaceDailyBudgetItem(
   currentItemId: string,
   item: DailyBudgetItem,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     dailyItems: previous.dailyItems.map((row) =>
       row.id === currentItemId ? item : row,
@@ -960,8 +963,8 @@ function replaceDailyBudgetItem(
 
 function removeDailyBudgetItem(
   itemId: string,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     dailyItems: previous.dailyItems.filter((row) => row.id !== itemId),
   }));
@@ -969,8 +972,8 @@ function removeDailyBudgetItem(
 
 function replaceVariableExpense(
   expense: VariableExpenseItem,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     variableExpenses: previous.variableExpenses.map((row) =>
       row.id === expense.id ? expense : row,
@@ -980,8 +983,8 @@ function replaceVariableExpense(
 
 function removeVariableExpense(
   expenseId: string,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     variableExpenses: previous.variableExpenses.filter(
       (row) => row.id !== expenseId,
@@ -1121,8 +1124,8 @@ function buildVariableExpenseCreateRequest({
 
 function applyDailyBudgetSnapshot(
   saved: BudgetApiResponse,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     dailyLimit: saved.data.snapshot.dailyLimit,
   }));
@@ -1456,7 +1459,7 @@ function VariableExpenseTable({
   );
 }
 
-function normalizeCategory(value: string): PreviewCategory {
+function normalizeCategory(value: string): ReminderCategory {
   const category = value.trim();
   if (category.includes("음식") || category.includes("식사")) return "음식";
   if (category.includes("카페") || category.includes("커피")) return "카페";

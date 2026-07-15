@@ -7,10 +7,10 @@ import type {
   VariableExpenseUpdateRequest,
 } from "../../budget/types";
 import {
-  getPreviewState,
-  updatePreviewState,
+  getPayrollReminderState,
+  updatePayrollReminderState,
   type PlanItem,
-} from "../../preview/interactive-state";
+} from "../../payroll-reminders/interactive-state";
 import {
   resetSalaryHomePreviewCacheForTests,
   SalaryHomeScreen,
@@ -157,12 +157,12 @@ describe("salary reference screen interactions", () => {
 
   it("resets yesterday's completed daily budget rows to scheduled on the next KST day", () => {
     jest.useFakeTimers({ now: new Date("2026-07-14T03:00:00.000Z") });
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const category = seeded.dailyItems[0]?.category;
     if (!category) {
       throw new Error("Seeded daily category is required");
     }
-    updatePreviewState((previous) => ({
+    updatePayrollReminderState((previous) => ({
       ...previous,
       dailyItems: [
         {
@@ -644,7 +644,7 @@ describe("salary reference screen interactions", () => {
 
   it("does not show future-dated fixed or savings reminders before their scheduled KST day", () => {
     jest.useFakeTimers({ now: new Date("2026-07-14T03:00:00.000Z") });
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const fixedCategory = seeded.planItems.find(
       (item) => item.section === "fixed",
     )?.category;
@@ -672,7 +672,7 @@ describe("salary reference screen interactions", () => {
         section: "saving",
       },
     ];
-    updatePreviewState((previous) => ({
+    updatePayrollReminderState((previous) => ({
       ...previous,
       planItems: rows,
     }));

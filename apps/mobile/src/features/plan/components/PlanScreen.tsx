@@ -42,17 +42,17 @@ import { appIconAssets } from "../../../shared/assets/icons";
 import { appImageAssets } from "../../../shared/assets/images";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
-  configurePreviewStatePersistence,
+  configurePayrollReminderStatePersistence,
   formatKrw,
-  getPreviewState,
+  getPayrollReminderState,
   getKstParts,
-  hydratePreviewStateFromStorage,
+  hydratePayrollReminderStateFromStorage,
   parseKrwInput,
-  updatePreviewState,
+  updatePayrollReminderState,
   type DailyBudgetItem,
   type PlanItem,
-  type PreviewCategory,
-} from "../../preview/interactive-state";
+  type ReminderCategory,
+} from "../../payroll-reminders/interactive-state";
 
 const BRAND_GREEN = "#209252";
 const TEXT_BLACK = "#191B1F";
@@ -61,7 +61,10 @@ const MUTED = "#6D737A";
 const DANGER_RED = "#B92133";
 const PLAN_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uACC4\uD68D\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
-const previewSecureStore = createSecureStoreRuntime(Platform.OS, SecureStore);
+const payrollReminderSecureStore = createSecureStoreRuntime(
+  Platform.OS,
+  SecureStore,
+);
 
 type SectionKey = "payroll" | "fixed" | "saving" | "living";
 type Draft = Readonly<{
@@ -120,7 +123,7 @@ export function PlanScreen({
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 430);
   const scale = clamp(width / 393, 0.9, 1.08);
-  const [state, setState] = useState(getPreviewState());
+  const [state, setState] = useState(getPayrollReminderState());
   const [monthlyTarget, setMonthlyTarget] = useState(500000);
   const [payrollDraft, setPayrollDraft] = useState<PayrollDraft>({
     expenseAmount: "700000",
@@ -168,10 +171,10 @@ export function PlanScreen({
 
   useEffect(() => {
     let mounted = true;
-    const current = getPreviewState();
-    configurePreviewStatePersistence(previewSecureStore);
+    const current = getPayrollReminderState();
+    configurePayrollReminderStatePersistence(payrollReminderSecureStore);
     if (process.env.JEST_WORKER_ID) return undefined;
-    void hydratePreviewStateFromStorage().then((restored) => {
+    void hydratePayrollReminderStateFromStorage().then((restored) => {
       if (mounted && restored !== current) setState(restored);
     });
     return () => {
@@ -179,7 +182,7 @@ export function PlanScreen({
     };
   }, []);
 
-  function sync(next: ReturnType<typeof getPreviewState>): void {
+  function sync(next: ReturnType<typeof getPayrollReminderState>): void {
     setState(next);
   }
 
@@ -256,7 +259,7 @@ export function PlanScreen({
           }),
         );
         sync(
-          savePlanItemInPreview({
+          savePlanItemInPayrollReminderState({
             amount: saved.amountMinor,
             category: normalizeCategory(saved.category ?? category),
             content: saved.title,
@@ -282,7 +285,7 @@ export function PlanScreen({
           }),
         );
         sync(
-          savePlanItemInPreview({
+          savePlanItemInPayrollReminderState({
             amount: saved.fixedSaveAmountMinor,
             category: normalizeCategory(saved.goalType ?? category),
             content: saved.title,
@@ -308,7 +311,7 @@ export function PlanScreen({
           }),
         );
         sync(
-          savePlanItemInPreview({
+          savePlanItemInPayrollReminderState({
             amount: saved.amountMinor,
             category: normalizeCategory(saved.category ?? category),
             content: saved.title,
@@ -333,7 +336,7 @@ export function PlanScreen({
           }),
         );
         sync(
-          savePlanItemInPreview({
+          savePlanItemInPayrollReminderState({
             amount: saved.fixedSaveAmountMinor,
             category: normalizeCategory(saved.goalType ?? category),
             content: saved.title,
@@ -346,7 +349,7 @@ export function PlanScreen({
         return;
       }
       sync(
-        savePlanItemInPreview({
+        savePlanItemInPayrollReminderState({
           amount,
           category,
           content,
@@ -388,11 +391,11 @@ export function PlanScreen({
             state.livingDays,
           ),
         );
-        sync(saveDailyLivingItemInPreview(nextItem));
+        sync(saveDailyLivingItemInPayrollReminderState(nextItem));
         clearDraft();
         return;
       }
-      sync(saveDailyLivingItemInPreview(nextItem));
+      sync(saveDailyLivingItemInPayrollReminderState(nextItem));
       clearDraft();
     } catch {
       setPlanError(PLAN_SAVE_ERROR);
@@ -422,7 +425,7 @@ export function PlanScreen({
       }
     }
     sync(
-      updatePreviewState((previous) => ({
+      updatePayrollReminderState((previous) => ({
         ...previous,
         dailyLimit,
       })),
@@ -438,7 +441,7 @@ export function PlanScreen({
           buildDailyBudgetRecalculateRequest(state.dailyLimit, livingDays),
         );
         sync(
-          updatePreviewState((previous) => ({
+          updatePayrollReminderState((previous) => ({
             ...previous,
             livingDays,
           })),
@@ -450,7 +453,7 @@ export function PlanScreen({
       }
     }
     sync(
-      updatePreviewState((previous) => ({
+      updatePayrollReminderState((previous) => ({
         ...previous,
         livingDays,
       })),
@@ -472,7 +475,7 @@ export function PlanScreen({
     ) {
       try {
         await serverPlanCommitmentsApi.deleteFixedExpense(editingId);
-        sync(deleteEditingItemInPreview(editingId));
+        sync(deleteEditingItemInPayrollReminderState(editingId));
         clearDraft();
         return;
       } catch {
@@ -486,7 +489,7 @@ export function PlanScreen({
     ) {
       try {
         await serverPlanCommitmentsApi.deleteSavingsGoal(editingId);
-        sync(deleteEditingItemInPreview(editingId));
+        sync(deleteEditingItemInPayrollReminderState(editingId));
         clearDraft();
         return;
       } catch {
@@ -505,7 +508,7 @@ export function PlanScreen({
             state.livingDays,
           ),
         );
-        sync(deleteEditingItemInPreview(editingId));
+        sync(deleteEditingItemInPayrollReminderState(editingId));
         clearDraft();
         return;
       } catch {
@@ -513,7 +516,7 @@ export function PlanScreen({
         return;
       }
     }
-    sync(deleteEditingItemInPreview(editingId));
+    sync(deleteEditingItemInPayrollReminderState(editingId));
     clearDraft();
   }
 
@@ -820,10 +823,10 @@ export function PlanScreen({
   );
 }
 
-function savePlanItemInPreview(
+function savePlanItemInPayrollReminderState(
   nextItem: PlanItem,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     planItems: previous.planItems.some((item) => item.id === nextItem.id)
       ? previous.planItems.map((item) =>
@@ -833,10 +836,10 @@ function savePlanItemInPreview(
   }));
 }
 
-function saveDailyLivingItemInPreview(
+function saveDailyLivingItemInPayrollReminderState(
   nextItem: DailyBudgetItem,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     dailyItems: previous.dailyItems.some((item) => item.id === nextItem.id)
       ? previous.dailyItems.map((item) =>
@@ -902,10 +905,10 @@ function payrollDraftFromSnapshot(snapshot: PayrollPlanSnapshot): PayrollDraft {
   };
 }
 
-function deleteEditingItemInPreview(
+function deleteEditingItemInPayrollReminderState(
   editingId: string,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     dailyItems: previous.dailyItems.filter((item) => item.id !== editingId),
     planItems: previous.planItems.filter((item) => item.id !== editingId),
@@ -1044,8 +1047,8 @@ function addDaysToIsoDate(isoDate: string, days: number): string {
 
 function applyDailyBudgetSnapshot(
   saved: BudgetApiResponse,
-): ReturnType<typeof getPreviewState> {
-  return updatePreviewState((previous) => ({
+): ReturnType<typeof getPayrollReminderState> {
+  return updatePayrollReminderState((previous) => ({
     ...previous,
     dailyLimit: saved.data.snapshot.dailyLimit,
   }));
@@ -1319,7 +1322,7 @@ function PlanItemForm({
   );
 }
 
-function normalizeCategory(value: string): PreviewCategory {
+function normalizeCategory(value: string): ReminderCategory {
   const category = value.trim();
   if (category.includes("음식") || category.includes("식사")) return "음식";
   if (category.includes("카페") || category.includes("커피")) return "카페";

@@ -4428,3 +4428,15 @@ When completing a work slice, append or update a row with:
   - Core native library inspection: Expo Modules Core, Hermes, React Native, and Reanimated native libraries present under `lib/arm64-v8a/`.
   - GitHub raw APK URL HEAD request: HTTP 200, `Content-Length=64827505`.
 - Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
+
+# 2026-07-15 KST - Iteration 123 Payroll Reminder State Boundary
+
+- Files: `apps/mobile/src/features/payroll-reminders/interactive-state.ts`, `apps/mobile/src/features/payroll-reminders/__tests__/interactive-state.test.ts`, `apps/mobile/src/features/payroll-reminders/__tests__/interactive-state.launch-readiness.test.ts`, `apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx`, `apps/mobile/src/features/plan/components/PlanScreen.tsx`, Salary/Plan wiring and component tests, `docs/codex/100-completion/131_ITERATION_123_PAYROLL_REMINDER_STATE_BOUNDARY.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Moved the shared interactive money-reminder state module out of `features/preview` and into `features/payroll-reminders`, renamed public state helpers from `PreviewState` names to payroll-reminder names, updated production Salary Home and Plan screens, and added screen-wiring guards against reintroducing preview-state runtime boundaries.
+- Verified:
+  - RED targeted screen-wiring tests failed because Salary Home and Plan still imported `../../preview/interactive-state` and preview state helpers.
+  - GREEN combined state/screen/component regression suite PASS, 57 tests.
+  - `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+  - `corepack pnpm run format:check`: PASS.
+  - Runtime search excluding tests for `PreviewState`, `PreviewCategory`, `features/preview/interactive-state`, `qa-preview-state`, and old preview state helper names: no matches.
+- Remaining: This narrows GATE-051 but does not close full server-authoritative data flow, physical Android phone QA, or strict release readiness. A fresh current-source APK/evidence refresh is required after this source commit.
