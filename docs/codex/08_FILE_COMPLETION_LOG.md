@@ -4481,3 +4481,21 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run format:check`: PASS.
   - `git diff --check`: PASS.
 - Remaining: Profile and Community route fixtures still contain `홍길동` demo copy and need a separate cleanup slice. The Iteration 125 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.
+
+# 2026-07-15 KST - Iteration 127 Display Name Boundary APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/135_ITERATION_127_DISPLAY_NAME_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt and republished the arm64-v8a phone-target Android debug APK for current source HEAD `89f6964fb576cfe8453840c4c859ce1bfbe26dbb`, copied it to D-drive artifact storage and Downloads, published a GitHub raw artifact branch, and refreshed mobile preview evidence.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration127-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration127/salary-hijacking-phone-arm64-iteration127-debug.apk`.
+- SHA256: `0BDC59CABCAE91D8E618ED4EB5DCCE2014B135196425DF18FDEDBDB0C092B87A`.
+- Verified:
+  - `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local-debug:preflight`: PASS.
+  - `corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug`: PASS, exit code 0.
+  - APK header: PASS.
+  - APK ABI inspection: only `arm64-v8a`.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - GitHub raw APK download request: HTTP 200, `Content-Length=64827725`.
+  - Downloaded APK SHA256 matched local APK.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
