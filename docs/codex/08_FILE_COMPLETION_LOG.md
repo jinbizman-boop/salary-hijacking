@@ -4512,3 +4512,19 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run format:check`: PASS.
   - `git diff --check`: PASS.
 - Remaining: The Iteration 127 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.
+
+# 2026-07-15 KST - Iteration 129 Profile/Community Cleanup APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/137_ITERATION_129_PROFILE_COMMUNITY_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt and republished the arm64-v8a phone-target Android debug APK for current source HEAD `c0f6f918aa8816b28abc7e0b4fa5ed56fd15503f`, copied it to D-drive artifact storage and Downloads, published a GitHub raw artifact branch, and refreshed mobile preview evidence.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration129-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration129/salary-hijacking-phone-arm64-iteration129-debug.apk`.
+- SHA256: `F71C2B6FB0F7CA984EB74D9DCFE15C72F48328CF1334638D6506110388FDF9CB`.
+- Verified:
+  - APK header: PASS.
+  - APK ABI inspection: only `arm64-v8a`.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - GitHub raw APK download request: HTTP 200.
+  - Downloaded APK SHA256 matched local APK.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission.
