@@ -4384,3 +4384,19 @@ When completing a work slice, append or update a row with:
   - `rg -n "PreviewState" apps/mobile/app -g "*.tsx"`: no matches.
   - `corepack pnpm run check:release-readiness -- --strict`: BLOCKED by existing launch gaps, stale preview APK evidence for the new source changes, unmerged feature branch state, and pending physical Android phone QA/logcat proof.
 - Remaining: Internal feature implementation files still contain preview/reference names and state helpers. Those need later server-authoritative data and naming cleanup slices before GATE-051/GATE-052 can be considered complete. A fresh preview APK/evidence refresh must be done in a separate commit after this source change.
+
+# 2026-07-15 KST - Iteration 120 Current HEAD Phone APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/128_ITERATION_120_CURRENT_HEAD_PHONE_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt the arm64-v8a phone-target Android debug APK for current source HEAD `01f43d59daaa299b8a002d326e2243794ff73809`, copied it to D-drive artifact storage and Downloads, published a GitHub raw download artifact branch, and refreshed mobile preview evidence.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration119-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration119/salary-hijacking-phone-arm64-iteration119-debug.apk`.
+- SHA256: `0E7EF02948845AE12AC0F2A7AD080A01344C56A176CC920A1DAF282462EB9109`.
+- Verified:
+  - `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local-debug:preflight`: PASS.
+  - Android Gradle `assembleDebug`: BUILD SUCCESSFUL; app APK produced.
+  - Android Gradle `assembleDebugAndroidTest`: completed; AndroidTest APK copied.
+  - APK ABI inspection: only `arm64-v8a`.
+  - Core native library inspection: Expo Modules Core, Hermes, React Native, and Reanimated native libraries present under `lib/arm64-v8a/`.
+  - GitHub raw APK URL HEAD request: HTTP 200, `Content-Length=64827757`.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This is a QA debug APK, not a production AAB or Google Play submission.

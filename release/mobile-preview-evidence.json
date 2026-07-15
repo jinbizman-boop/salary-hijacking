@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-14T15:26:25.126Z",
-  "source": "Local Android preview/debug QA evidence for iteration 117: source HEAD 52acb8961bdeafac31b6004ae78c2982b00e116c is packaged in a fresh arm64-v8a phone-target debug APK after isolated Android debug cache cleanup. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
+  "observedAt": "2026-07-15T00:56:25.587Z",
+  "source": "Local Android preview/debug QA evidence for iteration 119: source HEAD 01f43d59daaa299b8a002d326e2243794ff73809 is packaged in a fresh arm64-v8a phone-target debug APK after the production route screen entrypoint cleanup. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -12,23 +12,23 @@
   "android": {
     "debugApkBuilt": true,
     "debugApkSigned": true,
-    "debugApkSha256": "4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36",
-    "debugApkLocalPath": "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/salary-hijacking-phone-arm64-iteration117-debug.apk",
-    "debugApkTemporaryUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration117/salary-hijacking-phone-arm64-iteration117-debug.apk",
+    "debugApkSha256": "0E7EF02948845AE12AC0F2A7AD080A01344C56A176CC920A1DAF282462EB9109",
+    "debugApkLocalPath": "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/salary-hijacking-phone-arm64-iteration119-debug.apk",
+    "debugApkTemporaryUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration119/salary-hijacking-phone-arm64-iteration119-debug.apk",
     "downloadVerified": true,
-    "downloadVerificationEvidence": "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/apk-summary.json",
+    "downloadVerificationEvidence": "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/apk-summary.json",
     "phoneTargetDebugApkBuilt": true,
     "phoneTargetDebugApkSigned": true,
-    "phoneTargetDebugApkSha256": "4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36",
-    "phoneTargetDebugApkLocalPath": "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/salary-hijacking-phone-arm64-iteration117-debug.apk",
-    "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration117-debug.apk",
-    "phoneTargetDebugApkTemporaryUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration117/salary-hijacking-phone-arm64-iteration117-debug.apk",
+    "phoneTargetDebugApkSha256": "0E7EF02948845AE12AC0F2A7AD080A01344C56A176CC920A1DAF282462EB9109",
+    "phoneTargetDebugApkLocalPath": "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/salary-hijacking-phone-arm64-iteration119-debug.apk",
+    "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration119-debug.apk",
+    "phoneTargetDebugApkTemporaryUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration119/salary-hijacking-phone-arm64-iteration119-debug.apk",
     "phoneTargetDebugApkTemporaryUrlVerified": true,
     "phoneTargetDebugApkDownloadVerified": true,
     "phoneTargetDebugApkDownloadBlocker": null,
-    "phoneTargetDebugApkDownloadVerificationEvidence": "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/apk-summary.json",
-    "phoneTargetDebugApkArtifactBranch": "codex-apk-artifacts-20260715-iteration117",
-    "phoneTargetDebugApkEvidence": "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/apk-summary.json",
+    "phoneTargetDebugApkDownloadVerificationEvidence": "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/apk-summary.json",
+    "phoneTargetDebugApkArtifactBranch": "codex-apk-artifacts-20260715-iteration119",
+    "phoneTargetDebugApkEvidence": "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/apk-summary.json",
     "phoneTargetDebugApkAbis": ["arm64-v8a"],
     "phoneTargetDebugApkEmulatorSmokeVerified": false,
     "keyboardAvoidanceCodeVerified": true,
@@ -78,15 +78,15 @@
     "latestSourceChangesEvidence": [
       "apps/mobile/scripts/expo-local-android-debug-build.mjs",
       "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
-      "scripts/dev/clean-generated-junk.mjs",
-      "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/apk-summary.json"
+      "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/apk-summary.json",
+      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration119/salary-hijacking-phone-arm64-iteration119-debug.apk"
     ],
     "latestSourceGitStatusSha256": "CLEAN",
-    "latestSourcePackagedAtKst": "2026-07-15T00:26:25+09:00",
-    "latestSourcePackagedHead": "52acb8961bdeafac31b6004ae78c2982b00e116c",
-    "latestSourcePackagedApkSha256": "4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36",
-    "latestSourcePackagedApk": "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/salary-hijacking-phone-arm64-iteration117-debug.apk",
-    "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration117-debug.apk",
+    "latestSourcePackagedAtKst": "2026-07-15T09:53:47+09:00",
+    "latestSourcePackagedHead": "01f43d59daaa299b8a002d326e2243794ff73809",
+    "latestSourcePackagedApkSha256": "0E7EF02948845AE12AC0F2A7AD080A01344C56A176CC920A1DAF282462EB9109",
+    "latestSourcePackagedApk": "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/salary-hijacking-phone-arm64-iteration119-debug.apk",
+    "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration119-debug.apk",
     "latestSourceDirtyMobileSourcePathCount": 0,
     "emulatorTargetDebugApkLatestSourceBuildVerified": true,
     "emulatorTargetDebugApkLatestSourceEvidence": "D:/salary-hijacking-artifacts/20260714/iteration-032-latest-x86-emulator-rebuild/apk-summary.json",
@@ -94,8 +94,8 @@
     "latestSourceEvidence": [
       "apps/mobile/scripts/expo-local-android-debug-build.mjs",
       "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
-      "scripts/dev/clean-generated-junk.mjs",
-      "D:/salary-hijacking-artifacts/20260714/iteration-117-current-head-apk/apk-summary.json"
+      "D:/salary-hijacking-artifacts/20260715/iteration-119-current-head-apk/apk-summary.json",
+      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration119/salary-hijacking-phone-arm64-iteration119-debug.apk"
     ]
   },
   "privacy": {
