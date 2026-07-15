@@ -3595,8 +3595,12 @@ const checkMobileNativeEvidence = (
   );
 };
 
-const isSha256Hex = (value) =>
-  typeof value === "string" && /^[a-f0-9]{64}$/i.test(value.trim());
+const normalizeSha256Hex = (value) =>
+  typeof value === "string" && /^[a-f0-9]{64}$/i.test(value.trim())
+    ? value.trim().toUpperCase()
+    : "";
+
+const isSha256Hex = (value) => normalizeSha256Hex(value).length === 64;
 
 const checkMobilePreviewEvidence = (
   rootDir,
@@ -3852,6 +3856,14 @@ const checkMobilePreviewEvidence = (
         "containsRawDeviceIdentifier",
       ].filter((flagName) => phoneProofPrivacy[flagName] === true)
     : [];
+  const expectedPhoneProofApkSha = normalizeSha256Hex(
+    android.phoneTargetDebugApkSha256 || android.debugApkSha256,
+  );
+  const phoneProofApkSha = normalizeSha256Hex(phoneProofAndroid.apkSha256);
+  const phoneProofApkMatchesEvidence =
+    !phoneProof ||
+    (expectedPhoneProofApkSha.length === 64 &&
+      phoneProofApkSha === expectedPhoneProofApkSha);
   const phoneProofValid =
     phoneProof?.schemaVersion === 1 &&
     phoneProof.secretsRedacted === true &&
@@ -3859,6 +3871,7 @@ const checkMobilePreviewEvidence = (
     !containsRawSecretEvidenceValue(phoneProof) &&
     phoneProofAppIdentityMismatches.length === 0 &&
     phoneProofUnsafeFlags.length === 0 &&
+    phoneProofApkMatchesEvidence &&
     phoneProofAndroid.physicalPhoneVerified === true &&
     phoneProofAndroid.installVerified === true &&
     Number.isInteger(phoneProofAndroid.coldStartRuns) &&
@@ -3896,7 +3909,9 @@ const checkMobilePreviewEvidence = (
             ? `physical phone proof does not prove ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs`
             : phoneProofMissingQaFields.length > 0
               ? `physical phone proof does not prove persistence, keyboard/safe-area, navigation, and background/foreground QA: missing ${phoneProofMissingQaFields.join(", ")}`
-              : typeof phoneProofAndroid.physicalPhoneBlocker === "string" &&
+              : !phoneProofApkMatchesEvidence
+                ? "physical phone proof APK SHA256 does not match the current preview APK evidence"
+                : typeof phoneProofAndroid.physicalPhoneBlocker === "string" &&
                   phoneProofAndroid.physicalPhoneBlocker.trim()
                 ? phoneProofAndroid.physicalPhoneBlocker
                 : "physical phone proof is present but does not prove install, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, and raw-logcat redaction";
@@ -3913,7 +3928,7 @@ const checkMobilePreviewEvidence = (
       : android.physicalPhoneVerified === true
         ? "Physical phone preview QA is verified"
         : "Physical phone preview QA remains tracked as pending",
-    `physical phone preview QA proof must be no-secret, app-identity aligned, install verified, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
+    `physical phone preview QA proof must be no-secret, app-identity aligned, installed APK SHA256 matched to current preview evidence, install verified, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
   );
 };
 

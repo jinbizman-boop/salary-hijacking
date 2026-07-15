@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -192,6 +193,10 @@ test("builds verified no-secret proof when physical phone startup has zero fatal
 
   assert.equal(proof.android.physicalPhoneVerified, true);
   assert.equal(proof.android.installVerified, true);
+  assert.equal(
+    proof.android.apkSha256,
+    createHash("sha256").update("APK").digest("hex").toUpperCase(),
+  );
   assert.equal(proof.android.coldStartRuns, 2);
   assert.equal(proof.android.coldStartFatalCount, 0);
   assert.equal(proof.android.navigationSmokeVerified, true);

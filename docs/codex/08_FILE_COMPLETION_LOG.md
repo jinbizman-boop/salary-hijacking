@@ -10,6 +10,12 @@ last_verified: 2026-07-01
 This log records observed status. It is not a marketing completion sheet.
 
 
+
+## 2026-07-16 Iteration 142 Physical Phone Proof APK SHA Guard
+
+| Area | Path | Status | Verification | Notes |
+| --- | --- | --- | --- | --- |
+| Physical phone proof current-APK guard | `scripts/release/collect-mobile-preview-phone-proof.mjs`, `scripts/release/collect-mobile-preview-phone-proof.test.mjs`, `scripts/release/check-release-readiness.mjs`, `scripts/release/check-release-readiness.test.mjs`, `docs/codex/100-completion/151_ITERATION_142_PHYSICAL_PHONE_PROOF_APK_SHA_GUARD.md` | Release-readiness regression PASS | Added `android.apkSha256` to generated physical phone proof and made readiness require that proof hash to match the current preview APK evidence. Focused tests PASS. Full `node --test scripts/release/collect-mobile-preview-phone-proof.test.mjs scripts/release/check-release-readiness.test.mjs`: PASS, 96 tests. Current soft readiness still reports physical phone QA as pending when no proof exists. | This prevents a real-phone QA proof from an older APK being accepted for the current APK. Physical phone QA still requires a connected Android phone and current proof. Existing GAP/main/external approval blockers remain. |
 ## 2026-07-16 Iteration 141 Final Report Stale APK Readiness Guard
 
 | Area | Path | Status | Verification | Notes |

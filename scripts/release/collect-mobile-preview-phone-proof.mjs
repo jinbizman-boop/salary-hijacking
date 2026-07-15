@@ -12,6 +12,9 @@ const DEFAULT_RELIABILITY_RUNS = 20;
 const sha256 = (value) =>
   createHash("sha256").update(String(value)).digest("hex").toUpperCase();
 
+const fileSha256 = (targetPath) =>
+  createHash("sha256").update(fs.readFileSync(targetPath)).digest("hex").toUpperCase();
+
 const isPhysicalDeviceLine = (line) => {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith("List of devices")) return false;
@@ -362,6 +365,7 @@ export const buildMobilePreviewPhoneProof = ({
     android: {
       adbPath,
       apkPath: resolvedApkPath,
+      apkSha256: fileSha256(resolvedApkPath),
       physicalPhoneVerified: verified,
       physicalPhoneBlocker: verified
         ? null
