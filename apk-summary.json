@@ -1,0 +1,23 @@
+﻿{
+    "schemaVersion":  1,
+    "iteration":  122,
+    "observedAt":  "2026-07-15T02:05:20.3262594Z",
+    "sourceHead":  "a507293a2e4ff24a8d6e872972315b4b7db3eb45",
+    "apkPath":  "D:\\salary-hijacking-artifacts\\20260715\\iteration-122-current-head-apk\\salary-hijacking-phone-arm64-iteration122-debug.apk",
+    "downloadsPath":  "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration122-debug.apk",
+    "sha256":  "5547EB794469D08E089E1A9AA604069EACAAE89454A8895CB68110F35E2DF522",
+    "sizeBytes":  64827505,
+    "abis":  [
+                 "arm64-v8a"
+             ],
+    "coreNativeLibraries":  [
+                                "lib/arm64-v8a/libexpo-modules-core.so",
+                                "lib/arm64-v8a/libhermes.so",
+                                "lib/arm64-v8a/libreactnative.so",
+                                "lib/arm64-v8a/libreanimated.so"
+                            ],
+    "artifactBranch":  "codex-apk-artifacts-20260715-iteration122",
+    "artifactUrl":  "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration122/salary-hijacking-phone-arm64-iteration122-debug.apk",
+    "secretsRedacted":  true,
+    "containsSecretValues":  false
+}
