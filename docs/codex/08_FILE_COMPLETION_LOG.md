@@ -4573,3 +4573,19 @@ When completing a work slice, append or update a row with:
   - `corepack pnpm run format:check`: PASS.
   - `git diff --check`: PASS.
 - Remaining: GATE-052 is narrowed but not complete because prototype/reference and notification surfaces still contain sample amounts that need separate cleanup/contract decisions. The Iteration 131 APK evidence is stale after this source change until the phone-target APK is rebuilt for the new source commit. Physical Android phone QA/logcat proof remains pending because no physical phone is attached.
+
+# 2026-07-15 KST - Iteration 133 Salary Financial Summary APK Refresh
+
+- Files: `release/mobile-preview-evidence.json`, `docs/codex/100-completion/141_ITERATION_133_SALARY_FINANCIAL_SUMMARY_APK_REFRESH.md`, `docs/codex/08_FILE_COMPLETION_LOG.md`.
+- Completed: Rebuilt, verified, copied, and republished the arm64-v8a Android debug APK for current source HEAD `ce42621f976a341eeba72a866abab70c5d03a421` after the Salary Home financial summary boundary cleanup.
+- Build note: the local debug wrapper exited 0 and produced a final APK. Gradle output included intermediate cache move failures before final success, so the final APK was independently verified with `aapt`, `apksigner`, ABI/hash checks, and raw URL SHA matching.
+- APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration133-debug.apk`.
+- Download URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260715-iteration133/salary-hijacking-phone-arm64-iteration133-debug.apk`.
+- SHA256: `50CC6C77B7B7F60B037A9F90073563258B71B8AAFC838644DBBAD240833007BD`.
+- Verified:
+  - APK ABI inspection: only `arm64-v8a`.
+  - `aapt dump badging`: PASS for package `com.salaryhijacking.mobile`, label `급여납치`, min SDK 24, target SDK 35, and native-code `arm64-v8a`.
+  - `apksigner verify --verbose --print-certs`: PASS with APK Signature Scheme v2.
+  - GitHub raw APK download request: HTTP 200.
+  - Downloaded APK SHA256 matched local APK.
+- Remaining: Physical Android phone install/cold-start/persistence/keyboard/safe-area/logcat proof remains pending because no physical phone is attached. This remains a QA debug APK, not production AAB or Google Play submission. GATE-052 is still not closed because prototype/reference and notification sample amount surfaces require separate cleanup or contract decisions.
