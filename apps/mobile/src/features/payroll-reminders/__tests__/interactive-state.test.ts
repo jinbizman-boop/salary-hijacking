@@ -35,15 +35,16 @@ describe("interactive preview state Korean copy", () => {
     expect(serialized).toContain("유튜브 프리미엄");
     expect(serialized).toContain("MS오피스");
     expect(serialized).toContain("학자금 대출");
-    expect(serialized).not.toMatch(/[占�疫燁獄筌袁]/u);
+    expect(serialized).not.toMatch(/[�熬怨援移湲鍮]/u);
   });
 
   it("maps readable Korean categories to the expected icon families", () => {
-    expect(iconForCategory("한식")).toBeTruthy();
+    expect(iconForCategory("음식")).toBeTruthy();
     expect(iconForCategory("카페")).toBeTruthy();
     expect(iconForCategory("담배")).toBeTruthy();
     expect(iconForCategory("구독")).toBeTruthy();
   });
+
   it("does not seed prototype salary amounts into the production financial summary", () => {
     const state = getPayrollReminderState();
 
@@ -261,7 +262,7 @@ describe("interactive preview state secure persistence", () => {
         ...previous.variableExpenses,
         {
           amount: 7777,
-          category: "湲고?",
+          category: "기타",
           content: "Persistence retry",
           id: "variable-persistence-reject",
         },
@@ -272,7 +273,7 @@ describe("interactive preview state secure persistence", () => {
 
     expect(after.variableExpenses).toContainEqual({
       amount: 7777,
-      category: "湲고?",
+      category: "기타",
       content: "Persistence retry",
       id: "variable-persistence-reject",
     });
