@@ -590,6 +590,19 @@ test("patches Android root JavaCompile to copy node_modules generated jars to a 
   assert.match(patched, /'-classpath'/u);
 });
 
+test("uses atomic generated-file rewrites for Android patch targets flagged by CodeQL", () => {
+  const scriptSource = fs.readFileSync(
+    new URL("./expo-local-android-debug-build.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(scriptSource, /writeGeneratedFileAtomic/u);
+  assert.doesNotMatch(
+    scriptSource,
+    /fs\.writeFileSync\((?:buildGradlePath|stylesPath|mainActivityPath),/u,
+  );
+});
+
 test("parses Windows subst mappings without treating unrelated drives as project aliases", () => {
   const mappings = parseWindowsSubstMappings(
     [

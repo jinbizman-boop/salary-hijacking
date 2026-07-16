@@ -63,6 +63,27 @@ const splitPath = (pathValue) =>
     ? pathValue.split(path.delimiter).filter(Boolean)
     : [];
 
+const writeGeneratedFileAtomic = (targetPath, contents, encoding = "utf8") => {
+  const targetDir = path.dirname(targetPath);
+  const tempPath = path.join(
+    targetDir,
+    `.${path.basename(targetPath)}.${process.pid}.${Date.now()}.${Math.random()
+      .toString(16)
+      .slice(2)}.tmp`,
+  );
+  let replaced = false;
+
+  fs.writeFileSync(tempPath, contents, encoding);
+  try {
+    fs.renameSync(tempPath, targetPath);
+    replaced = true;
+  } finally {
+    if (!replaced) {
+      fs.rmSync(tempPath, { force: true });
+    }
+  }
+};
+
 const withBundledAndroidToolEnv = ({
   env,
   existsSync = fs.existsSync,
@@ -1373,7 +1394,7 @@ export const patchExpoModulesCoreJavaCompileKotlinClasspath = ({
       markerIndex >= 0 ? source.slice(0, markerIndex).trimEnd() : source;
     const nextSource = `${baseSource.trimEnd()}\n${patchBlock}`;
     if (nextSource === source) continue;
-    fs.writeFileSync(buildGradlePath, nextSource);
+    writeGeneratedFileAtomic(buildGradlePath, nextSource);
     patchedCount += 1;
   }
   return patchedCount;
@@ -1437,7 +1458,7 @@ export const patchAndroidRootJavaCompileSafeClasspath = ({
     markerIndex >= 0 ? source.slice(0, markerIndex).trimEnd() : source;
   const nextSource = `${baseSource.trimEnd()}\n${patchBlock}`;
   if (nextSource === source) return false;
-  fs.writeFileSync(buildGradlePath, nextSource);
+  writeGeneratedFileAtomic(buildGradlePath, nextSource);
   return true;
 };
 
@@ -1514,8 +1535,9 @@ const patchAndroidExpoEntrypoints = ({ mobileRootDir }) => {
         /^(\s*)\/\/\s*setTheme\(R\.style\.AppTheme\);\r?$/gmu,
         "$1setTheme(R.style.AppTheme);",
       );
-    if (nextSource !== source)
-      fs.writeFileSync(mainActivityPath, nextSource, "utf8");
+    if (nextSource !== source) {
+      writeGeneratedFileAtomic(mainActivityPath, nextSource);
+    }
   }
 };
 
@@ -1543,7 +1565,7 @@ const patchAndroidPostSplashWindowBackground = ({ mobileRootDir }) => {
           '$1    <item name="android:windowBackground">@drawable/ic_launcher_background</item>\n',
         );
   if (nextSource !== source) {
-    fs.writeFileSync(stylesPath, nextSource, "utf8");
+    writeGeneratedFileAtomic(stylesPath, nextSource);
   }
 
   const mainActivityPath = path.join(
@@ -1581,7 +1603,7 @@ const patchAndroidPostSplashWindowBackground = ({ mobileRootDir }) => {
     );
   }
   if (nextActivitySource !== activitySource) {
-    fs.writeFileSync(mainActivityPath, nextActivitySource, "utf8");
+    writeGeneratedFileAtomic(mainActivityPath, nextActivitySource);
   }
 };
 

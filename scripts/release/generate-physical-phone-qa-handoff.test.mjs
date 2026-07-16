@@ -93,7 +93,10 @@ test("builds a no-secret physical phone QA handoff from current preview APK evid
     markdown,
     /apps\/mobile\/build\/phone\/android\/salary-hijacking-phone-arm64-debug\.apk/,
   );
-  assert.match(markdown, /raw\.githubusercontent\.com/);
+  assert.match(
+    markdown,
+    /^- Remote APK: `https:\/\/raw\.githubusercontent\.com\/jinbizman-boop\/salary-hijacking\/codex-apk-artifacts-20260714-iteration104\/salary\.apk`$/m,
+  );
   assert.match(markdown, /9e65d4df9a49e44816cde883239354249ebd2a4c/);
   assert.match(
     markdown,
