@@ -1,0 +1,51 @@
+# Final Validation Report
+
+Updated: 2026-07-17 KST
+
+## Scope
+
+This report records the current final-QA evidence for the Salary Hijacking platform after the Stitch mobile UI pass.
+
+## Repository Evidence
+
+- Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
+- Branch: `codex/payroll-reminder-launch-ready-100-20260714`
+- HEAD at report creation: `705428ca983b2ad61b1995a7b1f44f5d1b48b386`
+- Git status evidence: `release/evidence/git-status-before-final-qa.txt`
+- Secret ignore evidence: `release/evidence/secret-ignore-final-qa.txt`
+
+## Mobile Visual Evidence
+
+- Capture summary: `release/evidence/mobile-ui/capture-summary.json`
+- Stitch comparison: `release/evidence/mobile-ui/stitch-comparison.md`
+- Mobile UI screenshots: 17
+- Responsive checks: 105
+- Responsive overflow result: PASS in the current capture summary
+
+## Android APK Evidence
+
+- APK path: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
+- SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
+- Package: `com.salaryhijacking.mobile`
+- ABI: `arm64-v8a`
+- Signing evidence: `release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log`
+- AAPT evidence: `release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log`
+
+## Physical Device Status
+
+- ADB path found: `D:/salary-hijacking-artifacts/android-sdk/platform-tools/adb.exe`
+- ADB devices evidence: `release/evidence/physical-phone/adb-devices.txt`
+- Physical phone connected: false
+- Physical phone QA status: BLOCKED
+
+## Release Readiness Status
+
+`check-release-readiness` remains BLOCKED because:
+
+- unresolved launch-blocking gaps remain in `docs/codex/100-completion/05_GAP_REGISTER.md`
+- no physical Android phone proof exists
+- production AAB/Google Play/main merge actions remain externally gated
+
+## Judgment
+
+The current state is suitable for continued QA handoff with the generated debug APK. It is not a verified 100% production launch state.

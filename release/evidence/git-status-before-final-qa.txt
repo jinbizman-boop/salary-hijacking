@@ -1,0 +1,9 @@
+=== show-toplevel ===
+C:/Users/PC/Desktop/salary-hijacking-platform
+=== branch ===
+codex/payroll-reminder-launch-ready-100-20260714
+=== HEAD ===
+705428ca983b2ad61b1995a7b1f44f5d1b48b386
+=== status short ===
+=== porcelain all ===
+=== diff check ===

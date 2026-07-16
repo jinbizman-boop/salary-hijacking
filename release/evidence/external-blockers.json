@@ -1,0 +1,58 @@
+{
+    "schemaVersion":  1,
+    "generatedAt":  "2026-07-17T04:55:31+09:00",
+    "gitHead":  "705428ca983b2ad61b1995a7b1f44f5d1b48b386",
+    "releaseReadiness":  "BLOCKED",
+    "blockers":  [
+                     {
+                         "id":  "GAP-003",
+                         "severity":  "P0",
+                         "area":  "Mobile startup",
+                         "status":  "BLOCKED",
+                         "reason":  "ADB is available but no physical Android phone is attached, so install/cold-start/logcat startup proof cannot be produced.",
+                         "evidence":  "release/evidence/physical-phone/adb-devices.txt",
+                         "nextCommand":  "node scripts/release/collect-mobile-preview-phone-proof.mjs --apk \"C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk\" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile",
+                         "humanActionRequired":  true
+                     },
+                     {
+                         "id":  "GAP-004",
+                         "severity":  "P1",
+                         "area":  "Salary home",
+                         "status":  "PARTIAL",
+                         "reason":  "Automated tests and emulator evidence exist, but physical phone relaunch/persistence flow evidence is missing.",
+                         "evidence":  "docs/codex/100-completion/05_GAP_REGISTER.md",
+                         "nextCommand":  "Run physical phone proof collector and salary persistence probe on attached phone.",
+                         "humanActionRequired":  true
+                     },
+                     {
+                         "id":  "GAP-005",
+                         "severity":  "P1",
+                         "area":  "Plan",
+                         "status":  "PARTIAL",
+                         "reason":  "Automated tests and server-authority evidence exist, but physical phone recurrence/persistence flow evidence is missing.",
+                         "evidence":  "docs/codex/100-completion/05_GAP_REGISTER.md",
+                         "nextCommand":  "Run physical phone proof collector and plan recurrence probe on attached phone.",
+                         "humanActionRequired":  true
+                     },
+                     {
+                         "id":  "GAP-006",
+                         "severity":  "P1",
+                         "area":  "UI safe-area/keyboard",
+                         "status":  "BLOCKED",
+                         "reason":  "17 visual screenshots and 105 responsive web checks exist, but physical safe-area/keyboard matrix is not verified without an attached phone.",
+                         "evidence":  "release/evidence/mobile-ui/capture-summary.json",
+                         "nextCommand":  "Run keyboard/safe-area probes on attached physical phone.",
+                         "humanActionRequired":  true
+                     },
+                     {
+                         "id":  "GAP-008",
+                         "severity":  "P0",
+                         "area":  "External release approval",
+                         "status":  "BLOCKED",
+                         "reason":  "Production AAB, Play upload/submit, main merge, and production release actions are not approved for automatic execution.",
+                         "evidence":  "docs/codex/100-completion/05_GAP_REGISTER.md",
+                         "nextCommand":  "After explicit user approval, run production release commands documented in release/store and release evidence.",
+                         "humanActionRequired":  true
+                     }
+                 ]
+}

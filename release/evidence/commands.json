@@ -1,0 +1,362 @@
+[
+  {
+    "name": "node-version",
+    "command": "node --version",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:15:25.6723539+09:00",
+    "endedAt": "2026-07-17T02:15:25.9030249+09:00",
+    "durationSeconds": 0.23,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\node-version.log"
+  },
+  {
+    "name": "pnpm-version",
+    "command": "corepack pnpm --version",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:15:25.9658853+09:00",
+    "endedAt": "2026-07-17T02:15:26.6689101+09:00",
+    "durationSeconds": 0.7,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\pnpm-version.log"
+  },
+  {
+    "name": "pnpm-install-frozen",
+    "command": "corepack pnpm install --frozen-lockfile",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T02:15:26.6719112+09:00",
+    "endedAt": "2026-07-17T02:15:27.9046905+09:00",
+    "durationSeconds": 1.23,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\pnpm-install-frozen.log"
+  },
+  {
+    "name": "root-format-check",
+    "command": "corepack pnpm run format:check",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:15:27.9066916+09:00",
+    "endedAt": "2026-07-17T02:16:21.6501928+09:00",
+    "durationSeconds": 53.74,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\root-format-check.log"
+  },
+  {
+    "name": "root-lint",
+    "command": "corepack pnpm run lint",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:16:21.6517014+09:00",
+    "endedAt": "2026-07-17T02:17:23.4127273+09:00",
+    "durationSeconds": 61.76,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\root-lint.log"
+  },
+  {
+    "name": "root-typecheck",
+    "command": "corepack pnpm run typecheck",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:17:23.4157297+09:00",
+    "endedAt": "2026-07-17T02:18:42.6657326+09:00",
+    "durationSeconds": 79.25,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\root-typecheck.log"
+  },
+  {
+    "name": "mobile-lint",
+    "command": "corepack pnpm --filter @salary-hijacking/mobile run lint",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:18:42.6677324+09:00",
+    "endedAt": "2026-07-17T02:18:56.9216660+09:00",
+    "durationSeconds": 14.25,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\mobile-lint.log"
+  },
+  {
+    "name": "mobile-typecheck",
+    "command": "corepack pnpm --filter @salary-hijacking/mobile run typecheck",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:18:56.9236671+09:00",
+    "endedAt": "2026-07-17T02:19:07.5470139+09:00",
+    "durationSeconds": 10.62,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\mobile-typecheck.log"
+  },
+  {
+    "name": "mobile-test",
+    "command": "corepack pnpm --filter @salary-hijacking/mobile test",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:19:07.5490152+09:00",
+    "endedAt": "2026-07-17T02:19:38.4178716+09:00",
+    "durationSeconds": 30.87,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\mobile-test.log"
+  },
+  {
+    "name": "mobile-export-web",
+    "command": "corepack pnpm --filter @salary-hijacking/mobile run export:web",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:19:38.4198736+09:00",
+    "endedAt": "2026-07-17T02:20:59.6059085+09:00",
+    "durationSeconds": 81.19,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\mobile-export-web.log"
+  },
+  {
+    "name": "root-test",
+    "command": "corepack pnpm run test",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:21:16.9466755+09:00",
+    "endedAt": "2026-07-17T02:21:57.3481808+09:00",
+    "durationSeconds": 40.4,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\root-test.log"
+  },
+  {
+    "name": "api-contract",
+    "command": "corepack pnpm run api:contract",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:21:57.3929540+09:00",
+    "endedAt": "2026-07-17T02:22:26.8496048+09:00",
+    "durationSeconds": 29.46,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\api-contract.log"
+  },
+  {
+    "name": "privacy-check",
+    "command": "corepack pnpm run privacy:check",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:22:26.8516061+09:00",
+    "endedAt": "2026-07-17T02:22:35.6379410+09:00",
+    "durationSeconds": 8.79,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\privacy-check.log"
+  },
+  {
+    "name": "security-scan",
+    "command": "corepack pnpm run security:scan",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:22:35.6399536+09:00",
+    "endedAt": "2026-07-17T02:22:37.6330997+09:00",
+    "durationSeconds": 1.99,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\security-scan.log"
+  },
+  {
+    "name": "pnpm-install-frozen-ci",
+    "command": "set CI=true&& corepack pnpm install --frozen-lockfile",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:22:50.0349784+09:00",
+    "endedAt": "2026-07-17T02:31:24.1390686+09:00",
+    "durationSeconds": 514.1,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\pnpm-install-frozen-ci.log"
+  },
+  {
+    "name": "root-build",
+    "command": "corepack pnpm run build",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:31:44.3147129+09:00",
+    "endedAt": "2026-07-17T02:34:27.2753727+09:00",
+    "durationSeconds": 162.96,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\root-build.log"
+  },
+  {
+    "name": "release-preflight",
+    "command": "corepack pnpm run release:preflight",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T02:34:27.3263843+09:00",
+    "endedAt": "2026-07-17T02:34:34.6543721+09:00",
+    "durationSeconds": 7.33,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\release-preflight.log"
+  },
+  {
+    "name": "check-release-readiness",
+    "command": "corepack pnpm run check:release-readiness",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T02:34:34.6573729+09:00",
+    "endedAt": "2026-07-17T02:34:36.7684031+09:00",
+    "durationSeconds": 2.11,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\check-release-readiness.log"
+  },
+  {
+    "name": "check-external-integrations",
+    "command": "corepack pnpm run check:external-integrations",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:34:36.7706296+09:00",
+    "endedAt": "2026-07-17T02:34:40.1496755+09:00",
+    "durationSeconds": 3.38,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\check-external-integrations.log"
+  },
+  {
+    "name": "apk-aapt-badging",
+    "command": "\"D:\\salary-hijacking-artifacts\\android-sdk\\build-tools\\35.0.0\\aapt.exe\" dump badging \"C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\apps\\mobile\\build\\phone\\android\\salary-hijacking-stitch-ui-debug.apk\"",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:36:48.2690694+09:00",
+    "endedAt": "2026-07-17T02:36:48.6416087+09:00",
+    "durationSeconds": 0.37,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\apk-aapt-badging.log"
+  },
+  {
+    "name": "apk-apksigner-verify",
+    "command": "\"D:\\salary-hijacking-artifacts\\android-sdk\\build-tools\\35.0.0\\apksigner.bat\" verify --verbose --print-certs \"C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\apps\\mobile\\build\\phone\\android\\salary-hijacking-stitch-ui-debug.apk\"",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T02:36:48.6977342+09:00",
+    "endedAt": "2026-07-17T02:36:48.7916505+09:00",
+    "durationSeconds": 0.09,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\apk-apksigner-verify.log"
+  },
+  {
+    "name": "adb-devices",
+    "command": "\"D:\\salary-hijacking-artifacts\\android-sdk\\platform-tools\\adb.exe\" devices -l",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:36:48.7946527+09:00",
+    "endedAt": "2026-07-17T02:36:51.6354504+09:00",
+    "durationSeconds": 2.84,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\adb-devices.log"
+  },
+  {
+    "name": "apk-apksigner-verify-with-java-home",
+    "command": "set JAVA_HOME=C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\.tools\\jdk-17&& set PATH=C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\.tools\\jdk-17\\bin;%PATH%&& \"D:\\salary-hijacking-artifacts\\android-sdk\\build-tools\\35.0.0\\apksigner.bat\" verify --verbose --print-certs \"C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\apps\\mobile\\build\\phone\\android\\salary-hijacking-stitch-ui-debug.apk\"",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T02:38:42.9170193+09:00",
+    "endedAt": "2026-07-17T02:38:46.6762622+09:00",
+    "durationSeconds": 3.76,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\apk-apksigner-verify-with-java-home.log"
+  },
+  {
+    "name": "check-release-readiness-after-apk-evidence",
+    "command": "corepack pnpm run check:release-readiness",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T02:40:02.8061274+09:00",
+    "endedAt": "2026-07-17T02:40:05.1818643+09:00",
+    "durationSeconds": 2.38,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\check-release-readiness-after-apk-evidence.log"
+  },
+  {
+    "name": "release-preflight-after-apk-evidence",
+    "command": "corepack pnpm run release:preflight",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T02:40:05.2543866+09:00",
+    "endedAt": "2026-07-17T02:40:07.3450511+09:00",
+    "durationSeconds": 2.09,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\release-preflight-after-apk-evidence.log"
+  },
+  {
+    "name": "apk-arm64-aapt-badging",
+    "command": "\"D:\\salary-hijacking-artifacts\\android-sdk\\build-tools\\35.0.0\\aapt.exe\" dump badging \"C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\apps\\mobile\\build\\phone\\android\\salary-hijacking-phone-arm64-debug.apk\"",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T03:28:50.2781515+09:00",
+    "endedAt": "2026-07-17T03:28:50.6591894+09:00",
+    "durationSeconds": 0.38,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\apk-arm64-aapt-badging.log"
+  },
+  {
+    "name": "apk-arm64-apksigner-verify",
+    "command": "set JAVA_HOME=C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\.tools\\jdk-17&& set PATH=C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\.tools\\jdk-17\\bin;%PATH%&& \"D:\\salary-hijacking-artifacts\\android-sdk\\build-tools\\35.0.0\\apksigner.bat\" verify --verbose --print-certs \"C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\apps\\mobile\\build\\phone\\android\\salary-hijacking-phone-arm64-debug.apk\"",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T03:28:50.7087353+09:00",
+    "endedAt": "2026-07-17T03:28:51.5251201+09:00",
+    "durationSeconds": 0.82,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\apk-arm64-apksigner-verify.log"
+  },
+  {
+    "name": "clean-junk-after-arm64-build",
+    "command": "node scripts/dev/clean-generated-junk.mjs",
+    "exitCode": 1,
+    "startedAt": "2026-07-17T03:35:27.9973620+09:00",
+    "endedAt": "2026-07-17T03:37:42.0151146+09:00",
+    "durationSeconds": 134.02,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\clean-junk-after-arm64-build.log"
+  },
+  {
+    "name": "disk-report-json-after-cleanup",
+    "command": "corepack pnpm run disk:report:json",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T03:37:42.0608574+09:00",
+    "endedAt": "2026-07-17T03:38:55.2361460+09:00",
+    "durationSeconds": 73.18,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\disk-report-json-after-cleanup.log"
+  },
+  {
+    "name": "disk-report-after-cleanup",
+    "command": "corepack pnpm run disk:report",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T03:38:55.2381541+09:00",
+    "endedAt": "2026-07-17T03:39:40.5185596+09:00",
+    "durationSeconds": 45.28,
+    "log": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\release\\evidence\\final-qa-command-logs\\disk-report-after-cleanup.log"
+  },
+  {
+    "name": "git-status-before-final-qa-refresh",
+    "command": "git rev-parse --show-toplevel; git rev-parse HEAD; git status --short --untracked-files=all",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T04:57:17+09:00",
+    "endedAt": "2026-07-17T04:57:17+09:00",
+    "durationSeconds": 0,
+    "evidence": "release/evidence/git-status-before-final-qa.txt"
+  },
+  {
+    "name": "secret-ignore-final-qa-refresh",
+    "command": "git check-ignore -v apps/mobile/secrets/firebase/google-services.json",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T04:57:17+09:00",
+    "endedAt": "2026-07-17T04:57:17+09:00",
+    "durationSeconds": 0,
+    "evidence": "release/evidence/secret-ignore-final-qa.txt"
+  },
+  {
+    "name": "adb-devices-physical-phone-check",
+    "command": "D:/salary-hijacking-artifacts/android-sdk/platform-tools/adb.exe devices -l",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T04:57:17+09:00",
+    "endedAt": "2026-07-17T04:57:17+09:00",
+    "durationSeconds": 0,
+    "evidence": "release/evidence/physical-phone/adb-devices.txt"
+  },
+  {
+    "name": "apk-sha256-final-qa-refresh",
+    "command": "Get-FileHash -Algorithm SHA256 C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T04:57:17+09:00",
+    "endedAt": "2026-07-17T04:57:17+09:00",
+    "durationSeconds": 0,
+    "evidence": "release/evidence/checksums.txt"
+  },
+  {
+    "name": "clean-junk-final-qa",
+    "command": "corepack pnpm run clean:junk",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T05:04:58+09:00",
+    "endedAt": "2026-07-17T05:04:58+09:00",
+    "durationSeconds": 39.9,
+    "evidence": "tool output; removed 30 generated paths and freed 1.48 GB"
+  },
+  {
+    "name": "disk-report-after-final-qa",
+    "command": "corepack pnpm run disk:report",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T05:04:58+09:00",
+    "endedAt": "2026-07-17T05:04:58+09:00",
+    "durationSeconds": 104.9,
+    "evidence": "release/evidence/disk-report-after-final-qa.txt"
+  },
+  {
+    "name": "restore-repo-apk-and-signing-logs-after-clean",
+    "command": "Copy APK from D:/salary-hijacking-artifacts/apk and regenerate aapt/apksigner logs",
+    "exitCode": 0,
+    "startedAt": "2026-07-17T05:04:58+09:00",
+    "endedAt": "2026-07-17T05:04:58+09:00",
+    "durationSeconds": 3.9,
+    "evidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log; release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log"
+  },
+  {
+    "name": "root-format-check-latest",
+    "command": "corepack pnpm run format:check",
+    "exitCode": 0,
+    "startedAt": "2026-07-16T20:06:08.858Z",
+    "endedAt": "2026-07-16T20:06:08.858Z",
+    "durationSeconds": 0,
+    "evidence": "format check passed after final QA evidence edits"
+  },
+  {
+    "name": "json-parse-final-qa-evidence",
+    "command": "node JSON.parse release/evidence/{commands,external-blockers,physical-phone-qa-summary}.json",
+    "exitCode": 0,
+    "startedAt": "2026-07-16T20:06:08.858Z",
+    "endedAt": "2026-07-16T20:06:08.858Z",
+    "durationSeconds": 0,
+    "evidence": "JSON parse validation for final QA evidence"
+  },
+  {
+    "name": "check-release-readiness-latest",
+    "command": "corepack pnpm run check:release-readiness",
+    "exitCode": 1,
+    "startedAt": "2026-07-16T20:06:08.858Z",
+    "endedAt": "2026-07-16T20:06:08.858Z",
+    "durationSeconds": 0,
+    "evidence": "release readiness intentionally BLOCKED by physical phone and external approval gates"
+  }
+]

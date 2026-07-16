@@ -14,7 +14,8 @@ Updated: 2026-07-17 KST
 ## Why This Is Still Blocked
 
 - Current status: BLOCKED
-- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device.
+- ADB path: `D:/salary-hijacking-artifacts/android-sdk/platform-tools/adb.exe`
+- Blocker: ADB is available, but no physical Android phone is attached to this Codex Windows environment at observation time; `adb devices -l` returned no attached device.
 - This handoff does not replace physical phone QA. strict readiness remains BLOCKED until the local no-secret proof file is produced by an attached physical Android phone.
 
 ## Required Phone Setup
@@ -29,6 +30,9 @@ Updated: 2026-07-17 KST
 
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
+$env:ANDROID_HOME = 'D:\salary-hijacking-artifacts\android-sdk'
+$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
+$env:Path = "$env:ANDROID_HOME\platform-tools;$env:Path"
 node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
 ```
 
