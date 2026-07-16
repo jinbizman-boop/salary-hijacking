@@ -10,7 +10,8 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- HEAD at report creation: `0a780637c0ffb1397d30890d3d2c9f1cff2e1100`
+- PR branch HEAD at report creation: `fea4dc62af868aa08ad622e8fb9c3d1cae5df5be`
+- APK source/evidence HEAD: `0a780637c0ffb1397d30890d3d2c9f1cff2e1100`
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 - Git status evidence: `release/evidence/git-status-before-final-qa.txt`
 - Secret ignore evidence: `release/evidence/secret-ignore-final-qa.txt`
@@ -33,6 +34,7 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 - Signing evidence: `release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log`
 - AAPT evidence: `release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log`
 - Remote HTTP/SHA verification: PASS, recorded in `release/evidence/build-artifacts.json`
+- Source delta after APK packaging: docs/evidence only, verified by `mobile:preview:latest-source-apk`
 
 ## Physical Device Status
 

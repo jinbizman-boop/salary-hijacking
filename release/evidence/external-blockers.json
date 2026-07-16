@@ -1,7 +1,8 @@
 {
     "schemaVersion":  1,
-    "generatedAt":  "2026-07-17T05:22:00+09:00",
-    "gitHead":  "0a780637c0ffb1397d30890d3d2c9f1cff2e1100",
+    "generatedAt":  "2026-07-17T05:36:00+09:00",
+    "gitHead":  "fea4dc62af868aa08ad622e8fb9c3d1cae5df5be",
+    "apkSourceGitHead":  "0a780637c0ffb1397d30890d3d2c9f1cff2e1100",
     "draftPullRequest":  {
                              "number":  2,
                              "url":  "https://github.com/jinbizman-boop/salary-hijacking/pull/2",
