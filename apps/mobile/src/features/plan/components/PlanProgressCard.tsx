@@ -47,14 +47,14 @@ const styles = StyleSheet.create({
     gap: componentSpacing.sm,
   },
   eyebrow: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "900",
   },
   footer: {
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   guard: {
-    color: componentColors.textSecondary,
+    color: componentColors.textMuted,
     fontSize: 12,
     fontWeight: "700",
   },

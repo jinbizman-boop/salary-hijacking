@@ -1,0 +1,271 @@
+<!DOCTYPE html><html class="light" lang="ko" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin 2s linear infinite;
+        }
+        .unread-indicator {
+            border-left: 2px solid #209252;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#e5eeff",
+                        "outline": "#6e7a6f",
+                        "surface-dim": "#cbdbf5",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#eff4ff",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#213145",
+                        "secondary-fixed": "#a6f4b5",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-secondary-fixed-variant": "#005226",
+                        "primary-fixed": "#8ef9ad",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#161d1b",
+                        "primary-fixed-dim": "#72dc93",
+                        "tertiary-container": "#6f7673",
+                        "on-primary-fixed": "#00210d",
+                        "on-tertiary-container": "#f7fefa",
+                        "on-tertiary-fixed-variant": "#414846",
+                        "on-primary-fixed-variant": "#005229",
+                        "on-primary-container": "#f6fff4",
+                        "tertiary-fixed": "#dde4e0",
+                        "inverse-primary": "#72dc93",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#0b1c30",
+                        "secondary": "#1f6c3a",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary": "#565e5b",
+                        "on-error": "#ffffff",
+                        "on-surface": "#0b1c30",
+                        "surface-variant": "#d3e4fe",
+                        "secondary-container": "#a4f1b2",
+                        "surface-container-high": "#dce9ff",
+                        "primary-container": "#078648",
+                        "primary": "#006a37",
+                        "surface": "#f8f9ff",
+                        "surface-tint": "#006d39",
+                        "on-secondary-container": "#24703e",
+                        "tertiary-fixed-dim": "#c1c8c4",
+                        "outline-variant": "#bdcabd",
+                        "surface-bright": "#f8f9ff",
+                        "on-secondary-fixed": "#00210b",
+                        "on-surface-variant": "#3e4a40",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#8bd79b",
+                        "background": "#f8f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xl": "32px",
+                        "md": "16px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "margin-desktop": "48px",
+                        "lg": "24px",
+                        "base": "8px",
+                        "sm": "12px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Noto Sans"],
+                        "body-md": ["Noto Sans"],
+                        "label-md": ["Noto Sans"],
+                        "headline-lg-mobile": ["Noto Sans"],
+                        "headline-lg": ["Noto Sans"],
+                        "title-md": ["Noto Sans"],
+                        "display-lg": ["Noto Sans"],
+                        "label-sm": ["Noto Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                        "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed antialiased">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant flex items-center justify-between px-4 h-[56px] w-full">
+<div class="flex items-center gap-4">
+<button aria-label="Back" class="p-2 hover:bg-surface-container-high transition-colors rounded-full active:opacity-70 disabled:opacity-30 cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-[20px] font-bold text-on-surface">알림</h1>
+</div>
+<div class="flex items-center gap-1">
+<button aria-label="Settings" class="p-2 hover:bg-surface-container-high transition-colors rounded-full active:opacity-70 disabled:opacity-30 cursor-not-allowed" disabled="">
+<span class="material-symbols-outlined text-primary">settings</span>
+</button>
+</div>
+</header>
+<main class="pt-[56px] pb-8 max-w-2xl mx-auto">
+<!-- Filters & Batch Actions -->
+<section class="px-4 py-4 flex items-center justify-between sticky top-[56px] bg-background z-40 bg-opacity-95 backdrop-blur-sm">
+<div class="flex gap-2">
+<!-- Chip: Active '전체' -->
+<button class="h-10 px-5 rounded-full bg-primary text-on-primary font-label-md transition-all flex items-center justify-center" disabled="">
+                    전체
+                </button>
+<button class="h-10 px-5 rounded-full bg-surface-container-low text-on-surface-variant font-label-md hover:bg-surface-dim transition-all flex items-center justify-center" disabled="">
+                    연봉
+                </button>
+<button class="h-10 px-5 rounded-full bg-surface-container-low text-on-surface-variant font-label-md hover:bg-surface-dim transition-all flex items-center justify-center" disabled="">
+                    커리어
+                </button>
+</div>
+<!-- '전체 읽음' Loading Button -->
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface-variant font-label-md transition-all cursor-not-allowed opacity-80" disabled="">
+<span class="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+<span class="">전체 읽음 처리 중</span>
+</button>
+</section>
+<!-- Notification List -->
+<div class="space-y-2 px-4">
+<!-- Unread Item (Processing) -->
+<div class="bg-[#F3FAF6] unread-indicator p-4 rounded-xl border border-outline-variant/30 flex gap-4 transition-opacity duration-300 opacity-90 transition-all duration-1000" style="background-color: rgba(243, 250, 246, 0.5);">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-md text-body-md font-semibold text-on-surface">새로운 연봉 정보가 등록되었습니다</h3>
+<span class="text-label-sm text-outline">방금 전</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                        관심 기업 '테크코리아'의 프론트엔드 개발자 5~7년차 평균 연봉 데이터가 업데이트되었습니다. 지금 바로 확인해보세요.
+                    </p>
+</div>
+</div>
+<!-- Unread Item (Processing) -->
+<div class="bg-[#F3FAF6] unread-indicator p-4 rounded-xl border border-outline-variant/30 flex gap-4 transition-opacity duration-300 opacity-90 transition-all duration-1000" style="background-color: rgba(243, 250, 246, 0.5);">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-md text-body-md font-semibold text-on-surface">업계 평균 대비 내 연봉 수준</h3>
+<span class="text-label-sm text-outline">12분 전</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed">
+                        동일 직군 3년차 평균 대비 귀하의 연봉은 상위 15% 수준입니다. 커리어 성장을 위한 맞춤형 제안이 도착했습니다.
+                    </p>
+</div>
+</div>
+<!-- Previously Read Item -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 flex gap-4">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">campaign</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-md text-body-md font-normal text-on-surface-variant">공지사항: 서비스 점검 안내</h3>
+<span class="text-label-sm text-outline">2시간 전</span>
+</div>
+<p class="text-body-md text-outline leading-relaxed">
+                        안정적인 서비스 제공을 위해 금일 새벽 2시부터 4시까지 시스템 점검이 진행될 예정입니다.
+                    </p>
+</div>
+</div>
+<!-- Previously Read Item -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 flex gap-4">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">verified_user</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-md text-body-md font-normal text-on-surface-variant">본인 인증이 완료되었습니다</h3>
+<span class="text-label-sm text-outline">어제</span>
+</div>
+<p class="text-body-md text-outline leading-relaxed">
+                        급여 명세서 인증을 통해 연봉 데이터 신뢰도가 상승했습니다. 이제 더 많은 인사이트를 확인하실 수 있습니다.
+                    </p>
+</div>
+</div>
+<!-- Previously Read Item -->
+<div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 flex gap-4">
+<div class="flex-shrink-0 w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">person_celebrate</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start mb-1">
+<h3 class="font-title-md text-body-md font-normal text-on-surface-variant">새로운 뱃지를 획득하셨습니다!</h3>
+<span class="text-label-sm text-outline">2일 전</span>
+</div>
+<p class="text-body-md text-outline leading-relaxed">
+                        '첫 리뷰어' 뱃지를 획득하셨습니다. 정성스러운 정보를 공유해주셔서 감사합니다.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Empty State Visual Context (Hidden by default but shown if list was empty) -->
+<div class="fixed inset-0 bg-white/20 pointer-events-none flex items-center justify-center z-[60] hidden" id="loading-overlay">
+<div class="bg-white/80 backdrop-blur-md p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3">
+<span class="material-symbols-outlined text-primary text-4xl animate-spin">sync</span>
+<p class="text-primary font-semibold">데이터 동기화 중...</p>
+</div>
+</div>
+</main>
+<script>
+        // Micro-interaction simulation
+        document.addEventListener('DOMContentLoaded', () => {
+            const listItems = document.querySelectorAll('.unread-indicator');
+            let delay = 0;
+
+            // Subtle pulse animation for items being "read"
+            listItems.forEach((item) => {
+                setTimeout(() => {
+                    item.classList.add('transition-all', 'duration-1000');
+                    item.style.backgroundColor = 'rgba(243, 250, 246, 0.5)';
+                }, delay);
+                delay += 800;
+            });
+        });
+    </script>
+
+
+</body></html>

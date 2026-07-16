@@ -202,7 +202,8 @@ describe("mobile Detox E2E contract", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_JSON: "./fixtures/firebase/google-services.local-test.json",
+      GOOGLE_SERVICES_JSON:
+        "./fixtures/firebase/google-services.local-test.json",
     };
     const overriddenConfig = appConfig({ config: {} });
 

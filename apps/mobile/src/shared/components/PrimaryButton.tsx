@@ -42,7 +42,7 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
+    minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: componentSpacing.lg,
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   secondary: {
     borderWidth: 1,
     borderColor: componentColors.line,
-    backgroundColor: componentColors.surface,
+    backgroundColor: componentColors.surfaceSoft,
   },
   danger: {
     backgroundColor: componentColors.dangerRed,
@@ -67,10 +67,10 @@ const styles = StyleSheet.create({
   },
   text: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "800",
   },
   secondaryText: {
-    color: componentColors.textPrimary,
+    color: componentColors.primaryGreenDark,
   },
 });

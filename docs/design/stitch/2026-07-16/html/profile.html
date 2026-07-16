@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#745f00",
+                        "surface-tint": "#006d39",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#3e4a40",
+                        "secondary-fixed-dim": "#e7c43f",
+                        "on-surface": "#181c20",
+                        "secondary-fixed": "#ffe179",
+                        "on-secondary-fixed": "#231b00",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9ff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#715c00",
+                        "on-tertiary-fixed": "#400010",
+                        "primary-fixed-dim": "#72dc93",
+                        "secondary-container": "#ffda54",
+                        "primary": "#006a37",
+                        "outline": "#6e7a6f",
+                        "on-primary-fixed-variant": "#005229",
+                        "tertiary-fixed": "#ffdadc",
+                        "surface-container-highest": "#e0e3e8",
+                        "on-secondary-fixed-variant": "#554500",
+                        "primary-container": "#078648",
+                        "on-primary-container": "#f6fff4",
+                        "inverse-surface": "#2d3135",
+                        "tertiary-container": "#bd5161",
+                        "outline-variant": "#bdcabd",
+                        "inverse-primary": "#72dc93",
+                        "inverse-on-surface": "#eef1f6",
+                        "on-background": "#181c20",
+                        "on-primary-fixed": "#00210d",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#ebeef3",
+                        "surface-container-low": "#f1f4f9",
+                        "on-tertiary-container": "#fffbff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#9e394a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e0e3e8",
+                        "on-tertiary-fixed-variant": "#822436",
+                        "on-error-container": "#93000a",
+                        "background": "#f7f9ff",
+                        "surface": "#f7f9ff",
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "surface-dim": "#d7dadf",
+                        "surface-container-high": "#e5e8ee",
+                        "primary-fixed": "#8ef9ad"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap-md": "16px",
+                        "stack-gap-lg": "24px",
+                        "stack-gap-sm": "8px",
+                        "unit": "4px",
+                        "container-padding": "20px",
+                        "gutter": "12px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "body-lg": ["Noto Sans KR"],
+                        "label-bold": ["Noto Sans KR"],
+                        "body-md": ["Noto Sans KR"],
+                        "label-sm": ["Noto Sans KR"],
+                        "display-level": ["Noto Sans KR"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                        "display-lg": ["32px", {"lineHeight": "40px", "fontWeight": "800"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["12px", {"lineHeight": "16px", "fontWeight": "700"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "display-level": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "900"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F7F8FA;
+            font-family: 'Noto Sans KR', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(233, 236, 239, 1);
+        }
+        .radar-shape {
+            clip-path: polygon(50% 10%, 85% 35%, 85% 75%, 50% 90%, 15% 75%, 15% 35%);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface shadow-sm flex justify-between items-center h-16 px-margin-mobile">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-display-lg text-display-lg font-bold text-primary">SALARY HIJACKING</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-variant transition-colors active:scale-95 duration-100">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="settings">settings</span>
+</button>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-20 pb-32 px-margin-mobile">
+<!-- Header Section -->
+<section class="mb-stack-gap-lg">
+<h1 class="font-headline-lg text-headline-lg leading-tight whitespace-pre-line">오늘의 독서,<br/>역량 레벨업</h1>
+<p class="text-on-surface-variant font-body-md mt-2">지식 성장을 통해 연봉의 벽을 넘어서세요.</p>
+</section>
+<!-- Profile/Balance Card (Asymmetric Layout) -->
+<section class="mb-stack-gap-lg">
+<div class="glass-card rounded-xl p-6 shadow-sm relative overflow-hidden">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="bg-secondary-container text-on-secondary-container font-label-bold px-3 py-1 rounded-full text-[10px]">CURRENT LEVEL</span>
+<h2 class="font-headline-md text-headline-md mt-1">나의 독서 밸런스</h2>
+</div>
+<div class="flex flex-col items-end">
+<span class="text-primary font-bold text-lg">LV. 14</span>
+<span class="text-on-surface-variant text-[10px]">Expert Learner</span>
+</div>
+</div>
+<!-- Radar Chart Visual Placeholder -->
+<div class="flex justify-center items-center py-4 relative h-48">
+<!-- Background Circles -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-40 h-40 border border-outline-variant/30 rounded-full"></div>
+<div class="absolute w-28 h-28 border border-outline-variant/30 rounded-full"></div>
+<div class="absolute w-16 h-16 border border-outline-variant/30 rounded-full"></div>
+</div>
+<!-- Data Shape -->
+<div class="w-32 h-32 bg-primary/20 border-2 border-primary radar-shape relative animate-pulse"></div>
+<!-- Labels -->
+<span class="absolute top-0 font-label-bold text-on-surface-variant">지성</span>
+<span class="absolute right-0 font-label-bold text-on-surface-variant">사고</span>
+<span class="absolute bottom-0 font-label-bold text-on-surface-variant">실천</span>
+<span class="absolute left-0 font-label-bold text-on-surface-variant">관계</span>
+</div>
+<!-- XP Progress Bar -->
+<div class="mt-6">
+<div class="flex justify-between items-end mb-1">
+<span class="font-label-bold text-on-surface-variant">Next Level까지 240 XP</span>
+<span class="text-primary font-bold">85%</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 85%"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Category Tabs -->
+<nav class="flex gap-2 overflow-x-auto pb-4 no-scrollbar -mx-margin-mobile px-margin-mobile">
+<button class="flex-shrink-0 bg-primary text-on-primary px-5 py-2 rounded-full font-label-bold text-body-md transition-all active:scale-95">AI 추천</button>
+<button class="flex-shrink-0 bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-label-bold text-body-md hover:bg-surface-variant">소설</button>
+<button class="flex-shrink-0 bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-label-bold text-body-md hover:bg-surface-variant">경제·경영</button>
+<button class="flex-shrink-0 bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-label-bold text-body-md hover:bg-surface-variant">인문·철학</button>
+<button class="flex-shrink-0 bg-surface-container-high text-on-surface-variant px-5 py-2 rounded-full font-label-bold text-body-md hover:bg-surface-variant">기타</button>
+</nav>
+<!-- Book List (Bento Grid Style) -->
+<section class="mt-4">
+<div class="bento-grid">
+<!-- Book Card 1 -->
+<div class="col-span-1 glass-card rounded-xl overflow-hidden flex flex-col group active:scale-[0.98] transition-transform">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A premium 3D book cover for 'The Art of Planning', featuring elegant typography and minimalist geometric shapes in emerald green and gold accents, professional lighting, studio background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCFuDg6X6XWnYck3ZCfLl_T_eMhQ-FGciqDwVPaUXTjMXeDaDTqDI43x5mn2RdL4ETYpj8gJXeTHTAdDMTp9swZwjCMTTJemVcxLoSfCbpK625_RxBxx1sN4zrGo_I6pwCfgEAIt_v-6a-iv_78hedJlPOuA4BenRgeIdQmFyRCRBd9ZrojbaFQUrd_BvzlF6bUC299GZ6Tjt0gawY99PRlVb2h5yzMT_KqLne7keEVcjCeUc-O8WRd"/>
+<div class="absolute top-2 left-2">
+<span class="bg-primary-container text-on-primary-container px-2 py-0.5 rounded text-[10px] font-bold">추천</span>
+</div>
+</div>
+<div class="p-4 flex-grow flex flex-col justify-between">
+<div>
+<h3 class="font-headline-md text-[16px] leading-tight mb-1">기획의 정석</h3>
+<p class="text-on-surface-variant text-[12px] line-clamp-1">박신영 저</p>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<div class="flex items-center text-primary">
+<span class="material-symbols-outlined text-[14px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[12px] font-bold ml-1">4.8</span>
+</div>
+<span class="text-on-surface-variant text-[11px]">+50 XP</span>
+</div>
+</div>
+</div>
+<!-- Book Card 2 -->
+<div class="col-span-1 glass-card rounded-xl overflow-hidden flex flex-col group active:scale-[0.98] transition-transform">
+<div class="relative h-48 w-full bg-surface-container-highest overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="A modern book cover titled 'Getting More' with sophisticated abstract waves in navy and primary green, high-end corporate aesthetic, clean layout, depth and texture, soft studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDY1EepqLKiB9ghWb5S82QnagznAysVJEb7Zduatg4Sf3tIL8DRdflOSjxHkT4fVM5GhIw0lTwGKioUIdfAKP4pM-tD8wf2z_cqKQJUyMr7e-ihOjVdE7Ytf9s3CRfIyYJsfRz9wL_KFd801GcIic73l9k6YiK64T3jrhosIdeU6BWlXS3oGmA9_cCWeMHVtpune5oyIIim9qVZpRQ1lfKiWl_k7j3GnBmUMOKcxpUOJqj_nbuDQgr2"/>
+<div class="absolute top-2 left-2">
+<span class="bg-outline-variant text-on-surface-variant px-2 py-0.5 rounded text-[10px] font-bold">시작 전</span>
+</div>
+</div>
+<div class="p-4 flex-grow flex flex-col justify-between">
+<div>
+<h3 class="font-headline-md text-[16px] leading-tight mb-1">어떻게 원하는 것을 얻는가</h3>
+<p class="text-on-surface-variant text-[12px] line-clamp-1">스튜어트 다이아몬드 저</p>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<div class="flex items-center text-primary">
+<span class="material-symbols-outlined text-[14px]" data-icon="star" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[12px] font-bold ml-1">4.9</span>
+</div>
+<span class="text-on-surface-variant text-[11px]">+75 XP</span>
+</div>
+</div>
+</div>
+<!-- Featured Wide Card -->
+<div class="col-span-2 glass-card rounded-xl p-4 flex gap-4 items-center">
+<div class="w-20 h-28 bg-surface-container-highest rounded-lg overflow-hidden flex-shrink-0 shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A book cover design with a powerful 3D golden trophy and light rays, symbolizing achievement and financial freedom, emerald background, high resolution, corporate modern style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD5VsilCNBL1Q63wjMqA1zfPWWzvannSLvFagQyZEjiYlffKH4BzgMxBZnm24reuooha9217jlo92ltv1bAufaQN9OCMpIVSI5G9GyhMuFXEBIsVbY3dTlntfxphtf0LKIAmazyYH52_0nYkWjm83x4EN4xnu4fCRMpZCXSVHABGD8S1en4x6hzUusnr-r6V2TQgnJpXwIau8BU8u_RXj7WyJm6Ju0lYR0wI5Cc1SBxY-txaLU_saTG"/>
+</div>
+<div class="flex-grow">
+<span class="text-secondary font-label-bold text-[10px] tracking-wider uppercase">Weekly Mission</span>
+<h3 class="font-headline-md text-headline-md mb-1">베스트셀러 독파하기</h3>
+<p class="text-on-surface-variant text-[13px]">이번 주 '경제' 카테고리 도서를 읽고 실천 과제를 수행하세요.</p>
+<div class="mt-3 bg-secondary-container/30 border border-secondary-container rounded-lg p-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]" data-icon="celebration" style="font-variation-settings: 'FILL' 1;">celebration</span>
+<span class="text-on-secondary-container font-label-bold text-[11px]">성공 시 한정판 뱃지 +300 XP</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full h-20 flex justify-around items-center px-4 pb-safe bg-surface-container shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.04)] rounded-t-xl z-50">
+<!-- 급여 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:bg-surface-variant transition-colors rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md mt-1">급여</span>
+</a>
+<!-- 계획 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:bg-surface-variant transition-colors rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-md text-label-md mt-1">계획</span>
+</a>
+<!-- LV UP (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-5 py-1 active:scale-90 transition-transform duration-200 shadow-sm" href="#">
+<span class="material-symbols-outlined" data-icon="trending_up">trending_up</span>
+<span class="font-label-md text-label-md mt-0.5">LV UP</span>
+</a>
+<!-- 커뮤니티 -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:bg-surface-variant transition-colors rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="forum">forum</span>
+<span class="font-label-md text-label-md mt-1">커뮤니티</span>
+</a>
+<!-- MY -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-70 hover:bg-surface-variant transition-colors rounded-full px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md mt-1">MY</span>
+</a>
+</nav>
+<!-- Floating Micro-Interaction Trigger (Visual Only) -->
+<button class="fixed bottom-24 right-6 w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-transform z-40">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+</body></html>

@@ -1,12 +1,13 @@
 # Physical Android Phone QA Handoff
 
-Updated: 2026-07-15 KST
+Updated: 2026-07-17 KST
 
 ## Current APK
 
-- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration138-debug.apk`
-- Artifact APK: `D:/salary-hijacking-artifacts/20260715/iteration-138-root-capture-web-guard-apk/salary-hijacking-phone-arm64-iteration138-debug.apk`
-- SHA256: `79E68CC7B6C0532B9672CCE4F2654BB9ADEF2814AC3A68B4652160DE9E33E879`
+- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
+- Artifact APK: `D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk`
+- Repo APK: `C:/Users/PC/Desktop/salary-hijacking-platform/apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
+- SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 
@@ -28,7 +29,7 @@ Updated: 2026-07-15 KST
 
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
-node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration138-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
+node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
 ```
 
 ## What The Collector Must Prove

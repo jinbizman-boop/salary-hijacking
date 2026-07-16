@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<title>뉴스 레벨업 - SALARY HIJACKING</title>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; -webkit-font-smoothing: antialiased; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+        .achievement-glow { box-shadow: 0 0 20px rgba(32, 146, 82, 0.2); }
+        .glass-effect { backdrop-filter: blur(8px); background: rgba(255, 255, 255, 0.85); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2d3135",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#f6fff4",
+                        "tertiary-fixed": "#ffdadc",
+                        "on-secondary-fixed": "#231b00",
+                        "surface-dim": "#d7dadf",
+                        "tertiary": "#9e394a",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eef1f6",
+                        "primary-fixed": "#8ef9ad",
+                        "tertiary-container": "#bd5161",
+                        "primary-container": "#078648",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#005229",
+                        "background": "#f7f9ff",
+                        "on-secondary-fixed-variant": "#554500",
+                        "surface": "#f7f9ff",
+                        "on-surface": "#181c20",
+                        "surface-container-highest": "#e0e3e8",
+                        "on-background": "#181c20",
+                        "primary": "#006a37",
+                        "surface-container": "#ebeef3",
+                        "on-primary-fixed": "#00210d",
+                        "inverse-primary": "#72dc93",
+                        "primary-fixed-dim": "#72dc93",
+                        "surface-container-high": "#e5e8ee",
+                        "on-secondary-container": "#745f00",
+                        "outline-variant": "#bdcabd",
+                        "on-tertiary-fixed": "#400010",
+                        "secondary-container": "#ffda54",
+                        "secondary": "#715c00",
+                        "error": "#ba1a1a",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#822436",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e0e3e8",
+                        "surface-bright": "#f7f9ff",
+                        "surface-tint": "#006d39",
+                        "on-tertiary-container": "#fffbff",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed-dim": "#e7c43f",
+                        "secondary-fixed": "#ffe179",
+                        "on-surface-variant": "#3e4a40",
+                        "outline": "#6e7a6f",
+                        "surface-container-low": "#f1f4f9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "body-lg": ["Noto Sans KR"],
+                        "display-level": ["Noto Sans KR"],
+                        "headline-md": ["Noto Sans KR"],
+                        "body-md": ["Noto Sans KR"],
+                        "label-bold": ["Noto Sans KR"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "display-level": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-bold": ["12px", {"lineHeight": "16px", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen pb-20">
+<!-- Screen 1: 콘텐츠 목록 (News List) -->
+<section class="flex flex-col min-h-screen" id="screen-news-list">
+<header class="bg-surface shadow-sm sticky top-0 z-50 flex justify-between items-center w-full px-5 py-3">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A 3D emerald and gold shield emblem with a white checkmark, representing financial security and achievement. The style is high-gloss and modern, with soft shadows against a clean white background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8cEiF_lYyq2QDO04ezo2I4Awz_soA_JMhoc9kScvcGPpXjdfVgNe1dlTzJrhkQ-sT6p9Fi0Rn_dC9iWrWs-PgdpaJvKOOarWoWmYu2NgfSICkMB2sU-UIYyVBa38-5fExExsdEgYgh0qs8h2LEVTsR4WBnJ-CwRjvcPlmkXUfLrlG4EnTR-NjQpXiHnkzP16nZG-1xHxaCy5ZNLHMY4b_dibcXD-H4X105-wXVOcoxGRIqQlqynud"/>
+</div>
+<h1 class="text-body-lg font-headline-lg font-black tracking-tight text-primary">SALARY HIJACKING</h1>
+</div>
+<button class="material-symbols-outlined text-primary p-2 hover:bg-surface-container-low transition-colors rounded-full">settings</button>
+</header>
+<main class="flex-1 px-5 py-6">
+<div class="mb-8">
+<div class="flex justify-between items-end mb-4">
+<div>
+<p class="text-label-bold text-primary mb-1">LV. 12 이코노미스트</p>
+<h2 class="text-headline-lg font-headline-lg">오늘의 뉴스 미션</h2>
+</div>
+<div class="flex items-center gap-1 bg-secondary-fixed px-3 py-1 rounded-full">
+<span class="material-symbols-outlined text-[18px]">local_fire_department</span>
+<span class="text-label-bold">14일 연속</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%] rounded-full shadow-[0_0_10px_rgba(0,106,55,0.3)]"></div>
+</div>
+<div class="flex justify-between mt-2 text-label-sm text-outline">
+<span>현재 XP 1,240</span>
+<span>레벨업까지 760 XP</span>
+</div>
+</div>
+<div class="space-y-4">
+<!-- News Card 1 (Active) -->
+<div class="cursor-pointer bg-surface-container-lowest border border-outline-variant rounded-xl p-5 hover:border-primary transition-all active:scale-[0.98]" onclick="showScreen('screen-news-detail')">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-secondary-container text-on-secondary-container text-label-bold px-2 py-0.5 rounded">NEW</span>
+<span class="text-label-bold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">military_tech</span> +50 XP
+                        </span>
+</div>
+<h3 class="text-headline-md font-headline-md mb-2 leading-snug">기준금리 동결, 하반기 부동산 시장의 향방은?</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2">한국은행 금융통화위원회가 기준금리를 연 3.50%로 10회 연속 동결했습니다. 시장의 예상과 일치하는 결과이나...</p>
+<div class="mt-4 flex items-center gap-4 text-label-sm text-outline">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> 3분 전</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">visibility</span> 1.2k 읽음</span>
+</div>
+</div>
+<!-- News Card 2 (Completed) -->
+<div class="bg-primary/5 border border-primary/20 rounded-xl p-5 relative opacity-80">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-surface-container-highest text-on-surface-variant text-label-bold px-2 py-0.5 rounded">완료</span>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h3 class="text-headline-md font-headline-md mb-2 text-on-surface/60 line-through">엔저 현상 장기화, 일본 주식 투자 전략</h3>
+<div class="mt-4 flex items-center gap-2">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-white bg-primary-fixed"></div>
+<div class="w-6 h-6 rounded-full border-2 border-white bg-secondary-fixed"></div>
+</div>
+<span class="text-label-sm text-outline">친구 4명이 함께 읽었어요</span>
+</div>
+</div>
+<!-- News Card 3 -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-5 active:scale-[0.98] transition-transform">
+<div class="flex justify-between items-start mb-3">
+<span class="bg-surface-container-highest text-on-surface-variant text-label-bold px-2 py-0.5 rounded">경제</span>
+<span class="text-label-bold text-primary flex items-center gap-1">+30 XP</span>
+</div>
+<h3 class="text-headline-md font-headline-md mb-2 leading-snug">AI 반도체 수요 폭증, 엔비디아의 독주는 언제까지?</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2">글로벌 빅테크 기업들의 인공지능 투자 경쟁이 심화되면서 HBM 반도체 시장이 요동치고 있습니다.</p>
+</div>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container-lowest shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<button class="flex flex-col items-center justify-center text-primary font-bold transition-transform duration-200 scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="text-label-sm">급여</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-label-sm">계획</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined">military_tech</span>
+<span class="text-label-sm">LV UP</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm">커뮤니티</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-lg">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm">MY</span>
+</button>
+</nav>
+</section>
+<!-- Screen 2: 콘텐츠 상세 (News Detail) -->
+<section class="hidden flex flex-col min-h-screen bg-white" id="screen-news-detail">
+<header class="flex justify-between items-center w-full px-6 py-4 bg-surface border-b border-outline-variant sticky top-0 z-50">
+<button class="material-symbols-outlined text-on-surface" onclick="showScreen('screen-news-list')">arrow_back</button>
+<h2 class="text-headline-md font-headline-md text-on-surface">Mission Details</h2>
+<button class="material-symbols-outlined text-on-surface">more_vert</button>
+</header>
+<main class="flex-1 overflow-y-auto no-scrollbar">
+<div class="relative h-64 w-full">
+<img class="w-full h-full object-cover" data-alt="A professional, high-end editorial photograph of a modern financial skyscraper interior with glass and steel elements. Soft morning sunlight streams through windows, creating a clean, high-contrast atmosphere of wealth and corporate growth. The aesthetic matches a modern financial magazine." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYfJ20V-PT6uyljlQAkK8hGAYOGeIbxDnjmRRqlZNPo6ufNze-VBSRt_GylNg2cgoZQB7xIqrYCAf-tkPs0f4vANv_slygaYCXgJmcN4uqm18WlPiOXF2_0h5ipNNNyrRK3vckx1kyipKdFvgRy0a21F7yahK6nzeEBkEeFqyfPBIWCBAckUiWOl_dmBbsCNLdjmn1stuhCYmUevtSZp0wcKIdyRH8TRM-J72Or3A46eFgZj8spcjA"/>
+<div class="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/80 to-transparent">
+<span class="bg-primary text-white text-label-bold px-3 py-1 rounded-full mb-3 inline-block">금융 정책</span>
+<h1 class="text-white text-headline-lg font-headline-lg leading-tight">기준금리 동결, 하반기 부동산 시장의 향방은?</h1>
+</div>
+</div>
+<div class="p-6">
+<div class="flex items-center gap-3 mb-6 pb-6 border-b border-outline-variant">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">news</span>
+</div>
+<div>
+<p class="text-label-bold text-on-surface">한경경제신문</p>
+<p class="text-label-sm text-outline">최민석 기자 | 2024.05.20</p>
+</div>
+</div>
+<div class="space-y-6 mb-10">
+<div class="bg-surface-container-low p-5 rounded-xl border-l-4 border-primary">
+<h4 class="text-label-bold text-primary mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">summarize</span> 핵심 요약
+                        </h4>
+<p class="text-body-md text-on-surface leading-relaxed">한국은행 금통위는 기준금리를 3.5%로 동결했습니다. 이는 소비자 물가 상승률이 아직 목표치인 2%에 안착하지 못했다는 판단과 가계부채 관리에 대한 경계심이 반영된 결과입니다.</p>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<h5 class="text-label-bold text-on-surface mb-2">상승론자 시각</h5>
+<p class="text-label-sm text-on-surface-variant">"금리 인하 기대감이 선반영되어 거래량이 회복될 것"</p>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl">
+<h5 class="text-label-bold text-on-surface mb-2">보수적 시각</h5>
+<p class="text-label-sm text-on-surface-variant">"고금리 유지가 장기화되어 매수 심리가 위축될 것"</p>
+</div>
+</div>
+<article class="text-body-lg text-on-surface-variant leading-relaxed">
+                        이번 금통위의 결정은 '매파적 동결'에 가깝다는 평가입니다. 이창용 한국은행 총재는 기자간담회에서 "하반기 금리 인하 가능성을 예단하기 어렵다"며 신중한 태도를 견지했습니다. 전문가들은 부동산 시장의 양극화가 심화될 것으로 내다보고 있습니다. 강남권 등 핵심 지역은 대기 수요가 탄탄한 반면, 외곽 지역은 이자 부담으로 인한 매물이 쌓일 가능성이 높습니다...
+                    </article>
+</div>
+</div>
+</main>
+<footer class="p-6 bg-surface-container-lowest border-t border-outline-variant sticky bottom-0">
+<div class="mb-4">
+<div class="flex justify-between text-label-sm mb-2">
+<span class="text-primary font-bold">읽기 진행률 85%</span>
+<span class="text-outline">목표: 100% 완독</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary transition-all duration-500" id="read-progress" style="width: 85%"></div>
+</div>
+</div>
+<button class="w-full h-[56px] bg-primary text-white font-headline-md rounded-2xl flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform" onclick="showScreen('screen-news-record')">
+<span class="material-symbols-outlined">edit_note</span>
+                학습 기록하고 XP 받기
+            </button>
+</footer>
+</section>
+<!-- Screen 3: 기록 입력 (Record Input) -->
+<section class="hidden flex flex-col min-h-screen" id="screen-news-record">
+<header class="flex justify-between items-center w-full px-6 py-4 bg-surface border-b border-outline-variant">
+<button class="material-symbols-outlined text-on-surface" onclick="showScreen('screen-news-detail')">close</button>
+<h2 class="text-headline-md font-headline-md text-on-surface">성장 기록하기</h2>
+<div class="w-8"></div>
+</header>
+<main class="flex-1 p-6 space-y-8">
+<div class="space-y-4">
+<h3 class="text-headline-md font-headline-md">쟁점 파악 체크</h3>
+<div class="space-y-3">
+<label class="flex items-center gap-4 p-4 bg-white border border-outline-variant rounded-xl cursor-pointer hover:border-primary transition-colors group">
+<input class="w-6 h-6 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface group-active:text-primary">금리 동결의 주된 원인을 이해했습니다.</span>
+</label>
+<label class="flex items-center gap-4 p-4 bg-white border border-outline-variant rounded-xl cursor-pointer hover:border-primary transition-colors group">
+<input class="w-6 h-6 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-body-md text-on-surface">향후 시장 전망의 두 가지 시각을 파악했습니다.</span>
+</label>
+</div>
+</div>
+<div class="space-y-4">
+<h3 class="text-headline-md font-headline-md">내 생각 기록</h3>
+<textarea class="w-full h-40 p-5 bg-white border border-outline-variant rounded-2xl focus:ring-2 focus:ring-primary focus:border-primary text-body-md placeholder:text-outline" placeholder="이 뉴스를 읽고 나만의 투자 전략이나 느낀 점을 한 줄 이상 적어주세요."></textarea>
+</div>
+<div class="bg-primary/5 p-5 rounded-2xl border border-primary/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed">emoji_events</span>
+</div>
+<div>
+<p class="text-label-bold text-on-surface">오늘의 보너스!</p>
+<p class="text-label-sm text-on-surface-variant">이 미션을 완료하면 14일 연속 스트릭이 유지됩니다.</p>
+</div>
+</div>
+</main>
+<div class="p-6">
+<button class="w-full h-[56px] bg-primary text-white font-headline-md rounded-2xl shadow-lg active:scale-95 transition-transform" onclick="showScreen('screen-news-result')">
+                미션 완료
+            </button>
+</div>
+</section>
+<!-- Screen 4: 완료 결과 (Success Result) -->
+<section class="hidden fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center p-8 text-center overflow-hidden" id="screen-news-result">
+
+<div class="relative z-10 w-full max-w-sm space-y-8">
+<div class="relative inline-block">
+<div class="absolute -inset-8 bg-primary/20 blur-3xl rounded-full"></div>
+<div class="w-32 h-32 mx-auto bg-primary-container rounded-[2rem] flex items-center justify-center rotate-3 shadow-2xl relative achievement-glow">
+<img class="w-20 h-20 object-contain" data-alt="A glowing gold medal with a central 'W' symbol for Won, surrounded by a radiant green and gold aura. 3D rendered style with metallic reflections and particles, emphasizing achievement and wealth accumulation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXcmmcqTWW5yOqAbWPQp-zV7Q8lbI5FFeQ9itggXRe79ajVrejkHE7JuBmaka8jdId5iEzFsuYDFir-_mt0yC3dST7XvbP7NlN_wdKyaAHKyYZ2KorpengHN8DzGMDEpZEEVPmsj8-d8teaKjchXc62bOrfolTgUY-JvYkgEiVnA20Iw0--uAgTWa1jzAMWd3W__6CKLYxAaWD7crl7U-RANPVMq7wR4cU5DyDwuu_2Wc5xSjtp8ya"/>
+</div>
+</div>
+<div class="space-y-2">
+<h2 class="text-display-level font-display-level text-primary">LEVEL UP!</h2>
+<p class="text-headline-md font-headline-md text-on-surface">경제 문해력이 한 단계 성장했습니다</p>
+</div>
+<div class="bg-surface-container-low p-6 rounded-3xl border border-outline-variant flex flex-col items-center">
+<div class="flex items-center gap-2 mb-4">
+<span class="text-display-level font-display-level text-primary text-[32px]">+50</span>
+<span class="text-headline-md font-headline-md text-on-surface-variant pt-2">XP 확보</span>
+</div>
+<div class="w-full h-2 bg-surface-container-highest rounded-full mb-2">
+<div class="h-full bg-primary rounded-full animate-grow" style="width: 72%"></div>
+</div>
+<p class="text-label-sm text-outline">다음 레벨까지 710 XP 남음</p>
+</div>
+<div class="flex justify-center gap-3">
+<div class="bg-secondary-fixed px-5 py-3 rounded-2xl border border-secondary/20 text-center">
+<p class="text-label-sm text-on-secondary-fixed">스트릭</p>
+<p class="text-headline-md font-headline-md">14일🔥</p>
+</div>
+<div class="bg-primary-fixed px-5 py-3 rounded-2xl border border-primary/20 text-center">
+<p class="text-label-sm text-on-primary-fixed">전국 순위</p>
+<p class="text-headline-md font-headline-md">상위 8%</p>
+</div>
+</div>
+<button class="w-full h-[56px] bg-primary text-white font-headline-md rounded-2xl shadow-xl hover:shadow-primary/30 transition-all" onclick="showScreen('screen-news-list')">
+                메인으로 돌아가기
+            </button>
+</div>
+</section>
+<script>
+        function showScreen(screenId) {
+            const screens = ['screen-news-list', 'screen-news-detail', 'screen-news-record', 'screen-news-result'];
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                if (id === screenId) {
+                    el.classList.remove('hidden');
+                    window.scrollTo(0, 0);
+                    if(id === 'screen-news-result') {
+                        confettiEffect();
+                    }
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function confettiEffect() {
+            // Simplified particle animation logic could go here
+            console.log('Confetti triggered');
+        }
+
+        // Add some basic interactions
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                this.parentElement.classList.toggle('border-primary', this.checked);
+                this.parentElement.classList.toggle('bg-primary/5', this.checked);
+            });
+        });
+    </script>
+</body></html>

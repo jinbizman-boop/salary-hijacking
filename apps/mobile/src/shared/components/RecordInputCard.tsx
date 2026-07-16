@@ -37,12 +37,17 @@ export function RecordInputCard({
 
 const styles = StyleSheet.create({
   card: {
-    gap: componentSpacing.sm,
-    padding: componentSpacing.md,
+    gap: componentSpacing.md,
+    padding: componentSpacing.lg,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.card,
     backgroundColor: componentColors.surface,
+    shadowColor: componentColors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 3,
   },
   label: {
     color: componentColors.textPrimary,
@@ -50,12 +55,15 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   input: {
-    minHeight: 78,
-    padding: 12,
+    minHeight: 112,
+    padding: 14,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.button,
+    backgroundColor: componentColors.surfaceSoft,
     color: componentColors.textPrimary,
+    fontSize: 16,
+    lineHeight: 22,
     textAlignVertical: "top",
   },
 });

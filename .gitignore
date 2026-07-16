@@ -113,6 +113,31 @@ next-env.d.ts
 .expo/web/cache/
 apps/mobile/apps/
 android/
+!apps/mobile/android/
+apps/mobile/android/*
+!apps/mobile/android/app/
+apps/mobile/android/app/*
+!apps/mobile/android/app/src/
+apps/mobile/android/app/src/*
+!apps/mobile/android/app/src/main/
+apps/mobile/android/app/src/main/*
+!apps/mobile/android/app/src/main/java/
+apps/mobile/android/app/src/main/java/*
+!apps/mobile/android/app/src/main/java/com/
+apps/mobile/android/app/src/main/java/com/*
+!apps/mobile/android/app/src/main/java/com/salaryhijacking/
+apps/mobile/android/app/src/main/java/com/salaryhijacking/*
+!apps/mobile/android/app/src/main/java/com/salaryhijacking/mobile/
+apps/mobile/android/app/src/main/java/com/salaryhijacking/mobile/*
+!apps/mobile/android/app/src/main/java/com/salaryhijacking/mobile/MainActivity.kt
+!apps/mobile/android/app/src/main/res/
+apps/mobile/android/app/src/main/res/*
+!apps/mobile/android/app/src/main/res/drawable/
+apps/mobile/android/app/src/main/res/drawable/*
+!apps/mobile/android/app/src/main/res/drawable/ic_launcher_background.xml
+!apps/mobile/android/app/src/main/res/values/
+apps/mobile/android/app/src/main/res/values/*
+!apps/mobile/android/app/src/main/res/values/styles.xml
 ios/
 
 # React Native / Metro

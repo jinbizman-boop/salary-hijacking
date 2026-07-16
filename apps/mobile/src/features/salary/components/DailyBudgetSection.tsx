@@ -71,16 +71,19 @@ export function DailyBudgetSection({
 const styles = StyleSheet.create({
   amountCell: {
     flex: 1,
-    gap: 4,
+    gap: 6,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: componentColors.surfaceSoft,
   },
   amountLabel: {
-    color: componentColors.textSecondary,
+    color: componentColors.primaryGreenDark,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "900",
   },
   amountRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
   },
   badge: {
     overflow: "hidden",
@@ -114,7 +117,7 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     color: componentColors.textPrimary,
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "900",
   },
 });

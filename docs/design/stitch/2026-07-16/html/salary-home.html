@@ -1,0 +1,324 @@
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=block" rel="stylesheet"><script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script><script id="tailwind-config">try{
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#d9e3f1",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "on-tertiary-fixed": "#191c1e",
+                        "secondary-container": "#e5e2e1",
+                        "on-surface-variant": "#3e4a40",
+                        "surface-tint": "#006d39",
+                        "primary-fixed-dim": "#72dc93",
+                        "on-primary-fixed": "#00210d",
+                        "surface-container-high": "#dfe9f6",
+                        "primary": "#006a37",
+                        "surface-variant": "#d9e3f1",
+                        "surface-container-low": "#edf4ff",
+                        "on-surface": "#131c26",
+                        "primary-container": "#078648",
+                        "background": "#f7f9ff",
+                        "on-secondary-container": "#656464",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "tertiary": "#595c5e",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "inverse-on-surface": "#e8f2ff",
+                        "outline": "#6e7a6f",
+                        "on-secondary-fixed-variant": "#474646",
+                        "surface": "#f7f9ff",
+                        "outline-variant": "#bdcabd",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#f6fff4",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#131c26",
+                        "error-container": "#ffdad6",
+                        "secondary-fixed": "#e5e2e1",
+                        "secondary": "#5f5e5e",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "on-tertiary-container": "#fbfdff",
+                        "error": "#ba1a1a",
+                        "surface-bright": "#f7f9ff",
+                        "inverse-surface": "#28313b",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#8ef9ad",
+                        "inverse-primary": "#72dc93",
+                        "surface-container": "#e5effc",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#005229",
+                        "tertiary-container": "#727577",
+                        "surface-dim": "#d1dbe8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-xl": "48px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "margin-page": "24px",
+                        "gutter-grid": "12px",
+                        "stack-sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Noto Sans KR"],
+                        "label-lg": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "headline-md": ["Noto Sans KR"],
+                        "label-sm": ["Noto Sans KR"],
+                        "body-md": ["Noto Sans KR"],
+                        "display-lg": ["Noto Sans KR"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["17px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-lg": ["14px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "headline-lg": ["24px", {"lineHeight": "1.4", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "body-md": ["15px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.3", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    }catch(_e){}</script></head><body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="flex justify-between items-center px-margin-page h-14 w-full fixed top-0 z-50 bg-primary dark:bg-primary-container">
+<div class="flex items-center gap-2">
+<img src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJk2GBrPb15xZPp7NC7XBKLFajOi892wW_FP0PJukB3zBXAALpVGDAJj-Dvmi5oreoqKHYnJm-_OJww7ARr3LoMmFd3wXhh8lRJMUUBMFHuz1PXWMehsQWrM4Hp6w49SR0vKUySqIQB20yWv4VHmO1z4qFAssBxdw1pkposJ1L2QEal2tC6WCkHfQr-7KAezoWuXlcn8JpidYEgzd4qvyJKatXV1Ex7_klNJEae2F436bLUOSKeCv_4kjbW6yWfylFiw" class="w-7 h-7 rounded-full object-cover border border-on-primary/20">
+<span class="font-headline-md text-headline-md font-bold text-on-primary">SALARY HIJACKING</span>
+</div>
+<div class="relative transition-opacity duration-200 hover:opacity-80 cursor-pointer">
+<span class="material-symbols-outlined text-on-primary text-[24px]" data-original-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-primary"></span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-14">
+<!-- Hero Section -->
+<section class="bg-[#209252] text-white px-margin-page pt-stack-lg pb-10 rounded-b-[32px] shadow-lg" style="opacity: 1; transform: translateY(0px);">
+<div class="flex flex-col gap-1 mb-stack-md">
+<span class="font-label-lg text-label-lg opacity-80">2026년 7월 16일</span>
+<h1 class="font-display-lg text-[28px] leading-tight font-bold">내 급여 납치 현황</h1>
+</div>
+<!-- Payday Summary Cards -->
+<div class="flex gap-3 mb-stack-lg">
+<div class="flex-1 bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+<p class="text-[12px] opacity-70 mb-1">이번 급여일</p>
+<p class="font-bold text-body-lg">7월 15일</p>
+</div>
+<div class="flex-1 bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
+<p class="text-[12px] opacity-70 mb-1">다음 급여일</p>
+<p class="font-bold text-body-lg">8월 15일 <span class="text-[#F7D34D] ml-1">D-30</span></p>
+</div>
+</div>
+<!-- Total Cumulative Amount -->
+<div class="mb-stack-lg">
+<p class="text-label-sm opacity-80 mb-1">전체 누적 납치금액</p>
+<h2 class="text-[34px] font-black text-[#F7D34D] tracking-tight">5,780,000원</h2>
+</div>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-2 gap-3">
+<div class="bg-white/5 p-4 rounded-xl">
+<p class="text-label-sm opacity-70 mb-1">수령금액</p>
+<p class="font-bold">2,700,000원</p>
+</div>
+<div class="bg-white/5 p-4 rounded-xl">
+<p class="text-label-sm opacity-70 mb-1">지출금액</p>
+<p class="font-bold">773,000원</p>
+</div>
+<div class="col-span-2 bg-white text-primary p-5 rounded-xl border-4 border-[#F7D34D] flex flex-col items-center">
+<p class="text-label-sm text-primary/70 mb-1">이번 달 납치금액</p>
+<p class="text-[28px] font-black tracking-tight">1,927,000원</p>
+</div>
+</div>
+</section>
+<!-- Ad Banner -->
+<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px);">
+<div class="bg-surface-container text-on-surface p-5 rounded-2xl flex justify-between items-center relative overflow-hidden group">
+<div class="z-10">
+<span class="inline-block bg-primary/10 text-primary font-bold text-[10px] px-2 py-0.5 rounded mb-2">광고</span>
+<h3 class="font-headline-md text-body-lg font-bold mb-1">직장인을 위한 생활 혜택</h3>
+<p class="text-label-sm text-on-surface-variant">이번 주 제휴 혜택을 확인해 보세요.</p>
+</div>
+<button class="z-10 bg-primary text-on-primary text-label-sm font-bold px-4 py-2 rounded-full shadow-sm active:scale-95 transition-transform">
+                    혜택 보기
+                </button>
+<div class="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
+</div>
+</section>
+<!-- Daily Budget Card (Today's Allowance) -->
+<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px);">
+<div class="bg-surface-container-lowest border border-outline-variant p-margin-page rounded-3xl shadow-sm">
+<div class="flex justify-between items-center mb-stack-md">
+<h3 class="font-headline-md text-headline-md">오늘의 생활비</h3>
+<button class="text-primary text-label-sm font-bold flex items-center">
+<span class="material-symbols-outlined mr-1 text-[18px]">add_circle</span>
+                        지출 추가
+                    </button>
+</div>
+<div class="flex justify-between items-end mb-4">
+<div>
+<p class="text-label-sm text-on-surface-variant mb-1">남은 금액</p>
+<p class="text-[28px] font-black text-primary">7,000원</p>
+</div>
+<div class="text-right">
+<p class="text-label-sm text-on-surface-variant">한도 20,000원</p>
+<p class="text-label-sm text-on-surface-variant">사용 13,000원</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full bg-surface-container-highest h-3 rounded-full mb-stack-lg overflow-hidden">
+<div class="bg-primary h-full rounded-full transition-all duration-700" style="width: 65%;"></div>
+</div>
+<!-- Recent Expenses -->
+<div class="space-y-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-low rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">coffee</span>
+</div>
+<span class="text-body-md">아이스 아메리카노</span>
+</div>
+<span class="font-bold text-body-md">2,000원</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-low rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">restaurant</span>
+</div>
+<span class="text-body-md">점심 식사</span>
+</div>
+<span class="font-bold text-body-md">6,500원</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-surface-container-low rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[20px]">shopping_basket</span>
+</div>
+<span class="text-body-md">편의점</span>
+</div>
+<span class="font-bold text-body-md">4,500원</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Fixed Expenses Card -->
+<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px);">
+<div class="bg-surface-container-lowest border border-outline-variant p-margin-page rounded-3xl shadow-sm">
+<div class="flex justify-between items-center mb-stack-md">
+<h3 class="font-headline-md text-headline-md">이번 급여주기 고정지출</h3>
+<span class="material-symbols-outlined text-on-surface-variant">settings</span>
+</div>
+<div class="flex gap-4 mb-stack-lg p-4 bg-surface-container-low rounded-xl">
+<div class="flex-1">
+<p class="text-label-sm text-on-surface-variant mb-1">예정</p>
+<p class="font-bold text-body-lg">85,000원</p>
+</div>
+<div class="w-[1px] bg-outline-variant"></div>
+<div class="flex-1">
+<p class="text-label-sm text-on-surface-variant mb-1">완료</p>
+<p class="font-bold text-body-lg text-primary">500,000원</p>
+</div>
+</div>
+<div class="divide-y divide-outline-variant">
+<div class="py-4 flex justify-between items-center">
+<div>
+<p class="font-bold text-body-md">AI 서비스</p>
+<p class="text-label-sm text-on-surface-variant">매월 10일 결제</p>
+</div>
+<div class="text-right">
+<p class="font-bold text-body-md">30,000원</p>
+<span class="text-[11px] font-bold text-primary">완료</span>
+</div>
+</div>
+<div class="py-4 flex justify-between items-center">
+<div>
+<p class="font-bold text-body-md">동영상 서비스</p>
+<p class="text-label-sm text-on-surface-variant">매월 16일 결제</p>
+</div>
+<div class="text-right">
+<p class="font-bold text-body-md">15,000원</p>
+<span class="text-[11px] font-bold text-amber-600">예정</span>
+</div>
+</div>
+<div class="py-4 flex justify-between items-center">
+<div>
+<p class="font-bold text-body-md">통신비</p>
+<p class="text-label-sm text-on-surface-variant">매월 25일 결제</p>
+</div>
+<div class="text-right">
+<p class="font-bold text-body-md">70,000원</p>
+<span class="text-[11px] font-bold text-error">연체</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Variable Expenses Card -->
+<section class="px-margin-page mt-stack-lg pb-stack-xl" style="opacity: 1; transform: translateY(0px);">
+<div class="bg-surface-container-lowest border border-outline-variant p-margin-page rounded-3xl shadow-sm">
+<div class="flex justify-between items-center mb-stack-md">
+<h3 class="font-headline-md text-headline-md">이번 급여주기 변동지출</h3>
+<p class="text-headline-md font-bold">203,000원</p>
+</div>
+<div class="flex items-center justify-between py-4 bg-surface-container-low/50 px-4 rounded-xl mb-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">sports_esports</span>
+<span class="text-body-md">게임·콘텐츠</span>
+</div>
+<span class="font-bold text-body-md">15,000원</span>
+</div>
+<button class="w-full h-14 bg-surface-container-high text-on-surface text-body-lg font-bold rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">add</span>
+                    지출 추가하기
+                </button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pt-2 pb-safe bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-none shadow-sm rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span class="font-label-sm text-label-sm mt-1">급여</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[24px]">event_note</span>
+<span class="font-label-sm text-label-sm mt-1">계획</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[24px]">trending_up</span>
+<span class="font-label-sm text-label-sm mt-1">LV UP</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[24px]">forum</span>
+<span class="font-label-sm text-label-sm mt-1">커뮤니티</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[24px]">person</span>
+<span class="font-label-sm text-label-sm mt-1">MY</span>
+</button>
+</nav>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simple entry animations for cards
+            const cards = document.querySelectorAll('section');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = `all 0.5s ease-out ${index * 0.1}s`;
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50);
+            });
+        });
+    </script>
+</body></html>

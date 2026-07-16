@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SCR-012-06: 완료 결과 및 XP 반영</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#e0e3e8",
+                        "on-primary-fixed-variant": "#005229",
+                        "on-secondary-fixed": "#231b00",
+                        "inverse-on-surface": "#eef1f6",
+                        "on-surface": "#181c20",
+                        "tertiary-container": "#bd5161",
+                        "surface-tint": "#006d39",
+                        "on-primary-fixed": "#00210d",
+                        "surface-container-high": "#e5e8ee",
+                        "on-tertiary-fixed": "#400010",
+                        "on-secondary-fixed-variant": "#554500",
+                        "on-surface-variant": "#3e4a40",
+                        "surface-dim": "#d7dadf",
+                        "secondary-fixed": "#ffe179",
+                        "on-primary-container": "#f6fff4",
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "secondary-fixed-dim": "#e7c43f",
+                        "primary-container": "#078648",
+                        "on-secondary-container": "#745f00",
+                        "tertiary": "#9e394a",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#72dc93",
+                        "background": "#f7f9ff",
+                        "on-tertiary-container": "#fffbff",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2d3135",
+                        "surface-variant": "#e0e3e8",
+                        "error-container": "#ffdad6",
+                        "surface": "#f7f9ff",
+                        "surface-container": "#ebeef3",
+                        "secondary-container": "#ffda54",
+                        "on-primary": "#ffffff",
+                        "on-background": "#181c20",
+                        "on-tertiary-fixed-variant": "#822436",
+                        "primary-fixed": "#8ef9ad",
+                        "outline": "#6e7a6f",
+                        "surface-container-low": "#f1f4f9",
+                        "secondary": "#715c00",
+                        "primary-fixed-dim": "#72dc93",
+                        "outline-variant": "#bdcabd",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary": "#006a37",
+                        "tertiary-fixed": "#ffdadc",
+                        "surface-bright": "#f7f9ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "stack-gap-md": "16px",
+                        "container-padding": "20px",
+                        "stack-gap-sm": "8px",
+                        "gutter": "12px",
+                        "stack-gap-lg": "24px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Noto Sans KR"],
+                        "body-md": ["Noto Sans KR"],
+                        "headline-md": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "label-sm": ["Noto Sans KR"],
+                        "display-level": ["Noto Sans KR"],
+                        "label-bold": ["Noto Sans KR"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "display-level": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                        "label-bold": ["12px", {"lineHeight": "16px", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .achievement-glow {
+            box-shadow: 0 0 20px rgba(0, 106, 55, 0.15);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-medal {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background font-body-md text-on-surface min-h-screen relative overflow-hidden">
+<!-- Dashboard Content (Background) -->
+<div class="fixed inset-0 overflow-y-auto pb-24">
+<!-- TopAppBar (Small) -->
+<header class="flex justify-between items-center w-full px-5 py-3 bg-surface shadow-sm sticky top-0 z-10">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full overflow-hidden bg-primary-container flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A 3D high-gloss emerald and gold shield emblem with a central white checkmark. The icon is rendered in a clean corporate modern style with soft highlights and depth, reflecting wealth and security themes of the LV UP financial app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDzo38KnACd98f6izEYw0t3zI6PhdusXQTM7ljTc2Fa2jq76z0mhmP4cYtA8Vus3FBgFPCVU1QVRdyfYF0dM6rlCRXK0pitawHKnRsu2njbk9xZ6edadoIHLnIJ4_6E_9Uw2BmkeeGQr9Z0crYB6TXXxJQfZ9r__XEpuePQHp4h0ipv8SrUsBGorrf8-Kle6pc0ym-ysCJF_L2_ooWO8cEEWB3yr2effVUu6X9PTE4tS_-HPoEYD_l0"/>
+</div>
+<span class="text-body-lg font-headline-lg font-black tracking-tight text-primary">SALARY HIJACKING</span>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full">settings</button>
+</header>
+<main class="p-container-padding space-y-stack-gap-lg">
+<!-- XP Overview Hero -->
+<section class="bg-surface-container-lowest rounded-xl p-5 border border-outline-variant shadow-sm space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<span class="text-label-bold font-label-bold text-on-surface-variant">LEVEL 12</span>
+<h2 class="text-headline-lg font-headline-lg text-primary">Wealth Architect</h2>
+</div>
+<div class="text-right">
+<span class="text-display-level font-display-level text-secondary">420</span>
+<span class="text-body-md font-body-md text-on-surface-variant ml-1">/ 1000 XP</span>
+</div>
+</div>
+<div class="w-full h-3 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[42%] transition-all duration-1000 ease-out"></div>
+</div>
+</section>
+<!-- Mission Cards (Inactive for context) -->
+<div class="space-y-stack-gap-md opacity-60">
+<h3 class="text-headline-md font-headline-md px-1">데일리 미션</h3>
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[28px]">payments</span>
+</div>
+<div class="flex-1">
+<p class="font-label-bold text-on-surface">지출 일기 쓰기</p>
+<p class="text-body-md text-on-surface-variant">어제의 지출을 기록하고 10 XP 받기</p>
+</div>
+<div class="bg-surface-container px-3 py-1 rounded-full">
+<span class="text-label-bold text-on-surface-variant">+10 XP</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant flex items-center gap-4">
+<div class="w-12 h-12 bg-primary-container/10 rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[28px]">article</span>
+</div>
+<div class="flex-1">
+<p class="font-label-bold text-on-surface">금융 트렌드 뉴스 읽기</p>
+<p class="text-body-md text-on-surface-variant">오늘의 추천 뉴스를 읽고 25 XP 받기</p>
+</div>
+<div class="bg-primary-container px-3 py-1 rounded-full">
+<span class="text-label-bold text-on-primary-container">완료</span>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Bottom Navigation (Hidden by Backdrop but part of structure) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container-lowest shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<div class="flex flex-col items-center justify-center text-primary font-bold">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-label-sm font-label-sm">급여</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-label-sm font-label-sm">계획</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="text-label-sm font-label-sm">LV UP</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm font-label-sm">커뮤니티</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm">MY</span>
+</div>
+</nav>
+<!-- Success Overlay Layer -->
+<div class="fixed inset-0 bg-on-background/40 backdrop-blur-[2px] z-60 flex flex-col justify-end transition-opacity duration-300" id="backdrop">
+<!-- Bottom Sheet -->
+<div class="bg-surface-container-lowest rounded-t-[24px] w-full max-w-lg mx-auto shadow-2xl animate-in slide-in-from-bottom duration-500 flex flex-col items-center pb-12 pt-6 px-container-padding relative">
+<!-- Handle -->
+<div class="w-12 h-1.5 bg-outline-variant rounded-full mb-8"></div>
+<!-- 3D Success Asset (Visual) -->
+<div class="relative w-32 h-32 mb-6">
+<div class="absolute inset-0 bg-primary/10 rounded-full blur-2xl"></div>
+<div class="floating-medal flex items-center justify-center bg-surface-container-lowest rounded-full w-full h-full border-2 border-primary/20 achievement-glow">
+<img class="w-24 h-24 object-contain" data-alt="A 3D achievement medal styled with polished emerald green and radiant gold. In the center, a golden coin featuring the South Korean Won symbol sparkles. A vibrant green checkmark shield is positioned in front. The lighting is celebratory and optimistic, creating a premium gaming-reward aesthetic against a clean light background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkUIaWDGr3GCOW7ffCWI0vxmIIEVAP89GZ-XgIJRfnxNh9OtkrFCKSXCaSH6XWCC_16DX0zIbIeD9FdcO7PHcQ0g72GSNMToi-TcTA6Q1WGLhbQwejwbjKKY0LL8moWZEfBeA3E3EN4cqAGoEM-_KP-Io44xABhh53exafQ-poj__FS3Nb-sj3ZDSIe71DMRkWsNvOE5GJF3qIGb2Mp9ZH0kG5DITW7QxJu-zYkntWcpFG8TWv0B4j"/>
+</div>
+<div class="absolute -top-2 -right-2 bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-label-bold shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+                    연속 8일
+                </div>
+</div>
+<!-- Headlines -->
+<div class="text-center space-y-2 mb-8">
+<h1 class="text-headline-lg font-headline-lg text-on-surface">오늘의 뉴스 미션을 완료했어요.</h1>
+<p class="text-body-lg font-body-lg text-on-surface-variant">XP와 연속 수행일이 저장됐어요.</p>
+</div>
+<!-- Reward Breakdown Bento -->
+<div class="grid grid-cols-2 gap-stack-gap-md w-full mb-10">
+<!-- XP Item -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center border border-outline-variant/30">
+<span class="text-label-bold font-label-bold text-on-surface-variant mb-1">획득 XP</span>
+<span class="text-headline-md font-headline-md text-primary">+25 XP</span>
+</div>
+<!-- Progress Item -->
+<div class="bg-surface-container-low rounded-xl p-4 flex flex-col items-center border border-outline-variant/30">
+<span class="text-label-bold font-label-bold text-on-surface-variant mb-1">레벨 진행도</span>
+<span class="text-body-lg font-headline-md text-on-surface">420 → 445</span>
+</div>
+</div>
+<!-- Level Progress Bar Visual -->
+<div class="w-full space-y-2 mb-10">
+<div class="flex justify-between text-label-bold text-on-surface-variant">
+<span>Lv.12</span>
+<span>Lv.13</span>
+</div>
+<div class="w-full h-4 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[42%] transition-all duration-1000 ease-out" id="progressFill" style="width: 44.5%;"></div>
+</div>
+<p class="text-center text-label-sm font-label-sm text-on-surface-variant">다음 레벨까지 555 XP 남았습니다.</p>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-3 w-full">
+<button class="h-[56px] w-full bg-primary text-on-primary rounded-xl font-headline-md hover:opacity-90 active:scale-95 transition-all flex items-center justify-center" onclick="closeSheet()">
+                    확인
+                </button>
+<button class="h-[56px] w-full bg-surface-container-lowest border-2 border-primary/20 text-primary rounded-xl font-headline-md hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">share</span>
+                    레벨업 인증글로 공유하기
+                </button>
+</div>
+</div>
+</div>
+<script>
+        function closeSheet() {
+            const backdrop = document.getElementById('backdrop');
+            backdrop.style.opacity = '0';
+            setTimeout(() => {
+                backdrop.style.display = 'none';
+            }, 300);
+        }
+
+        // Slight micro-interaction for the progress bar
+        window.addEventListener('DOMContentLoaded', () => {
+            const progress = document.getElementById('progressFill');
+            progress.style.width = '42%';
+            setTimeout(() => {
+                progress.style.width = '44.5%';
+            }, 500);
+        });
+    </script>
+</body></html>

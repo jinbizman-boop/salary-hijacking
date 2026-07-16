@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: componentSpacing.xs,
     padding: componentSpacing.md,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: componentColors.primaryGreenSoft,
   },
   summaryLabel: {
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: componentSpacing.md,
-    minHeight: 54,
-    paddingVertical: componentSpacing.sm,
+    minHeight: 58,
+    paddingVertical: componentSpacing.md,
     borderBottomWidth: 1,
     borderBottomColor: componentColors.line,
   },
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   guard: {
-    color: componentColors.textSecondary,
+    color: componentColors.textMuted,
     fontSize: 12,
     fontWeight: "700",
   },

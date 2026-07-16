@@ -1,0 +1,104 @@
+[
+  {
+    "screen": "community-all",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/_1",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "community-free",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/_2",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "community-hobby",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/_4",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "community-level-certification",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/_3",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "community-write",
+    "source": "stitch_salary_hijacking_design_system-8/stitch_salary_hijacking_design_system/_12",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "english",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/lv_up_4",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "health",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/lv_up_5",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "level-main",
+    "source": "stitch_salary_hijacking_design_system-7/stitch_salary_hijacking_design_system/lv_up_3",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "login",
+    "source": "stitch_salary_hijacking_design_system-2/stitch_salary_hijacking_design_system/_8",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "news",
+    "source": "stitch_salary_hijacking_design_system-9/stitch_salary_hijacking_design_system/_6",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "notifications",
+    "source": "stitch_salary_hijacking_design_system-4/stitch_salary_hijacking_design_system/_5",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "plan-settings",
+    "source": "stitch_salary_hijacking_design_system-2/stitch_salary_hijacking_design_system/_9",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "profile",
+    "source": "stitch_salary_hijacking_design_system-8/stitch_salary_hijacking_design_system/_3",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "reading",
+    "source": "stitch_salary_hijacking_design_system-8/stitch_salary_hijacking_design_system/_6",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "salary-home",
+    "source": "stitch_salary_hijacking_design_system-3/stitch_salary_hijacking_design_system/_10",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "signup",
+    "source": "stitch_salary_hijacking_design_system-2/stitch_salary_hijacking_design_system/_14",
+    "hasPng": true,
+    "hasHtml": true
+  },
+  {
+    "screen": "splash",
+    "source": "stitch_salary_hijacking_design_system-2/stitch_salary_hijacking_design_system/_10",
+    "hasPng": true,
+    "hasHtml": true
+  }
+]

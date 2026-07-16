@@ -6,6 +6,7 @@ import path from "node:path";
 import test from "node:test";
 
 import {
+  buildGradleNodeExecutableSource,
   buildExpoLocalAndroidDebugInvocations,
   buildSameRootExpoCliGradleSource,
   buildWindowsSubstAliasPlan,
@@ -14,6 +15,8 @@ import {
   ensureAndroidDebugNdkAbiFilters,
   expoModulesCoreCmakeDebugRoot,
   parseWindowsSubstMappings,
+  patchAndroidRootJavaCompileSafeClasspath,
+  patchExpoModulesCoreJavaCompileKotlinClasspath,
   repairGradleTransformTemporaryWorkspaces,
   regenerateMissingReanimatedWindowsCmakeRules,
   repairReanimatedWindowsCmakeDirectories,
@@ -21,8 +24,11 @@ import {
   runExpoLocalAndroidDebugBuild,
 } from "./expo-local-android-debug-build.mjs";
 
-const makeWorkspace = () =>
-  fs.mkdtempSync(path.join(os.tmpdir(), "salary-expo-android-"));
+const makeWorkspace = () => {
+  const tmpRoot = path.join(process.cwd(), ".tmp", "native-build-tests");
+  fs.mkdirSync(tmpRoot, { recursive: true });
+  return fs.mkdtempSync(path.join(tmpRoot, "salary-expo-android-"));
+};
 
 const touch = (filePath, contents = "") => {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -115,6 +121,116 @@ test("preflight discovers bundled monorepo .tools JDK and Android SDK", () => {
   assert.equal(result.env.JAVA_HOME, javaHome);
   assert.equal(result.env.ANDROID_HOME, sdkRoot);
   assert.equal(result.env.ANDROID_SDK_ROOT, sdkRoot);
+});
+
+test("preflight pins a workspace Node executable for Gradle subprocesses", () => {
+  const rootDir = makeWorkspace();
+  const nodeBinDir = path.join(rootDir, ".tmp", "native-build-bin");
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const nodePath = path.join(nodeBinDir, "node.EXE");
+
+  writeMobileFixture(rootDir);
+  touch(nodePath);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = checkExpoLocalAndroidDebugPrerequisites({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: nodeBinDir,
+    platform: "win32",
+  });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+  assert.equal(result.env.SALARY_HIJACKING_NODE_EXECUTABLE, nodePath);
+  assert.equal(result.env.LOCALAPPDATA, path.join(rootDir, ".localappdata"));
+  assert.equal(
+    result.env.KOTLIN_USER_HOME,
+    path.join(rootDir, ".gradle-local-debug", "kotlin"),
+  );
+  assert.equal(
+    result.env.SALARY_HIJACKING_ANDROID_KOTLIN_CLASSPATH_DIR,
+    path.join(
+      rootDir,
+      ".gradle-local-debug",
+      "salary-hijacking-kotlin-classpath",
+    ),
+  );
+  assert.equal(
+    result.env.SALARY_HIJACKING_ANDROID_SAFE_CLASSPATH_DIR,
+    path.join(
+      rootDir,
+      ".gradle-local-debug",
+      "salary-hijacking-safe-classpath",
+    ),
+  );
+});
+
+test("preflight creates a Windows npm shim when Expo prebuild cannot find npm", () => {
+  const rootDir = makeWorkspace();
+  const binDir = path.join(rootDir, "bin");
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const pnpmExecPath = path.join(rootDir, ".tmp", "pnpm.cjs");
+
+  writeMobileFixture(rootDir);
+  touch(path.join(binDir, "node.EXE"));
+  touch(pnpmExecPath);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = checkExpoLocalAndroidDebugPrerequisites({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      npm_execpath: pnpmExecPath,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: binDir,
+    platform: "win32",
+  });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+  const shimPath = path.join(rootDir, ".local-native-bin", "npm.cmd");
+  const shimScriptPath = path.join(
+    rootDir,
+    ".local-native-bin",
+    "npm-shim.cjs",
+  );
+  assert.equal(fs.existsSync(shimPath), true);
+  assert.equal(fs.existsSync(shimScriptPath), true);
+  assert.match(fs.readFileSync(shimPath, "utf8"), /npm-shim\.cjs/u);
+  assert.match(fs.readFileSync(shimScriptPath, "utf8"), /npm view dist/u);
+  assert.equal(
+    (result.env.Path ?? result.env.PATH).split(path.delimiter)[0],
+    path.dirname(shimPath),
+  );
 });
 
 test("preflight fails when the Expo app config is missing", () => {
@@ -211,6 +327,269 @@ test("cleans only stale subst aliases that point at the Salary Hijacking workspa
   );
 });
 
+test("runner keeps repairing repeated Gradle temporary workspace failures on Windows", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const transformHashes = [
+    "b3db7a06956f2bccac6b9f3f98ca8237",
+    "12ac58ebd481dcbd7474580e70f1bb56",
+  ];
+  const staleExpoModulesCoreRJar = path.join(
+    rootDir,
+    "node_modules",
+    ".pnpm",
+    "expo-modules-core@2.5.0",
+    "node_modules",
+    "expo-modules-core",
+    "android",
+    "build",
+    "intermediates",
+    "compile_r_class_jar",
+    "debug",
+    "generateDebugRFile",
+    "R.jar",
+  );
+  const expoModulesCoreKotlinClass = path.join(
+    rootDir,
+    "node_modules",
+    ".pnpm",
+    "expo-modules-core@2.5.0",
+    "node_modules",
+    "expo-modules-core",
+    "android",
+    "build",
+    "tmp",
+    "kotlin-classes",
+    "debug",
+    "expo",
+    "modules",
+    "kotlin",
+    "AppContext.class",
+  );
+  let assembleDebugAttempts = 0;
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        assembleDebugAttempts += 1;
+        if (
+          assembleDebugAttempts > 1 &&
+          fs.existsSync(staleExpoModulesCoreRJar)
+        )
+          return { status: 1 };
+        if (assembleDebugAttempts <= transformHashes.length) {
+          const hash = transformHashes[assembleDebugAttempts - 1];
+          if (assembleDebugAttempts === 1) {
+            touch(staleExpoModulesCoreRJar, "stale");
+            touch(expoModulesCoreKotlinClass, "compiled");
+          }
+          touch(
+            path.join(
+              rootDir,
+              ".gradle-local-debug",
+              "caches",
+              "8.13",
+              "transforms",
+              `${hash}-42178b6f-79f7-4264-b3f9-3df7f4c1a571`,
+              "metadata.bin",
+            ),
+            "temp",
+          );
+          return { status: 1 };
+        }
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "debug",
+            "app-debug.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "androidTest",
+            "debug",
+            "app-debug-androidTest.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(assembleDebugAttempts, 3);
+  assert.equal(fs.existsSync(staleExpoModulesCoreRJar), false);
+  assert.equal(fs.existsSync(expoModulesCoreKotlinClass), true);
+});
+
+test("patches expo-modules-core JavaCompile to include Kotlin outputs", () => {
+  const rootDir = makeWorkspace();
+  const buildGradlePath = path.join(
+    rootDir,
+    "node_modules",
+    ".pnpm",
+    "expo-modules-core@2.5.0",
+    "node_modules",
+    "expo-modules-core",
+    "android",
+    "build.gradle",
+  );
+  touch(
+    buildGradlePath,
+    [
+      "apply plugin: 'com.android.library'",
+      "apply plugin: 'expo-module-gradle-plugin'",
+    ].join("\n"),
+  );
+
+  assert.equal(
+    patchExpoModulesCoreJavaCompileKotlinClasspath({ mobileRootDir: rootDir }),
+    1,
+  );
+  assert.equal(
+    patchExpoModulesCoreJavaCompileKotlinClasspath({ mobileRootDir: rootDir }),
+    0,
+  );
+
+  const patched = fs.readFileSync(buildGradlePath, "utf8");
+  assert.match(patched, /salaryHijackingJavaCompileKotlinClasspathPatch/u);
+  assert.match(patched, /tasks\.withType\(JavaCompile\)/u);
+  assert.match(patched, /kotlinTask\.destinationDirectory\.get\(\)\.asFile/u);
+  assert.match(patched, /tmp\/kotlin-classes\/\$\{variantOutputName\}/u);
+  assert.match(
+    patched,
+    /ant\.jar\(destfile: salaryHijackingKotlinClasspathJar\)/u,
+  );
+  assert.match(patched, /SALARY_HIJACKING_ANDROID_KOTLIN_CLASSPATH_DIR/u);
+  assert.match(patched, /compile_r_class_jar/u);
+  assert.match(patched, /'-classpath'/u);
+  assert.match(patched, /javaTask\.doFirst/u);
+  assert.match(patched, /javaTask\.dependsOn\(kotlinTask\)/u);
+});
+
+test("patches Android root JavaCompile to copy node_modules generated jars to a safe classpath cache", () => {
+  const rootDir = makeWorkspace();
+  const buildGradlePath = path.join(rootDir, "android", "build.gradle");
+  touch(
+    buildGradlePath,
+    [
+      "buildscript {",
+      "  repositories { google() }",
+      "}",
+      "allprojects { repositories { google() } }",
+    ].join("\n"),
+  );
+
+  assert.equal(
+    patchAndroidRootJavaCompileSafeClasspath({ mobileRootDir: rootDir }),
+    true,
+  );
+  assert.equal(
+    patchAndroidRootJavaCompileSafeClasspath({ mobileRootDir: rootDir }),
+    false,
+  );
+
+  const patched = fs.readFileSync(buildGradlePath, "utf8");
+  assert.match(patched, /salaryHijackingJavaCompileSafeClasspathPatch/u);
+  assert.match(patched, /tasks\.withType\(JavaCompile\)\.configureEach/u);
+  assert.doesNotMatch(patched, /afterEvaluate/u);
+  assert.match(patched, /SALARY_HIJACKING_ANDROID_SAFE_CLASSPATH_DIR/u);
+  assert.match(patched, /compile_library_classes_jar/u);
+  assert.match(patched, /StandardCopyOption\.REPLACE_EXISTING/u);
+  assert.match(
+    patched,
+    /javaTask\.classpath = files\(salaryHijackingSafeClasspathFiles\)/u,
+  );
+  assert.match(patched, /'-classpath'/u);
+});
+
 test("parses Windows subst mappings without treating unrelated drives as project aliases", () => {
   const mappings = parseWindowsSubstMappings(
     [
@@ -276,6 +655,49 @@ test("repairs Gradle transform temporary workspaces before retrying Windows buil
   );
   assert.equal(
     fs.existsSync(path.join(transformsRoot, existingTargetTemp)),
+    false,
+  );
+});
+
+test("repairs Gradle Kotlin DSL accessor temporary workspaces before retrying Windows builds", () => {
+  const rootDir = makeWorkspace();
+  const accessorsRoot = path.join(
+    rootDir,
+    ".gradle-local-debug",
+    "caches",
+    "8.13",
+    "kotlin-dsl",
+    "accessors",
+  );
+  const missingTargetHash = "6c030dd5654f008ca14835947e0c9f35";
+  const existingTargetHash = "9c030dd5654f008ca14835947e0c9f35";
+  const missingTargetTemp = `${missingTargetHash}-8d0c34b6-df90-4fe3-8166-bb6fd8f0dcae`;
+  const existingTargetTemp = `${existingTargetHash}-f40bbebd-763c-453e-84ab-c0f85fd8db8c`;
+
+  touch(path.join(accessorsRoot, missingTargetTemp, "metadata.bin"), "temp");
+  touch(path.join(accessorsRoot, existingTargetHash, "metadata.bin"), "ok");
+  touch(path.join(accessorsRoot, existingTargetTemp, "metadata.bin"), "dupe");
+
+  const result = repairGradleTransformTemporaryWorkspaces({
+    gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
+  });
+
+  assert.equal(result.moved, 1);
+  assert.equal(result.removed, 1);
+  assert.equal(
+    fs.existsSync(path.join(accessorsRoot, missingTargetHash)),
+    true,
+  );
+  assert.equal(
+    fs.existsSync(path.join(accessorsRoot, missingTargetTemp)),
+    false,
+  );
+  assert.equal(
+    fs.existsSync(path.join(accessorsRoot, existingTargetHash)),
+    true,
+  );
+  assert.equal(
+    fs.existsSync(path.join(accessorsRoot, existingTargetTemp)),
     false,
   );
 });
@@ -670,6 +1092,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "-Pksp.incremental=false",
     "-Pksp.incremental.intermodule=false",
     "-Dkotlin.compiler.execution.strategy=in-process",
+    "-PhermesEnabled=false",
     "-x",
     ":app:generateAutolinkingPackageList",
     "-x",
@@ -686,6 +1109,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "-Pksp.incremental=false",
     "-Pksp.incremental.intermodule=false",
     "-Dkotlin.compiler.execution.strategy=in-process",
+    "-PhermesEnabled=false",
     "-x",
     ":app:generateAutolinkingPackageList",
     "-x",
@@ -950,6 +1374,69 @@ test("pins Expo CLI Gradle path to the canonical root when Metro uses canonical 
     /cliFile = new File\("C:\/Users\/Telos_PC_17\/Desktop\/salary-hijacking-platform\/node_modules\/\.pnpm\/@expo\+cli@0\.24\.24\/node_modules\/@expo\/cli\/build\/bin\/cli"\)/,
   );
   assert.doesNotMatch(patched, /S:\//);
+});
+
+test("pins Hermes compiler to the Windows executable path", () => {
+  const source = [
+    "react {",
+    '    hermesCommand = new File(["node", "--print", "require.resolve(\'react-native/package.json\')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"',
+    "}",
+    "",
+  ].join("\n");
+
+  const patched = buildSameRootExpoCliGradleSource({
+    mobileRootDir:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\apps\\mobile",
+    platform: "win32",
+    realMonorepoRootDir:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+    resolvedExpoCliPath:
+      "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\@expo+cli@0.24.24\\node_modules\\@expo\\cli\\build\\bin\\cli",
+    source,
+  });
+
+  assert.match(patched, /\/sdks\/hermesc\/%OS-BIN%\/hermesc\.exe"/);
+  assert.doesNotMatch(patched, /\/sdks\/hermesc\/%OS-BIN%\/hermesc"/);
+});
+
+test("pins Gradle node invocations to an explicit Windows executable", () => {
+  const source = [
+    "pluginManagement {",
+    "  providers.exec {",
+    '    commandLine("node", "--print", "require.resolve(\'react-native/package.json\')")',
+    "  }",
+    "}",
+    "",
+  ].join("\n");
+
+  const patched = buildGradleNodeExecutableSource({
+    platform: "win32",
+    source,
+  });
+
+  assert.match(
+    patched,
+    /commandLine\(System\.getenv\('SALARY_HIJACKING_NODE_EXECUTABLE'\) \?: "node", "--print"/,
+  );
+  assert.doesNotMatch(patched, /commandLine\("node", "--print"/);
+});
+
+test("local Android debug builds disable Hermes when Windows cannot execute hermesc", () => {
+  const rootDir = makeWorkspace();
+  writeMobileFixture(rootDir);
+  touch(path.join(rootDir, "android", "gradlew.bat"));
+
+  const invocations = buildExpoLocalAndroidDebugInvocations({
+    mobileRootDir: rootDir,
+    output: "build/e2e/android/salary-hijacking-e2e.apk",
+    platform: "win32",
+  });
+
+  assert.ok(invocations.gradleArgs.includes("-PhermesEnabled=false"));
+  assert.ok(invocations.androidTestArgs.includes("-PhermesEnabled=false"));
+  assert.ok(
+    invocations.packageListArgs.includes("-PhermesEnabled=false") === false,
+  );
 });
 
 test("runner executes prebuild before Gradle and copies a verified APK to the Detox path", () => {

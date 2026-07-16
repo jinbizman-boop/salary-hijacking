@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: 12,
   },
   label: {
     color: componentColors.textSecondary,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   },
   value: {
     color: componentColors.textPrimary,
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "900",
   },
 });

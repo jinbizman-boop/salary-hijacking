@@ -44,11 +44,14 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   row: {
-    minHeight: 52,
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: componentColors.line,
   },
   copy: {
     flex: 1,
@@ -60,8 +63,9 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   status: {
-    color: componentColors.textSecondary,
+    color: componentColors.primaryGreenDark,
     fontSize: 12,
+    fontWeight: "800",
   },
   guard: {
     color: componentColors.textSecondary,

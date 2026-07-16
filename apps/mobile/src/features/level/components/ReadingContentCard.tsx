@@ -59,10 +59,10 @@ function RecordPreview({
 const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
-    gap: 8,
+    gap: 10,
   },
   category: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
     fontSize: 12,
     fontWeight: "900",
   },
@@ -85,9 +85,9 @@ const styles = StyleSheet.create({
   },
   recordPreview: {
     gap: 4,
-    padding: 12,
-    borderRadius: 14,
-    backgroundColor: "#F8FAFC",
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: componentColors.surfaceSoft,
   },
   recordQuestion: {
     color: componentColors.textSecondary,
@@ -101,9 +101,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: 14,
+    backgroundColor: componentColors.surfaceSoft,
   },
   secondaryText: {
-    color: componentColors.textPrimary,
+    color: componentColors.primaryGreenDark,
     fontWeight: "900",
   },
   source: {
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: "900",
   },
 });

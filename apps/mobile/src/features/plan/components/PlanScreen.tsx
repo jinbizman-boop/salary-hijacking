@@ -654,9 +654,9 @@ export function PlanScreen({
               formatKrw(parseKrwInput(payrollDraft.hijackAmount)),
             ],
           ]}
-          settingLabel="\uB0B4 \uAE09\uC5EC \uB0A9\uCE58 \uACC4\uD68D/\uC124\uC815 \uC124\uC815"
+          settingLabel="내 급여 납치 계획/설정 설정"
           settingTestID="payroll-section-settings-button"
-          title="\uB0B4 \uAE09\uC5EC \uB0A9\uCE58 \uACC4\uD68D/\uC124\uC815"
+          title="내 급여 납치 계획/설정"
           headers={[
             "\uAE09\uC5EC \uBC1B\uB294\uB0A0",
             "\uC218\uB839 \uC608\uC0C1 \uAE09\uC5EC",

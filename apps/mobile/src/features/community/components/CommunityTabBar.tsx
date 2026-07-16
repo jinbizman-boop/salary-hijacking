@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { componentColors, componentRadius } from "../../../shared/components";
 import { COMMUNITY_BOARD_LABELS } from "../community.constants";
 import type { CommunityBoardType } from "../community.types";
 
@@ -66,29 +67,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.pill,
+    backgroundColor: componentColors.surface,
   },
   selectedTab: {
-    borderColor: "#176B5B",
-    backgroundColor: "#E8F4F1",
+    borderColor: componentColors.primaryGreen,
+    backgroundColor: componentColors.primaryGreen,
   },
   tabLabel: {
-    color: "#4B5563",
+    color: componentColors.textSecondary,
     fontSize: 11,
     fontWeight: "800",
   },
   tabCount: {
-    color: "#6B7280",
+    color: componentColors.textMuted,
     fontSize: 10,
     fontWeight: "700",
   },
   selectedLabel: {
-    color: "#155E52",
+    color: "#FFFFFF",
   },
   guard: {
-    color: "#6B7280",
+    color: componentColors.textMuted,
     fontSize: 11,
     fontWeight: "700",
   },

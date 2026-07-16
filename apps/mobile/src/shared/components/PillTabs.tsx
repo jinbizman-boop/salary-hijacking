@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   },
   selectedPill: {
     borderColor: componentColors.primaryGreen,
-    backgroundColor: componentColors.primaryGreenSoft,
+    backgroundColor: componentColors.primaryGreen,
   },
   label: {
     color: componentColors.textSecondary,
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   selectedLabel: {
-    color: componentColors.primaryGreenDark,
+    color: "#FFFFFF",
   },
 });
