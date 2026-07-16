@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-16T22:39:22.640Z",
+  "generatedAt": "2026-07-16T22:45:25.123Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,10 +9,10 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "d7785b0f32cfadc58b2f75c8d767c8bdfb0e5a95",
-    "trackedWorkingTreeDirty": true,
-    "trackedChangeCount": 12,
-    "note": "Current tracked changes are Stitch reference/evidence/script updates; mobile runtime source was not changed in this iteration, so the rebuilt APK hash remains stable."
+    "gitHead": "7fdde9345c276c219804a64b40d7f7e85d0524a4",
+    "trackedWorkingTreeDirty": false,
+    "trackedChangeCount": 0,
+    "note": "Stitch reference inventory, visual evidence, and root script automation were committed before this evidence sync. Mobile runtime source was not changed in this iteration, so the rebuilt APK hash remains stable."
   },
   "stitch": {
     "zipCount": 10,
@@ -26,7 +26,7 @@
     "bytes": 70703071,
     "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
     "lastModified": "2026-07-16T22:23:24.045Z",
-    "packagedHead": "d7785b0f32cfadc58b2f75c8d767c8bdfb0e5a95"
+    "packagedHead": "7fdde9345c276c219804a64b40d7f7e85d0524a4"
   },
   "copies": [
     {
