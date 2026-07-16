@@ -10,10 +10,9 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- PR branch HEAD verification: run `git rev-parse HEAD` and compare with GitHub draft PR #2 metadata.
-- Last connector-observed PR head before this report sync: `06f463a0c491004eae121a252fb76e47f401bfd4`
+- Current branch HEAD: `9e6eea5fb1fe6641dc968fceef018e8ea2f65dc9`
 - Draft PR #2 state: `open`, `draft=true`, `merged=false`, `mergeable=true`
-- APK source/evidence HEAD: `0a780637c0ffb1397d30890d3d2c9f1cff2e1100`
+- APK packaged source HEAD: `7fdde9345c276c219804a64b40d7f7e85d0524a4`
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 - Git status evidence: `release/evidence/git-status-before-final-qa.txt`
 - Secret ignore evidence: `release/evidence/secret-ignore-final-qa.txt`
@@ -33,8 +32,8 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 - SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
 - Package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
-- Signing evidence: `release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log`
-- AAPT evidence: `release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log`
+- Signing evidence: `release/evidence/build-artifacts.json`
+- AAPT/package metadata evidence: `release/evidence/build-artifacts.json`
 - Remote HTTP/SHA verification: PASS, recorded in `release/evidence/build-artifacts.json`
 - Source delta after APK packaging: docs/evidence only, verified by `mobile:preview:latest-source-apk`
 

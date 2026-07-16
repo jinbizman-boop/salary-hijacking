@@ -6,7 +6,8 @@ Updated: 2026-07-17 KST
 
 - Repository: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- HEAD verification: run `git rev-parse HEAD`; the pushed PR head is also visible on draft PR #2.
+- Current branch HEAD: `9e6eea5fb1fe6641dc968fceef018e8ea2f65dc9`
+- APK packaged source HEAD: `7fdde9345c276c219804a64b40d7f7e85d0524a4`
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 - Draft PR state: `open`, `draft=true`, `merged=false`, `mergeable=true`
 - Release readiness: `BLOCKED`
@@ -31,7 +32,7 @@ Updated: 2026-07-17 KST
 - SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
-- Signing: verified by `release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log`
+- Signing and APK metadata: verified by `release/evidence/build-artifacts.json` and `release/evidence/checksums.txt`
 
 ## Verification Evidence
 
