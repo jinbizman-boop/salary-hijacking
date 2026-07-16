@@ -358,5 +358,14 @@
     "endedAt": "2026-07-16T20:06:08.858Z",
     "durationSeconds": 0,
     "evidence": "release readiness intentionally BLOCKED by physical phone and external approval gates"
+  },
+  {
+    "name": "remote-apk-artifact-branch-push-and-http-verify",
+    "command": "push codex-apk-artifacts-20260717-stitch-ui-final and verify raw GitHub APK HTTP 200 plus SHA256",
+    "exitCode": 0,
+    "startedAt": "2026-07-16T20:15:46.531Z",
+    "endedAt": "2026-07-16T20:15:46.531Z",
+    "durationSeconds": 96.2,
+    "evidence": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk"
   }
 ]

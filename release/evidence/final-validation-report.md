@@ -25,11 +25,13 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 ## Android APK Evidence
 
 - APK path: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
+- Remote APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk`
 - SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
 - Package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 - Signing evidence: `release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log`
 - AAPT evidence: `release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log`
+- Remote HTTP/SHA verification: PASS, recorded in `release/evidence/build-artifacts.json`
 
 ## Physical Device Status
 

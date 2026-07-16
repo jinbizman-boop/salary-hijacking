@@ -21,6 +21,8 @@ Updated: 2026-07-17 KST
 ## Passing Evidence
 
 - Current QA APK SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
+- Remote QA APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk`
+- Remote QA APK HTTP/SHA verification: PASS
 - APK signature verification: PASS
 - Visual evidence count: 17 mobile UI screenshots
 - Responsive web checks: 105
