@@ -6,17 +6,17 @@ Updated: 2026-07-17 KST
 
 - Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
 - Artifact APK: `D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk`
-- Repo APK: `C:/Users/PC/Desktop/salary-hijacking-platform/apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
+- Repo APK: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
 - Remote APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk`
 - SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
+- Packaged source HEAD: `7fdde9345c276c219804a64b40d7f7e85d0524a4`
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 
 ## Why This Is Still Blocked
 
 - Current status: BLOCKED
-- ADB path: `D:/salary-hijacking-artifacts/android-sdk/platform-tools/adb.exe`
-- Blocker: ADB is available, but no physical Android phone is attached to this Codex Windows environment at observation time; `adb devices -l` returned no attached device.
+- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-17 KST.
 - This handoff does not replace physical phone QA. strict readiness remains BLOCKED until the local no-secret proof file is produced by an attached physical Android phone.
 
 ## Required Phone Setup
@@ -40,9 +40,6 @@ Direct collector command:
 
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
-$env:ANDROID_HOME = 'D:\salary-hijacking-artifacts\android-sdk'
-$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
-$env:Path = "$env:ANDROID_HOME\platform-tools;$env:Path"
 node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
 ```
 

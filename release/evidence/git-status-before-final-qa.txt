@@ -1,9 +1,20 @@
-=== show-toplevel ===
-C:/Users/PC/Desktop/salary-hijacking-platform
-=== branch ===
-codex/payroll-reminder-launch-ready-100-20260714
-=== HEAD ===
-705428ca983b2ad61b1995a7b1f44f5d1b48b386
-=== status short ===
-=== porcelain all ===
-=== diff check ===
+﻿generatedAt=2026-07-16T22:58:52.8227284Z
+repo=C:/Users/PC/Desktop/salary-hijacking-platform
+branch=codex/payroll-reminder-launch-ready-100-20260714
+head=9e65d4df9a49e44816cde883239354249ebd2a4c
+status:
+ M docs/codex/08_FILE_COMPLETION_LOG.md
+ M docs/qa/100-completion/physical-phone-qa-handoff.md
+ M release/evidence/physical-phone/adb-devices.txt
+ M release/evidence/physical-phone/physical-phone-qa-summary.json
+ M scripts/release/generate-physical-phone-qa-handoff.mjs
+ M scripts/release/generate-physical-phone-qa-handoff.test.mjs
+?? docs/codex/100-completion/160_ITERATION_153_PHYSICAL_PHONE_HANDOFF_SOURCE_SYNC.md
+diff-stat:
+ docs/codex/08_FILE_COMPLETION_LOG.md               |  6 ++
+ .../qa/100-completion/physical-phone-qa-handoff.md |  9 +--
+ release/evidence/physical-phone/adb-devices.txt    |  6 +-
+ .../physical-phone/physical-phone-qa-summary.json  | 74 ++++++++++++----------
+ .../release/generate-physical-phone-qa-handoff.mjs |  6 ++
+ .../generate-physical-phone-qa-handoff.test.mjs    | 15 ++++-
+ 6 files changed, 69 insertions(+), 47 deletions(-)

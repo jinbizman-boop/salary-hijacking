@@ -37,6 +37,9 @@ export const buildPhysicalPhoneQaHandoff = ({
     android.phoneTargetDebugApkDownloadsPath,
   );
   const apkLocalPath = valueOrBlocked(android.phoneTargetDebugApkLocalPath);
+  const repoApkPath = valueOrBlocked(android.debugApkLocalPath);
+  const remoteApkUrl = valueOrBlocked(android.phoneTargetDebugApkTemporaryUrl);
+  const sourceHead = valueOrBlocked(android.latestSourcePackagedHead);
   const apkSha256 = valueOrBlocked(android.phoneTargetDebugApkSha256);
   const androidPackage = valueOrBlocked(appIdentity.androidPackage);
   const abis = Array.isArray(android.phoneTargetDebugApkAbis)
@@ -55,7 +58,10 @@ Updated: ${formatKstDate(now())} KST
 
 - Downloads APK: ${markdownCode(apkDownloadsPath)}
 - Artifact APK: ${markdownCode(apkLocalPath)}
+- Repo APK: ${markdownCode(repoApkPath)}
+- Remote APK: ${markdownCode(remoteApkUrl)}
 - SHA256: ${markdownCode(apkSha256)}
+- Packaged source HEAD: ${markdownCode(sourceHead)}
 - Android package: ${markdownCode(androidPackage)}
 - ABI: ${markdownCode(abis)}
 

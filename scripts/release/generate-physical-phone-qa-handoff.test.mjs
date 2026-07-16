@@ -52,15 +52,18 @@ const makePreviewEvidence = () => ({
     iosBundleIdentifier: "com.salaryhijacking.mobile",
   },
   android: {
+    debugApkLocalPath:
+      "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
     phoneTargetDebugApkDownloadsPath:
       "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration104-debug.apk",
     phoneTargetDebugApkLocalPath:
       "D:/salary-hijacking-artifacts/20260714/iteration-104-daily-budget-date-key/salary-hijacking-phone-arm64-iteration104-debug.apk",
+    phoneTargetDebugApkTemporaryUrl:
+      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration104/salary.apk",
     phoneTargetDebugApkSha256:
       "5E9CC86ECA43F41327FF3C8B4392F5F8F08479C58EC1EB7ED204CF7356ADCDB0",
     phoneTargetDebugApkAbis: ["arm64-v8a"],
-    phoneTargetDebugApkTemporaryUrl:
-      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260714-iteration104/salary.apk",
+    latestSourcePackagedHead: "9e65d4df9a49e44816cde883239354249ebd2a4c",
     physicalPhoneVerified: false,
     physicalPhoneBlocker:
       "No physical Android phone is attached to this Codex Windows environment at observation time.",
@@ -88,6 +91,12 @@ test("builds a no-secret physical phone QA handoff from current preview APK evid
   );
   assert.match(
     markdown,
+    /apps\/mobile\/build\/phone\/android\/salary-hijacking-phone-arm64-debug\.apk/,
+  );
+  assert.match(markdown, /raw\.githubusercontent\.com/);
+  assert.match(markdown, /9e65d4df9a49e44816cde883239354249ebd2a4c/);
+  assert.match(
+    markdown,
     /5E9CC86ECA43F41327FF3C8B4392F5F8F08479C58EC1EB7ED204CF7356ADCDB0/,
   );
   assert.match(markdown, /com\.salaryhijacking\.mobile/);
@@ -106,7 +115,7 @@ test("builds a no-secret physical phone QA handoff from current preview APK evid
   assert.match(markdown, /packageInfoProbe\.rawPackageInfoStored=false/);
   assert.match(markdown, /\/data\/app\/\.\.\./);
   assert.match(markdown, /release\/mobile-preview-phone-proof\.local\.json/);
-  assert.doesNotMatch(markdown, /raw\.githubusercontent\.com/);
+  assert.doesNotMatch(markdown, /sk-[A-Za-z0-9_-]+|DATABASE_URL=|-----BEGIN/i);
 });
 
 test("writes the handoff document to the docs QA completion directory", () => {
