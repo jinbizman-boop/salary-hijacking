@@ -1,7 +1,15 @@
 {
     "schemaVersion":  1,
-    "generatedAt":  "2026-07-17T04:55:31+09:00",
-    "gitHead":  "705428ca983b2ad61b1995a7b1f44f5d1b48b386",
+    "generatedAt":  "2026-07-17T05:22:00+09:00",
+    "gitHead":  "0a780637c0ffb1397d30890d3d2c9f1cff2e1100",
+    "draftPullRequest":  {
+                             "number":  2,
+                             "url":  "https://github.com/jinbizman-boop/salary-hijacking/pull/2",
+                             "base":  "main",
+                             "head":  "codex/payroll-reminder-launch-ready-100-20260714",
+                             "status":  "open draft",
+                             "updatedAt":  "2026-07-17T05:21:31+09:00"
+                         },
     "releaseReadiness":  "BLOCKED",
     "blockers":  [
                      {
@@ -49,9 +57,9 @@
                          "severity":  "P0",
                          "area":  "External release approval",
                          "status":  "BLOCKED",
-                         "reason":  "Production AAB, Play upload/submit, main merge, and production release actions are not approved for automatic execution.",
+                         "reason":  "Draft PR #2 is open for the release branch, but production AAB, Play upload/submit, main merge, and production release actions are not approved for automatic execution.",
                          "evidence":  "docs/codex/100-completion/05_GAP_REGISTER.md",
-                         "nextCommand":  "After explicit user approval, run production release commands documented in release/store and release evidence.",
+                         "nextCommand":  "After physical phone QA and explicit approval, review and merge https://github.com/jinbizman-boop/salary-hijacking/pull/2, then run production release commands documented in release/store and release evidence.",
                          "humanActionRequired":  true
                      }
                  ]

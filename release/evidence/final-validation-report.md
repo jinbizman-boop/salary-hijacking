@@ -10,7 +10,8 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- HEAD at report creation: `705428ca983b2ad61b1995a7b1f44f5d1b48b386`
+- HEAD at report creation: `0a780637c0ffb1397d30890d3d2c9f1cff2e1100`
+- Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 - Git status evidence: `release/evidence/git-status-before-final-qa.txt`
 - Secret ignore evidence: `release/evidence/secret-ignore-final-qa.txt`
 
@@ -46,7 +47,7 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 
 - unresolved launch-blocking gaps remain in `docs/codex/100-completion/05_GAP_REGISTER.md`
 - no physical Android phone proof exists
-- production AAB/Google Play/main merge actions remain externally gated
+- draft PR #2 is open, but production AAB/Google Play/main merge actions remain externally gated
 
 ## Judgment
 
