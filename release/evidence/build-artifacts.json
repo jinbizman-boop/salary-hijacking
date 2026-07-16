@@ -1,29 +1,45 @@
 {
-  "generatedAt": "2026-07-16T20:15:46.531Z",
+  "generatedAt": "2026-07-16T22:39:22.640Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
+  "versionCode": "1",
+  "versionName": "1.0.0",
+  "targetSdk": "35",
   "buildType": "debug-preview-qa",
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
+  "source": {
+    "gitHead": "d7785b0f32cfadc58b2f75c8d767c8bdfb0e5a95",
+    "trackedWorkingTreeDirty": true,
+    "trackedChangeCount": 12,
+    "note": "Current tracked changes are Stitch reference/evidence/script updates; mobile runtime source was not changed in this iteration, so the rebuilt APK hash remains stable."
+  },
+  "stitch": {
+    "zipCount": 10,
+    "canonicalScreenCount": 17,
+    "inventory": "docs/design/stitch/2026-07-16/STITCH_SCREEN_INVENTORY.md",
+    "sourceZipManifest": "docs/design/stitch/2026-07-16/source-zips/source-zips-manifest.json",
+    "comparison": "release/evidence/mobile-ui/stitch-comparison.md"
+  },
   "apk": {
     "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
     "bytes": 70703071,
     "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-    "lastModified": "2026-07-16T19:31:06.286Z",
-    "packagedHead": "aa52db4d093086841c58bd333bb39cb454109545"
+    "lastModified": "2026-07-16T22:23:24.045Z",
+    "packagedHead": "d7785b0f32cfadc58b2f75c8d767c8bdfb0e5a95"
   },
   "copies": [
     {
       "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
       "bytes": 70703071,
       "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-      "lastModified": "2026-07-16T19:31:06.286Z"
+      "lastModified": "2026-07-16T22:23:24.045Z"
     },
     {
       "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
       "bytes": 70703071,
       "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-      "lastModified": "2026-07-16T19:31:06.286Z"
+      "lastModified": "2026-07-16T22:23:24.045Z"
     }
   ],
   "signing": {
@@ -40,9 +56,13 @@
     "responsiveChecksPassed": true
   },
   "tests": {
-    "formatCheck": "PASS",
+    "stitchPreparation": "PASS",
+    "rootScriptTargeted": "PASS",
+    "mobileLint": "PASS",
     "mobileTypecheck": "PASS",
-    "mobileTest": "PASS (66 suites / 769 tests before final merge; merge post-check typecheck PASS)",
+    "mobileTest": "PASS (66 suites / 769 tests)",
+    "mobileFormatCheck": "PASS",
+    "rootFormatCheck": "PASS",
     "webExport": "PASS",
     "screenshotCapture": "PASS"
   },
@@ -51,19 +71,11 @@
     "logcatColdStart": "BLOCKED_NOT_CONNECTED"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
-  "nativeLibraries": [
-    "lib/arm64-v8a/libexpo-modules-core.so",
-    "lib/arm64-v8a/libreactnative.so",
-    "lib/arm64-v8a/libreanimated.so",
-    "lib/arm64-v8a/librnscreens.so"
-  ],
   "remoteArtifact": {
     "branch": "codex-apk-artifacts-20260717-stitch-ui-final",
     "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk",
-    "httpStatus": 200,
     "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-    "downloadVerified": true,
-    "verifiedAt": "2026-07-16T20:15:46.531Z",
-    "artifactType": "debug QA APK, not production AAB"
+    "artifactType": "debug QA APK, not production AAB",
+    "note": "Hash is unchanged from prior runtime build because this iteration updated Stitch reference/evidence automation, not mobile runtime source."
   }
 }
