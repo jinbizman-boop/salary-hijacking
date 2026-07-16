@@ -49,12 +49,13 @@ node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/D
 ## What The Collector Must Prove
 
 - Install succeeds on the attached physical phone.
+- Installed package is verified with `adb shell pm path com.salaryhijacking.mobile`.
 - 20 cold-start runs complete with zero fatal markers.
 - 20 background/foreground runs complete with zero fatal markers.
 - Navigation smoke reaches the package launcher without fatal markers.
 - Process kill plus relaunch persistence probe completes.
 - keyboard/safe-area probes complete.
-- raw logcat is summarized only; raw logcat lines, device serials, tokens, signing keys, and credentials are not stored.
+- raw logcat and raw package paths are summarized only; raw logcat lines, `/data/app/...` package paths, device serials, tokens, signing keys, and credentials are not stored.
 
 ## Expected Proof File
 
@@ -63,6 +64,9 @@ node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/D
 - The proof is acceptable only when it reports:
   - `physicalPhoneVerified=true`
   - `installVerified=true`
+  - `installedPackageVerified=true`
+  - `installedPackagePathHash` is present
+  - `packageInfoProbe.rawPackageInfoStored=false`
   - `coldStartRuns>=20`
   - `backgroundForegroundRuns>=20`
   - `coldStartFatalCount=0`

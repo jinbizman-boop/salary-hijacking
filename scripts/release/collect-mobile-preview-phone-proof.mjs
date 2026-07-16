@@ -149,6 +149,11 @@ const blockedProof = ({ now, reason, adbPath = null, apkPath = null }) => ({
     physicalPhoneVerified: false,
     physicalPhoneBlocker: reason,
     installVerified: false,
+    installedPackageVerified: false,
+    installedPackagePathHash: null,
+    packageInfoProbe: {
+      rawPackageInfoStored: false,
+    },
     navigationSmokeVerified: false,
     backgroundForegroundVerified: false,
     persistenceVerified: false,
@@ -231,6 +236,18 @@ export const buildMobilePreviewPhoneProof = ({
       reason: "adb install failed on the attached physical phone.",
     });
   }
+  const packageInfoProbe = commandRunner(adbPath, [
+    "shell",
+    "pm",
+    "path",
+    packageName,
+  ]);
+  const installedPackagePath = String(packageInfoProbe.stdout ?? "").trim();
+  const installedPackageVerified =
+    packageInfoProbe.status === 0 && /^package:/m.test(installedPackagePath);
+  const installedPackagePathHash = installedPackageVerified
+    ? sha256(installedPackagePath)
+    : null;
 
   let fatalCount = 0;
   let lastLogcatSummary = sanitizeLogcatSummary("");
@@ -349,6 +366,7 @@ export const buildMobilePreviewPhoneProof = ({
 
   const verified =
     fatalCount === 0 &&
+    installedPackageVerified &&
     navigationSmokeVerified &&
     backgroundForegroundVerified &&
     persistenceVerified &&
@@ -372,8 +390,15 @@ export const buildMobilePreviewPhoneProof = ({
       physicalPhoneVerified: verified,
       physicalPhoneBlocker: verified
         ? null
-        : "Physical phone startup logcat contained fatal markers.",
+        : installedPackageVerified
+          ? "Physical phone startup logcat contained fatal markers."
+          : "Installed package verification failed after adb install.",
       installVerified,
+      installedPackageVerified,
+      installedPackagePathHash,
+      packageInfoProbe: {
+        rawPackageInfoStored: false,
+      },
       attachedDeviceCount: devices.attachedCount,
       physicalDeviceCount: devices.physicalCount,
       emulatorDeviceCount: devices.emulatorCount,

@@ -18,7 +18,7 @@
                          "severity":  "P0",
                          "area":  "Mobile startup",
                          "status":  "BLOCKED",
-                         "reason":  "ADB is available but no physical Android phone is attached, so install/cold-start/logcat startup proof cannot be produced.",
+                         "reason":  "ADB is available but no physical Android phone is attached, so install/package-verification/cold-start/logcat startup proof cannot be produced.",
                          "evidence":  "release/evidence/physical-phone/adb-devices.txt",
                          "nextCommand":  "node scripts/release/run-physical-phone-qa.mjs --runs 20",
                          "humanActionRequired":  true

@@ -11,6 +11,11 @@
     "apkSha256":  "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
     "packageName":  "com.salaryhijacking.mobile",
     "installVerified":  false,
+    "installedPackageVerified":  false,
+    "installedPackagePathHash":  null,
+    "packageInfoProbe":  {
+        "rawPackageInfoStored":  false
+    },
     "coldStartCount":  0,
     "coldStartFatalCount":  null,
     "anrCount":  null,
