@@ -6,7 +6,7 @@ Updated: 2026-07-17 KST
 
 - 100% launch-ready declaration: `false`
 - Strict release readiness: `BLOCKED`
-- Current PR branch HEAD: `fea4dc62af868aa08ad622e8fb9c3d1cae5df5be`
+- Current PR branch HEAD: tracked by GitHub draft PR #2 metadata
 - APK source/evidence HEAD: `0a780637c0ffb1397d30890d3d2c9f1cff2e1100`
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 
