@@ -41,12 +41,12 @@ class MainActivity : ReactActivity() {
               mainComponentName,
               fabricEnabled
           ){
-                  override fun createRootView(): ReactRootView {
-                    return ReactRootView(this@MainActivity).apply {
-                      setBackgroundResource(R.drawable.ic_launcher_background)
-                    }
-                  }
-              })
+            override fun createRootView(): ReactRootView {
+              return ReactRootView(this@MainActivity).apply {
+                setBackgroundResource(R.drawable.ic_launcher_background)
+              }
+            }
+          })
   }
 
   /**
