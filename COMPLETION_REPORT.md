@@ -6,7 +6,9 @@ Updated: 2026-07-17 KST
 
 - Repository: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- HEAD: `705428ca983b2ad61b1995a7b1f44f5d1b48b386`
+- HEAD: `06f463a0c491004eae121a252fb76e47f401bfd4`
+- Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
+- Draft PR state: `open`, `draft=true`, `merged=false`, `mergeable=true`
 - Release readiness: `BLOCKED`
 - 100% launch-ready claim: `false`
 
@@ -16,6 +18,7 @@ Updated: 2026-07-17 KST
 - React Native mobile feature components received the Stitch visual token and layout pass.
 - Mobile visual evidence was regenerated: 17 mobile UI screenshots and 105 responsive checks.
 - Android phone-target debug APK exists and is signed.
+- Physical phone QA handoff and readiness gates now require installed package verification via `adb shell pm path com.salaryhijacking.mobile`.
 - Secret ignore evidence confirms `apps/mobile/secrets/firebase/google-services.json` remains ignored.
 - Working tree was clean before the latest final-QA evidence refresh.
 

@@ -1,7 +1,7 @@
 {
     "schemaVersion":  1,
-    "generatedAt":  "2026-07-17T05:58:00+09:00",
-    "gitHead":  "tracked-by-draft-pr-head",
+    "generatedAt":  "2026-07-17T06:30:00+09:00",
+    "gitHead":  "06f463a0c491004eae121a252fb76e47f401bfd4",
     "apkSourceGitHead":  "0a780637c0ffb1397d30890d3d2c9f1cff2e1100",
     "draftPullRequest":  {
                              "number":  2,
@@ -9,7 +9,10 @@
                              "base":  "main",
                              "head":  "codex/payroll-reminder-launch-ready-100-20260714",
                              "status":  "open draft",
-                             "updatedAt":  "2026-07-17T05:21:31+09:00"
+                             "headSha":  "06f463a0c491004eae121a252fb76e47f401bfd4",
+                             "updatedAt":  "2026-07-17T06:21:20+09:00",
+                             "merged":  false,
+                             "mergeable":  true
                          },
     "releaseReadiness":  "BLOCKED",
     "blockers":  [
