@@ -29,6 +29,15 @@ Updated: 2026-07-17 KST
 
 ## Required Command
 
+Preferred one-command runner:
+
+```powershell
+Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
+node scripts\release\run-physical-phone-qa.mjs --runs 20
+```
+
+Direct collector command:
+
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
 $env:ANDROID_HOME = 'D:\salary-hijacking-artifacts\android-sdk'

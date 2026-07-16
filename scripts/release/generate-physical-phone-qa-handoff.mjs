@@ -75,6 +75,15 @@ Updated: ${formatKstDate(now())} KST
 
 ## Required Command
 
+Preferred one-command runner:
+
+\`\`\`powershell
+Set-Location '${rootDir.replaceAll("'", "''")}'
+node scripts\\release\\run-physical-phone-qa.mjs --runs 20
+\`\`\`
+
+Direct collector command:
+
 \`\`\`powershell
 Set-Location '${rootDir.replaceAll("'", "''")}'
 node scripts\\release\\collect-mobile-preview-phone-proof.mjs --apk "${apkDownloadsPath}" --runs 20 --output release/mobile-preview-phone-proof.local.json --package ${androidPackage}

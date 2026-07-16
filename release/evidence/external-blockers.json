@@ -1,6 +1,6 @@
 {
     "schemaVersion":  1,
-    "generatedAt":  "2026-07-17T05:43:00+09:00",
+    "generatedAt":  "2026-07-17T05:58:00+09:00",
     "gitHead":  "tracked-by-draft-pr-head",
     "apkSourceGitHead":  "0a780637c0ffb1397d30890d3d2c9f1cff2e1100",
     "draftPullRequest":  {
@@ -20,7 +20,7 @@
                          "status":  "BLOCKED",
                          "reason":  "ADB is available but no physical Android phone is attached, so install/cold-start/logcat startup proof cannot be produced.",
                          "evidence":  "release/evidence/physical-phone/adb-devices.txt",
-                         "nextCommand":  "node scripts/release/collect-mobile-preview-phone-proof.mjs --apk \"C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk\" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile",
+                         "nextCommand":  "node scripts/release/run-physical-phone-qa.mjs --runs 20",
                          "humanActionRequired":  true
                      },
                      {
@@ -30,7 +30,7 @@
                          "status":  "PARTIAL",
                          "reason":  "Automated tests and emulator evidence exist, but physical phone relaunch/persistence flow evidence is missing.",
                          "evidence":  "docs/codex/100-completion/05_GAP_REGISTER.md",
-                         "nextCommand":  "Run physical phone proof collector and salary persistence probe on attached phone.",
+                         "nextCommand":  "Run node scripts/release/run-physical-phone-qa.mjs --runs 20 on an attached phone, then inspect the generated no-secret proof for salary persistence.",
                          "humanActionRequired":  true
                      },
                      {
@@ -40,7 +40,7 @@
                          "status":  "PARTIAL",
                          "reason":  "Automated tests and server-authority evidence exist, but physical phone recurrence/persistence flow evidence is missing.",
                          "evidence":  "docs/codex/100-completion/05_GAP_REGISTER.md",
-                         "nextCommand":  "Run physical phone proof collector and plan recurrence probe on attached phone.",
+                         "nextCommand":  "Run node scripts/release/run-physical-phone-qa.mjs --runs 20 on an attached phone, then inspect the generated no-secret proof for plan recurrence/persistence.",
                          "humanActionRequired":  true
                      },
                      {
@@ -50,7 +50,7 @@
                          "status":  "BLOCKED",
                          "reason":  "17 visual screenshots and 105 responsive web checks exist, but physical safe-area/keyboard matrix is not verified without an attached phone.",
                          "evidence":  "release/evidence/mobile-ui/capture-summary.json",
-                         "nextCommand":  "Run keyboard/safe-area probes on attached physical phone.",
+                         "nextCommand":  "Run node scripts/release/run-physical-phone-qa.mjs --runs 20 on an attached phone; the runner includes keyboard/safe-area probe evidence.",
                          "humanActionRequired":  true
                      },
                      {

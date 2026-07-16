@@ -93,6 +93,7 @@ test("builds a no-secret physical phone QA handoff from current preview APK evid
   assert.match(markdown, /com\.salaryhijacking\.mobile/);
   assert.match(markdown, /arm64-v8a/);
   assert.match(markdown, /collect-mobile-preview-phone-proof\.mjs/);
+  assert.match(markdown, /run-physical-phone-qa\.mjs/);
   assert.match(markdown, /--runs 20/);
   assert.match(markdown, /20 cold-start/);
   assert.match(markdown, /20 background\/foreground/);

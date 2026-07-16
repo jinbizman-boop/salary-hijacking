@@ -1,6 +1,6 @@
 {
     "schemaVersion":  1,
-    "generatedAt":  "2026-07-17T04:55:02+09:00",
+    "generatedAt":  "2026-07-17T05:58:00+09:00",
     "physicalPhoneVerified":  false,
     "blocker":  "ADB is available, but adb devices -l reports no attached physical Android phone.",
     "adbPath":  "D:/salary-hijacking-artifacts/android-sdk/platform-tools/adb.exe",
@@ -25,7 +25,8 @@
     "notificationDeepLinkVerified":  false,
     "offlineStateVerified":  false,
     "networkFailureStateVerified":  false,
-    "nextCommand":  "node scripts/release/collect-mobile-preview-phone-proof.mjs --apk \"C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk\" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile",
-    "gitHead":  "705428ca983b2ad61b1995a7b1f44f5d1b48b386",
+    "nextCommand":  "node scripts/release/run-physical-phone-qa.mjs --runs 20",
+    "gitHead":  "tracked-by-draft-pr-head",
+    "apkSourceGitHead":  "0a780637c0ffb1397d30890d3d2c9f1cff2e1100",
     "branch":  "codex/payroll-reminder-launch-ready-100-20260714"
 }
