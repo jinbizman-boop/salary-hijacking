@@ -2553,6 +2553,12 @@ test("uses local no-secret physical phone proof when present", () => {
             "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
           physicalPhoneVerified: true,
           installVerified: true,
+          installedPackageVerified: true,
+          installedPackagePathHash:
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          packageInfoProbe: {
+            rawPackageInfoStored: false,
+          },
           coldStartRuns: 20,
           coldStartFatalCount: 0,
           navigationSmokeVerified: true,
@@ -2661,6 +2667,75 @@ test("blocks physical phone proof for a stale APK hash", () => {
   assert.match(report, /mobile:preview:physical-phone/);
   assert.match(report, /APK SHA256 does not match/);
 });
+
+test("blocks physical phone proof without installed package verification", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          apkSha256:
+            "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+          physicalPhoneVerified: true,
+          installVerified: true,
+          installedPackageVerified: false,
+          installedPackagePathHash: null,
+          packageInfoProbe: {
+            rawPackageInfoStored: false,
+          },
+          coldStartRuns: 20,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 20,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /installed package verification/i);
+});
+
 test("blocks physical phone proof that lacks persistence and keyboard safe-area QA", () => {
   const rootDir = makeWorkspace();
   write(

@@ -3865,6 +3865,11 @@ const checkMobilePreviewEvidence = (
     !phoneProof ||
     (expectedPhoneProofApkSha.length === 64 &&
       phoneProofApkSha === expectedPhoneProofApkSha);
+  const phoneProofInstalledPackageVerified =
+    phoneProofAndroid.installedPackageVerified === true &&
+    typeof phoneProofAndroid.installedPackagePathHash === "string" &&
+    /^[A-F0-9]{64}$/.test(phoneProofAndroid.installedPackagePathHash) &&
+    phoneProofAndroid.packageInfoProbe?.rawPackageInfoStored === false;
   const phoneProofValid =
     phoneProof?.schemaVersion === 1 &&
     phoneProof.secretsRedacted === true &&
@@ -3875,6 +3880,7 @@ const checkMobilePreviewEvidence = (
     phoneProofApkMatchesEvidence &&
     phoneProofAndroid.physicalPhoneVerified === true &&
     phoneProofAndroid.installVerified === true &&
+    phoneProofInstalledPackageVerified &&
     Number.isInteger(phoneProofAndroid.coldStartRuns) &&
     phoneProofAndroid.coldStartRuns >= MIN_PHYSICAL_PHONE_RELIABILITY_RUNS &&
     phoneProofAndroid.coldStartFatalCount === 0 &&
@@ -3912,10 +3918,13 @@ const checkMobilePreviewEvidence = (
               ? `physical phone proof does not prove persistence, keyboard/safe-area, navigation, and background/foreground QA: missing ${phoneProofMissingQaFields.join(", ")}`
               : !phoneProofApkMatchesEvidence
                 ? "physical phone proof APK SHA256 does not match the current preview APK evidence"
-                : typeof phoneProofAndroid.physicalPhoneBlocker === "string" &&
-                    phoneProofAndroid.physicalPhoneBlocker.trim()
-                  ? phoneProofAndroid.physicalPhoneBlocker
-                  : "physical phone proof is present but does not prove install, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, and raw-logcat redaction";
+                : !phoneProofInstalledPackageVerified
+                  ? "physical phone proof does not prove installed package verification without raw package info storage"
+                  : typeof phoneProofAndroid.physicalPhoneBlocker ===
+                        "string" &&
+                      phoneProofAndroid.physicalPhoneBlocker.trim()
+                    ? phoneProofAndroid.physicalPhoneBlocker
+                    : "physical phone proof is present but does not prove install, installed package verification, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, raw-logcat redaction, and raw-package-info redaction";
 
   addMobileCheck(
     checks,
@@ -3929,7 +3938,7 @@ const checkMobilePreviewEvidence = (
       : android.physicalPhoneVerified === true
         ? "Physical phone preview QA is verified"
         : "Physical phone preview QA remains tracked as pending",
-    `physical phone preview QA proof must be no-secret, app-identity aligned, installed APK SHA256 matched to current preview evidence, install verified, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
+    `physical phone preview QA proof must be no-secret, app-identity aligned, installed APK SHA256 matched to current preview evidence, install verified, installed package verified without raw package info storage, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
   );
 };
 
