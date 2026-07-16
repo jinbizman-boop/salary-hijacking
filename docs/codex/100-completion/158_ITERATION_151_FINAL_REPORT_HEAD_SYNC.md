@@ -4,8 +4,8 @@ Date: 2026-07-17 KST
 
 ## Scope
 
-- Updated final readiness/report evidence to reference the current PR branch HEAD explicitly.
-- Replaced weak `tracked by GitHub draft PR #2 metadata` report wording with the observed PR branch HEAD `06f463a0c491004eae121a252fb76e47f401bfd4`.
+- Updated final readiness/report evidence to avoid stale self-referential commit hashes.
+- Replaced weak `tracked by GitHub draft PR #2 metadata` report wording with explicit verification instructions and the last connector-observed PR head.
 - Recorded current draft PR state: open, draft, unmerged, mergeable.
 - Added installed package proof requirements to the 100% readiness checklist.
 
@@ -19,7 +19,8 @@ Date: 2026-07-17 KST
 
 ## Verification
 
-- GitHub connector PR metadata confirmed PR #2 head SHA `06f463a0c491004eae121a252fb76e47f401bfd4`, state `open`, `draft=true`, `merged=false`, and `mergeable=true`.
+- GitHub connector PR metadata confirmed PR #2 head SHA `06f463a0c491004eae121a252fb76e47f401bfd4`, state `open`, `draft=true`, `merged=false`, and `mergeable=true` before this report-sync commit.
+- The report intentionally tells readers to verify the current HEAD with `git rev-parse HEAD` and PR #2 metadata because a Git commit cannot contain its own final SHA without changing that SHA.
 - `node -e "JSON.parse(require('fs').readFileSync('release/evidence/external-blockers.json','utf8'))"` passed.
 - `corepack pnpm run format:check` passed.
 - `git diff --check` passed.

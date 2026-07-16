@@ -10,7 +10,8 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- PR branch HEAD: `06f463a0c491004eae121a252fb76e47f401bfd4`
+- PR branch HEAD verification: run `git rev-parse HEAD` and compare with GitHub draft PR #2 metadata.
+- Last connector-observed PR head before this report sync: `06f463a0c491004eae121a252fb76e47f401bfd4`
 - Draft PR #2 state: `open`, `draft=true`, `merged=false`, `mergeable=true`
 - APK source/evidence HEAD: `0a780637c0ffb1397d30890d3d2c9f1cff2e1100`
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`

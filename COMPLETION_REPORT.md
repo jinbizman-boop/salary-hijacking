@@ -6,7 +6,7 @@ Updated: 2026-07-17 KST
 
 - Repository: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- HEAD: `06f463a0c491004eae121a252fb76e47f401bfd4`
+- HEAD verification: run `git rev-parse HEAD`; the pushed PR head is also visible on draft PR #2.
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 - Draft PR state: `open`, `draft=true`, `merged=false`, `mergeable=true`
 - Release readiness: `BLOCKED`
