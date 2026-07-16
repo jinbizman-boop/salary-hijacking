@@ -100,6 +100,11 @@ test("builds a no-secret physical phone QA handoff from current preview APK evid
   assert.match(markdown, /persistence/);
   assert.match(markdown, /keyboard\/safe-area/);
   assert.match(markdown, /raw logcat/);
+  assert.match(markdown, /adb shell pm path com\.salaryhijacking\.mobile/);
+  assert.match(markdown, /installedPackageVerified=true/);
+  assert.match(markdown, /installedPackagePathHash/);
+  assert.match(markdown, /packageInfoProbe\.rawPackageInfoStored=false/);
+  assert.match(markdown, /\/data\/app\/\.\.\./);
   assert.match(markdown, /release\/mobile-preview-phone-proof\.local\.json/);
   assert.doesNotMatch(markdown, /raw\.githubusercontent\.com/);
 });

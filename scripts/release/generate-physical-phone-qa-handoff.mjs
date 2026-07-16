@@ -92,12 +92,13 @@ node scripts\\release\\collect-mobile-preview-phone-proof.mjs --apk "${apkDownlo
 ## What The Collector Must Prove
 
 - Install succeeds on the attached physical phone.
+- Installed package is verified with \`adb shell pm path ${androidPackage}\`.
 - 20 cold-start runs complete with zero fatal markers.
 - 20 background/foreground runs complete with zero fatal markers.
 - Navigation smoke reaches the package launcher without fatal markers.
 - Process kill plus relaunch persistence probe completes.
 - keyboard/safe-area probes complete.
-- raw logcat is summarized only; raw logcat lines, device serials, tokens, signing keys, and credentials are not stored.
+- raw logcat and raw package paths are summarized only; raw logcat lines, \`/data/app/...\` package paths, device serials, tokens, signing keys, and credentials are not stored.
 
 ## Expected Proof File
 
@@ -106,6 +107,9 @@ node scripts\\release\\collect-mobile-preview-phone-proof.mjs --apk "${apkDownlo
 - The proof is acceptable only when it reports:
   - ${markdownCode("physicalPhoneVerified=true")}
   - ${markdownCode("installVerified=true")}
+  - ${markdownCode("installedPackageVerified=true")}
+  - ${markdownCode("installedPackagePathHash")} is present
+  - ${markdownCode("packageInfoProbe.rawPackageInfoStored=false")}
   - ${markdownCode("coldStartRuns>=20")}
   - ${markdownCode("backgroundForegroundRuns>=20")}
   - ${markdownCode("coldStartFatalCount=0")}
