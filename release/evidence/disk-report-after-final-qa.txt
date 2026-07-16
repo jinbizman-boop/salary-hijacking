@@ -1,19 +1,19 @@
-﻿
+
 > salary-hijacking-platform@1.0.0 disk:report C:\Users\PC\Desktop\salary-hijacking-platform
-> node scripts/dev/report-workspace-disk-usage.mjs
+> node scripts/dev/report-workspace-disk-usage.mjs "--" "--top" "20"
 
 [disk:report] root: C:\Users\PC\Desktop\salary-hijacking-platform
-[disk:report] top-level total: 2.48 GB
+[disk:report] top-level total: 2.52 GB
 [disk:report] largest top-level paths:
 - node_modules: 1.13 GB (directory)
 - .pnpm-store: 1.12 GB (directory)
 - apps: 159.8 MB (directory)
-- .git: 57.5 MB (directory)
+- .git: 96.0 MB (directory)
 - docs: 10.5 MB (directory)
 - services: 2.1 MB (directory)
 - packages: 1.8 MB (directory)
-- release: 1.6 MB (directory)
-- scripts: 888.6 KB (directory)
+- release: 1.7 MB (directory)
+- scripts: 906.3 KB (directory)
 - pnpm-lock.yaml: 666.4 KB (file)
 - database: 502.8 KB (directory)
 - .github: 195.5 KB (directory)
@@ -29,7 +29,7 @@
 - none
 [disk:report] protected paths:
 - node_modules: 1.13 GB
-- .git: 57.5 MB
+- .git: 96.0 MB
 - apps/mobile/node_modules: 65.7 KB
 [disk:report] sibling salary workspaces:
 - salary-hijacking-main: 3.2 KB (C:\Users\PC\Desktop\salary-hijacking-main)
