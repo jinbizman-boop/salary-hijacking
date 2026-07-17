@@ -93,6 +93,24 @@ function requiresNode22ForWrangler(packageJson) {
   return !/(?:^|[<>=~^* xX|&(), -])>=?\s*22(?:\.|\s|$)/.test(nodeRange);
 }
 
+function readRootNodeVersion(rootDir) {
+  for (const fileName of [".node-version", ".nvmrc"]) {
+    const filePath = path.join(rootDir, fileName);
+    if (!fs.existsSync(filePath)) continue;
+    const value = fs.readFileSync(filePath, "utf8").trim();
+    if (value) return { fileName, value };
+  }
+  return null;
+}
+
+function isNode22OrNewerVersion(value) {
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/^v/u, "");
+  const major = Number.parseInt(normalized.split(".")[0] ?? "", 10);
+  return Number.isInteger(major) && major >= 22;
+}
+
 const CLOUDFLARE_DEPLOY_SCRIPT_REQUIREMENTS = {
   "deploy:cloudflare-api": [
     "--filter @salary-hijacking/api",
@@ -223,6 +241,7 @@ export function runPackageManagerScriptCheck(options = {}) {
   const rootDir = options.rootDir ?? process.cwd();
   const failures = [];
   const checkedFiles = [];
+  let hasWranglerPackage = false;
 
   for (const packagePath of walkPackageJsonFiles(rootDir)) {
     const relativePath = toPosix(path.relative(rootDir, packagePath));
@@ -230,6 +249,8 @@ export function runPackageManagerScriptCheck(options = {}) {
 
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
     const scripts = packageJson.scripts;
+    if (hasPackageDependency(packageJson, "wrangler"))
+      hasWranglerPackage = true;
 
     if (requiresNode22ForWrangler(packageJson)) {
       failures.push(
@@ -271,6 +292,19 @@ export function runPackageManagerScriptCheck(options = {}) {
     }
 
     checkRootCloudflareDeployEntrypoints(relativePath, packageJson, failures);
+  }
+
+  if (hasWranglerPackage) {
+    const rootNodeVersion = readRootNodeVersion(rootDir);
+    if (!rootNodeVersion) {
+      failures.push(
+        ".node-version: missing Node 22+ version pin for Cloudflare Workers Builds",
+      );
+    } else if (!isNode22OrNewerVersion(rootNodeVersion.value)) {
+      failures.push(
+        `${rootNodeVersion.fileName}: Cloudflare Workers Builds must pin Node 22 or newer, got ${rootNodeVersion.value}`,
+      );
+    }
   }
 
   return {

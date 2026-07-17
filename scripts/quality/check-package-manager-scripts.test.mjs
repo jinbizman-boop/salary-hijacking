@@ -11,6 +11,10 @@ async function writeJson(filePath, value) {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
+async function writeNodeVersion(rootDir, value = "22.16.0") {
+  await writeFile(path.join(rootDir, ".node-version"), `${value}\n`, "utf8");
+}
+
 test("passes when package scripts delegate pnpm through corepack", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
 
@@ -144,6 +148,7 @@ test("passes when root turbo scripts use the corepack pnpm shim runner", async (
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
 
   try {
+    await writeNodeVersion(rootDir);
     await writeJson(path.join(rootDir, "package.json"), {
       packageManager: "pnpm@10.0.0",
       engines: {
@@ -185,6 +190,7 @@ test("fails when root Cloudflare Worker deploy entrypoints are missing", async (
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
 
   try {
+    await writeNodeVersion(rootDir);
     await writeJson(path.join(rootDir, "package.json"), {
       packageManager: "pnpm@10.0.0",
       name: "salary-hijacking-platform",
@@ -211,6 +217,7 @@ test("passes when root Cloudflare Worker deploy entrypoints are split by Worker"
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
 
   try {
+    await writeNodeVersion(rootDir);
     await writeJson(path.join(rootDir, "package.json"), {
       packageManager: "pnpm@10.0.0",
       name: "salary-hijacking-platform",
@@ -252,6 +259,7 @@ test("fails when a Wrangler package still allows Node 20 runtimes", async () => 
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
 
   try {
+    await writeNodeVersion(rootDir);
     await writeJson(path.join(rootDir, "services/api/package.json"), {
       name: "@salary-hijacking/api",
       engines: {
@@ -273,6 +281,33 @@ test("fails when a Wrangler package still allows Node 20 runtimes", async () => 
       /services\/api\/package\.json engines\.node/,
     );
     assert.match(result.failures.join("\n"), /Wrangler requires Node 22/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when Wrangler packages lack a root Node version pin for Cloudflare builds", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
+
+  try {
+    await writeJson(path.join(rootDir, "services/api/package.json"), {
+      name: "@salary-hijacking/api",
+      engines: {
+        node: ">=22.0.0 <25",
+      },
+      devDependencies: {
+        wrangler: "^4.107.0",
+      },
+      scripts: {
+        deploy: "corepack pnpm exec wrangler deploy --config wrangler.toml",
+      },
+    });
+
+    const result = runPackageManagerScriptCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /\.node-version/);
+    assert.match(result.failures.join("\n"), /Cloudflare Workers Builds/);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }
