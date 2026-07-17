@@ -71,6 +71,28 @@ function usesCorepackPnpmShimRunner(script) {
   return script.includes("scripts/dev/run-with-corepack-pnpm.mjs turbo run");
 }
 
+function hasPackageDependency(packageJson, dependencyName) {
+  return [
+    packageJson.dependencies,
+    packageJson.devDependencies,
+    packageJson.optionalDependencies,
+  ].some(
+    (dependencies) =>
+      dependencies &&
+      typeof dependencies === "object" &&
+      typeof dependencies[dependencyName] === "string",
+  );
+}
+
+function requiresNode22ForWrangler(packageJson) {
+  if (!hasPackageDependency(packageJson, "wrangler")) return false;
+
+  const nodeRange = packageJson.engines?.node;
+  if (typeof nodeRange !== "string") return true;
+
+  return !/(?:^|[<>=~^* xX|&(), -])>=?\s*22(?:\.|\s|$)/.test(nodeRange);
+}
+
 const CLOUDFLARE_DEPLOY_SCRIPT_REQUIREMENTS = {
   "deploy:cloudflare-api": [
     "--filter @salary-hijacking/api",
@@ -208,6 +230,13 @@ export function runPackageManagerScriptCheck(options = {}) {
 
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
     const scripts = packageJson.scripts;
+
+    if (requiresNode22ForWrangler(packageJson)) {
+      failures.push(
+        `${relativePath} engines.node: Wrangler requires Node 22 or newer; set a Node 22+ range so Cloudflare build images and local dry-runs do not execute Wrangler on Node 20`,
+      );
+    }
+
     if (!scripts || typeof scripts !== "object") continue;
 
     for (const [scriptName, scriptValue] of Object.entries(scripts)) {
