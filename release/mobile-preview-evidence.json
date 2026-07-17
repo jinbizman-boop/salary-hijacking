@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-17T00:38:31.047Z",
-  "source": "Local Android preview/debug QA evidence after CodeQL hardening: current source HEAD c15557ae2b2ccf1c4dc819449052f0a6697961ce is packaged in a phone-target arm64-v8a APK. The APK was verified with SHA256, aapt package metadata, arm64 native libraries, and apksigner v2 signature. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
+  "observedAt": "2026-07-17T06:28:43.440Z",
+  "source": "Local Android preview/debug QA evidence after Stitch design-system evidence refresh: current source HEAD be449241b55f55cb6c0373ddfde95dfc0c5a5011 is associated with the phone-target arm64-v8a APK. The APK was verified with SHA256, aapt package metadata, arm64 native libraries, and apksigner v2 signature. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -90,9 +90,9 @@
       "scripts/release/github-actions-security.test.mjs",
       "apps/mobile/scripts/expo-local-android-debug-build.test.mjs"
     ],
-    "latestSourceGitStatusSha256": "CLEAN_WORKTREE_AT_PACKAGED_HEAD_c15557ae2b2ccf1c4dc819449052f0a6697961ce",
-    "latestSourcePackagedAtKst": "2026-07-17T09:22:24+09:00",
-    "latestSourcePackagedHead": "c15557ae2b2ccf1c4dc819449052f0a6697961ce",
+    "latestSourceGitStatusSha256": "TRACKED_CHANGE_COUNT_5_AT_EVIDENCE_REFRESH_be449241b55f55cb6c0373ddfde95dfc0c5a5011",
+    "latestSourcePackagedAtKst": "2026-07-17T15:28:50+09:00",
+    "latestSourcePackagedHead": "be449241b55f55cb6c0373ddfde95dfc0c5a5011",
     "latestSourcePackagedApkSha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
     "latestSourcePackagedApk": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
     "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
@@ -118,7 +118,7 @@
     "latestSourceApkBytes": 70703071,
     "remoteArtifactHttpStatus": 200,
     "remoteArtifactSha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-    "remoteArtifactVerifiedAt": "2026-07-17T00:38:31.047Z"
+    "remoteArtifactVerifiedAt": "2026-07-17T06:28:43.440Z"
   },
   "privacy": {
     "containsEasToken": false,
