@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-16T22:45:25.123Z",
-  "source": "Local Android preview/debug QA evidence for Stitch UI pass: current source HEAD 7fdde9345c276c219804a64b40d7f7e85d0524a4 is packaged in a phone-target arm64-v8a APK. The APK was verified with SHA256, aapt package metadata, arm64 native libraries, and apksigner v2 signature. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
+  "observedAt": "2026-07-17T00:38:31.047Z",
+  "source": "Local Android preview/debug QA evidence after CodeQL hardening: current source HEAD c15557ae2b2ccf1c4dc819449052f0a6697961ce is packaged in a phone-target arm64-v8a APK. The APK was verified with SHA256, aapt package metadata, arm64 native libraries, and apksigner v2 signature. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -86,11 +86,13 @@
       "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
       "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
       "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk"
+      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk",
+      "scripts/release/github-actions-security.test.mjs",
+      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs"
     ],
-    "latestSourceGitStatusSha256": "CLEAN_WORKTREE_AT_PACKAGED_HEAD_7fdde9345c276c219804a64b40d7f7e85d0524a4",
-    "latestSourcePackagedAtKst": "2026-07-17T07:23:24+09:00",
-    "latestSourcePackagedHead": "7fdde9345c276c219804a64b40d7f7e85d0524a4",
+    "latestSourceGitStatusSha256": "CLEAN_WORKTREE_AT_PACKAGED_HEAD_c15557ae2b2ccf1c4dc819449052f0a6697961ce",
+    "latestSourcePackagedAtKst": "2026-07-17T09:22:24+09:00",
+    "latestSourcePackagedHead": "c15557ae2b2ccf1c4dc819449052f0a6697961ce",
     "latestSourcePackagedApkSha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
     "latestSourcePackagedApk": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
     "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
@@ -109,12 +111,14 @@
       "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
       "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
       "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk"
+      "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk",
+      "scripts/release/github-actions-security.test.mjs",
+      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs"
     ],
     "latestSourceApkBytes": 70703071,
     "remoteArtifactHttpStatus": 200,
     "remoteArtifactSha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-    "remoteArtifactVerifiedAt": "2026-07-16T22:45:25.123Z"
+    "remoteArtifactVerifiedAt": "2026-07-17T00:38:31.047Z"
   },
   "privacy": {
     "containsEasToken": false,
