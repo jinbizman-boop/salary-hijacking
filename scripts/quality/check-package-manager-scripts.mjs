@@ -93,9 +93,9 @@ function requiresNode22ForWrangler(packageJson) {
   return !/(?:^|[<>=~^* xX|&(), -])>=?\s*22(?:\.|\s|$)/.test(nodeRange);
 }
 
-function readRootNodeVersion(rootDir) {
+function readNodeVersion(directoryPath) {
   for (const fileName of [".node-version", ".nvmrc"]) {
-    const filePath = path.join(rootDir, fileName);
+    const filePath = path.join(directoryPath, fileName);
     if (!fs.existsSync(filePath)) continue;
     const value = fs.readFileSync(filePath, "utf8").trim();
     if (value) return { fileName, value };
@@ -295,7 +295,7 @@ export function runPackageManagerScriptCheck(options = {}) {
   }
 
   if (hasWranglerPackage) {
-    const rootNodeVersion = readRootNodeVersion(rootDir);
+    const rootNodeVersion = readNodeVersion(rootDir);
     if (!rootNodeVersion) {
       failures.push(
         ".node-version: missing Node 22+ version pin for Cloudflare Workers Builds",
@@ -303,6 +303,24 @@ export function runPackageManagerScriptCheck(options = {}) {
     } else if (!isNode22OrNewerVersion(rootNodeVersion.value)) {
       failures.push(
         `${rootNodeVersion.fileName}: Cloudflare Workers Builds must pin Node 22 or newer, got ${rootNodeVersion.value}`,
+      );
+    }
+  }
+
+  for (const packagePath of walkPackageJsonFiles(rootDir)) {
+    const packageDir = path.dirname(packagePath);
+    const relativePath = toPosix(path.relative(rootDir, packagePath));
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    if (!hasPackageDependency(packageJson, "wrangler")) continue;
+
+    const packageNodeVersion = readNodeVersion(packageDir);
+    if (!packageNodeVersion) {
+      failures.push(
+        `${toPosix(path.dirname(relativePath))}/.node-version: missing Node 22+ version pin for Worker package builds`,
+      );
+    } else if (!isNode22OrNewerVersion(packageNodeVersion.value)) {
+      failures.push(
+        `${toPosix(path.dirname(relativePath))}/${packageNodeVersion.fileName}: Worker package builds must pin Node 22 or newer, got ${packageNodeVersion.value}`,
       );
     }
   }
