@@ -2914,7 +2914,6 @@ const normalizeGitStatusPath = (line) => {
 };
 
 const isMobilePreviewSourcePath = (filePath) =>
-  filePath === "package.json" ||
   filePath === "pnpm-lock.yaml" ||
   filePath.startsWith("apps/mobile/") ||
   filePath.startsWith("packages/");

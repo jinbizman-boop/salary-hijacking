@@ -3041,6 +3041,40 @@ test("passes latest-source preview APK evidence when only evidence docs changed 
   );
 });
 
+test("passes latest-source preview APK evidence when only root package engine policy changed after packaging", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourcePackagedHead: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output:
+        "package.json\nscripts/quality/check-package-manager-scripts.mjs\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /only non-mobile evidence or documentation changed after APK packaging/,
+  );
+});
+
 test("blocks latest-source preview APK evidence when a dirty mobile file changes after packaging", () => {
   const rootDir = makeWorkspace();
   const dirtyStatus =
