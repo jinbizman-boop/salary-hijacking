@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T10:01:41.849Z",
+  "generatedAt": "2026-07-19T11:20:44.104Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "7845f8c68ccd8d9f29f833b4d2ce555094f0f849",
+    "gitHead": "e7c21594a9643605fd36fec9e6d6bbcec9715978",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
     "trackedWorkingTreeDirty": false,
     "trackedChangeCount": 0,
-    "note": "Source commit 7845f8c68ccd8d9f29f833b4d2ce555094f0f849 fixes the Expo Router tab crash regression by registering tab segment names (salary, plan, level, community, profile) instead of stale index route names. A phone-target arm64-v8a debug QA APK was rebuilt by replacing the JS bundle in the previously verified native APK, then zipaligned, debug-signed, and verified. Production AAB and Play submission were not attempted."
+    "note": "Source commit e7c21594a9643605fd36fec9e6d6bbcec9715978 adds an Android direct-entry QA bootstrap that registers the main React Native component without expo-router/entry, to isolate the user's repeated physical-device crash from Expo Router startup. Production AAB and Play submission were not attempted."
   },
   "stitch": {
     "zipCount": 10,
@@ -23,12 +23,12 @@
     "comparison": "release/evidence/mobile-ui/stitch-comparison.md"
   },
   "apk": {
-    "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-router-fix-debug.apk",
-    "bytes": 71033881,
-    "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
-    "lastModified": "2026-07-19T09:55:29.467Z",
-    "packagedHead": "7845f8c68ccd8d9f29f833b4d2ce555094f0f849",
-    "currentHeadRebuildStatus": "PASS_ROUTER_FIX_JS_BUNDLE_REPACK_SIGNED_APK_PRODUCED",
+    "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-direct-entry-debug.apk",
+    "bytes": 71009305,
+    "sha256": "695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D",
+    "lastModified": "2026-07-19T11:18:38.847Z",
+    "packagedHead": "e7c21594a9643605fd36fec9e6d6bbcec9715978",
+    "currentHeadRebuildStatus": "PASS_ANDROID_DIRECT_ENTRY_APK_PRODUCED",
     "currentHeadRebuildAttempts": [
       {
         "attemptedAt": "2026-07-19T02:50:00Z",
@@ -90,16 +90,16 @@
   },
   "copies": [
     {
-      "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-router-fix-debug.apk",
-      "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
-      "bytes": 71033881,
-      "lastModified": "2026-07-19T09:55:29.467Z"
+      "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-direct-entry-debug.apk",
+      "sha256": "695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D",
+      "bytes": 71009305,
+      "lastModified": "2026-07-19T11:18:38.847Z"
     },
     {
-      "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-router-fix-debug.apk",
-      "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
-      "bytes": 71033881,
-      "lastModified": "2026-07-19T09:55:29.467Z"
+      "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-direct-entry-debug.apk",
+      "sha256": "695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D",
+      "bytes": 71009305,
+      "lastModified": "2026-07-19T11:18:38.847Z"
     }
   ],
   "signing": {
@@ -132,7 +132,7 @@
     "stitchPreparation": "PASS",
     "stitchPreparationTest": "PASS (node --test scripts/release/prepare-stitch-design-system.test.mjs)",
     "mobileLint": "PASS",
-    "mobileTypecheck": "PASS (corepack pnpm --filter @salary-hijacking/mobile run typecheck)",
+    "mobileTypecheck": "PASS",
     "mobileTest": "PASS (66 suites / 769 tests)",
     "rootFormatCheck": "PASS (corepack pnpm run format:check)",
     "webExport": "PASS",
@@ -140,24 +140,25 @@
     "junkCleanupRegression": "PASS (corepack pnpm run clean:junk removed 36 generated paths / 5.70 GB after APK copy; APK evidence logs regenerated)",
     "screenshotCaptureTest": "PASS (node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs)",
     "routerRouteRegression": "PASS (app-screen-contract enforces salary/plan/level/community/profile segment route names)",
-    "apkBundleInspection": "PASS (APK bundle contains expo_router_segment_tabs and does not contain expo_router_index_tabs)"
+    "apkBundleInspection": "PASS (APK bundle contains expo_router_segment_tabs and does not contain expo_router_index_tabs)",
+    "androidDirectEntryBundleInspection": "PASS (contains android-router-bypass and main AppRegistry registration; excludes expo-router/entry)"
   },
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "PASS_ROUTER_FIX_JS_BUNDLE_REPACK_SIGNED_APK_PRODUCED",
+    "currentHeadLocalApkRebuild": "PASS_ANDROID_DIRECT_ENTRY_APK_PRODUCED",
     "currentHeadRemotePreviewApkRebuild": "PASS_ARTIFACT_BRANCH_RAW_HTTP_200"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
     "branch": "codex-apk-artifacts-20260719-latest",
-    "branchHead": "2be4d5fe1094fc1e5e771a093cc8cef3444e2635",
-    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-router-fix-debug.apk",
-    "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
-    "artifactType": "debug QA APK, not production AAB",
+    "branchHead": "5c66a0978e38216271127981fda5e109de8c1897",
+    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-direct-entry-debug.apk",
+    "sha256": "695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D",
+    "artifactType": "debug QA APK with Android direct-entry crash bypass, not production AAB",
     "httpStatus": 200,
-    "bytes": 71033881,
-    "verifiedAt": "2026-07-19T10:01:41.849Z",
-    "note": "Router crash fix debug QA APK was published to the artifact branch and the raw GitHub URL returned HTTP 200 with Content-Length 71033881. This is not a production AAB and no Play submit was attempted."
+    "bytes": 71009305,
+    "verifiedAt": "2026-07-19T11:20:44.104Z",
+    "note": "Direct-entry debug QA APK was published to the artifact branch and the raw GitHub URL returned HTTP 200."
   }
 }
