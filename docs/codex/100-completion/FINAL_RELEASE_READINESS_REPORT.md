@@ -5,13 +5,14 @@ Updated: 2026-07-19 KST
 ## Current Evidence Snapshot
 
 - Canonical repository: C:/Users/PC/Desktop/salary-hijacking-platform.
-- Latest verified branch HEAD before this report refresh: 32497dad66ef888676aaa5a5b0b8f09c6a5e62c1 in the current working tree.
+- Latest evidence branch HEAD: c13efaef4c7afb075048201c0d98bd9ddd02ac54.
+- Latest APK-packaged source commit: 32497dad66ef888676aaa5a5b0b8f09c6a5e62c1.
 - Latest current-HEAD phone QA APK: salary-hijacking-phone-arm64-debug.apk.
 - Local artifact: D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk.
 - Download copy: C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk.
 - Download URL: https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk.
 - SHA256: CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B.
-- Latest release-readiness regression test: pending rerun after this evidence refresh.
+- Latest release-readiness regression test: BLOCKED as expected after rerun; APK/current-source gates PASS, remaining blockers are physical phone QA, unresolved launch gaps, and origin/main release gate.
 
 ## Objective Readiness
 
@@ -20,7 +21,7 @@ The platform has a current-source ARM64 debug APK and extensive automated eviden
 ## PASS
 
 - Canonical platform repository is established and old salary-hijacking-main / salary-hijacking-work directories are not used for active work.
-- Current-source debug APK evidence has been refreshed from HEAD 32497dad66ef888676aaa5a5b0b8f09c6a5e62c1.
+- Current-source debug APK evidence has been refreshed from commit 32497dad66ef888676aaa5a5b0b8f09c6a5e62c1, with evidence-only follow-up commit c13efaef4c7afb075048201c0d98bd9ddd02ac54.
 - Release-readiness regression tests protect stale APK, evidence, and gate parsing behavior.
 - Production AAB, Play submission, new EAS project, new keystore, Firebase/secret rotation, destructive DB migration, force-push, and rebase were not performed.
 
