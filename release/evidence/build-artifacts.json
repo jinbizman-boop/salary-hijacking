@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T06:52:53.008Z",
+  "generatedAt": "2026-07-19T07:01:12.903Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -133,10 +133,13 @@
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
-    "branch": null,
-    "url": null,
-    "sha256": null,
+    "branch": "codex-apk-artifacts-20260719-latest",
+    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk",
+    "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
     "artifactType": "debug QA APK, not production AAB",
-    "note": "Current HEAD phone-target debug QA APK was produced locally, copied to D:/salary-hijacking-artifacts/apk and C:/Users/PC/Downloads, and verified with SHA256, aapt, apksigner v2, and arm64 native library evidence. EAS remote preview build remains blocked by missing non-interactive Expo account/EXPO_TOKEN. No secret value was requested or exposed."
+    "httpStatus": 200,
+    "bytes": 70713523,
+    "verifiedAt": "2026-07-19T07:01:12.903Z",
+    "note": "Latest phone-target debug QA APK was published to a dedicated artifact branch for mobile download. This is not a production AAB and no Play submit was attempted."
   }
 }

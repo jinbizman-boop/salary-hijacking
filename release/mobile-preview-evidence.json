@@ -22,12 +22,12 @@
     "phoneTargetDebugApkSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
     "phoneTargetDebugApkLocalPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
     "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-    "phoneTargetDebugApkTemporaryUrl": null,
-    "phoneTargetDebugApkTemporaryUrlVerified": false,
+    "phoneTargetDebugApkTemporaryUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk",
+    "phoneTargetDebugApkTemporaryUrlVerified": true,
     "phoneTargetDebugApkDownloadVerified": true,
     "phoneTargetDebugApkDownloadBlocker": null,
     "phoneTargetDebugApkDownloadVerificationEvidence": "release/evidence/build-artifacts.json",
-    "phoneTargetDebugApkArtifactBranch": "codex/payroll-reminder-launch-ready-100-20260714",
+    "phoneTargetDebugApkArtifactBranch": "codex-apk-artifacts-20260719-latest",
     "phoneTargetDebugApkEvidence": "release/evidence/build-artifacts.json",
     "phoneTargetDebugApkAbis": ["arm64-v8a"],
     "phoneTargetDebugApkEmulatorSmokeVerified": false,
@@ -114,9 +114,9 @@
       "release/evidence/final-qa-command-logs/apk-arm64-native-libs.log"
     ],
     "latestSourceApkBytes": 70713523,
-    "remoteArtifactHttpStatus": null,
-    "remoteArtifactSha256": null,
-    "remoteArtifactVerifiedAt": null
+    "remoteArtifactHttpStatus": 200,
+    "remoteArtifactSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+    "remoteArtifactVerifiedAt": "2026-07-19T07:01:12.903Z"
   },
   "privacy": {
     "containsEasToken": false,
