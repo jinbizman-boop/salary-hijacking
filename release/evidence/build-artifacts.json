@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T05:45:42.230Z",
+  "generatedAt": "2026-07-19T05:53:52.333Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -55,6 +55,13 @@
         "result": "TIMEOUT_AFTER_1804S_THEN_NO_APK_OUTPUT_AFTER_ADDITIONAL_WAIT",
         "stage": "assembleDebug / Gradle process left running without updating apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
         "cleanup": "Stopped only the stuck build processes and ran corepack pnpm run clean:junk; existing APK artifact was not replaced."
+      },
+      {
+        "attemptedAt": "2026-07-19T05:53:52.333Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile run build:preview:android",
+        "result": "BLOCKED_NO_EXPO_ACCOUNT_OR_EXPO_TOKEN",
+        "stage": "EAS preview APK build preflight",
+        "cleanup": "Ran corepack pnpm run clean:junk after failed EAS CLI dlx attempt; no Expo token or secret value was requested or printed."
       }
     ]
   },
@@ -113,7 +120,8 @@
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "BLOCKED_TIMEOUT_AFTER_UI_EVIDENCE_REFRESH"
+    "currentHeadLocalApkRebuild": "BLOCKED_TIMEOUT_AFTER_UI_EVIDENCE_REFRESH",
+    "currentHeadRemotePreviewApkRebuild": "BLOCKED_NO_EXPO_ACCOUNT_OR_EXPO_TOKEN"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
@@ -121,6 +129,6 @@
     "url": null,
     "sha256": null,
     "artifactType": "debug QA APK, not production AAB",
-    "note": "Current HEAD APK was rebuilt and copied locally to D:/salary-hijacking-artifacts/apk and C:/Users/PC/Downloads. No remote raw APK artifact was republished in this step because EAS/GitHub artifact publishing credentials are not available in this non-interactive environment."
+    "note": "Current HEAD preview APK was not republished in this step. Local Gradle rebuild timed out without updating the APK, and EAS preview build failed non-interactively because no Expo user account/EXPO_TOKEN is available. No secret value was requested or exposed."
   }
 }
