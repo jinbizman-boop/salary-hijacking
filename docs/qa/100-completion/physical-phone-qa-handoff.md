@@ -1,22 +1,22 @@
 # Physical Android Phone QA Handoff
 
-Updated: 2026-07-17 KST
+Updated: 2026-07-19 KST
 
 ## Current APK
 
 - Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
 - Artifact APK: `D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk`
 - Repo APK: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
-- Remote APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk`
-- SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
-- Packaged source HEAD: `7fdde9345c276c219804a64b40d7f7e85d0524a4`
+- Remote APK: not republished for this rebuild; use the Downloads APK on this Windows machine.
+- SHA256: `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`
+- Packaged source HEAD: `ee5df3101f53b596a9b818e731a82b41f953ea02`
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 
 ## Why This Is Still Blocked
 
 - Current status: BLOCKED
-- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-17 KST.
+- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-19 KST.
 - This handoff does not replace physical phone QA. strict readiness remains BLOCKED until the local no-secret proof file is produced by an attached physical Android phone.
 
 ## Required Phone Setup
