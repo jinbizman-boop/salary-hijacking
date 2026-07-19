@@ -10,13 +10,14 @@ Updated: 2026-07-19 KST
 - Remote APK: not republished for this rebuild; use the Downloads APK on this Windows machine.
 - SHA256: `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`
 - Packaged source HEAD: `ee5df3101f53b596a9b818e731a82b41f953ea02`
+- Latest pushed evidence HEAD at phone-observation time: `60f021cdb2658576327ffb24afd10bdc39684921`
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 
 ## Why This Is Still Blocked
 
 - Current status: BLOCKED
-- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-19 KST.
+- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; bundled adb at `C:/Users/PC/Desktop/salary-hijacking-platform/.tools/android-sdk/platform-tools/adb.exe` returned no attached device on 2026-07-19 KST.
 - This handoff does not replace physical phone QA. strict readiness remains BLOCKED until the local no-secret proof file is produced by an attached physical Android phone.
 
 ## Required Phone Setup
