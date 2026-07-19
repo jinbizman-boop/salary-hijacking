@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T09:59:16.751Z",
+  "generatedAt": "2026-07-19T10:01:41.849Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -146,18 +146,18 @@
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
     "currentHeadLocalApkRebuild": "PASS_ROUTER_FIX_JS_BUNDLE_REPACK_SIGNED_APK_PRODUCED",
-    "currentHeadRemotePreviewApkRebuild": "PENDING_ARTIFACT_BRANCH_PUSH"
+    "currentHeadRemotePreviewApkRebuild": "PASS_ARTIFACT_BRANCH_RAW_HTTP_200"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
     "branch": "codex-apk-artifacts-20260719-latest",
-    "branchHead": "PENDING_PUSH",
+    "branchHead": "2be4d5fe1094fc1e5e771a093cc8cef3444e2635",
     "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-router-fix-debug.apk",
     "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
     "artifactType": "debug QA APK, not production AAB",
-    "httpStatus": "PENDING_PUSH",
+    "httpStatus": 200,
     "bytes": 71033881,
-    "verifiedAt": "2026-07-19T09:59:16.751Z",
-    "note": "Router crash fix APK prepared for mobile download. Artifact branch push and raw URL HTTP verification are pending in this evidence snapshot."
+    "verifiedAt": "2026-07-19T10:01:41.849Z",
+    "note": "Router crash fix debug QA APK was published to the artifact branch and the raw GitHub URL returned HTTP 200 with Content-Length 71033881. This is not a production AAB and no Play submit was attempted."
   }
 }
