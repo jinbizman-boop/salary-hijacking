@@ -1,0 +1,15 @@
+﻿lib/arm64-v8a/libc++_shared.so
+lib/arm64-v8a/libexpo-modules-core.so
+lib/arm64-v8a/libfbjni.so
+lib/arm64-v8a/libgifimage.so
+lib/arm64-v8a/libimagepipeline.so
+lib/arm64-v8a/libjsc.so
+lib/arm64-v8a/libjsctooling.so
+lib/arm64-v8a/libjsi.so
+lib/arm64-v8a/libnative-filters.so
+lib/arm64-v8a/libnative-imagetranscoder.so
+lib/arm64-v8a/libreactnative.so
+lib/arm64-v8a/libreanimated.so
+lib/arm64-v8a/librnscreens.so
+lib/arm64-v8a/libstatic-webp.so
+lib/arm64-v8a/libworklets.so

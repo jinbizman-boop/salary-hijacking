@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T05:53:52.333Z",
+  "generatedAt": "2026-07-19T06:52:53.008Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "dc5ed2cc014fe0704c55989bae7cdb7416f6cd89",
+    "gitHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
     "trackedWorkingTreeDirty": true,
-    "trackedChangeCount": 14,
-    "note": "Current source has refreshed 30-screen mobile UI visual evidence. Android APK rebuild was attempted after these source changes but timed out and was stopped after no APK output changed; existing APK artifact remains the previous debug QA build and must be rebuilt before final APK handoff."
+    "trackedChangeCount": 8,
+    "note": "Current source HEAD b7c6133a11749726ce64564a31fc76c6a82dbf21 is packaged into the phone-target arm64-v8a debug QA APK after the 30-screen mobile UI evidence expansion. Local Gradle command timed out during assembleDebugAndroidTest, but assembleDebug produced a fresh app-debug.apk; the APK was copied, hashed, aapt-verified, apksigner v2-verified, and arm64 native libraries were recorded. Production AAB and Play submission were not attempted."
   },
   "stitch": {
     "zipCount": 10,
@@ -24,11 +24,11 @@
   },
   "apk": {
     "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
-    "bytes": 70703135,
-    "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
-    "lastModified": "2026-07-19T04:02:29.265Z",
-    "packagedHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
-    "currentHeadRebuildStatus": "BLOCKED_TIMEOUT_AFTER_UI_EVIDENCE_REFRESH",
+    "bytes": 70713523,
+    "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+    "lastModified": "2026-07-19T06:40:33.790Z",
+    "packagedHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
+    "currentHeadRebuildStatus": "PASS_APP_DEBUG_APK_PRODUCED_ANDROID_TEST_STAGE_TIMED_OUT",
     "currentHeadRebuildAttempts": [
       {
         "attemptedAt": "2026-07-19T02:50:00Z",
@@ -62,21 +62,29 @@
         "result": "BLOCKED_NO_EXPO_ACCOUNT_OR_EXPO_TOKEN",
         "stage": "EAS preview APK build preflight",
         "cleanup": "Ran corepack pnpm run clean:junk after failed EAS CLI dlx attempt; no Expo token or secret value was requested or printed."
+      },
+      {
+        "attemptedAt": "2026-07-19T06:47:27.025Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug",
+        "result": "PASS_APK_PRODUCED_THEN_TIMEOUT_DURING_ANDROID_TEST_STAGE",
+        "stage": "assembleDebug produced app-debug.apk; assembleDebugAndroidTest continued past command timeout",
+        "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
+        "cleanup": "Stopped only stale Gradle/node build processes after APK copy and verification."
       }
     ]
   },
   "copies": [
     {
       "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
-      "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
-      "bytes": 70703135,
-      "lastModified": "2026-07-19T04:02:29.265Z"
+      "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+      "bytes": 70713523,
+      "lastModified": "2026-07-19T06:40:33.790Z"
     },
     {
       "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
-      "bytes": 70703135,
-      "lastModified": "2026-07-19T04:02:29.265Z"
+      "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+      "bytes": 70713523,
+      "lastModified": "2026-07-19T06:40:33.790Z"
     }
   ],
   "signing": {
@@ -114,13 +122,13 @@
     "rootFormatCheck": "PASS",
     "webExport": "PASS",
     "screenshotCapture": "PASS (30 mobile UI screenshots / 120 responsive checks)",
-    "junkCleanupRegression": "PASS (node --test scripts/dev/clean-generated-junk.test.mjs)",
+    "junkCleanupRegression": "PASS (corepack pnpm run clean:junk removed 36 generated paths / 5.70 GB after APK copy; APK evidence logs regenerated)",
     "screenshotCaptureTest": "PASS (node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs)"
   },
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "BLOCKED_TIMEOUT_AFTER_UI_EVIDENCE_REFRESH",
+    "currentHeadLocalApkRebuild": "PASS_APP_DEBUG_APK_PRODUCED_ANDROID_TEST_STAGE_TIMED_OUT",
     "currentHeadRemotePreviewApkRebuild": "BLOCKED_NO_EXPO_ACCOUNT_OR_EXPO_TOKEN"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
@@ -129,6 +137,6 @@
     "url": null,
     "sha256": null,
     "artifactType": "debug QA APK, not production AAB",
-    "note": "Current HEAD preview APK was not republished in this step. Local Gradle rebuild timed out without updating the APK, and EAS preview build failed non-interactively because no Expo user account/EXPO_TOKEN is available. No secret value was requested or exposed."
+    "note": "Current HEAD phone-target debug QA APK was produced locally, copied to D:/salary-hijacking-artifacts/apk and C:/Users/PC/Downloads, and verified with SHA256, aapt, apksigner v2, and arm64 native library evidence. EAS remote preview build remains blocked by missing non-interactive Expo account/EXPO_TOKEN. No secret value was requested or exposed."
   }
 }

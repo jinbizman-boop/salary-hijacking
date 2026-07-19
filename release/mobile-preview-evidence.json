@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-19T04:11:38.072Z",
-  "source": "Local Android preview/debug QA evidence after Stitch design-system evidence refresh: current source HEAD ee5df3101f53b596a9b818e731a82b41f953ea02 is associated with the phone-target arm64-v8a APK. The APK was verified with SHA256, aapt package metadata, arm64 native libraries, and apksigner v2 signature. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
+  "observedAt": "2026-07-19T06:52:53.008Z",
+  "source": "Local Android preview/debug QA evidence after 30-screen mobile UI evidence expansion: current source HEAD b7c6133a11749726ce64564a31fc76c6a82dbf21 is associated with the phone-target arm64-v8a APK. The APK was verified with SHA256, aapt package metadata, arm64 native libraries, and apksigner v2 signature. No secrets, tokens, signing keys, raw logcat, or store credentials are stored.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -12,14 +12,14 @@
   "android": {
     "debugApkBuilt": true,
     "debugApkSigned": true,
-    "debugApkSha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
+    "debugApkSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
     "debugApkLocalPath": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
     "debugApkTemporaryUrl": null,
     "downloadVerified": true,
     "downloadVerificationEvidence": "release/evidence/build-artifacts.json",
     "phoneTargetDebugApkBuilt": true,
     "phoneTargetDebugApkSigned": true,
-    "phoneTargetDebugApkSha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
+    "phoneTargetDebugApkSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
     "phoneTargetDebugApkLocalPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
     "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
     "phoneTargetDebugApkTemporaryUrl": null,
@@ -27,7 +27,7 @@
     "phoneTargetDebugApkDownloadVerified": true,
     "phoneTargetDebugApkDownloadBlocker": null,
     "phoneTargetDebugApkDownloadVerificationEvidence": "release/evidence/build-artifacts.json",
-    "phoneTargetDebugApkArtifactBranch": null,
+    "phoneTargetDebugApkArtifactBranch": "codex/payroll-reminder-launch-ready-100-20260714",
     "phoneTargetDebugApkEvidence": "release/evidence/build-artifacts.json",
     "phoneTargetDebugApkAbis": ["arm64-v8a"],
     "phoneTargetDebugApkEmulatorSmokeVerified": false,
@@ -86,12 +86,13 @@
       "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
       "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
       "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs"
+      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+      "release/evidence/final-qa-command-logs/apk-arm64-native-libs.log"
     ],
-    "latestSourceGitStatusSha256": "TRACKED_CHANGE_COUNT_0_AT_EVIDENCE_REFRESH_ee5df3101f53b596a9b818e731a82b41f953ea02",
-    "latestSourcePackagedAtKst": "2026-07-19T13:11:39+09:00",
-    "latestSourcePackagedHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
-    "latestSourcePackagedApkSha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
+    "latestSourceGitStatusSha256": "TRACKED_CHANGE_COUNT_0_AT_EVIDENCE_REFRESH_b7c6133a11749726ce64564a31fc76c6a82dbf21",
+    "latestSourcePackagedAtKst": "2026-07-19T15:47:27+09:00",
+    "latestSourcePackagedHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
+    "latestSourcePackagedApkSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
     "latestSourcePackagedApk": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
     "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
     "latestSourceDirtyMobileSourcePathCount": 0,
@@ -109,9 +110,10 @@
       "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
       "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
       "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs"
+      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+      "release/evidence/final-qa-command-logs/apk-arm64-native-libs.log"
     ],
-    "latestSourceApkBytes": 70703135,
+    "latestSourceApkBytes": 70713523,
     "remoteArtifactHttpStatus": null,
     "remoteArtifactSha256": null,
     "remoteArtifactVerifiedAt": null
