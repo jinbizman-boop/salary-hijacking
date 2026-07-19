@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "generatedAt": "2026-07-19T04:56:54.331Z",
+  "generatedAt": "2026-07-19T07:18:19.188Z",
   "screenshotDir": "release\\screenshots",
   "mobileUiEvidenceDir": "release\\evidence\\mobile-ui",
-  "count": 36,
+  "count": 39,
   "storeCount": 6,
-  "mobileUiEvidenceCount": 30,
+  "mobileUiEvidenceCount": 33,
   "responsiveCheckCount": 120,
   "responsiveChecks": [
     {
@@ -1532,7 +1532,7 @@
       "file": "06_daily_budget.png",
       "width": 430,
       "height": 932,
-      "bytes": 64484
+      "bytes": 64517
     },
     {
       "group": "mobile-ui",
@@ -1701,6 +1701,27 @@
       "width": 430,
       "height": 932,
       "bytes": 25138
+    },
+    {
+      "group": "mobile-ui",
+      "file": "31_fixed_expense_form.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24395
+    },
+    {
+      "group": "mobile-ui",
+      "file": "32_fixed_saving_form.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25038
+    },
+    {
+      "group": "mobile-ui",
+      "file": "33_living_cost_form.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25963
     }
   ]
 }

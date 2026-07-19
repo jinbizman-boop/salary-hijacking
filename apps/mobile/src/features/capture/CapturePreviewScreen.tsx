@@ -65,6 +65,9 @@ export type CapturePreviewKind =
   | "common-empty"
   | "common-error"
   | "common-offline"
+  | "fixed-expense-form"
+  | "fixed-saving-form"
+  | "living-cost-form"
   | "terms-consent"
   | "expense-form-state"
   | "reading"
@@ -427,6 +430,18 @@ export function CapturePreviewScreen({
     return <CommonStateCapturePreview state="offline" />;
   }
 
+  if (kind === "fixed-expense-form") {
+    return <PlanFormStateCapturePreview variant="fixedExpense" />;
+  }
+
+  if (kind === "fixed-saving-form") {
+    return <PlanFormStateCapturePreview variant="fixedSaving" />;
+  }
+
+  if (kind === "living-cost-form") {
+    return <PlanFormStateCapturePreview variant="livingCost" />;
+  }
+
   if (kind === "terms-consent") {
     return <TermsConsentCapturePreview />;
   }
@@ -772,6 +787,66 @@ function ExpenseFormStateCapturePreview(): React.ReactElement {
       />
       <Text style={styles.guard}>
         키보드가 열려도 입력 필드와 저장 버튼은 safe area 안에 유지됩니다.
+      </Text>
+    </AppShell>
+  );
+}
+
+function PlanFormStateCapturePreview({
+  variant,
+}: Readonly<{
+  variant: "fixedExpense" | "fixedSaving" | "livingCost";
+}>): React.ReactElement {
+  const copy = {
+    fixedExpense: {
+      amount: "32,000원",
+      body: "월별 반복 지출은 템플릿과 이번 급여주기 발생분을 분리해서 저장합니다.",
+      category: "구독료",
+      detail: "ChatGPT 자동 결제",
+      title: "월별 고정 지출 설정",
+    },
+    fixedSaving: {
+      amount: "200,000원",
+      body: "고정 적금은 완료 처리 시 현재 주기 발생분만 반영하고 다음 주기에는 예정으로 다시 생성합니다.",
+      category: "저축",
+      detail: "NH투자증권 수시 투자",
+      title: "월별 고정 적금 설정",
+    },
+    livingCost: {
+      amount: "6,500원",
+      body: "일일 생활비는 하루 기준 금액을 저장하고 서버 기준 일수로 월별 생활비 총액을 계산합니다.",
+      category: "점심 식사",
+      detail: "KT광화문지사 구내식당",
+      title: "일일 생활비 설정",
+    },
+  }[variant];
+
+  return (
+    <AppShell
+      accessibilityLabel={`급여납치 ${copy.title} 화면 캡처`}
+      header={<AppHeader subtitle="계획" title={copy.title} />}
+    >
+      <SurfaceCard accessibilityLabel={`${copy.title} 안내`}>
+        <Text style={styles.sectionTitle}>{copy.title}</Text>
+        <Text style={styles.body}>{copy.body}</Text>
+      </SurfaceCard>
+      <SurfaceCard accessibilityLabel={`${copy.title} 입력 폼`}>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailText}>카테고리</Text>
+          <Text style={styles.detailStatus}>{copy.category}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailText}>내용</Text>
+          <Text style={styles.meta}>{copy.detail}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailText}>금액</Text>
+          <Text style={styles.detailStatus}>{copy.amount}</Text>
+        </View>
+        <PrimaryButton label="저장" onPress={() => undefined} />
+      </SurfaceCard>
+      <Text style={styles.guard}>
+        계획 화면 설정은 서버 권위 API 응답 기준으로 홈 화면과 동기화됩니다.
       </Text>
     </AppShell>
   );

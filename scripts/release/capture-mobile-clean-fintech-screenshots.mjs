@@ -84,6 +84,9 @@ const mobileUiEvidenceCaptures = [
   ["/capture/common-offline", "28_common_offline.png"],
   ["/capture/terms-consent", "29_terms_consent.png"],
   ["/capture/expense-form-state", "30_expense_form_state.png"],
+  ["/capture/fixed-expense-form", "31_fixed_expense_form.png"],
+  ["/capture/fixed-saving-form", "32_fixed_saving_form.png"],
+  ["/capture/living-cost-form", "33_living_cost_form.png"],
 ];
 
 const responsiveCheckRoutes = [

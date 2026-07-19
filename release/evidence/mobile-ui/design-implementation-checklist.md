@@ -43,16 +43,16 @@ Generated: 2026-07-19 KST
 ## Evidence
 
 - [x] Web export regenerated.
-- [x] 30 mobile UI screenshots regenerated.
+- [x] 33 mobile UI screenshots regenerated.
 - [x] Store screenshots regenerated.
 - [x] Responsive checks across 320, 360, 375, 390, 393, 412, 430, 768 passed.
 - [x] `capture-summary.json` regenerated.
 - [x] `stitch-comparison.md` generated.
-- [x] Profile detail, community detail, notification settings, common state, consent, and input form evidence added.
+- [x] Profile detail, community detail, notification settings, common state, consent, input form, and plan-setting form evidence added.
 
 ## Required Before 100% Claim
 
 - [x] Latest APK build regenerated from current HEAD.
-- [x] APK SHA256 recorded: `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`.
+- [x] APK SHA256 recorded: `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`.
 - [ ] APK install/cold-start tested on Android physical device.
 - [ ] No AndroidRuntime fatal exception in logcat.

@@ -1,15 +1,18 @@
-﻿lib/arm64-v8a/libc++_shared.so
-lib/arm64-v8a/libexpo-modules-core.so
-lib/arm64-v8a/libfbjni.so
-lib/arm64-v8a/libgifimage.so
-lib/arm64-v8a/libimagepipeline.so
-lib/arm64-v8a/libjsc.so
-lib/arm64-v8a/libjsctooling.so
-lib/arm64-v8a/libjsi.so
-lib/arm64-v8a/libnative-filters.so
-lib/arm64-v8a/libnative-imagetranscoder.so
-lib/arm64-v8a/libreactnative.so
-lib/arm64-v8a/libreanimated.so
-lib/arm64-v8a/librnscreens.so
-lib/arm64-v8a/libstatic-webp.so
-lib/arm64-v8a/libworklets.so
+﻿
+FullName                                     Length
+--------                                     ------
+lib/arm64-v8a/libc++_shared.so              1292904
+lib/arm64-v8a/libexpo-modules-core.so       1352360
+lib/arm64-v8a/libfbjni.so                    177000
+lib/arm64-v8a/libgifimage.so                 318992
+lib/arm64-v8a/libimagepipeline.so              8760
+lib/arm64-v8a/libjsc.so                    10173344
+lib/arm64-v8a/libjsctooling.so               240528
+lib/arm64-v8a/libjsi.so                     1007480
+lib/arm64-v8a/libnative-filters.so            23712
+lib/arm64-v8a/libnative-imagetranscoder.so   585376
+lib/arm64-v8a/libreactnative.so            22417896
+lib/arm64-v8a/libreanimated.so              2710792
+lib/arm64-v8a/librnscreens.so                167984
+lib/arm64-v8a/libstatic-webp.so              501856
+lib/arm64-v8a/libworklets.so                2067256

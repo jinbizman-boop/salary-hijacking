@@ -17,6 +17,6 @@ This is an in-progress implementation report, not a 100% completion claim.
 
 ## Not Yet Implemented / Blocked
 
-- Current-HEAD Android ARM64 debug QA APK build now PASS: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`, SHA256 `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`.
+- Current-source Android ARM64 debug QA APK build now PASS: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`, SHA256 `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`.
 - Current-HEAD physical device cold start/logcat QA is still blocked because no physical Android phone is attached.
 - Production AAB and Play submission remain blocked by explicit NO approvals.

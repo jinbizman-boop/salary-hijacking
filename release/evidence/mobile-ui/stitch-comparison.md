@@ -33,9 +33,10 @@
 
 ## Visual Evidence
 
-- 30 mobile UI screenshots regenerated in `release/evidence/mobile-ui` on 2026-07-19 KST.
+- 33 mobile UI screenshots regenerated in `release/evidence/mobile-ui` on 2026-07-19 KST.
 - Files `01_splash.png` through `17_profile_level.png` cover the canonical Stitch/PDF screen set.
 - Files `18_profile_settings.png` through `30_expense_form_state.png` extend the current evidence set to profile detail, post detail, notification settings, common states, consent, and input form states.
+- Files `31_fixed_expense_form.png` through `33_living_cost_form.png` add explicit plan-setting form states for fixed expenses, fixed savings, and daily living costs.
 - Responsive widths checked: 320, 360, 375, 390, 393, 412, 430, 768.
 - Responsive check count: 120.
 - Horizontal overflow: 0 detected.
@@ -49,7 +50,7 @@
 - `corepack pnpm run format:check` PASS
 - `corepack pnpm --filter @salary-hijacking/mobile run export:web` PASS
 - `node scripts/release/capture-mobile-clean-fintech-screenshots.mjs` PASS
-- Current-head Android debug QA APK evidence is recorded with SHA256 `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`; APK signing/package gates pass in release readiness.
+- Current-source Android debug QA APK evidence is recorded with SHA256 `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`; APK signing/package gates pass in release readiness, and the raw GitHub download artifact was re-downloaded with a matching hash.
 
 ## Remaining Visual Risk
 

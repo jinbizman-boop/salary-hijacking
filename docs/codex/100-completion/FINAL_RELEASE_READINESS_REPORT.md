@@ -5,12 +5,12 @@ Updated: 2026-07-19 KST
 ## Current Evidence Snapshot
 
 - Canonical repository: C:/Users/PC/Desktop/salary-hijacking-platform.
-- Latest verified branch HEAD before this report refresh: ee5df3101f53b596a9b818e731a82b41f953ea02.
+- Latest verified branch HEAD before this report refresh: 7f40d3905bee37e30f8c14daf79190c1010923be plus the tracked 33-screen visual-evidence refresh in the current working tree.
 - Latest current-HEAD phone QA APK: salary-hijacking-phone-arm64-debug.apk.
 - Local artifact: D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk.
 - Download copy: C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk.
-- Download URL: not republished for this rebuild; use local/download copies recorded in `release/evidence/build-artifacts.json`.
-- SHA256: 235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A.
+- Download URL: https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk.
+- SHA256: CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B.
 - Latest release-readiness regression test: pending rerun after this evidence refresh.
 
 ## Objective Readiness
@@ -20,7 +20,7 @@ The platform has a current-source ARM64 debug APK and extensive automated eviden
 ## PASS
 
 - Canonical platform repository is established and old salary-hijacking-main / salary-hijacking-work directories are not used for active work.
-- Current-source debug APK evidence has been refreshed from HEAD ee5df3101f53b596a9b818e731a82b41f953ea02.
+- Current-source debug APK evidence has been refreshed from HEAD 7f40d3905bee37e30f8c14daf79190c1010923be plus the tracked 33-screen visual-evidence refresh.
 - Release-readiness regression tests protect stale APK, evidence, and gate parsing behavior.
 - Production AAB, Play submission, new EAS project, new keystore, Firebase/secret rotation, destructive DB migration, force-push, and rebase were not performed.
 
@@ -34,4 +34,4 @@ The platform has a current-source ARM64 debug APK and extensive automated eviden
 ## WARN
 
 - This report records a new local ARM64 debug QA APK build, not a production AAB or Play release.
-- Any new mobile runtime source change after HEAD ee5df3101f53b596a9b818e731a82b41f953ea02 requires a fresh test/build/evidence cycle before being called release-ready.
+- Any new mobile runtime source change after this report refresh requires a fresh test/build/evidence cycle before being called release-ready.

@@ -28,7 +28,7 @@ test("capture script produces the 17 core mobile UI evidence screenshots", () =>
   );
 });
 
-test("capture script produces the 30 official mobile UI evidence screenshots", () => {
+test("capture script produces the 33 official mobile UI evidence screenshots", () => {
   assert.match(source, /"18_profile_settings\.png"/);
   assert.match(source, /"19_profile_account\.png"/);
   assert.match(source, /"20_profile_community\.png"/);
@@ -42,6 +42,9 @@ test("capture script produces the 30 official mobile UI evidence screenshots", (
   assert.match(source, /"28_common_offline\.png"/);
   assert.match(source, /"29_terms_consent\.png"/);
   assert.match(source, /"30_expense_form_state\.png"/);
+  assert.match(source, /"31_fixed_expense_form\.png"/);
+  assert.match(source, /"32_fixed_saving_form\.png"/);
+  assert.match(source, /"33_living_cost_form\.png"/);
 });
 
 test("capture script records responsive overflow checks for 320 through 768px", () => {

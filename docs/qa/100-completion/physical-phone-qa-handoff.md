@@ -7,9 +7,9 @@ Updated: 2026-07-19 KST
 - Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
 - Artifact APK: `D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk`
 - Repo APK: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
-- Remote APK: `BLOCKED`
-- SHA256: `CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A`
-- Packaged source HEAD: `b7c6133a11749726ce64564a31fc76c6a82dbf21`
+- Remote APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk`
+- SHA256: `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`
+- Packaged source HEAD: `7f40d3905bee37e30f8c14daf79190c1010923be` plus tracked 33-screen visual-evidence refresh changes
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 

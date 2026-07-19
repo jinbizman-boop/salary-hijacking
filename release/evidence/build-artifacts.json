@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T07:01:12.903Z",
+  "generatedAt": "2026-07-19T08:19:01.397Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
+    "gitHead": "7f40d3905bee37e30f8c14daf79190c1010923be",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
     "trackedWorkingTreeDirty": true,
-    "trackedChangeCount": 8,
-    "note": "Current source HEAD b7c6133a11749726ce64564a31fc76c6a82dbf21 is packaged into the phone-target arm64-v8a debug QA APK after the 30-screen mobile UI evidence expansion. Local Gradle command timed out during assembleDebugAndroidTest, but assembleDebug produced a fresh app-debug.apk; the APK was copied, hashed, aapt-verified, apksigner v2-verified, and arm64 native libraries were recorded. Production AAB and Play submission were not attempted."
+    "trackedChangeCount": 14,
+    "note": "Current source HEAD 7f40d3905bee37e30f8c14daf79190c1010923be plus tracked Stitch evidence/capture changes is packaged into the phone-target arm64-v8a debug QA APK after the 33-screen mobile UI evidence expansion. The APK was copied to the app build path, D:/salary-hijacking-artifacts/apk, and C:/Users/PC/Downloads; SHA256, aapt, apksigner v2, arm64 native libraries, and raw GitHub artifact download hash were verified. Production AAB and Play submission were not attempted."
   },
   "stitch": {
     "zipCount": 10,
@@ -24,11 +24,11 @@
   },
   "apk": {
     "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
-    "bytes": 70713523,
-    "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
-    "lastModified": "2026-07-19T06:40:33.790Z",
-    "packagedHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
-    "currentHeadRebuildStatus": "PASS_APP_DEBUG_APK_PRODUCED_ANDROID_TEST_STAGE_TIMED_OUT",
+    "bytes": 70716651,
+    "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
+    "lastModified": "2026-07-19T08:03:20.361Z",
+    "packagedHead": "7f40d3905bee37e30f8c14daf79190c1010923be",
+    "currentHeadRebuildStatus": "PASS_ARM64_DEBUG_APK_PRODUCED",
     "currentHeadRebuildAttempts": [
       {
         "attemptedAt": "2026-07-19T02:50:00Z",
@@ -70,21 +70,28 @@
         "stage": "assembleDebug produced app-debug.apk; assembleDebugAndroidTest continued past command timeout",
         "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
         "cleanup": "Stopped only stale Gradle/node build processes after APK copy and verification."
+      },
+      {
+        "attemptedAt": "2026-07-19T08:19:01.397Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug",
+        "result": "PASS_EXIT_0_ARM64_DEBUG_APK_PRODUCED",
+        "stage": "assembleDebug + APK copy + SHA/aapt/apksigner/native-library verification",
+        "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk"
       }
     ]
   },
   "copies": [
     {
       "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
-      "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
-      "bytes": 70713523,
-      "lastModified": "2026-07-19T06:40:33.790Z"
+      "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
+      "bytes": 70716651,
+      "lastModified": "2026-07-19T08:03:20.361Z"
     },
     {
       "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
-      "bytes": 70713523,
-      "lastModified": "2026-07-19T06:40:33.790Z"
+      "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
+      "bytes": 70716651,
+      "lastModified": "2026-07-19T08:03:20.361Z"
     }
   ],
   "signing": {
@@ -96,9 +103,9 @@
   },
   "visualEvidence": {
     "captureSummary": "release/evidence/mobile-ui/capture-summary.json",
-    "mobileUiEvidenceCount": 30,
+    "mobileUiEvidenceCount": 33,
     "storeCount": 6,
-    "totalCapturedImageCount": 36,
+    "totalCapturedImageCount": 39,
     "responsiveCheckCount": 120,
     "responsiveChecksPassed": true,
     "horizontalOverflowDetected": 0,
@@ -121,25 +128,26 @@
     "mobileTest": "PASS (66 suites / 769 tests)",
     "rootFormatCheck": "PASS",
     "webExport": "PASS",
-    "screenshotCapture": "PASS (30 mobile UI screenshots / 120 responsive checks)",
+    "screenshotCapture": "PASS (33 mobile UI screenshots / 120 responsive checks)",
     "junkCleanupRegression": "PASS (corepack pnpm run clean:junk removed 36 generated paths / 5.70 GB after APK copy; APK evidence logs regenerated)",
     "screenshotCaptureTest": "PASS (node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs)"
   },
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "PASS_APP_DEBUG_APK_PRODUCED_ANDROID_TEST_STAGE_TIMED_OUT",
+    "currentHeadLocalApkRebuild": "PASS_ARM64_DEBUG_APK_PRODUCED",
     "currentHeadRemotePreviewApkRebuild": "BLOCKED_NO_EXPO_ACCOUNT_OR_EXPO_TOKEN"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
     "branch": "codex-apk-artifacts-20260719-latest",
+    "branchHead": "eba944f6160b8cf9b4d19055abd346eea261559f",
     "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk",
-    "sha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+    "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
     "artifactType": "debug QA APK, not production AAB",
     "httpStatus": 200,
-    "bytes": 70713523,
-    "verifiedAt": "2026-07-19T07:01:12.903Z",
-    "note": "Latest phone-target debug QA APK was published to a dedicated artifact branch for mobile download. This is not a production AAB and no Play submit was attempted."
+    "bytes": 70716651,
+    "verifiedAt": "2026-07-19T08:19:01.397Z",
+    "note": "Latest phone-target debug QA APK was published to a dedicated artifact branch for mobile download and re-downloaded for SHA256 verification. This is not a production AAB and no Play submit was attempted."
   }
 }

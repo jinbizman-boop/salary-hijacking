@@ -36,7 +36,7 @@ Status: PARTIAL
 3. Add explicit modal/state model coverage for fixed expense, fixed saving, living cost, delete confirmation, withdrawal confirmation, offline, empty, loading, and server error states.
 4. Ensure every button in captured states has a route, mutation, or disabled reason.
 
-Gate: G03 through G08 require 30 official screens, modal inventory, state inventory, and dead-link checks.
+Gate: G03 through G08 require the 33-screen mobile UI evidence set, modal inventory, state inventory, and dead-link checks.
 
 ## Phase 4: Interaction And Persistence
 

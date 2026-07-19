@@ -118,6 +118,8 @@ type CaptureScreenKind =
   | "common-error"
   | "common-loading"
   | "common-offline"
+  | "fixed-expense-form"
+  | "fixed-saving-form"
   | "profile"
   | "profile-level"
   | "profile-settings"
@@ -131,6 +133,7 @@ type CaptureScreenKind =
   | "notification-settings"
   | "terms-consent"
   | "expense-form-state"
+  | "living-cost-form"
   | "reading"
   | "news"
   | "english"
@@ -262,8 +265,11 @@ const CAPTURE_SCREENS: Readonly<Record<string, CaptureScreenKind>> =
     "common-offline": "common-offline",
     english: "english",
     "expense-form-state": "expense-form-state",
+    "fixed-expense-form": "fixed-expense-form",
+    "fixed-saving-form": "fixed-saving-form",
     health: "health",
     level: "level",
+    "living-cost-form": "living-cost-form",
     login: "login",
     news: "news",
     notifications: "notifications",
