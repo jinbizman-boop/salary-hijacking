@@ -1,6 +1,6 @@
 # Mobile UI Design Implementation Checklist
 
-Generated: 2026-07-17 KST
+Generated: 2026-07-19 KST
 
 ## Stitch Reference
 
@@ -43,11 +43,12 @@ Generated: 2026-07-17 KST
 ## Evidence
 
 - [x] Web export regenerated.
-- [x] 17 mobile UI screenshots regenerated.
+- [x] 30 mobile UI screenshots regenerated.
 - [x] Store screenshots regenerated.
 - [x] Responsive checks across 320, 360, 375, 390, 393, 412, 430, 768 passed.
 - [x] `capture-summary.json` regenerated.
 - [x] `stitch-comparison.md` generated.
+- [x] Profile detail, community detail, notification settings, common state, consent, and input form evidence added.
 
 ## Required Before 100% Claim
 

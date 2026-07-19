@@ -9,7 +9,7 @@ This is a live report for the active UI/UX finalization goal. It is not a 100% c
 - Implementation target: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Mobile stack: Expo Router, React Native, TypeScript, Jest, Expo Web capture tooling
 - Current design-token decision: Stitch-derived `#006A37` is semantic primary; legacy `#209252` is not randomly mixed into screen-local styles.
-- Current gate status: PARTIAL. The canonical 17 Stitch screens are evidenced, but the full 30-screen/modal/common-state/physical-device objective is not yet complete.
+- Current gate status: PARTIAL. The canonical 17 Stitch screens and 30 current mobile UI evidence files are captured, but modal sub-state, accessibility, and physical-device objectives are not yet complete.
 
 ## B. Input Reflection
 
@@ -24,9 +24,9 @@ This is a live report for the active UI/UX finalization goal. It is not a 100% c
 ## C. Screen Implementation
 
 - Official user screens required by objective: 30
-- Screens with direct current visual evidence: 17
+- Screens with direct current visual evidence: 30
 - Screens/routes with implementation or route coverage: 30 listed in `SCREEN_CATALOG.csv`
-- Screens requiring additional visual evidence: post detail, profile detail/settings, account, my posts, support, notices, terms, notification settings, common states
+- Screens requiring additional visual evidence: dedicated fixed-expense, fixed-saving, and daily-living-cost modal edit states
 - Modal/common-state inventory: PARTIAL
 
 ## D. Design Consistency
@@ -54,8 +54,8 @@ Latest known evidence from current repository:
 
 - Current comparison file: `release/evidence/mobile-ui/stitch-comparison.md`
 - Current capture summary: `release/evidence/mobile-ui/capture-summary.json`
-- Current result: 17 canonical screens captured; 120 responsive checks across 320, 360, 375, 390, 393, 412, 430, and 768px; horizontal overflow 0
-- Missing: pixel diff/SSIM comparator, full 30-screen/modal/common-state visual set
+- Current result: 30 mobile UI evidence files captured; 120 responsive checks across 320, 360, 375, 390, 393, 412, 430, and 768px; horizontal overflow 0
+- Missing: pixel diff/SSIM comparator, dedicated modal sub-state visual set, physical keyboard/device proof
 
 ## G. Review Result
 
@@ -77,8 +77,7 @@ Three independent reviews are not yet complete for the full objective. Existing 
 Not complete:
 
 - Missing exact local copies or confirmation for several named source files.
-- 30 official screens are not all visually captured.
-- Modal/state inventory is incomplete.
+- Dedicated plan modal sub-state inventory is incomplete.
 - Accessibility critical/serious count is not yet proven by an automated a11y run.
 - Physical Android device QA remains blocked.
 - Release readiness remains blocked by existing gap register and `origin/main` release gate.

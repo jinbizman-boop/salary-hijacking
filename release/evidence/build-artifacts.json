@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T04:11:38.072Z",
+  "generatedAt": "2026-07-19T05:45:42.230Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+    "gitHead": "dc5ed2cc014fe0704c55989bae7cdb7416f6cd89",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
-    "trackedWorkingTreeDirty": false,
-    "trackedChangeCount": 0,
-    "note": "Current HEAD Android arm64-v8a debug QA APK was rebuilt locally after the earlier Gradle timeout investigation. Gradle cache was moved to D:/salary-hijacking-artifacts during the build to avoid filling the project drive; repository build caches were cleaned after preserving the APK artifact."
+    "trackedWorkingTreeDirty": true,
+    "trackedChangeCount": 14,
+    "note": "Current source has refreshed 30-screen mobile UI visual evidence. Android APK rebuild was attempted after these source changes but timed out and was stopped after no APK output changed; existing APK artifact remains the previous debug QA build and must be rebuilt before final APK handoff."
   },
   "stitch": {
     "zipCount": 10,
@@ -28,7 +28,7 @@
     "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
     "lastModified": "2026-07-19T04:02:29.265Z",
     "packagedHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
-    "currentHeadRebuildStatus": "PASS",
+    "currentHeadRebuildStatus": "BLOCKED_TIMEOUT_AFTER_UI_EVIDENCE_REFRESH",
     "currentHeadRebuildAttempts": [
       {
         "attemptedAt": "2026-07-19T02:50:00Z",
@@ -48,6 +48,13 @@
         "result": "PASS_AFTER_EXTENDED_NATIVE_GRADLE_BUILD",
         "stage": "assembleDebug + assembleDebugAndroidTest",
         "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk"
+      },
+      {
+        "attemptedAt": "2026-07-19T05:45:42.230Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug",
+        "result": "TIMEOUT_AFTER_1804S_THEN_NO_APK_OUTPUT_AFTER_ADDITIONAL_WAIT",
+        "stage": "assembleDebug / Gradle process left running without updating apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
+        "cleanup": "Stopped only the stuck build processes and ran corepack pnpm run clean:junk; existing APK artifact was not replaced."
       }
     ]
   },
@@ -74,9 +81,22 @@
   },
   "visualEvidence": {
     "captureSummary": "release/evidence/mobile-ui/capture-summary.json",
-    "mobileUiEvidenceCount": 17,
-    "responsiveCheckCount": 105,
-    "responsiveChecksPassed": true
+    "mobileUiEvidenceCount": 30,
+    "storeCount": 6,
+    "totalCapturedImageCount": 36,
+    "responsiveCheckCount": 120,
+    "responsiveChecksPassed": true,
+    "horizontalOverflowDetected": 0,
+    "widths": [
+      320,
+      360,
+      375,
+      390,
+      393,
+      412,
+      430,
+      768
+    ]
   },
   "tests": {
     "stitchPreparation": "PASS",
@@ -86,13 +106,14 @@
     "mobileTest": "PASS (66 suites / 769 tests)",
     "rootFormatCheck": "PASS",
     "webExport": "PASS",
-    "screenshotCapture": "PASS (17 mobile UI screenshots / 105 responsive checks)",
-    "junkCleanupRegression": "PASS (node --test scripts/dev/clean-generated-junk.test.mjs)"
+    "screenshotCapture": "PASS (30 mobile UI screenshots / 120 responsive checks)",
+    "junkCleanupRegression": "PASS (node --test scripts/dev/clean-generated-junk.test.mjs)",
+    "screenshotCaptureTest": "PASS (node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs)"
   },
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "PASS"
+    "currentHeadLocalApkRebuild": "BLOCKED_TIMEOUT_AFTER_UI_EVIDENCE_REFRESH"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {

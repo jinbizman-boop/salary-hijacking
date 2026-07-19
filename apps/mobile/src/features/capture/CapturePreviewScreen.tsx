@@ -16,8 +16,12 @@ import {
 import {
   AppHeader,
   AppShell,
+  EmptyState,
+  ErrorState,
+  LoadingSkeleton,
   PrimaryButton,
   ProgressBar,
+  RecordInputCard,
   SurfaceCard,
   componentColors,
   componentRadius,
@@ -26,7 +30,17 @@ import {
 } from "../../shared/components";
 import { SalaryHomeScreen } from "../salary/components";
 import { PlanScreen } from "../plan/components";
-import { NotificationScreen } from "../notifications/components";
+import {
+  NotificationPreferenceStrip,
+  NotificationScreen,
+} from "../notifications/components";
+import { ProfileDetailScreen } from "../profile/components";
+import { CommunityCommentItem } from "../community/components/CommunityCommentItem";
+import { CommunityPostCard } from "../community/components/CommunityPostCard";
+import type {
+  CommunityComment,
+  CommunityPost,
+} from "../community/community.types";
 
 export type CapturePreviewKind =
   | "salary"
@@ -40,6 +54,19 @@ export type CapturePreviewKind =
   | "signup"
   | "community-write"
   | "profile-level"
+  | "profile-settings"
+  | "profile-account"
+  | "profile-community"
+  | "profile-support"
+  | "profile-notices"
+  | "community-post-detail"
+  | "notification-settings"
+  | "common-loading"
+  | "common-empty"
+  | "common-error"
+  | "common-offline"
+  | "terms-consent"
+  | "expense-form-state"
   | "reading"
   | "news"
   | "english"
@@ -71,7 +98,7 @@ const commonGuards = Object.freeze([
   "금융 금액은 광고 타겟팅에 쓰지 않아요",
 ]);
 
-const contentByKind: Record<CapturePreviewKind, CaptureContent> = {
+const contentByKind: Partial<Record<CapturePreviewKind, CaptureContent>> = {
   community: {
     body: "전체, 자유, 레벨업 인증, 취미 게시판을 민감정보 없이 탐색합니다.",
     detailRows: ["인기글", "최신글", "신고/숨김"],
@@ -356,7 +383,62 @@ export function CapturePreviewScreen({
     return <NotificationScreen />;
   }
 
+  if (kind === "profile-settings") {
+    return <ProfileDetailScreen variant="settings" />;
+  }
+
+  if (kind === "profile-account") {
+    return <ProfileDetailScreen variant="account" />;
+  }
+
+  if (kind === "profile-community") {
+    return <ProfileDetailScreen variant="community" />;
+  }
+
+  if (kind === "profile-support") {
+    return <ProfileDetailScreen variant="support" />;
+  }
+
+  if (kind === "profile-notices") {
+    return <ProfileDetailScreen variant="notices" />;
+  }
+
+  if (kind === "community-post-detail") {
+    return <CommunityPostDetailCapturePreview />;
+  }
+
+  if (kind === "notification-settings") {
+    return <NotificationSettingsCapturePreview />;
+  }
+
+  if (kind === "common-loading") {
+    return <CommonStateCapturePreview state="loading" />;
+  }
+
+  if (kind === "common-empty") {
+    return <CommonStateCapturePreview state="empty" />;
+  }
+
+  if (kind === "common-error") {
+    return <CommonStateCapturePreview state="error" />;
+  }
+
+  if (kind === "common-offline") {
+    return <CommonStateCapturePreview state="offline" />;
+  }
+
+  if (kind === "terms-consent") {
+    return <TermsConsentCapturePreview />;
+  }
+
+  if (kind === "expense-form-state") {
+    return <ExpenseFormStateCapturePreview />;
+  }
+
   const content = contentByKind[kind];
+  if (!content) {
+    return <CommonStateCapturePreview state="error" />;
+  }
 
   return (
     <AppShell
@@ -471,6 +553,227 @@ function AuthCapturePreview({
       <EurekaWorldMark />
       <View style={{ height: clampValue(height * 0.072, 38, 78) }} />
     </AuthVisualFrame>
+  );
+}
+
+const communityDetailPost: CommunityPost = {
+  adsFinancialTargetingUsed: false,
+  anonymous: true,
+  anonymousDisplayName: "익명 기획자",
+  boardType: "LEVEL_CERTIFICATION",
+  bodyPreview:
+    "오늘 독서 미션을 완료하고 월 고정지출을 다시 점검했습니다. 민감한 급여 원문 없이 성장 기록만 공유합니다.",
+  bookmarkCount: 8,
+  bookmarkedByMe: false,
+  commentCount: 2,
+  createdAt: "2026-07-12T01:20:00.000Z",
+  id: "capture-post-001",
+  likeCount: 24,
+  likedByMe: true,
+  moderationStatus: "SAFE",
+  rawFinancialDataExposed: false,
+  rawPersonalDataExposed: false,
+  shareCount: 4,
+  title: "[LV.7] 독서 5일 완주, 예산 흔들림 없이 마감",
+  updatedAt: "2026-07-12T01:20:00.000Z",
+};
+
+const communityDetailComments: readonly CommunityComment[] = [
+  {
+    anonymous: true,
+    anonymousDisplayName: "익명 응원러",
+    content:
+      "좋아요. 다음 주기에도 같은 루틴으로 이어가면 충분히 안정적일 것 같아요.",
+    createdAt: "2026-07-12T02:15:00.000Z",
+    id: "capture-comment-001",
+    likeCount: 3,
+    likedByMe: false,
+    moderationStatus: "SAFE",
+    postId: "capture-post-001",
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    updatedAt: "2026-07-12T02:15:00.000Z",
+  },
+  {
+    anonymous: true,
+    anonymousDisplayName: "익명 절약러",
+    content:
+      "개인 금액을 그대로 올리지 않고 비율로 공유한 점이 안전해서 좋습니다.",
+    createdAt: "2026-07-12T03:10:00.000Z",
+    id: "capture-comment-002",
+    likeCount: 5,
+    likedByMe: true,
+    moderationStatus: "SAFE",
+    postId: "capture-post-001",
+    rawFinancialDataExposed: false,
+    rawPersonalDataExposed: false,
+    updatedAt: "2026-07-12T03:10:00.000Z",
+  },
+];
+
+function CommunityPostDetailCapturePreview(): React.ReactElement {
+  return (
+    <AppShell
+      accessibilityLabel="급여납치 커뮤니티 상세 화면 캡처"
+      header={<AppHeader subtitle="커뮤니티" title="게시글 상세" />}
+    >
+      <CommunityPostCard
+        liked
+        onLike={() => undefined}
+        onPress={() => undefined}
+        post={communityDetailPost}
+      />
+      <SurfaceCard accessibilityLabel="게시글 본문">
+        <Text style={styles.sectionTitle}>본문</Text>
+        <Text style={styles.body}>
+          오늘은 지출 원문을 공개하지 않고, 급여 납치 목표를 지키기 위해 독서와
+          예산 점검을 함께 기록했습니다. 커뮤니티에는 개인정보와 금융 원천
+          데이터를 올리지 않는 원칙을 지켰습니다.
+        </Text>
+        <View style={styles.pillRow}>
+          {["#레벨업인증", "#예산점검", "#개인정보보호"].map((tag) => (
+            <View key={tag} style={styles.pill}>
+              <Text style={styles.pillText}>{tag}</Text>
+            </View>
+          ))}
+        </View>
+      </SurfaceCard>
+      <SurfaceCard accessibilityLabel="댓글 목록">
+        <Text style={styles.sectionTitle}>댓글</Text>
+        {communityDetailComments.map((comment) => (
+          <CommunityCommentItem
+            key={comment.id}
+            comment={comment}
+            onReport={() => undefined}
+          />
+        ))}
+      </SurfaceCard>
+    </AppShell>
+  );
+}
+
+function NotificationSettingsCapturePreview(): React.ReactElement {
+  return (
+    <AppShell
+      accessibilityLabel="급여납치 알림 설정 화면 캡처"
+      header={<AppHeader subtitle="알림" title="알림 설정" />}
+    >
+      <NotificationPreferenceStrip
+        marketingEnabled={false}
+        onMarkAllRead={() => undefined}
+        pushEnabled
+      />
+      <SurfaceCard accessibilityLabel="알림 정책">
+        <Text style={styles.sectionTitle}>수신 범위</Text>
+        {[
+          "급여일, 고정지출, 예산 임박 알림은 서비스 필수 알림으로 분리",
+          "이벤트와 제휴 알림은 마케팅 동의가 있을 때만 발송",
+          "알림 payload에는 급여와 지출 원문을 포함하지 않음",
+        ].map((row) => (
+          <View key={row} style={styles.detailRow}>
+            <Text style={styles.detailText}>{row}</Text>
+            <Text style={styles.detailStatus}>보호</Text>
+          </View>
+        ))}
+      </SurfaceCard>
+    </AppShell>
+  );
+}
+
+function CommonStateCapturePreview({
+  state,
+}: Readonly<{
+  state: "loading" | "empty" | "error" | "offline";
+}>): React.ReactElement {
+  const stateTitle = {
+    empty: "빈 상태",
+    error: "오류 상태",
+    loading: "로딩 상태",
+    offline: "오프라인 상태",
+  }[state];
+
+  return (
+    <AppShell
+      accessibilityLabel={`급여납치 공통 ${stateTitle} 화면 캡처`}
+      header={<AppHeader subtitle="공통 상태" title={stateTitle} />}
+    >
+      <SurfaceCard accessibilityLabel={stateTitle}>
+        {state === "loading" ? (
+          <LoadingSkeleton label="서버 기준 데이터를 불러오는 중" />
+        ) : null}
+        {state === "empty" ? (
+          <EmptyState
+            description="아직 저장된 기록이 없습니다. 추가 버튼으로 첫 항목을 만들 수 있습니다."
+            title="표시할 항목이 없어요"
+          />
+        ) : null}
+        {state === "error" ? (
+          <ErrorState
+            message="요청이 실패했습니다. 민감 정보 없이 다시 시도할 수 있습니다."
+            onRetry={() => undefined}
+            title="데이터를 불러오지 못했어요"
+          />
+        ) : null}
+        {state === "offline" ? (
+          <ErrorState
+            message="네트워크가 불안정합니다. 저장 성공으로 표시하지 않고 재시도 상태를 유지합니다."
+            onRetry={() => undefined}
+            retryLabel="다시 연결"
+            title="오프라인 보호 모드"
+          />
+        ) : null}
+      </SurfaceCard>
+      <Text style={styles.guard}>
+        보호 화면은 실제 저장 성공값처럼 표시하지 않습니다.
+      </Text>
+    </AppShell>
+  );
+}
+
+function TermsConsentCapturePreview(): React.ReactElement {
+  return (
+    <AuthVisualFrame accessibilityLabel="급여납치 약관 동의 화면 캡처">
+      <View style={{ height: 96 }} />
+      <SignupHero />
+      <View style={{ height: 40 }} />
+      <SignupAgreementCard
+        marketingAccepted={false}
+        privacyAccepted
+        termsAccepted
+      />
+      <View style={{ height: 24 }} />
+      <PrimaryButton label="필수 동의 후 계속" onPress={() => undefined} />
+      <View style={{ flex: 1, minHeight: 96 }} />
+      <EurekaWorldMark />
+      <View style={{ height: 48 }} />
+    </AuthVisualFrame>
+  );
+}
+
+function ExpenseFormStateCapturePreview(): React.ReactElement {
+  return (
+    <AppShell
+      accessibilityLabel="급여납치 변동지출 입력 화면 캡처"
+      header={<AppHeader subtitle="급여" title="금일 변동 지출 저장" />}
+    >
+      <SurfaceCard accessibilityLabel="입력 안내">
+        <Text style={styles.sectionTitle}>금일 사용한 변동 지출</Text>
+        <Text style={styles.body}>
+          항목, 세부 내용, 금액을 입력한 뒤 서버 저장 성공 기준으로 홈 요약을
+          갱신합니다.
+        </Text>
+      </SurfaceCard>
+      <RecordInputCard
+        label="지출 내용"
+        onChangeText={() => undefined}
+        onSubmit={() => undefined}
+        placeholder="예: 커피 / 백다방 아이스 아메리카노 / 2,000원"
+        value={"커피\n백다방 아이스 아메리카노\n2,000원"}
+      />
+      <Text style={styles.guard}>
+        키보드가 열려도 입력 필드와 저장 버튼은 safe area 안에 유지됩니다.
+      </Text>
+    </AppShell>
   );
 }
 

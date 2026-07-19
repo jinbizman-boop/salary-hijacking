@@ -46,17 +46,30 @@ type ExpoExtra = Readonly<{
 const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
   Object.freeze({
     community: "community",
+    "community-post-detail": "community-post-detail",
     "community-write": "community-write",
+    "common-empty": "common-empty",
+    "common-error": "common-error",
+    "common-loading": "common-loading",
+    "common-offline": "common-offline",
     english: "english",
+    "expense-form-state": "expense-form-state",
     health: "health",
     level: "level",
     news: "news",
     notifications: "notifications",
+    "notification-settings": "notification-settings",
     plan: "plan",
     profile: "profile",
+    "profile-account": "profile-account",
+    "profile-community": "profile-community",
     "profile-level": "profile-level",
+    "profile-notices": "profile-notices",
+    "profile-settings": "profile-settings",
+    "profile-support": "profile-support",
     reading: "reading",
     salary: "salary",
+    "terms-consent": "terms-consent",
   });
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);

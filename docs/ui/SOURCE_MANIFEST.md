@@ -47,10 +47,10 @@ This manifest is the UI/UX finalization intake record. It records what is presen
 
 ## Current Visual Evidence
 
-- Mobile UI screenshot count: 17
+- Mobile UI screenshot count: 30
 - Store screenshot count: 6
-- Responsive checks: 105
-- Widths verified in current evidence: 320, 360, 375, 390, 393, 412, 430
+- Responsive checks: 120
+- Widths verified in current evidence: 320, 360, 375, 390, 393, 412, 430, 768
 - Horizontal overflow in current evidence: 0
 - Physical Android phone QA: BLOCKED until a real device is attached and `scripts/release/run-physical-phone-qa.mjs` passes.
 

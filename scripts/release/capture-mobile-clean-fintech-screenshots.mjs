@@ -71,6 +71,19 @@ const mobileUiEvidenceCaptures = [
   ["/capture/community-write", "15_community_write.png"],
   ["/capture/profile", "16_profile.png"],
   ["/capture/profile-level", "17_profile_level.png"],
+  ["/capture/profile-settings", "18_profile_settings.png"],
+  ["/capture/profile-account", "19_profile_account.png"],
+  ["/capture/profile-community", "20_profile_community.png"],
+  ["/capture/profile-support", "21_profile_support.png"],
+  ["/capture/profile-notices", "22_profile_notices.png"],
+  ["/capture/community-post-detail", "23_community_post_detail.png"],
+  ["/capture/notification-settings", "24_notification_settings.png"],
+  ["/capture/common-loading", "25_common_loading.png"],
+  ["/capture/common-empty", "26_common_empty.png"],
+  ["/capture/common-error", "27_common_error.png"],
+  ["/capture/common-offline", "28_common_offline.png"],
+  ["/capture/terms-consent", "29_terms_consent.png"],
+  ["/capture/expense-form-state", "30_expense_form_state.png"],
 ];
 
 const responsiveCheckRoutes = [

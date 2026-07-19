@@ -5,7 +5,7 @@ Generated: 2026-07-19 KST
 ## Current Evidence
 
 - Canonical Stitch reference count: 17
-- Current mobile UI evidence count: 17
+- Current mobile UI evidence count: 30
 - Responsive checks in latest capture summary: 120
 - Widths in latest capture summary: 320, 360, 375, 390, 393, 412, 430, 768
 - Horizontal overflow detected: 0
@@ -14,15 +14,15 @@ Generated: 2026-07-19 KST
 
 ## Coverage
 
-| Area                        | Status  | Evidence                                          |
-| --------------------------- | ------- | ------------------------------------------------- |
-| 17 Stitch canonical screens | PASS    | `release/evidence/mobile-ui/*.png`                |
-| 30 official product screens | PARTIAL | `docs/ui/SCREEN_CATALOG.csv`                      |
-| 10 modal inventory          | PARTIAL | Not yet exhaustively captured                     |
-| 8 common states             | PARTIAL | Shared components exist; visual matrix incomplete |
-| 320-430 responsive matrix   | PASS    | `capture-summary.json`                            |
-| 768 responsive matrix       | PASS    | `capture-summary.json`                            |
-| Physical native rendering   | BLOCKED | No physical Android phone attached                |
+| Area                        | Status  | Evidence                                                                       |
+| --------------------------- | ------- | ------------------------------------------------------------------------------ |
+| 17 Stitch canonical screens | PASS    | `release/evidence/mobile-ui/*.png`                                             |
+| 30 official product screens | PASS    | `release/evidence/mobile-ui/01_splash.png` through `30_expense_form_state.png` |
+| 10 modal inventory          | PARTIAL | Not yet exhaustively captured                                                  |
+| 8 common states             | PARTIAL | Shared components exist; visual matrix incomplete                              |
+| 320-430 responsive matrix   | PASS    | `capture-summary.json`                                                         |
+| 768 responsive matrix       | PASS    | `capture-summary.json`                                                         |
+| Physical native rendering   | BLOCKED | No physical Android phone attached                                             |
 
 ## Known Intentional Differences
 
@@ -33,6 +33,6 @@ Generated: 2026-07-19 KST
 
 ## Next Required Visual Work
 
-1. Add capture targets for detail/profile/legal/support/common state screens not represented in the current 17 image evidence set.
-2. Add a visual assertion for keyboard-open form state or produce device proof.
+1. Add dedicated visual capture targets for remaining plan modal sub-states: fixed expense, fixed saving, and daily living cost edit forms.
+2. Add physical-device keyboard-open proof for Android.
 3. Update this report with measured diff/SSIM values if a pixel comparator is introduced.

@@ -112,12 +112,25 @@ type CaptureScreenKind =
   | "level"
   | "notifications"
   | "community"
+  | "community-post-detail"
   | "community-write"
+  | "common-empty"
+  | "common-error"
+  | "common-loading"
+  | "common-offline"
   | "profile"
   | "profile-level"
+  | "profile-settings"
+  | "profile-account"
+  | "profile-community"
+  | "profile-support"
+  | "profile-notices"
   | "login"
   | "signup"
   | "splash"
+  | "notification-settings"
+  | "terms-consent"
+  | "expense-form-state"
   | "reading"
   | "news"
   | "english"
@@ -241,20 +254,33 @@ const OFFICIAL_BI_LOGO = appImageAssets.brand.platformLogo as unknown;
 const CAPTURE_SCREENS: Readonly<Record<string, CaptureScreenKind>> =
   Object.freeze({
     community: "community",
+    "community-post-detail": "community-post-detail",
     "community-write": "community-write",
+    "common-empty": "common-empty",
+    "common-error": "common-error",
+    "common-loading": "common-loading",
+    "common-offline": "common-offline",
     english: "english",
+    "expense-form-state": "expense-form-state",
     health: "health",
     level: "level",
     login: "login",
     news: "news",
     notifications: "notifications",
+    "notification-settings": "notification-settings",
     plan: "plan",
     profile: "profile",
+    "profile-account": "profile-account",
+    "profile-community": "profile-community",
     "profile-level": "profile-level",
+    "profile-notices": "profile-notices",
+    "profile-settings": "profile-settings",
+    "profile-support": "profile-support",
     reading: "reading",
     salary: "salary",
     signup: "signup",
     splash: "splash",
+    "terms-consent": "terms-consent",
   });
 
 const ReactRuntimeRef = loadReactRuntime();

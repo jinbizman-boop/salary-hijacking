@@ -33,7 +33,9 @@
 
 ## Visual Evidence
 
-- 17 mobile UI screenshots regenerated in `release/evidence/mobile-ui` on 2026-07-19 KST.
+- 30 mobile UI screenshots regenerated in `release/evidence/mobile-ui` on 2026-07-19 KST.
+- Files `01_splash.png` through `17_profile_level.png` cover the canonical Stitch/PDF screen set.
+- Files `18_profile_settings.png` through `30_expense_form_state.png` extend the current evidence set to profile detail, post detail, notification settings, common states, consent, and input form states.
 - Responsive widths checked: 320, 360, 375, 390, 393, 412, 430, 768.
 - Responsive check count: 120.
 - Horizontal overflow: 0 detected.

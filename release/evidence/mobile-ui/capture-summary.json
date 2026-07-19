@@ -1,11 +1,11 @@
 {
   "ok": true,
-  "generatedAt": "2026-07-19T04:38:45.871Z",
+  "generatedAt": "2026-07-19T04:56:54.331Z",
   "screenshotDir": "release\\screenshots",
   "mobileUiEvidenceDir": "release\\evidence\\mobile-ui",
-  "count": 23,
+  "count": 36,
   "storeCount": 6,
-  "mobileUiEvidenceCount": 17,
+  "mobileUiEvidenceCount": 30,
   "responsiveCheckCount": 120,
   "responsiveChecks": [
     {
@@ -1532,7 +1532,7 @@
       "file": "06_daily_budget.png",
       "width": 430,
       "height": 932,
-      "bytes": 64517
+      "bytes": 64484
     },
     {
       "group": "mobile-ui",
@@ -1610,6 +1610,97 @@
       "width": 430,
       "height": 932,
       "bytes": 39963
+    },
+    {
+      "group": "mobile-ui",
+      "file": "18_profile_settings.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32359
+    },
+    {
+      "group": "mobile-ui",
+      "file": "19_profile_account.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34865
+    },
+    {
+      "group": "mobile-ui",
+      "file": "20_profile_community.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33213
+    },
+    {
+      "group": "mobile-ui",
+      "file": "21_profile_support.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32225
+    },
+    {
+      "group": "mobile-ui",
+      "file": "22_profile_notices.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32890
+    },
+    {
+      "group": "mobile-ui",
+      "file": "23_community_post_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 41182
+    },
+    {
+      "group": "mobile-ui",
+      "file": "24_notification_settings.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 22624
+    },
+    {
+      "group": "mobile-ui",
+      "file": "25_common_loading.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14350
+    },
+    {
+      "group": "mobile-ui",
+      "file": "26_common_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16050
+    },
+    {
+      "group": "mobile-ui",
+      "file": "27_common_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17459
+    },
+    {
+      "group": "mobile-ui",
+      "file": "28_common_offline.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17867
+    },
+    {
+      "group": "mobile-ui",
+      "file": "29_terms_consent.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25881
+    },
+    {
+      "group": "mobile-ui",
+      "file": "30_expense_form_state.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25138
     }
   ]
 }
