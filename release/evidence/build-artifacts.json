@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T08:32:17.196Z",
+  "generatedAt": "2026-07-19T09:59:16.751Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "32497dad66ef888676aaa5a5b0b8f09c6a5e62c1",
+    "gitHead": "7845f8c68ccd8d9f29f833b4d2ce555094f0f849",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
     "trackedWorkingTreeDirty": false,
     "trackedChangeCount": 0,
-    "note": "Current source commit 32497dad66ef888676aaa5a5b0b8f09c6a5e62c1 is packaged into the phone-target arm64-v8a debug QA APK after the 33-screen mobile UI evidence expansion. The APK was copied to the app build path, D:/salary-hijacking-artifacts/apk, and C:/Users/PC/Downloads; SHA256, aapt, apksigner v2, arm64 native libraries, and raw GitHub artifact download hash were verified. Production AAB and Play submission were not attempted."
+    "note": "Source commit 7845f8c68ccd8d9f29f833b4d2ce555094f0f849 fixes the Expo Router tab crash regression by registering tab segment names (salary, plan, level, community, profile) instead of stale index route names. A phone-target arm64-v8a debug QA APK was rebuilt by replacing the JS bundle in the previously verified native APK, then zipaligned, debug-signed, and verified. Production AAB and Play submission were not attempted."
   },
   "stitch": {
     "zipCount": 10,
@@ -23,12 +23,12 @@
     "comparison": "release/evidence/mobile-ui/stitch-comparison.md"
   },
   "apk": {
-    "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
-    "bytes": 70716651,
-    "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
-    "lastModified": "2026-07-19T08:03:20.361Z",
-    "packagedHead": "32497dad66ef888676aaa5a5b0b8f09c6a5e62c1",
-    "currentHeadRebuildStatus": "PASS_ARM64_DEBUG_APK_PRODUCED",
+    "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-router-fix-debug.apk",
+    "bytes": 71033881,
+    "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
+    "lastModified": "2026-07-19T09:55:29.467Z",
+    "packagedHead": "7845f8c68ccd8d9f29f833b4d2ce555094f0f849",
+    "currentHeadRebuildStatus": "PASS_ROUTER_FIX_JS_BUNDLE_REPACK_SIGNED_APK_PRODUCED",
     "currentHeadRebuildAttempts": [
       {
         "attemptedAt": "2026-07-19T02:50:00Z",
@@ -77,21 +77,29 @@
         "result": "PASS_EXIT_0_ARM64_DEBUG_APK_PRODUCED",
         "stage": "assembleDebug + APK copy + SHA/aapt/apksigner/native-library verification",
         "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk"
+      },
+      {
+        "attemptedAt": "2026-07-19T09:59:16.751Z",
+        "command": "react-native bundle + APK bundle replacement + zipalign + apksigner debug sign",
+        "result": "PASS_ROUTER_SEGMENT_TAB_FIX_APK_PRODUCED",
+        "stage": "index.android.bundle replacement after Gradle CMake timeout; apksigner v2/v3 verification PASS",
+        "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-router-fix-debug.apk",
+        "cleanup": "Generated intermediate cleanup was attempted, but destructive cleanup commands were blocked by local command policy; final APK copies were preserved."
       }
     ]
   },
   "copies": [
     {
-      "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
-      "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
-      "bytes": 70716651,
-      "lastModified": "2026-07-19T08:03:20.361Z"
+      "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-router-fix-debug.apk",
+      "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
+      "bytes": 71033881,
+      "lastModified": "2026-07-19T09:55:29.467Z"
     },
     {
-      "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
-      "bytes": 70716651,
-      "lastModified": "2026-07-19T08:03:20.361Z"
+      "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-router-fix-debug.apk",
+      "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
+      "bytes": 71033881,
+      "lastModified": "2026-07-19T09:55:29.467Z"
     }
   ],
   "signing": {
@@ -124,30 +132,32 @@
     "stitchPreparation": "PASS",
     "stitchPreparationTest": "PASS (node --test scripts/release/prepare-stitch-design-system.test.mjs)",
     "mobileLint": "PASS",
-    "mobileTypecheck": "PASS",
+    "mobileTypecheck": "PASS (corepack pnpm --filter @salary-hijacking/mobile run typecheck)",
     "mobileTest": "PASS (66 suites / 769 tests)",
-    "rootFormatCheck": "PASS",
+    "rootFormatCheck": "PASS (corepack pnpm run format:check)",
     "webExport": "PASS",
     "screenshotCapture": "PASS (33 mobile UI screenshots / 120 responsive checks)",
     "junkCleanupRegression": "PASS (corepack pnpm run clean:junk removed 36 generated paths / 5.70 GB after APK copy; APK evidence logs regenerated)",
-    "screenshotCaptureTest": "PASS (node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs)"
+    "screenshotCaptureTest": "PASS (node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs)",
+    "routerRouteRegression": "PASS (app-screen-contract enforces salary/plan/level/community/profile segment route names)",
+    "apkBundleInspection": "PASS (APK bundle contains expo_router_segment_tabs and does not contain expo_router_index_tabs)"
   },
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "PASS_ARM64_DEBUG_APK_PRODUCED",
-    "currentHeadRemotePreviewApkRebuild": "BLOCKED_NO_EXPO_ACCOUNT_OR_EXPO_TOKEN"
+    "currentHeadLocalApkRebuild": "PASS_ROUTER_FIX_JS_BUNDLE_REPACK_SIGNED_APK_PRODUCED",
+    "currentHeadRemotePreviewApkRebuild": "PENDING_ARTIFACT_BRANCH_PUSH"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
     "branch": "codex-apk-artifacts-20260719-latest",
-    "branchHead": "eba944f6160b8cf9b4d19055abd346eea261559f",
-    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk",
-    "sha256": "CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B",
+    "branchHead": "PENDING_PUSH",
+    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-router-fix-debug.apk",
+    "sha256": "C83AC5A8114E1AD37DA64F7FEB33DDF374A060904863CA8465FB068521F571AC",
     "artifactType": "debug QA APK, not production AAB",
-    "httpStatus": 200,
-    "bytes": 70716651,
-    "verifiedAt": "2026-07-19T08:32:17.196Z",
-    "note": "Latest phone-target debug QA APK was published to a dedicated artifact branch for mobile download and re-downloaded for SHA256 verification. This is not a production AAB and no Play submit was attempted."
+    "httpStatus": "PENDING_PUSH",
+    "bytes": 71033881,
+    "verifiedAt": "2026-07-19T09:59:16.751Z",
+    "note": "Router crash fix APK prepared for mobile download. Artifact branch push and raw URL HTTP verification are pending in this evidence snapshot."
   }
 }
