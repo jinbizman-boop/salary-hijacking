@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LV UP - 독서 상세</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-container": "#745f00",
+                        "surface-tint": "#006d39",
+                        "on-secondary": "#ffffff",
+                        "on-surface-variant": "#3e4a40",
+                        "secondary-fixed-dim": "#e7c43f",
+                        "on-surface": "#181c20",
+                        "secondary-fixed": "#ffe179",
+                        "on-secondary-fixed": "#231b00",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9ff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#715c00",
+                        "on-tertiary-fixed": "#400010",
+                        "primary-fixed-dim": "#72dc93",
+                        "secondary-container": "#ffda54",
+                        "primary": "#006a37",
+                        "outline": "#6e7a6f",
+                        "on-primary-fixed-variant": "#005229",
+                        "tertiary-fixed": "#ffdadc",
+                        "surface-container-highest": "#e0e3e8",
+                        "on-secondary-fixed-variant": "#554500",
+                        "primary-container": "#078648",
+                        "on-primary-container": "#f6fff4",
+                        "inverse-surface": "#2d3135",
+                        "tertiary-container": "#bd5161",
+                        "outline-variant": "#bdcabd",
+                        "inverse-primary": "#72dc93",
+                        "inverse-on-surface": "#eef1f6",
+                        "on-background": "#181c20",
+                        "on-primary-fixed": "#00210d",
+                        "on-primary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container": "#ebeef3",
+                        "surface-container-low": "#f1f4f9",
+                        "on-tertiary-container": "#fffbff",
+                        "error-container": "#ffdad6",
+                        "tertiary": "#9e394a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-variant": "#e0e3e8",
+                        "on-tertiary-fixed-variant": "#822436",
+                        "on-error-container": "#93000a",
+                        "background": "#f7f9ff",
+                        "surface": "#f7f9ff",
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "surface-dim": "#d7dadf",
+                        "surface-container-high": "#e5e8ee",
+                        "primary-fixed": "#8ef9ad"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "body-lg": ["Noto Sans KR"],
+                        "label-bold": ["Noto Sans KR"],
+                        "body-md": ["Noto Sans KR"],
+                        "label-sm": ["Noto Sans KR"],
+                        "display-level": ["Noto Sans KR"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                        "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-bold": ["12px", {"lineHeight": "16px", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "display-level": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "900"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #f7f9ff;
+            color: #181c20;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .achievement-card {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .achievement-card:active {
+            transform: scale(0.98);
+        }
+        .glass-header {
+            backdrop-filter: blur(8px);
+            background-color: rgba(247, 249, 255, 0.8);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen flex flex-col items-center">
+<!-- Top Navigation Bar -->
+<header class="w-full max-w-md glass-header sticky top-0 z-50 px-6 py-4 flex justify-between items-center border-b border-outline-variant">
+<button class="flex items-center justify-center p-1 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<h1 class="text-headline-md font-headline-md text-on-surface">독서 상세</h1>
+<button class="flex items-center justify-center p-1 rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant">more_vert</span>
+</button>
+</header>
+<main class="w-full max-w-md flex-1 pb-32">
+<!-- Hero Section: Book Info -->
+<section class="px-5 pt-8 pb-10 flex flex-col items-center">
+<div class="relative group mb-6">
+<div class="w-48 h-64 rounded-xl overflow-hidden shadow-2xl transition-transform duration-500 group-hover:scale-105 border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A premium 3D render of a professional business book cover titled '기획의 정석' with a clean, minimalist design in shades of deep emerald green and white. The lighting is soft and studio-quality, emphasizing the high-end tactile feel of the paper texture. This image is set against a clean, light-mode background, fitting the modern financial growth aesthetic of the LV UP app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFuvS5QpqOz7ZqjWfflsPydDICPZGMIxLgc8q_jqo1U_INJrzjkyNjco7aiag4KL_5FTbQxu_9cGdRWIv094EDM9fZ5wjvZRfzfbTtju_n4wMy_DuI6wueQnoUhxTi-Y8_L8WsO82Msz1JbylPPDh5ZNTnIAhGQZlmChBPfp_uIGtUnpat6UyQWccMkI69_z6LzN619_W0hVMywZM6qojx79Gc5XkiKntEkYRJyoOVZoWGcIr6gFO3"/>
+</div>
+<div class="absolute -bottom-3 -right-3 bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="text-label-bold font-label-bold">LV.2 추천</span>
+</div>
+</div>
+<div class="text-center">
+<h2 class="text-headline-lg font-headline-lg text-on-surface mb-2">기획의 정석</h2>
+<div class="flex items-center justify-center gap-2 text-on-surface-variant font-body-md text-body-md">
+<span>박신영</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span>경제·경영</span>
+</div>
+<!-- Tag Badges -->
+<div class="flex gap-2 mt-4 justify-center">
+<span class="bg-surface-container-high px-3 py-1 rounded-full text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">schedule</span> 5분
+                    </span>
+<span class="bg-surface-container-high px-3 py-1 rounded-full text-label-sm font-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">bar_chart</span> 보통
+                    </span>
+<span class="bg-primary-container/10 px-3 py-1 rounded-full text-label-sm font-label-sm text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">monetization_on</span> +150 XP
+                    </span>
+</div>
+</div>
+</section>
+<!-- Bento Grid Layout for Details -->
+<div class="px-5 space-y-6">
+<!-- 추천 이유 Section -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant hover:border-primary/30 transition-all">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">star</span>
+<h3 class="text-headline-md font-headline-md">추천 이유</h3>
+</div>
+<p class="text-body-lg font-body-lg text-on-surface-variant leading-relaxed">
+                    상위 1% 기획자의 사고 방식을 통해 연봉을 높이는 전략적 제안법을 배울 수 있습니다. 실무에서 즉시 활용 가능한 '4단계 프레임워크'를 통해 당신의 아이디어를 논리적으로 구조화해보세요.
+                </p>
+</div>
+<!-- 오늘의 5분 미션 Section -->
+<div class="bg-primary-container text-on-primary-container rounded-3xl p-6 shadow-md achievement-card">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">target</span>
+<h3 class="text-headline-md font-headline-md">오늘의 5분 미션</h3>
+</div>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded-lg text-label-bold font-label-bold">🔥 3일 연속</span>
+</div>
+<div class="space-y-4">
+<div class="bg-white/10 rounded-2xl p-4 flex items-center gap-4">
+<div class="bg-white/20 p-2 rounded-xl">
+<span class="material-symbols-outlined">menu_book</span>
+</div>
+<div class="flex-1">
+<p class="text-body-md font-label-bold">Part 1. 상대방의 뇌 구조 읽기</p>
+<p class="text-label-sm opacity-80">기획의 첫 걸음은 'Why'에서 시작합니다.</p>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="space-y-2">
+<div class="flex justify-between text-label-sm font-label-bold">
+<span>진행도</span>
+<span>0%</span>
+</div>
+<div class="w-full h-2 bg-on-primary-container/20 rounded-full overflow-hidden">
+<div class="h-full bg-secondary-fixed w-0 transition-all duration-1000"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- 읽기 방법 Section -->
+<div class="bg-surface-container-lowest rounded-3xl p-6 shadow-sm border border-outline-variant">
+<div class="flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-primary">tips_and_updates</span>
+<h3 class="text-headline-md font-headline-md">읽기 방법</h3>
+</div>
+<ul class="space-y-4">
+<li class="flex gap-3">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-container/10 text-primary flex items-center justify-center text-label-bold">1</span>
+<p class="text-body-md font-body-md text-on-surface-variant">핵심 요약 3분 독서: 텍스트로 정리된 기획의 핵심을 정독합니다.</p>
+</li>
+<li class="flex gap-3">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-container/10 text-primary flex items-center justify-center text-label-bold">2</span>
+<p class="text-body-md font-body-md text-on-surface-variant">인사이트 기록 1분: 나만의 언어로 기획 팁을 메모합니다.</p>
+</li>
+<li class="flex gap-3">
+<span class="flex-shrink-0 w-6 h-6 rounded-full bg-primary-container/10 text-primary flex items-center justify-center text-label-bold">3</span>
+<p class="text-body-md font-body-md text-on-surface-variant">오늘의 퀴즈 1분: 배운 내용을 복습하고 보너스 XP를 획득하세요.</p>
+</li>
+</ul>
+</div>
+<!-- 출처 및 이용 안내 Section -->
+<div class="pt-4 pb-8">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-[16px] text-outline">info</span>
+<h4 class="text-label-bold font-label-bold text-on-surface-variant">출처·이용 안내</h4>
+</div>
+<p class="text-label-sm font-body-md text-outline leading-tight">
+                    본 콘텐츠는 도서 '기획의 정석'(다산북스)을 바탕으로 LV UP팀이 핵심 내용을 발췌·재구성하였습니다. 저작권은 원작자와 해당 출판사에 있으며, 상업적 재배포를 금합니다.
+                </p>
+</div>
+</div>
+</main>
+<!-- Sticky Bottom Action Button -->
+<div class="fixed bottom-0 left-0 w-full p-5 bg-gradient-to-t from-background via-background to-transparent pointer-events-none">
+<div class="max-w-md mx-auto pointer-events-auto">
+<button class="w-full h-14 bg-primary text-on-primary rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined">rocket_launch</span>
+<span class="text-body-lg font-headline-md">오늘 5분만 읽기</span>
+</button>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simple animation for the progress bar on load
+            setTimeout(() => {
+                const progressBar = document.querySelector('.bg-secondary-fixed');
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+            }, 500);
+
+            // Add smooth appearance for sections
+            const sections = document.querySelectorAll('section, div.bg-surface-container-lowest, div.bg-primary-container');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('opacity-100', 'translate-y-0');
+                        entry.target.classList.remove('opacity-0', 'translate-y-4');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            sections.forEach(section => {
+                section.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-4');
+                observer.observe(section);
+            });
+        });
+    </script>
+</body></html>

@@ -9,6 +9,9 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   ".expo",
   ".expo-shared",
   ".gradle",
+  ".gradle-local-debug",
+  ".localappdata",
+  ".local-native-bin",
   ".metro-cache",
   ".next",
   ".open-next",
@@ -131,6 +134,7 @@ function isRepositoryJunkFile(relativePath) {
   return (
     /^release\/[^/]+-(?:proof|observation)\.local\.jsonc?$/.test(posixPath) ||
     /^apps\/mobile\/build\/phone\/android\/salary-hijacking-phone-arm64-iteration\d+-debug\.apk$/.test(
+      posixPath,
       posixPath,
     ) ||
     /\.tsbuildinfo$/.test(fileName) ||

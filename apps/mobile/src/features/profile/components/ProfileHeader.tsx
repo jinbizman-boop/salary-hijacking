@@ -45,8 +45,8 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   avatar: {
-    width: 56,
-    height: 56,
+    width: 64,
+    height: 64,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: componentRadius.pill,
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: componentColors.primaryGreenDark,
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "900",
   },
   copy: {
@@ -63,11 +63,11 @@ const styles = StyleSheet.create({
   },
   name: {
     color: componentColors.textPrimary,
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "900",
   },
   title: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
     fontSize: 14,
     fontWeight: "900",
   },

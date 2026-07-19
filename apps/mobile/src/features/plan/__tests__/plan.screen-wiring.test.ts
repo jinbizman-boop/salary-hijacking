@@ -19,11 +19,44 @@ describe("plan tab screen wiring", () => {
     );
 
     expect(source).not.toContain("CleanFintechScreen");
-    expect(source).toContain("PlanReferenceScreen");
+    expect(source).toContain("PlanScreen");
+    expect(source).not.toContain("PlanReferenceScreen");
     expect(source).toContain("/api/v1/fixed-expenses");
     expect(source).toContain("/api/v1/savings");
     expect(source).toContain("server_authority_component_guard");
-    expect(source).toContain("responsive_plan_reference_guard");
+    expect(source).toContain("responsive_plan_guard");
     expect(source).toContain("safe_area_top_bottom_guard");
+  });
+
+  it("exports the production plan screen without reference-screen aliases", () => {
+    const componentIndex = readFileSync(
+      join(__dirname, "..", "components", "index.ts"),
+      "utf8",
+    );
+
+    expect(componentIndex).toContain("PlanScreen");
+    expect(componentIndex).not.toContain("PlanReferenceScreen");
+    expect(componentIndex).not.toContain("./PlanReferenceScreen");
+  });
+
+  it("does not wire the production plan screen to preview-state runtime boundaries", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "PlanScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("../../preview/interactive-state");
+    expect(source).not.toContain("PreviewState");
+    expect(source).not.toContain("getPreviewState");
+    expect(source).not.toContain("updatePreviewState");
+  });
+
+  it("does not seed production plan financial UI from prototype amounts", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "PlanScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toMatch(/500000|700000|2000000|2700000|2,500,000|88%/u);
   });
 });

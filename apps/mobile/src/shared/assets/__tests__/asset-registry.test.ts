@@ -172,6 +172,14 @@ describe("mobile asset registry policy", () => {
       path.resolve(mobileRoot, "..", "..", "release", "evidence"),
       path.resolve(mobileRoot, "..", "..", "docs"),
     ];
+    const allowedDesignReferenceRoot = path.resolve(
+      mobileRoot,
+      "..",
+      "..",
+      "docs",
+      "design",
+      "stitch",
+    );
     const runtimeAssetBasenames = new Set([
       ...expoAssetFiles,
       ...requiredIconFiles.map((file) => path.basename(file)),
@@ -186,7 +194,7 @@ describe("mobile asset registry policy", () => {
           (file) =>
             !allowedRuntimeRoots.some((allowedRoot) =>
               file.startsWith(allowedRoot),
-            ),
+            ) && !file.startsWith(allowedDesignReferenceRoot),
         )
         .map((file) => relativePosix(mobileRoot, file));
     });

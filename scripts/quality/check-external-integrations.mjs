@@ -94,7 +94,7 @@ const REQUIRED_TOKENS_BY_FILE = {
     "pnpm test",
     "pnpm build",
     "pnpm test:e2e",
-    "pnpm audit --prod --audit-level high",
+    "pnpm audit --prod --audit-level high --ignore-registry-errors",
   ],
   ".github/workflows/deploy-api.yml": [
     "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}",

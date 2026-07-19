@@ -44,11 +44,13 @@ export function BottomTabBar({
 
 const styles = StyleSheet.create({
   bar: {
-    minHeight: 68,
+    minHeight: 76,
     flexDirection: "row",
     justifyContent: "space-around",
     gap: 8,
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingTop: 10,
+    paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: componentColors.line,
     backgroundColor: componentColors.surface,
@@ -69,6 +71,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   selectedLabel: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
   },
 });

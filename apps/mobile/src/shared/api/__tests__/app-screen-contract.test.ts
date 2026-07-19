@@ -1,4 +1,4 @@
-﻿import { readdirSync, readFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const APP_ROOT = join(process.cwd(), "app");
@@ -28,6 +28,7 @@ const CAPTURE_PREVIEW_SCREEN = join(
   "capture",
   "CapturePreviewScreen.tsx",
 );
+const CAPTURE_ROUTE_SCREEN = join(APP_ROOT, "capture", "[screen].tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
@@ -115,13 +116,18 @@ describe("mobile app screen API and route contracts", () => {
       "utf8",
     );
 
-    expect(source).toContain('initialRouteName="salary/index"');
-    expect(source).toContain('name: "salary/index"');
-    expect(source).toContain('name: "plan/index"');
-    expect(source).toContain('name: "level/index"');
-    expect(source).toContain('name: "community/index"');
-    expect(source).toContain('name: "profile/index"');
-    expect(source).not.toContain('initialRouteName="salary"');
+    expect(source).toContain('initialRouteName="salary"');
+    expect(source).toContain('name: "salary"');
+    expect(source).toContain('name: "plan"');
+    expect(source).toContain('name: "level"');
+    expect(source).toContain('name: "community"');
+    expect(source).toContain('name: "profile"');
+    expect(source).not.toContain('initialRouteName="salary/index"');
+    expect(source).not.toContain('name: "salary/index"');
+    expect(source).not.toContain('name: "plan/index"');
+    expect(source).not.toContain('name: "level/index"');
+    expect(source).not.toContain('name: "community/index"');
+    expect(source).not.toContain('name: "profile/index"');
   });
 
   it("keeps primary tab visible copy in Korean instead of temporary English labels", () => {
@@ -142,9 +148,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(tabLayoutSource).not.toContain("怨꾪쉷");
     expect(tabLayoutSource).not.toContain("而ㅻ");
 
-    expect(salarySource).toContain("SalaryHomeReferenceScreen");
+    expect(salarySource).toContain("SalaryHomeScreen");
     expect(salarySource).toContain("내 급여 납치 현황");
-    expect(salarySource).toContain("홍길동님이 설정한 일일 사용 예산");
+    expect(salarySource).toContain("사용자님이 설정한 일일 사용 예산");
     expect(salarySource).toContain("Google 광고 영역");
     expect(salarySource).not.toContain("Salary Home");
     expect(salarySource).not.toContain("This month protected");
@@ -158,8 +164,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(communitySource).not.toContain("Proof Board");
     expect(communitySource).not.toContain("Write");
 
-    expect(profileSource).toContain("ProfileHeader");
-    expect(profileSource).toContain("ProfileStatGrid");
+    expect(profileSource).toContain("ProfileScreen");
+    expect(profileSource).toContain("/api/v1/users/me/my-page-summary");
     expect(profileSource).not.toContain("LV 7 Budget Builder");
   });
 
@@ -339,6 +345,31 @@ describe("mobile app screen API and route contracts", () => {
     );
     expect(screenshotScript).toContain(
       '["/capture/profile-level", "17_profile_level.png"]',
+    );
+  });
+
+  it("keeps screenshot capture routes web-only so native production cannot show preview screens", () => {
+    const source = readFileSync(CAPTURE_ROUTE_SCREEN, "utf8");
+
+    expect(source).toContain('import { Platform } from "react-native"');
+    expect(source).toContain('Platform.OS !== "web"');
+    expect(source).toContain('<Redirect href="/salary" />');
+    expect(source.indexOf('Platform.OS !== "web"')).toBeLessThan(
+      source.indexOf("<CapturePreviewScreen"),
+    );
+  });
+
+  it("keeps root and launch capture preview rendering behind a web platform guard", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
+
+    expect(rootLayout).toContain('NativeRuntimeRef.Platform.OS !== "web"');
+    expect(rootLayout).toMatch(
+      /function readBrowserLocation\(\):[\s\S]*?NativeRuntimeRef\.Platform\.OS !== "web"[\s\S]*?window\.location/u,
+    );
+    expect(indexScreen).toContain('import { Platform } from "react-native"');
+    expect(indexScreen).toMatch(
+      /function readBrowserLocation\(\):[\s\S]*?Platform\.OS !== "web"[\s\S]*?window\.location/u,
     );
   });
 

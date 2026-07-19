@@ -1,19 +1,22 @@
 # Physical Android Phone QA Handoff
 
-Updated: 2026-07-14 KST
+Updated: 2026-07-19 KST
 
 ## Current APK
 
-- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration115-debug.apk`
-- Artifact APK: `D:/salary-hijacking-artifacts/20260714/iteration-115-plan-dedupe-current-head-apk/salary-hijacking-phone-arm64-iteration115-debug.apk`
-- SHA256: `DC1BF6CBDD61C7710BD64AE1BC8C536F5704EB9375F96C1CBFB34D821FEF5FE0`
+- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
+- Artifact APK: `D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk`
+- Repo APK: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
+- Remote APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk`
+- SHA256: `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`
+- Packaged source HEAD: `7f40d3905bee37e30f8c14daf79190c1010923be` plus tracked 33-screen visual-evidence refresh changes
 - Android package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 
 ## Why This Is Still Blocked
 
 - Current status: BLOCKED
-- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time.
+- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-19 KST.
 - This handoff does not replace physical phone QA. strict readiness remains BLOCKED until the local no-secret proof file is produced by an attached physical Android phone.
 
 ## Required Phone Setup
@@ -26,20 +29,30 @@ Updated: 2026-07-14 KST
 
 ## Required Command
 
+Preferred one-command runner:
+
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
-node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration115-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
+node scripts\release\run-physical-phone-qa.mjs --runs 20
+```
+
+Direct collector command:
+
+```powershell
+Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
+node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
 ```
 
 ## What The Collector Must Prove
 
 - Install succeeds on the attached physical phone.
+- Installed package is verified with `adb shell pm path com.salaryhijacking.mobile`.
 - 20 cold-start runs complete with zero fatal markers.
 - 20 background/foreground runs complete with zero fatal markers.
 - Navigation smoke reaches the package launcher without fatal markers.
 - Process kill plus relaunch persistence probe completes.
 - keyboard/safe-area probes complete.
-- raw logcat is summarized only; raw logcat lines, device serials, tokens, signing keys, and credentials are not stored.
+- raw logcat and raw package paths are summarized only; raw logcat lines, `/data/app/...` package paths, device serials, tokens, signing keys, and credentials are not stored.
 
 ## Expected Proof File
 
@@ -48,6 +61,9 @@ node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/D
 - The proof is acceptable only when it reports:
   - `physicalPhoneVerified=true`
   - `installVerified=true`
+  - `installedPackageVerified=true`
+  - `installedPackagePathHash` is present
+  - `packageInfoProbe.rawPackageInfoStored=false`
   - `coldStartRuns>=20`
   - `backgroundForegroundRuns>=20`
   - `coldStartFatalCount=0`

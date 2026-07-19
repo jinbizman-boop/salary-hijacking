@@ -1,9 +1,9 @@
 import { render } from "@testing-library/react-native";
 
-import { PlanReferenceScreen } from "../../plan/components";
+import { PlanScreen } from "../../plan/components";
 import {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
+  SalaryHomeScreen,
 } from "../../salary/components";
 
 function serializedTree(screen: ReturnType<typeof render>): string {
@@ -16,7 +16,7 @@ describe("reference mobile screens Korean copy guard", () => {
   });
 
   it("renders salary home with readable Korean labels and no mojibake markers", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
     const tree = serializedTree(screen);
 
     expect(screen.getByText(/내 급여 납치/u)).toBeTruthy();
@@ -27,7 +27,7 @@ describe("reference mobile screens Korean copy guard", () => {
   });
 
   it("renders plan screen with readable Korean labels and no mojibake markers", () => {
-    const screen = render(<PlanReferenceScreen />);
+    const screen = render(<PlanScreen />);
     const tree = serializedTree(screen);
 
     expect(screen.getByText(/급여 납치 목표 달성률/u)).toBeTruthy();

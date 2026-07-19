@@ -1,0 +1,6 @@
+# Salary Hijacking evidence checksums
+# Generated at 2026-07-19T11:20:44.104Z
+3F9351D3786729825D04A7813942E60360D8011CE98A07571747DEB072EA5130  release/evidence/build-artifacts.json
+695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D  apps/mobile/build/phone/android/salary-hijacking-phone-arm64-direct-entry-debug.apk
+695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D  D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-direct-entry-debug.apk
+695B4078A0D90271C6EDA6BAF5F91A92B785014EBCE11F1F37FA0211CDB6DE4D  C:/Users/PC/Downloads/salary-hijacking-phone-arm64-direct-entry-debug.apk

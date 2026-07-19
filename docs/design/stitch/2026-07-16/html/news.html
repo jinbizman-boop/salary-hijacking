@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Salary Hijacking - 뉴스 레벨업</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9ff",
+                        "outline-variant": "#bdcabd",
+                        "inverse-on-surface": "#eef1f6",
+                        "on-primary-fixed-variant": "#005229",
+                        "on-secondary-container": "#745f00",
+                        "surface-container-high": "#e5e8ee",
+                        "on-surface": "#181c20",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb2b9",
+                        "background": "#f7f9ff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#554500",
+                        "surface-variant": "#e0e3e8",
+                        "primary": "#006a37",
+                        "inverse-primary": "#72dc93",
+                        "secondary": "#715c00",
+                        "surface-bright": "#f7f9ff",
+                        "on-primary": "#ffffff",
+                        "secondary-container": "#ffda54",
+                        "on-surface-variant": "#3e4a40",
+                        "error": "#ba1a1a",
+                        "primary-fixed": "#8ef9ad",
+                        "on-tertiary-container": "#fffbff",
+                        "outline": "#6e7a6f",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e0e3e8",
+                        "on-primary-fixed": "#00210d",
+                        "on-secondary-fixed": "#231b00",
+                        "error-container": "#ffdad6",
+                        "primary-fixed-dim": "#72dc93",
+                        "surface-container": "#ebeef3",
+                        "tertiary": "#9e394a",
+                        "surface-dim": "#d7dadf",
+                        "tertiary-fixed": "#ffdadc",
+                        "surface-tint": "#006d39",
+                        "on-primary-container": "#f6fff4",
+                        "on-background": "#181c20",
+                        "on-tertiary-fixed-variant": "#822436",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-fixed": "#400010",
+                        "inverse-surface": "#2d3135",
+                        "primary-container": "#078648",
+                        "surface-container-low": "#f1f4f9",
+                        "tertiary-container": "#bd5161",
+                        "secondary-fixed": "#ffe179",
+                        "secondary-fixed-dim": "#e7c43f",
+                        "achievement-yellow": "#ffda54"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Noto Sans KR"],
+                        "label-bold": ["Noto Sans KR"],
+                        "body-lg": ["Noto Sans KR"],
+                        "headline-md": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "display-level": ["Noto Sans KR"],
+                        "label-sm": ["Noto Sans KR"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .fill-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f7f9ff;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #bdcabd;
+            border-radius: 10px;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-on-surface">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-50 bg-surface shadow-sm px-5 py-3 flex justify-between items-center w-full">
+<div class="flex items-center gap-2">
+<img alt="Salary Hijacking Logo" class="w-8 h-8 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdDb2BwQeW1bMpn-qGPeSBf-nIBqzKldyV6pThVO-bayOIH3_-KG3unOPPHM2THvyt1BU6Tz6w7Xwb0BApmi_xQQrSiXcC78FK3EuVh1t6oQtlNWTCVui9YAeC-5YuCFlCoysV9m-DghqxA6EEYikYCNOFlYk9vLkF--mg7PAJarwuBsTJP85l95O3DajNnCwLjNeAbBV4GAF_ZVpknSFrjLMi7it2t30X8_0gEJnXVWPmKieCUzdn362PgXf4kdbcSg"/>
+<span class="text-body-lg font-headline-lg font-black tracking-tight text-primary">SALARY HIJACKING</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-primary">settings</span>
+</button>
+</header>
+<main class="flex-1 overflow-y-auto pb-24 px-5">
+<!-- Title Section -->
+<section class="mt-6">
+<h1 class="text-headline-lg font-headline-lg text-on-surface">오늘의 뉴스, 정보 레벨업</h1>
+<p class="text-body-md text-on-surface-variant mt-1">균형 있는 시각으로 지식의 질을 높여보세요.</p>
+</section>
+<!-- Category Tabs -->
+<nav class="mt-6 flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+<button class="shrink-0 px-4 py-2 bg-primary text-on-primary rounded-full font-label-bold text-label-bold">경제</button>
+<button class="shrink-0 px-4 py-2 bg-surface-container-lowest text-on-surface-variant rounded-full font-label-bold text-label-bold border border-outline-variant">산업</button>
+<button class="shrink-0 px-4 py-2 bg-surface-container-lowest text-on-surface-variant rounded-full font-label-bold text-label-bold border border-outline-variant">사회</button>
+<button class="shrink-0 px-4 py-2 bg-surface-container-lowest text-on-surface-variant rounded-full font-label-bold text-label-bold border border-outline-variant">기술</button>
+<button class="shrink-0 px-4 py-2 bg-surface-container-lowest text-on-surface-variant rounded-full font-label-bold text-label-bold border border-outline-variant">전체</button>
+</nav>
+<!-- Balanced-reading Progress Card -->
+<section class="mt-6 bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm">
+<div class="flex justify-between items-center">
+<h2 class="text-body-lg font-headline-md flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span>
+                    오늘의 균형 읽기
+                </h2>
+<span class="text-primary font-bold text-label-bold">0 / 2 완료</span>
+</div>
+<div class="mt-4 grid grid-cols-2 gap-3">
+<div class="bg-surface-container p-3 rounded-lg flex flex-col items-center">
+<span class="text-label-sm text-on-surface-variant">핵심 쟁점</span>
+<span class="text-body-md font-bold text-error mt-1">미작성</span>
+</div>
+<div class="bg-surface-container p-3 rounded-lg flex flex-col items-center">
+<span class="text-label-sm text-on-surface-variant">내 생각</span>
+<span class="text-body-md font-bold text-error mt-1">미작성</span>
+</div>
+</div>
+<div class="mt-4 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 0%"></div>
+</div>
+<p class="mt-3 text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span>
+                두 개 이상의 관점을 확인하고 기록하면 XP를 드려요.
+            </p>
+</section>
+<!-- Issue Cards Container -->
+<section class="mt-8 space-y-4">
+<h3 class="text-label-bold text-on-surface-variant">추천 이슈</h3>
+<!-- Issue Card 1 -->
+<div class="bg-surface-container-lowest p-5 rounded-xl border border-outline-variant shadow-sm hover:border-primary transition-all group" onclick="document.getElementById('detail-modal').classList.remove('hidden')">
+<div class="flex justify-between items-start">
+<span class="px-2 py-0.5 bg-primary-container text-on-primary-container rounded-md text-label-sm font-label-bold">경제</span>
+<span class="text-label-sm text-outline">오늘 오전 8:30</span>
+</div>
+<h4 class="mt-3 text-body-lg font-headline-md leading-snug">기준금리 변화가 가계와 기업에 미치는 영향</h4>
+<p class="mt-2 text-body-md text-on-surface-variant line-clamp-2">금리 인상 기조가 지속됨에 따라 대출 상환 부담이 커지고 기업 투자가 위축되는 현상에 대한 다각도 분석...</p>
+<div class="mt-4 flex items-center gap-4 border-t border-surface-variant pt-4">
+<div class="flex items-center gap-1 text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">news</span>
+                        4개 출처
+                    </div>
+<div class="flex items-center gap-1 text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+                        3개 관점
+                    </div>
+</div>
+<div class="mt-4 bg-surface p-3 rounded-lg text-label-sm text-on-surface-variant italic">
+                    "가계 부채 리스크, 과연 감당 가능한 수준인가?"
+                </div>
+<button class="mt-4 w-full bg-primary text-on-primary h-12 rounded-xl font-label-bold flex items-center justify-center gap-2 group-active:scale-95 transition-transform">
+                    이슈 비교하기
+                    <span class="material-symbols-outlined">trending_flat</span>
+</button>
+</div>
+</section>
+<!-- Recent Records -->
+<section class="mt-8">
+<h3 class="text-label-bold text-on-surface-variant">최근 읽은 뉴스</h3>
+<div class="mt-4 space-y-3">
+<div class="flex items-center gap-4 bg-surface-container p-3 rounded-xl">
+<div class="w-10 h-10 bg-surface-container-highest rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-outline">history</span>
+</div>
+<div class="flex-1">
+<p class="text-body-md font-medium truncate">반도체 수출 지표 호조와 실물 경제...</p>
+<p class="text-label-sm text-outline">어제 오후 6:15 · 읽음</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container-lowest shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-label-sm font-label-sm">급여</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-label-sm font-label-sm">계획</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary font-bold scale-110">
+<span class="material-symbols-outlined fill-icon">military_tech</span>
+<span class="text-label-sm font-label-sm">LV UP</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm font-label-sm">커뮤니티</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm">MY</span>
+</div>
+</nav>
+<!-- Modal Mockups (SCR-014-02 to 08) -->
+<!-- Detail Modal -->
+<div class="fixed inset-0 z-[60] hidden overflow-y-auto bg-surface" id="detail-modal">
+<div class="sticky top-0 z-10 bg-surface border-b border-outline-variant px-6 py-4 flex justify-between items-center">
+<button class="w-8 h-8 flex items-center justify-center" onclick="document.getElementById('detail-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-headline-md font-headline-md">Mission Details</h2>
+<button class="w-8 h-8 flex items-center justify-center">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="p-6">
+<h1 class="text-headline-lg font-headline-lg">기준금리 변화가 가계와 기업에 미치는 영향</h1>
+<section class="mt-8 bg-surface-container-low p-5 rounded-xl">
+<h3 class="font-label-bold text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">list_alt</span>
+                    팩트 요약
+                </h3>
+<ul class="mt-3 space-y-2 text-body-md text-on-surface-variant">
+<li class="flex gap-2"><span>•</span> <span>중앙은행이 기준금리를 연 3.5%에서 유지 결정.</span></li>
+<li class="flex gap-2"><span>•</span> <span>가계 부채 증가세는 둔화되었으나 이자 부담은 역대 최대.</span></li>
+<li class="flex gap-2"><span>•</span> <span>기업 대출 연체율이 작년 대비 0.2%p 상승.</span></li>
+</ul>
+</section>
+<section class="mt-6">
+<h3 class="font-label-bold text-on-surface">핵심 질문</h3>
+<p class="mt-2 text-body-lg italic font-medium">"금리 인하 시점, 우리는 무엇을 준비해야 하는가?"</p>
+</section>
+<section class="mt-8">
+<h3 class="font-label-bold text-on-surface">확인할 관점</h3>
+<div class="mt-4 space-y-3">
+<div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">business</span>
+</div>
+<span class="font-label-bold">시장·기업</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">person</span>
+</div>
+<span class="font-label-bold">노동·생활</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="p-4 bg-surface-container-lowest border border-outline-variant rounded-xl flex justify-between items-center">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined">balance</span>
+</div>
+<span class="font-label-bold">중도·정책</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</section>
+</div>
+<div class="sticky bottom-0 p-6 bg-surface">
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-label-bold text-body-lg shadow-lg" onclick="document.getElementById('start-confirm-modal').classList.remove('hidden')">균형 읽기 시작</button>
+</div>
+</div>
+<!-- Start Confirmation Modal -->
+<div class="fixed inset-0 z-[70] hidden modal-overlay flex items-end" id="start-confirm-modal">
+<div class="bg-surface w-full rounded-t-3xl p-8 max-h-[90vh] overflow-y-auto">
+<div class="w-12 h-1.5 bg-outline-variant rounded-full mx-auto mb-6"></div>
+<h2 class="text-headline-lg font-headline-lg">오늘의 균형 성장을 시작할까요?</h2>
+<div class="mt-8 space-y-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="text-body-lg">2개 이상 관점 확인</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="text-body-lg">핵심 쟁점 기록</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="text-body-lg">내 생각 기록</span>
+</div>
+</div>
+<div class="mt-8 bg-surface-container-low p-4 rounded-xl flex items-center justify-between">
+<span class="text-on-surface-variant">예상 소요 시간</span>
+<span class="font-bold text-primary">약 7분</span>
+</div>
+<button class="mt-8 w-full h-14 bg-primary text-on-primary rounded-xl font-label-bold text-body-lg" onclick="document.getElementById('recording-modal').classList.remove('hidden')">시작하기</button>
+</div>
+</div>
+<!-- Recording Form Modal -->
+<div class="fixed inset-0 z-[80] hidden bg-surface overflow-y-auto" id="recording-modal">
+<div class="sticky top-0 bg-surface border-b border-outline-variant px-6 py-4 flex items-center justify-between">
+<button onclick="document.getElementById('recording-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="font-headline-md">기록하기</h2>
+<div class="w-8"></div>
+</div>
+<div class="p-6 space-y-8">
+<section>
+<h3 class="text-headline-lg font-headline-lg">오늘의 기록</h3>
+<p class="text-on-surface-variant mt-1">읽은 내용을 바탕으로 생각을 정리해보세요.</p>
+</section>
+<div class="space-y-6">
+<div>
+<label class="font-label-bold mb-2 block">핵심 쟁점 한 줄</label>
+<input class="w-full p-4 bg-surface-container rounded-xl border-none focus:ring-2 focus:ring-primary" placeholder="이슈의 가장 중요한 포인트를 적어주세요" type="text"/>
+</div>
+<div>
+<label class="font-label-bold mb-2 block">관점의 차이</label>
+<textarea class="w-full p-4 bg-surface-container rounded-xl border-none focus:ring-2 focus:ring-primary" placeholder="서로 다른 관점들이 어떻게 대립하고 있나요?" rows="3"></textarea>
+</div>
+<div>
+<label class="font-label-bold mb-2 block">내 생각</label>
+<textarea class="w-full p-4 bg-surface-container rounded-xl border-none focus:ring-2 focus:ring-primary" placeholder="이 이슈에 대한 당신의 최종 의견은?" rows="3"></textarea>
+</div>
+</div>
+<label class="flex items-center gap-3 p-4 bg-surface-container-low rounded-xl cursor-pointer">
+<input class="w-5 h-5 rounded text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-body-md">한쪽 주장만 보지 않고 균형있게 읽었어요</span>
+</label>
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-label-bold text-body-lg" onclick="document.getElementById('completion-modal').classList.remove('hidden')">균형 읽기 완료 요청</button>
+</div>
+</div>
+<!-- Completion Result Modal -->
+<div class="fixed inset-0 z-[90] hidden bg-surface flex flex-col items-center justify-center p-8 text-center" id="completion-modal">
+
+<div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center text-on-primary shadow-xl animate-bounce">
+<span class="material-symbols-outlined text-[48px]">verified</span>
+</div>
+<h1 class="mt-8 text-headline-lg font-headline-lg">오늘의 균형 읽기를 완료했어요!</h1>
+<p class="mt-2 text-on-surface-variant">3개 관점 분석 및 기록 완료</p>
+<div class="mt-10 grid grid-cols-2 gap-4 w-full">
+<div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant">
+<span class="text-label-sm text-outline">획득 경험치</span>
+<p class="text-headline-md font-bold text-primary mt-1">+25 XP</p>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant">
+<span class="text-label-sm text-outline">연속 달성</span>
+<p class="text-headline-md font-bold text-achievement-yellow mt-1">8일 🔥</p>
+</div>
+</div>
+<div class="mt-6 w-full bg-surface-container-low p-5 rounded-2xl text-left">
+<h4 class="font-label-bold mb-3">성장 분석</h4>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<span class="text-body-md">팩트 파악</span>
+<span class="text-primary font-bold">+1</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-body-md">관점 비교</span>
+<span class="text-primary font-bold">+2</span>
+</div>
+</div>
+</div>
+<div class="mt-10 w-full space-y-3">
+<button class="w-full h-14 bg-primary text-on-primary rounded-xl font-label-bold" onclick="document.getElementById('levelup-modal').classList.remove('hidden')">확인</button>
+<button class="w-full h-14 border border-primary text-primary rounded-xl font-label-bold bg-white">레벨업 인증글로 공유하기</button>
+</div>
+</div>
+<!-- Level-up Celebration Modal -->
+<div class="fixed inset-0 z-[100] hidden bg-primary flex flex-col items-center justify-center text-on-primary p-8 overflow-hidden" id="levelup-modal">
+
+<div class="relative z-10 flex flex-col items-center">
+<div class="w-32 h-32 bg-achievement-yellow text-primary rounded-full flex items-center justify-center shadow-2xl animate-pulse">
+<span class="material-symbols-outlined text-[64px] fill-icon">military_tech</span>
+</div>
+<h1 class="mt-10 text-display-level font-black">LV.19</h1>
+<h2 class="mt-4 text-headline-lg">정보 레벨이 올랐어요!</h2>
+<div class="mt-12 bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/20 max-w-xs w-full text-center">
+<p class="text-body-lg font-medium">"관점 비교 능력이 탁월해졌습니다!"</p>
+<p class="mt-2 text-label-sm opacity-80">다음 레벨까지 +45 XP</p>
+</div>
+<button class="mt-12 w-full max-w-xs h-14 bg-achievement-yellow text-on-secondary-fixed font-bold rounded-2xl shadow-xl active:scale-95 transition-transform" onclick="window.location.reload()">신나는 성장 계속하기</button>
+</div>
+</div>
+<script>
+        // Simple logic for state transitions in the demo
+        document.addEventListener('DOMContentLoaded', () => {
+            // All modals are controlled by manual trigger for this mockup
+        });
+    </script>
+</body></html>

@@ -37,6 +37,9 @@ export const buildPhysicalPhoneQaHandoff = ({
     android.phoneTargetDebugApkDownloadsPath,
   );
   const apkLocalPath = valueOrBlocked(android.phoneTargetDebugApkLocalPath);
+  const repoApkPath = valueOrBlocked(android.debugApkLocalPath);
+  const remoteApkUrl = valueOrBlocked(android.phoneTargetDebugApkTemporaryUrl);
+  const sourceHead = valueOrBlocked(android.latestSourcePackagedHead);
   const apkSha256 = valueOrBlocked(android.phoneTargetDebugApkSha256);
   const androidPackage = valueOrBlocked(appIdentity.androidPackage);
   const abis = Array.isArray(android.phoneTargetDebugApkAbis)
@@ -55,7 +58,10 @@ Updated: ${formatKstDate(now())} KST
 
 - Downloads APK: ${markdownCode(apkDownloadsPath)}
 - Artifact APK: ${markdownCode(apkLocalPath)}
+- Repo APK: ${markdownCode(repoApkPath)}
+- Remote APK: ${markdownCode(remoteApkUrl)}
 - SHA256: ${markdownCode(apkSha256)}
+- Packaged source HEAD: ${markdownCode(sourceHead)}
 - Android package: ${markdownCode(androidPackage)}
 - ABI: ${markdownCode(abis)}
 
@@ -75,6 +81,15 @@ Updated: ${formatKstDate(now())} KST
 
 ## Required Command
 
+Preferred one-command runner:
+
+\`\`\`powershell
+Set-Location '${rootDir.replaceAll("'", "''")}'
+node scripts\\release\\run-physical-phone-qa.mjs --runs 20
+\`\`\`
+
+Direct collector command:
+
 \`\`\`powershell
 Set-Location '${rootDir.replaceAll("'", "''")}'
 node scripts\\release\\collect-mobile-preview-phone-proof.mjs --apk "${apkDownloadsPath}" --runs 20 --output release/mobile-preview-phone-proof.local.json --package ${androidPackage}
@@ -83,12 +98,13 @@ node scripts\\release\\collect-mobile-preview-phone-proof.mjs --apk "${apkDownlo
 ## What The Collector Must Prove
 
 - Install succeeds on the attached physical phone.
+- Installed package is verified with \`adb shell pm path ${androidPackage}\`.
 - 20 cold-start runs complete with zero fatal markers.
 - 20 background/foreground runs complete with zero fatal markers.
 - Navigation smoke reaches the package launcher without fatal markers.
 - Process kill plus relaunch persistence probe completes.
 - keyboard/safe-area probes complete.
-- raw logcat is summarized only; raw logcat lines, device serials, tokens, signing keys, and credentials are not stored.
+- raw logcat and raw package paths are summarized only; raw logcat lines, \`/data/app/...\` package paths, device serials, tokens, signing keys, and credentials are not stored.
 
 ## Expected Proof File
 
@@ -97,6 +113,9 @@ node scripts\\release\\collect-mobile-preview-phone-proof.mjs --apk "${apkDownlo
 - The proof is acceptable only when it reports:
   - ${markdownCode("physicalPhoneVerified=true")}
   - ${markdownCode("installVerified=true")}
+  - ${markdownCode("installedPackageVerified=true")}
+  - ${markdownCode("installedPackagePathHash")} is present
+  - ${markdownCode("packageInfoProbe.rawPackageInfoStored=false")}
   - ${markdownCode("coldStartRuns>=20")}
   - ${markdownCode("backgroundForegroundRuns>=20")}
   - ${markdownCode("coldStartFatalCount=0")}

@@ -44,12 +44,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   timer: {
-    color: componentColors.primaryGreenDark,
-    fontSize: 26,
+    color: componentColors.primaryGreen,
+    fontSize: 30,
     fontWeight: "900",
   },
   safe: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
     fontSize: 12,
     fontWeight: "900",
   },
@@ -64,14 +64,14 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   button: {
-    minHeight: 44,
+    minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
-    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: 16,
+    backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: componentColors.primaryGreenDark,
+    color: "#FFFFFF",
     fontWeight: "900",
   },
 });

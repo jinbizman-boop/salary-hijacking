@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("notifications screen wiring", () => {
@@ -16,21 +16,27 @@ describe("notifications screen wiring", () => {
       ),
       "utf8",
     );
-    const componentSource = readFileSync(
-      join(__dirname, "..", "components", "NotificationReferenceScreen.tsx"),
-      "utf8",
+    const componentPath = join(
+      __dirname,
+      "..",
+      "components",
+      "NotificationScreen.tsx",
     );
+    expect(existsSync(componentPath)).toBe(true);
+    const componentSource = readFileSync(componentPath, "utf8");
     const source = `${routeSource}\n${componentSource}`;
 
+    expect(routeSource).toContain("NotificationScreen");
+    expect(routeSource).not.toContain("NotificationReferenceScreen");
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).not.toContain("bottomTabs");
     expect(source).toContain("useRouter");
     expect(source).toContain("새로운 알림이 있어요");
-    expect(source).toContain("내 급여 납치 현황 5,780,000원 달성");
+    expect(source).toContain("내 급여 납치 현황 목표 달성");
     expect(source).toContain(
       "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
     );
-    expect(source).toContain("Today, Business Conversation");
+    expect(source).toContain("오늘의 영어 회화 루틴 확인하기");
     expect(source).toContain("router.push(href as never)");
     expect(source).toContain("/level/reading");
     expect(source).toContain("/level/news");
@@ -39,5 +45,31 @@ describe("notifications screen wiring", () => {
     expect(source).toContain("NOTIFICATIONS_PATH");
     expect(source).toContain("NOTIFICATIONS_UNREAD_COUNT_PATH");
     expect(source).toContain("sensitive_financial_data_component_guard");
+  });
+
+  it("does not hardcode production notification money or reward examples in the runtime screen", () => {
+    const componentPath = join(
+      __dirname,
+      "..",
+      "components",
+      "NotificationScreen.tsx",
+    );
+    const source = readFileSync(componentPath, "utf8");
+
+    expect(source).not.toMatch(
+      /5,780,000|5,500,000|500P|5780000|5500000|Today,\s*Business\s*Conversation/u,
+    );
+  });
+
+  it("exports the production notification screen without reference-screen aliases", () => {
+    const componentIndex = readFileSync(
+      join(__dirname, "..", "components", "index.ts"),
+      "utf8",
+    );
+
+    expect(componentIndex).toContain("NotificationScreen");
+    expect(componentIndex).not.toContain("NotificationReferenceScreen");
+    expect(componentIndex).not.toContain("NotificationReferenceHref");
+    expect(componentIndex).not.toContain("./NotificationReferenceScreen");
   });
 });

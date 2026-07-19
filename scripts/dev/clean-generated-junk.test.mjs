@@ -28,6 +28,21 @@ test("removes repository generated junk while preserving dependencies, local sec
     );
     await touch(path.join(rootDir, "apps", "mobile", ".expo", "web", "cache"));
     await touch(
+      path.join(rootDir, "apps", "mobile", ".local-native-bin", "npm.cmd"),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        ".localappdata",
+        "npm-cache",
+        "_cacache",
+        "index-v5",
+        "cache.bin",
+      ),
+    );
+    await touch(
       path.join(
         rootDir,
         "apps",
@@ -166,6 +181,14 @@ test("removes repository generated junk while preserving dependencies, local sec
     assert.equal(existsSync(path.join(rootDir, ".tmp")), false);
     assert.equal(
       existsSync(path.join(rootDir, "apps", "mobile", ".expo")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", ".local-native-bin")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", ".localappdata")),
       false,
     );
     assert.equal(

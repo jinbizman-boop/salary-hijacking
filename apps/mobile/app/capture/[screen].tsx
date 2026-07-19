@@ -1,4 +1,5 @@
-import { useLocalSearchParams, usePathname } from "expo-router";
+import { Redirect, useLocalSearchParams, usePathname } from "expo-router";
+import { Platform } from "react-native";
 
 import {
   CapturePreviewScreen,
@@ -8,23 +9,41 @@ import {
 const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
   Object.freeze({
     community: "community",
+    "community-post-detail": "community-post-detail",
     "community-write": "community-write",
+    "common-empty": "common-empty",
+    "common-error": "common-error",
+    "common-loading": "common-loading",
+    "common-offline": "common-offline",
     english: "english",
+    "expense-form-state": "expense-form-state",
+    "fixed-expense-form": "fixed-expense-form",
+    "fixed-saving-form": "fixed-saving-form",
     health: "health",
     level: "level",
+    "living-cost-form": "living-cost-form",
     login: "login",
     news: "news",
     notifications: "notifications",
+    "notification-settings": "notification-settings",
     plan: "plan",
     profile: "profile",
+    "profile-account": "profile-account",
+    "profile-community": "profile-community",
     "profile-level": "profile-level",
+    "profile-notices": "profile-notices",
+    "profile-settings": "profile-settings",
+    "profile-support": "profile-support",
     reading: "reading",
     salary: "salary",
     signup: "signup",
     splash: "splash",
+    "terms-consent": "terms-consent",
   });
 
 export default function CaptureScreen(): React.ReactElement {
+  if (Platform.OS !== "web") return <Redirect href="/salary" />;
+
   const params = useLocalSearchParams();
   const pathname = usePathname();
   const paramScreen = params.screen;

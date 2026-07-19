@@ -387,6 +387,7 @@ const baseConfig = [
     ignores: [
       "**/.expo/**",
       "**/.next/**",
+      "**/.local-native-bin/**",
       "**/.nuxt/**",
       "**/.open-next/**",
       "**/.output/**",

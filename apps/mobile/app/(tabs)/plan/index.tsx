@@ -1,11 +1,11 @@
-import { PlanReferenceScreen } from "../../../src/features/plan/components";
+import { PlanScreen } from "../../../src/features/plan/components";
 
-const SCREEN_VERSION = "4.2.0-plan-reference-ui";
+const SCREEN_VERSION = "4.3.0-plan-ui";
 const PLAN_FIXED_EXPENSES_ENDPOINT = "/api/v1/fixed-expenses";
 const PLAN_SAVINGS_ENDPOINT = "/api/v1/savings";
 
 export default function PlanIndexScreen(): React.ReactElement {
-  return <PlanReferenceScreen />;
+  return <PlanScreen />;
 }
 
 export function assertMobilePlanIndexCompleteness(): {
@@ -14,11 +14,11 @@ export function assertMobilePlanIndexCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "PlanReferenceScreen",
+    "PlanScreen",
     "SALARY HIJACKING",
     PLAN_FIXED_EXPENSES_ENDPOINT,
     PLAN_SAVINGS_ENDPOINT,
-    "홍길동님의 급여 납치 목표 달성률",
+    "사용자님의 급여 납치 목표 달성률",
     "목표 달성률 88%",
     "내 급여 납치 계획/설정",
     "월별 고정 지출 계획/설정",
@@ -30,7 +30,7 @@ export function assertMobilePlanIndexCompleteness(): {
     "raw_personal_data_component_guard",
     "ads_financial_targeting_component_guard",
     "krw_integer_display",
-    "responsive_plan_reference_guard",
+    "responsive_plan_guard",
     "safe_area_top_bottom_guard",
   ] as const;
 

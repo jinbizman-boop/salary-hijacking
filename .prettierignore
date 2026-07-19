@@ -17,6 +17,10 @@ web-build
 # Native/mobile generated workspaces
 android
 ios
+apps/mobile/.local-native-bin
+
+# Design reference originals copied from Stitch. Keep unchanged for traceability.
+docs/design/stitch/**/html/*.html
 
 # Local environment files
 .env

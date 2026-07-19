@@ -5,12 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { appIconAssets } from "../../src/shared/assets/icons";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
-type TabName =
-  | "salary/index"
-  | "plan/index"
-  | "level/index"
-  | "community/index"
-  | "profile/index";
+type TabName = "salary" | "plan" | "level" | "community" | "profile";
 
 type TabDefinition = Readonly<{
   href: string;
@@ -20,41 +15,41 @@ type TabDefinition = Readonly<{
   title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.3-router-index-tabs-korean-labels";
+const LAYOUT_VERSION = "4.0.4-router-segment-tabs-korean-labels";
 
 const tabs: readonly TabDefinition[] = [
   {
     href: "/salary",
     icon: appIconAssets.bottomTabs.salary,
-    name: "salary/index",
+    name: "salary",
     privacyBoundary: "payroll_home",
     title: "급여",
   },
   {
     href: "/plan",
     icon: appIconAssets.bottomTabs.plan,
-    name: "plan/index",
+    name: "plan",
     privacyBoundary: "payroll_plan",
     title: "계획",
   },
   {
     href: "/level",
     icon: appIconAssets.bottomTabs.level,
-    name: "level/index",
+    name: "level",
     privacyBoundary: "growth",
     title: "LV",
   },
   {
     href: "/community",
     icon: appIconAssets.bottomTabs.community,
-    name: "community/index",
+    name: "community",
     privacyBoundary: "anonymous_community",
     title: "커뮤니티",
   },
   {
     href: "/profile",
     icon: appIconAssets.bottomTabs.profile,
-    name: "profile/index",
+    name: "profile",
     privacyBoundary: "profile_privacy",
     title: "MY",
   },
@@ -67,7 +62,7 @@ export default function TabsLayout(): React.ReactElement {
 
   return (
     <Tabs
-      initialRouteName="salary/index"
+      initialRouteName="salary"
       screenOptions={{
         freezeOnBlur: true,
         headerShown: false,
@@ -176,7 +171,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "anonymous_community_boundary",
     "profile_privacy_boundary",
     "accessibility_labels",
-    "expo_router_index_tabs",
+    "expo_router_segment_tabs",
     "readable_korean_tab_copy",
     "typescript_strict_ready",
   ] as const;

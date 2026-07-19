@@ -10,7 +10,7 @@ import type {
   PlanSavingsGoalCommitment,
 } from "../types";
 import { resetSalaryHomePreviewCacheForTests } from "../../salary/components";
-import { PlanReferenceScreen } from "../components";
+import { PlanScreen } from "../components";
 
 describe("plan reference screen interactions", () => {
   beforeEach(() => {
@@ -18,8 +18,20 @@ describe("plan reference screen interactions", () => {
     jest.clearAllMocks();
   });
 
+  it("renders the goal card from the provided display name", () => {
+    const displayName = "\uAE40\uD14C\uC2A4\uD2B8";
+    const screen = render(<PlanScreen displayName={displayName} />);
+
+    expect(
+      screen.getByText(
+        `${displayName}\uB2D8\uC758 \uAE09\uC5EC \uB0A9\uCE58 \uBAA9\uD45C \uB2EC\uC131\uB960`,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/^\uD64D\uAE38\uB3D9/u)).toBeNull();
+  });
+
   it("opens section settings and exposes editable plan controls", () => {
-    const screen = render(<PlanReferenceScreen />);
+    const screen = render(<PlanScreen />);
 
     fireEvent.press(screen.getByTestId("fixed-section-settings-button"));
     expect(screen.getByTestId("fixed-section-add-button")).toBeTruthy();
@@ -50,7 +62,7 @@ describe("plan reference screen interactions", () => {
       }),
     );
     const screen = render(
-      <PlanReferenceScreen planCommitmentsApi={{ createFixedExpense }} />,
+      <PlanScreen planCommitmentsApi={{ createFixedExpense }} />,
     );
 
     fireEvent.press(screen.getByTestId("fixed-section-settings-button"));
@@ -78,7 +90,7 @@ describe("plan reference screen interactions", () => {
     const pendingSave = createDeferred<PlanFixedExpenseCommitment>();
     const createFixedExpense = jest.fn().mockReturnValue(pendingSave.promise);
     const screen = render(
-      <PlanReferenceScreen planCommitmentsApi={{ createFixedExpense }} />,
+      <PlanScreen planCommitmentsApi={{ createFixedExpense }} />,
     );
 
     fireEvent.press(screen.getByTestId("fixed-section-settings-button"));
@@ -113,7 +125,7 @@ describe("plan reference screen interactions", () => {
       .fn()
       .mockRejectedValue(new Error("offline"));
     const screen = render(
-      <PlanReferenceScreen planCommitmentsApi={{ createFixedExpense }} />,
+      <PlanScreen planCommitmentsApi={{ createFixedExpense }} />,
     );
 
     fireEvent.press(screen.getByTestId("fixed-section-settings-button"));
@@ -152,7 +164,7 @@ describe("plan reference screen interactions", () => {
       status: "DELETED",
     });
     const screen = render(
-      <PlanReferenceScreen
+      <PlanScreen
         planCommitmentsApi={{ deleteFixedExpense, updateFixedExpense }}
       />,
     );
@@ -206,7 +218,7 @@ describe("plan reference screen interactions", () => {
       status: "DELETED",
     });
     const screen = render(
-      <PlanReferenceScreen
+      <PlanScreen
         planCommitmentsApi={{
           createSavingsGoal,
           deleteSavingsGoal,
@@ -280,7 +292,7 @@ describe("plan reference screen interactions", () => {
       }),
     );
     const screen = render(
-      <PlanReferenceScreen
+      <PlanScreen
         budgetApi={{ createVariableExpense, updateVariableExpense }}
       />,
     );
@@ -322,9 +334,7 @@ describe("plan reference screen interactions", () => {
       serverAuthority: true,
     });
     const screen = render(
-      <PlanReferenceScreen
-        budgetApi={{ createVariableExpense, recalculate }}
-      />,
+      <PlanScreen budgetApi={{ createVariableExpense, recalculate }} />,
     );
 
     fireEvent.press(screen.getByTestId("living-section-settings-button"));
@@ -351,6 +361,39 @@ describe("plan reference screen interactions", () => {
     await waitFor(() => expect(screen.getByText("점심 샐러드")).toBeTruthy());
   });
 
+  it("blocks duplicate daily living recalculations while the server save is pending", async () => {
+    const recalculationResult = {
+      adTargetingSeparated: true,
+      affectedBudgetCount: 30,
+      financialRawDataExposed: false,
+      periodEndDate: "2026-07-14",
+      periodStartDate: "2026-07-13",
+      recalculatedDailyAmountMinor: 12_000,
+      serverAuthority: true,
+    };
+    const pendingRecalculation = createDeferred<typeof recalculationResult>();
+    const recalculate = jest.fn().mockReturnValue(pendingRecalculation.promise);
+    const screen = render(<PlanScreen budgetApi={{ recalculate }} />);
+
+    fireEvent.press(screen.getByTestId("living-section-settings-button"));
+    fireEvent.press(screen.getByTestId("living-section-add-button"));
+    fillPlanItem(screen, {
+      amount: "12000",
+      category: "food",
+      content: "Plan dinner",
+      day: "1",
+    });
+
+    fireEvent.press(screen.getByTestId("plan-item-save-button"));
+    fireEvent.press(screen.getByTestId("plan-item-save-button"));
+
+    expect(recalculate).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      pendingRecalculation.resolve(recalculationResult);
+      await pendingRecalculation.promise;
+    });
+  });
+
   it("deletes daily living plan rows without deleting actual variable expenses", async () => {
     const deleteVariableExpense = jest.fn().mockResolvedValue({
       adTargetingSeparated: true,
@@ -359,9 +402,7 @@ describe("plan reference screen interactions", () => {
       serverAuthority: true,
       status: "DELETED",
     });
-    const screen = render(
-      <PlanReferenceScreen budgetApi={{ deleteVariableExpense }} />,
-    );
+    const screen = render(<PlanScreen budgetApi={{ deleteVariableExpense }} />);
 
     fireEvent.press(screen.getByTestId("living-section-settings-button"));
     fireEvent.press(screen.getByTestId("living-item-edit-daily-coffee"));
@@ -383,9 +424,7 @@ describe("plan reference screen interactions", () => {
       serverAuthority: true,
     });
     const screen = render(
-      <PlanReferenceScreen
-        budgetApi={{ deleteVariableExpense, recalculate }}
-      />,
+      <PlanScreen budgetApi={{ deleteVariableExpense, recalculate }} />,
     );
 
     fireEvent.press(screen.getByTestId("living-section-settings-button"));
@@ -419,7 +458,7 @@ describe("plan reference screen interactions", () => {
         resolveSavePlanRef.current = resolve;
       });
     });
-    const plan = render(<PlanReferenceScreen payrollApi={{ savePlan }} />);
+    const plan = render(<PlanScreen payrollApi={{ savePlan }} />);
 
     fireEvent.press(plan.getByTestId("payroll-section-settings-button"));
     fireEvent.changeText(plan.getByLabelText("payroll-payday-input"), "24");
@@ -481,9 +520,10 @@ describe("plan reference screen interactions", () => {
           remainderMinor: 2_000_000,
         }),
       );
-      const plan = render(<PlanReferenceScreen payrollApi={{ savePlan }} />);
+      const plan = render(<PlanScreen payrollApi={{ savePlan }} />);
 
       fireEvent.press(plan.getByTestId("payroll-section-settings-button"));
+      fireEvent.changeText(plan.getByLabelText("payroll-amount-input"), "1");
       fireEvent.changeText(plan.getByLabelText("payroll-payday-input"), "31");
       fireEvent.press(
         plan.getByRole("button", { name: "payroll-plan-save-button" }),

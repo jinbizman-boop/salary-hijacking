@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+
+<html class="light" lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LV UP - 독서 레벨업</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed-dim": "#ffb2b9",
+                    "on-error": "#ffffff",
+                    "inverse-surface": "#2d3135",
+                    "on-error-container": "#93000a",
+                    "on-primary-container": "#f6fff4",
+                    "tertiary-fixed": "#ffdadc",
+                    "on-secondary-fixed": "#231b00",
+                    "surface-dim": "#d7dadf",
+                    "tertiary": "#9e394a",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eef1f6",
+                    "primary-fixed": "#8ef9ad",
+                    "tertiary-container": "#bd5161",
+                    "primary-container": "#078648",
+                    "on-tertiary": "#ffffff",
+                    "on-primary-fixed-variant": "#005229",
+                    "background": "#f7f9ff",
+                    "on-secondary-fixed-variant": "#554500",
+                    "surface": "#f7f9ff",
+                    "on-surface": "#181c20",
+                    "surface-container-highest": "#e0e3e8",
+                    "on-background": "#181c20",
+                    "primary": "#006a37",
+                    "surface-container": "#ebeef3",
+                    "on-primary-fixed": "#00210d",
+                    "inverse-primary": "#72dc93",
+                    "primary-fixed-dim": "#72dc93",
+                    "surface-container-high": "#e5e8ee",
+                    "on-secondary-container": "#745f00",
+                    "outline-variant": "#bdcabd",
+                    "on-tertiary-fixed": "#400010",
+                    "secondary-container": "#ffda54",
+                    "secondary": "#715c00",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#822436",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#e0e3e8",
+                    "surface-bright": "#f7f9ff",
+                    "surface-tint": "#006d39",
+                    "on-tertiary-container": "#fffbff",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed-dim": "#e7c43f",
+                    "secondary-fixed": "#ffe179",
+                    "on-surface-variant": "#3e4a40",
+                    "outline": "#6e7a6f",
+                    "surface-container-low": "#f1f4f9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "stack-gap-lg": "24px",
+                    "gutter": "12px",
+                    "container-padding": "20px",
+                    "unit": "4px",
+                    "stack-gap-md": "16px",
+                    "stack-gap-sm": "8px"
+            },
+            "fontFamily": {
+                    "label-sm": ["Noto Sans KR"],
+                    "headline-lg": ["Noto Sans KR"],
+                    "body-lg": ["Noto Sans KR"],
+                    "display-level": ["Noto Sans KR"],
+                    "headline-md": ["Noto Sans KR"],
+                    "body-md": ["Noto Sans KR"],
+                    "label-bold": ["Noto Sans KR"]
+            },
+            "fontSize": {
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "display-level": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "900"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-bold": ["12px", {"lineHeight": "16px", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .active-state { transform: scale(0.95); transition: transform 0.15s; }
+        .glow-primary { box-shadow: 0 0 20px rgba(32, 146, 82, 0.2); }
+        .medal-hex { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-surface-container-low text-on-surface overflow-x-hidden">
+<main class="flex flex-row overflow-x-auto snap-x snap-mandatory no-scrollbar min-h-screen">
+<!-- 1. 콘텐츠 목록 -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-surface" id="scr-list">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-5 py-3 bg-surface shadow-sm sticky top-0 z-10">
+<div class="flex items-center gap-3">
+<img alt="Logo" class="w-8 h-8" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPNGdWCTBisKGQjsQM7Zv11_YVZ8UcLd5jZlsq9ZCqBG-s3WWlUG8x4vKHKz-xPePzwiJ5rkMRh_u9btxGqxvUHa6E4cs1cbVKJXmrJZUfM9UC1fX5tJDHN7y_ereuQRh5oC36C-Ng88fX3vhuW7gS9tTiD8K1NpKUU0ByGipDVtc2OLTuE1xva_Vp8-Mjgv4WuPKkpsQtLKC3Iw5JiN-d7KXmVIv1pZIUYDbimgnCm-pH_WywiD6c"/>
+<span class="text-body-lg font-headline-lg font-black tracking-tight text-primary">SALARY HIJACKING</span>
+</div>
+<span class="material-symbols-outlined text-primary cursor-pointer hover:bg-surface-container-low transition-colors p-2 rounded-full">settings</span>
+</header>
+<div class="flex-1 overflow-y-auto px-container-padding pb-24">
+<div class="mt-6">
+<h1 class="text-headline-md font-headline-md text-on-surface">독서 미션</h1>
+<p class="text-body-md text-on-surface-variant mt-1">지식을 쌓고 경험치를 획득하세요.</p>
+</div>
+<!-- Filters -->
+<div class="flex gap-2 mt-4 overflow-x-auto no-scrollbar">
+<button class="px-4 py-2 bg-primary text-on-primary rounded-full text-label-bold whitespace-nowrap">전체</button>
+<button class="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-label-bold whitespace-nowrap">난이도: 하</button>
+<button class="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-label-bold whitespace-nowrap">시간: 15분</button>
+<button class="px-4 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-label-bold whitespace-nowrap">미완료</button>
+</div>
+<!-- List of Missions -->
+<div class="mt-stack-gap-lg space-y-4">
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex items-center gap-4 hover:bg-surface-container transition-colors cursor-pointer shadow-sm">
+<div class="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Cover of the book Rich Dad Poor Dad featuring a sleek, professional corporate modern design with bold green and gold accents. The book is set against a clean, minimalist financial office background with soft lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEJjI5GtGHcT2WbmDqJwR-u4yD62GEihQVZwzrvCLIH5rFSoWZiZTl0fPhB-Ev2i_HiC_D7QpKBUbS83STvR1HOh28VnHnDRkamXyLjhG2WWmzP-VYYsbBEZjFmOVdB5JrCwUOUzgpPZdtxEvpPXhF9zcnSWs9KygDb3qk8K2sodRek9xkYp6z34gurPQCQSsuQdB36yjB_9GtHg9x10WDkErWHVQtcxFbsHlZWaRzszWS_XVg0pi9"/>
+</div>
+<div class="flex-1">
+<span class="text-label-sm text-primary font-bold">금융지능 UP</span>
+<h3 class="text-body-lg font-bold text-on-surface leading-tight">부자 아빠 가난한 아빠</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm text-on-surface-variant">15분 독서</span>
+<span class="text-label-sm text-secondary font-bold">50 XP</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-4 rounded-xl flex items-center gap-4 hover:bg-surface-container transition-colors cursor-pointer shadow-sm">
+<div class="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A book cover for 'Atomic Habits' by James Clear, designed in a clean, modern aesthetic. The cover features a small, glowing green atomic symbol on a white background with strong, minimal typography. High-end financial branding colors like emerald green and charcoal gray are used." src="https://lh3.googleusercontent.com/aida-public/AB6AXuABA9wMC2Hn1r8yo9fmMArpG6e02c74Wk2JtFkqJv6kZVy4gSwp-T1O5yWvZnHWzrqKS2EqkX4cEqtD1f673IemcKTKFe4lIY3aQouMi0snBbbruJiwxBUpOPulTBgUGvXURNsXmdh4KZrgy1_pQEjTU5SARKRWFHmzxeJbZPdy33Xr80PTWESpHtkQF-vilJUUtPdO82OgB6tPZEK3Z53LhoS3WoJZSf_9B6XmEBtlsENteFZ_D0U2"/>
+</div>
+<div class="flex-1">
+<span class="text-label-sm text-primary font-bold">습관 형성</span>
+<h3 class="text-body-lg font-bold text-on-surface leading-tight">아주 작은 습관의 힘</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm text-on-surface-variant">20분 독서</span>
+<span class="text-label-sm text-secondary font-bold">60 XP</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="bg-primary/5 border-2 border-primary p-4 rounded-xl flex items-center gap-4 shadow-sm">
+<div class="w-16 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-container text-4xl">check_circle</span>
+</div>
+<div class="flex-1">
+<span class="px-2 py-0.5 bg-primary text-on-primary text-label-sm rounded-full inline-block mb-1">수행 완료</span>
+<h3 class="text-body-lg font-bold text-on-surface leading-tight">보도 섀퍼의 돈</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-label-sm text-on-surface-variant">완료일: 어제</span>
+<span class="text-label-sm text-primary font-bold">+100 XP</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</div>
+</div>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 py-3 bg-surface-container-lowest shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer">
+<span class="material-symbols-outlined">payments</span>
+<span class="text-label-sm font-label-sm mt-1">급여</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-label-sm font-label-sm mt-1">계획</span>
+</div>
+<div class="flex flex-col items-center justify-center text-primary font-bold cursor-pointer scale-110">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<span class="text-label-sm font-label-sm mt-1">LV UP</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer">
+<span class="material-symbols-outlined">group</span>
+<span class="text-label-sm font-label-sm mt-1">커뮤니티</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant cursor-pointer">
+<span class="material-symbols-outlined">person</span>
+<span class="text-label-sm font-label-sm mt-1">MY</span>
+</div>
+</nav>
+</section>
+<!-- 2. 콘텐츠 상세 -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-surface border-l border-outline-variant" id="scr-detail">
+<header class="flex justify-between items-center w-full px-6 py-4 border-b border-outline-variant">
+<span class="material-symbols-outlined text-primary cursor-pointer">arrow_back</span>
+<span class="text-headline-md font-headline-md text-on-surface">Mission Details</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">more_vert</span>
+</header>
+<div class="flex-1 overflow-y-auto">
+<div class="w-full h-64 relative">
+<img class="w-full h-full object-cover" data-alt="A cinematic, high-detail overhead shot of an open financial strategy book next to a coffee cup on a minimal white desk. Sunlight streams through a window, creating soft shadows. The overall aesthetic is professional, calming, and high-end, utilizing the brand's emerald green and white palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi91GeqbneWD9lCUm59IdgALEipEdU1makmLLDNAMlzswu9_BIte11F-LNAhdKoGJaUXnFGiN5eCB8ZYgfcTyh-rJSYJvZYtXnh91tfkiaV3gbiEL_K8H34HDlvUmlnf4bg6XE-v5_Fr6YAxgfvfjJXPcQnMwiIlqTHuW5LuWrUg57RK793XqtzG6C4H63LzN9yp5Xp1n70YeTTnxXoHsGnxYxezKpG5RaCexnwc9thawYCV2IfRKU"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-container-padding">
+<div>
+<span class="bg-secondary text-on-secondary-fixed text-label-bold px-3 py-1 rounded-full">추천 도서</span>
+<h2 class="text-headline-lg text-white mt-2">부자 아빠 가난한 아빠</h2>
+</div>
+</div>
+</div>
+<div class="p-container-padding space-y-6">
+<div>
+<h3 class="text-label-bold text-on-surface-variant mb-2">미션 개요</h3>
+<p class="text-body-md text-on-surface leading-relaxed">
+                            자산과 부채의 차이를 이해하고, 돈이 나를 위해 일하게 만드는 기초 금융 지식을 쌓는 시간입니다. 핵심 요약을 읽고 당신의 통찰력을 기록하세요.
+                        </p>
+</div>
+<div class="bg-surface-container-low p-4 rounded-xl space-y-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">timer</span>
+<span class="text-body-md font-bold">소요 시간: 약 15분</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">workspace_premium</span>
+<span class="text-body-md font-bold">보상: 50 XP + '지혜의 초석' 배지</span>
+</div>
+</div>
+<div>
+<h3 class="text-label-bold text-on-surface-variant mb-3">주요 포인트</h3>
+<ul class="space-y-3">
+<li class="flex gap-3">
+<span class="text-primary font-bold">01</span>
+<span class="text-body-md">자산은 내 지갑에 돈을 넣어주는 것</span>
+</li>
+<li class="flex gap-3">
+<span class="text-primary font-bold">02</span>
+<span class="text-body-md">부채는 내 지갑에서 돈을 빼가는 것</span>
+</li>
+<li class="flex gap-3">
+<span class="text-primary font-bold">03</span>
+<span class="text-body-md">금융 지능이 곧 진정한 재산이다</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="p-5 border-t border-outline-variant bg-surface">
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span>미션 시작하기</span>
+<span class="material-symbols-outlined">play_arrow</span>
+</button>
+</div>
+</section>
+<!-- 3. 수행 시작 컨펌 -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-black/40 items-center justify-center p-container-padding" id="scr-confirm">
+<div class="bg-surface-container-lowest w-full max-w-sm rounded-[24px] p-8 shadow-2xl animate-in slide-in-from-bottom-10 duration-500">
+<div class="flex flex-col items-center text-center">
+<div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-5xl animate-pulse">menu_book</span>
+</div>
+<h2 class="text-headline-md font-headline-md text-on-surface">몰입 독서 준비</h2>
+<p class="text-body-md text-on-surface-variant mt-2 mb-8">
+                        앞으로 15분 동안 외부 알림을 차단하고<br/>독서에 집중할 준비가 되셨나요?
+                    </p>
+<div class="flex flex-col w-full gap-3">
+<button class="w-full py-4 bg-primary text-on-primary rounded-xl font-bold">지금 시작</button>
+<button class="w-full py-4 text-on-surface-variant font-medium">나중에 하기</button>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. 수행 중 (Timer) -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-primary-container text-white relative" id="scr-timer">
+
+<div class="relative z-10 flex flex-col h-full items-center justify-center p-container-padding text-center">
+<span class="text-label-bold bg-white/20 px-4 py-1 rounded-full mb-8">부자 아빠 가난한 아빠 요독 중...</span>
+<div class="relative w-64 h-64 flex items-center justify-center">
+<svg class="w-full h-full -rotate-90">
+<circle cx="128" cy="128" fill="transparent" r="120" stroke="rgba(255,255,255,0.2)" stroke-width="8"></circle>
+<circle cx="128" cy="128" fill="transparent" r="120" stroke="white" stroke-dasharray="753.6" stroke-dashoffset="188.4" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-6xl font-black tracking-widest">14:28</span>
+<span class="text-label-sm mt-2 opacity-80">남은 시간</span>
+</div>
+</div>
+<div class="mt-12 space-y-2">
+<p class="text-headline-md font-bold">"자산과 부채를 구분하라"</p>
+<p class="text-body-md opacity-70">집중하면 지혜가 보입니다.</p>
+</div>
+<button class="mt-16 bg-white/10 hover:bg-white/20 px-8 py-3 rounded-full border border-white/30 flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined">pause</span>
+<span>잠시 멈춤</span>
+</button>
+</div>
+</section>
+<!-- 5. 기록 입력 -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-surface" id="scr-form">
+<header class="px-6 py-4 flex items-center justify-between">
+<span class="material-symbols-outlined text-primary">close</span>
+<span class="text-headline-md font-headline-md">오늘의 기록</span>
+<div class="w-6"></div>
+</header>
+<div class="flex-1 p-container-padding">
+<div class="mb-8">
+<label class="text-label-bold text-primary mb-2 block">한 줄 요약</label>
+<textarea class="w-full bg-surface-container border-none rounded-xl p-4 h-32 focus:ring-2 focus:ring-primary text-body-md" placeholder="오늘 읽은 내용 중 가장 인상 깊은 한 문장은 무엇인가요?"></textarea>
+</div>
+<div class="space-y-4">
+<label class="text-label-bold text-on-surface-variant block">오늘의 감상</label>
+<div class="flex gap-2">
+<button class="flex-1 py-3 border border-outline-variant rounded-xl flex flex-col items-center gap-1">
+<span class="text-2xl">💡</span>
+<span class="text-label-sm">깨달음</span>
+</button>
+<button class="flex-1 py-3 bg-primary/10 border-2 border-primary rounded-xl flex flex-col items-center gap-1">
+<span class="text-2xl">🔥</span>
+<span class="text-label-sm">동기부여</span>
+</button>
+<button class="flex-1 py-3 border border-outline-variant rounded-xl flex flex-col items-center gap-1">
+<span class="text-2xl">✅</span>
+<span class="text-label-sm">실천의지</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-5">
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-xl font-bold">기록 완료하고 XP 받기</button>
+</div>
+</section>
+<!-- 6. 완료 결과 및 XP 반영 -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-white items-center justify-center" id="scr-result">
+<div class="text-center p-container-padding w-full">
+<div class="relative inline-block mb-10">
+
+<div class="absolute inset-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-7xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+</div>
+<h2 class="text-display-level text-primary">+50 XP</h2>
+<h3 class="text-headline-md mt-2">미션 성공!</h3>
+<p class="text-body-md text-on-surface-variant mt-4">지식의 근육이 조금 더 단단해졌습니다.</p>
+<div class="mt-12 w-full max-w-xs mx-auto">
+<div class="flex justify-between text-label-bold mb-2">
+<span>LEVEL 12</span>
+<span class="text-primary">95%</span>
+</div>
+<div class="w-full h-3 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-1000" style="width: 95%;"></div>
+</div>
+</div>
+<button class="mt-16 w-full h-[56px] border-2 border-primary text-primary rounded-xl font-bold hover:bg-primary/5 transition-colors">다음 단계</button>
+</div>
+</section>
+<!-- 7. 레벨업 달성 -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-primary relative overflow-hidden" id="scr-levelup">
+
+<div class="relative z-10 flex flex-col items-center justify-center h-full p-container-padding text-center">
+<div class="medal-hex w-40 h-44 bg-secondary-container flex flex-col items-center justify-center shadow-2xl animate-bounce">
+<span class="text-display-level text-on-secondary-fixed">13</span>
+<span class="text-label-bold text-on-secondary-fixed uppercase tracking-widest">Level</span>
+</div>
+<h1 class="text-display-level text-white mt-10">LEVEL UP!</h1>
+<p class="text-body-lg text-white/90 mt-4 max-w-[280px]">
+                    축하합니다! 당신의 경제적 자유를 향한 레벨이 13으로 올랐습니다.
+                </p>
+<div class="mt-12 bg-white/20 backdrop-blur-md p-6 rounded-2xl w-full max-w-xs border border-white/30">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-secondary rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-white">bolt</span>
+</div>
+<div class="text-left">
+<h4 class="text-label-bold text-white">새로운 보상 잠금 해제</h4>
+<p class="text-body-md text-white/80">고급 투자 시뮬레이션 모드</p>
+</div>
+</div>
+</div>
+<button class="mt-16 w-full h-[56px] bg-white text-primary rounded-xl font-bold shadow-lg">확인</button>
+</div>
+</section>
+<!-- 8. 커뮤니티 인증글 공유 (Preview Sheet) -->
+<section class="min-w-full md:min-w-[400px] snap-center flex flex-col h-screen bg-surface-container-low relative" id="scr-share">
+<div class="flex-1 p-container-padding flex items-center justify-center">
+<!-- Share Card Preview -->
+<div class="w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl border border-outline-variant">
+<div class="h-64 relative">
+<img class="w-full h-full object-cover" data-alt="A stylized digital badge featuring a level 13 achievement in a gamified financial app. The badge is emerald green and gold, glowing with soft particle effects. The background shows a blurry financial charts and a modern reading environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYGOhlugjEBDPbZAM8JuBwLcw6bLCE43ErydtUkUm6K64S5sk5sTZdu6WF03VcMcrN-LquLUeUVIp_AdItIuPg_wL61jd9UL_hiqn_WdDJPBsfRFWWjdYBLbHQkRSlFxLUS2yaKawi2sK7imN8rvi-VI9ao6yCkksjiIxyVlWKKixSg3jz3AKwnL0vCA6QZhN_nbp4OJ1-fm5FdqT8d37xIvP6728Zfza1cvAV-9XGGc7hQq3l7nl8"/>
+<div class="absolute top-4 left-4 flex items-center gap-2 bg-black/30 backdrop-blur-sm p-2 rounded-full pr-4">
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden flex items-center justify-center border border-white">
+<span class="material-symbols-outlined text-on-primary-fixed text-lg">person</span>
+</div>
+<span class="text-white text-label-bold">Kim Success</span>
+</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-4">
+<div>
+<span class="text-primary text-label-bold">독서 레벨업 완료!</span>
+<h3 class="text-headline-md mt-1">부자 아빠 가난한 아빠</h3>
+</div>
+<div class="medal-hex w-12 h-14 bg-secondary-fixed flex flex-col items-center justify-center">
+<span class="text-headline-md text-on-secondary-fixed font-black">13</span>
+</div>
+</div>
+<blockquote class="text-body-md italic text-on-surface-variant border-l-4 border-primary pl-4 py-1 mb-4">
+                            "자산과 부채의 차이를 이해하는 것이 부의 시작이라는 것을 다시금 깨달은 15분이었습니다."
+                        </blockquote>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">#독서습관</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">#레벨업</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-label-sm">#성장일기</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Sheet -->
+<div class="bg-surface rounded-t-[24px] p-container-padding shadow-[0_-10px_30px_rgba(0,0,0,0.1)] border-t border-outline-variant">
+<h3 class="text-headline-md mb-6">인증글 공유하기</h3>
+<div class="grid grid-cols-4 gap-4 mb-8">
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 bg-[#3b5998]/10 rounded-2xl flex items-center justify-center text-[#3b5998]">
+<span class="material-symbols-outlined">share</span>
+</div>
+<span class="text-label-sm">피드</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 bg-[#1DA1F2]/10 rounded-2xl flex items-center justify-center text-[#1DA1F2]">
+<span class="material-symbols-outlined">alternate_email</span>
+</div>
+<span class="text-label-sm">DM</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 bg-[#FEE500]/10 rounded-2xl flex items-center justify-center text-[#964B00]">
+<span class="material-symbols-outlined">chat</span>
+</div>
+<span class="text-label-sm">카카오톡</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center">
+<span class="material-symbols-outlined">link</span>
+</div>
+<span class="text-label-sm">링크복사</span>
+</div>
+</div>
+<button class="w-full h-[56px] bg-primary text-on-primary rounded-xl font-bold">커뮤니티에 즉시 공유</button>
+</div>
+</section>
+</main>
+<script>
+        // Simple horizontal scroll indicators or micro-interactions
+        const main = document.querySelector('main');
+        main.addEventListener('scroll', () => {
+            // Can add logic to highlight scroll progress if needed
+        });
+    </script>
+</body></html>

@@ -3,6 +3,7 @@ import * as Linking from "expo-linking";
 import * as SplashScreen from "expo-splash-screen";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { Platform } from "react-native";
 
 import { SplashLaunchScreen } from "../src/features/auth/components";
 import {
@@ -45,17 +46,33 @@ type ExpoExtra = Readonly<{
 const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
   Object.freeze({
     community: "community",
+    "community-post-detail": "community-post-detail",
     "community-write": "community-write",
+    "common-empty": "common-empty",
+    "common-error": "common-error",
+    "common-loading": "common-loading",
+    "common-offline": "common-offline",
     english: "english",
+    "expense-form-state": "expense-form-state",
+    "fixed-expense-form": "fixed-expense-form",
+    "fixed-saving-form": "fixed-saving-form",
     health: "health",
     level: "level",
+    "living-cost-form": "living-cost-form",
     news: "news",
     notifications: "notifications",
+    "notification-settings": "notification-settings",
     plan: "plan",
     profile: "profile",
+    "profile-account": "profile-account",
+    "profile-community": "profile-community",
     "profile-level": "profile-level",
+    "profile-notices": "profile-notices",
+    "profile-settings": "profile-settings",
+    "profile-support": "profile-support",
     reading: "reading",
     salary: "salary",
+    "terms-consent": "terms-consent",
   });
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
@@ -207,6 +224,7 @@ function isUsableAccessToken(value: string | null): boolean {
 }
 
 function readBrowserLocation(): Readonly<{ href: string }> | null {
+  if (Platform.OS !== "web") return null;
   if (typeof window === "undefined") return null;
   const location = window.location;
   if (!location || typeof location.href !== "string") return null;

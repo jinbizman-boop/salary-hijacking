@@ -2,9 +2,9 @@ import { fireEvent, render } from "@testing-library/react-native";
 
 import {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
+  SalaryHomeScreen,
 } from "../../salary/components";
-import { PlanReferenceScreen } from "../components";
+import { PlanScreen } from "../components";
 
 describe("plan launch readiness interactions", () => {
   beforeEach(() => {
@@ -12,7 +12,7 @@ describe("plan launch readiness interactions", () => {
   });
 
   it("treats living cost as daily amount times days and syncs new rows to salary home", () => {
-    const plan = render(<PlanReferenceScreen />);
+    const plan = render(<PlanScreen />);
 
     expect(plan.getByText("일일 생활비 계획/설정")).toBeTruthy();
     expect(plan.getByText("일일 생활비 총액")).toBeTruthy();
@@ -31,7 +31,7 @@ describe("plan launch readiness interactions", () => {
     expect(plan.getByText("점심 샐러드")).toBeTruthy();
     expect(plan.getByText("8,500원")).toBeTruthy();
 
-    const salary = render(<SalaryHomeReferenceScreen />);
+    const salary = render(<SalaryHomeScreen />);
     expect(salary.getByText("점심 샐러드")).toBeTruthy();
     expect(salary.getAllByText("8,500원").length).toBeGreaterThanOrEqual(1);
   });

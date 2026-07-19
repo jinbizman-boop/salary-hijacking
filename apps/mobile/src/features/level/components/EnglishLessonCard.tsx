@@ -33,7 +33,7 @@ export function EnglishLessonCard({
 
 const styles = StyleSheet.create({
   mode: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
     fontSize: 12,
     fontWeight: "900",
   },
@@ -48,14 +48,14 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   button: {
-    minHeight: 44,
+    minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
-    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: 16,
+    backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: componentColors.primaryGreenDark,
+    color: "#FFFFFF",
     fontWeight: "900",
   },
 });

@@ -1,5 +1,6 @@
 node_modules
 .expo
+.local-native-bin
 .turbo
 coverage
 dist

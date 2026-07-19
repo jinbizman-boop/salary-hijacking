@@ -49,7 +49,7 @@ const popularPosts: readonly CommunityPost[] = [
     moderationStatus: "SAFE",
     rawFinancialDataExposed: false,
     rawPersonalDataExposed: false,
-    title: "회계팀 홍길동입니다. 연말정산 실전 팁 5가지 공유!",
+    title: "익명 회계팀의 연말정산 실전 팁 5가지 공유!",
     updatedAt: "2026-07-10T01:00:00.000Z",
   },
 ];

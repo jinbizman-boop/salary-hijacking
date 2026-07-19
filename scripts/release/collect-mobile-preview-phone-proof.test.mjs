@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -177,6 +178,14 @@ test("builds verified no-secret proof when physical phone startup has zero fatal
         stderr: "",
       };
     }
+    if (joined.includes("shell pm path com.salaryhijacking.mobile")) {
+      return {
+        status: 0,
+        stdout:
+          "package:/data/app/~~secret-free/com.salaryhijacking.mobile-random/base.apk\n",
+        stderr: "",
+      };
+    }
     return { status: 0, stdout: "", stderr: "" };
   };
 
@@ -192,6 +201,13 @@ test("builds verified no-secret proof when physical phone startup has zero fatal
 
   assert.equal(proof.android.physicalPhoneVerified, true);
   assert.equal(proof.android.installVerified, true);
+  assert.equal(proof.android.installedPackageVerified, true);
+  assert.match(proof.android.installedPackagePathHash, /^[A-F0-9]{64}$/);
+  assert.equal(proof.android.packageInfoProbe.rawPackageInfoStored, false);
+  assert.equal(
+    proof.android.apkSha256,
+    createHash("sha256").update("APK").digest("hex").toUpperCase(),
+  );
   assert.equal(proof.android.coldStartRuns, 2);
   assert.equal(proof.android.coldStartFatalCount, 0);
   assert.equal(proof.android.navigationSmokeVerified, true);
@@ -200,8 +216,53 @@ test("builds verified no-secret proof when physical phone startup has zero fatal
   assert.equal(proof.android.keyboardSafeAreaVerified, true);
   assert.equal(proof.android.logcatSummary.rawLogcatStored, false);
   assert.doesNotMatch(JSON.stringify(proof), /R5CT123456X/);
+  assert.doesNotMatch(JSON.stringify(proof), /\/data\/app/);
   assert.ok(calls.some(([, args]) => args.includes("install")));
+  assert.ok(calls.some(([, args]) => args.join(" ").includes("pm path")));
   assert.ok(calls.some(([, args]) => args.includes("monkey")));
+});
+
+test("blocks physical phone proof when installed package cannot be verified", () => {
+  const rootDir = makeWorkspace();
+  const apkPath = write(rootDir, "build/salary.apk", "APK");
+  const commandRunner = (command, args) => {
+    const joined = [command, ...args].join(" ");
+    if (joined.includes("devices -l")) {
+      return {
+        status: 0,
+        stdout:
+          "List of devices attached\nR5CT123456X device product:r8q model:SM_G780N device:r8q transport_id:7\n",
+        stderr: "",
+      };
+    }
+    if (joined.includes("shell pm path com.salaryhijacking.mobile")) {
+      return { status: 1, stdout: "", stderr: "package not found" };
+    }
+    if (joined.includes("logcat -d")) {
+      return {
+        status: 0,
+        stdout: "07-13 12:00:01 Expo: startup\n",
+        stderr: "",
+      };
+    }
+    return { status: 0, stdout: "", stderr: "" };
+  };
+
+  const proof = buildMobilePreviewPhoneProof({
+    rootDir,
+    apkPath,
+    adbPath: "adb",
+    commandRunner,
+    packageName: "com.salaryhijacking.mobile",
+    coldStartRuns: 1,
+    now: () => new Date("2026-07-13T03:18:00.000Z"),
+  });
+
+  assert.equal(proof.android.physicalPhoneVerified, false);
+  assert.equal(proof.android.installVerified, true);
+  assert.equal(proof.android.installedPackageVerified, false);
+  assert.match(proof.android.physicalPhoneBlocker, /package verification/i);
+  assert.equal(proof.android.packageInfoProbe.rawPackageInfoStored, false);
 });
 
 test("defaults physical phone QA to 20 cold-start and background runs", () => {
@@ -221,6 +282,13 @@ test("defaults physical phone QA to 20 cold-start and background runs", () => {
       return {
         status: 0,
         stdout: "07-13 12:00:01 Expo: startup\n",
+        stderr: "",
+      };
+    }
+    if (joined.includes("shell pm path com.salaryhijacking.mobile")) {
+      return {
+        status: 0,
+        stdout: "package:/data/app/com.salaryhijacking.mobile/base.apk\n",
         stderr: "",
       };
     }

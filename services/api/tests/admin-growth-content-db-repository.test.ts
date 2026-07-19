@@ -69,7 +69,9 @@ function contentRow(overrides: Record<string, unknown> = {}) {
 describe("admin LV UP content DB repository", () => {
   it("selects the Neon admin repository only when a database URL is present", () => {
     expect(
-      shouldUseNeonAdminRepository({ DATABASE_URL: "postgres://db" }),
+      shouldUseNeonAdminRepository({
+        DATABASE_URL: "postgres://user:password@example.invalid/db",
+      }),
     ).toBe(true);
     expect(shouldUseNeonAdminRepository({})).toBe(false);
   });

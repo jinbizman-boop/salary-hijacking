@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-07-19T06:56:57.809Z",
+  "source": "Tracked no-secret physical phone QA summary generated from ignored local proof. Raw logcat, serials, package paths, tokens, credentials, signing keys, reviewer passwords, and raw device identifiers are not stored.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "physicalPhoneVerified": false,
+  "blocker": "No physical Android phone is attached; emulator evidence does not replace phone QA.",
+  "adbPath": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\.tools\\android-sdk\\platform-tools\\adb.exe",
+  "apkPath": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
+  "apkSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+  "packageName": "com.salaryhijacking.mobile",
+  "installVerified": false,
+  "installedPackageVerified": false,
+  "navigationSmokeVerified": false,
+  "backgroundForegroundVerified": false,
+  "persistenceVerified": false,
+  "keyboardSafeAreaVerified": false,
+  "requiredColdStartRuns": 20,
+  "requiredBackgroundForegroundRuns": 20,
+  "coldStartRuns": 0,
+  "backgroundForegroundRuns": 0,
+  "coldStartFatalCount": null,
+  "apkSourceGitHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
+  "gitHead": "e563007f65689f01b5b8664c44cc3e620d78b0fb",
+  "localProofTracked": false,
+  "rawLogcatStored": false,
+  "rawDeviceIdentifierStored": false,
+  "privacy": {
+    "containsEasToken": false,
+    "containsStoreCredential": false,
+    "containsSigningKey": false,
+    "containsReviewerPassword": false,
+    "containsRawLogcat": false,
+    "containsSecretValues": false,
+    "containsRawDeviceIdentifier": false
+  },
+  "nextEvidenceRequired": [
+    "Attach a physical Android phone with USB debugging enabled",
+    "Run the physical phone preview QA collector against the latest ARM64 APK with at least 20 cold-start and 20 background/foreground runs"
+  ]
+}

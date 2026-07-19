@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="ko"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @keyframes fadeInScale {
+            0% { opacity: 0; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1.0); }
+        }
+        @keyframes rotateIndicator {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-splash {
+            animation: fadeInScale 320ms ease-out forwards;
+        }
+        .animate-spin-slow {
+            animation: rotateIndicator 1.5s linear infinite;
+        }
+        body {
+            background-color: #f7f9ff;
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow: hidden;
+        }
+        .footer-safe-area {
+            padding-bottom: 44px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#006a37",
+                        "brand-green": "#209252",
+                        "brand-dark": "#34383D",
+                        "brand-footer": "#2E3135",
+                        "status-text": "#6B737C",
+                        "surface": "#f7f9ff",
+                        "on-surface": "#131c26",
+                        "error-bg": "#FFF2F2"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "margin-page": "24px"
+                    },
+                    "borderRadius": {
+                        "xl": "16px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Noto Sans KR"],
+                        "headline-lg": ["Noto Sans KR"],
+                        "body-md": ["Noto Sans KR"],
+                        "label-sm": ["Noto Sans KR"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex flex-col items-center justify-between min-h-screen">
+<!-- Header Spacer -->
+<div class="h-10 w-full"></div>
+<!-- Main Splash Content -->
+<main class="flex flex-col items-center justify-center flex-grow -mt-20 animate-splash">
+<!-- Logo Container: 124x124, 1:1 ratio, centered -->
+<div class="w-[124px] h-[124px] mb-8 flex items-center justify-center overflow-hidden">
+<img alt="급여납치 공식 로고" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWEDs43s0_K57HerC9Yo3m-u1JGKLJ7vathAHPXn4WpuUanibP3_oHhpzWKujmly3sd5Y9hZT_fCECiKYIFU5bt3ae19zxLs4cBzQd7MnUiXVEW92ZoGJxd0Rnny8BiLYTAxC4woAaue8OtRmHYR94nsEs-NuA4uL5FzMQwTw7LvVqofk9hf84An2sxy1CBuUsIyUKgAN_2ed4-arrxdpyIMh_YwQwqqiV3o57LTaiRQOsQ8xvxGXdBPCwhPrybCMi_g"/>
+</div>
+<!-- Brand Names -->
+<div class="flex flex-col items-center gap-2 mb-12">
+<h1 class="text-[46px] font-black tracking-tighter text-brand-green leading-none">
+                급여납치
+            </h1>
+<p class="text-[18px] font-bold tracking-[0.2em] text-brand-dark uppercase">
+                SALARY HIJACKING
+            </p>
+</div>
+<!-- Loading State Container -->
+<div class="flex flex-col items-center gap-3" id="loading-state">
+<!-- Uniform circular indicator -->
+<div class="relative w-5 h-5">
+<div class="absolute inset-0 border-2 border-brand-green/20 rounded-full"></div>
+<div class="absolute inset-0 border-2 border-brand-green border-t-transparent rounded-full animate-spin-slow"></div>
+</div>
+<!-- Status Text -->
+<span class="text-[14px] font-medium text-status-text">
+                앱을 준비하고 있어요
+            </span>
+</div>
+<!-- Error State Container (Hidden by default, used for SCR-020 reference) -->
+<div class="hidden flex flex-col items-center w-full max-w-[320px] p-6 bg-error-bg rounded-xl mt-4" id="error-state">
+<span class="material-symbols-outlined text-[#BA1A1A] text-4xl mb-3">error</span>
+<p class="text-[15px] font-medium text-brand-dark text-center mb-6">데이터를 불러오지 못했습니다.<br/>네트워크 연결을 확인해주세요.</p>
+<button class="w-full h-12 bg-brand-green text-white font-bold rounded-lg mb-4">다시 시도</button>
+<a class="text-[14px] text-status-text underline font-medium" href="#">로그인 화면으로 이동</a>
+</div>
+</main>
+<!-- Footer Wordmark -->
+<footer class="footer-safe-area w-full flex justify-center items-center">
+<span class="text-[18px] font-bold text-brand-footer tracking-tight">
+            Eureka World
+        </span>
+</footer>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Splash initializing...');
+
+            // Logic to demonstrate state handling (for design review purposes)
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('state') === 'error') {
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('error-state').classList.remove('hidden');
+            }
+        });
+    </script>
+</body></html>

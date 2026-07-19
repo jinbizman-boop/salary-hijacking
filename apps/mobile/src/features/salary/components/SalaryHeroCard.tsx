@@ -1,7 +1,12 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 
 import { appIconAssets } from "../../../shared/assets/icons";
-import { componentColors } from "../../../shared/components";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  componentTypography,
+} from "../../../shared/components";
 
 export type SalaryHeroCardProps = Readonly<{
   title: string;
@@ -42,27 +47,32 @@ export function SalaryHeroCard({
 const styles = StyleSheet.create({
   amount: {
     color: "#FFF65A",
-    fontSize: 32,
+    fontSize: componentTypography.heroAmount,
     fontWeight: "900",
-    lineHeight: 38,
+    lineHeight: 42,
   },
   card: {
-    minHeight: 188,
+    minHeight: 226,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    gap: 12,
-    padding: 16,
-    borderRadius: 8,
+    gap: componentSpacing.md,
+    padding: componentSpacing.lg,
+    borderRadius: componentRadius.card,
     backgroundColor: componentColors.primaryGreen,
+    shadowColor: componentColors.shadow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 1,
+    shadowRadius: 18,
+    elevation: 5,
   },
   copy: {
     flex: 1,
     gap: 5,
   },
   date: {
-    color: "#DDF4E7",
-    fontSize: 13,
+    color: "#DDFBE5",
+    fontSize: 14,
     fontWeight: "800",
   },
   guard: {
@@ -71,8 +81,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   icon: {
-    width: 74,
-    height: 74,
+    width: 82,
+    height: 82,
   },
   subtitle: {
     color: "#FFFFFF",
@@ -81,7 +91,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: "#FFFFFF",
-    fontSize: 21,
+    fontSize: 24,
     fontWeight: "900",
   },
 });

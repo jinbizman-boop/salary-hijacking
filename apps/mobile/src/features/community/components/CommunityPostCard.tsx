@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { componentColors, componentRadius } from "../../../shared/components";
 import type { CommunityPost } from "../community.types";
 import { CommunityModerationBanner } from "./CommunityModerationBanner";
 
@@ -64,16 +65,21 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surface,
+    shadowColor: componentColors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 3,
   },
   body: {
     gap: 8,
     padding: 16,
   },
   pressed: {
-    backgroundColor: "#F8FAFC",
+    backgroundColor: componentColors.surfaceSoft,
   },
   meta: {
     flexDirection: "row",
@@ -82,23 +88,23 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   author: {
-    color: "#4B5563",
+    color: componentColors.textSecondary,
     fontSize: 12,
     fontWeight: "600",
   },
   board: {
-    color: "#176B5B",
+    color: componentColors.primaryGreen,
     fontSize: 11,
     fontWeight: "700",
   },
   title: {
-    color: "#111827",
+    color: componentColors.textPrimary,
     fontSize: 16,
     fontWeight: "800",
     lineHeight: 22,
   },
   preview: {
-    color: "#4B5563",
+    color: componentColors.textSecondary,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -110,18 +116,18 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: "#EEF0F2",
+    borderTopColor: componentColors.line,
   },
   likeButton: {
     minHeight: 36,
     justifyContent: "center",
   },
   count: {
-    color: "#6B7280",
+    color: componentColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
   },
   liked: {
-    color: "#B42318",
+    color: componentColors.dangerRed,
   },
 });

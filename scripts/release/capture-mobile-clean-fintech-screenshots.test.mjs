@@ -28,10 +28,29 @@ test("capture script produces the 17 core mobile UI evidence screenshots", () =>
   );
 });
 
-test("capture script records responsive overflow checks for 320 through 430px", () => {
+test("capture script produces the 33 official mobile UI evidence screenshots", () => {
+  assert.match(source, /"18_profile_settings\.png"/);
+  assert.match(source, /"19_profile_account\.png"/);
+  assert.match(source, /"20_profile_community\.png"/);
+  assert.match(source, /"21_profile_support\.png"/);
+  assert.match(source, /"22_profile_notices\.png"/);
+  assert.match(source, /"23_community_post_detail\.png"/);
+  assert.match(source, /"24_notification_settings\.png"/);
+  assert.match(source, /"25_common_loading\.png"/);
+  assert.match(source, /"26_common_empty\.png"/);
+  assert.match(source, /"27_common_error\.png"/);
+  assert.match(source, /"28_common_offline\.png"/);
+  assert.match(source, /"29_terms_consent\.png"/);
+  assert.match(source, /"30_expense_form_state\.png"/);
+  assert.match(source, /"31_fixed_expense_form\.png"/);
+  assert.match(source, /"32_fixed_saving_form\.png"/);
+  assert.match(source, /"33_living_cost_form\.png"/);
+});
+
+test("capture script records responsive overflow checks for 320 through 768px", () => {
   assert.match(
     source,
-    /const responsiveViewportWidths = \[320, 360, 375, 390, 393, 412, 430\]/,
+    /const responsiveViewportWidths = \[320, 360, 375, 390, 393, 412, 430, 768\]/,
   );
   assert.match(source, /horizontalOverflow/);
   assert.match(source, /responsiveCheckCount: responsiveChecks\.length/);

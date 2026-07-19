@@ -776,6 +776,21 @@ const makeWorkspace = () => {
     "docs/codex/09_VALIDATION_PROTOCOL.md",
     "# Validation Protocol\n",
   );
+  write(
+    rootDir,
+    "docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md",
+    "# Release Gate Matrix\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_ANDROID_DEVICE_REPORT.md",
+    "# Final Android Device Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+    "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
   write(rootDir, "release/README.md", "# Release\n");
   writeReleaseTargets(rootDir);
   writeExternalEvidence(rootDir);
@@ -2454,6 +2469,31 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.match(report, /mobile:native:evidence/);
 });
 
+test("blocks stale APK references in final release reports", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+    "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration094-debug.apk\nSHA256: 073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91\n",
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /docs:final-report-apk-references/);
+  assert.match(report, /stale APK references/);
+  assert.doesNotMatch(
+    report,
+    /073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91/,
+  );
+});
 test("blocks when current-head mobile preview evidence is missing", () => {
   const rootDir = makeWorkspace();
   fs.rmSync(path.join(rootDir, "release", "mobile-preview-evidence.json"), {
@@ -2509,8 +2549,16 @@ test("uses local no-secret physical phone proof when present", () => {
           iosBundleIdentifier: "com.salaryhijacking.mobile",
         },
         android: {
+          apkSha256:
+            "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
           physicalPhoneVerified: true,
           installVerified: true,
+          installedPackageVerified: true,
+          installedPackagePathHash:
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          packageInfoProbe: {
+            rawPackageInfoStored: false,
+          },
           coldStartRuns: 20,
           coldStartFatalCount: 0,
           navigationSmokeVerified: true,
@@ -2555,6 +2603,137 @@ test("uses local no-secret physical phone proof when present", () => {
     report,
     /Physical phone preview QA is verified by local no-secret proof/,
   );
+});
+
+test("blocks physical phone proof for a stale APK hash", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          apkSha256:
+            "10C3FC2ED13C90F19DEFDE57062B88ED220D74623B3EC251C6CE03BBCC8101D8",
+          physicalPhoneVerified: true,
+          installVerified: true,
+          coldStartRuns: 20,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 20,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /APK SHA256 does not match/);
+});
+
+test("blocks physical phone proof without installed package verification", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          apkSha256:
+            "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+          physicalPhoneVerified: true,
+          installVerified: true,
+          installedPackageVerified: false,
+          installedPackagePathHash: null,
+          packageInfoProbe: {
+            rawPackageInfoStored: false,
+          },
+          coldStartRuns: 20,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 20,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /installed package verification/i);
 });
 
 test("blocks physical phone proof that lacks persistence and keyboard safe-area QA", () => {
@@ -2849,6 +3028,40 @@ test("passes latest-source preview APK evidence when only evidence docs changed 
       ok: true,
       output:
         "docs/codex/100-completion/110_ITERATION_100_CURRENT_HEAD_APK_REFRESH.md\nrelease/mobile-preview-evidence.json\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /only non-mobile evidence or documentation changed after APK packaging/,
+  );
+});
+
+test("passes latest-source preview APK evidence when only root package engine policy changed after packaging", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourcePackagedHead: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output:
+        "package.json\nscripts/quality/check-package-manager-scripts.mjs\n",
     }),
     gitRemote: matchingGitRemote,
   });

@@ -11,8 +11,8 @@ export {
   type NotificationSummaryCardProps,
 } from "./NotificationSummaryCard";
 export {
-  NotificationReferenceScreen,
   assertMobileNotificationsIndexCompleteness,
-  type NotificationReferenceHref,
-  type NotificationReferenceScreenProps,
-} from "./NotificationReferenceScreen";
+  NotificationScreen,
+  type NotificationHref,
+  type NotificationScreenProps,
+} from "./NotificationScreen";

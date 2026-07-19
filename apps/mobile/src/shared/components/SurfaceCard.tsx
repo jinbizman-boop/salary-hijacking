@@ -30,5 +30,10 @@ const styles = StyleSheet.create({
     borderColor: componentColors.line,
     borderRadius: componentRadius.card,
     backgroundColor: componentColors.surface,
+    shadowColor: componentColors.shadow,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 1,
+    shadowRadius: 18,
+    elevation: 4,
   },
 });

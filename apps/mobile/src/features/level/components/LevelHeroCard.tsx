@@ -44,13 +44,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   kicker: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
     fontSize: 12,
     fontWeight: "900",
   },
   level: {
     color: componentColors.textPrimary,
-    fontSize: 30,
+    fontSize: 34,
     fontWeight: "900",
   },
   exp: {
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   guard: {
-    color: componentColors.textSecondary,
+    color: componentColors.textMuted,
     fontSize: 11,
     fontWeight: "700",
   },

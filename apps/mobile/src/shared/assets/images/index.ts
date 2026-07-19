@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- React Native image assets must use static require() calls for Metro bundling. */
 import type { ImageSourcePropType } from "react-native";
 
 export const appImageAssets = {
