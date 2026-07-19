@@ -91,7 +91,7 @@ const responsiveCheckRoutes = [
   "/capture/profile",
 ];
 
-const responsiveViewportWidths = [320, 360, 375, 390, 393, 412, 430];
+const responsiveViewportWidths = [320, 360, 375, 390, 393, 412, 430, 768];
 
 const contentTypes = new Map([
   [".html", "text/html; charset=utf-8"],

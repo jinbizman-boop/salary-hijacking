@@ -40,19 +40,22 @@ This is a live report for the active UI/UX finalization goal. It is not a 100% c
 
 Latest known evidence from current repository:
 
-- `corepack pnpm --filter @salary-hijacking/mobile test`: PASS in prior Stitch pass, 66 suites / 769 tests
-- `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS in prior Stitch pass
-- `corepack pnpm run format:check`: PASS after Stitch metadata refresh
-- `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS in prior Stitch pass
-- `node scripts/release/capture-mobile-clean-fintech-screenshots.mjs`: PASS in prior Stitch pass
+- `corepack pnpm --filter @salary-hijacking/mobile test`: PASS, 66 suites / 769 tests
+- `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run format:check`: PASS
+- `corepack pnpm run format:check`: PASS
+- `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS
+- `node scripts/release/capture-mobile-clean-fintech-screenshots.mjs`: PASS
+- `node --test scripts/release/capture-mobile-clean-fintech-screenshots.test.mjs`: PASS
 - `corepack pnpm run check:release-readiness`: BLOCKED by known launch blockers, while mobile preview/APK evidence gates pass
 
 ## F. Visual Comparison
 
 - Current comparison file: `release/evidence/mobile-ui/stitch-comparison.md`
 - Current capture summary: `release/evidence/mobile-ui/capture-summary.json`
-- Current result: 17 canonical screens captured; 105 responsive checks; horizontal overflow 0
-- Missing: 768 matrix, pixel diff/SSIM comparator, full 30-screen/modal/common-state visual set
+- Current result: 17 canonical screens captured; 120 responsive checks across 320, 360, 375, 390, 393, 412, 430, and 768px; horizontal overflow 0
+- Missing: pixel diff/SSIM comparator, full 30-screen/modal/common-state visual set
 
 ## G. Review Result
 
@@ -76,7 +79,6 @@ Not complete:
 - Missing exact local copies or confirmation for several named source files.
 - 30 official screens are not all visually captured.
 - Modal/state inventory is incomplete.
-- 768px responsive objective is not yet evidenced.
 - Accessibility critical/serious count is not yet proven by an automated a11y run.
 - Physical Android device QA remains blocked.
 - Release readiness remains blocked by existing gap register and `origin/main` release gate.

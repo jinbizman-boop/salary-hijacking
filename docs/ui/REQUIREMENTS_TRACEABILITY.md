@@ -57,13 +57,13 @@ This traceability file connects the UI finalization objective to current impleme
 | Ads separated from raw financial data                                       | `AdBannerSlot`, community disclosure, AGENTS privacy rules | privacy/security evidence               | PARTIAL |
 | Stitch HTML not pasted into RN                                              | `release/evidence/mobile-ui/stitch-comparison.md`          | text/evidence review                    | PASS    |
 | Visual capture 17 canonical screens                                         | `release/evidence/mobile-ui/capture-summary.json`          | screenshot script                       | PASS    |
-| Responsive capture 320-430 widths                                           | `capture-summary.json`                                     | 105 checks, horizontal overflow 0       | PASS    |
-| 768px visual matrix                                                         | not yet in current capture summary                         | missing evidence                        | PARTIAL |
+| Responsive capture 320-430 widths                                           | `capture-summary.json`                                     | included in 120 checks, overflow 0      | PASS    |
+| 768px visual matrix                                                         | `capture-summary.json`                                     | included in 120 checks, overflow 0      | PASS    |
 | Physical Android safe-area/keyboard/logcat                                  | `release/mobile-preview-evidence.json`                     | no attached physical phone              | BLOCKED |
 | Production build/store public release                                       | release readiness                                          | external approval and main merge needed | BLOCKED |
 
 ## Current Gate Summary
 
 - PASS: canonical Stitch inventory, 17 reference screenshots, current mobile unit/component tests, typecheck, root format.
-- PARTIAL: full 30-screen visual coverage, modal coverage, 768px matrix, exhaustive accessibility audit, all E2E scenarios.
+- PARTIAL: full 30-screen visual coverage, modal coverage, exhaustive accessibility audit, all E2E scenarios.
 - BLOCKED: physical Android phone proof, final production submit, `origin/main` release gate, source materials not present locally.

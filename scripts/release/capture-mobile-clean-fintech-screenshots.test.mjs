@@ -28,10 +28,10 @@ test("capture script produces the 17 core mobile UI evidence screenshots", () =>
   );
 });
 
-test("capture script records responsive overflow checks for 320 through 430px", () => {
+test("capture script records responsive overflow checks for 320 through 768px", () => {
   assert.match(
     source,
-    /const responsiveViewportWidths = \[320, 360, 375, 390, 393, 412, 430\]/,
+    /const responsiveViewportWidths = \[320, 360, 375, 390, 393, 412, 430, 768\]/,
   );
   assert.match(source, /horizontalOverflow/);
   assert.match(source, /responsiveCheckCount: responsiveChecks\.length/);
