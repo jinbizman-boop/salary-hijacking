@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-19T03:16:48.271Z",
+  "generatedAt": "2026-07-19T04:11:38.072Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "fce65bee6c74eab6409065ae23fa934b8f72e119",
+    "gitHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
-    "trackedWorkingTreeDirty": true,
-    "trackedChangeCount": 4,
-    "note": "Stitch design-system evidence was refreshed from the current salary-hijacking-platform workspace. Android local debug APK rebuild was attempted twice from this HEAD but timed out in native Gradle/assembleDebug; no new current-HEAD APK was produced. The existing APK hash remains stable and is retained only as a previously built QA artifact."
+    "trackedWorkingTreeDirty": false,
+    "trackedChangeCount": 0,
+    "note": "Current HEAD Android arm64-v8a debug QA APK was rebuilt locally after the earlier Gradle timeout investigation. Gradle cache was moved to D:/salary-hijacking-artifacts during the build to avoid filling the project drive; repository build caches were cleaned after preserving the APK artifact."
   },
   "stitch": {
     "zipCount": 10,
@@ -24,11 +24,11 @@
   },
   "apk": {
     "path": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk",
-    "bytes": 70703071,
-    "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-    "lastModified": "2026-07-17T00:22:24.067Z",
-    "packagedHead": "be449241b55f55cb6c0373ddfde95dfc0c5a5011",
-    "currentHeadRebuildStatus": "BLOCKED_TIMEOUT",
+    "bytes": 70703135,
+    "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
+    "lastModified": "2026-07-19T04:02:29.265Z",
+    "packagedHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+    "currentHeadRebuildStatus": "PASS",
     "currentHeadRebuildAttempts": [
       {
         "attemptedAt": "2026-07-19T02:50:00Z",
@@ -41,21 +41,28 @@
         "command": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --architecture arm64-v8a --output build/phone/android/salary-hijacking-phone-arm64-debug.apk",
         "result": "TIMEOUT_AFTER_904S",
         "stage": "assembleDebug"
+      },
+      {
+        "attemptedAt": "2026-07-19T04:11:38.072Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug",
+        "result": "PASS_AFTER_EXTENDED_NATIVE_GRADLE_BUILD",
+        "stage": "assembleDebug + assembleDebugAndroidTest",
+        "output": "apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk"
       }
     ]
   },
   "copies": [
     {
       "path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk",
-      "bytes": 70703071,
-      "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-      "lastModified": "2026-07-17T00:22:24.067Z"
+      "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
+      "bytes": 70703135,
+      "lastModified": "2026-07-19T04:02:29.265Z"
     },
     {
       "path": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-      "bytes": 70703071,
-      "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
-      "lastModified": "2026-07-17T00:22:24.067Z"
+      "sha256": "235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A",
+      "bytes": 70703135,
+      "lastModified": "2026-07-19T04:02:29.265Z"
     }
   ],
   "signing": {
@@ -85,14 +92,14 @@
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
     "logcatColdStart": "BLOCKED_NOT_CONNECTED",
-    "currentHeadLocalApkRebuild": "BLOCKED_TIMEOUT"
+    "currentHeadLocalApkRebuild": "PASS"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
-    "branch": "codex-apk-artifacts-20260717-stitch-ui-final",
-    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk",
-    "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
+    "branch": null,
+    "url": null,
+    "sha256": null,
     "artifactType": "debug QA APK, not production AAB",
-    "note": "Remote artifact URL continues to serve the same SHA256 APK from the previous packaged head. It is not a current-HEAD rebuild. A new APK must be produced by a successful local or EAS preview build before current-HEAD phone QA can be claimed."
+    "note": "Current HEAD APK was rebuilt and copied locally to D:/salary-hijacking-artifacts/apk and C:/Users/PC/Downloads. No remote raw APK artifact was republished in this step because EAS/GitHub artifact publishing credentials are not available in this non-interactive environment."
   }
 }

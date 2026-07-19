@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-07-19T03:30:00.000Z",
-  "gitHead": "dca90ae12fb2180cdc849a6b1475fec15725109b",
-  "apkSourceGitHead": "7fdde9345c276c219804a64b40d7f7e85d0524a4",
+  "generatedAt": "2026-07-19T04:11:38.072Z",
+  "gitHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+  "apkSourceGitHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
   "draftPullRequest": {
     "number": 2,
     "url": "https://github.com/jinbizman-boop/salary-hijacking/pull/2",
     "base": "main",
     "head": "codex/payroll-reminder-launch-ready-100-20260714",
     "status": "open draft",
-    "headSha": "dca90ae12fb2180cdc849a6b1475fec15725109b",
-    "headShaObservation": "git push origin codex/payroll-reminder-launch-ready-100-20260714 succeeded from current local branch HEAD during Stitch UI evidence refresh.",
-    "updatedAt": "2026-07-19T12:20:00+09:00",
+    "headSha": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+    "headShaObservation": "Local current HEAD Android debug APK rebuild succeeded; feature branch evidence must be pushed after this evidence update.",
+    "updatedAt": "2026-07-19T13:11:39+09:00",
     "merged": false,
     "mergeable": true
   },
@@ -66,16 +66,6 @@
       "evidence": "docs/codex/100-completion/05_GAP_REGISTER.md",
       "nextCommand": "After physical phone QA and explicit approval, review and merge https://github.com/jinbizman-boop/salary-hijacking/pull/2, then run production release commands documented in release/store and release evidence.",
       "humanActionRequired": true
-    },
-    {
-      "id": "GAP-009",
-      "severity": "P1",
-      "area": "Current HEAD Android debug APK rebuild",
-      "status": "BLOCKED",
-      "reason": "Current HEAD local Android debug APK rebuild was attempted twice. The first attempt timed out after 1204s during react-native-reanimated configureCMakeDebug warmup, and the second attempt timed out after 904s during assembleDebug. Existing APK SHA256 was reverified, but it is not a new current-HEAD APK.",
-      "evidence": "release/evidence/build-artifacts.json",
-      "nextCommand": "Run a successful local Android debug build after native Gradle timeout investigation, or create an EAS preview APK build with existing approved project/credentials only.",
-      "humanActionRequired": false
     }
   ]
 }

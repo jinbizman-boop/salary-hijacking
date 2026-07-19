@@ -17,7 +17,6 @@ This is an in-progress implementation report, not a 100% completion claim.
 
 ## Not Yet Implemented / Blocked
 
-- Current-HEAD Android APK was not built because no local Java/Android SDK/adb/emulator is available and EAS is not logged in.
-- Current-HEAD physical device cold start/logcat QA is blocked by missing APK/device path.
-- Clean release-source gate still fails because the working tree intentionally contains active changes.
+- Current-HEAD Android ARM64 debug QA APK build now PASS: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`, SHA256 `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`.
+- Current-HEAD physical device cold start/logcat QA is still blocked because no physical Android phone is attached.
 - Production AAB and Play submission remain blocked by explicit NO approvals.

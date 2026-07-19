@@ -1,6 +1,6 @@
 # Final Validation Report
 
-Updated: 2026-07-17 KST
+Updated: 2026-07-19 KST
 
 ## Scope
 
@@ -10,9 +10,9 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current branch HEAD: `9e6eea5fb1fe6641dc968fceef018e8ea2f65dc9`
+- Current branch HEAD: `ee5df3101f53b596a9b818e731a82b41f953ea02`
 - Draft PR #2 state: `open`, `draft=true`, `merged=false`, `mergeable=true`
-- APK packaged source HEAD: `7fdde9345c276c219804a64b40d7f7e85d0524a4`
+- APK packaged source HEAD: `ee5df3101f53b596a9b818e731a82b41f953ea02`
 - Draft PR: `https://github.com/jinbizman-boop/salary-hijacking/pull/2`
 - Git status evidence: `release/evidence/git-status-before-final-qa.txt`
 - Secret ignore evidence: `release/evidence/secret-ignore-final-qa.txt`
@@ -28,14 +28,14 @@ This report records the current final-QA evidence for the Salary Hijacking platf
 ## Android APK Evidence
 
 - APK path: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
-- Remote APK URL: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk`
-- SHA256: `854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22`
+- Remote APK URL: not republished for this current-HEAD rebuild; use the local/download copies recorded in `release/evidence/build-artifacts.json`.
+- SHA256: `235B109A78C623B90DCA0A763F155517DE3FAC17C2077AC1BB892ED6FE1C3D3A`
 - Package: `com.salaryhijacking.mobile`
 - ABI: `arm64-v8a`
 - Signing evidence: `release/evidence/build-artifacts.json`
 - AAPT/package metadata evidence: `release/evidence/build-artifacts.json`
-- Remote HTTP/SHA verification: PASS, recorded in `release/evidence/build-artifacts.json`
-- Source delta after APK packaging: docs/evidence only, verified by `mobile:preview:latest-source-apk`
+- Local/Downloads copy verification: PASS, recorded in `release/evidence/build-artifacts.json`
+- Source delta after APK packaging: current HEAD packaged; any later docs/evidence edits must remain non-mobile runtime changes before `mobile:preview:latest-source-apk` can stay PASS.
 
 ## Physical Device Status
 
