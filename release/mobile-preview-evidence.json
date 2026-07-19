@@ -52,7 +52,7 @@
     "notificationNoBottomTabVerified": true,
     "notificationEvidence": "docs/qa/100-completion/iteration-004-20260713/x86-clean-build/route-recheck-abi-filter/window-notifications.xml",
     "physicalPhoneVerified": false,
-    "physicalPhoneBlocker": "No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-17 KST.",
+    "physicalPhoneBlocker": "No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-19 KST.",
     "phoneTargetDebugApkAbiFilterVerified": true,
     "phoneTargetDebugApkExpoCoreLibs": [
       "lib/arm64-v8a/libexpo-modules-core.so",
