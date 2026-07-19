@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T06:28:43.440Z",
+  "generatedAt": "2026-07-19T03:16:48.271Z",
   "app": "Salary Hijacking Android QA APK",
   "androidPackage": "com.salaryhijacking.mobile",
   "versionCode": "1",
@@ -9,11 +9,11 @@
   "productionAabBuilt": false,
   "playSubmitAttempted": false,
   "source": {
-    "gitHead": "be449241b55f55cb6c0373ddfde95dfc0c5a5011",
+    "gitHead": "fce65bee6c74eab6409065ae23fa934b8f72e119",
     "branch": "codex/payroll-reminder-launch-ready-100-20260714",
     "trackedWorkingTreeDirty": true,
-    "trackedChangeCount": 5,
-    "note": "Stitch design-system evidence and Android QA APK metadata were refreshed from the current salary-hijacking-platform workspace. The APK content hash remains stable; changes after packaging are limited to regenerated docs/evidence unless git status says otherwise."
+    "trackedChangeCount": 4,
+    "note": "Stitch design-system evidence was refreshed from the current salary-hijacking-platform workspace. Android local debug APK rebuild was attempted twice from this HEAD but timed out in native Gradle/assembleDebug; no new current-HEAD APK was produced. The existing APK hash remains stable and is retained only as a previously built QA artifact."
   },
   "stitch": {
     "zipCount": 10,
@@ -27,7 +27,22 @@
     "bytes": 70703071,
     "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
     "lastModified": "2026-07-17T00:22:24.067Z",
-    "packagedHead": "be449241b55f55cb6c0373ddfde95dfc0c5a5011"
+    "packagedHead": "be449241b55f55cb6c0373ddfde95dfc0c5a5011",
+    "currentHeadRebuildStatus": "BLOCKED_TIMEOUT",
+    "currentHeadRebuildAttempts": [
+      {
+        "attemptedAt": "2026-07-19T02:50:00Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug",
+        "result": "TIMEOUT_AFTER_1204S",
+        "stage": "react-native-reanimated configureCMakeDebug warmup"
+      },
+      {
+        "attemptedAt": "2026-07-19T03:05:00Z",
+        "command": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --architecture arm64-v8a --output build/phone/android/salary-hijacking-phone-arm64-debug.apk",
+        "result": "TIMEOUT_AFTER_904S",
+        "stage": "assembleDebug"
+      }
+    ]
   },
   "copies": [
     {
@@ -62,14 +77,15 @@
     "mobileLint": "PASS",
     "mobileTypecheck": "PASS",
     "mobileTest": "PASS (66 suites / 769 tests)",
-    "mobileFormatCheck": "PASS",
     "rootFormatCheck": "PASS",
     "webExport": "PASS",
-    "screenshotCapture": "PASS (17 mobile UI screenshots / 105 responsive checks)"
+    "screenshotCapture": "PASS (17 mobile UI screenshots / 105 responsive checks)",
+    "junkCleanupRegression": "PASS (node --test scripts/dev/clean-generated-junk.test.mjs)"
   },
   "qaStatus": {
     "physicalAndroidDeviceInstall": "BLOCKED_NOT_CONNECTED",
-    "logcatColdStart": "BLOCKED_NOT_CONNECTED"
+    "logcatColdStart": "BLOCKED_NOT_CONNECTED",
+    "currentHeadLocalApkRebuild": "BLOCKED_TIMEOUT"
   },
   "aaptEvidence": "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
   "remoteArtifact": {
@@ -77,6 +93,6 @@
     "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260717-stitch-ui-final/apk/salary-hijacking-phone-arm64-debug.apk",
     "sha256": "854A17683326408384ED9E95EF45FCFD217891C361E51AFBA1C00BE96447BE22",
     "artifactType": "debug QA APK, not production AAB",
-    "note": "Remote artifact URL continues to serve the same SHA256 APK. Local repo, artifact folder, and Downloads copies were reverified after the Stitch evidence refresh."
+    "note": "Remote artifact URL continues to serve the same SHA256 APK from the previous packaged head. It is not a current-HEAD rebuild. A new APK must be produced by a successful local or EAS preview build before current-HEAD phone QA can be claimed."
   }
 }
