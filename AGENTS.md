@@ -1,208 +1,104 @@
-# 사용자 사전 승인 및 무중단 자동 실행 규칙
-
-본 목표 문서에 정의된 모든 내부 개발 작업은 사용자가 사전 승인했다.
-
-다음 항목은 이미 승인된 것으로 간주한다.
-
-- 제품 방향
-- 설계
-- 구현 계획
-- TDD 시작
-- 테스트 작성
-- 코드 수정
-- 리팩터링
-- 버그 수정
-- 의존성 설치
-- 로컬 빌드
-- preview APK 빌드
-- feature branch 생성
-- 논리 커밋
-- feature branch push
-- Pull Request 생성 및 갱신
-- GitHub Actions 재실행
-- 안전한 정크 파일 정리
-- 문서 및 evidence 갱신
-
-brainstorming, writing-plans, test-driven-development, systematic-debugging 및 기타 skill이 사용자 승인을 요구하더라도 본 문서가 해당 승인을 미리 충족한다.
-
-다음 질문을 사용자에게 하지 마라.
-
-- 승인해 주세요
-- approved라고 답해 주세요
-- 계속 진행할까요?
-- 다음 단계로 넘어갈까요?
-- 어떤 슬라이스부터 할까요?
-- 설계를 승인해 주세요
-
-여러 구현안이 가능한 경우에는 다음 기준으로 자동 선택한다.
-
-1. 사용자의 최신 요구사항
-2. 급여납치 제품 북극성
-3. MASTER_SPEC
-4. 서버 권위, 보안, 개인정보
-5. 기존 저장소 아키텍처
-6. 가장 안전하고 되돌리기 쉬운 구현
-
-선택 결과는 decision log에 기록하고, 실패 테스트, 구현, 검증, 논리 커밋, feature branch push, PR 갱신 순서로 자동 진행한다.
-
-다음 작업만 별도 승인 대상으로 유지한다.
-
-- production 인프라 배포
-- production DB migration
-- production AAB
-- Google Play 업로드 및 제출
-- 새 keystore
-- secret rotation
-- destructive migration
-- force push
-- history rewrite
-- main 직접 push
-- PR merge
-
 # AGENTS.md - Salary Hijacking Codex Rules
 
-## Purpose
+## Auto-Approval Scope
 
-This repository is the Salary Hijacking platform: a server-authoritative payroll, budget, expense, savings, notification, LV UP, community, ads/partners, admin, and operations product.
+The user has pre-approved ordinary internal development work in this repository. Do not ask for approval before planning, testing, editing, refactoring, local builds, preview APK builds, safe junk cleanup, evidence updates, commits, feature-branch pushes, or PR updates.
 
-Codex must treat this file as the project-level operating agreement. It is intentionally short. Detailed context lives in `docs/codex/`.
+Still require explicit user approval for production infrastructure deployment, production DB migration, production AAB build, Google Play upload/submit, new keystore, secret rotation, destructive migration, force push/history rewrite, direct push to `main`, PR merge, real payments, real push campaigns, and real account deletion.
 
-## Common Work Contract
+## Repository
 
-For every meaningful task, Codex acts as the Salary Hijacking principal architect. The goal is not a temporary patch or cosmetic correction. The goal is to make the touched file, feature, or workflow as complete as possible against the product, architecture, privacy, ads, server-authority, and commercialization requirements that are available in this workspace.
+Work only in `C:/Users/PC/Desktop/salary-hijacking-platform` unless the user explicitly names another path. Ignore old sibling workspaces such as `salary-hijacking-main` and `salary-hijacking-work` for implementation.
 
-Before editing, Codex must identify the target path, summarize the target's role in the platform, list the relevant requirements, and break the user request into concrete implementation items. For substantial tasks, use at least 15 specific items unless the task is objectively smaller.
+Key areas:
 
-After editing, Codex must run the closest relevant validation at least three times or run three distinct relevant checks. If a check cannot run, report the blocker instead of claiming success. Update `docs/codex/08_FILE_COMPLETION_LOG.md` when a meaningful file group is completed, re-verified, or newly found blocked.
+- Mobile app: `apps/mobile`
+- Admin app: `apps/admin`
+- API Worker: `services/api`
+- Notifications Worker: `services/notifications`
+- Scheduler Worker: `services/scheduler`
+- DB/domain packages: `packages`
+- Release evidence: `release`
+- UI finalization docs: `docs/ui`
+- Long-running Codex completion evidence: `docs/codex/100-completion`
 
-Completion reports must separate:
+## Install And Commands
 
-- file-level document/theoretical completeness,
-- file-level verified completeness,
-- project-wide operational readiness.
+- Install: `corepack pnpm install --frozen-lockfile`
+- Root format: `corepack pnpm run format:check`
+- Quality: `corepack pnpm run quality`
+- Build: `corepack pnpm run build`
+- Release readiness: `corepack pnpm run check:release-readiness`
+- Junk cleanup: `corepack pnpm run clean:junk`
+- Mobile lint: `corepack pnpm --filter @salary-hijacking/mobile run lint`
+- Mobile typecheck: `corepack pnpm --filter @salary-hijacking/mobile run typecheck`
+- Mobile tests: `corepack pnpm --filter @salary-hijacking/mobile test`
+- Mobile web export: `corepack pnpm --filter @salary-hijacking/mobile run export:web`
+- Mobile visual capture: `node scripts/release/capture-mobile-clean-fintech-screenshots.mjs`
+- Phone APK: `corepack pnpm --filter @salary-hijacking/mobile run build:phone:android:local-debug`
 
-These are not interchangeable.
+## UI Source Of Truth
 
-## Source Of Truth
+Use this precedence:
 
-Use the local workspace as the verified source of truth.
+1. Security, privacy, accessibility, legal, server-authority, and ads-data-separation rules
+2. User's latest explicit instruction
+3. `docs/ui/**` and current release evidence
+4. Product planning docs and `docs/codex/**`
+5. Stitch `screen.png` for visual structure
+6. Stitch `code.html`/`DESIGN.md` for token and hierarchy extraction only
+7. PDF 17-screen design as brand/legacy visual reference
+8. Existing implementation
 
-The ChatGPT project share link provided on 2026-06-25 redirected to a login page in this Codex session, so its private contents were not readable here. Do not claim that the linked ChatGPT project was inspected unless the user provides its exported contents or grants an accessible source.
+Never paste Stitch HTML into React Native, never use screenshots as UI backgrounds, and never add CDN runtime dependencies from prototype HTML.
 
-## Required Reading
+## UI Implementation Rules
 
-Before non-trivial work, read:
-
-1. `docs/codex/00_INDEX.md`
-2. `docs/codex/01_PROJECT_BRIEF.md`
-3. `docs/codex/09_VALIDATION_PROTOCOL.md`
-4. The context document matching the touched area:
-   - Mobile: `docs/codex/06_MOBILE_APP_CONTEXT.md`
-   - API/services/DB: `docs/codex/07_API_CONTEXT.md`
-   - Privacy, ads, auth, logs, security: `docs/codex/05_PRIVACY_ADS_SECURITY.md`
-   - Existing completion claims: `docs/codex/08_FILE_COMPLETION_LOG.md`
-
-## Completion Language
-
-Do not report "project 100% complete" unless install, typecheck, lint, tests, E2E, build, DB migration/seed, deploy, secrets, API smoke, and QA have actually passed in this workspace or a named environment.
-
-Allowed wording:
-
-- "File-level documentation updated"
-- "Typecheck passed for API/Admin"
-- "Not verified"
-- "Blocked by missing dependency/config"
-- "Document/theoretical completeness claim exists in package metadata"
-
-Forbidden wording:
-
-- "production 100% complete" without full operational verification
-- "0% error rate" outside the verified test scope
-- "shared ChatGPT project inspected" when the link was inaccessible
+- Use `apps/mobile/src/shared/components/tokens.ts` for colors, radius, spacing, typography, and shadows.
+- Prefer shared components before creating screen-local buttons, cards, tabs, headers, inputs, or state views.
+- Keep `#006A37` as the current semantic primary green unless `docs/ui/UI_DECISION_LOG.md` is updated with evidence.
+- Do not randomly mix `#006A37` and `#209252` across screens.
+- Keep all money values formatted for `ko-KR` and KRW display.
+- Keep iOS/Android safe area, keyboard avoidance, and bottom-tab scroll padding intact.
+- Provide accessibility labels for meaningful icons and inputs.
+- Keep ad/partner UI labeled and separated from raw financial data.
 
 ## Architecture Rules
 
-- API prefix for user-facing backend routes is `/api/v1`.
-- Admin API prefix is `/admin/api/v1`.
+- User-facing API prefix: `/api/v1`
+- Admin API prefix: `/admin/api/v1`
 - Financial calculations are server-authoritative.
-- The client may display, collect input, handle interaction, and provide offline fallback, but must not become the source of truth for payroll, budget, expense, savings, or hijack amount calculations.
-- KRW money values must be integers.
-- Negative money and fractional money are invalid for authoritative records.
-- Store time in UTC and present user-facing Korean time in Asia/Seoul where needed.
-- Admin routes must require RBAC, MFA-sensitive boundaries, admin reason, and audit logging for mutations.
+- The client may collect input, display state, and handle optimistic UX, but must not become the source of truth for payroll, budget, expense, savings, or hijack amount calculations.
+- KRW authoritative values are integers.
+- Store time in UTC and present user-facing Korean time in Asia/Seoul.
+- Admin mutations require RBAC, reason capture, and audit logging.
 
-## Privacy, Ads, And Security
+## Privacy And Security
 
-Never expose raw financial or sensitive user data to ads, partner targeting, analytics, logs, public exports, or push payloads.
+Never expose raw salary, income, expense, savings, hijack amount, account, card, loan, resident number, phone, email, auth token, refresh token, push token, device identifier, private key, DB URL, JWT secret, service account, or FCM key to ads, analytics, logs, public exports, screenshots, fixtures, or push payloads.
 
-Sensitive raw data includes:
+Secrets and credentials must remain redacted in evidence. Do not print secret values.
 
-- salary, income, expense, savings, hijack amount
-- account, card, loan, resident, phone, email
-- auth token, refresh token, session token, push token
-- raw device identifier
-- private key, DB URL, JWT secret, service account, FCM server key
+## Completion Definition
 
-Ads and partner surfaces must be contextual-only unless a future verified policy explicitly says otherwise. Ad/partner content must be labeled.
+Do not claim project, launch, or UI 100% completion unless the relevant `docs/ui` gates, lint, typecheck, tests, E2E, visual regression, accessibility, responsive matrix, production/release build, APK/device QA, release evidence, and blocker matrix all prove completion.
 
-## Current Verification Snapshot
+Allowed wording:
 
-Last checked by Codex on 2026-07-02 KST:
+- `PASS within this test scope`
+- `PARTIAL`
+- `BLOCKED by missing device/credential/external approval`
+- `Not verified`
 
-- `corepack pnpm run check:package-manager-scripts`: PASS, 13 package files checked after dependency restore
-- `corepack pnpm run check:scripts`: PASS
-- `corepack pnpm run check:external-integrations`: PASS, 78 required files checked, including public app/legal custom-domain targets, API/Admin deploy workflow dispatch-only guards, deploy workflow mojibake guards, release workflow mojibake guard, release readiness workflow gate guard, ChatGPT work summary Android blocker wording guard, GitHub Actions runtime proof artifact guard, GitHub Environments runtime secret proof artifact guard, no-secret Cloudflare runtime proof artifact guard, no-secret database command proof artifact guard, no-secret public URL proof artifact guard, dev-inclusive release dependency audit guard, no-secret dependency security audit proof artifact guard, no-secret public URL evidence/proof automation, no-secret database command proof automation, no-value runtime secret proof automation, no-secret Cloudflare observation proof automation, no-secret mobile native observation proof automation, no-secret dependency security audit evidence automation, and tracked no-secret local proof example templates; this local shell warns `gh`, `neon`, and `neonctl` are not on PATH for that script
-- `corepack pnpm run test:root-scripts`: PASS, 200 tests; root script tests now run through `scripts/dev/run-node-tests-with-clean-temp.mjs` so Node test fixtures and compile cache are isolated under a cleanup directory instead of accumulating in the default C-drive temp path, Windows cleanup retries are covered for transient `EBUSY` locks, `scripts/dev/clean-generated-junk.mjs` is covered for safe generated-artifact cleanup, `scripts/dev/report-workspace-disk-usage.mjs` provides a no-delete disk report for protected dependencies versus removable caches, `apps/mobile/scripts/eas-local-android-build.test.mjs` covers the guarded local Android E2E EAS build wrapper, and API/Admin deployment workflows are guarded so push/PR runs verify without attempting Cloudflare deployment before runtime secrets and evidence are ready
-- `node --test apps\mobile\scripts\eas-local-android-build.test.mjs`: PASS, 5 tests; the local Android E2E build wrapper checks EAS `e2e` APK profile, the `pnpm dlx eas-cli@20.4.0` launcher path, Expo authentication via `EXPO_TOKEN` or `pnpm dlx eas-cli@20.4.0 whoami`, Android SDK tools, Java/JBR availability, the exact Detox APK output path, non-interactive local EAS flags, and Windows `.CMD` shell execution
-- `node --test apps\mobile\scripts\import-e2e-apk.test.mjs`: PASS, Android E2E APK import helper accepts only local APK/ZIP files and rejects artifact URLs, non-APK files, and placeholders
-- `corepack pnpm run release:public-url-proof`: FAIL by design because `https://salaryhijacking.com/`, `/privacy`, `/support`, and `/terms` are not yet reachable with verified CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure; the ignored local proof stores only false booleans and no raw headers/body data
-- `corepack pnpm run release:public-url-evidence`: PASS, generated `release/public-url-evidence.json` with public landing/privacy/support/terms evidence intentionally marked unverified until production reachability, CSP/privacy headers, Korean copy, store-review URL alignment, and sensitive-data non-exposure are proven
-- `corepack pnpm run release:database-proof`: FAIL by design because Neon project/main/staging branch proof is present but migration validation, staging migration/seed, production migration dry-run, staging API/Admin/server-authority/privacy smoke, and rollback rehearsal proof are still missing
-- `corepack pnpm run db:validate`: PASS, local-safe DB package/schema/DDL validation completed without runtime DB connection strings, SQL output, secrets, or smoke payloads; this records only the migration validation release gate and does not prove staging migration, production migration dry-run, seed, smoke, or rollback
-- `corepack pnpm run release:database-evidence`: PASS, refreshed `release/database-evidence.json` from no-secret Neon read-only project/branch proof booleans and local-safe DB validation proof while keeping staging migration/seed, production dry-run, API/Admin/server-authority/privacy smoke, and rollback gates blocked
-- `node --test scripts/release/collect-database-proof.test.mjs scripts/release/generate-database-evidence.test.mjs`: PASS, 15 tests; database command proof collector stores booleans only and rejects raw database URLs, secret values, raw smoke payloads, raw auth/cookie/header fields, unrelated Neon project hints, sensitive user/financial keys, production seed proof, and accepts UTF-8 BOM local proof JSON
-- `node --test scripts/release/generate-database-evidence.test.mjs`: PASS, database evidence generator rejects local proof whose Neon `expectedProjectHint` does not match `release/release-targets.json` before writing tracked evidence
-- `node --test scripts/release/generate-secrets-evidence.test.mjs`: PASS, runtime secret evidence generator rejects raw secret values, unknown secret names, and verified proof entries with unapproved or secret-mismatched secret store labels
-- `node --test scripts/release/collect-secrets-proof.test.mjs`: PASS, runtime secret proof collector writes only presence booleans and does not mark local developer env values as release-verified without an approved `SECRET_PROOF_STORE`
-- `corepack pnpm run release:cloudflare-proof`: writes ignored `release/cloudflare-proof.local.json` and exits 1 with `verified=false` because the latest read-only Cloudflare connector observation still has zero Salary Hijacking Workers, zero Queues, no `salaryhijacking.com` zone, no active TLS certificate proof, and R2 bucket listing is blocked by Cloudflare account activation error `10042`
-- `corepack pnpm run release:cloudflare-evidence`: PASS, refreshed `release/cloudflare-runtime-evidence.json` from no-secret Cloudflare observation/proof booleans while keeping the Cloudflare runtime gates blocked
-- `node --test scripts/release/collect-cloudflare-proof.test.mjs`: PASS, 7 tests; Cloudflare observation proof collector writes only expected Worker names, resource/domain booleans, and counts while rejecting raw credentials, secret values, unrelated Worker names, and unrelated observed custom-domain or TLS certificate hostnames, and it tolerates missing/BOM local observation files by writing blocked no-secret proof rather than throwing before evidence generation
-- `node --test scripts/release/generate-cloudflare-runtime-evidence.test.mjs`: PASS, Cloudflare runtime evidence generator rejects raw secret values, unrelated Worker names, and unrelated proof domains before writing tracked evidence
-- `node --test apps\mobile\scripts\import-e2e-apk.test.mjs scripts\release\collect-mobile-native-proof.test.mjs scripts\release\generate-mobile-native-evidence.test.mjs`: PASS, 19 tests; mobile native proof/evidence tooling writes only EAS build/native E2E/store-submit booleans and rejects tokens, credentials, artifact URLs, artifact paths, signing keys, reviewer passwords, copied provider payloads, logs, non-AAB Android production build claims, verified proof for unrelated mobile app identities, and UTF-8 BOM local observation JSON issues
-- `node --test scripts/release/generate-mobile-native-evidence.test.mjs`: PASS, mobile native evidence generator requires schemaVersion 1, secretsRedacted=true, containsSecretValues=false, no native build secret values/artifact URLs/artifact paths/unsafe production artifact types, and mobile app identity matching `release/release-targets.json`
-- `node --test scripts/release/check-release-readiness.test.mjs`: PASS, 54 tests; release readiness now blocks tracked secret evidence when raw values, raw secret-like strings in notes, unknown secret names, unapproved store labels, or secret-mismatched store labels are embedded while allowing approved runtime secret names such as `CF_ADMIN_WORKER_NAME` in no-value evidence next steps, blocks tracked external release evidence when raw secret values are embedded, blocks tracked Cloudflare runtime evidence when unrelated Worker names or domains are embedded or when its expected Worker names drift from `release/release-targets.json`, blocks tracked mobile native evidence when `containsSecretValues` is not explicitly false, raw native release secret values are embedded, unsafe native release privacy flags are set, or `appIdentity` drifts from the target app slug/package/bundle identifier, and blocks tracked dependency security audit evidence until pnpm registry audit coverage and zero high/critical vulnerability counts are proven without raw registry tokens or copied audit payloads
-- `node --test scripts/release/generate-security-audit-evidence.test.mjs`: PASS, dependency security audit evidence generator rejects raw registry tokens, copied full audit reports, advisories, registry responses, package payloads, and dependency details before writing tracked evidence
-- `node --test scripts/release/collect-public-url-proof.test.mjs`: PASS, public URL proof collector stores booleans only, records checked Salary Hijacking public URLs, rejects non-`salaryhijacking.com` proof base URLs before fetching, does not write copied HTML, raw headers, logs, identifiers, or financial payloads, treats sensitive response header names/values as non-exposure failures, and rejects mojibake/corrupted Korean copy as verified public copy
-- `node --test scripts/release/generate-public-url-evidence.test.mjs`: PASS, public URL evidence generator rejects proof files containing raw secrets, unrelated checked public URL targets, copied response bodies, copied response/request headers, cookies, sessions, auth markers, or sensitive user/financial keys before writing tracked evidence
-- `corepack pnpm --filter @salary-hijacking/api test`: PASS, 6 test files and 14 tests, including public `/`, `/privacy`, `/support`, and `/terms` pages
-- `corepack pnpm --filter @salary-hijacking/api exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, API Worker config parses with `salaryhijacking.com`, `www.salaryhijacking.com`, and `api.salaryhijacking.com` production custom-domain targets
-- `corepack pnpm --filter @salary-hijacking/notifications exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, Notifications Worker production config parses with retry/operation Queue bindings and privacy-safe notification flags
-- `corepack pnpm --filter @salary-hijacking/scheduler exec wrangler deploy --dry-run --env production --config wrangler.toml`: PASS, Scheduler Worker production config parses with scheduler/notification/growth Queue bindings, cron-capable Worker entrypoint, and server-authority/privacy flags
-- `corepack pnpm --filter @salary-hijacking/admin run build:cloudflare`: FAIL fast on this Windows PC because OpenNext/Next standalone output requires directory symlink permission; run from Developer Mode, an administrator shell, WSL, or CI before Admin Worker dry-run/deploy
-- `corepack pnpm --filter @salary-hijacking/mobile test -- clean-fintech-theme.test.ts`: PASS, 9 tests
-- `corepack pnpm --filter @salary-hijacking/mobile typecheck`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile format:check`: PASS
-- `corepack pnpm --filter @salary-hijacking/mobile run export:web`: PASS, Expo web export includes official BI and Freesentation assets
-- `node scripts\release\capture-mobile-clean-fintech-screenshots.mjs`: PASS, regenerated five 430x932 screenshots and one 1024x500 Google Play feature graphic
-- `corepack pnpm audit --audit-level=high --prod=false --json`: PASS after lockfile-only override refresh, with 0 low, 0 moderate, 0 high, and 0 critical vulnerabilities reported for the current lockfile
-- `node scripts\release\check-release-readiness.mjs --soft`: Reporting PASS, release status BLOCKED by missing runtime secret evidence, required Cloudflare Worker/Admin/R2/Queue/cron/secret-binding/domain/TLS proof, DB staging migration/seed/API smoke/rollback proof, public landing/privacy/support/terms production reachability and header/content safety proof, and Android/iOS native build/E2E/store-submit evidence; mobile EAS commands use `pnpm dlx eas-cli@20.4.0` instead of a local `eas-cli` app dependency; `release/release-targets.json`, mobile app identity evidence, external GitHub evidence, local `origin`, authenticated push evidence, current local HEAD to `origin/main` sync, Neon project evidence, local-safe DB migration validation evidence, public URL target evidence, and no-secret dependency security audit evidence align with `jinbizman-boop/salary-hijacking`
-- `corepack pnpm run format:check`: PASS after restoring dependencies and applying Prettier to the previously unformatted tracked files
-- `corepack pnpm run quality`: PASS, 82 Turbo tasks
-- `corepack pnpm run build`: PASS, 12 Turbo tasks
-- `node scripts\check-detox-env.mjs android.emu.debug` from `apps/mobile`: FAIL only because the local Detox Android E2E APK `apps/mobile/build/e2e/android/salary-hijacking-e2e.apk` is missing; local `adb` and `emulator` are detected through Android SDK tool lookup
-- `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:preflight`: FAIL fast because Expo account authentication is unavailable; Android Studio JBR and Android SDK root are detected, but `eas login` or a trusted `EXPO_TOKEN` is required before an Android E2E APK can be built
-- `corepack pnpm --filter @salary-hijacking/mobile run build:e2e:android:local`: BLOCKED by the same Expo account authentication requirement; no Android E2E APK was produced
-- `node scripts\check-detox-env.mjs ios.sim.debug` from `apps/mobile`: FAIL because the local Detox iOS app `apps/mobile/build/e2e/ios/salaryhijacking.app` is missing
-- `corepack pnpm run test:e2e`: still BLOCKED at `@salary-hijacking/mobile#test:e2e` until an E2E APK is built or equivalent native device-farm proof is recorded without secrets
-- Dependency vulnerability audit is represented by `release/security-audit-evidence.json`; the current lockfile has no-secret registry audit evidence with zero low/moderate/high/critical vulnerabilities, and the audit must be rerun after dependency changes before release
-- `git remote -v`: PASS, `origin` points to `https://github.com/jinbizman-boop/salary-hijacking.git`
-- `git push origin main` and `git ls-remote origin refs/heads/main`: PASS, authenticated push and remote branch read access are proven; release readiness now rechecks local HEAD against `origin/main` when authenticated push proof is claimed, falling back to the local `refs/remotes/origin/main` tracking ref with a warning when live remote reads are unavailable in the local Node sandbox; the latest recorded remote proof commit in `release/external-release-evidence.json` remains historical evidence
-- Ignored generated dependency/cache artifacts were cleaned on 2026-07-02 KST and then dependencies were restored with `corepack pnpm install --frozen-lockfile` so local package scripts, Prettier, Turbo, and `pnpm dlx`-based EAS launcher commands can run again. Use `corepack pnpm run disk:report -- --top 20` before large build/E2E work when storage is uncertain, and use `corepack pnpm run clean:junk` after verification-heavy work to remove regenerated `.turbo`, `.wrangler`, `.next`, `.open-next`, `.expo`, `.cache`, `dist`, `coverage`, EAS local build cache, Android `.gradle`/`.cxx`/build outputs, iOS `build`/`Pods`, `release/*-proof.local.json`, `release/*-observation.local.json`, TypeScript incremental files, and Salary Hijacking temp fixtures while preserving `node_modules`, `.dev.vars`, tracked release evidence, explicit E2E APK paths, and source/docs.
+Forbidden wording:
 
-## Editing Rules
+- `100% complete`
+- `final`
+- `launch-ready`
+- `no issues`
 
-- Prefer existing project patterns over new abstractions.
-- Do not silently remove existing files or user changes.
-- Update `docs/codex/08_FILE_COMPLETION_LOG.md` when a meaningful file group is completed or re-verified.
-- When touching mobile/API/admin integration, check endpoint path alignment.
-- When touching docs, keep claims grounded in observed files and command output.
+unless the current evidence proves every required gate.
+
+## Documentation Updates
+
+When meaningful UI work changes source behavior or evidence, update the relevant files under `docs/ui/**`, release evidence, and `docs/codex/08_FILE_COMPLETION_LOG.md` where applicable.
