@@ -86,14 +86,14 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
 
 const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
-  const source = 'import "expo-router/entry";\n';
+  const source = 'import "./src/android-safe-entry";\n';
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;
   }
 
   const current = fs.readFileSync(entryFilePath, "utf8");
-  if (!current.includes("expo-router/entry")) {
+  if (!current.includes("./src/android-safe-entry")) {
     fs.writeFileSync(entryFilePath, source, "utf8");
   }
 };

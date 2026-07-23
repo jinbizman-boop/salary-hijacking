@@ -9,8 +9,7 @@ const readApp = (...parts: readonly string[]) =>
 const readSrc = (...parts: readonly string[]) =>
   readFileSync(join(srcRoot, ...parts), "utf8");
 
-const mojibakePattern =
-  /[湲蹂吏遺怨而癤]|덉|꾩|꾨|뿬|⑹|섍|젙|쟻|쉷|묒|쑝|몄|솕|댁|쟾|쇱|쒓|컙/u;
+const mojibakePattern = /[�]|湲|됱|뿬|⑹|튂|꾪|솴|袁|筌|臾|紐|뚨|솮/u;
 
 describe("mobile prototype UI contract", () => {
   it("uses provided PNG icons and readable Korean labels for the five bottom tabs", () => {
@@ -47,18 +46,18 @@ describe("mobile prototype UI contract", () => {
       ),
     ].join("\n");
 
-    for (const source of [salary, plan, notifications]) {
+    for (const source of [salary, plan]) {
       expect(source).toContain("SALARY HIJACKING");
     }
 
-    expect(salary).toContain("내 급여 납치 현황");
+    expect(salary).toContain("내 급여 납치");
     expect(salary).toContain("전체 누적 납치 금액");
-    expect(salary).toContain("사용자님이 설정한 금일 고정 지출");
-    expect(salary).toContain("사용자님이 설정한 일일 사용 예산");
+    expect(salary).toContain("님이 설정한 금일 고정 지출");
+    expect(salary).toContain("님이 설정한 일일 사용 예산");
     expect(salary).toContain("사용 예정");
     expect(salary).toContain("사용 완료");
 
-    expect(plan).toContain("사용자님의 급여 납치 목표 달성률");
+    expect(plan).toContain("님의 급여 납치 목표 달성률");
     expect(plan).toContain("내 급여 납치 계획/설정");
     expect(plan).toContain("월별 고정 지출 계획/설정");
     expect(plan).toContain("월별 고정 적금 계획/설정");
@@ -66,10 +65,13 @@ describe("mobile prototype UI contract", () => {
     expect(plan).toContain("수정하기");
 
     expect(notifications).toContain("새로운 알림이 있어요");
-    expect(notifications).toContain("내 급여 납치 현황 목표 달성");
+    expect(notifications).toContain("내 급여 납치 현황 5,780,000원 달성");
     expect(notifications).toContain(
       "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
     );
+    expect(notifications).toContain("Today, Business Conversation");
+    expect(notifications).not.toContain("BottomNavigation");
+    expect(notifications).not.toContain('title: "급여"');
   });
 
   it("does not keep mojibake copy in core prototype screens", () => {
@@ -78,6 +80,7 @@ describe("mobile prototype UI contract", () => {
       readApp("(tabs)", "salary", "index.tsx"),
       readApp("(tabs)", "plan", "index.tsx"),
       readApp("notifications", "index.tsx"),
+      readApp("notifications", "settings.tsx"),
       readSrc("features", "salary", "components", "SalaryHomeScreen.tsx"),
       readSrc("features", "plan", "components", "PlanScreen.tsx"),
       readSrc(
@@ -85,6 +88,12 @@ describe("mobile prototype UI contract", () => {
         "notifications",
         "components",
         "NotificationScreen.tsx",
+      ),
+      readSrc(
+        "features",
+        "notifications",
+        "components",
+        "NotificationSettingsScreen.tsx",
       ),
       readSrc("features", "payroll-reminders", "interactive-state.ts"),
     ];

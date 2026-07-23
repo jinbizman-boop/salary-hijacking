@@ -7,6 +7,10 @@ import {
   UPLOADS_PRIVACY_HEADERS,
   UPLOADS_VARIABLE_EXPENSE_RECEIPT_CONTENT_TYPES,
 } from "./constants";
+import {
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import type {
   DirectCommunityAttachmentUpload,
   DirectVariableExpenseReceiptUpload,
@@ -45,9 +49,8 @@ function defaultCorrelationId(): string {
 function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new UploadsApiError(
       0,
@@ -55,7 +58,8 @@ function normalizeBaseUrl(value: string): string {
       "업로드 API 주소가 올바르지 않습니다.",
     );
   }
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new UploadsApiError(
       0,
       "UPLOADS_INVALID_BASE_URL",
@@ -63,10 +67,13 @@ function normalizeBaseUrl(value: string): string {
     );
   }
   const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+    baseUrlParts.hostname === "localhost" ||
+    baseUrlParts.hostname === "127.0.0.1" ||
+    baseUrlParts.hostname === "10.0.2.2";
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new UploadsApiError(
       0,
       "UPLOADS_INSECURE_BASE_URL",

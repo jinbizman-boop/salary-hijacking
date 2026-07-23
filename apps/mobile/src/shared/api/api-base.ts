@@ -1,5 +1,6 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { isValidUrlString, parseMobileBaseUrlParts } from "./url-validation";
 
 declare const process: {
   readonly env: {
@@ -66,23 +67,37 @@ function normalizeApiBase(
   if (!value?.trim()) return "";
 
   try {
-    const url = new URL(value.trim());
+    const stripped = value
+      .trim()
+      .replace(/[?#].*$/u, "")
+      .replace(/\/+$/u, "");
+    if (!isValidUrlString(stripped)) throw new Error("INVALID_URL");
+    const baseUrlParts = parseMobileBaseUrlParts(stripped);
+    if (!baseUrlParts || baseUrlParts.containsCredentials) return "";
     const localHost =
-      url.hostname === "localhost" || url.hostname === "127.0.0.1";
+      baseUrlParts.hostname === "localhost" ||
+      baseUrlParts.hostname === "127.0.0.1";
 
-    if (url.username || url.password) return "";
-    if (environment === "production" && url.protocol !== "https:") return "";
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+    if (environment === "production" && baseUrlParts.protocol !== "https:") {
+      return "";
+    }
+    if (
+      baseUrlParts.protocol !== "https:" &&
+      !(baseUrlParts.protocol === "http:" && localHost)
+    ) {
       return "";
     }
 
     if (platform === "android" && localHost) {
-      url.hostname = "10.0.2.2";
+      return stripped
+        .replace(
+          /^http:\/\/(?:localhost|127\.0\.0\.1)(?=[:/]|$)/iu,
+          "http://10.0.2.2",
+        )
+        .replace(/\/$/u, "");
     }
 
-    url.hash = "";
-    url.search = "";
-    return url.toString().replace(/\/$/, "");
+    return stripped;
   } catch {
     return "";
   }

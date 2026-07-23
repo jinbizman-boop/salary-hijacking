@@ -64,6 +64,36 @@ describe("salary reference screen interactions", () => {
     );
   });
 
+  it("renders Stitch salary home state variants without losing native sections", () => {
+    const noPlan = render(<SalaryHomeScreen previewVariant="no-plan" />);
+    expect(noPlan.getByText("아직 급여 계획이 없어요")).toBeTruthy();
+    expect(
+      noPlan.getByText("계획 탭에서 급여일과 고정지출을 설정해 주세요."),
+    ).toBeTruthy();
+    expect(noPlan.getByText("내 급여 납치 현황")).toBeTruthy();
+    noPlan.unmount();
+
+    const offline = render(<SalaryHomeScreen previewVariant="offline" />);
+    expect(offline.getByText("오프라인 미리보기")).toBeTruthy();
+    expect(
+      offline.getByText("저장된 급여 데이터를 안전하게 보여드리고 있어요."),
+    ).toBeTruthy();
+    expect(offline.getByText("내 급여 납치 현황")).toBeTruthy();
+    offline.unmount();
+
+    const compact = render(<SalaryHomeScreen previewVariant="compact" />);
+    expect(compact.getByText("간단 보기")).toBeTruthy();
+    expect(compact.getByText("핵심 금액만 빠르게 확인합니다.")).toBeTruthy();
+    compact.unmount();
+
+    const detailed = render(<SalaryHomeScreen previewVariant="detailed" />);
+    expect(detailed.getByText("상세 보기")).toBeTruthy();
+    expect(
+      detailed.getByText("고정 지출, 일일 예산, 변동 지출을 함께 확인합니다."),
+    ).toBeTruthy();
+    detailed.unmount();
+  });
+
   it("derives payday cards from the current KST salary cycle instead of static design dates", () => {
     jest.useFakeTimers({
       now: new Date("2026-07-13T00:30:00.000Z"),

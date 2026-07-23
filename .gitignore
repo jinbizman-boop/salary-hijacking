@@ -145,6 +145,9 @@ ios/
 **/.metro-cache/
 .bundle/
 **/.bundle/
+apps/mobile/.gradle-local-debug/
+apps/mobile/.localappdata/
+.gradle-qa-*/
 
 # Cloudflare / Wrangler
 .wrangler/
@@ -354,6 +357,7 @@ docs/qa/
 release/evidence/
 !release/evidence/final-100/
 !release/evidence/final-100/**
+artifacts/
 
 # Never commit production exports, real user data, or raw financial datasets.
 production-export/

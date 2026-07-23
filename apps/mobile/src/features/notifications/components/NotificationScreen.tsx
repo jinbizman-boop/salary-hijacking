@@ -16,8 +16,7 @@ import {
   NOTIFICATIONS_UNREAD_COUNT_PATH,
 } from "../constants";
 
-const SCREEN_VERSION = "5.2.0-notifications-no-bottom-nav";
-const BRAND_LABEL = "SALARY HIJACKING";
+const SCREEN_VERSION = "5.3.0-notifications-stitch-korean";
 const TEXT_BLACK = "#191B1F";
 const MUTED = "#6D737A";
 const SOFT_GREEN = "#EAF8EF";
@@ -44,7 +43,15 @@ type NotificationItem = Readonly<{
 export type NotificationScreenProps = Readonly<{
   onBack?: () => void;
   onOpenHref?: (href: NotificationHref) => void;
+  onRetry?: () => void;
   onSettings?: () => void;
+  variant?:
+    | "default"
+    | "empty"
+    | "offline"
+    | "error"
+    | "all-read"
+    | "no-unread-with-list";
 }>;
 
 const notificationItems: readonly NotificationItem[] = [
@@ -52,18 +59,18 @@ const notificationItems: readonly NotificationItem[] = [
     href: "/salary",
     icon: appIconAssets.money.coins,
     id: "goal-total",
-    subtitle: "누적납치금액 신기록 달성",
+    subtitle: "누적 납치금액 신기록 달성",
     time: "1일전",
-    title: "내 급여 납치 현황 목표 달성",
+    title: "내 급여 납치 현황 5,780,000원 달성",
     tone: "highlight",
   },
   {
     href: "/salary",
     icon: appIconAssets.level.box,
     id: "goal-point",
-    subtitle: "납치 금액달성 이벤트",
+    subtitle: "납치 금액 달성 보상 이벤트",
     time: "1일전",
-    title: "내 급여 납치 목표 달성 보상 지급 예정",
+    title: "내 급여 납치 5,500,000원 달성 시 포인트 500P 지급",
     tone: "highlight",
   },
   {
@@ -90,14 +97,14 @@ const notificationItems: readonly NotificationItem[] = [
     id: "english-business",
     subtitle: "오늘의 레벨업, 오늘의 영어회화를 가져왔어요",
     time: "8시간전",
-    title: "오늘의 영어 회화 루틴 확인하기",
+    title: "Today, Business Conversation",
     tone: "normal",
   },
   {
     href: "/level/health",
     icon: appIconAssets.level.video,
     id: "health-upper",
-    subtitle: "오늘의 레벨업, 오늘의 건강 스트레칭을 준비했어요",
+    subtitle: "오늘의 레벨업, 오늘의 건강 운동가이드를 준비했어요",
     time: "8시간전",
     title: "오늘은 상체를 부수는 날이에요! 파이팅!!",
     tone: "normal",
@@ -116,17 +123,30 @@ const notificationItems: readonly NotificationItem[] = [
 export function NotificationScreen({
   onBack,
   onOpenHref,
+  onRetry,
   onSettings,
+  variant = "default",
 }: NotificationScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 430);
+  const showsHistory =
+    variant === "default" ||
+    variant === "all-read" ||
+    variant === "no-unread-with-list";
+  const historyLabel =
+    variant === "all-read" || variant === "no-unread-with-list"
+      ? "최근 알림 기록"
+      : null;
+  const items = showsHistory
+    ? notificationItems
+    : ([] as readonly NotificationItem[]);
 
   return (
     <View style={styles.screen}>
       <View style={[styles.safeTop, { paddingTop: insets.top }]}>
         <View
-          accessibilityLabel={BRAND_LABEL}
+          accessibilityLabel="급여납치 알림 상단 영역"
           style={[styles.topBar, { width: contentWidth }]}
         >
           <Pressable
@@ -181,8 +201,56 @@ export function NotificationScreen({
           </Text>
         </View>
 
+        {variant === "empty" ? (
+          <NotificationStateCard
+            body="읽지 않은 알림이 생기면 이 화면에서 바로 확인할 수 있어요."
+            primaryLabel="알림 설정"
+            title="새로운 알림이 없어요"
+            onPrimary={onSettings}
+          />
+        ) : null}
+        {variant === "offline" ? (
+          <NotificationStateCard
+            body="네트워크가 불안정해 최신 알림을 가져오지 못했습니다. 저장된 화면만 안전하게 보여드려요."
+            primaryLabel="다시 연결"
+            title="오프라인 보호 모드"
+            tone="warning"
+            onPrimary={onRetry}
+          />
+        ) : null}
+        {variant === "error" ? (
+          <NotificationStateCard
+            body="서버 응답을 확인하지 못했습니다. 민감한 금융 원문 없이 다시 요청할 수 있어요."
+            primaryLabel="다시 시도"
+            title="알림을 불러오지 못했어요"
+            tone="danger"
+            onPrimary={onRetry}
+          />
+        ) : null}
+        {variant === "all-read" ? (
+          <NotificationStateCard
+            body="오늘 확인할 알림을 모두 읽었습니다. 새 알림이 오면 다시 상단에 표시됩니다."
+            primaryLabel="알림 설정"
+            title="모든 알림을 읽었어요"
+            onPrimary={onSettings}
+          />
+        ) : null}
+        {variant === "no-unread-with-list" ? (
+          <NotificationStateCard
+            body="읽지 않은 알림은 없지만 최근 알림 기록은 안전하게 보관됩니다."
+            primaryLabel="알림 설정"
+            title="읽지 않은 알림은 없어요"
+            onPrimary={onSettings}
+          />
+        ) : null}
+
+        {historyLabel ? (
+          <Text allowFontScaling={false} style={styles.historyTitle}>
+            {historyLabel}
+          </Text>
+        ) : null}
         <View style={styles.list}>
-          {notificationItems.map((item) => (
+          {items.map((item) => (
             <Pressable
               accessibilityLabel={`${item.title} 열기`}
               accessibilityRole="button"
@@ -228,6 +296,46 @@ export function NotificationScreen({
   );
 }
 
+function NotificationStateCard({
+  body,
+  onPrimary,
+  primaryLabel,
+  title,
+  tone = "default",
+}: Readonly<{
+  body: string;
+  onPrimary?: (() => void) | undefined;
+  primaryLabel: string;
+  title: string;
+  tone?: "default" | "warning" | "danger";
+}>): React.ReactElement {
+  return (
+    <View
+      accessibilityLabel={title}
+      style={[
+        styles.stateCard,
+        tone === "warning" ? styles.stateCardWarning : null,
+        tone === "danger" ? styles.stateCardDanger : null,
+      ]}
+    >
+      <Text allowFontScaling={false} style={styles.stateTitle}>
+        {title}
+      </Text>
+      <Text style={styles.stateBody}>{body}</Text>
+      <Pressable
+        accessibilityLabel={primaryLabel}
+        accessibilityRole="button"
+        onPress={onPrimary}
+        style={styles.stateButton}
+      >
+        <Text allowFontScaling={false} style={styles.stateButtonText}>
+          {primaryLabel}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
   try {
     return useSafeAreaInsets();
@@ -245,15 +353,15 @@ export function assertMobileNotificationsIndexCompleteness(): {
     NOTIFICATIONS_PATH,
     NOTIFICATIONS_UNREAD_COUNT_PATH,
     "새로운 알림이 있어요",
-    "내 급여 납치 현황 목표 달성",
+    "내 급여 납치 현황 5,780,000원 달성",
     "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
-    "오늘의 영어 회화 루틴 확인하기",
+    "Today, Business Conversation",
     "/level/reading",
     "/level/news",
     "/level/english",
     "/level/health",
     "sensitive_financial_data_component_guard",
-    "금융 금액 광고 타겟팅 금지",
+    "금융 원천 데이터 광고 타겟팅 금지",
   ] as const;
 
   return { checks, ok: checks.length >= 12, version: SCREEN_VERSION };
@@ -284,6 +392,13 @@ const styles = StyleSheet.create({
   },
   highlightRow: {
     backgroundColor: SOFT_GREEN,
+  },
+  historyTitle: {
+    color: TEXT_BLACK,
+    fontSize: 18,
+    fontWeight: "900",
+    lineHeight: 25,
+    marginBottom: 10,
   },
   list: {
     marginHorizontal: -18,
@@ -347,6 +462,50 @@ const styles = StyleSheet.create({
     color: TEXT_BLACK,
     fontSize: 16,
     fontWeight: "900",
+  },
+  stateBody: {
+    color: MUTED,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 21,
+  },
+  stateButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: "#209252",
+    borderRadius: 12,
+    justifyContent: "center",
+    minHeight: 44,
+    minWidth: 112,
+    paddingHorizontal: 18,
+  },
+  stateButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  stateCard: {
+    backgroundColor: "#F7F9FF",
+    borderColor: "#E7EBEF",
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 10,
+    marginBottom: 18,
+    padding: 18,
+  },
+  stateCardDanger: {
+    backgroundColor: "#FFF6F6",
+    borderColor: "#F3D4D4",
+  },
+  stateCardWarning: {
+    backgroundColor: "#FFF8ED",
+    borderColor: "#F4DFBF",
+  },
+  stateTitle: {
+    color: TEXT_BLACK,
+    fontSize: 21,
+    fontWeight: "900",
+    lineHeight: 28,
   },
   subtitle: {
     color: MUTED,

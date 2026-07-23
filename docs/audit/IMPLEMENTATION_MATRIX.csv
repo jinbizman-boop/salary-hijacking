@@ -1,0 +1,9 @@
+﻿id,area,requirement,status,evidence,next_action
+D-001,Auth,Login primary action must call real auth flow,RESOLVED_CODE_VERIFIED,artifacts/qa/test-login-screen-wiring-green-20260721.log,Continue full auth E2E
+D-002,Auth,Signup social auth and password recovery must not be no-op,RESOLVED_CODE_VERIFIED,artifacts/qa/test-auth-suite-password-recovery-final-20260721.log,Continue OAuth credential-gated validation
+D-003,Auth,Preview/staging must not bypass auth silently,RESOLVED_CODE_VERIFIED,artifacts/qa/test-app-screen-contract-auth-wiring-20260721.log,Verify with full app routing E2E
+D-004,Privacy,Production/sample financial data separation must be audited,CONFIRMED_PENDING,docs/audit/DEFECT_REGISTER.md,Audit production fixture boundaries
+D-005,Android QA,Direct-entry primary actions must not be dead callbacks,RESOLVED_CODE_VERIFIED,artifacts/qa/test-android-direct-entry-actions-postformat-20260721.log,Continue UI action E2E
+D-010,Android Crash,APK must cold-start without Hermes/JSC or RN URL runtime crashes,RESOLVED_EMULATOR_VERIFIED,artifacts/qa/logcat-lifecycle-fatal-filter-x86_64-url-getter-free-20260721.txt,User physical phone install confirmation pending
+STITCH-001,Mobile UI,Classified Stitch 304 artifacts must map to native screens and states,PENDING,stitch_salary_hijacking_design_system_classified.zip,Inventory and implement next
+APK-001,Release Artifact,ARM64 QA APK must build and be signed,PASS,artifacts/android/build-info.json,Provide user install path and continue final QA

@@ -2,6 +2,10 @@ import {
   normalizeMobileAuthResponse,
   normalizeMobileSignupResponse,
 } from "../../shared/api/auth-response";
+import {
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import * as Crypto from "expo-crypto";
 import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
 import {
@@ -152,22 +156,25 @@ function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
 
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
   }
 
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
   }
 
   const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+    baseUrlParts.hostname === "localhost" ||
+    baseUrlParts.hostname === "127.0.0.1" ||
+    baseUrlParts.hostname === "10.0.2.2";
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new AuthApiError(
       0,
       "AUTH_INSECURE_BASE_URL",
@@ -352,9 +359,8 @@ function assertSocialProvider(value: AuthSocialProvider): AuthSocialProvider {
 
 function assertOAuthRedirectUri(value: string): string {
   const redirectUri = assertPresent(value, "AUTH_OAUTH_REDIRECT_URI_REQUIRED");
-  let url: URL;
   try {
-    url = new URL(redirectUri);
+    if (!isValidUrlString(redirectUri)) throw new Error("INVALID_URL");
   } catch {
     throw new AuthApiError(
       0,
@@ -362,19 +368,20 @@ function assertOAuthRedirectUri(value: string): string {
       AUTH_SAFE_ERROR_MESSAGE,
     );
   }
+  const urlParts = parseMobileBaseUrlParts(redirectUri);
   const isAppCallback =
-    url.protocol === "salaryhijacking:" &&
-    url.hostname === "auth" &&
-    url.pathname === "/oauth/callback";
+    urlParts?.protocol === "salaryhijacking:" &&
+    urlParts.hostname === "auth" &&
+    urlParts.pathname === "/oauth/callback";
   const isWebCallback =
-    url.protocol === "https:" &&
-    (url.hostname === "salaryhijacking.com" ||
-      url.hostname.endsWith(".salaryhijacking.com")) &&
-    url.pathname === "/auth/oauth/callback";
+    urlParts?.protocol === "https:" &&
+    (urlParts.hostname === "salaryhijacking.com" ||
+      urlParts.hostname.endsWith(".salaryhijacking.com")) &&
+    urlParts.pathname === "/auth/oauth/callback";
   if (
     (!isAppCallback && !isWebCallback) ||
-    url.search.length > 0 ||
-    url.hash.length > 0
+    (urlParts?.search.length ?? 0) > 0 ||
+    (urlParts?.hash.length ?? 0) > 0
   ) {
     throw new AuthApiError(
       0,
@@ -393,8 +400,11 @@ function optionalAuthorizationUrl(value: unknown): string | null {
   const normalized = optionalNonEmptyString(value);
   if (!normalized) return null;
   try {
-    const url = new URL(normalized);
-    return url.protocol === "https:" ? normalized : null;
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
+    const urlParts = parseMobileBaseUrlParts(normalized);
+    return urlParts?.protocol === "https:" && !urlParts.containsCredentials
+      ? normalized
+      : null;
   } catch {
     return null;
   }

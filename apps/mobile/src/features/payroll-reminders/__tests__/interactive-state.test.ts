@@ -35,7 +35,9 @@ describe("interactive preview state Korean copy", () => {
     expect(serialized).toContain("유튜브 프리미엄");
     expect(serialized).toContain("MS오피스");
     expect(serialized).toContain("학자금 대출");
-    expect(serialized).not.toMatch(/[�熬怨援移湲鍮]/u);
+    expect(serialized).not.toMatch(
+      /(?:占|�|鍮|諛|愿|묓|솕|뒠|釉|誘|숈|異|\?뚯|\?대|\?곴|湲고\?)/u,
+    );
   });
 
   it("maps readable Korean categories to the expected icon families", () => {
@@ -279,6 +281,16 @@ describe("interactive preview state secure persistence", () => {
     });
     expect(getPayrollReminderState()).toBe(after);
   });
+
+  it("keeps the seeded state when secure storage read fails during startup hydration", async () => {
+    const storage = createReadRejectingSecureStorage();
+    configurePayrollReminderStatePersistence(storage);
+
+    await expect(hydratePayrollReminderStateFromStorage()).resolves.toBe(
+      getPayrollReminderState(),
+    );
+    expect(getPayrollReminderState().dailyItems).toHaveLength(5);
+  });
 });
 
 describe("interactive preview recurring plan reminders", () => {
@@ -390,5 +402,15 @@ function createRejectingSecureStorage(): PayrollReminderStateSecureStorage {
     setItemAsync: async (): Promise<void> => {
       throw new Error("secure store unavailable");
     },
+  };
+}
+
+function createReadRejectingSecureStorage(): PayrollReminderStateSecureStorage {
+  return {
+    deleteItemAsync: async (): Promise<void> => undefined,
+    getItemAsync: async (): Promise<string | null> => {
+      throw new Error("secure store read unavailable");
+    },
+    setItemAsync: async (): Promise<void> => undefined,
   };
 }

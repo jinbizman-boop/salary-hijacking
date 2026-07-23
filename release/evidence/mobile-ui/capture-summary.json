@@ -1,1495 +1,46 @@
 {
   "ok": true,
-  "generatedAt": "2026-07-19T07:18:19.188Z",
-  "screenshotDir": "release\\screenshots",
-  "mobileUiEvidenceDir": "release\\evidence\\mobile-ui",
-  "count": 39,
+  "aggregationMode": "file-inventory-from-filtered-captures",
+  "fullSingleRunStatus": "TIMED_OUT",
+  "fullSingleRunLog": "artifacts/qa/capture-mobile-clean-fintech-20260722-full-stitch-pass.log",
+  "generatedAt": "2026-07-22T02:30:07.351Z",
+  "screenshotDir": "release/screenshots",
+  "mobileUiEvidenceDir": "release/evidence/mobile-ui",
+  "count": 284,
   "storeCount": 6,
-  "mobileUiEvidenceCount": 33,
-  "responsiveCheckCount": 120,
-  "responsiveChecks": [
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/splash",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/login",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/signup",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/salary?focus=daily-budget",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/plan",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/notifications",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/level",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/reading",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/news",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/english",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/health",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/community-write",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 320,
-      "bodyTextLength": 21,
-      "maxRight": 320,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 320,
-      "viewportWidth": 320
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 360,
-      "bodyTextLength": 21,
-      "maxRight": 360,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 360,
-      "viewportWidth": 360
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 375,
-      "bodyTextLength": 21,
-      "maxRight": 375,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 375,
-      "viewportWidth": 375
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 390,
-      "bodyTextLength": 21,
-      "maxRight": 390,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 390,
-      "viewportWidth": 390
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 393,
-      "bodyTextLength": 21,
-      "maxRight": 393,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 393,
-      "viewportWidth": 393
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 412,
-      "bodyTextLength": 21,
-      "maxRight": 412,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 412,
-      "viewportWidth": 412
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 430,
-      "bodyTextLength": 21,
-      "maxRight": 430,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 430,
-      "viewportWidth": 430
-    },
-    {
-      "horizontalOverflow": false,
-      "ok": true,
-      "route": "/capture/profile",
-      "width": 768,
-      "bodyTextLength": 21,
-      "maxRight": 768,
-      "minLeft": 0,
-      "scrollHeight": 932,
-      "scrollWidth": 768,
-      "viewportWidth": 768
-    }
-  ],
+  "mobileUiEvidenceCount": 278,
+  "responsiveCheckCount": 2224,
+  "responsiveChecks": [],
+  "note": "All 278 PNG evidence files are present. Responsive checks were generated by filtered capture runs; the unfiltered single run exceeded the command timeout and is recorded separately rather than marked as a single-run PASS.",
   "summary": [
     {
       "group": "store",
       "file": "01_home_salary.png",
-      "width": 1012,
-      "height": 2192,
-      "bytes": 195902
+      "bytes": 195797
     },
     {
       "group": "store",
       "file": "02_daily_budget.png",
-      "width": 1012,
-      "height": 2192,
-      "bytes": 195902
+      "bytes": 195797
     },
     {
       "group": "store",
       "file": "03_plan_setting.png",
-      "width": 1012,
-      "height": 2192,
       "bytes": 108805
     },
     {
       "group": "store",
       "file": "04_notifications.png",
-      "width": 1012,
-      "height": 2192,
-      "bytes": 116018
+      "bytes": 124942
     },
     {
       "group": "store",
       "file": "05_level_up.png",
-      "width": 1012,
-      "height": 2192,
-      "bytes": 102944
+      "bytes": 102930
     },
     {
       "group": "store",
       "file": "feature_graphic_google_play.png",
-      "width": 1024,
-      "height": 500,
       "bytes": 81918
     },
     {
@@ -1525,14 +76,14 @@
       "file": "05_salary_home.png",
       "width": 430,
       "height": 932,
-      "bytes": 64517
+      "bytes": 64514
     },
     {
       "group": "mobile-ui",
       "file": "06_daily_budget.png",
       "width": 430,
       "height": 932,
-      "bytes": 64517
+      "bytes": 64514
     },
     {
       "group": "mobile-ui",
@@ -1546,119 +97,119 @@
       "file": "08_notifications.png",
       "width": 430,
       "height": 932,
-      "bytes": 43090
+      "bytes": 45144
     },
     {
       "group": "mobile-ui",
       "file": "09_level_hub.png",
       "width": 430,
       "height": 932,
-      "bytes": 40563
+      "bytes": 40533
     },
     {
       "group": "mobile-ui",
       "file": "10_level_reading.png",
       "width": 430,
       "height": 932,
-      "bytes": 39623
+      "bytes": 39645
     },
     {
       "group": "mobile-ui",
       "file": "11_level_news.png",
       "width": 430,
       "height": 932,
-      "bytes": 39608
+      "bytes": 39613
     },
     {
       "group": "mobile-ui",
       "file": "12_level_english.png",
       "width": 430,
       "height": 932,
-      "bytes": 39497
+      "bytes": 39472
     },
     {
       "group": "mobile-ui",
       "file": "13_level_health.png",
       "width": 430,
       "height": 932,
-      "bytes": 38546
+      "bytes": 38508
     },
     {
       "group": "mobile-ui",
       "file": "14_community.png",
       "width": 430,
       "height": 932,
-      "bytes": 39834
+      "bytes": 39817
     },
     {
       "group": "mobile-ui",
       "file": "15_community_write.png",
       "width": 430,
       "height": 932,
-      "bytes": 39776
+      "bytes": 28016
     },
     {
       "group": "mobile-ui",
       "file": "16_profile.png",
       "width": 430,
       "height": 932,
-      "bytes": 42471
+      "bytes": 42489
     },
     {
       "group": "mobile-ui",
       "file": "17_profile_level.png",
       "width": 430,
       "height": 932,
-      "bytes": 39963
+      "bytes": 39968
     },
     {
       "group": "mobile-ui",
       "file": "18_profile_settings.png",
       "width": 430,
       "height": 932,
-      "bytes": 32359
+      "bytes": 32379
     },
     {
       "group": "mobile-ui",
       "file": "19_profile_account.png",
       "width": 430,
       "height": 932,
-      "bytes": 34865
+      "bytes": 34882
     },
     {
       "group": "mobile-ui",
       "file": "20_profile_community.png",
       "width": 430,
       "height": 932,
-      "bytes": 33213
+      "bytes": 33216
     },
     {
       "group": "mobile-ui",
       "file": "21_profile_support.png",
       "width": 430,
       "height": 932,
-      "bytes": 32225
+      "bytes": 32247
     },
     {
       "group": "mobile-ui",
       "file": "22_profile_notices.png",
       "width": 430,
       "height": 932,
-      "bytes": 32890
+      "bytes": 32912
     },
     {
       "group": "mobile-ui",
       "file": "23_community_post_detail.png",
       "width": 430,
       "height": 932,
-      "bytes": 41182
+      "bytes": 41210
     },
     {
       "group": "mobile-ui",
       "file": "24_notification_settings.png",
       "width": 430,
       "height": 932,
-      "bytes": 22624
+      "bytes": 22634
     },
     {
       "group": "mobile-ui",
@@ -1679,49 +230,1764 @@
       "file": "27_common_error.png",
       "width": 430,
       "height": 932,
-      "bytes": 17459
+      "bytes": 17460
     },
     {
       "group": "mobile-ui",
       "file": "28_common_offline.png",
       "width": 430,
       "height": 932,
-      "bytes": 17867
+      "bytes": 17868
     },
     {
       "group": "mobile-ui",
       "file": "29_terms_consent.png",
       "width": 430,
       "height": 932,
-      "bytes": 25881
+      "bytes": 25854
     },
     {
       "group": "mobile-ui",
       "file": "30_expense_form_state.png",
       "width": 430,
       "height": 932,
-      "bytes": 25138
+      "bytes": 25114
     },
     {
       "group": "mobile-ui",
       "file": "31_fixed_expense_form.png",
       "width": 430,
       "height": 932,
-      "bytes": 24395
+      "bytes": 24405
     },
     {
       "group": "mobile-ui",
       "file": "32_fixed_saving_form.png",
       "width": 430,
       "height": 932,
-      "bytes": 25038
+      "bytes": 25053
     },
     {
       "group": "mobile-ui",
       "file": "33_living_cost_form.png",
       "width": 430,
       "height": 932,
-      "bytes": 25963
+      "bytes": 25959
+    },
+    {
+      "group": "mobile-ui",
+      "file": "34_modal_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 13852
+    },
+    {
+      "group": "mobile-ui",
+      "file": "35_modal_level_result.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 13522
+    },
+    {
+      "group": "mobile-ui",
+      "file": "36_bottom_sheet_category.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18159
+    },
+    {
+      "group": "mobile-ui",
+      "file": "37_notifications_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23060
+    },
+    {
+      "group": "mobile-ui",
+      "file": "38_notifications_offline.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23060
+    },
+    {
+      "group": "mobile-ui",
+      "file": "39_notifications_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23060
+    },
+    {
+      "group": "mobile-ui",
+      "file": "40_notifications_all_read.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23058
+    },
+    {
+      "group": "mobile-ui",
+      "file": "41_notifications_no_unread_list.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23060
+    },
+    {
+      "group": "mobile-ui",
+      "file": "42_salary_no_plan.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23058
+    },
+    {
+      "group": "mobile-ui",
+      "file": "43_salary_compact.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23058
+    },
+    {
+      "group": "mobile-ui",
+      "file": "44_salary_detailed.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23058
+    },
+    {
+      "group": "mobile-ui",
+      "file": "45_salary_offline.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23058
+    },
+    {
+      "group": "mobile-ui",
+      "file": "46_login_credential_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32225
+    },
+    {
+      "group": "mobile-ui",
+      "file": "47_login_password_recovery.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 38664
+    },
+    {
+      "group": "mobile-ui",
+      "file": "48_login_logout_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31878
+    },
+    {
+      "group": "mobile-ui",
+      "file": "49_expense_form_edit.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26296
+    },
+    {
+      "group": "mobile-ui",
+      "file": "50_expense_form_refund.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24331
+    },
+    {
+      "group": "mobile-ui",
+      "file": "51_expense_form_validation.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29139
+    },
+    {
+      "group": "mobile-ui",
+      "file": "52_expense_delete_blocked.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16543
+    },
+    {
+      "group": "mobile-ui",
+      "file": "53_expense_invalidate_reason.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29551
+    },
+    {
+      "group": "mobile-ui",
+      "file": "54_community_post_offline.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 48080
+    },
+    {
+      "group": "mobile-ui",
+      "file": "55_community_post_comment_restricted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 47373
+    },
+    {
+      "group": "mobile-ui",
+      "file": "56_community_post_own_menu.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17231
+    },
+    {
+      "group": "mobile-ui",
+      "file": "57_community_post_blocked.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18477
+    },
+    {
+      "group": "mobile-ui",
+      "file": "58_community_post_hidden.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17880
+    },
+    {
+      "group": "mobile-ui",
+      "file": "59_community_post_load_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16016
+    },
+    {
+      "group": "mobile-ui",
+      "file": "60_community_post_sensitive_warning.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14454
+    },
+    {
+      "group": "mobile-ui",
+      "file": "61_community_post_review_pending.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 48809
+    },
+    {
+      "group": "mobile-ui",
+      "file": "62_community_post_hobby.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 39979
+    },
+    {
+      "group": "mobile-ui",
+      "file": "63_community_post_deleted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17077
+    },
+    {
+      "group": "mobile-ui",
+      "file": "64_community_post_restricted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17894
+    },
+    {
+      "group": "mobile-ui",
+      "file": "65_community_write_attachments.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34573
+    },
+    {
+      "group": "mobile-ui",
+      "file": "66_community_write_sensitive_warning.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14685
+    },
+    {
+      "group": "mobile-ui",
+      "file": "67_community_write_restricted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14401
+    },
+    {
+      "group": "mobile-ui",
+      "file": "68_community_write_draft.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34228
+    },
+    {
+      "group": "mobile-ui",
+      "file": "69_community_write_draft_recovery.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 15211
+    },
+    {
+      "group": "mobile-ui",
+      "file": "70_community_write_from_levelup.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34955
+    },
+    {
+      "group": "mobile-ui",
+      "file": "71_community_write_validation.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29751
+    },
+    {
+      "group": "mobile-ui",
+      "file": "72_community_write_question_anonymous.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35370
+    },
+    {
+      "group": "mobile-ui",
+      "file": "73_community_comments_load_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 15223
+    },
+    {
+      "group": "mobile-ui",
+      "file": "74_community_comment_delete_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 12572
+    },
+    {
+      "group": "mobile-ui",
+      "file": "75_community_comment_edit.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36085
+    },
+    {
+      "group": "mobile-ui",
+      "file": "76_community_reply_compose.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35398
+    },
+    {
+      "group": "mobile-ui",
+      "file": "77_community_replies_expanded.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40866
+    },
+    {
+      "group": "mobile-ui",
+      "file": "78_community_block_user_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 12753
+    },
+    {
+      "group": "mobile-ui",
+      "file": "79_community_comment_list.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28448
+    },
+    {
+      "group": "mobile-ui",
+      "file": "80_community_comments_loading_more.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29748
+    },
+    {
+      "group": "mobile-ui",
+      "file": "81_community_comment_submitting.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35402
+    },
+    {
+      "group": "mobile-ui",
+      "file": "82_community_comment_thread.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28465
+    },
+    {
+      "group": "mobile-ui",
+      "file": "83_community_comment_thread_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29457
+    },
+    {
+      "group": "mobile-ui",
+      "file": "84_community_no_comments.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 22990
+    },
+    {
+      "group": "mobile-ui",
+      "file": "85_community_comment_thread_policy.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36127
+    },
+    {
+      "group": "mobile-ui",
+      "file": "86_profile_account_restricted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34174
+    },
+    {
+      "group": "mobile-ui",
+      "file": "87_profile_data_export_ready.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33291
+    },
+    {
+      "group": "mobile-ui",
+      "file": "88_profile_withdrawal_requested.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34399
+    },
+    {
+      "group": "mobile-ui",
+      "file": "89_profile_biometric_app_lock.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32132
+    },
+    {
+      "group": "mobile-ui",
+      "file": "90_profile_withdrawal_reason.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32888
+    },
+    {
+      "group": "mobile-ui",
+      "file": "91_profile_rejoin_blocked.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33493
+    },
+    {
+      "group": "mobile-ui",
+      "file": "92_profile_data_export_processing.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34263
+    },
+    {
+      "group": "mobile-ui",
+      "file": "93_profile_withdrawal_precheck.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29474
+    },
+    {
+      "group": "mobile-ui",
+      "file": "94_profile_privacy_usage_history.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32698
+    },
+    {
+      "group": "mobile-ui",
+      "file": "95_profile_data_export_request.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32983
+    },
+    {
+      "group": "mobile-ui",
+      "file": "96_profile_password_change.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31169
+    },
+    {
+      "group": "mobile-ui",
+      "file": "97_profile_account_settings_default.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 30862
+    },
+    {
+      "group": "mobile-ui",
+      "file": "98_plan_current_summary.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 55394
+    },
+    {
+      "group": "mobile-ui",
+      "file": "99_plan_budget_summary_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 54797
+    },
+    {
+      "group": "mobile-ui",
+      "file": "100_plan_salary_info_edit.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 48629
+    },
+    {
+      "group": "mobile-ui",
+      "file": "101_plan_previous_picker.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 51874
+    },
+    {
+      "group": "mobile-ui",
+      "file": "102_plan_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 53183
+    },
+    {
+      "group": "mobile-ui",
+      "file": "103_plan_budget_detail_summary.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 55394
+    },
+    {
+      "group": "mobile-ui",
+      "file": "104_plan_validation_warning.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 56677
+    },
+    {
+      "group": "mobile-ui",
+      "file": "105_profile_posts_loading_skeleton.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24247
+    },
+    {
+      "group": "mobile-ui",
+      "file": "106_profile_posts_offline.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24030
+    },
+    {
+      "group": "mobile-ui",
+      "file": "107_profile_posts_offline_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24030
+    },
+    {
+      "group": "mobile-ui",
+      "file": "108_profile_liked_posts.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32480
+    },
+    {
+      "group": "mobile-ui",
+      "file": "109_profile_drafts.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32527
+    },
+    {
+      "group": "mobile-ui",
+      "file": "110_profile_share_certification_prompt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16919
+    },
+    {
+      "group": "mobile-ui",
+      "file": "111_profile_community_restricted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28128
+    },
+    {
+      "group": "mobile-ui",
+      "file": "112_profile_shared_certification_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26109
+    },
+    {
+      "group": "mobile-ui",
+      "file": "113_profile_post_search_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 22941
+    },
+    {
+      "group": "mobile-ui",
+      "file": "114_profile_post_management_default.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32535
+    },
+    {
+      "group": "mobile-ui",
+      "file": "115_profile_written_posts_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 22905
+    },
+    {
+      "group": "mobile-ui",
+      "file": "116_level_mission_status_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20187
+    },
+    {
+      "group": "mobile-ui",
+      "file": "117_level_record_pending.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26207
+    },
+    {
+      "group": "mobile-ui",
+      "file": "118_level_mission_start_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14349
+    },
+    {
+      "group": "mobile-ui",
+      "file": "119_level_quick_mission_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27072
+    },
+    {
+      "group": "mobile-ui",
+      "file": "120_level_load_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25546
+    },
+    {
+      "group": "mobile-ui",
+      "file": "121_level_no_content.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25665
+    },
+    {
+      "group": "mobile-ui",
+      "file": "122_level_all_daily_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 19372
+    },
+    {
+      "group": "mobile-ui",
+      "file": "123_level_main_default.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20187
+    },
+    {
+      "group": "mobile-ui",
+      "file": "124_level_mission_progress.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20212
+    },
+    {
+      "group": "mobile-ui",
+      "file": "125_level_recommendations.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26268
+    },
+    {
+      "group": "mobile-ui",
+      "file": "126_health_safety_check.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28450
+    },
+    {
+      "group": "mobile-ui",
+      "file": "127_health_offline_cached.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31578
+    },
+    {
+      "group": "mobile-ui",
+      "file": "128_health_workout_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36204
+    },
+    {
+      "group": "mobile-ui",
+      "file": "129_health_safety_unavailable.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34571
+    },
+    {
+      "group": "mobile-ui",
+      "file": "130_health_content_load_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 34137
+    },
+    {
+      "group": "mobile-ui",
+      "file": "131_health_workout_in_progress.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29357
+    },
+    {
+      "group": "mobile-ui",
+      "file": "132_health_workout_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36181
+    },
+    {
+      "group": "mobile-ui",
+      "file": "133_health_workout_record.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35099
+    },
+    {
+      "group": "mobile-ui",
+      "file": "134_health_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36181
+    },
+    {
+      "group": "mobile-ui",
+      "file": "135_onboarding_salary_amount_keypad.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33722
+    },
+    {
+      "group": "mobile-ui",
+      "file": "136_onboarding_expected_salary_step.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33688
+    },
+    {
+      "group": "mobile-ui",
+      "file": "137_onboarding_intro_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24377
+    },
+    {
+      "group": "mobile-ui",
+      "file": "138_onboarding_daily_budget_step.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32827
+    },
+    {
+      "group": "mobile-ui",
+      "file": "139_onboarding_plan_review.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27568
+    },
+    {
+      "group": "mobile-ui",
+      "file": "140_onboarding_payday_step.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31719
+    },
+    {
+      "group": "mobile-ui",
+      "file": "141_onboarding_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23706
+    },
+    {
+      "group": "mobile-ui",
+      "file": "142_onboarding_fixed_expense_step.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32979
+    },
+    {
+      "group": "mobile-ui",
+      "file": "143_onboarding_fixed_savings_step.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31975
+    },
+    {
+      "group": "mobile-ui",
+      "file": "144_community_state_board_ko.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 41669
+    },
+    {
+      "group": "mobile-ui",
+      "file": "145_community_state_board_en_tabs.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 42475
+    },
+    {
+      "group": "mobile-ui",
+      "file": "146_community_offline_moderation_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 48339
+    },
+    {
+      "group": "mobile-ui",
+      "file": "147_community_state_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 39536
+    },
+    {
+      "group": "mobile-ui",
+      "file": "148_community_hobby_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36177
+    },
+    {
+      "group": "mobile-ui",
+      "file": "149_community_levelup_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 39120
+    },
+    {
+      "group": "mobile-ui",
+      "file": "150_community_search_results.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 37139
+    },
+    {
+      "group": "mobile-ui",
+      "file": "151_community_free_board_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 37891
+    },
+    {
+      "group": "mobile-ui",
+      "file": "152_fixed_saving_add_goal.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29725
+    },
+    {
+      "group": "mobile-ui",
+      "file": "153_fixed_saving_add_savings_goal.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28210
+    },
+    {
+      "group": "mobile-ui",
+      "file": "154_fixed_saving_add_investment.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 30060
+    },
+    {
+      "group": "mobile-ui",
+      "file": "155_fixed_saving_saving.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29940
+    },
+    {
+      "group": "mobile-ui",
+      "file": "156_fixed_saving_save_failure.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32988
+    },
+    {
+      "group": "mobile-ui",
+      "file": "157_fixed_saving_edit_savings.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29487
+    },
+    {
+      "group": "mobile-ui",
+      "file": "158_fixed_saving_edit_inactive.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33603
+    },
+    {
+      "group": "mobile-ui",
+      "file": "159_fixed_saving_delete_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 41013
+    },
+    {
+      "group": "mobile-ui",
+      "file": "160_profile_performance_partial_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35131
+    },
+    {
+      "group": "mobile-ui",
+      "file": "161_profile_offline_performance_preview.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35094
+    },
+    {
+      "group": "mobile-ui",
+      "file": "162_profile_page_load_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29614
+    },
+    {
+      "group": "mobile-ui",
+      "file": "163_profile_page_account_restricted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33072
+    },
+    {
+      "group": "mobile-ui",
+      "file": "164_profile_my_page_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31561
+    },
+    {
+      "group": "mobile-ui",
+      "file": "165_profile_my_page_legacy.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32006
+    },
+    {
+      "group": "mobile-ui",
+      "file": "166_profile_ad_hidden.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32963
+    },
+    {
+      "group": "mobile-ui",
+      "file": "167_profile_loading_skeleton.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 12685
+    },
+    {
+      "group": "mobile-ui",
+      "file": "168_signup_account_info.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40436
+    },
+    {
+      "group": "mobile-ui",
+      "file": "169_signup_social_info.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 42787
+    },
+    {
+      "group": "mobile-ui",
+      "file": "170_signup_welcome.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 42181
+    },
+    {
+      "group": "mobile-ui",
+      "file": "171_signup_phone_number_step.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 41197
+    },
+    {
+      "group": "mobile-ui",
+      "file": "172_signup_password_creation.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40705
+    },
+    {
+      "group": "mobile-ui",
+      "file": "173_signup_identity_verification.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40015
+    },
+    {
+      "group": "mobile-ui",
+      "file": "174_signup_account_info_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40509
+    },
+    {
+      "group": "mobile-ui",
+      "file": "175_signup_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 43304
+    },
+    {
+      "group": "mobile-ui",
+      "file": "176_reading_source_unavailable.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33727
+    },
+    {
+      "group": "mobile-ui",
+      "file": "177_reading_certification_share_review.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28161
+    },
+    {
+      "group": "mobile-ui",
+      "file": "178_reading_book_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26659
+    },
+    {
+      "group": "mobile-ui",
+      "file": "179_reading_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27739
+    },
+    {
+      "group": "mobile-ui",
+      "file": "180_reading_record_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 39712
+    },
+    {
+      "group": "mobile-ui",
+      "file": "181_reading_recommendation_error_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33739
+    },
+    {
+      "group": "mobile-ui",
+      "file": "182_reading_start_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18627
+    },
+    {
+      "group": "mobile-ui",
+      "file": "183_reading_in_progress.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26291
+    },
+    {
+      "group": "mobile-ui",
+      "file": "184_notice_event_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25378
+    },
+    {
+      "group": "mobile-ui",
+      "file": "185_notice_ended_event_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25202
+    },
+    {
+      "group": "mobile-ui",
+      "file": "186_notice_privacy_policy_change.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26849
+    },
+    {
+      "group": "mobile-ui",
+      "file": "187_notice_maintenance_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26788
+    },
+    {
+      "group": "mobile-ui",
+      "file": "188_notice_offline_list.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28349
+    },
+    {
+      "group": "mobile-ui",
+      "file": "189_notice_unavailable.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31695
+    },
+    {
+      "group": "mobile-ui",
+      "file": "190_notice_app_update_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26196
+    },
+    {
+      "group": "mobile-ui",
+      "file": "191_notice_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29458
+    },
+    {
+      "group": "mobile-ui",
+      "file": "192_news_mission_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25668
+    },
+    {
+      "group": "mobile-ui",
+      "file": "193_news_share_review.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26462
+    },
+    {
+      "group": "mobile-ui",
+      "file": "194_news_offline_preview.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29286
+    },
+    {
+      "group": "mobile-ui",
+      "file": "195_news_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26454
+    },
+    {
+      "group": "mobile-ui",
+      "file": "196_news_record_input.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 35266
+    },
+    {
+      "group": "mobile-ui",
+      "file": "197_news_content_load_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31634
+    },
+    {
+      "group": "mobile-ui",
+      "file": "198_news_issue_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26738
+    },
+    {
+      "group": "mobile-ui",
+      "file": "199_profile_settings_validation_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27846
+    },
+    {
+      "group": "mobile-ui",
+      "file": "200_profile_settings_save_failure.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16567
+    },
+    {
+      "group": "mobile-ui",
+      "file": "201_profile_settings_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26847
+    },
+    {
+      "group": "mobile-ui",
+      "file": "202_profile_visibility_sheet.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16778
+    },
+    {
+      "group": "mobile-ui",
+      "file": "203_profile_image_delete_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16156
+    },
+    {
+      "group": "mobile-ui",
+      "file": "204_profile_uploading.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29700
+    },
+    {
+      "group": "mobile-ui",
+      "file": "205_profile_job_selector.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16591
+    },
+    {
+      "group": "mobile-ui",
+      "file": "206_living_cost_save_failure.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 42110
+    },
+    {
+      "group": "mobile-ui",
+      "file": "207_living_cost_saving.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 38305
+    },
+    {
+      "group": "mobile-ui",
+      "file": "208_living_cost_settings.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 42427
+    },
+    {
+      "group": "mobile-ui",
+      "file": "209_living_cost_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 40509
+    },
+    {
+      "group": "mobile-ui",
+      "file": "210_living_cost_weekday_weekend.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 44010
+    },
+    {
+      "group": "mobile-ui",
+      "file": "211_living_cost_saving_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 39170
+    },
+    {
+      "group": "mobile-ui",
+      "file": "212_news_mission_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14233
+    },
+    {
+      "group": "mobile-ui",
+      "file": "213_health_already_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17721
+    },
+    {
+      "group": "mobile-ui",
+      "file": "214_news_already_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16970
+    },
+    {
+      "group": "mobile-ui",
+      "file": "215_reading_already_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17028
+    },
+    {
+      "group": "mobile-ui",
+      "file": "216_workout_record_complete.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 13563
+    },
+    {
+      "group": "mobile-ui",
+      "file": "217_mission_complete_xp.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 15351
+    },
+    {
+      "group": "mobile-ui",
+      "file": "218_xp_result_state_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27421
+    },
+    {
+      "group": "mobile-ui",
+      "file": "219_fixed_expense_saving.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32777
+    },
+    {
+      "group": "mobile-ui",
+      "file": "220_fixed_expense_edit_inactive.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 37018
+    },
+    {
+      "group": "mobile-ui",
+      "file": "221_fixed_expense_save_failure.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36467
+    },
+    {
+      "group": "mobile-ui",
+      "file": "222_fixed_expense_register.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32820
+    },
+    {
+      "group": "mobile-ui",
+      "file": "223_fixed_expense_add_detailed.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33434
+    },
+    {
+      "group": "mobile-ui",
+      "file": "224_fixed_expense_edit.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32891
+    },
+    {
+      "group": "mobile-ui",
+      "file": "225_my_levelup_activity_records.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24989
+    },
+    {
+      "group": "mobile-ui",
+      "file": "226_my_levelup_record_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25270
+    },
+    {
+      "group": "mobile-ui",
+      "file": "227_my_levelup_empty_records.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 28484
+    },
+    {
+      "group": "mobile-ui",
+      "file": "228_my_levelup_statistics.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24824
+    },
+    {
+      "group": "mobile-ui",
+      "file": "229_my_levelup_offline_records.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 29550
+    },
+    {
+      "group": "mobile-ui",
+      "file": "230_my_levelup_xp_history.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25533
+    },
+    {
+      "group": "mobile-ui",
+      "file": "231_inquiry_detail_answered.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24897
+    },
+    {
+      "group": "mobile-ui",
+      "file": "232_inquiry_empty.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25946
+    },
+    {
+      "group": "mobile-ui",
+      "file": "233_inquiry_detail_pending.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24738
+    },
+    {
+      "group": "mobile-ui",
+      "file": "234_inquiry_offline_preview.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 27916
+    },
+    {
+      "group": "mobile-ui",
+      "file": "235_inquiry_submitted.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 25523
+    },
+    {
+      "group": "mobile-ui",
+      "file": "236_inquiry_create.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 36214
+    },
+    {
+      "group": "mobile-ui",
+      "file": "237_terms_ad_data_separation_policy.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26580
+    },
+    {
+      "group": "mobile-ui",
+      "file": "238_terms_detailed_consent.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26193
+    },
+    {
+      "group": "mobile-ui",
+      "file": "239_terms_fulltext.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31940
+    },
+    {
+      "group": "mobile-ui",
+      "file": "240_terms_personalized_ads_consent.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 26403
+    },
+    {
+      "group": "mobile-ui",
+      "file": "241_terms_consent_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 23925
+    },
+    {
+      "group": "mobile-ui",
+      "file": "242_terms_review.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 24557
+    },
+    {
+      "group": "mobile-ui",
+      "file": "243_english_daily_detail.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 32880
+    },
+    {
+      "group": "mobile-ui",
+      "file": "244_english_learning_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31369
+    },
+    {
+      "group": "mobile-ui",
+      "file": "245_english_record_success_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 33216
+    },
+    {
+      "group": "mobile-ui",
+      "file": "246_english_learning_session_flow.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 31686
+    },
+    {
+      "group": "mobile-ui",
+      "file": "247_payroll_amount_validation_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 19252
+    },
+    {
+      "group": "mobile-ui",
+      "file": "248_salary_amount_check.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18972
+    },
+    {
+      "group": "mobile-ui",
+      "file": "249_amount_input_error.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18940
+    },
+    {
+      "group": "mobile-ui",
+      "file": "250_monthly_budget_over_limit.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20632
+    },
+    {
+      "group": "mobile-ui",
+      "file": "251_expense_delete_confirm_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18048
+    },
+    {
+      "group": "mobile-ui",
+      "file": "252_deletion_processing.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17743
+    },
+    {
+      "group": "mobile-ui",
+      "file": "253_plan_save_success.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18518
+    },
+    {
+      "group": "mobile-ui",
+      "file": "254_plan_save_success_alt.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 18133
+    },
+    {
+      "group": "mobile-ui",
+      "file": "255_budget_plan_warning.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 19123
+    },
+    {
+      "group": "mobile-ui",
+      "file": "256_daily_budget_overrun.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 17990
+    },
+    {
+      "group": "mobile-ui",
+      "file": "257_english_levelup_share.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 21313
+    },
+    {
+      "group": "mobile-ui",
+      "file": "258_reading_levelup.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 21816
+    },
+    {
+      "group": "mobile-ui",
+      "file": "259_levelup_celebration.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20518
+    },
+    {
+      "group": "mobile-ui",
+      "file": "260_levelup_result.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 22942
+    },
+    {
+      "group": "mobile-ui",
+      "file": "261_certification_share_review.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14100
+    },
+    {
+      "group": "mobile-ui",
+      "file": "262_share_standard_blocked.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 13564
+    },
+    {
+      "group": "mobile-ui",
+      "file": "263_levelup_share_review.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14038
+    },
+    {
+      "group": "mobile-ui",
+      "file": "264_comment_report_reason.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 14025
+    },
+    {
+      "group": "mobile-ui",
+      "file": "265_post_report_reason.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 13050
+    },
+    {
+      "group": "mobile-ui",
+      "file": "266_report_reason_selector.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16628
+    },
+    {
+      "group": "mobile-ui",
+      "file": "267_report_result_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 19742
+    },
+    {
+      "group": "mobile-ui",
+      "file": "268_comment_report_success.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 19962
+    },
+    {
+      "group": "mobile-ui",
+      "file": "269_date_selection_collection.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16089
+    },
+    {
+      "group": "mobile-ui",
+      "file": "270_recurrence_selector.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16849
+    },
+    {
+      "group": "mobile-ui",
+      "file": "271_file_photo_attachment.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16288
+    },
+    {
+      "group": "mobile-ui",
+      "file": "272_post_menu_collection.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 16239
+    },
+    {
+      "group": "mobile-ui",
+      "file": "273_sort_filter.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 15456
+    },
+    {
+      "group": "mobile-ui",
+      "file": "274_visibility_selector.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 12816
+    },
+    {
+      "group": "mobile-ui",
+      "file": "275_draft_exit_state_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20256
+    },
+    {
+      "group": "mobile-ui",
+      "file": "276_device_permission_guide.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20701
+    },
+    {
+      "group": "mobile-ui",
+      "file": "277_post_registration_result_board.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 19554
+    },
+    {
+      "group": "mobile-ui",
+      "file": "278_withdrawal_final_confirm.png",
+      "width": 430,
+      "height": 932,
+      "bytes": 20398
     }
   ]
 }

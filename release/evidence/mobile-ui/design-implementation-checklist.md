@@ -1,13 +1,13 @@
-# Mobile UI Design Implementation Checklist
+﻿# Mobile UI Design Implementation Checklist
 
-Generated: 2026-07-19 KST
+Generated: 2026-07-21 KST
 
 ## Stitch Reference
 
-- [x] 10 Stitch zip files inventoried.
+- [x] Classified Stitch zip inventoried: 304 metadata/html items mapped plus synthetic SCR-029 from product specs.
 - [x] 17 canonical screen references copied to `docs/design/stitch/2026-07-16/screens`.
 - [x] Canonical HTML references copied to `docs/design/stitch/2026-07-16/html`.
-- [x] `STITCH_SCREEN_INVENTORY.md` generated.
+- [x] `STITCH_SCREEN_INVENTORY.md` and `docs/qa/SCREEN_IMPLEMENTATION_MATRIX.csv` generated.
 - [x] HTML was not copied into RN implementation.
 
 ## RN Visual System
@@ -29,6 +29,7 @@ Generated: 2026-07-19 KST
 - [x] Level main, reading, news, English, and health cards updated.
 - [x] Community tab and post cards updated.
 - [x] Profile header updated.
+- [x] Notification stack and notification settings screen updated without bottom tab chrome.
 
 ## Function and Policy Preservation
 
@@ -43,16 +44,16 @@ Generated: 2026-07-19 KST
 ## Evidence
 
 - [x] Web export regenerated.
-- [x] 33 mobile UI screenshots regenerated.
+- [x] 45 mobile UI screenshots regenerated.
 - [x] Store screenshots regenerated.
 - [x] Responsive checks across 320, 360, 375, 390, 393, 412, 430, 768 passed.
 - [x] `capture-summary.json` regenerated.
 - [x] `stitch-comparison.md` generated.
-- [x] Profile detail, community detail, notification settings, common state, consent, input form, and plan-setting form evidence added.
+- [x] Profile detail, community detail, notification settings, common state, consent, input form, plan-setting form, notification-state, and salary-state evidence added.
 
 ## Required Before 100% Claim
 
 - [x] Latest APK build regenerated from current HEAD.
-- [x] APK SHA256 recorded: `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`.
+- [x] APK SHA256 recorded: `BF9700D259AE34F2789E86CAB91496921CC68B0FE58CA5FA0FE1B2FCC1BCBFC2`.
 - [ ] APK install/cold-start tested on Android physical device.
 - [ ] No AndroidRuntime fatal exception in logcat.

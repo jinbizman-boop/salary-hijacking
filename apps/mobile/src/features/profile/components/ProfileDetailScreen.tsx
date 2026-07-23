@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 import {
   AppHeader,
@@ -117,6 +117,12 @@ export function ProfileDetailScreen({
   variant,
 }: ProfileDetailScreenProps): React.ReactElement {
   const content = contentByVariant[variant];
+  const showActionNotice = (): void => {
+    Alert.alert(
+      "기능 준비",
+      "이 항목은 서버 권위 API 확인 후 안전하게 처리됩니다.",
+    );
+  };
 
   return (
     <AppShell
@@ -157,7 +163,7 @@ export function ProfileDetailScreen({
         <PrimaryButton
           accessibilityLabel={content.actionLabel}
           label={content.actionLabel}
-          onPress={() => undefined}
+          onPress={showActionNotice}
         />
       </SurfaceCard>
 

@@ -13,7 +13,7 @@ export default function NotificationsIndexScreen(): React.ReactElement {
     <NotificationScreen
       onBack={() => router.back()}
       onOpenHref={(href: NotificationHref) => router.push(href as never)}
-      onSettings={() => router.push("/profile/settings")}
+      onSettings={() => router.push("/notifications/settings" as never)}
     />
   );
 }

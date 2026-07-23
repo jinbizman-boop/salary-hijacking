@@ -131,6 +131,9 @@ const defaultApkPathFromPreviewEvidence = (rootDir) => {
     : evidence?.android?.phoneTargetDebugApkLocalPath;
 };
 
+const apkSha256IfPresent = (apkPath) =>
+  apkPath && fs.existsSync(apkPath) ? fileSha256(apkPath) : null;
+
 const blockedProof = ({ now, reason, adbPath = null, apkPath = null }) => ({
   schemaVersion: 1,
   observedAt: now().toISOString(),
@@ -146,6 +149,7 @@ const blockedProof = ({ now, reason, adbPath = null, apkPath = null }) => ({
   android: {
     adbPath,
     apkPath,
+    apkSha256: apkSha256IfPresent(apkPath),
     physicalPhoneVerified: false,
     physicalPhoneBlocker: reason,
     installVerified: false,

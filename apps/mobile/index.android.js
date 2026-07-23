@@ -1,1 +1,1 @@
-import "expo-router/entry";
+import "./src/android-safe-entry";

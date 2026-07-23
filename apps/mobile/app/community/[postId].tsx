@@ -54,7 +54,7 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
     >
       {detail ? (
         <>
-          <CommunityPostCard post={detail.post} onPress={() => undefined} />
+          <CommunityPostCard post={detail.post} />
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>본문</Text>

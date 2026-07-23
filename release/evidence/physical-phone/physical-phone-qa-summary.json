@@ -1,14 +1,15 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-19T06:56:57.809Z",
-  "source": "Tracked no-secret physical phone QA summary generated from ignored local proof. Raw logcat, serials, package paths, tokens, credentials, signing keys, reviewer passwords, and raw device identifiers are not stored.",
+  "observedAt": "2026-07-23T19:34:41+09:00",
+  "source": "Tracked no-secret physical phone QA summary. Latest APK passes emulator/static APK proof; physical Samsung phone crash stack trace is still unavailable because no physical Android phone is attached to this Codex Windows environment.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "physicalPhoneVerified": false,
-  "blocker": "No physical Android phone is attached; emulator evidence does not replace phone QA.",
+  "blocker": "No physical Android phone is attached; emulator/static APK evidence does not replace phone QA or the user-reported Samsung crash logcat.",
   "adbPath": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\.tools\\android-sdk\\platform-tools\\adb.exe",
-  "apkPath": "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk",
-  "apkSha256": "CE93F8EA783E6C7A3E5D4F6919C0DCEB08B89963898E9590225A1E5E36B9732A",
+  "adbDevicesEvidence": "release/evidence/physical-phone/adb-devices.txt",
+  "apkPath": "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk",
+  "apkSha256": "FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8",
   "packageName": "com.salaryhijacking.mobile",
   "installVerified": false,
   "installedPackageVerified": false,
@@ -21,8 +22,9 @@
   "coldStartRuns": 0,
   "backgroundForegroundRuns": 0,
   "coldStartFatalCount": null,
-  "apkSourceGitHead": "b7c6133a11749726ce64564a31fc76c6a82dbf21",
-  "gitHead": "e563007f65689f01b5b8664c44cc3e620d78b0fb",
+  "apkSourceGitHead": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
+  "gitHead": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
+  "dirtyMobileSourceSnapshotSha256": "662E695325BCB7138E7959A5D96B971E6EFE9A27CB78A67C2130C7632B0CA54F",
   "localProofTracked": false,
   "rawLogcatStored": false,
   "rawDeviceIdentifierStored": false,
@@ -36,7 +38,20 @@
     "containsRawDeviceIdentifier": false
   },
   "nextEvidenceRequired": [
-    "Attach a physical Android phone with USB debugging enabled",
-    "Run the physical phone preview QA collector against the latest ARM64 APK with at least 20 cold-start and 20 background/foreground runs"
-  ]
+    "Attach the physical Samsung/Android phone with USB debugging enabled",
+    "Run paired physical-phone crash triage against original package and isolated QA package to capture sanitized startup classification",
+    "Run at least 20 physical cold-start and 20 background/foreground cycles for final QA gate"
+  ],
+  "recommendedApk": "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk",
+  "recommendedApkSha256": "FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8",
+  "latestSourceGitStatusSha256": "662E695325BCB7138E7959A5D96B971E6EFE9A27CB78A67C2130C7632B0CA54F",
+  "emulatorLifecycleProof": "artifacts/qa/original-safe-patched-lifecycle-20260723-full/summary.json",
+  "emulatorLifecycleStatus": "PASS_10_COLD_START_10_BACKGROUND_RESUME_FATAL_0",
+  "physicalPhoneCrashTriage": "artifacts/qa/physical-phone-crash-triage-20260723-default-safe-apk-sha/summary.json",
+  "physicalPhoneCrashTriageRunLog": "artifacts/qa/physical-phone-crash-triage-20260723-default-safe-apk-sha.log",
+  "physicalPhoneCrashTriageClassification": "PHYSICAL_PHONE_QA_BLOCKED",
+  "physicalPhoneCrashTriageDefaultOriginalApk": "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk",
+  "physicalPhoneCrashTriageDefaultOriginalApkSha256": "FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8",
+  "physicalPhoneCrashTriageDefaultDiagnosticApk": "C:/Users/PC/Downloads/salary-hijacking-qa-direct-current-universal.apk",
+  "physicalPhoneCrashTriageDefaultDiagnosticApkSha256": "47C4BA596453367A71565D1AA02544D19C39A0500BB2799CA36AA412F8F1C0B9"
 }

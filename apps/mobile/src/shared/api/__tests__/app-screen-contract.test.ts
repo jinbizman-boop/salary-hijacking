@@ -97,17 +97,126 @@ describe("mobile app screen API and route contracts", () => {
     expect(violations).toEqual([]);
   });
 
-  it("keeps the Android entry on the real Expo Router app instead of a release-candidate shell", () => {
+  it("keeps the Android entry on the crash-safe direct native app registration", () => {
     const source = readFileSync(ANDROID_ENTRY, "utf8");
 
-    expect(source.trim()).toBe('import "expo-router/entry";');
+    expect(source.trim()).toBe('import "./src/android-safe-entry";');
+    expect(source).toContain("./src/android-safe-entry");
+    expect(source).not.toContain("expo-router/entry");
     expect(source).not.toContain("AndroidReleaseCandidateApp");
     expect(source).not.toContain("AppRegistry.registerComponent");
     expect(source).not.toContain("salary-hijacking-android-rc-root");
-    expect(source).toContain('import "expo-router/entry"');
     expect(source).not.toContain("ExpoRoot");
     expect(source).not.toContain("expo-router/_ctx");
     expect(source).not.toContain("?ㅽ뻾 吏꾨떒 ?붾㈃");
+  });
+
+  it("keeps the Android direct-entry UI labels as readable Korean UTF-8", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src", "android-safe-entry.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain('label: "\uAE09\uC5EC"');
+    expect(source).toContain('label: "\uACC4\uD68D"');
+    expect(source).toContain('label: "\uCEE4\uBBA4\uB2C8\uD2F0"');
+    expect(source).toContain(
+      "\uAE09\uC5EC\uB0A9\uCE58 \uC2E4\uD589 \uBCF4\uD638 \uBAA8\uB4DC",
+    );
+    expect(source).toContain("\uB0B4 \uAE09\uC5EC \uB0A9\uCE58 \uD604\uD669");
+    expect(source).toContain(
+      "\uC77C\uC77C \uC0DD\uD65C\uBE44 \uACC4\uD68D/\uC124\uC815",
+    );
+    expect(source).toContain("\uD558\uB2E8 \uB0B4\uBE44\uAC8C\uC774\uC158");
+    const mojibakeMarkers = [
+      "\u6E72",
+      "\u6028",
+      "\u800C\u316B",
+      "\uB35A",
+      "\u907A",
+      "\u934C",
+      "\uC392",
+    ] as const;
+    expect(mojibakeMarkers.filter((marker) => source.includes(marker))).toEqual(
+      [],
+    );
+  });
+
+  it("does not leave Android direct-entry primary actions as dead no-op callbacks", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src", "android-safe-entry.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("onSelect={() => undefined}");
+    expect(source).not.toContain("onPress={() => undefined}");
+    expect(source).not.toContain("onSettings={() => undefined}");
+    expect(source).toContain("onAddDaily");
+    expect(source).toContain("onToggleDaily");
+    expect(source).toContain("onAddPlan");
+    expect(source).toContain("onTogglePlan");
+  });
+
+  it("wraps the Android direct-entry app in a startup error boundary", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src", "android-safe-entry.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("class RootBoundary");
+    expect(source).toContain("componentDidCatch");
+    expect(source).toContain("function Root()");
+    expect(source).toContain(
+      "\uC571\uC744 \uC885\uB8CC\uD558\uC9C0 \uC54A\uACE0 \uBCF4\uD638 \uD654\uBA74\uC73C\uB85C",
+    );
+    expect(source).not.toContain("console.log(error)");
+    expect(source).not.toContain("console.error(error)");
+  });
+
+  it("keeps the Android direct QA APK entry labels as readable Korean UTF-8", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src", "android-direct-entry.tsx"),
+      "utf8",
+    );
+    const salaryHomeSource = readFileSync(
+      join(
+        process.cwd(),
+        "src",
+        "features",
+        "salary",
+        "components",
+        "SalaryHomeScreen.tsx",
+      ),
+      "utf8",
+    );
+    const combinedRuntimeSurface = `${source}\n${salaryHomeSource}`;
+
+    expect(source).toContain('label: "\uAE09\uC5EC"');
+    expect(source).toContain('label: "\uACC4\uD68D"');
+    expect(source).toContain('label: "\uCEE4\uBBA4\uB2C8\uD2F0"');
+    expect(source).toContain("SalaryHomeScreen");
+    expect(combinedRuntimeSurface).toContain(
+      "\uB0B4 \uAE09\uC5EC \uB0A9\uCE58",
+    );
+    expect(combinedRuntimeSurface).toContain("\uD604\uD669");
+    expect(combinedRuntimeSurface).toContain("\uC0AC\uC6A9 \uC608\uC815");
+    expect(combinedRuntimeSurface).toContain("\uC0AC\uC6A9 \uC644\uB8CC");
+
+    const mojibakeMarkers = [
+      "\u6E72",
+      "\u6028",
+      "\u800C\u316B",
+      "\uB35A",
+      "\u907A",
+      "\u934C",
+      "\uC392",
+      "\uFFFD",
+    ] as const;
+    expect(
+      mojibakeMarkers.filter((marker) =>
+        combinedRuntimeSurface.includes(marker),
+      ),
+    ).toEqual([]);
   });
 
   it("keeps tab screen names aligned with Expo Router child segments", () => {
@@ -346,6 +455,17 @@ describe("mobile app screen API and route contracts", () => {
     expect(screenshotScript).toContain(
       '["/capture/profile-level", "17_profile_level.png"]',
     );
+    for (const expenseCapture of [
+      "expense-form-edit",
+      "expense-form-refund",
+      "expense-form-validation",
+      "expense-delete-blocked",
+      "expense-invalidate-reason",
+    ]) {
+      expect(rootLayout).toContain(`"${expenseCapture}"`);
+      expect(indexScreen).toContain(`"${expenseCapture}"`);
+      expect(screenshotScript).toContain(`/capture/${expenseCapture}`);
+    }
   });
 
   it("keeps screenshot capture routes web-only so native production cannot show preview screens", () => {

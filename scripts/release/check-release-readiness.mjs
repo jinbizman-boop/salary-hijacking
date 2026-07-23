@@ -3768,6 +3768,121 @@ const checkMobilePreviewEvidence = (
     "latest source changes must be packaged into a fresh Android preview APK before the artifact can be treated as launch QA ready",
   );
 
+  const staticInspectionSummary = isPlainObject(
+    evidence.latestStaticApkInspectionSummary,
+  )
+    ? evidence.latestStaticApkInspectionSummary
+    : {};
+  const staticInspectionPath =
+    typeof evidence.latestStaticApkInspection === "string"
+      ? evidence.latestStaticApkInspection.trim()
+      : "";
+  const staticInspection = staticInspectionPath
+    ? readJsonIfPresent(rootDir, staticInspectionPath)
+    : null;
+  const staticInspectionSource = isPlainObject(staticInspection)
+    ? staticInspection
+    : staticInspectionSummary;
+  const staticInspectionAbis = stringArray(staticInspectionSource.nativeAbis);
+  const requiredStaticArm64Libs = Array.isArray(
+    staticInspectionSource.requiredArm64Libs,
+  )
+    ? staticInspectionSource.requiredArm64Libs
+    : [];
+  const requiredStaticX86Libs = Array.isArray(
+    staticInspectionSource.requiredX86_64Libs,
+  )
+    ? staticInspectionSource.requiredX86_64Libs
+    : [];
+  const requiredStaticBundleMarkers = Array.isArray(
+    staticInspectionSource.requiredBundleMarkers,
+  )
+    ? staticInspectionSource.requiredBundleMarkers
+    : [];
+  const forbiddenStaticBundleMarkers = Array.isArray(
+    staticInspectionSource.forbiddenBundleMarkers,
+  )
+    ? staticInspectionSource.forbiddenBundleMarkers
+    : [];
+  const staticRequiredLibsOk =
+    (requiredStaticArm64Libs.length === 0 ||
+      requiredStaticArm64Libs.every((item) => item?.present === true)) &&
+    (requiredStaticX86Libs.length === 0 ||
+      requiredStaticX86Libs.every((item) => item?.present === true));
+  const staticBundleMarkersOk =
+    (requiredStaticBundleMarkers.length === 0 ||
+      requiredStaticBundleMarkers.every((item) => item?.present === true)) &&
+    (forbiddenStaticBundleMarkers.length === 0 ||
+      forbiddenStaticBundleMarkers.every((item) => item?.present === false));
+  const expectedStaticApkSha = normalizeSha256Hex(
+    android.latestSourcePackagedApkSha256 || android.debugApkSha256,
+  );
+  const staticApkSha = normalizeSha256Hex(staticInspectionSource.apkSha256);
+  const staticApkShaMatches =
+    expectedStaticApkSha.length === 64 && staticApkSha === expectedStaticApkSha;
+  const staticApkInspectionOk =
+    evidence.latestStaticApkInspectionPass === true &&
+    staticInspectionPath.length > 0 &&
+    staticInspectionSource.pass === true &&
+    staticInspectionSource.hasBundle === true &&
+    isSha256Hex(staticInspectionSource.bundleSha256) &&
+    staticInspectionAbis.includes("arm64-v8a") &&
+    staticInspectionAbis.includes("x86_64") &&
+    Number.isInteger(staticInspectionSource.arm64LibCount) &&
+    staticInspectionSource.arm64LibCount > 0 &&
+    Number.isInteger(staticInspectionSource.x86_64LibCount) &&
+    staticInspectionSource.x86_64LibCount > 0 &&
+    staticRequiredLibsOk &&
+    staticBundleMarkersOk &&
+    staticApkShaMatches &&
+    staticInspectionSource.rawDeviceIdentifiersStored !== true &&
+    staticInspectionSource.rawLogcatStored !== true &&
+    staticInspectionSource.secretValuesStored !== true;
+  addMobileCheck(
+    checks,
+    blockers,
+    staticApkInspectionOk ? "PASS" : "BLOCKED",
+    "mobile:preview:static-apk-inspection",
+    staticApkInspectionOk
+      ? `static APK inspection verifies embedded bundle, safe-entry markers, ARM64/x86_64 startup libraries, and matching APK SHA256 (${staticApkSha})`
+      : "static APK inspection evidence is missing, failed, stale, unsafe, or does not prove embedded bundle plus ARM64/x86_64 startup libraries",
+    "static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, safe-entry markers, and matching APK SHA256 without raw logcat, raw device identifiers, or secret values",
+  );
+
+  const finalStableQaApk = isPlainObject(evidence.finalStableQaApk)
+    ? evidence.finalStableQaApk
+    : {};
+  const finalStableSha = normalizeSha256Hex(finalStableQaApk.sha256);
+  const finalStableExpectedSha =
+    staticApkSha.length === 64 ? staticApkSha : expectedStaticApkSha;
+  const finalStableRuntimeOk =
+    finalStableQaApk.fileName === "salary-hijacking-qa-universal.apk" &&
+    finalStableSha.length === 64 &&
+    finalStableSha === finalStableExpectedSha &&
+    Number.isInteger(finalStableQaApk.sizeBytes) &&
+    finalStableQaApk.sizeBytes > 0 &&
+    String(finalStableQaApk.emulatorLifecycleProof ?? "").length > 0 &&
+    finalStableQaApk.emulatorColdStarts === "10/10 PASS" &&
+    finalStableQaApk.emulatorBackgroundResume === "10/10 PASS" &&
+    finalStableQaApk.emulatorFatalMarkerCount === 0 &&
+    String(finalStableQaApk.launcherMonkeyProof ?? "").length > 0 &&
+    finalStableQaApk.launcherMonkeyStatus === "PASS" &&
+    String(finalStableQaApk.upgradeInstallProof ?? "").length > 0 &&
+    String(finalStableQaApk.upgradeInstallStatus ?? "").startsWith("PASS") &&
+    finalStableQaApk.upgradeColdStarts === "10/10 PASS" &&
+    finalStableQaApk.upgradeBackgroundResume === "10/10 PASS" &&
+    finalStableQaApk.upgradeFatalMarkerCount === 0;
+  addMobileCheck(
+    checks,
+    blockers,
+    finalStableRuntimeOk ? "PASS" : "BLOCKED",
+    "mobile:preview:final-stable-runtime",
+    finalStableRuntimeOk
+      ? `final stable QA APK clean install, launcher startup, upgrade install, and zero-fatal emulator runtime proof are verified (${finalStableSha})`
+      : "final stable QA APK runtime proof is missing, stale, incomplete, or does not match the inspected APK SHA256",
+    "final stable QA APK runtime proof must include clean install, launcher, upgrade, and zero fatal markers for salary-hijacking-qa-universal.apk",
+  );
+
   const hasPhoneTargetEvidence =
     android.phoneTargetDebugApkBuilt !== undefined ||
     android.phoneTargetDebugApkSigned !== undefined ||

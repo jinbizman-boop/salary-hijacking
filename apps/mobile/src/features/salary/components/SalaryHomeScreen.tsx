@@ -48,6 +48,7 @@ import {
   resetPayrollReminderStateForTests,
   updatePayrollReminderState,
   type DailyBudgetItem,
+  type PayrollReminderState,
   type PlanItem,
   type ReminderCategory,
   type VariableExpenseItem,
@@ -74,6 +75,13 @@ type ItemDraft = Readonly<{
   content: string;
 }>;
 
+export type SalaryHomePreviewVariant =
+  | "default"
+  | "no-plan"
+  | "compact"
+  | "detailed"
+  | "offline";
+
 export type SalaryHomeScreenProps = Readonly<{
   displayName?: string | undefined;
   onOpenNotifications?: (() => void) | undefined;
@@ -98,6 +106,7 @@ export type SalaryHomeScreenProps = Readonly<{
       >
     | null
     | undefined;
+  previewVariant?: SalaryHomePreviewVariant | undefined;
 }>;
 
 export function resetSalaryHomePreviewCacheForTests(): void {
@@ -108,6 +117,7 @@ export function SalaryHomeScreen({
   displayName = "\uC0AC\uC6A9\uC790",
   onOpenNotifications,
   planCommitmentsApi,
+  previewVariant = "default",
   variableExpenseApi,
 }: SalaryHomeScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
@@ -117,7 +127,9 @@ export function SalaryHomeScreen({
   const contentWidth = Math.min(width, 430);
   const scale = clamp(width / 393, 0.9, 1.08);
   const [tick, setTick] = useState(0);
-  const [state, setState] = useState(getPayrollReminderState());
+  const [state, setState] = useState(() =>
+    createSalaryHomeVariantState(getPayrollReminderState(), previewVariant),
+  );
   const [dailySettingsOpen, setDailySettingsOpen] = useState(false);
   const [dailyEditorOpen, setDailyEditorOpen] = useState(false);
   const [editingDailyId, setEditingDailyId] = useState<string | null>(null);
@@ -163,14 +175,16 @@ export function SalaryHomeScreen({
     let mounted = true;
     const current = getPayrollReminderState();
     configurePayrollReminderStatePersistence(payrollReminderSecureStore);
-    if (process.env.JEST_WORKER_ID) return undefined;
+    if (process.env.JEST_WORKER_ID || previewVariant !== "default") {
+      return undefined;
+    }
     void hydratePayrollReminderStateFromStorage().then((restored) => {
       if (mounted && restored !== current) setState(restored);
     });
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [previewVariant]);
 
   const kst = useMemo(() => getKstParts(), [tick]);
   const salaryCycle = useMemo(
@@ -198,6 +212,10 @@ export function SalaryHomeScreen({
   const currentHijacked = Math.max(
     0,
     state.financialSummary.receivedAmount - currentSpent,
+  );
+  const visiblePlanReminderItems = useMemo(
+    () => getVisiblePlanReminderItems(state.planItems, kst.monthKey, kst.day),
+    [kst.day, kst.monthKey, state.planItems],
   );
 
   function sync(next: ReturnType<typeof getPayrollReminderState>): void {
@@ -675,6 +693,8 @@ export function SalaryHomeScreen({
           </Text>
         ) : null}
 
+        <SalaryHomeVariantBanner variant={previewVariant} />
+
         <View style={styles.heroPanel}>
           <View style={styles.heroLeft}>
             <Text allowFontScaling={false} style={styles.heroDate}>
@@ -727,11 +747,13 @@ export function SalaryHomeScreen({
           <Text allowFontScaling={false} style={styles.cardTitle}>
             {displayName}님이 설정한 금일 고정 지출
           </Text>
-          {getVisiblePlanReminderItems(
-            state.planItems,
-            kst.monthKey,
-            kst.day,
-          ).map((item) => (
+          {visiblePlanReminderItems.length === 0 ? (
+            <SalaryEmptyState
+              body="계획 탭에서 급여일과 고정지출을 설정해 주세요."
+              title="아직 급여 계획이 없어요"
+            />
+          ) : null}
+          {visiblePlanReminderItems.map((item) => (
             <PlanReminderRow
               key={item.id}
               item={item}
@@ -1002,6 +1024,73 @@ function removeVariableExpense(
       (row) => row.id !== expenseId,
     ),
   }));
+}
+
+function createSalaryHomeVariantState(
+  base: PayrollReminderState,
+  variant: SalaryHomePreviewVariant,
+): PayrollReminderState {
+  if (variant !== "no-plan") return base;
+  return {
+    ...base,
+    dailyItems: [],
+    dailyLimit: 0,
+    financialSummary: {
+      cumulativeHijacked: 0,
+      fixedExpenseBaseline: 0,
+      receivedAmount: 0,
+    },
+    planItems: [],
+    variableExpenses: [],
+  };
+}
+
+function SalaryHomeVariantBanner({
+  variant,
+}: Readonly<{ variant: SalaryHomePreviewVariant }>): React.ReactElement | null {
+  if (variant === "default" || variant === "no-plan") return null;
+  const content =
+    variant === "offline"
+      ? {
+          body: "저장된 급여 데이터를 안전하게 보여드리고 있어요.",
+          title: "오프라인 미리보기",
+        }
+      : variant === "compact"
+        ? {
+            body: "핵심 금액만 빠르게 확인합니다.",
+            title: "간단 보기",
+          }
+        : {
+            body: "고정 지출, 일일 예산, 변동 지출을 함께 확인합니다.",
+            title: "상세 보기",
+          };
+
+  return (
+    <View accessibilityLabel={content.title} style={styles.variantBanner}>
+      <Text allowFontScaling={false} style={styles.variantTitle}>
+        {content.title}
+      </Text>
+      <Text allowFontScaling={false} style={styles.variantBody}>
+        {content.body}
+      </Text>
+    </View>
+  );
+}
+
+function SalaryEmptyState({
+  body,
+  title,
+}: Readonly<{ body: string; title: string }>): React.ReactElement {
+  return (
+    <View accessibilityLabel={title} style={styles.emptyState}>
+      <Text allowFontScaling={false} style={styles.emptyTitle}>
+        {title}
+      </Text>
+      <Text allowFontScaling={false} style={styles.emptyBody}>
+        {body}
+      </Text>
+    </View>
+  );
 }
 
 function buildFixedExpensePaymentRequest(
@@ -1665,6 +1754,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800",
   },
+  emptyBody: {
+    color: "#5F6971",
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  emptyState: {
+    backgroundColor: "#F7F8FA",
+    borderColor: LINE,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 12,
+    padding: 16,
+  },
+  emptyTitle: {
+    color: TEXT_BLACK,
+    fontSize: 16,
+    fontWeight: "900",
+    lineHeight: 22,
+  },
   errorText: {
     backgroundColor: "#FFF4F1",
     borderColor: "#F1B7A8",
@@ -2014,5 +2124,27 @@ const styles = StyleSheet.create({
     minWidth: 82,
     paddingVertical: 7,
     textAlign: "center",
+  },
+  variantBanner: {
+    backgroundColor: "#F2FBF6",
+    borderColor: "#D3EFDF",
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 4,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  variantBody: {
+    color: "#496154",
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 19,
+  },
+  variantTitle: {
+    color: BRAND_GREEN,
+    fontSize: 16,
+    fontWeight: "900",
+    lineHeight: 22,
   },
 });

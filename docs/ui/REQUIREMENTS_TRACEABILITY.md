@@ -57,14 +57,14 @@ This traceability file connects the UI finalization objective to current impleme
 | Ads separated from raw financial data                                       | `AdBannerSlot`, community disclosure, AGENTS privacy rules | privacy/security evidence               | PARTIAL |
 | Stitch HTML not pasted into RN                                              | `release/evidence/mobile-ui/stitch-comparison.md`          | text/evidence review                    | PASS    |
 | Visual capture 17 canonical screens                                         | `release/evidence/mobile-ui/capture-summary.json`          | screenshot script                       | PASS    |
-| Visual capture 33 mobile UI evidence files                                  | `release/evidence/mobile-ui/capture-summary.json`          | screenshot script                       | PASS    |
-| Responsive capture 320-430 widths                                           | `capture-summary.json`                                     | included in 120 checks, overflow 0      | PASS    |
-| 768px visual matrix                                                         | `capture-summary.json`                                     | included in 120 checks, overflow 0      | PASS    |
+| Visual capture 36 mobile UI evidence files                                  | `release/evidence/mobile-ui/capture-summary.json`          | screenshot script                       | PASS    |
+| Responsive capture 320-430 widths                                           | `capture-summary.json`                                     | included in 136 checks, overflow 0      | PASS    |
+| 768px visual matrix                                                         | `capture-summary.json`                                     | included in 136 checks, overflow 0      | PASS    |
 | Physical Android safe-area/keyboard/logcat                                  | `release/mobile-preview-evidence.json`                     | no attached physical phone              | BLOCKED |
 | Production build/store public release                                       | release readiness                                          | external approval and main merge needed | BLOCKED |
 
 ## Current Gate Summary
 
-- PASS: canonical Stitch inventory, 33 mobile UI evidence screenshots, current mobile unit/component tests, typecheck, root format.
+- PASS: canonical Stitch inventory, 36 mobile UI evidence screenshots, current mobile unit/component tests, typecheck, root format.
 - PARTIAL: exhaustive accessibility audit, all E2E scenarios.
 - BLOCKED: physical Android phone proof, final production submit, `origin/main` release gate, source materials not present locally.

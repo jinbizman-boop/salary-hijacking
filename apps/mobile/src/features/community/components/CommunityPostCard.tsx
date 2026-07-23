@@ -7,7 +7,7 @@ import { CommunityModerationBanner } from "./CommunityModerationBanner";
 export type CommunityPostCardProps = Readonly<{
   post: CommunityPost;
   liked?: boolean;
-  onPress: (post: CommunityPost) => void;
+  onPress?: (post: CommunityPost) => void;
   onLike?: (post: CommunityPost, liked: boolean) => void;
 }>;
 
@@ -17,28 +17,38 @@ export function CommunityPostCard({
   onPress,
   onLike,
 }: CommunityPostCardProps): React.ReactElement {
+  const body = (
+    <View style={styles.body}>
+      <View style={styles.meta}>
+        <Text style={styles.author}>{post.anonymousDisplayName}</Text>
+        <Text style={styles.board}>{post.boardType}</Text>
+      </View>
+      <Text numberOfLines={2} style={styles.title}>
+        {post.title}
+      </Text>
+      <Text numberOfLines={3} style={styles.preview}>
+        {post.bodyPreview}
+      </Text>
+    </View>
+  );
+
   return (
     <View style={styles.card}>
       {post.moderationStatus !== "SAFE" ? (
         <CommunityModerationBanner status={post.moderationStatus} />
       ) : null}
-      <Pressable
-        accessibilityLabel={`${post.title} 게시글 열기`}
-        accessibilityRole="button"
-        onPress={() => onPress(post)}
-        style={({ pressed }) => [styles.body, pressed && styles.pressed]}
-      >
-        <View style={styles.meta}>
-          <Text style={styles.author}>{post.anonymousDisplayName}</Text>
-          <Text style={styles.board}>{post.boardType}</Text>
-        </View>
-        <Text numberOfLines={2} style={styles.title}>
-          {post.title}
-        </Text>
-        <Text numberOfLines={3} style={styles.preview}>
-          {post.bodyPreview}
-        </Text>
-      </Pressable>
+      {onPress ? (
+        <Pressable
+          accessibilityLabel={`${post.title} 게시글 열기`}
+          accessibilityRole="button"
+          onPress={() => onPress(post)}
+          style={({ pressed }) => [pressed && styles.pressed]}
+        >
+          {body}
+        </Pressable>
+      ) : (
+        body
+      )}
       <View style={styles.footer}>
         <Text style={styles.count}>댓글 {post.commentCount}</Text>
         {onLike ? (
@@ -62,6 +72,20 @@ export function CommunityPostCard({
 }
 
 const styles = StyleSheet.create({
+  author: {
+    color: componentColors.textSecondary,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  board: {
+    color: componentColors.primaryGreen,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  body: {
+    gap: 8,
+    padding: 16,
+  },
   card: {
     overflow: "hidden",
     borderWidth: 1,
@@ -74,39 +98,10 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 3,
   },
-  body: {
-    gap: 8,
-    padding: 16,
-  },
-  pressed: {
-    backgroundColor: componentColors.surfaceSoft,
-  },
-  meta: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  author: {
-    color: componentColors.textSecondary,
+  count: {
+    color: componentColors.textMuted,
     fontSize: 12,
     fontWeight: "600",
-  },
-  board: {
-    color: componentColors.primaryGreen,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  title: {
-    color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "800",
-    lineHeight: 22,
-  },
-  preview: {
-    color: componentColors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
   },
   footer: {
     minHeight: 42,
@@ -122,12 +117,27 @@ const styles = StyleSheet.create({
     minHeight: 36,
     justifyContent: "center",
   },
-  count: {
-    color: componentColors.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
-  },
   liked: {
     color: componentColors.dangerRed,
+  },
+  meta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  pressed: {
+    backgroundColor: componentColors.surfaceSoft,
+  },
+  preview: {
+    color: componentColors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  title: {
+    color: componentColors.textPrimary,
+    fontSize: 16,
+    fontWeight: "800",
+    lineHeight: 22,
   },
 });

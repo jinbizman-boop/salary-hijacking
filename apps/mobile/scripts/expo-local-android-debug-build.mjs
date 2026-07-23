@@ -37,6 +37,7 @@ const substAliasEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS";
 const substAliasDisableEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_DISABLE";
 const substTargetEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_TARGET";
 const gradleTimeoutEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_GRADLE_TIMEOUT_MS";
+const skipAndroidTestEnvKey = "SALARY_HIJACKING_ANDROID_SKIP_ANDROID_TEST";
 const gradleTimeoutExitStatus = 124;
 const substRootLengthThreshold = 40;
 const substPreferredDriveLetters = ["Z", "Y", "X", "W", "V", "U", "T", "S"];
@@ -378,6 +379,12 @@ const normalizeAndroidArchitectures = (architecture) => {
   return architectures.length > 0 ? [...new Set(architectures)] : ["x86_64"];
 };
 
+const normalizeAndroidEntry = (value) => {
+  const entry = String(value ?? "").trim();
+  if (entry === "safe" || entry === "direct") return entry;
+  throw new Error(`Unsupported Android entry: ${entry || "(empty)"}`);
+};
+
 export const repairGradleTransformTemporaryWorkspaces = ({
   gradleUserHome,
 }) => {
@@ -522,16 +529,23 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
   );
 };
 
-const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
+export const ensureLocalMetroEntryFile = ({
+  androidEntry = "safe",
+  mobileRootDir,
+}) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
-  const source = 'import "expo-router/entry";\n';
+  const normalizedEntry = normalizeAndroidEntry(androidEntry);
+  const source =
+    normalizedEntry === "direct"
+      ? 'import "./src/android-direct-entry";\n'
+      : 'import "./src/android-safe-entry";\n';
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;
   }
 
   const current = fs.readFileSync(entryFilePath, "utf8");
-  if (!current.includes("expo-router/entry")) {
+  if (current !== source) {
     fs.writeFileSync(entryFilePath, source, "utf8");
   }
 };
@@ -1428,7 +1442,9 @@ export const patchAndroidRootJavaCompileSafeClasspath = ({
     '          salaryHijackingEntryPath.contains("${File.separator}android${File.separator}build${File.separator}intermediates${File.separator}") &&',
     "          (salaryHijackingEntryPath.contains('compile_library_classes_jar') || salaryHijackingEntryPath.contains('runtime_library_classes_jar'))",
     "        if (salaryHijackingShouldCopyClasspathJar && classpathEntry.exists()) {",
-    "          def salaryHijackingSafeName = salaryHijackingEntryPath.replace(':', '_').replace(File.separator, '_')",
+    "          def salaryHijackingEntryHash = java.security.MessageDigest.getInstance('SHA-256').digest(salaryHijackingEntryPath.bytes).encodeHex().toString().substring(0, 16)",
+    "          def salaryHijackingSafeBaseName = classpathEntry.name.replaceAll(/[^A-Za-z0-9_.-]/, '_')",
+    '          def salaryHijackingSafeName = "${salaryHijackingSafeBaseName}-${salaryHijackingEntryHash}.jar"',
     "          def salaryHijackingSafeFile = new File(salaryHijackingSafeClasspathRoot, salaryHijackingSafeName)",
     "          salaryHijackingSafeFile.parentFile.mkdirs()",
     "          java.nio.file.Files.copy(",
@@ -1501,6 +1517,78 @@ export const ensureAndroidDebugNdkAbiFilters = ({
       `$1\n${nextBlock}\n`,
     );
   }
+
+  if (nextSource !== source) {
+    fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+  }
+};
+
+export const ensureAndroidDebugQaApplicationConfig = ({ mobileRootDir }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!fs.existsSync(appBuildGradlePath)) return;
+
+  const source = fs.readFileSync(appBuildGradlePath, "utf8");
+  let nextSource = source;
+
+  if (!nextSource.includes("salaryHijackingDebugApplicationIdSuffix")) {
+    nextSource = nextSource.replace(
+      /android\s*\{/u,
+      [
+        'def salaryHijackingDebugApplicationIdSuffix = (findProperty("salaryHijackingDebugApplicationIdSuffix") ?: "").toString()',
+        'def salaryHijackingDebugVersionCode = (findProperty("salaryHijackingDebugVersionCode") ?: "").toString()',
+        "",
+        "android {",
+      ].join("\n"),
+    );
+  }
+
+  if (!nextSource.includes("salaryHijackingDebugVersionCode.toInteger()")) {
+    nextSource = nextSource.replace(
+      /versionCode\s+\d+/u,
+      "versionCode salaryHijackingDebugVersionCode ? salaryHijackingDebugVersionCode.toInteger() : 1",
+    );
+  }
+
+  if (
+    !/applicationIdSuffix\s+salaryHijackingDebugApplicationIdSuffix/u.test(
+      nextSource,
+    )
+  ) {
+    nextSource = nextSource.replace(
+      /(debug\s*\{\s*[\r\n]+\s*signingConfig\s+signingConfigs\.debug[^\r\n]*)(\s*[\r\n]+\s*\})/u,
+      [
+        "$1",
+        "            if (salaryHijackingDebugApplicationIdSuffix) {",
+        "                applicationIdSuffix salaryHijackingDebugApplicationIdSuffix",
+        '                versionNameSuffix salaryHijackingDebugApplicationIdSuffix.replace(".", "-")',
+        "            }",
+        "$2",
+      ].join("\n"),
+    );
+  }
+
+  nextSource = nextSource.replace(
+    /(versionNameSuffix salaryHijackingDebugApplicationIdSuffix\.replace\("\.", "-"\)\s*[\r\n]+\s*\})\}(\s*[\r\n]+\s*release\s*\{)/u,
+    "$1$2",
+  );
+  nextSource = nextSource.replace(
+    /(versionNameSuffix salaryHijackingDebugApplicationIdSuffix\.replace\("\.", "-"\)\s*[\r\n]+\s*\})(\s*[\r\n]+\s*release\s*\{)/u,
+    "$1\n        }$2",
+  );
+
+  nextSource = nextSource.replace(
+    /^apply plugin:\s*['"]com\.google\.gms\.google-services['"]\s*$/mu,
+    [
+      "if (!salaryHijackingDebugApplicationIdSuffix) {",
+      "    apply plugin: 'com.google.gms.google-services'",
+      "}",
+    ].join("\n"),
+  );
 
   if (nextSource !== source) {
     fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
@@ -2044,15 +2132,37 @@ const patchAndroidExpoCliSameRoot = ({
   };
 };
 
+const buildDebugQaGradleProperties = ({
+  applicationIdSuffix = "",
+  versionCode = "",
+} = {}) => {
+  const properties = [];
+  if (applicationIdSuffix) {
+    properties.push(
+      `-PsalaryHijackingDebugApplicationIdSuffix=${applicationIdSuffix}`,
+    );
+  }
+  if (versionCode) {
+    properties.push(`-PsalaryHijackingDebugVersionCode=${versionCode}`);
+  }
+  return properties;
+};
+
 export const buildExpoLocalAndroidDebugInvocations = ({
+  applicationIdSuffix = "",
   architecture = "x86_64",
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
   output = "build/e2e/android/salary-hijacking-e2e.apk",
   platform = process.platform,
+  versionCode = "",
 } = {}) => {
   const architectures = normalizeAndroidArchitectures(architecture);
   const architectureList = architectures.join(",");
+  const debugQaGradleProperties = buildDebugQaGradleProperties({
+    applicationIdSuffix,
+    versionCode,
+  });
   const expoCommand = findLocalCli({
     command: "expo",
     existsSync,
@@ -2073,10 +2183,9 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     "-Pksp.incremental=false",
     "-Pksp.incremental.intermodule=false",
     "-Dkotlin.compiler.execution.strategy=in-process",
+    ...debugQaGradleProperties,
   ];
-  const localDebugJsEngineGradleArgs = isWindows(platform)
-    ? ["-PhermesEnabled=false"]
-    : [];
+  const localDebugJsEngineGradleArgs = [];
   const expoModulesCoreConfigureExcludes = architectures.flatMap(
     (nextArchitecture) => [
       "-x",
@@ -2262,11 +2371,15 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
 
 const parseArgs = (argv) => {
   const options = {
+    androidEntry: process.env.SALARY_HIJACKING_ANDROID_ENTRY || "safe",
+    applicationIdSuffix:
+      process.env.SALARY_HIJACKING_ANDROID_APPLICATION_ID_SUFFIX || "",
     architecture:
       process.env.SALARY_HIJACKING_ANDROID_ARCHITECTURES || "x86_64",
     checkOnly: false,
     output: "build/e2e/android/salary-hijacking-e2e.apk",
     skipPrebuild: false,
+    versionCode: process.env.SALARY_HIJACKING_ANDROID_VERSION_CODE || "",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -2277,8 +2390,20 @@ const parseArgs = (argv) => {
     } else if (arg === "--output") {
       options.output = argv[index + 1] ?? options.output;
       index += 1;
+    } else if (arg === "--android-entry") {
+      options.androidEntry = normalizeAndroidEntry(
+        argv[index + 1] ?? options.androidEntry,
+      );
+      index += 1;
     } else if (arg === "--architecture") {
       options.architecture = argv[index + 1] ?? options.architecture;
+      index += 1;
+    } else if (arg === "--application-id-suffix") {
+      options.applicationIdSuffix =
+        argv[index + 1] ?? options.applicationIdSuffix;
+      index += 1;
+    } else if (arg === "--version-code") {
+      options.versionCode = argv[index + 1] ?? options.versionCode;
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -2307,8 +2432,16 @@ const copyVerifiedAndroidTestApk = ({ testApkPath, testOutputPath }) => {
   fs.copyFileSync(testApkPath, testOutputPath);
 };
 
+const isPhoneTargetDebugOutput = ({ mobileRootDir, outputPath }) =>
+  path
+    .relative(mobileRootDir, outputPath)
+    .replace(/\\/gu, "/")
+    .startsWith("build/phone/android/");
+
 export const runExpoLocalAndroidDebugBuild = ({
   androidToolHomeDir,
+  androidEntry = "safe",
+  applicationIdSuffix = "",
   architecture = "x86_64",
   env = process.env,
   existsSync = fs.existsSync,
@@ -2318,6 +2451,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   platform = process.platform,
   skipPrebuild = false,
   spawn = spawnSync,
+  versionCode = "",
 } = {}) => {
   const preflight = checkExpoLocalAndroidDebugPrerequisites({
     androidToolHomeDir,
@@ -2328,11 +2462,13 @@ export const runExpoLocalAndroidDebugBuild = ({
     platform,
   });
   const invocations = buildExpoLocalAndroidDebugInvocations({
+    applicationIdSuffix,
     architecture,
     existsSync,
     mobileRootDir,
     output,
     platform,
+    versionCode,
   });
   if (!preflight.ok) return { ...preflight, status: 2 };
 
@@ -2354,7 +2490,7 @@ export const runExpoLocalAndroidDebugBuild = ({
     mobileRootDir,
     sdkRoot: preflight.sdkRoot,
   });
-  ensureLocalMetroEntryFile({ mobileRootDir });
+  ensureLocalMetroEntryFile({ androidEntry, mobileRootDir });
   ensureGradleInputMetroEntryShim({ mobileRootDir });
   ensureAndroidSplashScreenDependency({ mobileRootDir });
   ensureExpoProjectDependency({ mobileRootDir });
@@ -2380,6 +2516,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   patchAndroidPostSplashWindowBackground({ mobileRootDir });
   patchAndroidDebugDeveloperSupport({ mobileRootDir });
   ensureAndroidDebugNdkAbiFilters({ architecture, mobileRootDir });
+  ensureAndroidDebugQaApplicationConfig({ mobileRootDir });
   const canonicalMetroRoot =
     preflight.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT === "1";
   const restoreExpoCliGradlePath = patchAndroidExpoCliSameRoot({
@@ -2434,6 +2571,13 @@ export const runExpoLocalAndroidDebugBuild = ({
   try {
     patchExpoModulesCoreJavaCompileKotlinClasspath({ mobileRootDir });
     patchAndroidRootJavaCompileSafeClasspath({ mobileRootDir });
+    if (isWindows(platform)) {
+      cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
+      cleanNativeDependencyCompileCaches({ mobileRootDir });
+      repairGradleTransformTemporaryWorkspaces({
+        gradleUserHome: preflight.env.GRADLE_USER_HOME,
+      });
+    }
 
     const packageList = runGradleInvocation(invocations.packageListArgs);
     if ((packageList.status ?? 1) !== 0) {
@@ -2517,14 +2661,24 @@ export const runExpoLocalAndroidDebugBuild = ({
       return { ...preflight, failures, status: gradle.status ?? 1 };
     }
 
-    const androidTest = runGradleInvocation(invocations.androidTestArgs);
-    if ((androidTest.status ?? 1) !== 0) {
-      return { ...preflight, failures, status: androidTest.status ?? 1 };
+    const shouldSkipAndroidTest =
+      preflight.env[skipAndroidTestEnvKey] === "1" ||
+      isPhoneTargetDebugOutput({
+        mobileRootDir,
+        outputPath: invocations.outputPath,
+      });
+    if (!shouldSkipAndroidTest) {
+      const androidTest = runGradleInvocation(invocations.androidTestArgs);
+      if ((androidTest.status ?? 1) !== 0) {
+        return { ...preflight, failures, status: androidTest.status ?? 1 };
+      }
     }
 
     try {
       copyVerifiedApk(invocations);
-      copyVerifiedAndroidTestApk(invocations);
+      if (!shouldSkipAndroidTest) {
+        copyVerifiedAndroidTestApk(invocations);
+      }
     } catch (error) {
       failures.push(error instanceof Error ? error.message : String(error));
       return { ...preflight, failures, status: 1 };
@@ -2537,6 +2691,7 @@ export const runExpoLocalAndroidDebugBuild = ({
       status: 0,
     };
   } finally {
+    ensureLocalMetroEntryFile({ androidEntry: "safe", mobileRootDir });
     restoreExpoCliGradlePath();
   }
 };

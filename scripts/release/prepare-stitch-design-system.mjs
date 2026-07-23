@@ -105,6 +105,49 @@ const canonicalReferences = [
   htmlEntry: posix.join(posix.dirname(screenEntry), "code.html"),
 }));
 
+const classifiedCanonicalFolders = [
+  ["splash", "SCR-001-V006__splash-default"],
+  ["login", "SCR-002-V001__password-login"],
+  ["signup", "SCR-003-V002__account-info"],
+  ["salary-home", "SCR-005-V005__salary-home-detailed"],
+  ["notifications", "SCR-007-V003__notification-list"],
+  ["plan-settings", "SCR-008-V004__plan-default"],
+  ["level-main", "SCR-012-V009__main-default"],
+  ["reading", "SCR-013-V001__reading-home"],
+  ["news", "SCR-014-V005__news-flow"],
+  ["english", "SCR-015-V003__english-home"],
+  ["health", "SCR-016-V003__health-home"],
+  ["community-all", "SCR-017-V007__community-default"],
+  ["community-free", "SCR-017-V009__free-board-alt"],
+  ["community-level-certification", "SCR-017-V006__levelup-board"],
+  ["community-hobby", "SCR-017-V005__hobby-board"],
+  ["community-write", "SCR-019-V008__compose-default"],
+  ["profile", "SCR-021-V001__my-page-default"],
+];
+
+function canonicalReferencesFor(byZipName) {
+  const classifiedZip = byZipName.has(
+    "stitch_salary_hijacking_design_system_classified.zip",
+  )
+    ? "stitch_salary_hijacking_design_system_classified.zip"
+    : null;
+  if (!classifiedZip) return canonicalReferences;
+
+  return classifiedCanonicalFolders.map(([name, folder]) => {
+    const screenEntry = posix.join(
+      "stitch_salary_hijacking_design_system_classified",
+      folder,
+      "screen.png",
+    );
+    return {
+      name,
+      zip: classifiedZip,
+      screenEntry,
+      htmlEntry: posix.join(posix.dirname(screenEntry), "code.html"),
+    };
+  });
+}
+
 function parseArgs(argv) {
   const args = { dryRun: false, downloads: defaultDownloads };
   for (let i = 0; i < argv.length; i += 1) {
@@ -178,7 +221,8 @@ function buildInventory(downloads) {
     };
   });
 
-  const canonicalScreens = canonicalReferences.map((ref) => {
+  const activeCanonicalReferences = canonicalReferencesFor(byZipName);
+  const canonicalScreens = activeCanonicalReferences.map((ref) => {
     const zipPath = byZipName.get(ref.zip);
     if (!zipPath) {
       return { ...ref, status: "missing-zip" };
@@ -228,7 +272,8 @@ function persistCanonical(summary) {
   mkdirSync(sourceZipsDir, { recursive: true });
 
   const byZip = new Map(summary.zips.map((zip) => [zip.zip, zip.sourcePath]));
-  for (const ref of canonicalReferences) {
+  const activeCanonicalReferences = canonicalReferencesFor(byZip);
+  for (const ref of activeCanonicalReferences) {
     const zipPath = byZip.get(ref.zip);
     const screen = extractZipEntry(zipPath, ref.screenEntry);
     const html = extractZipEntry(zipPath, ref.htmlEntry);

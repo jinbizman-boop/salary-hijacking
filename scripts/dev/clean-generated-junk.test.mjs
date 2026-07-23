@@ -392,6 +392,109 @@ test("dry run reports generated junk without deleting it", async () => {
   }
 });
 
+test("removes stale Android APK artifacts while preserving final QA and triage APKs", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-apks-"));
+  const mirrorRoot = await mkdtemp(
+    path.join(tmpdir(), "salary-junk-apk-mirror-"),
+  );
+  const downloadsRoot = await mkdtemp(
+    path.join(tmpdir(), "salary-junk-apk-downloads-"),
+  );
+
+  try {
+    const repoApkRoot = path.join(rootDir, "artifacts", "android");
+    const keepFinal = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk",
+    );
+    const keepOriginal = path.join(
+      repoApkRoot,
+      "salary-hijacking-original-safe-patched-current-universal.apk",
+    );
+    const keepDiagnostic = path.join(
+      mirrorRoot,
+      "salary-hijacking-qa-direct-current-universal.apk",
+    );
+    const keepUpgradeBase = path.join(
+      downloadsRoot,
+      "salary-hijacking-original-direct-current-universal.apk",
+    );
+    const oldProbe = path.join(repoApkRoot, "probe-copy.apk");
+    const oldArm64 = path.join(
+      downloadsRoot,
+      "salary-hijacking-original-direct-current-arm64.apk",
+    );
+    const oldCrashfix = path.join(
+      mirrorRoot,
+      "salary-hijacking-qa-universal-crashfix.apk",
+    );
+    const unrelatedText = path.join(downloadsRoot, "salary-hijacking-note.txt");
+
+    await touch(keepFinal, "PK\u0003\u0004");
+    await touch(keepOriginal, "PK\u0003\u0004");
+    await touch(keepDiagnostic, "PK\u0003\u0004");
+    await touch(keepUpgradeBase, "PK\u0003\u0004");
+    await touch(oldProbe, "PK\u0003\u0004");
+    await touch(oldArm64, "PK\u0003\u0004");
+    await touch(oldCrashfix, "PK\u0003\u0004");
+    await touch(unrelatedText, "keep");
+
+    const result = await cleanGeneratedJunk({
+      androidArtifactRoots: [repoApkRoot, mirrorRoot, downloadsRoot],
+      rootDir,
+      tempRoots: [],
+    });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(existsSync(keepFinal), true);
+    assert.equal(existsSync(keepOriginal), true);
+    assert.equal(existsSync(keepDiagnostic), true);
+    assert.equal(existsSync(keepUpgradeBase), true);
+    assert.equal(existsSync(unrelatedText), true);
+    assert.equal(existsSync(oldProbe), false);
+    assert.equal(existsSync(oldArm64), false);
+    assert.equal(existsSync(oldCrashfix), false);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+    await rm(mirrorRoot, { recursive: true, force: true });
+    await rm(downloadsRoot, { recursive: true, force: true });
+  }
+});
+
+test("preserves QA evidence logs while cleaning generated junk", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-evidence-"));
+
+  try {
+    const qaLog = path.join(
+      rootDir,
+      "artifacts",
+      "qa",
+      "release-preflight.log",
+    );
+    const finalQaLog = path.join(
+      rootDir,
+      "release",
+      "evidence",
+      "final-qa-command-logs",
+      "apk-arm64-apksigner-verify.log",
+    );
+    const tempLog = path.join(rootDir, "tmp", "transient.log");
+
+    await touch(qaLog, "qa evidence");
+    await touch(finalQaLog, "final evidence");
+    await touch(tempLog, "temporary log");
+
+    const result = await cleanGeneratedJunk({ rootDir, tempRoots: [] });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(existsSync(qaLog), true);
+    assert.equal(existsSync(finalQaLog), true);
+    assert.equal(existsSync(tempLog), false);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("parses Windows subst mappings", () => {
   assert.deepEqual(
     parseSubstMappings(

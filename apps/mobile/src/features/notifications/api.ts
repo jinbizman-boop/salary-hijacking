@@ -6,6 +6,10 @@ import {
   NOTIFICATIONS_SAFE_ERROR_MESSAGE,
   NOTIFICATIONS_UNREAD_COUNT_PATH,
 } from "./constants";
+import {
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import type {
   NotificationChannel,
   NotificationDevice,
@@ -178,9 +182,8 @@ function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
 
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new NotificationsApiError(
       0,
@@ -189,7 +192,8 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new NotificationsApiError(
       0,
       "NOTIFICATION_INVALID_BASE_URL",
@@ -198,10 +202,13 @@ function normalizeBaseUrl(value: string): string {
   }
 
   const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+    baseUrlParts.hostname === "localhost" ||
+    baseUrlParts.hostname === "127.0.0.1" ||
+    baseUrlParts.hostname === "10.0.2.2";
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new NotificationsApiError(
       0,
       "NOTIFICATION_INSECURE_BASE_URL",

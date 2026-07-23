@@ -12,7 +12,9 @@ import {
   buildWindowsSubstAliasPlan,
   checkExpoLocalAndroidDebugPrerequisites,
   cleanupStaleWindowsSubstAliases,
+  ensureAndroidDebugQaApplicationConfig,
   ensureAndroidDebugNdkAbiFilters,
+  ensureLocalMetroEntryFile,
   expoModulesCoreCmakeDebugRoot,
   parseWindowsSubstMappings,
   patchAndroidRootJavaCompileSafeClasspath,
@@ -509,6 +511,143 @@ test("runner keeps repairing repeated Gradle temporary workspace failures on Win
   assert.equal(fs.existsSync(expoModulesCoreKotlinClass), true);
 });
 
+test("runner repairs stale Gradle transform workspaces before the first Windows Gradle task", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const staleTransformPath = path.join(
+    rootDir,
+    ".gradle-local-debug",
+    "caches",
+    "8.13",
+    "transforms",
+    "b3db7a06956f2bccac6b9f3f98ca8237-42178b6f-79f7-4264-b3f9-3df7f4c1a571",
+    "metadata.bin",
+  );
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+  touch(staleTransformPath, "stale-before-build");
+  let calledGradleWithStaleTransform = false;
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        fs.existsSync(staleTransformPath)
+      ) {
+        calledGradleWithStaleTransform = true;
+        return { status: 77 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "debug",
+            "app-debug.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "androidTest",
+            "debug",
+            "app-debug-androidTest.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(calledGradleWithStaleTransform, false);
+  assert.equal(fs.existsSync(staleTransformPath), false);
+});
+
 test("patches expo-modules-core JavaCompile to include Kotlin outputs", () => {
   const rootDir = makeWorkspace();
   const buildGradlePath = path.join(
@@ -582,6 +721,8 @@ test("patches Android root JavaCompile to copy node_modules generated jars to a 
   assert.doesNotMatch(patched, /afterEvaluate/u);
   assert.match(patched, /SALARY_HIJACKING_ANDROID_SAFE_CLASSPATH_DIR/u);
   assert.match(patched, /compile_library_classes_jar/u);
+  assert.match(patched, /MessageDigest\.getInstance\('SHA-256'\)/u);
+  assert.match(patched, /substring\(0, 16\)/u);
   assert.match(patched, /StandardCopyOption\.REPLACE_EXISTING/u);
   assert.match(
     patched,
@@ -1105,7 +1246,6 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "-Pksp.incremental=false",
     "-Pksp.incremental.intermodule=false",
     "-Dkotlin.compiler.execution.strategy=in-process",
-    "-PhermesEnabled=false",
     "-x",
     ":app:generateAutolinkingPackageList",
     "-x",
@@ -1122,7 +1262,6 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "-Pksp.incremental=false",
     "-Pksp.incremental.intermodule=false",
     "-Dkotlin.compiler.execution.strategy=in-process",
-    "-PhermesEnabled=false",
     "-x",
     ":app:generateAutolinkingPackageList",
     "-x",
@@ -1204,6 +1343,246 @@ test("build invocations can target an ARM64 debug APK for physical phone install
   );
 });
 
+test("phone-target debug APK rebuild skips AndroidTest APK by default", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const gradleTasks = [];
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    architecture: "arm64-v8a",
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    output: "build/phone/android/salary-hijacking-phone-arm64-debug.apk",
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (commandName.includes("gradlew")) {
+        gradleTasks.push(String(args[0]));
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "debug",
+            "app-debug.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        return { status: 99 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.ok(gradleTasks.includes("assembleDebug"));
+  assert.ok(!gradleTasks.includes(":app:assembleDebugAndroidTest"));
+  assert.equal(
+    fs.readFileSync(
+      path.join(
+        rootDir,
+        "build",
+        "phone",
+        "android",
+        "salary-hijacking-phone-arm64-debug.apk",
+      ),
+      "utf8",
+    ),
+    "PK\u0003\u0004",
+  );
+});
+
+test("direct phone APK build restores the repository Android entry to safe startup", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidEntry: "direct",
+    androidToolHomeDir: rootDir,
+    architecture: "arm64-v8a",
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+      SALARY_HIJACKING_ANDROID_BUILD_SUBST_DISABLE: "1",
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    output: "build/phone/android/salary-hijacking-direct-phone-debug.apk",
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "debug",
+            "app-debug.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    'import "./src/android-safe-entry";\n',
+  );
+  assert.equal(
+    fs.readFileSync(
+      path.join(
+        rootDir,
+        "build",
+        "phone",
+        "android",
+        "salary-hijacking-direct-phone-debug.apk",
+      ),
+      "utf8",
+    ),
+    "PK\u0003\u0004",
+  );
+});
+
 test("writes Android ndk abiFilters for the requested debug APK architecture", () => {
   const rootDir = makeWorkspace();
   const buildGradlePath = path.join(rootDir, "android", "app", "build.gradle");
@@ -1258,6 +1637,84 @@ test("updates stale Android ndk abiFilters instead of leaving mixed ABI APKs", (
   assert.match(source, /abiFilters\s+"x86_64"/u);
   assert.doesNotMatch(source, /arm64-v8a/u);
   assert.doesNotMatch(source, /armeabi-v7a/u);
+});
+
+test("build invocations can request a distinct QA debug application id and version code", () => {
+  const rootDir = makeWorkspace();
+  writeMobileFixture(rootDir);
+  touch(path.join(rootDir, "android", "gradlew.bat"));
+
+  const invocations = buildExpoLocalAndroidDebugInvocations({
+    applicationIdSuffix: ".qa",
+    architecture: "arm64-v8a",
+    mobileRootDir: rootDir,
+    platform: "win32",
+    versionCode: "20260722",
+  });
+
+  for (const args of [
+    invocations.packageListArgs,
+    invocations.gradleArgs,
+    invocations.androidTestArgs,
+  ]) {
+    assert.ok(
+      args.includes("-PsalaryHijackingDebugApplicationIdSuffix=.qa"),
+      args.join(" "),
+    );
+    assert.ok(
+      args.includes("-PsalaryHijackingDebugVersionCode=20260722"),
+      args.join(" "),
+    );
+  }
+});
+
+test("patches Android debug builds to honor QA application id suffix properties", () => {
+  const rootDir = makeWorkspace();
+  const buildGradlePath = path.join(rootDir, "android", "app", "build.gradle");
+  touch(
+    buildGradlePath,
+    [
+      "android {",
+      "    defaultConfig {",
+      "        applicationId 'com.salaryhijacking.mobile'",
+      "        versionCode 1",
+      '        versionName "1.0.0"',
+      "    }",
+      "    buildTypes {",
+      "        debug {",
+      "            signingConfig signingConfigs.debug",
+      "        }",
+      "    }",
+      "}",
+      "apply plugin: 'com.google.gms.google-services'",
+      "",
+    ].join("\n"),
+  );
+
+  ensureAndroidDebugQaApplicationConfig({ mobileRootDir: rootDir });
+  ensureAndroidDebugQaApplicationConfig({ mobileRootDir: rootDir });
+
+  const source = fs.readFileSync(buildGradlePath, "utf8");
+
+  assert.match(source, /salaryHijackingDebugApplicationIdSuffix/u);
+  assert.match(
+    source,
+    /versionCode salaryHijackingDebugVersionCode \? salaryHijackingDebugVersionCode\.toInteger\(\) : 1/u,
+  );
+  assert.match(
+    source,
+    /applicationIdSuffix salaryHijackingDebugApplicationIdSuffix/u,
+  );
+  assert.equal(
+    source.match(
+      /applicationIdSuffix salaryHijackingDebugApplicationIdSuffix/gu,
+    )?.length,
+    1,
+  );
+  assert.match(
+    source,
+    /if \(!salaryHijackingDebugApplicationIdSuffix\) \{\s*apply plugin: 'com\.google\.gms\.google-services'\s*\}/u,
+  );
 });
 
 test("build invocations warm native CMake outputs for every requested APK ABI", () => {
@@ -1434,7 +1891,7 @@ test("pins Gradle node invocations to an explicit Windows executable", () => {
   assert.doesNotMatch(patched, /commandLine\("node", "--print"/);
 });
 
-test("local Android debug builds disable Hermes when Windows cannot execute hermesc", () => {
+test("local Android debug builds keep Hermes enabled so embedded bundles parse on Android", () => {
   const rootDir = makeWorkspace();
   writeMobileFixture(rootDir);
   touch(path.join(rootDir, "android", "gradlew.bat"));
@@ -1445,10 +1902,44 @@ test("local Android debug builds disable Hermes when Windows cannot execute herm
     platform: "win32",
   });
 
-  assert.ok(invocations.gradleArgs.includes("-PhermesEnabled=false"));
-  assert.ok(invocations.androidTestArgs.includes("-PhermesEnabled=false"));
+  assert.equal(invocations.gradleArgs.includes("-PhermesEnabled=false"), false);
+  assert.equal(
+    invocations.androidTestArgs.includes("-PhermesEnabled=false"),
+    false,
+  );
   assert.ok(
     invocations.packageListArgs.includes("-PhermesEnabled=false") === false,
+  );
+});
+
+test("Android debug bundle entry can switch between safe and direct startup roots", () => {
+  const rootDir = makeWorkspace();
+
+  ensureLocalMetroEntryFile({ mobileRootDir: rootDir });
+  assert.equal(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    'import "./src/android-safe-entry";\n',
+  );
+
+  ensureLocalMetroEntryFile({ androidEntry: "direct", mobileRootDir: rootDir });
+  assert.equal(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    'import "./src/android-direct-entry";\n',
+  );
+
+  ensureLocalMetroEntryFile({ androidEntry: "safe", mobileRootDir: rootDir });
+  assert.equal(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    'import "./src/android-safe-entry";\n',
+  );
+
+  assert.throws(
+    () =>
+      ensureLocalMetroEntryFile({
+        androidEntry: "router",
+        mobileRootDir: rootDir,
+      }),
+    /Unsupported Android entry/,
   );
 });
 
@@ -1898,7 +2389,7 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   );
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "expo-router/entry";\n',
+    'import "./src/android-safe-entry";\n',
   );
   assert.equal(
     fs.readFileSync(

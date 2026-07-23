@@ -234,18 +234,25 @@ export function updatePayrollReminderState(
 export async function hydratePayrollReminderStateFromStorage(): Promise<PayrollReminderState> {
   if (!payrollReminderStateStorage) return payrollReminderState;
 
-  const raw = await payrollReminderStateStorage.getItemAsync(
-    PAYROLL_REMINDER_STATE_STORAGE_KEY,
-    secureStoreOptions(payrollReminderStateStorage),
-  );
+  let raw: string | null;
+  try {
+    raw = await payrollReminderStateStorage.getItemAsync(
+      PAYROLL_REMINDER_STATE_STORAGE_KEY,
+      secureStoreOptions(payrollReminderStateStorage),
+    );
+  } catch {
+    return payrollReminderState;
+  }
   if (!raw) return payrollReminderState;
 
   const restored = parsePersistedPayrollReminderState(raw);
   if (!restored) {
-    await payrollReminderStateStorage.deleteItemAsync(
-      PAYROLL_REMINDER_STATE_STORAGE_KEY,
-      secureStoreOptions(payrollReminderStateStorage),
-    );
+    await payrollReminderStateStorage
+      .deleteItemAsync(
+        PAYROLL_REMINDER_STATE_STORAGE_KEY,
+        secureStoreOptions(payrollReminderStateStorage),
+      )
+      .catch(() => undefined);
     return payrollReminderState;
   }
 

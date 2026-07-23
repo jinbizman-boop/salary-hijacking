@@ -1,5 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import {
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../../shared/api/url-validation";
 import type { CommunityAdDisclosureModel } from "../community.types";
 
 export type CommunityAdDisclosureProps = Readonly<{
@@ -9,10 +13,9 @@ export type CommunityAdDisclosureProps = Readonly<{
 
 function isSafeAdDestinationUrl(value: string): boolean {
   try {
-    const url = new URL(value);
-    return (
-      url.protocol === "https:" && url.username === "" && url.password === ""
-    );
+    if (!isValidUrlString(value)) throw new Error("INVALID_URL");
+    const urlParts = parseMobileBaseUrlParts(value);
+    return urlParts?.protocol === "https:" && !urlParts.containsCredentials;
   } catch {
     return false;
   }

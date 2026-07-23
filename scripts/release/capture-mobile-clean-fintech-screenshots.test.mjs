@@ -24,7 +24,7 @@ test("capture script produces the 17 core mobile UI evidence screenshots", () =>
   assert.match(source, /"17_profile_level\.png"/);
   assert.match(
     source,
-    /mobileUiEvidenceCount: mobileUiEvidenceCaptures\.length/,
+    /mobileUiEvidenceCount: selectedMobileUiEvidenceCaptures\.length/,
   );
 });
 

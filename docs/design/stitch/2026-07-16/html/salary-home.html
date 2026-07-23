@@ -102,7 +102,7 @@
 <!-- Main Content Canvas -->
 <main class="pt-14">
 <!-- Hero Section -->
-<section class="bg-[#209252] text-white px-margin-page pt-stack-lg pb-10 rounded-b-[32px] shadow-lg" style="opacity: 1; transform: translateY(0px);">
+<section class="bg-[#209252] text-white px-margin-page pt-stack-lg pb-10 rounded-b-[32px] shadow-lg" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out;">
 <div class="flex flex-col gap-1 mb-stack-md">
 <span class="font-label-lg text-label-lg opacity-80">2026년 7월 16일</span>
 <h1 class="font-display-lg text-[28px] leading-tight font-bold">내 급여 납치 현황</h1>
@@ -140,7 +140,7 @@
 </div>
 </section>
 <!-- Ad Banner -->
-<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px);">
+<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out 0.1s;">
 <div class="bg-surface-container text-on-surface p-5 rounded-2xl flex justify-between items-center relative overflow-hidden group">
 <div class="z-10">
 <span class="inline-block bg-primary/10 text-primary font-bold text-[10px] px-2 py-0.5 rounded mb-2">광고</span>
@@ -154,7 +154,7 @@
 </div>
 </section>
 <!-- Daily Budget Card (Today's Allowance) -->
-<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px);">
+<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out 0.2s;">
 <div class="bg-surface-container-lowest border border-outline-variant p-margin-page rounded-3xl shadow-sm">
 <div class="flex justify-between items-center mb-stack-md">
 <h3 class="font-headline-md text-headline-md">오늘의 생활비</h3>
@@ -210,7 +210,7 @@
 </div>
 </section>
 <!-- Fixed Expenses Card -->
-<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px);">
+<section class="px-margin-page mt-stack-lg" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out 0.3s;">
 <div class="bg-surface-container-lowest border border-outline-variant p-margin-page rounded-3xl shadow-sm">
 <div class="flex justify-between items-center mb-stack-md">
 <h3 class="font-headline-md text-headline-md">이번 급여주기 고정지출</h3>
@@ -262,7 +262,7 @@
 </div>
 </section>
 <!-- Variable Expenses Card -->
-<section class="px-margin-page mt-stack-lg pb-stack-xl" style="opacity: 1; transform: translateY(0px);">
+<section class="px-margin-page mt-stack-lg pb-stack-xl" style="opacity: 1; transform: translateY(0px); transition: 0.5s ease-out 0.4s;">
 <div class="bg-surface-container-lowest border border-outline-variant p-margin-page rounded-3xl shadow-sm">
 <div class="flex justify-between items-center mb-stack-md">
 <h3 class="font-headline-md text-headline-md">이번 급여주기 변동지출</h3>
@@ -283,28 +283,31 @@
 </section>
 </main>
 <!-- Bottom Navigation Bar -->
-<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-4 pt-2 pb-safe bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-none shadow-sm rounded-t-xl">
-<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined text-[24px]" style="font-variation-settings: 'FILL' 1;">payments</span>
-<span class="font-label-sm text-label-sm mt-1">급여</span>
-</button>
-<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined text-[24px]">event_note</span>
-<span class="font-label-sm text-label-sm mt-1">계획</span>
-</button>
-<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined text-[24px]">trending_up</span>
-<span class="font-label-sm text-label-sm mt-1">LV UP</span>
-</button>
-<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined text-[24px]">forum</span>
-<span class="font-label-sm text-label-sm mt-1">커뮤니티</span>
-</button>
-<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-tertiary-fixed-variant scale-95 active:scale-90 transition-transform">
-<span class="material-symbols-outlined text-[24px]">person</span>
-<span class="font-label-sm text-label-sm mt-1">MY</span>
-</button>
-</nav>
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface border-t border-outline-variant h-[64px] pb-safe"><!-- 급여 (Active) -->
+<a class="flex flex-col items-center justify-center text-primary font-semibold transition-all duration-150 scale-100 active:scale-90" href="#">
+  <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+  <span class="font-label-sm text-label-sm mt-0.5">급여</span>
+</a>
+<!-- 계획 -->
+<a class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-highest transition-all duration-150 active:scale-90 px-4 py-1 rounded-xl" href="#">
+  <span class="material-symbols-outlined">calendar_today</span>
+  <span class="font-label-sm text-label-sm mt-0.5">계획</span>
+</a>
+<!-- LV UP -->
+<a class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-highest transition-all duration-150 active:scale-90 px-4 py-1 rounded-xl" href="#">
+  <span class="material-symbols-outlined">military_tech</span>
+  <span class="font-label-sm text-label-sm mt-0.5">LV UP</span>
+</a>
+<!-- 커뮤니티 -->
+<a class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-highest transition-all duration-150 active:scale-90 px-4 py-1 rounded-xl" href="#">
+  <span class="material-symbols-outlined">group</span>
+  <span class="font-label-sm text-label-sm mt-0.5">커뮤니티</span>
+</a>
+<!-- MY -->
+<a class="flex flex-col items-center justify-center text-secondary hover:bg-surface-container-highest transition-all duration-150 active:scale-90 px-4 py-1 rounded-xl" href="#">
+  <span class="material-symbols-outlined">person</span>
+  <span class="font-label-sm text-label-sm mt-0.5">MY</span>
+</a></nav>
 <!-- Micro-interaction Script -->
 <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -321,4 +324,6 @@
             });
         });
     </script>
+
+
 </body></html>

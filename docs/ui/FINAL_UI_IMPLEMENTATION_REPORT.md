@@ -54,7 +54,7 @@ Latest known evidence from current repository:
 
 - Current comparison file: `release/evidence/mobile-ui/stitch-comparison.md`
 - Current capture summary: `release/evidence/mobile-ui/capture-summary.json`
-- Current result: 33 mobile UI evidence files captured; 120 responsive checks across 320, 360, 375, 390, 393, 412, 430, and 768px; horizontal overflow 0
+- Current result: 36 mobile UI evidence files captured; 136 responsive checks across 320, 360, 375, 390, 393, 412, 430, and 768px; horizontal overflow 0
 - Missing: pixel diff/SSIM comparator, physical keyboard/device proof
 
 ## G. Review Result

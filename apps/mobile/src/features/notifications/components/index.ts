@@ -7,6 +7,10 @@ export {
   type NotificationPreferenceStripProps,
 } from "./NotificationPreferenceStrip";
 export {
+  NotificationSettingsScreen,
+  type NotificationSettingsScreenProps,
+} from "./NotificationSettingsScreen";
+export {
   NotificationSummaryCard,
   type NotificationSummaryCardProps,
 } from "./NotificationSummaryCard";

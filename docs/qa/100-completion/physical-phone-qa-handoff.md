@@ -1,22 +1,23 @@
 # Physical Android Phone QA Handoff
 
-Updated: 2026-07-19 KST
+Updated: 2026-07-22 KST
 
 ## Current APK
 
-- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk`
-- Artifact APK: `D:/salary-hijacking-artifacts/apk/salary-hijacking-phone-arm64-debug.apk`
-- Repo APK: `apps/mobile/build/phone/android/salary-hijacking-phone-arm64-debug.apk`
-- Remote APK: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260719-latest/salary-hijacking-phone-arm64-debug.apk`
-- SHA256: `CBF6353546E00E1CCB32ACAC7D333B421EEAB172366666966FEFB422356ECE5B`
-- Packaged source HEAD: `7f40d3905bee37e30f8c14daf79190c1010923be` plus tracked 33-screen visual-evidence refresh changes
+- Downloads APK: `C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk`
+- Artifact APK: `C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk`
+- Repo APK: `artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk`
+- Remote APK: `BLOCKED`
+- SHA256: `FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8`
+- Packaged source HEAD: `67732db7b9f706211fc4a3c868ce4d1b7a806c60`
 - Android package: `com.salaryhijacking.mobile`
-- ABI: `arm64-v8a`
+- ABI: `arm64-v8a`, `x86_64`
+- Install caveat: this APK keeps the real package name but is locally QA debug-signed; uninstall any differently signed previous `com.salaryhijacking.mobile` build if Android rejects upgrade install.
 
 ## Why This Is Still Blocked
 
 - Current status: BLOCKED
-- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device on 2026-07-19 KST.
+- Blocker: No physical Android phone is attached to this Codex Windows environment at observation time; physical Samsung install/cold-start/logcat QA remains blocked.
 - This handoff does not replace physical phone QA. strict readiness remains BLOCKED until the local no-secret proof file is produced by an attached physical Android phone.
 
 ## Required Phone Setup
@@ -40,7 +41,7 @@ Direct collector command:
 
 ```powershell
 Set-Location 'C:\Users\PC\Desktop\salary-hijacking-platform'
-node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-phone-arm64-debug.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
+node scripts\release\collect-mobile-preview-phone-proof.mjs --apk "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk" --runs 20 --output release/mobile-preview-phone-proof.local.json --package com.salaryhijacking.mobile
 ```
 
 ## What The Collector Must Prove

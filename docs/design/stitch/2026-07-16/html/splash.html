@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-
-<html lang="ko"><head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<!DOCTYPE html><html lang="ko"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
 <style>
         @keyframes fadeInScale {
             0% { opacity: 0; transform: scale(0.98); }
@@ -24,7 +22,18 @@
         body {
             background-color: #f7f9ff;
             font-family: 'Noto Sans KR', sans-serif;
-            overflow: hidden;
+            overflow-x: hidden;
+        }
+        .mobile-container {
+            width: 100%;
+            max-width: 390px;
+            min-height: 100vh;
+            margin: 0 auto;
+            position: relative;
+            background-color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .footer-safe-area {
             padding-bottom: 44px;
@@ -36,89 +45,129 @@
             theme: {
                 extend: {
                     "colors": {
+                        "surface-container-highest": "#d9e3f1",
+                        "secondary-container": "#e5e2e1",
+                        "tertiary": "#595c5e",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#28313b",
+                        "outline": "#6e7a6f",
+                        "surface-variant": "#d9e3f1",
+                        "on-primary-fixed": "#00210d",
+                        "secondary-fixed-dim": "#c8c6c5",
+                        "primary-fixed-dim": "#72dc93",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#444749",
+                        "on-tertiary-container": "#fbfdff",
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#005229",
+                        "tertiary-fixed-dim": "#c4c7c9",
+                        "on-surface-variant": "#3e4a40",
+                        "surface-container-low": "#edf4ff",
+                        "on-secondary-fixed-variant": "#474646",
+                        "inverse-on-surface": "#e8f2ff",
+                        "surface-bright": "#f7f9ff",
+                        "secondary": "#5f5e5e",
+                        "primary-fixed": "#8ef9ad",
+                        "on-background": "#131c26",
+                        "surface": "#f7f9ff",
+                        "tertiary-fixed": "#e0e3e5",
+                        "on-primary-container": "#f6fff4",
                         "primary": "#006a37",
+                        "on-surface": "#131c26",
+                        "tertiary-container": "#727577",
+                        "background": "#f7f9ff",
+                        "surface-container": "#e5effc",
+                        "on-secondary-fixed": "#1c1b1b",
+                        "surface-dim": "#d1dbe8",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#e5e2e1",
+                        "on-tertiary-fixed": "#191c1e",
+                        "inverse-primary": "#72dc93",
+                        "primary-container": "#078648",
+                        "on-error-container": "#93000a",
+                        "on-secondary-container": "#656464",
+                        "surface-container-high": "#dfe9f6",
+                        "on-primary": "#ffffff",
+                        "surface-tint": "#006d39",
+                        "outline-variant": "#bdcabd",
+                        "on-tertiary": "#ffffff",
                         "brand-green": "#209252",
                         "brand-dark": "#34383D",
                         "brand-footer": "#2E3135",
-                        "status-text": "#6B737C",
-                        "surface": "#f7f9ff",
-                        "on-surface": "#131c26",
-                        "error-bg": "#FFF2F2"
+                        "status-text": "#6B737C"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
                     },
                     "spacing": {
                         "stack-sm": "8px",
+                        "margin-page": "24px",
                         "stack-md": "16px",
                         "stack-lg": "32px",
-                        "margin-page": "24px"
-                    },
-                    "borderRadius": {
-                        "xl": "16px"
+                        "stack-xl": "48px",
+                        "gutter-grid": "12px"
                     },
                     "fontFamily": {
                         "display-lg": ["Noto Sans KR"],
+                        "body-lg": ["Noto Sans KR"],
                         "headline-lg": ["Noto Sans KR"],
                         "body-md": ["Noto Sans KR"],
-                        "label-sm": ["Noto Sans KR"]
+                        "label-sm": ["Noto Sans KR"],
+                        "headline-md": ["Noto Sans KR"],
+                        "label-lg": ["Noto Sans KR"]
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="flex flex-col items-center justify-between min-h-screen">
+<body class="bg-surface">
+<div class="mobile-container shadow-2xl overflow-hidden">
 <!-- Header Spacer -->
 <div class="h-10 w-full"></div>
 <!-- Main Splash Content -->
-<main class="flex flex-col items-center justify-center flex-grow -mt-20 animate-splash">
-<!-- Logo Container: 124x124, 1:1 ratio, centered -->
-<div class="w-[124px] h-[124px] mb-8 flex items-center justify-center overflow-hidden">
-<img alt="급여납치 공식 로고" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWEDs43s0_K57HerC9Yo3m-u1JGKLJ7vathAHPXn4WpuUanibP3_oHhpzWKujmly3sd5Y9hZT_fCECiKYIFU5bt3ae19zxLs4cBzQd7MnUiXVEW92ZoGJxd0Rnny8BiLYTAxC4woAaue8OtRmHYR94nsEs-NuA4uL5FzMQwTw7LvVqofk9hf84An2sxy1CBuUsIyUKgAN_2ed4-arrxdpyIMh_YwQwqqiV3o57LTaiRQOsQ8xvxGXdBPCwhPrybCMi_g"/>
+<main class="flex flex-col items-center justify-center flex-grow -mt-10 animate-splash px-margin-page">
+<!-- Logo Container -->
+<div class="w-[124px] h-[124px] mb-8">
+<img alt="급여납치 공식 로고" class="w-full h-full object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD9v812mJDA2M3CJXn9OmwmIm4fjOMKXi5hOqHIYD6VGwF57uGehxvrgVfVoUhI09CIrJc6gRhhLCo5IXa6qw5WX8UiqEVKAzW-Mdn4yLXDfsGRummEvNnhvWT6XUMSHF2UpMm_pJ5alFp7Nhvr3_51E1wd42XHFIPCAmVqTWhQ77vgPsAJ--1BGvSrOUCIw5xyadez_F0j5YeQ9C42-Mqxhy7bTtHubuE4bBmygL9q-bJtKXpthD__F_uPIbUqVEE-sg">
 </div>
 <!-- Brand Names -->
 <div class="flex flex-col items-center gap-2 mb-12">
-<h1 class="text-[46px] font-black tracking-tighter text-brand-green leading-none">
-                급여납치
-            </h1>
-<p class="text-[18px] font-bold tracking-[0.2em] text-brand-dark uppercase">
-                SALARY HIJACKING
-            </p>
+<h1 class="text-[48px] font-black tracking-tighter text-brand-green leading-none">
+                    급여납치
+                </h1>
+<p class="text-[20px] font-bold tracking-[0.2em] text-brand-dark uppercase">
+                    SALARY HIJACKING
+                </p>
 </div>
-<!-- Loading State Container -->
-<div class="flex flex-col items-center gap-3" id="loading-state">
-<!-- Uniform circular indicator -->
+<!-- Status Area -->
+<div class="flex flex-col items-center gap-3">
+<!-- Loading Indicator -->
 <div class="relative w-5 h-5">
 <div class="absolute inset-0 border-2 border-brand-green/20 rounded-full"></div>
 <div class="absolute inset-0 border-2 border-brand-green border-t-transparent rounded-full animate-spin-slow"></div>
 </div>
 <!-- Status Text -->
 <span class="text-[14px] font-medium text-status-text">
-                앱을 준비하고 있어요
-            </span>
-</div>
-<!-- Error State Container (Hidden by default, used for SCR-020 reference) -->
-<div class="hidden flex flex-col items-center w-full max-w-[320px] p-6 bg-error-bg rounded-xl mt-4" id="error-state">
-<span class="material-symbols-outlined text-[#BA1A1A] text-4xl mb-3">error</span>
-<p class="text-[15px] font-medium text-brand-dark text-center mb-6">데이터를 불러오지 못했습니다.<br/>네트워크 연결을 확인해주세요.</p>
-<button class="w-full h-12 bg-brand-green text-white font-bold rounded-lg mb-4">다시 시도</button>
-<a class="text-[14px] text-status-text underline font-medium" href="#">로그인 화면으로 이동</a>
+                    앱을 준비하고 있어요
+                </span>
 </div>
 </main>
 <!-- Footer Wordmark -->
 <footer class="footer-safe-area w-full flex justify-center items-center">
 <span class="text-[18px] font-bold text-brand-footer tracking-tight">
-            Eureka World
-        </span>
+                Eureka World
+            </span>
 </footer>
+</div>
+<!-- Micro-interaction Script -->
 <script>
         document.addEventListener('DOMContentLoaded', () => {
             console.log('Splash initializing...');
-
-            // Logic to demonstrate state handling (for design review purposes)
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('state') === 'error') {
-                document.getElementById('loading-state').classList.add('hidden');
-                document.getElementById('error-state').classList.remove('hidden');
-            }
         });
     </script>
 </body></html>

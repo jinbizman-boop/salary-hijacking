@@ -252,11 +252,11 @@ test("production AAB runner copies only a verified AAB archive to the release pa
   assert.equal(calls[2].options.env.ANDROID_SDK_ROOT, sdkRoot);
   assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    /expo-router\/entry/u,
+    /\.\/src\/android-safe-entry/u,
   );
   assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    /expo-router\/entry/u,
+    /\.\/src\/android-safe-entry/u,
   );
   assert.match(
     fs.readFileSync(

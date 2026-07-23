@@ -42,10 +42,10 @@ export function NotificationPreferenceStrip({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: "row",
     gap: componentSpacing.md,
+    justifyContent: "space-between",
   },
   status: {
     color: componentColors.textPrimary,

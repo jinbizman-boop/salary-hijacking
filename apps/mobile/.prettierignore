@@ -1,6 +1,9 @@
 node_modules
 .expo
 .local-native-bin
+.gradle-local-debug
+.gradle-qa-*
+.localappdata
 .turbo
 coverage
 dist

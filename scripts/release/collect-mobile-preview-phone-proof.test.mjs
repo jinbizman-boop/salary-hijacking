@@ -138,8 +138,10 @@ test("summarizes logcat fatal markers without storing raw logcat lines", () => {
 
 test("builds blocked no-secret proof when adb is unavailable", () => {
   const rootDir = makeWorkspace();
+  const apkPath = write(rootDir, "build/salary.apk", "APK");
   const proof = buildMobilePreviewPhoneProof({
     rootDir,
+    apkPath,
     adbPath: null,
     now: () => new Date("2026-07-13T03:00:00.000Z"),
   });
@@ -149,6 +151,10 @@ test("builds blocked no-secret proof when adb is unavailable", () => {
   assert.equal(proof.containsSecretValues, false);
   assert.equal(proof.android.physicalPhoneVerified, false);
   assert.match(proof.android.physicalPhoneBlocker, /adb is unavailable/i);
+  assert.equal(
+    proof.android.apkSha256,
+    createHash("sha256").update("APK").digest("hex").toUpperCase(),
+  );
   assert.equal(proof.android.requiredColdStartRuns, 20);
   assert.equal(proof.android.requiredBackgroundForegroundRuns, 20);
   assert.match(proof.nextEvidenceRequired.join("\n"), /20 cold-start/i);

@@ -61,8 +61,8 @@ export function NotificationList({
           </Pressable>
         ))}
       </View>
-      <Text style={styles.guard}>민감 금액 원문은 알림에 담지 않아요</Text>
-      <Text style={styles.guard}>광고 타겟팅과 분리했어요</Text>
+      <Text style={styles.guard}>민감 금액 원문은 알림에 담지 않습니다.</Text>
+      <Text style={styles.guard}>광고 타겟팅 데이터와 분리됩니다.</Text>
     </SurfaceCard>
   );
 }
@@ -73,23 +73,23 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   dot: {
-    width: 10,
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: 999,
     height: 10,
     marginTop: 6,
-    borderRadius: 999,
-    backgroundColor: componentColors.primaryGreen,
+    width: 10,
   },
   dotRead: {
     backgroundColor: componentColors.disabledGray,
   },
   filter: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
     backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: 999,
     color: componentColors.primaryGreenDark,
     fontSize: 11,
     fontWeight: "900",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
   filters: {
     flexDirection: "row",
@@ -110,10 +110,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   metaRow: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: "row",
     gap: componentSpacing.sm,
+    justifyContent: "space-between",
   },
   priority: {
     color: componentColors.primaryGreenDark,
@@ -126,13 +126,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   row: {
-    flexDirection: "row",
     alignItems: "flex-start",
+    borderBottomColor: componentColors.line,
+    borderBottomWidth: 1,
+    flexDirection: "row",
     gap: componentSpacing.sm,
     minHeight: 76,
     paddingVertical: componentSpacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: componentColors.line,
   },
   rowTitle: {
     color: componentColors.textPrimary,

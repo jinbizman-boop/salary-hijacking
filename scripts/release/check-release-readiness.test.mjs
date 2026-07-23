@@ -463,6 +463,8 @@ const writeMobilePreviewEvidence = (rootDir, overrides = {}) => {
       debugApkSigned: true,
       debugApkSha256:
         "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      latestSourcePackagedApkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
       downloadVerified: true,
       emulatorInstallVerified: true,
       coldStartRuns: 5,
@@ -471,6 +473,36 @@ const writeMobilePreviewEvidence = (rootDir, overrides = {}) => {
       backgroundForegroundVerified: true,
       notificationNoBottomTabVerified: true,
       physicalPhoneVerified: false,
+    },
+    latestStaticApkInspection: "artifacts/qa/test-static-apk-inspection.json",
+    latestStaticApkInspectionPass: true,
+    latestStaticApkInspectionSummary: {
+      apkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      bundleSha256: "A".repeat(64),
+      nativeAbis: ["arm64-v8a", "x86_64"],
+      arm64LibCount: 15,
+      x86_64LibCount: 15,
+      hasBundle: true,
+      pass: true,
+    },
+    finalStableQaApk: {
+      fileName: "salary-hijacking-qa-universal.apk",
+      sha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      sizeBytes: 93983937,
+      emulatorLifecycleProof: "artifacts/qa/final-lifecycle/summary.json",
+      emulatorColdStarts: "10/10 PASS",
+      emulatorBackgroundResume: "10/10 PASS",
+      emulatorFatalMarkerCount: 0,
+      launcherMonkeyProof: "artifacts/qa/final-launcher/summary.json",
+      launcherMonkeyStatus: "PASS",
+      upgradeInstallProof: "artifacts/qa/final-upgrade/summary.json",
+      upgradeInstallStatus:
+        "PASS_FROM_PREVIOUS_ORIGINAL_PACKAGE_UNIVERSAL_APK_ON_EMULATOR",
+      upgradeColdStarts: "10/10 PASS",
+      upgradeBackgroundResume: "10/10 PASS",
+      upgradeFatalMarkerCount: 0,
     },
     privacy: {
       containsEasToken: false,
@@ -2885,6 +2917,61 @@ test("passes current-head mobile preview evidence with phone-target APK proof", 
   assert.match(
     report,
     /10C3FC2ED13C90F19DEFDE57062B88ED220D74623B3EC251C6CE03BBCC8101D8/,
+  );
+});
+
+test("blocks when final stable QA APK runtime proof is missing", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    finalStableQaApk: undefined,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:final-stable-runtime/);
+  assert.match(
+    report,
+    /final stable QA APK runtime proof must include clean install, launcher, upgrade, and zero fatal markers/,
+  );
+});
+
+test("blocks when static APK inspection evidence is incomplete", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    latestStaticApkInspectionPass: false,
+    latestStaticApkInspectionSummary: {
+      apkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      nativeAbis: ["x86_64"],
+      arm64LibCount: 0,
+      x86_64LibCount: 15,
+      hasBundle: true,
+      pass: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:static-apk-inspection/);
+  assert.match(
+    report,
+    /static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, safe-entry markers, and matching APK SHA256/,
   );
 });
 
