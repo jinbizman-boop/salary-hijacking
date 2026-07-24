@@ -126,6 +126,18 @@ Updated: 2026-07-24 KST
 
 ## Latest APK
 
+- Current-head stable QA APK path: `artifacts/android/salary-hijacking-qa-universal.apk`
+- Current-head stable QA APK SHA-256: `DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482`
+- Current-head stable QA Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk`
+- Current-head safe-current alias Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk`
+- Current-head stable QA D: mirror: `D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk`
+- Current-head Git commit packaged: `9cba4f83d609a67c282393a3ecd3ed11e779c818`
+- Current-head aapt metadata: PASS (`artifacts/qa/apk-current-head-9cba4f8-aapt-badging-20260725.log`)
+- Current-head apksigner: PASS (`artifacts/qa/apk-current-head-9cba4f8-apksigner-verify-20260725.log`)
+- Current-head static APK inspection: PASS (`artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json`)
+- Current-head emulator clean install lifecycle: PASS, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json`)
+- Current-head same-version upgrade lifecycle: PASS, `install -r`, launcher monkey, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json`)
+
 - Current diagnostic ARM64 path: `artifacts/android/salary-hijacking-original-safe-current-arm64.apk`
 - Current diagnostic ARM64 SHA-256: `8EEDCF261C1B511D2E0BE901E14497ACBDA3487877BBF54F1ED71D5AB7255701`
 - Current diagnostic x86_64 path: `artifacts/android/salary-hijacking-original-safe-current-x86_64.apk`

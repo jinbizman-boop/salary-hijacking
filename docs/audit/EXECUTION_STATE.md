@@ -101,6 +101,22 @@ Android physical-device crash verification is not complete until `adb logcat`, i
 - CONFIRMED: safe splash-hide universal QA candidate is built, signed, and emulator-verified, but has not been installed and logcat-verified on the user's physical Samsung phone.
 - CONFIRMED: these APKs are debug-signed diagnostic/direct artifacts, not final full-app release-like QA APK evidence under the updated master objective.
 
+## Current-HEAD Safe Universal QA APK
+
+- Commit packaged: `9cba4f83d609a67c282393a3ecd3ed11e779c818`
+- APK path: `artifacts/android/salary-hijacking-qa-universal.apk`
+- Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk`
+- Safe-current alias: `C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk`
+- D: mirror: `D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk`
+- SHA-256: `DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482`
+- Package: `com.salaryhijacking.mobile`, versionCode `202607223`, versionName `1.0.0`, min SDK 24, target SDK 35, ABI `arm64-v8a` + `x86_64`
+- Signing: PASS via APK Signature Scheme v2/v3 debug cert (`artifacts/qa/apk-current-head-9cba4f8-apksigner-verify-20260725.log`)
+- Static metadata: PASS (`artifacts/qa/apk-current-head-9cba4f8-aapt-badging-20260725.log`)
+- Static bundle/native inspection: PASS (`artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json`)
+- x86_64 emulator clean-install lifecycle: PASS, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json`)
+- x86_64 emulator same-version upgrade lifecycle: PASS, `install -r`, launcher monkey, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json`)
+- Physical Samsung/ARM64 install/cold-start/logcat: NOT VERIFIED; no physical Android phone is connected to adb in this workspace.
+
 ## Next Exact Action
 
-Continue from runtime evidence: fix the current direct-entry visual blank/black-screen evidence path if it reproduces outside the headless emulator display state, then proceed to classified Stitch 304 mapping and release-like QA APK gates.
+Strict release readiness is now blocked by external approval gates, origin/main policy, and physical Samsung/ARM64 phone QA. Continue only with work that can be verified locally; do not claim the phone crash gate PASS until the affected phone is connected and redacted logcat proves it.
