@@ -146,6 +146,7 @@ ios/
 .bundle/
 **/.bundle/
 apps/mobile/.gradle-local-debug/
+apps/mobile/.gradle-local-debug-direct/
 apps/mobile/.localappdata/
 .gradle-qa-*/
 

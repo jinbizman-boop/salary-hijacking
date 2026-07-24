@@ -20,6 +20,7 @@ android
 ios
 apps/mobile/.local-native-bin
 apps/mobile/.gradle-local-debug
+apps/mobile/.gradle-local-debug-direct
 apps/mobile/.localappdata
 .gradle-qa-*
 

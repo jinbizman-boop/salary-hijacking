@@ -550,6 +550,32 @@ export const ensureLocalMetroEntryFile = ({
   }
 };
 
+export const installSafeAndroidEntryRestoreHooks = ({
+  mobileRootDir,
+  processObject = process,
+} = {}) => {
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    try {
+      ensureLocalMetroEntryFile({ androidEntry: "safe", mobileRootDir });
+    } catch {
+      // Best effort only: signal/exit handlers must never mask the original exit.
+    }
+  };
+
+  processObject.once("exit", restore);
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    processObject.once(signal, () => {
+      restore();
+      processObject.exit(signal === "SIGINT" ? 130 : 143);
+    });
+  }
+
+  return restore;
+};
+
 const ensureGradleInputMetroEntryShim = ({ mobileRootDir }) => {
   const shimPath = path.join(
     mobileRootDir,
@@ -2017,6 +2043,164 @@ export const repairWindowsCmakeExistingInputPhonyEdges = ({
   return repairedCount;
 };
 
+const cmakePath = (value) => value.replace(/\\/gu, "/");
+
+const replaceAllKnownCmakePaths = (source, replacements) => {
+  let nextSource = source;
+  for (const [from, to] of replacements) {
+    if (!from || !to || from === to) continue;
+    nextSource = nextSource.replaceAll(from, to);
+  }
+  return nextSource;
+};
+
+const patchWindowsCmakeGeneratedAbsolutePaths = ({
+  cmakeRootDir,
+  env,
+  mobileRootDir,
+  platform,
+}) => {
+  if (!isWindows(platform)) return 0;
+  if (!fs.existsSync(cmakeRootDir)) return 0;
+
+  const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
+  const gradleUserHome = env.GRADLE_USER_HOME;
+  const monorepoRootCmakePath = cmakePath(monorepoRootDir);
+  const mobileRootCmakePath = cmakePath(mobileRootDir);
+  const gradleUserHomeCmakePath = gradleUserHome
+    ? cmakePath(gradleUserHome)
+    : "";
+  const defaultGradleHomes = [
+    path.join(mobileRootDir, ".gradle-local-debug"),
+    path.join(mobileRootDir, ".gradle-local-debug-direct"),
+  ];
+
+  const replacements = [
+    ["Z:/apps/mobile", mobileRootCmakePath],
+    ["Z:\\apps\\mobile", mobileRootDir],
+    ["Z:/", `${monorepoRootCmakePath}/`],
+    ["Z:\\", `${monorepoRootDir}\\`],
+    ["Z$", monorepoRootDir.replace(/\\/gu, "$/")],
+  ];
+
+  if (gradleUserHomeCmakePath) {
+    for (const defaultGradleHome of defaultGradleHomes) {
+      replacements.push([
+        cmakePath(defaultGradleHome),
+        gradleUserHomeCmakePath,
+      ]);
+      replacements.push([
+        `Z:/apps/mobile/${path.basename(defaultGradleHome)}`,
+        gradleUserHomeCmakePath,
+      ]);
+      replacements.push([
+        `Z:\\apps\\mobile\\${path.basename(defaultGradleHome)}`,
+        gradleUserHome,
+      ]);
+      replacements.push([
+        defaultGradleHome.replace(/\\/gu, "\\\\"),
+        gradleUserHome.replace(/\\/gu, "\\\\"),
+      ]);
+      replacements.push([
+        defaultGradleHome.replace(/\\/gu, "\\"),
+        gradleUserHome,
+      ]);
+    }
+  }
+
+  let patchedCount = 0;
+  const candidateFiles = collectDirectories(cmakeRootDir)
+    .flatMap((directory) => [
+      path.join(directory, "build.ninja"),
+      path.join(directory, "CMakeCache.txt"),
+      path.join(directory, "rules.ninja"),
+    ])
+    .filter((candidate, index, candidates) => {
+      if (!fs.existsSync(candidate)) return false;
+      return candidates.indexOf(candidate) === index;
+    });
+
+  for (const candidateFile of candidateFiles) {
+    const source = fs.readFileSync(candidateFile, "utf8");
+    let nextSource = replaceAllKnownCmakePaths(source, replacements);
+    if (gradleUserHomeCmakePath) {
+      nextSource = nextSource.replace(
+        /[A-Za-z]:\/[^ \r\n"]*\/apps\/mobile\/\.gradle-local-debug(?:-direct)?/gu,
+        gradleUserHomeCmakePath,
+      );
+    }
+    nextSource = nextSource.replaceAll(`${mobileRootCmakePath}/Z:`, "Z:");
+    if (nextSource !== source) {
+      fs.writeFileSync(candidateFile, nextSource, "utf8");
+      patchedCount += 1;
+    }
+  }
+
+  return patchedCount;
+};
+
+const patchExpoModulesCoreWindowsCmakeAbsolutePaths = ({
+  env,
+  mobileRootDir,
+  platform,
+}) =>
+  patchWindowsCmakeGeneratedAbsolutePaths({
+    cmakeRootDir: expoModulesCoreCmakeDebugRoot(mobileRootDir),
+    env,
+    mobileRootDir,
+    platform,
+  });
+
+const reanimatedCmakeDebugRoot = (mobileRootDir) =>
+  path.join(
+    mobileRootDir,
+    "node_modules",
+    "react-native-reanimated",
+    "android",
+    ".cxx",
+    "Debug",
+  );
+
+const patchReanimatedWindowsCmakeAbsolutePaths = ({
+  env,
+  mobileRootDir,
+  platform,
+}) =>
+  patchWindowsCmakeGeneratedAbsolutePaths({
+    cmakeRootDir: reanimatedCmakeDebugRoot(mobileRootDir),
+    env,
+    mobileRootDir,
+    platform,
+  });
+
+const removeWindowsNinjaState = ({ cmakeRootDir, platform }) => {
+  if (!isWindows(platform)) return 0;
+  if (!fs.existsSync(cmakeRootDir)) return 0;
+
+  let removedCount = 0;
+  for (const directory of collectDirectories(cmakeRootDir)) {
+    for (const stateFileName of [".ninja_deps", ".ninja_log"]) {
+      const stateFilePath = path.join(directory, stateFileName);
+      if (!fs.existsSync(stateFilePath)) continue;
+      fs.rmSync(stateFilePath, { force: true });
+      removedCount += 1;
+    }
+  }
+  return removedCount;
+};
+
+const removeExpoModulesCoreWindowsNinjaState = ({ mobileRootDir, platform }) =>
+  removeWindowsNinjaState({
+    cmakeRootDir: expoModulesCoreCmakeDebugRoot(mobileRootDir),
+    platform,
+  });
+
+const removeReanimatedWindowsNinjaState = ({ mobileRootDir, platform }) =>
+  removeWindowsNinjaState({
+    cmakeRootDir: reanimatedCmakeDebugRoot(mobileRootDir),
+    platform,
+  });
+
 const normalizeForPrefix = (value) =>
   path
     .resolve(value)
@@ -2586,8 +2770,7 @@ export const runExpoLocalAndroidDebugBuild = ({
     patchReactNativePackageList({ env: preflight.env, mobileRootDir });
     cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
 
-    const shouldRunWindowsCmakeWarmup =
-      isWindows(platform) && preflight.env[substAliasDisableEnvKey] !== "1";
+    const shouldRunWindowsCmakeWarmup = isWindows(platform);
 
     if (shouldRunWindowsCmakeWarmup) {
       for (const reanimatedConfigureArgs of invocations.reanimatedConfigureArgSets) {
@@ -2610,6 +2793,15 @@ export const runExpoLocalAndroidDebugBuild = ({
         platform,
         spawn,
       });
+      patchReanimatedWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
+      removeReanimatedWindowsNinjaState({
+        mobileRootDir,
+        platform,
+      });
 
       for (const expoModulesCoreConfigureArgs of invocations.expoModulesCoreConfigureArgSets) {
         let expoModulesCoreConfigure = spawn(
@@ -2627,6 +2819,15 @@ export const runExpoLocalAndroidDebugBuild = ({
           isWindows(platform)
         ) {
           repairExpoModulesCoreWindowsCmakeDirectories({
+            mobileRootDir,
+            platform,
+          });
+          patchExpoModulesCoreWindowsCmakeAbsolutePaths({
+            env: preflight.env,
+            mobileRootDir,
+            platform,
+          });
+          removeExpoModulesCoreWindowsNinjaState({
             mobileRootDir,
             platform,
           });
@@ -2650,8 +2851,31 @@ export const runExpoLocalAndroidDebugBuild = ({
       }
 
       repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
+      patchExpoModulesCoreWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
       repairWindowsCmakeExistingInputPhonyEdges({
         cmakeRootDir: expoModulesCoreCmakeDebugRoot(mobileRootDir),
+        platform,
+      });
+      patchExpoModulesCoreWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
+      removeExpoModulesCoreWindowsNinjaState({
+        mobileRootDir,
+        platform,
+      });
+      patchReanimatedWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
+      removeReanimatedWindowsNinjaState({
+        mobileRootDir,
         platform,
       });
     }
@@ -2736,7 +2960,11 @@ if (isCliEntrypoint()) {
     if (!preflight.ok) process.exit(2);
     if (options.checkOnly) process.exit(0);
 
+    const restoreSafeEntryOnExit = installSafeAndroidEntryRestoreHooks({
+      mobileRootDir: defaultMobileRootDir(),
+    });
     const result = runExpoLocalAndroidDebugBuild(options);
+    restoreSafeEntryOnExit();
     process.exit(result.status);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

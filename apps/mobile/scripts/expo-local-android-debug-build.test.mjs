@@ -16,6 +16,7 @@ import {
   ensureAndroidDebugNdkAbiFilters,
   ensureLocalMetroEntryFile,
   expoModulesCoreCmakeDebugRoot,
+  installSafeAndroidEntryRestoreHooks,
   parseWindowsSubstMappings,
   patchAndroidRootJavaCompileSafeClasspath,
   patchExpoModulesCoreJavaCompileKotlinClasspath,
@@ -1941,6 +1942,34 @@ test("Android debug bundle entry can switch between safe and direct startup root
       }),
     /Unsupported Android entry/,
   );
+});
+
+test("Android debug bundle entry is restored to safe entry on termination signals", () => {
+  const rootDir = makeWorkspace();
+  const handlers = new Map();
+  const exits = [];
+  const fakeProcess = {
+    exit(code) {
+      exits.push(code);
+    },
+    once(eventName, handler) {
+      handlers.set(eventName, handler);
+    },
+  };
+
+  ensureLocalMetroEntryFile({ androidEntry: "direct", mobileRootDir: rootDir });
+  installSafeAndroidEntryRestoreHooks({
+    mobileRootDir: rootDir,
+    processObject: fakeProcess,
+  });
+
+  handlers.get("SIGTERM")();
+
+  assert.equal(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    'import "./src/android-safe-entry";\n',
+  );
+  assert.deepEqual(exits, [143]);
 });
 
 test("runner executes prebuild before Gradle and copies a verified APK to the Detox path", () => {

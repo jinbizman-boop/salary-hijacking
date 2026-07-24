@@ -14,6 +14,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
 
 type TabKey = "salary" | "plan" | "level" | "community" | "profile";
 type ScreenKey = TabKey | "notifications";
@@ -45,6 +46,10 @@ const DANGER = "#B92133";
 const WARNING = "#E9872F";
 const DISABLED = "#C9CDD2";
 const VERSION = "1.0.1-android-safe-entry";
+
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // The Android safe entry is allowed to run after the native splash is hidden.
+});
 
 const tabs: readonly Readonly<{ key: TabKey; label: string; icon: string }>[] =
   [
@@ -189,6 +194,7 @@ function Root(): React.ReactElement {
 
 function SalaryHijackingApp(): React.ReactElement {
   const [screen, setScreen] = React.useState<ScreenKey>("salary");
+  const splashHiddenRef = React.useRef(false);
   const [dailyItems, setDailyItems] =
     React.useState<readonly DailyItem[]>(initialDailyItems);
   const [planItems, setPlanItems] =
@@ -203,9 +209,21 @@ function SalaryHijackingApp(): React.ReactElement {
   const salary = 2700000;
   const dailyBudget = 20000;
   const savedAmount = salary - plannedExpenseTotal - completedDailyTotal;
+  const hideNativeSplash = React.useCallback(() => {
+    if (splashHiddenRef.current) return;
+    splashHiddenRef.current = true;
+    void SplashScreen.hideAsync().catch(() => {
+      // Startup must remain alive even if the splash controller is unavailable.
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const timeout = setTimeout(hideNativeSplash, 2500);
+    return () => clearTimeout(timeout);
+  }, [hideNativeSplash]);
 
   return (
-    <SafeAreaView style={styles.safeRoot}>
+    <SafeAreaView onLayout={hideNativeSplash} style={styles.safeRoot}>
       <StatusBar backgroundColor="#FFFFFF" barStyle="dark-content" />
       <View style={styles.appRoot}>
         {screen === "notifications" ? null : (

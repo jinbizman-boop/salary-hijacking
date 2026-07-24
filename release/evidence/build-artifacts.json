@@ -3,7 +3,7 @@
   "versionName": "1.0.0",
   "versionCode": 202607223,
   "buildType": "debug-original-package-direct-universal",
-  "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
+  "gitCommit": "bbb7410fbbaeb784b9a4026f65154f94794ac0b4",
   "minSdk": 24,
   "targetSdk": 35,
   "abis": [
@@ -589,12 +589,11 @@
     "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
     "generatedAt": "2026-07-22T17:56:30+09:00"
   },
-  "phoneTargetDebugApkSha256": "06CA2E5ACD93E66020A1C406EC88113095F731DEEC553E821D96ABCC9E4A3DDA",
-  "phoneTargetDebugApkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-direct-current-universal.apk",
-  "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-original-direct-current-universal.apk",
+  "phoneTargetDebugApkSha256": "F838C2968698CB4A109116382A037C0E0DB2AEE402082A33503ED047C1E9E050",
+  "phoneTargetDebugApkPath": "artifacts/android/salary-hijacking-direct-current-arm64-splash-hide.apk",
+  "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-direct-current-arm64-splash-hide.apk",
   "phoneTargetDebugApkAbis": [
-    "arm64-v8a",
-    "x86_64"
+    "arm64-v8a"
   ],
   "phoneTargetDebugApkAbiFilterVerified": true,
   "phoneTargetDebugApkExpoCoreLibs": [
@@ -1003,68 +1002,225 @@
   "lastEvidenceRefreshAtKst": "2026-07-23T19:50:01+09:00",
   "latestPhysicalPhoneCrashTriage": "artifacts/qa/physical-phone-crash-triage-20260723-ready/summary.json",
   "latestPhysicalPhoneQaSummary": "release/evidence/physical-phone/physical-phone-qa-summary.json",
-  "latestEmulatorLifecycleProof": "artifacts/qa/final-qa-universal-lifecycle-20260723/summary.json",
+  "latestEmulatorLifecycleProof": "artifacts/qa/safe-current-splash-hide-universal-lifecycle-20260725/summary.json",
   "lastStaticApkInspectionAt": "2026-07-23T10:21:12.024Z",
   "lastStaticApkInspectionAtKst": "2026-07-23T19:21:12+09:00",
-  "latestStaticApkInspection": "artifacts/qa/apk-final-qa-universal-static-inspection-20260723.json",
+  "latestStaticApkInspection": "artifacts/qa/apk-safe-current-splash-hide-universal-static-inspection-20260725.json",
   "latestStaticApkInspectionPass": true,
   "latestStaticApkInspectionTestLog": "artifacts/qa/inspect-android-apk-static-cli-green-20260723.log",
   "latestStaticApkInspectionRedLog": "artifacts/qa/inspect-android-apk-static-cli-red-20260723.log",
   "latestStaticApkInspectionRunLog": "artifacts/qa/inspect-android-apk-static-run-20260723.log",
   "latestStaticApkSignerVerifyLog": "artifacts/qa/apk-final-qa-universal-apksigner-verify-20260723.log",
   "latestStaticApkInspectionSummary": {
-    "apkSha256": "FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8",
-    "bundleSha256": "8CADA9CF4815CF41E0523D57BD7AA9CAA86D0A8656E24462916ED32DBF41D49C",
+    "schemaVersion": 1,
+    "generatedAt": "2026-07-24T21:51:00.785Z",
+    "purpose": "Static inspection for Samsung/ARM64 startup crash triage when no physical phone is attached. This does not replace physical logcat QA.",
+    "apkPath": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\artifacts\\android\\salary-hijacking-qa-safe-current-splash-hide-universal.apk",
+    "apkSha256": "EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD",
+    "bundleSha256": "68290EB570075D3AB6992399916B45719D6B88FE0BAE0E7EF936F44F7933FB43",
+    "bundleBytes": 2421361,
+    "hasBundle": true,
     "nativeAbis": [
       "arm64-v8a",
       "x86_64"
     ],
     "arm64LibCount": 15,
     "x86_64LibCount": 15,
-    "hasBundle": true,
-    "pass": true
+    "requiredArm64Libs": [
+      {
+        "name": "lib/arm64-v8a/libexpo-modules-core.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libhermes.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libreactnative.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libreanimated.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/librnscreens.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libworklets.so",
+        "present": true
+      }
+    ],
+    "requiredX86_64Libs": [
+      {
+        "name": "lib/x86_64/libexpo-modules-core.so",
+        "present": true
+      },
+      {
+        "name": "lib/x86_64/libhermes.so",
+        "present": true
+      },
+      {
+        "name": "lib/x86_64/libreactnative.so",
+        "present": true
+      },
+      {
+        "name": "lib/x86_64/libreanimated.so",
+        "present": true
+      },
+      {
+        "name": "lib/x86_64/librnscreens.so",
+        "present": true
+      },
+      {
+        "name": "lib/x86_64/libworklets.so",
+        "present": true
+      }
+    ],
+    "requiredBundleMarkers": [
+      {
+        "marker": "1.0.1-android-safe-entry",
+        "present": true
+      },
+      {
+        "marker": "android-safe-entry",
+        "present": true
+      },
+      {
+        "marker": "AppRegistry.registerComponent",
+        "present": true
+      }
+    ],
+    "forbiddenBundleMarkers": [
+      {
+        "marker": "android-direct-entry",
+        "present": false
+      },
+      {
+        "marker": "ExpoRoot",
+        "present": false
+      },
+      {
+        "marker": "salary-hijacking-android-rc-root",
+        "present": false
+      },
+      {
+        "marker": "CleanFintechScreen",
+        "present": false
+      },
+      {
+        "marker": "stable-home",
+        "present": false
+      },
+      {
+        "marker": "mock-only",
+        "present": false
+      },
+      {
+        "marker": "expo-router/entry",
+        "present": false
+      }
+    ],
+    "pass": true,
+    "rawDeviceIdentifiersStored": false,
+    "rawLogcatStored": false,
+    "secretValuesStored": false
   },
   "finalStableQaApk": {
     "fileName": "salary-hijacking-qa-universal.apk",
-    "sha256": "FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8",
-    "sizeBytes": 93983937,
-    "sourceApk": "artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk",
     "apkPath": "artifacts/android/salary-hijacking-qa-universal.apk",
-    "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
     "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk",
-    "sha256Path": "artifacts/android/salary-hijacking-qa-universal.apk.sha256",
-    "downloadsSha256Path": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk.sha256",
-    "artifactMirrorSha256Path": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk.sha256",
-    "manifest": "artifacts/android/final-qa-apk-manifest.json",
-    "staticInspection": "artifacts/qa/apk-final-qa-universal-static-inspection-20260723.json",
-    "apksignerVerifyLog": "artifacts/qa/apk-final-qa-universal-apksigner-verify-20260723.log",
-    "syncLog": "artifacts/qa/sync-final-qa-apk-artifact-run-20260723.log",
-    "testLog": "artifacts/qa/sync-final-qa-apk-artifact-green-20260723-final.log",
-    "updatedAt": "2026-07-23T19:40:09+09:00",
-    "emulatorLifecycleProof": "artifacts/qa/final-qa-universal-lifecycle-20260723/summary.json",
-    "emulatorLifecycleLog": "artifacts/qa/collect-final-qa-universal-lifecycle-20260723-rerun.log",
+    "sha256": "EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD",
+    "sizeBytes": 93983937,
+    "emulatorLifecycleProof": "artifacts/qa/safe-current-splash-hide-universal-lifecycle-20260725/summary.json",
     "emulatorColdStarts": "10/10 PASS",
     "emulatorBackgroundResume": "10/10 PASS",
     "emulatorFatalMarkerCount": 0,
-    "launcherMonkeyProof": "artifacts/qa/final-qa-universal-launcher-monkey-20260723/summary.json",
-    "launcherMonkeyLog": "artifacts/qa/final-qa-universal-launcher-monkey-20260723/logcat-rerun.txt",
+    "launcherMonkeyProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
     "launcherMonkeyStatus": "PASS",
-    "runtimeUpdatedAt": "2026-07-23T19:45:59+09:00",
-    "upgradeInstallProof": "artifacts/qa/final-qa-universal-upgrade-from-direct-20260723/summary.json",
-    "upgradeInstallStatus": "PASS_FROM_PREVIOUS_ORIGINAL_PACKAGE_UNIVERSAL_APK_ON_EMULATOR",
+    "upgradeInstallProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
+    "upgradeInstallStatus": "PASS install -r over same-version universal APK",
     "upgradeColdStarts": "10/10 PASS",
     "upgradeBackgroundResume": "10/10 PASS",
-    "upgradeFatalMarkerCount": 0,
-    "upgradeUpdatedAt": "2026-07-23T19:50:01+09:00",
-    "postCleanEmulatorLifecycleProof": "artifacts/qa/final-qa-universal-lifecycle-20260723-post-clean/summary.json",
-    "postCleanEmulatorLifecycleLog": "artifacts/qa/collect-final-qa-universal-lifecycle-20260723-post-clean.log",
-    "postCleanColdStarts": "10/10 PASS",
-    "postCleanBackgroundResume": "10/10 PASS",
-    "postCleanFatalMarkerCount": 0,
-    "postCleanRuntimeUpdatedAt": "2026-07-23T20:03:34+09:00"
+    "upgradeFatalMarkerCount": 0
   },
   "fileName": "salary-hijacking-qa-universal.apk",
-  "latestStableQaLauncherProof": "artifacts/qa/final-qa-universal-launcher-monkey-20260723/summary.json",
-  "latestStableQaLauncherLog": "artifacts/qa/final-qa-universal-launcher-monkey-20260723/logcat-rerun.txt",
-  "latestStableQaUpgradeProof": "artifacts/qa/final-qa-universal-upgrade-from-direct-20260723/summary.json"
+  "latestStableQaLauncherProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
+  "latestStableQaLauncherLog": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/launcher-monkey.txt",
+  "latestStableQaUpgradeProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
+  "latestDirectSplashHideDiagnosticApks": {
+    "status": "SPLIT_APKS_CURRENT_HEAD_DIAGNOSTIC_NOT_FINAL_QA_RELEASE",
+    "updatedAt": "2026-07-25T05:47:00+09:00",
+    "buildInfo": "artifacts/android/build-info-direct-splash-hide.json",
+    "emulatorLifecycleProof": "artifacts/qa/direct-x86_64-splash-hide-lifecycle-20260725-rerun/summary.json",
+    "universalRebuildAttempt": "artifacts/qa/build-universal-splash-hide-timeout-20260725.txt",
+    "artifacts": [
+      {
+        "name": "salary-hijacking-direct-current-arm64-splash-hide.apk",
+        "applicationId": "com.salaryhijacking.mobile",
+        "versionName": "1.0.0",
+        "versionCode": 202607250,
+        "buildType": "debug-direct-arm64-splash-hide",
+        "minSdk": 24,
+        "targetSdk": 35,
+        "abis": [
+          "arm64-v8a"
+        ],
+        "verifiedOn": "metadata/signature only; physical ARM64 device not connected",
+        "path": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-direct-current-arm64-splash-hide.apk",
+        "sizeBytes": 57314813,
+        "sha256": "F838C2968698CB4A109116382A037C0E0DB2AEE402082A33503ED047C1E9E050",
+        "signed": true,
+        "signingScheme": "APK Signature Scheme v2 debug cert",
+        "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-direct-current-arm64-splash-hide.apk"
+      },
+      {
+        "name": "salary-hijacking-direct-current-x86_64-splash-hide.apk",
+        "applicationId": "com.salaryhijacking.mobile",
+        "versionName": "1.0.0",
+        "versionCode": 202607249,
+        "buildType": "debug-direct-x86_64-splash-hide",
+        "minSdk": 24,
+        "targetSdk": 35,
+        "abis": [
+          "x86_64"
+        ],
+        "verifiedOn": "emulator clean install, cold start 10/10, target fatal scan 0",
+        "path": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-direct-current-x86_64-splash-hide.apk",
+        "sizeBytes": 57154000,
+        "sha256": "0F3B5108FA978F965BDFB701033099E31B92584E149F9FA79ED6333ABA0F6F28",
+        "signed": true,
+        "signingScheme": "APK Signature Scheme v2 debug cert",
+        "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-direct-current-x86_64-splash-hide.apk"
+      }
+    ]
+  },
+  "latestSafeSplashHideUniversalQaApk": {
+    "apkPath": "artifacts/android/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
+    "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
+    "sha256": "EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD",
+    "sizeBytes": 93983937,
+    "buildInfo": "artifacts/android/build-info-safe-current-splash-hide-universal.json",
+    "sha256Path": "artifacts/android/salary-hijacking-qa-safe-current-splash-hide-universal.apk.sha256",
+    "sourceApk": "artifacts/android/salary-hijacking-original-direct-current-universal.apk",
+    "replacementBundle": "D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260725-splash-hide-v2/index.android.bundle",
+    "aaptBadgingLog": "artifacts/qa/apk-safe-current-splash-hide-universal-aapt-badging-20260725.log",
+    "apksignerVerifyLog": "artifacts/qa/apk-safe-current-splash-hide-universal-apksigner-verify-20260725.log",
+    "emulatorLifecycleProof": "artifacts/qa/safe-current-splash-hide-universal-lifecycle-20260725/summary.json",
+    "physicalPhoneStatus": "BLOCKED_NO_ATTACHED_PHYSICAL_PHONE",
+    "status": "EMULATOR_PASS_PHYSICAL_PHONE_BLOCKED"
+  },
+  "latestSourcePackagedHead": "bbb7410fbbaeb784b9a4026f65154f94794ac0b4",
+  "latestSourcePackagedApk": "artifacts/android/salary-hijacking-qa-universal.apk",
+  "latestSourcePackagedApkSha256": "EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD",
+  "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
+  "latestSourceGitStatusSha256": "EC1CCA7EF17B92F4F77797FD2B1695E145FA137AEFEBEE4EB880546D2D7F0F7A",
+  "latestSourceDirtyMobileSourcePathCount": 4,
+  "latestSourceDirtyMobileSourcePaths": [
+    "apps/mobile/scripts/expo-local-android-debug-build.mjs",
+    "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
+    "apps/mobile/src/android-direct-entry.tsx",
+    "apps/mobile/src/android-safe-entry.tsx"
+  ]
 }

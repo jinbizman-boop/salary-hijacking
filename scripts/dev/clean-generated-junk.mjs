@@ -10,6 +10,7 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
   ".expo-shared",
   ".gradle",
   ".gradle-local-debug",
+  ".gradle-local-debug-direct",
   ".localappdata",
   ".local-native-bin",
   ".metro-cache",
@@ -45,6 +46,10 @@ const DEPENDENCY_NATIVE_JUNK_RELATIVE_PATHS = [".cxx", ".gradle", "build"];
 const ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES = new Set([
   "salary-hijacking-qa-universal.apk",
   "salary-hijacking-qa-universal.apk.sha256",
+  "salary-hijacking-qa-safe-current-splash-hide-universal.apk",
+  "salary-hijacking-qa-safe-current-splash-hide-universal.apk.sha256",
+  "salary-hijacking-qa-safe-current-splash-hide-universal.apk.idsig",
+  "salary-hijacking-qa-safe-current-splash-hide-universal.apk.verify.txt",
   "salary-hijacking-original-safe-patched-current-universal.apk",
   "salary-hijacking-original-safe-patched-current-universal.apk.sha256",
   "salary-hijacking-original-safe-patched-current-universal.apk.idsig",
@@ -52,6 +57,12 @@ const ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES = new Set([
   "salary-hijacking-qa-direct-current-universal.apk",
   "salary-hijacking-qa-direct-current-universal.apk.idsig",
   "salary-hijacking-original-direct-current-universal.apk",
+  "salary-hijacking-original-safe-current-arm64.apk",
+  "salary-hijacking-original-safe-current-x86_64.apk",
+  "salary-hijacking-direct-current-arm64.apk",
+  "salary-hijacking-direct-current-x86_64.apk",
+  "salary-hijacking-direct-current-arm64-splash-hide.apk",
+  "salary-hijacking-direct-current-x86_64-splash-hide.apk",
 ]);
 const ANDROID_APK_ARTIFACT_FILE_PATTERN =
   /^salary-hijacking.*\.apk(?:\.sha256|\.idsig|\.verify\.txt)?$|^probe-copy\.apk$/u;

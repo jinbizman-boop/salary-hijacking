@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { CommunityWriteForm } from "./features/community/components/CommunityWriteForm";
@@ -67,6 +68,10 @@ type DirectScreen =
   | "notifications";
 
 const DIRECT_ENTRY_VERSION = "1.0.0-android-router-bypass";
+
+void SplashScreen.preventAutoHideAsync().catch(() => {
+  // The direct Android QA entry must never crash if native splash is already hidden.
+});
 const tabItems: readonly Readonly<{
   key: DirectTab;
   label: string;
@@ -175,10 +180,23 @@ function AndroidDirectRoot(): React.ReactElement {
 
 function AndroidDirectApp(): React.ReactElement {
   const [screen, setScreen] = React.useState<DirectScreen>("salary");
+  const splashHiddenRef = React.useRef(false);
+  const hideNativeSplash = React.useCallback(() => {
+    if (splashHiddenRef.current) return;
+    splashHiddenRef.current = true;
+    void SplashScreen.hideAsync().catch(() => {
+      // Keep the UI alive even if the platform reports the splash was not visible.
+    });
+  }, []);
+
+  React.useEffect(() => {
+    const timeout = setTimeout(hideNativeSplash, 2500);
+    return () => clearTimeout(timeout);
+  }, [hideNativeSplash]);
 
   return (
     <SafeAreaProvider>
-      <View style={styles.root}>
+      <View onLayout={hideNativeSplash} style={styles.root}>
         <View style={styles.body}>{renderScreen(screen, setScreen)}</View>
         {screen === "notifications" ? null : (
           <View
