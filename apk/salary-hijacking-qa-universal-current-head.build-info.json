@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-07-24T22:26:28.193Z",
+  "applicationId": "com.salaryhijacking.mobile",
+  "versionName": "1.0.0",
+  "versionCode": 202607223,
+  "buildType": "patched-universal-debug-safe-entry-splash-hide",
+  "gitCommit": "9cba4f83d609a67c282393a3ecd3ed11e779c818",
+  "minSdk": 24,
+  "targetSdk": 35,
+  "abis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "signed": true,
+  "signingScheme": "APK Signature Scheme v2/v3 debug cert",
+  "sha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
+  "sizeBytes": 93983937,
+  "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-universal.apk",
+  "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
+  "sourceApk": "artifacts/android/salary-hijacking-original-direct-current-universal.apk",
+  "replacementBundle": "D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260725-current-head-9cba4f8/index.android.bundle",
+  "buildCommand": "react-native bundle safe entry from HEAD 9cba4f8 -> hermesc -> patch-android-apk-bundle.mjs",
+  "evidence": {
+    "bundleLog": "artifacts/qa/bundle-safe-entry-20260725-current-head-9cba4f8.log",
+    "hermesLog": "artifacts/qa/hermes-safe-entry-20260725-current-head-9cba4f8.log",
+    "patchLog": "artifacts/qa/patch-safe-entry-current-head-9cba4f8-universal-20260725.log",
+    "aaptBadgingLog": "artifacts/qa/apk-current-head-9cba4f8-aapt-badging-20260725.log",
+    "apksignerVerifyLog": "artifacts/qa/apk-current-head-9cba4f8-apksigner-verify-20260725.log",
+    "staticInspection": "artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json",
+    "emulatorLifecycleProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
+    "upgradeProof": "artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json"
+  },
+  "qaStatus": {
+    "emulatorInstall": "PASS",
+    "emulatorColdStart": "PASS 10/10",
+    "emulatorBackgroundResume": "PASS 10/10",
+    "emulatorFatalMarkerCount": 0,
+    "upgradeInstall": "PASS install -r over same-version universal APK",
+    "upgradeColdStart": "PASS 10/10",
+    "upgradeBackgroundResume": "PASS 10/10",
+    "upgradeFatalMarkerCount": 0,
+    "physicalPhone": "BLOCKED_NO_ATTACHED_PHYSICAL_PHONE"
+  },
+  "notes": [
+    "This is a debug-signed release-like QA rescue APK candidate with the latest safe Android entry and explicit native splash hide.",
+    "It is not a production AAB and does not imply Google Play submission readiness.",
+    "Physical Samsung crash root cause remains unclosed until a phone logcat is captured."
+  ]
+}
