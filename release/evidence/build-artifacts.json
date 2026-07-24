@@ -1224,16 +1224,13 @@
   },
   "latestSourcePackagedHead": "9cba4f83d609a67c282393a3ecd3ed11e779c818",
   "latestSourcePackagedApk": "artifacts/android/salary-hijacking-qa-universal.apk",
-  "latestSourcePackagedApkSha256": "EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD",
+  "latestSourcePackagedApkSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
   "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
   "latestSourceGitStatusSha256": null,
-  "latestSourceDirtyMobileSourcePathCount": 4,
-  "latestSourceDirtyMobileSourcePaths": [
-    "apps/mobile/scripts/expo-local-android-debug-build.mjs",
-    "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
-    "apps/mobile/src/android-direct-entry.tsx",
-    "apps/mobile/src/android-safe-entry.tsx"
-  ],
+  "latestSourceDirtyMobileSourcePathCount": 0,
+  "latestSourceDirtyMobileSourcePaths": [],
+  "latestCurrentHeadEmulatorRerunProof": "artifacts/qa/current-head-c3b019c-emulator-rerun-20260725/summary.json",
+  "latestCurrentHeadEmulatorRerunStatus": "PASS clean install, cold start 10/10, background/resume 10/10, fatal marker count 0",
   "currentHeadQaApkDownload": {
     "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
     "artifactBranch": "codex-apk-artifacts-20260725-current-head",

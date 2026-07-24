@@ -139,6 +139,7 @@ Updated: 2026-07-24 KST
 - Current-head static APK inspection: PASS (`artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json`)
 - Current-head emulator clean install lifecycle: PASS, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json`)
 - Current-head same-version upgrade lifecycle: PASS, `install -r`, launcher monkey, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json`)
+- Current-head emulator rerun after latest evidence cleanup: PASS, clean install, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-c3b019c-emulator-rerun-20260725/summary.json`)
 
 - Current diagnostic ARM64 path: `artifacts/android/salary-hijacking-original-safe-current-arm64.apk`
 - Current diagnostic ARM64 SHA-256: `8EEDCF261C1B511D2E0BE901E14497ACBDA3487877BBF54F1ED71D5AB7255701`

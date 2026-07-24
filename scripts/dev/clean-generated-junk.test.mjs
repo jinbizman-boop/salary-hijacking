@@ -407,6 +407,14 @@ test("removes stale Android APK artifacts while preserving final QA and triage A
       repoApkRoot,
       "salary-hijacking-qa-universal.apk",
     );
+    const keepFinalSignature = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk.idsig",
+    );
+    const keepFinalVerifyLog = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk.verify.txt",
+    );
     const keepOriginal = path.join(
       repoApkRoot,
       "salary-hijacking-original-safe-patched-current-universal.apk",
@@ -431,6 +439,8 @@ test("removes stale Android APK artifacts while preserving final QA and triage A
     const unrelatedText = path.join(downloadsRoot, "salary-hijacking-note.txt");
 
     await touch(keepFinal, "PK\u0003\u0004");
+    await touch(keepFinalSignature, "signature");
+    await touch(keepFinalVerifyLog, "verified");
     await touch(keepOriginal, "PK\u0003\u0004");
     await touch(keepDiagnostic, "PK\u0003\u0004");
     await touch(keepUpgradeBase, "PK\u0003\u0004");
@@ -447,6 +457,8 @@ test("removes stale Android APK artifacts while preserving final QA and triage A
 
     assert.equal(result.errors.length, 0);
     assert.equal(existsSync(keepFinal), true);
+    assert.equal(existsSync(keepFinalSignature), true);
+    assert.equal(existsSync(keepFinalVerifyLog), true);
     assert.equal(existsSync(keepOriginal), true);
     assert.equal(existsSync(keepDiagnostic), true);
     assert.equal(existsSync(keepUpgradeBase), true);

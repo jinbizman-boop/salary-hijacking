@@ -115,6 +115,7 @@ Android physical-device crash verification is not complete until `adb logcat`, i
 - Static bundle/native inspection: PASS (`artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json`)
 - x86_64 emulator clean-install lifecycle: PASS, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json`)
 - x86_64 emulator same-version upgrade lifecycle: PASS, `install -r`, launcher monkey, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json`)
+- x86_64 emulator rerun after current HEAD/evidence cleanup: PASS, clean install, cold start 10/10, background/resume 10/10, fatal marker count 0 (`artifacts/qa/current-head-c3b019c-emulator-rerun-20260725/summary.json`)
 - Physical Samsung/ARM64 install/cold-start/logcat: NOT VERIFIED; no physical Android phone is connected to adb in this workspace.
 
 ## Next Exact Action

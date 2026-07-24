@@ -46,6 +46,8 @@ const DEPENDENCY_NATIVE_JUNK_RELATIVE_PATHS = [".cxx", ".gradle", "build"];
 const ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES = new Set([
   "salary-hijacking-qa-universal.apk",
   "salary-hijacking-qa-universal.apk.sha256",
+  "salary-hijacking-qa-universal.apk.idsig",
+  "salary-hijacking-qa-universal.apk.verify.txt",
   "salary-hijacking-qa-safe-current-splash-hide-universal.apk",
   "salary-hijacking-qa-safe-current-splash-hide-universal.apk.sha256",
   "salary-hijacking-qa-safe-current-splash-hide-universal.apk.idsig",
