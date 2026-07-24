@@ -796,7 +796,11 @@
       "upgradeFatalMarkerCount": 0,
       "emulatorLifecycleProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json"
     },
-    "latestSafeSplashHideUniversalSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482"
+    "latestSafeSplashHideUniversalSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
+    "currentHeadQaApkDownloadUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
+    "currentHeadQaApkArtifactBranch": "codex-apk-artifacts-20260725-current-head",
+    "currentHeadQaApkArtifactCommit": "598f13d",
+    "currentHeadQaApkDownloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
   },
   "privacy": {
     "containsEasToken": false,
@@ -968,9 +972,20 @@
     "upgradeBackgroundResume": "10/10 PASS",
     "upgradeFatalMarkerCount": 0,
     "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
-    "cleanInstallProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json"
+    "cleanInstallProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
+    "downloadUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
+    "artifactBranch": "codex-apk-artifacts-20260725-current-head",
+    "artifactCommit": "598f13d",
+    "downloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
   },
   "latestStableQaLauncherProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
   "latestStableQaLauncherLog": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/launcher-monkey.txt",
-  "latestStableQaUpgradeProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json"
+  "latestStableQaUpgradeProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
+  "currentHeadQaApkDownload": {
+    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
+    "artifactBranch": "codex-apk-artifacts-20260725-current-head",
+    "artifactCommit": "598f13d",
+    "sha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
+    "downloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
+  }
 }

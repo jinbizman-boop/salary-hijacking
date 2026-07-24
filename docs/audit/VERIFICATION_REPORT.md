@@ -129,6 +129,8 @@ Updated: 2026-07-24 KST
 - Current-head stable QA APK path: `artifacts/android/salary-hijacking-qa-universal.apk`
 - Current-head stable QA APK SHA-256: `DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482`
 - Current-head stable QA Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk`
+- Current-head GitHub raw download: `https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk`
+- Current-head GitHub raw download proof: `artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json`
 - Current-head safe-current alias Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk`
 - Current-head stable QA D: mirror: `D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk`
 - Current-head Git commit packaged: `9cba4f83d609a67c282393a3ecd3ed11e779c818`

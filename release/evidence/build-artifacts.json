@@ -1146,7 +1146,11 @@
     "upgradeBackgroundResume": "10/10 PASS",
     "upgradeFatalMarkerCount": 0,
     "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
-    "cleanInstallProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json"
+    "cleanInstallProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
+    "downloadUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
+    "artifactBranch": "codex-apk-artifacts-20260725-current-head",
+    "artifactCommit": "598f13d",
+    "downloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
   },
   "fileName": "salary-hijacking-qa-universal.apk",
   "latestStableQaLauncherProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
@@ -1229,5 +1233,12 @@
     "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
     "apps/mobile/src/android-direct-entry.tsx",
     "apps/mobile/src/android-safe-entry.tsx"
-  ]
+  ],
+  "currentHeadQaApkDownload": {
+    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
+    "artifactBranch": "codex-apk-artifacts-20260725-current-head",
+    "artifactCommit": "598f13d",
+    "sha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
+    "downloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
+  }
 }
