@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-28T10:26:27.029Z",
+  "purpose": "Provenance record for the release-like QA candidate APK using the full Expo Router Android entry. This is not production launch readiness evidence.",
+  "source": {
+    "head": "2bffe6157f3adda5a17dcc3e3cbaffc508cccff9",
+    "baseHeadBeforeFreeze": "c12717227f26f56185d5a3535566122a4e0062bf",
+    "tree": "fae72faced48fb4f160f96697b9f3a9ae4e5768d",
+    "fingerprint": {
+      "algorithm": "SHA-256",
+      "method": "sha256 over `git ls-tree -r HEAD` output with LF terminator",
+      "value": "BC47420490C745DBE5DC3BFF268D607585AFAA439381416D5DFD893725928398"
+    },
+    "workingTreeCleanBeforeBuildInfo": true,
+    "notes": [
+      "The source snapshot was committed before this metadata file was created so the APK can be linked to a stable source commit.",
+      "The APK artifact was generated from the same QA release-like source/config/inspector worktree before that worktree was frozen as this commit."
+    ]
+  },
+  "artifact": {
+    "apkPath": "D:/salary-hijacking-artifacts/android/salary-hijacking-qa-release-like-universal.apk",
+    "apkSha256": "E1F4F239B7D2310B5234A947CCCB5C208006072A449C48CC61F7468505601855",
+    "apkSizeBytes": 81527970,
+    "apkLastWriteTimeUtc": "2026-07-26T16:56:05.871Z",
+    "embeddedBundlePath": "assets/index.android.bundle",
+    "embeddedBundleSha256": "78F14E0ABFFE7BC5212BC9E3466E66F129C0A7561B512452FD06418FC7D86EDC",
+    "embeddedBundleSizeBytes": 2734556,
+    "looseBundlePath": "D:/salary-hijacking-artifacts/android/salary-hijacking-qa-release-like-index.android.bundle",
+    "looseBundleSha256": "AACC6AD80F568714E05DBF92C78B963F9413C087DF4EB514ABF101576D85C4FF",
+    "looseBundleSizeBytes": 5526914,
+    "looseBundleLastWriteTimeUtc": "2026-07-26T16:51:50.327Z",
+    "staticInspection": "D:/salary-hijacking-artifacts/android/salary-hijacking-qa-release-like-static-inspection.json"
+  },
+  "android": {
+    "buildType": "qaRelease",
+    "entry": "expo-router/entry",
+    "applicationId": "com.salaryhijacking.mobile",
+    "versionName": "1.0.0",
+    "versionCode": 1,
+    "minSdk": 24,
+    "targetSdk": 35,
+    "compileSdk": 35,
+    "abis": [
+      "arm64-v8a",
+      "armeabi-v7a",
+      "x86",
+      "x86_64"
+    ],
+    "launchableActivity": "com.salaryhijacking.mobile.MainActivity"
+  },
+  "signing": {
+    "signed": true,
+    "verified": true,
+    "scheme": "APK Signature Scheme v2",
+    "certificateDn": "CN=Salary Hijacking QA, O=Salary Hijacking, C=KR",
+    "certificateSha256": "EB00502F5456456DB4F3A975C7A6A44353B549FD2776F6B0BE855E7BB449D03B",
+    "publicKeySha256": "97160F792CEE7836AE4B2CFDE7CFE9BEA42BCD21546E1DB8CC7047FA985EAE38",
+    "rotationRequired": true,
+    "secretValuesStored": false
+  },
+  "embeddedConfiguration": {
+    "environment": "staging",
+    "operationsEnvironment": "staging",
+    "releaseChannel": "staging",
+    "apiBaseUrl": "https://api-staging.salaryhijacking.com",
+    "e2eBuild": false,
+    "crashReportingEnabled": true
+  },
+  "staticGuards": {
+    "safeEntryMarkersPresent": false,
+    "directEntryMarkersPresent": false,
+    "allowBackup": false,
+    "debuggablePresent": false,
+    "cleartextTrafficPresent": false,
+    "systemAlertWindowPresent": false,
+    "rawDeviceIdentifiersStored": false,
+    "rawLogcatStored": false,
+    "secretValuesStored": false
+  },
+  "runtimeGate": {
+    "d026Status": "FAIL_PENDING_RUNTIME",
+    "requiredBeforeResolving": [
+      "clean install exact APK",
+      "20 cold starts",
+      "20 background/resume cycles",
+      "full Expo Router route smoke for splash auth salary plan notifications level community profile",
+      "logcat and dumpsys exit-info with fatal exception 0 and ANR 0",
+      "staging HTTPS connectivity",
+      "auth to salary to plan to DB write/read to relaunch persistence E2E"
+    ]
+  }
+}
