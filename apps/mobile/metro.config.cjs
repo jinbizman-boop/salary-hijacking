@@ -2,7 +2,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { getDefaultConfig } = require("expo/metro-config");
 
-const substAliasRoot = process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS;
+const substAliasRoot =
+  process.env.SALARY_HIJACKING_METRO_SUBST_ALIAS ??
+  process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS;
 const useCanonicalMetroRoot =
   process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT === "1";
 const substProjectRootCandidate = substAliasRoot
@@ -15,6 +17,7 @@ const substProjectRoot =
 const projectRoot = useCanonicalMetroRoot
   ? fs.realpathSync.native(__dirname)
   : (substProjectRoot ?? __dirname);
+const canonicalProjectRoot = fs.realpathSync.native(__dirname);
 const workspaceRoot = path.resolve(projectRoot, "../..");
 const realWorkspaceRoot = fs.realpathSync.native(workspaceRoot);
 const config = getDefaultConfig(projectRoot);
@@ -46,14 +49,29 @@ function shouldAppendCanonicalNodeModules(
 
 const workspaceNodeModules = path.join(workspaceRoot, "node_modules");
 const realWorkspaceNodeModules = path.join(realWorkspaceRoot, "node_modules");
+const shouldUseCanonicalWorkspaceRoot =
+  !substAliasRoot ||
+  shouldAppendCanonicalNodeModules(
+    workspaceRoot,
+    realWorkspaceRoot,
+    process.platform,
+  );
+const shouldUseCanonicalProjectRoot =
+  (useCanonicalMetroRoot || !substAliasRoot) && shouldUseCanonicalWorkspaceRoot;
 config.watchFolders = appendUniquePath(
   config.watchFolders ?? [],
   workspaceRoot,
 );
-config.watchFolders = appendUniquePath(
-  config.watchFolders ?? [],
-  realWorkspaceRoot,
-);
+if (shouldUseCanonicalProjectRoot) {
+  config.watchFolders = appendUniquePath(
+    config.watchFolders ?? [],
+    canonicalProjectRoot,
+  );
+  config.watchFolders = appendUniquePath(
+    config.watchFolders ?? [],
+    realWorkspaceRoot,
+  );
+}
 config.watchFolders = appendUniquePath(
   config.watchFolders ?? [],
   workspaceNodeModules,
@@ -62,13 +80,7 @@ config.resolver.nodeModulesPaths = appendUniquePath(
   config.resolver.nodeModulesPaths ?? [],
   workspaceNodeModules,
 );
-if (
-  shouldAppendCanonicalNodeModules(
-    workspaceRoot,
-    realWorkspaceRoot,
-    process.platform,
-  )
-) {
+if (shouldUseCanonicalWorkspaceRoot) {
   config.watchFolders = appendUniquePath(
     config.watchFolders ?? [],
     realWorkspaceNodeModules,
@@ -702,6 +714,7 @@ Object.defineProperty(config, "__private", {
     patchMetroSerializerPolyfills,
     tryResolveWindowsDriveRootEntry,
     shouldAppendCanonicalNodeModules,
+    shouldUseCanonicalProjectRoot,
     shouldDelegateReactNativeWebResolution,
   },
 });

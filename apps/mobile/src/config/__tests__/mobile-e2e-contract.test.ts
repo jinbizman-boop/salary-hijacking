@@ -44,6 +44,7 @@ const fs = jest.requireActual<FileSystemLike>("node:fs");
 const path = jest.requireActual<PathLike>("node:path");
 const mobileRoot = path.resolve(__dirname, "../../..");
 const productionApiBaseUrl = "https://api.salaryhijacking.com";
+const stagingApiBaseUrl = "https://api-staging.salaryhijacking.com";
 const placeholderEasProjectId = "00000000-0000-4000-8000-000000000000";
 const validEasProjectId = "11111111-1111-4111-8111-111111111111";
 const originalEnv = process.env;
@@ -166,6 +167,21 @@ describe("mobile Detox E2E contract", () => {
     }
   });
 
+  it("keeps Android release-like builds away from debug signing and backup exposure", () => {
+    const buildGradle = readRequiredText("android/app/build.gradle");
+    const manifest = readRequiredText("android/app/src/main/AndroidManifest.xml");
+    const releaseBlock = buildGradle.match(/release\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+    const qaReleaseBlock =
+      buildGradle.match(/qaRelease\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+
+    expect(manifest).toContain('android:allowBackup="false"');
+    expect(buildGradle).toContain("qaRelease");
+    expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
+    expect(releaseBlock).not.toContain("matchingFallbacks = ['debug']");
+    expect(qaReleaseBlock).not.toContain("signingConfig signingConfigs.debug");
+    expect(qaReleaseBlock).not.toContain("matchingFallbacks = ['debug']");
+  });
+
   it("keeps Android custom scheme deep links on Expo Router paths instead of an /app prefix", () => {
     const config = appConfig({ config: {} });
     const intentFilters = config.android.intentFilters as ReadonlyArray<{
@@ -266,5 +282,25 @@ describe("mobile Detox E2E contract", () => {
     expect(appConfig({ config: {} }).extra.eas).toEqual({
       projectId: validEasProjectId,
     });
+  });
+
+  it("uses staging HTTPS as the release-like default API base when no explicit local URL is provided", () => {
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "development",
+      EXPO_PUBLIC_API_BASE_URL: "",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: stagingApiBaseUrl }),
+    );
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "local",
+      EXPO_PUBLIC_API_BASE_URL: "",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: "http://localhost:8787" }),
+    );
   });
 });

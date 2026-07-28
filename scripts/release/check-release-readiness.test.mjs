@@ -2971,7 +2971,7 @@ test("blocks when static APK inspection evidence is incomplete", () => {
   assert.match(report, /mobile:preview:static-apk-inspection/);
   assert.match(
     report,
-    /static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, safe-entry markers, and matching APK SHA256/,
+    /static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, Expo Router\/root markers, and matching APK SHA256/,
   );
 });
 

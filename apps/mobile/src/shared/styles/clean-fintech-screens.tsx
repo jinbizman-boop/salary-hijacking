@@ -1145,6 +1145,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           </Pressable>
           <Text style={styles.composeTitle}>글쓰기</Text>
           <Pressable
+            accessibilityLabel="게시글 작성 완료"
             accessibilityRole="button"
             accessibilityState={{
               disabled: !valid || submitting || uploadingAttachment,
@@ -1396,6 +1397,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           ))}
         </SectionCard>
         <Pressable
+          accessibilityLabel="회원가입 완료"
           accessibilityRole="button"
           accessibilityState={{ disabled: !valid || submitting }}
           disabled={!valid || submitting}
@@ -1781,6 +1783,7 @@ export function CleanFintechSettingsScreen({
             value={profileOccupationCategory}
           />
           <Pressable
+            accessibilityLabel="프로필 설정 저장"
             accessibilityRole="button"
             accessibilityState={{
               disabled: !profileSettingsValid || profileSettingsSaving,
@@ -1841,6 +1844,7 @@ export function CleanFintechSettingsScreen({
             }}
           />
           <Pressable
+            accessibilityLabel="계정 동의 설정 저장"
             accessibilityRole="button"
             accessibilityState={{ disabled: accountSettingsSaving }}
             disabled={accountSettingsSaving}
@@ -2037,6 +2041,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           </Pressable>
           <Text style={styles.composeTitle}>1:1 문의</Text>
           <Pressable
+            accessibilityLabel="1대1 문의 접수 완료"
             accessibilityRole="button"
             accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
@@ -3155,6 +3160,7 @@ export function CleanFintechPostDetailScreen({
         />
         <View style={styles.attachmentRow}>
           <Pressable
+            accessibilityLabel={liked ? "게시글 좋아요 취소" : "게시글 좋아요"}
             accessibilityRole="button"
             accessibilityState={{
               disabled: likePending || communityDetailActionBusy,
@@ -3328,6 +3334,7 @@ export function CleanFintechPostDetailScreen({
             value={commentDraft}
           />
           <Pressable
+            accessibilityLabel="댓글 등록"
             accessibilityRole="button"
             accessibilityState={{
               disabled:
@@ -3644,12 +3651,6 @@ function SalaryHomeScreen(): React.ReactElement {
 
     const nextIndex = addedExpenses.length + 1;
     const expenseTitle = expenseTitleDraft.trim() || `추가 지출 ${nextIndex}`;
-    const offlineEntry = {
-      amount,
-      icon: appIcons.expense,
-      id: `offline-expense-${nextIndex}-${amount}`,
-      name: expenseTitle,
-    } satisfies VariableExpenseEntry;
     setExpenseDraft("");
     setExpenseTitleDraft("");
 
@@ -3695,9 +3696,10 @@ function SalaryHomeScreen(): React.ReactElement {
         `서버에 지출을 기록했어요. ${formatMoney(result.netAmountMinor)}원 기준으로 다시 계산했습니다.`,
       );
     } catch {
-      setAddedExpenses((current) => [...current, offlineEntry]);
+      setExpenseDraft(String(amount));
+      setExpenseTitleDraft(expenseTitle);
       setToast(
-        `${formatMoney(amount)}원 지출을 오프라인 미리보기로 반영했어요. 서버 연결 후 다시 동기화가 필요합니다.`,
+        "서버 저장이 실패해 지출을 반영하지 않았습니다. 입력값은 유지했으니 연결을 확인한 뒤 다시 저장해 주세요.",
       );
     } finally {
       expenseCreateInFlightRef.current = false;
@@ -3929,6 +3931,7 @@ function SalaryHomeScreen(): React.ReactElement {
             value={dailyBudgetDraft}
           />
           <Pressable
+            accessibilityLabel="오늘 예산 저장"
             accessibilityRole="button"
             accessibilityState={{
               disabled: salaryHomeDailyBudgetSubmitDisabled,
@@ -4764,6 +4767,7 @@ function PlanScreen(): React.ReactElement {
           계산값으로 화면을 다시 맞춥니다.
         </Text>
         <Pressable
+          accessibilityLabel="급여 계획 서버 저장"
           accessibilityRole="button"
           accessibilityState={{ disabled: savingPayrollPlan }}
           disabled={savingPayrollPlan}
@@ -4857,6 +4861,7 @@ function PlanScreen(): React.ReactElement {
           value={planFixedExpenseAmount}
         />
         <Pressable
+          accessibilityLabel="고정 지출 서버 저장"
           accessibilityRole="button"
           accessibilityState={{ disabled: planFixedExpenseSubmitDisabled }}
           disabled={planFixedExpenseSubmitDisabled}
@@ -4921,6 +4926,7 @@ function PlanScreen(): React.ReactElement {
           value={planSavingsGoalAmount}
         />
         <Pressable
+          accessibilityLabel="고정 저축 서버 저장"
           accessibilityRole="button"
           accessibilityState={{ disabled: planSavingsGoalSubmitDisabled }}
           disabled={planSavingsGoalSubmitDisabled}
@@ -5356,6 +5362,7 @@ function LevelScreen(): React.ReactElement {
           const missionPending = submittingMissionId === mission.id;
           return (
             <Pressable
+              accessibilityLabel={`${mission.title} ${done ? "완료됨" : "열기"}`}
               accessibilityState={{ disabled: missionPending }}
               accessibilityRole="button"
               disabled={missionPending}
@@ -6264,6 +6271,7 @@ function CommunityScreen(): React.ReactElement {
         ))}
       </SectionCard>
       <Pressable
+        accessibilityLabel="커뮤니티 글쓰기 열기"
         accessibilityRole="button"
         onPress={openCommunityWrite}
         style={styles.fab}
@@ -6711,6 +6719,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
             value={email}
           />
           <Pressable
+            accessibilityLabel="비밀번호 재설정 메일 받기"
             accessibilityRole="button"
             accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
@@ -6840,6 +6849,7 @@ export function CleanFintechResetPasswordScreen({
                 {AUTH_PASSWORD_POLICY_MESSAGE}
               </Text>
               <Pressable
+                accessibilityLabel="비밀번호 변경"
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !valid || submitting }}
                 disabled={!valid || submitting}
@@ -7012,6 +7022,7 @@ function LoginScreen(): React.ReactElement {
             value={password}
           />
           <Pressable
+            accessibilityLabel="로그인"
             accessibilityRole="button"
             accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
@@ -7320,6 +7331,7 @@ function PillRow({
       <View style={styles.pillRow}>
         {items.map((item) => (
           <Pressable
+            accessibilityLabel={`${item} 탭`}
             accessibilityRole="tab"
             accessibilityState={{ disabled, selected: item === selected }}
             disabled={disabled}
@@ -7374,6 +7386,7 @@ function ToggleRow({
 }>): React.ReactElement {
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: active, disabled }}
       disabled={disabled}
@@ -7399,6 +7412,7 @@ function SmallButton({
 }>): React.ReactElement {
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}

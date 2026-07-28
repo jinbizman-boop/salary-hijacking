@@ -40,7 +40,7 @@ const write = (rootDir, relativePath, contents = "") => {
 const sha256 = (contents) =>
   createHash("sha256").update(contents).digest("hex").toUpperCase();
 
-test("plans stable final QA APK paths from the latest safe-entry source APK", () => {
+test("plans stable final QA APK paths from an explicit release-like source APK", () => {
   const rootDir = makeWorkspace();
   const sourceApk = write(rootDir, "artifacts/android/latest.apk", "APK");
 
@@ -61,6 +61,20 @@ test("plans stable final QA APK paths from the latest safe-entry source APK", ()
     "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk.sha256",
   ]);
   assert.equal(plan.sha256, sha256("APK"));
+});
+
+test("defaults final QA APK sync to the release-like QA source, not safe-entry patched APKs", () => {
+  const rootDir = makeWorkspace();
+  const sourceApk = write(
+    rootDir,
+    "artifacts/android/salary-hijacking-qa-release-like-universal.apk",
+    "APK",
+  );
+
+  const plan = buildFinalQaApkSyncPlan({ rootDir });
+
+  assert.equal(plan.sourceApk, sourceApk);
+  assert.doesNotMatch(plan.sourceApk, /safe|patched|direct/i);
 });
 
 test("copies final QA APK, writes checksum files, and records no-secret manifest", () => {

@@ -8,11 +8,11 @@ import {
 } from "./collect-mobile-preview-phone-proof.mjs";
 
 const DEFAULT_ORIGINAL_PACKAGE = "com.salaryhijacking.mobile";
-const DEFAULT_DIAGNOSTIC_PACKAGE = "com.salaryhijacking.mobile.qa.direct";
+const DEFAULT_DIAGNOSTIC_PACKAGE = "com.salaryhijacking.mobile.qa";
 const DEFAULT_ORIGINAL_APK =
-  "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk";
+  "artifacts/android/salary-hijacking-qa-release-like-universal.apk";
 const DEFAULT_DIAGNOSTIC_APK =
-  "C:/Users/PC/Downloads/salary-hijacking-qa-direct-current-universal.apk";
+  "artifacts/android/salary-hijacking-qa-release-like-isolated-universal.apk";
 const DEFAULT_OUTPUT_PATH = "artifacts/qa/physical-phone-crash-triage";
 const DEFAULT_RUNS = 10;
 const DEFAULT_KNOWN_ADB_PATHS = [
@@ -64,10 +64,10 @@ export const buildPhysicalPhoneCrashTriagePlan = ({
         proofOutputPath: `${outputPath}/original-package-proof.json`,
       },
       {
-        id: "isolated-diagnostic",
+        id: "isolated-qa-package",
         apkPath: diagnosticApkPath,
         packageName: DEFAULT_DIAGNOSTIC_PACKAGE,
-        proofOutputPath: `${outputPath}/isolated-diagnostic-proof.json`,
+        proofOutputPath: `${outputPath}/isolated-qa-package-proof.json`,
       },
     ],
   };
@@ -89,7 +89,7 @@ const isBlockedBeforeStartup = (caseResult) => {
 export const classifyPhysicalPhoneCrashTriage = (caseResults = []) => {
   const byId = new Map(caseResults.map((entry) => [entry.id, entry]));
   const original = byId.get("original-package");
-  const diagnostic = byId.get("isolated-diagnostic");
+  const diagnostic = byId.get("isolated-qa-package");
   if (!original || !diagnostic) return "INCONCLUSIVE";
 
   const originalVerified = Boolean(
@@ -194,7 +194,7 @@ export const runPhysicalPhoneCrashTriage = ({
       ORIGINAL_PACKAGE_ONLY_CRASH:
         "The original applicationId crashes while the isolated QA package opens, pointing to original package install state, signing mismatch, persisted local data, or package-specific native state.",
       DIAGNOSTIC_PACKAGE_ONLY_CRASH:
-        "The isolated QA package crashes while the original package opens; inspect the diagnostic build configuration.",
+        "The isolated QA package crashes while the original package opens; inspect the isolated release-like QA build configuration.",
       SHARED_STARTUP_CRASH:
         "Both packages crash on the same phone, pointing to a shared device/OS/native/runtime startup issue.",
       PHYSICAL_PHONE_QA_BLOCKED:

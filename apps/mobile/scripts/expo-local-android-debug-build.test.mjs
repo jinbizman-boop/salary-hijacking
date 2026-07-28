@@ -16,7 +16,7 @@ import {
   ensureAndroidDebugNdkAbiFilters,
   ensureLocalMetroEntryFile,
   expoModulesCoreCmakeDebugRoot,
-  installSafeAndroidEntryRestoreHooks,
+  installRouterAndroidEntryRestoreHooks,
   parseWindowsSubstMappings,
   patchAndroidRootJavaCompileSafeClasspath,
   patchExpoModulesCoreJavaCompileKotlinClasspath,
@@ -1567,7 +1567,7 @@ test("direct phone APK build restores the repository Android entry to safe start
   assert.equal(result.status, 0, result.failures.join("\n"));
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "./src/android-safe-entry";\n',
+    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
   );
   assert.equal(
     fs.readFileSync(
@@ -1913,13 +1913,13 @@ test("local Android debug builds keep Hermes enabled so embedded bundles parse o
   );
 });
 
-test("Android debug bundle entry can switch between safe and direct startup roots", () => {
+test("Android debug bundle entry can switch between router and direct startup roots", () => {
   const rootDir = makeWorkspace();
 
   ensureLocalMetroEntryFile({ mobileRootDir: rootDir });
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "./src/android-safe-entry";\n',
+    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
   );
 
   ensureLocalMetroEntryFile({ androidEntry: "direct", mobileRootDir: rootDir });
@@ -1928,23 +1928,23 @@ test("Android debug bundle entry can switch between safe and direct startup root
     'import "./src/android-direct-entry";\n',
   );
 
-  ensureLocalMetroEntryFile({ androidEntry: "safe", mobileRootDir: rootDir });
+  ensureLocalMetroEntryFile({ androidEntry: "router", mobileRootDir: rootDir });
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "./src/android-safe-entry";\n',
+    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
   );
 
   assert.throws(
     () =>
       ensureLocalMetroEntryFile({
-        androidEntry: "router",
+        androidEntry: "safe",
         mobileRootDir: rootDir,
       }),
     /Unsupported Android entry/,
   );
 });
 
-test("Android debug bundle entry is restored to safe entry on termination signals", () => {
+test("Android debug bundle entry is restored to router entry on termination signals", () => {
   const rootDir = makeWorkspace();
   const handlers = new Map();
   const exits = [];
@@ -1958,7 +1958,7 @@ test("Android debug bundle entry is restored to safe entry on termination signal
   };
 
   ensureLocalMetroEntryFile({ androidEntry: "direct", mobileRootDir: rootDir });
-  installSafeAndroidEntryRestoreHooks({
+  installRouterAndroidEntryRestoreHooks({
     mobileRootDir: rootDir,
     processObject: fakeProcess,
   });
@@ -1967,7 +1967,7 @@ test("Android debug bundle entry is restored to safe entry on termination signal
 
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "./src/android-safe-entry";\n',
+    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
   );
   assert.deepEqual(exits, [143]);
 });
@@ -2418,7 +2418,7 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   );
   assert.equal(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "./src/android-safe-entry";\n',
+    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
   );
   assert.equal(
     fs.readFileSync(

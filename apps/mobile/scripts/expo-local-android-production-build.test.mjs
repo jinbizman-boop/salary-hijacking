@@ -250,14 +250,14 @@ test("production AAB runner copies only a verified AAB archive to the release pa
   assert.equal(calls[2].args[0], "bundleRelease");
   assert.equal(calls[2].options.env.ANDROID_HOME, sdkRoot);
   assert.equal(calls[2].options.env.ANDROID_SDK_ROOT, sdkRoot);
-  assert.match(
-    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    /\.\/src\/android-safe-entry/u,
+  const androidEntry = fs.readFileSync(
+    path.join(rootDir, "index.android.js"),
+    "utf8",
   );
-  assert.match(
-    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    /\.\/src\/android-safe-entry/u,
-  );
+  assert.match(androidEntry, /react-native-gesture-handler/u);
+  assert.match(androidEntry, /expo-router\/entry/u);
+  assert.doesNotMatch(androidEntry, /android-safe-entry/u);
+  assert.doesNotMatch(androidEntry, /android-direct-entry/u);
   assert.match(
     fs.readFileSync(
       path.join(rootDir, "android", "app", "build.gradle"),

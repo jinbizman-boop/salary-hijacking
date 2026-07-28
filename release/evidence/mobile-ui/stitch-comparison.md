@@ -2,6 +2,8 @@
 
 ## Summary
 
+Truthful status update: prior wording in this file that described the Stitch set as `PASS 305/305` has been withdrawn. `docs/audit/IMPLEMENTATION_MATRIX.csv` is the single truth source; D-013 / Stitch production UI completion remains `UNVERIFIED` until production route interaction, native visual parity, release-like APK, and physical Android evidence are available.
+
 - Source ZIP: `C:/Users/PC/Downloads/stitch_salary_hijacking_design_system_classified.zip`
 - Source ZIP paths: recorded in `docs/design/stitch/2026-07-16/source-zips/source-zips-manifest.json`; raw ZIPs are not committed.
 - Canonical references: `docs/design/stitch/2026-07-16/screens` and `docs/design/stitch/2026-07-16/html`.
@@ -9,9 +11,9 @@
 - Extraction rule: Stitch `screen.png`, `code.html`, and `DESIGN.md` were used only to extract tokens and structure. Stitch HTML was not pasted into React Native.
 - Runtime policy: server-authority financial calculations, loading/error/empty states, privacy protection, and ad/finance data separation remain intact.
 - Classified design inventory: 304 supplied Stitch items plus 1 synthetic SCR-029 row, 305 matrix rows total.
-- Matrix status as of this report: PASS 305 / PARTIAL 0 / FAIL 0 / BLOCKED 0.
+- Matrix status as of this report: withdrawn. Current matrix truth is `UNVERIFIED` for D-013 / Stitch production UI completion, with inventory integrity only verified.
 - Artifact type count: screen 224, modal 41, bottom_sheet 17, multi_state_board 14, flow_board 9.
-- Current audit evidence: `docs/qa/STITCH_IMPLEMENTATION_MATRIX_AUDIT.md` and `docs/qa/STITCH_EVIDENCE_STATUS.md`. This report proves classified inventory coverage and synchronized native visual/test evidence for all tracked Stitch rows. It does not claim physical Android phone QA, production AAB, Play submission, or final release-like QA APK completion.
+- Current audit evidence: `artifacts/qa/stitch-matrix-audit-current.json` and `artifacts/qa/stitch-matrix-audit-current.md`. This report proves classified inventory mapping integrity only; implementation and interaction completion remain governed by `docs/audit/IMPLEMENTATION_MATRIX.csv`.
 
 ## Screen Matrix
 
@@ -50,7 +52,7 @@
 
 ## Verification
 
-- `node scripts/qa/audit-stitch-implementation-matrix.mjs` PASS, 305/305 tracked rows.
+- `node scripts/qa/audit-stitch-implementation-matrix.mjs` PASS for matrix/catalog integrity; this is not a production UI completion PASS.
 - `node scripts/qa/sync-stitch-evidence-status.mjs` PASS, 305 updated / 0 missing.
 - `corepack pnpm --filter @salary-hijacking/mobile run lint` PASS on 2026-07-25.
 - `corepack pnpm --filter @salary-hijacking/mobile run typecheck` PASS on 2026-07-25.
@@ -70,7 +72,7 @@
 
 ## Remaining Visual Risk
 
-- The classified Stitch matrix is synchronized as PASS 305/305, but physical Android screenshots are not a substitute for the web/capture evidence yet because the current emulator surface capture is black in the device display/lock state.
+- The classified Stitch matrix is synchronized as inventory, but D-013 remains `UNVERIFIED`; physical Android screenshots are not a substitute for production route interaction evidence yet because the current emulator surface capture is black in the device display/lock state.
 - 41 modal, 17 bottom-sheet, 14 multi-state-board, and 9 flow-board items are mapped; 7 representative modal/bottom-sheet rows now have direct native evidence, but the remaining variants still need interaction-level proof.
 - Evidence synchronization details are recorded in `docs/qa/STITCH_EVIDENCE_STATUS.md`.
 - Physical Android phone QA remains blocked until a device is connected. Native font rendering, actual keyboard resize behavior, notification tap behavior, cold-start logcat proof, and physical install/persistence proof must pass before a 100% launch-ready claim.

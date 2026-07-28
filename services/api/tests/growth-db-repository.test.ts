@@ -318,6 +318,10 @@ describe("Neon growth repository", () => {
     expect(calls[0]?.operationName).toBe("growth.completeContent");
     expect(calls[0]?.sqlText).toContain("public.growth_content_items");
     expect(calls[0]?.sqlText).toContain("public.user_level_content_progress");
+    expect(calls[0]?.sqlText).toContain(
+      "on conflict (user_id, content_id, completion_date)",
+    );
+    expect(calls[0]?.sqlText).toContain("on conflict (user_id)");
     expect(calls[0]?.sqlText).toContain("saved_progress.newly_completed");
     expect(calls[0]?.params).toContain(userId);
     expect(calls[0]?.params).toContain(contentId);

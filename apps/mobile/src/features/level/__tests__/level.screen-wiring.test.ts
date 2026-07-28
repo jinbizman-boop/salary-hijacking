@@ -25,6 +25,9 @@ describe("level tab screen wiring", () => {
     expect(source).toContain("LevelHeroCard");
     expect(source).toContain("LevelActionGrid");
     expect(source).not.toContain("<XpRewardToast");
+    expect(source).toContain("createMobileGrowthApi");
+    expect(source).toContain("loadGrowthDashboardSnapshot");
+    expect(source).toContain("loadGrowthContentForType");
     expect(source).toContain("/api/v1/growth/dashboard");
     expect(source).toContain("normalizeGrowthDashboardForLevel");
     expect(source).toContain("normalizeGrowthDashboardForTest");

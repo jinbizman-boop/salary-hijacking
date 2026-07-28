@@ -32,7 +32,8 @@ describe("notifications screen wiring", () => {
     expect(source).not.toContain("bottomTabs");
     expect(source).toContain("useRouter");
     expect(source).toContain("새로운 알림이 있어요");
-    expect(source).toContain("내 급여 납치 현황 5,780,000원 달성");
+    expect(source).toContain("내 급여 납치 현황 목표 달성");
+    expect(source).not.toMatch(/5,780,000|5,500,000/u);
     expect(source).toContain(
       "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
     );
@@ -71,6 +72,9 @@ describe("notifications screen wiring", () => {
     const routeSource = readFileSync(routePath, "utf8");
     const componentSource = readFileSync(componentPath, "utf8");
     expect(routeSource).toContain("NotificationSettingsScreen");
+    expect(routeSource).toContain("createMobileNotificationsApi");
+    expect(routeSource).toContain("loadNotificationPreferences");
+    expect(routeSource).toContain("saveNotificationPreferences");
     expect(routeSource).toContain("Linking.openSettings");
     expect(componentSource).toContain("알림 설정");
     expect(componentSource).toContain("푸시 알림");

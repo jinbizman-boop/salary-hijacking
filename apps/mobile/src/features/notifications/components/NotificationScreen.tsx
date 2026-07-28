@@ -15,6 +15,7 @@ import {
   NOTIFICATIONS_PATH,
   NOTIFICATIONS_UNREAD_COUNT_PATH,
 } from "../constants";
+import type { NotificationItem as ApiNotificationItem } from "../types";
 
 const SCREEN_VERSION = "5.3.0-notifications-stitch-korean";
 const TEXT_BLACK = "#191B1F";
@@ -30,7 +31,8 @@ export type NotificationHref =
   | "/level/english"
   | "/level/health";
 
-type NotificationItem = Readonly<{
+type ScreenNotificationItem = Readonly<{
+  apiItem?: ApiNotificationItem;
   href: NotificationHref;
   icon: ImageSourcePropType;
   id: string;
@@ -41,10 +43,15 @@ type NotificationItem = Readonly<{
 }>;
 
 export type NotificationScreenProps = Readonly<{
-  onBack?: () => void;
-  onOpenHref?: (href: NotificationHref) => void;
-  onRetry?: () => void;
-  onSettings?: () => void;
+  apiItems?: readonly ApiNotificationItem[] | undefined;
+  isRefreshing?: boolean;
+  onBack?: (() => void) | undefined;
+  onMarkAllRead?: (() => void) | undefined;
+  onOpenNotification?: ((item: ApiNotificationItem) => void) | undefined;
+  onOpenHref?: ((href: NotificationHref) => void) | undefined;
+  onRetry?: (() => void) | undefined;
+  onSettings?: (() => void) | undefined;
+  unreadCount?: number | undefined;
   variant?:
     | "default"
     | "empty"
@@ -54,14 +61,14 @@ export type NotificationScreenProps = Readonly<{
     | "no-unread-with-list";
 }>;
 
-const notificationItems: readonly NotificationItem[] = [
+const notificationItems: readonly ScreenNotificationItem[] = [
   {
     href: "/salary",
     icon: appIconAssets.money.coins,
     id: "goal-total",
     subtitle: "누적 납치금액 신기록 달성",
     time: "1일전",
-    title: "내 급여 납치 현황 5,780,000원 달성",
+    title: "내 급여 납치 현황 목표 달성",
     tone: "highlight",
   },
   {
@@ -70,7 +77,7 @@ const notificationItems: readonly NotificationItem[] = [
     id: "goal-point",
     subtitle: "납치 금액 달성 보상 이벤트",
     time: "1일전",
-    title: "내 급여 납치 5,500,000원 달성 시 포인트 500P 지급",
+    title: "내 급여 납치 목표 달성 시 포인트 지급",
     tone: "highlight",
   },
   {
@@ -121,10 +128,15 @@ const notificationItems: readonly NotificationItem[] = [
 ];
 
 export function NotificationScreen({
+  apiItems,
+  isRefreshing = false,
   onBack,
+  onMarkAllRead,
+  onOpenNotification,
   onOpenHref,
   onRetry,
   onSettings,
+  unreadCount,
   variant = "default",
 }: NotificationScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
@@ -139,8 +151,10 @@ export function NotificationScreen({
       ? "최근 알림 기록"
       : null;
   const items = showsHistory
-    ? notificationItems
-    : ([] as readonly NotificationItem[]);
+    ? apiItems
+      ? apiItems.map(screenNotificationItemFromApi)
+      : notificationItems
+    : ([] as readonly ScreenNotificationItem[]);
 
   return (
     <View style={styles.screen}>
@@ -197,9 +211,33 @@ export function NotificationScreen({
             </Text>
           </View>
           <Text allowFontScaling={false} style={styles.newNotice}>
-            새로운 알림이 있어요
+            {typeof unreadCount === "number" && unreadCount > 0
+              ? `새로운 알림 ${unreadCount}개`
+              : "새로운 알림이 있어요"}
           </Text>
         </View>
+
+        {onMarkAllRead ? (
+          <Pressable
+            accessibilityLabel="모든 알림 읽음 처리"
+            accessibilityRole="button"
+            onPress={onMarkAllRead}
+            style={styles.markAllReadButton}
+          >
+            <Text allowFontScaling={false} style={styles.markAllReadText}>
+              모두 읽음
+            </Text>
+          </Pressable>
+        ) : null}
+
+        {isRefreshing ? (
+          <NotificationStateCard
+            body="서버 기준 알림과 읽음 상태를 확인하고 있습니다."
+            primaryLabel="새로고침"
+            title="알림을 불러오는 중입니다"
+            onPrimary={onRetry}
+          />
+        ) : null}
 
         {variant === "empty" ? (
           <NotificationStateCard
@@ -255,7 +293,13 @@ export function NotificationScreen({
               accessibilityLabel={`${item.title} 열기`}
               accessibilityRole="button"
               key={item.id}
-              onPress={() => onOpenHref?.(item.href)}
+              onPress={() => {
+                if (item.apiItem && onOpenNotification) {
+                  onOpenNotification(item.apiItem);
+                  return;
+                }
+                onOpenHref?.(item.href);
+              }}
               style={[
                 styles.notificationRow,
                 item.tone === "highlight" ? styles.highlightRow : null,
@@ -294,6 +338,67 @@ export function NotificationScreen({
       </ScrollView>
     </View>
   );
+}
+
+function screenNotificationItemFromApi(
+  item: ApiNotificationItem,
+): ScreenNotificationItem {
+  return {
+    apiItem: item,
+    href: safeNotificationHref(item.deeplink) ?? "/level",
+    icon: iconForNotificationType(item.type),
+    id: item.notificationId,
+    subtitle: item.message,
+    time: formatNotificationTime(item.createdAt),
+    title: item.title,
+    tone: item.status === "UNREAD" ? "highlight" : "normal",
+  };
+}
+
+function safeNotificationHref(value: string | null): NotificationHref | null {
+  if (
+    value === "/salary" ||
+    value === "/level" ||
+    value === "/level/reading" ||
+    value === "/level/news" ||
+    value === "/level/english" ||
+    value === "/level/health"
+  ) {
+    return value;
+  }
+  return null;
+}
+
+function iconForNotificationType(
+  type: ApiNotificationItem["type"],
+): ImageSourcePropType {
+  if (type === "PAYDAY" || type === "SAVINGS_GOAL") {
+    return appIconAssets.money.coins;
+  }
+  if (type === "PAYMENT_DUE" || type === "BUDGET_WARNING") {
+    return appIconAssets.money.coffee;
+  }
+  if (type === "BUDGET_EXCEEDED" || type === "SECURITY") {
+    return appIconAssets.common.alarm;
+  }
+  if (type === "COMMUNITY") return appIconAssets.community.communication;
+  if (type === "CONTENT_RECOMMENDATION") return appIconAssets.level.book;
+  if (type === "NOTICE") return appIconAssets.common.settings;
+  return appIconAssets.level.ai;
+}
+
+function formatNotificationTime(isoTimestamp: string): string {
+  const createdAt = Date.parse(isoTimestamp);
+  if (Number.isNaN(createdAt)) return "방금 전";
+  const elapsedMinutes = Math.max(
+    0,
+    Math.floor((Date.now() - createdAt) / 60000),
+  );
+  if (elapsedMinutes < 1) return "방금 전";
+  if (elapsedMinutes < 60) return `${elapsedMinutes}분 전`;
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  if (elapsedHours < 24) return `${elapsedHours}시간 전`;
+  return `${Math.floor(elapsedHours / 24)}일 전`;
 }
 
 function NotificationStateCard({
@@ -353,7 +458,7 @@ export function assertMobileNotificationsIndexCompleteness(): {
     NOTIFICATIONS_PATH,
     NOTIFICATIONS_UNREAD_COUNT_PATH,
     "새로운 알림이 있어요",
-    "내 급여 납치 현황 5,780,000원 달성",
+    "내 급여 납치 현황 목표 달성",
     "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
     "Today, Business Conversation",
     "/level/reading",
@@ -402,6 +507,20 @@ const styles = StyleSheet.create({
   },
   list: {
     marginHorizontal: -18,
+  },
+  markAllReadButton: {
+    alignSelf: "flex-end",
+    backgroundColor: SOFT_GREEN,
+    borderRadius: 999,
+    marginBottom: 14,
+    minHeight: 38,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+  },
+  markAllReadText: {
+    color: "#16844A",
+    fontSize: 13,
+    fontWeight: "900",
   },
   metaRow: {
     alignItems: "center",

@@ -1,6 +1,17 @@
 # Execution State
 
-Updated: 2026-07-24 KST
+Updated: 2026-07-26 KST
+
+## 2026-07-26 Master-Goal Correction
+
+- The previous safe-entry, direct-entry, and patched debug APK records below are retained only as historical crash-triage evidence.
+- They are no longer accepted as final QA APK, release-like APK, Stitch production UI, or launch-readiness evidence.
+- Current source removed `apps/mobile/src/android-safe-entry.tsx`.
+- Current Android entry is full Expo Router: `react-native-gesture-handler` plus `expo-router/entry`.
+- Local Android debug build cleanup now restores the Expo Router entry instead of restoring safe-entry after timeout or termination.
+- Static APK inspection now treats `1.0.1-android-safe-entry`, `android-safe-entry`, and `android-direct-entry` bundle markers as forbidden.
+- D-013 remains FAIL until Stitch 304 states are proven through production-route visual/accessibility/runtime evidence.
+- D-026 remains FAIL until the exact clean full Expo Router release-like APK passes the required runtime checks.
 
 ## Repository
 

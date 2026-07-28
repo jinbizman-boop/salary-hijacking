@@ -3844,9 +3844,9 @@ const checkMobilePreviewEvidence = (
     staticApkInspectionOk ? "PASS" : "BLOCKED",
     "mobile:preview:static-apk-inspection",
     staticApkInspectionOk
-      ? `static APK inspection verifies embedded bundle, safe-entry markers, ARM64/x86_64 startup libraries, and matching APK SHA256 (${staticApkSha})`
+      ? `static APK inspection verifies embedded Expo Router bundle markers, ARM64/x86_64 startup libraries, and matching APK SHA256 (${staticApkSha})`
       : "static APK inspection evidence is missing, failed, stale, unsafe, or does not prove embedded bundle plus ARM64/x86_64 startup libraries",
-    "static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, safe-entry markers, and matching APK SHA256 without raw logcat, raw device identifiers, or secret values",
+    "static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, Expo Router/root markers, and matching APK SHA256 without raw logcat, raw device identifiers, or secret values",
   );
 
   const finalStableQaApk = isPlainObject(evidence.finalStableQaApk)

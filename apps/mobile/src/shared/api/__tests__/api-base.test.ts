@@ -32,13 +32,19 @@ describe("resolveMobileApiBaseUrl", () => {
     ).toBe("http://10.0.2.2:8787");
   });
 
-  it("falls back to local API outside production and official API in production", () => {
+  it("falls back to staging HTTPS outside local development and official API in production", () => {
     expect(
       resolveMobileApiBaseUrl({
         environment: "development",
         platform: "ios",
       }),
-    ).toBe("http://localhost:8787");
+    ).toBe("https://api-staging.salaryhijacking.com");
+    expect(
+      resolveMobileApiBaseUrl({
+        environment: "staging",
+        platform: "android",
+      }),
+    ).toBe("https://api-staging.salaryhijacking.com");
     expect(
       resolveMobileApiBaseUrl({
         environment: "production",
@@ -54,7 +60,7 @@ describe("resolveMobileApiBaseUrl", () => {
         environment: "development",
         platform: "web",
       }),
-    ).toBe("http://localhost:8787");
+    ).toBe("https://api-staging.salaryhijacking.com");
   });
 
   it("rejects configured API base URLs that embed credentials", () => {
@@ -73,6 +79,6 @@ describe("resolveMobileApiBaseUrl", () => {
         environment: "development",
         platform: "android",
       }),
-    ).toBe("http://10.0.2.2:8787");
+    ).toBe("https://api-staging.salaryhijacking.com");
   });
 });

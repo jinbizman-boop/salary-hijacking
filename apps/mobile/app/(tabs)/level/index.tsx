@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 
 import { AppHeader, AppShell } from "../../../src/shared/components";
@@ -9,7 +10,12 @@ import {
   normalizeGrowthDashboardForLevel,
   type LevelDashboardNormalizationInput,
 } from "../../../src/features/level/dashboard-normalization";
+import {
+  loadGrowthContentForType,
+  loadGrowthDashboardSnapshot,
+} from "../../../src/features/level/controller";
 import type { GrowthDashboard } from "../../../src/features/level/types";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 
 const SCREEN_VERSION = "4.2.0-prototype-lv-main";
 const GROWTH_DASHBOARD_ENDPOINT = "/api/v1/growth/dashboard";
@@ -34,6 +40,27 @@ const levelRoutes: Readonly<Record<string, string>> = {
 
 export default function LevelIndexScreen(): React.ReactElement {
   const router = useRouter();
+  const growthApi = useMemo(() => createMobileGrowthApi(), []);
+  const [serverDashboard, setServerDashboard] =
+    useState<GrowthDashboard>(dashboard);
+
+  useEffect(() => {
+    let mounted = true;
+    void loadGrowthDashboardSnapshot(growthApi)
+      .then((nextDashboard) => {
+        if (mounted) setServerDashboard(nextDashboard);
+      })
+      .catch(() => undefined);
+    void Promise.all([
+      loadGrowthContentForType(growthApi, "READING"),
+      loadGrowthContentForType(growthApi, "NEWS"),
+      loadGrowthContentForType(growthApi, "ENGLISH"),
+      loadGrowthContentForType(growthApi, "HEALTH"),
+    ]).catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, [growthApi]);
 
   return (
     <AppShell
@@ -46,7 +73,7 @@ export default function LevelIndexScreen(): React.ReactElement {
         />
       }
     >
-      <LevelHeroCard dashboard={dashboard} />
+      <LevelHeroCard dashboard={serverDashboard} />
       <LevelActionGrid
         actions={[
           {

@@ -223,50 +223,19 @@ const defaultCompleteness: Completeness = Object.freeze({
   audit: true,
   privacy: true,
 });
-const fallbackDataset: MetricsDataset = {
+const LIVE_DATA_UNAVAILABLE = "LIVE_DATA_UNAVAILABLE: ?? API ??? ??? ?? ??? ???? ????.";
+const EMPTY_METRICS_DATASET: MetricsDataset = {
   generatedAt: zeroDate,
   range: "24h",
-  metricCards: [
-    metric("request-rate", "TRAFFIC", "api", "API 요청", "req/min"),
-    metric("payday-close", "PAYROLL", "scheduler", "급여일 처리", "건"),
-    metric("budget-recalc", "BUDGET", "api", "예산 재계산", "건"),
-    metric(
-      "notification-send",
-      "NOTIFICATION",
-      "notifications",
-      "알림 발송",
-      "건",
-    ),
-    metric("community-moderation", "COMMUNITY", "admin", "모더레이션", "건"),
-    metric("ads-safe", "ADS", "ads", "광고 안전 집계", "건"),
-    metric("auth-risk", "SECURITY", "api", "인증 위험 신호", "건"),
-    metric("queue-backlog", "OPS", "queue", "Queue 대기", "건"),
-  ],
-  serviceMetrics: services.map(
-    (service: Service): ServiceMetric => ({
-      service,
-      status: "WATCH",
-      latencyP95Ms: 0,
-      errorRateBp: 0,
-      throughputPerMin: 0,
-      saturationBp: 0,
-      lastCheckedAt: zeroDate,
-      runbookUrl: `/admin/runbooks/${service}`,
-    }),
-  ),
-  businessMetrics: [
-    business("monthly-hijack-close-rate", "월간 납치 마감률", "PAYROLL", "%"),
-    business("budget-overrun-safe-rate", "예산 초과 안전 집계", "BUDGET", "%"),
-    business("notification-success-rate", "알림 성공률", "NOTIFICATION", "%"),
-    business("ads-policy-pass-rate", "광고 정책 통과율", "ADS", "%"),
-    business("audit-coverage", "감사 커버리지", "OPS", "%"),
-  ],
+  metricCards: [],
+  serviceMetrics: [],
+  businessMetrics: [],
   alerts: [],
   privacyGuard: defaultGuard,
   completeness: defaultCompleteness,
 };
 let state: State = {
-  dataset: fallbackDataset,
+  dataset: EMPTY_METRICS_DATASET,
   busy: false,
   loadedAt: "-",
   range: "24h",
@@ -275,7 +244,7 @@ let state: State = {
   query: "",
   reason: "",
   selectedMetricId: null,
-  toast: { type: "info", message: "운영 지표 콘솔이 준비되었습니다." },
+  toast: { type: "info", message: LIVE_DATA_UNAVAILABLE },
 };
 let mounted = false;
 let refreshTimer: number | null = null;
@@ -309,49 +278,6 @@ function mount(): void {
     },
     { once: true },
   );
-}
-
-function metric(
-  id: string,
-  group: MetricGroup,
-  service: Service,
-  label: string,
-  unit: string,
-): MetricCard {
-  return {
-    id,
-    group,
-    service,
-    label,
-    value: 0,
-    unit,
-    trend: "FLAT",
-    changeBp: 0,
-    status: "WATCH",
-    series: [],
-    safeAggregation: true,
-    rawFinancialDataIncluded: false,
-  };
-}
-
-function business(
-  key: string,
-  label: string,
-  group: MetricGroup,
-  unit: string,
-): BusinessMetric {
-  return {
-    key,
-    label,
-    group,
-    value: 0,
-    unit,
-    target: 0,
-    targetUnit: unit,
-    status: "WATCH",
-    safeAggregation: true,
-    rawAmountShown: false,
-  };
 }
 
 function installStyles(): void {
@@ -509,7 +435,7 @@ async function loadMetrics(root: HTMLElement, silent = false): Promise<void> {
     if (state.query.trim()) params.set("q", state.query.trim());
     const response = await api<ApiResponse>(`${API_BASE}?${params.toString()}`);
     const dataset = normalizeDataset(
-      response.data ?? response.metrics ?? fallbackDataset,
+      response.data ?? response.metrics ?? EMPTY_METRICS_DATASET,
     );
     patch(
       {
@@ -526,7 +452,7 @@ async function loadMetrics(root: HTMLElement, silent = false): Promise<void> {
   } catch (error) {
     patch(
       {
-        dataset: fallbackDataset,
+        dataset: EMPTY_METRICS_DATASET,
         toast: {
           type: "error",
           message:

@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { componentColors, componentRadius } from "./tokens";
 
@@ -19,8 +20,19 @@ export function BottomTabBar({
   items,
   onTabPress,
 }: BottomTabBarProps): React.ReactElement {
+  const insets = useOptionalSafeAreaInsets();
+
   return (
-    <View accessibilityRole="tablist" style={styles.bar}>
+    <View
+      accessibilityRole="tablist"
+      style={[
+        styles.bar,
+        {
+          minHeight: 76 + insets.bottom,
+          paddingBottom: 12 + insets.bottom,
+        },
+      ]}
+    >
       {items.map((item) => {
         const selected = item.key === activeKey;
         return (
@@ -42,6 +54,14 @@ export function BottomTabBar({
   );
 }
 
+function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
+  try {
+    return useSafeAreaInsets();
+  } catch {
+    return { bottom: 0, left: 0, right: 0, top: 0 };
+  }
+}
+
 const styles = StyleSheet.create({
   bar: {
     minHeight: 76,
@@ -50,7 +70,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 10,
     paddingTop: 10,
-    paddingBottom: 12,
     borderTopWidth: 1,
     borderTopColor: componentColors.line,
     backgroundColor: componentColors.surface,

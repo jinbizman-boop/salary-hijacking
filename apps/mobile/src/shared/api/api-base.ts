@@ -23,6 +23,7 @@ type ExpoExtra = Readonly<{
 }>;
 
 const PRODUCTION_API_BASE_URL = "https://api.salaryhijacking.com";
+const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";
 
 export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   const candidates = [options.explicitUrl, options.configuredUrl];
@@ -37,9 +38,12 @@ export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   }
 
   if (options.environment === "production") return PRODUCTION_API_BASE_URL;
-  return options.platform === "android"
-    ? "http://10.0.2.2:8787"
-    : "http://localhost:8787";
+  if (options.environment === "local") {
+    return options.platform === "android"
+      ? "http://10.0.2.2:8787"
+      : "http://localhost:8787";
+  }
+  return STAGING_API_BASE_URL;
 }
 
 export function readMobileApiBaseUrl(): string {

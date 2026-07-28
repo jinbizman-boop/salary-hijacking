@@ -60,11 +60,11 @@ test("builds a paired original-package and isolated-QA phone crash triage plan",
   assert.equal(plan.outputPath, "artifacts/qa/physical-phone-crash-triage");
   assert.deepEqual(
     plan.cases.map((entry) => entry.id),
-    ["original-package", "isolated-diagnostic"],
+    ["original-package", "isolated-qa-package"],
   );
   assert.deepEqual(
     plan.cases.map((entry) => entry.packageName),
-    ["com.salaryhijacking.mobile", "com.salaryhijacking.mobile.qa.direct"],
+    ["com.salaryhijacking.mobile", "com.salaryhijacking.mobile.qa"],
   );
   assert.deepEqual(
     plan.cases.map((entry) => entry.apkPath),
@@ -81,7 +81,7 @@ test("builds a paired original-package and isolated-QA phone crash triage plan",
   assert.doesNotMatch(JSON.stringify(plan), /token|secret|keystore/i);
 });
 
-test("defaults physical-phone triage to the latest safe-entry patched original APK", () => {
+test("defaults physical-phone triage to release-like QA APK paths, not safe-entry patched APKs", () => {
   const rootDir = makeWorkspace();
 
   const plan = buildPhysicalPhoneCrashTriagePlan({
@@ -91,12 +91,13 @@ test("defaults physical-phone triage to the latest safe-entry patched original A
 
   assert.equal(
     plan.cases.find((entry) => entry.id === "original-package")?.apkPath,
-    "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk",
+    "artifacts/android/salary-hijacking-qa-release-like-universal.apk",
   );
   assert.equal(
-    plan.cases.find((entry) => entry.id === "isolated-diagnostic")?.apkPath,
-    "C:/Users/PC/Downloads/salary-hijacking-qa-direct-current-universal.apk",
+    plan.cases.find((entry) => entry.id === "isolated-qa-package")?.apkPath,
+    "artifacts/android/salary-hijacking-qa-release-like-isolated-universal.apk",
   );
+  assert.doesNotMatch(JSON.stringify(plan), /safe-entry|safe-patched|direct/i);
 });
 
 test("classifies original-only crashes as package data or signature specific", () => {
@@ -113,7 +114,7 @@ test("classifies original-only crashes as package data or signature specific", (
         },
       },
       {
-        id: "isolated-diagnostic",
+        id: "isolated-qa-package",
         proof: {
           android: {
             physicalPhoneVerified: true,
@@ -148,7 +149,7 @@ test("writes combined triage summary without raw logcat or device serials", () =
           android: {
             packageName: "com.salaryhijacking.mobile",
             physicalPhoneVerified:
-              packageName === "com.salaryhijacking.mobile.qa.direct",
+              packageName === "com.salaryhijacking.mobile.qa",
             physicalPhoneBlocker:
               packageName === "com.salaryhijacking.mobile"
                 ? "Physical phone startup logcat contained fatal markers."
@@ -175,11 +176,11 @@ test("writes combined triage summary without raw logcat or device serials", () =
   assert.equal(calls.length, 2);
   assert.deepEqual(
     calls.map(([packageName]) => packageName),
-    ["com.salaryhijacking.mobile", "com.salaryhijacking.mobile.qa.direct"],
+    ["com.salaryhijacking.mobile", "com.salaryhijacking.mobile.qa"],
   );
   assert.deepEqual(
     result.summary.cases.map((entry) => entry.packageName),
-    ["com.salaryhijacking.mobile", "com.salaryhijacking.mobile.qa.direct"],
+    ["com.salaryhijacking.mobile", "com.salaryhijacking.mobile.qa"],
   );
 
   const summaryPath = path.join(

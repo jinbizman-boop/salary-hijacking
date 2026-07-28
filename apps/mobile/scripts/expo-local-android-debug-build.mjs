@@ -381,7 +381,7 @@ const normalizeAndroidArchitectures = (architecture) => {
 
 const normalizeAndroidEntry = (value) => {
   const entry = String(value ?? "").trim();
-  if (entry === "safe" || entry === "direct") return entry;
+  if (entry === "router" || entry === "direct") return entry;
   throw new Error(`Unsupported Android entry: ${entry || "(empty)"}`);
 };
 
@@ -530,7 +530,7 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
 };
 
 export const ensureLocalMetroEntryFile = ({
-  androidEntry = "safe",
+  androidEntry = "router",
   mobileRootDir,
 }) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
@@ -538,7 +538,7 @@ export const ensureLocalMetroEntryFile = ({
   const source =
     normalizedEntry === "direct"
       ? 'import "./src/android-direct-entry";\n'
-      : 'import "./src/android-safe-entry";\n';
+      : 'import "react-native-gesture-handler";\nimport "expo-router/entry";\n';
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;
@@ -550,7 +550,7 @@ export const ensureLocalMetroEntryFile = ({
   }
 };
 
-export const installSafeAndroidEntryRestoreHooks = ({
+export const installRouterAndroidEntryRestoreHooks = ({
   mobileRootDir,
   processObject = process,
 } = {}) => {
@@ -559,7 +559,7 @@ export const installSafeAndroidEntryRestoreHooks = ({
     if (restored) return;
     restored = true;
     try {
-      ensureLocalMetroEntryFile({ androidEntry: "safe", mobileRootDir });
+      ensureLocalMetroEntryFile({ androidEntry: "router", mobileRootDir });
     } catch {
       // Best effort only: signal/exit handlers must never mask the original exit.
     }
@@ -2555,7 +2555,7 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
 
 const parseArgs = (argv) => {
   const options = {
-    androidEntry: process.env.SALARY_HIJACKING_ANDROID_ENTRY || "safe",
+    androidEntry: process.env.SALARY_HIJACKING_ANDROID_ENTRY || "router",
     applicationIdSuffix:
       process.env.SALARY_HIJACKING_ANDROID_APPLICATION_ID_SUFFIX || "",
     architecture:
@@ -2624,7 +2624,7 @@ const isPhoneTargetDebugOutput = ({ mobileRootDir, outputPath }) =>
 
 export const runExpoLocalAndroidDebugBuild = ({
   androidToolHomeDir,
-  androidEntry = "safe",
+  androidEntry = "router",
   applicationIdSuffix = "",
   architecture = "x86_64",
   env = process.env,
@@ -2915,7 +2915,7 @@ export const runExpoLocalAndroidDebugBuild = ({
       status: 0,
     };
   } finally {
-    ensureLocalMetroEntryFile({ androidEntry: "safe", mobileRootDir });
+    ensureLocalMetroEntryFile({ androidEntry: "router", mobileRootDir });
     restoreExpoCliGradlePath();
   }
 };
@@ -2960,11 +2960,11 @@ if (isCliEntrypoint()) {
     if (!preflight.ok) process.exit(2);
     if (options.checkOnly) process.exit(0);
 
-    const restoreSafeEntryOnExit = installSafeAndroidEntryRestoreHooks({
+    const restoreRouterEntryOnExit = installRouterAndroidEntryRestoreHooks({
       mobileRootDir: defaultMobileRootDir(),
     });
     const result = runExpoLocalAndroidDebugBuild(options);
-    restoreSafeEntryOnExit();
+    restoreRouterEntryOnExit();
     process.exit(result.status);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

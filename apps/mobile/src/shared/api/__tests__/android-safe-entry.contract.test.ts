@@ -1,25 +1,19 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const mobileRoot = join(__dirname, "..", "..", "..", "..");
 const indexAndroid = readFileSync(join(mobileRoot, "index.android.js"), "utf8");
-const safeEntry = readFileSync(
-  join(mobileRoot, "src/android-safe-entry.tsx"),
-  "utf8",
-);
+const safeEntryPath = join(mobileRoot, "src/android-safe-entry.tsx");
 
-describe("Android standalone safe entry", () => {
-  it("uses the crash-safe native entry for Android APK boot", () => {
-    expect(indexAndroid).toContain("./src/android-safe-entry");
-    expect(safeEntry).toContain('AppRegistry.registerComponent("main"');
-    expect(safeEntry).toContain("RootBoundary");
+describe("Android standalone production entry", () => {
+  it("uses Expo Router for Android APK boot instead of the safe-entry shell", () => {
+    expect(indexAndroid).toContain("expo-router/entry");
+    expect(indexAndroid).toContain("react-native-gesture-handler");
+    expect(indexAndroid).not.toContain("./src/android-safe-entry");
+    expect(indexAndroid).not.toContain("./src/android-direct-entry");
   });
 
-  it("keeps startup free from router and high-risk native feature imports", () => {
-    expect(safeEntry).not.toContain("expo-router");
-    expect(safeEntry).not.toContain("expo-secure-store");
-    expect(safeEntry).not.toContain("./features/salary");
-    expect(safeEntry).not.toContain("./features/plan");
-    expect(safeEntry).not.toContain("./features/community");
+  it("does not keep the deprecated diagnostic safe-entry source in the mobile runtime tree", () => {
+    expect(existsSync(safeEntryPath)).toBe(false);
   });
 });

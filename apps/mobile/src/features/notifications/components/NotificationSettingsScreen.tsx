@@ -12,6 +12,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { appIconAssets } from "../../../shared/assets/icons";
+import type { NotificationPreferenceState } from "../controller";
 
 const BRAND_GREEN = "#209252";
 const TEXT_BLACK = "#191B1F";
@@ -20,8 +21,15 @@ const LINE = "#E7EBEF";
 const SOFT_GREEN = "#EAF8EF";
 
 export type NotificationSettingsScreenProps = Readonly<{
-  onBack?: () => void;
-  onOpenSystemSettings?: () => void;
+  onBack?: (() => void) | undefined;
+  onOpenSystemSettings?: (() => void) | undefined;
+  onPreferencesChange?:
+    | ((preferences: NotificationPreferenceState) => void)
+    | undefined;
+  onSavePreferences?:
+    | ((preferences: NotificationPreferenceState) => Promise<void> | void)
+    | undefined;
+  preferences?: NotificationPreferenceState | undefined;
 }>;
 
 type PreferenceKey =
@@ -46,24 +54,44 @@ const initialPreferences: Record<PreferenceKey, boolean> = {
 export function NotificationSettingsScreen({
   onBack,
   onOpenSystemSettings,
+  onPreferencesChange,
+  onSavePreferences,
+  preferences: serverPreferences,
 }: NotificationSettingsScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 430);
-  const [preferences, setPreferences] =
+  const [localPreferences, setLocalPreferences] =
     useState<Record<PreferenceKey, boolean>>(initialPreferences);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
+  const preferences = serverPreferences ?? localPreferences;
 
   function toggle(key: PreferenceKey): void {
-    setPreferences((current) => ({ ...current, [key]: !current[key] }));
+    const nextPreferences = { ...preferences, [key]: !preferences[key] };
+    if (onPreferencesChange) {
+      onPreferencesChange(nextPreferences);
+    } else {
+      setLocalPreferences(nextPreferences);
+    }
     setStatus("idle");
   }
 
-  function save(): void {
+  async function save(): Promise<void> {
     setStatus("saving");
-    setTimeout(() => setStatus("saved"), 80);
+    try {
+      if (onSavePreferences) {
+        await onSavePreferences(preferences);
+      } else {
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 80);
+        });
+      }
+      setStatus("saved");
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (
@@ -160,7 +188,9 @@ export function NotificationSettingsScreen({
         <Pressable
           accessibilityLabel="알림 설정 저장"
           accessibilityRole="button"
-          onPress={save}
+          onPress={() => {
+            void save();
+          }}
           style={styles.saveButton}
         >
           <Text allowFontScaling={false} style={styles.saveButtonText}>

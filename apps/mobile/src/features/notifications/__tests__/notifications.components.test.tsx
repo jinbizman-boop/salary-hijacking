@@ -114,7 +114,8 @@ describe("notifications feature components", () => {
 
     expect(screen.getByText("알림")).toBeTruthy();
     expect(screen.getByText("새로운 알림이 있어요")).toBeTruthy();
-    expect(screen.getByText("내 급여 납치 현황 5,780,000원 달성")).toBeTruthy();
+    expect(screen.getByText("내 급여 납치 현황 목표 달성")).toBeTruthy();
+    expect(screen.queryByText(/5,780,000|5,500,000/u)).toBeNull();
     expect(screen.queryByText("급여")).toBeNull();
     expect(screen.queryByText("계획")).toBeNull();
 
@@ -157,7 +158,7 @@ describe("notifications feature components", () => {
     expect(allRead.getByText("모든 알림을 읽었어요")).toBeTruthy();
     expect(allRead.getByText("최근 알림 기록")).toBeTruthy();
     expect(
-      allRead.getByText("내 급여 납치 현황 5,780,000원 달성"),
+      allRead.getByText("내 급여 납치 현황 목표 달성"),
     ).toBeTruthy();
     expect(allRead.queryByText("급여")).toBeNull();
     expectNoMojibake(allRead.toJSON() ? JSON.stringify(allRead.toJSON()) : "");

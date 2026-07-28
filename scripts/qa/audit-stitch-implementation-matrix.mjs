@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -40,6 +40,24 @@ const requiredColumns = [
   "visual_test",
   "status",
   "notes",
+];
+
+const truthMatrixRequiredColumns = [
+  "requirement_id",
+  "source_document",
+  "source_location",
+  "priority",
+  "domain",
+  "screen_code",
+  "stitch_instance_code",
+  "route_or_overlay",
+  "state",
+  "acceptance_criteria",
+  "implementation_file",
+  "visual_reference",
+  "status",
+  "evidence_path",
+  "commit_sha",
 ];
 
 const mojibakePattern = /[�]|(?:而|ㅻ|怨|湲|遺|鍌|쒒)/u;
@@ -113,19 +131,138 @@ const countBy = (values) => {
   return counts;
 };
 
-export function auditStitchImplementationMatrix({ catalog, matrixCsv }) {
+const hasColumns = (header, columns) =>
+  columns.every((column) => header.includes(column));
+
+const valueOf = (row, ...columns) => {
+  for (const column of columns) {
+    const value = row[column];
+    if (value !== undefined && String(value).trim()) return String(value);
+  }
+  return "";
+};
+
+const artifactTypeFromAcceptance = (acceptanceCriteria) => {
+  const firstToken = String(acceptanceCriteria ?? "")
+    .trim()
+    .match(/^(screen|modal|bottom_sheet|multi_state_board|flow_board)\b/u)?.[1];
+  return firstToken ?? "";
+};
+
+const hasHtmlPrimaryReferenceNote = (row) => {
+  const haystack = [
+    row.notes,
+    row.acceptance_criteria,
+    row.visual_reference,
+    row.evidence_path,
+  ]
+    .filter(Boolean)
+    .join(";");
+  return haystack.includes("HTML_PRIMARY_REFERENCE_REQUIRED");
+};
+
+const implementationPathAliases = [
+  ["app-entry/screens/SplashScreen.tsx", "apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx"],
+  ["auth/screens/LoginScreen.tsx", "apps/mobile/app/(auth)/login.tsx"],
+  ["auth/screens/SignupScreen.tsx", "apps/mobile/app/(auth)/signup.tsx"],
+  ["onboarding/screens/InitialPayrollSetupScreen.tsx", "apps/mobile/app/onboarding.tsx"],
+  ["payroll-onboarding/screens/PayrollOnboardingScreen.tsx", "apps/mobile/app/onboarding.tsx"],
+  ["salary/screens/SalaryHomeScreen.tsx", "apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx"],
+  ["expenses/screens/ExpenseFormScreen.tsx", "apps/mobile/src/features/salary/components/VariableExpenseQuickAdd.tsx"],
+  ["notifications/screens/NotificationsScreen.tsx", "apps/mobile/src/features/notifications/components/NotificationScreen.tsx"],
+  ["notifications/screens/NotificationSettingsScreen.tsx", "apps/mobile/src/features/notifications/components/NotificationSettingsScreen.tsx"],
+  ["plan/screens/PlanScreen.tsx", "apps/mobile/src/features/plan/components/PlanScreen.tsx"],
+  ["plan/screens/PlanSettingsScreen.tsx", "apps/mobile/src/features/plan/components/PlanScreen.tsx"],
+  ["plan/screens/FixedExpenseFormScreen.tsx", "apps/mobile/src/features/plan/components/FixedExpenseFormScreen.tsx"],
+  ["plan/screens/FixedSavingsFormScreen.tsx", "apps/mobile/src/features/plan/components/FixedSavingsFormScreen.tsx"],
+  ["plan/screens/DailyBudgetFormScreen.tsx", "apps/mobile/src/features/plan/components/DailyBudgetFormScreen.tsx"],
+  ["lv-up/screens/LvUpHomeScreen.tsx", "apps/mobile/app/(tabs)/level/index.tsx"],
+  ["lv-up/screens/ReadingLvUpScreen.tsx", "apps/mobile/app/level/reading.tsx"],
+  ["lv-up/screens/ReadingLevelScreen.tsx", "apps/mobile/app/level/reading.tsx"],
+  ["lv-up/screens/NewsLvUpScreen.tsx", "apps/mobile/app/level/news.tsx"],
+  ["lv-up/screens/NewsLevelScreen.tsx", "apps/mobile/app/level/news.tsx"],
+  ["lv-up/screens/EnglishLvUpScreen.tsx", "apps/mobile/app/level/english.tsx"],
+  ["lv-up/screens/EnglishLevelScreen.tsx", "apps/mobile/app/level/english.tsx"],
+  ["lv-up/screens/HealthLvUpScreen.tsx", "apps/mobile/app/level/health.tsx"],
+  ["lv-up/screens/HealthLevelScreen.tsx", "apps/mobile/app/level/health.tsx"],
+  ["community/screens/CommunityScreen.tsx", "apps/mobile/app/(tabs)/community/index.tsx"],
+  ["community/screens/CommentThreadScreen.tsx", "apps/mobile/app/community/[postId].tsx"],
+  ["community/screens/PostDetailScreen.tsx", "apps/mobile/app/community/[postId].tsx"],
+  ["community/screens/PostComposeScreen.tsx", "apps/mobile/app/community/write.tsx"],
+  ["my/screens/MyPageScreen.tsx", "apps/mobile/src/features/profile/components/ProfileScreen.tsx"],
+  ["my/screens/ProfileSettingsScreen.tsx", "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx"],
+  ["my/screens/AccountSettingsScreen.tsx", "apps/mobile/app/profile/account.tsx"],
+  ["my/screens/MyPostsScreen.tsx", "apps/mobile/app/profile/community.tsx"],
+  ["my/screens/MyLvUpScreen.tsx", "apps/mobile/app/profile/level.tsx"],
+  ["support/screens/InquiryScreen.tsx", "apps/mobile/app/profile/support.tsx"],
+  ["support/screens/NoticeScreen.tsx", "apps/mobile/app/profile/notices.tsx"],
+  ["policy/screens/TermsConsentScreen.tsx", "apps/mobile/app/onboarding.tsx"],
+  ["common/screens/CommonStateScreen.tsx", "apps/mobile/src/shared/ui/states/CommonStateScreen.tsx"],
+  ["community/components/", "apps/mobile/src/features/community/components/"],
+  ["lv-up/components/", "apps/mobile/src/features/level/components/"],
+  ["plan/components/", "apps/mobile/src/features/plan/components/"],
+  ["expenses/components/", "apps/mobile/src/features/expenses/components/"],
+  ["auth/components/", "apps/mobile/src/features/auth/components/"],
+  ["my/components/", "apps/mobile/src/features/profile/components/"],
+  ["shared/ui/", "apps/mobile/src/shared/ui/"],
+  ["features/", "apps/mobile/src/features/"],
+  ["shared/", "apps/mobile/src/shared/"],
+];
+
+const toSlash = (value) => String(value ?? "").replaceAll("\\", "/");
+
+const resolveImplementationFile = (implementationFile, rootDir) => {
+  const normalized = toSlash(implementationFile).trim();
+  if (!normalized) return "";
+  const candidates = [];
+  const pushCandidate = (candidate) => {
+    if (!candidate) return;
+    if (!candidates.includes(candidate)) candidates.push(candidate);
+  };
+
+  if (isAbsolute(normalized) || /^[A-Za-z]:\//u.test(normalized)) {
+    pushCandidate(normalized);
+  } else {
+    const aliasInputs = normalized.startsWith("features/")
+      ? [normalized, normalized.slice("features/".length)]
+      : [normalized];
+    for (const aliasInput of aliasInputs) {
+      for (const [from, to] of implementationPathAliases) {
+        if (aliasInput === from || aliasInput.startsWith(from)) {
+          pushCandidate(resolve(rootDir, to, aliasInput.slice(from.length)));
+        }
+      }
+    }
+    pushCandidate(resolve(rootDir, normalized));
+    pushCandidate(resolve(rootDir, "apps/mobile/src", normalized));
+  }
+
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0] ?? "";
+};
+
+export function auditStitchImplementationMatrix({
+  catalog,
+  matrixCsv,
+  rootDir = repoRoot,
+  checkImplementationFiles = false,
+}) {
   const parsed = parseCsv(matrixCsv);
   const matrixRows = parsed.rows;
+  const usingTruthMatrix = hasColumns(parsed.header, truthMatrixRequiredColumns);
+  const usingScreenMatrix = hasColumns(parsed.header, requiredColumns);
   const catalogScreens = catalog.screens ?? [];
   const catalogInstanceCodes = new Set(
     catalogScreens.map((screen) => screen.instance_code),
   );
   const matrixInstanceCodes = new Set(
-    matrixRows.map((row) => row.instance_code).filter(Boolean),
+    matrixRows
+      .map((row) => valueOf(row, "instance_code", "stitch_instance_code"))
+      .filter(Boolean),
   );
-  const missingColumns = requiredColumns.filter(
-    (column) => !parsed.header.includes(column),
-  );
+  const missingColumns =
+    usingScreenMatrix || usingTruthMatrix
+      ? []
+      : requiredColumns.filter((column) => !parsed.header.includes(column));
   const missingCatalogInstanceCodes = [...catalogInstanceCodes]
     .filter((instanceCode) => !matrixInstanceCodes.has(instanceCode))
     .sort();
@@ -137,30 +274,68 @@ export function auditStitchImplementationMatrix({ catalog, matrixCsv }) {
     )
     .sort();
   const syntheticRows = matrixRows.filter((row) =>
-    String(row.instance_code).startsWith("SCR-029"),
+    valueOf(row, "instance_code", "stitch_instance_code").startsWith(
+      "SCR-029",
+    ),
   ).length;
   const mojibakeRows = matrixRows
     .filter((row) => mojibakePattern.test(row.screen_name_ko))
-    .map((row) => row.instance_code);
+    .map((row) => valueOf(row, "instance_code", "stitch_instance_code"));
   const catalogByInstanceCode = new Map(
     catalogScreens.map((screen) => [screen.instance_code, screen]),
   );
   const corruptPngRowsMissingHtmlPrimaryReference = matrixRows
     .filter((row) => {
-      const catalogScreen = catalogByInstanceCode.get(row.instance_code);
+      const instanceCode = valueOf(row, "instance_code", "stitch_instance_code");
+      const catalogScreen = catalogByInstanceCode.get(instanceCode);
       return (
         catalogScreen?.png_status === "CORRUPT" &&
-        !String(row.notes).includes("HTML_PRIMARY_REFERENCE_REQUIRED")
+        !hasHtmlPrimaryReferenceNote(row)
       );
     })
-    .map((row) => row.instance_code);
+    .map((row) => valueOf(row, "instance_code", "stitch_instance_code"));
+  const missingImplementationFiles = checkImplementationFiles
+    ? matrixRows
+        .filter((row) => {
+          const instanceCode = valueOf(
+            row,
+            "instance_code",
+            "stitch_instance_code",
+          );
+          return instanceCode && catalogInstanceCodes.has(instanceCode);
+        })
+        .map((row) => {
+          const implementationFile = valueOf(row, "implementation_file");
+          const resolvedPath = resolveImplementationFile(
+            implementationFile,
+            rootDir,
+          );
+          return {
+            instance_code: valueOf(row, "instance_code", "stitch_instance_code"),
+            implementation_file: implementationFile,
+            resolved_path: resolvedPath,
+            exists: Boolean(resolvedPath && existsSync(resolvedPath)),
+          };
+        })
+        .filter((row) => !row.exists)
+        .map(({ exists: _exists, ...row }) => row)
+    : [];
   const statusCounts = countBy(
     matrixRows.map((row) => row.status || "UNKNOWN"),
   );
   const artifactTypeCounts = countBy(
     matrixRows
-      .filter((row) => catalogInstanceCodes.has(row.instance_code))
-      .map((row) => row.artifact_type || "UNKNOWN"),
+      .filter((row) =>
+        catalogInstanceCodes.has(
+          valueOf(row, "instance_code", "stitch_instance_code"),
+        ),
+      )
+      .map(
+        (row) =>
+          valueOf(row, "artifact_type") ||
+          artifactTypeFromAcceptance(row.acceptance_criteria) ||
+          "UNKNOWN",
+      ),
   );
   const catalogArtifactTypeCounts = countBy(
     catalogScreens.map((screen) => screen.artifact_type || "UNKNOWN"),
@@ -170,7 +345,8 @@ export function auditStitchImplementationMatrix({ catalog, matrixCsv }) {
     missingCatalogInstanceCodes.length === 0 &&
     extraInstanceCodes.length === 0 &&
     mojibakeRows.length === 0 &&
-    corruptPngRowsMissingHtmlPrimaryReference.length === 0;
+    corruptPngRowsMissingHtmlPrimaryReference.length === 0 &&
+    missingImplementationFiles.length === 0;
 
   return {
     ok,
@@ -185,6 +361,8 @@ export function auditStitchImplementationMatrix({ catalog, matrixCsv }) {
     extraInstanceCodes,
     mojibakeRows,
     corruptPngRowsMissingHtmlPrimaryReference,
+    implementationFilesChecked: checkImplementationFiles,
+    missingImplementationFiles,
   };
 }
 
@@ -223,6 +401,7 @@ function renderMarkdown(audit) {
     `- Extra non-catalog rows: ${audit.extraInstanceCodes.length}`,
     `- Mojibake rows: ${audit.mojibakeRows.length}`,
     `- Corrupt PNG rows missing HTML primary note: ${audit.corruptPngRowsMissingHtmlPrimaryReference.length}`,
+    `- Missing implementation files: ${audit.missingImplementationFiles.length}`,
     "",
     "## Status Counts",
     "",
@@ -236,6 +415,17 @@ function renderMarkdown(audit) {
     "|---|---:|---:|",
     artifactRows,
     "",
+    audit.missingImplementationFiles.length > 0 ? "## Missing Implementation Files" : "",
+    audit.missingImplementationFiles.length > 0 ? "" : "",
+    ...audit.missingImplementationFiles
+      .slice(0, 100)
+      .map(
+        (row) =>
+          `- ${row.instance_code}: ${row.implementation_file} -> ${row.resolved_path}`,
+      ),
+    audit.missingImplementationFiles.length > 100
+      ? `- ...and ${audit.missingImplementationFiles.length - 100} more`
+      : "",
   ].join("\n");
 }
 
@@ -282,6 +472,7 @@ if (isMain) {
   const audit = auditStitchImplementationMatrix({
     catalog: readClassifiedCatalog(options.zipPath),
     matrixCsv: readFileSync(options.matrixPath, "utf8"),
+    checkImplementationFiles: true,
   });
   mkdirSync(dirname(options.jsonPath), { recursive: true });
   mkdirSync(dirname(options.markdownPath), { recursive: true });

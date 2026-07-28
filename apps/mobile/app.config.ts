@@ -62,6 +62,9 @@ const DEFAULT_ANDROID_GOOGLE_SERVICES_FILE =
   "./secrets/firebase/google-services.json";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
+const LOCAL_API_BASE_URL = "http://localhost:8787";
+const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";
+const PRODUCTION_API_BASE_URL = "https://api.salaryhijacking.com";
 const LOCAL_EAS_PROJECT_ID_SENTINEL = "00000000-0000-4000-8000-000000000000";
 const FORBIDDEN_ENV_KEYWORDS = [
   "SECRET",
@@ -105,8 +108,10 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
   const apiBaseUrl = httpsUrlEnv(
     "EXPO_PUBLIC_API_BASE_URL",
     environment === "production"
-      ? "https://api.salaryhijacking.com"
-      : "http://localhost:8787",
+      ? PRODUCTION_API_BASE_URL
+      : environment === "local"
+        ? LOCAL_API_BASE_URL
+        : STAGING_API_BASE_URL,
   );
   const updatesUrl = optionalHttpsUrlEnv("EXPO_UPDATES_URL");
   const owner = optionalPlainEnv("EXPO_OWNER");

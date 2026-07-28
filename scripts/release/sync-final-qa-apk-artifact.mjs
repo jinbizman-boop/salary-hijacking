@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const DEFAULT_SOURCE_APK =
-  "artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk";
+  "artifacts/android/salary-hijacking-qa-release-like-universal.apk";
 const DEFAULT_TARGETS = [
   "artifacts/android/salary-hijacking-qa-universal.apk",
   "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",

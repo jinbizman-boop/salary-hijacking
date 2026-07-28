@@ -1,6 +1,8 @@
 # Verification Report
 
-Updated: 2026-07-24 KST
+Updated: 2026-07-26 KST
+
+> 2026-07-26 correction: safe-entry/direct-entry/patched debug APK evidence in this file is historical crash-triage evidence only. It is not final QA APK evidence, not Stitch production UI evidence, and not launch-readiness evidence. Current source removed `apps/mobile/src/android-safe-entry.tsx`; current Android startup must use the full Expo Router entry.
 
 | Command                                                                                                                                                                                                                                                                                                                                                                              | Exit | Log                                                                                                                                                                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

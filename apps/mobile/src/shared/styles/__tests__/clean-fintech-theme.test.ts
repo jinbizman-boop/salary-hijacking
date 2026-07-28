@@ -190,7 +190,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('accessibilityLabel="지출 추가 제목"');
     expect(cleanScreens).toContain("title: expenseTitle");
     expect(cleanScreens).toContain("서버에 지출을 기록했어요");
-    expect(cleanScreens).toContain("오프라인 미리보기로 반영했어요");
+    expect(cleanScreens).toContain(
+      "서버 저장이 실패해 지출을 반영하지 않았습니다.",
+    );
+    expect(cleanScreens).not.toContain(
+      "setAddedExpenses((current) => [...current, offlineEntry])",
+    );
+    expect(cleanScreens).not.toContain("오프라인 미리보기로 반영했어요");
   });
 
   it("keeps salary home daily budget hydrated from the server before offline preview fallback", () => {
@@ -3245,7 +3251,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(
       addExpenseSource.indexOf("attachReceiptToCreatedExpense"),
-    ).toBeLessThan(addExpenseSource.indexOf("setAddedExpenses"));
+    ).toBeLessThan(addExpenseSource.indexOf("setServerVariableExpenses"));
+    expect(addExpenseSource).not.toContain("offlineEntry");
+    expect(addExpenseSource).not.toContain(
+      "setAddedExpenses((current) => [...current",
+    );
   });
 
   it("keeps server-created salary home expenses visible as server rows before refresh can clear offline preview", () => {

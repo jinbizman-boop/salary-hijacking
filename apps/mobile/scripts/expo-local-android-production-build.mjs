@@ -86,14 +86,18 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
 
 const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
-  const source = 'import "./src/android-safe-entry";\n';
+  const source = 'import "react-native-gesture-handler";\nimport "expo-router/entry";\n';
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;
   }
 
   const current = fs.readFileSync(entryFilePath, "utf8");
-  if (!current.includes("./src/android-safe-entry")) {
+  if (
+    !current.includes("expo-router/entry") ||
+    current.includes("./src/android-safe-entry") ||
+    current.includes("./src/android-direct-entry")
+  ) {
     fs.writeFileSync(entryFilePath, source, "utf8");
   }
 };

@@ -1,1 +1,2 @@
-import "./src/android-safe-entry";
+import "react-native-gesture-handler";
+import "expo-router/entry";

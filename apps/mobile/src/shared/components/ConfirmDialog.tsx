@@ -40,6 +40,7 @@ export function ConfirmDialog({
         </View>
         <View style={styles.actions}>
           <Pressable
+            accessibilityLabel={cancelLabel}
             accessibilityRole="button"
             onPress={onCancel}
             style={({ pressed }) => [

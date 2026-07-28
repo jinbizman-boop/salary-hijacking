@@ -24,8 +24,12 @@ describe("community tab screen wiring", () => {
     expect(source).toContain("CommunityTabBar");
     expect(source).toContain("PopularPostSection");
     expect(source).toContain("ComposeBottomSheet");
+    expect(source).toContain("createMobileCommunityService");
+    expect(source).toContain("useCommunityFeed");
     expect(source).toContain("/api/v1/community/posts");
     expect(source).toContain("personal_raw_data_hidden");
+    expect(source).not.toContain("onPressPost={() => undefined}");
+    expect(source).not.toContain("popularPosts");
     expect(source).not.toContain(forbiddenFixtureName);
   });
 });

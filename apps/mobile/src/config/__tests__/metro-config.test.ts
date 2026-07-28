@@ -61,6 +61,7 @@ type MetroConfig = Readonly<{
       realWorkspaceRoot: string,
       platform: string,
     ) => boolean;
+    shouldUseCanonicalProjectRoot?: boolean;
   }>;
 }>;
 
@@ -815,6 +816,41 @@ describe("mobile Metro dependency resolution", () => {
         "win32",
       ),
     ).toBe(true);
+  });
+
+  it("does not mix canonical project watch roots into active Windows subst builds", () => {
+    const originalEnv = {
+      alias: process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS,
+      canonical: process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT,
+    };
+
+    jest.resetModules();
+    process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS = "Y:\\";
+    delete process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT;
+
+    try {
+      const substLoadedMetroConfig = jest.requireActual<MetroConfig>(
+        "../../../metro.config.cjs",
+      );
+
+      expect(
+        substLoadedMetroConfig.__private?.shouldUseCanonicalProjectRoot,
+      ).toBe(false);
+    } finally {
+      if (originalEnv.alias === undefined) {
+        delete process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS;
+      } else {
+        process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS =
+          originalEnv.alias;
+      }
+      if (originalEnv.canonical === undefined) {
+        delete process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT;
+      } else {
+        process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT =
+          originalEnv.canonical;
+      }
+      jest.resetModules();
+    }
   });
 
   it("maps Metro's prepended module system to the Windows subst workspace root", () => {

@@ -16,20 +16,19 @@ export const REQUIRED_STARTUP_NATIVE_LIBS = [
   "libworklets.so",
 ];
 
-export const REQUIRED_SAFE_ENTRY_BUNDLE_MARKERS = [
-  "1.0.1-android-safe-entry",
-  "android-safe-entry",
-  "AppRegistry.registerComponent",
+export const REQUIRED_ROUTER_BUNDLE_MARKERS = [
+  "salary-hijacking-mobile-root",
+  "SALARY HIJACKING",
 ];
 
 export const FORBIDDEN_STARTUP_BUNDLE_MARKERS = [
+  "1.0.1-android-safe-entry",
+  "android-safe-entry",
   "android-direct-entry",
-  "ExpoRoot",
   "salary-hijacking-android-rc-root",
   "CleanFintechScreen",
   "stable-home",
   "mock-only",
-  "expo-router/entry",
 ];
 
 const uniqueSorted = (values) => [...new Set(values)].sort();
@@ -43,12 +42,76 @@ const libResults = (abi, entries) =>
     present: entries.includes(`lib/${abi}/${lib}`),
   }));
 
+const decodeExpoConfig = (buffer) => {
+  if (!buffer) return null;
+  const utf16 = buffer.toString("utf16le").replace(/^\uFEFF/u, "");
+  const text = utf16.trim().startsWith("{")
+    ? utf16
+    : buffer.toString("utf8").replace(/^\uFEFF/u, "");
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+};
+
+export function analyzeEmbeddedExpoConfig(expoConfig) {
+  const extra = expoConfig?.extra ?? {};
+  const apiBaseUrl = String(extra.api?.baseUrl ?? "");
+  const appEnvironment = String(extra.app?.environment ?? "");
+  const operationsEnvironment = String(extra.operations?.environment ?? "");
+  const releaseChannel = String(extra.operations?.releaseChannel ?? "");
+  const e2eBuild = extra.operations?.e2eBuild;
+  const crashReportingEnabled = extra.operations?.crashReportingEnabled;
+  const checks = [
+    {
+      name: "apiBaseUrlIsStagingHttps",
+      pass:
+        apiBaseUrl === "https://api-staging.salaryhijacking.com" &&
+        !apiBaseUrl.includes("localhost") &&
+        !apiBaseUrl.startsWith("http://"),
+      value: apiBaseUrl,
+    },
+    {
+      name: "appEnvironmentIsStaging",
+      pass: appEnvironment === "staging",
+      value: appEnvironment,
+    },
+    {
+      name: "operationsEnvironmentIsStaging",
+      pass: operationsEnvironment === "staging",
+      value: operationsEnvironment,
+    },
+    {
+      name: "releaseChannelIsStaging",
+      pass: releaseChannel === "staging",
+      value: releaseChannel,
+    },
+    {
+      name: "e2eBuildDisabled",
+      pass: e2eBuild === false,
+      value: e2eBuild,
+    },
+    {
+      name: "crashReportingEnabled",
+      pass: crashReportingEnabled === true,
+      value: crashReportingEnabled,
+    },
+  ];
+
+  return {
+    present: Boolean(expoConfig),
+    checks,
+    pass: Boolean(expoConfig) && checks.every((check) => check.pass),
+  };
+}
+
 export function analyzeApkStaticContents({ bundleText, entries }) {
   const nativeLibs = entries.filter((entry) => entry.startsWith("lib/"));
   const requiredArm64Libs = libResults("arm64-v8a", entries);
   const requiredX86_64Libs = libResults("x86_64", entries);
   const requiredBundleMarkers = markerResults(
-    REQUIRED_SAFE_ENTRY_BUNDLE_MARKERS,
+    REQUIRED_ROUTER_BUNDLE_MARKERS,
     bundleText,
   );
   const forbiddenBundleMarkers = markerResults(
@@ -91,21 +154,36 @@ const readApkBundle = (apkPath) =>
     maxBuffer: 20 * 1024 * 1024,
   });
 
+const readOptionalApkEntry = (apkPath, entry) => {
+  try {
+    return execFileSync("tar", ["-xOf", apkPath, entry], {
+      encoding: "buffer",
+      maxBuffer: 10 * 1024 * 1024,
+    });
+  } catch {
+    return null;
+  }
+};
+
 export function inspectAndroidApkStatic({ apkPath, outputPath }) {
   if (!apkPath || !existsSync(apkPath)) {
     throw new Error(`APK not found: ${apkPath}`);
   }
   const entries = listApkEntries(apkPath);
   const bundle = readApkBundle(apkPath);
+  const embeddedExpoConfig = analyzeEmbeddedExpoConfig(
+    decodeExpoConfig(readOptionalApkEntry(apkPath, "assets/app.config")),
+  );
   const analysis = analyzeApkStaticContents({
     bundleText: bundle.toString("utf8"),
     entries,
   });
+  analysis.pass = analysis.pass && embeddedExpoConfig.pass;
   const result = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
     purpose:
-      "Static inspection for Samsung/ARM64 startup crash triage when no physical phone is attached. This does not replace physical logcat QA.",
+      "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
     apkPath,
     apkSha256: createHash("sha256")
       .update(readFileSync(apkPath))
@@ -117,6 +195,7 @@ export function inspectAndroidApkStatic({ apkPath, outputPath }) {
       .toUpperCase(),
     bundleBytes: bundle.length,
     ...analysis,
+    embeddedExpoConfig,
     rawDeviceIdentifiersStored: false,
     rawLogcatStored: false,
     secretValuesStored: false,
