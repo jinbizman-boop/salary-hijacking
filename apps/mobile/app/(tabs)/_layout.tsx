@@ -5,7 +5,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { appIconAssets } from "../../src/shared/assets/icons";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
-type TabName = "salary" | "plan" | "level" | "community" | "profile";
+type TabName =
+  | "salary/index"
+  | "plan/index"
+  | "level/index"
+  | "community/index"
+  | "profile/index";
 
 type TabDefinition = Readonly<{
   href: string;
@@ -15,41 +20,41 @@ type TabDefinition = Readonly<{
   title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.4-router-segment-tabs-korean-labels";
+const LAYOUT_VERSION = "4.0.5-router-index-tabs-korean-labels";
 
 const tabs: readonly TabDefinition[] = [
   {
     href: "/salary",
     icon: appIconAssets.bottomTabs.salary,
-    name: "salary",
+    name: "salary/index",
     privacyBoundary: "payroll_home",
     title: "급여",
   },
   {
     href: "/plan",
     icon: appIconAssets.bottomTabs.plan,
-    name: "plan",
+    name: "plan/index",
     privacyBoundary: "payroll_plan",
     title: "계획",
   },
   {
     href: "/level",
     icon: appIconAssets.bottomTabs.level,
-    name: "level",
+    name: "level/index",
     privacyBoundary: "growth",
     title: "LV",
   },
   {
     href: "/community",
     icon: appIconAssets.bottomTabs.community,
-    name: "community",
+    name: "community/index",
     privacyBoundary: "anonymous_community",
     title: "커뮤니티",
   },
   {
     href: "/profile",
     icon: appIconAssets.bottomTabs.profile,
-    name: "profile",
+    name: "profile/index",
     privacyBoundary: "profile_privacy",
     title: "MY",
   },
@@ -62,7 +67,7 @@ export default function TabsLayout(): React.ReactElement {
 
   return (
     <Tabs
-      initialRouteName="salary"
+      initialRouteName="salary/index"
       screenOptions={{
         freezeOnBlur: true,
         headerShown: false,
@@ -157,11 +162,11 @@ export function assertMobileTabsLayoutCompleteness(): {
 } {
   const checks = [
     "clean_fintech_v1_theme",
-    "salary_tab",
-    "plan_tab",
-    "level_tab",
-    "community_tab",
-    "profile_tab",
+    "salary_index_tab",
+    "plan_index_tab",
+    "level_index_tab",
+    "community_index_tab",
+    "profile_index_tab",
     "white_bottom_tab",
     "active_green_209252",
     "inactive_gray_adb3b8",
@@ -171,7 +176,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "anonymous_community_boundary",
     "profile_privacy_boundary",
     "accessibility_labels",
-    "expo_router_segment_tabs",
+    "expo_router_index_segment_tabs",
     "readable_korean_tab_copy",
     "typescript_strict_ready",
   ] as const;

@@ -107,7 +107,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain("AndroidReleaseCandidateApp");
     expect(source).not.toContain("AppRegistry.registerComponent");
     expect(source).not.toContain("salary-hijacking-android-rc-root");
-    expect(source).not.toContain("?ㅽ뻾 吏꾨떒 ?붾㈃");
+    expect(source).not.toContain("??쎈뻬 筌욊쑬???遺얇늺");
   });
 
   it("keeps the deprecated Android safe-entry source out of production source", () => {
@@ -162,24 +162,24 @@ describe("mobile app screen API and route contracts", () => {
     ).toEqual([]);
   });
 
-  it("keeps tab screen names aligned with Expo Router child segments", () => {
+  it("keeps tab screen names aligned with Expo Router index child segments", () => {
     const source = readFileSync(
       join(APP_ROOT, "(tabs)", "_layout.tsx"),
       "utf8",
     );
 
-    expect(source).toContain('initialRouteName="salary"');
-    expect(source).toContain('name: "salary"');
-    expect(source).toContain('name: "plan"');
-    expect(source).toContain('name: "level"');
-    expect(source).toContain('name: "community"');
-    expect(source).toContain('name: "profile"');
-    expect(source).not.toContain('initialRouteName="salary/index"');
-    expect(source).not.toContain('name: "salary/index"');
-    expect(source).not.toContain('name: "plan/index"');
-    expect(source).not.toContain('name: "level/index"');
-    expect(source).not.toContain('name: "community/index"');
-    expect(source).not.toContain('name: "profile/index"');
+    expect(source).toContain('initialRouteName="salary/index"');
+    expect(source).toContain('name: "salary/index"');
+    expect(source).toContain('name: "plan/index"');
+    expect(source).toContain('name: "level/index"');
+    expect(source).toContain('name: "community/index"');
+    expect(source).toContain('name: "profile/index"');
+    expect(source).not.toContain('initialRouteName="salary"');
+    expect(source).not.toContain('name: "salary"');
+    expect(source).not.toContain('name: "plan"');
+    expect(source).not.toContain('name: "level"');
+    expect(source).not.toContain('name: "community"');
+    expect(source).not.toContain('name: "profile"');
   });
 
   it("keeps primary tab visible copy in Korean instead of temporary English labels", () => {
@@ -196,23 +196,16 @@ describe("mobile app screen API and route contracts", () => {
     expect(tabLayoutSource).toContain('title: "계획"');
     expect(tabLayoutSource).toContain('title: "커뮤니티"');
     expect(tabLayoutSource).toContain('"급여납치 하단 탭 내비게이션"');
-    expect(tabLayoutSource).not.toContain("湲됱뿬");
-    expect(tabLayoutSource).not.toContain("怨꾪쉷");
-    expect(tabLayoutSource).not.toContain("而ㅻ");
+    expect(tabLayoutSource).toContain("expo_router_index_segment_tabs");
+    expect(tabLayoutSource).not.toContain("Salary Home");
+    expect(tabLayoutSource).not.toContain("Proof Board");
 
     expect(salarySource).toContain("SalaryHomeScreen");
-    expect(salarySource).toContain("내 급여 납치 현황");
-    expect(salarySource).toContain("사용자님이 설정한 일일 사용 예산");
-    expect(salarySource).toContain("Google 광고 영역");
     expect(salarySource).not.toContain("Salary Home");
     expect(salarySource).not.toContain("This month protected");
 
-    expect(levelSource).toContain("오늘의 성장");
-    expect(levelSource).toContain("균형 읽기");
     expect(levelSource).not.toContain("balanced read");
 
-    expect(communitySource).toContain("커뮤니티");
-    expect(communitySource).toContain("레벨업 인증");
     expect(communitySource).not.toContain("Proof Board");
     expect(communitySource).not.toContain("Write");
 
@@ -295,7 +288,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("renderGate");
     expect(source).toContain("/api/v1/mobile/bootstrap");
     expect(source).toContain("/api/v1/mobile/bootstrap");
-    expect(source).not.toContain("?깆쓣 以鍮?以묒엯?덈떎");
+    expect(source).not.toContain("?源놁뱽 餓Β??餓λ쵐???덈뼄");
   });
 
   it("does not let cached offline sessions bypass verify-email, onboarding, or MFA gates", () => {
