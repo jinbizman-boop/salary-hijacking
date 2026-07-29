@@ -2599,8 +2599,14 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.equal(calls[4].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.equal(calls[4].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
   assert.equal(
-    calls[4].options.env.GRADLE_USER_HOME,
-    path.join(rootDir, ".gradle-local-debug"),
+    calls[4].options.env.GRADLE_USER_HOME.startsWith(
+      path.join(rootDir, ".gradle-local-debug", "invocations"),
+    ),
+    true,
+  );
+  assert.match(
+    path.basename(calls[4].options.env.GRADLE_USER_HOME),
+    /^\d{3}$/u,
   );
   assert.match(String(calls[5].command).toLowerCase(), /gradlew/);
   assert.equal(calls[5].args[0], "assembleDebug");
@@ -2609,8 +2615,22 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
   assert.equal(calls[6].options.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.equal(calls[6].options.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
   assert.equal(
+    calls[6].options.env.GRADLE_USER_HOME.startsWith(
+      path.join(rootDir, ".gradle-local-debug", "invocations"),
+    ),
+    true,
+  );
+  assert.match(
+    path.basename(calls[6].options.env.GRADLE_USER_HOME),
+    /^\d{3}$/u,
+  );
+  assert.notEqual(
+    calls[4].options.env.GRADLE_USER_HOME,
+    calls[5].options.env.GRADLE_USER_HOME,
+  );
+  assert.notEqual(
+    calls[5].options.env.GRADLE_USER_HOME,
     calls[6].options.env.GRADLE_USER_HOME,
-    path.join(rootDir, ".gradle-local-debug"),
   );
   assert.match(
     fs.readFileSync(path.join(rootDir, "android", "local.properties"), "utf8"),

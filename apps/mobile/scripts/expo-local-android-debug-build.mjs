@@ -2830,15 +2830,33 @@ export const runExpoLocalAndroidDebugBuild = ({
     );
     return { ...result, status: gradleTimeoutExitStatus };
   };
-  const runGradleInvocation = (args) => {
+  const gradleUserHomeForInvocation = (() => {
+    let invocationIndex = 0;
+    return () => {
+      if (!isWindows(platform)) return preflight.env.GRADLE_USER_HOME;
+      invocationIndex += 1;
+      return path.join(
+        preflight.env.GRADLE_USER_HOME,
+        "invocations",
+        String(invocationIndex).padStart(3, "0"),
+      );
+    };
+  })();
+  const buildGradleInvocationSpawnOptions = () => {
     const options = buildGradleSpawnOptions();
+    const gradleUserHome = gradleUserHomeForInvocation();
+    options.env = { ...options.env, GRADLE_USER_HOME: gradleUserHome };
+    prepareWindowsGradleTransformCaches({
+      gradleUserHome,
+      platform,
+    });
+    return options;
+  };
+  const runGradleInvocation = (args) => {
     const maxAttempts = isWindows(platform) ? 4 : 1;
     let result = { status: 1 };
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-      prepareWindowsGradleTransformCaches({
-        gradleUserHome: preflight.env.GRADLE_USER_HOME,
-        platform,
-      });
+      const options = buildGradleInvocationSpawnOptions();
       result = normalizeGradleResult(
         args,
         spawn(invocations.gradleCommand, args, options),
@@ -2847,10 +2865,6 @@ export const runExpoLocalAndroidDebugBuild = ({
       if ((result.status ?? 1) === 0 || !isWindows(platform)) return result;
       cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
       cleanNativeDependencyCompileCaches({ mobileRootDir });
-      prepareWindowsGradleTransformCaches({
-        gradleUserHome: preflight.env.GRADLE_USER_HOME,
-        platform,
-      });
     }
     return result;
   };
@@ -2911,7 +2925,7 @@ export const runExpoLocalAndroidDebugBuild = ({
         let expoModulesCoreConfigure = spawn(
           invocations.gradleCommand,
           expoModulesCoreConfigureArgs,
-          buildGradleSpawnOptions(),
+          buildGradleInvocationSpawnOptions(),
         );
         expoModulesCoreConfigure = normalizeGradleResult(
           expoModulesCoreConfigureArgs,
@@ -2938,7 +2952,7 @@ export const runExpoLocalAndroidDebugBuild = ({
           expoModulesCoreConfigure = spawn(
             invocations.gradleCommand,
             expoModulesCoreConfigureArgs,
-            { ...buildGradleSpawnOptions(), shell: true },
+            { ...buildGradleInvocationSpawnOptions(), shell: true },
           );
           expoModulesCoreConfigure = normalizeGradleResult(
             expoModulesCoreConfigureArgs,
