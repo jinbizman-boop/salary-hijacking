@@ -442,6 +442,23 @@ export const repairGradleTransformTemporaryWorkspaces = ({
       const immutablePath = path.join(workspaceRoot, match[1]);
       if (fs.existsSync(immutablePath)) {
         try {
+          fs.rmSync(immutablePath, { force: true, recursive: true });
+          removed += 1;
+          fs.renameSync(temporaryPath, immutablePath);
+          moved += 1;
+        } catch {
+          try {
+            fs.rmSync(temporaryPath, { force: true, recursive: true });
+            removed += 1;
+          } catch {
+            // Windows may still hold nested Gradle cache files briefly; retrying
+            // Gradle is safe even if this duplicate temporary folder remains.
+          }
+        }
+        if (!fs.existsSync(temporaryPath)) {
+          continue;
+        }
+        try {
           fs.rmSync(temporaryPath, { force: true, recursive: true });
           removed += 1;
         } catch {

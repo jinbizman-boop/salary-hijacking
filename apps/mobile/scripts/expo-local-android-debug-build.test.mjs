@@ -821,18 +821,18 @@ test("repairs Gradle transform temporary workspaces before retrying Windows buil
   );
   touch(
     path.join(transformsRoot, existingTargetHash, "transformed", "module.json"),
-    "{}",
+    "stale",
   );
   touch(
     path.join(transformsRoot, existingTargetTemp, "transformed", "module.json"),
-    "{}",
+    "fresh",
   );
 
   const result = repairGradleTransformTemporaryWorkspaces({
     gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
   });
 
-  assert.equal(result.moved, 1);
+  assert.equal(result.moved, 2);
   assert.equal(result.removed, 1);
   assert.equal(
     fs.existsSync(path.join(transformsRoot, missingTargetHash)),
@@ -849,6 +849,18 @@ test("repairs Gradle transform temporary workspaces before retrying Windows buil
   assert.equal(
     fs.existsSync(path.join(transformsRoot, existingTargetTemp)),
     false,
+  );
+  assert.equal(
+    fs.readFileSync(
+      path.join(
+        transformsRoot,
+        existingTargetHash,
+        "transformed",
+        "module.json",
+      ),
+      "utf8",
+    ),
+    "fresh",
   );
 });
 
@@ -875,7 +887,7 @@ test("repairs Gradle Kotlin DSL accessor temporary workspaces before retrying Wi
     gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
   });
 
-  assert.equal(result.moved, 1);
+  assert.equal(result.moved, 2);
   assert.equal(result.removed, 1);
   assert.equal(
     fs.existsSync(path.join(accessorsRoot, missingTargetHash)),
