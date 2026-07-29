@@ -94,7 +94,44 @@ test("preflight passes without Expo account auth when Expo CLI, Java, and Androi
   assert.equal(result.env.JAVA_HOME, javaHome);
   assert.equal(result.env.ANDROID_HOME, sdkRoot);
   assert.equal(result.env.ANDROID_SDK_ROOT, sdkRoot);
+  assert.equal(result.env.EXPO_PUBLIC_E2E_BUILD, "true");
   assert.equal(result.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "1");
+});
+
+test("qaRelease preflight disables the embedded E2E build flag", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = checkExpoLocalAndroidDebugPrerequisites({
+    androidToolHomeDir: rootDir,
+    buildType: "qaRelease",
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+  });
+
+  assert.equal(result.ok, true, result.failures.join("\n"));
+  assert.equal(result.env.EXPO_PUBLIC_E2E_BUILD, "false");
+  assert.equal(result.gradleArgs[0], "assembleQaRelease");
 });
 
 test("preflight discovers bundled monorepo .tools JDK and Android SDK", () => {
@@ -1243,6 +1280,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "--max-workers=1",
     "--no-parallel",
     "-PreactNativeArchitectures=x86_64",
+    "-PsalaryHijackingAndroidAbiFilters=x86_64",
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
     "-Pksp.incremental=false",
@@ -1259,6 +1297,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "--max-workers=1",
     "--no-parallel",
     "-PreactNativeArchitectures=x86_64",
+    "-PsalaryHijackingAndroidAbiFilters=x86_64",
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
     "-Pksp.incremental=false",
@@ -1275,6 +1314,7 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
     "--max-workers=1",
     "--no-parallel",
     "-PreactNativeArchitectures=x86_64",
+    "-PsalaryHijackingAndroidAbiFilters=x86_64",
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
     "-Pksp.incremental=false",
@@ -1328,6 +1368,11 @@ test("build invocations can target qaRelease APK without AndroidTest packaging",
       "-PreactNativeArchitectures=x86_64,arm64-v8a",
     ),
   );
+  assert.ok(
+    invocations.gradleArgs.includes(
+      "-PsalaryHijackingAndroidAbiFilters=x86_64,arm64-v8a",
+    ),
+  );
   assert.match(
     invocations.debugApkPath,
     /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease\.apk$/,
@@ -1352,6 +1397,11 @@ test("build invocations can target an ARM64 debug APK for physical phone install
 
   assert.ok(
     invocations.gradleArgs.includes("-PreactNativeArchitectures=arm64-v8a"),
+  );
+  assert.ok(
+    invocations.gradleArgs.includes(
+      "-PsalaryHijackingAndroidAbiFilters=arm64-v8a",
+    ),
   );
   assert.ok(
     invocations.androidTestArgs.includes(
@@ -1764,6 +1814,11 @@ test("build invocations warm native CMake outputs for every requested APK ABI", 
   assert.ok(
     invocations.gradleArgs.includes(
       "-PreactNativeArchitectures=arm64-v8a,x86_64",
+    ),
+  );
+  assert.ok(
+    invocations.gradleArgs.includes(
+      "-PsalaryHijackingAndroidAbiFilters=arm64-v8a,x86_64",
     ),
   );
   assert.ok(

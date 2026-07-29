@@ -474,6 +474,7 @@ export const repairGradleTransformTemporaryWorkspaces = ({
 };
 
 const buildEnv = ({
+  e2eBuild = true,
   env,
   javaHome,
   mobileRootDir,
@@ -521,7 +522,7 @@ const buildEnv = ({
     ...env,
     ANDROID_HOME: sdkRoot,
     ANDROID_SDK_ROOT: sdkRoot,
-    EXPO_PUBLIC_E2E_BUILD: "true",
+    EXPO_PUBLIC_E2E_BUILD: e2eBuild ? "true" : "false",
     ...(gradleUserHome ? { GRADLE_USER_HOME: gradleUserHome } : {}),
     JAVA_HOME: javaHome,
     ...(kotlinUserHome ? { KOTLIN_USER_HOME: kotlinUserHome } : {}),
@@ -2385,6 +2386,7 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     "--max-workers=1",
     "--no-parallel",
     `-PreactNativeArchitectures=${architectureList}`,
+    `-PsalaryHijackingAndroidAbiFilters=${architectureList}`,
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
     "-Pksp.incremental=false",
@@ -2497,6 +2499,7 @@ const hasApkHeader = (filePath) => {
 
 export const checkExpoLocalAndroidDebugPrerequisites = ({
   androidToolHomeDir,
+  buildType = "debug",
   env = process.env,
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
@@ -2511,6 +2514,7 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
     platform,
   });
   const invocations = buildExpoLocalAndroidDebugInvocations({
+    buildType,
     existsSync,
     mobileRootDir,
     platform,
@@ -2565,6 +2569,7 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
     env:
       javaHome && sdkRoot
         ? buildEnv({
+            e2eBuild: normalizeAndroidBuildType(buildType) === "debug",
             env: toolEnv,
             javaHome,
             mobileRootDir,
