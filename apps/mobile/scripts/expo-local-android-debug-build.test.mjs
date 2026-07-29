@@ -1307,6 +1307,37 @@ test("build invocations keep prebuild, Gradle assembleDebug, and Detox APK copy 
   );
 });
 
+test("build invocations can target qaRelease APK without AndroidTest packaging", () => {
+  const rootDir = makeWorkspace();
+  writeMobileFixture(rootDir);
+  touch(path.join(rootDir, "android", "gradlew.bat"));
+
+  const invocations = buildExpoLocalAndroidDebugInvocations({
+    architecture: "x86_64,arm64-v8a",
+    buildType: "qaRelease",
+    mobileRootDir: rootDir,
+    output: "build/qa/android/salary-hijacking-qa-release-like.apk",
+    platform: "win32",
+  });
+
+  assert.equal(invocations.buildType, "qaRelease");
+  assert.equal(invocations.gradleArgs[0], "assembleQaRelease");
+  assert.deepEqual(invocations.androidTestArgs, []);
+  assert.ok(
+    invocations.gradleArgs.includes(
+      "-PreactNativeArchitectures=x86_64,arm64-v8a",
+    ),
+  );
+  assert.match(
+    invocations.debugApkPath,
+    /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease\.apk$/,
+  );
+  assert.match(
+    invocations.outputPath,
+    /build[\\/]qa[\\/]android[\\/]salary-hijacking-qa-release-like\.apk$/,
+  );
+});
+
 test("build invocations can target an ARM64 debug APK for physical phone install checks", () => {
   const rootDir = makeWorkspace();
   writeMobileFixture(rootDir);

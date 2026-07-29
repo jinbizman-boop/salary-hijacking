@@ -409,6 +409,15 @@ const normalizeAndroidEntry = (value) => {
   throw new Error(`Unsupported Android entry: ${entry || "(empty)"}`);
 };
 
+const normalizeAndroidBuildType = (value) => {
+  const buildType = String(value ?? "").trim() || "debug";
+  if (buildType === "debug" || buildType === "qaRelease") return buildType;
+  throw new Error(`Unsupported Android build type: ${buildType}`);
+};
+
+const androidVariantName = (buildType) =>
+  buildType.charAt(0).toUpperCase() + buildType.slice(1);
+
 export const repairGradleTransformTemporaryWorkspaces = ({
   gradleUserHome,
 }) => {
@@ -2346,6 +2355,7 @@ const buildDebugQaGradleProperties = ({
 export const buildExpoLocalAndroidDebugInvocations = ({
   applicationIdSuffix = "",
   architecture = "x86_64",
+  buildType = "debug",
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
   output = "build/e2e/android/salary-hijacking-e2e.apk",
@@ -2354,6 +2364,8 @@ export const buildExpoLocalAndroidDebugInvocations = ({
 } = {}) => {
   const architectures = normalizeAndroidArchitectures(architecture);
   const architectureList = architectures.join(",");
+  const normalizedBuildType = normalizeAndroidBuildType(buildType);
+  const variantName = androidVariantName(normalizedBuildType);
   const debugQaGradleProperties = buildDebugQaGradleProperties({
     applicationIdSuffix,
     versionCode,
@@ -2388,15 +2400,19 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     ],
   );
   return {
-    androidTestArgs: [
-      ":app:assembleDebugAndroidTest",
-      "--no-daemon",
-      ...stableLocalDebugGradleArgs,
-      ...localDebugJsEngineGradleArgs,
-      "-x",
-      ":app:generateAutolinkingPackageList",
-      ...expoModulesCoreConfigureExcludes,
-    ],
+    androidTestArgs:
+      normalizedBuildType === "debug"
+        ? [
+            ":app:assembleDebugAndroidTest",
+            "--no-daemon",
+            ...stableLocalDebugGradleArgs,
+            ...localDebugJsEngineGradleArgs,
+            "-x",
+            ":app:generateAutolinkingPackageList",
+            ...expoModulesCoreConfigureExcludes,
+          ]
+        : [],
+    buildType: normalizedBuildType,
     debugApkPath: path.join(
       mobileRootDir,
       "android",
@@ -2404,12 +2420,12 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "build",
       "outputs",
       "apk",
-      "debug",
-      "app-debug.apk",
+      normalizedBuildType,
+      `app-${normalizedBuildType}.apk`,
     ),
     expoCommand,
     gradleArgs: [
-      "assembleDebug",
+      `assemble${variantName}`,
       "--no-daemon",
       ...stableLocalDebugGradleArgs,
       ...localDebugJsEngineGradleArgs,
@@ -2571,6 +2587,7 @@ const parseArgs = (argv) => {
       process.env.SALARY_HIJACKING_ANDROID_APPLICATION_ID_SUFFIX || "",
     architecture:
       process.env.SALARY_HIJACKING_ANDROID_ARCHITECTURES || "x86_64",
+    buildType: process.env.SALARY_HIJACKING_ANDROID_BUILD_TYPE || "debug",
     checkOnly: false,
     output: "build/e2e/android/salary-hijacking-e2e.apk",
     skipPrebuild: false,
@@ -2592,6 +2609,11 @@ const parseArgs = (argv) => {
       index += 1;
     } else if (arg === "--architecture") {
       options.architecture = argv[index + 1] ?? options.architecture;
+      index += 1;
+    } else if (arg === "--build-type") {
+      options.buildType = normalizeAndroidBuildType(
+        argv[index + 1] ?? options.buildType,
+      );
       index += 1;
     } else if (arg === "--application-id-suffix") {
       options.applicationIdSuffix =
@@ -2638,6 +2660,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   androidEntry = "router",
   applicationIdSuffix = "",
   architecture = "x86_64",
+  buildType = "debug",
   env = process.env,
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
@@ -2659,6 +2682,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   const invocations = buildExpoLocalAndroidDebugInvocations({
     applicationIdSuffix,
     architecture,
+    buildType,
     existsSync,
     mobileRootDir,
     output,
@@ -2898,6 +2922,7 @@ export const runExpoLocalAndroidDebugBuild = ({
 
     const shouldSkipAndroidTest =
       preflight.env[skipAndroidTestEnvKey] === "1" ||
+      invocations.buildType !== "debug" ||
       isPhoneTargetDebugOutput({
         mobileRootDir,
         outputPath: invocations.outputPath,
