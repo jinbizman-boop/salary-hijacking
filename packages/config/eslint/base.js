@@ -391,6 +391,7 @@ const baseConfig = [
       "**/.nuxt/**",
       "**/.open-next/**",
       "**/.output/**",
+      "**/.tmp/**",
       "**/.turbo/**",
       "**/.vercel/**",
       "**/.wrangler/**",

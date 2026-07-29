@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   auditStitchImplementationMatrix,
+  parseArgs,
   parseCsv,
 } from "./audit-stitch-implementation-matrix.mjs";
 
@@ -80,8 +81,8 @@ const row = ({
   primaryCode,
   name,
   artifactType = "screen",
-  status = "PASS",
-  notes = "EVIDENCE_SYNCED:ok",
+  status = "UNVERIFIED",
+  notes = "MAPPED_ONLY:ok;FINAL_ANDROID_PRODUCTION_VISUAL_A11Y_REQUIRED",
 }) => [
   `classified/${instanceCode}__sample`,
   instanceCode,
@@ -153,6 +154,33 @@ test("parses quoted CSV while preserving Korean screen names", () => {
   );
 
   assert.equal(parsed.rows[0].screen_name_ko, "스플래시");
+});
+
+test("preserves raw CSV row lengths so malformed rows can be audited", () => {
+  const parsed = parseCsv("a,b,c\n1,2,3\n4,5,6,7\n");
+
+  assert.equal(parsed.header.length, 3);
+  assert.deepEqual(
+    parsed.rawRows.map((rawRow) => rawRow.length),
+    [3, 4],
+  );
+});
+
+test("defaults to the audit implementation matrix as the sole truth source", () => {
+  const options = parseArgs([]);
+
+  assert.match(
+    options.matrixPath.replaceAll("\\", "/"),
+    /docs\/audit\/IMPLEMENTATION_MATRIX\.csv$/u,
+  );
+  assert.match(
+    options.jsonPath.replaceAll("\\", "/"),
+    /artifacts\/qa\/stitch-matrix-audit-current\.json$/u,
+  );
+  assert.match(
+    options.markdownPath.replaceAll("\\", "/"),
+    /artifacts\/qa\/stitch-matrix-audit-current\.md$/u,
+  );
 });
 
 test("passes when the matrix covers catalog rows plus synthetic SCR-029", () => {
@@ -236,6 +264,60 @@ test("fails when catalog rows are missing or Korean names are mojibake", () => {
   assert.deepEqual(result.mojibakeRows, ["SCR-017-V001"]);
 });
 
+test("fails screen matrix PASS rows without final Android visual/a11y proof", () => {
+  const result = auditStitchImplementationMatrix({
+    catalog: {
+      screens: [
+        {
+          instance_code: "SCR-001-V001",
+          primary_code: "SCR-001",
+          artifact_type: "screen",
+          png_status: "OK",
+        },
+      ],
+    },
+    matrixCsv: csv([
+      row({
+        instanceCode: "SCR-001-V001",
+        primaryCode: "SCR-001",
+        name: "?ㅽ뵆?섏떆",
+        notes: "EVIDENCE_SYNCED:old capture-route proof",
+        status: "PASS",
+      }),
+    ]),
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.overclaimedPassRows, ["SCR-001-V001"]);
+});
+
+test("allows screen matrix PASS only with explicit final Android visual/a11y proof", () => {
+  const result = auditStitchImplementationMatrix({
+    catalog: {
+      screens: [
+        {
+          instance_code: "SCR-001-V001",
+          primary_code: "SCR-001",
+          artifact_type: "screen",
+          png_status: "OK",
+        },
+      ],
+    },
+    matrixCsv: csv([
+      row({
+        instanceCode: "SCR-001-V001",
+        primaryCode: "SCR-001",
+        name: "?ㅽ뵆?섏떆",
+        notes: "FINAL_ANDROID_PRODUCTION_VISUAL_A11Y_VERIFIED",
+        status: "PASS",
+      }),
+    ]),
+  });
+
+  assert.equal(result.ok, true, JSON.stringify(result, null, 2));
+  assert.deepEqual(result.overclaimedPassRows, []);
+});
+
 test("reads the audit truth matrix schema with stitch_instance_code", () => {
   const catalog = {
     screens: [
@@ -308,6 +390,127 @@ test("reads the audit truth matrix schema with stitch_instance_code", () => {
   assert.equal(result.artifactTypeCounts.modal, 1);
 });
 
+test("fails truth matrix rows with malformed CSV column counts", () => {
+  const goodRow = truthRow({
+    requirementId: "STITCH-001",
+    instanceCode: "SCR-001-V001",
+    primaryCode: "SCR-001",
+  });
+  const malformedCsv = [
+    truthHeader.join(","),
+    goodRow
+      .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+      .join(","),
+    [
+      "D-017",
+      "goal-objective.md",
+      "audit defect register",
+      "P1",
+      "DB",
+      "",
+      "",
+      "",
+      "user",
+      "",
+      "Staging DB must be validated",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "artifacts/qa/db.json",
+      "",
+      "EXTERNAL_BLOCKER",
+      "External blocker text with, unquoted comma",
+      "rollback rehearsal",
+      "c".repeat(40),
+    ].join(","),
+  ].join("\n");
+
+  const result = auditStitchImplementationMatrix({
+    catalog: {
+      screens: [
+        {
+          instance_code: "SCR-001-V001",
+          primary_code: "SCR-001",
+          artifact_type: "screen",
+          png_status: "OK",
+        },
+      ],
+    },
+    matrixCsv: malformedCsv,
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.malformedCsvRows, [
+    { line: 3, expectedColumns: truthHeader.length, actualColumns: 27 },
+  ]);
+});
+
+test("fails truth matrix rows with prose in evidence or commit fields", () => {
+  const result = auditStitchImplementationMatrix({
+    catalog: {
+      screens: [
+        {
+          instance_code: "SCR-001-V001",
+          primary_code: "SCR-001",
+          artifact_type: "screen",
+          png_status: "OK",
+        },
+      ],
+    },
+    matrixCsv: truthCsv([
+      truthRow({
+        requirementId: "STITCH-001",
+        instanceCode: "SCR-001-V001",
+        primaryCode: "SCR-001",
+      }),
+      [
+        "D-017",
+        "goal-objective.md",
+        "audit defect register",
+        "P1",
+        "DB",
+        "",
+        "",
+        "",
+        "user",
+        "",
+        "Staging DB must be validated",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "artifacts/qa/db.json",
+        "",
+        "EXTERNAL_BLOCKER",
+        "blocked externally",
+        "so live staging RLS isolation",
+        "rollback rehearsal",
+      ],
+    ]),
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.malformedTruthRows, [
+    {
+      line: 3,
+      requirement_id: "D-017",
+      evidence_path: "so live staging RLS isolation",
+      commit_sha: "rollback rehearsal",
+    },
+  ]);
+});
+
 test("fails truth matrix rows whose implementation files do not exist", () => {
   const catalog = {
     screens: [
@@ -335,7 +538,10 @@ test("fails truth matrix rows whose implementation files do not exist", () => {
 
   assert.equal(result.ok, false);
   assert.equal(result.missingImplementationFiles.length, 1);
-  assert.equal(result.missingImplementationFiles[0].instance_code, "SCR-001-V001");
+  assert.equal(
+    result.missingImplementationFiles[0].instance_code,
+    "SCR-001-V001",
+  );
   assert.equal(
     result.missingImplementationFiles[0].implementation_file,
     "features/missing/screens/NopeScreen.tsx",

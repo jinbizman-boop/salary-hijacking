@@ -82,6 +82,27 @@ BEFORE UPDATE ON public.user_support_tickets
 FOR EACH ROW
 EXECUTE FUNCTION public.set_updated_at();
 
+ALTER TABLE public.user_support_tickets ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS user_support_tickets_owner_select ON public.user_support_tickets;
+CREATE POLICY user_support_tickets_owner_select
+ON public.user_support_tickets
+FOR SELECT
+USING (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_support_tickets_owner_insert ON public.user_support_tickets;
+CREATE POLICY user_support_tickets_owner_insert
+ON public.user_support_tickets
+FOR INSERT
+WITH CHECK (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_support_tickets_owner_update ON public.user_support_tickets;
+CREATE POLICY user_support_tickets_owner_update
+ON public.user_support_tickets
+FOR UPDATE
+USING (user_id = public.current_app_user_id() OR public.current_app_is_admin())
+WITH CHECK (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
 COMMENT ON TABLE public.user_support_tickets
 IS 'Salary Hijacking mobile 1:1 support tickets. API responses must not echo user_id or message_body to the mobile support compose result.';
 

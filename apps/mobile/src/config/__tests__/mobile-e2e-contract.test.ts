@@ -169,8 +169,11 @@ describe("mobile Detox E2E contract", () => {
 
   it("keeps Android release-like builds away from debug signing and backup exposure", () => {
     const buildGradle = readRequiredText("android/app/build.gradle");
-    const manifest = readRequiredText("android/app/src/main/AndroidManifest.xml");
-    const releaseBlock = buildGradle.match(/release\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+    const manifest = readRequiredText(
+      "android/app/src/main/AndroidManifest.xml",
+    );
+    const releaseBlock =
+      buildGradle.match(/release\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
     const qaReleaseBlock =
       buildGradle.match(/qaRelease\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
 
@@ -301,6 +304,27 @@ describe("mobile Detox E2E contract", () => {
     };
     expect(appConfig({ config: {} }).extra.api).toEqual(
       expect.objectContaining({ baseUrl: "http://localhost:8787" }),
+    );
+  });
+
+  it("rejects localhost API overrides outside explicit local builds", () => {
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "staging",
+      EXPO_PUBLIC_API_BASE_URL: "http://localhost:8787",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: stagingApiBaseUrl }),
+    );
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: validEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: "http://localhost:8787",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: productionApiBaseUrl }),
     );
   });
 });

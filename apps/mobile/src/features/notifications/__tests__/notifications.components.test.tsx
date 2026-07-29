@@ -13,12 +13,15 @@ import {
 } from "../components/NotificationScreen";
 import type { NotificationItem } from "../types";
 
-const mojibakeMarkers = ["湲", "됱", "뿬", "⑹", "뚮", "꾩", "紐", "臾", "�"];
+const mojibakeRegex =
+  /[�]|濡|湲|鍮|怨|媛|踰|留|瑗|繹|諭|筌|揶|甕|疫|嫄|怨|移|異|遺|꾩|뚯|몄|쒕|대찓|몄쬆|덉|뺤/u;
 
 function expectNoMojibake(text: string): void {
-  for (const marker of mojibakeMarkers) {
-    expect(text).not.toContain(marker);
-  }
+  expect(text).not.toMatch(mojibakeRegex);
+}
+
+function jsonText(screen: ReturnType<typeof render>): string {
+  return screen.toJSON() ? JSON.stringify(screen.toJSON()) : "";
 }
 
 const notifications: readonly NotificationItem[] = [
@@ -80,7 +83,7 @@ describe("notifications feature components", () => {
     ).toBeTruthy();
     expect(screen.queryByText("pushTokenRendered=false")).toBeNull();
     expect(screen.queryByText(/fcm|push token|bearer/iu)).toBeNull();
-    expectNoMojibake(screen.toJSON() ? JSON.stringify(screen.toJSON()) : "");
+    expectNoMojibake(jsonText(screen));
   });
 
   it("renders notification rows with unread status and safe deeplink actions", () => {
@@ -94,7 +97,7 @@ describe("notifications feature components", () => {
     expect(
       screen.getByText("민감 금액 원문은 알림에 담지 않습니다."),
     ).toBeTruthy();
-    expect(screen.getByText("광고 타겟팅 데이터와 분리됩니다.")).toBeTruthy();
+    expect(screen.getByText("광고 타겟팅 데이터와 분리합니다.")).toBeTruthy();
     expect(screen.queryByText("sensitiveFinancialData=false")).toBeNull();
     expect(screen.queryByText("adTargetingSeparated=true")).toBeNull();
 
@@ -103,21 +106,24 @@ describe("notifications feature components", () => {
     );
 
     expect(onOpen).toHaveBeenCalledWith(notifications[0]);
-    expectNoMojibake(screen.toJSON() ? JSON.stringify(screen.toJSON()) : "");
+    expectNoMojibake(jsonText(screen));
   });
 
-  it("renders standalone notification screen and opens deep links", () => {
+  it("renders standalone notification screen without bottom tab labels and opens deep links", () => {
     const opened: NotificationHref[] = [];
     const screen = render(
       <NotificationScreen onOpenHref={(href) => opened.push(href)} />,
     );
 
+    expect(screen.getByTestId("notifications-standalone-screen")).toBeTruthy();
     expect(screen.getByText("알림")).toBeTruthy();
     expect(screen.getByText("새로운 알림이 있어요")).toBeTruthy();
     expect(screen.getByText("내 급여 납치 현황 목표 달성")).toBeTruthy();
     expect(screen.queryByText(/5,780,000|5,500,000/u)).toBeNull();
     expect(screen.queryByText("급여")).toBeNull();
     expect(screen.queryByText("계획")).toBeNull();
+    expect(screen.queryByText("커뮤니티")).toBeNull();
+    expect(screen.queryByText("MY")).toBeNull();
 
     fireEvent.press(
       screen.getByRole("button", {
@@ -126,7 +132,7 @@ describe("notifications feature components", () => {
     );
 
     expect(opened).toEqual(["/level/reading"]);
-    expectNoMojibake(screen.toJSON() ? JSON.stringify(screen.toJSON()) : "");
+    expectNoMojibake(jsonText(screen));
   });
 
   it("renders notification empty, offline, and error variants with retry actions", () => {
@@ -134,7 +140,7 @@ describe("notifications feature components", () => {
     const empty = render(<NotificationScreen variant="empty" />);
     expect(empty.getByText("새로운 알림이 없어요")).toBeTruthy();
     expect(empty.queryByText("급여")).toBeNull();
-    expectNoMojibake(empty.toJSON() ? JSON.stringify(empty.toJSON()) : "");
+    expectNoMojibake(jsonText(empty));
 
     const offline = render(
       <NotificationScreen onRetry={retry} variant="offline" />,
@@ -142,7 +148,7 @@ describe("notifications feature components", () => {
     expect(offline.getByText("오프라인 보호 모드")).toBeTruthy();
     fireEvent.press(offline.getByRole("button", { name: "다시 연결" }));
     expect(retry).toHaveBeenCalledTimes(1);
-    expectNoMojibake(offline.toJSON() ? JSON.stringify(offline.toJSON()) : "");
+    expectNoMojibake(jsonText(offline));
 
     const error = render(
       <NotificationScreen onRetry={retry} variant="error" />,
@@ -150,18 +156,16 @@ describe("notifications feature components", () => {
     expect(error.getByText("알림을 불러오지 못했어요")).toBeTruthy();
     fireEvent.press(error.getByRole("button", { name: "다시 시도" }));
     expect(retry).toHaveBeenCalledTimes(2);
-    expectNoMojibake(error.toJSON() ? JSON.stringify(error.toJSON()) : "");
+    expectNoMojibake(jsonText(error));
   });
 
   it("renders all-read and no-unread-with-list states with readable history", () => {
     const allRead = render(<NotificationScreen variant="all-read" />);
     expect(allRead.getByText("모든 알림을 읽었어요")).toBeTruthy();
     expect(allRead.getByText("최근 알림 기록")).toBeTruthy();
-    expect(
-      allRead.getByText("내 급여 납치 현황 목표 달성"),
-    ).toBeTruthy();
+    expect(allRead.getByText("내 급여 납치 현황 목표 달성")).toBeTruthy();
     expect(allRead.queryByText("급여")).toBeNull();
-    expectNoMojibake(allRead.toJSON() ? JSON.stringify(allRead.toJSON()) : "");
+    expectNoMojibake(jsonText(allRead));
 
     const noUnread = render(
       <NotificationScreen variant="no-unread-with-list" />,
@@ -170,9 +174,7 @@ describe("notifications feature components", () => {
     expect(noUnread.getByText("최근 알림 기록")).toBeTruthy();
     expect(noUnread.getByText("Today, Business Conversation")).toBeTruthy();
     expect(noUnread.queryByText("계획")).toBeNull();
-    expectNoMojibake(
-      noUnread.toJSON() ? JSON.stringify(noUnread.toJSON()) : "",
-    );
+    expectNoMojibake(jsonText(noUnread));
   });
 
   it("keeps notification index completeness contract readable", () => {
@@ -181,6 +183,7 @@ describe("notifications feature components", () => {
     expect(contract.ok).toBe(true);
     expect(contract.checks).toContain("새로운 알림이 있어요");
     expect(contract.checks).toContain("금융 원천 데이터 광고 타겟팅 금지");
+    expect(contract.checks).toContain("notifications-standalone-screen");
     expectNoMojibake(contract.checks.join("\n"));
   });
 
@@ -198,7 +201,7 @@ describe("notifications feature components", () => {
     expect(screen.getByText("마케팅 꺼짐")).toBeTruthy();
     fireEvent.press(screen.getByRole("button", { name: "모두 읽음" }));
     expect(onMarkAllRead).toHaveBeenCalledTimes(1);
-    expectNoMojibake(screen.toJSON() ? JSON.stringify(screen.toJSON()) : "");
+    expectNoMojibake(jsonText(screen));
   });
 
   it("renders notification settings without bottom navigation and saves preferences", async () => {
@@ -212,10 +215,12 @@ describe("notifications feature components", () => {
       />,
     );
 
+    expect(
+      screen.getByTestId("notification-settings-standalone-screen"),
+    ).toBeTruthy();
     expect(screen.getByText("알림 설정")).toBeTruthy();
     expect(screen.getByText("급여/납치금액")).toBeTruthy();
-    expect(screen.queryByText("급여")).toBeNull();
-    expect(screen.queryByText("계획")).toBeNull();
+    expect(screen.queryByLabelText("급여납치 하단 탭 내비게이션")).toBeNull();
 
     fireEvent.press(screen.getByRole("button", { name: "알림 설정 저장" }));
     act(() => {
@@ -230,7 +235,7 @@ describe("notifications feature components", () => {
       screen.getByRole("button", { name: "Android 시스템 알림 설정 열기" }),
     );
     expect(onOpenSystemSettings).toHaveBeenCalledTimes(1);
-    expectNoMojibake(screen.toJSON() ? JSON.stringify(screen.toJSON()) : "");
+    expectNoMojibake(jsonText(screen));
     jest.useRealTimers();
   });
 });

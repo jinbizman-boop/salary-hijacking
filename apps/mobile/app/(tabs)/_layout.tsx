@@ -20,7 +20,7 @@ type TabDefinition = Readonly<{
   title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.5-router-index-tabs-korean-labels";
+const LAYOUT_VERSION = "4.0.6-runtime-confirmed-index-tabs";
 
 const tabs: readonly TabDefinition[] = [
   {

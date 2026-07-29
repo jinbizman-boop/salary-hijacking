@@ -104,7 +104,7 @@ const FORBIDDEN_ENV_KEYWORDS = [
 ] as const;
 
 export default function appConfig(context: ConfigContext): ExpoConfig {
-  const environment = envName("APP_ENV", "development");
+  const environment = envName("APP_ENV", "staging");
   const apiBaseUrl = httpsUrlEnv(
     "EXPO_PUBLIC_API_BASE_URL",
     environment === "production"
@@ -112,6 +112,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
       : environment === "local"
         ? LOCAL_API_BASE_URL
         : STAGING_API_BASE_URL,
+    environment === "local",
   );
   const updatesUrl = optionalHttpsUrlEnv("EXPO_UPDATES_URL");
   const owner = optionalPlainEnv("EXPO_OWNER");
@@ -406,7 +407,7 @@ function operationsFlags(environment: EnvironmentName): JsonRecord {
     e2eBuild: boolEnv("EXPO_PUBLIC_E2E_BUILD", false),
     crashReportingEnabled: boolEnv(
       "EXPO_PUBLIC_CRASH_REPORTING_ENABLED",
-      environment === "production",
+      environment === "production" || environment === "staging",
     ),
     performanceBudgetMs: positiveIntEnv(
       "EXPO_PUBLIC_PERFORMANCE_BUDGET_MS",
@@ -605,9 +606,13 @@ function localFilePathEnv(key: string, fallback: string): string {
   return safe ? value.slice(0, 240) : fallback;
 }
 
-function httpsUrlEnv(key: string, fallback: string): string {
+function httpsUrlEnv(
+  key: string,
+  fallback: string,
+  allowLocalhost: boolean,
+): string {
   const raw = process.env?.[key]?.trim() ?? fallback;
-  return safeUrl(raw, fallback, true);
+  return safeUrl(raw, fallback, allowLocalhost);
 }
 
 function optionalHttpsUrlEnv(key: string): string | null {

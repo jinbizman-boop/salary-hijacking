@@ -17,6 +17,17 @@ function readPnpmVersion(rootDir) {
 
 function resolveCachedPnpmCjs(pnpmVersion) {
   const localAppData = process.env.LOCALAPPDATA;
+  const corepackHome = process.env.COREPACK_HOME;
+  if (corepackHome) {
+    return path.join(
+      corepackHome,
+      "v1",
+      "pnpm",
+      pnpmVersion,
+      "bin",
+      "pnpm.cjs",
+    );
+  }
   const candidates = [
     localAppData
       ? path.join(
@@ -44,11 +55,34 @@ export function ensureCorepackPnpmShim(options = {}) {
   const pnpmVersion = options.pnpmVersion ?? readPnpmVersion(rootDir);
   const cachedPnpmCjs =
     options.pnpmCjsPath ?? resolveCachedPnpmCjs(pnpmVersion);
+  const configuredCorepackHome = process.env.COREPACK_HOME;
   const windowsPnpmCjs =
     cachedPnpmCjs ??
+    (configuredCorepackHome
+      ? path.join(
+          configuredCorepackHome,
+          "v1",
+          "pnpm",
+          pnpmVersion,
+          "bin",
+          "pnpm.cjs",
+        )
+      : undefined) ??
     `%LOCALAPPDATA%\\node\\corepack\\v1\\pnpm\\${pnpmVersion}\\bin\\pnpm.cjs`;
   const unixPnpmCjs =
     cachedPnpmCjs?.replace(/\\/g, "/") ??
+    (configuredCorepackHome
+      ? path
+          .join(
+            configuredCorepackHome,
+            "v1",
+            "pnpm",
+            pnpmVersion,
+            "bin",
+            "pnpm.cjs",
+          )
+          .replace(/\\/g, "/")
+      : undefined) ??
     `\${COREPACK_HOME:-$HOME/.cache/node/corepack}/v1/pnpm/${pnpmVersion}/bin/pnpm.cjs`;
   const binDir =
     options.binDir ?? path.join(rootDir, ".turbo", "corepack-pnpm-bin");

@@ -161,6 +161,14 @@ function readSource(root, file) {
   return { exists: true, path, source: readFileSync(path, "utf8") };
 }
 
+function includesContract(source, check) {
+  if (source.includes(check)) return true;
+  const normalizedSource = source.replace(/\s+/gu, " ");
+  const normalizedCheck = check.replace(/\s+/gu, " ");
+  if (normalizedSource.includes(normalizedCheck)) return true;
+  return source.replace(/\s+/gu, "").includes(check.replace(/\s+/gu, ""));
+}
+
 export function auditMobileSafeAreaKeyboard({
   contracts = defaultContracts,
   root = repoRoot,
@@ -175,7 +183,7 @@ export function auditMobileSafeAreaKeyboard({
       missing.push("file_exists");
     } else {
       for (const check of contract.checks) {
-        if (!fileResult.source.includes(check)) missing.push(check);
+        if (!includesContract(fileResult.source, check)) missing.push(check);
       }
     }
 
@@ -209,7 +217,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = auditMobileSafeAreaKeyboard();
   const jsonPath = argValue("--json");
   if (jsonPath) {
-    writeFileSync(resolve(repoRoot, jsonPath), `${JSON.stringify(result, null, 2)}\n`);
+    writeFileSync(
+      resolve(repoRoot, jsonPath),
+      `${JSON.stringify(result, null, 2)}\n`,
+    );
   }
   console.log(
     JSON.stringify(

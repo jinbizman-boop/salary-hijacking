@@ -27,6 +27,9 @@ const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";
 
 export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   const candidates = [options.explicitUrl, options.configuredUrl];
+  const hadCandidate = candidates.some((candidate) =>
+    Boolean(candidate?.trim()),
+  );
 
   for (const candidate of candidates) {
     const normalized = normalizeApiBase(
@@ -38,6 +41,7 @@ export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   }
 
   if (options.environment === "production") return PRODUCTION_API_BASE_URL;
+  if (hadCandidate) return STAGING_API_BASE_URL;
   if (options.environment === "local") {
     return options.platform === "android"
       ? "http://10.0.2.2:8787"
@@ -87,7 +91,11 @@ function normalizeApiBase(
     }
     if (
       baseUrlParts.protocol !== "https:" &&
-      !(baseUrlParts.protocol === "http:" && localHost)
+      !(
+        environment === "local" &&
+        baseUrlParts.protocol === "http:" &&
+        localHost
+      )
     ) {
       return "";
     }
@@ -113,5 +121,5 @@ function normalizeEnvironment(value: unknown): EnvironmentName {
     value === "staging" ||
     value === "production"
     ? value
-    : "development";
+    : "staging";
 }

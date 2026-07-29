@@ -251,7 +251,7 @@ const fixedExpenses = [
   { name: "유튜브 프리미엄", amount: "15,000원", status: "납부완료" },
 ] as const;
 
-const fallbackPlanFixedExpenseRows: readonly PlanCommitmentRow[] = [
+const serverUnavailablePlanFixedExpenseRows: readonly PlanCommitmentRow[] = [
   {
     amountMinor: 30_000,
     id: "fallback-fixed-chatgpt",
@@ -287,13 +287,13 @@ const variableExpenses: readonly VariableExpenseEntry[] = [
   { id: "store", name: "편의점", amount: 4500, icon: appIcons.expense },
 ] as const;
 
-const fallbackNotifications: readonly NotificationScreenItem[] = [
+const serverUnavailableNotifications: readonly NotificationScreenItem[] = [
   {
     deeplink: "/plan",
     id: "fallback_goal",
     icon: "🏅",
     title: "목표 달성",
-    message: "누적 납치금액 5,780,000원 달성",
+    message: "누적 납치금액 서버 기준 달성",
     type: "SAVINGS_GOAL",
     priority: "HIGH",
     isMandatory: false,
@@ -1257,7 +1257,7 @@ export function CleanFintechSplashScreen(): React.ReactElement {
         </Text>
         <SectionCard>
           <Text style={styles.sectionTitle}>이번 달 내가 지켜낼 돈</Text>
-          <Text style={styles.money}>1,927,000원</Text>
+          <Text style={styles.money}>서버 기준 금액</Text>
           <Text style={styles.bodyText}>
             스플래시는 1.2초 안에 로그인 또는 급여 홈으로 자연스럽게 이어지는 첫
             화면 기준입니다.
@@ -3825,7 +3825,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
 
   const metrics: readonly MoneyMetric[] = [
-    { label: "수령금액", value: "2,700,000원" },
+    { label: "수령금액", value: "서버 기준 금액" },
     { label: "지출금액", value: `${formatMoney(preview.monthlyExpense)}원` },
     {
       label: "이번 달 납치금액",
@@ -3839,7 +3839,7 @@ function SalaryHomeScreen(): React.ReactElement {
       <View style={prioritizeDailyBudget ? styles.webCaptureHidden : undefined}>
         <MoneyHeroCard
           label="이번 달 내가 지켜낸 돈"
-          value="5,780,000원"
+          value="서버 기준 금액"
           description="지난달보다 +420,000원 더 지켰어요"
         />
         <MetricGrid metrics={metrics} />
@@ -4180,7 +4180,7 @@ function PlanScreen(): React.ReactElement {
     () => createMobilePlanCommitmentsApi(),
     [],
   );
-  const [salary, setSalary] = useState("2700000");
+  const [salary, setSalary] = useState("");
   const [expense, setExpense] = useState("773000");
   const [target, setTarget] = useState("2200000");
   const [serverPayrollPlan, setServerPayrollPlan] =
@@ -4727,7 +4727,7 @@ function PlanScreen(): React.ReactElement {
   );
   const fixedExpenseRows = planCommitmentsHydrated
     ? serverFixedExpenses.map(fixedExpenseRowFromServer)
-    : fallbackPlanFixedExpenseRows;
+    : serverUnavailablePlanFixedExpenseRows;
   const savingsRows = planCommitmentsHydrated
     ? serverSavingsGoals.map(savingsGoalRowFromServer)
     : fallbackPlanSavingsRows;
@@ -5594,9 +5594,10 @@ function NotificationsScreen(): React.ReactElement {
   const notificationRouter = useRouter();
   const [serverNotifications, setServerNotifications] = useState<
     readonly NotificationScreenItem[]
-  >(fallbackNotifications);
+  >(serverUnavailableNotifications);
   const [unreadCount, setUnreadCount] = useState(
-    fallbackNotifications.filter((item) => item.status === "UNREAD").length,
+    serverUnavailableNotifications.filter((item) => item.status === "UNREAD")
+      .length,
   );
   const [serverNotificationPreferences, setServerNotificationPreferences] =
     useState<NotificationPreferences | null>(null);
@@ -5640,7 +5641,9 @@ function NotificationsScreen(): React.ReactElement {
           )
           .map(toNotificationScreenItem);
         setServerNotifications(
-          nextNotifications.length ? nextNotifications : fallbackNotifications,
+          nextNotifications.length
+            ? nextNotifications
+            : serverUnavailableNotifications,
         );
         setUnreadCount(unreadResult.unreadCount);
         setServerNotificationPreferences(preferencesResult);
@@ -5648,12 +5651,13 @@ function NotificationsScreen(): React.ReactElement {
         setSyncLabel("서버 알림 기준으로 동기화됐어요.");
       } catch {
         if (!mounted) return;
-        setServerNotifications(fallbackNotifications);
+        setServerNotifications(serverUnavailableNotifications);
         setServerNotificationPreferences(null);
         setServerNotificationDevices([]);
         setUnreadCount(
-          fallbackNotifications.filter((item) => item.status === "UNREAD")
-            .length,
+          serverUnavailableNotifications.filter(
+            (item) => item.status === "UNREAD",
+          ).length,
         );
         setSyncLabel("서버 연결 전이라 앱 기준 예시 알림을 보여줘요.");
       }

@@ -1,6 +1,6 @@
 /* eslint-disable require-atomic-updates */
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -13,7 +13,7 @@ import {
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
 import { salaryHijackingTheme as theme } from "../../src/shared/styles/clean-fintech-theme";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.0.1-readable-korean";
 const VERIFY_EMAIL_PATH = "/api/v1/auth/verify-email";
 const VERIFY_EMAIL_RESEND_PATH = "/api/v1/auth/verify-email/resend";
 
@@ -100,7 +100,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
     status === "WAITING"
       ? "메일의 인증 링크를 열면 서버에서 계정을 확인합니다."
       : status === "RESENT"
-        ? "새 링크가 도착하면 다시 열어 주세요. 이메일 주소는 재전송 요청에만 사용합니다."
+        ? "새 링크가 도착하면 다시 열어 주세요. 이메일 주소는 사전 요청에만 사용합니다."
         : "인증 토큰은 화면에 표시하거나 저장하지 않고 서버 확인에만 사용합니다.";
 
   return (

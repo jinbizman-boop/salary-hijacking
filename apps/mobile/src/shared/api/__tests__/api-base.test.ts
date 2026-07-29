@@ -12,24 +12,41 @@ describe("resolveMobileApiBaseUrl", () => {
     ).toBe("https://api.salaryhijacking.com");
   });
 
-  it("uses the configured development API URL on web", () => {
+  it("uses the configured local API URL only in local mode on web", () => {
     expect(
       resolveMobileApiBaseUrl({
         configuredUrl: "http://localhost:8787/",
-        environment: "development",
+        environment: "local",
         platform: "web",
       }),
     ).toBe("http://localhost:8787");
   });
 
-  it("maps localhost to the Android emulator host bridge", () => {
+  it("maps localhost to the Android emulator host bridge only in local mode", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        configuredUrl: "http://localhost:8787",
+        environment: "local",
+        platform: "android",
+      }),
+    ).toBe("http://10.0.2.2:8787");
+  });
+
+  it("rejects localhost outside local mode", () => {
     expect(
       resolveMobileApiBaseUrl({
         configuredUrl: "http://localhost:8787",
         environment: "development",
         platform: "android",
       }),
-    ).toBe("http://10.0.2.2:8787");
+    ).toBe("https://api-staging.salaryhijacking.com");
+    expect(
+      resolveMobileApiBaseUrl({
+        configuredUrl: "http://localhost:8787",
+        environment: "staging",
+        platform: "android",
+      }),
+    ).toBe("https://api-staging.salaryhijacking.com");
   });
 
   it("falls back to staging HTTPS outside local development and official API in production", () => {
@@ -76,7 +93,7 @@ describe("resolveMobileApiBaseUrl", () => {
     expect(
       resolveMobileApiBaseUrl({
         configuredUrl: "http://operator:secret@localhost:8787",
-        environment: "development",
+        environment: "local",
         platform: "android",
       }),
     ).toBe("https://api-staging.salaryhijacking.com");

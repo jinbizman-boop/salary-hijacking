@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-24T21:57:16.669Z",
-  "source": "Current-source safe splash-hide universal QA APK SHA256 EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD; emulator clean install, cold start 10/10, background/resume 10/10, fatal markers 0. Physical Samsung phone QA remains blocked without an attached phone.",
+  "observedAt": "2026-07-29T10:14:21.398Z",
+  "source": "Release-like Expo Router staging QA APK evidence for current local HEAD 64d40ea30728b16e39eb505464071b242f28fe9e. Emulator lifecycle and deep-link navigation probes pass; this does not close authenticated staging persistence, Stitch 304 production-route visual regression, notification no-bottom-tab proof, production AAB, Google Play submission, or physical Samsung QA.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -12,980 +12,316 @@
   "android": {
     "debugApkBuilt": true,
     "debugApkSigned": true,
-    "debugApkSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
+    "debugApkSha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
     "debugApkLocalPath": "artifacts/android/salary-hijacking-qa-universal.apk",
-    "debugApkTemporaryUrl": null,
+    "debugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
+    "debugApkArtifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk",
+    "debugApkBuildType": "qaRelease",
+    "debugApkBuildLog": "artifacts/qa/gradle-assemble-qa-release-route-fixed-signed-20260729.log",
     "downloadVerified": true,
-    "downloadVerificationEvidence": "release/evidence/build-artifacts.json",
-    "phoneTargetDebugApkBuilt": true,
-    "phoneTargetDebugApkSigned": true,
-    "phoneTargetDebugApkSha256": "F838C2968698CB4A109116382A037C0E0DB2AEE402082A33503ED047C1E9E050",
-    "phoneTargetDebugApkLocalPath": "artifacts/android/salary-hijacking-direct-current-arm64-splash-hide.apk",
-    "phoneTargetDebugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-direct-current-arm64-splash-hide.apk",
-    "phoneTargetDebugApkTemporaryUrl": null,
-    "phoneTargetDebugApkTemporaryUrlVerified": false,
-    "phoneTargetDebugApkDownloadVerified": true,
-    "phoneTargetDebugApkDownloadBlocker": null,
-    "phoneTargetDebugApkDownloadVerificationEvidence": "release/evidence/build-artifacts.json",
-    "phoneTargetDebugApkArtifactBranch": null,
-    "phoneTargetDebugApkEvidence": "release/evidence/build-artifacts.json",
-    "phoneTargetDebugApkAbis": ["arm64-v8a"],
-    "phoneTargetDebugApkEmulatorSmokeVerified": true,
-    "keyboardAvoidanceCodeVerified": true,
-    "keyboardAvoidanceCodeEvidence": [
-      "apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx",
-      "apps/mobile/src/features/salary/__tests__/salary.launch-readiness.test.tsx"
-    ],
-    "keyboardAvoidanceDeviceEvidenceBeforeFix": "docs/qa/100-completion/iteration-004-20260713/android-keyboard-qa-variable-form-amount-keyboard-open.png",
-    "keyboardAvoidanceDeviceEvidenceAfterFix": "docs/qa/100-completion/iteration-004-20260713/x86-clean-build/full-emulator-qa-abi-filter/keyboard-variable-expense-x86_64-abi-filter.png",
-    "keyboardAvoidanceDeviceStatus": "PASS on Android 15 x86_64 emulator for clean ABI-filtered local debug build: soft keyboard is visible and salary variable-expense input/save path is usable above the IME. Physical-phone keyboard/safe-area matrix remains blocked because no phone is attached.",
+    "downloadVerificationEvidence": "release/evidence/checksums.txt",
+    "latestSourcePackagedHead": "64d40ea30728b16e39eb505464071b242f28fe9e",
+    "latestSourcePackagedApkSha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
+    "latestSourceChangesPackaged": true,
+    "latestSourceGitStatusSha256": "536DC4F12C704DA37A09B5CBA976F1C3675852C71C0B5CE6A92ECA9FA95192E9",
     "emulatorInstallVerified": true,
-    "emulatorInstallEvidence": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-    "emulatorInstallBlocker": null,
+    "emulatorInstallEvidence": "D:/salary-hijacking-artifacts/android/qa-release-like-current/lifecycle-x86_64-d004-20260729/summary.json",
     "coldStartRuns": 10,
     "coldStartFatalCount": 0,
-    "coldStartEvidence": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-    "navigationSmokeVerified": true,
-    "navigationEvidence": "docs/qa/100-completion/iteration-004-20260713/x86-clean-build/route-recheck-abi-filter/route-recheck-summary.json",
+    "coldStartEvidence": "D:/salary-hijacking-artifacts/android/qa-release-like-current/lifecycle-x86_64-d004-20260729/summary.json",
     "backgroundForegroundVerified": true,
-    "backgroundForegroundEvidence": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-    "notificationNoBottomTabVerified": true,
-    "notificationEvidence": "docs/qa/100-completion/iteration-004-20260713/x86-clean-build/route-recheck-abi-filter/window-notifications.xml",
+    "backgroundForegroundEvidence": "D:/salary-hijacking-artifacts/android/qa-release-like-current/lifecycle-x86_64-d004-20260729/summary.json",
+    "navigationSmokeVerified": true,
+    "navigationEvidence": "artifacts/qa/android-qa-universal-route-probes-fast-20260729/summary.json",
+    "notificationNoBottomTabVerified": false,
+    "notificationEvidence": "artifacts/qa/android-qa-universal-route-probes-fast-20260729/summary.json",
     "physicalPhoneVerified": false,
-    "physicalPhoneBlocker": "No physical Android phone is attached; emulator evidence does not replace phone QA or the user-reported Samsung crash logcat.",
-    "phoneTargetDebugApkAbiFilterVerified": true,
-    "phoneTargetDebugApkExpoCoreLibs": [
-      "lib/arm64-v8a/libexpo-modules-core.so",
-      "lib/arm64-v8a/libreactnative.so",
-      "lib/arm64-v8a/libreanimated.so",
-      "lib/arm64-v8a/librnscreens.so"
-    ],
-    "phoneTargetDebugApkEmulatorSmokeBlocker": "arm64-v8a APK is intended for physical Android phone QA; no physical phone is attached to this Codex Windows environment.",
-    "emulatorTargetDebugApkBuilt": true,
-    "emulatorTargetDebugApkSigned": true,
-    "emulatorTargetDebugApkSha256": "451984884BE4A5F0707AB2C347D15EC4AD7C0951811C0B6365E6D1D998A93CA1",
-    "emulatorTargetDebugApkLocalPath": "artifacts/android/salary-hijacking-current-x86_64-debug.apk",
-    "emulatorTargetDebugApkTemporaryUrl": null,
-    "emulatorTargetDebugApkAbis": ["x86_64"],
-    "emulatorTargetDebugApkExpoCoreLibs": [
-      "lib/x86_64/libexpo-modules-core.so",
-      "lib/x86_64/libhermes.so",
-      "lib/x86_64/libreactnative.so",
-      "lib/x86_64/libreanimated.so",
-      "lib/x86_64/librnscreens.so"
-    ],
-    "latestSourceChangesPackaged": true,
-    "latestSourceChangesPackageBlocker": null,
-    "latestSourceChangesEvidence": [
-      "apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx",
-      "apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
-      "apps/mobile/src/features/capture/CapturePreviewScreen.tsx",
-      "apps/mobile/app/capture/[screen].tsx",
-      "scripts/release/capture-mobile-clean-fintech-screenshots.mjs",
-      "scripts/qa/sync-stitch-evidence-status.mjs",
-      "release/evidence/mobile-ui/42_salary_no_plan.png",
-      "release/evidence/mobile-ui/43_salary_compact.png",
-      "release/evidence/mobile-ui/44_salary_detailed.png",
-      "release/evidence/mobile-ui/45_salary_offline.png",
-      "release/evidence/mobile-ui/capture-summary.json",
-      "docs/qa/SCREEN_IMPLEMENTATION_MATRIX.csv",
-      "docs/qa/STITCH_EVIDENCE_STATUS.md",
-      "artifacts/android/salary-hijacking-qa-universal.apk",
-      "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal-crashfix.apk",
-      "C:/Users/PC/Downloads/salary-hijacking-qa-universal-crashfix.apk",
-      "artifacts/qa/android-phone-debug-build-20260721-salary-variants-rerun3.log",
-      "release/evidence/final-qa-command-logs/apk-arm64-aapt-badging.log",
-      "release/evidence/final-qa-command-logs/apk-arm64-apksigner-verify.log",
-      "release/evidence/final-qa-command-logs/apk-arm64-native-libs.log",
-      "artifacts/qa/mobile-format-check-20260721-salary-variants-post-format.log",
-      "artifacts/qa/root-format-check-20260721-salary-variants-post-format.log",
-      "artifacts/qa/git-diff-check-20260721-salary-variants-post-format.log",
-      "artifacts/qa/json-parse-20260721-salary-variants.log",
-      "artifacts/qa/android-x86-debug-build-20260721-salary-variants.log",
-      "artifacts/qa/emulator-current-x86-20260721-salary-variants/summary.json",
-      "artifacts/qa/root-format-check-20260721-salary-variants-final2.log",
-      "artifacts/qa/git-diff-check-20260721-salary-variants-final2.log",
-      "artifacts/qa/release-preflight-20260721-salary-variants-final2.log",
-      "artifacts/qa/clean-junk-20260721-salary-variants-final.log",
-      "apps/mobile/src/features/capture/__tests__/capture.auth-states.test.tsx",
-      "scripts/qa/sync-stitch-evidence-status.test.mjs",
-      "release/evidence/mobile-ui/46_login_credential_error.png",
-      "release/evidence/mobile-ui/47_login_password_recovery.png",
-      "release/evidence/mobile-ui/48_login_logout_complete.png",
-      "artifacts/qa/capture-auth-states-green-20260721.log",
-      "artifacts/qa/sync-stitch-auth-variants-green-20260721.log",
-      "artifacts/qa/mobile-typecheck-20260721-auth-states-final.log",
-      "artifacts/qa/mobile-full-test-20260721-auth-states-final.log",
-      "artifacts/qa/mobile-format-check-20260721-auth-states-final.log",
-      "artifacts/qa/root-format-check-20260721-auth-states-final.log",
-      "artifacts/qa/git-diff-check-20260721-auth-states-final.log",
-      "artifacts/qa/mobile-export-web-20260721-auth-states.log",
-      "artifacts/qa/capture-mobile-clean-fintech-20260721-auth-states.log",
-      "artifacts/qa/sync-stitch-evidence-20260721-auth-states.log",
-      "artifacts/qa/android-phone-debug-build-20260721-auth-states-final.log",
-      "artifacts/qa/android-x86-debug-build-20260721-auth-states.log",
-      "artifacts/qa/emulator-current-x86-20260721-auth-states/summary.json",
-      "artifacts/qa/emulator-current-x86-20260721-auth-states/logcat-target-fatal-filter.txt",
-      "artifacts/qa/emulator-current-x86-20260721-auth-states/current-screen.png",
-      "artifacts/qa/release-preflight-20260721-auth-states-after-evidence.log",
-      "C:/Users/PC/Downloads/salary-hijacking-qa-universal-safe-entry.apk",
-      "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal-safe-entry.apk",
-      "apps/mobile/src/android-safe-entry.tsx",
-      "apps/mobile/index.android.js",
-      "apps/mobile/scripts/expo-local-android-debug-build.mjs",
-      "apps/mobile/scripts/expo-local-android-production-build.mjs",
-      "artifacts/qa/android-phone-debug-build-20260721-safe-entry-clean.log",
-      "release/evidence/final-qa-command-logs/apk-arm64-safe-entry-clean-aapt-badging.log",
-      "release/evidence/final-qa-command-logs/apk-arm64-safe-entry-clean-apksigner-verify.log",
-      "artifacts/qa/android-x86-debug-build-20260721-safe-entry.log",
-      "artifacts/qa/emulator-safe-entry-20260721",
-      "artifacts/qa/mobile-full-test-20260721-android-safe-entry-rerun.log",
-      "artifacts/qa/mobile-typecheck-20260721-android-safe-entry-post-contract.log",
-      "artifacts/qa/mobile-format-check-20260721-android-safe-entry-post-contract.log",
-      "artifacts/qa/mobile-lint-20260721-android-safe-entry.log",
-      "artifacts/qa/android-debug-build-script-test-20260721-safe-entry.log",
-      "artifacts/qa/android-production-build-script-test-20260721-safe-entry.log",
-      "apps/mobile/src/features/capture/__tests__/capture.plan-states.test.tsx",
-      "release/evidence/mobile-ui/98_plan_current_summary.png",
-      "release/evidence/mobile-ui/99_plan_budget_summary_alt.png",
-      "release/evidence/mobile-ui/100_plan_salary_info_edit.png",
-      "release/evidence/mobile-ui/101_plan_previous_picker.png",
-      "release/evidence/mobile-ui/102_plan_empty.png",
-      "release/evidence/mobile-ui/103_plan_budget_detail_summary.png",
-      "release/evidence/mobile-ui/104_plan_validation_warning.png",
-      "apps/mobile/src/features/capture/__tests__/capture.profile-post-states.test.tsx",
-      "release/evidence/mobile-ui/105_profile_posts_loading_skeleton.png",
-      "release/evidence/mobile-ui/106_profile_posts_offline.png",
-      "release/evidence/mobile-ui/107_profile_posts_offline_alt.png",
-      "release/evidence/mobile-ui/108_profile_liked_posts.png",
-      "release/evidence/mobile-ui/109_profile_drafts.png",
-      "release/evidence/mobile-ui/110_profile_share_certification_prompt.png",
-      "release/evidence/mobile-ui/111_profile_community_restricted.png",
-      "release/evidence/mobile-ui/112_profile_shared_certification_detail.png",
-      "release/evidence/mobile-ui/113_profile_post_search_empty.png",
-      "release/evidence/mobile-ui/114_profile_post_management_default.png",
-      "release/evidence/mobile-ui/115_profile_written_posts_empty.png",
-      "apps/mobile/src/features/capture/__tests__/capture.level-states.test.tsx",
-      "release/evidence/mobile-ui/116_level_mission_status_board.png",
-      "release/evidence/mobile-ui/117_level_record_pending.png",
-      "release/evidence/mobile-ui/118_level_mission_start_confirm.png",
-      "release/evidence/mobile-ui/119_level_quick_mission_detail.png",
-      "release/evidence/mobile-ui/120_level_load_error.png",
-      "release/evidence/mobile-ui/121_level_no_content.png",
-      "release/evidence/mobile-ui/122_level_all_daily_complete.png",
-      "release/evidence/mobile-ui/123_level_main_default.png",
-      "release/evidence/mobile-ui/124_level_mission_progress.png",
-      "release/evidence/mobile-ui/125_level_recommendations.png",
-      "artifacts/android/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
-      "C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
-      "artifacts/android/build-info-safe-current-splash-hide-universal.json",
-      "artifacts/qa/android-safe-entry-splash-hide-contract-20260725.log",
-      "artifacts/qa/mobile-typecheck-20260725-safe-splash-hide.log",
-      "artifacts/qa/bundle-safe-entry-20260725-splash-hide.log",
-      "artifacts/qa/hermes-safe-entry-20260725-splash-hide.log",
-      "artifacts/qa/patch-safe-current-splash-hide-universal-20260725.log",
-      "artifacts/qa/apk-safe-current-splash-hide-universal-aapt-badging-20260725.log",
-      "artifacts/qa/apk-safe-current-splash-hide-universal-apksigner-verify-20260725.log",
-      "artifacts/qa/safe-current-splash-hide-universal-lifecycle-20260725/summary.json"
-    ],
-    "latestSourceGitStatusSha256": "EC1CCA7EF17B92F4F77797FD2B1695E145FA137AEFEBEE4EB880546D2D7F0F7A",
-    "latestSourcePackagedAtKst": "2026-07-25T06:00:00+09:00",
-    "latestSourcePackagedHead": "9cba4f83d609a67c282393a3ecd3ed11e779c818",
-    "latestSourcePackagedApkSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
-    "latestSourcePackagedApk": "artifacts/android/salary-hijacking-qa-universal.apk",
-    "latestSourcePackagedCopiedToDownloads": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
-    "latestSourceDirtyMobileSourcePathCount": 4,
-    "emulatorTargetDebugApkLatestSourceBuildVerified": true,
-    "emulatorTargetDebugApkLatestSourceEvidence": "artifacts/qa/original-safe-patched-lifecycle-latest-source-20260722",
-    "emulatorTargetDebugApkInstallBlocker": null,
-    "latestSourceEvidence": [
-      "artifacts/qa/android-phone-universal-qa-direct-debug-build-20260722-interaction-audit-isolated.log",
-      "artifacts/qa/apk-universal-qa-direct-apksigner-verify-20260722-interaction-audit-rerun.log",
-      "artifacts/qa/apk-universal-qa-direct-aapt-badging-20260722-interaction-audit.log",
-      "artifacts/qa/qa-direct-universal-emulator-summary-20260722-interaction-audit.json",
-      "docs/qa/INTERACTION_ROUTE_AUDIT.md",
-      "apps/mobile/index.android.js",
-      "apps/mobile/src/features/payroll-reminders/interactive-state.ts",
-      "apps/mobile/src/features/payroll-reminders/__tests__/interactive-state.test.ts",
-      "artifacts/qa/safe-apk-startup-timings-10x-20260722.csv",
-      "artifacts/qa/safe-apk-background-resume-10x-20260722.csv",
-      "artifacts/qa/safe-apk-logcat-10x-target-fatal-filter-20260722.txt",
-      "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-safe-arm64.apk",
-      "C:/Users/PC/Downloads/salary-hijacking-qa-safe-arm64.apk",
-      "artifacts/qa/apk-safe-arm64-native-libs-20260722.log",
-      "artifacts/qa/apk-safe-arm64-apksigner-verify-20260722.log",
-      "artifacts/qa/apk-safe-arm64-aapt-badging-20260722.log",
-      "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk",
-      "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk",
-      "D:/salary-hijacking-artifacts/apk/salary-hijacking-original-safe-patched-current-universal.apk",
-      "D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-latest-source-v3/index.android.bundle",
-      "artifacts/qa/original-safe-patched-lifecycle-latest-source-20260722/summary.json",
-      "artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk.verify.txt",
-      "artifacts/qa/apk-original-safe-patched-current-universal-aapt-badging-20260722-latest-source.log"
-    ],
-    "latestSourceApkBytes": 93983937,
-    "remoteArtifactHttpStatus": null,
-    "remoteArtifactSha256": null,
-    "remoteArtifactVerifiedAt": null,
-    "latestSourceDirtyMobileSourcePaths": [
-      "apps/mobile/scripts/expo-local-android-debug-build.mjs",
-      "apps/mobile/scripts/expo-local-android-debug-build.test.mjs",
-      "apps/mobile/src/android-direct-entry.tsx",
-      "apps/mobile/src/android-safe-entry.tsx"
-    ],
-    "androidDirectEntryErrorBoundaryVerified": true,
-    "androidDirectEntryErrorBoundaryEvidence": "artifacts/qa/android-direct-entry-error-boundary-green-20260721.log",
-    "phoneApkSkipAndroidTestVerified": true,
-    "phoneApkSkipAndroidTestEvidence": "artifacts/qa/phone-apk-skip-androidtest-green-20260721.log",
-    "phoneApkPreflightTransformRepairVerified": true,
-    "phoneApkPreflightTransformRepairEvidence": "artifacts/qa/phone-apk-preflight-transform-repair-green-20260721.log",
-    "emulatorTargetDebugApkMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-current-x86_64-debug.apk",
-    "emulatorTargetDebugApkLatestSourceBuildLog": "artifacts/qa/android-x86-debug-build-20260721-auth-states.log",
-    "emulatorTargetDebugApkAaptEvidence": "artifacts/qa/apk-x86-aapt-badging-20260721-auth-states.log",
-    "emulatorTargetDebugApkSignerEvidence": "artifacts/qa/apk-x86-apksigner-verify-20260721-auth-states.log",
-    "emulatorTargetDebugApkNativeLibEvidence": "artifacts/qa/apk-x86-embedded-assets-native-libs-20260721-current.log",
-    "coldStartSuccessCount": 10,
-    "backgroundForegroundRuns": 10,
-    "backgroundForegroundSuccessCount": 10,
-    "emulatorCurrentSourceQaStatus": "PASS_X86_64_EMULATOR_INSTALL_10_COLD_START_10_BACKGROUND_RESUME_TARGET_FATAL_0_DIRECT_CURRENT_QA",
-    "emulatorCurrentSourceQaObservedAt": "2026-07-22T18:18:00+09:00",
-    "emulatorCurrentSourceQaEvidence": {
-      "summary": "artifacts/qa/direct-current-emulator-20260722/summary.json",
-      "targetFatalFilter": "artifacts/qa/direct-current-emulator-20260722/logcat-actual-fatal-filter.txt",
-      "startupTimings": "artifacts/qa/direct-current-emulator-20260722/startup-10x.json",
-      "backgroundResumeTimings": "artifacts/qa/direct-current-emulator-20260722/resume-10x.json",
-      "exitInfo": "artifacts/qa/direct-current-emulator-20260722/exit-info.txt",
-      "screenshot": "artifacts/qa/direct-current-emulator-20260722/home-screen.png"
-    },
-    "androidDirectEntryKoreanUtf8Verified": true,
-    "androidDirectEntryKoreanUtf8Evidence": "artifacts/qa/android-direct-entry-korean-green-20260721-final.log",
-    "notificationStateEvidence": {
-      "componentTest": "artifacts/qa/notifications-components-green-20260721-final-rerun.log",
-      "emptyCapture": "release/evidence/mobile-ui/37_notifications_empty.png",
-      "offlineCapture": "release/evidence/mobile-ui/38_notifications_offline.png",
-      "errorCapture": "release/evidence/mobile-ui/39_notifications_error.png",
-      "stitchEvidenceSync": "artifacts/qa/stitch-evidence-sync-20260721-notifications-states.log"
-    },
-    "salaryStateEvidence": {
-      "componentTest": "artifacts/qa/salary-components-green-stitch-variants-20260721-post-format.log",
-      "captures": [
-        "release/evidence/mobile-ui/42_salary_no_plan.png",
-        "release/evidence/mobile-ui/43_salary_compact.png",
-        "release/evidence/mobile-ui/44_salary_detailed.png",
-        "release/evidence/mobile-ui/45_salary_offline.png"
-      ],
-      "stitchMatrix": "PASS 52 / PARTIAL 253"
-    },
-    "authStateEvidence": {
-      "componentTest": "artifacts/qa/capture-auth-states-green-20260721.log",
-      "syncTest": "artifacts/qa/sync-stitch-auth-variants-green-20260721.log",
-      "loginCredentialErrorCapture": "release/evidence/mobile-ui/46_login_credential_error.png",
-      "loginPasswordRecoveryCapture": "release/evidence/mobile-ui/47_login_password_recovery.png",
-      "loginLogoutCompleteCapture": "release/evidence/mobile-ui/48_login_logout_complete.png",
-      "stitchEvidenceSync": "artifacts/qa/sync-stitch-evidence-20260721-auth-states.log",
-      "stitchMatrix": "PASS 64 / PARTIAL 241"
-    },
-    "expenseStateEvidence": {
-      "captures": [
-        "release/evidence/mobile-ui/49_expense_form_edit.png",
-        "release/evidence/mobile-ui/50_expense_form_refund.png",
-        "release/evidence/mobile-ui/51_expense_form_validation.png",
-        "release/evidence/mobile-ui/52_expense_delete_blocked.png",
-        "release/evidence/mobile-ui/53_expense_invalidate_reason.png"
-      ],
-      "componentTest": "artifacts/qa/capture-expense-states-green-20260721.log",
-      "captureRegistryContractTest": "artifacts/qa/app-screen-capture-registry-green-20260721.log",
-      "stitchEvidenceSync": "artifacts/qa/sync-stitch-evidence-20260721-expense-states.log",
-      "stitchMatrix": "PASS 77 / PARTIAL 228"
-    },
-    "safeEntryCrashFixVerified": true,
-    "safeEntryCrashFixEvidence": {
-      "arm64ApkSha256": "B2C09C8FA5A24DCCBB8A3C225967B77CEF8975C7821852D857B342C8EA8C3AC1",
-      "x86EmulatorApkSha256": "451984884BE4A5F0707AB2C347D15EC4AD7C0951811C0B6365E6D1D998A93CA1",
-      "sourceSnapshotSha256": "188ADAC60EF87548F5C505274A8513AB72788799F6A996B8736E5D8B0DDD1D37",
-      "buildScriptsPreserveSafeEntry": true,
-      "arm64BundleContainsAndroidSafeEntry": true,
-      "arm64BundleContainsAndroidDirectEntry": false,
-      "emulatorColdStartRuns": 10,
-      "emulatorColdStartFatalCount": 0,
-      "emulatorBackgroundForegroundRuns": 10,
-      "emulatorBackgroundForegroundFatalCount": 0,
-      "evidenceDir": "artifacts/qa/emulator-safe-entry-20260721"
-    },
-    "webExportLog": "artifacts/qa/mobile-export-web-20260722-level-states.log",
-    "mobileUiCaptureLog": "artifacts/qa/capture-mobile-clean-fintech-20260722-level-states.log",
-    "stitchEvidenceSyncLog": "artifacts/qa/sync-stitch-evidence-status-20260722-level-states.log",
-    "directEntryUniversalQa": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "baseApplicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "buildType": "qa-direct-safe-entry-hermes-bundle-patched-universal",
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "abis": ["arm64-v8a", "x86_64"],
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "sha256": "A4AA35DAC76571662D691F9DAB8A7A379C6B94AE28308FDCB5E1CC8496A52064",
-      "bundleSha256": "A6D8DC9D563B9FE1E390787C9078F2931EBB532640B2CEE35A1223627474D611",
-      "sizeBytes": 92706450,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-safe-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-safe-universal.apk",
-      "buildCommand": "Hermes safe-entry bundle generated with react-native bundle + hermesc, then embedded into the latest validated native universal QA APK shell, zipaligned, and signed with the existing Android debug keystore; full Gradle universal safe build timed out in CMake/NDK and is recorded as a WARN, not PASS.",
-      "bundleBuildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec react-native bundle --platform android --dev false --entry-file index.android.js --bundle-output D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-170916/index.android.bundle.js --assets-dest D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-170916/assets --minify true; hermesc -emit-binary -out D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-170916/index.android.bundle ...",
-      "aaptBadgingLog": "artifacts/qa/apk-safe-aapt-badging-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-safe-apksigner-verify-20260722.log",
-      "installLog": "artifacts/qa/safe-apk-install-output-20260722.log",
-      "logcatFull": "artifacts/qa/safe-apk-logcat-10x-cold-resume-20260722.txt",
-      "targetFatalFilter": "artifacts/qa/safe-apk-logcat-10x-target-fatal-filter-20260722.txt",
-      "startupTimings": "artifacts/qa/safe-apk-startup-timings-10x-20260722.csv",
-      "backgroundResumeTimings": "artifacts/qa/safe-apk-background-resume-10x-20260722.csv",
-      "coldStartRuns": 10,
-      "coldStartSuccessCount": 10,
-      "backgroundResumeRuns": 10,
-      "backgroundResumeSuccessCount": 10,
-      "targetFatalMarkerCount": 0,
-      "systemAnrMarkerCount": 0,
-      "emulatorDevice": "emulator-5554 sdk_gphone64_x86_64",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T17:25:00+09:00",
-      "notes": [
-        "index.android.js now imports android-safe-entry and SecureStore startup hydration failures are contained instead of rejecting during boot.",
-        "APK internal assets/index.android.bundle SHA256 matches the generated safe-entry Hermes bundle: A6D8DC9D563B9FE1E390787C9078F2931EBB532640B2CEE35A1223627474D611.",
-        "Clean install and upgrade install passed on Android emulator; 10/10 cold starts and 10/10 background/resume passed with target app fatal markers 0.",
-        "Physical Samsung phone QA remains blocked because no physical phone is connected to this Codex environment."
-      ]
-    },
-    "safeEntryDirectQa": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "baseApplicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "buildType": "qa-direct-safe-entry-hermes-bundle-patched-universal",
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "abis": ["arm64-v8a", "x86_64"],
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "sha256": "A4AA35DAC76571662D691F9DAB8A7A379C6B94AE28308FDCB5E1CC8496A52064",
-      "bundleSha256": "A6D8DC9D563B9FE1E390787C9078F2931EBB532640B2CEE35A1223627474D611",
-      "sizeBytes": 92706450,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-safe-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-safe-universal.apk",
-      "buildCommand": "Hermes safe-entry bundle generated with react-native bundle + hermesc, then embedded into the latest validated native universal QA APK shell, zipaligned, and signed with the existing Android debug keystore; full Gradle universal safe build timed out in CMake/NDK and is recorded as a WARN, not PASS.",
-      "bundleBuildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec react-native bundle --platform android --dev false --entry-file index.android.js --bundle-output D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-170916/index.android.bundle.js --assets-dest D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-170916/assets --minify true; hermesc -emit-binary -out D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-170916/index.android.bundle ...",
-      "aaptBadgingLog": "artifacts/qa/apk-safe-aapt-badging-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-safe-apksigner-verify-20260722.log",
-      "installLog": "artifacts/qa/safe-apk-install-output-20260722.log",
-      "logcatFull": "artifacts/qa/safe-apk-logcat-10x-cold-resume-20260722.txt",
-      "targetFatalFilter": "artifacts/qa/safe-apk-logcat-10x-target-fatal-filter-20260722.txt",
-      "startupTimings": "artifacts/qa/safe-apk-startup-timings-10x-20260722.csv",
-      "backgroundResumeTimings": "artifacts/qa/safe-apk-background-resume-10x-20260722.csv",
-      "coldStartRuns": 10,
-      "coldStartSuccessCount": 10,
-      "backgroundResumeRuns": 10,
-      "backgroundResumeSuccessCount": 10,
-      "targetFatalMarkerCount": 0,
-      "systemAnrMarkerCount": 0,
-      "emulatorDevice": "emulator-5554 sdk_gphone64_x86_64",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T17:25:00+09:00",
-      "notes": [
-        "index.android.js now imports android-safe-entry and SecureStore startup hydration failures are contained instead of rejecting during boot.",
-        "APK internal assets/index.android.bundle SHA256 matches the generated safe-entry Hermes bundle: A6D8DC9D563B9FE1E390787C9078F2931EBB532640B2CEE35A1223627474D611.",
-        "Clean install and upgrade install passed on Android emulator; 10/10 cold starts and 10/10 background/resume passed with target app fatal markers 0.",
-        "Physical Samsung phone QA remains blocked because no physical phone is connected to this Codex environment."
-      ]
-    },
-    "phoneTargetSafeEntryArm64Qa": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "buildType": "qa-direct-safe-entry-arm64-phone-target",
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "abis": ["arm64-v8a"],
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "sha256": "444878A6A2CC7329F17117AEB32A07E94C50071EA4C4BC11C078FD2FABA67FF1",
-      "sizeBytes": 25478594,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-safe-arm64.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-arm64.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-safe-arm64.apk",
-      "aaptBadgingLog": "artifacts/qa/apk-safe-arm64-aapt-badging-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-safe-arm64-apksigner-verify-20260722.log",
-      "nativeLibEvidence": "artifacts/qa/apk-safe-arm64-native-libs-20260722.log",
-      "expoCoreLibs": [
-        "lib/arm64-v8a/libexpo-modules-core.so",
-        "lib/arm64-v8a/libreactnative.so",
-        "lib/arm64-v8a/libreanimated.so",
-        "lib/arm64-v8a/librnscreens.so"
-      ],
-      "source": "Derived from safe-entry universal APK by excluding x86_64 native libraries, then zipaligned and signed with the existing Android debug keystore for physical ARM64 QA.",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T17:45:00+09:00"
-    },
-    "currentSourceBundleSha256": "B4C817286B85324DB3F98FBCA5BEC163191401661831BF617EA578EF1D9C3BC3",
-    "currentSourceUniversalApk": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "baseApplicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "buildType": "qa-direct-safe-entry-current-source-universal",
-      "abis": ["arm64-v8a", "x86_64"],
-      "sha256": "71CE1FB9DE2BA39932602A8D99703A20FCDA7F45B0B90B90784A4B785002F413",
-      "bundleSha256": "B4C817286B85324DB3F98FBCA5BEC163191401661831BF617EA578EF1D9C3BC3",
-      "latestSourceGitStatusSha256": "357B4034531F50559F2097A1639E537393A6A1D597323A399BEB17AC930E8D50",
-      "sizeBytes": 92728806,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-safe-current-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-safe-current-universal.apk",
-      "buildCommand": "react-native bundle --entry-file index.android.js + hermesc, jar update of assets/index.android.bundle into validated safe-entry QA APK shell, zipalign, apksigner debug signing",
-      "bundleBuildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec react-native bundle --platform android --dev false --entry-file index.android.js --bundle-output D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-current/index.android.bundle.js --assets-dest D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-current/assets --minify true; hermesc -emit-binary -out D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-current/index.android.bundle",
-      "aaptBadgingLog": "artifacts/qa/apk-safe-current-universal-aapt-badging-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-safe-current-universal-apksigner-verify-20260722.log",
-      "bundleInspectionLog": "artifacts/qa/apk-safe-current-bundle-inspection-20260722.json",
-      "installLog": "artifacts/qa/safe-current-emulator-20260722-rerun/install-output.txt",
-      "logcatFull": "artifacts/qa/safe-current-emulator-20260722-rerun/logcat-full.txt",
-      "targetFatalFilter": "artifacts/qa/safe-current-emulator-20260722-rerun/logcat-fatal-filter.txt",
-      "startupTimings": "artifacts/qa/safe-current-emulator-20260722-rerun/startup-10x.json",
-      "backgroundResumeTimings": "artifacts/qa/safe-current-emulator-20260722-rerun/resume-10x.json",
-      "coldStartRuns": 10,
-      "coldStartSuccessCount": 10,
-      "backgroundResumeRuns": 10,
-      "backgroundResumeSuccessCount": 10,
-      "targetFatalMarkerCount": 0,
-      "systemAnrMarkerCount": 0,
-      "emulatorDevice": "emulator-5554 sdk_gphone64_x86_64",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T17:56:30+09:00"
-    },
-    "currentSourceArm64Apk": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "baseApplicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "buildType": "qa-direct-safe-entry-current-source-arm64-phone-target",
-      "abis": ["arm64-v8a"],
-      "sha256": "C7E8A4819D06792ABB66B389503F8E1604592BC6617A35E8E5181D5C7F522145",
-      "bundleSha256": "B4C817286B85324DB3F98FBCA5BEC163191401661831BF617EA578EF1D9C3BC3",
-      "latestSourceGitStatusSha256": "357B4034531F50559F2097A1639E537393A6A1D597323A399BEB17AC930E8D50",
-      "sizeBytes": 25499078,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-safe-current-arm64.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-arm64.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-safe-current-arm64.apk",
-      "aaptBadgingLog": "artifacts/qa/apk-safe-current-arm64-aapt-badging-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-safe-current-arm64-apksigner-verify-20260722.log",
-      "nativeLibEvidence": "artifacts/qa/apk-safe-current-arm64-native-libs-20260722.log",
-      "expoCoreLibs": [
-        "lib/arm64-v8a/libexpo-modules-core.so",
-        "lib/arm64-v8a/libreactnative.so",
-        "lib/arm64-v8a/libreanimated.so",
-        "lib/arm64-v8a/librnscreens.so"
-      ],
-      "source": "Derived from current-source safe-entry universal APK shell by updating assets/index.android.bundle, preserving arm64-v8a native libraries, zipaligning, and signing with the existing app debug keystore for physical phone QA.",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T17:56:30+09:00"
-    },
-    "latestFunctionalQaApk": {
-      "applicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0",
-      "versionCode": 202607222,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2 debug signing",
-      "buildType": "original-package-direct-current-source-universal-debug",
-      "abis": ["arm64-v8a", "x86_64"],
-      "sha256": "06CA2E5ACD93E66020A1C406EC88113095F731DEEC553E821D96ABCC9E4A3DDA",
-      "sizeBytes": 94558706,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-direct-current-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-original-direct-current-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-original-direct-current-universal.apk",
-      "buildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --android-entry direct --architecture arm64-v8a,x86_64 --version-code 202607222 --output build/phone/android/salary-hijacking-original-direct-current-universal.apk",
-      "buildLog": "artifacts/qa/build-original-direct-current-universal-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-original-direct-current-universal-apksigner-verify-20260722.log",
-      "installLog": "artifacts/qa/original-direct-current-universal-emulator-20260722/install-output.txt",
-      "logcatFull": "artifacts/qa/original-direct-current-universal-emulator-20260722/logcat-full.txt",
-      "targetFatalFilter": "artifacts/qa/original-direct-current-universal-emulator-20260722/logcat-fatal-filter.txt",
-      "screenshot": "artifacts/qa/original-direct-current-universal-emulator-20260722/home-screen.png",
-      "coldStartRuns": 10,
-      "coldStartSuccessCount": 10,
-      "backgroundResumeRuns": 10,
-      "backgroundResumeSuccessCount": 10,
-      "targetFatalMarkerCount": 0,
-      "systemAnrMarkerCount": 0,
-      "emulatorDevice": "emulator-5554 sdk_gphone64_x86_64",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T19:23:04+09:00",
-      "notes": [
-        "This current-source direct APK uses the original com.salaryhijacking.mobile package to avoid confusion with an older crashing install icon.",
-        "Clean x86_64 emulator install passed with 10/10 cold starts, 10/10 background/resume, fatal markers 0, and exit-info crash/ANR markers 0.",
-        "If a physical phone has a differently signed existing com.salaryhijacking.mobile app, Android upgrade install may fail; uninstalling the old build before installing this QA APK is required unless the original signing key is available.",
-        "Physical Samsung phone QA remains blocked because no physical phone is attached to this Codex Windows environment."
-      ]
-    },
-    "phoneTargetFunctionalArm64QaApk": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "baseApplicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "buildType": "qa-direct-current-source-arm64-phone-target",
-      "abis": ["arm64-v8a"],
-      "sha256": "AEBBC33F339C6DBFC0B9D719BAB518DE83768E579E6377E67722F5B191C2DBDE",
-      "bundleSha256": "A4A6F041D8997122E1A8358C009544D61854D91782321365F31AE2C1DCC2D2B1",
-      "latestSourceGitStatusSha256": "357B4034531F50559F2097A1639E537393A6A1D597323A399BEB17AC930E8D50",
-      "sizeBytes": 27507259,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-direct-current-arm64.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-direct-current-arm64.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-direct-current-arm64.apk",
-      "buildCommand": "react-native bundle --entry-file apps/mobile/src/android-direct-entry.tsx + hermesc, jar update of assets/index.android.bundle and generated drawable assets into validated direct QA APK shell, zipalign, apksigner debug signing",
-      "bundleBuildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec react-native bundle --platform android --dev false --entry-file apps/mobile/src/android-direct-entry.tsx --bundle-output D:/salary-hijacking-artifacts/apk-patch/direct-entry-bundle-20260722-current/index.android.bundle.js --assets-dest D:/salary-hijacking-artifacts/apk-patch/direct-entry-bundle-20260722-current/assets --minify true; hermesc -emit-binary -out D:/salary-hijacking-artifacts/apk-patch/direct-entry-bundle-20260722-current/index.android.bundle",
-      "signerVerifyLog": "artifacts/qa/apk-direct-current-arm64-apksigner-verify-20260722.log",
-      "bundleInspectionLog": "artifacts/qa/apk-direct-current-bundle-inspection-20260722.json",
-      "buildInfoLog": "artifacts/qa/apk-direct-current-arm64-build-20260722.json",
-      "installLog": null,
-      "logcatFull": null,
-      "targetFatalFilter": null,
-      "startupTimings": null,
-      "backgroundResumeTimings": null,
-      "screenshot": null,
-      "coldStartRuns": 0,
-      "coldStartSuccessCount": 0,
-      "backgroundResumeRuns": 0,
-      "backgroundResumeSuccessCount": 0,
-      "targetFatalMarkerCount": null,
-      "systemAnrMarkerCount": null,
-      "emulatorDevice": null,
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T18:18:00+09:00",
-      "notes": [
-        "ARM64 phone-target APK embeds the same current direct-entry Hermes bundle as the emulator-verified universal APK.",
-        "Native library inspection shows arm64-v8a only and includes Expo/RN core libraries.",
-        "Runtime validation requires a physical Android phone; none is attached to this Codex Windows environment."
-      ],
-      "nativeLibEvidence": "artifacts/qa/apk-direct-current-arm64-native-libs-20260722.log"
-    },
-    "currentSourceDirectBundleSha256": "A4A6F041D8997122E1A8358C009544D61854D91782321365F31AE2C1DCC2D2B1",
-    "currentSourceDirectUniversalApk": {
-      "applicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0",
-      "versionCode": 202607222,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2 debug signing",
-      "buildType": "original-package-direct-current-source-universal-debug",
-      "abis": ["arm64-v8a", "x86_64"],
-      "sha256": "06CA2E5ACD93E66020A1C406EC88113095F731DEEC553E821D96ABCC9E4A3DDA",
-      "sizeBytes": 94558706,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-direct-current-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-original-direct-current-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-original-direct-current-universal.apk",
-      "buildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --android-entry direct --architecture arm64-v8a,x86_64 --version-code 202607222 --output build/phone/android/salary-hijacking-original-direct-current-universal.apk",
-      "buildLog": "artifacts/qa/build-original-direct-current-universal-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-original-direct-current-universal-apksigner-verify-20260722.log",
-      "installLog": "artifacts/qa/original-direct-current-universal-emulator-20260722/install-output.txt",
-      "logcatFull": "artifacts/qa/original-direct-current-universal-emulator-20260722/logcat-full.txt",
-      "targetFatalFilter": "artifacts/qa/original-direct-current-universal-emulator-20260722/logcat-fatal-filter.txt",
-      "screenshot": "artifacts/qa/original-direct-current-universal-emulator-20260722/home-screen.png",
-      "coldStartRuns": 10,
-      "coldStartSuccessCount": 10,
-      "backgroundResumeRuns": 10,
-      "backgroundResumeSuccessCount": 10,
-      "targetFatalMarkerCount": 0,
-      "systemAnrMarkerCount": 0,
-      "emulatorDevice": "emulator-5554 sdk_gphone64_x86_64",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T19:23:04+09:00",
-      "notes": [
-        "This current-source direct APK uses the original com.salaryhijacking.mobile package to avoid confusion with an older crashing install icon.",
-        "Clean x86_64 emulator install passed with 10/10 cold starts, 10/10 background/resume, fatal markers 0, and exit-info crash/ANR markers 0.",
-        "If a physical phone has a differently signed existing com.salaryhijacking.mobile app, Android upgrade install may fail; uninstalling the old build before installing this QA APK is required unless the original signing key is available.",
-        "Physical Samsung phone QA remains blocked because no physical phone is attached to this Codex Windows environment."
-      ]
-    },
-    "currentSourceDirectArm64Apk": {
-      "applicationId": "com.salaryhijacking.mobile.qa.direct",
-      "baseApplicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0-qa-direct",
-      "versionCode": 20260722,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2/v3 debug signing",
-      "buildType": "qa-direct-current-source-arm64-phone-target",
-      "abis": ["arm64-v8a"],
-      "sha256": "AEBBC33F339C6DBFC0B9D719BAB518DE83768E579E6377E67722F5B191C2DBDE",
-      "bundleSha256": "A4A6F041D8997122E1A8358C009544D61854D91782321365F31AE2C1DCC2D2B1",
-      "latestSourceGitStatusSha256": "357B4034531F50559F2097A1639E537393A6A1D597323A399BEB17AC930E8D50",
-      "sizeBytes": 27507259,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-qa-direct-current-arm64.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-direct-current-arm64.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-direct-current-arm64.apk",
-      "buildCommand": "react-native bundle --entry-file apps/mobile/src/android-direct-entry.tsx + hermesc, jar update of assets/index.android.bundle and generated drawable assets into validated direct QA APK shell, zipalign, apksigner debug signing",
-      "bundleBuildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec react-native bundle --platform android --dev false --entry-file apps/mobile/src/android-direct-entry.tsx --bundle-output D:/salary-hijacking-artifacts/apk-patch/direct-entry-bundle-20260722-current/index.android.bundle.js --assets-dest D:/salary-hijacking-artifacts/apk-patch/direct-entry-bundle-20260722-current/assets --minify true; hermesc -emit-binary -out D:/salary-hijacking-artifacts/apk-patch/direct-entry-bundle-20260722-current/index.android.bundle",
-      "signerVerifyLog": "artifacts/qa/apk-direct-current-arm64-apksigner-verify-20260722.log",
-      "bundleInspectionLog": "artifacts/qa/apk-direct-current-bundle-inspection-20260722.json",
-      "buildInfoLog": "artifacts/qa/apk-direct-current-arm64-build-20260722.json",
-      "installLog": null,
-      "logcatFull": null,
-      "targetFatalFilter": null,
-      "startupTimings": null,
-      "backgroundResumeTimings": null,
-      "screenshot": null,
-      "coldStartRuns": 0,
-      "coldStartSuccessCount": 0,
-      "backgroundResumeRuns": 0,
-      "backgroundResumeSuccessCount": 0,
-      "targetFatalMarkerCount": null,
-      "systemAnrMarkerCount": null,
-      "emulatorDevice": null,
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T18:18:00+09:00",
-      "notes": [
-        "ARM64 phone-target APK embeds the same current direct-entry Hermes bundle as the emulator-verified universal APK.",
-        "Native library inspection shows arm64-v8a only and includes Expo/RN core libraries.",
-        "Runtime validation requires a physical Android phone; none is attached to this Codex Windows environment."
-      ],
-      "nativeLibEvidence": "artifacts/qa/apk-direct-current-arm64-native-libs-20260722.log"
-    },
-    "originalPackageDirectUniversalApk": {
-      "applicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0",
-      "versionCode": 202607222,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2 debug signing",
-      "buildType": "original-package-direct-current-source-universal-debug",
-      "abis": ["arm64-v8a", "x86_64"],
-      "sha256": "06CA2E5ACD93E66020A1C406EC88113095F731DEEC553E821D96ABCC9E4A3DDA",
-      "sizeBytes": 94558706,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-direct-current-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-original-direct-current-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-original-direct-current-universal.apk",
-      "buildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --android-entry direct --architecture arm64-v8a,x86_64 --version-code 202607222 --output build/phone/android/salary-hijacking-original-direct-current-universal.apk",
-      "buildLog": "artifacts/qa/build-original-direct-current-universal-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-original-direct-current-universal-apksigner-verify-20260722.log",
-      "installLog": "artifacts/qa/original-direct-current-universal-emulator-20260722/install-output.txt",
-      "logcatFull": "artifacts/qa/original-direct-current-universal-emulator-20260722/logcat-full.txt",
-      "targetFatalFilter": "artifacts/qa/original-direct-current-universal-emulator-20260722/logcat-fatal-filter.txt",
-      "screenshot": "artifacts/qa/original-direct-current-universal-emulator-20260722/home-screen.png",
-      "coldStartRuns": 10,
-      "coldStartSuccessCount": 10,
-      "backgroundResumeRuns": 10,
-      "backgroundResumeSuccessCount": 10,
-      "targetFatalMarkerCount": 0,
-      "systemAnrMarkerCount": 0,
-      "emulatorDevice": "emulator-5554 sdk_gphone64_x86_64",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T19:23:04+09:00",
-      "notes": [
-        "This current-source direct APK uses the original com.salaryhijacking.mobile package to avoid confusion with an older crashing install icon.",
-        "Clean x86_64 emulator install passed with 10/10 cold starts, 10/10 background/resume, fatal markers 0, and exit-info crash/ANR markers 0.",
-        "If a physical phone has a differently signed existing com.salaryhijacking.mobile app, Android upgrade install may fail; uninstalling the old build before installing this QA APK is required unless the original signing key is available.",
-        "Physical Samsung phone QA remains blocked because no physical phone is attached to this Codex Windows environment."
-      ]
-    },
-    "originalPackageDirectArm64Apk": {
-      "applicationId": "com.salaryhijacking.mobile",
-      "versionName": "1.0.0",
-      "versionCode": 202607221,
-      "gitCommit": "67732db7b9f706211fc4a3c868ce4d1b7a806c60",
-      "minSdk": 24,
-      "targetSdk": 35,
-      "signed": true,
-      "signingScheme": "APK Signature Scheme v2 debug signing",
-      "buildType": "original-package-direct-current-source-arm64-phone-target-debug",
-      "abis": ["arm64-v8a"],
-      "sha256": "B21D03C0D11A822882CF098D6B824DD94693C315AE092CBCA387015A440623D7",
-      "sizeBytes": 57313677,
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-direct-current-arm64.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-original-direct-current-arm64.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-original-direct-current-arm64.apk",
-      "buildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --android-entry direct --architecture arm64-v8a --version-code 202607221 --output build/phone/android/salary-hijacking-original-direct-current-arm64.apk",
-      "buildLog": "artifacts/qa/build-original-direct-current-arm64-20260722.log",
-      "signerVerifyLog": "artifacts/qa/apk-original-direct-current-arm64-apksigner-verify-20260722.log",
-      "emulatorInstallStatus": "FAIL_EXPECTED_ON_X86_64_EMULATOR_ABI_MISMATCH",
-      "emulatorCrashEvidence": "artifacts/qa/original-direct-current-emulator-20260722/logcat-full.txt",
-      "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-      "generatedAt": "2026-07-22T19:23:04+09:00",
-      "notes": [
-        "ARM64-only phone-target APK statically verifies and includes lib/arm64-v8a libraries only.",
-        "It crashes on the x86_64 emulator with SoLoaderDSONotFoundError for libreactnative.so because the emulator requires x86_64 native libraries; use the universal APK for emulator QA.",
-        "Runtime validation requires a physical ARM64 Android phone."
-      ]
-    },
-    "latestOriginalPackageUniversalApk": {
-      "applicationId": "com.salaryhijacking.mobile",
-      "fileName": "salary-hijacking-original-safe-patched-current-universal.apk",
-      "versionCode": 202607223,
-      "sha256": "FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8",
-      "apkPath": "C:/Users/PC/Desktop/salary-hijacking-platform/artifacts/android/salary-hijacking-original-safe-patched-current-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-original-safe-patched-current-universal.apk",
-      "emulatorQaSummary": "artifacts/qa/original-safe-patched-lifecycle-latest-source-20260722/summary.json",
-      "sourceApk": "artifacts/android/salary-hijacking-original-direct-current-universal.apk",
-      "replacementBundle": "D:/salary-hijacking-artifacts/apk-patch/safe-entry-bundle-20260722-latest-source-v3/index.android.bundle",
-      "replacementBundleSha256": "8CADA9CF4815CF41E0523D57BD7AA9CAA86D0A8656E24462916ED32DBF41D49C"
-    },
-    "latestEntryRestoreValidation": {
-      "observedAt": "2026-07-22T11:24:30.027Z",
-      "status": "PASS",
-      "rootCausePrevented": "direct Android phone APK builds now restore apps/mobile/index.android.js to the safe startup entry after Gradle completes",
-      "redLog": "artifacts/qa/android-debug-build-entry-restore-red-20260722.log",
-      "greenLog": "artifacts/qa/android-debug-build-entry-restore-green-20260722.log",
-      "contractLog": "artifacts/qa/mobile-entry-contract-test-20260722-entry-restore-green.log",
-      "typecheckLog": "artifacts/qa/mobile-typecheck-20260722-entry-restore.log",
-      "coreFeatureTestLog": "artifacts/qa/mobile-core-feature-tests-20260722-entry-restore.log",
-      "lintLog": "artifacts/qa/mobile-lint-20260722-after-clean.log",
-      "mobileFormatCheckLog": "artifacts/qa/mobile-format-check-20260722-after-clean.log",
-      "rootFormatCheckLog": "artifacts/qa/root-format-check-20260722-final-after-docs.log",
-      "cleanupLog": "artifacts/qa/clean-junk-20260722-after-original-direct-rebuild.log"
-    },
-    "launcherManualEquivalentVerified": true,
-    "launcherManualEquivalentEvidence": "artifacts/qa/final-qa-universal-launcher-monkey-20260723/summary.json",
-    "upgradeInstallVerified": true,
-    "upgradeInstallEvidence": "artifacts/qa/final-qa-universal-upgrade-from-direct-20260723/summary.json",
-    "debugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
-    "latestSafeSplashHideUniversalApk": "artifacts/android/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
-    "latestSafeSplashHideUniversalApkSha256": "EFBE90AE9E0E864C658D630FA0163238A1824848D2C93C1C64789E79856D9CDD",
-    "latestSafeSplashHideUniversalDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-safe-current-splash-hide-universal.apk",
-    "latestSafeSplashHideUniversalBuildInfo": "artifacts/android/build-info-safe-current-splash-hide-universal.json",
-    "latestSafeSplashHideUniversalLifecycleEvidence": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-    "latestSourcePackagedDirtyGitStatusSha256": null,
-    "latestSourcePackagedDirtyGitStatusPaths": [],
-    "latestStaticApkInspection": "artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json",
-    "finalStableQaApk": {
-      "sha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
-      "apkPath": "artifacts/android/salary-hijacking-qa-universal.apk",
-      "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
-      "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk",
-      "cleanInstallProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-      "launcherMonkeyProof": "artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json",
-      "launcherMonkeyStatus": "PASS",
-      "upgradeInstallProof": "artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json",
-      "upgradeInstallStatus": "PASS install -r over same-version universal APK",
-      "upgradeColdStarts": "10/10 PASS",
-      "upgradeBackgroundResume": "10/10 PASS",
-      "upgradeFatalMarkerCount": 0,
-      "emulatorLifecycleProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json"
-    },
-    "latestSafeSplashHideUniversalSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
-    "currentHeadQaApkDownloadUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
-    "currentHeadQaApkArtifactBranch": "codex-apk-artifacts-20260725-current-head",
-    "currentHeadQaApkArtifactCommit": "598f13d",
-    "currentHeadQaApkDownloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
+    "physicalPhoneBlocker": "No physical Samsung Android phone is attached in this Codex environment; emulator evidence does not replace user-device logcat QA."
   },
-  "privacy": {
-    "containsEasToken": false,
-    "containsStoreCredential": false,
-    "containsSigningKey": false,
-    "containsReviewerPassword": false,
-    "containsRawLogcat": false,
-    "containsSecretValues": false
-  },
-  "nextEvidenceRequired": [
-    "Install C:/Users/PC/Downloads/salary-hijacking-original-safe-patched-current-universal.apk on the user Samsung phone after uninstalling older differently signed builds if Android refuses upgrade install.",
-    "Capture Samsung physical-device logcat and 10/10 cold-start evidence for com.salaryhijacking.mobile.",
-    "Production AAB and Play submission remain blocked until explicit approval."
-  ],
-  "lastEvidenceRefreshAt": "2026-07-23T10:50:01.710Z",
-  "lastEvidenceRefreshAtKst": "2026-07-23T19:50:01+09:00",
-  "latestPhysicalPhoneCrashTriage": "artifacts/qa/physical-phone-crash-triage-20260723-default-safe-apk-sha/summary.json",
-  "latestPhysicalPhoneQaSummary": "release/evidence/physical-phone/physical-phone-qa-summary.json",
-  "latestEmulatorLifecycleProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-  "physicalPhoneQaStatus": "BLOCKED_NO_CONNECTED_PHYSICAL_ANDROID_PHONE",
-  "notes": [
-    "2026-07-23 evidence refresh: original safe-entry patched APK FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8 passed emulator clean install/lifecycle 10 cold starts and 10 background/resume with fatal markers 0; paired physical-phone crash triage remains BLOCKED because only emulator-5554 is attached.",
-    "2026-07-23 static APK inspection PASS: safe-entry bundle markers present, direct/router/RC fallback markers absent, arm64-v8a and x86_64 startup native libs present; evidence artifacts/qa/apk-original-safe-patched-current-universal-static-inspection-20260723.json.",
-    "2026-07-23 physical-phone crash triage default now targets the latest original safe-entry patched APK and records APK SHA256 even when physical-phone QA is blocked; evidence artifacts/qa/physical-phone-crash-triage-20260723-default-safe-apk-sha/summary.json.",
-    "2026-07-23 final stable QA APK path synchronized: artifacts/android/salary-hijacking-qa-universal.apk and Downloads/mirror copies now match safe-entry APK FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8; static inspection and apksigner PASS.",
-    "2026-07-23 final stable QA APK emulator runtime PASS: FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8 clean install 10/10 cold starts, 10/10 background/resume, launcher monkey event PASS, fatal markers 0; physical Samsung phone QA remains blocked because only emulator-5554 is attached.",
-    "2026-07-23 stable QA APK upgrade path PASS: installed previous original-package universal APK 915AE5680B21510F413F684E55FA4547007A815B4469A24FD10D3798080DB76F, upgraded with stable QA APK FC220C4250A0A511F7DEFB7A8B6B7A42E1BAF3559DBBF42F2548839D3F6124D8 using adb install -r, then verified 10/10 cold starts, 10/10 background/resume, fatal markers 0 on emulator.",
-    "2026-07-25 current-head QA APK repackaged from 9cba4f8; SHA DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482; aapt/apksigner/static inspection PASS; emulator clean install 10/10 and same-version upgrade 10/10 PASS; physical Samsung QA remains pending."
-  ],
-  "lastStaticApkInspectionAt": "2026-07-23T10:21:12.024Z",
-  "lastStaticApkInspectionAtKst": "2026-07-23T19:21:12+09:00",
-  "latestStaticApkInspection": "artifacts/qa/apk-current-head-9cba4f8-static-inspection-20260725.json",
+  "latestStaticApkInspection": "artifacts/qa/apk-static-inspection-qa-universal-route-fixed-20260729.json",
   "latestStaticApkInspectionPass": true,
-  "latestStaticApkInspectionTestLog": "artifacts/qa/inspect-android-apk-static-cli-green-20260723.log",
-  "latestStaticApkInspectionRedLog": "artifacts/qa/inspect-android-apk-static-cli-red-20260723.log",
-  "latestStaticApkInspectionRunLog": "artifacts/qa/inspect-apk-current-head-9cba4f8-static-20260725.log",
-  "latestStaticApkSignerVerifyLog": "artifacts/qa/apk-current-head-9cba4f8-apksigner-verify-20260725.log",
-  "latestStaticApkInspectionSummary": {
-    "schemaVersion": 1,
-    "generatedAt": "2026-07-24T22:18:44.846Z",
-    "purpose": "Static inspection for Samsung/ARM64 startup crash triage when no physical phone is attached. This does not replace physical logcat QA.",
-    "apkPath": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\artifacts\\android\\salary-hijacking-qa-universal.apk",
-    "apkSha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
-    "bundleSha256": "7701C084837C96AAFA970F1F59278501D06BB1DA3C2E682AD42924E8F85758C7",
-    "bundleBytes": 2421367,
-    "hasBundle": true,
-    "nativeAbis": ["arm64-v8a", "x86_64"],
-    "arm64LibCount": 15,
-    "x86_64LibCount": 15,
-    "requiredArm64Libs": [
-      {
-        "name": "lib/arm64-v8a/libexpo-modules-core.so",
-        "present": true
-      },
-      {
-        "name": "lib/arm64-v8a/libhermes.so",
-        "present": true
-      },
-      {
-        "name": "lib/arm64-v8a/libreactnative.so",
-        "present": true
-      },
-      {
-        "name": "lib/arm64-v8a/libreanimated.so",
-        "present": true
-      },
-      {
-        "name": "lib/arm64-v8a/librnscreens.so",
-        "present": true
-      },
-      {
-        "name": "lib/arm64-v8a/libworklets.so",
-        "present": true
-      }
-    ],
-    "requiredX86_64Libs": [
-      {
-        "name": "lib/x86_64/libexpo-modules-core.so",
-        "present": true
-      },
-      {
-        "name": "lib/x86_64/libhermes.so",
-        "present": true
-      },
-      {
-        "name": "lib/x86_64/libreactnative.so",
-        "present": true
-      },
-      {
-        "name": "lib/x86_64/libreanimated.so",
-        "present": true
-      },
-      {
-        "name": "lib/x86_64/librnscreens.so",
-        "present": true
-      },
-      {
-        "name": "lib/x86_64/libworklets.so",
-        "present": true
-      }
-    ],
-    "requiredBundleMarkers": [
-      {
-        "marker": "1.0.1-android-safe-entry",
-        "present": true
-      },
-      {
-        "marker": "android-safe-entry",
-        "present": true
-      },
-      {
-        "marker": "AppRegistry.registerComponent",
-        "present": true
-      }
-    ],
-    "forbiddenBundleMarkers": [
-      {
-        "marker": "android-direct-entry",
-        "present": false
-      },
-      {
-        "marker": "ExpoRoot",
-        "present": false
-      },
-      {
-        "marker": "salary-hijacking-android-rc-root",
-        "present": false
-      },
-      {
-        "marker": "CleanFintechScreen",
-        "present": false
-      },
-      {
-        "marker": "stable-home",
-        "present": false
-      },
-      {
-        "marker": "mock-only",
-        "present": false
-      },
-      {
-        "marker": "expo-router/entry",
-        "present": false
-      }
-    ],
-    "pass": true,
-    "rawDeviceIdentifiersStored": false,
-    "rawLogcatStored": false,
-    "secretValuesStored": false
-  },
-  "lastPhysicalPhoneCrashTriageAt": "2026-07-23T10:34:41.215Z",
-  "lastPhysicalPhoneCrashTriageAtKst": "2026-07-23T19:34:41+09:00",
-  "latestPhysicalPhoneCrashTriageRunLog": "artifacts/qa/physical-phone-crash-triage-20260723-default-safe-apk-sha.log",
+  "latestStaticApkInspectionRunLog": "artifacts/qa/inspect-apk-signed-staging-universal-d004-20260729.log",
+  "latestStaticApkSignerVerifyLog": "artifacts/qa/apksigner-verify-qa-universal-route-fixed-20260729.txt",
   "finalStableQaApk": {
+    "schemaVersion": 2,
+    "generatedAt": "2026-07-29T10:14:21.398Z",
+    "applicationId": "com.salaryhijacking.mobile",
+    "versionName": "1.0.0",
+    "versionCode": 1,
+    "buildType": "qaRelease",
+    "gitCommit": "64d40ea30728b16e39eb505464071b242f28fe9e",
+    "minSdk": 24,
+    "targetSdk": 35,
+    "abis": ["arm64-v8a", "x86_64"],
+    "signed": true,
+    "sha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
+    "sizeBytes": 47047859,
+    "file": "artifacts/android/salary-hijacking-qa-universal.apk",
     "fileName": "salary-hijacking-qa-universal.apk",
-    "apkPath": "artifacts/android/salary-hijacking-qa-universal.apk",
+    "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
     "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk",
-    "sha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
-    "sizeBytes": 93983937,
-    "emulatorLifecycleProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
+    "buildCommand": ":app:assembleQaRelease --no-daemon --max-workers=1 --no-parallel --stacktrace -PnewArchEnabled=false -PreactNativeArchitectures=x86_64,arm64-v8a -PsalaryHijackingAndroidAbiFilters=x86_64,arm64-v8a with staging HTTPS env and E2E disabled",
+    "buildLog": "artifacts/qa/gradle-assemble-qa-release-route-fixed-signed-20260729.log",
+    "badgingLog": "artifacts/qa/aapt-badging-qa-universal-route-fixed-20260729.txt",
+    "staticInspection": {
+      "path": "artifacts/qa/apk-static-inspection-qa-universal-route-fixed-20260729.json",
+      "pass": true,
+      "apkSha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
+      "bundleSha256": "B9440F7362B375F23E846DA19C5951F0C539E59B9FA3561DCDFAFDCA882693EF",
+      "hasBundle": true,
+      "nativeAbis": ["arm64-v8a", "x86_64"],
+      "requiredArm64Libs": [
+        {
+          "name": "lib/arm64-v8a/libexpo-modules-core.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libhermes.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libreactnative.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libreanimated.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/librnscreens.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libworklets.so",
+          "present": true
+        }
+      ],
+      "requiredX86_64Libs": [
+        {
+          "name": "lib/x86_64/libexpo-modules-core.so",
+          "present": true
+        },
+        {
+          "name": "lib/x86_64/libhermes.so",
+          "present": true
+        },
+        {
+          "name": "lib/x86_64/libreactnative.so",
+          "present": true
+        },
+        {
+          "name": "lib/x86_64/libreanimated.so",
+          "present": true
+        },
+        {
+          "name": "lib/x86_64/librnscreens.so",
+          "present": true
+        },
+        {
+          "name": "lib/x86_64/libworklets.so",
+          "present": true
+        }
+      ],
+      "requiredBundleMarkers": [
+        {
+          "marker": "salary-hijacking-mobile-root",
+          "present": true
+        },
+        {
+          "marker": "SALARY HIJACKING",
+          "present": true
+        }
+      ],
+      "forbiddenBundleMarkers": [
+        {
+          "marker": "1.0.1-android-safe-entry",
+          "present": false
+        },
+        {
+          "marker": "android-safe-entry",
+          "present": false
+        },
+        {
+          "marker": "android-direct-entry",
+          "present": false
+        },
+        {
+          "marker": "salary-hijacking-android-rc-root",
+          "present": false
+        },
+        {
+          "marker": "CleanFintechScreen",
+          "present": false
+        },
+        {
+          "marker": "stable-home",
+          "present": false
+        },
+        {
+          "marker": "mock-only",
+          "present": false
+        },
+        {
+          "marker": "fallbackPlanFixedExpenseRows",
+          "present": false
+        },
+        {
+          "marker": "fallbackNotifications",
+          "present": false
+        },
+        {
+          "marker": "5,780,000",
+          "present": false
+        },
+        {
+          "marker": "5,500,000",
+          "present": false
+        },
+        {
+          "marker": "2,700,000",
+          "present": false
+        },
+        {
+          "marker": "1,927,000",
+          "present": false
+        },
+        {
+          "marker": "773,000",
+          "present": false
+        },
+        {
+          "marker": "2700000",
+          "present": false
+        },
+        {
+          "marker": "1927000",
+          "present": false
+        },
+        {
+          "marker": "5780000",
+          "present": false
+        }
+      ],
+      "embeddedConfigChecks": [
+        {
+          "name": "apiBaseUrlIsStagingHttps",
+          "pass": true,
+          "observed": "https://api-staging.salaryhijacking.com"
+        },
+        {
+          "name": "appEnvironmentIsStaging",
+          "pass": true,
+          "observed": "staging"
+        },
+        {
+          "name": "operationsEnvironmentIsStaging",
+          "pass": true,
+          "observed": "staging"
+        },
+        {
+          "name": "releaseChannelIsStaging",
+          "pass": true,
+          "observed": "staging"
+        },
+        {
+          "name": "e2eBuildDisabled",
+          "pass": true,
+          "observed": false
+        },
+        {
+          "name": "crashReportingEnabled",
+          "pass": true,
+          "observed": true
+        }
+      ],
+      "manifestSecurityChecks": [
+        {
+          "name": "manifestPresent",
+          "pass": true,
+          "observed": true
+        },
+        {
+          "name": "allowBackupDisabled",
+          "pass": true,
+          "observed": true
+        },
+        {
+          "name": "debuggableDisabled",
+          "pass": true,
+          "observed": true
+        },
+        {
+          "name": "cleartextTrafficDisabled",
+          "pass": true,
+          "observed": true
+        },
+        {
+          "name": "systemAlertWindowAbsent",
+          "pass": true,
+          "observed": true
+        }
+      ]
+    },
+    "signerVerifyLog": "artifacts/qa/apksigner-verify-qa-universal-route-fixed-20260729.txt",
+    "emulatorLifecycleProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/cold-start-10.txt",
     "emulatorColdStarts": "10/10 PASS",
     "emulatorBackgroundResume": "10/10 PASS",
     "emulatorFatalMarkerCount": 0,
-    "launcherMonkeyProof": "artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json",
+    "cleanInstallProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-clean.txt",
+    "cleanColdStarts": "10/10 PASS",
+    "cleanFatalMarkerCount": 0,
+    "launcherMonkeyProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/launcher-monkey.txt",
     "launcherMonkeyStatus": "PASS",
-    "upgradeInstallProof": "artifacts/qa/current-head-9cba4f8-universal-upgrade-20260725/summary.json",
-    "upgradeInstallStatus": "PASS install -r over same-version universal APK",
+    "upgradeInstallProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-upgrade.txt",
+    "upgradeInstallStatus": "PASS adb install -r on emulator",
     "upgradeColdStarts": "10/10 PASS",
     "upgradeBackgroundResume": "10/10 PASS",
     "upgradeFatalMarkerCount": 0,
-    "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
-    "cleanInstallProof": "artifacts/qa/current-head-9cba4f8-universal-lifecycle-20260725/summary.json",
-    "downloadUrl": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
-    "artifactBranch": "codex-apk-artifacts-20260725-current-head",
-    "artifactCommit": "598f13d",
-    "downloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
+    "lifecycleProof": {
+      "path": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729",
+      "device": "emulator-5554 sdk_gphone64_x86_64 Android emulator",
+      "cleanInstallLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-clean.txt",
+      "cleanColdStartLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/clean-cold-start-10.txt",
+      "cleanColdStartSuccess": 10,
+      "cleanColdStartAttempts": 10,
+      "cleanColdStartFatalFilter": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/logcat-clean-cold-start-fatal-filter.txt",
+      "upgradeInstallLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-upgrade.txt",
+      "coldStartLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/cold-start-10.txt",
+      "coldStartSuccess": 10,
+      "coldStartAttempts": 10,
+      "backgroundResumeLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/background-resume-10.txt",
+      "backgroundResumeSuccess": 10,
+      "backgroundResumeAttempts": 10,
+      "coldStartFatalFilter": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/logcat-cold-start-fatal-filter.txt",
+      "backgroundResumeFatalFilter": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/logcat-background-resume-fatal-filter.txt",
+      "fatalOrRouteErrorCount": 0,
+      "launcherMonkeyLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/launcher-monkey.txt",
+      "screenshot": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/post-launcher-screenshot.png",
+      "exitInfo": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/exit-info.txt"
+    },
+    "status": "PARTIAL_QA_RELEASE_ROUTE_FIXED",
+    "truthfulScope": "Real Expo Router qaRelease APK built with staging HTTPS config and verified on Android emulator for clean install, upgrade install, 10 cold starts, 10 background/resume cycles, and fatal/route-error logcat filters. This is not a 100% feature QA APK.",
+    "remainingBlockers": [
+      "Physical Samsung ARM64 install/cold-start/logcat QA is still not executed in this environment.",
+      "Authenticated staging DB persistence E2E is still unverified.",
+      "Classified Stitch 304 production-route interaction/visual/a11y verification is still unverified.",
+      "Cloudflare staging deploy/health and DB migration/RLS/rollback remain unverified.",
+      "Production AAB and Google Play submission are intentionally not executed without explicit approval."
+    ]
   },
-  "latestStableQaLauncherProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
-  "latestStableQaLauncherLog": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/launcher-monkey.txt",
-  "latestStableQaUpgradeProof": "artifacts/qa/final-safe-splash-hide-universal-upgrade-same-version-20260725/summary.json",
-  "currentHeadQaApkDownload": {
-    "url": "https://raw.githubusercontent.com/jinbizman-boop/salary-hijacking/codex-apk-artifacts-20260725-current-head/apk/salary-hijacking-qa-universal-current-head.apk",
-    "artifactBranch": "codex-apk-artifacts-20260725-current-head",
-    "artifactCommit": "598f13d",
-    "sha256": "DE4C6F4FC339680822FDEE54E4BF694BB6948C4D0F4AA63461D64931FAC4B482",
-    "downloadProof": "artifacts/qa/current-head-apk-raw-github-download-proof-20260725.json"
-  }
+  "privacy": {
+    "previewSecretsRedacted": true,
+    "embeddedCredentialsPresent": false,
+    "embeddedSigningMaterialPresent": false,
+    "reviewerCredentialPresent": false,
+    "rawLogcatStored": false,
+    "rawSecretMaterialPresent": false
+  },
+  "nextEvidenceRequired": [
+    "Run the same APK on the user Samsung physical ARM64 phone and collect logcat/exit-info.",
+    "Run authenticated staging DB persistence E2E against HTTPS staging API.",
+    "Run classified Stitch 304 production-route interaction, visual, and accessibility verification.",
+    "Run Cloudflare staging deploy/health and DB migration/RLS/rollback validation.",
+    "Build production AAB only after explicit user approval."
+  ]
 }

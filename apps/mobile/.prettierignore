@@ -1,5 +1,6 @@
 node_modules
 .expo
+.tmp
 .local-native-bin
 .gradle-local-debug
 .gradle-qa-*

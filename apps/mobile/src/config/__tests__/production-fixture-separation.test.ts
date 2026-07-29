@@ -14,7 +14,9 @@ const forbiddenFallbackDatasets = [
   "fallbackPostDetail",
 ] as const;
 
-function collectProductionFiles(...roots: readonly string[]): readonly string[] {
+function collectProductionFiles(
+  ...roots: readonly string[]
+): readonly string[] {
   const files: string[] = [];
   const ignoredSegments = new Set([
     "__tests__",
@@ -61,7 +63,9 @@ describe("production fixture separation", () => {
         const source = readFileSync(filePath, "utf8");
         return forbiddenFallbackDatasets
           .filter((marker) => source.includes(marker))
-          .map((marker) => `${relative(mobileRoot, filePath)} contains ${marker}`);
+          .map(
+            (marker) => `${relative(mobileRoot, filePath)} contains ${marker}`,
+          );
       },
     );
 

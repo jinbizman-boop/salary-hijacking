@@ -17,6 +17,8 @@ const BRAND_GREEN = "#209252";
 const BRAND_INK = "#202327";
 const BRAND_MUTED = "#6D737A";
 const FIELD_LINE = "#E4E7EA";
+const AUTH_VISUAL_MIN_BOTTOM_SAFE_GAP = 36;
+const EUREKA_WORLD_LOGO_ASPECT_RATIO = 177 / 1280;
 
 export const authVisualColors = {
   brandGreen: BRAND_GREEN,
@@ -57,7 +59,10 @@ export function AuthVisualFrame({
           styles.frameContent,
           {
             minHeight: Math.max(height, 640),
-            paddingBottom: Math.max(insets.bottom, 0),
+            paddingBottom: Math.max(
+              insets.bottom + AUTH_VISUAL_MIN_BOTTOM_SAFE_GAP,
+              64,
+            ),
             paddingHorizontal: horizontalPadding,
             paddingTop: Math.max(insets.top, 0),
           },
@@ -119,8 +124,8 @@ export function AuthBrandLogo({
 
 export function EurekaWorldMark(): React.ReactElement {
   const { width } = useWindowDimensions();
-  const logoWidth = clampValue(width * 0.58, 214, 340);
-  const logoHeight = logoWidth * 0.158;
+  const logoWidth = clampValue(width * 0.52, 190, Math.min(300, width * 0.84));
+  const logoHeight = logoWidth * EUREKA_WORLD_LOGO_ASPECT_RATIO;
 
   return (
     <View style={styles.eurekaRow}>

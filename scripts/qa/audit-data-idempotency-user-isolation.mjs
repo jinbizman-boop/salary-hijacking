@@ -132,7 +132,7 @@ const defaultChecks = [
     file: "services/api/tests/growth-db-repository.test.ts",
     mustContain: [
       "server XP and idempotency",
-      "idempotencyKey: \"content-reading-1\"",
+      'idempotencyKey: "content-reading-1"',
       "on conflict",
     ],
   },
@@ -207,7 +207,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = auditDataIdempotencyUserIsolation();
   const jsonPath = argValue("--json");
   if (jsonPath) {
-    writeFileSync(resolve(repoRoot, jsonPath), `${JSON.stringify(result, null, 2)}\n`);
+    writeFileSync(
+      resolve(repoRoot, jsonPath),
+      `${JSON.stringify(result, null, 2)}\n`,
+    );
   }
   console.log(
     JSON.stringify(

@@ -36,7 +36,7 @@ export default function LoginScreen(): React.ReactElement {
     async (request: AuthLoginRequest): Promise<void> => {
       if (submitting) return;
       setSubmitting(true);
-      setMessage("로그인 요청을 서버에 확인하고 있습니다.");
+      setMessage("로그인 요청을 서버에서 확인하고 있습니다.");
       try {
         const response = await authApi.login(request);
         const route = routeAfterLogin(loginRouter, response);
@@ -94,9 +94,9 @@ export default function LoginScreen(): React.ReactElement {
 
   return (
     <AuthVisualFrame accessibilityLabel="급여납치 로그인 화면">
-      <View style={{ height: clampValue(height * 0.245, 118, 245) }} />
+      <View style={{ height: clampValue(height * 0.18, 86, 172) }} />
       <LoginHero />
-      <View style={{ height: clampValue(height * 0.095, 42, 92) }} />
+      <View style={{ height: clampValue(height * 0.065, 32, 64) }} />
       <LoginCredentialForm
         loading={submitting}
         onSubmit={(request) => {
@@ -128,10 +128,10 @@ export default function LoginScreen(): React.ReactElement {
         onSignupPress={openSignup}
       />
       <View
-        style={{ flex: 1, minHeight: clampValue(height * 0.125, 68, 130) }}
+        style={{ flex: 1, minHeight: clampValue(height * 0.075, 40, 82) }}
       />
       <EurekaWorldMark />
-      <View style={{ height: clampValue(height * 0.072, 38, 78) }} />
+      <View style={{ height: clampValue(height * 0.045, 24, 46) }} />
     </AuthVisualFrame>
   );
 }
@@ -142,7 +142,7 @@ export function assertMobileLoginScreenCompleteness(): {
   readonly checks: readonly string[];
 } {
   const checks = [
-    "Salary Hijacking login feature components",
+    "Salary Hijacking auth feature components",
     AUTH_LOGIN_PATH,
     "AuthVisualFrame",
     "LoginHero",
@@ -152,18 +152,16 @@ export function assertMobileLoginScreenCompleteness(): {
     "SALARY HIJACKING",
     "아이디",
     "비밀번호",
-    "네이버 로그인",
-    "카카오 로그인",
-    "구글 로그인",
     "회원가입",
     "자동 로그인",
     "Eureka World",
     "createMobileAuthApi",
     "authApi.login",
     "authApi.startOAuth",
+    "oauth_token_component_guard",
     "raw_credential_component_guard",
     "password_render_component_guard",
-    "oauth_token_component_guard",
+    "financial_ad_targeting_component_guard",
   ] as const;
 
   return { ok: checks.length >= 18, version: SCREEN_VERSION, checks };

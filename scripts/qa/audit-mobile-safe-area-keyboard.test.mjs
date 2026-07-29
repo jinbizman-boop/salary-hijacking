@@ -55,7 +55,10 @@ test("passes when a contract file includes all required safe-area and keyboard c
 
   assert.equal(result.ok, true);
   assert.equal(result.failedFiles, 0);
-  assert.deepEqual(result.targetViewportWidths, [320, 360, 375, 390, 393, 412, 430, 768]);
+  assert.deepEqual(
+    result.targetViewportWidths,
+    [320, 360, 375, 390, 393, 412, 430, 768],
+  );
 });
 
 test("fails when keyboard inset handling is missing", () => {
@@ -78,8 +81,14 @@ test("fails when keyboard inset handling is missing", () => {
   });
 
   assert.equal(result.ok, false);
-  assert.equal(result.failures[0].missing.includes("keyboardVerticalOffset={insets.top}"), true);
-  assert.equal(result.failures[0].missing.includes("automaticallyAdjustKeyboardInsets"), true);
+  assert.equal(
+    result.failures[0].missing.includes("keyboardVerticalOffset={insets.top}"),
+    true,
+  );
+  assert.equal(
+    result.failures[0].missing.includes("automaticallyAdjustKeyboardInsets"),
+    true,
+  );
 });
 
 test("fails when the target production file is absent", () => {

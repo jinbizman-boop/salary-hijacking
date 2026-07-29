@@ -119,6 +119,47 @@ BEFORE UPDATE ON public.user_withdrawal_requests
 FOR EACH ROW
 EXECUTE FUNCTION public.set_updated_at();
 
+ALTER TABLE public.user_privacy_exports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_withdrawal_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS user_privacy_exports_owner_select ON public.user_privacy_exports;
+CREATE POLICY user_privacy_exports_owner_select
+ON public.user_privacy_exports
+FOR SELECT
+USING (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_privacy_exports_owner_insert ON public.user_privacy_exports;
+CREATE POLICY user_privacy_exports_owner_insert
+ON public.user_privacy_exports
+FOR INSERT
+WITH CHECK (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_privacy_exports_owner_update ON public.user_privacy_exports;
+CREATE POLICY user_privacy_exports_owner_update
+ON public.user_privacy_exports
+FOR UPDATE
+USING (user_id = public.current_app_user_id() OR public.current_app_is_admin())
+WITH CHECK (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_withdrawal_requests_owner_select ON public.user_withdrawal_requests;
+CREATE POLICY user_withdrawal_requests_owner_select
+ON public.user_withdrawal_requests
+FOR SELECT
+USING (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_withdrawal_requests_owner_insert ON public.user_withdrawal_requests;
+CREATE POLICY user_withdrawal_requests_owner_insert
+ON public.user_withdrawal_requests
+FOR INSERT
+WITH CHECK (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
+DROP POLICY IF EXISTS user_withdrawal_requests_owner_update ON public.user_withdrawal_requests;
+CREATE POLICY user_withdrawal_requests_owner_update
+ON public.user_withdrawal_requests
+FOR UPDATE
+USING (user_id = public.current_app_user_id() OR public.current_app_is_admin())
+WITH CHECK (user_id = public.current_app_user_id() OR public.current_app_is_admin());
+
 COMMENT ON TABLE public.user_privacy_exports
 IS 'Salary Hijacking privacy export requests. Exports are financial-summary-only and must never include raw tokens, raw financial rows, or ad targeting payloads.';
 

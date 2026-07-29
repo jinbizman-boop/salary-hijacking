@@ -136,6 +136,8 @@ const REQUIRED_TOKENS_BY_FILE = {
     "compatibility_date",
     "[env.staging]",
     "[env.staging.vars]",
+    '{ pattern = "api-staging.salaryhijacking.com", custom_domain = true }',
+    'APP_PUBLIC_BASE_URL = "https://api-staging.salaryhijacking.com"',
     "[env.production]",
     "[env.production.vars]",
     '{ pattern = "salaryhijacking.com", custom_domain = true }',
@@ -204,6 +206,9 @@ const REQUIRED_TOKENS_BY_FILE = {
   ],
   "apps/admin/wrangler.jsonc": [
     "salary-hijacking-admin",
+    "salary-hijacking-admin-staging",
+    "staging-admin.salaryhijacking.com",
+    '"APP_PUBLIC_BASE_URL": "https://staging-admin.salaryhijacking.com"',
     ".open-next/worker.js",
     ".open-next/assets",
     "nodejs_compat",

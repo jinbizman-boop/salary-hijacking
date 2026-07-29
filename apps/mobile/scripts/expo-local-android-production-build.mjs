@@ -86,7 +86,8 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
 
 const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
-  const source = 'import "react-native-gesture-handler";\nimport "expo-router/entry";\n';
+  const source =
+    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n';
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;

@@ -10,6 +10,9 @@ const defaultAdbPath = resolve(
   repoRoot,
   ".tools/android-sdk/platform-tools/adb.exe",
 );
+const ADB_COMMAND_TIMEOUT_MS = Number(
+  process.env.SALARY_HIJACKING_ADB_COMMAND_TIMEOUT_MS ?? 120_000,
+);
 
 export function parseStartStatus(output) {
   return /(?:^|\n)\s*Status:\s*ok(?:\r?\n|$)/u.test(String(output));
@@ -28,6 +31,21 @@ export function sanitizeSerial(serial) {
     .digest("hex")
     .slice(0, 16)
     .toUpperCase();
+}
+
+export function redactSensitiveLogcat(logcat) {
+  return String(logcat)
+    .replace(
+      /(?:access|refresh|id)?token["'=:\s]+[A-Za-z0-9._~+/=-]{12,}/giu,
+      "token=[REDACTED]",
+    )
+    .replace(
+      /(?:api[_-]?key|secret|password)["'=:\s]+[^\s"'\\]{8,}/giu,
+      "$1=[REDACTED]",
+    )
+    .replace(/\b\d{2,3}-\d{3,4}-\d{4}\b/gu, "[REDACTED_PHONE]")
+    .replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu, "[REDACTED_EMAIL]")
+    .replace(/\b\d{9,16}\b/gu, "[REDACTED_NUMBER]");
 }
 
 export function classifyLifecycleProof({
@@ -51,14 +69,48 @@ export function classifyLifecycleProof({
   return { ok: true, status: "PASS" };
 }
 
+export function classifyRouteProbeSummary(routeProbeResults = []) {
+  const failedRoutes = routeProbeResults
+    .filter(
+      (result) =>
+        result.startOk !== true || Number(result.fatalMarkerCount ?? 0) > 0,
+    )
+    .map((result) => result.href);
+  const navigationSmokeVerified =
+    routeProbeResults.length > 0 && failedRoutes.length === 0;
+
+  return {
+    failedRoutes,
+    navigationSmokeVerified,
+    routeProbeCount: routeProbeResults.length,
+    status: navigationSmokeVerified ? "PASS_ROUTE_PROBES" : "FAIL_ROUTE_PROBES",
+  };
+}
+
+export function hasNotificationScreenWithoutBottomTabs(uiDump = "") {
+  const text = String(uiDump);
+  const hasNotificationMarker =
+    /(?:알림|새로운\s*알림|notifications?|notifications-standalone-screen|급여납치\s*알림\s*독립\s*화면)/iu.test(
+      text,
+    );
+  const hasBottomTabMarker =
+    /(?:급여납치\s*하단\s*탭\s*내비게이션|급여\s*탭|계획\s*탭|커뮤니티\s*탭|MY\s*탭|profile_privacy|payroll_home|payroll_plan|anonymous_community)/u.test(
+      text,
+    );
+  return hasNotificationMarker && !hasBottomTabMarker;
+}
+
 const runAdb = ({ adbPath, args, outputPath = null, serial = "" }) => {
   const adbArgs = serial ? ["-s", serial, ...args] : args;
   const result = spawnSync(adbPath, adbArgs, {
     encoding: "utf8",
     shell: false,
     windowsHide: true,
+    timeout: ADB_COMMAND_TIMEOUT_MS,
   });
-  const output = `${result.stdout ?? ""}${result.stderr ?? ""}`;
+  const output = `${result.stdout ?? ""}${result.stderr ?? ""}${
+    result.error?.message ? `\n${result.error.message}` : ""
+  }`;
   if (outputPath) writeFileSync(outputPath, output, "utf8");
   return {
     exitCode: result.status ?? 1,
@@ -85,6 +137,14 @@ export function collectAndroidApkLifecycleProof({
   coldStartRuns = 10,
   outDir,
   packageName,
+  routeProbeHrefs = [
+    "/salary",
+    "/plan",
+    "/level",
+    "/community",
+    "/profile",
+    "/notifications",
+  ],
   serial = "",
 }) {
   if (!existsSync(adbPath)) throw new Error(`adb not found: ${adbPath}`);
@@ -162,15 +222,89 @@ export function collectAndroidApkLifecycleProof({
       "System.err:W",
       "*:S",
     ],
-    outputPath: resolve(resolvedOutDir, "logcat.txt"),
     serial: targetSerial,
   });
+  writeFileSync(
+    resolve(resolvedOutDir, "logcat-redacted.txt"),
+    redactSensitiveLogcat(logcat.output),
+    "utf8",
+  );
   runAdb({
     adbPath,
     args: ["shell", "dumpsys", "activity", "exit-info", packageName],
     outputPath: resolve(resolvedOutDir, "exit-info.txt"),
     serial: targetSerial,
   });
+
+  const routeProbeResults = [];
+  for (const href of routeProbeHrefs) {
+    const deepLink = `salaryhijacking:///${href.replace(/^\//u, "")}`;
+    runAdb({ adbPath, args: ["logcat", "-c"], serial: targetSerial });
+    runAdb({
+      adbPath,
+      args: ["shell", "am", "force-stop", packageName],
+      serial: targetSerial,
+    });
+    const routeStart = runAdb({
+      adbPath,
+      args: [
+        "shell",
+        "am",
+        "start",
+        "-W",
+        "-a",
+        "android.intent.action.VIEW",
+        "-d",
+        deepLink,
+        packageName,
+      ],
+      outputPath: resolve(
+        resolvedOutDir,
+        `route-${href.replace(/[^A-Za-z0-9_-]+/gu, "-").replace(/^-|-$/gu, "") || "root"}.txt`,
+      ),
+      serial: targetSerial,
+    });
+    const routeLogcat = runAdb({
+      adbPath,
+      args: [
+        "logcat",
+        "-d",
+        "-v",
+        "threadtime",
+        "AndroidRuntime:E",
+        "ReactNativeJS:V",
+        "ReactNative:V",
+        "Expo:V",
+        "System.err:W",
+        "*:S",
+      ],
+      serial: targetSerial,
+    });
+    const routeFatalMarkerCount = countFatalMarkers(routeLogcat.output);
+    routeProbeResults.push({
+      fatalMarkerCount: routeFatalMarkerCount,
+      href,
+      startOk: routeStart.exitCode === 0 && parseStartStatus(routeStart.output),
+    });
+  }
+
+  const routeProbeSummary = classifyRouteProbeSummary(routeProbeResults);
+  const notificationDumpResult = runAdb({
+    adbPath,
+    args: ["shell", "uiautomator", "dump", "/sdcard/salary-window.xml"],
+    serial: targetSerial,
+  });
+  const notificationDump =
+    notificationDumpResult.exitCode === 0
+      ? runAdb({
+          adbPath,
+          args: ["shell", "cat", "/sdcard/salary-window.xml"],
+          serial: targetSerial,
+        })
+      : { exitCode: 1, output: "" };
+  const notificationNoBottomTabVerified =
+    notificationDump.exitCode === 0 &&
+    hasNotificationScreenWithoutBottomTabs(notificationDump.output);
 
   const fatalMarkerCount = countFatalMarkers(logcat.output);
   const classification = classifyLifecycleProof({
@@ -193,9 +327,18 @@ export function collectAndroidApkLifecycleProof({
     fatalMarkerCount,
     generatedAt: new Date().toISOString(),
     installExitCode: install.exitCode,
+    navigationSmokeVerified: routeProbeSummary.navigationSmokeVerified,
+    notificationNoBottomTabVerified,
+    notificationNoBottomTabProbe:
+      notificationDump.exitCode === 0
+        ? "uiautomator dump inspected in-memory for notification markers and bottom-tab labels; raw XML is not stored"
+        : "uiautomator dump unavailable",
     ok: classification.ok,
     packageName,
-    rawLogcatStored: true,
+    logcatPath: "logcat-redacted.txt",
+    rawLogcatStored: false,
+    routeProbeResults,
+    routeProbeSummary,
     serialHash: sanitizeSerial(targetSerial),
     startExitCode,
     status: classification.status,

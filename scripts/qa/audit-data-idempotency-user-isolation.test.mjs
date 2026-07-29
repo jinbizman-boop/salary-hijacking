@@ -18,7 +18,8 @@ function tempRepo(files) {
 
 test("passes when required user-scoped idempotency and isolation patterns exist", () => {
   const root = tempRepo({
-    "a.ts": "where user_id = $1::uuid and idempotency_key = $2 on conflict (user_id, idempotency_key)",
+    "a.ts":
+      "where user_id = $1::uuid and idempotency_key = $2 on conflict (user_id, idempotency_key)",
   });
 
   const result = auditDataIdempotencyUserIsolation({

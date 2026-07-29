@@ -13,7 +13,11 @@ export function DraftExitBottomSheet({
     <BottomSheet
       actions={[
         { key: "save", label: "임시 저장", description: "작성 내용을 보관" },
-        { key: "discard", label: "버리고 나가기", description: "작성 내용 삭제" },
+        {
+          key: "discard",
+          label: "버리고 나가기",
+          description: "작성 내용 삭제",
+        },
         { key: "keep", label: "계속 작성" },
       ]}
       onClose={onClose}

@@ -73,7 +73,9 @@ export async function openNotificationWithServerRead(
   };
 }
 
-export function toNotificationHref(value: string | null): NotificationHref | null {
+export function toNotificationHref(
+  value: string | null,
+): NotificationHref | null {
   if (!value) return null;
   return ALLOWED_NOTIFICATION_HREFS.has(value as NotificationHref)
     ? (value as NotificationHref)
@@ -107,7 +109,8 @@ export function preferenceStateFromApi(
     marketing: preferences.adPartnerEnabled,
     push: preferences.pushEnabled,
     quietHours:
-      preferences.quietHoursStart !== null && preferences.quietHoursEnd !== null,
+      preferences.quietHoursStart !== null &&
+      preferences.quietHoursEnd !== null,
     salary: preferences.paydayEnabled && preferences.savingsGoalEnabled,
   };
 }

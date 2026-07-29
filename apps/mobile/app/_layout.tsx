@@ -1,6 +1,6 @@
 /** apps/mobile/app/_layout.tsx
- * 급여납치 모바일 앱 루트 레이아웃 최종본.
- * 정적 import와 JSX 없이 Expo Router·React Native 런타임 모듈을 지연 로딩한다.
+ * 급여납치 모바일 루트 레이아웃 최종본
+ * 정적 import와 JSX 없이 Expo Router, React Native 런타임 모듈을 지연 로딩한다.
  */
 
 import { createAuthApi } from "../src/features/auth/api";
@@ -476,6 +476,7 @@ const SENSITIVE_KEYWORDS = [
   "대출",
   "부채",
   "푸시",
+  "임시",
   "기기토큰",
 ] as const;
 const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
@@ -789,7 +790,7 @@ const fallbackSession: SessionSnapshot = Object.freeze({
 });
 const fallbackConfig: AppConfigSnapshot = Object.freeze({
   apiVersion: "v1",
-  environment: "development",
+  environment: "staging",
   maintenanceMode: false,
   minSupportedBuild: "0",
   featureFlags: {},
@@ -1035,7 +1036,7 @@ export function ErrorBoundary({
       h(
         NativeRuntimeRef.Text,
         { style: styles.errorBoundaryTitle },
-        "앱 화면을 다시 준비하고 있어요.",
+        "이 화면을 다시 준비하고 있어요.",
       ),
       h(
         NativeRuntimeRef.Text,
@@ -1141,7 +1142,7 @@ function renderGate(
             : "서버 권위 앱 상태 확인 중";
   const message =
     status === "AUTH_REQUIRED"
-      ? "안전한 세션 확인 후 급여·예산 데이터를 불러옵니다."
+      ? "안전한 세션 확인 후 급여와 예산 데이터를 불러옵니다."
       : status === "VERIFY_EMAIL"
         ? "계정 보호를 위해 인증을 완료해야 합니다."
         : status === "ONBOARDING"
@@ -1198,19 +1199,19 @@ function renderRuntimeGuard(_payload: RootPayload): null {
 }
 
 function rootHeaderMessage(payload: RootPayload, status: RootStatus): string {
-  if (status === "BOOTSTRAPPING") return "안전하게 앱을 준비하고 있어요";
-  if (status === "AUTH_REQUIRED") return "로그인 후 급여 현황을 확인하세요";
+  if (status === "BOOTSTRAPPING") return "안전하게 앱을 준비하고 있어요.";
+  if (status === "AUTH_REQUIRED") return "로그인 후 급여 현황을 확인하세요.";
   if (status === "OFFLINE") return "오프라인 보호 모드로 표시 중";
-  if (status === "ERROR") return "점검 상태를 확인하고 있어요";
+  if (status === "ERROR") return "오류 상태를 확인하고 있어요.";
   return payload.config.privacyMode === "STRICT"
     ? "개인정보 보호 모드 적용 중"
-    : "급여 현황을 확인하세요";
+    : "급여 현황을 확인하세요.";
 }
 
 function rootStatusLabel(status: RootStatus): string {
   if (status === "READY") return "준비 완료";
   if (status === "OFFLINE") return "오프라인";
-  if (status === "ERROR") return "점검";
+  if (status === "ERROR") return "오류";
   return "확인 중";
 }
 
@@ -1345,7 +1346,7 @@ function normalizeConfig(config: AppConfigSnapshot): AppConfigSnapshot {
     environment: enumOf(
       ["local", "development", "staging", "production"] as const,
       config.environment,
-      "development",
+      "staging",
     ),
     maintenanceMode: Boolean(config.maintenanceMode),
     minSupportedBuild: scrub(config.minSupportedBuild) || "0",
@@ -1518,8 +1519,8 @@ function statusMessage(status: RootStatus): string {
   if (status === "VERIFY_EMAIL") return "이메일 인증 화면으로 이동합니다.";
   if (status === "ONBOARDING") return "온보딩 화면으로 이동합니다.";
   if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
-  if (status === "ERROR") return "서비스 점검 상태입니다.";
-  return "서버 권위 앱 상태를 확인하고 있어요.";
+  if (status === "ERROR") return "서비스 오류 상태입니다.";
+  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했습니다.";
 }
 
 function safeBootstrapErrorMessage(
@@ -1527,7 +1528,7 @@ function safeBootstrapErrorMessage(
 ): string {
   if (reason === "auth-expired")
     return "세션이 만료되어 다시 로그인이 필요합니다.";
-  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했어요.";
+  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했습니다.";
 }
 
 function readMobileE2eBuildEnabled(): boolean {
@@ -1718,12 +1719,12 @@ function errorMessage(value: unknown, status: number): string {
       return safeMessage(message);
   }
   if (status === 401) return "로그인이 필요합니다.";
-  if (status === 403) return "앱 접근이 제한되었습니다.";
+  if (status === 403) return "접근이 제한되었습니다.";
   if (status === 409) return "세션 상태가 변경되었습니다. 다시 확인하세요.";
   if (status === 426) return "앱 업데이트가 필요합니다.";
   if (status === 429) return "요청이 많습니다. 잠시 후 다시 시도하세요.";
-  if (status >= 500) return "서버 점검 또는 일시 장애입니다.";
-  return `앱 시작 요청에 실패했습니다. (${status})`;
+  if (status >= 500) return "서버 오류 또는 일시 장애입니다.";
+  return `앱 시작 요청이 실패했습니다. (${status})`;
 }
 function sanitize(value: unknown): JsonValue {
   if (value === null || value === undefined) return null;

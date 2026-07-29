@@ -17,9 +17,11 @@ import {
 } from "../constants";
 import type { NotificationItem as ApiNotificationItem } from "../types";
 
-const SCREEN_VERSION = "5.3.0-notifications-stitch-korean";
+const SCREEN_VERSION = "5.3.1-notifications-readable-korean";
+const BRAND_GREEN = "#209252";
 const TEXT_BLACK = "#191B1F";
 const MUTED = "#6D737A";
+const LINE = "#E7EBEF";
 const SOFT_GREEN = "#EAF8EF";
 const BLUE = "#2E83C8";
 
@@ -84,7 +86,7 @@ const notificationItems: readonly ScreenNotificationItem[] = [
     href: "/level/reading",
     icon: appIconAssets.level.book,
     id: "reading-focus",
-    subtitle: "오늘의 레벨업, 오늘의 따뜻한 마음의 양식을 가져왔어요",
+    subtitle: "오늘의 따뜻한 마음의 양식을 가져왔어요",
     time: "8시간전",
     title: "기획의 정석 2장 FOCUS, 기획이 되려면 읽으러 가기",
     tone: "normal",
@@ -93,7 +95,7 @@ const notificationItems: readonly ScreenNotificationItem[] = [
     href: "/level/news",
     icon: appIconAssets.level.news,
     id: "news-npu",
-    subtitle: "오늘의 레벨업, 오늘의 따끈한 소식을 가져왔어요",
+    subtitle: "오늘의 따끈한 소식을 가져왔어요",
     time: "8시간전",
     title: "[매일경제] 국내 NPU 개발 가속화, AI 학습/추론에...",
     tone: "normal",
@@ -102,7 +104,7 @@ const notificationItems: readonly ScreenNotificationItem[] = [
     href: "/level/english",
     icon: appIconAssets.level.read,
     id: "english-business",
-    subtitle: "오늘의 레벨업, 오늘의 영어회화를 가져왔어요",
+    subtitle: "오늘의 영어회화를 가져왔어요",
     time: "8시간전",
     title: "Today, Business Conversation",
     tone: "normal",
@@ -111,7 +113,7 @@ const notificationItems: readonly ScreenNotificationItem[] = [
     href: "/level/health",
     icon: appIconAssets.level.video,
     id: "health-upper",
-    subtitle: "오늘의 레벨업, 오늘의 건강 운동가이드를 준비했어요",
+    subtitle: "오늘의 건강 운동가이드를 준비했어요",
     time: "8시간전",
     title: "오늘은 상체를 부수는 날이에요! 파이팅!!",
     tone: "normal",
@@ -157,7 +159,11 @@ export function NotificationScreen({
     : ([] as readonly ScreenNotificationItem[]);
 
   return (
-    <View style={styles.screen}>
+    <View
+      accessibilityLabel="급여납치 알림 독립 화면"
+      style={styles.screen}
+      testID="notifications-standalone-screen"
+    >
       <View style={[styles.safeTop, { paddingTop: insets.top }]}>
         <View
           accessibilityLabel="급여납치 알림 상단 영역"
@@ -467,9 +473,10 @@ export function assertMobileNotificationsIndexCompleteness(): {
     "/level/health",
     "sensitive_financial_data_component_guard",
     "금융 원천 데이터 광고 타겟팅 금지",
+    "notifications-standalone-screen",
   ] as const;
 
-  return { checks, ok: checks.length >= 12, version: SCREEN_VERSION };
+  return { checks, ok: checks.length >= 13, version: SCREEN_VERSION };
 }
 
 const styles = StyleSheet.create({
@@ -546,6 +553,8 @@ const styles = StyleSheet.create({
   notificationRow: {
     alignItems: "flex-start",
     backgroundColor: "#FFFFFF",
+    borderBottomColor: LINE,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: 14,
     minHeight: 86,
@@ -591,7 +600,7 @@ const styles = StyleSheet.create({
   stateButton: {
     alignItems: "center",
     alignSelf: "flex-start",
-    backgroundColor: "#209252",
+    backgroundColor: BRAND_GREEN,
     borderRadius: 12,
     justifyContent: "center",
     minHeight: 44,
@@ -605,7 +614,7 @@ const styles = StyleSheet.create({
   },
   stateCard: {
     backgroundColor: "#F7F9FF",
-    borderColor: "#E7EBEF",
+    borderColor: LINE,
     borderRadius: 18,
     borderWidth: 1,
     gap: 10,

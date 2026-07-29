@@ -683,14 +683,15 @@ test("patches expo-modules-core JavaCompile to include Kotlin outputs", () => {
   assert.match(patched, /tasks\.withType\(JavaCompile\)/u);
   assert.match(patched, /kotlinTask\.destinationDirectory\.get\(\)\.asFile/u);
   assert.match(patched, /tmp\/kotlin-classes\/\$\{variantOutputName\}/u);
+  assert.doesNotMatch(patched, /ant\.jar\(destfile:/u);
+  assert.match(patched, /compile_r_class_jar/u);
+  assert.doesNotMatch(patched, /'-classpath'/u);
+  assert.match(patched, /javaTask\.doFirst/u);
+  assert.match(patched, /salaryHijackingFilteredClasspath/u);
   assert.match(
     patched,
-    /ant\.jar\(destfile: salaryHijackingKotlinClasspathJar\)/u,
+    /salaryHijackingKotlinOutput \?: salaryHijackingFallbackKotlinOutput/u,
   );
-  assert.match(patched, /SALARY_HIJACKING_ANDROID_KOTLIN_CLASSPATH_DIR/u);
-  assert.match(patched, /compile_r_class_jar/u);
-  assert.match(patched, /'-classpath'/u);
-  assert.match(patched, /javaTask\.doFirst/u);
   assert.match(patched, /javaTask\.dependsOn\(kotlinTask\)/u);
 });
 
@@ -729,7 +730,7 @@ test("patches Android root JavaCompile to copy node_modules generated jars to a 
     patched,
     /javaTask\.classpath = files\(salaryHijackingSafeClasspathFiles\)/u,
   );
-  assert.match(patched, /'-classpath'/u);
+  assert.doesNotMatch(patched, /'-classpath'/u);
 });
 
 test("uses atomic generated-file rewrites for Android patch targets flagged by CodeQL", () => {

@@ -1487,7 +1487,7 @@ const onboardingStepContent: Record<
   "onboarding-expected-salary-step": {
     actionLabel: "예상 납치금액 보기",
     amountLabel: "예상 수령 급여",
-    amountValue: "2,700,000원",
+    amountValue: "서버 기준 금액",
     description:
       "세금·공제 후 실제 사용할 수 있는 금액을 기준으로 계획과 홈 요약이 이어집니다.",
     rows: ["수령 예상 급여", "공제 후 기준", "서버 계산 대기"],
@@ -1517,10 +1517,10 @@ const onboardingStepContent: Record<
   "onboarding-plan-review": {
     actionLabel: "서버 기준 저장",
     amountLabel: "예상 납치금액",
-    amountValue: "1,927,000원",
+    amountValue: "서버 기준 금액",
     description:
       "입력한 급여·지출·저축·생활비를 검토하고 서버 저장 성공 후에만 홈으로 이동합니다.",
-    rows: ["수령 급여 2,700,000원", "고정지출 773,000원", "생활비 42,000원"],
+    rows: ["수령 급여 서버 기준", "고정지출 서버 기준", "생활비 서버 기준"],
     step: "검토",
     title: "계획을 마지막으로 확인해요",
   },
@@ -1547,7 +1547,7 @@ const onboardingStepContent: Record<
   "onboarding-fixed-expense-step": {
     actionLabel: "고정지출 추가",
     amountLabel: "고정지출",
-    amountValue: "773,000원",
+    amountValue: "서버 기준 금액",
     description:
       "구독료·대출상환처럼 매월 반복되는 지출은 template와 occurrence를 분리해 관리합니다.",
     rows: ["유튜브 프리미엄", "ChatGPT", "학자금 대출"],
@@ -2032,7 +2032,7 @@ const profilePageStateContent: Record<
     menuRows: ["내 게시글 관리", "내 레벨업 관리", "1:1 문의", "공지사항"],
     notice: "성과 일부를 불러오지 못했어요. 민감 금액 없이 다시 시도합니다.",
     stats: [
-      { label: "누적 납치금액", value: "5,780,000원" },
+      { label: "누적 납치금액", value: "서버 기준 금액" },
       { label: "레벨", value: "18LV" },
       { label: "성과", value: "재시도" },
     ],
@@ -2046,7 +2046,7 @@ const profilePageStateContent: Record<
     menuRows: ["내 게시글 관리", "내 레벨업 관리", "오프라인 문의 대기"],
     notice: "네트워크 연결 후 최신 성과로 동기화됩니다.",
     stats: [
-      { label: "캐시 납치금액", value: "5,780,000원" },
+      { label: "캐시 납치금액", value: "서버 기준 금액" },
       { label: "캐시 레벨", value: "18LV" },
       { label: "동기화", value: "대기" },
     ],
@@ -2085,7 +2085,7 @@ const profilePageStateContent: Record<
     menuRows: ["성과 리포트", "내 게시글", "내 레벨업", "계정 설정"],
     stats: [
       { label: "이번 달 절약", value: "500,000원" },
-      { label: "누적 납치", value: "5,780,000원" },
+      { label: "누적 납치", value: "서버 기준 금액" },
       { label: "연속 성장", value: "12일" },
     ],
     status: "대체 레이아웃",
@@ -2097,7 +2097,7 @@ const profilePageStateContent: Record<
       "레거시 시안의 핵심 정보는 공식 급여납치 구조로 정규화해 유지합니다.",
     menuRows: ["내 게시글 관리", "내 레벨업 관리", "1:1 문의", "공지사항"],
     stats: [
-      { label: "누적 납치금액", value: "5,780,000원" },
+      { label: "누적 납치금액", value: "서버 기준 금액" },
       { label: "레벨 현황", value: "18LV" },
       { label: "자기관리", value: "4.2점" },
     ],
@@ -2111,7 +2111,7 @@ const profilePageStateContent: Record<
     emptyAd: true,
     menuRows: ["내 게시글 관리", "내 레벨업 관리", "계정 설정"],
     stats: [
-      { label: "누적 납치금액", value: "5,780,000원" },
+      { label: "누적 납치금액", value: "서버 기준 금액" },
       { label: "레벨", value: "18LV" },
       { label: "광고", value: "숨김" },
     ],
@@ -5873,7 +5873,7 @@ function PlanStateCapturePreview({
               keyboardType="number-pad"
               onChangeText={() => undefined}
               style={styles.singleLineInput}
-              value="2,700,000"
+              value="서버 기준"
             />
             <PrimaryButton label="저장" onPress={() => undefined} />
           </SurfaceCard>
@@ -5897,7 +5897,7 @@ function PlanStateCapturePreview({
                 "지출 예상 금액",
                 "예상 납치 금액",
               ]}
-              rows={[["매월 25일", "2,700,000원", "700,000원", "2,000,000원"]]}
+              rows={[["매월 25일", "서버 기준", "서버 기준", "서버 기준"]]}
             />
           )}
           <Text style={styles.addLine}>+추가하기</Text>

@@ -11,7 +11,7 @@ import {
 
 import { createMobileProfileApi } from "../src/shared/api/mobile-api";
 
-const VERSION = "1.0.2-onboarding-copy-restored";
+const VERSION = "1.0.3-onboarding-readable-korean";
 const STEPS = [
   "급여일과 예상 수령액을 먼저 확인해요.",
   "고정지출과 고정저축을 급여 직후 먼저 분리해요.",

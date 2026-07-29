@@ -219,6 +219,13 @@
     ]
   },
   "expo": {
+    "autolinking": {
+      "android": {
+        "exclude": [
+          "expo-updates"
+        ]
+      }
+    },
     "install": {
       "exclude": [
         "@react-navigation/bottom-tabs",

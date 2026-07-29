@@ -407,26 +407,47 @@ test("removes stale Android APK artifacts while preserving final QA and triage A
       repoApkRoot,
       "salary-hijacking-qa-universal.apk",
     );
-    const keepFinalSignature = path.join(
+    const keepFinalSha = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk.sha256",
+    );
+    const staleFinalSignature = path.join(
       repoApkRoot,
       "salary-hijacking-qa-universal.apk.idsig",
     );
-    const keepFinalVerifyLog = path.join(
+    const staleFinalVerifyLog = path.join(
       repoApkRoot,
       "salary-hijacking-qa-universal.apk.verify.txt",
     );
-    const keepOriginal = path.join(
+    const staleOriginal = path.join(
       repoApkRoot,
       "salary-hijacking-original-safe-patched-current-universal.apk",
     );
-    const keepDiagnostic = path.join(
+    const staleDiagnostic = path.join(
       mirrorRoot,
       "salary-hijacking-qa-direct-current-universal.apk",
     );
-    const keepUpgradeBase = path.join(
+    const staleUpgradeBase = path.join(
       downloadsRoot,
       "salary-hijacking-original-direct-current-universal.apk",
     );
+    const staleReleaseLikeArm64 = path.join(
+      downloadsRoot,
+      "salary-hijacking-qa-release-like-arm64-eureka-fit-20260729.apk",
+    );
+    const staleReleaseLikeArm64Sha = path.join(
+      downloadsRoot,
+      "salary-hijacking-qa-release-like-arm64-eureka-fit-20260729.apk.sha256",
+    );
+    const staleBuildInfo = path.join(
+      repoApkRoot,
+      "build-info-safe-current-splash-hide-universal.json",
+    );
+    const staleChecksum = path.join(
+      repoApkRoot,
+      "checksums-direct-current.txt",
+    );
+    const staleManifest = path.join(repoApkRoot, "final-qa-apk-manifest.json");
     const oldProbe = path.join(repoApkRoot, "probe-copy.apk");
     const oldArm64 = path.join(
       downloadsRoot,
@@ -439,11 +460,17 @@ test("removes stale Android APK artifacts while preserving final QA and triage A
     const unrelatedText = path.join(downloadsRoot, "salary-hijacking-note.txt");
 
     await touch(keepFinal, "PK\u0003\u0004");
-    await touch(keepFinalSignature, "signature");
-    await touch(keepFinalVerifyLog, "verified");
-    await touch(keepOriginal, "PK\u0003\u0004");
-    await touch(keepDiagnostic, "PK\u0003\u0004");
-    await touch(keepUpgradeBase, "PK\u0003\u0004");
+    await touch(keepFinalSha, "sha256");
+    await touch(staleFinalSignature, "signature");
+    await touch(staleFinalVerifyLog, "verified");
+    await touch(staleOriginal, "PK\u0003\u0004");
+    await touch(staleDiagnostic, "PK\u0003\u0004");
+    await touch(staleUpgradeBase, "PK\u0003\u0004");
+    await touch(staleReleaseLikeArm64, "PK\u0003\u0004");
+    await touch(staleReleaseLikeArm64Sha, "sha256");
+    await touch(staleBuildInfo, "{}");
+    await touch(staleChecksum, "sha256");
+    await touch(staleManifest, "{}");
     await touch(oldProbe, "PK\u0003\u0004");
     await touch(oldArm64, "PK\u0003\u0004");
     await touch(oldCrashfix, "PK\u0003\u0004");
@@ -457,11 +484,17 @@ test("removes stale Android APK artifacts while preserving final QA and triage A
 
     assert.equal(result.errors.length, 0);
     assert.equal(existsSync(keepFinal), true);
-    assert.equal(existsSync(keepFinalSignature), true);
-    assert.equal(existsSync(keepFinalVerifyLog), true);
-    assert.equal(existsSync(keepOriginal), true);
-    assert.equal(existsSync(keepDiagnostic), true);
-    assert.equal(existsSync(keepUpgradeBase), true);
+    assert.equal(existsSync(keepFinalSha), true);
+    assert.equal(existsSync(staleFinalSignature), false);
+    assert.equal(existsSync(staleFinalVerifyLog), false);
+    assert.equal(existsSync(staleOriginal), false);
+    assert.equal(existsSync(staleDiagnostic), false);
+    assert.equal(existsSync(staleUpgradeBase), false);
+    assert.equal(existsSync(staleReleaseLikeArm64), false);
+    assert.equal(existsSync(staleReleaseLikeArm64Sha), false);
+    assert.equal(existsSync(staleBuildInfo), false);
+    assert.equal(existsSync(staleChecksum), false);
+    assert.equal(existsSync(staleManifest), false);
     assert.equal(existsSync(unrelatedText), true);
     assert.equal(existsSync(oldProbe), false);
     assert.equal(existsSync(oldArm64), false);
@@ -502,6 +535,62 @@ test("preserves QA evidence logs while cleaning generated junk", async () => {
     assert.equal(existsSync(qaLog), true);
     assert.equal(existsSync(finalQaLog), true);
     assert.equal(existsSync(tempLog), false);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("removes stale Gradle caches under artifacts while preserving QA runtime evidence", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-gradle-"));
+
+  try {
+    const qaRuntimeEvidence = path.join(
+      rootDir,
+      "artifacts",
+      "qa",
+      "android-qa-universal-route-fixed-runtime-20260729",
+      "logcat.txt",
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "artifacts",
+        "qa",
+        "gradle-home-20260720",
+        "cache.bin",
+      ),
+    );
+    await touch(
+      path.join(rootDir, "artifacts", "qa", "gradle-user-home", "cache.bin"),
+    );
+    await touch(
+      path.join(rootDir, "artifacts", "tmp", "gradle-temp", "cache.bin"),
+    );
+    await touch(
+      path.join(rootDir, "artifacts", "tmp", "gradle-home", "cache.bin"),
+    );
+    await touch(qaRuntimeEvidence, "runtime evidence");
+
+    const result = await cleanGeneratedJunk({ rootDir, tempRoots: [] });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "qa", "gradle-home-20260720")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "qa", "gradle-user-home")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "tmp", "gradle-temp")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "tmp", "gradle-home")),
+      false,
+    );
+    assert.equal(existsSync(qaRuntimeEvidence), true);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

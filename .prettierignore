@@ -1,6 +1,7 @@
 node_modules
 .turbo
 .cache
+.tmp
 .tools
 coverage
 dist
@@ -19,10 +20,12 @@ web-build
 android
 ios
 apps/mobile/.local-native-bin
+apps/mobile/.tmp
 apps/mobile/.gradle-local-debug
 apps/mobile/.gradle-local-debug-direct
 apps/mobile/.localappdata
 .gradle-qa-*
+.android-subproject-build
 
 # Design reference originals copied from Stitch. Keep unchanged for traceability.
 docs/design/stitch/**/html/*.html

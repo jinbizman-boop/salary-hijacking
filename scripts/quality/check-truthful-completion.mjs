@@ -27,6 +27,10 @@ const REQUIRED_COLUMNS = [
   "commit_sha",
 ];
 
+const COMPLETION_DEPENDENCIES = new Map([["D-026", ["D-013", "D-028"]]]);
+
+const STITCH_FINAL_MARKER = "FINAL_ANDROID_PRODUCTION_VISUAL_A11Y_VERIFIED";
+
 function parseCsv(text) {
   const rows = [];
   let field = "";
@@ -82,11 +86,14 @@ function parseCsv(text) {
   const header = rows[0] ?? [];
   return {
     header,
-    rows: rows.slice(1).map((values) =>
-      Object.fromEntries(
-        header.map((column, index) => [column, values[index] ?? ""]),
+    rawRows: rows.slice(1),
+    rows: rows
+      .slice(1)
+      .map((values) =>
+        Object.fromEntries(
+          header.map((column, index) => [column, values[index] ?? ""]),
+        ),
       ),
-    ),
   };
 }
 
@@ -98,6 +105,20 @@ function normalizeStatus(status) {
 
 function isFortyHex(value) {
   return /^[0-9a-f]{40}$/iu.test(String(value ?? "").trim());
+}
+
+function isEvidencePathToken(value) {
+  const token = String(value ?? "").trim();
+  if (!token) return true;
+  if (/^https?:\/\//iu.test(token)) return true;
+  if (path.isAbsolute(token)) return true;
+  return /[\\/]/u.test(token) && /\.[A-Za-z0-9]{1,12}$/u.test(token);
+}
+
+function hasOnlyEvidencePathTokens(value) {
+  return String(value ?? "")
+    .split(";")
+    .every(isEvidencePathToken);
 }
 
 function resolveEvidencePath(rootDir, evidencePath) {
@@ -116,6 +137,63 @@ function countStatuses(rows) {
     counts[status] = (counts[status] ?? 0) + 1;
   }
   return counts;
+}
+
+function rowByRequirementId(rows) {
+  return new Map(
+    rows.map((row) => [String(row.requirement_id ?? "").trim(), row]),
+  );
+}
+
+function assertCompletionDependencies({ failures, lineById, rowsById }) {
+  for (const [requirementId, dependencyIds] of COMPLETION_DEPENDENCIES) {
+    const row = rowsById.get(requirementId);
+    if (!row || !COMPLETED_STATUSES.has(normalizeStatus(row.status))) continue;
+
+    for (const dependencyId of dependencyIds) {
+      const dependency = rowsById.get(dependencyId);
+      if (
+        !dependency ||
+        !COMPLETED_STATUSES.has(normalizeStatus(dependency.status))
+      ) {
+        failures.push(
+          `${requirementId} line ${lineById.get(requirementId) ?? "?"}: completed status requires ${dependencyId} to be completed first`,
+        );
+      }
+    }
+  }
+}
+
+function assertStitchCompletionGate({ failures, rootDir, rowsById }) {
+  const d013 = rowsById.get("D-013");
+  if (!d013 || !COMPLETED_STATUSES.has(normalizeStatus(d013.status))) return;
+
+  const screenMatrixPath = path.resolve(
+    rootDir,
+    "docs/qa/SCREEN_IMPLEMENTATION_MATRIX.csv",
+  );
+  if (!fs.existsSync(screenMatrixPath)) {
+    failures.push(
+      "D-013: completed Stitch UI status requires docs/qa/SCREEN_IMPLEMENTATION_MATRIX.csv",
+    );
+    return;
+  }
+
+  const parsed = parseCsv(fs.readFileSync(screenMatrixPath, "utf8"));
+  parsed.rows.forEach((row, index) => {
+    const line = index + 2;
+    const status = normalizeStatus(row.status);
+    const notes = String(row.notes ?? "");
+    if (status !== "PASS") {
+      failures.push(
+        `D-013: Stitch screen matrix line ${line} remains ${status || "MISSING"}; production UI cannot be completed`,
+      );
+    } else if (!notes.includes(STITCH_FINAL_MARKER)) {
+      failures.push(
+        `D-013: Stitch screen matrix line ${line} PASS lacks ${STITCH_FINAL_MARKER}`,
+      );
+    }
+  });
 }
 
 export function runTruthfulCompletionCheck(options = {}) {
@@ -142,16 +220,43 @@ export function runTruthfulCompletionCheck(options = {}) {
     (column) => !parsed.header.includes(column),
   );
   for (const column of missingColumns) {
-    failures.push(`IMPLEMENTATION_MATRIX.csv: missing required column ${column}`);
+    failures.push(
+      `IMPLEMENTATION_MATRIX.csv: missing required column ${column}`,
+    );
   }
+
+  parsed.rawRows.forEach((values, index) => {
+    if (values.length !== parsed.header.length) {
+      failures.push(
+        `IMPLEMENTATION_MATRIX.csv line ${index + 2}: malformed CSV row expected ${parsed.header.length} columns, got ${values.length}`,
+      );
+    }
+  });
 
   let completedCount = 0;
   let unverifiedCount = 0;
+  const lineById = new Map();
 
   parsed.rows.forEach((row, index) => {
     const line = index + 2;
     const requirementId = row.requirement_id || `row-${line}`;
+    lineById.set(requirementId, line);
     const status = normalizeStatus(row.status);
+
+    if (
+      String(row.evidence_path ?? "").trim() &&
+      !hasOnlyEvidencePathTokens(row.evidence_path)
+    ) {
+      failures.push(
+        `${requirementId} line ${line}: evidence_path must contain local path or URL tokens, got "${row.evidence_path}"`,
+      );
+    }
+
+    if (String(row.commit_sha ?? "").trim() && !isFortyHex(row.commit_sha)) {
+      failures.push(
+        `${requirementId} line ${line}: commit_sha must be 40-hex when present, got "${row.commit_sha}"`,
+      );
+    }
 
     if (status === "UNVERIFIED") unverifiedCount += 1;
     if (!COMPLETED_STATUSES.has(status)) {
@@ -194,6 +299,10 @@ export function runTruthfulCompletionCheck(options = {}) {
       );
     }
   });
+
+  const rowsById = rowByRequirementId(parsed.rows);
+  assertCompletionDependencies({ failures, lineById, rowsById });
+  assertStitchCompletionGate({ failures, rootDir, rowsById });
 
   return {
     ok: failures.length === 0,

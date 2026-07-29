@@ -72,6 +72,9 @@ name = "salary-hijacking-api-staging"
 workers_dev = true
 minify = true
 upload_source_maps = true
+routes = [
+  { pattern = "api-staging.salaryhijacking.com", custom_domain = true }
+]
 
 [env.staging.observability]
 enabled = true
@@ -83,7 +86,7 @@ mode = "smart"
 APP_ENV = "staging"
 ENVIRONMENT = "staging"
 NODE_ENV = "production"
-APP_PUBLIC_BASE_URL = "https://salary-hijacking-api-staging.workers.dev"
+APP_PUBLIC_BASE_URL = "https://api-staging.salaryhijacking.com"
 CORS_ALLOWED_ORIGINS = "https://staging.salaryhijacking.com,http://localhost:3000"
 ALLOWED_ORIGINS = "https://staging.salaryhijacking.com,http://localhost:3000"
 ENABLE_QUEUE_HANDLER = "true"

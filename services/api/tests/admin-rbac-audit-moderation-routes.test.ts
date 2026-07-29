@@ -91,7 +91,8 @@ function createRepository() {
     createNotice: async (input, runtime) => record(input, runtime),
     updateNotice: async (_noticeId, input, runtime) => record(input, runtime),
     publishNotice: async (_noticeId, input, runtime) => record(input, runtime),
-    unpublishNotice: async (_noticeId, input, runtime) => record(input, runtime),
+    unpublishNotice: async (_noticeId, input, runtime) =>
+      record(input, runtime),
     deleteNotice: async (_noticeId, input, runtime) => record(input, runtime),
     listAdCampaigns: async () => emptyList(),
     createAdCampaign: async (input, runtime) => record(input, runtime),
@@ -127,7 +128,8 @@ function createRepository() {
       total: 1,
     }),
     listRoleMembers: async () => emptyList(),
-    updateRoleMember: async (_adminId, input, runtime) => record(input, runtime),
+    updateRoleMember: async (_adminId, input, runtime) =>
+      record(input, runtime),
   };
   return { calls, repository };
 }
@@ -173,11 +175,14 @@ describe("admin RBAC, audit, and moderation routes", () => {
     const app = appWithRepository(repository);
 
     const response = await app.fetch(
-      new Request("https://api.test/admin/api/v1/community/posts/post_1001/hide", {
-        body: JSON.stringify({ reason: "privacy report" }),
-        headers: headersFor("ADM_READONLY"),
-        method: "POST",
-      }),
+      new Request(
+        "https://api.test/admin/api/v1/community/posts/post_1001/hide",
+        {
+          body: JSON.stringify({ reason: "privacy report" }),
+          headers: headersFor("ADM_READONLY"),
+          method: "POST",
+        },
+      ),
       { APP_ENV: "development" },
       context,
     );
@@ -193,11 +198,14 @@ describe("admin RBAC, audit, and moderation routes", () => {
     const app = appWithRepository(repository);
 
     const response = await app.fetch(
-      new Request("https://api.test/admin/api/v1/community/posts/post_1001/hide", {
-        body: JSON.stringify({ reason: "privacy report" }),
-        headers: headersFor("ADM_COMMUNITY"),
-        method: "POST",
-      }),
+      new Request(
+        "https://api.test/admin/api/v1/community/posts/post_1001/hide",
+        {
+          body: JSON.stringify({ reason: "privacy report" }),
+          headers: headersFor("ADM_COMMUNITY"),
+          method: "POST",
+        },
+      ),
       { APP_ENV: "development" },
       context,
     );

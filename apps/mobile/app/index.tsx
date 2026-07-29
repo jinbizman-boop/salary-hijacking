@@ -405,18 +405,19 @@ export function normalizeInitialDeepLinkRoute(
   }
 
   const route = routePathFromUrl(url);
+  if (!route) return null;
   if (COLD_DEEP_LINK_ROUTES.has(route)) return route;
   if (/^\/community\/[A-Za-z0-9_-]{1,80}$/u.test(route)) return route;
   return null;
 }
 
-function routePathFromUrl(url: URL): AppRoute {
+function routePathFromUrl(url: URL): AppRoute | null {
   const pathname = url.pathname.startsWith("/")
     ? url.pathname
     : `/${url.pathname}`;
-  if (url.protocol === "https:") return pathname || SALARY_HOME_ROUTE;
+  if (url.protocol === "https:") return pathname === "/" ? null : pathname;
   const host = url.hostname;
-  if (!host || host === "app") return pathname || SALARY_HOME_ROUTE;
+  if (!host || host === "app") return pathname === "/" ? null : pathname;
   return `/${[host, pathname.replace(/^\//u, "")].filter(Boolean).join("/")}`;
 }
 

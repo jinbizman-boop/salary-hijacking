@@ -4,6 +4,10 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
+  ".android-subproject-build",
+  ".android-subproject-build-current-c",
+  ".android-subproject-build-oldarch-c",
+  ".android-subproject-build-oldarch-probe",
   ".cache",
   ".cxx",
   ".expo",
@@ -46,28 +50,15 @@ const DEPENDENCY_NATIVE_JUNK_RELATIVE_PATHS = [".cxx", ".gradle", "build"];
 const ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES = new Set([
   "salary-hijacking-qa-universal.apk",
   "salary-hijacking-qa-universal.apk.sha256",
-  "salary-hijacking-qa-universal.apk.idsig",
-  "salary-hijacking-qa-universal.apk.verify.txt",
-  "salary-hijacking-qa-safe-current-splash-hide-universal.apk",
-  "salary-hijacking-qa-safe-current-splash-hide-universal.apk.sha256",
-  "salary-hijacking-qa-safe-current-splash-hide-universal.apk.idsig",
-  "salary-hijacking-qa-safe-current-splash-hide-universal.apk.verify.txt",
-  "salary-hijacking-original-safe-patched-current-universal.apk",
-  "salary-hijacking-original-safe-patched-current-universal.apk.sha256",
-  "salary-hijacking-original-safe-patched-current-universal.apk.idsig",
-  "salary-hijacking-original-safe-patched-current-universal.apk.verify.txt",
-  "salary-hijacking-qa-direct-current-universal.apk",
-  "salary-hijacking-qa-direct-current-universal.apk.idsig",
-  "salary-hijacking-original-direct-current-universal.apk",
-  "salary-hijacking-original-safe-current-arm64.apk",
-  "salary-hijacking-original-safe-current-x86_64.apk",
-  "salary-hijacking-direct-current-arm64.apk",
-  "salary-hijacking-direct-current-x86_64.apk",
-  "salary-hijacking-direct-current-arm64-splash-hide.apk",
-  "salary-hijacking-direct-current-x86_64-splash-hide.apk",
 ]);
 const ANDROID_APK_ARTIFACT_FILE_PATTERN =
   /^salary-hijacking.*\.apk(?:\.sha256|\.idsig|\.verify\.txt)?$|^probe-copy\.apk$/u;
+const ANDROID_ARTIFACT_METADATA_FILE_PATTERN =
+  /^(?:build-info-.+\.json|checksums-.+\.txt|final-qa-apk-manifest\.json)$/u;
+const GENERATED_ARTIFACT_JUNK_DIRECTORY_PATTERNS = [
+  /^artifacts\/qa\/gradle-(?:home|user-home)(?:-.+)?$/u,
+  /^artifacts\/tmp\/gradle-(?:home|temp)(?:-.+)?$/u,
+];
 
 const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^salary-hijacking/i,
@@ -181,7 +172,10 @@ function isRepositoryJunkDirectory(entryName, relativePath) {
   const posixPath = toPosix(relativePath);
   return (
     REPOSITORY_JUNK_DIRECTORY_NAMES.has(entryName) ||
-    REPOSITORY_JUNK_RELATIVE_PATHS.has(posixPath)
+    REPOSITORY_JUNK_RELATIVE_PATHS.has(posixPath) ||
+    GENERATED_ARTIFACT_JUNK_DIRECTORY_PATTERNS.some((pattern) =>
+      pattern.test(posixPath),
+    )
   );
 }
 
@@ -379,6 +373,7 @@ export function defaultAndroidArtifactRoots(rootDir = process.cwd()) {
   const roots = [
     path.join(path.resolve(rootDir), "artifacts", "android"),
     "D:\\salary-hijacking-artifacts\\apk",
+    "D:\\salary-hijacking-artifacts\\android\\qa-release-like-current",
     path.join(process.env.USERPROFILE ?? "C:\\Users\\PC", "Downloads"),
   ];
 
@@ -400,9 +395,13 @@ async function collectOldAndroidApkArtifactTargets(artifactRoots) {
 
     for (const entry of entries) {
       if (!entry.isFile()) continue;
-      if (!ANDROID_APK_ARTIFACT_FILE_PATTERN.test(entry.name)) continue;
+      if (
+        !ANDROID_APK_ARTIFACT_FILE_PATTERN.test(entry.name) &&
+        !ANDROID_ARTIFACT_METADATA_FILE_PATTERN.test(entry.name)
+      ) {
+        continue;
+      }
       if (ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES.has(entry.name)) continue;
-
       targets.push({
         kind: "artifact",
         path: assertInsideRoot(

@@ -83,6 +83,22 @@ async function writeMatrix(rootDir, rows) {
   await writeFile(matrixPath, `${csv(rows)}\n`, "utf8");
 }
 
+async function writeScreenMatrix(rootDir, rows) {
+  const matrixPath = path.join(
+    rootDir,
+    "docs/qa/SCREEN_IMPLEMENTATION_MATRIX.csv",
+  );
+  await mkdir(path.dirname(matrixPath), { recursive: true });
+  const text = [["instance_code", "status", "notes"], ...rows]
+    .map((fields) =>
+      fields
+        .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+        .join(","),
+    )
+    .join("\n");
+  await writeFile(matrixPath, `${text}\n`, "utf8");
+}
+
 test("fails when a completed row points to missing evidence", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
 
@@ -153,6 +169,144 @@ test("fails when a completed row lacks a commit SHA", async () => {
 
     assert.equal(result.ok, false);
     assert.match(result.failures.join("\n"), /commit_sha/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when any row has malformed evidence or commit columns", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
+
+  try {
+    await writeMatrix(rootDir, [
+      row({
+        id: "D-017",
+        status: "EXTERNAL_BLOCKER",
+        evidencePath: "so live staging RLS isolation",
+        commitSha: "rollback rehearsal",
+      }),
+    ]);
+
+    const result = runTruthfulCompletionCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /D-017/);
+    assert.match(result.failures.join("\n"), /evidence_path/);
+    assert.match(result.failures.join("\n"), /commit_sha/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when the matrix contains a malformed CSV row", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
+
+  try {
+    const matrixPath = path.join(
+      rootDir,
+      "docs/audit/IMPLEMENTATION_MATRIX.csv",
+    );
+    await mkdir(path.dirname(matrixPath), { recursive: true });
+    await writeFile(
+      matrixPath,
+      `${header.join(",")}\nD-017,goal-objective.md,audit defect register,P1,DB,,,,user,,Requirement,,,,,,,,,,,EXTERNAL_BLOCKER,blocked,text,${"a".repeat(40)}\n`,
+      "utf8",
+    );
+
+    const result = runTruthfulCompletionCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /malformed CSV row/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when final QA APK completion is claimed before dependent gates close", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
+
+  try {
+    await mkdir(path.join(rootDir, "artifacts/qa"), { recursive: true });
+    await writeFile(path.join(rootDir, "artifacts/qa/proof.log"), "ok\n");
+    await writeMatrix(rootDir, [
+      row({
+        id: "D-013",
+        status: "FAIL",
+        evidencePath: "artifacts/qa/proof.log",
+      }),
+      row({
+        id: "D-028",
+        status: "EXTERNAL_BLOCKER",
+        evidencePath: "artifacts/qa/proof.log",
+      }),
+      row({
+        id: "D-026",
+        status: "RESOLVED",
+        evidencePath: "artifacts/qa/proof.log",
+        commitSha: "c".repeat(40),
+      }),
+    ]);
+
+    const result = runTruthfulCompletionCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /D-026/);
+    assert.match(result.failures.join("\n"), /D-013/);
+    assert.match(result.failures.join("\n"), /D-028/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when Stitch UI completion is claimed while screen matrix remains unverified", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
+
+  try {
+    await mkdir(path.join(rootDir, "artifacts/qa"), { recursive: true });
+    await writeFile(path.join(rootDir, "artifacts/qa/proof.log"), "ok\n");
+    await writeMatrix(rootDir, [
+      row({
+        id: "D-013",
+        status: "RESOLVED",
+        evidencePath: "artifacts/qa/proof.log",
+        commitSha: "d".repeat(40),
+      }),
+    ]);
+    await writeScreenMatrix(rootDir, [
+      ["SCR-001-V001", "UNVERIFIED", "MAPPED_ONLY"],
+    ]);
+
+    const result = runTruthfulCompletionCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /Stitch screen matrix/);
+    assert.match(result.failures.join("\n"), /UNVERIFIED/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("allows Stitch UI completion only when screen matrix carries final Android visual and accessibility proof markers", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
+
+  try {
+    await mkdir(path.join(rootDir, "artifacts/qa"), { recursive: true });
+    await writeFile(path.join(rootDir, "artifacts/qa/proof.log"), "ok\n");
+    await writeMatrix(rootDir, [
+      row({
+        id: "D-013",
+        status: "RESOLVED",
+        evidencePath: "artifacts/qa/proof.log",
+        commitSha: "e".repeat(40),
+      }),
+    ]);
+    await writeScreenMatrix(rootDir, [
+      ["SCR-001-V001", "PASS", "FINAL_ANDROID_PRODUCTION_VISUAL_A11Y_VERIFIED"],
+    ]);
+
+    const result = runTruthfulCompletionCheck({ rootDir });
+
+    assert.equal(result.ok, true, result.failures.join("\n"));
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

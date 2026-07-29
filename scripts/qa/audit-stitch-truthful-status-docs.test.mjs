@@ -39,7 +39,10 @@ test("fails bare 305 pass overclaim", () => {
 });
 
 test("fails pass count overclaim", () => {
-  const root = tempDocRoot("release/evidence/mobile-ui/status.md", "- PASS: 305");
+  const root = tempDocRoot(
+    "release/evidence/mobile-ui/status.md",
+    "- PASS: 305",
+  );
 
   const result = auditStitchTruthfulStatusDocs({ root });
 

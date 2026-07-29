@@ -89,12 +89,12 @@ describe("level growth controller", () => {
       financialRawDataExposed: false,
       profile: { level: 18, totalExp: 880 },
     });
-    await expect(loadGrowthContentForType(api, "READING")).resolves.toMatchObject(
-      {
-        contentId: "reading_daily",
-        serverAuthority: true,
-      },
-    );
+    await expect(
+      loadGrowthContentForType(api, "READING"),
+    ).resolves.toMatchObject({
+      contentId: "reading_daily",
+      serverAuthority: true,
+    });
 
     expect(api.getDashboard).toHaveBeenCalledTimes(1);
     expect(api.listContents).toHaveBeenCalledWith({

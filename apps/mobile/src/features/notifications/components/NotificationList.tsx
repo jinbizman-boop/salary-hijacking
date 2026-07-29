@@ -29,7 +29,7 @@ export function NotificationList({
       <View style={styles.filters}>
         <Text style={styles.filter}>급여/납치금액</Text>
         <Text style={styles.filter}>오늘의 레벨업</Text>
-        <Text style={styles.filter}>이벤트/포인트</Text>
+        <Text style={styles.filter}>이벤트 포인트</Text>
       </View>
       <View style={styles.list}>
         {items.map((item) => (
@@ -62,7 +62,7 @@ export function NotificationList({
         ))}
       </View>
       <Text style={styles.guard}>민감 금액 원문은 알림에 담지 않습니다.</Text>
-      <Text style={styles.guard}>광고 타겟팅 데이터와 분리됩니다.</Text>
+      <Text style={styles.guard}>광고 타겟팅 데이터와 분리합니다.</Text>
     </SurfaceCard>
   );
 }

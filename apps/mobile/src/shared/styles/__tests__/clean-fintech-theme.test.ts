@@ -1298,7 +1298,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
-  it("keeps notification screen hydrated from the server before static fallback", () => {
+  it("keeps notification screen hydrated from the server before unavailable-state data", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
@@ -1307,7 +1307,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(mobileApi).toContain("createMobileNotificationsApi");
     expect(cleanScreens).toContain("createMobileNotificationsApi");
     expect(cleanScreens).toContain("serverNotifications");
-    expect(cleanScreens).toContain("fallbackNotifications");
+    expect(cleanScreens).toContain("serverUnavailableNotifications");
     expect(cleanScreens).toContain("notificationsApi.list");
     expect(cleanScreens).toContain("notificationsApi.unreadCount");
     expect(cleanScreens).toContain("중요 알림");

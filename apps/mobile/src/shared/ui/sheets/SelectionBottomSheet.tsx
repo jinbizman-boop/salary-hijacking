@@ -1,4 +1,7 @@
-import { BottomSheet, type BottomSheetAction } from "../../components/BottomSheet";
+import {
+  BottomSheet,
+  type BottomSheetAction,
+} from "../../components/BottomSheet";
 
 export type SelectionBottomSheetProps = Readonly<{
   title?: string;

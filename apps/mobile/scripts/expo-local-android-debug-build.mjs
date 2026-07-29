@@ -76,7 +76,31 @@ const writeGeneratedFileAtomic = (targetPath, contents, encoding = "utf8") => {
 
   fs.writeFileSync(tempPath, contents, encoding);
   try {
-    fs.renameSync(tempPath, targetPath);
+    try {
+      fs.renameSync(tempPath, targetPath);
+    } catch (error) {
+      if (
+        process.platform !== "win32" ||
+        !["EACCES", "EPERM"].includes(error?.code)
+      ) {
+        throw error;
+      }
+      try {
+        fs.copyFileSync(tempPath, targetPath);
+        fs.rmSync(tempPath, { force: true });
+      } catch (copyError) {
+        if (!["EACCES", "EPERM"].includes(copyError?.code)) {
+          throw copyError;
+        }
+        try {
+          fs.chmodSync(targetPath, 0o666);
+        } catch {
+          // The target may not exist or may already be writable.
+        }
+        fs.rmSync(targetPath, { force: true });
+        fs.renameSync(tempPath, targetPath);
+      }
+    }
     replaced = true;
   } finally {
     if (!replaced) {
@@ -1397,22 +1421,10 @@ export const patchExpoModulesCoreJavaCompileKotlinClasspath = ({
     "        }",
     "        javaTask.classpath += files(salaryHijackingFallbackKotlinOutput)",
     "        javaTask.doFirst {",
-    "          def salaryHijackingEffectiveKotlinOutput = salaryHijackingKotlinOutput ?: salaryHijackingFallbackKotlinOutput",
-    "          def salaryHijackingClasspathRootValue = System.getenv('SALARY_HIJACKING_ANDROID_KOTLIN_CLASSPATH_DIR')",
-    '          def salaryHijackingClasspathRoot = salaryHijackingClasspathRootValue ? new File(salaryHijackingClasspathRootValue) : project.layout.buildDirectory.dir("salary-hijacking").get().asFile',
-    '          def salaryHijackingKotlinClasspathJar = new File(salaryHijackingClasspathRoot, "${project.name}-${javaName}-kotlin-classes.jar")',
-    "          salaryHijackingKotlinClasspathJar.parentFile.mkdirs()",
-    "          if (salaryHijackingEffectiveKotlinOutput.exists()) {",
-    "            ant.jar(destfile: salaryHijackingKotlinClasspathJar) {",
-    "              fileset(dir: salaryHijackingEffectiveKotlinOutput)",
-    "            }",
-    "            def salaryHijackingFilteredClasspath = javaTask.classpath.filter { classpathEntry ->",
-    "              !(classpathEntry.name == 'R.jar' && classpathEntry.path.contains('compile_r_class_jar'))",
-    "            }",
-    "            javaTask.classpath = salaryHijackingFilteredClasspath.plus(files(salaryHijackingKotlinClasspathJar))",
-    "            def salaryHijackingForcedClasspath = javaTask.classpath.asPath",
-    "            javaTask.options.compilerArgs += ['-classpath', salaryHijackingForcedClasspath]",
+    "          def salaryHijackingFilteredClasspath = javaTask.classpath.filter { classpathEntry ->",
+    "            !(classpathEntry.name == 'R.jar' && classpathEntry.path.contains('compile_r_class_jar'))",
     "          }",
+    "          javaTask.classpath = salaryHijackingFilteredClasspath.plus(files(salaryHijackingKotlinOutput ?: salaryHijackingFallbackKotlinOutput))",
     "        }",
     "      }",
     "    }",
@@ -1484,7 +1496,6 @@ export const patchAndroidRootJavaCompileSafeClasspath = ({
     "        }",
     "    }",
     "      javaTask.classpath = files(salaryHijackingSafeClasspathFiles)",
-    "      javaTask.options.compilerArgs += ['-classpath', javaTask.classpath.asPath]",
     "    }",
     "  }",
     "}",

@@ -9,15 +9,15 @@ const defaultZipPath =
   "C:/Users/PC/Downloads/stitch_salary_hijacking_design_system_classified.zip";
 const defaultMatrixPath = resolve(
   repoRoot,
-  "docs/qa/SCREEN_IMPLEMENTATION_MATRIX.csv",
+  "docs/audit/IMPLEMENTATION_MATRIX.csv",
 );
 const defaultJsonPath = resolve(
   repoRoot,
-  "docs/qa/STITCH_IMPLEMENTATION_MATRIX_AUDIT.json",
+  "artifacts/qa/stitch-matrix-audit-current.json",
 );
 const defaultMarkdownPath = resolve(
   repoRoot,
-  "docs/qa/STITCH_IMPLEMENTATION_MATRIX_AUDIT.md",
+  "artifacts/qa/stitch-matrix-audit-current.md",
 );
 
 const requiredColumns = [
@@ -115,6 +115,7 @@ export function parseCsv(text) {
   const header = rows[0] ?? [];
   return {
     header,
+    rawRows: rows.slice(1),
     rows: rows
       .slice(1)
       .map((values) =>
@@ -162,21 +163,60 @@ const hasHtmlPrimaryReferenceNote = (row) => {
 };
 
 const implementationPathAliases = [
-  ["app-entry/screens/SplashScreen.tsx", "apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx"],
+  [
+    "app-entry/screens/SplashScreen.tsx",
+    "apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx",
+  ],
   ["auth/screens/LoginScreen.tsx", "apps/mobile/app/(auth)/login.tsx"],
   ["auth/screens/SignupScreen.tsx", "apps/mobile/app/(auth)/signup.tsx"],
-  ["onboarding/screens/InitialPayrollSetupScreen.tsx", "apps/mobile/app/onboarding.tsx"],
-  ["payroll-onboarding/screens/PayrollOnboardingScreen.tsx", "apps/mobile/app/onboarding.tsx"],
-  ["salary/screens/SalaryHomeScreen.tsx", "apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx"],
-  ["expenses/screens/ExpenseFormScreen.tsx", "apps/mobile/src/features/salary/components/VariableExpenseQuickAdd.tsx"],
-  ["notifications/screens/NotificationsScreen.tsx", "apps/mobile/src/features/notifications/components/NotificationScreen.tsx"],
-  ["notifications/screens/NotificationSettingsScreen.tsx", "apps/mobile/src/features/notifications/components/NotificationSettingsScreen.tsx"],
-  ["plan/screens/PlanScreen.tsx", "apps/mobile/src/features/plan/components/PlanScreen.tsx"],
-  ["plan/screens/PlanSettingsScreen.tsx", "apps/mobile/src/features/plan/components/PlanScreen.tsx"],
-  ["plan/screens/FixedExpenseFormScreen.tsx", "apps/mobile/src/features/plan/components/FixedExpenseFormScreen.tsx"],
-  ["plan/screens/FixedSavingsFormScreen.tsx", "apps/mobile/src/features/plan/components/FixedSavingsFormScreen.tsx"],
-  ["plan/screens/DailyBudgetFormScreen.tsx", "apps/mobile/src/features/plan/components/DailyBudgetFormScreen.tsx"],
-  ["lv-up/screens/LvUpHomeScreen.tsx", "apps/mobile/app/(tabs)/level/index.tsx"],
+  [
+    "onboarding/screens/InitialPayrollSetupScreen.tsx",
+    "apps/mobile/app/onboarding.tsx",
+  ],
+  [
+    "payroll-onboarding/screens/PayrollOnboardingScreen.tsx",
+    "apps/mobile/app/onboarding.tsx",
+  ],
+  [
+    "salary/screens/SalaryHomeScreen.tsx",
+    "apps/mobile/src/features/salary/components/SalaryHomeScreen.tsx",
+  ],
+  [
+    "expenses/screens/ExpenseFormScreen.tsx",
+    "apps/mobile/src/features/salary/components/VariableExpenseQuickAdd.tsx",
+  ],
+  [
+    "notifications/screens/NotificationsScreen.tsx",
+    "apps/mobile/src/features/notifications/components/NotificationScreen.tsx",
+  ],
+  [
+    "notifications/screens/NotificationSettingsScreen.tsx",
+    "apps/mobile/src/features/notifications/components/NotificationSettingsScreen.tsx",
+  ],
+  [
+    "plan/screens/PlanScreen.tsx",
+    "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+  ],
+  [
+    "plan/screens/PlanSettingsScreen.tsx",
+    "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+  ],
+  [
+    "plan/screens/FixedExpenseFormScreen.tsx",
+    "apps/mobile/src/features/plan/components/FixedExpenseFormScreen.tsx",
+  ],
+  [
+    "plan/screens/FixedSavingsFormScreen.tsx",
+    "apps/mobile/src/features/plan/components/FixedSavingsFormScreen.tsx",
+  ],
+  [
+    "plan/screens/DailyBudgetFormScreen.tsx",
+    "apps/mobile/src/features/plan/components/DailyBudgetFormScreen.tsx",
+  ],
+  [
+    "lv-up/screens/LvUpHomeScreen.tsx",
+    "apps/mobile/app/(tabs)/level/index.tsx",
+  ],
   ["lv-up/screens/ReadingLvUpScreen.tsx", "apps/mobile/app/level/reading.tsx"],
   ["lv-up/screens/ReadingLevelScreen.tsx", "apps/mobile/app/level/reading.tsx"],
   ["lv-up/screens/NewsLvUpScreen.tsx", "apps/mobile/app/level/news.tsx"],
@@ -185,19 +225,43 @@ const implementationPathAliases = [
   ["lv-up/screens/EnglishLevelScreen.tsx", "apps/mobile/app/level/english.tsx"],
   ["lv-up/screens/HealthLvUpScreen.tsx", "apps/mobile/app/level/health.tsx"],
   ["lv-up/screens/HealthLevelScreen.tsx", "apps/mobile/app/level/health.tsx"],
-  ["community/screens/CommunityScreen.tsx", "apps/mobile/app/(tabs)/community/index.tsx"],
-  ["community/screens/CommentThreadScreen.tsx", "apps/mobile/app/community/[postId].tsx"],
-  ["community/screens/PostDetailScreen.tsx", "apps/mobile/app/community/[postId].tsx"],
-  ["community/screens/PostComposeScreen.tsx", "apps/mobile/app/community/write.tsx"],
-  ["my/screens/MyPageScreen.tsx", "apps/mobile/src/features/profile/components/ProfileScreen.tsx"],
-  ["my/screens/ProfileSettingsScreen.tsx", "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx"],
-  ["my/screens/AccountSettingsScreen.tsx", "apps/mobile/app/profile/account.tsx"],
+  [
+    "community/screens/CommunityScreen.tsx",
+    "apps/mobile/app/(tabs)/community/index.tsx",
+  ],
+  [
+    "community/screens/CommentThreadScreen.tsx",
+    "apps/mobile/app/community/[postId].tsx",
+  ],
+  [
+    "community/screens/PostDetailScreen.tsx",
+    "apps/mobile/app/community/[postId].tsx",
+  ],
+  [
+    "community/screens/PostComposeScreen.tsx",
+    "apps/mobile/app/community/write.tsx",
+  ],
+  [
+    "my/screens/MyPageScreen.tsx",
+    "apps/mobile/src/features/profile/components/ProfileScreen.tsx",
+  ],
+  [
+    "my/screens/ProfileSettingsScreen.tsx",
+    "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+  ],
+  [
+    "my/screens/AccountSettingsScreen.tsx",
+    "apps/mobile/app/profile/account.tsx",
+  ],
   ["my/screens/MyPostsScreen.tsx", "apps/mobile/app/profile/community.tsx"],
   ["my/screens/MyLvUpScreen.tsx", "apps/mobile/app/profile/level.tsx"],
   ["support/screens/InquiryScreen.tsx", "apps/mobile/app/profile/support.tsx"],
   ["support/screens/NoticeScreen.tsx", "apps/mobile/app/profile/notices.tsx"],
   ["policy/screens/TermsConsentScreen.tsx", "apps/mobile/app/onboarding.tsx"],
-  ["common/screens/CommonStateScreen.tsx", "apps/mobile/src/shared/ui/states/CommonStateScreen.tsx"],
+  [
+    "common/screens/CommonStateScreen.tsx",
+    "apps/mobile/src/shared/ui/states/CommonStateScreen.tsx",
+  ],
   ["community/components/", "apps/mobile/src/features/community/components/"],
   ["lv-up/components/", "apps/mobile/src/features/level/components/"],
   ["plan/components/", "apps/mobile/src/features/plan/components/"],
@@ -210,6 +274,19 @@ const implementationPathAliases = [
 ];
 
 const toSlash = (value) => String(value ?? "").replaceAll("\\", "/");
+const isFortyHex = (value) =>
+  /^[0-9a-f]{40}$/iu.test(String(value ?? "").trim());
+const isEvidencePathToken = (value) => {
+  const token = String(value ?? "").trim();
+  if (!token) return true;
+  if (/^https?:\/\//iu.test(token)) return true;
+  if (/^[A-Za-z]:[\\/]/u.test(token)) return true;
+  return /[\\/]/u.test(token) && /\.[A-Za-z0-9]{1,12}$/u.test(token);
+};
+const hasOnlyEvidencePathTokens = (value) =>
+  String(value ?? "")
+    .split(";")
+    .every(isEvidencePathToken);
 
 const resolveImplementationFile = (implementationFile, rootDir) => {
   const normalized = toSlash(implementationFile).trim();
@@ -237,7 +314,9 @@ const resolveImplementationFile = (implementationFile, rootDir) => {
     pushCandidate(resolve(rootDir, "apps/mobile/src", normalized));
   }
 
-  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0] ?? "";
+  return (
+    candidates.find((candidate) => existsSync(candidate)) ?? candidates[0] ?? ""
+  );
 };
 
 export function auditStitchImplementationMatrix({
@@ -248,9 +327,34 @@ export function auditStitchImplementationMatrix({
 }) {
   const parsed = parseCsv(matrixCsv);
   const matrixRows = parsed.rows;
-  const usingTruthMatrix = hasColumns(parsed.header, truthMatrixRequiredColumns);
+  const usingTruthMatrix = hasColumns(
+    parsed.header,
+    truthMatrixRequiredColumns,
+  );
   const usingScreenMatrix = hasColumns(parsed.header, requiredColumns);
   const catalogScreens = catalog.screens ?? [];
+  const malformedCsvRows = parsed.rawRows
+    .map((values, index) => ({
+      line: index + 2,
+      expectedColumns: parsed.header.length,
+      actualColumns: values.length,
+    }))
+    .filter((row) => row.actualColumns !== row.expectedColumns);
+  const malformedTruthRows = usingTruthMatrix
+    ? matrixRows
+        .map((row, index) => ({
+          line: index + 2,
+          requirement_id: String(row.requirement_id ?? "").trim(),
+          evidence_path: String(row.evidence_path ?? "").trim(),
+          commit_sha: String(row.commit_sha ?? "").trim(),
+        }))
+        .filter(
+          (row) =>
+            (row.evidence_path &&
+              !hasOnlyEvidencePathTokens(row.evidence_path)) ||
+            (row.commit_sha && !isFortyHex(row.commit_sha)),
+        )
+    : [];
   const catalogInstanceCodes = new Set(
     catalogScreens.map((screen) => screen.instance_code),
   );
@@ -274,9 +378,7 @@ export function auditStitchImplementationMatrix({
     )
     .sort();
   const syntheticRows = matrixRows.filter((row) =>
-    valueOf(row, "instance_code", "stitch_instance_code").startsWith(
-      "SCR-029",
-    ),
+    valueOf(row, "instance_code", "stitch_instance_code").startsWith("SCR-029"),
   ).length;
   const mojibakeRows = matrixRows
     .filter((row) => mojibakePattern.test(row.screen_name_ko))
@@ -286,7 +388,11 @@ export function auditStitchImplementationMatrix({
   );
   const corruptPngRowsMissingHtmlPrimaryReference = matrixRows
     .filter((row) => {
-      const instanceCode = valueOf(row, "instance_code", "stitch_instance_code");
+      const instanceCode = valueOf(
+        row,
+        "instance_code",
+        "stitch_instance_code",
+      );
       const catalogScreen = catalogByInstanceCode.get(instanceCode);
       return (
         catalogScreen?.png_status === "CORRUPT" &&
@@ -311,7 +417,11 @@ export function auditStitchImplementationMatrix({
             rootDir,
           );
           return {
-            instance_code: valueOf(row, "instance_code", "stitch_instance_code"),
+            instance_code: valueOf(
+              row,
+              "instance_code",
+              "stitch_instance_code",
+            ),
             implementation_file: implementationFile,
             resolved_path: resolvedPath,
             exists: Boolean(resolvedPath && existsSync(resolvedPath)),
@@ -319,6 +429,19 @@ export function auditStitchImplementationMatrix({
         })
         .filter((row) => !row.exists)
         .map(({ exists: _exists, ...row }) => row)
+    : [];
+  const overclaimedPassRows = usingScreenMatrix
+    ? matrixRows
+        .filter((row) => {
+          const status = String(row.status ?? "")
+            .trim()
+            .toUpperCase();
+          if (status !== "PASS") return false;
+          return !String(row.notes ?? "").includes(
+            "FINAL_ANDROID_PRODUCTION_VISUAL_A11Y_VERIFIED",
+          );
+        })
+        .map((row) => valueOf(row, "instance_code", "stitch_instance_code"))
     : [];
   const statusCounts = countBy(
     matrixRows.map((row) => row.status || "UNKNOWN"),
@@ -342,11 +465,14 @@ export function auditStitchImplementationMatrix({
   );
   const ok =
     missingColumns.length === 0 &&
+    malformedCsvRows.length === 0 &&
+    malformedTruthRows.length === 0 &&
     missingCatalogInstanceCodes.length === 0 &&
     extraInstanceCodes.length === 0 &&
     mojibakeRows.length === 0 &&
     corruptPngRowsMissingHtmlPrimaryReference.length === 0 &&
-    missingImplementationFiles.length === 0;
+    missingImplementationFiles.length === 0 &&
+    overclaimedPassRows.length === 0;
 
   return {
     ok,
@@ -357,12 +483,15 @@ export function auditStitchImplementationMatrix({
     artifactTypeCounts,
     catalogArtifactTypeCounts,
     missingColumns,
+    malformedCsvRows,
+    malformedTruthRows,
     missingCatalogInstanceCodes,
     extraInstanceCodes,
     mojibakeRows,
     corruptPngRowsMissingHtmlPrimaryReference,
     implementationFilesChecked: checkImplementationFiles,
     missingImplementationFiles,
+    overclaimedPassRows,
   };
 }
 
@@ -397,11 +526,14 @@ function renderMarkdown(audit) {
     `- Classified catalog items: ${audit.sourceCatalogItems}`,
     `- Matrix rows: ${audit.totalRows}`,
     `- Synthetic rows: ${audit.syntheticRows}`,
+    `- Malformed CSV rows: ${audit.malformedCsvRows.length}`,
+    `- Malformed truth rows: ${audit.malformedTruthRows.length}`,
     `- Missing catalog rows: ${audit.missingCatalogInstanceCodes.length}`,
     `- Extra non-catalog rows: ${audit.extraInstanceCodes.length}`,
     `- Mojibake rows: ${audit.mojibakeRows.length}`,
     `- Corrupt PNG rows missing HTML primary note: ${audit.corruptPngRowsMissingHtmlPrimaryReference.length}`,
     `- Missing implementation files: ${audit.missingImplementationFiles.length}`,
+    `- Overclaimed PASS rows without final Android production visual/a11y proof: ${audit.overclaimedPassRows.length}`,
     "",
     "## Status Counts",
     "",
@@ -415,7 +547,9 @@ function renderMarkdown(audit) {
     "|---|---:|---:|",
     artifactRows,
     "",
-    audit.missingImplementationFiles.length > 0 ? "## Missing Implementation Files" : "",
+    audit.missingImplementationFiles.length > 0
+      ? "## Missing Implementation Files"
+      : "",
     audit.missingImplementationFiles.length > 0 ? "" : "",
     ...audit.missingImplementationFiles
       .slice(0, 100)
@@ -426,10 +560,40 @@ function renderMarkdown(audit) {
     audit.missingImplementationFiles.length > 100
       ? `- ...and ${audit.missingImplementationFiles.length - 100} more`
       : "",
+    audit.malformedCsvRows.length > 0 ? "## Malformed CSV Rows" : "",
+    audit.malformedCsvRows.length > 0 ? "" : "",
+    ...audit.malformedCsvRows
+      .slice(0, 100)
+      .map(
+        (row) =>
+          `- line ${row.line}: expected ${row.expectedColumns}, got ${row.actualColumns}`,
+      ),
+    audit.malformedCsvRows.length > 100
+      ? `- ...and ${audit.malformedCsvRows.length - 100} more`
+      : "",
+    audit.malformedTruthRows.length > 0 ? "## Malformed Truth Rows" : "",
+    audit.malformedTruthRows.length > 0 ? "" : "",
+    ...audit.malformedTruthRows
+      .slice(0, 100)
+      .map(
+        (row) =>
+          `- line ${row.line} ${row.requirement_id}: evidence_path="${row.evidence_path}" commit_sha="${row.commit_sha}"`,
+      ),
+    audit.malformedTruthRows.length > 100
+      ? `- ...and ${audit.malformedTruthRows.length - 100} more`
+      : "",
+    audit.overclaimedPassRows.length > 0 ? "## Overclaimed PASS Rows" : "",
+    audit.overclaimedPassRows.length > 0 ? "" : "",
+    ...audit.overclaimedPassRows
+      .slice(0, 100)
+      .map((instanceCode) => `- ${instanceCode}`),
+    audit.overclaimedPassRows.length > 100
+      ? `- ...and ${audit.overclaimedPassRows.length - 100} more`
+      : "",
   ].join("\n");
 }
 
-function parseArgs(argv) {
+export function parseArgs(argv) {
   const options = {
     zipPath: defaultZipPath,
     matrixPath: defaultMatrixPath,

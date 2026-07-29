@@ -103,7 +103,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = auditMobileAccessibilityCritical();
   const jsonPath = argValue("--json");
   if (jsonPath) {
-    writeFileSync(resolve(repoRoot, jsonPath), `${JSON.stringify(result, null, 2)}\n`);
+    writeFileSync(
+      resolve(repoRoot, jsonPath),
+      `${JSON.stringify(result, null, 2)}\n`,
+    );
   }
   console.log(
     JSON.stringify(

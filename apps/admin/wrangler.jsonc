@@ -14,8 +14,15 @@
   "env": {
     "staging": {
       "name": "salary-hijacking-admin-staging",
+      "routes": [
+        {
+          "pattern": "staging-admin.salaryhijacking.com",
+          "custom_domain": true,
+        },
+      ],
       "vars": {
         "APP_ENV": "staging",
+        "APP_PUBLIC_BASE_URL": "https://staging-admin.salaryhijacking.com",
       },
     },
     "production": {

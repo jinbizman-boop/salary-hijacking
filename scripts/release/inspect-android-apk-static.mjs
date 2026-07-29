@@ -6,6 +6,11 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const defaultAaptPath =
+  process.env.AAPT_PATH ??
+  (process.env.ANDROID_HOME
+    ? resolve(process.env.ANDROID_HOME, "build-tools/35.0.0/aapt.exe")
+    : resolve(repoRoot, ".tools/android-sdk/build-tools/35.0.0/aapt.exe"));
 
 export const REQUIRED_STARTUP_NATIVE_LIBS = [
   "libexpo-modules-core.so",
@@ -29,6 +34,16 @@ export const FORBIDDEN_STARTUP_BUNDLE_MARKERS = [
   "CleanFintechScreen",
   "stable-home",
   "mock-only",
+  "fallbackPlanFixedExpenseRows",
+  "fallbackNotifications",
+  "5,780,000",
+  "5,500,000",
+  "2,700,000",
+  "1,927,000",
+  "773,000",
+  "2700000",
+  "1927000",
+  "5780000",
 ];
 
 const uniqueSorted = (values) => [...new Set(values)].sort();
@@ -41,6 +56,12 @@ const libResults = (abi, entries) =>
     name: `lib/${abi}/${lib}`,
     present: entries.includes(`lib/${abi}/${lib}`),
   }));
+
+const normalizeExpectedAbis = (expectedAbis = ["arm64-v8a", "x86_64"]) =>
+  (Array.isArray(expectedAbis) ? expectedAbis : [expectedAbis])
+    .flatMap((abi) => String(abi).split(","))
+    .map((abi) => abi.trim())
+    .filter(Boolean);
 
 const decodeExpoConfig = (buffer) => {
   if (!buffer) return null;
@@ -106,10 +127,71 @@ export function analyzeEmbeddedExpoConfig(expoConfig) {
   };
 }
 
-export function analyzeApkStaticContents({ bundleText, entries }) {
+export function analyzeManifestSecurity(manifestXmlTree) {
+  const manifest = String(manifestXmlTree ?? "");
+  const hasManifest = manifest.includes("E: manifest");
+  const attributeValueMatches = (attributeName, pattern) =>
+    new RegExp(`${attributeName}[^\\n]*=\\([^)]*\\)\\s*${pattern}`, "iu").test(
+      manifest,
+    );
+  const allowBackupFalse = attributeValueMatches(
+    "android:allowBackup",
+    "(?:0x0|false)",
+  );
+  const debuggableTrue = attributeValueMatches(
+    "android:debuggable",
+    "(?:0xffffffff|true)",
+  );
+  const cleartextTrue = attributeValueMatches(
+    "android:usesCleartextTraffic",
+    "(?:0xffffffff|true)",
+  );
+  const systemAlertWindow = manifest.includes(
+    "android.permission.SYSTEM_ALERT_WINDOW",
+  );
+  const checks = [
+    { name: "manifestPresent", pass: hasManifest, value: hasManifest },
+    {
+      name: "allowBackupDisabled",
+      pass: allowBackupFalse,
+      value: allowBackupFalse,
+    },
+    {
+      name: "debuggableDisabled",
+      pass: !debuggableTrue,
+      value: !debuggableTrue,
+    },
+    {
+      name: "cleartextTrafficDisabled",
+      pass: !cleartextTrue,
+      value: !cleartextTrue,
+    },
+    {
+      name: "systemAlertWindowAbsent",
+      pass: !systemAlertWindow,
+      value: !systemAlertWindow,
+    },
+  ];
+
+  return {
+    checks,
+    pass: checks.every((check) => check.pass),
+    present: hasManifest,
+  };
+}
+
+export function analyzeApkStaticContents({
+  bundleText,
+  entries,
+  expectedAbis = ["arm64-v8a", "x86_64"],
+}) {
   const nativeLibs = entries.filter((entry) => entry.startsWith("lib/"));
+  const normalizedExpectedAbis = normalizeExpectedAbis(expectedAbis);
   const requiredArm64Libs = libResults("arm64-v8a", entries);
   const requiredX86_64Libs = libResults("x86_64", entries);
+  const requiredLibsByAbi = Object.fromEntries(
+    normalizedExpectedAbis.map((abi) => [abi, libResults(abi, entries)]),
+  );
   const requiredBundleMarkers = markerResults(
     REQUIRED_ROUTER_BUNDLE_MARKERS,
     bundleText,
@@ -121,13 +203,15 @@ export function analyzeApkStaticContents({ bundleText, entries }) {
   const hasBundle = entries.includes("assets/index.android.bundle");
   const pass =
     hasBundle &&
-    requiredArm64Libs.every((entry) => entry.present) &&
-    requiredX86_64Libs.every((entry) => entry.present) &&
+    Object.values(requiredLibsByAbi).every((libs) =>
+      libs.every((entry) => entry.present),
+    ) &&
     requiredBundleMarkers.every((entry) => entry.present) &&
     forbiddenBundleMarkers.every((entry) => !entry.present);
 
   return {
     hasBundle,
+    expectedAbis: normalizedExpectedAbis,
     nativeAbis: uniqueSorted(nativeLibs.map((entry) => entry.split("/")[1])),
     arm64LibCount: nativeLibs.filter((entry) =>
       entry.startsWith("lib/arm64-v8a/"),
@@ -135,6 +219,7 @@ export function analyzeApkStaticContents({ bundleText, entries }) {
     x86_64LibCount: nativeLibs.filter((entry) =>
       entry.startsWith("lib/x86_64/"),
     ).length,
+    requiredLibsByAbi,
     requiredArm64Libs,
     requiredX86_64Libs,
     requiredBundleMarkers,
@@ -165,7 +250,29 @@ const readOptionalApkEntry = (apkPath, entry) => {
   }
 };
 
-export function inspectAndroidApkStatic({ apkPath, outputPath }) {
+const dumpManifestXmlTree = (apkPath, aaptPath) => {
+  if (!aaptPath || !existsSync(aaptPath)) return "";
+  try {
+    return execFileSync(
+      aaptPath,
+      ["dump", "xmltree", apkPath, "AndroidManifest.xml"],
+      {
+        encoding: "utf8",
+        maxBuffer: 10 * 1024 * 1024,
+        windowsHide: true,
+      },
+    );
+  } catch {
+    return "";
+  }
+};
+
+export function inspectAndroidApkStatic({
+  aaptPath = defaultAaptPath,
+  apkPath,
+  outputPath,
+  expectedAbis,
+}) {
   if (!apkPath || !existsSync(apkPath)) {
     throw new Error(`APK not found: ${apkPath}`);
   }
@@ -174,11 +281,16 @@ export function inspectAndroidApkStatic({ apkPath, outputPath }) {
   const embeddedExpoConfig = analyzeEmbeddedExpoConfig(
     decodeExpoConfig(readOptionalApkEntry(apkPath, "assets/app.config")),
   );
+  const manifestSecurity = analyzeManifestSecurity(
+    dumpManifestXmlTree(apkPath, aaptPath),
+  );
   const analysis = analyzeApkStaticContents({
     bundleText: bundle.toString("utf8"),
     entries,
+    expectedAbis,
   });
-  analysis.pass = analysis.pass && embeddedExpoConfig.pass;
+  analysis.pass =
+    analysis.pass && embeddedExpoConfig.pass && manifestSecurity.pass;
   const result = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
@@ -196,6 +308,7 @@ export function inspectAndroidApkStatic({ apkPath, outputPath }) {
     bundleBytes: bundle.length,
     ...analysis,
     embeddedExpoConfig,
+    manifestSecurity,
     rawDeviceIdentifiersStored: false,
     rawLogcatStored: false,
     secretValuesStored: false,
@@ -215,6 +328,10 @@ export function parseInspectAndroidApkStaticArgs(argv = []) {
       options.apkPath = argv[++index];
     } else if (arg === "--output") {
       options.outputPath = argv[++index];
+    } else if (arg === "--expected-abis") {
+      options.expectedAbis = normalizeExpectedAbis(argv[++index]);
+    } else if (arg === "--aapt") {
+      options.aaptPath = argv[++index];
     } else {
       throw new Error(`Unknown argument: ${arg}`);
     }
@@ -234,6 +351,8 @@ if (isMainModule(import.meta.url, process.argv[1])) {
     outputPath: options.outputPath
       ? resolve(repoRoot, options.outputPath)
       : undefined,
+    expectedAbis: options.expectedAbis,
+    aaptPath: options.aaptPath,
   });
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   process.exitCode = result.pass ? 0 : 1;

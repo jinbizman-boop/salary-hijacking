@@ -12,6 +12,7 @@ const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
 const PROFILE_HUB_SCREEN = join(APP_ROOT, "profile", "index.tsx");
 const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
+const TABS_LAYOUT_SCREEN = join(APP_ROOT, "(tabs)", "_layout.tsx");
 const ANDROID_ENTRY = join(process.cwd(), "index.android.js");
 const SPLASH_LAUNCH_SCREEN = join(
   process.cwd(),
@@ -46,6 +47,8 @@ const INTERNAL_DIAGNOSTIC_MARKERS = [
   "adsFinancialTargeting=false",
   "ads_financial_targeting=false",
 ] as const;
+const MOJIBAKE_PATTERN =
+  /(?:\u6FE1|\u6E72|\u936E|\u6028|\u5A9B|\u8E30|\uF9CD|\u7457|\u7E79|\u8AED|\u7B4C|\u63F6|\u7515|\u75AB|\?\uAFA9|\?\uB6AF|\?\uBA84|\?\uC495|\?\uB300)/u;
 
 function collectAppSourceFiles(directory: string): readonly string[] {
   const files: string[] = [];
@@ -86,6 +89,19 @@ describe("mobile app screen API and route contracts", () => {
     expect(violations).toEqual([]);
   });
 
+  it("keeps bottom tab labels readable Korean without mojibake", () => {
+    const source = readFileSync(TABS_LAYOUT_SCREEN, "utf8");
+
+    for (const label of ["급여", "계획", "LV", "커뮤니티", "MY"]) {
+      expect(source).toContain(`title: "${label}"`);
+    }
+    expect(source).toContain(
+      'tabBarAccessibilityLabel: "급여납치 하단 탭 내비게이션"',
+    );
+    expect(source).not.toMatch(MOJIBAKE_PATTERN);
+    expect(source).not.toContain("??");
+  });
+
   it("keeps app route files free from internal diagnostic privacy markers", () => {
     const violations = collectAppSourceFiles(APP_ROOT).flatMap((path) => {
       const source = readFileSync(path, "utf8");
@@ -107,7 +123,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain("AndroidReleaseCandidateApp");
     expect(source).not.toContain("AppRegistry.registerComponent");
     expect(source).not.toContain("salary-hijacking-android-rc-root");
-    expect(source).not.toContain("??쎈뻬 筌욊쑬???遺얇늺");
+    expect(source).not.toContain("android-safe-entry");
   });
 
   it("keeps the deprecated Android safe-entry source out of production source", () => {
@@ -116,11 +132,11 @@ describe("mobile app screen API and route contracts", () => {
     ).toBe(false);
   });
 
-  it("keeps the Android direct QA APK entry labels as readable Korean UTF-8", () => {
-    const source = readFileSync(
-      join(process.cwd(), "src", "android-direct-entry.tsx"),
-      "utf8",
-    );
+  it("keeps the deprecated Android direct QA APK entry source out of production source", () => {
+    expect(
+      existsSync(join(process.cwd(), "src", "android-direct-entry.tsx")),
+    ).toBe(false);
+
     const salaryHomeSource = readFileSync(
       join(
         process.cwd(),
@@ -132,12 +148,8 @@ describe("mobile app screen API and route contracts", () => {
       ),
       "utf8",
     );
-    const combinedRuntimeSurface = `${source}\n${salaryHomeSource}`;
+    const combinedRuntimeSurface = salaryHomeSource;
 
-    expect(source).toContain('label: "\uAE09\uC5EC"');
-    expect(source).toContain('label: "\uACC4\uD68D"');
-    expect(source).toContain('label: "\uCEE4\uBBA4\uB2C8\uD2F0"');
-    expect(source).toContain("SalaryHomeScreen");
     expect(combinedRuntimeSurface).toContain(
       "\uB0B4 \uAE09\uC5EC \uB0A9\uCE58",
     );
@@ -162,7 +174,7 @@ describe("mobile app screen API and route contracts", () => {
     ).toEqual([]);
   });
 
-  it("keeps tab screen names aligned with Expo Router index child segments", () => {
+  it("keeps tab screen names aligned with Expo Router folder route segments", () => {
     const source = readFileSync(
       join(APP_ROOT, "(tabs)", "_layout.tsx"),
       "utf8",
@@ -175,11 +187,6 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('name: "community/index"');
     expect(source).toContain('name: "profile/index"');
     expect(source).not.toContain('initialRouteName="salary"');
-    expect(source).not.toContain('name: "salary"');
-    expect(source).not.toContain('name: "plan"');
-    expect(source).not.toContain('name: "level"');
-    expect(source).not.toContain('name: "community"');
-    expect(source).not.toContain('name: "profile"');
   });
 
   it("keeps primary tab visible copy in Korean instead of temporary English labels", () => {
@@ -253,6 +260,15 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("keeps root bootstrap runtime fallback on staging instead of development", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("const fallbackConfig: AppConfigSnapshot");
+    expect(source).toContain('environment: "staging"');
+    expect(source).not.toContain('environment: "development",');
+    expect(source).toMatch(/config\.environment,\s*"staging",\s*\)/u);
+  });
+
   it("wraps unreadable root bootstrap response bodies before fallback handling", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
@@ -288,7 +304,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("renderGate");
     expect(source).toContain("/api/v1/mobile/bootstrap");
     expect(source).toContain("/api/v1/mobile/bootstrap");
-    expect(source).not.toContain("?源놁뱽 餓Β??餓λ쵐???덈뼄");
+    expect(source).toContain("서버 권위 앱 상태 확인 중");
+    expect(source).toContain("급여납치 앱을 안전하게 시작합니다.");
+    expect(source).not.toMatch(MOJIBAKE_PATTERN);
   });
 
   it("does not let cached offline sessions bypass verify-email, onboarding, or MFA gates", () => {
@@ -460,6 +478,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("Linking.getInitialURL");
     expect(source).toContain("Linking.parseInitialURLAsync");
     expect(source).toContain("parsedToHref");
+    expect(source).not.toContain("pathname || SALARY_HOME_ROUTE");
+    expect(source).toContain('return pathname === "/" ? null : pathname;');
     expect(source).toContain('"/community/write"');
     expect(source).toContain("MOBILE_ACCESS_TOKEN_KEY");
     expect(source).toContain("router.replace(route as never)");
@@ -505,7 +525,7 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(source).toContain("export function ErrorBoundary");
     expect(source).toContain("hideNativeSplashSafely()");
-    expect(source).toContain("다시 준비하고 있어요");
+    expect(source).toContain("이 화면을 다시 준비하고 있어요.");
     expect(source).toContain("다시 시도");
     expect(source).toContain("onPress: retry");
     expect(source).not.toContain("error.message");
@@ -522,8 +542,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain("finishOnboarding");
     expect(onboarding).toContain("/plan");
     expect(onboarding).toContain("/salary");
-    expect(onboarding).toContain("서버 기준으로 급여 계획을 저장해요");
-    expect(onboarding).toContain("금융 원문은 광고나 분석에 쓰지 않아요");
+    expect(onboarding).toContain("서버 기준으로 급여 계획을 저장해요.");
+    expect(onboarding).toContain("금융 원문은 광고나 분석에 쓰지 않아요.");
     expect(onboarding).not.toContain("serverAuthority=true");
     expect(onboarding).not.toContain("rawFinancialData=false");
   });

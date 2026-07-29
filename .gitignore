@@ -149,6 +149,7 @@ apps/mobile/.gradle-local-debug/
 apps/mobile/.gradle-local-debug-direct/
 apps/mobile/.localappdata/
 .gradle-qa-*/
+.android-subproject-build/
 
 # Cloudflare / Wrangler
 .wrangler/

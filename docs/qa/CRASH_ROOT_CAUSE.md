@@ -2,6 +2,23 @@
 
 Status: ROOT_CAUSE_FIXED_STATIC_AND_X86_EMULATOR_VERIFIED_ARM64_PHONE_BLOCKED
 
+## 2026-07-29 Full Expo Router qaRelease Route-Name Crash Recheck
+
+- Current HEAD: `64d40ea30728b16e39eb505464071b242f28fe9e`.
+- Current QA APK: `artifacts/android/salary-hijacking-qa-universal.apk`.
+- Download copy: `C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk`.
+- Artifact mirror: `D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk`.
+- SHA-256: `8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3`.
+- applicationId: `com.salaryhijacking.mobile`; versionName `1.0.0`; versionCode `1`; min SDK 24; target SDK 35; ABI `arm64-v8a` + `x86_64`.
+- Build type: `qaRelease`, full Expo Router production entry, staging HTTPS API config, `e2eBuild=false`, `crashReportingEnabled=true`, `debuggable=false`, cleartext disabled, backup disabled, `SYSTEM_ALERT_WINDOW` absent.
+- Root cause confirmed on the x86_64 emulator: Expo Router tab layout used flat tab names while the actual app directory registered nested names. Runtime error: `Couldn't find a screen named 'salary' to use as 'initialRouteName'`; Expo Router children were `salary/index`, `plan/index`, `level/index`, `community/index`, `profile/index`.
+- Source fix: `apps/mobile/app/(tabs)/_layout.tsx` now uses `initialRouteName="salary/index"` and tab names `salary/index`, `plan/index`, `level/index`, `community/index`, `profile/index` while preserving public hrefs `/salary`, `/plan`, `/level`, `/community`, `/profile`.
+- Regression test: `apps/mobile/src/shared/api/__tests__/app-screen-contract.test.ts` asserts those route names and forbids reverting `initialRouteName` to `salary`.
+- Static inspection: `artifacts/qa/apk-static-inspection-qa-universal-route-fixed-20260729.json` PASS. It proves embedded Expo Router bundle markers, ARM64/x86_64 startup libraries, staging HTTPS API, and absence of safe/direct/fallback/sample finance markers.
+- Signing and package metadata: `artifacts/qa/apksigner-verify-qa-universal-route-fixed-20260729.txt` and `artifacts/qa/aapt-badging-qa-universal-route-fixed-20260729.txt` PASS with local QA signing certificate. No signing secret material is stored in repo evidence.
+- Emulator runtime proof: `artifacts/qa/android-qa-universal-route-fixed-runtime-20260729` records clean install, upgrade install, clean cold start 10/10, upgrade cold start 10/10, background/resume 10/10, launcher monkey PASS, and fatal/route-error marker count 0.
+- Current limitation: this closes the emulator-reproduced route-name startup crash for the full Expo Router `qaRelease` APK only. It does not close physical Samsung/ARM64 logcat QA, authenticated staging persistence E2E, or Stitch 304 production-route visual/accessibility gates.
+
 ## 2026-07-25 Direct Splash-Hide Recheck
 
 - Current HEAD: `bbb7410fbbaeb784b9a4026f65154f94794ac0b4`.

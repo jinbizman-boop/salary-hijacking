@@ -95,7 +95,11 @@ export function NotificationSettingsScreen({
   }
 
   return (
-    <View style={styles.screen}>
+    <View
+      accessibilityLabel="급여납치 알림 설정 독립 화면"
+      style={styles.screen}
+      testID="notification-settings-standalone-screen"
+    >
       <View style={[styles.safeTop, { paddingTop: insets.top }]}>
         <View style={[styles.topBar, { width: contentWidth }]}>
           <Pressable
@@ -172,13 +176,13 @@ export function NotificationSettingsScreen({
             onToggle={() => toggle("community")}
           />
           <PreferenceRow
-            description="이벤트와 제휴 혜택. 금융 원문 기반 타겟팅은 금지됩니다."
+            description="이벤트와 제휴 혜택. 금융 원문 기반 타겟팅은 금지합니다."
             enabled={preferences.marketing}
-            label="이벤트/마케팅"
+            label="이벤트 마케팅"
             onToggle={() => toggle("marketing")}
           />
           <PreferenceRow
-            description="밤 시간대에는 긴급하지 않은 알림을 쉬게 합니다."
+            description="밤 시간대에는 긴급하지 않은 알림을 조용하게 합니다."
             enabled={preferences.quietHours}
             label="방해 금지 시간"
             onToggle={() => toggle("quietHours")}
@@ -205,7 +209,7 @@ export function NotificationSettingsScreen({
         ) : null}
         {status === "error" ? (
           <Text accessibilityLiveRegion="polite" style={styles.errorText}>
-            저장하지 못했습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.
+            저장하지 못했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.
           </Text>
         ) : null}
 

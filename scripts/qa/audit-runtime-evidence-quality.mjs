@@ -45,11 +45,16 @@ function parseCsvLine(line) {
 }
 
 function parseCsv(text) {
-  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).filter(Boolean);
+  const lines = text
+    .replace(/^\uFEFF/, "")
+    .split(/\r?\n/)
+    .filter(Boolean);
   const header = parseCsvLine(lines[0]);
   return lines.slice(1).map((line) => {
     const values = parseCsvLine(line);
-    return Object.fromEntries(header.map((column, index) => [column, values[index] ?? ""]));
+    return Object.fromEntries(
+      header.map((column, index) => [column, values[index] ?? ""]),
+    );
   });
 }
 
@@ -106,7 +111,11 @@ export function auditRuntimeEvidenceQuality({
             evidence,
             reason: "source-string-test-used-as-runtime-evidence",
           });
-        } else if (evidence && !isRuntimeArtifactPath(evidence) && existsSync(resolve(root, evidence))) {
+        } else if (
+          evidence &&
+          !isRuntimeArtifactPath(evidence) &&
+          existsSync(resolve(root, evidence))
+        ) {
           warnings.push({
             requirementId: row.requirement_id,
             column,
@@ -140,7 +149,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = auditRuntimeEvidenceQuality();
   const jsonPath = argValue("--json");
   if (jsonPath) {
-    writeFileSync(resolve(repoRoot, jsonPath), `${JSON.stringify(result, null, 2)}\n`);
+    writeFileSync(
+      resolve(repoRoot, jsonPath),
+      `${JSON.stringify(result, null, 2)}\n`,
+    );
   }
   console.log(
     JSON.stringify(

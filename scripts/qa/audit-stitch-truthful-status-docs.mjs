@@ -37,7 +37,8 @@ function walk(root, relativeDir, files) {
       walk(root, relativePath, files);
       continue;
     }
-    if (entry.isFile() && /\.(md|csv|json)$/u.test(entry.name)) files.push(relativePath);
+    if (entry.isFile() && /\.(md|csv|json)$/u.test(entry.name))
+      files.push(relativePath);
   }
 }
 
@@ -90,7 +91,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const result = auditStitchTruthfulStatusDocs();
   const jsonPath = argValue("--json");
   if (jsonPath) {
-    writeFileSync(resolve(repoRoot, jsonPath), `${JSON.stringify(result, null, 2)}\n`);
+    writeFileSync(
+      resolve(repoRoot, jsonPath),
+      `${JSON.stringify(result, null, 2)}\n`,
+    );
   }
   console.log(
     JSON.stringify(
