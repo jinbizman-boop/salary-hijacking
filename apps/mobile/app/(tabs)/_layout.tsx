@@ -113,7 +113,7 @@ export default function TabsLayout(): React.ReactElement {
           name={tab.name}
           options={{
             href: tab.href as never,
-            tabBarAccessibilityLabel: `${tab.title} 탭 ${tab.privacyBoundary}`,
+            tabBarAccessibilityLabel: `${tab.title} \uD0ED ${tab.privacyBoundary}`,
             tabBarIcon: ({ color, focused, size }) => (
               <View
                 style={{

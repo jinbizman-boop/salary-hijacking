@@ -199,10 +199,12 @@ describe("mobile app screen API and route contracts", () => {
     const communitySource = readFileSync(TAB_SCREEN_SOURCES.community, "utf8");
     const profileSource = readFileSync(TAB_SCREEN_SOURCES.profile, "utf8");
 
-    expect(tabLayoutSource).toContain('title: "급여"');
-    expect(tabLayoutSource).toContain('title: "계획"');
-    expect(tabLayoutSource).toContain('title: "커뮤니티"');
-    expect(tabLayoutSource).toContain('"급여납치 하단 탭 내비게이션"');
+    expect(tabLayoutSource).toContain('title: "\uAE09\uC5EC"');
+    expect(tabLayoutSource).toContain('title: "\uACC4\uD68D"');
+    expect(tabLayoutSource).toContain('title: "\uCEE4\uBBA4\uB2C8\uD2F0"');
+    expect(tabLayoutSource).toContain(
+      '"\uAE09\uC5EC\uB0A9\uCE58 \uD558\uB2E8 \uD0ED \uB0B4\uBE44\uAC8C\uC774\uC158"',
+    );
     expect(tabLayoutSource).toContain("expo_router_index_segment_tabs");
     expect(tabLayoutSource).not.toContain("Salary Home");
     expect(tabLayoutSource).not.toContain("Proof Board");
@@ -243,8 +245,12 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileHub).toContain("/salary");
     expect(profileHub).toContain("router.push(item.route as never)");
     expect(profileHub).toContain('router.replace("/salary" as never)');
-    expect(profileHub).toContain("서버 기준으로 MY 데이터를 확인해요.");
-    expect(profileHub).toContain("금융 원문은 광고나 분석에 쓰지 않아요.");
+    expect(profileHub).toContain(
+      "\uC11C\uBC84 \uAE30\uC900\uC73C\uB85C MY \uB370\uC774\uD130\uB97C \uD655\uC778\uD574\uC694.",
+    );
+    expect(profileHub).toContain(
+      "\uAE08\uC735 \uC6D0\uBB38\uC740 \uAD11\uACE0\uB098 \uBD84\uC11D\uC5D0 \uC4F0\uC9C0 \uC54A\uC544\uC694.",
+    );
     expect(profileHub).not.toContain("serverAuthority=true");
     expect(profileHub).not.toContain("rawFinancialData=false");
   });

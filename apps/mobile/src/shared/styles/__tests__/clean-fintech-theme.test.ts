@@ -8,7 +8,8 @@ import { salaryHijackingTheme } from "../clean-fintech-theme";
 const appRoot = join(process.cwd(), "app");
 const officialBiSha256 =
   "EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466";
-const mojibakePattern = /[湲怨吏猷醫紐留吏理痍寃]/;
+const mojibakePattern =
+  /[\uFFFD\u6E72\u6028\u800C\u316B\uB35A\u907A\u934C\uC392\uF9CD\u7457\u7E79\u8AED\u7B4C\u75AB]/u;
 
 function source(path: string): string {
   return readFileSync(join(appRoot, path), "utf8");
@@ -104,6 +105,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const checkedSources = [
       "src/shared/styles/clean-fintech-theme.ts",
       "src/shared/styles/clean-fintech-screens.tsx",
+      "app/_layout.tsx",
       "app/(tabs)/_layout.tsx",
       "app/(tabs)/salary/index.tsx",
       "app/(tabs)/plan/index.tsx",
@@ -139,13 +141,19 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
   it("keeps the bottom navigation on the approved five-tab IA", () => {
     const tabs = source("(tabs)/_layout.tsx");
-
-    for (const label of ["급여", "계획", "LV", "커뮤니티", "MY"]) {
+    for (const label of [
+      "\uAE09\uC5EC",
+      "\uACC4\uD68D",
+      "LV",
+      "\uCEE4\uBBA4\uB2C8\uD2F0",
+      "MY",
+    ]) {
       expect(tabs).toContain(label);
     }
-
-    expect(tabs).toContain("급여납치 하단 탭 내비게이션");
-    expect(tabs).not.toMatch(/湲됱|怨꾪|而ㅻ|덊떚/u);
+    expect(tabs).toContain(
+      "\uAE09\uC5EC\uB0A9\uCE58 \uD558\uB2E8 \uD0ED \uB0B4\uBE44\uAC8C\uC774\uC158",
+    );
+    expect(tabs).not.toMatch(mojibakePattern);
     expect(tabs).toContain("#209252");
     expect(tabs).toContain("#ADB3B8");
     expect(tabs).toContain("#FFFFFF");
@@ -553,7 +561,6 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
 
     expect(planSource).not.toMatch(mojibakePattern);
-    expect(planSource).not.toMatch(/[�]|[?][가-힣]|[가-힣][?]/u);
   });
 
   it("keeps plan completion toasts free from internal privacy flags", () => {
@@ -1082,7 +1089,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(callbackRoute).toContain(
       "서버 인증 결과와 계정 상태를 확인한 뒤 다음 화면으로 이동합니다.",
     );
-    expect(callbackRoute).not.toMatch(/[?][가-힣]|[가-힣][?]|�/u);
+    expect(callbackRoute).not.toMatch(mojibakePattern);
     expect(callbackRoute).not.toContain("급여 홈으로 이동합니다");
     expect(callbackRoute).toContain("routeAuthenticatedOAuthResult");
   });

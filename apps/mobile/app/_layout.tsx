@@ -1,6 +1,6 @@
 /** apps/mobile/app/_layout.tsx
- * 급여납치 모바일 루트 레이아웃 최종본
- * 정적 import와 JSX 없이 Expo Router, React Native 런타임 모듈을 지연 로딩한다.
+ * 급여납치 모바일 루트 레이아웃.
+ * 정적 import와 JSX 없이 Expo Router, React Native 런타임 모듈을 안전하게 로딩한다.
  */
 
 import { createAuthApi } from "../src/features/auth/api";
@@ -477,6 +477,7 @@ const SENSITIVE_KEYWORDS = [
   "부채",
   "푸시",
   "임시",
+  "표시",
   "기기토큰",
 ] as const;
 const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
@@ -1200,18 +1201,18 @@ function renderRuntimeGuard(_payload: RootPayload): null {
 
 function rootHeaderMessage(payload: RootPayload, status: RootStatus): string {
   if (status === "BOOTSTRAPPING") return "안전하게 앱을 준비하고 있어요.";
-  if (status === "AUTH_REQUIRED") return "로그인 후 급여 현황을 확인하세요.";
-  if (status === "OFFLINE") return "오프라인 보호 모드로 표시 중";
-  if (status === "ERROR") return "오류 상태를 확인하고 있어요.";
+  if (status === "AUTH_REQUIRED") return "인증 화면으로 이동합니다.";
+  if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
+  if (status === "ERROR") return "서비스 오류 상태입니다.";
   return payload.config.privacyMode === "STRICT"
     ? "개인정보 보호 모드 적용 중"
     : "급여 현황을 확인하세요.";
 }
 
 function rootStatusLabel(status: RootStatus): string {
-  if (status === "READY") return "준비 완료";
-  if (status === "OFFLINE") return "오프라인";
-  if (status === "ERROR") return "오류";
+  if (status === "READY") return "앱 준비가 완료되었습니다.";
+  if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
+  if (status === "ERROR") return "서비스 오류 상태입니다.";
   return "확인 중";
 }
 
