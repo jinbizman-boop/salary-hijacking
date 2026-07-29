@@ -929,6 +929,34 @@ describe("mobile Metro dependency resolution", () => {
     ]);
   });
 
+  it.each([
+    [
+      "S:\\",
+      "S:\\C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+      "S:\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+    ],
+    [
+      "D:\\shp",
+      "D:\\C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+      "D:\\shp\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+    ],
+  ])(
+    "normalizes Metro virtual files after Windows prepends alias root %s to a canonical path",
+    (aliasWorkspaceRoot, malformedFilePath, expectedFilePath) => {
+      const helper = metroConfig.__private?.mapToWorkspaceAliasRoot;
+
+      expect(helper).toBeDefined();
+      expect(
+        helper?.(
+          malformedFilePath,
+          aliasWorkspaceRoot,
+          "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+          "win32",
+        ),
+      ).toBe(expectedFilePath);
+    },
+  );
+
   it("keeps Windows subst Android entry fallback working when loaded on a Linux CI runner", () => {
     const originalPlatform = process.platform;
 

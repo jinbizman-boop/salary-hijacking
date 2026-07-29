@@ -275,31 +275,47 @@ function normalizeForPrefix(value, platform = process.platform) {
     .toLowerCase();
 }
 
+function stripAliasPrefixedWindowsDrivePath(
+  filePath,
+  platform = process.platform,
+) {
+  if (platform !== "win32") return filePath;
+  const normalizedFilePath = filePath.replace(/\//gu, "\\");
+  const prefixedDrivePath = /^[A-Za-z]:\\([A-Za-z]:\\.*)$/u.exec(
+    normalizedFilePath,
+  );
+  return prefixedDrivePath ? prefixedDrivePath[1] : filePath;
+}
+
 function mapToWorkspaceAliasRoot(
   filePath,
   aliasWorkspaceRoot,
   canonicalWorkspaceRoot,
   platform = process.platform,
 ) {
+  const canonicalFilePath = stripAliasPrefixedWindowsDrivePath(
+    filePath,
+    platform,
+  );
   const pathApi = pathForPlatform(platform);
-  if (!pathApi.isAbsolute(filePath)) return filePath;
+  if (!pathApi.isAbsolute(canonicalFilePath)) return canonicalFilePath;
   if (platform !== "win32") return filePath;
-  const normalizedFilePath = normalizeForPrefix(filePath, platform);
+  const normalizedFilePath = normalizeForPrefix(canonicalFilePath, platform);
   const normalizedAliasRoot = normalizeForPrefix(aliasWorkspaceRoot, platform);
   const normalizedCanonicalRoot = normalizeForPrefix(
     canonicalWorkspaceRoot,
     platform,
   );
-  if (normalizedAliasRoot === normalizedCanonicalRoot) return filePath;
+  if (normalizedAliasRoot === normalizedCanonicalRoot) return canonicalFilePath;
   if (
     normalizedFilePath !== normalizedCanonicalRoot &&
     !normalizedFilePath.startsWith(`${normalizedCanonicalRoot}${pathApi.sep}`)
   ) {
-    return filePath;
+    return canonicalFilePath;
   }
   return pathApi.join(
     aliasWorkspaceRoot,
-    pathApi.relative(canonicalWorkspaceRoot, filePath),
+    pathApi.relative(canonicalWorkspaceRoot, canonicalFilePath),
   );
 }
 
