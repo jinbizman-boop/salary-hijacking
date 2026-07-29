@@ -1383,6 +1383,148 @@ test("build invocations can target qaRelease APK without AndroidTest packaging",
   );
 });
 
+test("qaRelease build removes stale embedded Expo config assets before packaging", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const staleAppConfigPaths = [
+    path.join(
+      rootDir,
+      "android",
+      "app",
+      "build",
+      "intermediates",
+      "assets",
+      "qaRelease",
+      "mergeQaReleaseAssets",
+      "app.config",
+    ),
+    path.join(
+      rootDir,
+      "android",
+      "app",
+      "build",
+      "intermediates",
+      "compressed_assets",
+      "qaRelease",
+      "compressQaReleaseAssets",
+      "out",
+      "assets",
+      "app.config",
+    ),
+  ];
+  const gradleCalls = [];
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+  for (const stalePath of staleAppConfigPaths) {
+    touch(
+      stalePath,
+      JSON.stringify({ extra: { operations: { e2eBuild: true } } }),
+    );
+  }
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    architecture: "x86_64",
+    buildType: "qaRelease",
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+      SALARY_HIJACKING_ANDROID_BUILD_SUBST_DISABLE: "1",
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    output: "build/qa/android/salary-hijacking-qa-release-like.apk",
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args, options) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (commandName.includes("gradlew")) {
+        gradleCalls.push({ args, options });
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleQaRelease"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "qaRelease",
+            "app-qaRelease.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+      }
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  const assembleCall = gradleCalls.find(
+    (call) => String(call.args[0]) === "assembleQaRelease",
+  );
+  assert.ok(assembleCall, "assembleQaRelease was not invoked");
+  assert.equal(assembleCall.options.env.EXPO_PUBLIC_E2E_BUILD, "false");
+  for (const stalePath of staleAppConfigPaths) {
+    assert.equal(fs.existsSync(stalePath), false, stalePath);
+  }
+});
+
 test("build invocations can target an ARM64 debug APK for physical phone install checks", () => {
   const rootDir = makeWorkspace();
   writeMobileFixture(rootDir);

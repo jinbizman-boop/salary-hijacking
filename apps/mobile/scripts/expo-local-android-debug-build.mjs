@@ -2678,6 +2678,7 @@ export const runExpoLocalAndroidDebugBuild = ({
 } = {}) => {
   const preflight = checkExpoLocalAndroidDebugPrerequisites({
     androidToolHomeDir,
+    buildType,
     env,
     existsSync,
     mobileRootDir,
