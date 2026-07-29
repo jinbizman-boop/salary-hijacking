@@ -490,6 +490,38 @@ export const repairGradleTransformTemporaryWorkspaces = ({
   return { moved, removed };
 };
 
+export const cleanGradleTransformCaches = ({ gradleUserHome }) => {
+  const cachesRoot = path.join(gradleUserHome, "caches");
+  if (!fs.existsSync(cachesRoot)) return { removed: 0 };
+
+  let removed = 0;
+  for (const cacheVersion of fs.readdirSync(cachesRoot, {
+    withFileTypes: true,
+  })) {
+    if (!cacheVersion.isDirectory()) continue;
+    const transformsRoot = path.join(
+      cachesRoot,
+      cacheVersion.name,
+      "transforms",
+    );
+    if (!fs.existsSync(transformsRoot)) continue;
+    try {
+      fs.rmSync(transformsRoot, { force: true, recursive: true });
+      removed += 1;
+    } catch {
+      repairGradleTransformTemporaryWorkspaces({ gradleUserHome });
+    }
+  }
+
+  return { removed };
+};
+
+const prepareWindowsGradleTransformCaches = ({ gradleUserHome, platform }) => {
+  if (!isWindows(platform)) return;
+  cleanGradleTransformCaches({ gradleUserHome });
+  repairGradleTransformTemporaryWorkspaces({ gradleUserHome });
+};
+
 const buildEnv = ({
   e2eBuild = true,
   env,
@@ -2803,6 +2835,10 @@ export const runExpoLocalAndroidDebugBuild = ({
     const maxAttempts = isWindows(platform) ? 4 : 1;
     let result = { status: 1 };
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      prepareWindowsGradleTransformCaches({
+        gradleUserHome: preflight.env.GRADLE_USER_HOME,
+        platform,
+      });
       result = normalizeGradleResult(
         args,
         spawn(invocations.gradleCommand, args, options),
@@ -2811,8 +2847,9 @@ export const runExpoLocalAndroidDebugBuild = ({
       if ((result.status ?? 1) === 0 || !isWindows(platform)) return result;
       cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
       cleanNativeDependencyCompileCaches({ mobileRootDir });
-      repairGradleTransformTemporaryWorkspaces({
+      prepareWindowsGradleTransformCaches({
         gradleUserHome: preflight.env.GRADLE_USER_HOME,
+        platform,
       });
     }
     return result;
@@ -2824,8 +2861,9 @@ export const runExpoLocalAndroidDebugBuild = ({
     if (isWindows(platform)) {
       cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
       cleanNativeDependencyCompileCaches({ mobileRootDir });
-      repairGradleTransformTemporaryWorkspaces({
+      prepareWindowsGradleTransformCaches({
         gradleUserHome: preflight.env.GRADLE_USER_HOME,
+        platform,
       });
     }
 

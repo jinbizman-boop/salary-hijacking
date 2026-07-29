@@ -11,6 +11,7 @@ import {
   buildSameRootExpoCliGradleSource,
   buildWindowsSubstAliasPlan,
   checkExpoLocalAndroidDebugPrerequisites,
+  cleanGradleTransformCaches,
   cleanupStaleWindowsSubstAliases,
   ensureAndroidDebugQaApplicationConfig,
   ensureAndroidDebugNdkAbiFilters,
@@ -862,6 +863,48 @@ test("repairs Gradle transform temporary workspaces before retrying Windows buil
     ),
     "fresh",
   );
+});
+
+test("cleans stale Gradle transform caches before Windows Gradle invocations", () => {
+  const rootDir = makeWorkspace();
+  const gradleUserHome = path.join(rootDir, ".gradle-local-debug");
+  const firstTransformsRoot = path.join(
+    gradleUserHome,
+    "caches",
+    "8.13",
+    "transforms",
+  );
+  const secondTransformsRoot = path.join(
+    gradleUserHome,
+    "caches",
+    "8.14",
+    "transforms",
+  );
+
+  touch(
+    path.join(
+      firstTransformsRoot,
+      "295828255aec3b5325e40ea42f076a17-0ab257bd-05c8-4aec-93b5-e8b079b6bdcb",
+      "transformed",
+      "module.json",
+    ),
+    "{}",
+  );
+  touch(
+    path.join(
+      secondTransformsRoot,
+      "e49a5d11120204f413844bc62c0c72c3",
+      "transformed",
+      "module.json",
+    ),
+    "{}",
+  );
+
+  const result = cleanGradleTransformCaches({ gradleUserHome });
+
+  assert.equal(result.removed, 2);
+  assert.equal(fs.existsSync(firstTransformsRoot), false);
+  assert.equal(fs.existsSync(secondTransformsRoot), false);
 });
 
 test("repairs Gradle Kotlin DSL accessor temporary workspaces before retrying Windows builds", () => {
