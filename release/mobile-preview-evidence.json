@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-07-29T10:14:21.398Z",
-  "source": "Release-like Expo Router staging QA APK evidence for current local HEAD 64d40ea30728b16e39eb505464071b242f28fe9e. Emulator lifecycle and deep-link navigation probes pass; this does not close authenticated staging persistence, Stitch 304 production-route visual regression, notification no-bottom-tab proof, production AAB, Google Play submission, or physical Samsung QA.",
+  "observedAt": "2026-07-29T19:48:31.548Z",
+  "source": "Release-like Expo Router staging qaRelease APK evidence for current local HEAD aa0e174dbd597c395117d79e13094f8e8d559327. Emulator clean/upgrade lifecycle smoke passes; this does not close authenticated staging persistence, Stitch 304 production-route visual regression, notification Android no-bottom-tab runtime proof, production AAB, Google Play submission, or physical Samsung QA.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -12,196 +12,67 @@
   "android": {
     "debugApkBuilt": true,
     "debugApkSigned": true,
-    "debugApkSha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
+    "debugApkSha256": "BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200",
     "debugApkLocalPath": "artifacts/android/salary-hijacking-qa-universal.apk",
     "debugApkDownloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
     "debugApkArtifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk",
     "debugApkBuildType": "qaRelease",
-    "debugApkBuildLog": "artifacts/qa/gradle-assemble-qa-release-route-fixed-signed-20260729.log",
+    "debugApkBuildLog": "artifacts/qa/qa-release-script-build-signed-head-aa0e174-20260730.log",
     "downloadVerified": true,
     "downloadVerificationEvidence": "release/evidence/checksums.txt",
-    "latestSourcePackagedHead": "64d40ea30728b16e39eb505464071b242f28fe9e",
-    "latestSourcePackagedApkSha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
+    "latestSourcePackagedHead": "aa0e174dbd597c395117d79e13094f8e8d559327",
+    "latestSourcePackagedApkSha256": "BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200",
     "latestSourceChangesPackaged": true,
     "latestSourceGitStatusSha256": "536DC4F12C704DA37A09B5CBA976F1C3675852C71C0B5CE6A92ECA9FA95192E9",
     "emulatorInstallVerified": true,
-    "emulatorInstallEvidence": "D:/salary-hijacking-artifacts/android/qa-release-like-current/lifecycle-x86_64-d004-20260729/summary.json",
-    "coldStartRuns": 10,
+    "emulatorInstallEvidence": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
+    "coldStartRuns": 20,
     "coldStartFatalCount": 0,
-    "coldStartEvidence": "D:/salary-hijacking-artifacts/android/qa-release-like-current/lifecycle-x86_64-d004-20260729/summary.json",
+    "coldStartEvidence": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
     "backgroundForegroundVerified": true,
-    "backgroundForegroundEvidence": "D:/salary-hijacking-artifacts/android/qa-release-like-current/lifecycle-x86_64-d004-20260729/summary.json",
+    "backgroundForegroundEvidence": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
     "navigationSmokeVerified": true,
-    "navigationEvidence": "artifacts/qa/android-qa-universal-route-probes-fast-20260729/summary.json",
+    "navigationEvidence": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
     "notificationNoBottomTabVerified": false,
-    "notificationEvidence": "artifacts/qa/android-qa-universal-route-probes-fast-20260729/summary.json",
+    "notificationEvidence": "component/source tests pass; Android authenticated standalone runtime proof remains unverified",
     "physicalPhoneVerified": false,
-    "physicalPhoneBlocker": "No physical Samsung Android phone is attached in this Codex environment; emulator evidence does not replace user-device logcat QA."
+    "physicalPhoneBlocker": "No physical Android phone is attached; emulator evidence does not replace Samsung ARM64 logcat QA."
   },
-  "latestStaticApkInspection": "artifacts/qa/apk-static-inspection-qa-universal-route-fixed-20260729.json",
+  "latestStaticApkInspection": "artifacts/qa/apk-static-inspection-qa-release-like-current-aa0e174-20260730.json",
   "latestStaticApkInspectionPass": true,
-  "latestStaticApkInspectionRunLog": "artifacts/qa/inspect-apk-signed-staging-universal-d004-20260729.log",
-  "latestStaticApkSignerVerifyLog": "artifacts/qa/apksigner-verify-qa-universal-route-fixed-20260729.txt",
+  "latestStaticApkInspectionRunLog": "artifacts/qa/apk-static-inspection-qa-release-like-current-aa0e174-20260730.json",
+  "latestStaticApkSignerVerifyLog": "artifacts/qa/apksigner-verify-qa-release-like-current-aa0e174-20260730.txt",
   "finalStableQaApk": {
-    "schemaVersion": 2,
-    "generatedAt": "2026-07-29T10:14:21.398Z",
+    "schemaVersion": 3,
+    "generatedAt": "2026-07-29T19:48:31.548Z",
     "applicationId": "com.salaryhijacking.mobile",
     "versionName": "1.0.0",
     "versionCode": 1,
     "buildType": "qaRelease",
-    "gitCommit": "64d40ea30728b16e39eb505464071b242f28fe9e",
+    "gitCommit": "aa0e174dbd597c395117d79e13094f8e8d559327",
     "minSdk": 24,
     "targetSdk": 35,
     "abis": ["arm64-v8a", "x86_64"],
     "signed": true,
-    "sha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
-    "sizeBytes": 47047859,
+    "sha256": "BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200",
+    "bundleSha256": "730B4C7B2C6A2607CB29BE714E02862CFF742686A0840094F5C2D621C7D3337A",
+    "sizeBytes": 47047823,
     "file": "artifacts/android/salary-hijacking-qa-universal.apk",
+    "sourceFile": "apps/mobile/build/qa/android/salary-hijacking-qa-release-like-aa0e174dbd597c395117d79e13094f8e8d559327.apk",
     "fileName": "salary-hijacking-qa-universal.apk",
     "downloadsPath": "C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk",
     "artifactMirrorPath": "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk",
-    "buildCommand": ":app:assembleQaRelease --no-daemon --max-workers=1 --no-parallel --stacktrace -PnewArchEnabled=false -PreactNativeArchitectures=x86_64,arm64-v8a -PsalaryHijackingAndroidAbiFilters=x86_64,arm64-v8a with staging HTTPS env and E2E disabled",
-    "buildLog": "artifacts/qa/gradle-assemble-qa-release-route-fixed-signed-20260729.log",
-    "badgingLog": "artifacts/qa/aapt-badging-qa-universal-route-fixed-20260729.txt",
+    "buildCommand": "corepack pnpm --filter @salary-hijacking/mobile exec node scripts/expo-local-android-debug-build.mjs --skip-prebuild --build-type qaRelease --architecture x86_64,arm64-v8a",
+    "buildLog": "artifacts/qa/qa-release-script-build-signed-head-aa0e174-20260730.log",
+    "badgingLog": "artifacts/qa/aapt-badging-qa-release-like-current-aa0e174-20260730.txt",
+    "signerVerifyLog": "artifacts/qa/apksigner-verify-qa-release-like-current-aa0e174-20260730.txt",
     "staticInspection": {
-      "path": "artifacts/qa/apk-static-inspection-qa-universal-route-fixed-20260729.json",
+      "path": "artifacts/qa/apk-static-inspection-qa-release-like-current-aa0e174-20260730.json",
       "pass": true,
-      "apkSha256": "8C74B6E98F77EF58AF460DEB810715FE68EEA13CAFE71A24CA4D63CA468DB9C3",
-      "bundleSha256": "B9440F7362B375F23E846DA19C5951F0C539E59B9FA3561DCDFAFDCA882693EF",
+      "apkSha256": "BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200",
+      "bundleSha256": "730B4C7B2C6A2607CB29BE714E02862CFF742686A0840094F5C2D621C7D3337A",
       "hasBundle": true,
       "nativeAbis": ["arm64-v8a", "x86_64"],
-      "requiredArm64Libs": [
-        {
-          "name": "lib/arm64-v8a/libexpo-modules-core.so",
-          "present": true
-        },
-        {
-          "name": "lib/arm64-v8a/libhermes.so",
-          "present": true
-        },
-        {
-          "name": "lib/arm64-v8a/libreactnative.so",
-          "present": true
-        },
-        {
-          "name": "lib/arm64-v8a/libreanimated.so",
-          "present": true
-        },
-        {
-          "name": "lib/arm64-v8a/librnscreens.so",
-          "present": true
-        },
-        {
-          "name": "lib/arm64-v8a/libworklets.so",
-          "present": true
-        }
-      ],
-      "requiredX86_64Libs": [
-        {
-          "name": "lib/x86_64/libexpo-modules-core.so",
-          "present": true
-        },
-        {
-          "name": "lib/x86_64/libhermes.so",
-          "present": true
-        },
-        {
-          "name": "lib/x86_64/libreactnative.so",
-          "present": true
-        },
-        {
-          "name": "lib/x86_64/libreanimated.so",
-          "present": true
-        },
-        {
-          "name": "lib/x86_64/librnscreens.so",
-          "present": true
-        },
-        {
-          "name": "lib/x86_64/libworklets.so",
-          "present": true
-        }
-      ],
-      "requiredBundleMarkers": [
-        {
-          "marker": "salary-hijacking-mobile-root",
-          "present": true
-        },
-        {
-          "marker": "SALARY HIJACKING",
-          "present": true
-        }
-      ],
-      "forbiddenBundleMarkers": [
-        {
-          "marker": "1.0.1-android-safe-entry",
-          "present": false
-        },
-        {
-          "marker": "android-safe-entry",
-          "present": false
-        },
-        {
-          "marker": "android-direct-entry",
-          "present": false
-        },
-        {
-          "marker": "salary-hijacking-android-rc-root",
-          "present": false
-        },
-        {
-          "marker": "CleanFintechScreen",
-          "present": false
-        },
-        {
-          "marker": "stable-home",
-          "present": false
-        },
-        {
-          "marker": "mock-only",
-          "present": false
-        },
-        {
-          "marker": "fallbackPlanFixedExpenseRows",
-          "present": false
-        },
-        {
-          "marker": "fallbackNotifications",
-          "present": false
-        },
-        {
-          "marker": "5,780,000",
-          "present": false
-        },
-        {
-          "marker": "5,500,000",
-          "present": false
-        },
-        {
-          "marker": "2,700,000",
-          "present": false
-        },
-        {
-          "marker": "1,927,000",
-          "present": false
-        },
-        {
-          "marker": "773,000",
-          "present": false
-        },
-        {
-          "marker": "2700000",
-          "present": false
-        },
-        {
-          "marker": "1927000",
-          "present": false
-        },
-        {
-          "marker": "5780000",
-          "present": false
-        }
-      ],
       "embeddedConfigChecks": [
         {
           "name": "apiBaseUrlIsStagingHttps",
@@ -262,52 +133,85 @@
         }
       ]
     },
-    "signerVerifyLog": "artifacts/qa/apksigner-verify-qa-universal-route-fixed-20260729.txt",
-    "emulatorLifecycleProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/cold-start-10.txt",
+    "runtimeEvidence": {
+      "status": "EMULATOR_RUNTIME_CURRENT_HEAD_PASS_PHYSICAL_BLOCKED",
+      "device": "Google sdk_gphone64_x86_64 Android 15 API 35 emulator",
+      "cleanInstall": {
+        "path": "artifacts/qa/current-head-emulator-aa0e174-20260730",
+        "installLog": "artifacts/qa/current-head-emulator-aa0e174-20260730/clean-install.txt",
+        "coldStartSuccess": 20,
+        "coldStartTotal": 20,
+        "backgroundResumeSuccess": 20,
+        "backgroundResumeTotal": 20,
+        "strictFatalLineCount": 0,
+        "abnormalExitInfoCount": 0,
+        "summary": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
+        "logcatStrictFatal": "artifacts/qa/current-head-emulator-aa0e174-20260730/logcat-fatal-strict.txt",
+        "exitInfo": "artifacts/qa/current-head-emulator-aa0e174-20260730/exit-info.txt"
+      },
+      "upgradeInstall": {
+        "path": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730",
+        "installLog": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/upgrade-install.txt",
+        "upgradeColdStartSuccess": 20,
+        "upgradeColdStartTotal": 20,
+        "strictFatalLineCount": 0,
+        "abnormalExitInfoCount": 0,
+        "summary": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/runtime-summary-strict.json",
+        "logcatStrictFatal": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/logcat-fatal-strict.txt",
+        "exitInfo": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/exit-info.txt"
+      },
+      "physicalPhone": {
+        "verified": false,
+        "blocker": "No physical Android phone is attached; emulator evidence does not replace Samsung ARM64 logcat QA.",
+        "proof": "release/mobile-preview-phone-proof.local.json"
+      },
+      "note": "This closes only current-HEAD emulator lifecycle crash smoke. It does not close authenticated staging DB persistence E2E, Stitch 304 production-route visual/a11y, Cloudflare staging deploy/health, or physical Samsung QA."
+    },
+    "status": "PARTIAL_QA_RELEASE_CURRENT_HEAD_EMULATOR_VERIFIED",
+    "truthfulScope": "Current HEAD qaRelease APK is built, signed, statically inspected, and emulator lifecycle verified. It is not final, not commercial-launch-ready, and not a D-013/D-026 PASS until authenticated staging persistence, Stitch 304 production-route visual/accessibility, Cloudflare staging health, and physical Samsung evidence exists.",
+    "emulatorLifecycleProof": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
     "emulatorColdStarts": "10/10 PASS",
     "emulatorBackgroundResume": "10/10 PASS",
     "emulatorFatalMarkerCount": 0,
-    "cleanInstallProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-clean.txt",
+    "cleanInstallProof": "artifacts/qa/current-head-emulator-aa0e174-20260730/clean-install.txt",
     "cleanColdStarts": "10/10 PASS",
     "cleanFatalMarkerCount": 0,
-    "launcherMonkeyProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/launcher-monkey.txt",
-    "launcherMonkeyStatus": "PASS",
-    "upgradeInstallProof": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-upgrade.txt",
+    "upgradeInstallProof": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/upgrade-install.txt",
     "upgradeInstallStatus": "PASS adb install -r on emulator",
     "upgradeColdStarts": "10/10 PASS",
-    "upgradeBackgroundResume": "10/10 PASS",
     "upgradeFatalMarkerCount": 0,
-    "lifecycleProof": {
-      "path": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729",
-      "device": "emulator-5554 sdk_gphone64_x86_64 Android emulator",
-      "cleanInstallLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-clean.txt",
-      "cleanColdStartLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/clean-cold-start-10.txt",
-      "cleanColdStartSuccess": 10,
-      "cleanColdStartAttempts": 10,
-      "cleanColdStartFatalFilter": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/logcat-clean-cold-start-fatal-filter.txt",
-      "upgradeInstallLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/install-upgrade.txt",
-      "coldStartLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/cold-start-10.txt",
-      "coldStartSuccess": 10,
-      "coldStartAttempts": 10,
-      "backgroundResumeLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/background-resume-10.txt",
-      "backgroundResumeSuccess": 10,
-      "backgroundResumeAttempts": 10,
-      "coldStartFatalFilter": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/logcat-cold-start-fatal-filter.txt",
-      "backgroundResumeFatalFilter": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/logcat-background-resume-fatal-filter.txt",
-      "fatalOrRouteErrorCount": 0,
-      "launcherMonkeyLog": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/launcher-monkey.txt",
-      "screenshot": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/post-launcher-screenshot.png",
-      "exitInfo": "artifacts/qa/android-qa-universal-route-fixed-runtime-20260729/exit-info.txt"
-    },
-    "status": "PARTIAL_QA_RELEASE_ROUTE_FIXED",
-    "truthfulScope": "Real Expo Router qaRelease APK built with staging HTTPS config and verified on Android emulator for clean install, upgrade install, 10 cold starts, 10 background/resume cycles, and fatal/route-error logcat filters. This is not a 100% feature QA APK.",
     "remainingBlockers": [
       "Physical Samsung ARM64 install/cold-start/logcat QA is still not executed in this environment.",
       "Authenticated staging DB persistence E2E is still unverified.",
       "Classified Stitch 304 production-route interaction/visual/a11y verification is still unverified.",
-      "Cloudflare staging deploy/health and DB migration/RLS/rollback remain unverified.",
+      "Cloudflare staging deploy/health remains blocked by DNS/auth; Admin OpenNext dry-run remains blocked by Windows symlink permission.",
       "Production AAB and Google Play submission are intentionally not executed without explicit approval."
-    ]
+    ],
+    "emulatorColdStartsActual": "20/20 PASS",
+    "emulatorBackgroundResumeActual": "20/20 PASS",
+    "cleanColdStartsActual": "20/20 PASS",
+    "launcherMonkeyProof": "artifacts/qa/current-head-emulator-aa0e174-launcher-20260730/launcher-monkey.txt",
+    "launcherMonkeyStatus": "PASS",
+    "upgradeColdStartsActual": "20/20 PASS",
+    "upgradeBackgroundResume": "10/10 PASS",
+    "upgradeBackgroundResumeActual": "not separately required; clean background/resume 20/20 verified",
+    "lifecycleProof": {
+      "path": "artifacts/qa/current-head-emulator-aa0e174-20260730",
+      "device": "emulator-5554 sdk_gphone64_x86_64 Android 15 API 35 emulator",
+      "cleanInstallLog": "artifacts/qa/current-head-emulator-aa0e174-20260730/clean-install.txt",
+      "cleanRuntimeSummary": "artifacts/qa/current-head-emulator-aa0e174-20260730/runtime-summary-strict.json",
+      "cleanColdStartSuccess": 20,
+      "cleanColdStartAttempts": 20,
+      "backgroundResumeSuccess": 20,
+      "backgroundResumeAttempts": 20,
+      "upgradeInstallLog": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/upgrade-install.txt",
+      "upgradeRuntimeSummary": "artifacts/qa/current-head-emulator-aa0e174-upgrade-20260730/runtime-summary-strict.json",
+      "upgradeColdStartSuccess": 20,
+      "upgradeColdStartAttempts": 20,
+      "launcherMonkeyLog": "artifacts/qa/current-head-emulator-aa0e174-launcher-20260730/launcher-monkey.txt",
+      "strictFatalLineCount": 0,
+      "abnormalExitInfoCount": 0
+    }
   },
   "privacy": {
     "previewSecretsRedacted": true,
@@ -318,10 +222,10 @@
     "rawSecretMaterialPresent": false
   },
   "nextEvidenceRequired": [
-    "Run the same APK on the user Samsung physical ARM64 phone and collect logcat/exit-info.",
-    "Run authenticated staging DB persistence E2E against HTTPS staging API.",
-    "Run classified Stitch 304 production-route interaction, visual, and accessibility verification.",
-    "Run Cloudflare staging deploy/health and DB migration/RLS/rollback validation.",
-    "Build production AAB only after explicit user approval."
+    "Physical Samsung ARM64 install/cold-start/logcat QA is still not executed in this environment.",
+    "Authenticated staging DB persistence E2E is still unverified.",
+    "Classified Stitch 304 production-route interaction/visual/a11y verification is still unverified.",
+    "Cloudflare staging deploy/health remains blocked by DNS/auth; Admin OpenNext dry-run remains blocked by Windows symlink permission.",
+    "Production AAB and Google Play submission are intentionally not executed without explicit approval."
   ]
 }

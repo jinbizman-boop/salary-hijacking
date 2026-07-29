@@ -2353,6 +2353,14 @@ const buildDebugQaGradleProperties = ({
   return properties;
 };
 
+const androidGradleAssembleTask = (variantName) =>
+  variantName === "Debug" ? "assembleDebug" : `assemble${variantName}`;
+
+const androidApkFileName = (normalizedBuildType) =>
+  normalizedBuildType === "debug"
+    ? "app-debug.apk"
+    : `app-${normalizedBuildType}.apk`;
+
 export const buildExpoLocalAndroidDebugInvocations = ({
   applicationIdSuffix = "",
   architecture = "x86_64",
@@ -2423,11 +2431,11 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "outputs",
       "apk",
       normalizedBuildType,
-      `app-${normalizedBuildType}.apk`,
+      androidApkFileName(normalizedBuildType),
     ),
     expoCommand,
     gradleArgs: [
-      `assemble${variantName}`,
+      androidGradleAssembleTask(variantName),
       "--no-daemon",
       ...stableLocalDebugGradleArgs,
       ...localDebugJsEngineGradleArgs,
