@@ -386,6 +386,8 @@ const baseConfig = [
     name: "salary-hijacking/global-ignores",
     ignores: [
       "**/.expo/**",
+      "**/.gradle-local-debug/**",
+      "**/.gradle-local-debug-direct/**",
       "**/.next/**",
       "**/.local-native-bin/**",
       "**/.nuxt/**",
