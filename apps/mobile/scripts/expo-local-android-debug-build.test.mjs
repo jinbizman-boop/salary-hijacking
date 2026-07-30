@@ -907,6 +907,23 @@ test("cleans stale Gradle transform caches before Windows Gradle invocations", (
   assert.equal(fs.existsSync(secondTransformsRoot), false);
 });
 
+test("Android Gradle wrapper stays on the AGP 8.8 supported default Gradle version", () => {
+  const mobileRootDir = path.resolve(process.cwd(), "apps", "mobile");
+  const wrapperPropertiesPath = path.join(
+    mobileRootDir,
+    "android",
+    "gradle",
+    "wrapper",
+    "gradle-wrapper.properties",
+  );
+  const wrapperProperties = fs.readFileSync(wrapperPropertiesPath, "utf8");
+
+  assert.match(
+    wrapperProperties,
+    /distributionUrl=.*gradle-8\.10\.2-bin\.zip/u,
+  );
+});
+
 test("repairs Gradle Kotlin DSL accessor temporary workspaces before retrying Windows builds", () => {
   const rootDir = makeWorkspace();
   const accessorsRoot = path.join(
