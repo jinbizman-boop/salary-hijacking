@@ -1277,6 +1277,33 @@ const ensureSecureStoreBackupXmlResources = ({ mobileRootDir }) => {
   }
 };
 
+const ensureAndroidManifestBackupDisabled = ({ mobileRootDir }) => {
+  const manifestPath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "AndroidManifest.xml",
+  );
+  if (!fs.existsSync(manifestPath)) return;
+
+  const source = fs.readFileSync(manifestPath, "utf8");
+  let nextSource = source.replace(
+    /android:allowBackup="true"/gu,
+    'android:allowBackup="false"',
+  );
+  if (!/android:allowBackup=/u.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /<application\s/u,
+      '<application android:allowBackup="false" ',
+    );
+  }
+  if (nextSource !== source) {
+    writeGeneratedFileAtomic(manifestPath, nextSource);
+  }
+};
+
 const buildReactNativePackageListPath = (mobileRootDir) =>
   path.join(
     mobileRootDir,
@@ -2885,6 +2912,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   ensureDetoxAndroidTestConfig({ mobileRootDir });
   ensureDetoxAndroidTestSource({ mobileRootDir });
   ensureSecureStoreBackupXmlResources({ mobileRootDir });
+  ensureAndroidManifestBackupDisabled({ mobileRootDir });
   patchAndroidExpoEntrypoints({ mobileRootDir });
   patchAndroidPostSplashWindowBackground({ mobileRootDir });
   patchAndroidDebugDeveloperSupport({ mobileRootDir });
@@ -3027,20 +3055,28 @@ export const runExpoLocalAndroidDebugBuild = ({
 
       for (const expoModulesCoreConfigureArgs of invocations.expoModulesCoreConfigureArgSets) {
         const gradleUserHome = gradleUserHomeForStep();
-        let expoModulesCoreConfigure = spawn(
-          invocations.gradleCommand,
-          expoModulesCoreConfigureArgs,
-          buildGradleInvocationSpawnOptions({ gradleUserHome }),
-        );
-        expoModulesCoreConfigure = normalizeGradleResult(
-          expoModulesCoreConfigureArgs,
-          expoModulesCoreConfigure,
-        );
-        if (
-          expoModulesCoreConfigure.status !== gradleTimeoutExitStatus &&
-          (expoModulesCoreConfigure.status ?? 1) !== 0 &&
-          isWindows(platform)
-        ) {
+        const maxConfigureAttempts = isWindows(platform) ? 4 : 1;
+        let expoModulesCoreConfigure = { status: 1 };
+        for (let attempt = 0; attempt < maxConfigureAttempts; attempt += 1) {
+          expoModulesCoreConfigure = spawn(
+            invocations.gradleCommand,
+            expoModulesCoreConfigureArgs,
+            buildGradleInvocationSpawnOptions({
+              cleanTransforms: attempt === 0,
+              gradleUserHome,
+            }),
+          );
+          expoModulesCoreConfigure = normalizeGradleResult(
+            expoModulesCoreConfigureArgs,
+            expoModulesCoreConfigure,
+          );
+          if (
+            expoModulesCoreConfigure.status === gradleTimeoutExitStatus ||
+            (expoModulesCoreConfigure.status ?? 1) === 0 ||
+            !isWindows(platform)
+          ) {
+            break;
+          }
           repairExpoModulesCoreWindowsCmakeDirectories({
             mobileRootDir,
             platform,
@@ -3054,21 +3090,6 @@ export const runExpoLocalAndroidDebugBuild = ({
             mobileRootDir,
             platform,
           });
-          expoModulesCoreConfigure = spawn(
-            invocations.gradleCommand,
-            expoModulesCoreConfigureArgs,
-            {
-              ...buildGradleInvocationSpawnOptions({
-                cleanTransforms: false,
-                gradleUserHome,
-              }),
-              shell: true,
-            },
-          );
-          expoModulesCoreConfigure = normalizeGradleResult(
-            expoModulesCoreConfigureArgs,
-            expoModulesCoreConfigure,
-          );
         }
         if ((expoModulesCoreConfigure.status ?? 1) !== 0) {
           return {

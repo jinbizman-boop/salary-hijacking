@@ -3739,3 +3739,190 @@ test("runner repairs and retries Expo modules core CMake configure once on Windo
     true,
   );
 });
+
+test("runner keeps repairing repeated Expo modules core CMake configure transform failures on Windows", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const transformHash = "6c3f5b40f9864a626cb2f0dfaafc46e6";
+  let expoModulesCoreConfigureAttempts = 0;
+  const gradleHomesByAttempt = [];
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args, options = {}) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainActivity.kt",
+          ),
+          "package com.salaryhijacking.mobile\nclass MainActivity {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) ===
+          ":react-native-reanimated:configureCMakeDebug[x86_64]"
+      ) {
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":expo-modules-core:configureCMakeDebug[x86_64]"
+      ) {
+        expoModulesCoreConfigureAttempts += 1;
+        const tempWorkspaceIds = [
+          "229756c0-87ad-44f5-8a91-9911ce4df27f",
+          "f8a5dde0-a4e6-4e20-a03a-be3ab0a7905c",
+        ];
+        const gradleUserHome = options.env.GRADLE_USER_HOME;
+        gradleHomesByAttempt.push(gradleUserHome);
+        if (expoModulesCoreConfigureAttempts < 3) {
+          touch(
+            path.join(
+              gradleUserHome,
+              "caches",
+              "8.10.2",
+              "transforms",
+              `${transformHash}-${tempWorkspaceIds[expoModulesCoreConfigureAttempts - 1]}`,
+              "metadata.bin",
+            ),
+            "temp",
+          );
+          return { status: 1 };
+        }
+        return fs.existsSync(
+          path.join(
+            gradleUserHome,
+            "caches",
+            "8.10.2",
+            "transforms",
+            transformHash,
+            "metadata.bin",
+          ),
+        )
+          ? { status: 0 }
+          : { status: 1 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "debug",
+            "app-debug.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "androidTest",
+            "debug",
+            "app-debug-androidTest.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(expoModulesCoreConfigureAttempts, 3);
+  assert.deepEqual(
+    new Set(gradleHomesByAttempt).size,
+    1,
+    "configure retries must share the same Gradle user home so repaired transforms are visible",
+  );
+});

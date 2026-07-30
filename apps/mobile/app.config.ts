@@ -230,6 +230,7 @@ function androidConfig(versionCode: number): JsonRecord {
       ),
       backgroundColor: "#FFFFFF",
     },
+    allowBackup: false,
     permissions: [
       "POST_NOTIFICATIONS",
       "VIBRATE",
