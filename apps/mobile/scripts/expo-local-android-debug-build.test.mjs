@@ -1139,7 +1139,7 @@ test("repairs Gradle transform temporary workspaces before retrying Windows buil
     gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
   });
 
-  assert.equal(result.moved, 2);
+  assert.equal(result.moved, 1);
   assert.equal(result.removed, 1);
   assert.equal(
     fs.existsSync(path.join(transformsRoot, missingTargetHash)),
@@ -1167,8 +1167,42 @@ test("repairs Gradle transform temporary workspaces before retrying Windows buil
       ),
       "utf8",
     ),
-    "fresh",
+    "stale",
   );
+});
+
+test("preserves existing Gradle immutable transforms when duplicate temporary workspaces remain", () => {
+  const rootDir = makeWorkspace();
+  const transformsRoot = path.join(
+    rootDir,
+    ".gradle-local-debug",
+    "caches",
+    "8.10.2",
+    "transforms",
+  );
+  const existingTargetHash = "6c3f5b40f9864a626cb2f0dfaafc46e6";
+  const duplicateTemp = `${existingTargetHash}-cfb4a1aa-96e3-49a6-92f0-acbae8d4ebea`;
+
+  touch(
+    path.join(transformsRoot, existingTargetHash, "metadata.bin"),
+    "immutable",
+  );
+  touch(path.join(transformsRoot, duplicateTemp, "metadata.bin"), "temp");
+
+  const result = repairGradleTransformTemporaryWorkspaces({
+    gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
+  });
+
+  assert.equal(result.moved, 0);
+  assert.equal(result.removed, 1);
+  assert.equal(
+    fs.readFileSync(
+      path.join(transformsRoot, existingTargetHash, "metadata.bin"),
+      "utf8",
+    ),
+    "immutable",
+  );
+  assert.equal(fs.existsSync(path.join(transformsRoot, duplicateTemp)), false);
 });
 
 test("cleans stale Gradle transform caches before Windows Gradle invocations", () => {
@@ -1256,7 +1290,7 @@ test("repairs Gradle Kotlin DSL accessor temporary workspaces before retrying Wi
     gradleUserHome: path.join(rootDir, ".gradle-local-debug"),
   });
 
-  assert.equal(result.moved, 2);
+  assert.equal(result.moved, 1);
   assert.equal(result.removed, 1);
   assert.equal(
     fs.existsSync(path.join(accessorsRoot, missingTargetHash)),
@@ -1273,6 +1307,13 @@ test("repairs Gradle Kotlin DSL accessor temporary workspaces before retrying Wi
   assert.equal(
     fs.existsSync(path.join(accessorsRoot, existingTargetTemp)),
     false,
+  );
+  assert.equal(
+    fs.readFileSync(
+      path.join(accessorsRoot, existingTargetHash, "metadata.bin"),
+      "utf8",
+    ),
+    "ok",
   );
 });
 
