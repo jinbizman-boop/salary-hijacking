@@ -26,6 +26,7 @@ import {
   regenerateMissingReanimatedWindowsCmakeRules,
   repairReanimatedWindowsCmakeDirectories,
   repairWindowsCmakeExistingInputPhonyEdges,
+  patchWindowsCmakeGeneratedAbsolutePaths,
   runExpoLocalAndroidDebugBuild,
 } from "./expo-local-android-debug-build.mjs";
 
@@ -1172,6 +1173,42 @@ test("repairs Windows CMake prefab paths when referenced inputs already exist", 
   assert.doesNotMatch(source, /\.\.\/prefab\/arm64-v8a/u);
   assert.match(source, /[A-Z]\$:.+ReactAndroidConfigVersion\.cmake/u);
   assert.match(source, /build all: phony/u);
+});
+
+test("keeps subst drive paths Ninja-escaped when patching Windows CMake files", () => {
+  const rootDir = makeWorkspace();
+  const mobileRootDir = path.join(rootDir, "apps", "mobile");
+  const cmakeRootDir = path.join(rootDir, ".cxx", "RelWithDebInfo");
+  const architectureRoot = path.join(cmakeRootDir, "hash", "arm64-v8a");
+  const buildNinjaPath = path.join(architectureRoot, "build.ninja");
+
+  touch(
+    buildNinjaPath,
+    [
+      "cmake_ninja_workdir = Z$:/node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core/android/.cxx/RelWithDebInfo/hash/arm64-v8a/",
+      "build CMakeFiles/expo-modules-core.dir/EventEmitter.cpp.o: CXX_COMPILER__expo-modules-core Z$:/node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core/common/cpp/EventEmitter.cpp",
+      "  INCLUDES = -IZ$:/node_modules/.pnpm/expo-modules-core@2.5.0/node_modules/expo-modules-core/android/src/main/cpp",
+      "",
+    ].join("\n"),
+  );
+
+  const patchedCount = patchWindowsCmakeGeneratedAbsolutePaths({
+    cmakeRootDir,
+    env: {
+      GRADLE_USER_HOME: path.join(mobileRootDir, ".gradle-local-debug"),
+      SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS: "Z:\\",
+      SALARY_HIJACKING_ANDROID_BUILD_SUBST_TARGET: rootDir,
+    },
+    mobileRootDir,
+    platform: "win32",
+  });
+
+  const source = fs.readFileSync(buildNinjaPath, "utf8");
+  assert.equal(patchedCount, 0);
+  assert.match(source, /cmake_ninja_workdir = Z\$:\/node_modules/u);
+  assert.match(source, /CXX_COMPILER__expo-modules-core Z\$:\/node_modules/u);
+  assert.doesNotMatch(source, /Z:\$\/:/u);
+  assert.doesNotMatch(source, /Z:\/\//u);
 });
 
 test("repairs Reanimated Windows CMake directories for the configured ABI", () => {

@@ -2139,7 +2139,7 @@ const replaceAllKnownCmakePaths = (source, replacements) => {
   return nextSource;
 };
 
-const patchWindowsCmakeGeneratedAbsolutePaths = ({
+export const patchWindowsCmakeGeneratedAbsolutePaths = ({
   cmakeRootDir,
   env,
   mobileRootDir,
@@ -2152,6 +2152,7 @@ const patchWindowsCmakeGeneratedAbsolutePaths = ({
   const gradleUserHome = env.GRADLE_USER_HOME;
   const monorepoRootCmakePath = cmakePath(monorepoRootDir);
   const mobileRootCmakePath = cmakePath(mobileRootDir);
+  const usesSubstAlias = Boolean(env[substAliasEnvKey]);
   const gradleUserHomeCmakePath = gradleUserHome
     ? cmakePath(gradleUserHome)
     : "";
@@ -2160,13 +2161,15 @@ const patchWindowsCmakeGeneratedAbsolutePaths = ({
     path.join(mobileRootDir, ".gradle-local-debug-direct"),
   ];
 
-  const replacements = [
-    ["Z:/apps/mobile", mobileRootCmakePath],
-    ["Z:\\apps\\mobile", mobileRootDir],
-    ["Z:/", `${monorepoRootCmakePath}/`],
-    ["Z:\\", `${monorepoRootDir}\\`],
-    ["Z$", monorepoRootDir.replace(/\\/gu, "$/")],
-  ];
+  const replacements = usesSubstAlias
+    ? []
+    : [
+        ["Z:/apps/mobile", mobileRootCmakePath],
+        ["Z:\\apps\\mobile", mobileRootDir],
+        ["Z:/", `${monorepoRootCmakePath}/`],
+        ["Z:\\", `${monorepoRootDir}\\`],
+        ["Z$", monorepoRootDir.replace(/\\/gu, "$/")],
+      ];
 
   if (gradleUserHomeCmakePath) {
     for (const defaultGradleHome of defaultGradleHomes) {
