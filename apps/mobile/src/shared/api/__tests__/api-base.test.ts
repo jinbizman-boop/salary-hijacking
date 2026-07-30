@@ -22,6 +22,15 @@ describe("resolveMobileApiBaseUrl", () => {
     ).toBe("http://localhost:8787");
   });
 
+  it("defaults local web builds to loopback without embedding localhost", () => {
+    expect(
+      resolveMobileApiBaseUrl({
+        environment: "local",
+        platform: "web",
+      }),
+    ).toBe("http://127.0.0.1:8787");
+  });
+
   it("maps localhost to the Android emulator host bridge only in local mode", () => {
     expect(
       resolveMobileApiBaseUrl({

@@ -62,7 +62,7 @@ const DEFAULT_ANDROID_GOOGLE_SERVICES_FILE =
   "./secrets/firebase/google-services.json";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
-const LOCAL_API_BASE_URL = "http://localhost:8787";
+const LOCAL_API_BASE_URL = "http://127.0.0.1:8787";
 const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";
 const PRODUCTION_API_BASE_URL = "https://api.salaryhijacking.com";
 const LOCAL_EAS_PROJECT_ID_SENTINEL = "00000000-0000-4000-8000-000000000000";

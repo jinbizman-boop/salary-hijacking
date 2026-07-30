@@ -303,7 +303,7 @@ describe("mobile Detox E2E contract", () => {
       EXPO_PUBLIC_API_BASE_URL: "",
     };
     expect(appConfig({ config: {} }).extra.api).toEqual(
-      expect.objectContaining({ baseUrl: "http://localhost:8787" }),
+      expect.objectContaining({ baseUrl: "http://127.0.0.1:8787" }),
     );
   });
 

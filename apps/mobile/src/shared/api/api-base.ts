@@ -45,7 +45,7 @@ export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   if (options.environment === "local") {
     return options.platform === "android"
       ? "http://10.0.2.2:8787"
-      : "http://localhost:8787";
+      : "http://127.0.0.1:8787";
   }
   return STAGING_API_BASE_URL;
 }

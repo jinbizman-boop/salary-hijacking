@@ -44,6 +44,7 @@ export const FORBIDDEN_STARTUP_BUNDLE_MARKERS = [
   "2700000",
   "1927000",
   "5780000",
+  "localhost:8787",
 ];
 
 const uniqueSorted = (values) => [...new Set(values)].sort();
