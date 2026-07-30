@@ -2501,7 +2501,9 @@ const androidGradleAssembleTask = (variantName) =>
 const androidApkFileName = (normalizedBuildType) =>
   normalizedBuildType === "debug"
     ? "app-debug.apk"
-    : `app-${normalizedBuildType}.apk`;
+    : normalizedBuildType === "qaRelease"
+      ? "app-qaRelease-unsigned.apk"
+      : `app-${normalizedBuildType}.apk`;
 
 const androidReleaseLintExcludes = (normalizedBuildType, variantName) =>
   normalizedBuildType === "qaRelease"

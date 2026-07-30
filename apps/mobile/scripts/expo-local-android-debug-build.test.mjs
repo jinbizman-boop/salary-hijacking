@@ -1649,7 +1649,7 @@ test("build invocations can target qaRelease APK without AndroidTest packaging",
   );
   assert.match(
     invocations.debugApkPath,
-    /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease\.apk$/,
+    /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease-unsigned\.apk$/,
   );
   assert.match(
     invocations.outputPath,
@@ -1809,7 +1809,7 @@ test("qaRelease build removes stale embedded Expo config assets before packaging
             "outputs",
             "apk",
             "qaRelease",
-            "app-qaRelease.apk",
+            "app-qaRelease-unsigned.apk",
           ),
           "PK\u0003\u0004",
         );
