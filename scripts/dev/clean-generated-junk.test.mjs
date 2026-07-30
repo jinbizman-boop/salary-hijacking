@@ -348,7 +348,7 @@ test("removes repository generated junk while preserving dependencies, local sec
           "salary-hijacking-phone-arm64-debug.apk",
         ),
       ),
-      true,
+      false,
     );
     assert.equal(
       existsSync(
@@ -362,7 +362,7 @@ test("removes repository generated junk while preserving dependencies, local sec
           "salary-hijacking-e2e.apk",
         ),
       ),
-      true,
+      false,
     );
     assert.equal(existsSync(path.join(rootDir, "docs", "source.md")), true);
   } finally {
@@ -387,6 +387,59 @@ test("dry run reports generated junk without deleting it", async () => {
     assert.equal(result.removed.length, 0);
     assert.equal(result.planned.length, 1);
     assert.equal(existsSync(target), true);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("removes high-volume repository build outputs and temporary APK patch artifacts", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-builds-"));
+
+  try {
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        "build",
+        "phone",
+        "android",
+        "salary-hijacking-qa-direct-universal.apk",
+      ),
+      "PK\u0003\u0004",
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "artifacts",
+        "tmp",
+        "apk-bundle-patch",
+        "patched-aligned.apk",
+      ),
+      "PK\u0003\u0004",
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "build",
+        "android-subproject-build",
+        "expo-modules-core",
+        "intermediates",
+        "generated.bin",
+      ),
+    );
+    await touch(path.join(rootDir, "docs", "source.md"));
+
+    const result = await cleanGeneratedJunk({ rootDir, tempRoots: [] });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "build")),
+      false,
+    );
+    assert.equal(existsSync(path.join(rootDir, "artifacts", "tmp")), false);
+    assert.equal(existsSync(path.join(rootDir, "build")), false);
+    assert.equal(existsSync(path.join(rootDir, "docs", "source.md")), true);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
   }

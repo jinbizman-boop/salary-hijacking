@@ -35,6 +35,8 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
 ]);
 
 const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
+  "artifacts/tmp",
+  "apps/mobile/build",
   "apps/mobile/apps",
   "apps/mobile/.eas/build",
   "apps/mobile/.eas/cache",
@@ -42,6 +44,7 @@ const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
   "apps/mobile/android/app/build",
   "apps/mobile/ios/build",
   "apps/mobile/ios/Pods",
+  "build",
 ]);
 
 const PROTECTED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
