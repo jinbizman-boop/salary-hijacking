@@ -2983,7 +2983,7 @@ export const runExpoLocalAndroidDebugBuild = ({
     return options;
   };
   const runGradleInvocation = (args) => {
-    const maxAttempts = isWindows(platform) ? 4 : 1;
+    const maxAttempts = isWindows(platform) ? 8 : 1;
     const gradleUserHome = gradleUserHomeForStep();
     let result = { status: 1 };
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {

@@ -713,6 +713,149 @@ test("runner retries a Gradle step with the same repaired Windows Gradle home", 
   );
 });
 
+test("runner allows qaRelease assembly to recover after late native-lib transform collisions on Windows", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const transformHashes = [
+    "6c3f5b40f9864a626cb2f0dfaafc46e6",
+    "9a4070547643be2ea182d02017c0413c",
+    "28344be5cb970b9afdf94c3804726816",
+    "7b183afd218e128e331af34f7ed36765",
+  ];
+  let assembleQaReleaseAttempts = 0;
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    buildType: "qaRelease",
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args, options = {}) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainActivity.kt",
+          ),
+          "package com.salaryhijacking.mobile\nclass MainActivity {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]).includes(":configureCMake")
+      ) {
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleQaRelease"
+      ) {
+        assembleQaReleaseAttempts += 1;
+        if (assembleQaReleaseAttempts <= transformHashes.length) {
+          const transformHash = transformHashes[assembleQaReleaseAttempts - 1];
+          touch(
+            path.join(
+              options.env.GRADLE_USER_HOME,
+              "caches",
+              "8.10.2",
+              "transforms",
+              `${transformHash}-229756c0-87ad-44f5-8a91-9911ce4df27f`,
+              "metadata.bin",
+            ),
+            "temp",
+          );
+          return { status: 1 };
+        }
+
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "qaRelease",
+            "app-qaRelease-unsigned.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(assembleQaReleaseAttempts, 5);
+});
+
 test("runner repairs stale Gradle transform workspaces before the first Windows Gradle task", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
