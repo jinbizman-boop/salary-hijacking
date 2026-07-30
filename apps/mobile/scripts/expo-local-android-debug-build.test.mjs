@@ -550,6 +550,167 @@ test("runner keeps repairing repeated Gradle temporary workspace failures on Win
   assert.equal(fs.existsSync(expoModulesCoreKotlinClass), true);
 });
 
+test("runner retries a Gradle step with the same repaired Windows Gradle home", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+  const transformHash = "b3db7a06956f2bccac6b9f3f98ca8237";
+  const gradleHomesByAttempt = [];
+  let assembleDebugAttempts = 0;
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = runExpoLocalAndroidDebugBuild({
+    androidToolHomeDir: rootDir,
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+    spawn(command, args, options = {}) {
+      const commandName = path.basename(String(command)).toLowerCase();
+      if (commandName.includes("expo")) {
+        touch(path.join(rootDir, "android", "gradlew.bat"));
+        touch(
+          path.join(rootDir, "android", "build.gradle"),
+          "allprojects {}\n",
+        );
+        touch(
+          path.join(rootDir, "android", "app", "build.gradle"),
+          "android { defaultConfig {} }\ndependencies {}\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:generateAutolinkingPackageList"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "generated",
+            "autolinking",
+            "src",
+            "main",
+            "java",
+            "com",
+            "facebook",
+            "react",
+            "PackageList.java",
+          ),
+          "package com.facebook.react;\n",
+        );
+        return { status: 0 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === "assembleDebug"
+      ) {
+        assembleDebugAttempts += 1;
+        const gradleUserHome = options.env.GRADLE_USER_HOME;
+        gradleHomesByAttempt.push(gradleUserHome);
+        const immutablePath = path.join(
+          gradleUserHome,
+          "caches",
+          "8.13",
+          "transforms",
+          transformHash,
+          "metadata.bin",
+        );
+
+        if (assembleDebugAttempts === 1) {
+          touch(
+            path.join(
+              gradleUserHome,
+              "caches",
+              "8.13",
+              "transforms",
+              `${transformHash}-42178b6f-79f7-4264-b3f9-3df7f4c1a571`,
+              "metadata.bin",
+            ),
+            "temp",
+          );
+          return { status: 1 };
+        }
+
+        if (
+          gradleUserHome === gradleHomesByAttempt[0] &&
+          fs.existsSync(immutablePath)
+        ) {
+          touch(
+            path.join(
+              rootDir,
+              "android",
+              "app",
+              "build",
+              "outputs",
+              "apk",
+              "debug",
+              "app-debug.apk",
+            ),
+            "PK\u0003\u0004",
+          );
+          return { status: 0 };
+        }
+
+        return { status: 1 };
+      }
+
+      if (
+        commandName.includes("gradlew") &&
+        String(args[0]) === ":app:assembleDebugAndroidTest"
+      ) {
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "build",
+            "outputs",
+            "apk",
+            "androidTest",
+            "debug",
+            "app-debug-androidTest.apk",
+          ),
+          "PK\u0003\u0004",
+        );
+        return { status: 0 };
+      }
+
+      return { status: 0 };
+    },
+  });
+
+  assert.equal(result.status, 0, result.failures.join("\n"));
+  assert.equal(gradleHomesByAttempt.length, 2);
+  assert.equal(gradleHomesByAttempt[0], gradleHomesByAttempt[1]);
+  assert.equal(
+    gradleHomesByAttempt[0].startsWith(
+      path.join(rootDir, ".gradle-local-debug", "invocations"),
+    ),
+    true,
+  );
+});
+
 test("runner repairs stale Gradle transform workspaces before the first Windows Gradle task", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
@@ -2641,7 +2802,7 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
     path.basename(calls[6].options.env.GRADLE_USER_HOME),
     /^\d{3}$/u,
   );
-  assert.notEqual(
+  assert.equal(
     calls[4].options.env.GRADLE_USER_HOME,
     calls[5].options.env.GRADLE_USER_HOME,
   );
