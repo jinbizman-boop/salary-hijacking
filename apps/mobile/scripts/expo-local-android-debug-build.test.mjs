@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   buildGradleNodeExecutableSource,
@@ -1069,7 +1070,10 @@ test("cleans stale Gradle transform caches before Windows Gradle invocations", (
 });
 
 test("Android Gradle wrapper stays on the AGP 8.8 supported default Gradle version", () => {
-  const mobileRootDir = path.resolve(process.cwd(), "apps", "mobile");
+  const mobileRootDir = path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    "..",
+  );
   const wrapperPropertiesPath = path.join(
     mobileRootDir,
     "android",
@@ -1614,6 +1618,36 @@ test("build invocations can target qaRelease APK without AndroidTest packaging",
     invocations.outputPath,
     /build[\\/]qa[\\/]android[\\/]salary-hijacking-qa-release-like\.apk$/,
   );
+});
+
+test("qaRelease APK build excludes Android release lint model tasks from the Gradle assemble invocation", () => {
+  const rootDir = makeWorkspace();
+  writeMobileFixture(rootDir);
+  touch(path.join(rootDir, "android", "gradlew.bat"));
+
+  const invocations = buildExpoLocalAndroidDebugInvocations({
+    buildType: "qaRelease",
+    mobileRootDir: rootDir,
+    output: "build/qa/android/salary-hijacking-qa-release-like.apk",
+    platform: "win32",
+  });
+
+  for (const taskName of [
+    "lintVitalAnalyzeQaRelease",
+    "lintVitalReportQaRelease",
+    "lintVitalQaRelease",
+    "lintAnalyzeQaRelease",
+    "lintReportQaRelease",
+    "lintQaRelease",
+    "generateReleaseLintModel",
+  ]) {
+    const excludeIndex = invocations.gradleArgs.indexOf(taskName) - 1;
+    assert.equal(
+      invocations.gradleArgs[excludeIndex],
+      "-x",
+      `${taskName} must be excluded from release-like APK packaging on Windows`,
+    );
+  }
 });
 
 test("qaRelease build removes stale embedded Expo config assets before packaging", () => {

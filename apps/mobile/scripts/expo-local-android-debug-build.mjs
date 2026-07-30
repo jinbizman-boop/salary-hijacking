@@ -2410,6 +2410,26 @@ const androidApkFileName = (normalizedBuildType) =>
     ? "app-debug.apk"
     : `app-${normalizedBuildType}.apk`;
 
+const androidReleaseLintExcludes = (normalizedBuildType, variantName) =>
+  normalizedBuildType === "qaRelease"
+    ? [
+        "-x",
+        `lintVitalAnalyze${variantName}`,
+        "-x",
+        `lintVitalReport${variantName}`,
+        "-x",
+        `lintVital${variantName}`,
+        "-x",
+        `lintAnalyze${variantName}`,
+        "-x",
+        `lintReport${variantName}`,
+        "-x",
+        `lint${variantName}`,
+        "-x",
+        "generateReleaseLintModel",
+      ]
+    : [];
+
 export const buildExpoLocalAndroidDebugInvocations = ({
   applicationIdSuffix = "",
   architecture = "x86_64",
@@ -2491,6 +2511,7 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "-x",
       ":app:generateAutolinkingPackageList",
       ...expoModulesCoreConfigureExcludes,
+      ...androidReleaseLintExcludes(normalizedBuildType, variantName),
     ],
     gradleCommand,
     outputPath: path.resolve(mobileRootDir, output),
