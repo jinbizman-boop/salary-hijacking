@@ -2270,6 +2270,34 @@ test("build invocations warm native CMake outputs for every requested APK ABI", 
   ]);
 });
 
+test("qaRelease invocations warm release CMake outputs before assemble", () => {
+  const rootDir = makeWorkspace();
+  writeMobileFixture(rootDir);
+  touch(path.join(rootDir, "android", "gradlew.bat"));
+
+  const invocations = buildExpoLocalAndroidDebugInvocations({
+    architecture: "arm64-v8a",
+    buildType: "qaRelease",
+    mobileRootDir: rootDir,
+    platform: "win32",
+  });
+
+  assert.ok(
+    invocations.expoModulesCoreConfigureArgSets.some(
+      (args) =>
+        args[0] ===
+        ":expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]",
+    ),
+  );
+  assert.ok(
+    invocations.reanimatedConfigureArgSets.some(
+      (args) =>
+        args[0] ===
+        ":react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]",
+    ),
+  );
+});
+
 test("rewrites Expo CLI Gradle path to the subst drive root on Windows", () => {
   const source = [
     "react {",

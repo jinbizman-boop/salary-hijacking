@@ -31,6 +31,9 @@ export const expoModulesCoreCmakeDebugRoot = (mobileRootDir) =>
     "Debug",
   );
 
+const nativeCmakeBuildTypesForAndroidBuild = (normalizedBuildType) =>
+  normalizedBuildType === "qaRelease" ? ["Debug", "RelWithDebInfo"] : ["Debug"];
+
 const isWindows = (platform) => platform === "win32";
 
 const substAliasEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS";
@@ -1864,72 +1867,84 @@ export const repairReanimatedWindowsCmakeDirectories = ({
   platform,
 }) => {
   if (!isWindows(platform)) return;
-  const reanimatedCxxRoot = path.join(
-    mobileRootDir,
-    "node_modules",
-    "react-native-reanimated",
-    "android",
-    ".cxx",
-    "Debug",
+  const reanimatedCxxRoots = ["Debug", "RelWithDebInfo"].map((buildType) =>
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      "react-native-reanimated",
+      "android",
+      ".cxx",
+      buildType,
+    ),
   );
   const sourceSegments = toWindowsCmakePathSegments(
     path.join(mobileRootDir, "node_modules"),
   );
-  const hashRoots = fs.existsSync(reanimatedCxxRoot)
-    ? fs
-        .readdirSync(reanimatedCxxRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .flatMap((entry) => {
-          const hashRoot = path.join(reanimatedCxxRoot, entry.name);
-          const architectureRoots = fs
-            .readdirSync(hashRoot, { withFileTypes: true })
-            .filter((candidate) => candidate.isDirectory())
-            .map((candidate) => path.join(hashRoot, candidate.name));
-          return architectureRoots.length > 0
-            ? architectureRoots
-            : [path.join(hashRoot, "x86_64")];
-        })
-    : [];
-  for (const architectureRoot of hashRoots) {
-    for (const targetName of ["reanimated", "worklets"]) {
-      fs.mkdirSync(
-        path.join(
-          architectureRoot,
-          "src",
-          "main",
-          "cpp",
-          targetName,
-          "CMakeFiles",
-          `${targetName}.dir`,
-          ...sourceSegments,
+  for (const reanimatedCxxRoot of reanimatedCxxRoots) {
+    const hashRoots = fs.existsSync(reanimatedCxxRoot)
+      ? fs
+          .readdirSync(reanimatedCxxRoot, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .flatMap((entry) => {
+            const hashRoot = path.join(reanimatedCxxRoot, entry.name);
+            const architectureRoots = fs
+              .readdirSync(hashRoot, { withFileTypes: true })
+              .filter((candidate) => candidate.isDirectory())
+              .map((candidate) => path.join(hashRoot, candidate.name));
+            return architectureRoots.length > 0
+              ? architectureRoots
+              : [path.join(hashRoot, "x86_64")];
+          })
+      : [];
+    for (const architectureRoot of hashRoots) {
+      for (const targetName of ["reanimated", "worklets"]) {
+        fs.mkdirSync(
+          path.join(
+            architectureRoot,
+            "src",
+            "main",
+            "cpp",
+            targetName,
+            "CMakeFiles",
+            `${targetName}.dir`,
+            ...sourceSegments,
+          ),
+          { recursive: true },
+        );
+        mkdirSyncLongPath(
+          path.join(
+            architectureRoot,
+            "src",
+            "main",
+            "cpp",
+            targetName,
+            "CMakeFiles",
+            `${targetName}.dir`,
+            ...sourceSegments,
+          ),
+        );
+      }
+    }
+    const cmakeFileDirs = collectDirectories(reanimatedCxxRoot).filter(
+      (directory) =>
+        directory.endsWith(".dir") &&
+        directory.includes(
+          `${path.sep}src${path.sep}main${path.sep}cpp${path.sep}`,
         ),
-        { recursive: true },
-      );
-      mkdirSyncLongPath(
-        path.join(
-          architectureRoot,
-          "src",
-          "main",
-          "cpp",
-          targetName,
-          "CMakeFiles",
-          `${targetName}.dir`,
-          ...sourceSegments,
-        ),
-      );
+    );
+    for (const directory of cmakeFileDirs) {
+      mkdirSyncLongPath(path.join(directory, ...sourceSegments));
     }
   }
-  const cmakeFileDirs = collectDirectories(reanimatedCxxRoot).filter(
-    (directory) =>
-      directory.endsWith(".dir") &&
-      directory.includes(
-        `${path.sep}src${path.sep}main${path.sep}cpp${path.sep}`,
-      ),
-  );
-  for (const directory of cmakeFileDirs) {
-    mkdirSyncLongPath(path.join(directory, ...sourceSegments));
-  }
 };
+
+const reanimatedAndroidRoot = (mobileRootDir) =>
+  path.join(
+    mobileRootDir,
+    "node_modules",
+    "react-native-reanimated",
+    "android",
+  );
 
 const cmakeExecutableFromCache = ({ buildDir, env = process.env } = {}) => {
   const cachePath = path.join(buildDir, "CMakeCache.txt");
@@ -2009,7 +2024,7 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
   if (!isWindows(platform)) return;
   const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
   const nodeModulesRoot = path.join(monorepoRootDir, "node_modules");
-  const expoModulesRoots = [
+  const expoModulesRoots = ["Debug", "RelWithDebInfo"].flatMap((buildType) => [
     path.join(
       mobileRootDir,
       "node_modules",
@@ -2019,7 +2034,7 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
       "expo-modules-core",
       "android",
       ".cxx",
-      "Debug",
+      buildType,
     ),
     path.join(
       mobileRootDir,
@@ -2027,7 +2042,7 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
       "expo-modules-core",
       "android",
       ".cxx",
-      "Debug",
+      buildType,
     ),
     path.join(
       nodeModulesRoot,
@@ -2037,9 +2052,9 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
       "expo-modules-core",
       "android",
       ".cxx",
-      "Debug",
+      buildType,
     ),
-  ];
+  ]);
   const sourceSegments = toWindowsCmakePathSegments(nodeModulesRoot);
 
   for (const debugRoot of expoModulesRoots) {
@@ -2213,35 +2228,64 @@ const patchExpoModulesCoreWindowsCmakeAbsolutePaths = ({
   env,
   mobileRootDir,
   platform,
-}) =>
-  patchWindowsCmakeGeneratedAbsolutePaths({
-    cmakeRootDir: expoModulesCoreCmakeDebugRoot(mobileRootDir),
-    env,
-    mobileRootDir,
-    platform,
-  });
+}) => {
+  let patchedCount = 0;
+  for (const cmakeRootDir of [
+    expoModulesCoreCmakeDebugRoot(mobileRootDir),
+    path.join(
+      defaultMonorepoRootDir(mobileRootDir),
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "RelWithDebInfo",
+    ),
+  ]) {
+    patchedCount += patchWindowsCmakeGeneratedAbsolutePaths({
+      cmakeRootDir,
+      env,
+      mobileRootDir,
+      platform,
+    });
+  }
+  return patchedCount;
+};
 
-const reanimatedCmakeDebugRoot = (mobileRootDir) =>
+const reanimatedCmakeRoot = (mobileRootDir, buildType = "Debug") =>
   path.join(
     mobileRootDir,
     "node_modules",
     "react-native-reanimated",
     "android",
     ".cxx",
-    "Debug",
+    buildType,
   );
+
+const reanimatedCmakeDebugRoot = (mobileRootDir) =>
+  reanimatedCmakeRoot(mobileRootDir, "Debug");
 
 const patchReanimatedWindowsCmakeAbsolutePaths = ({
   env,
   mobileRootDir,
   platform,
-}) =>
-  patchWindowsCmakeGeneratedAbsolutePaths({
-    cmakeRootDir: reanimatedCmakeDebugRoot(mobileRootDir),
-    env,
-    mobileRootDir,
-    platform,
-  });
+}) => {
+  let patchedCount = 0;
+  for (const cmakeRootDir of [
+    reanimatedCmakeRoot(mobileRootDir, "Debug"),
+    reanimatedCmakeRoot(mobileRootDir, "RelWithDebInfo"),
+  ]) {
+    patchedCount += patchWindowsCmakeGeneratedAbsolutePaths({
+      cmakeRootDir,
+      env,
+      mobileRootDir,
+      platform,
+    });
+  }
+  return patchedCount;
+};
 
 const removeWindowsNinjaState = ({ cmakeRootDir, platform }) => {
   if (!isWindows(platform)) return 0;
@@ -2260,16 +2304,35 @@ const removeWindowsNinjaState = ({ cmakeRootDir, platform }) => {
 };
 
 const removeExpoModulesCoreWindowsNinjaState = ({ mobileRootDir, platform }) =>
-  removeWindowsNinjaState({
-    cmakeRootDir: expoModulesCoreCmakeDebugRoot(mobileRootDir),
-    platform,
-  });
+  [
+    expoModulesCoreCmakeDebugRoot(mobileRootDir),
+    path.join(
+      defaultMonorepoRootDir(mobileRootDir),
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "RelWithDebInfo",
+    ),
+  ].reduce(
+    (removed, cmakeRootDir) =>
+      removed + removeWindowsNinjaState({ cmakeRootDir, platform }),
+    0,
+  );
 
 const removeReanimatedWindowsNinjaState = ({ mobileRootDir, platform }) =>
-  removeWindowsNinjaState({
-    cmakeRootDir: reanimatedCmakeDebugRoot(mobileRootDir),
-    platform,
-  });
+  ["Debug", "RelWithDebInfo"].reduce(
+    (removed, buildType) =>
+      removed +
+      removeWindowsNinjaState({
+        cmakeRootDir: reanimatedCmakeRoot(mobileRootDir, buildType),
+        platform,
+      }),
+    0,
+  );
 
 const normalizeForPrefix = (value) =>
   path
@@ -2472,12 +2535,30 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     ...debugQaGradleProperties,
   ];
   const localDebugJsEngineGradleArgs = [];
+  const cmakeWarmupBuildTypes =
+    nativeCmakeBuildTypesForAndroidBuild(normalizedBuildType);
   const expoModulesCoreConfigureExcludes = architectures.flatMap(
-    (nextArchitecture) => [
-      "-x",
-      `:expo-modules-core:configureCMakeDebug[${nextArchitecture}]`,
-    ],
+    (nextArchitecture) =>
+      cmakeWarmupBuildTypes.flatMap((cmakeBuildType) => [
+        "-x",
+        `:expo-modules-core:configureCMake${cmakeBuildType}[${nextArchitecture}]`,
+      ]),
   );
+  const buildCmakeConfigureArgSets = (projectPath) =>
+    cmakeWarmupBuildTypes.flatMap((cmakeBuildType) =>
+      architectures.map((nextArchitecture) => [
+        `${projectPath}:configureCMake${cmakeBuildType}[${nextArchitecture}]`,
+        "--no-daemon",
+        `-PreactNativeArchitectures=${architectureList}`,
+        "-PnewArchEnabled=false",
+      ]),
+    );
+  const buildFirstCmakeConfigureArgs = (projectPath) => [
+    `${projectPath}:configureCMake${cmakeWarmupBuildTypes[0]}[${architectures[0]}]`,
+    "--no-daemon",
+    `-PreactNativeArchitectures=${architectureList}`,
+    "-PnewArchEnabled=false",
+  ];
   return {
     androidTestArgs:
       normalizedBuildType === "debug"
@@ -2520,31 +2601,17 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "--no-daemon",
       ...stableLocalDebugGradleArgs,
     ],
-    reanimatedConfigureArgSets: architectures.map((nextArchitecture) => [
-      `:react-native-reanimated:configureCMakeDebug[${nextArchitecture}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ]),
+    reanimatedConfigureArgSets: buildCmakeConfigureArgSets(
+      ":react-native-reanimated",
+    ),
     prebuildArgs: ["prebuild", "--platform", "android", "--no-install"],
-    reanimatedConfigureArgs: [
-      `:react-native-reanimated:configureCMakeDebug[${architectures[0]}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ],
-    expoModulesCoreConfigureArgSets: architectures.map((nextArchitecture) => [
-      `:expo-modules-core:configureCMakeDebug[${nextArchitecture}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ]),
-    expoModulesCoreConfigureArgs: [
-      `:expo-modules-core:configureCMakeDebug[${architectures[0]}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ],
+    reanimatedConfigureArgs: buildFirstCmakeConfigureArgs(
+      ":react-native-reanimated",
+    ),
+    expoModulesCoreConfigureArgSets:
+      buildCmakeConfigureArgSets(":expo-modules-core"),
+    expoModulesCoreConfigureArgs:
+      buildFirstCmakeConfigureArgs(":expo-modules-core"),
     testApkPath: path.join(
       mobileRootDir,
       "android",
