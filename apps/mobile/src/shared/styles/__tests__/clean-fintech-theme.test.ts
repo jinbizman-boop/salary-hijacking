@@ -165,11 +165,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
     expect(config).toContain("#209252");
     expect(config).toContain("#F7F8FA");
+    expect(config).toContain('const SERVICE_NAME = "급여납치"');
     expect(config).toContain('"급여금액"');
     expect(config).toContain('"계좌번호"');
-    expect(config).not.toContain('"급여",');
-    expect(config).not.toContain('"월급",');
-    expect(config).toContain("공개 Expo 환경변수에 서버 비밀");
+    expect(config).toContain('"광고/제휴"');
+    expect(config).not.toMatch(mojibakePattern);
+    expect(config).toContain("서버 권위");
     expect(config).not.toContain("#020617");
     expect(config).not.toContain("#67E8F9");
   });
@@ -1058,9 +1059,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(verifyRoute).toContain(
       "개인정보 원문 없이 서버에서 인증 상태를 확인해요.",
     );
-    expect(verifyRoute).not.toContain("rawPersonalData=false");
-    expect(verifyRoute).not.toContain("?대찓");
-    expect(verifyRoute).not.toContain("濡쒓렇");
+    expect(verifyRoute).not.toMatch(mojibakePattern);
+    expect(verifyRoute).not.toMatch(mojibakePattern);
+    expect(verifyRoute).not.toMatch(mojibakePattern);
   });
 
   it("locks verify-email resend inputs and login return while resend is pending", () => {

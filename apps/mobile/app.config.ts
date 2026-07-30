@@ -1,6 +1,6 @@
 /** apps/mobile/app.config.ts
  * 급여납치 모바일 Expo 설정 최종본.
- * 서버 권위, 개인정보 최소화, 광고 금융 타겟팅 금지, 알림/운영/OTA/빌드 설정을 한 파일에 고정한다.
+ * 서버 권위, 개인정보 최소화, 금융 원문 광고 타겟팅 금지, 알림/운영/OTA/빌드 설정을 한 파일에 고정한다.
  */
 
 declare const process: {
@@ -198,7 +198,7 @@ function iosConfig(buildNumber: string): JsonRecord {
       CFBundleAllowMixedLocalizations: true,
       LSApplicationQueriesSchemes: [DEFAULT_SCHEME, "https"],
       NSFaceIDUsageDescription:
-        "급여납치 보안 잠금과 민감 데이터 보호를 위해 사용합니다.",
+        "급여납치 보안 인증과 민감 데이터 보호를 위해 사용합니다.",
       NSUserTrackingUsageDescription:
         "급여납치는 금융 금액 기반 광고 타겟팅과 외부 추적을 사용하지 않습니다.",
       UIBackgroundModes: ["remote-notification"],
@@ -382,7 +382,7 @@ function adsFlags(): JsonRecord {
     expenseAmountTargetingAllowed: false,
     savingsAmountTargetingAllowed: false,
     userIdentifierSharedWithAdvertisers: false,
-    labelRequired: "광고·제휴",
+    labelRequired: "광고/제휴",
   };
 }
 
