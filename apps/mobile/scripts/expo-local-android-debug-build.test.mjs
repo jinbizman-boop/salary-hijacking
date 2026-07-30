@@ -52,6 +52,13 @@ const existsInside = (rootDir) => (filePath) => {
   return fs.existsSync(filePath);
 };
 
+const qaSigningEnv = (rootDir) => ({
+  SALARY_HIJACKING_QA_KEYSTORE_FILE: path.join(rootDir, "qa-signing.jks"),
+  SALARY_HIJACKING_QA_KEYSTORE_PASSWORD: "store-password",
+  SALARY_HIJACKING_QA_KEY_ALIAS: "salary-hijacking-qa",
+  SALARY_HIJACKING_QA_KEY_PASSWORD: "key-password",
+});
+
 const writeMobileFixture = (rootDir) => {
   writeJson(path.join(rootDir, "app.config.ts"), {
     expo: { android: { package: "com.salaryhijacking.mobile" } },
@@ -125,6 +132,7 @@ test("qaRelease preflight disables the embedded E2E build flag", () => {
       LOCALAPPDATA: localAppData,
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),
+      ...qaSigningEnv(rootDir),
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
@@ -135,6 +143,41 @@ test("qaRelease preflight disables the embedded E2E build flag", () => {
   assert.equal(result.ok, true, result.failures.join("\n"));
   assert.equal(result.env.EXPO_PUBLIC_E2E_BUILD, "false");
   assert.equal(result.gradleArgs[0], "assembleQaRelease");
+});
+
+test("qaRelease preflight rejects missing QA signing material", () => {
+  const rootDir = makeWorkspace();
+  const localAppData = path.join(rootDir, "AppData", "Local");
+  const sdkRoot = path.join(localAppData, "Android", "Sdk");
+  const javaHome = path.join(
+    rootDir,
+    "Program Files",
+    "Android",
+    "Android Studio",
+    "jbr",
+  );
+
+  writeMobileFixture(rootDir);
+  touch(path.join(sdkRoot, "platform-tools", "adb.EXE"));
+  touch(path.join(sdkRoot, "emulator", "emulator.EXE"));
+  touch(path.join(javaHome, "bin", "java.EXE"));
+
+  const result = checkExpoLocalAndroidDebugPrerequisites({
+    androidToolHomeDir: rootDir,
+    buildType: "qaRelease",
+    env: {
+      LOCALAPPDATA: localAppData,
+      PATHEXT: ".EXE;.CMD;.BAT;.COM",
+      PROGRAMFILES: path.join(rootDir, "Program Files"),
+    },
+    existsSync: existsInside(rootDir),
+    mobileRootDir: rootDir,
+    pathValue: "",
+    platform: "win32",
+  });
+
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join("\n"), /QA signing material/);
 });
 
 test("preflight discovers bundled monorepo .tools JDK and Android SDK", () => {
@@ -192,6 +235,7 @@ test("preflight pins a workspace Node executable for Gradle subprocesses", () =>
       LOCALAPPDATA: localAppData,
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),
+      ...qaSigningEnv(rootDir),
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
@@ -744,6 +788,7 @@ test("runner allows qaRelease assembly to recover after late native-lib transfor
       LOCALAPPDATA: localAppData,
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),
+      ...qaSigningEnv(rootDir),
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
@@ -841,7 +886,7 @@ test("runner allows qaRelease assembly to recover after late native-lib transfor
             "outputs",
             "apk",
             "qaRelease",
-            "app-qaRelease-unsigned.apk",
+            "app-qaRelease.apk",
           ),
           "PK\u0003\u0004",
         );
@@ -1833,7 +1878,7 @@ test("build invocations can target qaRelease APK without AndroidTest packaging",
   );
   assert.match(
     invocations.debugApkPath,
-    /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease-unsigned\.apk$/,
+    /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease\.apk$/,
   );
   assert.match(
     invocations.outputPath,
@@ -1930,6 +1975,7 @@ test("qaRelease build removes stale embedded Expo config assets before packaging
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),
       SALARY_HIJACKING_ANDROID_BUILD_SUBST_DISABLE: "1",
+      ...qaSigningEnv(rootDir),
     },
     existsSync: existsInside(rootDir),
     mobileRootDir: rootDir,
@@ -1993,7 +2039,7 @@ test("qaRelease build removes stale embedded Expo config assets before packaging
             "outputs",
             "apk",
             "qaRelease",
-            "app-qaRelease-unsigned.apk",
+            "app-qaRelease.apk",
           ),
           "PK\u0003\u0004",
         );

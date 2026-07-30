@@ -2481,11 +2481,18 @@ const buildDebugQaGradleProperties = ({
 const androidGradleAssembleTask = (variantName) =>
   variantName === "Debug" ? "assembleDebug" : `assemble${variantName}`;
 
+const qaSigningEnvKeys = [
+  "SALARY_HIJACKING_QA_KEYSTORE_FILE",
+  "SALARY_HIJACKING_QA_KEYSTORE_PASSWORD",
+  "SALARY_HIJACKING_QA_KEY_ALIAS",
+  "SALARY_HIJACKING_QA_KEY_PASSWORD",
+];
+
 const androidApkFileName = (normalizedBuildType) =>
   normalizedBuildType === "debug"
     ? "app-debug.apk"
     : normalizedBuildType === "qaRelease"
-      ? "app-qaRelease-unsigned.apk"
+      ? "app-qaRelease.apk"
       : `app-${normalizedBuildType}.apk`;
 
 const androidReleaseLintExcludes = (normalizedBuildType, variantName) =>
@@ -2687,6 +2694,16 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
   }
   if (!existsSync(path.join(mobileRootDir, "app.config.ts"))) {
     failures.push("Expo app.config.ts is missing.");
+  }
+  if (normalizeAndroidBuildType(buildType) === "qaRelease") {
+    const missingQaSigningKeys = qaSigningEnvKeys.filter(
+      (key) => !String(env[key] ?? "").trim(),
+    );
+    if (missingQaSigningKeys.length > 0) {
+      failures.push(
+        `QA signing material is required for qaRelease builds. Missing: ${missingQaSigningKeys.join(", ")}`,
+      );
+    }
   }
 
   const javaHome = resolveJavaHome({
