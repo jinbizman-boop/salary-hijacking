@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const defaultDownloads = "C:/Users/PC/Downloads";
+const defaultArtifactSourceZips =
+  "D:/salary-hijacking-artifacts/design-source-zips";
 const stitchRoot = join(repoRoot, "docs/design/stitch/2026-07-16");
 const screensDir = join(stitchRoot, "screens");
 const htmlDir = join(stitchRoot, "html");
@@ -176,7 +178,11 @@ function sha256(buffer) {
 }
 
 function findZips(downloads) {
-  const ps = `Get-ChildItem -LiteralPath '${downloads.replaceAll("'", "''")}' -Filter 'stitch_salary_hijacking_design_system*.zip' | Sort-Object Name | ForEach-Object { $_.FullName }`;
+  const roots = [downloads, defaultArtifactSourceZips]
+    .map((root) => root.replaceAll("'", "''"))
+    .map((root) => `'${root}'`)
+    .join(",");
+  const ps = `@(${roots}) | Where-Object { Test-Path -LiteralPath $_ } | ForEach-Object { Get-ChildItem -LiteralPath $_ -Filter 'stitch_salary_hijacking_design_system*.zip' } | Sort-Object Name,FullName -Unique | ForEach-Object { $_.FullName }`;
   return execFileSync("powershell", ["-NoProfile", "-Command", ps], {
     encoding: "utf8",
   })

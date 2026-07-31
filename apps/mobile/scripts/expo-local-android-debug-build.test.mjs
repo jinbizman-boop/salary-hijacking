@@ -2537,7 +2537,7 @@ test("build invocations warm native CMake outputs for every requested APK ABI", 
   ]);
 });
 
-test("qaRelease invocations warm release CMake outputs before assemble", () => {
+test("qaRelease invocations avoid separate release CMake warmups before assemble", () => {
   const rootDir = makeWorkspace();
   writeMobileFixture(rootDir);
   touch(path.join(rootDir, "android", "gradlew.bat"));
@@ -2550,17 +2550,13 @@ test("qaRelease invocations warm release CMake outputs before assemble", () => {
   });
 
   assert.ok(
-    invocations.expoModulesCoreConfigureArgSets.some(
-      (args) =>
-        args[0] ===
-        ":expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]",
+    invocations.expoModulesCoreConfigureArgSets.every(
+      (args) => !String(args[0]).includes("RelWithDebInfo"),
     ),
   );
   assert.ok(
-    invocations.reanimatedConfigureArgSets.some(
-      (args) =>
-        args[0] ===
-        ":react-native-reanimated:configureCMakeRelWithDebInfo[arm64-v8a]",
+    invocations.reanimatedConfigureArgSets.every(
+      (args) => !String(args[0]).includes("RelWithDebInfo"),
     ),
   );
 });

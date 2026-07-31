@@ -31,8 +31,7 @@ export const expoModulesCoreCmakeDebugRoot = (mobileRootDir) =>
     "Debug",
   );
 
-const nativeCmakeBuildTypesForAndroidBuild = (normalizedBuildType) =>
-  normalizedBuildType === "qaRelease" ? ["Debug", "RelWithDebInfo"] : ["Debug"];
+const nativeCmakeBuildTypesForAndroidBuild = (normalizedBuildType) => ["Debug"];
 
 const isWindows = (platform) => platform === "win32";
 
