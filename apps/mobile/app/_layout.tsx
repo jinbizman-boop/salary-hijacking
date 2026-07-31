@@ -1,6 +1,6 @@
 /** apps/mobile/app/_layout.tsx
  * 급여납치 모바일 루트 레이아웃.
- * 정적 import와 JSX 없이 Expo Router, React Native 런타임 모듈을 안전하게 로딩한다.
+ * 정적 import와 JSX 없이 Expo Router, React Native, Expo 모듈을 안전하게 로딩한다.
  */
 
 import { createAuthApi } from "../src/features/auth/api";
