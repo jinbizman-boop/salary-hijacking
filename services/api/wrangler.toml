@@ -104,10 +104,7 @@ ADMIN_REASON_REQUIRED = "true"
 SERVER_AUTHORITY_CALCULATION = "true"
 
 [env.staging.triggers]
-crons = [
-  "*/15 * * * *",
-  "0 15 * * *"
-]
+crons = []
 
 [[env.staging.r2_buckets]]
 binding = "UPLOADS_BUCKET"

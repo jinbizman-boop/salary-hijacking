@@ -59,6 +59,7 @@ const ANDROID_APK_ARTIFACT_FILE_PATTERN =
 const ANDROID_ARTIFACT_METADATA_FILE_PATTERN =
   /^(?:build-info-.+\.json|checksums-.+\.txt|final-qa-apk-manifest\.json)$/u;
 const GENERATED_ARTIFACT_JUNK_DIRECTORY_PATTERNS = [
+  /^artifacts\/qa\/apk-inspect-.+$/u,
   /^artifacts\/qa\/gradle-(?:home|user-home)(?:-.+)?$/u,
   /^artifacts\/tmp\/gradle-(?:home|temp)(?:-.+)?$/u,
 ];
@@ -79,7 +80,12 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^salary-secrets-(?:evidence|proof)-/i,
   /^salary-security-audit-evidence-/i,
   /^salary-staging-smoke-/i,
+  /^stitch_salary_hijacking_design_system(?:_classified)?(?: \(\d+\))?\.zip$/i,
+  /^apk-inspect-/i,
   /^chrome-clean-fintech/i,
+  /^DiagOutputDir$/i,
+  /^gradle-.+\.log$/i,
+  /^jest$/i,
   /^metro-cache$/i,
   /^metro-file-map-/i,
   /^haste-map-/i,
@@ -89,6 +95,7 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^v8-compile-cache$/i,
   /^hsperfdata_/i,
   /^paycheck-accounting/i,
+  /^pnpm-cache$/i,
   /^node-test-run-/i,
 ];
 const REMOVE_RETRY_OPTIONS = {
@@ -155,6 +162,7 @@ function isRepositoryJunkFile(relativePath) {
     posixPath.startsWith("artifacts/qa/") ||
     posixPath.startsWith("release/evidence/final-qa-command-logs/")
   ) {
+    if (/^artifacts\/qa\/gradle-.+\.log$/u.test(posixPath)) return true;
     return false;
   }
 
@@ -358,6 +366,8 @@ export function defaultTempRoots() {
     process.env.TEMP,
     process.env.TMP,
     process.env.TMPDIR,
+    process.env.LOCALAPPDATA,
+    "C:\\salary-hijacking-artifacts\\repo-artifacts\\qa",
     ...windowsCodexTempRoots,
     "D:\\codex-temp\\salary-hijacking",
   ];

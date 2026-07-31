@@ -139,10 +139,7 @@ TOKEN_HASH_ONLY = "true"
 SERVER_AUTHORITY_NOTIFICATION_DISPATCH = "true"
 
 [env.staging.triggers]
-crons = [
-  "*/10 * * * *",
-  "0 18 * * *"
-]
+crons = []
 
 [[env.staging.queues.producers]]
 binding = "NOTIFICATIONS_RETRY_QUEUE"

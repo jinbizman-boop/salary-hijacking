@@ -1,4 +1,4 @@
-BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200  artifacts/android/salary-hijacking-qa-universal.apk
-BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200  C:/Users/PC/Downloads/salary-hijacking-qa-universal.apk
-BA304469CB3EDC43A2E622C4E38B0F367A71E9F3107A9F836C4A427B04C75200  D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal.apk
-730B4C7B2C6A2607CB29BE714E02862CFF742686A0840094F5C2D621C7D3337A  embedded index.android.bundle from artifacts/android/salary-hijacking-qa-universal.apk
+F5ADD73DAA85C6C0C16EFCA7760F7525DE77A1089CDCF0E9B8195AEDE19593E2  D:/salary-hijacking-artifacts/android/b4bddd9-staging-arm64/salary-hijacking-qa-release-like-b4bddd9-staging-arm64.apk
+6F68C4253DBFDD29F2AF02E3608432A6CE36B43FF5BD60E52BC21217A83B4E54  D:/salary-hijacking-artifacts/android/b4bddd9-staging/salary-hijacking-qa-release-like-b4bddd9-staging-x86_64.apk
+AA907DB3CA695CB7E5377816A9867D24AE7DF62867386677A528694D7DA87357  embedded assets/index.android.bundle from current-head b4bddd9 staging ARM64 APK
+AA907DB3CA695CB7E5377816A9867D24AE7DF62867386677A528694D7DA87357  embedded assets/index.android.bundle from current-head b4bddd9 staging x86_64 APK
