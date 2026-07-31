@@ -683,12 +683,15 @@ describe("salary reference screen interactions", () => {
   });
 
   it("removes a fixed plan reminder from the current month after the user marks it completed", () => {
+    jest.useFakeTimers({ now: new Date("2026-07-13T00:30:00.000Z") });
     const screen = render(<SalaryHomeScreen />);
 
     expect(screen.getByText("ChatGPT")).toBeTruthy();
 
     fireEvent.press(
-      screen.getByRole("button", { name: /ChatGPT 사용 완료 처리$/u }),
+      screen.getByRole("button", {
+        name: /ChatGPT 사용 완료 처리$/u,
+      }),
     );
 
     expect(screen.queryByText("ChatGPT")).toBeNull();
@@ -737,6 +740,7 @@ describe("salary reference screen interactions", () => {
   });
 
   it("records fixed plan reminder completion through the server-authoritative plan API before hiding it", async () => {
+    jest.useFakeTimers({ now: new Date("2026-07-13T00:30:00.000Z") });
     const recordFixedExpensePayment = jest.fn().mockResolvedValue({
       amountMinor: 32000,
       category: "구독",
@@ -757,7 +761,9 @@ describe("salary reference screen interactions", () => {
     expect(screen.getByText("ChatGPT")).toBeTruthy();
 
     fireEvent.press(
-      screen.getByRole("button", { name: /ChatGPT 사용 완료 처리$/u }),
+      screen.getByRole("button", {
+        name: /ChatGPT 사용 완료 처리$/u,
+      }),
     );
 
     await waitFor(() =>

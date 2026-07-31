@@ -86,113 +86,116 @@ const DEFAULT_FINANCIAL_SUMMARY: PayrollFinancialSummary = {
   fixedExpenseBaseline: 0,
   receivedAmount: 0,
 };
-const initialState: PayrollReminderState = {
-  dailyLimit: 20000,
-  financialSummary: DEFAULT_FINANCIAL_SUMMARY,
-  livingDays: 30,
-  dailyItems: [
-    {
-      amount: 2000,
-      category: "카페",
-      completed: false,
-      content: "빽다방 아이스 아메리카노",
-      id: "daily-coffee",
-    },
-    {
-      amount: 6500,
-      category: "음식",
-      completed: false,
-      content: "KT광화문지사 구내식당 점심 식사",
-      id: "daily-lunch",
-    },
-    {
-      amount: 4500,
-      category: "담배",
-      completed: true,
-      content: "GS25 어묵사라꼬치 1mm 담배",
-      id: "daily-store",
-    },
-    {
-      amount: 3000,
-      category: "카페",
-      completed: true,
-      content: "크라제버거 Hot 아메리카노",
-      id: "daily-hot-coffee",
-    },
-    {
-      amount: 4000,
-      category: "음식",
-      completed: true,
-      content: "봉구스 밥버거 오므라이스 토핑 주문",
-      id: "daily-rice-burger",
-    },
-  ],
-  variableExpenses: [
-    {
-      amount: 15000,
-      category: "게임 결제",
-      content: "폴드센스 파스콘 구입",
-      id: "variable-game",
-    },
-  ],
-  planItems: [
-    {
-      amount: 14900,
-      category: "구독",
-      content: "유튜브 프리미엄",
-      day: 10,
-      id: "plan-fixed-youtube",
-      section: "fixed",
-    },
-    {
-      amount: 32000,
-      category: "구독",
-      content: "ChatGPT",
-      day: 10,
-      id: "plan-fixed-chatgpt",
-      section: "fixed",
-    },
-    {
-      amount: 13500,
-      category: "구독",
-      content: "MS오피스",
-      day: 10,
-      id: "plan-fixed-office",
-      section: "fixed",
-    },
-    {
-      amount: 200000,
-      category: "대출",
-      content: "학자금 대출",
-      day: 25,
-      id: "plan-fixed-loan",
-      section: "fixed",
-    },
-    {
-      amount: 200000,
-      category: "적금",
-      content: "여행, 방학",
-      day: 25,
-      id: "plan-saving-travel",
-      section: "saving",
-    },
-    {
-      amount: 200000,
-      category: "적금",
-      content: "수시 투자",
-      day: 25,
-      id: "plan-saving-invest",
-      section: "saving",
-    },
-  ],
-};
+function createInitialPayrollReminderState(): PayrollReminderState {
+  return {
+    dailyLimit: 20000,
+    financialSummary: { ...DEFAULT_FINANCIAL_SUMMARY },
+    livingDays: 30,
+    dailyItems: [
+      {
+        amount: 2000,
+        category: "카페",
+        completed: false,
+        content: "빽다방 아이스 아메리카노",
+        id: "daily-coffee",
+      },
+      {
+        amount: 6500,
+        category: "음식",
+        completed: false,
+        content: "KT광화문지사 구내식당 점심 식사",
+        id: "daily-lunch",
+      },
+      {
+        amount: 4500,
+        category: "담배",
+        completed: true,
+        content: "GS25 어묵사라꼬치 1mm 담배",
+        id: "daily-store",
+      },
+      {
+        amount: 3000,
+        category: "카페",
+        completed: true,
+        content: "크라제버거 Hot 아메리카노",
+        id: "daily-hot-coffee",
+      },
+      {
+        amount: 4000,
+        category: "음식",
+        completed: true,
+        content: "봉구스 밥버거 오므라이스 토핑 주문",
+        id: "daily-rice-burger",
+      },
+    ],
+    variableExpenses: [
+      {
+        amount: 15000,
+        category: "게임 결제",
+        content: "폴드센스 파스콘 구입",
+        id: "variable-game",
+      },
+    ],
+    planItems: [
+      {
+        amount: 14900,
+        category: "구독",
+        content: "유튜브 프리미엄",
+        day: 10,
+        id: "plan-fixed-youtube",
+        section: "fixed",
+      },
+      {
+        amount: 32000,
+        category: "구독",
+        content: "ChatGPT",
+        day: 10,
+        id: "plan-fixed-chatgpt",
+        section: "fixed",
+      },
+      {
+        amount: 13500,
+        category: "구독",
+        content: "MS오피스",
+        day: 10,
+        id: "plan-fixed-office",
+        section: "fixed",
+      },
+      {
+        amount: 200000,
+        category: "대출",
+        content: "학자금 대출",
+        day: 25,
+        id: "plan-fixed-loan",
+        section: "fixed",
+      },
+      {
+        amount: 200000,
+        category: "적금",
+        content: "여행, 방학",
+        day: 25,
+        id: "plan-saving-travel",
+        section: "saving",
+      },
+      {
+        amount: 200000,
+        category: "적금",
+        content: "수시 투자",
+        day: 25,
+        id: "plan-saving-invest",
+        section: "saving",
+      },
+    ],
+  };
+}
 
-let payrollReminderState: PayrollReminderState = initialState;
+let payrollReminderState: PayrollReminderState =
+  createInitialPayrollReminderState();
 let payrollReminderStateStorage: PayrollReminderStateSecureStorage | null =
   null;
 
 export function resetPayrollReminderStateForTests(): void {
-  payrollReminderState = initialState;
+  payrollReminderState = createInitialPayrollReminderState();
   payrollReminderStateStorage = null;
 }
 

@@ -2983,9 +2983,9 @@ export const runExpoLocalAndroidDebugBuild = ({
   };
   const runGradleInvocation = (args) => {
     const maxAttempts = isWindows(platform) ? 8 : 1;
-    const gradleUserHome = gradleUserHomeForStep();
     let result = { status: 1 };
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const gradleUserHome = gradleUserHomeForStep();
       const options = buildGradleInvocationSpawnOptions({
         cleanTransforms: attempt === 0,
         gradleUserHome,
