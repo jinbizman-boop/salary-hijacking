@@ -275,6 +275,21 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toMatch(/config\.environment,\s*"staging",\s*\)/u);
   });
 
+  it("keeps root layout Korean user-facing strings readable", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const mojibakeMarkers = [
+      0xfffd, 0x6e72, 0x6028, 0x91ab, 0xafa9, 0xca0c, 0x5a9b, 0xf9e4, 0x936e,
+      0x7652, 0x6fe1, 0xb301, 0xc10f, 0xbc40, 0x7570,
+    ].map((codePoint) => String.fromCodePoint(codePoint));
+
+    mojibakeMarkers.forEach((marker) => {
+      expect(source).not.toContain(marker);
+    });
+    expect(source).toContain("급여납치 앱을 안전하게 시작합니다");
+    expect(source).toContain("서버 권위 앱 상태 확인 중");
+    expect(source).toContain("앱 시작 요청이 실패했습니다");
+  });
+
   it("wraps unreadable root bootstrap response bodies before fallback handling", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
