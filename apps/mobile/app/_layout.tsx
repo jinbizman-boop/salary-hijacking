@@ -475,9 +475,9 @@ const SENSITIVE_KEYWORDS = [
   "납치",
   "대출",
   "부채",
+  "인증",
   "푸시",
-  "임시",
-  "표시",
+  "세션",
   "기기토큰",
 ] as const;
 const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({

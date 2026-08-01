@@ -1456,7 +1456,7 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
       throw new UserHttpError(
         400,
         "USER_EXPORT_ID_INVALID",
-        "?대낫?닿린 ?앸퀎?먭? ?щ컮瑜댁? ?딆뒿?덈떎.",
+        "개인정보 내보내기 요청 ID가 올바르지 않습니다.",
       );
     }
     const data = await repository.getExport(exportId, rt);
@@ -1464,7 +1464,7 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
       throw new UserHttpError(
         404,
         "USER_EXPORT_NOT_FOUND",
-        "媛쒖씤?뺣낫 ?대낫?닿린 ?붿껌??李얠쓣 ???놁뒿?덈떎.",
+        "개인정보 내보내기 요청을 찾을 수 없습니다.",
       );
     return out(rt, 200, { data: mobilePrivacyExportRecord(data, rt.now) });
   }

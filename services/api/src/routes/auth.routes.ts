@@ -528,7 +528,7 @@ function optionalOAuthCodeChallenge(value: string | null): string | null {
     throw new AuthRouteError(
       400,
       "AUTH_PKCE_CHALLENGE_INVALID",
-      "PKCE code challenge媛 ?щ컮瑜댁? ?딆뒿?덈떎.",
+      "PKCE code challenge가 올바르지 않습니다.",
     );
   return challenge;
 }
