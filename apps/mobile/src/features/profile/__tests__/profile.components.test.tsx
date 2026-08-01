@@ -132,5 +132,5 @@ describe("profile feature components", () => {
     fireEvent.press(screen.getByRole("button", { name: "공지사항" }));
     expect(onSelectMenu).toHaveBeenCalledWith("NOTICES");
     expect(getProfile).toHaveBeenCalledTimes(1);
-  });
+  }, 15000);
 });

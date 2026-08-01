@@ -122,7 +122,7 @@ test("fails when a completed row points to missing evidence", async () => {
   }
 });
 
-test("passes completed rows with evidence and leaves UNVERIFIED rows open", async () => {
+test("fails while UNVERIFIED rows remain open", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-truth-check-"));
 
   try {
@@ -143,7 +143,9 @@ test("passes completed rows with evidence and leaves UNVERIFIED rows open", asyn
 
     const result = runTruthfulCompletionCheck({ rootDir });
 
-    assert.equal(result.ok, true, result.failures.join("\n"));
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /D-004/);
+    assert.match(result.failures.join("\n"), /UNVERIFIED/);
     assert.equal(result.unverifiedCount, 1);
     assert.equal(result.completedCount, 1);
   } finally {

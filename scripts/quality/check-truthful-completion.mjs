@@ -264,6 +264,10 @@ export function runTruthfulCompletionCheck(options = {}) {
         failures.push(
           `${requirementId} line ${line}: unknown status "${row.status}"`,
         );
+      } else {
+        failures.push(
+          `${requirementId} line ${line}: status ${status} remains open; truthful completion cannot pass until it is completed or removed from launch scope`,
+        );
       }
       return;
     }
