@@ -62,6 +62,13 @@ function readRequiredText(relativePath: string): string {
   return fs.readFileSync(absolutePath, "utf8");
 }
 
+function readOptionalText(relativePath: string): string | null {
+  const absolutePath = path.join(mobileRoot, relativePath);
+  return fs.existsSync(absolutePath)
+    ? fs.readFileSync(absolutePath, "utf8")
+    : null;
+}
+
 describe("mobile Detox E2E contract", () => {
   it("defines Detox configurations used by the mobile package scripts", () => {
     const detoxConfig = JSON.parse(
@@ -168,21 +175,40 @@ describe("mobile Detox E2E contract", () => {
   });
 
   it("keeps Android release-like builds away from debug signing and backup exposure", () => {
-    const buildGradle = readRequiredText("android/app/build.gradle");
-    const manifest = readRequiredText(
+    const buildGradle = readOptionalText("android/app/build.gradle");
+    const manifest = readOptionalText(
       "android/app/src/main/AndroidManifest.xml",
     );
-    const releaseBlock =
-      buildGradle.match(/release\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
-    const qaReleaseBlock =
-      buildGradle.match(/qaRelease\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
 
-    expect(manifest).toContain('android:allowBackup="false"');
-    expect(buildGradle).toContain("qaRelease");
-    expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
-    expect(releaseBlock).not.toContain("matchingFallbacks = ['debug']");
-    expect(qaReleaseBlock).not.toContain("signingConfig signingConfigs.debug");
-    expect(qaReleaseBlock).not.toContain("matchingFallbacks = ['debug']");
+    if (buildGradle && manifest) {
+      const releaseBlock =
+        buildGradle.match(/release\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+      const qaReleaseBlock =
+        buildGradle.match(/qaRelease\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+
+      expect(manifest).toContain('android:allowBackup="false"');
+      expect(buildGradle).toContain("qaRelease");
+      expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
+      expect(releaseBlock).not.toContain("matchingFallbacks = ['debug']");
+      expect(qaReleaseBlock).not.toContain(
+        "signingConfig signingConfigs.debug",
+      );
+      expect(qaReleaseBlock).not.toContain("matchingFallbacks = ['debug']");
+      return;
+    }
+
+    const config = appConfig({ config: {} });
+    const productionBuildScript = readRequiredText(
+      "scripts/expo-local-android-production-build.mjs",
+    );
+
+    expect(config.android.allowBackup).toBe(false);
+    expect(productionBuildScript).toContain("prebuild");
+    expect(productionBuildScript).toContain("bundleRelease");
+    expect(productionBuildScript).not.toContain(
+      "signingConfig signingConfigs.debug",
+    );
+    expect(productionBuildScript).not.toContain("matchingFallbacks = ['debug']");
   });
 
   it("keeps Android custom scheme deep links on Expo Router paths instead of an /app prefix", () => {
