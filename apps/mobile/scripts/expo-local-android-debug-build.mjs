@@ -2987,7 +2987,7 @@ export const runExpoLocalAndroidDebugBuild = ({
     let result = { status: 1 };
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       const options = buildGradleInvocationSpawnOptions({
-        cleanTransforms: attempt === 0,
+        cleanTransforms: true,
         gradleUserHome,
       });
       result = normalizeGradleResult(
