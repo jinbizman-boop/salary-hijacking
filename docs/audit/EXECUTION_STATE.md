@@ -69,6 +69,15 @@ Do not report Cloudflare credentials unavailable. Remaining staging blockers are
 
 Keep `D-013` as FAIL until all 304 Stitch states have current-HEAD production-route interaction, Android visual regression, accessibility, safe-area, keyboard, and status-state evidence from the same APK lineage.
 
+### Neon/Staging DB
+
+- Neon project metadata: PASS, project `still-feather-22153967` / `salary-hijacking`.
+- Observed read-write branch computes without exposing DB URLs:
+  - `br-fragrant-sky-aj5kk2c3` / `ep-young-sunset-ajgi3bab`
+  - `br-icy-frog-aj3b1bl9` / `ep-restless-mouse-aj80bf0j`
+- Evidence: `D:/salary-hijacking-artifacts/qa/neon-metadata-no-connection-string-20260803.json`
+- Remaining blocker: live staging migration/RLS/rollback/authenticated persistence still requires safe secret injection or a non-secret SQL execution path. Connection strings and DB URLs were intentionally not requested or recorded.
+
 ### D-026 Gate
 
 Keep `D-026` as FAIL until the same signed RC APK has current-HEAD static inspection, clean/upgrade install, cold start 20/20, background/resume 20/20, route smoke, authenticated staging DB persistence, standalone notifications route proof, service E2E, `D-013` acceptance, and physical Samsung ARM64 logcat QA.
