@@ -13,8 +13,15 @@ import {
 } from "../components/NotificationScreen";
 import type { NotificationItem } from "../types";
 
-const mojibakeRegex =
-  /[�]|濡|湲|鍮|怨|媛|踰|留|瑗|繹|諭|筌|揶|甕|疫|嫄|怨|移|異|遺|꾩|뚯|몄|쒕|대찓|몄쬆|덉|뺤/u;
+const mojibakeRegex = new RegExp(
+  [
+    0xfffd, 0x5360, 0x56a5, 0x75ab, 0x63f6, 0x7515, 0x7b4c, 0x6fda, 0x7344,
+    0xf9ab, 0x6930, 0x71c1, 0x8881, 0xf9cf,
+  ]
+    .map((codePoint) => String.fromCodePoint(codePoint))
+    .join("|"),
+  "u",
+);
 
 function expectNoMojibake(text: string): void {
   expect(text).not.toMatch(mojibakeRegex);
