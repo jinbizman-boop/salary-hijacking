@@ -576,7 +576,7 @@ const buildEnv = ({
       ? { SALARY_HIJACKING_NODE_EXECUTABLE: nodeExecutable }
       : {}),
     SALARY_HIJACKING_METRO_CANONICAL_ROOT:
-      env.SALARY_HIJACKING_METRO_CANONICAL_ROOT ?? "1",
+      env.SALARY_HIJACKING_METRO_CANONICAL_ROOT ?? (e2eBuild ? "1" : "0"),
     NODE_ENV: env.NODE_ENV || "production",
     [envPathKey]: [npmShimDir, path.join(javaHome, "bin"), pathValue]
       .filter(Boolean)

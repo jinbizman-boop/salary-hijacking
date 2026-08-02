@@ -142,6 +142,7 @@ test("qaRelease preflight disables the embedded E2E build flag", () => {
 
   assert.equal(result.ok, true, result.failures.join("\n"));
   assert.equal(result.env.EXPO_PUBLIC_E2E_BUILD, "false");
+  assert.equal(result.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "0");
   assert.equal(result.gradleArgs[0], "assembleQaRelease");
 });
 
