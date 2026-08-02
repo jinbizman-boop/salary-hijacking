@@ -358,6 +358,31 @@ type CompletenessResult = {
 type BootstrapRole = (typeof BOOTSTRAP_ROLES)[number];
 type BootstrapAccountStatus = (typeof BOOTSTRAP_ACCOUNT_STATUSES)[number];
 
+const DATABASE_URL_ENV_KEYS = [
+  "SALARY_HIJACKING_DATABASE_URL",
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "NEON_DATABASE_URL",
+  "NEON_POSTGRES_URL",
+  "DIRECT_DATABASE_URL",
+] as const;
+
+const PERSISTENT_DATABASE_ROUTE_IDS = new Set([
+  "auth",
+  "admin",
+  "users",
+  "payroll",
+  "daily-budgets",
+  "fixed-expenses",
+  "variable-expenses",
+  "savings",
+  "growth",
+  "notifications",
+  "community",
+  "uploads",
+]);
+
 const handleEnvAwareAuthRoutes: FetchHandler<unknown> = createAuthRoutes({
   repository: (env) =>
     shouldUseNeonAuthRepository(env) ? createNeonAuthRepository() : null,
@@ -560,6 +585,22 @@ function environmentOf<TEnv>(env: TEnv, fallback = "production"): string {
   );
 }
 
+function hasRuntimeDatabaseUrl<TEnv>(env: TEnv): boolean {
+  return DATABASE_URL_ENV_KEYS.some((key) => Boolean(envString(env, key)));
+}
+
+function requiresPersistentDatabase<TEnv>(
+  env: TEnv,
+  route: RouteModule,
+): boolean {
+  const environment = environmentOf(env).toLowerCase();
+  return (
+    (environment === "staging" || environment === "production") &&
+    PERSISTENT_DATABASE_ROUTE_IDS.has(route.id) &&
+    !hasRuntimeDatabaseUrl(env)
+  );
+}
+
 function stringFromOption<TEnv>(
   env: TEnv,
   option:
@@ -618,6 +659,26 @@ function json(
       },
     },
   );
+}
+
+function databaseUrlRequired(
+  runtime: AppRuntime,
+  route: RouteModule,
+): Response {
+  return json(503, runtime, {
+    error: {
+      code: "APP_DATABASE_URL_REQUIRED",
+      message:
+        "A persistent database binding is required for staging and production API routes.",
+      status: 503,
+      requestId: runtime.requestId,
+    },
+    data: {
+      environment: environmentOf(runtime.env),
+      route: route.id,
+      persistentDatabaseRequired: true,
+    },
+  });
 }
 
 function escapeHtml(value: string): string {
@@ -1385,6 +1446,8 @@ async function coreDispatch<TEnv>(
 
   const route = selectRoute(path);
   if (!route) return notFound(runtime);
+  if (requiresPersistentDatabase(env, route))
+    return databaseUrlRequired(runtime, route);
   if (route.id === "admin") {
     const baseOptions: AdminRoutesOptions<TEnv> =
       options.adminRoutesOptions ??
