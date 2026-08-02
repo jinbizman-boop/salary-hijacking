@@ -6,7 +6,9 @@
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current HEAD: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
+- Current HEAD / QA_EVIDENCE_SHA: `2177696c2e19f7b32f62969e72c19d43378c49d7`
+- RC_SOURCE_SHA: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
+- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7` changes only audit/status documentation. It does not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
 - Source of truth: `docs/audit/IMPLEMENTATION_MATRIX.csv`
 - Do not use: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
 
