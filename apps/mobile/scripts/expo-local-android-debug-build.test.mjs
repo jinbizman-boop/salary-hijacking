@@ -597,7 +597,7 @@ test("runner keeps repairing repeated Gradle temporary workspace failures on Win
   assert.equal(fs.existsSync(expoModulesCoreKotlinClass), true);
 });
 
-test("runner retries a Gradle step with an isolated Windows Gradle home", () => {
+test("runner retries a Gradle step within the same isolated Windows Gradle home", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
   const sdkRoot = path.join(localAppData, "Android", "Sdk");
@@ -700,8 +700,8 @@ test("runner retries a Gradle step with an isolated Windows Gradle home", () => 
         }
 
         if (
-          gradleUserHome !== gradleHomesByAttempt[0] &&
-          !fs.existsSync(immutablePath)
+          gradleUserHome === gradleHomesByAttempt[0] &&
+          fs.existsSync(immutablePath)
         ) {
           touch(
             path.join(
@@ -749,7 +749,7 @@ test("runner retries a Gradle step with an isolated Windows Gradle home", () => 
 
   assert.equal(result.status, 0, result.failures.join("\n"));
   assert.equal(gradleHomesByAttempt.length, 2);
-  assert.notEqual(gradleHomesByAttempt[0], gradleHomesByAttempt[1]);
+  assert.equal(gradleHomesByAttempt[0], gradleHomesByAttempt[1]);
   assert.equal(
     gradleHomesByAttempt[0].startsWith(
       path.join(rootDir, ".gradle-local-debug", "invocations"),
@@ -758,7 +758,7 @@ test("runner retries a Gradle step with an isolated Windows Gradle home", () => 
   );
 });
 
-test("runner allows qaRelease assembly to recover after late native-lib transform collisions on Windows", () => {
+test("runner allows qaRelease assembly to recover in the same isolated Gradle home after late native-lib transform collisions on Windows", () => {
   const rootDir = makeWorkspace();
   const localAppData = path.join(rootDir, "AppData", "Local");
   const sdkRoot = path.join(localAppData, "Android", "Sdk");
@@ -902,7 +902,7 @@ test("runner allows qaRelease assembly to recover after late native-lib transfor
 
   assert.equal(result.status, 0, result.failures.join("\n"));
   assert.equal(assembleQaReleaseAttempts, 5);
-  assert.equal(new Set(gradleHomesByAttempt).size, 5);
+  assert.equal(new Set(gradleHomesByAttempt).size, 1);
 });
 
 test("runner repairs stale Gradle transform workspaces before the first Windows Gradle task", () => {
@@ -3131,7 +3131,7 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
     path.basename(calls[6].options.env.GRADLE_USER_HOME),
     /^\d{3}$/u,
   );
-  assert.notEqual(
+  assert.equal(
     calls[4].options.env.GRADLE_USER_HOME,
     calls[5].options.env.GRADLE_USER_HOME,
   );
