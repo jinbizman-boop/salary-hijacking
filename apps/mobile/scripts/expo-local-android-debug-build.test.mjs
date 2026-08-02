@@ -778,7 +778,6 @@ test("runner allows qaRelease assembly to recover in the same isolated Gradle ho
     "7b183afd218e128e331af34f7ed36765",
   ];
   const gradleHomesByAttempt = [];
-  const reanimatedConfigureHomes = [];
   let assembleQaReleaseAttempts = 0;
   let reanimatedConfigureAttempts = 0;
 
@@ -862,27 +861,7 @@ test("runner allows qaRelease assembly to recover in the same isolated Gradle ho
           ":react-native-reanimated:configureCMakeDebug[arm64-v8a]"
       ) {
         reanimatedConfigureAttempts += 1;
-        const gradleUserHome = options.env.GRADLE_USER_HOME;
-        reanimatedConfigureHomes.push(gradleUserHome);
-        const transformsRoot = path.join(
-          gradleUserHome,
-          "caches",
-          "8.10.2",
-          "transforms",
-        );
-        if (reanimatedConfigureAttempts <= 2) {
-          touch(
-            path.join(
-              transformsRoot,
-              `${transformHashes[0]}-229756c0-87ad-44f5-8a91-9911ce4df27f`,
-              "metadata.bin",
-            ),
-            "temp",
-          );
-          return { status: 1 };
-        }
-
-        return !fs.existsSync(transformsRoot) ? { status: 0 } : { status: 1 };
+        return { status: 1 };
       }
 
       if (
@@ -935,8 +914,7 @@ test("runner allows qaRelease assembly to recover in the same isolated Gradle ho
   });
 
   assert.equal(result.status, 0, result.failures.join("\n"));
-  assert.equal(reanimatedConfigureAttempts, 3);
-  assert.equal(new Set(reanimatedConfigureHomes).size, 1);
+  assert.equal(reanimatedConfigureAttempts, 0);
   assert.equal(assembleQaReleaseAttempts, 5);
   assert.equal(new Set(gradleHomesByAttempt).size, 1);
 });

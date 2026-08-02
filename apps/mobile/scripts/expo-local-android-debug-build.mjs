@@ -3021,7 +3021,8 @@ export const runExpoLocalAndroidDebugBuild = ({
     patchReactNativePackageList({ env: preflight.env, mobileRootDir });
     cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
 
-    const shouldRunWindowsCmakeWarmup = isWindows(platform);
+    const shouldRunWindowsCmakeWarmup =
+      isWindows(platform) && invocations.buildType === "debug";
 
     if (shouldRunWindowsCmakeWarmup) {
       for (const reanimatedConfigureArgs of invocations.reanimatedConfigureArgSets) {
