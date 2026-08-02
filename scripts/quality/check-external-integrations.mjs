@@ -99,6 +99,8 @@ const REQUIRED_TOKENS_BY_FILE = {
   ".github/workflows/deploy-api.yml": [
     "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}",
     "${{ secrets.CLOUDFLARE_API_TOKEN }}",
+    "${{ secrets.STAGING_DATABASE_URL }}",
+    "wrangler secret put DATABASE_URL",
     "wrangler deploy --dry-run",
     "wrangler deploy --env",
   ],

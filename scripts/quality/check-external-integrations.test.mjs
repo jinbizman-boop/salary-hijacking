@@ -48,8 +48,10 @@ jobs:
     env:
       CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+      STAGING_DATABASE_URL: \${{ secrets.STAGING_DATABASE_URL }}
     steps:
       - run: pnpm exec wrangler deploy --dry-run
+      - run: printf '%s' "$STAGING_DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env staging
       - run: pnpm exec wrangler deploy --env staging
 `,
     ".github/workflows/deploy-admin.yml": `

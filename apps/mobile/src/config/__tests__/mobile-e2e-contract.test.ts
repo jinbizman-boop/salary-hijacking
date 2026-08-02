@@ -208,7 +208,9 @@ describe("mobile Detox E2E contract", () => {
     expect(productionBuildScript).not.toContain(
       "signingConfig signingConfigs.debug",
     );
-    expect(productionBuildScript).not.toContain("matchingFallbacks = ['debug']");
+    expect(productionBuildScript).not.toContain(
+      "matchingFallbacks = ['debug']",
+    );
   });
 
   it("keeps Android custom scheme deep links on Expo Router paths instead of an /app prefix", () => {
