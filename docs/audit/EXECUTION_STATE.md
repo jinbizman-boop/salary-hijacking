@@ -1,14 +1,14 @@
 # 급여납치 실행 상태 체크포인트
 
-## 2026-08-03 09:10 KST
+## 2026-08-03 09:27 KST
 
 ### Canonical Repository
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`
+- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `94eb8281bc3348ea92f65607e5b61ece0ed28335`
 - RC_SOURCE_SHA: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
-- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, and `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
+- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`, and `94eb8281bc3348ea92f65607e5b61ece0ed28335` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
 - Source of truth: `docs/audit/IMPLEMENTATION_MATRIX.csv`
 - Do not use: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
 
@@ -80,6 +80,11 @@ Do not report Cloudflare credentials unavailable. Remaining staging blockers are
 - Any mojibake displayed by default PowerShell output is a console decoding issue, not source content evidence.
 - Static grep still finds non-final local/dev values in development/test/capture contexts; these must not be embedded into final release-like APK evidence.
 - `SYSTEM_ALERT_WINDOW` appears in `blockedPermissions` and config tests, not as an allowed app permission in app config.
+- Focused startup/route contract test: PASS, 36/36 tests.
+- Mobile typecheck: PASS.
+- Mobile lint: PASS.
+- Mobile format check: PASS.
+- Full mobile Jest regression: PASS, 103/103 suites and 852/852 tests.
 
 ### D-013 Gate
 
