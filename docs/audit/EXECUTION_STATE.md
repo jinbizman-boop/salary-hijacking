@@ -1,14 +1,14 @@
 # 급여납치 실행 상태 체크포인트
 
-## 2026-08-03 08:45 KST
+## 2026-08-03 09:10 KST
 
 ### Canonical Repository
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`
+- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`
 - RC_SOURCE_SHA: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
-- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, and `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d` are audit/status documentation commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
+- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, and `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
 - Source of truth: `docs/audit/IMPLEMENTATION_MATRIX.csv`
 - Do not use: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
 
@@ -58,21 +58,20 @@ Per the master goal, do not add another Windows workaround build loop for this f
 
 - Wrangler OAuth login: PASS.
 - `wrangler whoami`: PASS.
-- API staging current deploy: PASS, version `10930c28-dd9b-4dfb-ac4c-f0face659023`.
+- Staging-only secret gap reduction: PASS. API staging now lists `AUTH_JWT_SECRET`, `HASH_SECRET`, `RATE_LIMIT_HASH_SECRET`, `AUDIT_HASH_SECRET`, and `OPERATION_WEBHOOK_TOKEN`. Notifications staging now lists `NOTIFICATIONS_SERVICE_TOKEN` and `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN`. Scheduler staging now lists `SCHEDULER_SERVICE_TOKEN` and `SCHEDULER_OPERATION_WEBHOOK_TOKEN`. Secret values were generated for staging only and were not printed or committed.
+- API staging current deploy: PASS, version `e4c902b4-30d3-42d2-ad1f-a8624d54c497`.
+- Notifications staging current deploy: PASS, version `cbdc7ab4-3359-41d0-a569-24315761c017`.
 - Canonical API host DNS: PASS for `api-staging.salaryhijacking.com`.
 - `https://api-staging.salaryhijacking.com/health`: HTTP 200.
 - `https://api-staging.salaryhijacking.com/ready`: HTTP 200.
 - `https://api-staging.salary-hijacking.com/health`: unresolved/failed and must not be used as canonical evidence.
-- Notifications staging `/health`: HTTP 200 in previous current-lineage evidence.
-- Scheduler staging `/health` and `/ready`: HTTP 200 in previous current-lineage evidence.
-- Scheduler staging trigger activation retry at 2026-08-03 08:51 KST: FAIL. `wrangler triggers deploy --config services/scheduler/wrangler.toml --env staging` deployed worker trigger metadata but Cloudflare `/schedules` API failed for `salary-hijacking-scheduler-staging`.
-- API staging secrets list contains `AUTH_JWT_SECRET`.
-- Notifications staging secrets list is empty in the latest known secret inventory.
-- Scheduler staging secrets list is empty in the latest known secret inventory.
+- Notifications staging `/health`: HTTP 200.
+- Scheduler staging `/health` and `/ready`: HTTP 200.
+- Scheduler staging deploy at 2026-08-03 09:09 KST: PARTIAL/FAIL. Worker upload, workers.dev route, queue producers, and queue consumer were deployed, but Cloudflare `/schedules` API returned HTTP 400 and the cron trigger did not close. `D-016` must remain open.
 - Persistent staging route without DB: PASS as a blocker guard. `POST /api/v1/auth/register` returned HTTP 503 with `APP_DATABASE_URL_REQUIRED`, proving staging/production persistent routes no longer fall through to in-memory success when DB credentials are absent.
 - Evidence: `D:/salary-hijacking-artifacts/qa/staging-api-persistent-db-required-98d7cd6-20260803.json`
 
-Do not report Cloudflare credentials unavailable. Remaining staging blockers are Scheduler cron activation, Admin staging deploy/DNS, DB credentials/application role evidence, service secrets, and authenticated persistence evidence.
+Do not report Cloudflare credentials unavailable. Remaining staging blockers are Scheduler cron activation, Admin staging deploy/DNS, DB credentials/application role evidence, FCM/service account evidence, and authenticated persistence evidence.
 
 ### Mobile Runtime Source Defect Scan
 
@@ -106,5 +105,6 @@ Keep `D-026` as FAIL until the same signed RC APK has current-HEAD static inspec
 3. Prefer Linux/CI Android packaging if another Windows Gradle/CMake/path-lock failure would be repeated.
 4. Do not change `D-013` or `D-026` to PASS without current-HEAD runtime evidence.
 5. Do not create a safe-entry APK, new audit framework, evidence count sync phase, or completion report.
+6. Keep `check:artifact-lineage` failing until a new same-RC APK/build-info/bundle hash is generated from `RC_SOURCE_SHA`.
 
 CONTINUING=true
