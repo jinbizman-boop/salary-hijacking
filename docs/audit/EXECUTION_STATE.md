@@ -102,10 +102,12 @@ Keep `D-013` as FAIL until all 304 Stitch states have current-HEAD production-ro
 - Observed read-write branch computes without exposing DB URLs:
   - `br-fragrant-sky-aj5kk2c3` / `ep-young-sunset-ajgi3bab`
   - `br-icy-frog-aj3b1bl9` / `ep-restless-mouse-aj80bf0j`
-- MCP read-only query against the default `neondb` showed `0` application tables in non-system schemas. This means staging migrations/RLS/rollback are not current-HEAD runtime PASS evidence.
+- MCP read-only metadata query against `br-fragrant-sky-aj5kk2c3` / `neondb` showed 39 application tables, 39/39 RLS enabled, and 29 FORCE RLS.
+- MCP read-only metadata query against `br-icy-frog-aj3b1bl9` / `neondb` showed 0 application tables.
+- Observed login roles are `cloud_admin`, `neon_service`, and `neondb_owner`; all have `rolbypassrls=true`, so this is not non-BYPASSRLS user A/B isolation evidence.
 - Local `neonctl` and `psql` are not available on PATH. The repository `scripts/db/migrate.sh` still requires a DB URL or direct DB URL, which was not requested, printed, or recorded.
-- Evidence: `D:/salary-hijacking-artifacts/qa/neon-metadata-no-connection-string-20260803.json`
-- Remaining blocker: live staging migration/RLS/rollback/authenticated persistence still requires safe secret injection or a non-secret full migration execution path. Connection strings and DB URLs were intentionally not requested or recorded.
+- Evidence: `D:/salary-hijacking-artifacts/qa/neon-metadata-no-connection-string-20260803.json`; `D:/salary-hijacking-artifacts/qa/neon-rls-current-e603f27.json`
+- Remaining blocker: live non-BYPASSRLS user A/B isolation, staging rollback/forward recovery, and authenticated app persistence still require a safe application-role/bearer path. Connection strings, tokens, passwords, and DB URLs were intentionally not requested or recorded.
 
 ### D-026 Gate
 
