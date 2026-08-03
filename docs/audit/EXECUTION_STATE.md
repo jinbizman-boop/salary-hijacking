@@ -91,8 +91,10 @@ Keep `D-013` as FAIL until all 304 Stitch states have current-HEAD production-ro
 - Observed read-write branch computes without exposing DB URLs:
   - `br-fragrant-sky-aj5kk2c3` / `ep-young-sunset-ajgi3bab`
   - `br-icy-frog-aj3b1bl9` / `ep-restless-mouse-aj80bf0j`
+- MCP read-only query against the default `neondb` showed `0` application tables in non-system schemas. This means staging migrations/RLS/rollback are not current-HEAD runtime PASS evidence.
+- Local `neonctl` and `psql` are not available on PATH. The repository `scripts/db/migrate.sh` still requires a DB URL or direct DB URL, which was not requested, printed, or recorded.
 - Evidence: `D:/salary-hijacking-artifacts/qa/neon-metadata-no-connection-string-20260803.json`
-- Remaining blocker: live staging migration/RLS/rollback/authenticated persistence still requires safe secret injection or a non-secret SQL execution path. Connection strings and DB URLs were intentionally not requested or recorded.
+- Remaining blocker: live staging migration/RLS/rollback/authenticated persistence still requires safe secret injection or a non-secret full migration execution path. Connection strings and DB URLs were intentionally not requested or recorded.
 
 ### D-026 Gate
 
@@ -106,5 +108,6 @@ Keep `D-026` as FAIL until the same signed RC APK has current-HEAD static inspec
 4. Do not change `D-013` or `D-026` to PASS without current-HEAD runtime evidence.
 5. Do not create a safe-entry APK, new audit framework, evidence count sync phase, or completion report.
 6. Keep `check:artifact-lineage` failing until a new same-RC APK/build-info/bundle hash is generated from `RC_SOURCE_SHA`.
+7. `clean:junk:dry-run` timed out at 60s in this session; do not run destructive cleanup blindly. Use targeted cleanup or a longer monitored run.
 
 CONTINUING=true
