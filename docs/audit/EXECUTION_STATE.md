@@ -1,14 +1,14 @@
 # 급여납치 실행 상태 체크포인트
 
-## 2026-08-03 09:27 KST
+## 2026-08-03 09:40 KST
 
 ### Canonical Repository
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `94eb8281bc3348ea92f65607e5b61ece0ed28335`
+- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `bcd12cd555940c4a5f1363eab6395307ed58fe56`
 - RC_SOURCE_SHA: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
-- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`, and `94eb8281bc3348ea92f65607e5b61ece0ed28335` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
+- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`, `94eb8281bc3348ea92f65607e5b61ece0ed28335`, and `bcd12cd555940c4a5f1363eab6395307ed58fe56` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
 - Source of truth: `docs/audit/IMPLEMENTATION_MATRIX.csv`
 - Do not use: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
 
@@ -30,10 +30,11 @@
 ### Storage Gate
 
 - Artifact budget: PASS, 9.61GB available
-- System drive: PASS, 33.72GB available / 15GB required
-- Work drive: PASS, 33.72GB available / 25GB required
-- Android build-start: FAIL, 33.72GB available / 35GB required
+- System drive: PASS, 33.68GB available / 15GB required
+- Work drive: PASS, 33.68GB available / 25GB required
+- Android build-start: FAIL, 33.68GB available / 35GB required
 - Latest storage evidence: `artifacts/storage/storage-report.json`
+- Cleanup at 2026-08-03 09:39 KST: `clean:junk` removed 7 generated paths and freed 32.1MB. Removed paths were `.wrangler` worker caches and temp/jest/node caches only.
 
 Heavy Android Gradle/APK/AAB/export/full visual capture work remains blocked until the Android build-start free-space gate is met or Android packaging is moved to an approved Linux/CI route. Low-storage source, focused test, Cloudflare, Neon, and UI implementation work may continue.
 
@@ -113,6 +114,6 @@ Keep `D-026` as FAIL until the same signed RC APK has current-HEAD static inspec
 4. Do not change `D-013` or `D-026` to PASS without current-HEAD runtime evidence.
 5. Do not create a safe-entry APK, new audit framework, evidence count sync phase, or completion report.
 6. Keep `check:artifact-lineage` failing until a new same-RC APK/build-info/bundle hash is generated from `RC_SOURCE_SHA`.
-7. `clean:junk:dry-run` timed out at 60s in this session; do not run destructive cleanup blindly. Use targeted cleanup or a longer monitored run.
+7. `clean:junk` now completed successfully after a longer monitored run; keep using dry-run first before future cleanup.
 
 CONTINUING=true
