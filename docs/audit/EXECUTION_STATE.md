@@ -6,9 +6,9 @@
 
 - Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `bcd12cd555940c4a5f1363eab6395307ed58fe56`
+- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `87eae4bb8b8670c5210329d00525a9f481af3e54`
 - RC_SOURCE_SHA: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
-- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`, `94eb8281bc3348ea92f65607e5b61ece0ed28335`, and `bcd12cd555940c4a5f1363eab6395307ed58fe56` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
+- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`, `94eb8281bc3348ea92f65607e5b61ece0ed28335`, `bcd12cd555940c4a5f1363eab6395307ed58fe56`, and `87eae4bb8b8670c5210329d00525a9f481af3e54` are audit/quality/status commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
 - Source of truth: `docs/audit/IMPLEMENTATION_MATRIX.csv`
 - Do not use: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
 
@@ -69,6 +69,9 @@ Per the master goal, do not add another Windows workaround build loop for this f
 - Notifications staging `/health`: HTTP 200.
 - Scheduler staging `/health` and `/ready`: HTTP 200.
 - Scheduler staging deploy at 2026-08-03 09:09 KST: PARTIAL/FAIL. Worker upload, workers.dev route, queue producers, and queue consumer were deployed, but Cloudflare `/schedules` API returned HTTP 400 and the cron trigger did not close. `D-016` must remain open.
+- Scheduler trigger retry at 2026-08-03 09:42 KST: PARTIAL/FAIL. `wrangler triggers deploy --config services/scheduler/wrangler.toml --env staging` uploaded worker routing, queue producers, and queue consumer, but the Cloudflare `/schedules` API again returned HTTP 400. Evidence: `D:/salary-hijacking-artifacts/qa/cloudflare-scheduler-trigger-deploy-20260803-current.log`.
+- Official Cloudflare docs confirm Cron Triggers are configured from Wrangler config and Cloudflare account limits include a 5 Cron Trigger limit on Free plans. Existing root/production cron ownership must not be removed automatically because production trigger deletion remains an external approval gate. The scheduler cron blocker therefore remains `EXTERNAL_BLOCKER` unless an obsolete staging/legacy trigger is proven safe to remove or the account limit is changed.
+- GitHub Actions current-HEAD deploy-admin run `30775028678`: Verify admin console PASS on `ubuntu-latest`, including install, lint, typecheck, tests, OpenNext build, output verification, secret-output scan, and artifact `admin-opennext-1` digest `sha256:8b99b5814756ac65999c688d2ce04b04903d85d57be78ecd1a379aaf8d92823c`. The actual deploy job was skipped because the run was push-triggered, so Admin staging public deploy/health remains UNVERIFIED.
 - Persistent staging route without DB: PASS as a blocker guard. `POST /api/v1/auth/register` returned HTTP 503 with `APP_DATABASE_URL_REQUIRED`, proving staging/production persistent routes no longer fall through to in-memory success when DB credentials are absent.
 - Evidence: `D:/salary-hijacking-artifacts/qa/staging-api-persistent-db-required-98d7cd6-20260803.json`
 
@@ -105,6 +108,16 @@ Keep `D-013` as FAIL until all 304 Stitch states have current-HEAD production-ro
 ### D-026 Gate
 
 Keep `D-026` as FAIL until the same signed RC APK has current-HEAD static inspection, clean/upgrade install, cold start 20/20, background/resume 20/20, route smoke, authenticated staging DB persistence, standalone notifications route proof, service E2E, `D-013` acceptance, and physical Samsung ARM64 logcat QA.
+
+Current-HEAD supporting CI evidence at `87eae4bb8b8670c5210329d00525a9f481af3e54`:
+
+- `ci` run `30775028665`: PASS.
+- `release` run `30775028650`: PASS with supporting artifacts including `release-artifacts-1` digest `sha256:0c009b3a046e7999b178b7590ede9ee563304aea24b413028d10a284d0ed921e`, `cloudflare-runtime-proof-1` digest `sha256:f92ee7026f8c9ba2d0213d7419121fd78750ccc4766a9c93411265758b014b2e`, `database-command-proof-1` digest `sha256:6deec700a43c654802f80f46c4e554bf7742b5c3776da0b1a963e2b1a717a591`, and `public-url-proof-1` digest `sha256:2cc1d229ca9b49104efd3f622cfbd248c0cbf9bc666be681eeaa8bee1cc02f72`.
+- `mobile-build` run `30775028654`: Verify mobile app quality gate PASS; EAS build trigger skipped.
+- `deploy-api` run `30775028657`: PASS.
+- `deploy-admin` run `30775028678`: Admin verify PASS; deploy job skipped.
+
+These GitHub artifacts are supporting evidence only. They do not close `D-026` because the same signed RC APK still lacks authenticated staging persistence, Stitch 304 Android visual/accessibility, scheduler cron or approved equivalent, Admin public staging deploy-health, and physical Samsung ARM64 logcat evidence.
 
 ### Next Exact Actions
 
