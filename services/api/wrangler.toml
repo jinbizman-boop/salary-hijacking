@@ -162,8 +162,7 @@ SERVER_AUTHORITY_CALCULATION = "true"
 
 [env.production.triggers]
 crons = [
-  "*/10 * * * *",
-  "0 15 * * *"
+  "*/10 * * * *"
 ]
 
 [[env.production.r2_buckets]]
