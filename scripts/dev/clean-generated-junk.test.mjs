@@ -649,6 +649,54 @@ test("removes stale Gradle caches under artifacts while preserving QA runtime ev
   }
 });
 
+test("removes generated junk from configured external artifact roots", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-root-"));
+  const externalRoot = await mkdtemp(path.join(tmpdir(), "salary-artifacts-"));
+
+  try {
+    await touch(path.join(externalRoot, "gradle-home-20260729", "cache.bin"));
+    await touch(path.join(externalRoot, "gradle-user-home-x86", "cache.bin"));
+    await touch(path.join(externalRoot, "android-subprojects", "build.bin"));
+    await touch(path.join(externalRoot, "qa-release-build-20260726.log"));
+    await touch(path.join(externalRoot, "qa", "runtime", "summary.json"));
+    await touch(path.join(externalRoot, "keystores", "qa-keystore.jks"));
+
+    const result = await cleanGeneratedJunk({
+      rootDir,
+      tempRoots: [externalRoot],
+    });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(
+      existsSync(path.join(externalRoot, "gradle-home-20260729")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "gradle-user-home-x86")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "android-subprojects")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "qa-release-build-20260726.log")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "qa", "runtime", "summary.json")),
+      true,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "keystores", "qa-keystore.jks")),
+      true,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+    await rm(externalRoot, { recursive: true, force: true });
+  }
+});
+
 test("parses Windows subst mappings", () => {
   assert.deepEqual(
     parseSubstMappings(

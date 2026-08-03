@@ -85,6 +85,15 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^chrome-clean-fintech/i,
   /^DiagOutputDir$/i,
   /^gradle-.+\.log$/i,
+  /^gradle-home(?:-.+)?$/i,
+  /^gradle-user-home(?:-.+)?$/i,
+  /^android-build-work$/i,
+  /^android-subproject(?:s|-build)?$/i,
+  /^apk-patch$/i,
+  /^kotlin-daemon$/i,
+  /^moved-caches$/i,
+  /^node-tests$/i,
+  /^qa-release-.+\.log$/i,
   /^jest$/i,
   /^metro-cache$/i,
   /^metro-file-map-/i,
@@ -369,6 +378,7 @@ export function defaultTempRoots() {
     process.env.LOCALAPPDATA,
     "C:\\salary-hijacking-artifacts\\repo-artifacts\\qa",
     ...windowsCodexTempRoots,
+    "D:\\salary-hijacking-artifacts",
     "D:\\codex-temp\\salary-hijacking",
   ];
 
@@ -495,7 +505,9 @@ export async function cleanGeneratedJunk(options = {}) {
   for (const target of deduped) {
     try {
       const bytes =
-        target.kind === "subst" ? 0 : await measurePathBytes(target.path);
+        dryRun || target.kind === "subst" || target.kind === "temp"
+          ? 0
+          : await measurePathBytes(target.path);
       if (!dryRun) {
         if (target.kind === "subst") {
           removeSubstTarget(target, spawn);
