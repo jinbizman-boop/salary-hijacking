@@ -402,28 +402,72 @@ jobs:
           );
           NODE
 
-      - name: Verify production admin read-only regression
+      - name: Diagnose production admin read-only readiness from GitHub runner
         run: |
           set -euo pipefail
 
+          mkdir -p artifacts/admin-staging/diagnostics
+
           node <<'NODE'
+          const fs = require("node:fs");
+
           async function main() {
+            const baseUrl = process.env.PRODUCTION_ADMIN_BASE_URL;
+            const readyPath = process.env.ADMIN_READY_PATH;
+            const url = `${baseUrl}${readyPath}`;
+            const startedAt = new Date().toISOString();
             const response = await fetch(
-              `${process.env.PRODUCTION_ADMIN_BASE_URL}${process.env.ADMIN_READY_PATH}`,
-              { headers: { accept: "application/json" } },
+              url,
+              {
+                headers: {
+                  accept: "application/json",
+                  "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+                },
+              },
             );
-            if (response.status !== 200) {
-              throw new Error(`production admin readiness returned ${response.status}`);
+            const rawBody = await response.text();
+            const allowedHeaders = {};
+
+            for (const key of [
+              "cf-ray",
+              "server",
+              "content-type",
+              "date",
+              "cache-control",
+              "cf-cache-status",
+            ]) {
+              const value = response.headers.get(key);
+              if (value) allowedHeaders[key] = value;
             }
-            const body = await response.json();
-            if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
-              throw new Error("production admin readiness payload contract failed");
-            }
-            const internalHealth = body?.data?.stagingApiInternalHealth;
-            if (internalHealth?.required === true) {
-              throw new Error("production admin must not require staging API service binding");
-            }
-            console.log("production admin read-only readiness verified");
+
+            const redactedBody = rawBody
+              .slice(0, 1200)
+              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[redacted-email]")
+              .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+\b/gu, "[redacted-auth]")
+              .replace(/\b(?:cf_clearance|session|token|jwt|secret|password|cookie)[^\\s<>,;]*/giu, "[redacted-sensitive]");
+
+            const evidence = {
+              capturedAt: new Date().toISOString(),
+              startedAt,
+              url,
+              method: "GET",
+              requestHeaders: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+              status: response.status,
+              responseHeaders: allowedHeaders,
+              bodySnippet: redactedBody,
+              storedCookie: false,
+              storedAuthorization: false,
+              storedToken: false,
+            };
+
+            fs.writeFileSync(
+              "artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json",
+              `${JSON.stringify(evidence, null, 2)}\n`,
+            );
+            console.log(`production admin readiness diagnostic status=${response.status}`);
           }
 
           main().catch((error) => {
@@ -431,7 +475,65 @@ jobs:
             process.exit(1);
           });
           NODE
-          touch artifacts/admin-staging/status/production-admin-readonly-regression-ok
+
+      - name: Classify production admin read-only readiness from GitHub runner
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const diagnostic = JSON.parse(
+            fs.readFileSync(
+              "artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json",
+              "utf8",
+            ),
+          );
+          const headers = diagnostic.responseHeaders ?? {};
+          const bodySnippet = String(diagnostic.bodySnippet ?? "");
+          const status = Number(diagnostic.status);
+          const knownBotFightChallenge =
+            status === 403 &&
+            String(headers.server ?? "").toLowerCase() === "cloudflare" &&
+            String(headers["content-type"] ?? "").includes("text/html") &&
+            bodySnippet.includes("Just a moment");
+
+          if (status === 200) {
+            const body = JSON.parse(bodySnippet);
+            if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
+              throw new Error("production admin readiness payload contract failed");
+            }
+            const internalHealth = body?.data?.stagingApiInternalHealth;
+            if (internalHealth?.required === true) {
+              throw new Error("production admin must not require staging API service binding");
+            }
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/production-admin-public-github-ok",
+              "",
+            );
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/production-admin-readonly-regression-ok",
+              "",
+            );
+            console.log("production admin read-only readiness verified");
+            process.exit(0);
+          }
+
+          if (knownBotFightChallenge) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/production-admin-public-github-known-bot-fight-challenge",
+              "",
+            );
+            console.log(
+              "GitHub public production admin readiness classified as known Cloudflare Bot Fight Mode challenge",
+            );
+            process.exit(0);
+          }
+
+          throw new Error(
+            `unexpected GitHub public production admin readiness status ${status}`,
+          );
+          NODE
 
       - name: Write no-secret staging evidence
         if: always()
@@ -446,12 +548,17 @@ jobs:
             "artifacts/admin-staging/diagnostics/staging-api-health-ci.json";
           const adminDiagnosticPath =
             "artifacts/admin-staging/diagnostics/admin-staging-readiness-ci.json";
+          const productionAdminDiagnosticPath =
+            "artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json";
           const hasStatus = (name) => fs.existsSync(`${statusPath}/${name}`);
           const stagingApiDiagnostic = fs.existsSync(diagnosticPath)
             ? JSON.parse(fs.readFileSync(diagnosticPath, "utf8"))
             : null;
           const stagingAdminDiagnostic = fs.existsSync(adminDiagnosticPath)
             ? JSON.parse(fs.readFileSync(adminDiagnosticPath, "utf8"))
+            : null;
+          const productionAdminDiagnostic = fs.existsSync(productionAdminDiagnosticPath)
+            ? JSON.parse(fs.readFileSync(productionAdminDiagnosticPath, "utf8"))
             : null;
 
           const evidence = {
@@ -497,6 +604,14 @@ jobs:
             productionAdminRegressionCheckedReadOnly: hasStatus(
               "production-admin-readonly-regression-ok",
             ),
+            productionAdminPublicGithubHealthOk: hasStatus(
+              "production-admin-public-github-ok",
+            ),
+            productionAdminPublicGithubKnownBotFightChallenge: hasStatus(
+              "production-admin-public-github-known-bot-fight-challenge",
+            ),
+            productionAdminPublicOperatorHealthRequired: true,
+            productionAdminDiagnostic,
             secretsStored: false,
             rawFinancialDataStored: false,
             rawPersonalDataStored: false,
@@ -520,3 +635,4 @@ jobs:
             artifacts/admin-staging/evidence.json
             artifacts/admin-staging/diagnostics/staging-api-health-ci.json
             artifacts/admin-staging/diagnostics/admin-staging-readiness-ci.json
+            artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json
