@@ -79,7 +79,18 @@ test("admin staging workflow uses repository-defined Admin build and readiness c
   );
   assert.match(workflow, /pnpm --dir "\$ADMIN_APP_DIR" build:cloudflare/u);
   assert.match(workflow, /Diagnose staging API health from GitHub runner/u);
+  assert.match(
+    workflow,
+    /Classify staging API public health from GitHub runner/u,
+  );
+  assert.match(workflow, /known Cloudflare Bot Fight Mode challenge/u);
   assert.match(workflow, /staging-api-health-ci\.json/u);
+  assert.match(workflow, /staging-api-internal-health-ok/u);
+  assert.match(workflow, /admin staging internal API health contract failed/u);
+  assert.match(
+    workflow,
+    /production admin must not require staging API service binding/u,
+  );
   assert.match(workflow, /ADMIN_READY_PATH: \/admin\/api\/v1\/ready/u);
   assert.match(workflow, /admin staging readiness payload contract failed/u);
   assert.match(
@@ -99,6 +110,12 @@ test("admin staging Wrangler config points staging only at admin-staging domain"
     wranglerConfig,
     /"APP_PUBLIC_BASE_URL": "https:\/\/admin-staging\.salaryhijacking\.com"/u,
   );
+  assert.match(wranglerConfig, /"binding": "STAGING_API_WORKER"/u);
+  assert.match(wranglerConfig, /"service": "salary-hijacking-api-staging"/u);
   assert.match(wranglerConfig, /"production": \{/u);
   assert.match(wranglerConfig, /"name": "salary-hijacking-admin"/u);
+  assert.doesNotMatch(
+    wranglerConfig,
+    /"production": \{[\s\S]*"STAGING_API_WORKER"/u,
+  );
 });

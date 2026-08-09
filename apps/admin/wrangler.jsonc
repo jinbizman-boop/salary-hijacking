@@ -24,6 +24,12 @@
         "APP_ENV": "staging",
         "APP_PUBLIC_BASE_URL": "https://admin-staging.salaryhijacking.com",
       },
+      "services": [
+        {
+          "binding": "STAGING_API_WORKER",
+          "service": "salary-hijacking-api-staging",
+        },
+      ],
     },
     "production": {
       "name": "salary-hijacking-admin",

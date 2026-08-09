@@ -205,12 +205,52 @@ jobs:
           });
           NODE
 
-      - name: Verify staging API health
+      - name: Classify staging API public health from GitHub runner
         run: |
           set -euo pipefail
 
-          curl --fail --silent --show-error --max-time 30 "$STAGING_API_BASE_URL/health" >/dev/null
-          touch artifacts/admin-staging/status/staging-api-health-ok
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const diagnostic = JSON.parse(
+            fs.readFileSync(
+              "artifacts/admin-staging/diagnostics/staging-api-health-ci.json",
+              "utf8",
+            ),
+          );
+          const headers = diagnostic.responseHeaders ?? {};
+          const bodySnippet = String(diagnostic.bodySnippet ?? "");
+          const status = Number(diagnostic.status);
+          const knownBotFightChallenge =
+            status === 403 &&
+            String(headers.server ?? "").toLowerCase() === "cloudflare" &&
+            String(headers["content-type"] ?? "").includes("text/html") &&
+            bodySnippet.includes("Just a moment");
+
+          if (status === 200) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-api-public-github-ok",
+              "",
+            );
+            console.log("GitHub public staging API health returned HTTP 200");
+            process.exit(0);
+          }
+
+          if (knownBotFightChallenge) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-api-public-github-known-bot-fight-challenge",
+              "",
+            );
+            console.log(
+              "GitHub public staging API health classified as known Cloudflare Bot Fight Mode challenge",
+            );
+            process.exit(0);
+          }
+
+          throw new Error(
+            `unexpected GitHub public staging API health status ${status}`,
+          );
+          NODE
 
       - name: Verify admin staging DNS
         run: |
@@ -224,27 +264,72 @@ jobs:
           set -euo pipefail
 
           node <<'NODE'
-          const baseUrl = process.env.STAGING_ADMIN_BASE_URL;
-          const readyPath = process.env.ADMIN_READY_PATH;
-          const response = await fetch(`${baseUrl}${readyPath}`, {
-            headers: { accept: "application/json" },
+          async function main() {
+            const baseUrl = process.env.STAGING_ADMIN_BASE_URL;
+            const readyPath = process.env.ADMIN_READY_PATH;
+            const response = await fetch(`${baseUrl}${readyPath}`, {
+              headers: { accept: "application/json" },
+            });
+            if (response.status !== 200) {
+              throw new Error(`admin staging readiness returned ${response.status}`);
+            }
+            const body = await response.json();
+            const internalHealth = body?.data?.stagingApiInternalHealth;
+
+            if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
+              throw new Error("admin staging readiness payload contract failed");
+            }
+
+            if (
+              internalHealth?.required !== true ||
+              internalHealth?.ok !== true ||
+              internalHealth?.source !== "cloudflare_service_binding" ||
+              internalHealth?.status !== 200 ||
+              internalHealth?.service !== "salary-hijacking-api"
+            ) {
+              throw new Error("admin staging internal API health contract failed");
+            }
+
+            console.log("admin staging readiness verified");
+          }
+
+          main().catch((error) => {
+            console.error(error.message);
+            process.exit(1);
           });
-          if (response.status !== 200) {
-            throw new Error(`admin staging readiness returned ${response.status}`);
-          }
-          const body = await response.json();
-          if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
-            throw new Error("admin staging readiness payload contract failed");
-          }
-          console.log("admin staging readiness verified");
           NODE
           touch artifacts/admin-staging/status/staging-admin-ready-ok
+          touch artifacts/admin-staging/status/staging-api-internal-health-ok
 
       - name: Verify production admin read-only regression
         run: |
           set -euo pipefail
 
-          curl --fail --silent --show-error --max-time 30 "$PRODUCTION_ADMIN_BASE_URL$ADMIN_READY_PATH" >/dev/null
+          node <<'NODE'
+          async function main() {
+            const response = await fetch(
+              `${process.env.PRODUCTION_ADMIN_BASE_URL}${process.env.ADMIN_READY_PATH}`,
+              { headers: { accept: "application/json" } },
+            );
+            if (response.status !== 200) {
+              throw new Error(`production admin readiness returned ${response.status}`);
+            }
+            const body = await response.json();
+            if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
+              throw new Error("production admin readiness payload contract failed");
+            }
+            const internalHealth = body?.data?.stagingApiInternalHealth;
+            if (internalHealth?.required === true) {
+              throw new Error("production admin must not require staging API service binding");
+            }
+            console.log("production admin read-only readiness verified");
+          }
+
+          main().catch((error) => {
+            console.error(error.message);
+            process.exit(1);
+          });
+          NODE
           touch artifacts/admin-staging/status/production-admin-readonly-regression-ok
 
       - name: Write no-secret staging evidence
@@ -281,7 +366,17 @@ jobs:
             readinessEndpoint: `${process.env.STAGING_ADMIN_BASE_URL}${process.env.ADMIN_READY_PATH}`,
             contextValidated: hasStatus("context-ok"),
             deployed: hasStatus("deploy-ok"),
-            stagingApiHealthOk: hasStatus("staging-api-health-ok"),
+            stagingApiHealthOk: hasStatus("staging-api-internal-health-ok"),
+            stagingApiCiSafeInternalHealthOk: hasStatus(
+              "staging-api-internal-health-ok",
+            ),
+            stagingApiPublicGithubHealthOk: hasStatus(
+              "staging-api-public-github-ok",
+            ),
+            stagingApiPublicGithubKnownBotFightChallenge: hasStatus(
+              "staging-api-public-github-known-bot-fight-challenge",
+            ),
+            stagingApiPublicOperatorHealthRequired: true,
             stagingAdminDnsOk: hasStatus("staging-admin-dns-ok"),
             stagingAdminReadyOk: hasStatus("staging-admin-ready-ok"),
             stagingApiDiagnostic,
