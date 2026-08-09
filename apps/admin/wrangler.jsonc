@@ -16,13 +16,13 @@
       "name": "salary-hijacking-admin-staging",
       "routes": [
         {
-          "pattern": "staging-admin.salaryhijacking.com",
+          "pattern": "admin-staging.salaryhijacking.com",
           "custom_domain": true,
         },
       ],
       "vars": {
         "APP_ENV": "staging",
-        "APP_PUBLIC_BASE_URL": "https://staging-admin.salaryhijacking.com",
+        "APP_PUBLIC_BASE_URL": "https://admin-staging.salaryhijacking.com",
       },
     },
     "production": {

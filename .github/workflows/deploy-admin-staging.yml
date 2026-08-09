@@ -1,0 +1,235 @@
+name: deploy-admin-staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - "apps/admin/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-admin-staging.yml"
+      - "scripts/release/admin-staging-workflow-contract.test.mjs"
+
+concurrency:
+  group: admin-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  STAGING_BRANCH: codex/payroll-reminder-launch-ready-100-20260714
+  ADMIN_APP_DIR: apps/admin
+  ADMIN_READY_PATH: /admin/api/v1/ready
+  STAGING_API_BASE_URL: https://api-staging.salaryhijacking.com
+  STAGING_ADMIN_BASE_URL: https://admin-staging.salaryhijacking.com
+  PRODUCTION_ADMIN_BASE_URL: https://admin.salaryhijacking.com
+  ADMIN_API_ORIGIN: https://api-staging.salaryhijacking.com
+  NEXT_PUBLIC_APP_ENV: staging
+  NEXT_PUBLIC_ADMIN_BASE_PATH: /admin
+  NEXT_PUBLIC_ADMIN_API_BASE_PATH: /admin/api/v1
+  NEXT_PUBLIC_ADMIN_AUTH_BASE_PATH: /admin/auth
+
+jobs:
+  deploy-admin-staging:
+    name: Deploy admin staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: staging
+
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Validate staging workflow context
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging/status
+
+          if [ "${GITHUB_REF_NAME:-}" != "$STAGING_BRANCH" ]; then
+            echo "::error::This staging workflow may only run on $STAGING_BRANCH."
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing staging environment secret: CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing staging environment secret: CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+
+          if [ "$STAGING_API_BASE_URL" != "https://api-staging.salaryhijacking.com" ]; then
+            echo "::error::Unexpected STAGING_API_BASE_URL"
+            exit 1
+          fi
+
+          if [ "$STAGING_ADMIN_BASE_URL" != "https://admin-staging.salaryhijacking.com" ]; then
+            echo "::error::Unexpected STAGING_ADMIN_BASE_URL"
+            exit 1
+          fi
+
+          echo "Staging GitHub Actions context verified without exposing secret values."
+          touch artifacts/admin-staging/status/context-ok
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run admin staging workflow contract
+        run: node scripts/release/admin-staging-workflow-contract.test.mjs
+
+      - name: Typecheck admin
+        run: pnpm --dir "$ADMIN_APP_DIR" typecheck:strict
+
+      - name: Test admin readiness route
+        run: pnpm --dir "$ADMIN_APP_DIR" exec vitest run tests/unit/admin-ready-route.test.ts --passWithNoTests
+
+      - name: Build admin OpenNext Worker
+        run: pnpm --dir "$ADMIN_APP_DIR" build:cloudflare
+
+      - name: Verify OpenNext output
+        run: |
+          set -euo pipefail
+
+          test -f "$ADMIN_APP_DIR/.open-next/worker.js"
+          test -d "$ADMIN_APP_DIR/.open-next/assets"
+          find "$ADMIN_APP_DIR/.open-next/assets" -type f | head -n 1 | grep -q .
+
+      - name: Wrangler staging dry-run
+        run: pnpm --dir "$ADMIN_APP_DIR" exec wrangler deploy --env staging --config wrangler.jsonc --dry-run
+
+      - name: Deploy admin staging Worker
+        run: |
+          set -euo pipefail
+
+          pnpm --dir "$ADMIN_APP_DIR" exec wrangler deploy --env staging --config wrangler.jsonc --keep-vars
+          touch artifacts/admin-staging/status/deploy-ok
+
+      - name: Verify staging API health
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error --max-time 30 "$STAGING_API_BASE_URL/health" >/dev/null
+          touch artifacts/admin-staging/status/staging-api-health-ok
+
+      - name: Verify admin staging DNS
+        run: |
+          set -euo pipefail
+
+          node -e "require('node:dns').resolve('admin-staging.salaryhijacking.com', (error, records) => { if (error || !records.length) throw error || new Error('no DNS records'); console.log('admin staging DNS resolved'); })"
+          touch artifacts/admin-staging/status/staging-admin-dns-ok
+
+      - name: Verify admin staging readiness
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const baseUrl = process.env.STAGING_ADMIN_BASE_URL;
+          const readyPath = process.env.ADMIN_READY_PATH;
+          const response = await fetch(`${baseUrl}${readyPath}`, {
+            headers: { accept: "application/json" },
+          });
+          if (response.status !== 200) {
+            throw new Error(`admin staging readiness returned ${response.status}`);
+          }
+          const body = await response.json();
+          if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
+            throw new Error("admin staging readiness payload contract failed");
+          }
+          console.log("admin staging readiness verified");
+          NODE
+          touch artifacts/admin-staging/status/staging-admin-ready-ok
+
+      - name: Verify production admin read-only regression
+        run: |
+          set -euo pipefail
+
+          curl --fail --silent --show-error --max-time 30 "$PRODUCTION_ADMIN_BASE_URL$ADMIN_READY_PATH" >/dev/null
+          touch artifacts/admin-staging/status/production-admin-readonly-regression-ok
+
+      - name: Write no-secret staging evidence
+        if: always()
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging
+          node <<'NODE'
+          const fs = require("node:fs");
+          const statusPath = "artifacts/admin-staging/status";
+          const hasStatus = (name) => fs.existsSync(`${statusPath}/${name}`);
+
+          const evidence = {
+            evidenceType: "admin-staging-github-actions-deploy",
+            generatedAt: new Date().toISOString(),
+            repository: process.env.GITHUB_REPOSITORY,
+            workflow: process.env.GITHUB_WORKFLOW,
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            refName: process.env.GITHUB_REF_NAME,
+            commit: process.env.GITHUB_SHA,
+            runnerOs: process.env.RUNNER_OS,
+            environment: "staging",
+            adminWorker: "salary-hijacking-admin-staging",
+            wranglerEnv: "staging",
+            stagingApiBaseUrl: process.env.STAGING_API_BASE_URL,
+            stagingAdminBaseUrl: process.env.STAGING_ADMIN_BASE_URL,
+            readinessEndpoint: `${process.env.STAGING_ADMIN_BASE_URL}${process.env.ADMIN_READY_PATH}`,
+            contextValidated: hasStatus("context-ok"),
+            deployed: hasStatus("deploy-ok"),
+            stagingApiHealthOk: hasStatus("staging-api-health-ok"),
+            stagingAdminDnsOk: hasStatus("staging-admin-dns-ok"),
+            stagingAdminReadyOk: hasStatus("staging-admin-ready-ok"),
+            productionAdminRegressionCheckedReadOnly: hasStatus(
+              "production-admin-readonly-regression-ok",
+            ),
+            secretsStored: false,
+            rawFinancialDataStored: false,
+            rawPersonalDataStored: false,
+            rawPushTokenStored: false,
+          };
+
+          fs.writeFileSync(
+            "artifacts/admin-staging/evidence.json",
+            `${JSON.stringify(evidence, null, 2)}\n`,
+          );
+          NODE
+
+      - name: Upload no-secret staging evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-staging-evidence-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: artifacts/admin-staging/evidence.json
