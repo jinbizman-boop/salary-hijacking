@@ -89,6 +89,19 @@ test("admin staging workflow uses repository-defined Admin build and readiness c
   assert.match(workflow, /admin staging internal API health contract failed/u);
   assert.match(
     workflow,
+    /Diagnose admin staging readiness from GitHub runner/u,
+  );
+  assert.match(
+    workflow,
+    /Classify admin staging readiness from GitHub runner/u,
+  );
+  assert.match(workflow, /admin-staging-readiness-ci\.json/u);
+  assert.match(
+    workflow,
+    /GitHub public admin staging readiness classified as known Cloudflare Bot Fight Mode challenge/u,
+  );
+  assert.match(
+    workflow,
     /production admin must not require staging API service binding/u,
   );
   assert.match(workflow, /ADMIN_READY_PATH: \/admin\/api\/v1\/ready/u);
