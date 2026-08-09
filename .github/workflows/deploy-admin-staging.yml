@@ -136,6 +136,75 @@ jobs:
           pnpm --dir "$ADMIN_APP_DIR" exec wrangler deploy --env staging --config wrangler.jsonc --keep-vars
           touch artifacts/admin-staging/status/deploy-ok
 
+      - name: Diagnose staging API health from GitHub runner
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging/diagnostics
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          async function main() {
+            const url = `${process.env.STAGING_API_BASE_URL}/health`;
+            const startedAt = new Date().toISOString();
+            const response = await fetch(url, {
+              headers: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+            });
+            const rawBody = await response.text();
+            const allowedHeaders = {};
+
+            for (const key of [
+              "cf-ray",
+              "server",
+              "content-type",
+              "date",
+              "cache-control",
+              "cf-cache-status",
+            ]) {
+              const value = response.headers.get(key);
+              if (value) allowedHeaders[key] = value;
+            }
+
+            const redactedBody = rawBody
+              .slice(0, 1200)
+              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[redacted-email]")
+              .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+\b/gu, "[redacted-auth]")
+              .replace(/\b(?:cf_clearance|session|token|jwt|secret|password|cookie)[^\\s<>,;]*/giu, "[redacted-sensitive]");
+
+            const evidence = {
+              capturedAt: new Date().toISOString(),
+              startedAt,
+              url,
+              method: "GET",
+              requestHeaders: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+              status: response.status,
+              responseHeaders: allowedHeaders,
+              bodySnippet: redactedBody,
+              storedCookie: false,
+              storedAuthorization: false,
+              storedToken: false,
+            };
+
+            fs.writeFileSync(
+              "artifacts/admin-staging/diagnostics/staging-api-health-ci.json",
+              `${JSON.stringify(evidence, null, 2)}\n`,
+            );
+            console.log(`staging API diagnostic status=${response.status}`);
+          }
+
+          main().catch((error) => {
+            console.error(error.message);
+            process.exit(1);
+          });
+          NODE
+
       - name: Verify staging API health
         run: |
           set -euo pipefail
@@ -187,7 +256,12 @@ jobs:
           node <<'NODE'
           const fs = require("node:fs");
           const statusPath = "artifacts/admin-staging/status";
+          const diagnosticPath =
+            "artifacts/admin-staging/diagnostics/staging-api-health-ci.json";
           const hasStatus = (name) => fs.existsSync(`${statusPath}/${name}`);
+          const stagingApiDiagnostic = fs.existsSync(diagnosticPath)
+            ? JSON.parse(fs.readFileSync(diagnosticPath, "utf8"))
+            : null;
 
           const evidence = {
             evidenceType: "admin-staging-github-actions-deploy",
@@ -210,6 +284,7 @@ jobs:
             stagingApiHealthOk: hasStatus("staging-api-health-ok"),
             stagingAdminDnsOk: hasStatus("staging-admin-dns-ok"),
             stagingAdminReadyOk: hasStatus("staging-admin-ready-ok"),
+            stagingApiDiagnostic,
             productionAdminRegressionCheckedReadOnly: hasStatus(
               "production-admin-readonly-regression-ok",
             ),
@@ -232,4 +307,6 @@ jobs:
           name: admin-staging-evidence-${{ github.run_attempt }}
           if-no-files-found: error
           retention-days: 14
-          path: artifacts/admin-staging/evidence.json
+          path: |
+            artifacts/admin-staging/evidence.json
+            artifacts/admin-staging/diagnostics/staging-api-health-ci.json

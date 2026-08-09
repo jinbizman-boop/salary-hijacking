@@ -78,6 +78,8 @@ test("admin staging workflow uses repository-defined Admin build and readiness c
     /pnpm --dir "\$ADMIN_APP_DIR" exec vitest run tests\/unit\/admin-ready-route\.test\.ts --passWithNoTests/u,
   );
   assert.match(workflow, /pnpm --dir "\$ADMIN_APP_DIR" build:cloudflare/u);
+  assert.match(workflow, /Diagnose staging API health from GitHub runner/u);
+  assert.match(workflow, /staging-api-health-ci\.json/u);
   assert.match(workflow, /ADMIN_READY_PATH: \/admin\/api\/v1\/ready/u);
   assert.match(workflow, /admin staging readiness payload contract failed/u);
   assert.match(
