@@ -152,7 +152,7 @@ jobs:
           set -euo pipefail
 
           node --input-type=module <<'NODE'
-          const fs = require("node:fs");
+          import fs from "node:fs";
 
           const redact = (value) => String(value)
             .slice(0, 1200)
