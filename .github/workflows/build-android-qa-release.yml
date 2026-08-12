@@ -109,7 +109,15 @@ jobs:
           echo "$android_sdk_root/emulator" >> "$GITHUB_PATH"
           echo "$android_sdk_root/build-tools/35.0.0" >> "$GITHUB_PATH"
 
+          set +o pipefail
           yes | "$sdkmanager_cmd" --licenses >/dev/null
+          sdk_license_status="${PIPESTATUS[1]}"
+          set -o pipefail
+          if [ "$sdk_license_status" -ne 0 ]; then
+            printf '::error::Android SDK license acceptance failed with exit code %s\n' "$sdk_license_status"
+            exit "$sdk_license_status"
+          fi
+
           "$sdkmanager_cmd" \
             "platform-tools" \
             "emulator" \
