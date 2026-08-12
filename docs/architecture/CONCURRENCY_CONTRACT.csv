@@ -1,0 +1,11 @@
+DOMAIN,RESOURCE,RACE,STRATEGY,DB_CONSTRAINT,TEST
+PAYROLL,payroll profile/cycle,lost update active payroll,transaction + optimistic version + active unique,unique active primary per user/cycle,contract guard
+BUD,daily budget,budget recalculation race,transaction + calculation snapshot revision,unique user date/cycle budget,contract guard
+EXP,variable expense,double submit/concurrent create,idempotency record + transaction,unique idempotency key,contract guard
+SAV,savings,double submit/concurrent reserve,idempotency record + transaction,unique idempotency key,contract guard
+FIN,summary,payroll summary race,deterministic server recalculation version,snapshot source hash,contract guard
+LV,XP/progress,duplicate XP award,unique completion constraint + transaction,unique user content version,contract guard
+COM,reaction count,reaction race,unique reaction + aggregate recalculation,unique user target reaction,contract guard
+NOTI,notification generation,duplicate send,event idempotency key + delivery log,unique notification event user channel,contract guard
+ADMIN,privileged mutation,simultaneous admin change,optimistic version + audit reason,target revision,contract guard
+OPS,retention batch,overlapping job,unique job window + retry ledger,unique job window,contract guard

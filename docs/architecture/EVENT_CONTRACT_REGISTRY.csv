@@ -1,0 +1,11 @@
+EVENT,PRODUCER,CONSUMER,SCHEMA_VERSION,SCHEMA_FIELDS,IDEMPOTENCY_KEY,MAX_ATTEMPTS,RETRY_BACKOFF,TERMINAL_BEHAVIOR,PRIVACY_CLASSIFICATION
+PAYDAY_REMINDER,scheduler,notifications,1,"eventId,occurredAt,userId,payrollCycleId",user+cycle+payday,5,exponential backoff,terminal store/DLQ,no raw financial data
+FIXED_EXPENSE_REMINDER,scheduler,notifications,1,"eventId,occurredAt,userId,fixedExpenseId",user+expense+dueDate,5,exponential backoff,terminal store/DLQ,minimal identifiers
+BUDGET_THRESHOLD,api/scheduler,notifications,1,"eventId,occurredAt,userId,budgetId,threshold",user+budget+threshold+date,5,exponential backoff,terminal store/DLQ,no transaction raw body
+SAVING_DUE,scheduler,notifications,1,"eventId,occurredAt,userId,savingPlanId",user+saving+dueDate,5,exponential backoff,terminal store/DLQ,minimal identifiers
+SAVING_GOAL,api,notifications,1,"eventId,occurredAt,userId,savingGoalId",user+goal+milestone,5,exponential backoff,terminal store/DLQ,minimal identifiers
+GROWTH_COMPLETION,api,notifications/growth,1,"eventId,occurredAt,userId,contentId",user+content+version,5,exponential backoff,terminal store/DLQ,no financial data
+COMMUNITY_ACTIVITY,api,notifications,1,"eventId,occurredAt,userId,targetId",actor+target+activity,5,exponential backoff,terminal store/DLQ,community minimal payload
+MONTHLY_CLOSE,scheduler,api/db,1,"eventId,occurredAt,cycleId",cycle+month,3,backoff,terminal store,financial snapshots by reference
+PAY_CYCLE_CLOSE,scheduler,api/db,1,"eventId,occurredAt,payrollCycleId",cycle+close,3,backoff,terminal store,financial snapshots by reference
+DATA_RETENTION,scheduler,api/db/storage,1,"eventId,occurredAt,window",job+window,3,backoff,terminal store,privacy minimal identifiers

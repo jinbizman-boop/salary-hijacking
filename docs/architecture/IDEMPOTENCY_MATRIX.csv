@@ -1,0 +1,14 @@
+ENDPOINT_OR_EVENT,REQ_ID,IDEMPOTENCY_REQUIRED,KEY_SOURCE,KEY_SCOPE,STORAGE,TTL,DUPLICATE_RESPONSE,CONCURRENCY_BEHAVIOR,DB_UNIQUE_CONSTRAINT,TEST
+POST /api/v1/auth/register,AUTH-001,YES,Idempotency-Key or normalized email uniqueness,user/email,idempotency_records + users unique email,24h,return existing safe result or 409 conflict,unique email + transaction,users.email unique,PHASE3
+POST /api/v1/payroll,PAY-001,YES,Idempotency-Key,user+cycle+key,idempotency_records,24h,same resource response,transaction + active payroll constraint,payroll idempotency key,PHASE2/3
+POST /api/v1/daily-budgets,BUD-001,YES,Idempotency-Key,user+date+key,idempotency_records,24h,same budget response,transaction + date unique,user date budget unique,PHASE2/3
+POST /api/v1/variable-expenses,EXP-001,YES,Idempotency-Key,user+cycle+key,idempotency_records,24h,same expense response,transaction + unique key,expense idempotency key,PHASE2/3
+POST /api/v1/savings,SAV-001,YES,Idempotency-Key,user+plan+key,idempotency_records,24h,same saving response,transaction + unique key,savings idempotency key,PHASE2/3
+POST /api/v1/growth/*/complete,LV-001,YES,domain completion key,user+content+version,user_level_content_progress,permanent,existing progress response,unique completion constraint,user content unique,PHASE2/3
+POST /api/v1/community/posts,COM-001,YES,Idempotency-Key,user+body hash+key,idempotency_records,24h,same post response,transaction,post idempotency key,PHASE3
+POST /api/v1/community/*/like,COM-002,YES,domain unique reaction,user+target+reaction,reaction table,permanent,existing reaction response,unique constraint,user target reaction unique,PHASE3
+POST /api/v1/community/*/report,COM-003,YES,domain report key,user+target+reason,reports table,permanent,existing report response,unique active report,report unique,PHASE3
+POST /api/v1/uploads/*/finalize,WRITE-001,YES,uploadId + object key,user+uploadId,uploads metadata,permanent,existing finalize response,transaction + object ownership,upload id unique,PHASE3
+Admin privileged mutation,ADMIN-001,YES,Idempotency-Key + reason,admin+target+key,idempotency_records + audit_events,24h,same mutation response,transaction + audit,audit event unique optional,PHASE4
+Scheduler notification generation,NOTI-001,YES,eventId + job date,job+date+event,scheduled_job_runs,per job date,skip duplicate,advisory/unique job key,job key unique,PHASE5
+Retention batch,OPS-001,YES,batchId + target window,job+window,retention_job_runs,per window,skip duplicate,unique job window,job window unique,PHASE5

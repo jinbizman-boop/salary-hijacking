@@ -1,0 +1,8 @@
+DRIFT_DIRECTION,CLASSIFICATION,FINDING,PRIORITY,NEXT_PHASE_OWNER
+PDF target <-> API contract,CONTRACT_MISSING,Shared api-contract exports auth/community/payroll only; Phase 1 freezes target registry for all current endpoints/domains.,P1,PHASE3/4 consumer/provider implementation
+API contract <-> API implementation,SAFE_ADDITIVE_DRIFT,Route modules use success/meta while shared package uses ok/meta. Final contract keeps canonical ok envelope and documents compatibility adapter requirement.,P1,PHASE3 adapter/type correction
+API contract <-> DB schema,UNKNOWN,Phase 0 static DB mapping exists; live 41-table/RLS finalization belongs to Phase 2.,P1,PHASE2 DB Finalization
+API contract <-> Mobile consumer,SAFE_ADDITIVE_DRIFT,Mobile consumers must use canonical staging API and server-authoritative responses; exact runtime evidence remains D-026.,P0_RUNTIME_GATE,PHASE7 Android QA
+API contract <-> Admin consumer,SAFE_ADDITIVE_DRIFT,Admin staging deploy is complete; exact endpoint schema compatibility is frozen here and verified further in PHASE4.,P1,PHASE4 Admin Operations
+Client finance authority,MATCH_CONTRACT_TARGET,PHASE1 freezes client as display/input/offline-estimate only; authoritative finance calculation must remain server-side with calculationVersion.,P0,PHASE2/3 implementation closure
+Admin RBAC names,SAFE_ADDITIVE_DRIFT,Current middleware roles differ from final spec roles. Final matrix freezes required roles without weakening PDF target.,P0_CONTRACT,PHASE4 RBAC implementation

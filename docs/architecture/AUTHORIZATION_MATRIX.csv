@@ -1,0 +1,11 @@
+ROLE,RESOURCE,ACTION,PERMISSION,OWNERSHIP_RULE,SERVER_ENFORCEMENT,PRIVACY_BOUNDARY,TEST
+USER,own user-owned resource,read/write,"self:read,self:write,domain permissions",authenticated user equals owner,auth middleware + RLS,YES,PHASE2/3
+RESOURCE_OWNER,owned payroll/budget/expense/saving/profile,CRUD,domain read/write,resource.user_id equals principal.userId,auth middleware + RLS,YES,PHASE2/3
+SUPER_ADMIN,all admin resources,manage,*,server RBAC + MFA + reason,auth middleware/admin routes,NO_BROAD_USER_DATA_IN_RESPONSE,PHASE4
+OPS_ADMIN,ops/health/incidents/notifications,manage,"incident:manage,notification:send",server RBAC + MFA,admin routes,NO_FINANCIAL_RAW,PHASE4
+MODERATOR,community reports/posts/comments,moderate,"community:moderate,report:manage",server RBAC + MFA,admin/community routes,NO_FINANCIAL_RAW,PHASE4
+CONTENT_ADMIN,LV UP/notices/banners/content,manage,"growth:manage,notice:write,banner:write",server RBAC + MFA,admin routes,NO_FINANCIAL_RAW,PHASE4
+SUPPORT,support/privacy requests,limited read/action,"support:read,support:write",server RBAC + reason,admin routes,MASKED_PII_ONLY,PHASE4
+ADS_PARTNER_ADMIN,ads/partners/campaigns,manage,"ad:manage,partner:manage",server RBAC + consent boundary,admin routes,FINANCE_TARGETING_FORBIDDEN,PHASE4
+AUDITOR_READONLY,audit/metrics,read,audit:read:minimal,server RBAC + MFA,admin routes,NO_MUTATION,PHASE4
+SYSTEM,scheduler/queues/internal jobs,execute,"system:job,system:scheduler",service token + job id,auth middleware,MINIMAL_IDENTIFIERS_ONLY,PHASE5
