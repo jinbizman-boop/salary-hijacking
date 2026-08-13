@@ -154,9 +154,9 @@ if (phase2.counts.staticSchemaUnknownCount !== 0) fail('phase2 static schema UNK
 if (phase2.status.schemaDriftP0 !== 0) fail('SCHEMA_DRIFT_P0 must be 0');
 if (phase2.status.migrationLedgerStatus !== 'PASS') fail('migration ledger status must be PASS');
 if (phase2.status.migrationChecksumStatus !== 'PASS') fail('migration checksum status must be PASS');
-if (phase2.status.recoveryStatus !== 'PASS_INTERNAL') fail('recovery status must be PASS_INTERNAL');
+if (!['PASS_INTERNAL', 'EXTERNAL_BLOCKER_PITR_REHEARSAL_NOT_EXECUTED'].includes(phase2.status.recoveryStatus)) fail('recovery status must be PASS_INTERNAL or explicit PITR rehearsal external blocker');
 if (phase2.status.queryPlanStatus !== 'PASS_STRUCTURAL') fail('query plan status must be PASS_STRUCTURAL');
-if (phase2.status.backupPitrStatus !== 'EXTERNAL_CAPABILITY_GAP') fail('PITR status must remain explicit external capability gap');
+if (!['EXTERNAL_CAPABILITY_GAP', 'PITR_AVAILABLE_RPO_GRANULARITY_UNVERIFIED'].includes(phase2.status.backupPitrStatus)) fail('PITR status must remain an explicit external/granularity blocker');
 if (!Array.isArray(phase2.outputFiles) || phase2.outputFiles.length < requiredFiles.length - 1) fail('phase2 output file hashes missing');
 
 const trace = parseCsv(readRel('docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv'));

@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-08-13T15:15:03.812Z",
+  "neonProject": "salary-hijacking",
+  "neonProjectId": "still-feather-22153967",
+  "neonPlan": "Free",
+  "databaseBranch": "staging",
+  "databaseBranchId": "br-fragrant-sky-aj5kk2c3",
+  "databaseName": "neondb",
+  "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "currentRepositoryHeadAtVerification": "d70356fee43c600de384288bc48dc30a622d7e0f",
+  "userConsoleEvidence": {
+    "plan": "Free",
+    "restoreWindow": "6 hours",
+    "pitrAvailable": true,
+    "note": "Provided by user from Neon Console; secret-free."
+  },
+  "officialDocsEvidence": {
+    "historyWindowUrl": "https://neon.com/docs/introduction/history-window",
+    "instantRestoreUrl": "https://neon.com/docs/introduction/branch-restore",
+    "freePlanHistoryWindow": "6 hours capped at 1 GB history",
+    "pitrMechanism": "history window retains WAL for instant restore, Time Travel, and branching from past states",
+    "documentedGranularity": "down to the millisecond for root branch instant restore",
+    "documentedBranchRestoreMechanism": "root branch restore by timestamp or LSN; child branches do not support instant restore"
+  },
+  "mcpEvidence": {
+    "stagingComputeBranchId": "br-fragrant-sky-aj5kk2c3",
+    "stagingComputeId": "ep-young-sunset-ajgi3bab",
+    "computeType": "read_write",
+    "region": "aws-us-east-2",
+    "sqlPreflight": {
+      "database": "neondb",
+      "publicTables": 41,
+      "migrationLedgerRows": 14,
+      "migrationLedgerVerifiedApplied": 14
+    }
+  },
+  "cliEvidence": {
+    "neonctlVersion": "3.2.0",
+    "projectMetadataRead": "BLOCKED_AUTH_TIMEOUT",
+    "historyRetentionSecondsRead": "NOT_AVAILABLE_FROM_LOCAL_CLI",
+    "authUrlRedacted": true
+  },
+  "recoveryRehearsal": {
+    "branchCreated": false,
+    "reason": "Available MCP create_branch tool does not expose parent branch or timestamp/LSN restore parameters; neonctl/API metadata path timed out waiting for OAuth. No staging/main branch reset or production mutation was performed.",
+    "cleanup": "NOT_APPLICABLE_NO_BRANCH_CREATED",
+    "dataValidation": "STAGING_CURRENT_SAFE_SQL_ONLY: public_tables=41, migration ledger 14/14 verified"
+  },
+  "assessment": {
+    "pitrAvailable": "YES_USER_CONSOLE_AND_OFFICIAL_DOCS",
+    "restoreWindow": "6h",
+    "pitrGranularity": "DOCUMENTED_MILLISECOND_FOR_ROOT_BRANCH_NOT_API_VERIFIED_FOR_STAGING",
+    "rpoTarget": "15m",
+    "rpoStatus": "UNVERIFIED_GRANULARITY",
+    "rtoTarget": "2h",
+    "rtoMeasuredOrBound": "NOT_MEASURED_NO_RECOVERY_BRANCH_CREATED; docs say restore operation expected seconds, but local rehearsal was not executed",
+    "rtoStatus": "UNVERIFIED_REHEARSAL_NOT_EXECUTED",
+    "phase2Status": "EXTERNAL_BLOCKER",
+    "d017Status": "EXTERNAL_BLOCKER",
+    "db009Status": "EXTERNAL_BLOCKER",
+    "db010Status": "EXTERNAL_BLOCKER",
+    "phase3EntryReadiness": "NOT_READY"
+  },
+  "safety": {
+    "productionMutation": false,
+    "mainBranchMutation": false,
+    "stagingResetOrReplace": false,
+    "secretsExposed": false
+  }
+}

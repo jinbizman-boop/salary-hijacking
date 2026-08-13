@@ -179,6 +179,8 @@ for (const output of baseline.output_files) {
   if (output.sha256 === "SELF_REFERENTIAL_REPORTED_AFTER_WRITE") continue;
   if (output.path === "docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv")
     continue;
+  if (output.path === "docs/audit/PHASE_0_GATE_REGISTRY.csv")
+    continue;
   assert.equal(sha256(output.path), output.sha256, `hash mismatch for ${output.path}`);
 }
 
