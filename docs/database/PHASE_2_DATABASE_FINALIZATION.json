@@ -1,0 +1,245 @@
+{
+  "timestamp": "2026-08-13T11:30:02.461Z",
+  "currentRepositoryHead": "81691409da91ddc26b85da7eceb4d773ee82197d",
+  "remoteHead": "81691409da91ddc26b85da7eceb4d773ee82197d",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "database": {
+    "project": "salary-hijacking",
+    "projectId": "still-feather-22153967",
+    "branch": "staging",
+    "branchId": "br-fragrant-sky-aj5kk2c3",
+    "database": "neondb",
+    "role": "salary_hijacking_staging_app"
+  },
+  "counts": {
+    "tableCount": 41,
+    "migrationCount": 14,
+    "rlsCount": 41,
+    "forceRlsCount": 30,
+    "policyCount": 75,
+    "pkCount": 41,
+    "fkCount": 65,
+    "uniqueConstraintCount": 6,
+    "uniqueIndexCount": 21,
+    "checkConstraintCount": 252,
+    "indexCount": 156,
+    "apiEndpointCount": 234,
+    "apiWriteEndpointCount": 132,
+    "apiDbMatrixRows": 234,
+    "packagesDbStaticTableCount": 72,
+    "packagesDbCanonicalPhysicalCount": 41,
+    "staticSchemaNoncanonicalCount": 50,
+    "staticSchemaUnknownCount": 0
+  },
+  "status": {
+    "phase2": "EXTERNAL_BLOCKER",
+    "d017": "EXTERNAL_BLOCKER",
+    "appRoleBypassRls": false,
+    "abIsolation": "PASS",
+    "schemaDriftP0": 0,
+    "apiDbDriftP0": 0,
+    "dbSecurityP0": 0,
+    "backupPitrStatus": "EXTERNAL_CAPABILITY_GAP",
+    "recoveryStatus": "PASS_INTERNAL",
+    "queryPlanStatus": "PASS_STRUCTURAL",
+    "migrationLedgerStatus": "PASS",
+    "migrationChecksumStatus": "PASS",
+    "concurrencyStatus": "PASS_FOR_TESTED_DB_GUARDS",
+    "projectCompletion100": false,
+    "commercialLaunchReady": false
+  },
+  "evidence": {
+    "live": {
+      "tableCount": 41,
+      "rlsCount": 41,
+      "forceRlsCount": 30,
+      "policyCount": 75,
+      "pkCount": 41,
+      "fkCount": 65,
+      "uniqueConstraintCount": 6,
+      "uniqueIndexCount": 21,
+      "checkConstraintCount": 252,
+      "indexCount": 156
+    },
+    "role": {
+      "rolsuper": false,
+      "rolcreaterole": false,
+      "rolcreatedb": false,
+      "rolreplication": false,
+      "rolbypassrls": false,
+      "rolcanlogin": false,
+      "schemaUsage": true,
+      "schemaCreate": false,
+      "tableGrant": "SELECT/INSERT/UPDATE/DELETE on 41 base tables and admin_ad_campaign_metrics view; RLS/FORCE is final boundary"
+    },
+    "isolation": {
+      "result": "PASS",
+      "domains": [
+        "users/profile",
+        "payroll",
+        "daily budgets",
+        "fixed expenses",
+        "variable expenses",
+        "savings",
+        "notifications",
+        "growth/progress",
+        "community",
+        "support/privacy"
+      ],
+      "operations": [
+        "A create",
+        "A read",
+        "B read invisible",
+        "B update denied/0 rows",
+        "B delete denied/0 rows",
+        "ownership spoof insert blocked"
+      ],
+      "residue": "0 synthetic rows after cleanup"
+    },
+    "concurrency": {
+      "result": "PASS_FOR_TESTED_DB_GUARDS",
+      "tested": [
+        "duplicate ACTIVE payroll per user/month blocked",
+        "duplicate daily budget per user/date blocked",
+        "variable expense idempotency duplicate blocked",
+        "LV UP progress idempotency duplicate blocked"
+      ]
+    },
+    "queryPlans": [
+      [
+        "current payroll cycle",
+        "Seq Scan at tiny staging row count; active user/month unique index exists; monitor under larger data"
+      ],
+      [
+        "daily budget today",
+        "Index Scan using idx_daily_budget_user_date"
+      ],
+      [
+        "expenses by user/date",
+        "Index Scan using idx_variable_user_spent; status filter outside index"
+      ],
+      [
+        "fixed expense due lookup",
+        "Seq Scan plus Sort at tiny staging row count; low cost and no P0 issue, candidate status/day index for larger scheduler batches"
+      ],
+      [
+        "savings by user/status",
+        "Index Scan using idx_savings_user_category_status plus small Sort by saving_day"
+      ],
+      [
+        "unread notifications",
+        "Index Scan using idx_notifications_user_type_created plus Sort; status filter outside index"
+      ],
+      [
+        "growth progress",
+        "Bitmap Index Scan using idx_user_level_content_progress_user_completed plus Sort"
+      ],
+      [
+        "community feed",
+        "Index Scan using idx_posts_board_status_created"
+      ],
+      [
+        "moderation report queue",
+        "Index Scan using idx_reports_status"
+      ],
+      [
+        "admin user lookup by email",
+        "Seq Scan for direct email predicate; unique functional index exists on lower(email), API should use lower(email) predicate"
+      ]
+    ],
+    "blockers": [
+      "PITR/backup plan capability could not be verified from local/MCP evidence without Neon plan/console metadata; no plan upgrade or billing action performed"
+    ]
+  },
+  "traceUpdate": {
+    "changed": 15,
+    "sha256": "15B24645F3C83438BDBB81312B2A75604590BC45C13C9B910701F56114C75A8B"
+  },
+  "dirtyFilesBefore": [
+    "M docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv",
+    " M docs/audit/EXECUTION_STATE.md",
+    " M docs/audit/IMPLEMENTATION_MATRIX.csv",
+    " M packages/db/src/index.ts",
+    " M scripts/audit/validate-phase-0-baseline.mjs",
+    " M services/api/wrangler.toml",
+    "?? database/migrations/0014_database_schema_migrations.sql",
+    "?? docs/audit/CURRENT_API_DB_AUDIT_2026-08-12.csv",
+    "?? docs/audit/CURRENT_IMPLEMENTATION_AUDIT_2026-08-12.md",
+    "?? docs/audit/CURRENT_IMPLEMENTATION_GAPS_2026-08-12.csv",
+    "?? docs/audit/CURRENT_IMPLEMENTATION_MATRIX_2026-08-12.csv",
+    "?? docs/audit/CURRENT_RELEASE_READINESS_2026-08-12.md",
+    "?? docs/audit/CURRENT_ROUTE_SCREEN_AUDIT_2026-08-12.csv",
+    "?? docs/audit/PHASE_0_REQUIREMENT_TRACE_SNAPSHOT.csv",
+    "?? docs/database/",
+    "?? scripts/audit/generate-phase-2-database.mjs",
+    "?? scripts/audit/validate-migration-checksums.mjs",
+    "?? scripts/audit/validate-phase-2-database.mjs"
+  ],
+  "outputFiles": [
+    {
+      "path": "docs/database/DB_TABLE_REGISTRY_41.csv",
+      "sha256": "5B705A9B57D631473ACFFB2CF9B616BB3D0B403EC67C7216D608CF78B911581E"
+    },
+    {
+      "path": "docs/database/MIGRATION_LEDGER.csv",
+      "sha256": "F6A726F5E3E98B896276A45FE3E96591B186986E46F88BD4A5082C3866A7C6E5"
+    },
+    {
+      "path": "docs/database/STATIC_SCHEMA_72_RECONCILIATION.csv",
+      "sha256": "1351B8EA20C03EA2A7F3D91F4D174F0C56BC3846B4E4BA314CAD718579AE626E"
+    },
+    {
+      "path": "docs/database/RLS_MATRIX.csv",
+      "sha256": "C89AF76116C689DFA4C9CAFDBC5CAD080BFD1150FB7736A7D87BBDCCC5152692"
+    },
+    {
+      "path": "docs/database/API_DB_CONSTRAINT_MATRIX.csv",
+      "sha256": "F102CA6F2A17507A5DDF04E69AEB8235B6A6152AE7CBB420F806E4869BFBB0EA"
+    },
+    {
+      "path": "docs/database/CANONICAL_SCHEMA_BOUNDARY.md",
+      "sha256": "864B69B940788F4E37D0E886C1DCFA82B9A39A7EC9BAFAA2464212591B12E464"
+    },
+    {
+      "path": "docs/database/MIGRATION_LEDGER_DESIGN.md",
+      "sha256": "AB44E18270D9A8D665598EEEE77F52D31255A0EB9B994B48C1CA91C8CDFBD41D"
+    },
+    {
+      "path": "docs/database/MIGRATION_CHECKSUM_GOVERNANCE.md",
+      "sha256": "AD50BFB4C5260D80F79AC21D1D842F8D4DF950E88517614E98EDF3B7658BCEC8"
+    },
+    {
+      "path": "docs/database/SCHEMA_DRIFT_REPORT.md",
+      "sha256": "052EF0ADBE3681C49D9DAB4057CDC973EC5D35A8A6C1EE29C5B6DBEB95D959B2"
+    },
+    {
+      "path": "docs/database/RLS_AB_ISOLATION_REPORT.md",
+      "sha256": "190930A2F673EE1A6D17366043EF0893670EF6D05538F5A81F13563CB1107D10"
+    },
+    {
+      "path": "docs/database/QUERY_PLAN_REPORT.md",
+      "sha256": "B265E738BB73F1E6EA7DA2BC5063E3567CA2073851A56358F3445D6456441CA0"
+    },
+    {
+      "path": "docs/database/RECOVERY_DRILL.md",
+      "sha256": "B87E6322ADC63F5D8AA5B99175198B03291AC8AAF8C503EEB8122B51E8395C90"
+    },
+    {
+      "path": "docs/database/DB_SECURITY_REPORT.md",
+      "sha256": "C5514558692E26F52E462DD99535AA207F82819E67B525486F9DF2BB007E8C6F"
+    },
+    {
+      "path": "docs/database/DB_CAPABILITY_MATRIX.md",
+      "sha256": "EFA40135A4FA0E03DA3667C50E82A13EE3A252BD2A3F7621C498F1C3DB9A7D9B"
+    },
+    {
+      "path": "docs/database/PHASE_2_REMEDIATION_REPORT.md",
+      "sha256": "184BC73E03F20315B44BA1FA501F1648C9CDE40C7F0BD88549D2C479E67BDC67"
+    },
+    {
+      "path": "docs/database/DB_SCHEMA_BASELINE.json",
+      "sha256": "98E047949F5DE25B3F20DFC6C52683A60104B98DFB973802DCECCAC5AAF4BFE1"
+    }
+  ]
+}

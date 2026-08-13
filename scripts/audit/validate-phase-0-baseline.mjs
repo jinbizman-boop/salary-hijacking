@@ -59,6 +59,7 @@ function sha256(path) {
 }
 
 const normative = csv("docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv");
+const phase0Snapshot = csv("docs/audit/PHASE_0_REQUIREMENT_TRACE_SNAPSHOT.csv");
 const legacy = csv("docs/audit/PHASE_0_LEGACY_305_RECONCILIATION.csv");
 const sources = csv("docs/audit/PHASE_0_SOURCE_REGISTRY.csv");
 const stitch = csv("docs/audit/PHASE_0_STITCH_STATE_REGISTRY.csv");
@@ -113,6 +114,23 @@ for (const ns of expectedNamespaces) {
   assert.ok(ids.some((id) => id.startsWith(`${ns}-`)), `missing namespace ${ns}`);
 }
 
+assert.equal(
+  phase0Snapshot.length,
+  237,
+  "Phase 0 requirement trace snapshot count must be 237",
+);
+const snapshotIds = phase0Snapshot.map((r) => r.REQ_ID);
+assert.equal(
+  new Set(snapshotIds).size,
+  237,
+  "duplicate Phase 0 snapshot REQ_ID must be 0",
+);
+assert.deepEqual(
+  [...snapshotIds].sort(),
+  [...ids].sort(),
+  "current requirement matrix must preserve the Phase 0 canonical REQ_ID set",
+);
+
 for (const row of normative) {
   assert.ok(row.PRIORITY, `${row.REQ_ID} missing priority`);
   assert.ok(row.GATE, `${row.REQ_ID} missing gate`);
@@ -159,6 +177,8 @@ assert.ok(
 
 for (const output of baseline.output_files) {
   if (output.sha256 === "SELF_REFERENTIAL_REPORTED_AFTER_WRITE") continue;
+  if (output.path === "docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv")
+    continue;
   assert.equal(sha256(output.path), output.sha256, `hash mismatch for ${output.path}`);
 }
 
@@ -172,6 +192,10 @@ console.log(
       gates: gates.length,
       sources: sources.length,
       baselineSha256: sha256("docs/audit/PHASE_0_BASELINE.json"),
+      phase0TraceSnapshotSha256: sha256(
+        "docs/audit/PHASE_0_REQUIREMENT_TRACE_SNAPSHOT.csv",
+      ),
+      currentTraceSha256: sha256("docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv"),
     },
     null,
     2,

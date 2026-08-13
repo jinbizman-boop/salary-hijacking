@@ -235,6 +235,67 @@ export const dbSchemaTablesInDdlOrder = Object.freeze({
   notifications: notificationsSchemaTables,
 });
 
+export const canonicalProductionTableNames = [
+  "ad_campaigns",
+  "ad_events",
+  "admin_audit_logs",
+  "admin_role_members",
+  "admin_roles",
+  "attachments",
+  "auth_credentials",
+  "auth_email_verifications",
+  "auth_identities",
+  "auth_oauth_states",
+  "auth_password_resets",
+  "auth_sessions",
+  "community_comments",
+  "community_posts",
+  "community_reactions",
+  "community_reports",
+  "daily_budgets",
+  "fixed_expenses",
+  "growth_content_items",
+  "growth_task_completions",
+  "growth_tasks",
+  "notices",
+  "notification_deliveries",
+  "notifications",
+  "operational_incidents",
+  "partner_accounts",
+  "payroll_calculation_snapshots",
+  "payroll_plans",
+  "savings_plans",
+  "user_consents",
+  "user_devices",
+  "user_growth_stats",
+  "user_level_content_progress",
+  "user_mfa_factors",
+  "user_privacy_exports",
+  "user_profiles",
+  "user_settings",
+  "user_support_tickets",
+  "user_withdrawal_requests",
+  "users",
+  "variable_expenses",
+] as const;
+
+export type CanonicalProductionTableName =
+  (typeof canonicalProductionTableNames)[number];
+
+export const canonicalProductionTableSet = Object.freeze(
+  new Set<string>(canonicalProductionTableNames),
+);
+
+export const canonicalProductionSchema = Object.freeze({
+  contractVersion: "2.0.0",
+  tableCount: canonicalProductionTableNames.length,
+  tableNames: canonicalProductionTableNames,
+  owner: "database/migrations",
+  evidence: "docs/database/DB_TABLE_REGISTRY_41.csv",
+  note:
+    "Canonical production/staging physical schema boundary. Broader domain schema arrays remain compatibility/future contracts until migration-backed.",
+});
+
 export const dbSchemaDdl = Object.freeze({
   extensions: uniq(dbSchemaModules.flatMap((module) => module.ddl.extensions)),
   tables: dbSchemaModules.flatMap((module) => module.ddl.tables),
@@ -347,6 +408,7 @@ export const dbPackage = Object.freeze({
   domainNames: dbSchemaDomainNames,
   tables: dbSchemaTables,
   ddlTables: dbSchemaTablesInDdlOrder,
+  canonicalProductionSchema,
   ddl: dbSchemaDdl,
   getCompletenessReport: getDbPackageCompletenessReport,
   assertCompleteness: assertDbPackageCompleteness,

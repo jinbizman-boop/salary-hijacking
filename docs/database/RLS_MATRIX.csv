@@ -1,0 +1,42 @@
+TABLE_NAME,USER_OWNED,RLS_ENABLED,FORCE_RLS,POLICY_COUNT,APP_ROLE_GRANTS,BYPASSRLS_EXPOSURE,EXCEPTION_REASON,STATUS
+ad_campaigns,NO,YES,NO,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+ad_events,YES,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+admin_audit_logs,NO,YES,NO,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+admin_role_members,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+admin_roles,NO,YES,NO,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+attachments,NO,YES,NO,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+auth_credentials,YES,YES,YES,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+auth_email_verifications,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+auth_identities,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+auth_oauth_states,NO,YES,NO,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+auth_password_resets,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+auth_sessions,YES,YES,YES,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+community_comments,YES,YES,YES,4,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+community_posts,YES,YES,YES,4,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+community_reactions,YES,YES,YES,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+community_reports,NO,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+daily_budgets,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+fixed_expenses,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+growth_content_items,NO,YES,NO,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+growth_task_completions,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+growth_tasks,NO,YES,NO,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+notices,NO,YES,NO,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+notification_deliveries,NO,YES,NO,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+notifications,YES,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+operational_incidents,NO,YES,NO,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+partner_accounts,NO,YES,NO,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,Catalog/public/admin/operational table; not direct user-owned row store or policy-controlled admin/read catalog.,PASS_CATALOG
+payroll_calculation_snapshots,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+payroll_plans,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+savings_plans,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_consents,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_devices,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_growth_stats,YES,YES,YES,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_level_content_progress,YES,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_mfa_factors,YES,YES,YES,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_privacy_exports,YES,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_profiles,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_settings,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_support_tickets,YES,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+user_withdrawal_requests,YES,YES,YES,3,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+users,YES,YES,YES,2,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
+variable_expenses,YES,YES,YES,1,"SELECT,INSERT,UPDATE,DELETE",NO_APP_ROLE_BYPASSRLS,,PASS_CATALOG
