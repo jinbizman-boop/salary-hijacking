@@ -1,0 +1,130 @@
+{
+  "timestamp": "2026-08-13T16:03:00.344Z",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "currentRepositoryHead": "45276c3a3cf7626e9ba65c40d11da0d85b4657bc",
+  "remoteHead": "45276c3a3cf7626e9ba65c40d11da0d85b4657bc",
+  "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "phaseStatus": "PARTIAL",
+  "phase4EntryReadiness": "NOT_READY",
+  "authEndpointCount": 84,
+  "statuses": {
+    "authP0Drift": 1,
+    "sessionReuseTest": "PASS_LOCAL_CONTRACT",
+    "passwordResetReplay": "PASS_LOCAL_CONTRACT",
+    "rateLimitStatus": "PARTIAL_STAGING_ABUSE_RUNTIME_UNVERIFIED",
+    "crossUserAuthz": "PARTIAL_LOCAL_AND_DB_CONTRACT_STAGING_RUNTIME_UNVERIFIED",
+    "onboardingGate": "PARTIAL_SOURCE_CONTRACT_NATIVE_RUNTIME_UNVERIFIED",
+    "privacyExport": "PARTIAL_E2E_UNVERIFIED",
+    "withdrawal": "PARTIAL_E2E_UNVERIFIED",
+    "support": "PARTIAL_REPOSITORY_CONTRACT_E2E_UNVERIFIED",
+    "consentVersioning": "PARTIAL_POLICY_RUNTIME_UNVERIFIED",
+    "oauthGoogle": "PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED",
+    "oauthApple": "PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED",
+    "oauthNaver": "PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED",
+    "oauthKakao": "PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED",
+    "adminAuth": "PARTIAL_LOCAL_RBAC_TEST_PASS_STAGING_RUNTIME_UNVERIFIED",
+    "adminMfa": "PARTIAL_RUNTIME_UNVERIFIED",
+    "rbac": "PARTIAL_ROLE_MODEL_DRIFT",
+    "breakGlass": "UNVERIFIED",
+    "privilegeEscalationP0": 0,
+    "piiTokenLoggingIssues": 0,
+    "d013": "FAIL",
+    "d016": "PARTIAL",
+    "d017": "PASS",
+    "d026": "FAIL",
+    "projectCompletion100": false,
+    "commercialLaunchReady": false
+  },
+  "tests": [
+    {
+      "command": "corepack pnpm --filter @salary-hijacking/api exec vitest run tests/auth-phase3-session-security.test.ts",
+      "result": "PASS",
+      "files": 1,
+      "tests": 5
+    },
+    {
+      "command": "corepack pnpm --filter @salary-hijacking/api exec vitest run tests/auth-db-repository.test.ts tests/auth-routes-env-secret.test.ts tests/auth-session-resolver-contract.test.ts tests/mobile-profile-contract.test.ts tests/users-support-ticket-db-repository.test.ts tests/admin-rbac-audit-moderation-routes.test.ts tests/auth-phase3-session-security.test.ts",
+      "result": "PASS",
+      "files": 7,
+      "tests": 42
+    }
+  ],
+  "evidence": {
+    "codePaths": [
+      "services/api/src/routes/auth.routes.ts",
+      "services/api/src/repositories/auth.repository.ts",
+      "services/api/src/middlewares/auth.middleware.ts",
+      "services/api/tests/auth-phase3-session-security.test.ts"
+    ],
+    "improvements": [
+      "new email password hashes use PBKDF2-SHA256 with 310000 iterations",
+      "legacy sha256 password verification remains backward-compatible",
+      "refresh-token reuse is detected and revokes the token family",
+      "nonlocal auth delivery responses no longer expose raw verification/reset tokens",
+      "current-session logout can revoke by refresh token without a bearer token",
+      "password reset token replay is blocked"
+    ],
+    "blockers": [
+      "full staging account lifecycle E2E not executed",
+      "OAuth provider external console/runtime config not verified",
+      "Admin MFA/break-glass runtime not verified",
+      "native mobile session/bootstrap runtime not executed"
+    ],
+    "secretExposure": false,
+    "productionMutation": false
+  },
+  "outputFiles": [
+    {
+      "path": "docs/auth/AUTH_ENDPOINT_RUNTIME_MATRIX.csv",
+      "sha256": "54E057FB57E4408CAE029FE6BBF1724E7CC61B838EEC2259CE15397031C68DF3"
+    },
+    {
+      "path": "docs/auth/AUTH_SESSION_SECURITY_REPORT.md",
+      "sha256": "60C874FCDB3BEFFB7D3E3A5FF6BC02C255A19683F0DE4F86760070BD5E6690CD"
+    },
+    {
+      "path": "docs/auth/AUTH_PASSWORD_RESET_REPORT.md",
+      "sha256": "9770016A617254858FBFC895F2F68000C9DF330EC3955E25DE06854A599EEA7B"
+    },
+    {
+      "path": "docs/auth/AUTH_RATE_LIMIT_REPORT.md",
+      "sha256": "70E9D3885858DE59FF1BC0D96BF2F76FF4F8C9505EBC2DFC8BEF1419A0186A91"
+    },
+    {
+      "path": "docs/auth/OAUTH_PROVIDER_MATRIX.csv",
+      "sha256": "2817CBABFE3E5FA1ADFB5E1D08456863AC2690ACC72E286B67E04C340F407428"
+    },
+    {
+      "path": "docs/auth/ONBOARDING_GATE_REPORT.md",
+      "sha256": "870595D1802127F9F997D437EF745111316C136E7E11D2A367B42EEC05F2EFAE"
+    },
+    {
+      "path": "docs/auth/PRIVACY_EXPORT_E2E_REPORT.md",
+      "sha256": "B01A964A725073E3B713CB6FE7D61FD933A19F767227301FFAE81E0B64642BE0"
+    },
+    {
+      "path": "docs/auth/WITHDRAWAL_E2E_REPORT.md",
+      "sha256": "6B9FB7C4C34549BD3ED62CB098475EFADEE41C99C40AD84663E244A982F611C8"
+    },
+    {
+      "path": "docs/auth/SUPPORT_E2E_REPORT.md",
+      "sha256": "14CF3E9BC7270C668C815EE34B81983D2922C9FAB6141B196C8268658C3E59B9"
+    },
+    {
+      "path": "docs/auth/CONSENT_VERSIONING_REPORT.md",
+      "sha256": "EA97F8296C868342ED137C0F7A44B7D98F726F53807BCA94584C585B2642BCEE"
+    },
+    {
+      "path": "docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md",
+      "sha256": "15DA2318C3DC5570310E08C5178617513F80AE41EEFE51F2405A5DAC8DE3877E"
+    },
+    {
+      "path": "docs/auth/AUTH_CROSS_USER_ISOLATION_REPORT.md",
+      "sha256": "B1E183D5FFA6FE5916B076DA3E080451A438EB7A752F9E7211F12DA1119C1062"
+    },
+    {
+      "path": "docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json",
+      "sha256": "SELF_REFERENTIAL_UPDATED_AFTER_WRITE"
+    }
+  ]
+}

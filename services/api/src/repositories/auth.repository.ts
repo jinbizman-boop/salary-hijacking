@@ -501,7 +501,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
             'PASSWORD_HASH',
             'ACTIVE',
             $4,
-            'sha256',
+            'pbkdf2-sha256',
             $6::timestamptz,
             $6::timestamptz
           from new_identity
@@ -739,19 +739,48 @@ export function createNeonAuthRepository<TEnv = unknown>(
         runtime,
         "auth.findSessionByRefreshHash",
         `
-        update public.auth_sessions
-        set last_used_at = $2::timestamptz,
-            updated_at = $2::timestamptz
-        where refresh_token_hash = $1
-          and status = 'ACTIVE'
-          and revoked_at is null
-        returning
+        with matched as (
+          select
+            session_id,
+            user_id,
+            refresh_token_hash,
+            expires_at,
+            revoked_at,
+            created_at,
+            status
+          from public.auth_sessions
+          where refresh_token_hash = $1
+          limit 1
+        ),
+        touched as (
+          update public.auth_sessions
+          set last_used_at = $2::timestamptz,
+              updated_at = $2::timestamptz
+          where session_id in (
+            select session_id
+            from matched
+            where status = 'ACTIVE'
+              and revoked_at is null
+          )
+          returning
+            session_id,
+            user_id,
+            refresh_token_hash,
+            expires_at,
+            revoked_at,
+            created_at
+        )
+        select * from touched
+        union all
+        select
           session_id,
           user_id,
           refresh_token_hash,
           expires_at,
           revoked_at,
-          created_at`,
+          created_at
+        from matched
+        where not exists (select 1 from touched)`,
         [refreshTokenHash, runtime.now.toISOString()],
       );
       return mapSession(result.rows[0]);
@@ -926,7 +955,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
             'PASSWORD_HASH',
             'ACTIVE',
             $2,
-            'sha256',
+            'pbkdf2-sha256',
             $3::timestamptz,
             $3::timestamptz
           from old_credentials

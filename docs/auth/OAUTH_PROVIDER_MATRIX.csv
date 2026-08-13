@@ -1,0 +1,5 @@
+PROVIDER,STATUS,CONTRACT,RUNTIME_EVIDENCE,BLOCKER
+GOOGLE,PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED,state and PKCE contract present in auth routes,not verified against external Google console/provider,provider credentials/redirect console runtime
+APPLE,PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED,state and PKCE/nonce boundary required by Phase 1 contract,not verified against external Apple provider,provider credentials/redirect console runtime
+NAVER,PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED,state and PKCE contract present in auth routes,not verified against external Naver provider,provider credentials/redirect console runtime
+KAKAO,PARTIAL_EXTERNAL_PROVIDER_CONFIG_REQUIRED,state and PKCE contract present in auth routes,not verified against external Kakao provider,provider credentials/redirect console runtime

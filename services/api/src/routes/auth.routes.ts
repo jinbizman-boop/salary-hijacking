@@ -19,6 +19,7 @@ const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const ADMIN_MFA_TOKEN_TTL_SECONDS = 5 * 60;
 const PASSWORD_RESET_TTL_SECONDS = 15 * 60;
 const EMAIL_VERIFY_TTL_SECONDS = 24 * 60 * 60;
+const PBKDF2_SHA256_ITERATIONS = 310_000;
 const MAX_JSON_BODY_BYTES = 128 * 1024;
 const MAX_TEXT = 2_000;
 const DEFAULT_COOKIE_NAME = "sh_refresh";
@@ -277,6 +278,7 @@ export interface AuthSecurityEvent {
     | "auth_login_failed"
     | "auth_social_login"
     | "auth_refresh"
+    | "auth_refresh_reuse_detected"
     | "auth_logout"
     | "auth_logout_all"
     | "auth_password_reset_requested"
@@ -459,6 +461,12 @@ function base64Url(bytes: Uint8Array): string {
     .replace(/=+$/g, "");
 }
 
+function hex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
+}
+
 function randomBytes(size: number): Uint8Array {
   const bytes = new Uint8Array(size);
   globalThis.crypto.getRandomValues(bytes);
@@ -541,6 +549,21 @@ function envText<TEnv>(env: TEnv, key: string): string | null {
   return trimmed;
 }
 
+function authEnvironment<TEnv>(runtime: AuthRuntime<TEnv>): string {
+  return (
+    envText(runtime.env, "APP_ENV") ??
+    envText(runtime.env, "ENVIRONMENT") ??
+    envText(runtime.env, "NODE_ENV") ??
+    "production"
+  ).toLowerCase();
+}
+
+function exposeDeliveryTokens<TEnv>(runtime: AuthRuntime<TEnv>): boolean {
+  return ["development", "dev", "test", "local"].includes(
+    authEnvironment(runtime),
+  );
+}
+
 function oauthClientId<TEnv>(
   provider: AuthProvider,
   runtime: AuthRuntime<TEnv>,
@@ -619,22 +642,72 @@ function sanitize(
   );
 }
 
-async function defaultHashPassword(password: string): Promise<string> {
+export async function hashPasswordForAuth(password: string): Promise<string> {
   const salt = base64Url(randomBytes(16));
-  const digest = await sha256Hex(`${salt}:${password}`);
-  return `sha256$${salt}$${digest}`;
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    toArrayBuffer(utf8(password)),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const derived = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: toArrayBuffer(utf8(salt)),
+      iterations: PBKDF2_SHA256_ITERATIONS,
+      hash: "SHA-256",
+    },
+    key,
+    256,
+  );
+  return `pbkdf2-sha256$${PBKDF2_SHA256_ITERATIONS}$${salt}$${hex(
+    new Uint8Array(derived),
+  )}`;
 }
 
-async function defaultVerifyPassword(
+export async function verifyPasswordForAuth(
   password: string,
   passwordHash: string,
 ): Promise<boolean> {
   const parts = passwordHash.split("$");
-  if (parts.length !== 3 || parts[0] !== "sha256") return false;
-  const salt = parts[1] ?? "";
-  const expected = parts[2] ?? "";
-  const actual = await sha256Hex(`${salt}:${password}`);
-  return constantTimeEqual(actual, expected);
+  if (parts.length === 4 && parts[0] === "pbkdf2-sha256") {
+    const iterations = Number.parseInt(parts[1] ?? "", 10);
+    const salt = parts[2] ?? "";
+    const expected = parts[3] ?? "";
+    if (
+      !Number.isInteger(iterations) ||
+      iterations < 100_000 ||
+      !salt ||
+      !/^[a-f0-9]{64}$/i.test(expected)
+    )
+      return false;
+    const key = await globalThis.crypto.subtle.importKey(
+      "raw",
+      toArrayBuffer(utf8(password)),
+      "PBKDF2",
+      false,
+      ["deriveBits"],
+    );
+    const derived = await globalThis.crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: toArrayBuffer(utf8(salt)),
+        iterations,
+        hash: "SHA-256",
+      },
+      key,
+      256,
+    );
+    return constantTimeEqual(hex(new Uint8Array(derived)), expected);
+  }
+  if (parts.length === 3 && parts[0] === "sha256") {
+    const salt = parts[1] ?? "";
+    const expected = parts[2] ?? "";
+    const actual = await sha256Hex(`${salt}:${password}`);
+    return constantTimeEqual(actual, expected);
+  }
+  return false;
 }
 
 function constantTimeEqual(a: string, b: string): boolean {
@@ -1034,7 +1107,7 @@ async function handleRegister<TEnv>(
     );
   const passwordHash = runtime.options.hashPassword
     ? await runtime.options.hashPassword(password, runtime)
-    : await defaultHashPassword(password);
+    : await hashPasswordForAuth(password);
   const user = await runtime.repository.createEmailUser(
     input,
     passwordHash,
@@ -1070,7 +1143,9 @@ async function handleRegister<TEnv>(
       data: {
         user: userPublicView(user),
         tokens,
-        emailVerificationTokenForDelivery: verifyToken,
+        ...(exposeDeliveryTokens(runtime)
+          ? { emailVerificationTokenForDelivery: verifyToken }
+          : { emailVerificationDeliveryQueued: true }),
       },
     },
     { "set-cookie": refreshCookie(runtime, tokens.refreshToken) },
@@ -1088,7 +1163,7 @@ async function handleLogin<TEnv>(
   const valid = user?.passwordHash
     ? await (runtime.options.verifyPassword
         ? runtime.options.verifyPassword(password, user.passwordHash, runtime)
-        : defaultVerifyPassword(password, user.passwordHash))
+        : verifyPasswordForAuth(password, user.passwordHash))
     : false;
   if (!user || !valid) {
     await emit(runtime, {
@@ -1211,16 +1286,40 @@ async function handleRefresh<TEnv>(
     await sha256Hex(refreshToken),
     runtime,
   );
-  if (
-    !session ||
-    session.revokedAt ||
-    new Date(session.expiresAt).getTime() <= runtime.now.getTime()
-  )
+  if (!session)
     throw new AuthRouteError(
       401,
       "AUTH_REFRESH_TOKEN_INVALID",
       "Refresh Token이 유효하지 않습니다.",
     );
+  if (session.revokedAt) {
+    await runtime.repository.revokeAllUserSessions(
+      session.userId,
+      "REFRESH_TOKEN_REUSE",
+      runtime,
+    );
+    await emit(runtime, {
+      event: "auth_refresh_reuse_detected",
+      requestId: runtime.requestId,
+      userId: session.userId,
+      provider: null,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    throw new AuthRouteError(
+      401,
+      "AUTH_REFRESH_TOKEN_REUSED",
+      "Refresh Token이 이미 사용되었습니다. 다시 로그인해야 합니다.",
+    );
+  }
+  if (new Date(session.expiresAt).getTime() <= runtime.now.getTime()) {
+    await runtime.repository.revokeSession(session.sessionId, "EXPIRED", runtime);
+    throw new AuthRouteError(
+      401,
+      "AUTH_REFRESH_TOKEN_INVALID",
+      "Refresh Token이 유효하지 않습니다.",
+    );
+  }
   const user = await runtime.repository.findUserById(session.userId, runtime);
   if (!user)
     throw new AuthRouteError(
@@ -1351,7 +1450,14 @@ async function handlePasswordResetRequest<TEnv>(
     createdAt: runtime.now.toISOString(),
   });
   return jsonResponse(runtime, 200, {
-    data: { accepted: true, resetTokenForDelivery: resetToken },
+    data: {
+      accepted: true,
+      ...(exposeDeliveryTokens(runtime) && resetToken
+        ? { resetTokenForDelivery: resetToken }
+        : user
+          ? { resetDeliveryQueued: true }
+          : {}),
+    },
   });
 }
 
@@ -1387,7 +1493,11 @@ async function handleEmailVerificationResend<TEnv>(
   return jsonResponse(runtime, 200, {
     data: {
       accepted: true,
-      emailVerificationTokenForDelivery: verifyToken,
+      ...(exposeDeliveryTokens(runtime) && verifyToken
+        ? { emailVerificationTokenForDelivery: verifyToken }
+        : user
+          ? { emailVerificationDeliveryQueued: true }
+          : {}),
     },
   });
 }
@@ -1401,7 +1511,7 @@ async function handlePasswordResetConfirm<TEnv>(
   assertStrongPassword(password);
   const passwordHash = runtime.options.hashPassword
     ? await runtime.options.hashPassword(password, runtime)
-    : await defaultHashPassword(password);
+    : await hashPasswordForAuth(password);
   const user = await runtime.repository.resetPassword(
     await sha256Hex(token),
     passwordHash,

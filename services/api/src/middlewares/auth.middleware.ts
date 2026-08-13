@@ -348,7 +348,7 @@ const defaultPublicPolicies: readonly AuthRoutePolicy[] = [
   {
     id: "auth-login",
     pattern:
-      /^\/api\/v1\/auth\/(login|register|social-login|oauth|oauth\/callback|password-reset|verify-email)(?:\/|$)/,
+      /^\/api\/v1\/auth\/(login|register|logout|social-login|oauth|oauth\/callback|password-reset|verify-email)(?:\/|$)/,
     public: true,
   },
   {
