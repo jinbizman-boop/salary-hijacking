@@ -141,8 +141,8 @@ if (schemaBaseline.sourceSchemaTableCount !== 72) fail('packages/db static schem
 if (schemaBaseline.noncanonicalStaticSchemaTableCount !== 50) fail('noncanonical static schema export count must be 50');
 
 const phase2 = JSON.parse(readRel('docs/database/PHASE_2_DATABASE_FINALIZATION.json'));
-if (phase2.status.phase2 !== 'EXTERNAL_BLOCKER') fail('phase2 status should truthfully be EXTERNAL_BLOCKER when only PITR capability remains external');
-if (phase2.status.d017 !== 'EXTERNAL_BLOCKER') fail('D-017 should remain EXTERNAL_BLOCKER for PITR capability proof');
+if (phase2.status.phase2 !== 'PASS') fail('phase2 status must be PASS after PITR RPO/RTO rehearsal evidence');
+if (phase2.status.d017 !== 'PASS') fail('D-017 must be PASS after PITR RPO/RTO rehearsal evidence');
 if (phase2.status.projectCompletion100 !== false) fail('PROJECT_COMPLETION_100 must remain false');
 if (phase2.status.commercialLaunchReady !== false) fail('COMMERCIAL_LAUNCH_READY must remain false');
 if (phase2.counts.tableCount !== 41) fail('phase2 baseline table count is not 41');
@@ -154,9 +154,14 @@ if (phase2.counts.staticSchemaUnknownCount !== 0) fail('phase2 static schema UNK
 if (phase2.status.schemaDriftP0 !== 0) fail('SCHEMA_DRIFT_P0 must be 0');
 if (phase2.status.migrationLedgerStatus !== 'PASS') fail('migration ledger status must be PASS');
 if (phase2.status.migrationChecksumStatus !== 'PASS') fail('migration checksum status must be PASS');
-if (!['PASS_INTERNAL', 'EXTERNAL_BLOCKER_PITR_REHEARSAL_NOT_EXECUTED'].includes(phase2.status.recoveryStatus)) fail('recovery status must be PASS_INTERNAL or explicit PITR rehearsal external blocker');
+if (phase2.status.recoveryStatus !== 'PASS') fail('recovery status must be PASS after PITR rehearsal evidence');
 if (phase2.status.queryPlanStatus !== 'PASS_STRUCTURAL') fail('query plan status must be PASS_STRUCTURAL');
-if (!['EXTERNAL_CAPABILITY_GAP', 'PITR_AVAILABLE_RPO_GRANULARITY_UNVERIFIED'].includes(phase2.status.backupPitrStatus)) fail('PITR status must remain an explicit external/granularity blocker');
+if (phase2.status.backupPitrStatus !== 'PASS') fail('PITR status must be PASS after RPO/RTO closure');
+if (phase2.status.db009Status !== 'PASS') fail('DB-009 status must be PASS');
+if (phase2.status.db010Status !== 'PASS') fail('DB-010 status must be PASS');
+if (phase2.status.rpoStatus !== 'PASS') fail('RPO status must be PASS');
+if (phase2.status.rtoStatus !== 'PASS') fail('RTO status must be PASS');
+if (phase2.status.phase3EntryReadiness !== 'READY') fail('Phase 3 entry readiness must be READY after Phase 2 PASS');
 if (!Array.isArray(phase2.outputFiles) || phase2.outputFiles.length < requiredFiles.length - 1) fail('phase2 output file hashes missing');
 
 const trace = parseCsv(readRel('docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv'));

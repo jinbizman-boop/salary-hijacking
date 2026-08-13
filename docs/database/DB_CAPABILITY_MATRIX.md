@@ -1,27 +1,28 @@
 # DB Capability Matrix
 
-Generated: 2026-08-13T15:15:03.812Z
+Generated: 2026-08-13T15:46:34.210Z
 
 | Capability | Target | Current Evidence | Status |
 |---|---|---|---|
-| Staging branch isolation | staging branch, not main | Project salary-hijacking, branch staging (br-fragrant-sky-aj5kk2c3), database neondb; MCP compute ep-young-sunset-ajgi3bab read_write in aws-us-east-2 | PASS |
-| RLS | 41/41 | 41/41 live catalog from prior Phase 2 evidence | PASS |
-| FORCE RLS | required user-owned/sensitive tables | 30 live catalog FORCE RLS rows from prior Phase 2 evidence | PASS |
-| App role BYPASSRLS | false | salary_hijacking_staging_app rolbypassrls=false from prior Phase 2 evidence | PASS |
-| A/B isolation | representative domains | PASS synthetic test, residue 0 from prior Phase 2 evidence | PASS |
-| PITR availability | available for staging recovery planning | User Console: PITR_AVAILABLE=YES, RESTORE_WINDOW=6h, NEON_PLAN=Free; official Neon docs confirm Free history window 6h and instant restore/PITR uses retained history | VERIFIED_BY_USER_CONSOLE_AND_DOCS |
-| PITR granularity | prove RPO<=15m | Official Neon docs state root branch instant restore supports timestamp/LSN and down-to-millisecond restore, but local API/CLI metadata could not verify staging branch root/PITR granularity; no branch rehearsal was executed | UNVERIFIED_GRANULARITY |
-| RPO | <=15 minutes | 6h history window is sufficient range, but range is not the same as demonstrated RPO; granularity was not verified through local API/CLI/rehearsal | EXTERNAL_BLOCKER |
-| Recovery/RTO | <=2 hours | Internal forward recovery PASS; actual branch-based PITR rehearsal not executed because local Neon tooling lacked parent/timestamp restore path without OAuth | EXTERNAL_BLOCKER |
+| Staging branch isolation | staging branch, not main | Project salary-hijacking, source branch staging (br-fragrant-sky-aj5kk2c3), database neondb | PASS |
+| RLS | 41/41 | 41/41 live catalog from Phase 2 evidence | PASS |
+| FORCE RLS | required user-owned/sensitive tables | 30 live catalog FORCE RLS rows from Phase 2 evidence | PASS |
+| App role BYPASSRLS | false | salary_hijacking_staging_app rolbypassrls=false from Phase 2 evidence | PASS |
+| A/B isolation | representative domains | PASS synthetic test, residue 0 from Phase 2 evidence | PASS |
+| PITR availability | available for staging recovery planning | Neon Console: NEON_PLAN=Free, RESTORE_WINDOW=6h, PITR_AVAILABLE=YES; temporary PITR branch pitr-rehearsal-20260814 materialized | PASS |
+| PITR granularity/RPO | RPO<=15m | Point-in-time target 2026-08-14 00:24 KST, 10 minutes before branch creation target, materialized into branch br-odd-base-ajl0hbn9 | PASS |
+| Recovery/RTO | RTO<=2h | Branch materialization conservatively bounded at <2 minutes; application validation/reconnection allowance remains clearly below 2h | PASS |
+| Recovered schema validation | 41 public physical tables | Codex read-only SQL on temporary branch verified public physical tables=41 | PASS |
+| Recovered migration ledger | 14/14 VERIFIED_APPLIED | Codex read-only SQL on temporary branch verified db_meta.database_schema_migrations rows=14 and VERIFIED_APPLIED=14 | PASS |
 | Performance | no pathological critical plan | 10 representative EXPLAIN paths reviewed; no P0 plan issue found in staging | PASS_STRUCTURAL |
 | Migration checksums | recorded DB checksums | db_meta.database_schema_migrations records 14/14 file checksums | PASS |
 
-## Official Sources
+## PITR Closure
 
-- https://neon.com/docs/introduction/history-window
-- https://neon.com/docs/introduction/branch-restore
-- https://neon.com/docs/manage/backups
+DB_009_STATUS=PASS
+DB_010_STATUS=PASS
+PHASE_2_STATUS=PASS
+D_017_STATUS=PASS
+PHASE_3_ENTRY_READINESS=READY
 
-## Decision
-
-PHASE_2_STATUS=EXTERNAL_BLOCKER because DB-009/DB-010 cannot be promoted without an API/CLI/Console recovery rehearsal or equivalent no-secret metadata proving staging PITR root-branch granularity and RTO. No production, main, or staging reset/replace operation was performed.
+The temporary PITR branch currently has Auto-delete=After 1 Day. Codex did not delete it before evidence was written. No production/main branch mutation and no Neon plan upgrade occurred.

@@ -1,6 +1,6 @@
 # Recovery Drill
 
-Generated: 2026-08-13T15:15:03.812Z
+Generated: 2026-08-13T15:46:34.210Z
 
 ## Existing Internal Phase 2 Recovery Evidence
 
@@ -9,38 +9,53 @@ Generated: 2026-08-13T15:15:03.812Z
 - Duplicate/forward-safe DB guard tests passed for active payroll, daily budget uniqueness, variable expense idempotency, and LV UP progress idempotency.
 - Synthetic data cleanup verified with residue 0.
 
-RECOVERY_STATUS=PASS_INTERNAL
+RECOVERY_STATUS=PASS
 
-## PITR / Branch Recovery Closure Attempt
+## PITR Temporary Branch Rehearsal
 
 - NEON_PLAN=Free
 - RESTORE_WINDOW=6h
-- PITR_AVAILABLE=YES by user Console evidence.
-- Official Neon docs confirm Free history window is 6 hours and instant restore supports point-in-time restore from root branches by timestamp or LSN; docs state root branch restore can target down to the millisecond.
-- MCP verified staging branch compute identity: project still-feather-22153967, branch br-fragrant-sky-aj5kk2c3, read_write compute ep-young-sunset-ajgi3bab.
-- SQL preflight verified neondb current state: public_tables=41, migration ledger rows=14, verified_applied=14.
+- PITR_AVAILABLE=YES
+- PITR_TEST_SOURCE_BRANCH=staging
+- PITR_TEST_SOURCE_BRANCH_ID=br-fragrant-sky-aj5kk2c3
+- PITR_TEST_OFFSET=10 minutes before branch creation target
+- PITR_TEST_POINT_IN_TIME=2026-08-14 00:24 KST
+- PITR_TEST_MODE=point-in-time temporary branch
+- PITR_BRANCH_NAME=pitr-rehearsal-20260814
+- PITR_BRANCH_ID=br-odd-base-ajl0hbn9
+- PITR_BRANCH_PARENT=staging
+- PITR_BRANCH_READY_AT=2026-08-14 00:36 KST
 
-## Rehearsal Result
+## Read-only Validation On Temporary Branch
 
-RECOVERY_BRANCH_CREATED=NO
-RECOVERY_BRANCH_READY_TIME=N/A
-RECOVERY_DATA_VALIDATION=STAGING_CURRENT_SAFE_SQL_ONLY
-RECOVERY_BRANCH_CLEANUP=NOT_APPLICABLE_NO_BRANCH_CREATED
+- public physical tables = 41
+- db_meta.database_schema_migrations = 14 rows
+- VERIFIED_APPLIED = 14
+- Codex MCP compute check: active read_write compute ep-silent-truth-ajhrxmc4
 
-The exposed Neon MCP create_branch tool does not accept parent branch, source timestamp, or LSN parameters. Local neonctl 3.2.0 was available, but project metadata access timed out waiting for OAuth browser authentication. Therefore no branch-based point-in-time recovery rehearsal was executed.
+RECOVERY_DATA_VALIDATION=PASS
 
 ## RPO/RTO Decision
 
 RPO_TARGET=15m
-RPO_STATUS=UNVERIFIED_GRANULARITY
+RPO_STATUS=PASS
 
-A 6-hour restore window proves sufficient lookback range, but does not by itself prove the project's usable RPO. Official docs document millisecond root-branch granularity, but this workspace did not verify staging branch root status/granularity through API/CLI/rehearsal.
+A point-in-time recovery point inside the 15-minute loss budget was selected and materialized into a usable Neon temporary branch.
 
 RTO_TARGET=2h
-RTO_STATUS=UNVERIFIED_REHEARSAL_NOT_EXECUTED
-RTO_MEASURED_OR_BOUND=NOT_MEASURED_NO_RECOVERY_BRANCH_CREATED
+RTO_BRANCH_MATERIALIZATION_BOUND=<2 minutes
+RTO_STATUS=PASS
 
-PHASE_2_STATUS=EXTERNAL_BLOCKER
-D_017_STATUS=EXTERNAL_BLOCKER
-DB_009_STATUS=EXTERNAL_BLOCKER
-DB_010_STATUS=EXTERNAL_BLOCKER
+Exact Create-button seconds were not separately recorded. This is recorded as a conservative upper-bound rehearsal result, not an exact sub-minute RTO measurement. Adding application validation/reconnection allowance remains clearly within the 2-hour target.
+
+RECOVERY_BRANCH_CREATED=YES
+RECOVERY_BRANCH_READY_TIME=2026-08-14 00:36 KST
+RECOVERY_BRANCH_CLEANUP=AUTO_DELETE_AFTER_1_DAY_OR_MANUAL_ALLOWED_AFTER_EVIDENCE
+
+PHASE_2_STATUS=PASS
+D_017_STATUS=PASS
+DB_009_STATUS=PASS
+DB_010_STATUS=PASS
+PHASE_3_ENTRY_READINESS=READY
+
+No main/production mutation occurred. No Neon plan upgrade occurred. Codex did not delete the temporary PITR branch before evidence was written.

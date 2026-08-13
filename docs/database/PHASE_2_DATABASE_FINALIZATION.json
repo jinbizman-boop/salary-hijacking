@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-08-13T15:15:03.812Z",
-  "currentRepositoryHead": "d70356fee43c600de384288bc48dc30a622d7e0f",
-  "remoteHead": "d70356fee43c600de384288bc48dc30a622d7e0f",
+  "timestamp": "2026-08-13T15:46:34.210Z",
+  "currentRepositoryHead": "3dbb5ee515915ecf632a827726c9a9dab65be188",
+  "remoteHead": "3dbb5ee515915ecf632a827726c9a9dab65be188",
   "branch": "codex/payroll-reminder-launch-ready-100-20260714",
   "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
   "database": {
@@ -33,26 +33,26 @@
     "staticSchemaUnknownCount": 0
   },
   "status": {
-    "phase2": "EXTERNAL_BLOCKER",
-    "d017": "EXTERNAL_BLOCKER",
+    "phase2": "PASS",
+    "d017": "PASS",
     "appRoleBypassRls": false,
     "abIsolation": "PASS",
     "schemaDriftP0": 0,
     "apiDbDriftP0": 0,
     "dbSecurityP0": 0,
-    "backupPitrStatus": "PITR_AVAILABLE_RPO_GRANULARITY_UNVERIFIED",
-    "recoveryStatus": "EXTERNAL_BLOCKER_PITR_REHEARSAL_NOT_EXECUTED",
+    "backupPitrStatus": "PASS",
+    "recoveryStatus": "PASS",
     "queryPlanStatus": "PASS_STRUCTURAL",
     "migrationLedgerStatus": "PASS",
     "migrationChecksumStatus": "PASS",
     "concurrencyStatus": "PASS_FOR_TESTED_DB_GUARDS",
     "projectCompletion100": false,
     "commercialLaunchReady": false,
-    "db009Status": "EXTERNAL_BLOCKER",
-    "db010Status": "EXTERNAL_BLOCKER",
-    "rpoStatus": "UNVERIFIED_GRANULARITY",
-    "rtoStatus": "UNVERIFIED_REHEARSAL_NOT_EXECUTED",
-    "phase3EntryReadiness": "NOT_READY"
+    "db009Status": "PASS",
+    "db010Status": "PASS",
+    "rpoStatus": "PASS",
+    "rtoStatus": "PASS",
+    "phase3EntryReadiness": "READY"
   },
   "evidence": {
     "live": {
@@ -153,76 +153,69 @@
         "Seq Scan for direct email predicate; unique functional index exists on lower(email), API should use lower(email) predicate"
       ]
     ],
-    "blockers": [
-      "DB-009/DB-010: PITR available by Console/docs, but local API/CLI metadata and branch recovery rehearsal could not verify staging root-branch granularity/RTO without OAuth-enabled Neon CLI or Console/API action."
-    ],
+    "blockers": [],
     "pitrRpoRto": {
-      "timestamp": "2026-08-13T15:15:03.812Z",
+      "timestamp": "2026-08-13T15:46:34.210Z",
       "neonProject": "salary-hijacking",
       "neonProjectId": "still-feather-22153967",
       "neonPlan": "Free",
-      "databaseBranch": "staging",
-      "databaseBranchId": "br-fragrant-sky-aj5kk2c3",
-      "databaseName": "neondb",
-      "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
-      "currentRepositoryHeadAtVerification": "d70356fee43c600de384288bc48dc30a622d7e0f",
-      "userConsoleEvidence": {
-        "plan": "Free",
-        "restoreWindow": "6 hours",
-        "pitrAvailable": true,
-        "note": "Provided by user from Neon Console; secret-free."
+      "restoreWindow": "6h",
+      "sourceBranch": "staging",
+      "sourceBranchId": "br-fragrant-sky-aj5kk2c3",
+      "pitrTestOffset": "10 minutes before branch creation target",
+      "pitrTestPointInTime": "2026-08-14 00:24 KST",
+      "pitrTestMode": "point-in-time temporary branch",
+      "pitrBranchName": "pitr-rehearsal-20260814",
+      "pitrBranchId": "br-odd-base-ajl0hbn9",
+      "pitrBranchParent": "staging",
+      "pitrBranchReadyAt": "2026-08-14 00:36 KST",
+      "temporaryBranchAutoDelete": "After 1 Day",
+      "userNeonEvidence": {
+        "pitrBranchExists": true,
+        "publicTableCount": 41,
+        "migrationLedgerRows": 14,
+        "migrationLedgerVerifiedApplied": 14,
+        "cleanup": "AUTO_DELETE_AFTER_1_DAY_OR_MANUAL_ALLOWED_AFTER_EVIDENCE"
       },
-      "officialDocsEvidence": {
-        "historyWindowUrl": "https://neon.com/docs/introduction/history-window",
-        "instantRestoreUrl": "https://neon.com/docs/introduction/branch-restore",
-        "freePlanHistoryWindow": "6 hours capped at 1 GB history",
-        "pitrMechanism": "history window retains WAL for instant restore, Time Travel, and branching from past states",
-        "documentedGranularity": "down to the millisecond for root branch instant restore",
-        "documentedBranchRestoreMechanism": "root branch restore by timestamp or LSN; child branches do not support instant restore"
+      "codexReadOnlyVerification": {
+        "checkedAt": "2026-08-13T15:46:34.210Z",
+        "projectId": "still-feather-22153967",
+        "branchId": "br-odd-base-ajl0hbn9",
+        "database": "neondb",
+        "publicPhysicalTables": 41,
+        "migrationLedgerRows": 14,
+        "migrationLedgerVerifiedApplied": 14,
+        "computeId": "ep-silent-truth-ajhrxmc4",
+        "computeState": "active",
+        "region": "aws-us-east-2"
       },
-      "mcpEvidence": {
-        "stagingComputeBranchId": "br-fragrant-sky-aj5kk2c3",
-        "stagingComputeId": "ep-young-sunset-ajgi3bab",
-        "computeType": "read_write",
-        "region": "aws-us-east-2",
-        "sqlPreflight": {
-          "database": "neondb",
-          "publicTables": 41,
-          "migrationLedgerRows": 14,
-          "migrationLedgerVerifiedApplied": 14
-        }
+      "rpoEvaluation": {
+        "target": "15m",
+        "selectedRecoveryPointAge": "10m",
+        "status": "PASS",
+        "reason": "A point-in-time recovery point inside the 15-minute loss budget was selected and materialized into a usable Neon temporary branch."
       },
-      "cliEvidence": {
-        "neonctlVersion": "3.2.0",
-        "projectMetadataRead": "BLOCKED_AUTH_TIMEOUT",
-        "historyRetentionSecondsRead": "NOT_AVAILABLE_FROM_LOCAL_CLI",
-        "authUrlRedacted": true
+      "rtoEvaluation": {
+        "target": "2h",
+        "branchMaterializationBound": "<2 minutes",
+        "conservativeApplicationValidationAllowance": "well below 2h for reconnect plus schema/ledger validation based on this rehearsal",
+        "status": "PASS",
+        "note": "Exact Create-button seconds were not separately recorded; this is a conservative upper-bound rehearsal result, not a sub-minute precision claim."
       },
-      "recoveryRehearsal": {
-        "branchCreated": false,
-        "reason": "Available MCP create_branch tool does not expose parent branch or timestamp/LSN restore parameters; neonctl/API metadata path timed out waiting for OAuth. No staging/main branch reset or production mutation was performed.",
-        "cleanup": "NOT_APPLICABLE_NO_BRANCH_CREATED",
-        "dataValidation": "STAGING_CURRENT_SAFE_SQL_ONLY: public_tables=41, migration ledger 14/14 verified"
-      },
-      "assessment": {
-        "pitrAvailable": "YES_USER_CONSOLE_AND_OFFICIAL_DOCS",
-        "restoreWindow": "6h",
-        "pitrGranularity": "DOCUMENTED_MILLISECOND_FOR_ROOT_BRANCH_NOT_API_VERIFIED_FOR_STAGING",
-        "rpoTarget": "15m",
-        "rpoStatus": "UNVERIFIED_GRANULARITY",
-        "rtoTarget": "2h",
-        "rtoMeasuredOrBound": "NOT_MEASURED_NO_RECOVERY_BRANCH_CREATED; docs say restore operation expected seconds, but local rehearsal was not executed",
-        "rtoStatus": "UNVERIFIED_REHEARSAL_NOT_EXECUTED",
-        "phase2Status": "EXTERNAL_BLOCKER",
-        "d017Status": "EXTERNAL_BLOCKER",
-        "db009Status": "EXTERNAL_BLOCKER",
-        "db010Status": "EXTERNAL_BLOCKER",
-        "phase3EntryReadiness": "NOT_READY"
+      "finalStatus": {
+        "db009": "PASS",
+        "db010": "PASS",
+        "phase2": "PASS",
+        "d017": "PASS",
+        "phase3EntryReadiness": "READY",
+        "projectCompletion100": false,
+        "commercialLaunchReady": false
       },
       "safety": {
         "productionMutation": false,
         "mainBranchMutation": false,
-        "stagingResetOrReplace": false,
+        "planUpgrade": false,
+        "temporaryBranchDeletedByCodex": false,
         "secretsExposed": false
       }
     }
@@ -298,7 +291,7 @@
     },
     {
       "path": "docs/database/RECOVERY_DRILL.md",
-      "sha256": "92127388307844839BBC3A8314B3FB9839D3CBB2E2FA825C6640251E788C1AC0"
+      "sha256": "1B707D04AF7F66FC27A47C4FCE237509095429305D599B044DCE502E9E1CE918"
     },
     {
       "path": "docs/database/DB_SECURITY_REPORT.md",
@@ -306,7 +299,7 @@
     },
     {
       "path": "docs/database/DB_CAPABILITY_MATRIX.md",
-      "sha256": "6B7332563786D96B01FC53FE2551C82F83639CC98033C788AA5DD22E2791FB0F"
+      "sha256": "3310090CEE81A013660E57473CC3C5A313D793BCA7D93A4CF536C1E3890F7BE8"
     },
     {
       "path": "docs/database/PHASE_2_REMEDIATION_REPORT.md",
@@ -318,7 +311,7 @@
     },
     {
       "path": "docs/database/PITR_RPO_RTO_EVIDENCE_2026-08-14.json",
-      "sha256": "CC63999B36051782086F3A60BF3567BA91DDC3286910C34E714A04B6AB62F97D"
+      "sha256": "C72AA33C2345A8E53A62205D1D84DB7C6CD06632B373A369C3D8FBAA02FC192D"
     },
     {
       "path": "docs/database/PHASE_2_DATABASE_FINALIZATION.json",
