@@ -192,6 +192,12 @@ const BOOTSTRAP_ROLES = [
   "OPERATOR",
   "ADMIN",
   "SUPER_ADMIN",
+  "OPS_ADMIN",
+  "MODERATOR",
+  "CONTENT_ADMIN",
+  "SUPPORT",
+  "ADS_PARTNER_ADMIN",
+  "AUDITOR_READONLY",
   "SYSTEM",
 ] as const;
 const BOOTSTRAP_ACCOUNT_STATUSES = [
@@ -210,6 +216,10 @@ const DEFAULT_ALLOWED_HEADERS = [
   "x-idempotency-key",
   "idempotency-key",
   "x-admin-reason",
+  "x-admin-break-glass",
+  "x-admin-break-glass-reason",
+  "x-admin-break-glass-scope",
+  "x-admin-break-glass-expires-at",
   "x-service-token",
   "x-refresh-token",
   "x-upload-file-name",
@@ -1227,7 +1237,15 @@ function bootstrapAccountStatus(headers: Headers): BootstrapAccountStatus {
 
 function mfaRequiredFor(role: BootstrapRole, mfaVerified: boolean): boolean {
   return (
-    (role === "OPERATOR" || role === "ADMIN" || role === "SUPER_ADMIN") &&
+    (role === "OPERATOR" ||
+      role === "ADMIN" ||
+      role === "SUPER_ADMIN" ||
+      role === "OPS_ADMIN" ||
+      role === "MODERATOR" ||
+      role === "CONTENT_ADMIN" ||
+      role === "SUPPORT" ||
+      role === "ADS_PARTNER_ADMIN" ||
+      role === "AUDITOR_READONLY") &&
     !mfaVerified
   );
 }
@@ -1772,6 +1790,11 @@ function adminReasonPresent(request: Request): boolean {
   return Boolean(request.headers.get("x-admin-reason")?.trim());
 }
 
+function adminBreakGlassRequested(request: Request): boolean {
+  return request.headers.get("x-admin-break-glass")?.trim().toLowerCase() ===
+    "true";
+}
+
 function isAdminMutation(path: string, method: string): boolean {
   return (
     (path === ADMIN_API_PREFIX || path.startsWith(`${ADMIN_API_PREFIX}/`)) &&
@@ -1801,13 +1824,18 @@ function createAppAuditGate<TEnv>(
     const enforceReason = options.auditOptions?.enforceAdminReason ?? true;
 
     if (enforceReason && isAdminMutation(path, method) && !reasonPresent) {
+      const breakGlass = adminBreakGlassRequested(request);
       return new Response(
         JSON.stringify({
           success: false,
           error: {
-            code: "ADMIN_REASON_REQUIRED",
+            code: breakGlass
+              ? "ADMIN_BREAK_GLASS_REASON_REQUIRED"
+              : "ADMIN_REASON_REQUIRED",
             message:
-              "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
+              breakGlass
+                ? "긴급 권한 사용에는 X-Admin-Reason 헤더가 필요합니다."
+                : "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
             status: 400,
             requestId,
           },

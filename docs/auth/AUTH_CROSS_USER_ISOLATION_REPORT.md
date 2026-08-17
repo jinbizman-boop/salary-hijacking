@@ -1,20 +1,21 @@
-﻿@"
 # Auth Cross-User Isolation Report
 
-Status: PARTIAL_STAGING_CORE_ONLY
-Timestamp: 2026-08-17T10:45:17.0464780Z
+Status: PASS_STAGING_DIRECT_ID_RUNTIME
+Timestamp: 2026-08-17T11:30:59.056Z
 
-Verified in current closure:
-- Owner-bound middleware no longer mistakes self-collection aliases such as /users/consents for foreign user ids.
-- Privacy/support/withdrawal/consent are executed under authenticated synthetic staging users.
-- DB Phase 2 A/B RLS isolation remains PASS.
+Evidence:
+- docs/auth/CROSS_USER_DIRECT_ID_RUNTIME_MATRIX.csv
+- docs/auth/CROSS_USER_RUNTIME_FINAL_REPORT.md
 
-Remaining internal work:
-- Full requested USER_A/USER_B direct-ID negative matrix for profile, sessions, settings, consents, privacy export, withdrawal, devices, and notification preferences was not exhaustively rerun in this closure.
+Result:
+- CROSS_USER_AUTHZ=PASS
+- CROSS_USER_DIRECT_ID_MATRIX=PASS
+- CROSS_USER_DATA_LEAK=0
+- RLS_CROSS_USER_ESCAPE=0 for live physical user-owned tables inspected.
 
-Cross-user data leak status:
-- CROSS_USER_DATA_LEAK=0 for tested paths.
-- CROSS_USER_AUTHZ remains PARTIAL until the full requested matrix is executed.
-
+Notes:
+- The direct-ID staging matrix used two synthetic users and exact resource IDs where the public API exposes them.
+- The notification preferences API is owner-scoped at runtime; live staging does not expose a separate physical notification_preferences table in the 41-table catalog.
+- The notification device cross-user 500 was fixed to stable NOTIFICATION_DEVICE_NOT_FOUND before this final PASS run.
 
 No raw password, access token, refresh token, reset token, verification token, OAuth token, MFA secret, connection string, production data, raw PII, or financial source value is stored in this evidence.

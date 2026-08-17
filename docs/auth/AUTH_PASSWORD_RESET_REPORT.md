@@ -1,17 +1,15 @@
-﻿@"
 # Auth Password Reset Report
 
-Status: PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME
-Timestamp: 2026-08-17T10:45:17.0464780Z
+Status: EXTERNAL_EMAIL_DELIVERY_RUNTIME_STAGING_LOCAL_CONTRACT_PASS
+Timestamp: 2026-08-17T11:30:59.056Z
 
-Verified:
-- Password reset request returns accepted on staging without exposing raw reset token.
+Verified internal security:
+- Password reset request is accepted on staging without exposing raw reset tokens.
 - Local contract verifies valid reset, one-time replay block, invalid token rejection, old password rejection, and new password login.
-- Non-local/staging response intentionally does not expose delivery token.
+- Non-local/staging responses intentionally do not expose delivery tokens.
 
-Remaining external blocker:
-- Staging password reset confirm/replay cannot be executed end-to-end without an email delivery provider/inbox or secure token retrieval path.
-- This is intentionally not bypassed by returning raw reset tokens from staging responses.
-
+External delivery blocker:
+- Full provider-runtime reset confirm/replay on staging requires a safe email delivery provider/inbox or approved secure token retrieval path.
+- This blocker is external to the internal auth/session/account closure because returning raw reset tokens from staging would violate the security contract.
 
 No raw password, access token, refresh token, reset token, verification token, OAuth token, MFA secret, connection string, production data, raw PII, or financial source value is stored in this evidence.

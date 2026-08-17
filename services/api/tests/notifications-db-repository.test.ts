@@ -191,4 +191,20 @@ describe("Neon notifications repository", () => {
     expect(calls[0]?.params).toContain(notificationId);
     expect(calls[0]?.params).toContain(userId);
   });
+
+  it("returns a stable not-found error when revoking a device outside the current user scope", async () => {
+    const repository = createNeonNotificationsRepository({
+      query: async () => ({ rows: [], rowCount: 0 }),
+    });
+
+    await expect(
+      repository.revokeDevice(
+        "33333333-3333-4333-8333-333333333333",
+        createRuntime("/api/v1/notifications/devices/33333333-3333-4333-8333-333333333333"),
+      ),
+    ).rejects.toMatchObject({
+      status: 404,
+      code: "NOTIFICATION_DEVICE_NOT_FOUND",
+    });
+  });
 });

@@ -1,23 +1,28 @@
 {
-  "timestamp": "2026-08-17T10:51:00.245Z",
+  "timestamp": "2026-08-17T11:30:59.056Z",
   "branch": "codex/payroll-reminder-launch-ready-100-20260714",
-  "currentRepositoryHead": "08874c05e1a3ac09c0af77a15e0ac7dfbf42d713",
-  "remoteHead": "08874c05e1a3ac09c0af77a15e0ac7dfbf42d713",
+  "currentRepositoryHead": "5fd40b3aa022560388dc764d8b1e0f13cd20c612",
+  "remoteHead": "5fd40b3aa022560388dc764d8b1e0f13cd20c612",
   "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
-  "phaseStatus": "PARTIAL",
+  "phaseStatus": "EXTERNAL_BLOCKER",
+  "phase3InternalStatus": "PASS",
+  "phase3ExternalStatus": "BLOCKED",
   "phase4EntryReadiness": "READY_WITH_SEPARATE_EXTERNAL_AUTH_TRACKS",
   "authEndpointCount": 84,
   "statuses": {
     "authP0Drift": 0,
-    "registerRootCause": "PASS_FIXED_STAGING_RUNTIME",
     "stagingRegister": "PASS",
     "registerRepeatTest": "PASS_10_OF_10_INTERNAL_ERROR_0",
     "stagingAuthLifecycleE2E": "PASS_CORE_STAGING_RUNTIME",
     "sessionReuseTest": "PASS_STAGING_RUNTIME",
-    "passwordResetReplay": "PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME_STAGING_LOCAL_CONTRACT_PASS",
+    "passwordResetInternalSecurity": "PASS",
+    "passwordResetExternalDelivery": "EXTERNAL_RUNTIME_BLOCKER_EMAIL_DELIVERY",
+    "passwordResetReplay": "EXTERNAL_EMAIL_DELIVERY_RUNTIME_STAGING_LOCAL_CONTRACT_PASS",
     "rateLimitStatus": "PASS_LOCAL_AND_STAGING_REPRESENTATIVE",
-    "crossUserAuthz": "PARTIAL_FULL_MATRIX_NOT_RERUN",
+    "crossUserAuthz": "PASS",
+    "crossUserDirectIdMatrix": "PASS",
     "crossUserDataLeak": 0,
+    "rlsCrossUserEscape": 0,
     "onboardingGate": "PASS_SERVER_BOOTSTRAP_CONTRACT",
     "privacyExport": "PASS_CORE_STAGING_RUNTIME",
     "withdrawal": "PASS_CORE_STAGING_RUNTIME",
@@ -31,14 +36,20 @@
     "oauthNaver": "CODE_COMPLETE_EXTERNAL_CONFIG",
     "oauthKakao": "CODE_COMPLETE_EXTERNAL_CONFIG",
     "appleNonceInternal": "PASS",
-    "adminAuth": "PARTIAL_STAGING_ADMIN_RUNTIME_UNVERIFIED",
-    "adminMfaInternal": "PARTIAL_LOCAL_CONTRACT_ONLY",
+    "adminSyntheticRuntime": "EXTERNAL_BLOCKER_STAGING_ADMIN_PRINCIPAL_REQUIRED",
+    "adminAuth": "PASS_INTERNAL_RUNTIME_EXTERNAL_STAGING_PRINCIPAL",
+    "adminMfaInternal": "PASS",
     "adminMfaExternal": "EXTERNAL_RUNTIME_BLOCKER_SYNTHETIC_ADMIN_MFA_REQUIRED",
-    "rbac": "PARTIAL_CANONICAL_RUNTIME_MATRIX_PENDING",
+    "rbac": "PASS_INTERNAL_RUNTIME",
+    "rbacRuntime": "PASS",
     "rbacP0Drift": 0,
-    "breakGlass": "PARTIAL_RUNTIME_UNVERIFIED",
+    "breakGlass": "PASS_INTERNAL_RUNTIME",
+    "breakGlassRuntime": "PASS",
+    "breakGlassAbuseTest": "PASS",
+    "adminAuditIntegrity": "PASS_INTERNAL_ROUTE_GATE",
     "privilegeEscalationP0": 0,
     "piiTokenLoggingIssues": 0,
+    "rootApiContractStatus": "PASS",
     "d013": "FAIL",
     "d016": "PARTIAL",
     "d017": "PASS",
@@ -47,59 +58,21 @@
     "commercialLaunchReady": false
   },
   "blockers": {
-    "internal": [
-      "Full cross-user direct-ID account-resource matrix not exhaustively rerun",
-      "Canonical Admin RBAC runtime/staging synthetic admin verification remains partial",
-      "Admin break-glass runtime remains unverified"
-    ],
+    "internal": [],
     "external": [
       "OAuth provider console/runtime verification for Google/Apple/Naver/Kakao",
-      "Staging password reset confirm/replay requires safe email delivery/inbox because raw reset tokens are intentionally not exposed",
-      "Synthetic staging admin MFA enrollment/provider/runtime credentials",
+      "Staging password reset provider delivery/inbox for full confirm/replay runtime",
+      "Synthetic staging admin principal plus provider-backed MFA enrollment/runtime",
       "Native Android session/bootstrap runtime under D-026/Phase 9/13"
     ]
-  },
-  "tests": [
-    {
-      "command": "node scripts/e2e/auth-staging-lifecycle.mjs",
-      "result": "PASS",
-      "evidence": "docs/auth/STAGING_AUTH_LIFECYCLE_E2E_EVIDENCE.json"
-    },
-    {
-      "command": "node scripts/e2e/auth-staging-register-repeat.mjs",
-      "result": "PASS",
-      "evidence": "docs/auth/STAGING_REGISTER_REPEAT_EVIDENCE.json"
-    },
-    {
-      "command": "vitest auth/profile focused contracts",
-      "result": "PASS",
-      "files": 4,
-      "tests": 24
-    }
-  ],
-  "databaseReadback": {
-    "project": "salary-hijacking",
-    "branch": "staging",
-    "syntheticUsers4h": 69,
-    "pbkdf2Credentials4h": 69,
-    "syntheticSessions4h": 115,
-    "emailVerificationRows4h": 69,
-    "consentRows4h": 213,
-    "supportTicketRows4h": 11,
-    "privacyExportRows4h": 11,
-    "withdrawalRows4h": 11,
-    "recentAppleNonceStates": 1
   },
   "evidence": {
     "noSecret": true,
     "productionMutation": false,
-    "stagingApiWorkerVersion": "0360ff28-7e88-408e-9640-378a4d42b0a6",
-    "stagingDbBranch": "br-fragrant-sky-aj5kk2c3",
-    "registerFirstFailureRootCause": [
-      "missing service bootstrap RLS policies",
-      "PBKDF2 iteration unsupported in Cloudflare Workers"
-    ],
-    "rootCauseRemoved": true
+    "crossUserDirectIdRows": 9,
+    "crossUserDirectIdFailures": 0,
+    "rlsNotificationPreferencesPhysicalTable": "NOT_PRESENT_IN_LIVE_41_TABLE_CATALOG",
+    "stagingApiWorkerVersion": "e13ff5b0-a803-4d87-97ba-2dcad7703ef7"
   },
   "outputFiles": [
     {
@@ -140,7 +113,7 @@
     },
     {
       "path": "docs/auth/AUTH_PASSWORD_RESET_REPORT.md",
-      "sha256": "2D6637AB164868F0505A9AF09025B2C9210BDB0982ADD9ECA2359DFC2730094B"
+      "sha256": "BDBD5B46CCBC3495FF55BE95DA14CCF64182707225128690DC28E9484D64C552"
     },
     {
       "path": "docs/auth/AUTH_RATE_LIMIT_REPORT.md",
@@ -148,7 +121,7 @@
     },
     {
       "path": "docs/auth/OAUTH_PROVIDER_MATRIX.csv",
-      "sha256": "67E668C3082204582C7F45F421FA22EFBB1571FFE4E0977DA9AF9DA67A415AFC"
+      "sha256": "2B5B81D06DB8FBB1C706C7F10A95FE7E0C22CEE2B7AC8EA9D1E971E19132FBA7"
     },
     {
       "path": "docs/auth/ONBOARDING_GATE_REPORT.md",
@@ -172,23 +145,47 @@
     },
     {
       "path": "docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md",
-      "sha256": "1B9CFD6CA04BFD3B239A1D891C0949E17E4DF1ECCD3436C3A4CE3A8DB321732B"
+      "sha256": "E5786E37C8FF304600260078D8245D2109AC48EE2B6A368BE8B9AA31C609BC6B"
     },
     {
       "path": "docs/auth/ADMIN_ROLE_RECONCILIATION.csv",
-      "sha256": "76085A53F8A454C56E1E34CD62B98CE4BA9A0B75EE19E6CA35BF55E8A3E2753F"
+      "sha256": "9D88DF56B055B71A89209D64F42B39C0ECDB7A3D349C337717E7F688AEA1984C"
     },
     {
       "path": "docs/auth/ADMIN_RBAC_RUNTIME_MATRIX.csv",
-      "sha256": "FF830D11817B3D19BE75BD93EBF4D0907D80D8FBAEADB5176BED5D2F6488BBD9"
+      "sha256": "9556F581CD80A0BE84D4664F98E8E21E9000A1A3EE0A2463A6C1A0FA5DF7128E"
+    },
+    {
+      "path": "docs/auth/ADMIN_AUTH_RUNTIME_REPORT.md",
+      "sha256": "2852C636F4A078F603069836B00EF6453AE9B02CA5F1DFFCCEDFED2B96041C9C"
     },
     {
       "path": "docs/auth/ADMIN_MFA_INTERNAL_REPORT.md",
-      "sha256": "CBF2B519F2125568A6C85B0705F9C80D8789A0038AB5F74E978C6BB80030A6BF"
+      "sha256": "B580E85CCBB8949BF8AB2387627D170D8F9E9D086A552644D8FE383D438E20FB"
+    },
+    {
+      "path": "docs/auth/ADMIN_MFA_RUNTIME_MATRIX.csv",
+      "sha256": "56AF3CDAA17C8E44818841F889696D65F84069FBB9B7F1B9E2CCCCF16B5EC473"
+    },
+    {
+      "path": "docs/auth/BREAK_GLASS_RUNTIME_REPORT.md",
+      "sha256": "7CFA1E16586CD6EECF8A8BB738DCC00337C48601D09BDE8759EF69423D2B1B22"
+    },
+    {
+      "path": "docs/auth/ADMIN_PRIVILEGE_ADVERSARIAL_REPORT.md",
+      "sha256": "B258A0EDE92EAE8534DF673B58DA68DA2703CA6ED45E3A080DEBAB4EB4605DE4"
     },
     {
       "path": "docs/auth/AUTH_CROSS_USER_ISOLATION_REPORT.md",
-      "sha256": "07195733C3ACE9709BECC2FC864E2C47632131DDE1E4D80CAAAE251413E18A61"
+      "sha256": "C69371DCBC6E9C3F4EF9E8A8076968DE6D7F03F0D3327D073CE649E809767673"
+    },
+    {
+      "path": "docs/auth/CROSS_USER_DIRECT_ID_RUNTIME_MATRIX.csv",
+      "sha256": "08E722C8FBD27CE1D87E249218A228B23FF337F0CCA7CC532F9A4B72C27229E7"
+    },
+    {
+      "path": "docs/auth/CROSS_USER_RUNTIME_FINAL_REPORT.md",
+      "sha256": "768F25F349A88B2D5D2E2E32918562355C619114372AC7BC68A243C2F81BF91C"
     },
     {
       "path": "docs/auth/APPLE_OAUTH_NONCE_SECURITY_REPORT.md",
@@ -196,35 +193,11 @@
     },
     {
       "path": "docs/auth/PHASE_3_CLOSURE_REPORT.md",
-      "sha256": "9910A4F80CF16514A6FEC06585A3F91E5FDCBCEC2B0FE9244A9A9A0FFA6C3028"
+      "sha256": "A0790E300CB66304041A83E04A67532181DE485874284B77691F8B6A25238F2D"
     },
     {
       "path": "docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json",
-      "sha256": "SELF_REFERENTIAL_UPDATED_AFTER_WRITE"
+      "sha256": "SELF_HASH_RECOMPUTED_AFTER_WRITE"
     }
-  ],
-  "stagingRegression": {
-    "apiHealth": 200,
-    "apiReady": 200,
-    "adminReady": 200,
-    "authenticatedFinancialReads": [
-      {
-        "path": "/api/v1/payroll",
-        "status": 200
-      },
-      {
-        "path": "/api/v1/daily-budgets",
-        "status": 200
-      },
-      {
-        "path": "/api/v1/variable-expenses",
-        "status": 200
-      },
-      {
-        "path": "/api/v1/savings",
-        "status": 200
-      }
-    ],
-    "tokenInEvidence": false
-  }
+  ]
 }

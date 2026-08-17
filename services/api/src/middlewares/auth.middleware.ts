@@ -43,6 +43,14 @@ const AUTH_CONTEXT_EXACT_HEADERS = [
   "x-permissions",
 ] as const;
 
+const CLIENT_ADMIN_OPERATION_HEADERS = new Set([
+  "x-admin-reason",
+  "x-admin-break-glass",
+  "x-admin-break-glass-reason",
+  "x-admin-break-glass-scope",
+  "x-admin-break-glass-expires-at",
+]);
+
 const AUTH_CONTEXT_SOURCE_HEADER = "x-auth-context-source";
 const AUTH_CONTEXT_VERSION_HEADER = "x-auth-context-version";
 
@@ -52,6 +60,12 @@ export type UserRole =
   | "OPERATOR"
   | "ADMIN"
   | "SUPER_ADMIN"
+  | "OPS_ADMIN"
+  | "MODERATOR"
+  | "CONTENT_ADMIN"
+  | "SUPPORT"
+  | "ADS_PARTNER_ADMIN"
+  | "AUDITOR_READONLY"
   | "SYSTEM";
 export type AccountStatus =
   | "ACTIVE"
@@ -266,6 +280,12 @@ const roleRank: Record<UserRole, number> = {
   OPERATOR: 20,
   ADMIN: 30,
   SUPER_ADMIN: 40,
+  OPS_ADMIN: 30,
+  MODERATOR: 30,
+  CONTENT_ADMIN: 30,
+  SUPPORT: 30,
+  ADS_PARTNER_ADMIN: 30,
+  AUDITOR_READONLY: 30,
   SYSTEM: 50,
 };
 
@@ -327,6 +347,65 @@ const permissionsByRole: Record<UserRole, readonly string[]> = {
     "audit:read:minimal",
   ],
   SUPER_ADMIN: ["*"],
+  OPS_ADMIN: [
+    "self:read",
+    "admin:read",
+    "admin:write",
+    "user:read",
+    "user:manage",
+    "community:read",
+    "community:moderate",
+    "report:read",
+    "report:manage",
+    "notice:read",
+    "notice:write",
+    "notification:send",
+    "incident:manage",
+    "metrics:read",
+  ],
+  MODERATOR: [
+    "self:read",
+    "admin:read",
+    "community:read",
+    "community:moderate",
+    "report:read",
+    "report:manage",
+    "metrics:read",
+  ],
+  CONTENT_ADMIN: [
+    "self:read",
+    "admin:read",
+    "growth:read",
+    "growth:manage",
+    "notice:read",
+    "notice:write",
+    "metrics:read",
+  ],
+  SUPPORT: [
+    "self:read",
+    "admin:read",
+    "user:read",
+    "community:read",
+    "report:read",
+    "support:read",
+    "support:manage",
+    "metrics:read",
+  ],
+  ADS_PARTNER_ADMIN: [
+    "self:read",
+    "admin:read",
+    "ad:read",
+    "ad:manage",
+    "partner:read",
+    "partner:manage",
+    "metrics:read",
+  ],
+  AUDITOR_READONLY: [
+    "self:read",
+    "admin:read",
+    "audit:read:minimal",
+    "metrics:read",
+  ],
   SYSTEM: [
     "system:job",
     "system:batch",
@@ -336,6 +415,30 @@ const permissionsByRole: Record<UserRole, readonly string[]> = {
     "stats:aggregate",
     "audit:write",
   ],
+};
+
+const canonicalAdminRoles = new Set<UserRole>([
+  "OPERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "OPS_ADMIN",
+  "MODERATOR",
+  "CONTENT_ADMIN",
+  "SUPPORT",
+  "ADS_PARTNER_ADMIN",
+  "AUDITOR_READONLY",
+]);
+
+const roleAliases: Record<string, UserRole> = {
+  OWNER: "SUPER_ADMIN",
+  PLATFORM_ADMIN: "OPS_ADMIN",
+  BACKEND_ADMIN: "OPS_ADMIN",
+  SECURITY_ADMIN: "OPS_ADMIN",
+  MODERATION_ADMIN: "MODERATOR",
+  MODERATOR_ADMIN: "MODERATOR",
+  PRODUCT_ADMIN: "CONTENT_ADMIN",
+  SUPPORT_ADMIN: "SUPPORT",
+  ADS_ADMIN: "ADS_PARTNER_ADMIN",
 };
 
 const defaultPublicPolicies: readonly AuthRoutePolicy[] = [
@@ -377,8 +480,8 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(roles|admin-roles|admin-role-members)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["SUPER_ADMIN"],
-    requiredPermissions: ["*"],
+    requiredRoles: ["SUPER_ADMIN", "OPS_ADMIN"],
+    requiredPermissions: ["role:manage", "incident:manage", "*"],
   },
   {
     id: "admin-audit",
@@ -386,7 +489,7 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(audit|audit-logs|security)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: ["ADMIN", "SUPER_ADMIN", "OPS_ADMIN", "AUDITOR_READONLY"],
     requiredPermissions: ["audit:read:minimal", "*"],
   },
   {
@@ -394,7 +497,7 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
     pattern: /^\/(?:api\/v1\/admin|admin\/api\/v1)\/users(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: ["ADMIN", "SUPER_ADMIN", "OPS_ADMIN", "SUPPORT"],
     requiredPermissions: ["user:manage", "*"],
   },
   {
@@ -403,7 +506,7 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(ads|banners|partners|partner-accounts)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: ["ADMIN", "SUPER_ADMIN", "OPS_ADMIN", "ADS_PARTNER_ADMIN"],
     requiredPermissions: ["ad:manage", "banner:write", "partner:manage", "*"],
   },
   {
@@ -412,7 +515,14 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(reports|community|notices|notifications|incidents)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["OPERATOR", "ADMIN", "SUPER_ADMIN"],
+    requiredRoles: [
+      "OPERATOR",
+      "ADMIN",
+      "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+    ],
     requiredPermissions: [
       "community:moderate",
       "report:manage",
@@ -427,7 +537,16 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
     pattern: /^\/(?:api\/v1\/admin|admin\/api\/v1)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: [
+      "ADMIN",
+      "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+      "SUPPORT",
+      "ADS_PARTNER_ADMIN",
+      "AUDITOR_READONLY",
+    ],
     requiredPermissions: ["admin:read", "admin:write", "*"],
   },
   {
@@ -866,16 +985,25 @@ function normalizeRole(role: unknown): UserRole | null {
     .trim()
     .toUpperCase()
     .replace(/^ROLE_/, "");
-  return [
+  if (
+    [
     "GUEST",
     "USER",
     "OPERATOR",
     "ADMIN",
     "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+      "SUPPORT",
+      "ADS_PARTNER_ADMIN",
+      "AUDITOR_READONLY",
     "SYSTEM",
-  ].includes(normalized)
-    ? (normalized as UserRole)
-    : null;
+    ].includes(normalized)
+  ) {
+    return normalized as UserRole;
+  }
+  return roleAliases[normalized] ?? null;
 }
 
 function normalizeRoles(claims: SalaryHijackingJwtClaims): readonly UserRole[] {
@@ -963,7 +1091,7 @@ function tokenKindFromClaims(
   }
 
   if (
-    roles.some((role) => ["OPERATOR", "ADMIN", "SUPER_ADMIN"].includes(role))
+    roles.some((role) => canonicalAdminRoles.has(role))
   ) {
     return "ADMIN";
   }
@@ -1242,7 +1370,7 @@ function hasAnyPermission(
 
 function isPrivileged(principal: AuthenticatedPrincipal): boolean {
   return principal.roles.some((role) =>
-    ["OPERATOR", "ADMIN", "SUPER_ADMIN", "SYSTEM"].includes(role),
+    role === "SYSTEM" || canonicalAdminRoles.has(role),
   );
 }
 
@@ -1461,9 +1589,7 @@ async function assertRouteAuthorization<TEnv>(
 
   if (policy.requireAdmin || isAdminPath(runtime.path)) {
     if (
-      !principal.roles.some((role) =>
-        ["OPERATOR", "ADMIN", "SUPER_ADMIN"].includes(role),
-      )
+      !principal.roles.some((role) => canonicalAdminRoles.has(role))
     ) {
       throw new AuthFailure(
         "AUTH_PERMISSION_DENIED",
@@ -1527,6 +1653,7 @@ function stripInboundAuthContextHeaders(headers: Headers): void {
   const namesToDelete: string[] = [];
   headers.forEach((_value, key) => {
     const normalized = key.toLowerCase();
+    if (CLIENT_ADMIN_OPERATION_HEADERS.has(normalized)) return;
     const isInternalContextHeader =
       AUTH_CONTEXT_HEADER_PREFIXES.some((prefix) =>
         normalized.startsWith(prefix),
@@ -1944,7 +2071,29 @@ export const authMiddlewareContract = Object.freeze({
     "APPLE",
     "FACEBOOK",
   ],
-  rbacRoles: ["GUEST", "USER", "OPERATOR", "ADMIN", "SUPER_ADMIN", "SYSTEM"],
+  rbacRoles: [
+    "GUEST",
+    "USER",
+    "OPERATOR",
+    "ADMIN",
+    "SUPER_ADMIN",
+    "OPS_ADMIN",
+    "MODERATOR",
+    "CONTENT_ADMIN",
+    "SUPPORT",
+    "ADS_PARTNER_ADMIN",
+    "AUDITOR_READONLY",
+    "SYSTEM",
+  ],
+  canonicalAdminRoles: [
+    "SUPER_ADMIN",
+    "OPS_ADMIN",
+    "MODERATOR",
+    "CONTENT_ADMIN",
+    "SUPPORT",
+    "ADS_PARTNER_ADMIN",
+    "AUDITOR_READONLY",
+  ],
   adminMfaRequired: true,
   serviceTokenSupported: true,
   protectsFinancialDataBoundary: true,

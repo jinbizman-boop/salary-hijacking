@@ -24,7 +24,13 @@ const requiredFiles = [
   "docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md",
   "docs/auth/ADMIN_ROLE_RECONCILIATION.csv",
   "docs/auth/ADMIN_RBAC_RUNTIME_MATRIX.csv",
+  "docs/auth/ADMIN_AUTH_RUNTIME_REPORT.md",
   "docs/auth/ADMIN_MFA_INTERNAL_REPORT.md",
+  "docs/auth/ADMIN_MFA_RUNTIME_MATRIX.csv",
+  "docs/auth/BREAK_GLASS_RUNTIME_REPORT.md",
+  "docs/auth/ADMIN_PRIVILEGE_ADVERSARIAL_REPORT.md",
+  "docs/auth/CROSS_USER_DIRECT_ID_RUNTIME_MATRIX.csv",
+  "docs/auth/CROSS_USER_RUNTIME_FINAL_REPORT.md",
   "docs/auth/AUTH_CROSS_USER_ISOLATION_REPORT.md",
   "docs/auth/APPLE_OAUTH_NONCE_SECURITY_REPORT.md",
   "docs/auth/PHASE_3_CLOSURE_REPORT.md",
@@ -140,7 +146,10 @@ for (const provider of ["GOOGLE", "APPLE", "NAVER", "KAKAO"]) {
 }
 
 const phase3 = JSON.parse(readRel("docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json"));
-if (phase3.phaseStatus !== "PARTIAL") fail("Phase 3 status must remain PARTIAL until full cross-user/admin runtime closes");
+if (phase3.phaseStatus !== "EXTERNAL_BLOCKER")
+  fail("Phase 3 status must be EXTERNAL_BLOCKER after internal closure with provider/runtime external tracks");
+if (phase3.phase3InternalStatus !== "PASS") fail("Phase 3 internal status must be PASS");
+if (phase3.phase3ExternalStatus !== "BLOCKED") fail("Phase 3 external status must be BLOCKED");
 if (phase3.phase4EntryReadiness !== "READY_WITH_SEPARATE_EXTERNAL_AUTH_TRACKS")
   fail("Phase 4 readiness must be READY_WITH_SEPARATE_EXTERNAL_AUTH_TRACKS after core auth runtime passes");
 if (phase3.statuses.authP0Drift !== 0) fail("auth P0 drift must be 0 after register root-cause closure");
@@ -150,7 +159,11 @@ if (phase3.statuses.registerRepeatTest !== "PASS_10_OF_10_INTERNAL_ERROR_0")
 if (phase3.statuses.stagingAuthLifecycleE2E !== "PASS_CORE_STAGING_RUNTIME")
   fail("staging auth lifecycle core PASS evidence missing");
 if (phase3.statuses.sessionReuseTest !== "PASS_STAGING_RUNTIME") fail("session reuse staging status missing");
-if (!String(phase3.statuses.passwordResetReplay).startsWith("PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME"))
+if (phase3.statuses.passwordResetInternalSecurity !== "PASS")
+  fail("password reset internal security PASS missing");
+if (phase3.statuses.passwordResetExternalDelivery !== "EXTERNAL_RUNTIME_BLOCKER_EMAIL_DELIVERY")
+  fail("password reset external delivery blocker classification missing");
+if (!String(phase3.statuses.passwordResetReplay).includes("EXTERNAL_EMAIL_DELIVERY_RUNTIME"))
   fail("password reset external delivery blocker classification missing");
 if (phase3.statuses.rateLimitStatus !== "PASS_LOCAL_AND_STAGING_REPRESENTATIVE")
   fail("rate limit local/staging representative status missing");
@@ -166,7 +179,19 @@ if (phase3.statuses.oauthApple !== "CODE_COMPLETE_EXTERNAL_CONFIG" || phase3.sta
   fail("Apple OAuth nonce internal closure missing");
 if (phase3.statuses.legacyRehashStrategy !== "PASS_LOCAL_AND_DB_CONTRACT")
   fail("legacy password rehash strategy status missing");
+if (phase3.statuses.crossUserAuthz !== "PASS") fail("cross-user authz must be PASS");
+if (phase3.statuses.crossUserDirectIdMatrix !== "PASS") fail("cross-user direct-ID matrix must be PASS");
+if (phase3.statuses.crossUserDataLeak !== 0) fail("cross-user data leak count must be 0");
+if (phase3.statuses.rlsCrossUserEscape !== 0) fail("RLS cross-user escape count must be 0");
+if (phase3.statuses.adminMfaInternal !== "PASS") fail("admin MFA internal status must be PASS");
+if (phase3.statuses.adminMfaExternal !== "EXTERNAL_RUNTIME_BLOCKER_SYNTHETIC_ADMIN_MFA_REQUIRED")
+  fail("admin MFA external blocker classification missing");
+if (phase3.statuses.rbac !== "PASS_INTERNAL_RUNTIME" || phase3.statuses.rbacRuntime !== "PASS")
+  fail("RBAC internal runtime status missing");
 if (phase3.statuses.rbacP0Drift !== 0) fail("RBAC P0 drift must be 0 for tested paths");
+if (phase3.statuses.breakGlassRuntime !== "PASS") fail("break-glass runtime status must be PASS");
+if (phase3.statuses.breakGlassAbuseTest !== "PASS") fail("break-glass abuse test status must be PASS");
+if (phase3.statuses.privilegeEscalationP0 !== 0) fail("privilege escalation P0 count must be 0");
 if (phase3.statuses.piiTokenLoggingIssues !== 0) fail("PII/token logging issue count must be 0 for generated artifacts");
 if (phase3.statuses.projectCompletion100 !== false) fail("PROJECT_COMPLETION_100 must remain false");
 if (phase3.statuses.commercialLaunchReady !== false) fail("COMMERCIAL_LAUNCH_READY must remain false");
@@ -179,7 +204,7 @@ const sessionReport = readRel("docs/auth/AUTH_SESSION_SECURITY_REPORT.md");
 if (!sessionReport.includes("PASS_STAGING_RUNTIME") || !sessionReport.includes("legacy"))
   fail("session report lacks refresh evidence or partial status");
 const resetReport = readRel("docs/auth/AUTH_PASSWORD_RESET_REPORT.md");
-if (!resetReport.includes("one-time replay block") || !resetReport.includes("PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME"))
+if (!resetReport.includes("one-time replay block") || !resetReport.includes("EXTERNAL_EMAIL_DELIVERY_RUNTIME"))
   fail("password reset report lacks replay evidence or partial status");
 const stagingReport = readRel("docs/auth/STAGING_AUTH_LIFECYCLE_E2E_REPORT.md");
 if (!stagingReport.includes("PASS") || !stagingReport.includes("core=PASS"))
@@ -201,7 +226,7 @@ const appleReport = readRel("docs/auth/APPLE_OAUTH_NONCE_SECURITY_REPORT.md");
 if (!appleReport.includes("PASS_INTERNAL_CODE_AND_STAGING_START") || !appleReport.includes("nonce hash"))
   fail("Apple OAuth nonce report lacks closure evidence");
 const adminReport = readRel("docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md");
-if (!adminReport.includes("role model") || !adminReport.includes("MFA"))
+if (!adminReport.includes("Canonical v2.0 role") || !adminReport.includes("MFA"))
   fail("admin report must document role/MFA drift");
 const roleMatrix = parseCsv(readRel("docs/auth/ADMIN_ROLE_RECONCILIATION.csv"));
 if (roleMatrix.rows.length < 7) fail("admin role reconciliation missing canonical roles");
@@ -216,6 +241,56 @@ for (const role of [
 ]) {
   if (!roleMatrix.rows.some((r) => r.CANONICAL_ROLE === role))
     fail(`admin role reconciliation missing ${role}`);
+}
+if (roleMatrix.rows.some((r) => !String(r.PHASE_3_STATUS).startsWith("PASS")))
+  fail("admin role reconciliation contains non-PASS internal role status");
+
+const rbacRuntime = parseCsv(readRel("docs/auth/ADMIN_RBAC_RUNTIME_MATRIX.csv"));
+for (const role of [
+  "SUPER_ADMIN",
+  "OPS_ADMIN",
+  "MODERATOR",
+  "CONTENT_ADMIN",
+  "SUPPORT",
+  "ADS_PARTNER_ADMIN",
+  "AUDITOR_READONLY",
+]) {
+  const row = rbacRuntime.rows.find((candidate) => candidate.ROLE === role);
+  if (!row) fail(`RBAC runtime matrix missing ${role}`);
+  if (row.STATUS !== "PASS_INTERNAL_RUNTIME") fail(`RBAC runtime ${role} is not PASS_INTERNAL_RUNTIME`);
+}
+
+const mfaMatrix = parseCsv(readRel("docs/auth/ADMIN_MFA_RUNTIME_MATRIX.csv"));
+if (mfaMatrix.rows.length < 3) fail("MFA runtime matrix missing required controls");
+if (mfaMatrix.rows.some((row) => row.STATUS !== "PASS_INTERNAL_RUNTIME"))
+  fail("MFA runtime matrix contains non-PASS internal control");
+
+const crossUserMatrix = parseCsv(readRel("docs/auth/CROSS_USER_DIRECT_ID_RUNTIME_MATRIX.csv"));
+if (crossUserMatrix.rows.length < 9) fail("cross-user direct-ID matrix missing required resources");
+if (crossUserMatrix.rows.some((row) => row.status !== "PASS"))
+  fail("cross-user direct-ID matrix contains non-PASS row");
+for (const resource of [
+  "profile",
+  "user_settings",
+  "consents",
+  "notification_preferences",
+  "privacy_export",
+  "support_ticket",
+  "withdrawal_request",
+  "device",
+  "sessions",
+]) {
+  if (!crossUserMatrix.rows.some((row) => row.resource === resource))
+    fail(`cross-user direct-ID matrix missing ${resource}`);
+}
+
+for (const [rel, phrase] of [
+  ["docs/auth/ADMIN_AUTH_RUNTIME_REPORT.md", "PASS_INTERNAL_RUNTIME"],
+  ["docs/auth/BREAK_GLASS_RUNTIME_REPORT.md", "PASS_INTERNAL_RUNTIME"],
+  ["docs/auth/ADMIN_PRIVILEGE_ADVERSARIAL_REPORT.md", "PASS_INTERNAL_RUNTIME"],
+  ["docs/auth/AUTH_CROSS_USER_ISOLATION_REPORT.md", "PASS_STAGING_DIRECT_ID_RUNTIME"],
+]) {
+  if (!readRel(rel).includes(phrase)) fail(`${rel} missing ${phrase}`);
 }
 
 const trace = parseCsv(readRel("docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv"));
@@ -246,7 +321,8 @@ for (const id of [
 ]) {
   const row = trace.rows.find((r) => r.REQ_ID === id);
   if (!row) fail(`trace matrix missing ${id}`);
-  if (!["PASS", "PARTIAL"].includes(row.CURRENT_STATUS)) fail(`trace matrix ${id} must be PASS or PARTIAL`);
+  if (!["PASS", "PARTIAL", "EXTERNAL_BLOCKER"].includes(row.CURRENT_STATUS))
+    fail(`trace matrix ${id} must be PASS, PARTIAL, or EXTERNAL_BLOCKER`);
   if (
     !row.RUNTIME_EVIDENCE ||
     row.RUNTIME_EVIDENCE.includes("Phase 0 does not execute runtime")

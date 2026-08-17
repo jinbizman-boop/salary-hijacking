@@ -465,9 +465,28 @@ function errorResponse(
   path: string,
   error: unknown,
 ): Response {
+  const repositoryError =
+    error &&
+    typeof error === "object" &&
+    typeof (error as { readonly status?: unknown }).status === "number" &&
+    typeof (error as { readonly code?: unknown }).code === "string"
+      ? (error as {
+          readonly status: number;
+          readonly code: string;
+          readonly message?: string;
+          readonly details?: JsonValue | null;
+        })
+      : null;
   const normalized =
     error instanceof NotificationHttpError
       ? error
+      : repositoryError
+        ? new NotificationHttpError(
+            repositoryError.status,
+            repositoryError.code,
+            repositoryError.message ?? "알림 API 요청을 처리할 수 없습니다.",
+            repositoryError.details ?? null,
+          )
       : new NotificationHttpError(
           500,
           "NOTIFICATION_ROUTE_INTERNAL_ERROR",

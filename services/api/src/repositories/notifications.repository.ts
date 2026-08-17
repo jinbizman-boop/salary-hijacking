@@ -35,6 +35,25 @@ export type NotificationsDbQuery<TEnv = unknown> = (
   options: NotificationsDbQueryOptions<TEnv>,
 ) => Promise<NotificationsDbQueryResult>;
 
+export class NotificationRepositoryError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly details: JsonValue | null;
+
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    details: JsonValue | null = null,
+  ) {
+    super(message);
+    this.name = "NotificationRepositoryError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 export interface NeonNotificationsRepositoryOptions<TEnv = unknown> {
   readonly query?: NotificationsDbQuery<TEnv>;
 }
@@ -843,7 +862,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Notification device not found.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_DEVICE_NOT_FOUND",
+          "디바이스를 찾을 수 없습니다.",
+        );
       return {
         deviceId: String(row.device_id ?? deviceId),
         status: String(row.status ?? "REVOKED"),
