@@ -14,7 +14,7 @@
                  },
     "counts":  {
                    "tableCount":  41,
-                   "migrationCount":  16,
+                   "migrationCount":  18,
                    "rlsCount":  41,
                    "forceRlsCount":  30,
                    "policyCount":  77,

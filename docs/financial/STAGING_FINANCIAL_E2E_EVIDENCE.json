@@ -1,0 +1,355 @@
+{
+  "timestamp": "2026-08-17T12:01:01.073Z",
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "workerVersion": "1cbd1402-2c51-4bc0-87c3-94fd8960bd1c",
+  "startedAt": "2026-08-17T12:00:49.206Z",
+  "finishedAt": "2026-08-17T12:01:01.073Z",
+  "syntheticUser": {
+    "emailHash": "913f9a3239e7d462"
+  },
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-e6c8f4df97ef3667",
+      "idHashes": {},
+      "flags": {
+        "status": "ok",
+        "service": "salary-hijacking-api",
+        "version": "3.1.0",
+        "uptime": "edge",
+        "routeCount": 12
+      },
+      "pass": true
+    },
+    {
+      "step": "ready",
+      "method": "GET",
+      "path": "/api/v1/ready",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-977176da2eac48c0",
+      "idHashes": {},
+      "flags": {
+        "status": "ready",
+        "environment": "staging",
+        "serverAuthorityEnabled": true,
+        "rawFinancialDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false,
+        "privacyMode": "STRICT",
+        "smokeSafe": true,
+        "completeness": true
+      },
+      "pass": true
+    },
+    {
+      "step": "register",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase4-28469a42cd4c00da",
+      "idHashes": {},
+      "flags": {},
+      "pass": true
+    },
+    {
+      "step": "payroll_create",
+      "method": "POST",
+      "path": "/api/v1/payroll/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase4-2a5a4ed38d4e90c4",
+      "idHashes": {
+        "planId": "7d92235d6fce98c8"
+      },
+      "flags": {
+        "title": "Phase 4 payroll cycle",
+        "payday": 25,
+        "periodStartDate": "2026-07-26",
+        "periodEndDate": "2026-08-25",
+        "reservePolicy": "ZERO_BASE",
+        "memo": "phase4 synthetic",
+        "status": "DRAFT",
+        "createdAt": "2026-08-17T12:01:02.000Z",
+        "updatedAt": "2026-08-17T12:01:02.000Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    },
+    {
+      "step": "payroll_activate",
+      "method": "POST",
+      "path": "/api/v1/payroll/[UUID]/activate",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-841b4dedfb1b0128",
+      "idHashes": {
+        "planId": "7d92235d6fce98c8"
+      },
+      "flags": {
+        "title": "2026-08 급여 계획",
+        "payday": 25,
+        "periodStartDate": "2026-07-26",
+        "periodEndDate": "2026-08-25",
+        "reservePolicy": "ZERO_BASE",
+        "status": "ACTIVE",
+        "createdAt": "2026-08-17T12:01:02.000Z",
+        "updatedAt": "2026-08-17T12:01:03.056Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    },
+    {
+      "step": "daily_budget_create",
+      "method": "POST",
+      "path": "/api/v1/daily-budgets/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase4-97e39c113494c1a6",
+      "idHashes": {
+        "budgetId": "27297b6a61e0c100"
+      },
+      "flags": {
+        "usageRate": 0,
+        "source": "MANUAL",
+        "memo": "phase4 synthetic budget",
+        "status": "ACTIVE",
+        "calculatedAt": "2026-08-17T12:01:03.869Z",
+        "createdAt": "2026-08-17T12:01:03.869Z",
+        "updatedAt": "2026-08-17T12:01:03.869Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    },
+    {
+      "step": "fixed_expense_create",
+      "method": "POST",
+      "path": "/api/v1/fixed-expenses/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase4-b664b639228809df",
+      "idHashes": {
+        "expenseId": "2f0dc892f1ee4792"
+      },
+      "flags": {
+        "title": "Phase4 fixed",
+        "category": "HOUSING",
+        "frequency": "MONTHLY",
+        "paymentDay": 5,
+        "startDate": "2026-07-26",
+        "merchantName": "phase4",
+        "memo": "synthetic",
+        "autoPay": false,
+        "status": "ACTIVE",
+        "createdAt": "2026-08-17T12:01:04.640Z",
+        "updatedAt": "2026-08-17T12:01:04.640Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "nextDueDate": "2026-09-05"
+      },
+      "pass": true
+    },
+    {
+      "step": "savings_create",
+      "method": "POST",
+      "path": "/api/v1/savings/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase4-550ba44c268070cf",
+      "idHashes": {
+        "goalId": "d0efebf375fa81c5"
+      },
+      "flags": {
+        "title": "Phase4 saving",
+        "goalType": "EMERGENCY_FUND",
+        "frequency": "MONTHLY",
+        "saveDay": 10,
+        "startDate": "2026-07-26",
+        "memo": "synthetic",
+        "autoSave": false,
+        "status": "ACTIVE",
+        "createdAt": "2026-08-17T12:01:05.404Z",
+        "updatedAt": "2026-08-17T12:01:05.404Z",
+        "completionRate": 0,
+        "estimatedRemainingCycles": 5,
+        "serverAuthority": true,
+        "nextSaveDate": "2026-09-10"
+      },
+      "pass": true
+    },
+    {
+      "step": "variable_expense_create",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase4-6ec4469ab6c8a43e",
+      "idHashes": {
+        "expenseId": "01b209554ee7e1dd"
+      },
+      "flags": {
+        "category": "MEAL",
+        "title": "phase4",
+        "spentAt": "2026-08-17T03:00:00.000Z",
+        "paymentMethod": "ETC",
+        "merchantName": "phase4",
+        "memo": "synthetic",
+        "source": "MANUAL",
+        "status": "POSTED",
+        "createdAt": "2026-08-17T12:01:06.423Z",
+        "updatedAt": "2026-08-17T12:01:06.423Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    },
+    {
+      "step": "variable_expense_duplicate_idempotency",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-06665c4c2cd374d6",
+      "idHashes": {
+        "expenseId": "01b209554ee7e1dd"
+      },
+      "flags": {
+        "category": "MEAL",
+        "title": "phase4",
+        "spentAt": "2026-08-17T03:00:00.000Z",
+        "paymentMethod": "ETC",
+        "merchantName": "phase4",
+        "memo": "synthetic",
+        "source": "MANUAL",
+        "status": "POSTED",
+        "createdAt": "2026-08-17T12:01:06.423Z",
+        "updatedAt": "2026-08-17T12:01:06.423Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]",
+        "idempotentReplay": true
+      },
+      "pass": true
+    },
+    {
+      "step": "payroll_home",
+      "method": "GET",
+      "path": "/api/v1/payroll/home",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-e822ae9f50829df4",
+      "idHashes": {},
+      "flags": {
+        "headline": "급여 납치 계획이 활성화되어 있습니다.",
+        "nextAction": "오늘의 일일 예산을 확인하고 변동지출을 기록하세요.",
+        "financialRawDataExposed": false,
+        "serverAuthority": true
+      },
+      "pass": true
+    },
+    {
+      "step": "payroll_current",
+      "method": "GET",
+      "path": "/api/v1/payroll/current",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-d2d75ee5aa85d80f",
+      "idHashes": {
+        "planId": "7d92235d6fce98c8"
+      },
+      "flags": {
+        "title": "2026-08 급여 계획",
+        "payday": 25,
+        "periodStartDate": "2026-07-26",
+        "periodEndDate": "2026-08-25",
+        "reservePolicy": "ZERO_BASE",
+        "status": "ACTIVE",
+        "createdAt": "2026-08-17T12:01:02.000Z",
+        "updatedAt": "2026-08-17T12:01:06.423Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    },
+    {
+      "step": "daily_budget_read",
+      "method": "GET",
+      "path": "/api/v1/daily-budgets/[UUID]",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-dcfb660781f534e6",
+      "idHashes": {
+        "budgetId": "27297b6a61e0c100"
+      },
+      "flags": {
+        "usageRate": 0.25,
+        "source": "SYSTEM",
+        "status": "ACTIVE",
+        "calculatedAt": "2026-08-17T12:01:06.423Z",
+        "createdAt": "2026-08-17T12:01:03.869Z",
+        "updatedAt": "2026-08-17T12:01:06.423Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    },
+    {
+      "step": "variable_expense_delete",
+      "method": "DELETE",
+      "path": "/api/v1/variable-expenses/[UUID]",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase4-b57d8b96148aa716",
+      "idHashes": {
+        "expenseId": "01b209554ee7e1dd"
+      },
+      "flags": {
+        "category": "MEAL",
+        "title": "phase4",
+        "spentAt": "2026-08-17T03:00:00.000Z",
+        "paymentMethod": "ETC",
+        "merchantName": "phase4",
+        "memo": "synthetic",
+        "source": "MANUAL",
+        "status": "DELETED",
+        "createdAt": "2026-08-17T12:01:06.423Z",
+        "updatedAt": "2026-08-17T12:01:10.299Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      },
+      "pass": true
+    }
+  ],
+  "assertions": {
+    "register": true,
+    "payrollCreate": true,
+    "dailyBudgetCreate": true,
+    "variableExpenseCreate": true,
+    "idempotencyDuplicateBlockedOrStable": true,
+    "fullCorePath": true
+  },
+  "status": "PASS_CORE_STAGING_RUNTIME",
+  "secretValuesStored": false,
+  "rawTokensStored": false,
+  "rawFinancialValuesStored": false,
+  "productionMutation": false,
+  "notes": [
+    "Raw access/refresh tokens, passwords, connection strings, and raw financial values are not written.",
+    "This harness validates core staging API runtime after Phase 4 staging-only deploy; broader concurrency/direct-ID/finalization remains separate."
+  ]
+}

@@ -106,4 +106,54 @@ describe("Neon payroll repository", () => {
     expect(calls[0]?.params).toContain(userId);
     expect(JSON.stringify(created)).not.toContain(userId);
   });
+
+  it("stores payday-cycle plans under the payroll month, not the cycle start month", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonPayrollRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName.endsWith(".create")) {
+          return {
+            rows: [
+              {
+                payroll_plan_id: planId,
+                year_month: "2026-09",
+                payday: 25,
+                expected_salary_amount: "2700000",
+                expected_expense_amount: "1370000",
+                target_hijack_amount: "1870000",
+                expected_hijack_amount: "1330000",
+                confirmed_hijack_amount: "0",
+                status: "DRAFT",
+                created_at: "2026-08-26T00:00:00.000Z",
+                updated_at: "2026-08-26T00:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    await repository.createPlan(
+      {
+        ...createInput,
+        firstPayrollDate: "2026-09-25",
+        periodStartDate: "2026-08-26",
+        periodEndDate: "2026-09-25",
+      },
+      createRuntime(),
+    );
+
+    expect(calls[0]?.params[1]).toBe("2026-09");
+  });
 });

@@ -7,6 +7,10 @@ import type {
   PayrollRouteRuntime,
   PayrollSimulationInput,
 } from "../routes/payroll.routes";
+import {
+  createPayrollCycle,
+  type YearMonthString,
+} from "@salary-hijacking/utils";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];
@@ -145,11 +149,27 @@ function lastDateOfMonth(yearMonth: string): string {
   return date.toISOString().slice(0, 10);
 }
 
-function dayForMonth(yearMonth: string, payday: number): string {
-  const lastDate = lastDateOfMonth(yearMonth);
-  const maxDay = Number.parseInt(lastDate.slice(8, 10), 10);
-  const day = Math.max(1, Math.min(maxDay, payday));
-  return `${yearMonth}-${String(day).padStart(2, "0")}`;
+function payrollCycleFor(yearMonth: string, payday: number): {
+  readonly firstPayrollDate: string;
+  readonly periodStartDate: string;
+  readonly periodEndDate: string;
+} {
+  const cycle = createPayrollCycle(yearMonth as YearMonthString, {
+    type: "DAY_OF_MONTH",
+    dayOfMonth: payday,
+    timezone: "Asia/Seoul",
+  });
+  return {
+    firstPayrollDate: cycle.payday,
+    periodStartDate: cycle.cycleStartDate,
+    periodEndDate: cycle.cycleEndDate,
+  };
+}
+
+function payrollMonthFromInput(
+  input: Pick<PayrollPlanCreateInput, "firstPayrollDate" | "periodEndDate">,
+): string {
+  return (input.firstPayrollDate || input.periodEndDate).slice(0, 7);
 }
 
 function daysInclusive(startDate: string, endDate: string): number {
@@ -251,8 +271,9 @@ function rowToPlan(
     extra.fixedExpenseTotalMinor ?? expectedExpenseAmount;
   const variableExpenseReserveMinor = extra.variableExpenseReserveMinor ?? 0;
   const emergencyBufferMinor = extra.emergencyBufferMinor ?? 0;
-  const periodStartDate = extra.periodStartDate ?? `${yearMonth}-01`;
-  const periodEndDate = extra.periodEndDate ?? lastDateOfMonth(yearMonth);
+  const cycle = payrollCycleFor(yearMonth, payday);
+  const periodStartDate = extra.periodStartDate ?? cycle.periodStartDate;
+  const periodEndDate = extra.periodEndDate ?? cycle.periodEndDate;
   const plan: JsonRecord = {
     planId: String(row.payroll_plan_id ?? ""),
     title: extra.title ?? `${yearMonth} 급여 계획`,
@@ -260,7 +281,7 @@ function rowToPlan(
     payrollCycle: extra.payrollCycle ?? "MONTHLY",
     payrollAmountMinor,
     payday,
-    firstPayrollDate: extra.firstPayrollDate ?? dayForMonth(yearMonth, payday),
+    firstPayrollDate: extra.firstPayrollDate ?? cycle.firstPayrollDate,
     periodStartDate,
     periodEndDate,
     fixedExpenseTotalMinor,
@@ -458,7 +479,7 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         `,
         [
           assertUuid(runtime.principal.userId, "principal.userId"),
-          input.periodStartDate.slice(0, 7),
+          payrollMonthFromInput(input),
           input.payday ?? 1,
           assertKrw(input.payrollAmountMinor, "payrollAmountMinor"),
           expectedExpenseAmount,
@@ -535,7 +556,7 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         [
           assertUuid(planId, "planId"),
           assertUuid(runtime.principal.userId, "principal.userId"),
-          merged.periodStartDate.slice(0, 7),
+          payrollMonthFromInput(merged),
           merged.payday ?? 1,
           assertKrw(merged.payrollAmountMinor, "payrollAmountMinor"),
           expectedExpenseAmount,

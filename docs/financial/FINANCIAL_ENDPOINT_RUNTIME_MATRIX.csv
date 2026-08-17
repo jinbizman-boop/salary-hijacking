@@ -1,0 +1,9 @@
+method,path,domain,auth,ownership,status,evidence
+POST,/api/v1/payroll,PAY,YES,USER_OWNER,PASS_CORE,Creates payroll plan; repository fixed to store payroll month from cycle end/payday; staging E2E passed core create/activate.
+GET,/api/v1/payroll,PAY,YES,USER_OWNER,PASS_CORE,Current payroll read passed in staging core E2E.
+PATCH,/api/v1/payroll/{payrollPlanId},PAY,YES,USER_OWNER,PARTIAL,Update path now derives payroll month from firstPayrollDate/periodEndDate.
+POST,/api/v1/daily-budgets,BUD,YES,USER_OWNER,PASS_CORE,DB recalculation dispatcher maps budget date to KST payday cycle; staging E2E create/read passed after 0018 repair.
+POST,/api/v1/fixed-expenses,EXP,YES,USER_OWNER,PASS_CORE,Fixed totals included in server recalculation by payroll_plan_id; staging E2E create passed.
+POST,/api/v1/variable-expenses,EXP,YES,USER_OWNER,PASS_CORE,Variable totals included by KST spent_at business date and refund-adjusted amount; staging E2E create/delete and idempotent replay passed.
+POST,/api/v1/savings,SAV,YES,USER_OWNER,PASS_CORE,Savings totals included as reserved allocation in server recalculation; staging E2E create passed.
+GET,/api/v1/payroll/home,HOME,YES,USER_OWNER,PASS_CORE,Home/current reads passed in staging core E2E.

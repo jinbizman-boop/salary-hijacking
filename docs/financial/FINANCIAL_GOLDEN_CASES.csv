@@ -1,0 +1,13 @@
+caseId,description,expected,implementation,status
+CASE-001,"normal payroll with fixed, savings, variable totals",server recalculation snapshot,0017 payroll-v2-cycle-kst,PARTIAL
+CASE-002,no expense,hijack equals salary,pending public API runtime,PENDING
+CASE-003,no savings,savings total zero,pending public API runtime,PENDING
+CASE-004,overspend,remaining may go negative while hijack clamps to zero,DB formula clamps hijack,PARTIAL
+CASE-005,exact zero remaining,zero boundary stable,pending public API runtime,PENDING
+CASE-006,multiple fixed expenses,sum by payroll_plan_id,0017 function,PARTIAL
+CASE-007,recurring savings,sum by payroll_plan_id,0017 function,PARTIAL
+CASE-008,payday 31 February,2026-02-28,staging helper verified,PASS_DB_HELPER
+CASE-009,timezone midnight,KST business date attribution,0017 function,PARTIAL
+CASE-010,concurrent expenses,no lost updates,pending runtime harness,PENDING
+CASE-011,idempotent retry,duplicate financial row zero,DB unique exists for variable expense,PARTIAL
+CASE-012,finalized cycle,immutable deterministic totals,pending finalization runtime,PENDING
