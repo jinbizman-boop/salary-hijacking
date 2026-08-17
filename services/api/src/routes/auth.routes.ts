@@ -19,7 +19,7 @@ const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const ADMIN_MFA_TOKEN_TTL_SECONDS = 5 * 60;
 const PASSWORD_RESET_TTL_SECONDS = 15 * 60;
 const EMAIL_VERIFY_TTL_SECONDS = 24 * 60 * 60;
-const PBKDF2_SHA256_ITERATIONS = 310_000;
+const PBKDF2_SHA256_ITERATIONS = 100_000;
 const MAX_JSON_BODY_BYTES = 128 * 1024;
 const MAX_TEXT = 2_000;
 const DEFAULT_COOKIE_NAME = "sh_refresh";
@@ -128,6 +128,7 @@ export interface OAuthStateRecord {
   readonly state: string;
   readonly provider: AuthProvider;
   readonly codeVerifierHash: string;
+  readonly nonceHash?: string | null;
   readonly redirectUri: string;
   readonly createdAt: string;
   readonly expiresAt: string;
@@ -595,6 +596,7 @@ function oauthAuthorizationUrl<TEnv>(
   redirectUri: string,
   state: string,
   codeChallenge: string,
+  nonce?: string | null,
 ): string | null {
   const endpoint = oauthAuthorizeEndpoint(provider);
   const clientId = oauthClientId(provider, runtime);
@@ -608,6 +610,7 @@ function oauthAuthorizationUrl<TEnv>(
   url.searchParams.set("code_challenge_method", "S256");
   if (provider === "GOOGLE" || provider === "APPLE")
     url.searchParams.set("scope", "openid email profile");
+  if (provider === "APPLE" && nonce) url.searchParams.set("nonce", nonce);
   return url.toString();
 }
 
@@ -785,11 +788,40 @@ function jsonResponse(
   );
 }
 
+function redactDiagnosticText(value: string): string {
+  return value
+    .replace(
+      /\b(password|token|secret|authorization|cookie|email|phone)\s*=\s*[^\s,;]+/giu,
+      "$1=[REDACTED]",
+    )
+    .replace(
+      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
+      "[REDACTED_EMAIL]",
+    );
+}
+
 function errorResponse(
   requestId: string,
   path: string,
   error: unknown,
 ): Response {
+  if (!(error instanceof AuthRouteError)) {
+    const diagnostic =
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: redactDiagnosticText(error.message).slice(0, 500),
+          }
+        : {
+            name: typeof error,
+            message: redactDiagnosticText(String(error)).slice(0, 500),
+          };
+    console.warn("auth_routes_unexpected_error", {
+      requestId,
+      path,
+      ...diagnostic,
+    });
+  }
   const normalized =
     error instanceof AuthRouteError
       ? error
@@ -1629,6 +1661,7 @@ async function handleOAuthStart<TEnv>(
     runtime.url.searchParams.get("codeChallenge"),
   );
   const codeVerifier = clientCodeChallenge ? null : randomToken("pkce");
+  const nonce = provider === "APPLE" ? randomToken("onc") : null;
   const codeChallenge =
     clientCodeChallenge ?? (await pkceS256Challenge(codeVerifier ?? ""));
   await runtime.repository.storeOAuthState(
@@ -1638,6 +1671,7 @@ async function handleOAuthStart<TEnv>(
       codeVerifierHash: clientCodeChallenge
         ? `s256:${clientCodeChallenge}`
         : await sha256Hex(codeVerifier ?? ""),
+      nonceHash: nonce ? await sha256Hex(nonce) : null,
       redirectUri,
       createdAt: runtime.now.toISOString(),
       expiresAt: new Date(
@@ -1652,11 +1686,13 @@ async function handleOAuthStart<TEnv>(
     redirectUri,
     state,
     codeChallenge,
+    nonce,
   );
   return jsonResponse(runtime, 200, {
     data: {
       provider,
       state,
+      ...(nonce ? { nonce } : {}),
       codeChallenge,
       codeChallengeMethod: "S256",
       redirectUri,
@@ -1702,6 +1738,22 @@ async function handleOAuthCallback<TEnv>(
       "AUTH_OAUTH_STATE_INVALID",
       "OAuth state가 유효하지 않습니다.",
     );
+  if (stateRecord.provider === "APPLE") {
+    const nonce =
+      stringField(body, "nonce", false) ||
+      runtime.url.searchParams.get("nonce") ||
+      "";
+    if (
+      !nonce ||
+      !stateRecord.nonceHash ||
+      !constantTimeEqual(await sha256Hex(nonce), stateRecord.nonceHash)
+    )
+      throw new AuthRouteError(
+        400,
+        "AUTH_OAUTH_NONCE_INVALID",
+        "OAuth nonce validation failed.",
+      );
+  }
   const storedPkce = stateRecord.codeVerifierHash;
   const isClientChallenge = storedPkce.startsWith("s256:");
   const expectedPkce = isClientChallenge

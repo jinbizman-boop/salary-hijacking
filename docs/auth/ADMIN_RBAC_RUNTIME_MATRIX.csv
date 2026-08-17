@@ -1,0 +1,8 @@
+ROLE,PERMISSION_AREA,EXPECTED_RESULT,LOCAL_CONTRACT_EVIDENCE,STAGING_RUNTIME,STATUS
+SUPER_ADMIN,all admin permissions,allow all admin mutation with MFA and audit,admin-rbac-audit-moderation-routes.test.ts,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL
+OPS_ADMIN,operations and incident management,allow ops admin paths and deny unrelated role escalation,role reconciliation documented,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL
+MODERATOR,community moderation,allow report moderation and deny ads/user finance mutation,admin-rbac-audit-moderation-routes.test.ts,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL
+CONTENT_ADMIN,content and notices,allow content management and deny support credential/session access,role reconciliation documented,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL
+SUPPORT,support ticket handling,allow support ticket access and deny password/session/raw finance data,Phase 3 support core user runtime PASS; support admin runtime pending,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL
+ADS_PARTNER_ADMIN,ads and partnerships,allow ads partner admin and deny unrelated privileged mutation,role reconciliation documented,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL
+AUDITOR_READONLY,audit read-only,allow audit read and deny all mutation,admin-rbac-audit-moderation-routes.test.ts,UNVERIFIED_SYNTHETIC_ADMIN,PARTIAL

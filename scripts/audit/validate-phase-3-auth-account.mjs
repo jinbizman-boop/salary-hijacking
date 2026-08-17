@@ -5,8 +5,13 @@ import path from "node:path";
 const ROOT = process.cwd();
 const requiredFiles = [
   "docs/auth/AUTH_ENDPOINT_RUNTIME_MATRIX.csv",
+  "docs/auth/STAGING_REGISTER_ROOT_CAUSE_REPORT.md",
+  "docs/auth/STAGING_REGISTER_TRANSACTION_REPORT.md",
+  "docs/auth/STAGING_REGISTER_REPEAT_EVIDENCE.json",
+  "docs/auth/STAGING_ACCOUNT_LIFECYCLE_FINAL_REPORT.md",
   "docs/auth/STAGING_AUTH_LIFECYCLE_E2E_REPORT.md",
   "docs/auth/STAGING_AUTH_LIFECYCLE_E2E_EVIDENCE.json",
+  "docs/auth/AUTH_STAGING_ERROR_CONTRACT_REPORT.md",
   "docs/auth/AUTH_SESSION_SECURITY_REPORT.md",
   "docs/auth/AUTH_PASSWORD_RESET_REPORT.md",
   "docs/auth/AUTH_RATE_LIMIT_REPORT.md",
@@ -18,7 +23,11 @@ const requiredFiles = [
   "docs/auth/CONSENT_VERSIONING_REPORT.md",
   "docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md",
   "docs/auth/ADMIN_ROLE_RECONCILIATION.csv",
+  "docs/auth/ADMIN_RBAC_RUNTIME_MATRIX.csv",
+  "docs/auth/ADMIN_MFA_INTERNAL_REPORT.md",
   "docs/auth/AUTH_CROSS_USER_ISOLATION_REPORT.md",
+  "docs/auth/APPLE_OAUTH_NONCE_SECURITY_REPORT.md",
+  "docs/auth/PHASE_3_CLOSURE_REPORT.md",
   "docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json",
 ];
 
@@ -131,14 +140,30 @@ for (const provider of ["GOOGLE", "APPLE", "NAVER", "KAKAO"]) {
 }
 
 const phase3 = JSON.parse(readRel("docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json"));
-if (phase3.phaseStatus !== "PARTIAL") fail("Phase 3 status must remain PARTIAL until full runtime E2E passes");
-if (phase3.phase4EntryReadiness !== "NOT_READY") fail("Phase 4 entry readiness must remain NOT_READY");
-if (!String(phase3.statuses.sessionReuseTest).startsWith("PASS_LOCAL_CONTRACT")) fail("session reuse local contract status missing");
-if (!String(phase3.statuses.passwordResetReplay).startsWith("PASS_LOCAL_CONTRACT")) fail("password reset replay local contract status missing");
-if (phase3.statuses.stagingAuthLifecycleE2E !== "BLOCKED_STAGING_REGISTER_INTERNAL_ERROR")
-  fail("staging auth lifecycle blocker evidence missing");
-if (phase3.statuses.rateLimitStatus !== "PASS_LOCAL_CONTRACT")
-  fail("rate limit local contract status missing");
+if (phase3.phaseStatus !== "PARTIAL") fail("Phase 3 status must remain PARTIAL until full cross-user/admin runtime closes");
+if (phase3.phase4EntryReadiness !== "READY_WITH_SEPARATE_EXTERNAL_AUTH_TRACKS")
+  fail("Phase 4 readiness must be READY_WITH_SEPARATE_EXTERNAL_AUTH_TRACKS after core auth runtime passes");
+if (phase3.statuses.authP0Drift !== 0) fail("auth P0 drift must be 0 after register root-cause closure");
+if (phase3.statuses.stagingRegister !== "PASS") fail("staging register status must be PASS");
+if (phase3.statuses.registerRepeatTest !== "PASS_10_OF_10_INTERNAL_ERROR_0")
+  fail("register repeat PASS evidence missing");
+if (phase3.statuses.stagingAuthLifecycleE2E !== "PASS_CORE_STAGING_RUNTIME")
+  fail("staging auth lifecycle core PASS evidence missing");
+if (phase3.statuses.sessionReuseTest !== "PASS_STAGING_RUNTIME") fail("session reuse staging status missing");
+if (!String(phase3.statuses.passwordResetReplay).startsWith("PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME"))
+  fail("password reset external delivery blocker classification missing");
+if (phase3.statuses.rateLimitStatus !== "PASS_LOCAL_AND_STAGING_REPRESENTATIVE")
+  fail("rate limit local/staging representative status missing");
+if (phase3.statuses.consentVersioning !== "PASS_CORE_STAGING_RUNTIME")
+  fail("consent runtime status missing");
+if (phase3.statuses.privacyExport !== "PASS_CORE_STAGING_RUNTIME")
+  fail("privacy export runtime status missing");
+if (phase3.statuses.withdrawal !== "PASS_CORE_STAGING_RUNTIME")
+  fail("withdrawal runtime status missing");
+if (phase3.statuses.support !== "PASS_CORE_STAGING_RUNTIME")
+  fail("support runtime status missing");
+if (phase3.statuses.oauthApple !== "CODE_COMPLETE_EXTERNAL_CONFIG" || phase3.statuses.appleNonceInternal !== "PASS")
+  fail("Apple OAuth nonce internal closure missing");
 if (phase3.statuses.legacyRehashStrategy !== "PASS_LOCAL_AND_DB_CONTRACT")
   fail("legacy password rehash strategy status missing");
 if (phase3.statuses.rbacP0Drift !== 0) fail("RBAC P0 drift must be 0 for tested paths");
@@ -151,22 +176,30 @@ if (!Array.isArray(phase3.outputFiles) || phase3.outputFiles.length < requiredFi
   fail("phase3 output file hash list missing");
 
 const sessionReport = readRel("docs/auth/AUTH_SESSION_SECURITY_REPORT.md");
-if (!sessionReport.includes("Refresh rotation") || !sessionReport.includes("legacy") || !sessionReport.includes("PARTIAL"))
+if (!sessionReport.includes("PASS_STAGING_RUNTIME") || !sessionReport.includes("legacy"))
   fail("session report lacks refresh evidence or partial status");
 const resetReport = readRel("docs/auth/AUTH_PASSWORD_RESET_REPORT.md");
-if (!resetReport.includes("one-time replay block") || !resetReport.includes("PARTIAL"))
+if (!resetReport.includes("one-time replay block") || !resetReport.includes("PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME"))
   fail("password reset report lacks replay evidence or partial status");
 const stagingReport = readRel("docs/auth/STAGING_AUTH_LIFECYCLE_E2E_REPORT.md");
-if (!stagingReport.includes("BLOCKED_STAGING_REGISTER_INTERNAL_ERROR") || !stagingReport.includes("AUTH_ROUTE_INTERNAL_ERROR"))
-  fail("staging lifecycle report must record the register blocker");
+if (!stagingReport.includes("PASS") || !stagingReport.includes("core=PASS"))
+  fail("staging lifecycle report must record core PASS");
 const stagingEvidence = JSON.parse(readRel("docs/auth/STAGING_AUTH_LIFECYCLE_E2E_EVIDENCE.json"));
 if (stagingEvidence.rawTokensStored !== false || stagingEvidence.secretValuesStored !== false)
   fail("staging lifecycle evidence must not store raw tokens or secrets");
-if (stagingEvidence.blocker?.code !== "AUTH_ROUTE_INTERNAL_ERROR")
-  fail("staging lifecycle evidence must preserve first error code");
+if (stagingEvidence.assertions?.coreRegisterLoginRefreshLogout !== true)
+  fail("staging lifecycle core assertion missing");
+if (stagingEvidence.assertions?.consentRuntime !== true)
+  fail("staging lifecycle consent assertion missing");
+const registerRepeat = JSON.parse(readRel("docs/auth/STAGING_REGISTER_REPEAT_EVIDENCE.json"));
+if (registerRepeat.successCount !== 10 || registerRepeat.internalErrorCount !== 0)
+  fail("register repeat evidence must be 10/10 with zero internal errors");
 const rateLimitReport = readRel("docs/auth/AUTH_RATE_LIMIT_REPORT.md");
-if (!rateLimitReport.includes("PASS_LOCAL_CONTRACT") || !rateLimitReport.includes("RATE_LIMIT_EXCEEDED"))
+if (!rateLimitReport.includes("PASS") || !rateLimitReport.includes("RATE_LIMIT_EXCEEDED"))
   fail("rate limit report lacks Phase 3 contract evidence");
+const appleReport = readRel("docs/auth/APPLE_OAUTH_NONCE_SECURITY_REPORT.md");
+if (!appleReport.includes("PASS_INTERNAL_CODE_AND_STAGING_START") || !appleReport.includes("nonce hash"))
+  fail("Apple OAuth nonce report lacks closure evidence");
 const adminReport = readRel("docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md");
 if (!adminReport.includes("role model") || !adminReport.includes("MFA"))
   fail("admin report must document role/MFA drift");
@@ -213,7 +246,7 @@ for (const id of [
 ]) {
   const row = trace.rows.find((r) => r.REQ_ID === id);
   if (!row) fail(`trace matrix missing ${id}`);
-  if (row.CURRENT_STATUS !== "PARTIAL") fail(`trace matrix ${id} must remain PARTIAL`);
+  if (!["PASS", "PARTIAL"].includes(row.CURRENT_STATUS)) fail(`trace matrix ${id} must be PASS or PARTIAL`);
   if (
     !row.RUNTIME_EVIDENCE ||
     row.RUNTIME_EVIDENCE.includes("Phase 0 does not execute runtime")

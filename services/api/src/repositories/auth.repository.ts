@@ -319,6 +319,10 @@ function mapOAuthState(row: DbRow | undefined): OAuthStateRecord | null {
     state: String(row.state),
     provider: providerFrom(row.provider),
     codeVerifierHash: String(row.code_verifier_hash),
+    nonceHash:
+      row.nonce_hash === null || row.nonce_hash === undefined
+        ? null
+        : String(row.nonce_hash),
     redirectUri: String(row.redirect_uri),
     createdAt: toIso(row.created_at),
     expiresAt: toIso(row.expires_at),
@@ -1044,16 +1048,18 @@ export function createNeonAuthRepository<TEnv = unknown>(
           state,
           provider,
           code_verifier_hash,
+          nonce_hash,
           redirect_uri,
           expires_at,
           created_at
         )
-        values ($1, $2, $3, $4, $5::timestamptz, $6::timestamptz)
+        values ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz)
         on conflict (state) do nothing`,
         [
           record.state,
           record.provider,
           record.codeVerifierHash,
+          record.nonceHash ?? null,
           record.redirectUri,
           record.expiresAt,
           runtime.now.toISOString(),
@@ -1075,6 +1081,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
           state,
           provider,
           code_verifier_hash,
+          nonce_hash,
           redirect_uri,
           created_at,
           expires_at`,

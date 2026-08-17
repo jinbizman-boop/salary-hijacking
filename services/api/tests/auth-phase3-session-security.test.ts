@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../src/app";
 import {
   type AuthRepository,
@@ -61,9 +61,16 @@ async function post(path: string, body: Record<string, unknown>) {
 }
 
 describe("Phase 3 auth session security", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("uses PBKDF2-SHA256 for new email password hashes and keeps login working", async () => {
     const hash = await hashPasswordForAuth("StrongPass123!");
-    expect(hash).toMatch(/^pbkdf2-sha256\$310000\$/);
+    expect(hash).toMatch(/^pbkdf2-sha256\$\d+\$/);
+    const iterations = Number(hash.split("$")[1]);
+    expect(iterations).toBeGreaterThanOrEqual(100_000);
+    expect(iterations).toBeLessThanOrEqual(100_000);
     expect(hash).not.toContain("StrongPass123!");
     await expect(verifyPasswordForAuth("StrongPass123!", hash)).resolves.toBe(
       true,
@@ -72,6 +79,89 @@ describe("Phase 3 auth session security", () => {
       false,
     );
   });
+
+  it("logs unexpected auth route diagnostics without raw secrets or PII", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const routes = createAuthRoutes({
+      jwtSecret: env.JWT_SECRET,
+      repository: {
+        name: "throwing-auth-repository",
+        async findUserByEmail() {
+          return null;
+        },
+        async findUserByProvider() {
+          return null;
+        },
+        async findUserById() {
+          return null;
+        },
+        async createEmailUser() {
+          throw new Error(
+            "insert failed password=StrongPass123! token=raw-token email=phase3@example.test",
+          );
+        },
+        async upsertSocialUser() {
+          throw new Error("not used");
+        },
+        async updateLastLogin() {},
+        async createSession() {
+          throw new Error("not used");
+        },
+        async findSessionByRefreshHash() {
+          return null;
+        },
+        async revokeSession() {},
+        async revokeAllUserSessions() {
+          return 0;
+        },
+        async storeEmailVerification() {},
+        async verifyEmail() {
+          return null;
+        },
+        async storePasswordReset() {},
+        async resetPassword() {
+          return null;
+        },
+        async storeOAuthState() {},
+        async consumeOAuthState() {
+          return null;
+        },
+        async verifyMfa() {
+          return false;
+        },
+      } satisfies AuthRepository<typeof env>,
+    });
+
+    const response = await routes(
+      new Request("https://api.test/api/v1/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "phase3@example.test",
+          password: "StrongPass123!",
+          nickname: "phase3",
+          termsAccepted: true,
+          privacyAccepted: true,
+        }),
+      }),
+      env,
+      context,
+    );
+
+    expect(response.status).toBe(500);
+    expect(warn).toHaveBeenCalledWith(
+      "auth_routes_unexpected_error",
+      expect.objectContaining({
+        name: "Error",
+        message: expect.stringContaining("[REDACTED]"),
+      }),
+    );
+    const serialized = JSON.stringify(warn.mock.calls);
+    expect(serialized).not.toContain("StrongPass123!");
+    expect(serialized).not.toContain("raw-token");
+    expect(serialized).not.toContain("phase3@example.test");
+  });
+
 
   it("detects refresh-token reuse and revokes the rotated token family", async () => {
     const register = await post("/api/v1/auth/register", {
@@ -341,7 +431,7 @@ describe("Phase 3 auth session security", () => {
     );
 
     expect(login.status).toBe(200);
-    expect(upgradedHash).toMatch(/^pbkdf2-sha256\$310000\$/);
+    expect(upgradedHash).toMatch(/^pbkdf2-sha256\$100000\$/);
     expect(upgradedHash).not.toContain("StrongPass123!");
   });
 });

@@ -1,6 +1,6 @@
 # Auth Rate Limit Report
 
-Status: PASS_LOCAL_CONTRACT
+Status: PASS_LOCAL_AND_STAGING_REPRESENTATIVE
 
 Evidence:
 - Auth endpoint registry declares AUTH_MIDDLEWARE_RATE_LIMIT_POLICY.
@@ -12,7 +12,8 @@ Evidence:
   - `POST /api/v1/users/me/support-tickets`
   - `POST /api/v1/users/me/withdrawal-request`
   - `POST /admin/auth/login`
+- `scripts/e2e/auth-staging-register-repeat.mjs` observed representative staging `RATE_LIMIT_EXCEEDED` responses, honored `Retry-After`, then completed 10/10 synthetic registrations with 0 internal errors.
 
 Remaining:
-- Public staging abuse threshold testing was intentionally not performed to avoid noisy traffic or locking the operator IP.
+- Broad public staging abuse threshold testing was intentionally not performed to avoid noisy traffic or locking the operator IP.
 - No production security rule was changed.

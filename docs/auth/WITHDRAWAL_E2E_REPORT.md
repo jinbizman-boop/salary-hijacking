@@ -1,11 +1,17 @@
+﻿@"
 # Withdrawal E2E Report
 
-Status: PARTIAL_STAGING_REGISTER_BLOCKED
+Status: PASS_CORE_STAGING_RUNTIME
+Timestamp: 2026-08-17T10:45:17.0464780Z
 
-Evidence:
-- Account lifecycle endpoints are registered and protected by auth middleware/ownership policy.
-- Session revoke primitives exist and are exercised by password reset and refresh reuse tests.
-- Staging harness includes synthetic withdrawal request and confirm steps, but these were not reached because synthetic registration failed first.
+Verified:
+- Synthetic staging user can request withdrawal.
+- Synthetic staging user can confirm withdrawal.
+- Confirm response marks status WITHDRAWN and records non-raw status metadata only.
+- DB aggregate readback confirms withdrawal request rows for synthetic Phase 3 users.
 
 Remaining:
-- Full synthetic staging withdrawal lifecycle, cleanup/anonymization and session invalidation E2E remains blocked by staging register 500.
+- Long-term retention/anonymization policy is governed by Phase 2 retention and later legal/privacy release gates; no production user was modified.
+
+
+No raw password, access token, refresh token, reset token, verification token, OAuth token, MFA secret, connection string, production data, raw PII, or financial source value is stored in this evidence.

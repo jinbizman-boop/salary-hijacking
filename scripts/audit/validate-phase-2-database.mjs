@@ -109,7 +109,7 @@ for (const field of ['TABLE_PURPOSE','DOMAIN','PK','RLS_ENABLED','FORCE_RLS','PO
 }
 
 const migrations = parseCsv(readRel('docs/database/MIGRATION_LEDGER.csv'));
-if (migrations.rows.length !== 14) fail(`migration ledger rows expected 14, got ${migrations.rows.length}`);
+if (migrations.rows.length !== 16) fail(`migration ledger rows expected 16, got ${migrations.rows.length}`);
 const migrationIds = migrations.rows.map((r) => r.MIGRATION_ID);
 if (new Set(migrationIds).size !== migrationIds.length) fail('duplicate migration ids');
 if (migrations.rows.some((r) => !r.FILE_SHA256 || !/^[A-F0-9]{64}$/.test(r.FILE_SHA256))) fail('migration file SHA invalid');
@@ -146,8 +146,8 @@ if (phase2.status.d017 !== 'PASS') fail('D-017 must be PASS after PITR RPO/RTO r
 if (phase2.status.projectCompletion100 !== false) fail('PROJECT_COMPLETION_100 must remain false');
 if (phase2.status.commercialLaunchReady !== false) fail('COMMERCIAL_LAUNCH_READY must remain false');
 if (phase2.counts.tableCount !== 41) fail('phase2 baseline table count is not 41');
-if (phase2.counts.migrationCount !== 14) fail('phase2 migration count is not 14');
-if (phase2.counts.policyCount !== 75) fail('phase2 policy count is not 75');
+if (phase2.counts.migrationCount !== 16) fail('phase2 migration count is not 16');
+if (phase2.counts.policyCount !== 77) fail('phase2 policy count is not 77');
 if (phase2.counts.packagesDbStaticTableCount !== 72) fail('phase2 static schema export count is not 72');
 if (phase2.counts.packagesDbCanonicalPhysicalCount !== 41) fail('phase2 canonical physical count is not 41');
 if (phase2.counts.staticSchemaUnknownCount !== 0) fail('phase2 static schema UNKNOWN count is not 0');

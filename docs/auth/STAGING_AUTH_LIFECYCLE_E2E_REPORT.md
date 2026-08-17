@@ -1,16 +1,22 @@
 # Staging Auth Lifecycle E2E Report
 
-Status: BLOCKED_STAGING_REGISTER_INTERNAL_ERROR
+Status: PASS_CORE_STAGING_RUNTIME
+Harness result: core=PASS
 
 Base URL: https://api-staging.salaryhijacking.com
-Timestamp: 2026-08-17T10:06:32.809Z
+Timestamp: 2026-08-17T10:41:09.310Z
 
-First failing step: `register_user_a`
-HTTP status: 500
-Stable error code: `AUTH_ROUTE_INTERNAL_ERROR`
-RequestId: `phase3-7213ed574fd50729`
+## Results
 
-The public staging API did not return access/refresh tokens for a synthetic registration, so downstream login/refresh/privacy/support/withdrawal E2E was not attempted in this run.
+| Check | Status |
+| --- | --- |
+| Register/login/refresh/logout core | PASS |
+| Refresh reuse family revocation | PASS |
+| Password reset request no raw token | PASS |
+| Consent update/read | PASS |
+| Privacy export request/list/detail | PASS |
+| Support ticket create | PASS |
+| Withdrawal request/confirm | PASS |
 
 Evidence JSON: `docs/auth/STAGING_AUTH_LIFECYCLE_E2E_EVIDENCE.json`
 

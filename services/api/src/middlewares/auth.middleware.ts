@@ -443,6 +443,14 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
     blockMassAssignment: true,
   },
   {
+    id: "users-self-collections",
+    pattern:
+      /^\/api\/v1\/users\/(?:settings|consents|privacy|support-tickets|activity|profile|summary)(?:\/|$)/,
+    requireUser: true,
+    ownerBound: true,
+    blockMassAssignment: true,
+  },
+  {
     id: "users-owned",
     pattern: /^\/api\/v1\/users\/[^/]+(?:\/|$)/,
     requireUser: true,
@@ -1304,11 +1312,24 @@ function explicitUserIdHints(runtime: AuthRouteRuntime): readonly string[] {
   const hints = new Set<string>();
   const pathParts = runtime.path.split("/").filter(Boolean);
   const usersIndex = pathParts.findIndex((part) => part === "users");
+  const selfCollectionSegments = new Set([
+    "activity",
+    "consents",
+    "privacy",
+    "profile",
+    "settings",
+    "summary",
+    "support-tickets",
+  ]);
 
   if (usersIndex >= 0) {
     const pathUserId = pathParts[usersIndex + 1];
 
-    if (pathUserId && pathUserId !== "me") {
+    if (
+      pathUserId &&
+      pathUserId !== "me" &&
+      !selfCollectionSegments.has(pathUserId)
+    ) {
       hints.add(pathUserId);
     }
   }

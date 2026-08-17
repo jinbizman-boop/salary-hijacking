@@ -1,11 +1,17 @@
+﻿@"
 # Support E2E Report
 
-Status: PARTIAL_STAGING_REGISTER_BLOCKED
+Status: PASS_CORE_STAGING_RUNTIME
+Timestamp: 2026-08-17T10:45:17.0464780Z
 
-Evidence:
-- Support ticket repository contract tests PASS.
-- Owner-access and support/admin access paths are covered by local route/repository tests.
-- Staging harness includes privacy-safe support ticket creation, but this step was not reached because synthetic registration failed first.
+Verified:
+- Synthetic staging user can create support ticket.
+- Response exposes status/category/safe flags only.
+- rawFinancialDataExposed=false and rawPersonalDataExposed=false in response flags.
+- DB aggregate readback confirms support ticket rows for synthetic Phase 3 users.
 
 Remaining:
-- Full staging user A/B support-ticket create/read/update denial E2E remains blocked by staging register 500.
+- Full support-admin reply/status runtime requires synthetic support admin principal and is tracked with Admin auth/RBAC subgates.
+
+
+No raw password, access token, refresh token, reset token, verification token, OAuth token, MFA secret, connection string, production data, raw PII, or financial source value is stored in this evidence.

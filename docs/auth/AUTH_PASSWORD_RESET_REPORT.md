@@ -1,13 +1,17 @@
+﻿@"
 # Auth Password Reset Report
 
-Status: PARTIAL_STAGING_REGISTER_BLOCKED
+Status: PARTIAL_EXTERNAL_EMAIL_DELIVERY_RUNTIME
+Timestamp: 2026-08-17T10:45:17.0464780Z
 
-Evidence:
-- Reset token one-time replay block local route test PASS.
-- Non-local environments do not return raw reset delivery tokens in auth route responses local test PASS.
-- Repository path stores reset state by hashed token and consumes it on successful reset.
+Verified:
+- Password reset request returns accepted on staging without exposing raw reset token.
+- Local contract verifies valid reset, one-time replay block, invalid token rejection, old password rejection, and new password login.
+- Non-local/staging response intentionally does not expose delivery token.
 
-Remaining:
-- Password reset request/confirm staging flow remains blocked because synthetic staging registration currently returns HTTP 500 before a test account can be created.
-- Email delivery provider/capture is still required for non-local reset confirm because raw reset delivery tokens are intentionally not exposed.
-- Post-reset mobile session cleanup requires Android/runtime validation in a later phase.
+Remaining external blocker:
+- Staging password reset confirm/replay cannot be executed end-to-end without an email delivery provider/inbox or secure token retrieval path.
+- This is intentionally not bypassed by returning raw reset tokens from staging responses.
+
+
+No raw password, access token, refresh token, reset token, verification token, OAuth token, MFA secret, connection string, production data, raw PII, or financial source value is stored in this evidence.

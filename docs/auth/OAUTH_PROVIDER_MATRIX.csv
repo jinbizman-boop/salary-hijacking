@@ -1,5 +1,5 @@
 PROVIDER,STATUS,CONTRACT,RUNTIME_EVIDENCE,BLOCKER
 GOOGLE,CODE_COMPLETE_EXTERNAL_CONFIG,state and PKCE start/callback contract present in auth routes and mobile callback source,not verified against external Google console/provider,provider credentials/redirect console runtime
-APPLE,PARTIAL_INTERNAL_NONCE_RUNTIME_UNVERIFIED,state and PKCE contract present; Apple-specific nonce/runtime path remains unverified,not verified against external Apple provider,provider credentials/redirect console runtime plus nonce verification proof
+APPLE,CODE_COMPLETE_EXTERNAL_CONFIG,Apple start/callback includes state PKCE and nonce hash binding; raw nonce is not stored,local nonce tests PASS and staging start returned nonce; provider callback not executed,provider credentials/redirect console runtime
 NAVER,CODE_COMPLETE_EXTERNAL_CONFIG,state and PKCE start/callback contract present in auth routes and mobile callback source,not verified against external Naver provider,provider credentials/redirect console runtime
 KAKAO,CODE_COMPLETE_EXTERNAL_CONFIG,state and PKCE start/callback contract present in auth routes and mobile callback source,not verified against external Kakao provider,provider credentials/redirect console runtime
