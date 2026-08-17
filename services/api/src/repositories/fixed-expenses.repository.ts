@@ -684,6 +684,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -738,6 +745,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning fixed_expense_id
         `,
         [assertUuid(expenseId, "expenseId"), userIdFromRuntime(runtime)],
@@ -757,6 +771,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(expenseId, "expenseId"), userIdFromRuntime(runtime)],
@@ -778,6 +799,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(expenseId, "expenseId"), userIdFromRuntime(runtime)],
@@ -804,6 +832,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -842,6 +877,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [

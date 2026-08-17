@@ -458,6 +458,39 @@ function errorResponse(
   path: string,
   error: unknown,
 ): Response {
+  if (error instanceof Error && !(error instanceof VariableExpenseHttpError)) {
+    const message = error.message.toLowerCase();
+    if (message.includes("idempotency conflict"))
+      return errorResponse(
+        requestId,
+        path,
+        new VariableExpenseHttpError(
+          409,
+          "IDEMPOTENCY_CONFLICT",
+          "동일한 멱등성 키로 다른 지출 요청을 처리할 수 없습니다.",
+        ),
+      );
+    if (message.includes("closed"))
+      return errorResponse(
+        requestId,
+        path,
+        new VariableExpenseHttpError(
+          409,
+          "VARIABLE_EXPENSE_CYCLE_CLOSED",
+          "마감된 일일예산의 변동지출은 변경할 수 없습니다.",
+        ),
+      );
+    if (message.includes("not found") || message.includes("failed"))
+      return errorResponse(
+        requestId,
+        path,
+        new VariableExpenseHttpError(
+          404,
+          "VARIABLE_EXPENSE_NOT_FOUND",
+          "변동지출을 찾을 수 없습니다.",
+        ),
+      );
+  }
   const normalized =
     error instanceof VariableExpenseHttpError
       ? error

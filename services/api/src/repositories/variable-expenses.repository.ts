@@ -341,6 +341,53 @@ async function findByIdempotency<TEnv>(
   return result.rows[0] ? rowToExpense(result.rows[0]) : null;
 }
 
+async function findCreateByIdempotency<TEnv>(
+  repositoryQuery: VariableExpensesDbQuery<TEnv>,
+  input: VariableExpenseCreateInput,
+  runtime: VariableExpensesRouteRuntime<TEnv>,
+  dailyBudgetId: string,
+): Promise<JsonRecord | null> {
+  if (!input.idempotencyKey) return null;
+  const result = await queryText(
+    repositoryQuery,
+    runtime,
+    "variableExpenses.findCreateByIdempotency",
+    `
+      select
+        ve.*,
+        md5(
+          $3::text || ':' || $4::text || ':' || $5::text || ':' ||
+          coalesce($6::text, '') || ':' || coalesce($7::text, '') || ':' ||
+          $8::text
+        ) as requested_hash
+      from public.variable_expenses ve
+      where ve.user_id = $1::uuid
+        and ve.idempotency_key = $2
+        and ve.status <> 'DELETED'
+      limit 1
+    `,
+    [
+      assertUuid(runtime.principal.userId, "principal.userId"),
+      input.idempotencyKey,
+      dailyBudgetId,
+      input.spentAt,
+      dbCategoryFromApi(input.category),
+      input.merchantName ?? input.title,
+      input.memo,
+      assertKrw(input.amountMinor, "amountMinor"),
+    ],
+  );
+  const row = result.rows[0];
+  if (!row) return null;
+  if (
+    typeof row.idempotency_request_hash === "string" &&
+    typeof row.requested_hash === "string" &&
+    row.idempotency_request_hash !== row.requested_hash
+  )
+    throw new Error("Variable expense idempotency conflict.");
+  return rowToExpense(row);
+}
+
 async function ensureDailyBudget<TEnv>(
   repositoryQuery: VariableExpensesDbQuery<TEnv>,
   runtime: VariableExpensesRouteRuntime<TEnv>,
@@ -364,7 +411,8 @@ async function ensureDailyBudget<TEnv>(
       values ($1::uuid, $2::date, 0, 0, 0, 0, 'OPEN', now())
       on conflict (user_id, budget_date)
       do update set budget_date = excluded.budget_date
-      returning daily_budget_id
+      where public.daily_budgets.status <> 'CLOSED'
+      returning daily_budget_id, status
     `,
     [
       assertUuid(runtime.principal.userId, "principal.userId"),
@@ -373,7 +421,9 @@ async function ensureDailyBudget<TEnv>(
   );
   const dailyBudgetId = result.rows[0]?.daily_budget_id;
   if (typeof dailyBudgetId !== "string") {
-    throw new Error("Failed to resolve daily budget for variable expense.");
+    throw new Error(
+      "Failed to resolve open daily budget for variable expense; cycle may be closed.",
+    );
   }
   return dailyBudgetId;
 }
@@ -506,18 +556,31 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
       return result.rows[0] ? rowToExpense(result.rows[0]) : null;
     },
     async create(input, runtime) {
-      const existing = await findByIdempotency(repositoryQuery, input, runtime);
-      if (existing) return { ...existing, idempotentReplay: true };
-
-      const dailyBudgetId = input.dailyBudgetId
+      const explicitDailyBudgetId = input.dailyBudgetId
         ? assertUuid(input.dailyBudgetId, "dailyBudgetId")
-        : await ensureDailyBudget(repositoryQuery, runtime, input.spentAt);
-
+        : null;
+      const dailyBudgetId =
+        explicitDailyBudgetId ??
+        (await ensureDailyBudget(repositoryQuery, runtime, input.spentAt));
+      const existing = await findCreateByIdempotency(
+        repositoryQuery,
+        input,
+        runtime,
+        dailyBudgetId,
+      );
+      if (existing) return { ...existing, idempotentReplay: true };
       const result = await queryText(
         repositoryQuery,
         runtime,
         "variableExpenses.create",
         `
+          with selected_budget as (
+            select daily_budget_id
+            from public.daily_budgets
+            where daily_budget_id = $2::uuid
+              and user_id = $1::uuid
+              and status <> 'CLOSED'
+          )
           insert into public.variable_expenses (
             user_id,
             daily_budget_id,
@@ -527,9 +590,30 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
             memo,
             amount,
             status,
-            idempotency_key
+            idempotency_key,
+            idempotency_request_hash
           )
-          values ($1::uuid, $2::uuid, $3::timestamptz, $4, $5, $6, $7::bigint, 'ACTIVE', $8)
+          select
+            $1::uuid,
+            selected_budget.daily_budget_id,
+            $3::timestamptz,
+            $4,
+            $5,
+            $6,
+            $7::bigint,
+            'ACTIVE',
+            $8,
+            md5(
+              selected_budget.daily_budget_id::text || ':' || $3::text || ':' ||
+              $4::text || ':' || coalesce($5::text, '') || ':' ||
+              coalesce($6::text, '') || ':' || $7::text
+            )
+          from selected_budget
+          on conflict (user_id, idempotency_key)
+          where idempotency_key is not null
+          do update set idempotency_key = excluded.idempotency_key
+          where public.variable_expenses.idempotency_request_hash = excluded.idempotency_request_hash
+            or public.variable_expenses.idempotency_request_hash is null
           returning *
         `,
         [
@@ -544,7 +628,7 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
         ],
       );
       if (!result.rows[0])
-        throw new Error("Failed to create variable expense.");
+        throw new Error("Failed to create variable expense; daily budget is closed or unavailable.");
       return rowToExpense(result.rows[0]);
     },
     async update(expenseId, input, runtime) {
@@ -583,6 +667,13 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
           where variable_expense_id = $1::uuid
             and user_id = $2::uuid
             and status = 'ACTIVE'
+            and exists (
+              select 1
+              from public.daily_budgets db
+              where db.daily_budget_id = public.variable_expenses.daily_budget_id
+                and db.user_id = $2::uuid
+                and db.status <> 'CLOSED'
+            )
           returning *
         `,
         params,
@@ -601,6 +692,13 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
           where variable_expense_id = $1::uuid
             and user_id = $2::uuid
             and status <> 'DELETED'
+            and exists (
+              select 1
+              from public.daily_budgets db
+              where db.daily_budget_id = public.variable_expenses.daily_budget_id
+                and db.user_id = $2::uuid
+                and db.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -647,6 +745,13 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
             and user_id = $2::uuid
             and status = 'ACTIVE'
             and refund_amount + $3::bigint <= amount
+            and exists (
+              select 1
+              from public.daily_budgets db
+              where db.daily_budget_id = public.variable_expenses.daily_budget_id
+                and db.user_id = $2::uuid
+                and db.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -681,6 +786,13 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
           where variable_expense_id = $1::uuid
             and user_id = $2::uuid
             and status = 'ACTIVE'
+            and exists (
+              select 1
+              from public.daily_budgets db
+              where db.daily_budget_id = public.variable_expenses.daily_budget_id
+                and db.user_id = $2::uuid
+                and db.status <> 'CLOSED'
+            )
           returning *
         `,
         [

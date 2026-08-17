@@ -26,3 +26,5 @@ Idempotency matrix: `docs/financial/FINANCIAL_IDEMPOTENCY_RUNTIME_MATRIX.csv`
 Error taxonomy matrix: `docs/financial/FINANCIAL_ERROR_TAXONOMY_RUNTIME.csv`
 
 No raw credentials, tokens, connection strings, PII, or raw financial values are stored.
+
+Goal edge behavior covered through savings target/current create plus cumulative close smoke; no raw target values stored.

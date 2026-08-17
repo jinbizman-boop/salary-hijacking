@@ -34,6 +34,7 @@ function createMobilePayrollRepository(): PayrollRepository<unknown> {
     activatePlan: notUsed,
     pausePlan: notUsed,
     archivePlan: notUsed,
+    closePlan: notUsed,
     home: async (_runtime: PayrollRouteRuntime<unknown>) => ({
       currentPlan: null,
       headline: "DB-backed payroll repository is wired",

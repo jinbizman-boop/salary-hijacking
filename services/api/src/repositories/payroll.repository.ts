@@ -2,6 +2,7 @@ import type {
   JsonRecord,
   JsonValue,
   PaginationInput,
+  PayrollCloseInput,
   PayrollPlanCreateInput,
   PayrollRepository,
   PayrollRouteRuntime,
@@ -124,6 +125,10 @@ function toNumber(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
+}
+
+function toText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function toIso(value: unknown): string {
@@ -670,6 +675,131 @@ export function createNeonPayrollRepository<TEnv = unknown>(
       const row = result.rows[0];
       if (!row) throw new Error("Payroll plan archive failed.");
       return rowToPlan(row);
+    },
+    async closePlan(planId, input: PayrollCloseInput, runtime) {
+      if (input.idempotencyKey) {
+        const existing = await queryText(
+          repositoryQuery,
+          runtime,
+          "payroll.closeIdempotencyLookup",
+          `
+            select
+              payroll_plan_id,
+              close_request_hash,
+              md5($1::text || ':' || coalesce($3::text, '')) as requested_hash
+            from public.payroll_plans
+            where user_id = $2::uuid
+              and close_idempotency_key = $4::text
+            limit 1
+          `,
+          [
+            assertUuid(planId, "planId"),
+            assertUuid(runtime.principal.userId, "principal.userId"),
+            input.reason,
+            input.idempotencyKey,
+          ],
+        );
+        const row = existing.rows[0];
+        if (row) {
+          if (row.payroll_plan_id !== planId)
+            throw new Error("Payroll close idempotency conflict.");
+          if (
+            typeof row.close_request_hash === "string" &&
+            typeof row.requested_hash === "string" &&
+            row.close_request_hash !== row.requested_hash
+          )
+            throw new Error("Payroll close idempotency conflict.");
+        }
+      }
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "payroll.close",
+        `
+          with target as (
+            select *
+            from public.payroll_plans
+            where payroll_plan_id = $1::uuid
+              and user_id = $2::uuid
+              and status <> 'ARCHIVED'
+            for update
+          ),
+          recalc as (
+            select public.recalculate_payroll_plan($1::uuid, 'MONTH_CLOSED') as snapshot_id
+            where exists (select 1 from target where status <> 'CLOSED')
+          ),
+          closed_budgets as (
+            update public.daily_budgets db
+            set status = 'CLOSED',
+                closed_at = coalesce(db.closed_at, now()),
+                calculated_at = now()
+            from target
+            where db.user_id = target.user_id
+              and public.payroll_cycle_contains_date(
+                target.year_month,
+                target.payday,
+                db.budget_date
+              )
+              and db.status <> 'CLOSED'
+            returning db.daily_budget_id
+          ),
+          closed as (
+            update public.payroll_plans pp
+            set status = 'CLOSED',
+                closed_at = coalesce(pp.closed_at, now()),
+                close_idempotency_key = coalesce(pp.close_idempotency_key, $4::text),
+                close_request_hash = coalesce(
+                  pp.close_request_hash,
+                  md5($1::text || ':' || coalesce($3::text, ''))
+                ),
+                close_reason = coalesce(pp.close_reason, $3::text),
+                updated_at = now()
+            from target
+            where pp.payroll_plan_id = target.payroll_plan_id
+            returning pp.*, (select snapshot_id from recalc) as snapshot_id
+          ),
+          cumulative as (
+            select coalesce(sum(confirmed_hijack_amount), 0)::bigint as cumulative_hijack_amount
+            from public.payroll_plans
+            where user_id = $2::uuid
+              and status = 'CLOSED'
+          )
+          select
+            closed.*,
+            closed.snapshot_id,
+            cumulative.cumulative_hijack_amount,
+            (select count(*) from closed_budgets)::int as closed_budget_count,
+            $3::text as close_reason,
+            closed.close_idempotency_key as idempotency_key
+          from closed
+          cross join cumulative
+        `,
+        [
+          assertUuid(planId, "planId"),
+          assertUuid(runtime.principal.userId, "principal.userId"),
+          input.reason,
+          input.idempotencyKey,
+        ],
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Payroll plan close failed.");
+      return {
+        ...rowToPlan(row),
+        status: "CLOSED",
+        closedAt: toIso(row.closed_at),
+        cumulativeHijackAmountMinor: toNumber(row.cumulative_hijack_amount),
+        finalization: {
+          snapshotId:
+            typeof row.snapshot_id === "string" && row.snapshot_id.trim()
+              ? row.snapshot_id
+              : null,
+          closedBudgetCount: toNumber(row.closed_budget_count),
+          reasonRecorded: Boolean(toText(row.close_reason)),
+          idempotencyKeyPresent: Boolean(toText(row.idempotency_key)),
+        },
+        serverAuthority: true,
+        financialRawDataExposed: false,
+      };
     },
     async home(runtime) {
       const currentPlan = await this.getCurrentPlan(runtime);

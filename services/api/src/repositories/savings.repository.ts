@@ -713,6 +713,13 @@ export function createNeonSavingsRepository<TEnv = unknown>(
               updated_at = now()
           where savings_plan_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.savings_plans.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -777,6 +784,13 @@ export function createNeonSavingsRepository<TEnv = unknown>(
               updated_at = now()
           where savings_plan_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.savings_plans.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning savings_plan_id
         `,
         [assertUuid(goalId, "goalId"), userIdFromRuntime(runtime)],
@@ -796,6 +810,13 @@ export function createNeonSavingsRepository<TEnv = unknown>(
               updated_at = now()
           where savings_plan_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.savings_plans.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(goalId, "goalId"), userIdFromRuntime(runtime)],
@@ -817,6 +838,13 @@ export function createNeonSavingsRepository<TEnv = unknown>(
               updated_at = now()
           where savings_plan_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.savings_plans.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(goalId, "goalId"), userIdFromRuntime(runtime)],
@@ -842,6 +870,13 @@ export function createNeonSavingsRepository<TEnv = unknown>(
               updated_at = now()
           where savings_plan_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.savings_plans.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(goalId, "goalId"), userIdFromRuntime(runtime)],
@@ -873,6 +908,13 @@ export function createNeonSavingsRepository<TEnv = unknown>(
               updated_at = now()
           where savings_plan_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.savings_plans.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [

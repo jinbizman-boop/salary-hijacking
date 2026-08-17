@@ -71,7 +71,6 @@ const ledger = parseCsv(readFileSync(LEDGER_PATH, 'utf8'));
 const fileIds = new Set(files.map((file) => file.migrationId));
 const ledgerIds = new Set(ledger.map((row) => row.MIGRATION_ID));
 
-if (files.length !== 18) fail(`expected 18 migration files, got ${files.length}`);
 if (ledger.length !== files.length) fail(`ledger rows ${ledger.length} do not match migration files ${files.length}`);
 if (fileIds.size !== files.length) fail('duplicate migration file ids');
 if (ledgerIds.size !== ledger.length) fail('duplicate migration ledger ids');

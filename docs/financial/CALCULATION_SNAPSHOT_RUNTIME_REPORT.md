@@ -26,3 +26,5 @@ Idempotency matrix: `docs/financial/FINANCIAL_IDEMPOTENCY_RUNTIME_MATRIX.csv`
 Error taxonomy matrix: `docs/financial/FINANCIAL_ERROR_TAXONOMY_RUNTIME.csv`
 
 No raw credentials, tokens, connection strings, PII, or raw financial values are stored.
+
+Close responses verified finalization metadata and immutable formula-versioned DB snapshot path; raw snapshot amounts are not stored.

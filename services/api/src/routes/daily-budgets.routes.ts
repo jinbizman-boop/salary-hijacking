@@ -428,6 +428,29 @@ function errorResponse(
   path: string,
   error: unknown,
 ): Response {
+  if (error instanceof Error && !(error instanceof DailyBudgetHttpError)) {
+    const message = error.message.toLowerCase();
+    if (message.includes("closed"))
+      return errorResponse(
+        requestId,
+        path,
+        new DailyBudgetHttpError(
+          409,
+          "DAILY_BUDGET_CYCLE_CLOSED",
+          "마감된 일일예산은 변경할 수 없습니다.",
+        ),
+      );
+    if (message.includes("not found") || message.includes("failed"))
+      return errorResponse(
+        requestId,
+        path,
+        new DailyBudgetHttpError(
+          404,
+          "DAILY_BUDGET_NOT_FOUND",
+          "일일예산을 찾을 수 없습니다.",
+        ),
+      );
+  }
   const normalized =
     error instanceof DailyBudgetHttpError
       ? error

@@ -422,6 +422,29 @@ function ok(
 }
 
 function fail(requestIdValue: string, path: string, error: unknown): Response {
+  if (error instanceof Error && !(error instanceof SavingsHttpError)) {
+    const message = error.message.toLowerCase();
+    if (message.includes("closed"))
+      return fail(
+        requestIdValue,
+        path,
+        new SavingsHttpError(
+          409,
+          "SAVINGS_CYCLE_CLOSED",
+          "마감된 급여주기의 저축 목표는 변경할 수 없습니다.",
+        ),
+      );
+    if (message.includes("not found") || message.includes("failed"))
+      return fail(
+        requestIdValue,
+        path,
+        new SavingsHttpError(
+          404,
+          "SAVINGS_GOAL_NOT_FOUND",
+          "저축 목표를 찾을 수 없습니다.",
+        ),
+      );
+  }
   const e =
     error instanceof SavingsHttpError
       ? error
