@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
 import {
+  type AuthRepository,
+  type AuthUser,
+  createAuthRoutes,
   hashPasswordForAuth,
   verifyPasswordForAuth,
 } from "../src/routes/auth.routes";
@@ -16,6 +19,16 @@ const env = Object.freeze({
   RATE_LIMIT_HASH_SECRET: "local-test-rate-secret-with-at-least-32-characters",
   AUDIT_HASH_SECRET: "local-test-audit-secret-with-at-least-32-characters",
 });
+
+async function legacySha256Hash(password: string): Promise<string> {
+  const salt = "legacy-salt";
+  const bytes = new TextEncoder().encode(`${salt}:${password}`);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+  const hex = Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+  return `sha256$${salt}$${hex}`;
+}
 
 async function post(path: string, body: Record<string, unknown>) {
   const app = createApp({
@@ -237,5 +250,98 @@ describe("Phase 3 auth session security", () => {
 
     const logout = await post("/api/v1/auth/logout", { refreshToken });
     expect(logout.response.status).toBe(200);
+  });
+
+  it("upgrades a valid legacy SHA-256 credential to PBKDF2 after successful login", async () => {
+    const user: AuthUser = {
+      userId: "usr_legacy_rehash",
+      emailMasked: "le***@example.test",
+      nickname: "legacy",
+      provider: "EMAIL",
+      roles: ["USER"],
+      permissions: [],
+      accountStatus: "ACTIVE",
+      level: 1,
+      mfaEnabled: false,
+      passwordHash: await legacySha256Hash("StrongPass123!"),
+      createdAt: "2026-08-14T01:00:00.000Z",
+      lastLoginAt: null,
+    };
+    let upgradedHash: string | null = null;
+    const sessions = new Map<string, string>();
+    const repository: AuthRepository<(typeof env)> = {
+      name: "phase3-legacy-rehash-test-repository",
+      async findUserByEmail() {
+        return { ...user, passwordHash: upgradedHash ?? user.passwordHash };
+      },
+      async findUserByProvider() {
+        return null;
+      },
+      async findUserById() {
+        return { ...user, passwordHash: upgradedHash ?? user.passwordHash };
+      },
+      async createEmailUser() {
+        throw new Error("not used");
+      },
+      async upsertSocialUser() {
+        throw new Error("not used");
+      },
+      async updateLastLogin() {},
+      async upgradePasswordHash(_userId, passwordHash) {
+        upgradedHash = passwordHash;
+      },
+      async createSession(input) {
+        sessions.set(input.refreshTokenHash, input.sessionId);
+        return {
+          ...input,
+          createdAt: "2026-08-14T01:00:00.000Z",
+          revokedAt: null,
+        };
+      },
+      async findSessionByRefreshHash() {
+        return null;
+      },
+      async revokeSession() {},
+      async revokeAllUserSessions() {
+        return 0;
+      },
+      async storeEmailVerification() {},
+      async verifyEmail() {
+        return null;
+      },
+      async storePasswordReset() {},
+      async resetPassword() {
+        return null;
+      },
+      async storeOAuthState() {},
+      async consumeOAuthState() {
+        return null;
+      },
+      async verifyMfa() {
+        return false;
+      },
+    };
+    const handler = createAuthRoutes<(typeof env)>({
+      repository,
+      jwtSecret: env.JWT_SECRET,
+      now: () => new Date("2026-08-14T01:30:00.000Z"),
+    });
+
+    const login = await handler(
+      new Request("https://api.test/api/v1/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: "legacy@example.test",
+          password: "StrongPass123!",
+        }),
+      }),
+      env,
+      context,
+    );
+
+    expect(login.status).toBe(200);
+    expect(upgradedHash).toMatch(/^pbkdf2-sha256\$310000\$/);
+    expect(upgradedHash).not.toContain("StrongPass123!");
   });
 });

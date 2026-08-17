@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-08-17T10:06:32.809Z",
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "startedAt": "2026-08-17T10:06:31.339Z",
+  "finishedAt": "2026-08-17T10:06:32.809Z",
+  "syntheticUsers": {
+    "a": {
+      "emailHash": "186a83fab4b24b53"
+    }
+  },
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-430d2e7a51f1d474",
+      "dataFlags": {
+        "status": "ok",
+        "service": "salary-hijacking-api",
+        "version": "3.1.0",
+        "uptime": "edge",
+        "routeCount": 12
+      },
+      "pass": true
+    },
+    {
+      "step": "ready",
+      "method": "GET",
+      "path": "/api/v1/ready",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-05235283f941dd71",
+      "dataFlags": {
+        "status": "ready",
+        "environment": "staging",
+        "serverAuthorityEnabled": true,
+        "rawFinancialDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false,
+        "privacyMode": "STRICT",
+        "smokeSafe": true,
+        "completeness": true
+      },
+      "pass": true
+    },
+    {
+      "step": "register_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 500,
+      "errorCode": "AUTH_ROUTE_INTERNAL_ERROR",
+      "requestId": "phase3-7213ed574fd50729",
+      "dataFlags": {},
+      "pass": false
+    }
+  ],
+  "assertions": {
+    "coreRegisterLoginRefreshLogout": false,
+    "stagingRegisterBlocked": true
+  },
+  "blocker": {
+    "code": "AUTH_ROUTE_INTERNAL_ERROR",
+    "status": 500,
+    "firstFailingStep": "register_user_a",
+    "classification": "STAGING_INTERNAL_AUTH_REGISTER_BLOCKER"
+  },
+  "secretValuesStored": false,
+  "rawTokensStored": false,
+  "productionMutation": false,
+  "notes": [
+    "Staging register did not return tokens, so destructive/credential-bearing follow-up steps were not attempted.",
+    "No raw password, access token, refresh token, reset token, email verification token, OAuth token, MFA token, or connection string is written."
+  ]
+}

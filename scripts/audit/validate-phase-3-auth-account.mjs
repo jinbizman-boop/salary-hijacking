@@ -5,6 +5,8 @@ import path from "node:path";
 const ROOT = process.cwd();
 const requiredFiles = [
   "docs/auth/AUTH_ENDPOINT_RUNTIME_MATRIX.csv",
+  "docs/auth/STAGING_AUTH_LIFECYCLE_E2E_REPORT.md",
+  "docs/auth/STAGING_AUTH_LIFECYCLE_E2E_EVIDENCE.json",
   "docs/auth/AUTH_SESSION_SECURITY_REPORT.md",
   "docs/auth/AUTH_PASSWORD_RESET_REPORT.md",
   "docs/auth/AUTH_RATE_LIMIT_REPORT.md",
@@ -15,6 +17,7 @@ const requiredFiles = [
   "docs/auth/SUPPORT_E2E_REPORT.md",
   "docs/auth/CONSENT_VERSIONING_REPORT.md",
   "docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md",
+  "docs/auth/ADMIN_ROLE_RECONCILIATION.csv",
   "docs/auth/AUTH_CROSS_USER_ISOLATION_REPORT.md",
   "docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json",
 ];
@@ -130,8 +133,15 @@ for (const provider of ["GOOGLE", "APPLE", "NAVER", "KAKAO"]) {
 const phase3 = JSON.parse(readRel("docs/auth/PHASE_3_AUTH_ACCOUNT_COMPLETION.json"));
 if (phase3.phaseStatus !== "PARTIAL") fail("Phase 3 status must remain PARTIAL until full runtime E2E passes");
 if (phase3.phase4EntryReadiness !== "NOT_READY") fail("Phase 4 entry readiness must remain NOT_READY");
-if (phase3.statuses.sessionReuseTest !== "PASS_LOCAL_CONTRACT") fail("session reuse local contract status missing");
-if (phase3.statuses.passwordResetReplay !== "PASS_LOCAL_CONTRACT") fail("password reset replay local contract status missing");
+if (!String(phase3.statuses.sessionReuseTest).startsWith("PASS_LOCAL_CONTRACT")) fail("session reuse local contract status missing");
+if (!String(phase3.statuses.passwordResetReplay).startsWith("PASS_LOCAL_CONTRACT")) fail("password reset replay local contract status missing");
+if (phase3.statuses.stagingAuthLifecycleE2E !== "BLOCKED_STAGING_REGISTER_INTERNAL_ERROR")
+  fail("staging auth lifecycle blocker evidence missing");
+if (phase3.statuses.rateLimitStatus !== "PASS_LOCAL_CONTRACT")
+  fail("rate limit local contract status missing");
+if (phase3.statuses.legacyRehashStrategy !== "PASS_LOCAL_AND_DB_CONTRACT")
+  fail("legacy password rehash strategy status missing");
+if (phase3.statuses.rbacP0Drift !== 0) fail("RBAC P0 drift must be 0 for tested paths");
 if (phase3.statuses.piiTokenLoggingIssues !== 0) fail("PII/token logging issue count must be 0 for generated artifacts");
 if (phase3.statuses.projectCompletion100 !== false) fail("PROJECT_COMPLETION_100 must remain false");
 if (phase3.statuses.commercialLaunchReady !== false) fail("COMMERCIAL_LAUNCH_READY must remain false");
@@ -141,14 +151,39 @@ if (!Array.isArray(phase3.outputFiles) || phase3.outputFiles.length < requiredFi
   fail("phase3 output file hash list missing");
 
 const sessionReport = readRel("docs/auth/AUTH_SESSION_SECURITY_REPORT.md");
-if (!sessionReport.includes("Refresh rotation") || !sessionReport.includes("PARTIAL"))
+if (!sessionReport.includes("Refresh rotation") || !sessionReport.includes("legacy") || !sessionReport.includes("PARTIAL"))
   fail("session report lacks refresh evidence or partial status");
 const resetReport = readRel("docs/auth/AUTH_PASSWORD_RESET_REPORT.md");
 if (!resetReport.includes("one-time replay block") || !resetReport.includes("PARTIAL"))
   fail("password reset report lacks replay evidence or partial status");
+const stagingReport = readRel("docs/auth/STAGING_AUTH_LIFECYCLE_E2E_REPORT.md");
+if (!stagingReport.includes("BLOCKED_STAGING_REGISTER_INTERNAL_ERROR") || !stagingReport.includes("AUTH_ROUTE_INTERNAL_ERROR"))
+  fail("staging lifecycle report must record the register blocker");
+const stagingEvidence = JSON.parse(readRel("docs/auth/STAGING_AUTH_LIFECYCLE_E2E_EVIDENCE.json"));
+if (stagingEvidence.rawTokensStored !== false || stagingEvidence.secretValuesStored !== false)
+  fail("staging lifecycle evidence must not store raw tokens or secrets");
+if (stagingEvidence.blocker?.code !== "AUTH_ROUTE_INTERNAL_ERROR")
+  fail("staging lifecycle evidence must preserve first error code");
+const rateLimitReport = readRel("docs/auth/AUTH_RATE_LIMIT_REPORT.md");
+if (!rateLimitReport.includes("PASS_LOCAL_CONTRACT") || !rateLimitReport.includes("RATE_LIMIT_EXCEEDED"))
+  fail("rate limit report lacks Phase 3 contract evidence");
 const adminReport = readRel("docs/auth/ADMIN_AUTH_RBAC_MFA_REPORT.md");
 if (!adminReport.includes("role model") || !adminReport.includes("MFA"))
   fail("admin report must document role/MFA drift");
+const roleMatrix = parseCsv(readRel("docs/auth/ADMIN_ROLE_RECONCILIATION.csv"));
+if (roleMatrix.rows.length < 7) fail("admin role reconciliation missing canonical roles");
+for (const role of [
+  "SUPER_ADMIN",
+  "OPS_ADMIN",
+  "MODERATOR",
+  "CONTENT_ADMIN",
+  "SUPPORT",
+  "ADS_PARTNER_ADMIN",
+  "AUDITOR_READONLY",
+]) {
+  if (!roleMatrix.rows.some((r) => r.CANONICAL_ROLE === role))
+    fail(`admin role reconciliation missing ${role}`);
+}
 
 const trace = parseCsv(readRel("docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv"));
 for (const id of [

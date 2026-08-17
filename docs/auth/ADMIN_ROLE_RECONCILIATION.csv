@@ -1,0 +1,10 @@
+CANONICAL_ROLE,CURRENT_ROLE,CLASSIFICATION,SERVER_PERMISSION_BOUNDARY,PHASE_3_STATUS,NOTES
+SUPER_ADMIN,SUPER_ADMIN,MATCH,admin superuser/admin APIs,PARTIAL_RUNTIME_UNVERIFIED,Canonical role name exists in current auth/admin model.
+OPS_ADMIN,OPERATOR,ALIAS,operational admin APIs,PARTIAL_ROLE_MODEL_DRIFT,Current code uses OPERATOR where v2.0 names OPS_ADMIN.
+MODERATOR,OPERATOR,SEMANTIC_OVERLAP,community moderation/admin APIs,PARTIAL_ROLE_MODEL_DRIFT,Current code does not expose a distinct MODERATOR role name; permissions need canonical mapping before PASS.
+CONTENT_ADMIN,ADMIN,SEMANTIC_OVERLAP,content/admin APIs,PARTIAL_ROLE_MODEL_DRIFT,Current broad ADMIN covers content operations; distinct CONTENT_ADMIN remains unresolved.
+SUPPORT,ADMIN,SEMANTIC_OVERLAP,support/admin APIs,PARTIAL_ROLE_MODEL_DRIFT,Current broad ADMIN can cover support; least-privilege SUPPORT role remains unresolved.
+ADS_PARTNER_ADMIN,ADMIN,SEMANTIC_OVERLAP,ads/partnership admin APIs,PARTIAL_ROLE_MODEL_DRIFT,Current broad ADMIN can cover ads operations; distinct ADS_PARTNER_ADMIN remains unresolved.
+AUDITOR_READONLY,ADMIN,SEMANTIC_OVERLAP,readonly audit/admin APIs,PARTIAL_ROLE_MODEL_DRIFT,Current broad ADMIN can read audit paths; mutation-blocking AUDITOR_READONLY role remains unresolved.
+USER,USER,EXTRA_RUNTIME_ROLE,consumer mobile/API owner resources,NOT_CANONICAL_ADMIN_ROLE,Regular user role is required runtime state but not an Admin SSOT role.
+SYSTEM,SYSTEM,EXTRA_RUNTIME_ROLE,internal service context,NOT_CANONICAL_ADMIN_ROLE,System role is internal service context, not user/admin assignment.

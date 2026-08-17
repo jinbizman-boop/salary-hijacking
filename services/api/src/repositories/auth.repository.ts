@@ -97,8 +97,18 @@ async function defaultQuery<TEnv>(
         text: string,
         values?: readonly DbValue[],
       ) => Promise<{
-        readonly rows: readonly DbRow[];
-        readonly rowCount: number | null;
+      readonly rows: readonly DbRow[];
+      readonly rowCount: number | null;
+    }>;
+      connect: () => Promise<{
+        query: (
+          text: string,
+          values?: readonly DbValue[],
+        ) => Promise<{
+          readonly rows: readonly DbRow[];
+          readonly rowCount: number | null;
+        }>;
+        release: () => void;
       }>;
       end: () => Promise<void>;
     };
@@ -114,9 +124,12 @@ async function defaultQuery<TEnv>(
     connectionTimeoutMillis: 10_000,
     statement_timeout: 30_000,
   });
+  const client = await pool.connect();
   try {
-    return await pool.query(sqlText, [...params]);
+    await client.query("select set_config('app.is_admin', 'true', false)");
+    return await client.query(sqlText, [...params]);
   } finally {
+    client.release();
     await pool.end();
   }
 }
@@ -672,6 +685,50 @@ export function createNeonAuthRepository<TEnv = unknown>(
         where user_id = $1::uuid
           and deleted_at is null`,
         [assertUuid(userId, "userId"), runtime.now.toISOString()],
+      );
+    },
+
+    async upgradePasswordHash(userId, passwordHash, runtime): Promise<void> {
+      await run(
+        runtime,
+        "auth.upgradePasswordHash",
+        `
+        with old_credentials as (
+          update public.auth_credentials
+          set status = 'ROTATED',
+              rotated_at = $3::timestamptz,
+              updated_at = $3::timestamptz
+          where user_id = $1::uuid
+            and kind = 'PASSWORD_HASH'
+            and status = 'ACTIVE'
+            and credential_hash like 'sha256$%'
+          returning user_id, identity_id
+        )
+        insert into public.auth_credentials (
+          user_id,
+          identity_id,
+          kind,
+          status,
+          credential_hash,
+          algorithm,
+          created_at,
+          updated_at
+        )
+        select
+          user_id,
+          identity_id,
+          'PASSWORD_HASH',
+          'ACTIVE',
+          $2,
+          'pbkdf2-sha256',
+          $3::timestamptz,
+          $3::timestamptz
+        from old_credentials`,
+        [
+          assertUuid(userId, "userId"),
+          passwordHash,
+          runtime.now.toISOString(),
+        ],
       );
     },
 

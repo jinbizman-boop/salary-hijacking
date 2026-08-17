@@ -173,6 +173,11 @@ export interface AuthRepository<TEnv = unknown> {
     runtime: AuthRuntime<TEnv>,
   ): Promise<AuthUser>;
   updateLastLogin(userId: string, runtime: AuthRuntime<TEnv>): Promise<void>;
+  upgradePasswordHash?(
+    userId: string,
+    passwordHash: string,
+    runtime: AuthRuntime<TEnv>,
+  ): Promise<void>;
   createSession(
     input: Omit<AuthSession, "createdAt" | "revokedAt">,
     runtime: AuthRuntime<TEnv>,
@@ -710,6 +715,16 @@ export async function verifyPasswordForAuth(
   return false;
 }
 
+function passwordHashNeedsUpgrade(passwordHash: string): boolean {
+  const parts = passwordHash.split("$");
+  if (parts.length === 3 && parts[0] === "sha256") return true;
+  if (parts.length === 4 && parts[0] === "pbkdf2-sha256") {
+    const iterations = Number.parseInt(parts[1] ?? "", 10);
+    return !Number.isInteger(iterations) || iterations < PBKDF2_SHA256_ITERATIONS;
+  }
+  return false;
+}
+
 function constantTimeEqual(a: string, b: string): boolean {
   const left = utf8(a);
   const right = utf8(b);
@@ -1181,6 +1196,20 @@ async function handleLogin<TEnv>(
     );
   }
   assertActiveUser(user);
+  if (
+    user.passwordHash &&
+    passwordHashNeedsUpgrade(user.passwordHash) &&
+    typeof runtime.repository.upgradePasswordHash === "function"
+  ) {
+    const upgradedPasswordHash = runtime.options.hashPassword
+      ? await runtime.options.hashPassword(password, runtime)
+      : await hashPasswordForAuth(password);
+    await runtime.repository.upgradePasswordHash(
+      user.userId,
+      upgradedPasswordHash,
+      runtime,
+    );
+  }
   if (
     adminMode &&
     !user.roles.some((role) =>
@@ -1899,6 +1928,10 @@ function createInMemoryAuthRepository<TEnv = unknown>(): AuthRepository<TEnv> {
       const user = users.get(userId);
       if (user)
         users.set(userId, { ...user, lastLoginAt: runtime.now.toISOString() });
+    },
+    async upgradePasswordHash(userId, passwordHash): Promise<void> {
+      const user = users.get(userId);
+      if (user) users.set(userId, { ...user, passwordHash });
     },
     async createSession(input, runtime): Promise<AuthSession> {
       const session: AuthSession = {
