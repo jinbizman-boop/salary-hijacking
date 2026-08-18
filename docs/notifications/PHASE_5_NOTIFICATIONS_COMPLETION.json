@@ -23,15 +23,20 @@
     "boundedCloudflareRetryBackoff": true,
     "wranglerRetryAndDlqConfiguration": true,
     "hashOnlyInvalidTokenDatabaseBoundary": true,
+    "singleDeviceInvalidTokenEmitter": true,
     "apiInvalidTokenCleanupConsumer": true,
     "apiCleanupStrictQueueEnvelope": true,
-    "canonicalCleanupOperationsQueueTopology": true
+    "canonicalCleanupOperationsQueueTopology": true,
+    "apiWorkspaceDependencyPreparation": true
   },
   "runtimeEvidence": {
+    "invalidTokenDatabaseRuntime": true,
+    "invalidTokenAppRoleLeastPrivilege": true,
     "naturalStagingCron": false,
     "queueRetryBackoff": false,
     "terminalDlq": false,
     "invalidTokenEndToEndCleanup": false,
+    "multicastInvalidTokenCleanup": false,
     "authenticatedNotificationCrud": false,
     "quietHoursTimezone": false,
     "budgetThresholdProducer": false,
@@ -44,9 +49,23 @@
     "perf017": false,
     "perf018": false
   },
+  "stagingInvalidTokenEvidence": {
+    "migrationId": "0021_notification_invalid_token_cleanup",
+    "migrationStatus": "VERIFIED_APPLIED",
+    "migrationChecksumSha256": "20B0C610301BE4071A6604C83A04B25C9147B50E4983CBCF46E3C94AC08795E4",
+    "appRole": "salary_hijacking_staging_app",
+    "appRoleBypassRls": false,
+    "appRoleCanExecuteCleanup": true,
+    "syntheticRevokedCount": 1,
+    "syntheticReadbackStatus": "REVOKED",
+    "syntheticRevokedAtSet": true,
+    "syntheticResidue": 0,
+    "evidencePath": "docs/notifications/STAGING_INVALID_TOKEN_CLEANUP_RUNTIME_2026-08-18.md"
+  },
   "internalBlockers": [
-    "FCM invalid-token result is not yet emitted as PUSH_TOKEN_INVALIDATED into NOTIFICATIONS_OPERATION_QUEUE.",
-    "Natural staging cron and Queue retry/DLQ runtime evidence are not yet captured.",
+    "Natural staging Cron and Cloudflare Queue retry/terminal/DLQ runtime evidence are not yet captured.",
+    "A natural provider-invalid FCM result has not yet been proven traversing Notifications -> operations Queue -> API -> DB; multicast invalid-token cleanup is also pending.",
+    "Authenticated notification CRUD/preferences/device lifecycle staging runtime evidence is incomplete.",
     "NOTI-006/007/008 producer-to-Queue-to-notification runtime evidence is incomplete.",
     "PERF-016/017/018 runtime evidence is incomplete."
   ],
