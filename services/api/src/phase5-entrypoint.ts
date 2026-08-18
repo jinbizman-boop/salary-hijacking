@@ -11,7 +11,7 @@
 import baseWorker from "./index";
 import type { AppEnv, WaitUntilCapable } from "./app";
 
-export const PHASE5_API_ENTRYPOINT_VERSION = "1.0.0";
+export const PHASE5_API_ENTRYPOINT_VERSION = "1.0.1";
 export const PUSH_TOKEN_INVALIDATED_EVENT = "PUSH_TOKEN_INVALIDATED";
 
 interface Phase5ApiEnv extends AppEnv {
@@ -119,6 +119,10 @@ function parseCleanupMessage(value: unknown): PushTokenCleanupMessage | null {
   }
 
   const notificationId = text(payload?.notificationId);
+  const eventId = text(source.eventId);
+  const occurredAt = text(source.occurredAt);
+  const correlationId = text(source.correlationId);
+  const idempotencyKey = text(source.idempotencyKey);
   const httpStatus = payload?.httpStatus;
 
   return {
@@ -135,16 +139,10 @@ function parseCleanupMessage(value: unknown): PushTokenCleanupMessage | null {
     ...(typeof source.schemaVersion === "number"
       ? { schemaVersion: source.schemaVersion }
       : {}),
-    ...(text(source.eventId) ? { eventId: text(source.eventId) ?? undefined } : {}),
-    ...(text(source.occurredAt)
-      ? { occurredAt: text(source.occurredAt) ?? undefined }
-      : {}),
-    ...(text(source.correlationId)
-      ? { correlationId: text(source.correlationId) ?? undefined }
-      : {}),
-    ...(text(source.idempotencyKey)
-      ? { idempotencyKey: text(source.idempotencyKey) ?? undefined }
-      : {}),
+    ...(eventId ? { eventId } : {}),
+    ...(occurredAt ? { occurredAt } : {}),
+    ...(correlationId ? { correlationId } : {}),
+    ...(idempotencyKey ? { idempotencyKey } : {}),
   };
 }
 
@@ -157,7 +155,10 @@ async function revokeInvalidPushTokenHash(
       query: (
         sqlText: string,
         params?: readonly DbValue[],
-      ) => Promise<{ readonly rows: readonly DbRow[]; readonly rowCount: number | null }>;
+      ) => Promise<{
+        readonly rows: readonly DbRow[];
+        readonly rowCount: number | null;
+      }>;
       end: () => Promise<void>;
     };
     readonly neonConfig?: { fetchConnectionCache?: boolean };
@@ -266,11 +267,11 @@ export async function queue(
   }
 
   if (fallback.length > 0) {
-    await baseWorker.queue(
-      { queue: batch.queue, messages: fallback },
-      env,
-      context,
-    );
+    const fallbackBatch = {
+      queue: batch.queue,
+      messages: fallback,
+    } as Parameters<typeof baseWorker.queue>[0];
+    await baseWorker.queue(fallbackBatch, env, context);
   }
 }
 
