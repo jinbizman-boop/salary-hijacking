@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "phase": 5,
+  "name": "Scheduler & Notifications Completion",
+  "status": "PARTIAL",
+  "codeBaselineCommit": "cd43a5810d2967a4d8c594547d4a8d506d0746f8",
+  "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "requirementScope": [
+    "NOTI-001",
+    "NOTI-002",
+    "NOTI-003",
+    "NOTI-004",
+    "NOTI-005",
+    "NOTI-006",
+    "NOTI-007",
+    "NOTI-008",
+    "NOTI-009",
+    "NOTI-010"
+  ],
+  "implemented": {
+    "queueEnvelope": true,
+    "canonicalDeeplinkContract": true,
+    "boundedCloudflareRetryBackoff": true,
+    "wranglerRetryAndDlqConfiguration": true,
+    "hashOnlyInvalidTokenDatabaseBoundary": true,
+    "apiInvalidTokenCleanupConsumer": true,
+    "apiCleanupStrictQueueEnvelope": true,
+    "canonicalCleanupOperationsQueueTopology": true
+  },
+  "runtimeEvidence": {
+    "naturalStagingCron": false,
+    "queueRetryBackoff": false,
+    "terminalDlq": false,
+    "invalidTokenEndToEndCleanup": false,
+    "authenticatedNotificationCrud": false,
+    "quietHoursTimezone": false,
+    "budgetThresholdProducer": false,
+    "savingsGoalProducer": false,
+    "growthCommunityProducer": false,
+    "foregroundPush": false,
+    "backgroundPush": false,
+    "deviceDeeplink": false,
+    "perf016": false,
+    "perf017": false,
+    "perf018": false
+  },
+  "internalBlockers": [
+    "FCM invalid-token result is not yet emitted as PUSH_TOKEN_INVALIDATED into NOTIFICATIONS_OPERATION_QUEUE.",
+    "Natural staging cron and Queue retry/DLQ runtime evidence are not yet captured.",
+    "NOTI-006/007/008 producer-to-Queue-to-notification runtime evidence is incomplete.",
+    "PERF-016/017/018 runtime evidence is incomplete."
+  ],
+  "externalTracks": [
+    "Current-RC Android foreground/background/deeplink device runtime remains under D-026/later mobile-release phases."
+  ],
+  "defects": {
+    "D-013": "FAIL",
+    "D-016": "PARTIAL",
+    "D-017": "PASS",
+    "D-026": "FAIL"
+  },
+  "projectCompletion100": false,
+  "commercialLaunchReady": false,
+  "phase6EntryReadiness": "NOT_READY"
+}
