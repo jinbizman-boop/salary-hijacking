@@ -26,12 +26,16 @@ import {
   type NotificationDeeplinkType,
 } from "./deeplink-contract";
 
-export const PHASE5_NOTIFICATIONS_ENTRYPOINT_VERSION = "1.0.0";
+export const PHASE5_NOTIFICATIONS_ENTRYPOINT_VERSION = "1.0.1";
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
+}
+
+function text(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function primitiveParams(
@@ -58,7 +62,7 @@ function canonicalizeDeeplink(
 ): Record<string, unknown> {
   const payload = record(message.payload);
   const data = record(payload?.data);
-  const type = typeof data?.type === "string" ? data.type : null;
+  const type = text(data?.type);
   if (!payload || !data || !type) return message;
 
   const supported = new Set<NotificationDeeplinkType>([
@@ -81,7 +85,7 @@ function canonicalizeDeeplink(
   const notificationType = type as NotificationDeeplinkType;
   const routeParams = primitiveParams(data.routeParams);
   const target = notificationDeeplinkFor(notificationType, routeParams);
-  const existing = typeof data.deeplink === "string" ? data.deeplink : "";
+  const existing = text(data.deeplink) ?? "";
   if (
     data.targetScreen === target.targetScreen &&
     isCanonicalNotificationDeeplink(notificationType, existing)
@@ -102,8 +106,43 @@ function canonicalizeDeeplink(
   };
 }
 
-function normalizeQueueBody(body: NotificationQueueMessage): NotificationQueueMessage {
-  const source = canonicalizeDeeplink(body as unknown as Record<string, unknown>);
+function legacyIdentity(
+  source: Record<string, unknown>,
+  queueMessageId?: string,
+): Record<string, unknown> {
+  const payload = record(source.payload);
+  const data = record(payload?.data);
+  const existingRequestId = text(source.requestId);
+  const requestId =
+    existingRequestId ??
+    (queueMessageId ? `queue_${queueMessageId}` : `queue_${globalThis.crypto.randomUUID()}`);
+
+  if (text(source.idempotencyKey) || text(data?.idempotencyKey)) {
+    return existingRequestId ? source : { ...source, requestId };
+  }
+
+  const notificationId = text(data?.notificationId);
+  const notificationType = text(data?.type) ?? "SYSTEM";
+  const idempotencyKey = notificationId
+    ? `notification:${notificationType}:${notificationId}`
+    : `notification:${notificationType}:${requestId}`;
+
+  return {
+    ...source,
+    requestId,
+    idempotencyKey,
+  };
+}
+
+export function normalizePhase5QueueBody(
+  body: NotificationQueueMessage,
+  queueMessageId?: string,
+): NotificationQueueMessage {
+  const raw = legacyIdentity(
+    body as unknown as Record<string, unknown>,
+    queueMessageId,
+  );
+  const source = canonicalizeDeeplink(raw);
   try {
     assertNotificationQueueEnvelope(source);
     return source as unknown as NotificationQueueMessage;
@@ -121,7 +160,7 @@ function normalizeBatch(
     messages: batch.messages.map(
       (message): QueueMessageLike<NotificationQueueMessage> => ({
         ...message,
-        body: normalizeQueueBody(message.body),
+        body: normalizePhase5QueueBody(message.body, message.id),
       }),
     ),
   };
@@ -156,6 +195,8 @@ export const phase5NotificationsEntrypointManifest = Object.freeze({
   baseEntrypoint: "services/notifications/src/index.ts",
   activeEntrypoint: "services/notifications/src/phase5-entrypoint.ts",
   legacyQueueMigrationSupported: true,
+  legacyMissingRequestIdUsesCloudflareMessageId: true,
+  legacyMissingIdempotencyUsesNotificationIdentity: true,
   queueEnvelopeEnforcedAtConsumerBoundary: true,
   deeplinkCanonicalizationEnabled: true,
   rawFinancialDataAdded: false,
