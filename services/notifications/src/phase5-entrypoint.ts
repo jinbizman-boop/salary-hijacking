@@ -28,7 +28,7 @@ import {
   type NotificationDeeplinkType,
 } from "./deeplink-contract";
 
-export const PHASE5_NOTIFICATIONS_ENTRYPOINT_VERSION = "1.1.0";
+export const PHASE5_NOTIFICATIONS_ENTRYPOINT_VERSION = "1.1.1";
 export const PHASE5_RETRY_MAX_ATTEMPTS = 5;
 export const PHASE5_RETRY_BASE_DELAY_SECONDS = 30;
 export const PHASE5_RETRY_MAX_DELAY_SECONDS = 3_600;
@@ -180,23 +180,36 @@ export function phase5RetryDelaySeconds(attempts?: number): number {
   );
 }
 
+function normalizeQueueMessage(
+  message: QueueMessageLike<NotificationQueueMessage>,
+): QueueMessageLike<NotificationQueueMessage> {
+  const normalizedBody = normalizePhase5QueueBody(message.body, message.id);
+
+  if (!message.retry) {
+    return {
+      ...message,
+      body: normalizedBody,
+    };
+  }
+
+  const retry = message.retry;
+  return {
+    ...message,
+    body: normalizedBody,
+    retry: () => {
+      retry({
+        delaySeconds: phase5RetryDelaySeconds(message.attempts),
+      });
+    },
+  };
+}
+
 function normalizeBatch(
   batch: QueueBatchLike<NotificationQueueMessage>,
 ): QueueBatchLike<NotificationQueueMessage> {
   return {
     queue: batch.queue,
-    messages: batch.messages.map(
-      (message): QueueMessageLike<NotificationQueueMessage> => ({
-        ...message,
-        body: normalizePhase5QueueBody(message.body, message.id),
-        retry: message.retry
-          ? () =>
-              message.retry?.({
-                delaySeconds: phase5RetryDelaySeconds(message.attempts),
-              })
-          : undefined,
-      }),
-    ),
+    messages: batch.messages.map(normalizeQueueMessage),
   };
 }
 
