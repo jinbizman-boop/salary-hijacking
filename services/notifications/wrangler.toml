@@ -13,7 +13,7 @@
 #   wrangler secret put FCM_PRIVATE_KEY
 
 name = "salary-hijacking-notifications"
-main = "src/index.ts"
+main = "src/phase5-entrypoint.ts"
 compatibility_date = "2026-06-15"
 workers_dev = true
 minify = true
