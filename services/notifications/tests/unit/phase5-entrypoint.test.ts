@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  PHASE5_PUSH_CLEANUP_EVENT_TYPE,
+  PHASE5_PUSH_CLEANUP_SCHEMA_VERSION,
   PHASE5_RETRY_MAX_DELAY_SECONDS,
+  buildPushTokenInvalidatedEvent,
+  isInvalidPushTokenErrorCode,
   normalizePhase5QueueBody,
   phase5RetryDelaySeconds,
 } from "../../src/phase5-entrypoint";
@@ -72,5 +76,45 @@ describe("Phase 5 notifications queue consumer normalization", () => {
     expect(phase5RetryDelaySeconds(100)).toBe(
       PHASE5_RETRY_MAX_DELAY_SECONDS,
     );
+  });
+
+  it("classifies provider invalid-token failures without treating transient errors as invalid tokens", () => {
+    expect(isInvalidPushTokenErrorCode("UNREGISTERED")).toBe(true);
+    expect(isInvalidPushTokenErrorCode("invalid_registration")).toBe(true);
+    expect(isInvalidPushTokenErrorCode("SENDER_ID_MISMATCH")).toBe(true);
+    expect(isInvalidPushTokenErrorCode("INTERNAL")).toBe(false);
+    expect(isInvalidPushTokenErrorCode("UNAVAILABLE")).toBe(false);
+  });
+
+  it("builds a strict hash-only cleanup envelope accepted by the API Phase 5 consumer", () => {
+    const event = buildPushTokenInvalidatedEvent({
+      tokenHash: `sha256:${"a".repeat(64)}`,
+      errorCode: "UNREGISTERED",
+      requestId: "queue_req_0001",
+      correlationId: "corr_0001",
+      notificationId: "notification_0001",
+      httpStatus: 404,
+      occurredAt: "2026-08-18T14:00:00.000Z",
+    });
+
+    expect(event.schemaVersion).toBe(PHASE5_PUSH_CLEANUP_SCHEMA_VERSION);
+    expect(event.type).toBe(PHASE5_PUSH_CLEANUP_EVENT_TYPE);
+    expect(event.payload.tokenHash).toBe("a".repeat(64));
+    expect(event.payload.providerErrorCode).toBe("UNREGISTERED");
+    expect(event.payload.httpStatus).toBe(404);
+    expect(event.eventId.length).toBeLessThanOrEqual(160);
+    expect(event.idempotencyKey.length).toBeLessThanOrEqual(160);
+    expect(JSON.stringify(event)).not.toContain("raw-fcm-registration-token");
+  });
+
+  it("rejects cleanup event construction without a valid SHA-256 hash", () => {
+    expect(() =>
+      buildPushTokenInvalidatedEvent({
+        tokenHash: "raw-fcm-registration-token",
+        errorCode: "UNREGISTERED",
+        requestId: "queue_req_0002",
+        correlationId: "corr_0002",
+      }),
+    ).toThrow("PHASE5_PUSH_CLEANUP_TOKEN_HASH_INVALID");
   });
 });
