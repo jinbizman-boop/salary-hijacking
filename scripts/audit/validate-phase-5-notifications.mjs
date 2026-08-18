@@ -78,11 +78,15 @@ assert(
   "API Wrangler is not using the Phase 5 entrypoint",
 );
 assert(
-  notificationsEntrypoint.includes("NOTIFICATION_QUEUE_SCHEMA_VERSION"),
+  notificationsEntrypoint.includes("assertNotificationQueueEnvelope") &&
+    notificationsEntrypoint.includes("queueEnvelopeFromLegacyMessage") &&
+    notificationsEntrypoint.includes("queueEnvelopeEnforcedAtConsumerBoundary: true"),
   "notifications Phase 5 envelope validation is missing",
 );
 assert(
-  apiEntrypoint.includes("PHASE5_PUSH_CLEANUP_SCHEMA_VERSION_INVALID"),
+  apiEntrypoint.includes("PHASE5_PUSH_CLEANUP_SCHEMA_VERSION_INVALID") &&
+    apiEntrypoint.includes("PHASE5_QUEUE_SCHEMA_VERSION = 1") &&
+    apiEntrypoint.includes("strictQueueEnvelopeRequired: true"),
   "API cleanup strict envelope validation is missing",
 );
 assert(
