@@ -6,20 +6,21 @@ function load(path: string): string {
   return readFileSync(resolve(process.cwd(), path), "utf8");
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function hasProducer(config: string, binding: string, queue: string): boolean {
-  const escapedBinding = binding.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const escapedQueue = queue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(
-    `\\[\\[.*queues\\.producers\\]\\][\\s\\S]*?binding\\s*=\\s*"${escapedBinding}"[\\s\\S]*?queue\\s*=\\s*"${escapedQueue}"`,
+    `binding\\s*=\\s*"${escapeRegExp(binding)}"[\\s\\S]{0,240}?queue\\s*=\\s*"${escapeRegExp(queue)}"`,
     "m",
   );
   return pattern.test(config);
 }
 
 function hasConsumer(config: string, queue: string): boolean {
-  const escapedQueue = queue.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const pattern = new RegExp(
-    `\\[\\[.*queues\\.consumers\\]\\][\\s\\S]*?queue\\s*=\\s*"${escapedQueue}"`,
+    `\\[\\[(?:env\\.(?:staging|production)\\.)?queues\\.consumers\\]\\][\\s\\S]{0,160}?queue\\s*=\\s*"${escapeRegExp(queue)}"`,
     "m",
   );
   return pattern.test(config);
@@ -38,9 +39,15 @@ describe("PHASE 5 invalid-token cleanup queue topology", () => {
     expect(hasConsumer(api, queue)).toBe(true);
   });
 
-  it("does not route cleanup producers to the legacy notifications-operations queues", () => {
+  it("removes the obsolete notifications-operations queue topology", () => {
     expect(notifications).not.toMatch(
-      /binding\s*=\s*"NOTIFICATIONS_OPERATION_QUEUE"[\s\S]{0,200}queue\s*=\s*"salary-hijacking-(?:dev|staging|production)-notifications-operations"/,
+      /salary-hijacking-(?:dev|staging|production)-notifications-operations/,
     );
+  });
+
+  it("keeps notification delivery retries on the notifications-owned retry queues", () => {
+    expect(notifications).toContain("salary-hijacking-dev-notifications-retry");
+    expect(notifications).toContain("salary-hijacking-staging-notifications-retry");
+    expect(notifications).toContain("salary-hijacking-production-notifications-retry");
   });
 });
