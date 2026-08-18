@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizePhase5QueueBody } from "../../src/phase5-entrypoint";
+import {
+  PHASE5_RETRY_MAX_DELAY_SECONDS,
+  normalizePhase5QueueBody,
+  phase5RetryDelaySeconds,
+} from "../../src/phase5-entrypoint";
 import { assertNotificationQueueEnvelope } from "../../src/queue-envelope";
 
 describe("Phase 5 notifications queue consumer normalization", () => {
@@ -55,6 +59,18 @@ describe("Phase 5 notifications queue consumer normalization", () => {
     expect(normalized.correlationId).toBe("queue_cf-message-0002");
     expect(normalized.idempotencyKey).toBe(
       "notification:SYSTEM:ntf_validate_0002",
+    );
+  });
+
+  it("applies bounded exponential backoff to Cloudflare-native queue retries", () => {
+    expect(phase5RetryDelaySeconds(undefined)).toBe(30);
+    expect(phase5RetryDelaySeconds(1)).toBe(30);
+    expect(phase5RetryDelaySeconds(2)).toBe(60);
+    expect(phase5RetryDelaySeconds(3)).toBe(120);
+    expect(phase5RetryDelaySeconds(4)).toBe(240);
+    expect(phase5RetryDelaySeconds(5)).toBe(480);
+    expect(phase5RetryDelaySeconds(100)).toBe(
+      PHASE5_RETRY_MAX_DELAY_SECONDS,
     );
   });
 });
