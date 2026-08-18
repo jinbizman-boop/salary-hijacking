@@ -86,13 +86,6 @@ max_batch_timeout = 30
 max_retries = 5
 dead_letter_queue = "salary-hijacking-dev-notifications-dlq"
 
-[[queues.consumers]]
-queue = "salary-hijacking-dev-notifications-operations"
-max_batch_size = 10
-max_batch_timeout = 30
-max_retries = 3
-dead_letter_queue = "salary-hijacking-dev-notifications-dlq"
-
 [env.staging]
 name = "salary-hijacking-notifications-staging"
 workers_dev = true
@@ -157,13 +150,6 @@ queue = "salary-hijacking-staging-notifications-retry"
 max_batch_size = 10
 max_batch_timeout = 30
 max_retries = 5
-dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
-
-[[env.staging.queues.consumers]]
-queue = "salary-hijacking-staging-notifications-operations"
-max_batch_size = 10
-max_batch_timeout = 30
-max_retries = 3
 dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
 
 [env.production]
@@ -236,11 +222,4 @@ queue = "salary-hijacking-production-notifications-retry"
 max_batch_size = 10
 max_batch_timeout = 30
 max_retries = 5
-dead_letter_queue = "salary-hijacking-production-notifications-dlq"
-
-[[env.production.queues.consumers]]
-queue = "salary-hijacking-production-notifications-operations"
-max_batch_size = 10
-max_batch_timeout = 30
-max_retries = 3
 dead_letter_queue = "salary-hijacking-production-notifications-dlq"
