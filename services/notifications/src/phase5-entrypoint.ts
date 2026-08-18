@@ -3,8 +3,10 @@
  *
  * This wrapper preserves the proven FCM worker while enforcing the v2.0 queue
  * event envelope at the consumer boundary. Legacy messages are normalized for
- * a staged migration, and known notification types are reconciled to current
- * Expo Router production deep links before FCM dispatch.
+ * a staged migration, known notification types are reconciled to current Expo
+ * Router production deep links, and Cloudflare queue retries are normalized to
+ * the PHASE 5 exponential-backoff contract before the platform applies the
+ * configured max_retries/dead-letter policy.
  */
 
 import baseWorker, {
@@ -26,7 +28,10 @@ import {
   type NotificationDeeplinkType,
 } from "./deeplink-contract";
 
-export const PHASE5_NOTIFICATIONS_ENTRYPOINT_VERSION = "1.0.1";
+export const PHASE5_NOTIFICATIONS_ENTRYPOINT_VERSION = "1.1.0";
+export const PHASE5_RETRY_MAX_ATTEMPTS = 5;
+export const PHASE5_RETRY_BASE_DELAY_SECONDS = 30;
+export const PHASE5_RETRY_MAX_DELAY_SECONDS = 3_600;
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -115,7 +120,9 @@ function legacyIdentity(
   const existingRequestId = text(source.requestId);
   const requestId =
     existingRequestId ??
-    (queueMessageId ? `queue_${queueMessageId}` : `queue_${globalThis.crypto.randomUUID()}`);
+    (queueMessageId
+      ? `queue_${queueMessageId}`
+      : `queue_${globalThis.crypto.randomUUID()}`);
 
   if (text(source.idempotencyKey) || text(data?.idempotencyKey)) {
     return existingRequestId ? source : { ...source, requestId };
@@ -148,8 +155,29 @@ export function normalizePhase5QueueBody(
     return source as unknown as NotificationQueueMessage;
   } catch {
     const envelope = queueEnvelopeFromLegacyMessage(source);
-    return withNotificationQueueEnvelope(source, envelope) as unknown as NotificationQueueMessage;
+    return withNotificationQueueEnvelope(
+      source,
+      envelope,
+    ) as unknown as NotificationQueueMessage;
   }
+}
+
+/**
+ * Cloudflare Queue's message.attempts represents delivery attempts already made
+ * for the current message. The PHASE 5 contract uses bounded exponential
+ * backoff; max_retries and dead-letter routing remain enforced by wrangler.
+ * Jitter stays inside the repository retry service where persisted retries are
+ * used; the Cloudflare-native path remains deterministic for test/evidence.
+ */
+export function phase5RetryDelaySeconds(attempts?: number): number {
+  const currentAttempt = Number.isFinite(attempts)
+    ? Math.max(1, Math.floor(attempts ?? 1))
+    : 1;
+  const exponent = Math.max(0, currentAttempt - 1);
+  return Math.min(
+    PHASE5_RETRY_MAX_DELAY_SECONDS,
+    PHASE5_RETRY_BASE_DELAY_SECONDS * 2 ** exponent,
+  );
 }
 
 function normalizeBatch(
@@ -161,6 +189,12 @@ function normalizeBatch(
       (message): QueueMessageLike<NotificationQueueMessage> => ({
         ...message,
         body: normalizePhase5QueueBody(message.body, message.id),
+        retry: message.retry
+          ? () =>
+              message.retry?.({
+                delaySeconds: phase5RetryDelaySeconds(message.attempts),
+              })
+          : undefined,
       }),
     ),
   };
@@ -199,6 +233,13 @@ export const phase5NotificationsEntrypointManifest = Object.freeze({
   legacyMissingIdempotencyUsesNotificationIdentity: true,
   queueEnvelopeEnforcedAtConsumerBoundary: true,
   deeplinkCanonicalizationEnabled: true,
+  cloudflareNativeRetryBackoffNormalized: true,
+  cloudflareNativeRetryMaxAttempts: PHASE5_RETRY_MAX_ATTEMPTS,
+  cloudflareNativeRetryBaseDelaySeconds: PHASE5_RETRY_BASE_DELAY_SECONDS,
+  cloudflareNativeRetryMaxDelaySeconds: PHASE5_RETRY_MAX_DELAY_SECONDS,
+  deadLetterPolicyDelegatedToCloudflareQueueConfig: true,
+  persistedRetryClassificationModuleAvailable: true,
+  invalidTokenCleanupRuntimeStillRequiresRepositoryAdapter: true,
   rawFinancialDataAdded: false,
   rawPushTokenAdded: false,
   requirementRefs: Object.freeze(["NOTI-009", "NOTI-010", "OPS-003"]),
