@@ -54,7 +54,7 @@
     "build:api": "corepack pnpm run build",
     "build:js": "tsc --project tsconfig.json --noEmit false --incremental false",
     "build:types": "tsc --project tsconfig.json --declaration --declarationMap --emitDeclarationOnly --outDir dist --noEmit false --incremental false",
-    "build:verify": "node -e \"const fs=require('node:fs'); for (const f of ['dist/index.js','dist/index.d.ts']) if (!fs.existsSync(f)) throw new Error('missing '+f); console.log('api build verified')\"",
+    "build:verify": "node -e \"const fs=require('node:fs'); for (const f of ['dist/index.js','dist/index.d.ts','dist/phase5-entrypoint.js','dist/phase5-entrypoint.d.ts']) if (!fs.existsSync(f)) throw new Error('missing '+f); console.log('api build verified')\"",
     "typecheck": "corepack pnpm run prepare:workspace-deps && tsc --project tsconfig.json --noEmit --pretty false",
     "typecheck:strict": "corepack pnpm run prepare:workspace-deps && tsc --project tsconfig.json --noEmit --pretty false --strict --exactOptionalPropertyTypes --noUncheckedIndexedAccess --noUnusedLocals --noUnusedParameters",
     "typecheck:watch": "tsc --project tsconfig.json --noEmit --watch",
@@ -154,7 +154,7 @@
     "rawFinancialDataForAds": false,
     "adminReasonRequired": true,
     "routeGateway": "src/app.ts",
-    "workerEntrypoint": "src/index.ts",
+    "workerEntrypoint": "src/phase5-entrypoint.ts",
     "domains": [
       "auth",
       "admin",
