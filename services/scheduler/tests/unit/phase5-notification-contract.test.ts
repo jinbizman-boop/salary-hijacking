@@ -49,7 +49,10 @@ describe("scheduler Phase 5 queue contract", () => {
   });
 
   it("decorates the actual queue binding before send", async () => {
-    const send = vi.fn(async () => undefined);
+    const sentMessages: unknown[] = [];
+    const send = vi.fn(async (message: unknown) => {
+      sentMessages.push(message);
+    });
     const wrapped = wrapPhase5QueueBinding({ send });
     expect(wrapped).toBeDefined();
 
@@ -60,7 +63,7 @@ describe("scheduler Phase 5 queue contract", () => {
     });
 
     expect(send).toHaveBeenCalledTimes(1);
-    const sent = send.mock.calls[0]?.[0] as Record<string, unknown>;
+    const sent = sentMessages[0] as Record<string, unknown>;
     expect(sent.schemaVersion).toBe("1.0");
     expect(sent.correlationId).toBe("req_scheduler_phase5_0003");
     expect(sent.idempotencyKey).toBe("growth:user-3:2026-08:closed");
