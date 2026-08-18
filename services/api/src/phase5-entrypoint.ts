@@ -11,8 +11,9 @@
 import baseWorker from "./index";
 import type { AppEnv, WaitUntilCapable } from "./app";
 
-export const PHASE5_API_ENTRYPOINT_VERSION = "1.0.1";
+export const PHASE5_API_ENTRYPOINT_VERSION = "1.1.0";
 export const PUSH_TOKEN_INVALIDATED_EVENT = "PUSH_TOKEN_INVALIDATED";
+export const PHASE5_QUEUE_SCHEMA_VERSION = 1;
 
 interface Phase5ApiEnv extends AppEnv {
   readonly SALARY_HIJACKING_DATABASE_URL?: string;
@@ -48,19 +49,19 @@ interface QueueBatchLike<TBody = unknown> {
   readonly messages: readonly QueueMessageLike<TBody>[];
 }
 
-interface PushTokenCleanupPayload {
+export interface PushTokenCleanupPayload {
   readonly tokenHash: string;
   readonly providerErrorCode: string;
   readonly notificationId?: string;
   readonly httpStatus?: number;
 }
 
-interface PushTokenCleanupMessage {
-  readonly schemaVersion?: number;
-  readonly eventId?: string;
-  readonly occurredAt?: string;
-  readonly correlationId?: string;
-  readonly idempotencyKey?: string;
+export interface PushTokenCleanupMessage {
+  readonly schemaVersion: typeof PHASE5_QUEUE_SCHEMA_VERSION;
+  readonly eventId: string;
+  readonly occurredAt: string;
+  readonly correlationId: string;
+  readonly idempotencyKey: string;
   readonly type: typeof PUSH_TOKEN_INVALIDATED_EVENT;
   readonly requestId: string;
   readonly payload: PushTokenCleanupPayload;
@@ -79,6 +80,8 @@ const DATABASE_URL_ENV_KEYS = [
   "NEON_POSTGRES_URL",
   "DIRECT_DATABASE_URL",
 ] as const;
+
+const safeIdPattern = /^[A-Za-z0-9._:/-]{1,160}$/;
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -99,18 +102,58 @@ function databaseUrl(env: Phase5ApiEnv): string {
   throw new Error("PHASE5_PUSH_CLEANUP_DATABASE_URL_MISSING");
 }
 
-function parseCleanupMessage(value: unknown): PushTokenCleanupMessage | null {
+function assertSafeId(value: string | null, code: string): string {
+  if (!value || !safeIdPattern.test(value)) throw new Error(code);
+  return value;
+}
+
+function assertOccurredAt(value: string | null): string {
+  if (!value) throw new Error("PHASE5_PUSH_CLEANUP_OCCURRED_AT_REQUIRED");
+  const parsed = new Date(value);
+  if (!Number.isFinite(parsed.getTime())) {
+    throw new Error("PHASE5_PUSH_CLEANUP_OCCURRED_AT_INVALID");
+  }
+  return parsed.toISOString();
+}
+
+/**
+ * Parses the only Phase 5 operations-queue message owned by this wrapper.
+ * Unknown message types return null so the base API worker can consume them.
+ * Cleanup events themselves are strict: the v2.0 queue envelope is mandatory,
+ * and only a SHA-256 token hash may cross the boundary.
+ */
+export function parsePhase5PushTokenCleanupMessage(
+  value: unknown,
+): PushTokenCleanupMessage | null {
   const source = record(value);
   if (!source || source.type !== PUSH_TOKEN_INVALIDATED_EVENT) return null;
 
-  const requestId = text(source.requestId);
+  if (source.schemaVersion !== PHASE5_QUEUE_SCHEMA_VERSION) {
+    throw new Error("PHASE5_PUSH_CLEANUP_SCHEMA_VERSION_INVALID");
+  }
+
+  const requestId = assertSafeId(
+    text(source.requestId),
+    "PHASE5_PUSH_CLEANUP_REQUEST_ID_INVALID",
+  );
+  const eventId = assertSafeId(
+    text(source.eventId),
+    "PHASE5_PUSH_CLEANUP_EVENT_ID_INVALID",
+  );
+  const correlationId = assertSafeId(
+    text(source.correlationId),
+    "PHASE5_PUSH_CLEANUP_CORRELATION_ID_INVALID",
+  );
+  const idempotencyKey = assertSafeId(
+    text(source.idempotencyKey),
+    "PHASE5_PUSH_CLEANUP_IDEMPOTENCY_KEY_INVALID",
+  );
+  const occurredAt = assertOccurredAt(text(source.occurredAt));
+
   const payload = record(source.payload);
   const tokenHash = text(payload?.tokenHash)?.replace(/^sha256:/i, "").toLowerCase();
   const providerErrorCode = text(payload?.providerErrorCode);
 
-  if (!requestId || !/^[A-Za-z0-9._:/-]{1,160}$/.test(requestId)) {
-    throw new Error("PHASE5_PUSH_CLEANUP_REQUEST_ID_INVALID");
-  }
   if (!tokenHash || !/^[0-9a-f]{64}$/.test(tokenHash)) {
     throw new Error("PHASE5_PUSH_CLEANUP_TOKEN_HASH_INVALID");
   }
@@ -119,30 +162,24 @@ function parseCleanupMessage(value: unknown): PushTokenCleanupMessage | null {
   }
 
   const notificationId = text(payload?.notificationId);
-  const eventId = text(source.eventId);
-  const occurredAt = text(source.occurredAt);
-  const correlationId = text(source.correlationId);
-  const idempotencyKey = text(source.idempotencyKey);
   const httpStatus = payload?.httpStatus;
 
   return {
+    schemaVersion: PHASE5_QUEUE_SCHEMA_VERSION,
+    eventId,
+    occurredAt,
+    correlationId,
+    idempotencyKey,
     type: PUSH_TOKEN_INVALIDATED_EVENT,
     requestId,
     payload: {
       tokenHash,
       providerErrorCode,
-      ...(notificationId ? { notificationId } : {}),
+      ...(notificationId ? { notificationId: notificationId.slice(0, 160) } : {}),
       ...(typeof httpStatus === "number" && Number.isInteger(httpStatus)
         ? { httpStatus }
         : {}),
     },
-    ...(typeof source.schemaVersion === "number"
-      ? { schemaVersion: source.schemaVersion }
-      : {}),
-    ...(eventId ? { eventId } : {}),
-    ...(occurredAt ? { occurredAt } : {}),
-    ...(correlationId ? { correlationId } : {}),
-    ...(idempotencyKey ? { idempotencyKey } : {}),
   };
 }
 
@@ -194,7 +231,7 @@ async function revokeInvalidPushTokenHash(
   }
 }
 
-function retryDelaySeconds(attempts?: number): number {
+export function phase5ApiRetryDelaySeconds(attempts?: number): number {
   const attempt = Number.isFinite(attempts)
     ? Math.max(1, Math.floor(attempts ?? 1))
     : 1;
@@ -205,7 +242,7 @@ async function consumeCleanupMessage(
   message: QueueMessageLike<unknown>,
   env: Phase5ApiEnv,
 ): Promise<boolean> {
-  const parsed = parseCleanupMessage(message.body);
+  const parsed = parsePhase5PushTokenCleanupMessage(message.body);
   if (!parsed) return false;
 
   try {
@@ -215,6 +252,8 @@ async function consumeCleanupMessage(
       "phase5_push_token_cleanup",
       JSON.stringify({
         requestId: parsed.requestId,
+        eventId: parsed.eventId,
+        correlationId: parsed.correlationId,
         providerErrorCode: parsed.payload.providerErrorCode,
         revokedCount,
         tokenHashPresent: true,
@@ -223,12 +262,14 @@ async function consumeCleanupMessage(
       }),
     );
   } catch (error) {
-    message.retry?.({ delaySeconds: retryDelaySeconds(message.attempts) });
+    message.retry?.({ delaySeconds: phase5ApiRetryDelaySeconds(message.attempts) });
     console.warn(
       "phase5_push_token_cleanup_failed",
       JSON.stringify({
         error: error instanceof Error ? error.name : "UnknownError",
         requestId: parsed.requestId,
+        eventId: parsed.eventId,
+        correlationId: parsed.correlationId,
         tokenHashPresent: true,
         rawPushTokenLogged: false,
         rawFinancialDataLogged: false,
@@ -280,6 +321,8 @@ export const phase5ApiEntrypointManifest = Object.freeze({
   baseEntrypoint: "services/api/src/index.ts",
   activeEntrypoint: "services/api/src/phase5-entrypoint.ts",
   pushTokenInvalidatedEvent: PUSH_TOKEN_INVALIDATED_EVENT,
+  queueSchemaVersion: PHASE5_QUEUE_SCHEMA_VERSION,
+  strictQueueEnvelopeRequired: true,
   hashOnlyCleanup: true,
   databaseFunction: "public.revoke_invalid_push_token_hash(text,text,text)",
   rawPushTokenAccepted: false,
