@@ -10,7 +10,7 @@
 #   wrangler secret put OPERATION_WEBHOOK_TOKEN
 
 name = "salary-hijacking-api"
-main = "src/index.ts"
+main = "src/phase5-entrypoint.ts"
 compatibility_date = "2026-06-15"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
