@@ -72,9 +72,12 @@ crons = [
 binding = "NOTIFICATIONS_RETRY_QUEUE"
 queue = "salary-hijacking-dev-notifications-retry"
 
+# Invalid-token cleanup events are consumed by the API Phase 5 operations
+# consumer, which owns the DB function boundary. Keep the notifications worker
+# producer binding but route it to the canonical API operations queue.
 [[queues.producers]]
 binding = "NOTIFICATIONS_OPERATION_QUEUE"
-queue = "salary-hijacking-dev-notifications-operations"
+queue = "salary-hijacking-dev-operations"
 
 [[queues.consumers]]
 queue = "salary-hijacking-dev-notifications-retry"
@@ -147,7 +150,7 @@ queue = "salary-hijacking-staging-notifications-retry"
 
 [[env.staging.queues.producers]]
 binding = "NOTIFICATIONS_OPERATION_QUEUE"
-queue = "salary-hijacking-staging-notifications-operations"
+queue = "salary-hijacking-staging-operations"
 
 [[env.staging.queues.consumers]]
 queue = "salary-hijacking-staging-notifications-retry"
@@ -226,7 +229,7 @@ queue = "salary-hijacking-production-notifications-retry"
 
 [[env.production.queues.producers]]
 binding = "NOTIFICATIONS_OPERATION_QUEUE"
-queue = "salary-hijacking-production-notifications-operations"
+queue = "salary-hijacking-production-operations"
 
 [[env.production.queues.consumers]]
 queue = "salary-hijacking-production-notifications-retry"
