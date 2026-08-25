@@ -61,6 +61,8 @@ export interface RetryQueueEnvLike {
   readonly NOTIFICATION_RETRY_JITTER_RATIO?: string;
   readonly NOTIFICATION_RETRY_BATCH_SIZE?: string;
   readonly NOTIFICATION_RETRY_DRY_RUN?: string;
+  readonly NOTIFICATION_RETRY_INVALID_TOKEN_CLEANUP_ENABLED?: string;
+  readonly NOTIFICATION_RETRY_DUPLICATE_PROTECTION_ENABLED?: string;
   readonly NOTIFICATION_RETRY_AUDIT_TO_CONSOLE?: string;
 }
 
@@ -658,13 +660,13 @@ function resolvePolicy<TEnv>(
     invalidTokenCleanupEnabled: optionBool(
       env,
       options.invalidTokenCleanupEnabled,
-      "NOTIFICATION_RETRY_DRY_RUN",
+      "NOTIFICATION_RETRY_INVALID_TOKEN_CLEANUP_ENABLED",
       true,
     ),
     duplicateProtectionEnabled: optionBool(
       env,
       options.duplicateProtectionEnabled,
-      "NOTIFICATION_RETRY_DRY_RUN",
+      "NOTIFICATION_RETRY_DUPLICATE_PROTECTION_ENABLED",
       true,
     ),
   };

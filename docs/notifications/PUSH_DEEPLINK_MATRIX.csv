@@ -1,0 +1,10 @@
+notificationType,targetEntity,productionRoute,requiredParams,fallbackRoute,authRequired,missingTargetBehavior
+PAYDAY_REMINDER,payroll cycle,salaryhijacking://salary/home,cycleId,salaryhijacking://salary/home,YES,reload summary or show not found
+FIXED_EXPENSE_REMINDER,fixed expense,salaryhijacking://fixed-expenses/{expenseId},expenseId,salaryhijacking://salary/home,YES,show deleted/expired fallback
+BUDGET_THRESHOLD,daily budget,salaryhijacking://daily-budget/{date},date,salaryhijacking://salary/home,YES,show current budget fallback
+SAVING_DUE,saving plan,salaryhijacking://savings/{savingPlanId},savingPlanId,salaryhijacking://savings,YES,show savings list
+SAVING_GOAL,saving goal,salaryhijacking://savings,goalId,salaryhijacking://savings,YES,show savings list
+GROWTH_COMPLETION,growth task,salaryhijacking://level,taskId,salaryhijacking://level,YES,show level home
+COMMUNITY_ACTIVITY,post/comment,salaryhijacking://community/post/{postId},postId,salaryhijacking://community,YES,respect block/deleted policy
+NOTICE_PUBLISHED,notice,salaryhijacking://notice/{noticeId},noticeId,salaryhijacking://notifications,YES,show notifications
+SECURITY,security center,salaryhijacking://profile/security,eventId,salaryhijacking://profile,YES,show profile

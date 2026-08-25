@@ -1,0 +1,11 @@
+requirementId,requirement,status,evidence,blocker
+NOTI-001,notification list/read state,PARTIAL_CURSOR_PAGINATION_DRIFT,Staging list/read/read-all/archive/delete direct-ID runtime passed; API still exposes page/pageSize instead of frozen cursor pagination.,PARTIAL_CURSOR_PAGINATION_DRIFT
+NOTI-002,preferences/quiet hours/channel,PASS,"Staging PATCH/GET persisted quiet hours/channel/timezone after migration 0023; supported timezone set is explicit, not arbitrary IANA.",
+NOTI-003,device push token lifecycle,PASS,Staging device register/list/revoke passed; raw token stored as hash/reference only.,
+NOTI-004,payday reminders,PARTIAL_NATURAL_CRON_PENDING,Scheduler job and queue binding deployed to staging; natural cron execution was not observed in the practical window.,PARTIAL_NATURAL_CRON_PENDING
+NOTI-005,fixed-expense reminders,PARTIAL_NATURAL_CRON_PENDING,Scheduler job and queue binding deployed to staging; completed/skipped runtime breadth remains future evidence.,PARTIAL_NATURAL_CRON_PENDING
+NOTI-006,budget threshold notifications,PARTIAL_PRODUCER_RUNTIME_PENDING,Rules preview and idempotent notification create passed; budget-threshold producer runtime/load acceptance not fully demonstrated.,PARTIAL_PRODUCER_RUNTIME_PENDING
+NOTI-007,saving/goal notifications,PARTIAL_PRODUCER_RUNTIME_PENDING,Contract and worker path exist; goal milestone producer runtime remains tied to broader feature events.,PARTIAL_PRODUCER_RUNTIME_PENDING
+NOTI-008,growth/community/notice notifications,PARTIAL_PENDING_PHASE_6_PRODUCERS,Notice path works; Growth/Community producer subflows are contract-ready and remain Phase 6-owned.,PARTIAL_PENDING_PHASE_6_PRODUCERS
+NOTI-009,type to deeplink contract,PASS_CONTRACT_DEVICE_RUNTIME_SEPARATE,Canonical route matrix created; physical foreground/background/terminated device validation remains D-026/PH13.,PASS_CONTRACT_DEVICE_RUNTIME_SEPARATE
+NOTI-010,queue retry/backoff/invalid token cleanup,PASS_INTERNAL_FCM_EXTERNAL_BLOCKER,"Queue poison handling, retry policy env separation, and invalid token cleanup policy tested locally; real FCM valid-token runtime remains external.",PASS_INTERNAL_FCM_EXTERNAL_BLOCKER

@@ -1,0 +1,5 @@
+surface,rawFinancialExposure,rawPiiExposure,evidence,status
+notification API create,NO,NO,route policy rejects sensitive account/card content and ad sensitive-finance targeting metadata,PASS
+staging E2E artifact,NO,NO,hashes/requestIds/status only,PASS
+FCM provider payload,NO_FOR_INTERNAL_TEST,NO_FOR_INTERNAL_TEST,unit test uses safe payload; real device provider runtime external,PARTIAL_EXTERNAL_RUNTIME
+scheduler events,NO,NO,event contract uses minimum identifiers only,PASS_CONTRACT

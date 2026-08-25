@@ -1,0 +1,4 @@
+worker,environment,schedule,job,timezoneSemantics,naturalExecutionEvidence,status
+scheduler,staging,0 23 * * *,payday/fixed-expense/monthly-close/data-retention dispatcher,Cloudflare UTC cron; job code evaluates user/business timezone,not observed in practical window,PARTIAL_NATURAL_CRON_PENDING
+notifications,staging,none,queue consumers only,N/A,consumer deployed,PASS_CONFIG
+notifications,production,*/5 * * *; 0 18 * * *,retry/cleanup schedule,Cloudflare UTC cron,not modified in Phase 5,NOT_TESTED_PRODUCTION

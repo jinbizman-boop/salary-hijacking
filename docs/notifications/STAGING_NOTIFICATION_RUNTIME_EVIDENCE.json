@@ -1,0 +1,521 @@
+{
+  "PHASE_5_STAGING_NOTIFICATION_RUNTIME": "PASS_CORE_RUNTIME",
+  "hardFailures": [],
+  "timestamp": "2026-08-25T11:00:17.314Z",
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "startedAt": "2026-08-25T10:59:56.542Z",
+  "finishedAt": "2026-08-25T11:00:17.314Z",
+  "syntheticUsers": {
+    "a": {
+      "emailHash": "9ae8dcb85ed9ff0d"
+    },
+    "b": {
+      "emailHash": "35bf0818029aa4fd"
+    }
+  },
+  "resourceHashes": {
+    "notificationIdHash": "2fa70ca06933b796",
+    "deviceIdHash": "b6f6e33b50f81bff"
+  },
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-7bae25fde9a31055",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "status": "ok",
+        "service": "salary-hijacking-api",
+        "version": "3.1.0",
+        "uptime": "edge",
+        "routeCount": 12
+      }
+    },
+    {
+      "step": "ready",
+      "method": "GET",
+      "path": "/api/v1/ready",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-3cc004cff6b775ce",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "status": "ready",
+        "environment": "staging",
+        "serverAuthorityEnabled": true,
+        "rawFinancialDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false,
+        "privacyMode": "STRICT",
+        "smokeSafe": true,
+        "completeness": true
+      }
+    },
+    {
+      "step": "register_a",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-98ea1e6bd9c99f88",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {}
+    },
+    {
+      "step": "register_b",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-3e0ef07ab08b4938",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {}
+    },
+    {
+      "step": "list_empty_a",
+      "method": "GET",
+      "path": "/api/v1/notifications?page=1&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-5d874b6558072d77",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 0
+      }
+    },
+    {
+      "step": "preferences_get_a",
+      "method": "GET",
+      "path": "/api/v1/notifications/preferences",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-adf94b35425d9927",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "inAppEnabled": true,
+        "pushEnabled": true,
+        "paydayEnabled": true,
+        "paymentDueEnabled": true,
+        "budgetWarningEnabled": true,
+        "budgetExceededEnabled": true,
+        "savingsGoalEnabled": "[REDACTED]",
+        "levelUpEnabled": true,
+        "communityEnabled": true,
+        "securityEnabled": true,
+        "contentRecommendationEnabled": false,
+        "adPartnerEnabled": false,
+        "quietHoursEnabled": true,
+        "quietHoursStart": "22:00",
+        "quietHoursEnd": "08:00",
+        "timezone": "Asia/Seoul",
+        "sensitiveFinancialTargetingConsent": "[REDACTED]",
+        "updatedAt": "2026-08-25T11:00:07.830Z"
+      }
+    },
+    {
+      "step": "preferences_patch_a",
+      "method": "PATCH",
+      "path": "/api/v1/notifications/preferences",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-9e1739ba9f4bb81c",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "inAppEnabled": true,
+        "pushEnabled": true,
+        "paydayEnabled": true,
+        "paymentDueEnabled": true,
+        "budgetWarningEnabled": true,
+        "budgetExceededEnabled": true,
+        "savingsGoalEnabled": "[REDACTED]",
+        "levelUpEnabled": true,
+        "communityEnabled": false,
+        "securityEnabled": true,
+        "contentRecommendationEnabled": false,
+        "adPartnerEnabled": false,
+        "quietHoursEnabled": true,
+        "quietHoursStart": "23:00",
+        "quietHoursEnd": "07:30",
+        "timezone": "UTC",
+        "sensitiveFinancialTargetingConsent": "[REDACTED]",
+        "updatedAt": "2026-08-25T11:00:09.099Z"
+      }
+    },
+    {
+      "step": "preferences_get_after_a",
+      "method": "GET",
+      "path": "/api/v1/notifications/preferences",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-c6993e4fc1e94b8f",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "inAppEnabled": true,
+        "pushEnabled": true,
+        "paydayEnabled": true,
+        "paymentDueEnabled": true,
+        "budgetWarningEnabled": true,
+        "budgetExceededEnabled": true,
+        "savingsGoalEnabled": "[REDACTED]",
+        "levelUpEnabled": true,
+        "communityEnabled": false,
+        "securityEnabled": true,
+        "contentRecommendationEnabled": false,
+        "adPartnerEnabled": false,
+        "quietHoursEnabled": true,
+        "quietHoursStart": "23:00",
+        "quietHoursEnd": "07:30",
+        "timezone": "UTC",
+        "sensitiveFinancialTargetingConsent": "[REDACTED]",
+        "updatedAt": "2026-08-25T11:00:09.099Z"
+      }
+    },
+    {
+      "step": "device_register_a",
+      "method": "POST",
+      "path": "/api/v1/notifications/devices",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-e908663e69741ea7",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "deviceIdHash": "b6f6e33b50f81bff",
+        "platform": "ANDROID",
+        "appVersion": "phase5-e2e",
+        "locale": "ko-KR",
+        "status": "ACTIVE",
+        "registeredAt": "2026-08-25T11:00:10.620Z",
+        "updatedAt": "2026-08-25T11:00:10.620Z"
+      }
+    },
+    {
+      "step": "device_list_a",
+      "method": "GET",
+      "path": "/api/v1/notifications/devices",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-e95a8234d0621a4f",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {}
+    },
+    {
+      "step": "notification_create_a",
+      "method": "POST",
+      "path": "/api/v1/notifications",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-312cac00468ee37e",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "notificationIdHash": "2fa70ca06933b796",
+        "type": "NOTICE",
+        "priority": "NORMAL",
+        "deeplink": "salaryhijacking://notifications",
+        "status": "UNREAD",
+        "isMandatory": false,
+        "createdAt": "2026-08-25T11:00:12.783Z",
+        "serverAuthority": true,
+        "sensitiveFinancialDataExposed": false,
+        "adTargetingSeparated": true
+      }
+    },
+    {
+      "step": "notification_create_replay_same_key_a",
+      "method": "POST",
+      "path": "/api/v1/notifications",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-dbab7e362c72c0aa",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "notificationIdHash": "2fa70ca06933b796",
+        "type": "NOTICE",
+        "priority": "NORMAL",
+        "deeplink": "salaryhijacking://notifications",
+        "status": "UNREAD",
+        "isMandatory": false,
+        "createdAt": "2026-08-25T11:00:12.783Z",
+        "serverAuthority": true,
+        "sensitiveFinancialDataExposed": false,
+        "adTargetingSeparated": true
+      }
+    },
+    {
+      "step": "notification_create_conflict_same_key_a",
+      "method": "POST",
+      "path": "/api/v1/notifications",
+      "status": 409,
+      "errorCode": "NOTIFICATION_IDEMPOTENCY_CONFLICT",
+      "requestId": "phase5-a9c4bbdf4f5589fd",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "cross_user_b_read",
+      "method": "GET",
+      "path": "/api/v1/notifications/e38e9d02-21cc-4408-8314-a69526a04891",
+      "status": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "requestId": "phase5-02a885bf3a787f7b",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "cross_user_b_mark_read",
+      "method": "POST",
+      "path": "/api/v1/notifications/e38e9d02-21cc-4408-8314-a69526a04891/read",
+      "status": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "requestId": "phase5-30115dde0770fd9a",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "cross_user_b_archive",
+      "method": "POST",
+      "path": "/api/v1/notifications/e38e9d02-21cc-4408-8314-a69526a04891/archive",
+      "status": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "requestId": "phase5-c4103391ed9eaa50",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "cross_user_b_delete",
+      "method": "DELETE",
+      "path": "/api/v1/notifications/e38e9d02-21cc-4408-8314-a69526a04891",
+      "status": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "requestId": "phase5-59684d875ca966ff",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "notification_mark_read_a",
+      "method": "POST",
+      "path": "/api/v1/notifications/e38e9d02-21cc-4408-8314-a69526a04891/read",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-2089d9783d83b20d",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "notificationIdHash": "2fa70ca06933b796",
+        "type": "NOTICE",
+        "priority": "NORMAL",
+        "deeplink": "salaryhijacking://notifications",
+        "status": "READ",
+        "isMandatory": false,
+        "createdAt": "2026-08-25T11:00:12.783Z",
+        "readAt": "2026-08-25T11:00:17.880Z",
+        "serverAuthority": true,
+        "sensitiveFinancialDataExposed": false,
+        "adTargetingSeparated": true
+      }
+    },
+    {
+      "step": "notification_archive_a",
+      "method": "POST",
+      "path": "/api/v1/notifications/e38e9d02-21cc-4408-8314-a69526a04891/archive",
+      "status": 500,
+      "errorCode": "NOTIFICATION_ROUTE_INTERNAL_ERROR",
+      "requestId": "phase5-424caa404dbb5a74",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "cross_user_device_revoke",
+      "method": "DELETE",
+      "path": "/api/v1/notifications/devices/e93e776e-754f-42a2-b980-09c8262a65c2",
+      "status": 404,
+      "errorCode": "NOTIFICATION_DEVICE_NOT_FOUND",
+      "requestId": "phase5-775af22983a3773d",
+      "retryAfter": null,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "device_revoke_a",
+      "method": "DELETE",
+      "path": "/api/v1/notifications/devices/e93e776e-754f-42a2-b980-09c8262a65c2",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-384433160f808539",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "deviceIdHash": "b6f6e33b50f81bff",
+        "status": "REVOKED",
+        "revokedAt": "2026-08-25T11:00:20.840Z"
+      }
+    },
+    {
+      "step": "read_all_a",
+      "method": "POST",
+      "path": "/api/v1/notifications/read-all",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-ab7d51c91bafad91",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "markedReadCount": 0,
+        "updatedAt": "2026-08-25T11:00:21.580Z"
+      }
+    },
+    {
+      "step": "unread_count_a",
+      "method": "GET",
+      "path": "/api/v1/notifications/unread-count",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-b3310223429bb596",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "unreadCount": 0,
+        "updatedAt": "2026-08-25T11:00:22.331Z"
+      }
+    },
+    {
+      "step": "rules_preview_a",
+      "method": "POST",
+      "path": "/api/v1/notifications/rules/preview",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-9cf8fcb0a4870dd0",
+      "retryAfter": null,
+      "pass": true,
+      "dataFlags": {
+        "today": "2026-08-25",
+        "source": "SERVER_RULE_PREVIEW",
+        "updatedAt": "2026-08-25T11:00:23.102Z",
+        "serverAuthority": true,
+        "sensitiveFinancialDataExposed": false,
+        "adTargetingSeparated": true
+      }
+    }
+  ],
+  "directIdMatrix": [
+    {
+      "resource": "notification",
+      "operation": "B_READ",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "resourceIdHash": "2fa70ca06933b796",
+      "httpStatus": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "apiAuthz": "DENIED_OR_INVISIBLE",
+      "rlsResult": "CHECKED_BY_SEPARATE_NEON_EVIDENCE",
+      "expected": "403_OR_404_OR_INVISIBLE",
+      "actual": "DENIED_OR_INVISIBLE",
+      "status": "PASS",
+      "evidenceRef": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "resource": "notification",
+      "operation": "B_MARK_READ",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "resourceIdHash": "2fa70ca06933b796",
+      "httpStatus": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "apiAuthz": "DENIED_OR_INVISIBLE",
+      "rlsResult": "CHECKED_BY_SEPARATE_NEON_EVIDENCE",
+      "expected": "403_OR_404_OR_INVISIBLE",
+      "actual": "DENIED_OR_INVISIBLE",
+      "status": "PASS",
+      "evidenceRef": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "resource": "notification",
+      "operation": "B_ARCHIVE",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "resourceIdHash": "2fa70ca06933b796",
+      "httpStatus": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "apiAuthz": "DENIED_OR_INVISIBLE",
+      "rlsResult": "CHECKED_BY_SEPARATE_NEON_EVIDENCE",
+      "expected": "403_OR_404_OR_INVISIBLE",
+      "actual": "DENIED_OR_INVISIBLE",
+      "status": "PASS",
+      "evidenceRef": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "resource": "notification",
+      "operation": "B_DELETE",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "resourceIdHash": "2fa70ca06933b796",
+      "httpStatus": 404,
+      "errorCode": "NOTIFICATION_NOT_FOUND",
+      "apiAuthz": "DENIED_OR_INVISIBLE",
+      "rlsResult": "CHECKED_BY_SEPARATE_NEON_EVIDENCE",
+      "expected": "403_OR_404_OR_INVISIBLE",
+      "actual": "DENIED_OR_INVISIBLE",
+      "status": "PASS",
+      "evidenceRef": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "resource": "device",
+      "operation": "B_REVOKE",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "resourceIdHash": "b6f6e33b50f81bff",
+      "httpStatus": 404,
+      "errorCode": "NOTIFICATION_DEVICE_NOT_FOUND",
+      "apiAuthz": "DENIED_OR_INVISIBLE",
+      "rlsResult": "CHECKED_BY_SEPARATE_NEON_EVIDENCE",
+      "expected": "403_OR_404_OR_INVISIBLE",
+      "actual": "DENIED_OR_INVISIBLE",
+      "status": "PASS",
+      "evidenceRef": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json"
+    }
+  ],
+  "assertions": {
+    "notificationListRuntime": true,
+    "preferenceRuntime": true,
+    "deviceRuntime": true,
+    "deviceRevokeRuntime": true,
+    "notificationCreateRuntime": true,
+    "idempotentReplaySameResult": true,
+    "idempotencyConflict": true,
+    "crossUserDirectIdDenied": true,
+    "rawPushTokenStoredInEvidence": false,
+    "rawCredentialStoredInEvidence": false
+  },
+  "duplicateRecordResult": 0,
+  "productionMutation": false,
+  "rawTokensStored": false,
+  "rawPushTokensStored": false,
+  "rawFinancialValuesStored": false,
+  "notes": [
+    "Synthetic staging users only.",
+    "Evidence stores request ids, status codes, hashes and booleans only.",
+    "No raw passwords, access tokens, refresh tokens, push tokens, PII payloads or financial values are written."
+  ]
+}

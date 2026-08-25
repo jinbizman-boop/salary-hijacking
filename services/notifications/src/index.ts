@@ -274,6 +274,14 @@ const importanceTypes = [
   "SYSTEM_REQUIRED",
 ] as const;
 
+const queueTypes = new Set<QueueType>([
+  "FCM_SEND",
+  "FCM_MULTICAST",
+  "FCM_TOPIC",
+  "FCM_CONDITION",
+  "FCM_VALIDATE",
+]);
+
 function envText(
   env: NotificationsEnv,
   key: keyof NotificationsEnv,
@@ -1331,7 +1339,6 @@ export async function fetch(
   env: NotificationsEnv,
   context: WorkerExecutionContext,
 ): Promise<Response> {
-  context.passThroughOnException?.();
   const requestId = requestIdFromHeaders(request);
 
   if (request.method.toUpperCase() === "OPTIONS") {
@@ -1371,6 +1378,17 @@ export async function fetch(
   }
 }
 
+function isTerminalQueueError(error: unknown): boolean {
+  if (error instanceof NotificationsHttpError) {
+    return error.status >= 400 && error.status < 500;
+  }
+  if (error && typeof error === "object" && "status" in error) {
+    const status = (error as { readonly status?: unknown }).status;
+    return typeof status === "number" && status >= 400 && status < 500;
+  }
+  return error instanceof TypeError || error instanceof SyntaxError;
+}
+
 function queueValidationResult(
   input: FcmSendInput,
   requestId: string,
@@ -1399,6 +1417,32 @@ function queueValidationResult(
   };
 }
 
+function assertQueuePayloadRoutable(
+  type: QueueType,
+  payload: Record<string, unknown>,
+): void {
+  if (type === "FCM_MULTICAST") {
+    if (Array.isArray(payload.tokens) && payload.tokens.length > 0) return;
+    throw new NotificationsHttpError(
+      400,
+      "NOTIFICATIONS_QUEUE_TARGET_REQUIRED",
+      "multicast queue message에는 tokens target이 필요합니다.",
+    );
+  }
+  if (
+    typeof payload.token === "string" ||
+    typeof payload.topic === "string" ||
+    typeof payload.condition === "string"
+  ) {
+    return;
+  }
+  throw new NotificationsHttpError(
+    400,
+    "NOTIFICATIONS_QUEUE_TARGET_REQUIRED",
+    "queue message에는 token, topic, condition 중 하나가 필요합니다.",
+  );
+}
+
 async function handleQueueMessage(
   message: QueueMessageLike<NotificationQueueMessage>,
   env: NotificationsEnv,
@@ -1406,7 +1450,10 @@ async function handleQueueMessage(
   queueName: string,
 ): Promise<JsonRecord> {
   const body = message.body;
-  const requestId = body.requestId ?? createRequestId("queue");
+  const requestId =
+    body && typeof body === "object" && typeof body.requestId === "string"
+      ? body.requestId
+      : createRequestId("queue");
   const ctx: FcmRuntimeContext<NotificationsEnv> = {
     env,
     execution: context,
@@ -1415,7 +1462,15 @@ async function handleQueueMessage(
   };
 
   try {
+    if (!body || typeof body !== "object" || !queueTypes.has(body.type)) {
+      throw new NotificationsHttpError(
+        400,
+        "NOTIFICATIONS_QUEUE_MESSAGE_INVALID",
+        "지원하지 않는 알림 queue message입니다.",
+      );
+    }
     const payload = objectField({ payload: body.payload }, "payload", true);
+    assertQueuePayloadRoutable(body.type, payload);
     let result: FcmSendResult | FcmMulticastResult;
 
     if (body.type === "FCM_MULTICAST") {
@@ -1459,7 +1514,14 @@ async function handleQueueMessage(
       "successCount" in result
         ? result.failureCount === 0
         : result.status === "SENT" || result.status === "SKIPPED";
-    if (success) message.ack?.();
+    const terminalResult =
+      !success &&
+      !("successCount" in result) &&
+      result.retriable === false &&
+      typeof result.httpStatus === "number" &&
+      result.httpStatus >= 400 &&
+      result.httpStatus < 500;
+    if (success || terminalResult) message.ack?.();
     else message.retry?.({ delaySeconds: body.retryDelaySeconds ?? 60 });
 
     await emitOperation(env, {
@@ -1469,7 +1531,7 @@ async function handleQueueMessage(
       requestId,
       operation: "QUEUE",
       path: null,
-      status: success ? "SUCCESS" : "FAILURE",
+      status: success ? "SUCCESS" : terminalResult ? "SKIPPED" : "FAILURE",
       httpStatus: "httpStatus" in result ? result.httpStatus : null,
       targetProvider: "FCM",
       notificationId: "notificationId" in result ? result.notificationId : null,
@@ -1481,13 +1543,21 @@ async function handleQueueMessage(
         queue: queueName,
         messageId: message.id ?? "none",
         attempts: message.attempts ?? 0,
+        terminalReason: terminalResult ? "TERMINAL_POISON" : null,
         result: sanitize(result),
       }),
     });
 
-    return { requestId, success, result: sanitize(result) };
+    return {
+      requestId,
+      success,
+      terminal: terminalResult,
+      result: sanitize(result),
+    };
   } catch (error) {
-    message.retry?.({ delaySeconds: body.retryDelaySeconds ?? 120 });
+    const terminal = isTerminalQueueError(error);
+    if (terminal) message.ack?.();
+    else message.retry?.({ delaySeconds: body?.retryDelaySeconds ?? 120 });
     await emitOperation(env, {
       event: "notification.queue",
       service: NOTIFICATIONS_SERVICE_NAME,
@@ -1506,12 +1576,18 @@ async function handleQueueMessage(
       details: eventDetails(null, {
         queue: queueName,
         messageId: message.id ?? "none",
+        terminalReason: terminal ? "TERMINAL_POISON" : "RETRYABLE_FAILURE",
+        errorCode:
+          error && typeof error === "object" && "code" in error
+            ? String((error as { readonly code?: unknown }).code)
+            : null,
         error: error instanceof Error ? error.name : "UnknownError",
       }),
     });
     return {
       requestId,
       success: false,
+      terminal,
       error: error instanceof Error ? error.message : "queue processing failed",
     };
   }

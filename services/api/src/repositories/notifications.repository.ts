@@ -247,6 +247,16 @@ function sanitizeJson(value: unknown, depth = 0): JsonValue {
   return out;
 }
 
+function boolFromDb(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function hhmm(value: unknown, fallback: string): string {
+  const text = toText(value);
+  if (text && /^\d{2}:\d{2}/.test(text)) return text.slice(0, 5);
+  return fallback;
+}
+
 function sanitizeRecord(value: unknown): JsonRecord {
   const sanitized = sanitizeJson(value);
   return sanitized && typeof sanitized === "object" && !Array.isArray(sanitized)
@@ -331,6 +341,87 @@ function privacyFlags(): JsonRecord {
     sensitiveFinancialDataExposed: false,
     adTargetingSeparated: true,
   };
+}
+
+function preferencesFromRow(
+  row: DbRow | null,
+  userId: string,
+  now: Date,
+): JsonRecord {
+  const defaults = defaultPreferences(userId, now);
+  const paymentDueEnabled = boolFromDb(
+    row?.fixed_payment_alert_enabled,
+    defaults.paymentDueEnabled === true,
+  );
+  const budgetEnabled = boolFromDb(
+    row?.budget_alert_enabled,
+    defaults.budgetWarningEnabled === true,
+  );
+  return {
+    userId,
+    inAppEnabled: boolFromDb(
+      row?.notification_in_app_enabled,
+      defaults.inAppEnabled === true,
+    ),
+    pushEnabled: boolFromDb(row?.push_enabled, defaults.pushEnabled === true),
+    emailEnabled: boolFromDb(
+      row?.notification_email_enabled,
+      defaults.emailEnabled === true,
+    ),
+    paydayEnabled: defaults.paydayEnabled === true,
+    paymentDueEnabled,
+    budgetWarningEnabled: budgetEnabled,
+    budgetExceededEnabled: budgetEnabled,
+    savingsGoalEnabled: defaults.savingsGoalEnabled === true,
+    levelUpEnabled: boolFromDb(
+      row?.growth_alert_enabled,
+      defaults.levelUpEnabled === true,
+    ),
+    communityEnabled: boolFromDb(
+      row?.community_alert_enabled,
+      defaults.communityEnabled === true,
+    ),
+    securityEnabled: defaults.securityEnabled === true,
+    contentRecommendationEnabled: false,
+    adPartnerEnabled: boolFromDb(
+      row?.marketing_opt_in,
+      defaults.adPartnerEnabled === true,
+    ),
+    quietHoursEnabled: boolFromDb(
+      row?.notification_quiet_hours_enabled,
+      true,
+    ),
+    quietHoursStart: hhmm(row?.notification_quiet_hours_start, "22:00"),
+    quietHoursEnd: hhmm(row?.notification_quiet_hours_end, "08:00"),
+    timezone: toText(row?.timezone) ?? "Asia/Seoul",
+    sensitiveFinancialTargetingConsent: false,
+    updatedAt: toIso(row?.updated_at ?? now),
+  };
+}
+
+function dedupeKeyFromInput(input: NotificationCreateInput): string | null {
+  const direct = input.metadata.idempotencyKey;
+  return typeof direct === "string" && direct.trim()
+    ? direct.trim().slice(0, 220)
+    : null;
+}
+
+async function requestHashForCreate(
+  input: NotificationCreateInput,
+): Promise<string> {
+  return hashHex(
+    JSON.stringify({
+      type: input.type,
+      title: input.title,
+      message: input.message,
+      priority: input.priority,
+      channels: [...input.channels].sort(),
+      deeplink: input.deeplink,
+      scheduledAt: input.scheduledAt,
+      expiresAt: input.expiresAt,
+      metadata: sanitizeRecord(input.metadata),
+    }),
+  );
 }
 
 function rowToNotification(row: DbRow): JsonRecord {
@@ -542,6 +633,38 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
       ) {
         return suppressed(input, runtime.now);
       }
+      const userId = userIdFromRuntime(runtime);
+      const dedupeKey = dedupeKeyFromInput(input);
+      const dedupeRequestHash = dedupeKey
+        ? await requestHashForCreate(input)
+        : null;
+      if (dedupeKey && dedupeRequestHash) {
+        const existing = await queryText(
+          repositoryQuery,
+          runtime,
+          "notifications.create.dedupeLookup",
+          `
+            select *
+            from public.notifications
+            where user_id = $1::uuid
+              and dedupe_key = $2
+              and status <> 'CANCELLED'
+            limit 1
+          `,
+          [userId, dedupeKey],
+        );
+        const row = existing.rows[0];
+        if (row) {
+          if (toText(row.dedupe_request_hash) !== dedupeRequestHash) {
+            throw new NotificationRepositoryError(
+              409,
+              "NOTIFICATION_IDEMPOTENCY_CONFLICT",
+              "동일 idempotency key에 다른 알림 요청 본문을 사용할 수 없습니다.",
+            );
+          }
+          return rowToNotification(row);
+        }
+      }
       const scheduledAt = input.scheduledAt;
       const sentAt = scheduledAt ? null : runtime.now.toISOString();
       const result = await queryText(
@@ -561,7 +684,9 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
             priority,
             scheduled_at,
             sent_at,
-            expires_at
+            expires_at,
+            dedupe_key,
+            dedupe_request_hash
           )
           values (
             $1::uuid,
@@ -575,12 +700,19 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
             $8::smallint,
             $9::timestamptz,
             $10::timestamptz,
-            $11::timestamptz
+            $11::timestamptz,
+            $12,
+            $13
           )
+          on conflict (user_id, dedupe_key)
+            where dedupe_key is not null and status <> 'CANCELLED'
+          do update
+            set updated_at = public.notifications.updated_at
+            where public.notifications.dedupe_request_hash = excluded.dedupe_request_hash
           returning *
         `,
         [
-          userIdFromRuntime(runtime),
+          userId,
           dbTypeFromApi(input.type),
           input.title,
           input.message,
@@ -591,10 +723,17 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           scheduledAt,
           sentAt,
           input.expiresAt,
+          dedupeKey,
+          dedupeRequestHash,
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Failed to create notification.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          409,
+          "NOTIFICATION_IDEMPOTENCY_CONFLICT",
+          "동일 idempotency key에 다른 알림 요청 본문을 사용할 수 없습니다.",
+        );
       return rowToNotification(row);
     },
     async markRead(notificationId, runtime) {
@@ -618,7 +757,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Notification not found.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_NOT_FOUND",
+          "알림을 찾을 수 없습니다.",
+        );
       return rowToNotification(row);
     },
     async markAllRead(runtime) {
@@ -664,7 +808,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Notification not found.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_NOT_FOUND",
+          "알림을 찾을 수 없습니다.",
+        );
       return rowToNotification(row);
     },
     async delete(notificationId, runtime) {
@@ -687,7 +836,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           runtime.now.toISOString(),
         ],
       );
-      if (!result.rows[0]) throw new Error("Notification not found.");
+      if (!result.rows[0])
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_NOT_FOUND",
+          "알림을 찾을 수 없습니다.",
+        );
       return { notificationId, status: "DELETED", ...privacyFlags() };
     },
     async unreadCount(runtime) {
@@ -759,26 +913,167 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
       };
     },
     async getPreferences(runtime) {
-      const { userId: _userId, ...safePreferences } = defaultPreferences(
-        userIdFromRuntime(runtime),
+      const userId = userIdFromRuntime(runtime);
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "notifications.getPreferences",
+        `
+          select *
+          from public.user_settings
+          where user_id = $1::uuid
+          limit 1
+        `,
+        [userId],
+      );
+      const { userId: _userId, ...safePreferences } = preferencesFromRow(
+        result.rows[0] ?? null,
+        userId,
         runtime.now,
       );
       return safePreferences;
     },
     async updatePreferences(input: NotificationPreferenceInput, runtime) {
-      const { userId: _userId, ...safePreferences } = defaultPreferences(
-        userIdFromRuntime(runtime),
+      const userId = userIdFromRuntime(runtime);
+      const current = preferencesFromRow(
+        (
+          await queryText(
+            repositoryQuery,
+            runtime,
+            "notifications.getPreferences",
+            `
+              select *
+              from public.user_settings
+              where user_id = $1::uuid
+              limit 1
+            `,
+            [userId],
+          )
+        ).rows[0] ?? null,
+        userId,
         runtime.now,
       );
-      return {
-        ...safePreferences,
-        ...sanitizeRecord(input),
+      const merged = {
+        pushEnabled:
+          input.pushEnabled === undefined
+            ? current.pushEnabled === true
+            : input.pushEnabled,
+        emailEnabled:
+          input.emailEnabled === undefined
+            ? current.emailEnabled === true
+            : input.emailEnabled,
+        inAppEnabled:
+          input.inAppEnabled === undefined
+            ? current.inAppEnabled === true
+            : input.inAppEnabled,
+        paymentDueEnabled:
+          input.paymentDueEnabled === undefined
+            ? current.paymentDueEnabled === true
+            : input.paymentDueEnabled,
+        budgetWarningEnabled:
+          input.budgetWarningEnabled === undefined
+            ? current.budgetWarningEnabled === true
+            : input.budgetWarningEnabled,
+        budgetExceededEnabled:
+          input.budgetExceededEnabled === undefined
+            ? current.budgetExceededEnabled === true
+            : input.budgetExceededEnabled,
+        levelUpEnabled:
+          input.levelUpEnabled === undefined
+            ? current.levelUpEnabled === true
+            : input.levelUpEnabled,
+        communityEnabled:
+          input.communityEnabled === undefined
+            ? current.communityEnabled === true
+            : input.communityEnabled,
         adPartnerEnabled: input.adPartnerEnabled === true,
         contentRecommendationEnabled:
           input.contentRecommendationEnabled === true,
+        quietHoursEnabled:
+          input.quietHoursStart !== undefined ||
+          input.quietHoursEnd !== undefined
+            ? true
+            : current.quietHoursEnabled === true,
+        quietHoursStart:
+          input.quietHoursStart ?? String(current.quietHoursStart ?? "22:00"),
+        quietHoursEnd:
+          input.quietHoursEnd ?? String(current.quietHoursEnd ?? "08:00"),
+        timezone: input.timezone ?? String(current.timezone ?? "Asia/Seoul"),
         sensitiveFinancialTargetingConsent: false,
-        updatedAt: runtime.now.toISOString(),
       };
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "notifications.updatePreferences",
+        `
+          insert into public.user_settings (
+            user_id,
+            notification_in_app_enabled,
+            push_enabled,
+            notification_email_enabled,
+            fixed_payment_alert_enabled,
+            budget_alert_enabled,
+            growth_alert_enabled,
+            community_alert_enabled,
+            marketing_opt_in,
+            notification_quiet_hours_enabled,
+            notification_quiet_hours_start,
+            notification_quiet_hours_end,
+            timezone
+          )
+          values (
+            $1::uuid,
+            $2::boolean,
+            $3::boolean,
+            $4::boolean,
+            $5::boolean,
+            $6::boolean,
+            $7::boolean,
+            $8::boolean,
+            $9::boolean,
+            $10::boolean,
+            $11::time,
+            $12::time,
+            $13
+          )
+          on conflict (user_id) do update
+            set notification_in_app_enabled = excluded.notification_in_app_enabled,
+                push_enabled = excluded.push_enabled,
+                notification_email_enabled = excluded.notification_email_enabled,
+                fixed_payment_alert_enabled = excluded.fixed_payment_alert_enabled,
+                budget_alert_enabled = excluded.budget_alert_enabled,
+                growth_alert_enabled = excluded.growth_alert_enabled,
+                community_alert_enabled = excluded.community_alert_enabled,
+                marketing_opt_in = excluded.marketing_opt_in,
+                notification_quiet_hours_enabled = excluded.notification_quiet_hours_enabled,
+                notification_quiet_hours_start = excluded.notification_quiet_hours_start,
+                notification_quiet_hours_end = excluded.notification_quiet_hours_end,
+                timezone = excluded.timezone,
+                updated_at = now()
+          returning *
+        `,
+        [
+          userId,
+          merged.inAppEnabled === true,
+          merged.pushEnabled === true,
+          merged.emailEnabled === true,
+          merged.paymentDueEnabled === true,
+          merged.budgetWarningEnabled === true || merged.budgetExceededEnabled === true,
+          merged.levelUpEnabled === true,
+          merged.communityEnabled === true,
+          merged.adPartnerEnabled === true,
+          merged.quietHoursEnabled === true,
+          String(merged.quietHoursStart ?? "22:00"),
+          String(merged.quietHoursEnd ?? "08:00"),
+          String(merged.timezone ?? "Asia/Seoul"),
+        ],
+      );
+      const { userId: _safeUserId, ...safePreferences } = preferencesFromRow(
+        result.rows[0] ?? null,
+        userId,
+        runtime.now,
+      );
+      return safePreferences;
     },
     async registerDevice(input: NotificationDeviceInput, runtime) {
       const pushTokenHash = await hashHex(input.pushToken);

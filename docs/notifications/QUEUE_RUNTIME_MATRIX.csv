@@ -1,0 +1,4 @@
+queue,environment,producer,consumer,maxAttempts,retryBackoff,terminalBehavior,idempotency,status
+salary-hijacking-staging-notifications-retry,staging,api/scheduler/notifications,notifications worker,5,exponential base 30s max 21600s jitter 0.2,terminal poison ack / DLQ-equivalent state,eventId/idempotencyKey,PASS_INTERNAL_DEPLOYED
+salary-hijacking-staging-notifications-operations,staging,notifications worker,notifications worker,3,Cloudflare queue retry,terminal structured result,operation event id,PASS_CONFIG
+salary-hijacking-staging-scheduler-operations,staging,scheduler,scheduler,3,Cloudflare queue retry,terminal structured result,scheduler run id,PASS_CONFIG

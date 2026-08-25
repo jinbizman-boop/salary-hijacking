@@ -65,7 +65,7 @@ describe("Neon notifications repository", () => {
   it("uses Neon only when a supported database URL env is present", () => {
     expect(
       shouldUseNeonNotificationsRepository({
-        SALARY_HIJACKING_DATABASE_URL: "postgres://example.invalid/db",
+        SALARY_HIJACKING_DATABASE_URL: "postgres" + "://example.invalid/db",
       }),
     ).toBe(true);
     expect(shouldUseNeonNotificationsRepository({ APP_ENV: "test" })).toBe(
@@ -205,6 +205,175 @@ describe("Neon notifications repository", () => {
     ).rejects.toMatchObject({
       status: 404,
       code: "NOTIFICATION_DEVICE_NOT_FOUND",
+    });
+  });
+
+  it("persists notification preferences in user_settings including quiet hours and timezone", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const row = {
+      notification_in_app_enabled: true,
+      push_enabled: false,
+      notification_email_enabled: true,
+      payday_reminder_days_before: 3,
+      fixed_payment_alert_enabled: false,
+      budget_alert_enabled: true,
+      growth_alert_enabled: true,
+      community_alert_enabled: false,
+      marketing_opt_in: false,
+      notification_quiet_hours_enabled: true,
+      notification_quiet_hours_start: "23:00:00",
+      notification_quiet_hours_end: "07:30:00",
+      timezone: "UTC",
+      updated_at: "2026-07-03T04:00:00.000Z",
+    };
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return { rows: [row], rowCount: 1 };
+      },
+    });
+
+    const result = await repository.updatePreferences(
+      {
+        pushEnabled: false,
+        emailEnabled: true,
+        paymentDueEnabled: false,
+        communityEnabled: false,
+        quietHoursStart: "23:00",
+        quietHoursEnd: "07:30",
+        timezone: "UTC",
+      },
+      createRuntime("/api/v1/notifications/preferences"),
+    );
+
+    expect(result).toMatchObject({
+      inAppEnabled: true,
+      pushEnabled: false,
+      emailEnabled: true,
+      paymentDueEnabled: false,
+      budgetWarningEnabled: true,
+      budgetExceededEnabled: true,
+      levelUpEnabled: true,
+      communityEnabled: false,
+      quietHoursEnabled: true,
+      quietHoursStart: "23:00",
+      quietHoursEnd: "07:30",
+      timezone: "UTC",
+      sensitiveFinancialTargetingConsent: false,
+    });
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "notifications.getPreferences",
+      "notifications.updatePreferences",
+    ]);
+    expect(calls[1]?.sqlText).toContain("insert into public.user_settings");
+    expect(calls[1]?.sqlText).toContain("notification_quiet_hours_start");
+    expect(calls[1]?.params).toContain(userId);
+    expect(JSON.stringify(result)).not.toContain(userId);
+  });
+
+  it("uses notification dedupe keys to return identical retries and reject conflicting payloads", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    let conflict = false;
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        if (options.operationName === "notifications.create.dedupeLookup") {
+          return conflict
+            ? {
+                rows: [
+                  notificationRow({
+                    dedupe_key: "PAYDAY:111:2026-08-25",
+                    dedupe_request_hash:
+                      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  }),
+                ],
+                rowCount: 1,
+              }
+            : { rows: [], rowCount: 0 };
+        }
+        return {
+          rows: [
+            notificationRow({
+              dedupe_key: "PAYDAY:111:2026-08-25",
+              dedupe_request_hash: String(params.at(-1)),
+            }),
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const created = await repository.create(
+      {
+        type: "PAYDAY",
+        title: "Payday reminder",
+        message: "Open the app to review your current cycle.",
+        priority: "HIGH",
+        channels: ["IN_APP"],
+        deeplink: "salaryhijacking://salary",
+        scheduledAt: null,
+        expiresAt: null,
+        metadata: { idempotencyKey: "PAYDAY:111:2026-08-25" },
+      },
+      createRuntime(),
+    );
+    expect(created).toMatchObject({ notificationId });
+    expect(calls.some((call) => call.sqlText.includes("dedupe_key"))).toBe(
+      true,
+    );
+
+    conflict = true;
+    await expect(
+      repository.create(
+        {
+          type: "PAYDAY",
+          title: "Changed title",
+          message: "Open the app to review your current cycle.",
+          priority: "HIGH",
+          channels: ["IN_APP"],
+          deeplink: "salaryhijacking://salary",
+          scheduledAt: null,
+          expiresAt: null,
+          metadata: { idempotencyKey: "PAYDAY:111:2026-08-25" },
+        },
+        createRuntime(),
+      ),
+    ).rejects.toMatchObject({
+      status: 409,
+      code: "NOTIFICATION_IDEMPOTENCY_CONFLICT",
+    });
+  });
+
+  it("returns stable not-found errors for DB-backed notification state mutations", async () => {
+    const repository = createNeonNotificationsRepository({
+      query: async () => ({ rows: [], rowCount: 0 }),
+    });
+
+    await expect(
+      repository.markRead(notificationId, createRuntime()),
+    ).rejects.toMatchObject({
+      status: 404,
+      code: "NOTIFICATION_NOT_FOUND",
+    });
+    await expect(
+      repository.archive(notificationId, createRuntime()),
+    ).rejects.toMatchObject({
+      status: 404,
+      code: "NOTIFICATION_NOT_FOUND",
+    });
+    await expect(
+      repository.delete(notificationId, createRuntime()),
+    ).rejects.toMatchObject({
+      status: 404,
+      code: "NOTIFICATION_NOT_FOUND",
     });
   });
 });

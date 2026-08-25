@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { scheduled } from "../../src/index";
+import { fetch, queue, scheduled } from "../../src/index";
 
 const currentDir = dirname(fileURLToPath(import.meta.url));
 const source = readFileSync(resolve(currentDir, "../../src/index.ts"), "utf8");
@@ -78,5 +78,64 @@ describe("Notifications Worker scheduled cron contract", () => {
     });
 
     expect(normalize(daily)).toEqual(normalize(frequent));
+  });
+
+  it("does not enable passThroughOnException in the fetch entrypoint", async () => {
+    const passThroughOnException = vi.fn();
+
+    await fetch(
+      new Request("https://notifications.test/notifications/v1/health"),
+      { APP_ENV: "production" },
+      { passThroughOnException },
+    );
+
+    expect(passThroughOnException).not.toHaveBeenCalled();
+  });
+
+  it("acks poison queue messages with terminal classification instead of retrying forever", async () => {
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+    await queue(
+      {
+        queue: "notifications-poison-test",
+        messages: [
+          {
+            id: "poison-1",
+            attempts: 3,
+            body: {
+              type: "FCM_SEND",
+              requestId: "queue-poison-message-test",
+              payload: {
+                notification: { title: "Safe title", body: "Safe body" },
+                data: {
+                  notificationId: "ntf_poison",
+                  userId: "user-poison",
+                  type: "PAYDAY",
+                  importance: "TRANSACTIONAL",
+                  targetScreen: "NOTIFICATIONS",
+                },
+              },
+            },
+            ack,
+            retry,
+          },
+        ],
+      },
+      {
+        APP_ENV: "test",
+        NOTIFICATIONS_AUDIT_TO_CONSOLE: "true",
+        ENABLE_NOTIFICATION_QUEUE_HANDLER: "true",
+      },
+      {},
+    );
+
+    expect(ack).toHaveBeenCalledTimes(1);
+    expect(retry).not.toHaveBeenCalled();
+    const serializedEvents = info.mock.calls
+      .filter(([label]) => label === "salary_hijacking_notifications_event")
+      .map(([, payload]) => String(payload));
+    expect(serializedEvents.join("\n")).toContain("TERMINAL_POISON");
   });
 });
