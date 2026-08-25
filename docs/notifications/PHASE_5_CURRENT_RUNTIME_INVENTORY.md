@@ -1,6 +1,6 @@
 # Phase 5 Current Runtime Inventory
 
-CURRENT_REPOSITORY_HEAD=6c935a523c1a30d62bcf159bfad641cd67fae7d2
+CURRENT_REPOSITORY_HEAD=d3270543b2fbb37a0cfed3397d4a5273a757f00b
 APPLICATION_RC_SOURCE_SHA=80cc5cdfb0758478791b19196e2812e7fa6d671f
 
 Staging deployments completed for API, notifications worker, and scheduler worker. The runtime E2E evidence file is `docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json` and records `PASS_CORE_RUNTIME`.
@@ -20,6 +20,7 @@ Staging deployments completed for API, notifications worker, and scheduler worke
 - `services/api/wrangler.toml`
 - `services/notifications/wrangler.toml`
 - `services/scheduler/wrangler.toml`
+- `database/migrations/0021_notification_invalid_token_cleanup.sql`
 - `database/migrations/0022_notification_runtime_contract.sql`
 - `database/migrations/0023_notification_timezone_archive_constraints.sql`
 
