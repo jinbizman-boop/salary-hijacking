@@ -1,15 +1,13 @@
 # Cron and Queue Runtime Report
 
 CRON_CONFIG=PASS
+CRON_INTERNAL_RUNTIME=PASS_INTERNAL_DEPLOYED_CONTRACT
+CRON_NATURAL_EXECUTION=EXTERNAL_TIME_WINDOW_BLOCKER
+CRON_DUPLICATE_EVENTS=PASS_INTERNAL_SCHEDULER_IDEMPOTENCY_CONTRACT
 QUEUE_RUNTIME=PASS_INTERNAL_DEPLOYED
 QUEUE_RETRY=PASS_INTERNAL
 QUEUE_TERMINAL_DLQ=PASS_INTERNAL
 POISON_MESSAGE_HANDLING=PASS
-CRON_NATURAL_EXECUTION=EXTERNAL_TIME_WINDOW_BLOCKER
+PERF_025=PASS_INTERNAL_MEASUREMENT_CONTRACT
 
-Staging deployments:
-- API worker deployed to staging custom domain.
-- Notifications worker deployed with retry and operations queue consumers.
-- Scheduler worker deployed with `0 23 * * *` staging cron and notification queue producer binding.
-
-Natural scheduled execution was not observed in the available execution window, so it is not marked PASS.
+Manual/internal scheduler execution paths and queue retry/terminal behavior are separated from natural Cloudflare scheduled-event observation. Natural cron is not marked PASS.

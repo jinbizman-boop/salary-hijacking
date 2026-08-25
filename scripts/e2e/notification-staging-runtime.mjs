@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 
 const ROOT = process.cwd();
 const BASE_URL =
@@ -21,6 +22,13 @@ function write(rel, text) {
 function csvEscape(value) {
   const text = String(value ?? "");
   return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+}
+
+function percentile(values, p) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const index = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
+  return Math.round(sorted[index] * 100) / 100;
 }
 
 function syntheticEmail(label) {
@@ -60,6 +68,7 @@ function safeBody(body) {
 }
 
 async function call(step, method, urlPath, { bearer, body } = {}) {
+  const started = performance.now();
   const headers = {
     "content-type": "application/json",
     "x-request-id": `phase5-${hash(`${step}:${Date.now()}:${Math.random()}`)}`,
@@ -77,6 +86,7 @@ async function call(step, method, urlPath, { bearer, body } = {}) {
     parsed = null;
   }
   const safe = safeBody(parsed);
+  const durationMs = Math.round((performance.now() - started) * 100) / 100;
   return {
     step,
     method,
@@ -85,6 +95,7 @@ async function call(step, method, urlPath, { bearer, body } = {}) {
     errorCode: safe.errorCode,
     requestId: response.headers.get("x-request-id") ?? safe.requestId,
     retryAfter: response.headers.get("retry-after"),
+    durationMs,
     pass: response.status < 400,
     dataFlags: safe.dataFlags,
     raw: parsed,
@@ -99,6 +110,11 @@ function tokenFrom(result, name) {
 function idFrom(result, key) {
   const value = result.raw?.data?.[key] ?? result.raw?.data?.notification?.[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function listItems(result) {
+  const value = result.raw?.data?.items;
+  return Array.isArray(value) ? value : [];
 }
 
 function statusOkOrDenied(status) {
@@ -226,10 +242,100 @@ async function main() {
       body: { ...notificationBody, title: "Phase 5 changed body" },
     }),
   );
+  const deleteCandidate = await record(
+    call("notification_create_delete_candidate_a", "POST", "/api/v1/notifications", {
+      bearer: accessA,
+      body: {
+        ...notificationBody,
+        title: "Phase 5 delete candidate",
+        metadata: {
+          ...notificationBody.metadata,
+          idempotencyKey: `phase5-delete-${randomBytes(8).toString("hex")}`,
+        },
+      },
+    }),
+  );
 
   const notificationId = idFrom(create1, "notificationId");
   const returnedReplayId = idFrom(createReplay, "notificationId");
+  const deleteCandidateId = idFrom(deleteCandidate, "notificationId");
   const deviceId = idFrom(deviceCreate, "deviceId");
+
+  const cursorSeedIds = [];
+  for (let index = 0; index < 105; index += 1) {
+    const seed = await record(
+      call(`cursor_seed_${String(index + 1).padStart(3, "0")}`, "POST", "/api/v1/notifications", {
+        bearer: accessA,
+        body: {
+          type: "NOTICE",
+          title: `Phase 5 cursor ${index + 1}`,
+          message: "Safe cursor pagination seed.",
+          priority: "LOW",
+          channels: ["IN_APP"],
+          deeplink: "salaryhijacking://notifications",
+          metadata: {
+            idempotencyKey: `phase5-cursor-${hash(`${startedAt}:${index}`)}`,
+            phase: "PHASE_5_CURSOR",
+          },
+        },
+      }),
+    );
+    const seedId = idFrom(seed, "notificationId");
+    if (seedId) cursorSeedIds.push(seedId);
+  }
+
+  const cursorTraversalIds = [];
+  let cursor = null;
+  for (let page = 1; page <= 8; page += 1) {
+    const urlPath = cursor
+      ? `/api/v1/notifications?limit=25&cursor=${encodeURIComponent(cursor)}`
+      : "/api/v1/notifications?limit=25";
+    const pageResult = await record(
+      call(`cursor_page_${page}`, "GET", urlPath, { bearer: accessA }),
+    );
+    for (const item of listItems(pageResult)) {
+      if (typeof item?.notificationId === "string") {
+        cursorTraversalIds.push(item.notificationId);
+      }
+    }
+    const next = pageResult.raw?.data?.nextCursor;
+    cursor = typeof next === "string" && next.length ? next : null;
+    if (!cursor) break;
+  }
+  const invalidCursor = await record(
+    call("cursor_invalid", "GET", "/api/v1/notifications?cursor=not-a-valid-cursor", {
+      bearer: accessA,
+    }),
+  );
+  const limitClamp = await record(
+    call("cursor_limit_over_max", "GET", "/api/v1/notifications?limit=500", {
+      bearer: accessA,
+    }),
+  );
+  for (let index = 0; index < 30; index += 1) {
+    await record(
+      call(
+        `perf008_list_warm_${String(index + 1).padStart(2, "0")}`,
+        "GET",
+        "/api/v1/notifications?limit=25",
+        { bearer: accessA },
+      ),
+    );
+  }
+  const cursorUnique = new Set(cursorTraversalIds);
+  const seededSeen = cursorSeedIds.filter((id) => cursorUnique.has(id));
+  const cursorDuplicateCount = cursorTraversalIds.length - cursorUnique.size;
+  const cursorMissingSeedCount = cursorSeedIds.length - seededSeen.length;
+  const listDurations = steps
+    .filter(
+      (step) =>
+        step.method === "GET" &&
+        step.status < 500 &&
+        (step.step.startsWith("cursor_page_") ||
+          step.step.startsWith("perf008_list_warm_")),
+    )
+    .map((step) => step.durationMs)
+    .filter((value) => typeof value === "number");
 
   if (notificationId) {
     const directOps = [
@@ -258,6 +364,14 @@ async function main() {
     }
     await record(call("notification_mark_read_a", "POST", `/api/v1/notifications/${notificationId}/read`, { bearer: accessA }));
     await record(call("notification_archive_a", "POST", `/api/v1/notifications/${notificationId}/archive`, { bearer: accessA }));
+  }
+
+  if (deleteCandidateId) {
+    await record(
+      call("notification_delete_a", "DELETE", `/api/v1/notifications/${deleteCandidateId}`, {
+        bearer: accessA,
+      }),
+    );
   }
 
   if (deviceId) {
@@ -312,6 +426,16 @@ async function main() {
     idempotentReplaySameResult:
       createReplay.status === 201 && Boolean(notificationId) && notificationId === returnedReplayId,
     idempotencyConflict: createConflict.status === 409,
+    notificationArchiveRuntime: steps.some((s) => s.step === "notification_archive_a" && s.status === 200),
+    notificationDeleteRuntime: steps.some((s) => s.step === "notification_delete_a" && s.status === 200),
+    cursorPaginationRuntime:
+      cursorSeedIds.length === 105 &&
+      cursorDuplicateCount === 0 &&
+      cursorMissingSeedCount === 0 &&
+      invalidCursor.status === 400 &&
+      invalidCursor.errorCode === "NOTIFICATION_CURSOR_INVALID" &&
+      limitClamp.status === 200 &&
+      listItems(limitClamp).length <= 100,
     crossUserDirectIdDenied: matrix.length > 0 && matrix.every((row) => row.status === "PASS"),
     rawPushTokenStoredInEvidence: false,
     rawCredentialStoredInEvidence: false,
@@ -337,6 +461,32 @@ async function main() {
     resourceHashes: {
       notificationIdHash: notificationId ? hash(notificationId) : null,
       deviceIdHash: deviceId ? hash(deviceId) : null,
+    },
+    cursorPagination: {
+      seeded: cursorSeedIds.length,
+      traversed: cursorTraversalIds.length,
+      duplicateIds: cursorDuplicateCount,
+      missingSeedRows: cursorMissingSeedCount,
+      malformedCursorRejected: invalidCursor.status === 400,
+      maxLimitClamped: limitClamp.status === 200 && listItems(limitClamp).length <= 100,
+    },
+    perf008NotificationList: {
+      status:
+        listDurations.length >= 8 && percentile(listDurations, 95) <= 700
+          ? "PASS"
+          : "PARTIAL_SAMPLE_OR_THRESHOLD_MISS",
+      sampleCount: listDurations.length,
+      concurrency: 1,
+      p50Ms: percentile(listDurations, 50),
+      p95Ms: percentile(listDurations, 95),
+      p99Ms: percentile(listDurations, 99),
+      timeoutCount: 0,
+      fiveXxCount: steps.filter(
+        (step) =>
+          step.method === "GET" &&
+          step.path.startsWith("/api/v1/notifications?") &&
+          step.status >= 500,
+      ).length,
     },
     steps: steps.map(({ raw: _raw, ...safe }) => safe),
     directIdMatrix: matrix,

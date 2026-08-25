@@ -281,16 +281,17 @@ function apiTypeFromDb(value: unknown): NotificationType {
 }
 
 function apiStatusFromDb(row: DbRow): NotificationStatus {
+  const status = String(row.status ?? "SENT").toUpperCase();
+  if (["CANCELLED", "EXPIRED", "FAILED", "SUPPRESSED"].includes(status)) {
+    return "ARCHIVED";
+  }
+  if (status === "DELETED") return "DELETED";
+
   const readStatus = String(row.read_status ?? "").toUpperCase();
   if (readStatus === "READ") return "READ";
   if (readStatus === "DELETED") return "DELETED";
 
-  const status = String(row.status ?? "SENT").toUpperCase();
   if (status === "READ" || row.read_at) return "READ";
-  if (status === "DELETED") return "DELETED";
-  if (["CANCELLED", "EXPIRED", "FAILED", "SUPPRESSED"].includes(status)) {
-    return "ARCHIVED";
-  }
   return "UNREAD";
 }
 
@@ -447,16 +448,77 @@ function rowToNotification(row: DbRow): JsonRecord {
   };
 }
 
+interface NotificationCursor {
+  readonly createdAt: string;
+  readonly notificationId: string;
+}
+
+function encodeCursor(cursor: NotificationCursor): string {
+  const encoded = btoa(JSON.stringify(cursor))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/u, "");
+  return encoded;
+}
+
+function decodeCursor(value: string): NotificationCursor {
+  try {
+    const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const parsed = JSON.parse(atob(padded)) as Partial<NotificationCursor>;
+    if (
+      typeof parsed.createdAt !== "string" ||
+      Number.isNaN(Date.parse(parsed.createdAt)) ||
+      typeof parsed.notificationId !== "string" ||
+      !uuidPattern.test(parsed.notificationId)
+    ) {
+      throw new Error("invalid cursor payload");
+    }
+    return {
+      createdAt: new Date(parsed.createdAt).toISOString(),
+      notificationId: parsed.notificationId,
+    };
+  } catch {
+    throw new NotificationRepositoryError(
+      400,
+      "NOTIFICATION_CURSOR_INVALID",
+      "알림 목록 cursor가 올바르지 않습니다.",
+    );
+  }
+}
+
 function listResult<TItem extends JsonRecord>(
   rows: readonly DbRow[],
   page: PaginationInput,
   mapper: (row: DbRow) => TItem,
 ): NotificationListResult<TItem> {
+  const limitedRows = rows.slice(0, page.limit);
+  const mapped = limitedRows.map(mapper);
+  const last = mapped.at(-1);
+  const nextCursor =
+    rows.length > page.limit &&
+    typeof last?.createdAt === "string" &&
+    typeof last.notificationId === "string"
+      ? encodeCursor({
+          createdAt: last.createdAt,
+          notificationId: last.notificationId,
+        })
+      : null;
   return {
-    items: rows.map(mapper),
+    items: mapped,
     page: page.page,
     pageSize: page.pageSize,
-    total: rows.length ? toNumber(rows[0]?.total_count) : 0,
+    total:
+      rows.length && rows[0]?.total_count !== undefined
+        ? toNumber(rows[0]?.total_count)
+        : mapped.length,
+    cursor: page.cursor ?? null,
+    nextCursor,
+    hasMore: nextCursor !== null,
+    limit: page.limit,
   };
 }
 
@@ -606,12 +668,31 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
     name: "neon-notifications-repository",
     async list(input, page, runtime) {
       const where = listWhere(input, runtime);
-      const params = [...where.params, page.limit, page.offset];
+      const cursor = page.cursor ? decodeCursor(page.cursor) : null;
+      const useKeyset = page.mode === "cursor" || cursor !== null;
+      const cursorSql = cursor
+        ? ` and (n.created_at, n.notification_id) < ($${where.params.length + 1}::timestamptz, $${where.params.length + 2}::uuid)`
+        : "";
+      const params = useKeyset
+        ? [
+            ...where.params,
+            ...(cursor ? [cursor.createdAt, cursor.notificationId] : []),
+            page.limit + 1,
+          ]
+        : [...where.params, page.limit + 1, page.offset];
       const result = await queryText(
         repositoryQuery,
         runtime,
         "notifications.list",
+        useKeyset
+          ? `
+          select n.*
+          from public.notifications n
+          where ${where.sql}${cursorSql}
+          order by n.created_at desc, n.notification_id desc
+          limit $${params.length}::int
         `
+          : `
           select n.*, count(*) over() as total_count
           from public.notifications n
           where ${where.sql}
@@ -796,6 +877,11 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           update public.notifications
           set status = 'CANCELLED',
               cancelled_at = coalesce(cancelled_at, $3::timestamptz),
+              read_status = case
+                when read_status = 'DELETED' then read_status
+                when read_at is not null then 'READ'
+                else read_status
+              end,
               updated_at = now()
           where notification_id = $1::uuid
             and user_id = $2::uuid
@@ -823,8 +909,9 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         "notifications.delete",
         `
           update public.notifications
-          set status = 'CANCELLED',
-              cancelled_at = coalesce(cancelled_at, $3::timestamptz),
+          set status = 'DELETED',
+              read_status = 'DELETED',
+              deleted_at = coalesce(deleted_at, $3::timestamptz),
               updated_at = now()
           where notification_id = $1::uuid
             and user_id = $2::uuid

@@ -1,0 +1,18 @@
+{
+  "status": "PASS_INTERNAL_MEASUREMENT_CONTRACT",
+  "count": 10000,
+  "queueLagP50Ms": 20,
+  "queueLagP95Ms": 34,
+  "queueLagP99Ms": 35,
+  "queueLagMaxMs": 35,
+  "processingP95Ms": 20,
+  "endToEndP95Ms": 48,
+  "retryCount": 0,
+  "terminalCount": 0,
+  "thresholdContract": {
+    "warningP95Ms": 30000,
+    "criticalP95Ms": 60000
+  },
+  "naturalCloudflareQueueRuntime": "EXTERNAL_TIME_WINDOW_BLOCKER",
+  "rawPayloadStored": false
+}

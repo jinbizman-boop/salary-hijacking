@@ -75,6 +75,8 @@ export interface PaginationInput {
   readonly pageSize: number;
   readonly offset: number;
   readonly limit: number;
+  readonly cursor?: string | null;
+  readonly mode?: "cursor" | "offset";
 }
 
 export interface NotificationListResult<TItem extends JsonRecord = JsonRecord> {
@@ -82,6 +84,10 @@ export interface NotificationListResult<TItem extends JsonRecord = JsonRecord> {
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
+  readonly cursor?: string | null;
+  readonly nextCursor?: string | null;
+  readonly hasMore?: boolean;
+  readonly limit?: number;
 }
 
 export interface NotificationCreateInput {
@@ -789,12 +795,26 @@ function pagination(url: URL): PaginationInput {
     Math.min(
       MAX_PAGE_SIZE,
       Number.parseInt(
-        url.searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE),
+        url.searchParams.get("limit") ??
+          url.searchParams.get("pageSize") ??
+          String(DEFAULT_PAGE_SIZE),
         10,
       ) || DEFAULT_PAGE_SIZE,
     ),
   );
-  return { page, pageSize, offset: (page - 1) * pageSize, limit: pageSize };
+  const cursor = url.searchParams.get("cursor");
+  const cursorMode =
+    Boolean(cursor && cursor.trim()) ||
+    url.searchParams.has("limit") ||
+    (!url.searchParams.has("page") && !url.searchParams.has("pageSize"));
+  return {
+    page,
+    pageSize,
+    offset: (page - 1) * pageSize,
+    limit: pageSize,
+    cursor: cursor && cursor.trim() ? cursor.trim() : null,
+    mode: cursorMode ? "cursor" : "offset",
+  };
 }
 
 function queryRecord(url: URL): JsonRecord {
@@ -829,6 +849,10 @@ function listResult<TItem extends JsonRecord>(
     page: page.page,
     pageSize: page.pageSize,
     total: items.length,
+    cursor: page.cursor ?? null,
+    nextCursor: null,
+    hasMore: page.offset + page.limit < items.length,
+    limit: page.limit,
   };
 }
 

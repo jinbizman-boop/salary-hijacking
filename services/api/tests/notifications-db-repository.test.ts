@@ -8,6 +8,13 @@ import type { NotificationsRouteRuntime } from "../src/routes/notifications.rout
 const userId = "11111111-1111-4111-8111-111111111111";
 const notificationId = "22222222-2222-4222-8222-222222222222";
 
+function notificationCursor(createdAt: string, id: string): string {
+  return Buffer.from(
+    JSON.stringify({ createdAt, notificationId: id }),
+    "utf8",
+  ).toString("base64url");
+}
+
 function createRuntime(
   path = "/api/v1/notifications",
 ): NotificationsRouteRuntime<unknown> {
@@ -146,6 +153,92 @@ describe("Neon notifications repository", () => {
       isMandatory: true,
       priority: "URGENT",
       type: "SECURITY",
+    });
+  });
+
+  it("uses stable keyset cursor pagination without leaking raw cursor fields", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const rows = Array.from({ length: 4 }, (_, index) =>
+      notificationRow({
+        notification_id: `${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}-${index + 1}${index + 1}${index + 1}${index + 1}-4${index + 1}${index + 1}${index + 1}-8${index + 1}${index + 1}${index + 1}-${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}${index + 1}`,
+        created_at: `2026-07-03T04:00:0${3 - index}.000Z`,
+        total_count: "4",
+      }),
+    );
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return { rows, rowCount: rows.length };
+      },
+    });
+
+    const result = await repository.list(
+      { status: "UNREAD" },
+      { page: 1, pageSize: 3, offset: 0, limit: 3, mode: "cursor" },
+      createRuntime(),
+    );
+
+    expect(result.items).toHaveLength(3);
+    expect(result.hasMore).toBe(true);
+    expect(result.nextCursor).toEqual(expect.any(String));
+    expect(result.nextCursor).not.toContain("2026-07-03");
+    expect(result.nextCursor).not.toContain(String(result.items[2]?.notificationId));
+    expect(calls[0]?.sqlText).not.toContain("offset");
+    expect(calls[0]?.params.at(-1)).toBe(4);
+  });
+
+  it("applies cursor tuple predicates and rejects malformed cursors", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return { rows: [notificationRow()], rowCount: 1 };
+      },
+    });
+
+    await repository.list(
+      { status: "UNREAD" },
+      {
+        page: 1,
+        pageSize: 20,
+        offset: 0,
+        limit: 20,
+        cursor: notificationCursor(
+          "2026-07-03T04:00:00.000Z",
+          "33333333-3333-4333-8333-333333333333",
+        ),
+      },
+      createRuntime(),
+    );
+
+    expect(calls[0]?.sqlText).toContain("(n.created_at, n.notification_id) <");
+    expect(calls[0]?.sqlText).not.toContain("offset");
+    expect(calls[0]?.params).toContain("2026-07-03T04:00:00.000Z");
+    expect(calls[0]?.params).toContain("33333333-3333-4333-8333-333333333333");
+
+    await expect(
+      repository.list(
+        { status: "UNREAD" },
+        {
+          page: 1,
+          pageSize: 20,
+          offset: 0,
+          limit: 20,
+          cursor: "not-a-valid-cursor",
+        },
+        createRuntime(),
+      ),
+    ).rejects.toMatchObject({
+      status: 400,
+      code: "NOTIFICATION_CURSOR_INVALID",
     });
   });
 
@@ -375,5 +468,61 @@ describe("Neon notifications repository", () => {
       status: 404,
       code: "NOTIFICATION_NOT_FOUND",
     });
+  });
+
+  it("archives read DB notifications without violating status/read_status constraints", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            notificationRow({
+              status: "CANCELLED",
+              read_status: "READ",
+              read_at: "2026-07-03T04:00:00.000Z",
+              cancelled_at: "2026-07-03T04:01:00.000Z",
+            }),
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.archive(notificationId, createRuntime());
+
+    expect(result).toMatchObject({ notificationId, status: "ARCHIVED" });
+    expect(calls[0]?.operationName).toBe("notifications.archive");
+    expect(calls[0]?.sqlText).toContain("status = 'CANCELLED'");
+    expect(calls[0]?.sqlText).toContain("read_status = case");
+    expect(calls[0]?.sqlText).toContain("when read_at is not null then 'READ'");
+    expect(calls[0]?.sqlText).toContain("cancelled_at = coalesce");
+  });
+
+  it("deletes DB notifications with the canonical deleted status/read_status pair", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return { rows: [{ notification_id: notificationId }], rowCount: 1 };
+      },
+    });
+
+    const result = await repository.delete(notificationId, createRuntime());
+
+    expect(result).toMatchObject({ notificationId, status: "DELETED" });
+    expect(calls[0]?.operationName).toBe("notifications.delete");
+    expect(calls[0]?.sqlText).toContain("status = 'DELETED'");
+    expect(calls[0]?.sqlText).toContain("read_status = 'DELETED'");
+    expect(calls[0]?.sqlText).toContain("deleted_at = coalesce");
+    expect(calls[0]?.sqlText).not.toContain("cancelled_at = coalesce");
   });
 });

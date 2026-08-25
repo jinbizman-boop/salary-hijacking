@@ -1,25 +1,31 @@
 # Phase 5 Closure Report
 
 PHASE_5_STATUS=PARTIAL
-PHASE_5_INTERNAL_STATUS=PARTIAL_CURSOR_CRON_PERF_AND_PROVIDER_GAPS
-PHASE_5_EXTERNAL_STATUS=BLOCKED_FOR_NATURAL_CRON_WINDOW_FCM_DEVICE_AND_LOAD_CAPABILITY
+PHASE_5_INTERNAL_STATUS=PARTIAL_PRODUCER_RUNTIME_AND_PERF008_GAPS
+PHASE_5_EXTERNAL_STATUS=BLOCKED_NATURAL_CRON_FCM_DEVICE_AND_PHYSICAL_PUSH_RUNTIME
 
 Closed in this pass:
-- Staging API notification preference persistence.
-- Notification event create idempotency and same-key different-body conflict.
-- Cross-user notification/device direct-ID denial through public staging API.
-- Worker poison message terminal handling.
-- Retry queue policy environment toggle separation.
-- Constraint drift: user_settings timezone support and read+archive notification lifecycle.
+- NOTI-001 cursor pagination duplicate/missing runtime drift closed.
+- Owner archive/delete notification lifecycle 500 closed with migration 0024.
+- 100K internal generation/idempotency harness executed.
+- 1M deterministic scheduler batch engine model executed and truthfully classified.
+- Queue lag measurement contract generated with aggregate p50/p95/p99.
 
-Not closed:
-- Cursor pagination drift for `GET /api/v1/notifications`.
-- Natural cron execution evidence.
-- Real FCM valid-token runtime and physical mobile push behavior.
-- PERF-017 100K and PERF-018 1M acceptance.
-- Phase 6-owned Growth/Community producer runtime.
+Remaining internal blockers:
+- PERF-008 failed the staging p95 <=700ms target; measured p95=924.16ms.
+- Budget threshold producer runtime from financial mutation to notification event is still pending.
+- Saving due/goal producer runtime is still pending.
+- Growth/Community actual producers remain Phase 6-owned.
 
-D-016 remains PARTIAL because broader Cloudflare operations still include natural cron/log/R2/ops evidence outside this closure.
+Remaining external blockers:
+- Natural Cloudflare cron observation window.
+- Valid FCM device/provider runtime.
+- Physical Android push runtime under D-026/PH13.
 
+PHASE_6_ENTRY_READINESS=NOT_READY
+D-013=FAIL
+D-016=PARTIAL
+D-017=PASS
+D-026=FAIL
 PROJECT_COMPLETION_100=false
 COMMERCIAL_LAUNCH_READY=false
