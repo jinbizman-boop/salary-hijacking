@@ -1,0 +1,102 @@
+{
+  "timestamp": "2026-08-26T14:43:02.552Z",
+  "canonicalRepository": "C:/Users/PC/Desktop/salary-hijacking-platform",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "currentRepositoryHead": "32c14766de791212862d6567b835e4a245ed6495",
+  "remoteHead": "32c14766de791212862d6567b835e4a245ed6495",
+  "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "phase6Status": "PARTIAL",
+  "phase6InternalStatus": "PARTIAL_STAGING_RUNTIME_LOAD_AND_CROSS_USER_PENDING",
+  "phase6ExternalStatus": "BLOCKED_FOR_R2_STAGING_AND_DEVICE_PROVIDER_TRACKS_WHERE_APPLICABLE",
+  "status": {
+    "growthE2E": "PARTIAL_LOCAL_CONTRACT_STAGING_PENDING",
+    "communityE2E": "PARTIAL_LOCAL_CONTRACT_STAGING_PENDING",
+    "writeE2E": "PARTIAL_LOCAL_CONTRACT_R2_STAGING_PENDING",
+    "responsibleGamification": "PARTIAL_LOCAL_CONTRACT",
+    "uploadSecurity": "PARTIAL_CONTRACT_TESTED_R2_STAGING_PENDING",
+    "communityTns": "PARTIAL_LOCAL_CONTRACT_STAGING_PENDING",
+    "growthNotificationProducer": "PASS_LOCAL_CONTRACT",
+    "communityNotificationProducer": "PASS_LOCAL_CONTRACT",
+    "notificationIntegration": "PASS_LOCAL_CONTRACT_STAGING_PENDING",
+    "communityCursorPagination": "PASS_LOCAL_CONTRACT_STAGING_PENDING",
+    "growthXpConcurrency": "UNVERIFIED_STAGING_RUNTIME",
+    "communityCrossUserLeak": "UNVERIFIED_STAGING_RUNTIME",
+    "writeCrossUserLeak": "UNVERIFIED_STAGING_RUNTIME",
+    "uploadR2Runtime": "UNVERIFIED_STAGING_RUNTIME",
+    "perf007": "UNVERIFIED_STAGING_LOAD_NOT_RUN",
+    "phase7EntryReadiness": "NOT_READY",
+    "d013": "FAIL",
+    "d016": "PARTIAL",
+    "d017": "PASS",
+    "d026": "FAIL",
+    "projectCompletion100": false,
+    "commercialLaunchReady": false
+  },
+  "requirementSummary": {
+    "PARTIAL": 28,
+    "PASS": 1,
+    "UNVERIFIED": 1
+  },
+  "focusedTests": {
+    "command": "corepack pnpm --filter @salary-hijacking/api exec vitest run tests/mobile-community-contract.test.ts tests/phase6-growth-community-notification-producers.test.ts tests/community-db-repository.test.ts tests/growth-db-repository.test.ts tests/uploads-db-repository.test.ts tests/mobile-growth-contract.test.ts tests/mobile-uploads-contract.test.ts tests/admin-growth-content-contract.test.ts tests/admin-growth-content-db-repository.test.ts tests/admin-rbac-audit-moderation-routes.test.ts",
+    "files": [
+      "services/api/tests/growth-db-repository.test.ts",
+      "services/api/tests/mobile-growth-contract.test.ts",
+      "services/api/tests/community-db-repository.test.ts",
+      "services/api/tests/mobile-community-contract.test.ts",
+      "services/api/tests/phase6-growth-community-notification-producers.test.ts",
+      "services/api/tests/uploads-db-repository.test.ts",
+      "services/api/tests/mobile-uploads-contract.test.ts",
+      "services/api/tests/admin-growth-content-contract.test.ts",
+      "services/api/tests/admin-growth-content-db-repository.test.ts",
+      "services/api/tests/admin-rbac-audit-moderation-routes.test.ts"
+    ],
+    "result": "PASS",
+    "testFiles": 10,
+    "tests": 48
+  },
+  "noSecretEvidence": true,
+  "remainingInternalBlockers": [
+    "full staging Growth E2E",
+    "full staging Community direct-ID/TNS matrix",
+    "full staging Write/R2 upload lifecycle",
+    "Growth XP concurrency/idempotency staging runtime",
+    "PERF-007 staging load evidence"
+  ],
+  "remainingExternalBlockers": [
+    "R2 staging/provider runtime configuration if not available to the current shell",
+    "physical Android/device runtime remains D-026/later phase",
+    "Phase 3 OAuth/MFA/email external tracks preserved",
+    "Phase 5 natural cron/FCM external tracks preserved"
+  ],
+  "outputFiles": [
+    "docs/growth-community/PHASE_6_CURRENT_IMPLEMENTATION_INVENTORY.md",
+    "docs/growth-community/RESPONSIBLE_GAMIFICATION_AUDIT.md",
+    "docs/growth-community/GROWTH_E2E_REPORT.md",
+    "docs/growth-community/COMMUNITY_E2E_REPORT.md",
+    "docs/growth-community/WRITE_E2E_REPORT.md",
+    "docs/growth-community/UPLOAD_SECURITY_REPORT.md",
+    "docs/growth-community/COMMUNITY_TNS_REPORT.md",
+    "docs/growth-community/PHASE_6_REQUIREMENT_MATRIX.csv",
+    "docs/growth-community/PHASE_6_NOTIFICATION_INTEGRATION_MATRIX.csv",
+    "docs/growth-community/PHASE_6_CROSS_USER_RUNTIME_MATRIX.csv",
+    "docs/growth-community/PHASE_6_PERFORMANCE_REPORT.md",
+    "docs/growth-community/PHASE_6_GROWTH_COMMUNITY_WRITE_COMPLETION.json",
+    "docs/growth-community/PHASE_6_CLOSURE_REPORT.md"
+  ],
+  "outputSha256": {
+    "docs/growth-community/PHASE_6_CURRENT_IMPLEMENTATION_INVENTORY.md": "782ADBC58B712030D47036B2CB4BFEB6CC95DFDA2A3AD32F2CF2B41DDD7F0525",
+    "docs/growth-community/RESPONSIBLE_GAMIFICATION_AUDIT.md": "BBEE9A3C51FFA779104A86A39F2B07B4FFA47846FE43B518B302BBB3BA43F35A",
+    "docs/growth-community/GROWTH_E2E_REPORT.md": "AD5B8A3B8B17A3647D783205C7ECDEF03A393EB92B5A94CCA95B0D6F7D66D32A",
+    "docs/growth-community/COMMUNITY_E2E_REPORT.md": "6AA78B6E05EE0BB4D42C364C8B5F236DBF74E4915250BCC4BF94863F67C2AC1F",
+    "docs/growth-community/WRITE_E2E_REPORT.md": "C9A5F315AAB8DDEF760D4E94623F91D0250438198D0B7D7DADB90AB57F272B5D",
+    "docs/growth-community/UPLOAD_SECURITY_REPORT.md": "60DD2DDDFD2A6E51CFB59B4EC6D054587C8FC44A28E3790FC5EDAB4C373CD37E",
+    "docs/growth-community/COMMUNITY_TNS_REPORT.md": "FEABE6F95104AEA0C79D36950117E1C07FFC6E2E13F563C02848A8A43134076D",
+    "docs/growth-community/PHASE_6_REQUIREMENT_MATRIX.csv": "ED518B104A3D8EA9E141F02C3F860B3B9D282B26A3A1A8DF65F3F180E9527803",
+    "docs/growth-community/PHASE_6_NOTIFICATION_INTEGRATION_MATRIX.csv": "6B21D59351D0F44119D7E2B4D5F96180CD5A5287CAD0D67554050959EF0921CC",
+    "docs/growth-community/PHASE_6_CROSS_USER_RUNTIME_MATRIX.csv": "CF4201D0F2A8967DB90EF03268DBDC81749A943E02308030FE57BD1FAA975E6D",
+    "docs/growth-community/PHASE_6_PERFORMANCE_REPORT.md": "3424B6C06E3C3423EEE069B0552AF255638F3027895534A9D8F23C6569D69F62",
+    "docs/growth-community/PHASE_6_GROWTH_COMMUNITY_WRITE_COMPLETION.json": "D455F0A9EBA2F99B5BBFEFCD3D7746E214A027FF9B7900D713BD62E0D9014990",
+    "docs/growth-community/PHASE_6_CLOSURE_REPORT.md": "0295DCBC49AF0099285387A252191FC2F63E5805F3AB6FCB8849964BE3641583"
+  }
+}

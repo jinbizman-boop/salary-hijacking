@@ -114,6 +114,52 @@ describe("mobile community API contract", () => {
     });
   });
 
+  it("passes cursor and limit query parameters to the community list repository", async () => {
+    const seenPages: unknown[] = [];
+    const repository = {
+      ...createMobileCommunityRepository(),
+      listPosts: async (_input: unknown, page: unknown) => {
+        seenPages.push(page);
+        return {
+          items: [],
+          page: 1,
+          pageSize: 5,
+          total: 0,
+          cursor: "cursor-a",
+          nextCursor: null,
+          hasMore: false,
+          limit: 5,
+        };
+      },
+    } as unknown as CommunityRepository<unknown>;
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      communityRoutesOptions: {
+        repository,
+      },
+    });
+
+    const response = await app.fetch(
+      new Request(
+        "https://api.test/api/v1/community/posts?cursor=cursor-a&limit=5",
+        { headers: authHeaders },
+      ),
+      { APP_ENV: "development" },
+      context,
+    );
+
+    expect(response.status).toBe(200);
+    expect(seenPages).toEqual([
+      expect.objectContaining({
+        cursor: "cursor-a",
+        limit: 5,
+        mode: "cursor",
+      }),
+    ]);
+  });
+
   it("routes mobile bookmark and share actions through the community repository", async () => {
     const setPostBookmark = vi.fn().mockResolvedValue({
       postId: "22222222-2222-4222-8222-222222222222",
@@ -261,6 +307,117 @@ describe("mobile community API contract", () => {
       authHeaders["x-authenticated-user-id"],
     );
     expect(responsePayload).not.toMatch(/salaryAmount|accountNumber|token/i);
+  });
+
+  it("emits community comment events with the post owner recipient without exposing owner IDs", async () => {
+    const events: Array<Record<string, unknown>> = [];
+    const repository = {
+      ...createMobileCommunityRepository(),
+      createComment: async () => ({
+        commentId: "33333333-3333-4333-8333-333333333333",
+        postId: "22222222-2222-4222-8222-222222222222",
+        authorMasked: "익명 사용자",
+        anonymous: true,
+        content: "댓글 알림 수신자 테스트",
+        status: "VISIBLE",
+        serverAuthority: true,
+        financialRawDataExposed: false,
+        rawPersonalDataExposed: false,
+        adsFinancialTargetingUsed: false,
+      }),
+      notificationTargetFor: async () => ({
+        recipientUserId: "99999999-9999-4999-8999-999999999999",
+        parentPostId: "22222222-2222-4222-8222-222222222222",
+      }),
+    } as unknown as CommunityRepository<unknown>;
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      communityRoutesOptions: {
+        repository,
+        onCommunityEvent: async (event) => {
+          events.push(event as unknown as Record<string, unknown>);
+        },
+      },
+    });
+
+    const response = await app.fetch(
+      new Request(
+        "https://api.test/api/v1/community/posts/22222222-2222-4222-8222-222222222222/comments",
+        {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            content: "댓글 알림 수신자 테스트",
+            anonymous: true,
+          }),
+        },
+      ),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = await response.clone().json();
+
+    expect(response.status).toBe(201);
+    expect(JSON.stringify(body)).not.toContain(
+      "99999999-9999-4999-8999-999999999999",
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        event: "community_comment_created",
+        recipientUserId: "99999999-9999-4999-8999-999999999999",
+        parentPostId: "22222222-2222-4222-8222-222222222222",
+      }),
+    );
+  });
+
+  it("keeps community writes successful when notification target enrichment fails", async () => {
+    const repository = {
+      ...createMobileCommunityRepository(),
+      createComment: async () => ({
+        commentId: "33333333-3333-4333-8333-333333333333",
+        postId: "22222222-2222-4222-8222-222222222222",
+        authorMasked: "익명 사용자",
+        anonymous: true,
+        content: "댓글 알림 실패 격리 테스트",
+        status: "VISIBLE",
+        serverAuthority: true,
+        financialRawDataExposed: false,
+        rawPersonalDataExposed: false,
+        adsFinancialTargetingUsed: false,
+      }),
+      notificationTargetFor: async () => {
+        throw new Error("target lookup unavailable");
+      },
+    } as unknown as CommunityRepository<unknown>;
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      communityRoutesOptions: {
+        repository,
+        onCommunityEvent: async () => undefined,
+      },
+    });
+
+    const response = await app.fetch(
+      new Request(
+        "https://api.test/api/v1/community/posts/22222222-2222-4222-8222-222222222222/comments",
+        {
+          method: "POST",
+          headers: authHeaders,
+          body: JSON.stringify({
+            content: "댓글 알림 실패 격리 테스트",
+            anonymous: true,
+          }),
+        },
+      ),
+      { APP_ENV: "development" },
+      context,
+    );
+
+    expect(response.status).toBe(201);
   });
 
   it("routes mobile comment lifecycle actions through the community repository without leaking owner identifiers", async () => {

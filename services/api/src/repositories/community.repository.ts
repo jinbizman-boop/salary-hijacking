@@ -340,17 +340,139 @@ function rowToReport(row: DbRow): JsonRecord {
   };
 }
 
+interface PostCursor {
+  readonly pinnedAt: string | null;
+  readonly publishedAt: string;
+  readonly postId: string;
+}
+
+interface CommentCursor {
+  readonly publishedAt: string;
+  readonly commentId: string;
+}
+
+function encodeCursor(value: PostCursor | CommentCursor): string {
+  return btoa(JSON.stringify(value))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/u, "");
+}
+
+function decodeCursor(value: string): JsonRecord {
+  try {
+    const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const parsed = JSON.parse(atob(padded)) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      throw new Error("invalid cursor");
+    return parsed as JsonRecord;
+  } catch {
+    throw new Error("COMMUNITY_CURSOR_INVALID");
+  }
+}
+
+function decodePostCursor(value: string): PostCursor {
+  const parsed = decodeCursor(value);
+  const pinnedAt =
+    typeof parsed.pinnedAt === "string" &&
+    !Number.isNaN(Date.parse(parsed.pinnedAt))
+      ? new Date(parsed.pinnedAt).toISOString()
+      : null;
+  if (
+    typeof parsed.publishedAt !== "string" ||
+    Number.isNaN(Date.parse(parsed.publishedAt)) ||
+    typeof parsed.postId !== "string" ||
+    !uuidPattern.test(parsed.postId)
+  )
+    throw new Error("COMMUNITY_CURSOR_INVALID");
+  return {
+    pinnedAt,
+    publishedAt: new Date(parsed.publishedAt).toISOString(),
+    postId: parsed.postId,
+  };
+}
+
+function decodeCommentCursor(value: string): CommentCursor {
+  const parsed = decodeCursor(value);
+  if (
+    typeof parsed.publishedAt !== "string" ||
+    Number.isNaN(Date.parse(parsed.publishedAt)) ||
+    typeof parsed.commentId !== "string" ||
+    !uuidPattern.test(parsed.commentId)
+  )
+    throw new Error("COMMUNITY_CURSOR_INVALID");
+  return {
+    publishedAt: new Date(parsed.publishedAt).toISOString(),
+    commentId: parsed.commentId,
+  };
+}
+
 function listResult<TItem extends JsonRecord>(
   rows: readonly DbRow[],
   page: PaginationInput,
   mapper: (row: DbRow) => TItem,
 ): CommunityListResult<TItem> {
+  const limitedRows = rows.slice(0, page.limit);
+  const mapped = limitedRows.map(mapper);
   return {
-    items: rows.map(mapper),
+    items: mapped,
     page: page.page,
     pageSize: page.pageSize,
-    total: rows.length ? toNumber(rows[0]?.total_count) : 0,
+    total:
+      rows.length && rows[0]?.total_count !== undefined
+        ? toNumber(rows[0]?.total_count)
+        : mapped.length,
+    cursor: page.cursor ?? null,
+    hasMore: rows.length > page.limit,
+    limit: page.limit,
   };
+}
+
+function postListResult<TItem extends JsonRecord>(
+  rows: readonly DbRow[],
+  page: PaginationInput,
+  mapper: (row: DbRow) => TItem,
+): CommunityListResult<TItem> {
+  const base = listResult(rows, page, mapper);
+  const last = rows.slice(0, page.limit).at(-1);
+  return {
+    ...base,
+    nextCursor:
+      rows.length > page.limit && last
+        ? encodeCursor({
+            pinnedAt: toIsoOrNull(last.pinned_at),
+            publishedAt: toIso(last.published_at ?? last.created_at),
+            postId: String(last.post_id ?? ""),
+          })
+        : null,
+  };
+}
+
+function commentListResult<TItem extends JsonRecord>(
+  rows: readonly DbRow[],
+  page: PaginationInput,
+  mapper: (row: DbRow) => TItem,
+): CommunityListResult<TItem> {
+  const base = listResult(rows, page, mapper);
+  const last = rows.slice(0, page.limit).at(-1);
+  return {
+    ...base,
+    nextCursor:
+      rows.length > page.limit && last
+        ? encodeCursor({
+            publishedAt: toIso(last.published_at ?? last.created_at),
+            commentId: String(last.comment_id ?? ""),
+          })
+        : null,
+  };
+}
+
+function toIsoOrNull(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  return toIso(value);
 }
 
 function queryText<TEnv>(
@@ -437,12 +559,41 @@ export function createNeonCommunityRepository<TEnv = unknown>(
           `(p.title ilike $${params.length} or p.body ilike $${params.length})`,
         );
       }
-      params.push(page.limit, page.offset);
+      const cursor = page.cursor ? decodePostCursor(page.cursor) : null;
+      if (cursor) {
+        params.push(cursor.pinnedAt, cursor.publishedAt, cursor.postId);
+        const pinnedParam = params.length - 2;
+        const publishedParam = params.length - 1;
+        const postParam = params.length;
+        clauses.push(`(
+          ($${pinnedParam}::timestamptz is null and p.pinned_at is null and (p.published_at, p.post_id) < ($${publishedParam}::timestamptz, $${postParam}::uuid))
+          or
+          ($${pinnedParam}::timestamptz is not null and (
+            p.pinned_at is null
+            or p.pinned_at < $${pinnedParam}::timestamptz
+            or (p.pinned_at = $${pinnedParam}::timestamptz and (p.published_at, p.post_id) < ($${publishedParam}::timestamptz, $${postParam}::uuid))
+          ))
+        )`);
+      }
+      const useKeyset = page.mode === "cursor" || cursor !== null;
+      params.push(page.limit + 1);
+      if (!useKeyset) params.push(page.offset);
       const result = await queryText(
         repositoryQuery,
         runtime,
         "community.listPosts",
+        useKeyset
+          ? `
+          select
+            p.*,
+            b.type as board_type
+          from public.community_posts p
+          join public.community_boards b on b.board_id = p.board_id
+          where ${clauses.join(" and ")}
+          order by p.pinned_at desc nulls last, p.published_at desc, p.post_id desc
+          limit $${params.length}::int
         `
+          : `
           select
             p.*,
             b.type as board_type,
@@ -456,7 +607,7 @@ export function createNeonCommunityRepository<TEnv = unknown>(
         `,
         params,
       );
-      return listResult(result.rows, page, rowToPost);
+      return postListResult(result.rows, page, rowToPost);
     },
     async getPost(postId, runtime) {
       const result = await queryText(
@@ -849,22 +1000,41 @@ export function createNeonCommunityRepository<TEnv = unknown>(
       };
     },
     async listComments(postId, page, runtime) {
+      const params: DbValue[] = [assertUuid(postId, "postId")];
+      const clauses = ["post_id = $1::uuid", "status <> 'deleted'"];
+      const cursor = page.cursor ? decodeCommentCursor(page.cursor) : null;
+      if (cursor) {
+        params.push(cursor.publishedAt, cursor.commentId);
+        clauses.push(
+          `(published_at, comment_id) > ($${params.length - 1}::timestamptz, $${params.length}::uuid)`,
+        );
+      }
+      const useKeyset = page.mode === "cursor" || cursor !== null;
+      params.push(page.limit + 1);
+      if (!useKeyset) params.push(page.offset);
       const result = await queryText(
         repositoryQuery,
         runtime,
         "community.listComments",
+        useKeyset
+          ? `
+          select *
+          from public.community_comments
+          where ${clauses.join(" and ")}
+          order by published_at asc, comment_id asc
+          limit $${params.length}::int
         `
+          : `
           select *, count(*) over() as total_count
           from public.community_comments
-          where post_id = $1::uuid
-            and status <> 'deleted'
+          where ${clauses.join(" and ")}
           order by published_at asc, comment_id asc
-          limit $2::int
-          offset $3::int
+          limit $${params.length - 1}::int
+          offset $${params.length}::int
         `,
-        [assertUuid(postId, "postId"), page.limit, page.offset],
+        params,
       );
-      return listResult(result.rows, page, rowToComment);
+      return commentListResult(result.rows, page, rowToComment);
     },
     async createComment(postId, input, runtime) {
       const userId = requireUserId(runtime);
@@ -1075,6 +1245,67 @@ export function createNeonCommunityRepository<TEnv = unknown>(
       const row = result.rows[0];
       if (!row) throw new Error("Failed to create community report.");
       return rowToReport(row);
+    },
+    async notificationTargetFor(event, runtime) {
+      const targetId = toText(event.targetId);
+      if (!targetId) return null;
+      if (
+        event.event === "community_comment_created" ||
+        event.event === "community_comment_reacted"
+      ) {
+        const result = await queryText(
+          repositoryQuery,
+          runtime,
+          "community.notificationTarget.comment",
+          `
+            select
+              c.post_id,
+              c.author_id as comment_author_id,
+              p.author_id as post_author_id
+            from public.community_comments c
+            join public.community_posts p on p.post_id = c.post_id
+            where c.comment_id = $1::uuid
+              and c.status <> 'deleted'
+              and p.status <> 'deleted'
+            limit 1
+          `,
+          [assertUuid(targetId, "targetId")],
+        );
+        const row = result.rows[0];
+        if (!row) return null;
+        return {
+          recipientUserId:
+            event.event === "community_comment_created"
+              ? String(row.post_author_id ?? "")
+              : String(row.comment_author_id ?? ""),
+          parentPostId: String(row.post_id ?? ""),
+        };
+      }
+      if (
+        event.event === "community_post_reacted" ||
+        event.event === "community_report_created"
+      ) {
+        const result = await queryText(
+          repositoryQuery,
+          runtime,
+          "community.notificationTarget.post",
+          `
+            select author_id, post_id
+            from public.community_posts
+            where post_id = $1::uuid
+              and status <> 'deleted'
+            limit 1
+          `,
+          [assertUuid(targetId, "targetId")],
+        );
+        const row = result.rows[0];
+        if (!row) return null;
+        return {
+          recipientUserId: String(row.author_id ?? ""),
+          parentPostId: String(row.post_id ?? ""),
+        };
+      }
+      return null;
     },
     async listMyPosts(page, runtime) {
       const userId = requireUserId(runtime);

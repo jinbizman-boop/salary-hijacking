@@ -1,0 +1,4 @@
+resource,operation,ownerUser,attackerUser,apiAuthz,rlsResult,expected,actual,status,evidenceRef
+growth_profile,direct-id read/update,synthetic-user-a,synthetic-user-b,UNVERIFIED_STAGING,UNVERIFIED_STAGING,403/404/invisible,not executed; no staging runtime configuration available,UNVERIFIED,docs/growth-community/GROWTH_E2E_REPORT.md
+community_post,direct-id read/update/delete/report,synthetic-user-a,synthetic-user-b,UNVERIFIED_STAGING,UNVERIFIED_STAGING,403/404/invisible where private or owner-only,not executed; no staging runtime configuration available,UNVERIFIED,docs/growth-community/COMMUNITY_E2E_REPORT.md
+attachment,direct-id read/finalize/delete/download,synthetic-user-a,synthetic-user-b,UNVERIFIED_STAGING,UNVERIFIED_STAGING,403/404/invisible,not executed; no staging runtime configuration available,UNVERIFIED,docs/growth-community/WRITE_E2E_REPORT.md

@@ -91,6 +91,8 @@ export interface PaginationInput {
   readonly pageSize: number;
   readonly offset: number;
   readonly limit: number;
+  readonly cursor?: string | null;
+  readonly mode?: "cursor" | "offset";
 }
 
 export interface CommunityListResult<TItem extends JsonRecord = JsonRecord> {
@@ -98,6 +100,10 @@ export interface CommunityListResult<TItem extends JsonRecord = JsonRecord> {
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
+  readonly cursor?: string | null;
+  readonly nextCursor?: string | null;
+  readonly hasMore?: boolean;
+  readonly limit?: number;
 }
 
 export interface CommunityPostInput {
@@ -204,6 +210,10 @@ export interface CommunityRepository<TEnv = unknown> {
     input: CommunityReportInput,
     runtime: CommunityRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
+  notificationTargetFor?(
+    event: CommunitySecurityEvent,
+    runtime: CommunityRouteRuntime<TEnv>,
+  ): Promise<JsonRecord | null>;
   listMyPosts(
     page: PaginationInput,
     runtime: CommunityRouteRuntime<TEnv>,
@@ -251,6 +261,8 @@ export interface CommunitySecurityEvent {
     | "SHARE"
     | "REPORT";
   readonly targetId: string | null;
+  readonly recipientUserId?: string | null | undefined;
+  readonly parentPostId?: string | null | undefined;
   readonly path: string;
   readonly createdAt: string;
 }
@@ -744,6 +756,7 @@ function queryRecord(url: URL): JsonRecord {
 }
 
 function pagination(url: URL): PaginationInput {
+  const cursor = url.searchParams.get("cursor")?.trim() || null;
   const page = Math.max(
     1,
     Number.parseInt(url.searchParams.get("page") ?? "1", 10) || 1,
@@ -753,12 +766,24 @@ function pagination(url: URL): PaginationInput {
     Math.min(
       MAX_PAGE_SIZE,
       Number.parseInt(
-        url.searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE),
+        url.searchParams.get("limit") ??
+          url.searchParams.get("pageSize") ??
+          String(DEFAULT_PAGE_SIZE),
         10,
       ) || DEFAULT_PAGE_SIZE,
     ),
   );
-  return { page, pageSize, offset: (page - 1) * pageSize, limit: pageSize };
+  return {
+    page,
+    pageSize,
+    offset: (page - 1) * pageSize,
+    limit: pageSize,
+    cursor,
+    mode:
+      cursor || url.searchParams.get("pagination") === "cursor"
+        ? "cursor"
+        : "offset",
+  };
 }
 
 function idFromMatch(match: RegExpMatchArray, index: number): string {
@@ -905,8 +930,29 @@ async function emit<TEnv>(
     }
   ).routeOptions;
   if (!options?.onCommunityEvent) return;
+  let target: JsonRecord = {};
+  try {
+    target =
+      (await runtime.repository.notificationTargetFor?.(event, runtime)) ?? {};
+  } catch (error) {
+    console.warn(
+      "community_routes_event_target_lookup_failed",
+      error instanceof Error ? error.name : "UnknownError",
+    );
+  }
+  const enriched: CommunitySecurityEvent = {
+    ...event,
+    recipientUserId:
+      typeof target.recipientUserId === "string"
+        ? target.recipientUserId
+        : event.recipientUserId,
+    parentPostId:
+      typeof target.parentPostId === "string"
+        ? target.parentPostId
+        : event.parentPostId,
+  };
   const task = Promise.resolve(
-    options.onCommunityEvent(event, runtime.env, runtime.execution),
+    options.onCommunityEvent(enriched, runtime.env, runtime.execution),
   ).catch((error) => {
     console.warn(
       "community_routes_event_failed",

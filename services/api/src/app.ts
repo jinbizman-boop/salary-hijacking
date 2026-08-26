@@ -119,6 +119,7 @@ import {
   shouldUseNeonNotificationsRepository,
 } from "./repositories/notifications.repository";
 import { createPhase5FinancialNotificationProducer } from "./notifications/phase5-financial-producers";
+import { createPhase6GrowthCommunityNotificationProducer } from "./notifications/phase6-growth-community-producers";
 import {
   PAYROLL_API_PREFIX,
   assertPayrollRoutesCompleteness,
@@ -1607,6 +1608,9 @@ async function coreDispatch<TEnv>(
     return createSavingsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "growth") {
+    const phase6Producer = createPhase6GrowthCommunityNotificationProducer<TEnv>(
+      options.now ? { now: options.now } : {},
+    );
     const baseOptions: GrowthRoutesOptions<TEnv> =
       options.growthRoutesOptions ??
       ({
@@ -1615,11 +1619,23 @@ async function coreDispatch<TEnv>(
             ? createNeonGrowthRepository<TEnv>()
             : undefined,
       } satisfies GrowthRoutesOptions<TEnv>);
+    const producerOptions: GrowthRoutesOptions<TEnv> = baseOptions.onGrowthEvent
+      ? baseOptions
+      : {
+          ...baseOptions,
+          onGrowthEvent: async (event, routeEnv, routeContext) => {
+            await phase6Producer.handleGrowthEvent(
+              event,
+              routeEnv,
+              routeContext,
+            );
+          },
+        };
     const routeOptions: GrowthRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
-        ? baseOptions
+      producerOptions.now || !options.now
+        ? producerOptions
         : {
-            ...baseOptions,
+            ...producerOptions,
             now: options.now,
           };
     return createGrowthRoutes(routeOptions)(request, env, context);
@@ -1643,6 +1659,9 @@ async function coreDispatch<TEnv>(
     return createNotificationsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "community") {
+    const phase6Producer = createPhase6GrowthCommunityNotificationProducer<TEnv>(
+      options.now ? { now: options.now } : {},
+    );
     const baseOptions: CommunityRoutesOptions<TEnv> =
       options.communityRoutesOptions ??
       ({
@@ -1651,11 +1670,24 @@ async function coreDispatch<TEnv>(
             ? createNeonCommunityRepository<TEnv>()
             : undefined,
       } satisfies CommunityRoutesOptions<TEnv>);
-    const routeOptions: CommunityRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
+    const producerOptions: CommunityRoutesOptions<TEnv> =
+      baseOptions.onCommunityEvent
         ? baseOptions
         : {
             ...baseOptions,
+            onCommunityEvent: async (event, routeEnv, routeContext) => {
+              await phase6Producer.handleCommunityEvent(
+                event,
+                routeEnv,
+                routeContext,
+              );
+            },
+          };
+    const routeOptions: CommunityRoutesOptions<TEnv> =
+      producerOptions.now || !options.now
+        ? producerOptions
+        : {
+            ...producerOptions,
             now: options.now,
           };
     return createCommunityRoutes(routeOptions)(request, env, context);

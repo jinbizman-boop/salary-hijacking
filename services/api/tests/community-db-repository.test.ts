@@ -56,6 +56,88 @@ describe("Neon community repository", () => {
     expect(shouldUseNeonCommunityRepository({ APP_ENV: "test" })).toBe(false);
   });
 
+  it("uses stable keyset cursor pagination for community posts", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.listPosts") {
+          return {
+            rows: [
+              {
+                post_id: postId,
+                board_type: "level_up_proof",
+                title: "cursor page row",
+                body: "커서 페이지 row",
+                author_display_name_snapshot: "익명 사용자",
+                is_anonymous: true,
+                status: "published",
+                like_count: "0",
+                comment_count: "0",
+                bookmark_count: "0",
+                report_count: "0",
+                view_count: "0",
+                published_at: "2026-07-02T03:00:00.000Z",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+              {
+                post_id: "44444444-4444-4444-8444-444444444444",
+                board_type: "level_up_proof",
+                title: "cursor lookahead row",
+                body: "커서 lookahead row",
+                author_display_name_snapshot: "익명 사용자",
+                is_anonymous: true,
+                status: "published",
+                like_count: "0",
+                comment_count: "0",
+                bookmark_count: "0",
+                report_count: "0",
+                view_count: "0",
+                published_at: "2026-07-02T02:00:00.000Z",
+                created_at: "2026-07-02T02:00:00.000Z",
+                updated_at: "2026-07-02T02:00:00.000Z",
+              },
+            ],
+            rowCount: 2,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const result = await repository.listPosts(
+      {},
+      {
+        mode: "cursor",
+        cursor: null,
+        page: 1,
+        pageSize: 1,
+        offset: 0,
+        limit: 1,
+      },
+      createRuntime("/api/v1/community/posts?limit=1"),
+    );
+
+    expect(result.items).toHaveLength(1);
+    expect(result.hasMore).toBe(true);
+    expect(result.nextCursor).toEqual(expect.any(String));
+    expect(calls[0]?.sqlText.toLowerCase()).toContain(
+      "order by p.pinned_at desc nulls last, p.published_at desc, p.post_id desc",
+    );
+    expect(calls[0]?.sqlText.toLowerCase()).toContain("limit $");
+    expect(calls[0]?.sqlText.toLowerCase()).not.toContain(" offset ");
+    expect(calls[0]?.params).toEqual([2]);
+  });
+
   it("creates a DB-backed community post without returning owner identifiers", async () => {
     const calls: Array<{
       readonly operationName: string;
