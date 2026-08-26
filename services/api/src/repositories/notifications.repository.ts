@@ -35,6 +35,22 @@ export type NotificationsDbQuery<TEnv = unknown> = (
   options: NotificationsDbQueryOptions<TEnv>,
 ) => Promise<NotificationsDbQueryResult>;
 
+type NeonNotificationsSqlLike = (
+  text: string,
+  values?: readonly DbValue[],
+) => Promise<{
+  readonly rows: readonly DbRow[];
+  readonly rowCount: number | null;
+}>;
+
+interface NeonNotificationsModule {
+  readonly neon: (
+    connectionString: string,
+    options?: Record<string, unknown>,
+  ) => NeonNotificationsSqlLike;
+  readonly neonConfig?: { fetchConnectionCache?: boolean };
+}
+
 export class NotificationRepositoryError extends Error {
   readonly status: number;
   readonly code: string;
@@ -74,7 +90,7 @@ const uuidPattern =
 const dbTypesByApiType = Object.freeze({
   PAYDAY: ["PAYDAY"],
   PAYMENT_DUE: ["FIXED_PAYMENT_DUE"],
-  BUDGET_WARNING: ["BUDGET_REMAINING_LOW", "BUDGET_REMAINING"],
+  BUDGET_WARNING: ["BUDGET_REMAINING", "BUDGET_REMAINING_LOW"],
   BUDGET_EXCEEDED: ["BUDGET_OVER"],
   SAVINGS_GOAL: ["SAVINGS_DUE", "SAVINGS_TRANSFER_DUE", "HIJACK_GOAL"],
   LEVEL_UP: ["GROWTH_LEVEL_UP"],
@@ -124,6 +140,14 @@ const apiTypeByDbType = Object.freeze({
 const sensitiveKeyPattern =
   /salary|payroll|income|expense|saving|savings|hijack|amount|loan|debt|token|secret|password|phone|email|card|account|resident|deviceid|device_id/iu;
 
+let neonNotificationsModulePromise:
+  | Promise<NeonNotificationsModule>
+  | undefined;
+const neonNotificationsPoolByUrl = new Map<
+  string,
+  Promise<NeonNotificationsSqlLike>
+>();
+
 function envText<TEnv>(env: TEnv, key: string): string | null {
   if (!env || typeof env !== "object") return null;
   const value = (env as Record<string, unknown>)[key];
@@ -142,39 +166,44 @@ function databaseUrl<TEnv>(env: TEnv): string {
   throw new Error("Missing database URL for notifications repository.");
 }
 
+async function neonNotificationsModule(): Promise<NeonNotificationsModule> {
+  neonNotificationsModulePromise ??= import("@neondatabase/serverless").then(
+    (moduleValue) => moduleValue as unknown as NeonNotificationsModule,
+  );
+  const moduleValue = await neonNotificationsModulePromise;
+  if (moduleValue.neonConfig)
+    moduleValue.neonConfig.fetchConnectionCache = true;
+  return moduleValue;
+}
+
+async function notificationSql<TEnv>(
+  env: TEnv,
+): Promise<NeonNotificationsSqlLike> {
+  const url = databaseUrl(env);
+  let sqlPromise = neonNotificationsPoolByUrl.get(url);
+  if (!sqlPromise) {
+    sqlPromise = neonNotificationsModule().then((moduleValue) =>
+      moduleValue.neon(url, {
+        arrayMode: false,
+        fullResults: true,
+      }),
+    );
+    neonNotificationsPoolByUrl.set(url, sqlPromise);
+  }
+  return sqlPromise;
+}
+
 async function defaultQuery<TEnv>(
   sqlText: string,
   params: readonly DbValue[],
   options: NotificationsDbQueryOptions<TEnv>,
 ): Promise<NotificationsDbQueryResult> {
-  const moduleValue = (await import("@neondatabase/serverless")) as unknown as {
-    readonly Pool: new (config: Record<string, unknown>) => {
-      query: (
-        text: string,
-        values?: readonly DbValue[],
-      ) => Promise<{
-        readonly rows: readonly DbRow[];
-        readonly rowCount: number | null;
-      }>;
-      end: () => Promise<void>;
-    };
-    readonly neonConfig?: { fetchConnectionCache?: boolean };
+  const sql = await notificationSql(options.env);
+  const result = await sql(sqlText, [...params]);
+  return {
+    rows: result.rows,
+    rowCount: result.rowCount,
   };
-
-  if (moduleValue.neonConfig)
-    moduleValue.neonConfig.fetchConnectionCache = true;
-  const pool = new moduleValue.Pool({
-    connectionString: databaseUrl(options.env),
-    max: 1,
-    idleTimeoutMillis: 5_000,
-    connectionTimeoutMillis: 10_000,
-    statement_timeout: 30_000,
-  });
-  try {
-    return await pool.query(sqlText, [...params]);
-  } finally {
-    await pool.end();
-  }
 }
 
 function assertUuid(value: string, field: string): string {
@@ -541,6 +570,25 @@ function userIdFromRuntime<TEnv>(
   return assertUuid(runtime.principal.userId, "principal.userId");
 }
 
+const notificationListProjection = `
+  n.notification_id,
+  n.type,
+  n.title,
+  n.body,
+  n.payload,
+  n.status,
+  n.priority,
+  n.scheduled_at,
+  n.expires_at,
+  n.created_at,
+  n.read_at,
+  n.cancelled_at,
+  n.deleted_at,
+  n.read_status,
+  false as push_required,
+  null::text as deep_link
+`;
+
 function listWhere(
   input: JsonRecord,
   runtime: NotificationsRouteRuntime,
@@ -686,14 +734,14 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         "notifications.list",
         useKeyset
           ? `
-          select n.*
+          select ${notificationListProjection}
           from public.notifications n
           where ${where.sql}${cursorSql}
           order by n.created_at desc, n.notification_id desc
           limit $${params.length}::int
         `
           : `
-          select n.*, count(*) over() as total_count
+          select ${notificationListProjection}, count(*) over() as total_count
           from public.notifications n
           where ${where.sql}
           order by n.created_at desc, n.notification_id desc

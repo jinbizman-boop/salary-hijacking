@@ -1,7 +1,11 @@
 # Budget Threshold Runtime Report
 
-BUDGET_THRESHOLD=PARTIAL_PRODUCER_RUNTIME_PENDING
-BUDGET_THRESHOLD_DUPE_PREVIEW=PASS
-CLIENT_NOTIFICATION_THRESHOLD_OVERRIDE=0_FOR_RULE_PREVIEW_CONTRACT
+BUDGET_THRESHOLD=PASS
+BUDGET_THRESHOLD_DUPLICATES=0
+CLIENT_NOTIFICATION_THRESHOLD_OVERRIDE=0
+BUDGET_WARNING_COUNT=1
+BUDGET_EXCEEDED_COUNT=1
 
-The staging notification rules preview evaluates budget threshold candidates server-side and does not accept client-supplied notification finality as authority. Full financial mutation -> notification producer runtime, including threshold crossing, re-entry, and duplicate suppression, was not proven in this closure.
+The staging financial mutation producer evaluates budget threshold notifications from server-derived budget impact, not client-supplied threshold fields. Synthetic staging evidence verified pre-threshold no-event behavior, warning/exceeded creation, replay dedupe, and client threshold override resistance.
+
+Evidence: `docs/notifications/PRODUCER_RUNTIME_EVIDENCE.json`.

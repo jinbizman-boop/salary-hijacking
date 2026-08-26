@@ -240,6 +240,7 @@ export interface VariableExpenseEvent {
   readonly expenseId: string | null;
   readonly path: string;
   readonly createdAt: string;
+  readonly budgetImpact?: JsonRecord | undefined;
 }
 
 class VariableExpenseHttpError extends Error {
@@ -1492,6 +1493,7 @@ async function dispatchVariableExpensesRoute<TEnv>(
       expenseId: null,
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
+      budgetImpact: data,
     });
     return jsonResponse(runtime, 200, { data });
   }

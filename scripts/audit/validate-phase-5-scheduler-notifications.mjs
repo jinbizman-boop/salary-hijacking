@@ -117,7 +117,10 @@ if (phase5.phase5Status === "PASS") {
     if (phase5.status[key] !== expected) fail(`PASS status is invalid because ${key} is ${phase5.status[key]}`);
   }
 }
-if (phase5.phase5Status !== "PARTIAL") fail("Phase 5 must remain PARTIAL while cursor/natural-cron/provider/load evidence is missing");
+if (!["EXTERNAL_BLOCKER", "PARTIAL", "PASS"].includes(phase5.phase5Status))
+  fail(`unexpected Phase 5 status ${phase5.phase5Status}`);
+if (phase5.phase5Status === "EXTERNAL_BLOCKER" && phase5.phase5InternalStatus !== "PASS")
+  fail("Phase 5 EXTERNAL_BLOCKER requires internal status PASS");
 if (phase5.status.projectCompletion100 !== false) fail("PROJECT_COMPLETION_100 must remain false");
 if (phase5.status.commercialLaunchReady !== false) fail("COMMERCIAL_LAUNCH_READY must remain false");
 if (phase5.status.d016 !== "PARTIAL") fail("D-016 must remain PARTIAL for broader Cloudflare ops");
@@ -128,12 +131,20 @@ if (phase5.status.rawFinancialPushExposure !== 0) fail("raw financial push expos
 if (phase5.status.rawPiiPushExposure !== 0) fail("raw PII push exposure must be 0");
 if (phase5.status.notificationCrossUserLeak !== 0) fail("notification cross-user leak must be 0");
 if (phase5.status.notificationList !== "PASS") fail("notification list must be PASS after cursor runtime closure");
+if (phase5.status.budgetThreshold !== "PASS") fail("budget threshold producer runtime must be PASS after Phase 5 closure");
+if (phase5.status.budgetThresholdDuplicates !== 0) fail("budget threshold duplicate count must be 0");
+if (phase5.status.clientNotificationThresholdOverride !== 0) fail("client threshold override must be 0");
+if (phase5.status.savingDueRuntime !== "PASS") fail("saving due runtime must be PASS after Phase 5 closure");
+if (phase5.status.savingDueDuplicates !== 0) fail("saving due duplicate count must be 0");
+if (phase5.status.savingGoalNotification !== "PASS") fail("saving goal notification runtime must be PASS after Phase 5 closure");
+if (phase5.status.goalNotificationDuplicates !== 0) fail("saving goal duplicate count must be 0");
 if (phase5.status.cronNaturalExecution === "PASS") fail("cron natural execution cannot be PASS without observed natural cron evidence");
 if (phase5.status.fcmExternalRuntime === "PASS") fail("FCM external runtime cannot be PASS without real valid device token evidence");
 if (phase5.status.perf017 !== "PASS_INTERNAL_GENERATION_RUNTIME") fail("PERF-017 internal 100K generation harness evidence missing");
 if (phase5.status.perf018 !== "PASS_ENGINE_MODEL_CAPABILITY_UNVERIFIED") fail("PERF-018 must remain truthfully classified as engine-model capability");
 if (phase5.status.perf025 !== "PASS_INTERNAL_MEASUREMENT_CONTRACT") fail("PERF-025 queue lag measurement contract evidence missing");
-if (phase5.status.perf008 !== "FAIL_STAGING_P95_THRESHOLD_MISS") fail("PERF-008 threshold miss must remain explicit until p95 <= 700ms");
+if (phase5.status.perf008 !== "PASS") fail("PERF-008 must be PASS after staging p95 <= 700ms evidence");
+if (Number(phase5.status.perf008P95Ms) > 700) fail("PERF-008 p95 exceeds 700ms target");
 
 const requirement = parseCsv(readRel("docs/notifications/PHASE_5_REQUIREMENT_MATRIX.csv"));
 if (requirement.rows.length !== 10) fail(`expected 10 NOTI requirement rows, got ${requirement.rows.length}`);
@@ -143,6 +154,10 @@ for (let i = 1; i <= 10; i += 1) {
 }
 if (!requirement.rows.some((row) => row.requirementId === "NOTI-001" && row.status === "PASS"))
   fail("NOTI-001 must be PASS after cursor pagination runtime closure");
+for (const id of ["NOTI-006", "NOTI-007", "NOTI-008"]) {
+  if (!requirement.rows.some((row) => row.requirementId === id && row.status === "PASS"))
+    fail(`${id} must be PASS after Phase 5-owned runtime/contract closure`);
+}
 
 const runtime = JSON.parse(readRel("docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json"));
 if (runtime.PHASE_5_STAGING_NOTIFICATION_RUNTIME !== "PASS_CORE_RUNTIME") fail("staging notification runtime must be PASS_CORE_RUNTIME");
@@ -157,8 +172,20 @@ if (runtime.cursorPagination?.duplicateIds !== 0 || runtime.cursorPagination?.mi
   fail("cursor pagination must have duplicate=0 and missing=0");
 if (runtime.cursorPagination?.malformedCursorRejected !== true || runtime.cursorPagination?.maxLimitClamped !== true)
   fail("cursor invalid/max-limit cases missing");
-if (!runtime.perf008NotificationList || Number(runtime.perf008NotificationList.p95Ms) <= 700)
-  fail("PERF-008 threshold miss evidence should remain explicit for current Phase 5 PARTIAL closure");
+if (!runtime.perf008NotificationList || runtime.perf008NotificationList.status !== "PASS" || Number(runtime.perf008NotificationList.p95Ms) > 700)
+  fail("PERF-008 staging runtime evidence must show p95 <= 700ms");
+
+const producer = JSON.parse(readRel("docs/notifications/PRODUCER_RUNTIME_EVIDENCE.json"));
+if (producer.PHASE_5_PRODUCER_RUNTIME !== "PASS_STAGING_RUNTIME")
+  fail("producer runtime evidence must be PASS_STAGING_RUNTIME");
+if (producer.budgetThreshold?.status !== "PASS" || producer.budgetThreshold?.duplicateCount !== 0)
+  fail("budget threshold producer evidence must be PASS with duplicate=0");
+if (producer.budgetThreshold?.clientOverrideCreated !== false)
+  fail("budget threshold producer must reject client override");
+if (producer.savings?.dueStatus !== "PASS" || producer.savings?.dueDuplicates !== 0)
+  fail("saving due producer evidence must be PASS with duplicate=0");
+if (producer.savings?.goalStatus !== "PASS" || producer.savings?.goalDuplicates !== 0)
+  fail("saving goal producer evidence must be PASS with duplicate=0");
 
 const cursorMatrix = parseCsv(readRel("docs/notifications/NOTIFICATION_CURSOR_RUNTIME_MATRIX.csv"));
 if (cursorMatrix.rows.length < 5) fail("cursor runtime matrix must include traversal/error/archive/delete coverage");

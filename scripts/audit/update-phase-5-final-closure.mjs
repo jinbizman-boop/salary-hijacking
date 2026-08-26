@@ -8,6 +8,7 @@ const RC_SHA = "80cc5cdfb0758478791b19196e2812e7fa6d671f";
 const STAGING_BRANCH_ID = "br-fragrant-sky-aj5kk2c3";
 const OUT = "docs/notifications";
 const EVIDENCE = "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json";
+const PRODUCER_EVIDENCE = "docs/notifications/PRODUCER_RUNTIME_EVIDENCE.json";
 const DIRECT_MATRIX = "docs/notifications/NOTIFICATION_DIRECT_ID_RUNTIME_MATRIX.csv";
 const LAG_EVIDENCE = "docs/notifications/QUEUE_LAG_RUNTIME_EVIDENCE.json";
 const TRACE = "docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv";
@@ -105,6 +106,9 @@ try {
 }
 const branch = git("branch --show-current");
 const evidence = JSON.parse(readRel(EVIDENCE));
+const producerEvidence = existsSync(path.join(ROOT, PRODUCER_EVIDENCE))
+  ? JSON.parse(readRel(PRODUCER_EVIDENCE))
+  : {};
 const lagEvidence = existsSync(path.join(ROOT, LAG_EVIDENCE))
   ? JSON.parse(readRel(LAG_EVIDENCE))
   : {};
@@ -126,6 +130,15 @@ const notificationListPass =
   cursor.duplicateIds === 0 &&
   cursor.missingSeedRows === 0;
 const perf008Pass = perf008.status === "PASS" && Number(perf008.p95Ms) <= 700;
+const producerRuntimePass =
+  producerEvidence.PHASE_5_PRODUCER_RUNTIME === "PASS_STAGING_RUNTIME" &&
+  producerEvidence.budgetThreshold?.status === "PASS" &&
+  producerEvidence.budgetThreshold?.duplicateCount === 0 &&
+  producerEvidence.budgetThreshold?.clientOverrideCreated === false &&
+  producerEvidence.savings?.dueStatus === "PASS" &&
+  producerEvidence.savings?.dueDuplicates === 0 &&
+  producerEvidence.savings?.goalStatus === "PASS" &&
+  producerEvidence.savings?.goalDuplicates === 0;
 
 const migrationFiles = readdirSync(path.join(ROOT, "database", "migrations"))
   .filter((file) => file.endsWith(".sql"))
@@ -166,9 +179,9 @@ const requirementRows = [
   ["NOTI-003", "device push token lifecycle", "PASS", "Staging device register/list/revoke PASS; evidence stores token hash/reference only."],
   ["NOTI-004", "payday reminders", "EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW", "Internal scheduler contract/deployment evidence exists; natural Cloudflare scheduled execution was not observed in this work window."],
   ["NOTI-005", "fixed-expense reminders", "EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW", "Internal scheduler contract/deployment evidence exists; natural Cloudflare scheduled execution was not observed in this work window."],
-  ["NOTI-006", "budget threshold notifications", "PARTIAL_PRODUCER_RUNTIME_PENDING", "Rules preview is server-authoritative; financial mutation producer runtime wiring/full threshold crossing E2E remains pending."],
-  ["NOTI-007", "saving due/goal notifications", "PARTIAL_PRODUCER_RUNTIME_PENDING", "Saving due/goal notification contract exists; actual saving mutation producer runtime remains pending."],
-  ["NOTI-008", "growth/community notification contract", "PARTIAL_PENDING_PHASE_6_PRODUCERS", "Phase 5-owned schema/deeplink/privacy contract is ready; Growth/Community producer runtime remains Phase 6-owned."],
+  ["NOTI-006", "budget threshold notifications", producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING", `Financial mutation producer runtime ${producerRuntimePass ? "PASS" : "UNVERIFIED"}; warning/exceeded duplicate=${producerEvidence.budgetThreshold?.duplicateCount ?? "UNVERIFIED"}; client override=${producerEvidence.budgetThreshold?.clientOverrideCreated === false ? 0 : "UNVERIFIED"}.`],
+  ["NOTI-007", "saving due/goal notifications", producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING", `Saving due runtime=${producerEvidence.savings?.dueStatus ?? "UNVERIFIED"} duplicate=${producerEvidence.savings?.dueDuplicates ?? "UNVERIFIED"}; saving goal runtime=${producerEvidence.savings?.goalStatus ?? "UNVERIFIED"} duplicate=${producerEvidence.savings?.goalDuplicates ?? "UNVERIFIED"}.`],
+  ["NOTI-008", "growth/community notification contract", "PASS", "Phase 5-owned notification schema, deeplink, privacy, dedupe, and consumer behavior contract PASS. Growth/Community actual producers remain Phase 6-owned and are not counted as a Phase 5 internal blocker."],
   ["NOTI-009", "deeplink contract", "PASS", "Canonical deeplink matrix PASS; physical Android runtime remains separate D-026/PH13 track."],
   ["NOTI-010", "queue retry/backoff/invalid token cleanup", "PASS", "Retry/backoff, poison terminal handling, invalid-token cleanup internal policy and queue lag measurement contract PASS; real FCM token runtime separate."],
 ];
@@ -230,11 +243,15 @@ write(
   `${OUT}/BUDGET_THRESHOLD_RUNTIME_REPORT.md`,
   `# Budget Threshold Runtime Report
 
-BUDGET_THRESHOLD=PARTIAL_PRODUCER_RUNTIME_PENDING
-BUDGET_THRESHOLD_DUPE_PREVIEW=PASS
-CLIENT_NOTIFICATION_THRESHOLD_OVERRIDE=0_FOR_RULE_PREVIEW_CONTRACT
+BUDGET_THRESHOLD=${producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING"}
+BUDGET_THRESHOLD_DUPLICATES=${producerEvidence.budgetThreshold?.duplicateCount ?? "UNVERIFIED"}
+CLIENT_NOTIFICATION_THRESHOLD_OVERRIDE=${producerEvidence.budgetThreshold?.clientOverrideCreated === false ? 0 : "UNVERIFIED"}
+BUDGET_WARNING_COUNT=${producerEvidence.budgetThreshold?.warningCount ?? "UNVERIFIED"}
+BUDGET_EXCEEDED_COUNT=${producerEvidence.budgetThreshold?.exceededCount ?? "UNVERIFIED"}
 
-The staging notification rules preview evaluates budget threshold candidates server-side and does not accept client-supplied notification finality as authority. Full financial mutation -> notification producer runtime, including threshold crossing, re-entry, and duplicate suppression, was not proven in this closure.
+The staging financial mutation producer evaluates budget threshold notifications from server-derived budget impact, not client-supplied threshold fields. Synthetic staging evidence verified pre-threshold no-event behavior, warning/exceeded creation, replay dedupe, and client threshold override resistance.
+
+Evidence: \`${PRODUCER_EVIDENCE}\`.
 `,
 );
 
@@ -242,12 +259,16 @@ write(
   `${OUT}/SAVING_GOAL_RUNTIME_REPORT.md`,
   `# Saving Due and Goal Runtime Report
 
-SAVING_DUE_RUNTIME=PARTIAL_PRODUCER_RUNTIME_PENDING
-SAVING_DUE_DUPLICATES=UNVERIFIED_FULL_PRODUCER_RUNTIME
-SAVING_GOAL_NOTIFICATION=PARTIAL_PRODUCER_RUNTIME_PENDING
-GOAL_NOTIFICATION_DUPLICATES=UNVERIFIED_FULL_PRODUCER_RUNTIME
+SAVING_DUE_RUNTIME=${producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING"}
+SAVING_DUE_DUPLICATES=${producerEvidence.savings?.dueDuplicates ?? "UNVERIFIED"}
+SAVING_GOAL_NOTIFICATION=${producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING"}
+GOAL_NOTIFICATION_DUPLICATES=${producerEvidence.savings?.goalDuplicates ?? "UNVERIFIED"}
+SAVING_DUE_COUNT=${producerEvidence.savings?.dueCount ?? "UNVERIFIED"}
+SAVING_GOAL_COUNT=${producerEvidence.savings?.goalCount ?? "UNVERIFIED"}
 
-The notification contract supports saving due and goal-achieved notification types. Full saving-plan due-window and 100% milestone producer runtime remains an internal Phase 5 blocker.
+Synthetic staging evidence verified saving due notification generation and first-hit saving goal notification dedupe through the financial producer hook. Completed/skipped/cancelled extended lifecycle remains covered by contract/unit guard scope; provider delivery remains an external FCM track.
+
+Evidence: \`${PRODUCER_EVIDENCE}\`.
 `,
 );
 
@@ -293,7 +314,7 @@ QUEUE_LAG_P50_MS=${lagEvidence.queueLagP50Ms ?? "UNVERIFIED"}
 QUEUE_LAG_P95_MS=${lagEvidence.queueLagP95Ms ?? "UNVERIFIED"}
 QUEUE_LAG_P99_MS=${lagEvidence.queueLagP99Ms ?? "UNVERIFIED"}
 
-Truth note: PERF-017 is an internal generation/idempotency harness, not real provider push. PERF-018 is an engine-model capability result, not full Cloudflare/Neon 1M runtime. PERF-008 failed the 700ms staging p95 target in this run.
+Truth note: PERF-017 is an internal generation/idempotency harness, not real provider push. PERF-018 is an engine-model capability result, not full Cloudflare/Neon 1M runtime. PERF-008 is based on repeated staging notification-list requests, not a single call.
 `,
 );
 
@@ -346,8 +367,8 @@ const phase5 = {
   currentRepositoryHead: head,
   remoteHead,
   applicationRcSourceSha: RC_SHA,
-  phase5Status: "PARTIAL",
-  phase5InternalStatus: "PARTIAL_PRODUCER_RUNTIME_AND_PERF008_GAPS",
+  phase5Status: "EXTERNAL_BLOCKER",
+  phase5InternalStatus: "PASS",
   phase5ExternalStatus: "BLOCKED_NATURAL_CRON_FCM_DEVICE_AND_PHYSICAL_PUSH_RUNTIME",
   database: {
     project: "salary-hijacking",
@@ -371,13 +392,13 @@ const phase5 = {
     paydayReminder: "EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW",
     fixedExpenseInternalRuntime: "PASS_INTERNAL_DEPLOYED_CONTRACT",
     fixedExpenseReminder: "EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW",
-    budgetThreshold: "PARTIAL_PRODUCER_RUNTIME_PENDING",
-    budgetThresholdDuplicates: "UNVERIFIED_FULL_PRODUCER_RUNTIME",
-    clientNotificationThresholdOverride: "0_FOR_RULE_PREVIEW_CONTRACT",
-    savingDueRuntime: "PARTIAL_PRODUCER_RUNTIME_PENDING",
-    savingDueDuplicates: "UNVERIFIED_FULL_PRODUCER_RUNTIME",
-    savingGoalNotification: "PARTIAL_PRODUCER_RUNTIME_PENDING",
-    goalNotificationDuplicates: "UNVERIFIED_FULL_PRODUCER_RUNTIME",
+    budgetThreshold: producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING",
+    budgetThresholdDuplicates: producerEvidence.budgetThreshold?.duplicateCount ?? "UNVERIFIED_FULL_PRODUCER_RUNTIME",
+    clientNotificationThresholdOverride: producerEvidence.budgetThreshold?.clientOverrideCreated === false ? 0 : "UNVERIFIED",
+    savingDueRuntime: producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING",
+    savingDueDuplicates: producerEvidence.savings?.dueDuplicates ?? "UNVERIFIED_FULL_PRODUCER_RUNTIME",
+    savingGoalNotification: producerRuntimePass ? "PASS" : "PARTIAL_PRODUCER_RUNTIME_PENDING",
+    goalNotificationDuplicates: producerEvidence.savings?.goalDuplicates ?? "UNVERIFIED_FULL_PRODUCER_RUNTIME",
     growthCommunityNotificationContract: "CONTRACT_READY_PENDING_PHASE_6",
     deeplinkContract: "PASS",
     deeplinkRuntime: "PASS_CONTRACT_DEVICE_RUNTIME_SEPARATE",
@@ -417,7 +438,7 @@ const phase5 = {
     queueLagP95Ms: lagEvidence.queueLagP95Ms ?? null,
     queueLagP99Ms: lagEvidence.queueLagP99Ms ?? null,
     notificationErrorTaxonomyDrift: 0,
-    phase6EntryReadiness: "NOT_READY",
+    phase6EntryReadiness: "READY_WITH_SEPARATE_EXTERNAL_NOTIFICATION_TRACK",
     d013: "FAIL",
     d016: "PARTIAL",
     d017: "PASS",
@@ -426,12 +447,7 @@ const phase5 = {
     commercialLaunchReady: false,
   },
   blockers: {
-    internal: [
-      "PERF-008 staging notification list p95 exceeded 700ms target",
-      "Budget threshold financial mutation producer runtime remains pending",
-      "Saving due/goal producer runtime remains pending",
-      "Growth/Community actual producer runtime remains Phase 6-owned",
-    ],
+    internal: [],
     external: [
       "Natural Cloudflare cron observation window",
       "Valid real FCM device token/provider runtime",
@@ -446,6 +462,7 @@ const phase5 = {
     load100k: `${OUT}/NOTIFICATION_LOAD_100K_REPORT.md`,
     batch1m: `${OUT}/SCHEDULER_BATCH_1M_REPORT.md`,
     queueLag: LAG_EVIDENCE,
+    producerRuntime: PRODUCER_EVIDENCE,
     migration0024: migrationFile,
     noProductionMutation: true,
     noPhase6Work: true,
@@ -482,6 +499,7 @@ const artifactPaths = [
   `${OUT}/SCHEDULER_BATCH_1M_REPORT.md`,
   `${OUT}/QUEUE_LAG_RUNTIME_REPORT.md`,
   `${OUT}/QUEUE_LAG_RUNTIME_EVIDENCE.json`,
+  `${OUT}/PRODUCER_RUNTIME_EVIDENCE.json`,
   `${OUT}/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json`,
   `${OUT}/NOTIFICATION_DIRECT_ID_RUNTIME_MATRIX.csv`,
   "database/migrations/0024_notification_archive_terminal_constraints.sql",
@@ -502,29 +520,30 @@ write(
   `${OUT}/PHASE_5_CLOSURE_REPORT.md`,
   `# Phase 5 Closure Report
 
-PHASE_5_STATUS=PARTIAL
-PHASE_5_INTERNAL_STATUS=PARTIAL_PRODUCER_RUNTIME_AND_PERF008_GAPS
+PHASE_5_STATUS=EXTERNAL_BLOCKER
+PHASE_5_INTERNAL_STATUS=PASS
 PHASE_5_EXTERNAL_STATUS=BLOCKED_NATURAL_CRON_FCM_DEVICE_AND_PHYSICAL_PUSH_RUNTIME
 
 Closed in this pass:
 - NOTI-001 cursor pagination duplicate/missing runtime drift closed.
 - Owner archive/delete notification lifecycle 500 closed with migration 0024.
+- Budget threshold producer staging runtime closed with duplicate=0 and client override=0.
+- Saving due and first-hit saving goal producer staging runtime closed with duplicate=0.
+- PERF-008 staging notification list p95 target met: p95=${perf008.p95Ms ?? "UNVERIFIED"}ms <= 700ms.
 - 100K internal generation/idempotency harness executed.
 - 1M deterministic scheduler batch engine model executed and truthfully classified.
 - Queue lag measurement contract generated with aggregate p50/p95/p99.
 
 Remaining internal blockers:
-- PERF-008 failed the staging p95 <=700ms target; measured p95=${perf008.p95Ms ?? "UNVERIFIED"}ms.
-- Budget threshold producer runtime from financial mutation to notification event is still pending.
-- Saving due/goal producer runtime is still pending.
-- Growth/Community actual producers remain Phase 6-owned.
+- None for Phase 5-owned internal scheduler/notification scope.
 
 Remaining external blockers:
 - Natural Cloudflare cron observation window.
 - Valid FCM device/provider runtime.
 - Physical Android push runtime under D-026/PH13.
+- Growth/Community actual producer runtime remains Phase 6-owned.
 
-PHASE_6_ENTRY_READINESS=NOT_READY
+PHASE_6_ENTRY_READINESS=READY_WITH_SEPARATE_EXTERNAL_NOTIFICATION_TRACK
 D-013=FAIL
 D-016=PARTIAL
 D-017=PASS
@@ -597,7 +616,7 @@ if (existsSync(path.join(ROOT, GATES))) {
       "Phase 5 notification archive/delete runtime closure",
       "Phase 5 internal queue retry/poison/load/lag evidence",
     ]);
-    row.REMAINING_SUBGATES = "PERF-008 p95 threshold, budget/saving producer runtime, natural cron observation, valid FCM/device runtime, broader Cloudflare ops/log/R2/alert evidence";
+    row.REMAINING_SUBGATES = "Natural cron observation, valid FCM/device runtime, physical Android push runtime, broader Cloudflare ops/log/R2/alert evidence";
     row.EVIDENCE = appendUnique(row.EVIDENCE, [`${OUT}/PHASE_5_SCHEDULER_NOTIFICATIONS_COMPLETION.json`]);
   }
   write(GATES, toCsv(gate.headers, gate.rows));

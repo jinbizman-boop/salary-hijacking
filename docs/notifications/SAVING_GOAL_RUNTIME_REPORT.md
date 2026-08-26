@@ -1,8 +1,12 @@
 # Saving Due and Goal Runtime Report
 
-SAVING_DUE_RUNTIME=PARTIAL_PRODUCER_RUNTIME_PENDING
-SAVING_DUE_DUPLICATES=UNVERIFIED_FULL_PRODUCER_RUNTIME
-SAVING_GOAL_NOTIFICATION=PARTIAL_PRODUCER_RUNTIME_PENDING
-GOAL_NOTIFICATION_DUPLICATES=UNVERIFIED_FULL_PRODUCER_RUNTIME
+SAVING_DUE_RUNTIME=PASS
+SAVING_DUE_DUPLICATES=0
+SAVING_GOAL_NOTIFICATION=PASS
+GOAL_NOTIFICATION_DUPLICATES=0
+SAVING_DUE_COUNT=1
+SAVING_GOAL_COUNT=1
 
-The notification contract supports saving due and goal-achieved notification types. Full saving-plan due-window and 100% milestone producer runtime remains an internal Phase 5 blocker.
+Synthetic staging evidence verified saving due notification generation and first-hit saving goal notification dedupe through the financial producer hook. Completed/skipped/cancelled extended lifecycle remains covered by contract/unit guard scope; provider delivery remains an external FCM track.
+
+Evidence: `docs/notifications/PRODUCER_RUNTIME_EVIDENCE.json`.

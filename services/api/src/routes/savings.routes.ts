@@ -224,6 +224,7 @@ export interface SavingsEvent {
   readonly goalId: string | null;
   readonly path: string;
   readonly createdAt: string;
+  readonly goalSnapshot?: JsonRecord | undefined;
 }
 
 class SavingsHttpError extends Error {
@@ -1526,6 +1527,7 @@ async function dispatch<TEnv>(
       goalId: String(data.goalId ?? ""),
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
+      goalSnapshot: data,
     });
     return ok(runtime, 201, { data });
   }
@@ -1555,6 +1557,7 @@ async function dispatch<TEnv>(
       goalId: null,
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
+      goalSnapshot: data,
     });
     return ok(runtime, 200, { data });
   }
@@ -1585,6 +1588,7 @@ async function dispatch<TEnv>(
       goalId,
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
+      goalSnapshot: data,
     });
     return ok(runtime, 200, { data });
   }
@@ -1650,6 +1654,7 @@ async function dispatch<TEnv>(
       goalId,
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
+      goalSnapshot: data,
     });
     return ok(runtime, 201, { data });
   }
@@ -1675,6 +1680,7 @@ async function dispatch<TEnv>(
       goalId,
       path: runtime.path,
       createdAt: runtime.now.toISOString(),
+      goalSnapshot: data,
     });
     return ok(runtime, 201, { data });
   }

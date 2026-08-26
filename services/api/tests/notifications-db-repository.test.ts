@@ -123,6 +123,8 @@ describe("Neon notifications repository", () => {
     expect(JSON.stringify(result)).not.toContain("2700000");
     expect(calls[0]?.operationName).toBe("notifications.list");
     expect(calls[0]?.sqlText).toContain("public.notifications");
+    expect(calls[0]?.sqlText).not.toContain("select n.*");
+    expect(calls[0]?.sqlText).not.toContain("select n.*,");
     expect(calls[0]?.params).toContain(userId);
   });
 
@@ -443,6 +445,54 @@ describe("Neon notifications repository", () => {
       status: 409,
       code: "NOTIFICATION_IDEMPOTENCY_CONFLICT",
     });
+  });
+
+  it("maps budget warnings to the migration-backed notification type", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonNotificationsRepository({
+      query: async (_sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, params });
+        return {
+          rows:
+            options.operationName === "notifications.create.dedupeLookup"
+              ? []
+              : [
+                  notificationRow({
+                    type: "BUDGET_REMAINING",
+                    dedupe_key: "budget-threshold:2026-08-18:WARNING_80",
+                    dedupe_request_hash: String(params.at(-1)),
+                  }),
+                ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    await repository.create(
+      {
+        type: "BUDGET_WARNING",
+        title: "Daily budget warning",
+        message: "Open the app to review the current budget.",
+        priority: "HIGH",
+        channels: ["IN_APP"],
+        deeplink: "salaryhijacking://salary",
+        scheduledAt: null,
+        expiresAt: null,
+        metadata: {
+          idempotencyKey: "budget-threshold:2026-08-18:WARNING_80",
+        },
+      },
+      createRuntime(),
+    );
+
+    const createCall = calls.find(
+      (call) => call.operationName === "notifications.create",
+    );
+    expect(createCall?.params).toContain("BUDGET_REMAINING");
+    expect(createCall?.params).not.toContain("BUDGET_REMAINING_LOW");
   });
 
   it("returns stable not-found errors for DB-backed notification state mutations", async () => {

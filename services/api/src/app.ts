@@ -118,6 +118,7 @@ import {
   createNeonNotificationsRepository,
   shouldUseNeonNotificationsRepository,
 } from "./repositories/notifications.repository";
+import { createPhase5FinancialNotificationProducer } from "./notifications/phase5-financial-producers";
 import {
   PAYROLL_API_PREFIX,
   assertPayrollRoutesCompleteness,
@@ -1539,6 +1540,9 @@ async function coreDispatch<TEnv>(
     return createFixedExpensesRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "variable-expenses") {
+    const phase5Producer = createPhase5FinancialNotificationProducer<TEnv>(
+      options.now ? { now: options.now } : {},
+    );
     const baseOptions: VariableExpensesRoutesOptions<TEnv> =
       options.variableExpensesRoutesOptions ??
       ({
@@ -1547,16 +1551,32 @@ async function coreDispatch<TEnv>(
             ? createNeonVariableExpensesRepository<TEnv>()
             : undefined,
       } satisfies VariableExpensesRoutesOptions<TEnv>);
-    const routeOptions: VariableExpensesRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
+    const producerOptions: VariableExpensesRoutesOptions<TEnv> =
+      baseOptions.onVariableExpenseEvent
         ? baseOptions
         : {
             ...baseOptions,
+            onVariableExpenseEvent: async (event, routeEnv, routeContext) => {
+              await phase5Producer.handleVariableExpenseEvent(
+                event,
+                routeEnv,
+                routeContext,
+              );
+            },
+          };
+    const routeOptions: VariableExpensesRoutesOptions<TEnv> =
+      producerOptions.now || !options.now
+        ? producerOptions
+        : {
+            ...producerOptions,
             now: options.now,
           };
     return createVariableExpensesRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "savings") {
+    const phase5Producer = createPhase5FinancialNotificationProducer<TEnv>(
+      options.now ? { now: options.now } : {},
+    );
     const baseOptions: SavingsRoutesOptions<TEnv> =
       options.savingsRoutesOptions ??
       ({
@@ -1565,11 +1585,23 @@ async function coreDispatch<TEnv>(
             ? createNeonSavingsRepository<TEnv>()
             : undefined,
       } satisfies SavingsRoutesOptions<TEnv>);
+    const producerOptions: SavingsRoutesOptions<TEnv> = baseOptions.onSavingsEvent
+      ? baseOptions
+      : {
+          ...baseOptions,
+          onSavingsEvent: async (event, routeEnv, routeContext) => {
+            await phase5Producer.handleSavingsEvent(
+              event,
+              routeEnv,
+              routeContext,
+            );
+          },
+        };
     const routeOptions: SavingsRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
-        ? baseOptions
+      producerOptions.now || !options.now
+        ? producerOptions
         : {
-            ...baseOptions,
+            ...producerOptions,
             now: options.now,
           };
     return createSavingsRoutes(routeOptions)(request, env, context);
