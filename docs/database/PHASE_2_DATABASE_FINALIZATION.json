@@ -14,7 +14,7 @@
   },
   "counts": {
     "tableCount": 41,
-    "migrationCount": 24,
+    "migrationCount": 25,
     "rlsCount": 41,
     "forceRlsCount": 30,
     "policyCount": 77,
@@ -251,7 +251,7 @@
     },
     {
       "path": "docs/database/MIGRATION_LEDGER.csv",
-      "sha256": "F6A726F5E3E98B896276A45FE3E96591B186986E46F88BD4A5082C3866A7C6E5"
+      "sha256": "6153B44348198160CF17B0D389FCA51245CB4ECECEE54A552F2EF3A62C5A3E7C"
     },
     {
       "path": "docs/database/STATIC_SCHEMA_72_RECONCILIATION.csv",

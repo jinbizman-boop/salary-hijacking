@@ -112,6 +112,7 @@ export interface CommunityPostInput {
   readonly content: string;
   readonly tags: readonly string[];
   readonly anonymous: boolean;
+  readonly moderationStatus?: CommunityPostStatus;
 }
 
 export interface CommunityCommentInput {
@@ -267,7 +268,7 @@ export interface CommunitySecurityEvent {
   readonly createdAt: string;
 }
 
-class CommunityHttpError extends Error {
+export class CommunityHttpError extends Error {
   readonly status: number;
   readonly code: string;
   readonly details: JsonValue | null;
@@ -841,6 +842,7 @@ function createPostInput(body: Record<string, unknown>): CommunityPostInput {
     content,
     tags: normalizeTags(body.tags),
     anonymous: booleanField(body, "anonymous"),
+    moderationStatus: assertCommunityContentSafe(title, content),
   };
 }
 
@@ -869,6 +871,14 @@ function updatePostInput(
       "COMMUNITY_UPDATE_EMPTY",
       "수정할 값이 필요합니다.",
     );
+  if (input.title !== undefined || input.content !== undefined) {
+    const title =
+      input.title ?? (typeof body.currentTitle === "string" ? body.currentTitle : "");
+    const content =
+      input.content ??
+      (typeof body.currentContent === "string" ? body.currentContent : "");
+    input.moderationStatus = assertCommunityContentSafe(title, content);
+  }
   return input;
 }
 

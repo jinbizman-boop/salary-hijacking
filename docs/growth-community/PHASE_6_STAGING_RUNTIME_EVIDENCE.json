@@ -1,0 +1,1402 @@
+{
+  "timestamp": "2026-08-26T15:24:35.527Z",
+  "startedAt": "2026-08-26T15:23:45.893Z",
+  "finishedAt": "2026-08-26T15:24:35.527Z",
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "assertions": {
+    "apiReady": true,
+    "authReady": true,
+    "growthE2E": true,
+    "growthXpConcurrency": true,
+    "communityE2E": true,
+    "crossUserRuntime": true,
+    "tnsRuntime": true,
+    "writeE2E": true,
+    "r2UploadRuntime": true,
+    "uploadSecurity": true,
+    "notificationProducerRuntime": true,
+    "perf007": true
+  },
+  "performance": {
+    "sampleCount": 40,
+    "p50Ms": 706.64,
+    "p95Ms": 762.97,
+    "p99Ms": 827.12,
+    "targetP95Ms": 800
+  },
+  "directIdRows": [
+    {
+      "resource": "community_post",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "operation": "B_READ_PUBLIC_POST",
+      "resourceId": "b8f51ace6fd5306e",
+      "httpStatus": 200,
+      "errorCode": "",
+      "apiAuthz": "PUBLIC_READ_ALLOWED",
+      "rlsResult": "UNVERIFIED_NO_DIRECT_DB_SECRET",
+      "expected": "200 for public community post",
+      "actual": 200,
+      "status": "PASS",
+      "evidenceRef": "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "resource": "community_post",
+      "ownerUser": "USER_A",
+      "attackerUser": "USER_B",
+      "operation": "B_UPDATE_OWNER_RESOURCE",
+      "resourceId": "b8f51ace6fd5306e",
+      "httpStatus": 404,
+      "errorCode": "COMMUNITY_POST_NOT_FOUND",
+      "apiAuthz": "DENIED",
+      "rlsResult": "UNVERIFIED_NO_DIRECT_DB_SECRET",
+      "expected": "403/404",
+      "actual": 404,
+      "status": "PASS",
+      "evidenceRef": "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "resource": "community_comment",
+      "ownerUser": "USER_B",
+      "attackerUser": "USER_A",
+      "operation": "A_UPDATE_OTHER_COMMENT",
+      "resourceId": "5720637a8cd801d6",
+      "httpStatus": 404,
+      "errorCode": "COMMUNITY_COMMENT_NOT_FOUND",
+      "apiAuthz": "DENIED",
+      "rlsResult": "UNVERIFIED_NO_DIRECT_DB_SECRET",
+      "expected": "403/404",
+      "actual": 404,
+      "status": "PASS",
+      "evidenceRef": "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"
+    }
+  ],
+  "uploadRows": [
+    {
+      "operation": "direct_upload_private",
+      "purpose": "COMMUNITY_ATTACHMENT",
+      "contentType": "image/png",
+      "httpStatus": 201,
+      "errorCode": "",
+      "expected": "201",
+      "actual": 201,
+      "status": "PASS",
+      "evidenceRef": "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "operation": "cross_user_private_read",
+      "purpose": "COMMUNITY_ATTACHMENT",
+      "contentType": "text/plain",
+      "httpStatus": 404,
+      "errorCode": "UPLOAD_ATTACHMENT_NOT_FOUND",
+      "expected": "403/404",
+      "actual": 404,
+      "status": "PASS",
+      "evidenceRef": "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"
+    },
+    {
+      "operation": "forbidden_extension",
+      "purpose": "COMMUNITY_ATTACHMENT",
+      "contentType": "application/x-msdownload",
+      "httpStatus": 415,
+      "errorCode": "UPLOAD_CONTENT_TYPE_FORBIDDEN",
+      "expected": "4xx",
+      "actual": 415,
+      "status": "PASS",
+      "evidenceRef": "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"
+    }
+  ],
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "a34a47a3b0e4067c",
+      "durationMs": 547.35,
+      "pass": true,
+      "dataFlags": {
+        "status": "ok",
+        "service": "salary-hijacking-api",
+        "version": "3.1.0",
+        "uptime": "edge",
+        "routeCount": 12
+      }
+    },
+    {
+      "step": "ready",
+      "method": "GET",
+      "path": "/api/v1/ready",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "e44354c727c6f225",
+      "durationMs": 157.4,
+      "pass": true,
+      "dataFlags": {
+        "status": "ready",
+        "environment": "staging",
+        "serverAuthorityEnabled": true,
+        "rawFinancialDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false,
+        "privacyMode": "STRICT",
+        "smokeSafe": true,
+        "completeness": true
+      }
+    },
+    {
+      "step": "admin_ready_unauthenticated",
+      "method": "GET",
+      "path": "/admin/api/v1/ready",
+      "status": 401,
+      "errorCode": "AUTH_TOKEN_MISSING",
+      "requestId": "2db29b811c80081c",
+      "durationMs": 152.98,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "register_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "03efc9fbb6d2e508",
+      "durationMs": 1948,
+      "pass": true,
+      "dataFlags": {}
+    },
+    {
+      "step": "register_user_b",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "24eb83710fc6874c",
+      "durationMs": 1434.95,
+      "pass": true,
+      "dataFlags": {}
+    },
+    {
+      "step": "growth_profile_before",
+      "method": "GET",
+      "path": "/api/v1/growth/profile",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "c88ce1b647c9ac2b",
+      "durationMs": 801.86,
+      "pass": true,
+      "dataFlags": {
+        "level": 1,
+        "totalExp": 0,
+        "nextLevelExp": 100,
+        "remainingExpToNextLevel": 100,
+        "badgeCount": 0,
+        "financialRawDataExposed": false
+      }
+    },
+    {
+      "step": "growth_task_create",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "1e4da83d33ba8308",
+      "durationMs": 679.43,
+      "pass": true,
+      "dataFlags": {
+        "taskIdHash": "3daf29324b4f458d",
+        "taskType": "READING",
+        "difficulty": "NORMAL",
+        "targetCount": 1,
+        "progressCount": 0,
+        "expReward": 50,
+        "startDate": "2026-08-27",
+        "note": "Phase6 synthetic growth task 6d0dc9a7db1d",
+        "publicShareEnabled": false,
+        "status": "ACTIVE",
+        "createdAt": "2026-08-26T15:23:54.422Z",
+        "updatedAt": "2026-08-26T15:23:54.422Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false
+      }
+    },
+    {
+      "step": "growth_task_create_mass_assignment",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks",
+      "status": 403,
+      "errorCode": "AUTH_RESOURCE_OWNER_MISMATCH",
+      "requestId": "c1e8f25643a2aac8",
+      "durationMs": 512.22,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "growth_task_progress",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "a709b1cce6a13e14",
+      "durationMs": 955.54,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 50,
+        "idempotentReplay": false
+      }
+    },
+    {
+      "step": "growth_task_progress_replay",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "36b9533f3235bcab",
+      "durationMs": 1016.02,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_0",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "19282b45f5456037",
+      "durationMs": 949.51,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_1",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "d656519f5b96200b",
+      "durationMs": 1324.15,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_2",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "9a5cb258503aeeac",
+      "durationMs": 1261.09,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_3",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "990787f02d543568",
+      "durationMs": 1451.94,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_4",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "b2d3af053eeb4974",
+      "durationMs": 1287.42,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_5",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "94a7b74c827c135d",
+      "durationMs": 1248.75,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_6",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "666058c730d1cc99",
+      "durationMs": 1291.54,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_7",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "6be9f1a94a54e135",
+      "durationMs": 1248.92,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_8",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "552617b034922832",
+      "durationMs": 1445.91,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_concurrent_replay_9",
+      "method": "POST",
+      "path": "/api/v1/growth/tasks/4dce3627-0bb9-4b6c-b158-49b6ef92de93/progress",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "96d11fc0f98aae6f",
+      "durationMs": 1278.48,
+      "pass": true,
+      "dataFlags": {
+        "expDelta": 0,
+        "idempotentReplay": true
+      }
+    },
+    {
+      "step": "growth_profile_after",
+      "method": "GET",
+      "path": "/api/v1/growth/profile",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "972e6f490abd9fdc",
+      "durationMs": 681.17,
+      "pass": true,
+      "dataFlags": {
+        "level": 1,
+        "totalExp": 50,
+        "nextLevelExp": 100,
+        "remainingExpToNextLevel": 50,
+        "badgeCount": 0,
+        "financialRawDataExposed": false
+      }
+    },
+    {
+      "step": "community_boards",
+      "method": "GET",
+      "path": "/api/v1/community/boards",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "41481e0cb48209f1",
+      "durationMs": 437.59,
+      "pass": true,
+      "dataFlags": {}
+    },
+    {
+      "step": "community_post_create",
+      "method": "POST",
+      "path": "/api/v1/community/posts",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "67ab95e3c8db7063",
+      "durationMs": 704.09,
+      "pass": true,
+      "dataFlags": {
+        "postIdHash": "b8f51ace6fd5306e",
+        "boardType": "FREE",
+        "tags": "",
+        "authorMasked": "사용자",
+        "anonymous": false,
+        "status": "VISIBLE",
+        "likeCount": 0,
+        "commentCount": 0,
+        "reportCount": 0,
+        "viewCount": 0,
+        "bookmarkCount": 0,
+        "shareCount": 0,
+        "createdAt": "2026-08-26T15:24:00.185Z",
+        "updatedAt": "2026-08-26T15:24:00.185Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false
+      }
+    },
+    {
+      "step": "community_post_read_owner",
+      "method": "GET",
+      "path": "/api/v1/community/posts/4b7a1060-868c-42b5-a6af-3c10896e08fc",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "1f3ee99eefb4f31c",
+      "durationMs": 1025.97,
+      "pass": true,
+      "dataFlags": {
+        "postIdHash": "b8f51ace6fd5306e",
+        "boardType": "FREE",
+        "tags": "",
+        "authorMasked": "사용자",
+        "anonymous": false,
+        "status": "VISIBLE",
+        "likeCount": 0,
+        "commentCount": 0,
+        "reportCount": 0,
+        "viewCount": 1,
+        "bookmarkCount": 0,
+        "shareCount": 0,
+        "createdAt": "2026-08-26T15:24:00.185Z",
+        "updatedAt": "2026-08-26T15:24:01.195Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false
+      }
+    },
+    {
+      "step": "community_post_read_other_public",
+      "method": "GET",
+      "path": "/api/v1/community/posts/4b7a1060-868c-42b5-a6af-3c10896e08fc",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "b7800cef7368b293",
+      "durationMs": 691.87,
+      "pass": true,
+      "dataFlags": {
+        "postIdHash": "b8f51ace6fd5306e",
+        "boardType": "FREE",
+        "tags": "",
+        "authorMasked": "사용자",
+        "anonymous": false,
+        "status": "VISIBLE",
+        "likeCount": 0,
+        "commentCount": 0,
+        "reportCount": 0,
+        "viewCount": 2,
+        "bookmarkCount": 0,
+        "shareCount": 0,
+        "createdAt": "2026-08-26T15:24:00.185Z",
+        "updatedAt": "2026-08-26T15:24:01.904Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false
+      }
+    },
+    {
+      "step": "community_post_update_attacker",
+      "method": "PATCH",
+      "path": "/api/v1/community/posts/4b7a1060-868c-42b5-a6af-3c10896e08fc",
+      "status": 404,
+      "errorCode": "COMMUNITY_POST_NOT_FOUND",
+      "requestId": "18aa86de148a5571",
+      "durationMs": 700.38,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "community_comment_create",
+      "method": "POST",
+      "path": "/api/v1/community/posts/4b7a1060-868c-42b5-a6af-3c10896e08fc/comments",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "984dcec62c9d76c9",
+      "durationMs": 942.11,
+      "pass": true,
+      "dataFlags": {
+        "commentIdHash": "5720637a8cd801d6",
+        "postIdHash": "b8f51ace6fd5306e",
+        "authorMasked": "사용자",
+        "anonymous": false,
+        "status": "VISIBLE",
+        "likeCount": 0,
+        "reportCount": 0,
+        "createdAt": "2026-08-26T15:24:03.295Z",
+        "updatedAt": "2026-08-26T15:24:03.295Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false
+      }
+    },
+    {
+      "step": "community_comment_update_attacker",
+      "method": "PATCH",
+      "path": "/api/v1/community/comments/35022ce4-34d2-4c0b-bc4b-2f1f5c78458f",
+      "status": 404,
+      "errorCode": "COMMUNITY_COMMENT_NOT_FOUND",
+      "requestId": "7494509d27b61260",
+      "durationMs": 754.44,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "community_report_create",
+      "method": "POST",
+      "path": "/api/v1/community/posts/4b7a1060-868c-42b5-a6af-3c10896e08fc/report",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "e6e36394a411954c",
+      "durationMs": 916.97,
+      "pass": true,
+      "dataFlags": {
+        "reportIdHash": "70bd98ee3fa18fbe",
+        "targetType": "POST",
+        "targetIdHash": "b8f51ace6fd5306e",
+        "reasonType": "SPAM",
+        "reason": "Synthetic moderation report.",
+        "status": "OPEN",
+        "createdAt": "2026-08-26T15:24:04.988Z",
+        "updatedAt": "2026-08-26T15:24:04.988Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false
+      }
+    },
+    {
+      "step": "community_tns_abuse_post",
+      "method": "POST",
+      "path": "/api/v1/community/posts",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "6c73a760ba639729",
+      "durationMs": 772.37,
+      "pass": true,
+      "dataFlags": {
+        "postIdHash": "c4f4643fd260567e",
+        "boardType": "FREE",
+        "tags": "",
+        "authorMasked": "사용자",
+        "anonymous": false,
+        "status": "HIDDEN",
+        "likeCount": 0,
+        "commentCount": 0,
+        "reportCount": 0,
+        "viewCount": 0,
+        "bookmarkCount": 0,
+        "shareCount": 0,
+        "createdAt": "2026-08-26T15:24:05.977Z",
+        "updatedAt": "2026-08-26T15:24:05.977Z",
+        "serverAuthority": true,
+        "financialRawDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false
+      }
+    },
+    {
+      "step": "upload_direct_r2",
+      "method": "POST",
+      "path": "/api/v1/uploads/direct",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "772ec7d61849142c",
+      "durationMs": 1238.92,
+      "pass": true,
+      "dataFlags": {
+        "attachmentIdHash": "09a86744f9748263",
+        "fileName": "phase6.png",
+        "sizeBytes": 31,
+        "purpose": "COMMUNITY_ATTACHMENT",
+        "ownerType": "USER",
+        "ownerIdHash": "d10d8b564a7654f3",
+        "visibility": "PRIVATE",
+        "status": "AVAILABLE",
+        "scanStatus": "PASSED",
+        "createdAt": "2026-08-26T15:24:06.477Z",
+        "updatedAt": "2026-08-26T15:24:06.477Z",
+        "rawStorageValueExposed": false,
+        "financialRawFileAllowed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      }
+    },
+    {
+      "step": "upload_read_owner",
+      "method": "GET",
+      "path": "/api/v1/uploads/555a4b56-c20e-451f-8f5c-b9c43d8f18e5",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "4a8308af86ebd24e",
+      "durationMs": 809.89,
+      "pass": true,
+      "dataFlags": {
+        "attachmentIdHash": "09a86744f9748263",
+        "fileName": "phase6.png",
+        "sizeBytes": 31,
+        "purpose": "COMMUNITY_ATTACHMENT",
+        "ownerType": "USER",
+        "ownerIdHash": "d10d8b564a7654f3",
+        "visibility": "PRIVATE",
+        "status": "AVAILABLE",
+        "scanStatus": "PASSED",
+        "createdAt": "2026-08-26T15:24:06.477Z",
+        "updatedAt": "2026-08-26T15:24:06.477Z",
+        "rawStorageValueExposed": false,
+        "financialRawFileAllowed": false,
+        "adTargetingSeparated": "[REDACTED]"
+      }
+    },
+    {
+      "step": "upload_read_attacker",
+      "method": "GET",
+      "path": "/api/v1/uploads/555a4b56-c20e-451f-8f5c-b9c43d8f18e5",
+      "status": 404,
+      "errorCode": "UPLOAD_ATTACHMENT_NOT_FOUND",
+      "requestId": "4d4b289ebd823eab",
+      "durationMs": 698.66,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "upload_forbidden_extension",
+      "method": "POST",
+      "path": "/api/v1/uploads/direct",
+      "status": 415,
+      "errorCode": "UPLOAD_CONTENT_TYPE_FORBIDDEN",
+      "requestId": "129ca3c599435271",
+      "durationMs": 439.72,
+      "pass": false,
+      "dataFlags": {}
+    },
+    {
+      "step": "perf_community_list_0",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "0389166e8b95f3ec",
+      "durationMs": 762.97,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_1",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "36d80f9efb31b2d4",
+      "durationMs": 706.64,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_2",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "9816de2c0dc8dec6",
+      "durationMs": 697.01,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_3",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "b0d61ef3cb4550e7",
+      "durationMs": 691.8,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_4",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "95a788f7cbbc95b8",
+      "durationMs": 712.69,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_5",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "172fc9ddde4221ae",
+      "durationMs": 713.27,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_6",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "ae62ea4f0b8abfe6",
+      "durationMs": 827.12,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_7",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "39d03747f6e23a39",
+      "durationMs": 699.86,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_8",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "08b8f50cb4f86301",
+      "durationMs": 720.77,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_9",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "2c9eac1ec167216a",
+      "durationMs": 694.88,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_10",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "c952a2b5c08081cd",
+      "durationMs": 732.01,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_11",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "9bb6abf6525afdeb",
+      "durationMs": 698.35,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_12",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "d924052da6e4f80f",
+      "durationMs": 698.27,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_13",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "c7d0ef528ce3e9ea",
+      "durationMs": 705.53,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_14",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "c21b9f732007c34d",
+      "durationMs": 762.76,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_15",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "a5c0151c2052f89d",
+      "durationMs": 726.75,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_16",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "017ae78137248e0d",
+      "durationMs": 700.14,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_17",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "83c175054229be22",
+      "durationMs": 718.43,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_18",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "9969c7fc0fb5bf4e",
+      "durationMs": 704.57,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_19",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "d7f2e42f8c5f0727",
+      "durationMs": 695.59,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_20",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "0f1512678d7b18ba",
+      "durationMs": 720.49,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_21",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "e52b5b1d3b671830",
+      "durationMs": 804.63,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_22",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "cf36a89270cd6166",
+      "durationMs": 730.93,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_23",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "686432e67497843c",
+      "durationMs": 726.15,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_24",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "a18191429dd76c75",
+      "durationMs": 719.95,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_25",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "6b115b41289872fa",
+      "durationMs": 704.7,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_26",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "c42449ae7e94624b",
+      "durationMs": 726.09,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_27",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "15f3b6af8632b991",
+      "durationMs": 719.05,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_28",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "3c1b20f18b902683",
+      "durationMs": 684.56,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_29",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "dbecf5e60b400d37",
+      "durationMs": 701.07,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_30",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "bbe870073bd6abb5",
+      "durationMs": 732.48,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_31",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "557e8156b626ecfa",
+      "durationMs": 710.08,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_32",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "9ef13a2380951b99",
+      "durationMs": 717.92,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_33",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "1f3a586f57b03ed3",
+      "durationMs": 700.09,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_34",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "71c7958cf8e19231",
+      "durationMs": 664.38,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_35",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "a50048c2983f7115",
+      "durationMs": 679.01,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_36",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "5e01febf06d0af36",
+      "durationMs": 714.77,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_37",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "30b294f2fb4b4c1c",
+      "durationMs": 669.74,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_38",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "82b95cfd961cf2ed",
+      "durationMs": 691.3,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "perf_community_list_39",
+      "method": "GET",
+      "path": "/api/v1/community/posts?pagination=cursor&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "130d55b3344a1636",
+      "durationMs": 702.61,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 17,
+        "hasMore": false,
+        "limit": 20
+      }
+    },
+    {
+      "step": "notifications_after_phase6",
+      "method": "GET",
+      "path": "/api/v1/notifications?page=1&pageSize=20",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "567573bf856f95a4",
+      "durationMs": 559.28,
+      "pass": true,
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 2,
+        "hasMore": false,
+        "limit": 20
+      }
+    }
+  ],
+  "blockers": [],
+  "secretValuesStored": false,
+  "rawTokensStored": false,
+  "rawPiiStored": false,
+  "rawFinancialValuesStored": false,
+  "productionMutation": false
+}

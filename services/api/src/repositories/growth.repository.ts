@@ -692,7 +692,7 @@ export function createNeonGrowthRepository<TEnv = unknown>(
                 proof_text = excluded.proof_text,
                 completed_at = excluded.completed_at,
                 updated_at = now()
-          returning *
+          returning *, (xmax = 0) as newly_completed
         `,
         [
           userIdFromRuntime(runtime),
@@ -709,7 +709,8 @@ export function createNeonGrowthRepository<TEnv = unknown>(
         runtime,
         "growth.getTaskAfterProgress",
       )) ?? { taskId, ...privacyFlags() };
-      const expDelta = toNumber(completion.earned_exp);
+      const idempotentReplay = completion.newly_completed === false;
+      const expDelta = idempotentReplay ? 0 : toNumber(completion.earned_exp);
       return {
         progress: {
           progressId: String(completion.completion_id ?? ""),
@@ -724,7 +725,7 @@ export function createNeonGrowthRepository<TEnv = unknown>(
         task,
         expDelta,
         badges: [],
-        idempotentReplay: false,
+        idempotentReplay,
       };
     },
     async listChallenges(_input, page) {

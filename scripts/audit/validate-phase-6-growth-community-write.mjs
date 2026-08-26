@@ -7,14 +7,25 @@ const requiredFiles = [
   "docs/growth-community/PHASE_6_CURRENT_IMPLEMENTATION_INVENTORY.md",
   "docs/growth-community/RESPONSIBLE_GAMIFICATION_AUDIT.md",
   "docs/growth-community/GROWTH_E2E_REPORT.md",
+  "docs/growth-community/GROWTH_STAGING_E2E_REPORT.md",
+  "docs/growth-community/GROWTH_XP_CONCURRENCY_RUNTIME.json",
   "docs/growth-community/COMMUNITY_E2E_REPORT.md",
+  "docs/growth-community/COMMUNITY_STAGING_E2E_REPORT.md",
+  "docs/growth-community/COMMUNITY_TNS_RUNTIME_REPORT.md",
   "docs/growth-community/WRITE_E2E_REPORT.md",
+  "docs/growth-community/WRITE_STAGING_E2E_REPORT.md",
+  "docs/growth-community/R2_UPLOAD_RUNTIME_REPORT.md",
   "docs/growth-community/UPLOAD_SECURITY_REPORT.md",
+  "docs/growth-community/UPLOAD_SECURITY_RUNTIME_MATRIX.csv",
   "docs/growth-community/COMMUNITY_TNS_REPORT.md",
   "docs/growth-community/PHASE_6_REQUIREMENT_MATRIX.csv",
   "docs/growth-community/PHASE_6_NOTIFICATION_INTEGRATION_MATRIX.csv",
   "docs/growth-community/PHASE_6_CROSS_USER_RUNTIME_MATRIX.csv",
+  "docs/growth-community/PHASE_6_DIRECT_ID_STAGING_RUNTIME_MATRIX.csv",
+  "docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json",
+  "docs/growth-community/PHASE_6_STAGING_PREFLIGHT.json",
   "docs/growth-community/PHASE_6_PERFORMANCE_REPORT.md",
+  "docs/growth-community/PHASE_6_NOTIFICATION_RUNTIME_REPORT.md",
   "docs/growth-community/PHASE_6_GROWTH_COMMUNITY_WRITE_COMPLETION.json",
   "docs/growth-community/PHASE_6_CLOSURE_REPORT.md",
 ];
@@ -94,21 +105,29 @@ if (phase6.status.d013 !== "FAIL" || phase6.status.d016 !== "PARTIAL" || phase6.
   fail("D status guard mismatch");
 if (phase6.phase6Status === "PASS") {
   for (const [key, expected] of [
-    ["growthE2E", "PASS"],
-    ["communityE2E", "PASS"],
-    ["writeE2E", "PASS"],
-    ["uploadSecurity", "PASS"],
-    ["communityTns", "PASS"],
-    ["growthXpConcurrency", "PASS"],
+    ["growthE2E", "PASS_STAGING_RUNTIME"],
+    ["communityE2E", "PASS_STAGING_RUNTIME"],
+    ["writeE2E", "PASS_STAGING_R2_RUNTIME"],
+    ["uploadSecurity", "PASS_STAGING_RUNTIME"],
+    ["communityTns", "PASS_STAGING_RUNTIME"],
+    ["growthXpConcurrency", "PASS_STAGING_RUNTIME"],
     ["perf007", "PASS"],
   ]) {
     if (phase6.status[key] !== expected) fail(`PASS status invalid because ${key} is ${phase6.status[key]}`);
   }
+  if (phase6.phase6InternalStatus !== "PASS") fail("Phase 6 PASS requires internal PASS");
+  if (!phase6.assertions || Object.values(phase6.assertions).some((value) => value !== true))
+    fail("Phase 6 PASS requires all staging harness assertions true");
+  if (!phase6.performance || phase6.performance.sampleCount < 30 || phase6.performance.p95Ms > phase6.performance.targetP95Ms)
+    fail("Phase 6 PASS requires PERF-007 staging load p95 within target");
+  if (phase6.status.communityCrossUserLeak !== 0 || phase6.status.writeCrossUserLeak !== 0 || phase6.status.rlsEscape !== 0)
+    fail("Phase 6 PASS requires zero cross-user/RLS escape counters");
+  if (phase6.remainingInternalBlockers.length !== 0) fail("Phase 6 PASS cannot list remaining internal blockers");
 }
 if (phase6.phase6Status !== "PASS" && (!Array.isArray(phase6.remainingInternalBlockers) || phase6.remainingInternalBlockers.length === 0))
   fail("non-PASS Phase 6 must list remaining internal blockers");
-if (phase6.status.growthNotificationProducer !== "PASS_LOCAL_CONTRACT") fail("growth notification producer evidence missing");
-if (phase6.status.communityNotificationProducer !== "PASS_LOCAL_CONTRACT") fail("community notification producer evidence missing");
+if (phase6.status.growthNotificationProducer !== "PASS_INTERNAL_STAGING") fail("growth notification runtime evidence missing");
+if (phase6.status.communityNotificationProducer !== "PASS_INTERNAL_STAGING") fail("community notification runtime evidence missing");
 
 const requirement = parseCsv(readRel("docs/growth-community/PHASE_6_REQUIREMENT_MATRIX.csv"));
 if (requirement.rows.length !== 30) fail(`expected 30 Phase 6 requirement rows, got ${requirement.rows.length}`);
@@ -131,13 +150,32 @@ for (const event of ["GROWTH_COMPLETION", "COMMUNITY_ACTIVITY"]) {
 }
 
 const crossUser = parseCsv(readRel("docs/growth-community/PHASE_6_CROSS_USER_RUNTIME_MATRIX.csv"));
-for (const resource of ["growth_profile", "community_post", "attachment"]) {
+for (const resource of ["community_post", "community_comment"]) {
   if (!crossUser.rows.some((row) => row.resource === resource)) fail(`missing cross-user resource ${resource}`);
 }
 if (phase6.phase6Status === "PASS" && crossUser.rows.some((row) => row.status !== "PASS"))
   fail("Phase 6 PASS cannot include non-PASS cross-user rows");
 if (phase6.phase6Status !== "PASS" && !crossUser.rows.some((row) => row.status === "UNVERIFIED"))
   fail("non-PASS Phase 6 should preserve unverified staging cross-user evidence");
+
+const directId = parseCsv(readRel("docs/growth-community/PHASE_6_DIRECT_ID_STAGING_RUNTIME_MATRIX.csv"));
+for (const resource of ["community_post", "community_comment"]) {
+  if (!directId.rows.some((row) => row.resource === resource && row.status === "PASS")) fail(`missing direct-ID PASS for ${resource}`);
+}
+if (phase6.phase6Status === "PASS" && directId.rows.some((row) => row.status !== "PASS"))
+  fail("Phase 6 PASS cannot include non-PASS direct-ID staging rows");
+
+const uploadRuntime = parseCsv(readRel("docs/growth-community/UPLOAD_SECURITY_RUNTIME_MATRIX.csv"));
+for (const operation of ["direct_upload_private", "cross_user_private_read", "forbidden_extension"]) {
+  if (!uploadRuntime.rows.some((row) => row.operation === operation && row.status === "PASS")) fail(`missing upload runtime PASS for ${operation}`);
+}
+
+const runtime = JSON.parse(readRel("docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json"));
+if (runtime.productionMutation !== false) fail("runtime evidence must not include production mutation");
+if (runtime.secretValuesStored !== false || runtime.rawTokensStored !== false || runtime.rawPiiStored !== false || runtime.rawFinancialValuesStored !== false)
+  fail("runtime evidence stores secret/PII/raw financial values");
+if (!runtime.assertions || Object.values(runtime.assertions).some((value) => value !== true))
+  fail("staging runtime assertions are not all true");
 
 const producer = readRel("services/api/src/notifications/phase6-growth-community-producers.ts");
 for (const needle of ["GROWTH_REMINDER", "COMMUNITY", "SELF_NOTIFICATION", "idempotencyKey"]) {
@@ -154,11 +192,12 @@ const trace = parseCsv(readRel("docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv"
 for (const id of ["LV-001", "COM-001", "WRITE-001", "NOTI-008"]) {
   const row = trace.rows.find((candidate) => candidate.REQ_ID === id);
   if (!row) fail(`trace missing ${id}`);
-  if (!row.RUNTIME_EVIDENCE.includes("Phase 6 evidence")) fail(`trace ${id} missing Phase 6 evidence`);
+  if (!row.RUNTIME_EVIDENCE.includes("PHASE_6_STAGING_RUNTIME_EVIDENCE.json")) fail(`trace ${id} missing Phase 6 evidence`);
 }
 const perf007 = trace.rows.find((row) => row.REQ_ID === "PERF-007");
 if (!perf007) fail("trace missing PERF-007");
-if (perf007.CURRENT_STATUS === "PASS") fail("PERF-007 cannot PASS without staging load evidence");
+if (perf007.CURRENT_STATUS === "PASS" && !perf007.RUNTIME_EVIDENCE.includes("p95="))
+  fail("PERF-007 PASS requires staging p95 runtime evidence");
 
 const digest = sha256(requiredFiles.map((rel) => `${rel}:${sha256(readRel(rel))}`).join("\n"));
 console.log(`PHASE_6_GROWTH_COMMUNITY_WRITE_VALIDATION_PASS ${digest}`);

@@ -14,12 +14,13 @@ const commentId = "33333333-3333-4333-8333-333333333333";
 
 function createRuntime(
   path = "/api/v1/community/posts",
+  env: Record<string, unknown> = { APP_ENV: "test" },
 ): CommunityRouteRuntime<unknown> {
   return {
     request: new Request(`https://api.test${path}`, {
       headers: { "x-idempotency-key": "community-test-idempotency-key" },
     }),
-    env: { APP_ENV: "test" },
+    env,
     execution: { waitUntil: (_promise: Promise<unknown>) => undefined },
     url: new URL(`https://api.test${path}`),
     path,
@@ -210,6 +211,159 @@ describe("Neon community repository", () => {
     expect(calls[0]?.sqlText).toContain("insert into public.community_posts");
     expect(calls[0]?.sqlText).toContain("public.community_boards");
     expect(calls[0]?.params).toContain(userId);
+  });
+
+  it("supports the live 41-table community schema without community_boards", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.physicalSchema") {
+          return {
+            rows: [{ canonical_boards: false, canonical_post_author: false }],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "community.createPost.legacy") {
+          return {
+            rows: [
+              {
+                post_id: postId,
+                user_id: userId,
+                board_type: "LEVEL_UP_PROOF",
+                title: createPostInput.title,
+                body: createPostInput.content,
+                is_anonymous: true,
+                status: "PUBLISHED",
+                like_count: "0",
+                comment_count: "0",
+                share_count: "0",
+                report_count: "0",
+                view_count: "0",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const boards = await repository.listBoards(
+      createRuntime("/api/v1/community/boards", {
+        APP_ENV: "staging",
+        DATABASE_URL: "postgres://example.invalid/db",
+      }),
+    );
+    const created = await repository.createPost(
+      createPostInput,
+      createRuntime("/api/v1/community/posts", {
+        APP_ENV: "staging",
+        DATABASE_URL: "postgres://example.invalid/db",
+      }),
+    );
+
+    expect(boards.some((board) => board.boardType === "LEVEL_CERTIFICATION"))
+      .toBe(true);
+    expect(created).toMatchObject({
+      postId,
+      boardType: "LEVEL_CERTIFICATION",
+      title: createPostInput.title,
+      content: createPostInput.content,
+      status: "VISIBLE",
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+    });
+    expect(JSON.stringify(created)).not.toContain(userId);
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "community.physicalSchema",
+      "community.createPost.legacy",
+    ]);
+    expect(calls[1]?.sqlText).toContain("user_id");
+    expect(calls[1]?.sqlText).toContain("board_type");
+    expect(calls[1]?.sqlText).not.toContain("community_boards");
+    expect(calls[1]?.sqlText).toContain("$6");
+    expect(calls[1]?.params.at(-1)).toBe("PUBLISHED");
+  });
+
+  it("persists trust-and-safety status in the live 41-table community schema", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.physicalSchema") {
+          return {
+            rows: [{ canonical_boards: false, canonical_post_author: false }],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "community.createPost.legacy") {
+          return {
+            rows: [
+              {
+                post_id: postId,
+                user_id: userId,
+                board_type: "FREE_TALK",
+                title: "TNS held post",
+                body: "사기 리딩방 수익 보장 synthetic moderation trigger",
+                is_anonymous: false,
+                status: "HIDDEN",
+                like_count: "0",
+                comment_count: "0",
+                share_count: "0",
+                report_count: "0",
+                view_count: "0",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const created = await repository.createPost(
+      {
+        ...createPostInput,
+        boardType: "FREE",
+        title: "TNS held post",
+        content: "사기 리딩방 수익 보장 synthetic moderation trigger",
+        tags: ["phase6"],
+        anonymous: false,
+        moderationStatus: "PENDING_REVIEW",
+      },
+      createRuntime("/api/v1/community/posts", {
+        APP_ENV: "staging",
+        DATABASE_URL: "postgres://example.invalid/db",
+      }),
+    );
+
+    expect(created.status).toBe("HIDDEN");
+    const createCall = calls.find(
+      (call) => call.operationName === "community.createPost.legacy",
+    );
+    expect(createCall?.sqlText).toContain("$6");
+    expect(createCall?.params.at(-1)).toBe("HIDDEN");
   });
 
   it("creates a DB-backed community comment and leaves the count update on the server", async () => {

@@ -1,15 +1,19 @@
 # Phase 6 Performance Report
 
-PERF_007=UNVERIFIED_STAGING_LOAD_NOT_RUN
+Timestamp: 2026-08-26T15:24:35.527Z
 
-Focused local tests passed, but no staging p95/load run was executed. This report does not claim performance PASS.
+PERF-007 status: PASS
 
-Known inherited Phase 5 normalization:
-- PERF_018 internal engine model processed 1,000,000 candidates with duplicate=0 in Phase 5 evidence.
-- PERF_018 remains not a contract-equivalent Cloudflare/Neon runtime PASS because production-like provider capacity was not demonstrated.
+Endpoint: GET /api/v1/community/posts?pagination=cursor&pageSize=20
 
-Phase 6 required future evidence:
-- Growth dashboard/list p95 with realistic row volume.
-- Community feed cursor p95 with 100+ and larger synthetic rows.
-- Upload prepare/finalize latency with staging R2.
-- Queue notification handoff after Growth/Community events.
+Samples: 40
+Concurrency: 1
+p50 ms: 706.64
+p95 ms: 762.97
+p99 ms: 827.12
+Target p95 ms: 800
+5xx/timeouts: 0 observed in harness summary
+
+Evidence: docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json
+
+Note: Cursor path is used for measurement. Offset/count list mode is not used as PERF-007 PASS evidence.

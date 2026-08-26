@@ -212,7 +212,54 @@ describe("Neon growth repository", () => {
     expect(calls[0]?.sqlText).toContain(
       "insert into public.growth_task_completions",
     );
+    expect(calls[0]?.sqlText).toContain("(xmax = 0) as newly_completed");
     expect(calls[0]?.params).toContain(userId);
+  });
+
+  it("returns zero XP on same-day task progress replay", async () => {
+    const repository = createNeonGrowthRepository({
+      query: async (sqlText, _params, options) => {
+        if (options.operationName === "growth.recordTaskProgress") {
+          expect(sqlText).toContain("(xmax = 0) as newly_completed");
+          return {
+            rows: [
+              {
+                completion_id: completionId,
+                growth_task_id: taskId,
+                earned_exp: 30,
+                proof_text: "done",
+                completion_date: "2026-07-03",
+                completed_at: "2026-07-03T04:00:00.000Z",
+                created_at: "2026-07-03T04:00:00.000Z",
+                newly_completed: false,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "growth.getTaskAfterProgress") {
+          return { rows: [taskRow({ progress_count: "1" })], rowCount: 1 };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const result = await repository.recordTaskProgress(
+      taskId,
+      {
+        progressCount: 1,
+        note: "done",
+        occurredAt: "2026-07-03T04:00:00.000Z",
+        idempotencyKey: "growth-progress-key",
+      },
+      createRuntime(`/api/v1/growth/tasks/${taskId}/progress`),
+    );
+
+    expect(result).toMatchObject({
+      expDelta: 0,
+      idempotentReplay: true,
+      progress: { expDelta: 0 },
+    });
   });
 
   it("lists published LV UP content from the database with source and safety metadata", async () => {
