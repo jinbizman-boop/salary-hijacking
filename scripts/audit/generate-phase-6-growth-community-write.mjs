@@ -679,9 +679,17 @@ function updateTraceMatrix() {
 updateTraceMatrix();
 
 const outputSha256 = Object.fromEntries(
-  artifacts.filter((rel) => existsSync(path.join(ROOT, rel))).map((rel) => [rel, sha256(read(rel))]),
+  artifacts
+    .filter(
+      (rel) =>
+        rel !== "docs/growth-community/PHASE_6_GROWTH_COMMUNITY_WRITE_COMPLETION.json" &&
+        existsSync(path.join(ROOT, rel)),
+    )
+    .map((rel) => [rel, sha256(read(rel))]),
 );
 phase6.outputSha256 = outputSha256;
+phase6.selfHashPolicy =
+  "PHASE_6_GROWTH_COMMUNITY_WRITE_COMPLETION.json hash is reported externally to avoid recursive self-hash drift.";
 write("docs/growth-community/PHASE_6_GROWTH_COMMUNITY_WRITE_COMPLETION.json", `${JSON.stringify(phase6, null, 2)}\n`);
 
 console.log(`PHASE_6_ARTIFACTS_GENERATED ${sha256(JSON.stringify(outputSha256))}`);
