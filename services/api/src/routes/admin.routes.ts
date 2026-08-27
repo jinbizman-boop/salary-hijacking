@@ -1741,21 +1741,22 @@ async function dispatchAdminRoute<TEnv>(
 
   if (method === "POST" && relativePath === "/ads/campaigns") {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 201, {
-      data: await repository.createAdCampaign(
-        await parseJsonBody(runtime.request),
-        runtime,
-      ),
+      data: await repository.createAdCampaign(input, runtime),
     });
   }
 
   match = matchRoute(relativePath, /^\/ads\/campaigns\/([^/]+)$/);
   if (method === "PATCH" && match) {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 200, {
       data: await repository.updateAdCampaign(
         idFromMatch(match, 1),
-        await parseJsonBody(runtime.request),
+        input,
         runtime,
       ),
     });
@@ -1764,11 +1765,13 @@ async function dispatchAdminRoute<TEnv>(
   match = matchRoute(relativePath, /^\/ads\/campaigns\/([^/]+)\/activate$/);
   if (method === "POST" && match) {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 200, {
       data: await repository.changeAdCampaignStatus(
         idFromMatch(match, 1),
         "ACTIVE",
-        await parseJsonBody(runtime.request),
+        input,
         runtime,
       ),
     });
@@ -1777,11 +1780,13 @@ async function dispatchAdminRoute<TEnv>(
   match = matchRoute(relativePath, /^\/ads\/campaigns\/([^/]+)\/pause$/);
   if (method === "POST" && match) {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 200, {
       data: await repository.changeAdCampaignStatus(
         idFromMatch(match, 1),
         "PAUSED",
-        await parseJsonBody(runtime.request),
+        input,
         runtime,
       ),
     });

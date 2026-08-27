@@ -253,6 +253,33 @@ describe("admin RBAC, audit, and moderation routes", () => {
     expect(calls).toEqual([]);
   });
 
+  it("blocks financial ad targeting at the route boundary before repository dispatch", async () => {
+    const { calls, repository } = createRepository();
+    const app = appWithRepository(repository);
+
+    const response = await app.fetch(
+      new Request("https://api.test/admin/api/v1/ads/campaigns", {
+        body: JSON.stringify({
+          title: "forbidden financial segment",
+          placement: "AD-HOME-001",
+          financialTargeting: { salaryBand: "high" },
+        }),
+        headers: headersFor("ADS_PARTNER_ADMIN"),
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = await bodyOf(response);
+
+    expect(response.status).toBe(400);
+    expect(body.error?.code).toBe("AD_FINANCIAL_TARGETING_FORBIDDEN");
+    expect(body.error?.details).toMatchObject({
+      field: "financialTargeting",
+    });
+    expect(calls).toEqual([]);
+  });
+
   it("allows auditors to read audit logs but not mutate role members", async () => {
     const { calls, repository } = createRepository();
     const app = appWithRepository(repository);
