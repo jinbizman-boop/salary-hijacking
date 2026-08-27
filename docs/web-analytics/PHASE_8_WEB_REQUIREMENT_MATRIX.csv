@@ -1,0 +1,9 @@
+requirementId,domain,requirement,implementationPath,testEvidence,runtimeEvidence,status,blocker
+WEB-001,WEB,Landing,apps/web/index.html,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-002,WEB,Privacy Policy,apps/web/privacy.html,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-003,WEB,Terms,apps/web/terms.html,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-004,WEB,Support,apps/web/support.html,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-005,WEB,Partnership Inquiry,apps/web/index.html#partner; apps/web/partners.html,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-006,WEB,Company Information,apps/web/index.html; apps/web/privacy.html; apps/web/terms.html; apps/web/support.html,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-007,WEB,SEO / OG,apps/web/index.html; apps/web/sitemap.xml; apps/web/robots.txt; apps/web/_redirects,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
+WEB-008,WEB,Accessibility / Responsive,apps/web/index.html; apps/web/assets/styles.css,scripts/audit/generate-phase-8-web-analytics.mjs; scripts/audit/validate-phase-8-web-analytics.mjs,docs/web-analytics/WEB_RUNTIME_EVIDENCE.json,PASS,
