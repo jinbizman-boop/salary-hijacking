@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-27T12:19:58.351Z",
+  "task": "PRE_PHASE_10_CURRENT_SOURCE_RC_LINEAGE",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "sourceCommit": "d74279e6810b9818393fbda3a7d1f9ce759c1f55",
+  "applicationRcSourceSha": "d74279e6810b9818393fbda3a7d1f9ce759c1f55",
+  "sourceFingerprint": "27BD4160347F61D48153146F98D1BD3C670109AE01F0FAB5A8462847E239FBF8",
+  "sourceFileCount": 324,
+  "sourceFingerprintMethod": "git ls-tree HEAD apps/mobile for committed TypeScript/JavaScript/JSON build input files; node_modules, .expo, coverage, dist, and build are excluded",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "workflow": {
+    "name": "Build Android QA Release",
+    "runId": "33070999722",
+    "jobId": "98512910644",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "failure",
+    "firstFailingStep": "Validate staging QA secrets are present",
+    "failureClassification": "MISSING_SECRET"
+  },
+  "buildType": "qaRelease",
+  "abi": "x86_64",
+  "apiEnvironment": "staging",
+  "apiBaseUrlClassification": "CANONICAL_STAGING_URL_CONFIGURED_IN_WORKFLOW",
+  "apkGenerated": false,
+  "apkSha256": null,
+  "bundleSha256": null,
+  "signerFingerprint": null,
+  "applicationId": "com.salaryhijacking.mobile",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "requiredSecretNames": [
+    "SALARY_HIJACKING_QA_KEYSTORE_BASE64",
+    "SALARY_HIJACKING_QA_KEYSTORE_PASSWORD",
+    "SALARY_HIJACKING_QA_KEY_ALIAS",
+    "SALARY_HIJACKING_QA_KEY_PASSWORD",
+    "GOOGLE_SERVICES_JSON_BASE64"
+  ],
+  "secretPresence": "MISSING_ALL_REQUIRED_STAGING_QA_SECRETS_AT_WORKFLOW_GATE",
+  "expoAuthRequired": false,
+  "expoAuthAvailable": "NOT_REQUIRED_BEFORE_SECRET_GATE",
+  "toolchain": {
+    "nodeVersion": "22",
+    "pnpmVersion": "10.24.0",
+    "jdkVersion": "Temurin 17.0.20-1 x64",
+    "androidSdk": "/usr/local/lib/android/sdk",
+    "androidBuildTools": "35.0.0",
+    "ndkVersion": "27.1.12297006",
+    "gradleVersion": "8.10.2"
+  },
+  "oldRc": {
+    "sourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+    "current": false
+  }
+}
