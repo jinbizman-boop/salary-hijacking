@@ -41,10 +41,11 @@ function createApi(overrides: Partial<NotificationsApiClient> = {}) {
     delete: jest.fn(),
     getPreferences: jest.fn(),
     list: jest.fn(async () => ({
+      cursor: null,
+      hasMore: false,
       items: [unreadNotification],
-      page: 1,
-      pageSize: 30,
-      total: 1,
+      limit: 30,
+      nextCursor: null,
     })),
     listDevices: jest.fn(),
     markAllRead: jest.fn(),
@@ -66,12 +67,13 @@ describe("notifications controller", () => {
     const api = createApi();
 
     await expect(loadNotificationSnapshot(api)).resolves.toMatchObject({
+      hasMore: false,
       items: [expect.objectContaining({ notificationId: "ntf_reading" })],
-      total: 1,
+      limit: 30,
       unreadCount: 1,
     });
 
-    expect(api.list).toHaveBeenCalledWith({ page: 1, pageSize: 30 });
+    expect(api.list).toHaveBeenCalledWith({ limit: 30 });
     expect(api.unreadCount).toHaveBeenCalledTimes(1);
   });
 

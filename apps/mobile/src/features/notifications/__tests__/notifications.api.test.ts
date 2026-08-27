@@ -67,9 +67,10 @@ describe("notifications api", () => {
         return jsonResponse({
           data: {
             items: [serverNotification],
-            page: 1,
-            pageSize: 20,
-            total: 1,
+            cursor: null,
+            hasMore: true,
+            limit: 20,
+            nextCursor: "cursor-next-1",
           },
         });
       },
@@ -92,13 +93,14 @@ describe("notifications api", () => {
           adTargetingSeparated: true,
         },
       ],
-      page: 1,
-      pageSize: 20,
-      total: 1,
+      cursor: null,
+      hasMore: true,
+      limit: 20,
+      nextCursor: "cursor-next-1",
     });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe(
-      "https://api.salaryhijacking.com/api/v1/notifications?page=1&pageSize=20",
+      "https://api.salaryhijacking.com/api/v1/notifications?limit=20",
     );
     expect(calls[0]?.headers.get("x-correlation-id")).toBe(
       "notification-correlation-1",
@@ -111,6 +113,42 @@ describe("notifications api", () => {
       "false",
     );
     expect(JSON.stringify(result)).not.toContain("userId");
+  });
+
+  it("continues cursor pagination with opaque server cursors", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "notification-cursor-2",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            items: [],
+            cursor: "cursor-next-1",
+            hasMore: false,
+            limit: 10,
+            nextCursor: null,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.list({ cursor: "cursor-next-1", limit: 10 }),
+    ).resolves.toMatchObject({
+      cursor: "cursor-next-1",
+      hasMore: false,
+      items: [],
+      limit: 10,
+      nextCursor: null,
+    });
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/notifications?limit=10&cursor=cursor-next-1",
+    );
   });
 
   it("rejects unsafe notification list options before query construction", async () => {
@@ -143,7 +181,7 @@ describe("notifications api", () => {
       api.list({
         page: 0,
         pageSize: 20,
-      }),
+      } as never),
     ).rejects.toMatchObject({ code: "NOTIFICATION_INVALID_LIST_OPTIONS" });
 
     await expect(
@@ -171,9 +209,10 @@ describe("notifications api", () => {
                 type: "SECURITY",
               },
             ],
-            page: 1,
-            pageSize: 20,
-            total: 1,
+            cursor: null,
+            hasMore: false,
+            limit: 20,
+            nextCursor: null,
           },
         }),
       platform: "android",

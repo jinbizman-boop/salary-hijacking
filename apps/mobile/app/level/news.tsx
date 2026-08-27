@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { AppHeader, AppShell } from "../../src/shared/components";
+import {
+  AppHeader,
+  AppShell,
+  EmptyState,
+  ErrorState,
+  LoadingSkeleton,
+} from "../../src/shared/components";
 import {
   NewsBalanceCard,
   XpRewardToast,
@@ -10,26 +16,32 @@ import {
   loadGrowthContentForType,
 } from "../../src/features/level/controller";
 import { GROWTH_CONTENTS_PATH } from "../../src/features/level/constants";
-import { levelDetailContent } from "../../src/features/level/detail-content";
 import type { GrowthContentItem } from "../../src/features/level/types";
 import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
 
-const SCREEN_VERSION = "4.1.0-level-detail-components";
-const content = levelDetailContent.NEWS;
+const SCREEN_VERSION = "4.1.1-level-detail-server-content";
 
 export default function NewsLevelScreen(): React.ReactElement {
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
   const [serverContent, setServerContent] =
-    useState<GrowthContentItem>(content);
+    useState<GrowthContentItem | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
+    setLoadError(null);
     void loadGrowthContentForType(growthApi, "NEWS")
       .then((nextContent) => {
-        if (mounted && nextContent) setServerContent(nextContent);
+        if (mounted) {
+          setServerContent(nextContent);
+          setLoaded(true);
+        }
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (mounted) setLoadError("뉴스 콘텐츠를 불러오지 못했습니다.");
+      });
     return () => {
       mounted = false;
     };
@@ -56,7 +68,18 @@ export default function NewsLevelScreen(): React.ReactElement {
       accessibilityLabel="Salary Hijacking news level detail"
       header={<AppHeader subtitle="LV UP" title="뉴스" />}
     >
-      <NewsBalanceCard content={serverContent} onRecord={handleRecord} />
+      {serverContent ? (
+        <NewsBalanceCard content={serverContent} onRecord={handleRecord} />
+      ) : null}
+      {!serverContent && !loaded && !loadError ? (
+        <LoadingSkeleton label="뉴스 콘텐츠를 불러오는 중" />
+      ) : null}
+      {!serverContent && loadError ? (
+        <ErrorState message={loadError} title="콘텐츠를 확인할 수 없습니다" />
+      ) : null}
+      {!serverContent && loaded && !loadError ? (
+        <EmptyState description="서버 콘텐츠가 없습니다." title="콘텐츠 없음" />
+      ) : null}
       {earnedXp !== null ? (
         <XpRewardToast
           earnedXp={earnedXp}

@@ -1,0 +1,11 @@
+ACTION,REQUEST_ID,HTTP,SERVER_RESULT,READBACK,RESULT
+login/session,AUTH-002; AUTH-003,POST /api/v1/auth/login; GET /api/v1/me,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_PRIOR_STAGING_PHASE3
+payroll,PAY/HOME,GET /api/v1/salary/summary,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_PRIOR_STAGING_PHASE4
+budget,BUD/EXP,GET/POST /api/v1/budget,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_PRIOR_STAGING_PHASE4
+expense,EXP,POST/PATCH/DELETE variable expense,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_PRIOR_STAGING_PHASE4
+saving,SAV,GET/POST savings,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_PRIOR_STAGING_PHASE4
+notification,NOTI,GET /api/v1/notifications?limit=20,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_SOURCE_CURSOR_CLIENT_AND_PHASE5_STAGING
+growth,LV,GET /api/v1/growth/dashboard,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_SOURCE_INTERNAL_PHASE6_STAGING
+community,COM,GET /api/v1/community/posts,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_SOURCE_INTERNAL_PHASE6_STAGING
+write,WRITE,POST /api/v1/community/posts,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_SOURCE_INTERNAL_PHASE6_STAGING
+profile,PROF,GET /api/v1/profile,server authoritative response required,API readback or prior phase staging DB/API evidence linked,PASS_SOURCE_INTERNAL_PHASE3_STAGING

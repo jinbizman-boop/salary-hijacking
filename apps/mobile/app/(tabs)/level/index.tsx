@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 
-import { AppHeader, AppShell } from "../../../src/shared/components";
+import {
+  AppHeader,
+  AppShell,
+  ErrorState,
+  LoadingSkeleton,
+} from "../../../src/shared/components";
 import {
   LevelActionGrid,
   LevelHeroCard,
@@ -17,19 +22,9 @@ import {
 import type { GrowthDashboard } from "../../../src/features/level/types";
 import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 
-const SCREEN_VERSION = "4.2.0-prototype-lv-main";
+const SCREEN_VERSION = "4.2.1-server-runtime-lv-main";
 const GROWTH_DASHBOARD_ENDPOINT = "/api/v1/growth/dashboard";
 const LEVEL_VISIBLE_COPY_CONTRACT = ["오늘의 성장", "균형 읽기"] as const;
-
-const dashboard: GrowthDashboard = {
-  profile: { level: 18, totalExp: 880 },
-  activeTaskCount: 4,
-  completedTaskCount: 12,
-  joinedChallengeCount: 2,
-  completedContentCount: 8,
-  todaySuggestion: "오늘의 레벨 업, 당신의 성장을 응원합니다!",
-  financialRawDataExposed: false,
-};
 
 const levelRoutes: Readonly<Record<string, string>> = {
   reading: "/level/reading",
@@ -42,15 +37,19 @@ export default function LevelIndexScreen(): React.ReactElement {
   const router = useRouter();
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
   const [serverDashboard, setServerDashboard] =
-    useState<GrowthDashboard>(dashboard);
+    useState<GrowthDashboard | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
+    setLoadError(null);
     void loadGrowthDashboardSnapshot(growthApi)
       .then((nextDashboard) => {
         if (mounted) setServerDashboard(nextDashboard);
       })
-      .catch(() => undefined);
+      .catch(() => {
+        if (mounted) setLoadError("LV UP 데이터를 불러오지 못했습니다.");
+      });
     void Promise.all([
       loadGrowthContentForType(growthApi, "READING"),
       loadGrowthContentForType(growthApi, "NEWS"),
@@ -73,7 +72,16 @@ export default function LevelIndexScreen(): React.ReactElement {
         />
       }
     >
-      <LevelHeroCard dashboard={serverDashboard} />
+      {serverDashboard ? <LevelHeroCard dashboard={serverDashboard} /> : null}
+      {!serverDashboard && !loadError ? (
+        <LoadingSkeleton label="LV UP 서버 데이터를 불러오는 중" />
+      ) : null}
+      {!serverDashboard && loadError ? (
+        <ErrorState
+          message={loadError}
+          title="성장 정보를 확인할 수 없습니다"
+        />
+      ) : null}
       <LevelActionGrid
         actions={[
           {

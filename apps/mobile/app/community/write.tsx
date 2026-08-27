@@ -9,7 +9,7 @@ import type { CommunityPostDraft } from "../../src/features/community/community.
 import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
 import { createSecureStoreRuntime } from "../../src/shared/storage/secure-store";
 
-const SCREEN_VERSION = "4.2.0-prototype-community-write";
+const SCREEN_VERSION = "4.2.1-server-backed-community-write";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
 const RAW_FINANCIAL_DATA_GUARD = "raw_financial_data_not_allowed_guard";
 const COMMUNITY_PUBLISH_IDEMPOTENCY_GUARD =

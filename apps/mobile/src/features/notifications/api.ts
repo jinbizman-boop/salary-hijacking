@@ -364,9 +364,10 @@ function normalizeListResult(value: unknown): NotificationListResult {
   const data = value.data;
   if (
     !Array.isArray(data.items) ||
-    !isNonNegativeInteger(data.page) ||
-    !isNonNegativeInteger(data.pageSize) ||
-    !isNonNegativeInteger(data.total)
+    !isNotificationCursor(data.cursor, true) ||
+    !isNotificationCursor(data.nextCursor, true) ||
+    typeof data.hasMore !== "boolean" ||
+    !isPositiveBoundedLimit(data.limit)
   ) {
     throw new NotificationsApiError(
       0,
@@ -375,10 +376,11 @@ function normalizeListResult(value: unknown): NotificationListResult {
     );
   }
   return {
+    cursor: data.cursor === null ? null : data.cursor.trim(),
+    hasMore: data.hasMore,
     items: data.items.map(normalizeNotificationItem),
-    page: data.page,
-    pageSize: data.pageSize,
-    total: data.total,
+    limit: data.limit,
+    nextCursor: data.nextCursor === null ? null : data.nextCursor.trim(),
   };
 }
 
@@ -765,19 +767,41 @@ function notificationDevicePath(deviceId: string): string {
   return `${NOTIFICATIONS_DEVICES_PATH}/${encodeURIComponent(normalized)}`;
 }
 
+function isNotificationCursor(
+  value: unknown,
+  nullable = false,
+): value is string | null {
+  if (value === null && nullable) return true;
+  return (
+    typeof value === "string" &&
+    value.trim().length >= 1 &&
+    value.trim().length <= 512 &&
+    /^[A-Za-z0-9_-]+$/u.test(value.trim())
+  );
+}
+
+function isPositiveBoundedLimit(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= 1 &&
+    value <= 100
+  );
+}
+
 function normalizeListOptions(options: {
-  readonly page?: number;
-  readonly pageSize?: number;
+  readonly cursor?: string | null;
+  readonly limit?: number;
   readonly status?: NotificationStatus;
 }): {
-  readonly page: number;
-  readonly pageSize: number;
+  readonly cursor?: string;
+  readonly limit: number;
   readonly status?: NotificationStatus;
 } {
   if (
     !hasOnlyKeys(options as Record<string, unknown>, [
-      "page",
-      "pageSize",
+      "cursor",
+      "limit",
       "status",
     ])
   ) {
@@ -787,15 +811,11 @@ function normalizeListOptions(options: {
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  const page = options.page ?? 1;
-  const pageSize = options.pageSize ?? 20;
+  const limit = options.limit ?? 20;
+  const cursor = options.cursor?.trim() || undefined;
   if (
-    !Number.isSafeInteger(page) ||
-    page < 1 ||
-    page > 10_000 ||
-    !Number.isSafeInteger(pageSize) ||
-    pageSize < 1 ||
-    pageSize > 100 ||
+    !isPositiveBoundedLimit(limit) ||
+    (cursor !== undefined && !isNotificationCursor(cursor)) ||
     (options.status !== undefined && !NOTIFICATION_STATUSES.has(options.status))
   ) {
     throw new NotificationsApiError(
@@ -804,9 +824,11 @@ function normalizeListOptions(options: {
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  return options.status === undefined
-    ? { page, pageSize }
-    : { page, pageSize, status: options.status };
+  return {
+    ...(cursor !== undefined ? { cursor } : {}),
+    limit,
+    ...(options.status !== undefined ? { status: options.status } : {}),
+  };
 }
 
 export function createNotificationsApi(
@@ -868,11 +890,11 @@ export function createNotificationsApi(
 
   return {
     async list(options = {}): Promise<NotificationListResult> {
-      const { page, pageSize, status } = normalizeListOptions(options);
+      const { cursor, limit, status } = normalizeListOptions(options);
       const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(pageSize),
+        limit: String(limit),
       });
+      if (cursor) params.set("cursor", cursor);
       if (status) params.set("status", status);
       return normalizeListResult(
         await request(`${NOTIFICATIONS_PATH}?${params}`),

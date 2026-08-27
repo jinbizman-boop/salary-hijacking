@@ -38,10 +38,11 @@ export type NotificationItem = Readonly<{
 }>;
 
 export type NotificationListResult = Readonly<{
+  cursor: string | null;
+  hasMore: boolean;
   items: readonly NotificationItem[];
-  page: number;
-  pageSize: number;
-  total: number;
+  limit: number;
+  nextCursor: string | null;
 }>;
 
 export type NotificationUnreadCount = Readonly<{
@@ -121,8 +122,8 @@ export type NotificationDeviceRegistrationRequest = Readonly<{
 
 export type NotificationsApiClient = Readonly<{
   list: (options?: {
-    readonly page?: number;
-    readonly pageSize?: number;
+    readonly cursor?: string | null;
+    readonly limit?: number;
     readonly status?: NotificationStatus;
   }) => Promise<NotificationListResult>;
   unreadCount: () => Promise<NotificationUnreadCount>;

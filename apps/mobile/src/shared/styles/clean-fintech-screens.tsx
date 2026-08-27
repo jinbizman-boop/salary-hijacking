@@ -5628,7 +5628,7 @@ function NotificationsScreen(): React.ReactElement {
       try {
         const [listResult, unreadResult, preferencesResult, devicesResult] =
           await Promise.all([
-            notificationsApi.list({ page: 1, pageSize: 20 }),
+            notificationsApi.list({ limit: 20 }),
             notificationsApi.unreadCount(),
             notificationsApi.getPreferences(),
             notificationsApi.listDevices(),

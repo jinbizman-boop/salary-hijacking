@@ -8,10 +8,11 @@ import type {
 } from "./types";
 
 export type NotificationSnapshot = Readonly<{
+  cursor: string | null;
+  hasMore: boolean;
   items: readonly NotificationItem[];
-  page: number;
-  pageSize: number;
-  total: number;
+  limit: number;
+  nextCursor: string | null;
   unreadByType: NotificationUnreadCount["byType"];
   unreadCount: number;
   updatedAt: string;
@@ -45,15 +46,16 @@ export async function loadNotificationSnapshot(
   api: NotificationsApiClient,
 ): Promise<NotificationSnapshot> {
   const [list, unread] = await Promise.all([
-    api.list({ page: 1, pageSize: 30 }),
+    api.list({ limit: 30 }),
     api.unreadCount(),
   ]);
 
   return {
+    cursor: list.cursor,
+    hasMore: list.hasMore,
     items: list.items,
-    page: list.page,
-    pageSize: list.pageSize,
-    total: list.total,
+    limit: list.limit,
+    nextCursor: list.nextCursor,
     unreadByType: unread.byType,
     unreadCount: unread.unreadCount,
     updatedAt: unread.updatedAt,
