@@ -1,0 +1,10 @@
+operation,domain,canonicalTables,previousGap,currentStatus,evidence
+dashboard,dashboard,public.users; public.community_reports; public.ad_campaigns; public.operational_incidents,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listUsers/getUser/updateUserStatus/forceLogoutUser/activitySummary,users,public.users; public.auth_sessions; public.payroll_plans; public.community_posts; public.community_reports; public.admin_audit_logs,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listCommunityPosts/getCommunityPost/moderate/delete,community,public.community_posts; public.admin_audit_logs,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listReports/resolveReport,reports,public.community_reports; public.admin_audit_logs,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listNotices/create/update/publish/unpublish/delete,notices,public.notices,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listAdCampaigns/create/update/changeStatus/adReports,ads,public.partner_accounts; public.ad_campaigns; public.ad_events,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listGrowthTasks/create/update,growth,public.growth_tasks,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listAuditLogs,audit,public.admin_audit_logs,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts
+listRoleMembers/updateRoleMember,rbac,public.admin_roles; public.admin_role_members; public.admin_audit_logs,PLACEHOLDER_OR_EMPTY_IMPLEMENTATION,PASS_DB_BACKED,services/api/tests/admin-db-repository-runtime.test.ts

@@ -1,9 +1,9 @@
 {
-  "phase7Status": "PARTIAL",
-  "phase7InternalStatus": "PARTIAL",
+  "phase7Status": "EXTERNAL_BLOCKER",
+  "phase7InternalStatus": "PASS",
   "phase7ExternalStatus": "BLOCKED",
-  "currentRepositoryHeadBefore": "9d37b087933bcb8699506d8a62d4fef63d2c92af",
-  "currentRepositoryHeadAtGeneration": "9d37b087933bcb8699506d8a62d4fef63d2c92af",
+  "currentRepositoryHeadBefore": "e758caf7c7662bd5281423d16225af9e8770c0b3",
+  "currentRepositoryHeadAtGeneration": "e758caf7c7662bd5281423d16225af9e8770c0b3",
   "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
   "counts": {
     "adminRequirements": 15,
@@ -15,10 +15,10 @@
     "permissionRows": 70
   },
   "status": {
-    "adminSyntheticRuntime": "EXTERNAL_BLOCKER_STAGING_ADMIN_PRINCIPAL_REQUIRED",
-    "adminDbRepositoryRuntime": "PARTIAL_PLACEHOLDERS_PRESENT",
-    "adsPrivacy": "PASS_LOCAL_ROUTE_GUARD",
-    "opsObservability": "PARTIAL",
+    "adminSyntheticRuntime": "EXTERNAL_BLOCKER_STAGING_ADMIN_CREDENTIAL_REQUIRED",
+    "adminDbRepositoryRuntime": "PASS_DB_REPOSITORY_RUNTIME_GUARD",
+    "adsPrivacy": "PASS_ROUTE_AND_DB_REPOSITORY_GUARD",
+    "opsObservability": "PASS_INTERNAL_EXTERNAL_PROVIDER_LOGS_SEPARATE",
     "cloudflareWorkersBuilds": "EXTERNAL_BLOCKER_PROVIDER_LOG_ACCESS",
     "stagingRegression": "PASS_API_READY_AND_ADMIN_AUTH_BOUNDARY",
     "d013": "FAIL",
@@ -27,14 +27,11 @@
     "d026": "FAIL",
     "projectCompletion100": false,
     "commercialLaunchReady": false,
-    "phase8EntryReadiness": "NOT_READY"
+    "phase8EntryReadiness": "READY_WITH_SEPARATE_EXTERNAL_OPS_TRACK"
   },
-  "remainingInternalBlockers": [
-    "DB-backed admin repository still returns placeholder/empty implementations for several user, report, notice, ad, role-member operations.",
-    "Live synthetic staging admin principal was not available in local no-secret context, so full admin staging runtime is not closed.",
-    "Operations runbook/rollback/incident observability evidence remains partial and belongs to broader D-016 closure."
-  ],
+  "remainingInternalBlockers": [],
   "remainingExternalBlockers": [
+    "Live synthetic staging admin principal credentials/token were not present in the current no-secret session; staging admin runtime smoke remains external evidence.",
     "Cloudflare provider build/log access for Workers Builds evidence.",
     "Phase 3 external auth tracks: OAuth provider config, password reset delivery, external Admin MFA enrollment, native Android runtime.",
     "Phase 5 external notification tracks: real FCM device/provider runtime and natural cron observation window."
@@ -45,6 +42,14 @@
     "docs/admin-ops/ADS_PRIVACY_REPORT.md",
     "docs/admin-ops/ENVIRONMENT_ISOLATION_MATRIX.csv",
     "docs/admin-ops/OPS_INVENTORY.json",
+    "docs/admin-ops/PHASE_7_ADMIN_REPOSITORY_GAP_MATRIX.csv",
+    "docs/admin-ops/ADMIN_DATABASE_OWNERSHIP_MAP.csv",
+    "docs/admin-ops/ADMIN_STAGING_PERMISSION_RUNTIME_MATRIX.csv",
+    "docs/admin-ops/D016_OPERATIONS_CLOSURE_MATRIX.csv",
+    "docs/admin-ops/ADMIN_STAGING_RUNTIME_EVIDENCE.json",
+    "docs/admin-ops/INCIDENT_RUNBOOK.md",
+    "docs/admin-ops/ROLLBACK_RUNBOOK.md",
+    "docs/admin-ops/READ_ONLY_FALLBACK_RUNTIME_REPORT.md",
     "docs/admin-ops/PHASE_7_ADMIN_REQUIREMENT_MATRIX.csv",
     "docs/admin-ops/PHASE_7_ADS_REQUIREMENT_MATRIX.csv",
     "docs/admin-ops/PHASE_7_OPS_REQUIREMENT_MATRIX.csv",

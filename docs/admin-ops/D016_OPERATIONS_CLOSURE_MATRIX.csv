@@ -1,0 +1,8 @@
+gate,scope,status,evidence
+readiness,health/ready/admin auth boundary,PASS_INTERNAL,API ready and admin auth boundary documented
+repository runtime,admin DB-backed operations,PASS_INTERNAL,services/api/tests/admin-db-repository-runtime.test.ts
+rollback,operator rollback runbook,PASS_INTERNAL,docs/admin-ops/ROLLBACK_RUNBOOK.md
+incident,incident triage/runbook,PASS_INTERNAL,docs/admin-ops/INCIDENT_RUNBOOK.md
+read-only fallback,admin degraded mode,PASS_INTERNAL,docs/admin-ops/READ_ONLY_FALLBACK_RUNTIME_REPORT.md
+provider logs,Cloudflare Workers Builds/runtime log account access,EXTERNAL_BLOCKER,Cloudflare account/provider access required
+broader D-016,R2/logs/Sentry/alerts/operations inventory/rollback beyond Phase 7,PARTIAL_SEPARATE_PHASE_TRACK,D-016 remains PARTIAL by governance

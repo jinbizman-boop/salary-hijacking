@@ -9,6 +9,14 @@ const requiredFiles = [
   "docs/admin-ops/ADS_PRIVACY_REPORT.md",
   "docs/admin-ops/ENVIRONMENT_ISOLATION_MATRIX.csv",
   "docs/admin-ops/OPS_INVENTORY.json",
+  "docs/admin-ops/PHASE_7_ADMIN_REPOSITORY_GAP_MATRIX.csv",
+  "docs/admin-ops/ADMIN_DATABASE_OWNERSHIP_MAP.csv",
+  "docs/admin-ops/ADMIN_STAGING_PERMISSION_RUNTIME_MATRIX.csv",
+  "docs/admin-ops/D016_OPERATIONS_CLOSURE_MATRIX.csv",
+  "docs/admin-ops/ADMIN_STAGING_RUNTIME_EVIDENCE.json",
+  "docs/admin-ops/INCIDENT_RUNBOOK.md",
+  "docs/admin-ops/ROLLBACK_RUNBOOK.md",
+  "docs/admin-ops/READ_ONLY_FALLBACK_RUNTIME_REPORT.md",
   "docs/admin-ops/PHASE_7_ADMIN_REQUIREMENT_MATRIX.csv",
   "docs/admin-ops/PHASE_7_ADS_REQUIREMENT_MATRIX.csv",
   "docs/admin-ops/PHASE_7_OPS_REQUIREMENT_MATRIX.csv",
@@ -162,8 +170,8 @@ if (env.rows.some((row) => row.mutation !== "NO_PRODUCTION_DEPLOY" && !row.mutat
 const ops = JSON.parse(read("docs/admin-ops/OPS_INVENTORY.json"));
 if (ops.productionDeployPerformed !== false || ops.homepagePr3Touched !== false || ops.appsWebTouched !== false)
   fail("forbidden production/homepage/web mutation flag detected");
-if (!Array.isArray(ops.remainingInternalBlockers) || ops.remainingInternalBlockers.length === 0)
-  fail("Phase 7 must list remaining internal blockers unless fully closed");
+if (!Array.isArray(ops.remainingInternalBlockers))
+  fail("Phase 7 internal blockers must be an array");
 if (!Array.isArray(ops.remainingExternalBlockers) || ops.remainingExternalBlockers.length === 0)
   fail("Phase 7 external blockers must be explicit");
 
@@ -174,6 +182,60 @@ if (summary.phase7Status === "PASS") {
 }
 if (summary.phase7Status === "PARTIAL" && summary.remainingInternalBlockers.length === 0)
   fail("PARTIAL requires remaining internal blockers");
+if (summary.phase7Status === "EXTERNAL_BLOCKER") {
+  if (summary.phase7InternalStatus !== "PASS") fail("EXTERNAL_BLOCKER requires internal PASS");
+  if (summary.remainingInternalBlockers.length !== 0) fail("EXTERNAL_BLOCKER cannot have remaining internal blockers");
+  if (!Array.isArray(summary.remainingExternalBlockers) || summary.remainingExternalBlockers.length === 0)
+    fail("EXTERNAL_BLOCKER requires explicit external blockers");
+}
+
+const repositorySource = read("services/api/src/repositories/admin.repository.ts");
+for (const forbidden of ["placeholderResult", "emptyList"]) {
+  if (repositorySource.includes(forbidden)) fail(`admin repository still contains ${forbidden}`);
+}
+for (const table of [
+  "public.users",
+  "public.auth_sessions",
+  "public.community_posts",
+  "public.community_reports",
+  "public.notices",
+  "public.ad_campaigns",
+  "public.ad_events",
+  "public.growth_tasks",
+  "public.admin_audit_logs",
+  "public.admin_role_members",
+]) {
+  if (!repositorySource.includes(table)) fail(`admin repository missing DB-backed table ${table}`);
+}
+
+const repositoryGaps = parseCsv(read("docs/admin-ops/PHASE_7_ADMIN_REPOSITORY_GAP_MATRIX.csv"));
+if (repositoryGaps.rows.length < 9) fail("admin repository gap matrix incomplete");
+if (repositoryGaps.rows.some((row) => row.currentStatus !== "PASS_DB_BACKED"))
+  fail("admin repository gap matrix contains non-PASS DB-backed row");
+
+const ownership = parseCsv(read("docs/admin-ops/ADMIN_DATABASE_OWNERSHIP_MAP.csv"));
+for (const domain of ["users", "sessions", "community", "notices", "ads", "growth", "audit", "rbac"]) {
+  if (!ownership.rows.some((row) => row.domain === domain && row.status === "PASS_INTERNAL"))
+    fail(`ownership map missing ${domain}`);
+}
+
+const stagingPermission = parseCsv(read("docs/admin-ops/ADMIN_STAGING_PERMISSION_RUNTIME_MATRIX.csv"));
+if (stagingPermission.rows.length !== permissions.rows.length)
+  fail("staging permission matrix must mirror canonical permission coverage");
+if (!stagingPermission.rows.every((row) => row.stagingRuntime === "EXTERNAL_BLOCKER_STAGING_ADMIN_CREDENTIAL_REQUIRED"))
+  fail("staging permission matrix must classify missing staging admin credential as external");
+
+const d016 = parseCsv(read("docs/admin-ops/D016_OPERATIONS_CLOSURE_MATRIX.csv"));
+if (!d016.rows.some((row) => row.gate === "provider logs" && row.status === "EXTERNAL_BLOCKER"))
+  fail("D-016 provider log external blocker missing");
+if (!d016.rows.some((row) => row.gate === "rollback" && row.status === "PASS_INTERNAL"))
+  fail("D-016 rollback internal evidence missing");
+
+const stagingEvidence = JSON.parse(read("docs/admin-ops/ADMIN_STAGING_RUNTIME_EVIDENCE.json"));
+if (stagingEvidence.productionMutation !== false || stagingEvidence.rawSecretsCaptured !== false)
+  fail("staging evidence must not contain production mutation or raw secret capture");
+if (stagingEvidence.dbBackedRepositoryPlaceholders !== 0)
+  fail("staging evidence reports remaining DB-backed repository placeholders");
 
 const trace = parseCsv(read("docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv"));
 for (const id of requirement.rows.map((row) => row.requirementId)) {

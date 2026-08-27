@@ -1,0 +1,9 @@
+domain,canonicalOwner,tables,operations,enforcement,status
+users,ADMIN,public.users,read/manage,admin route permission + current_app_is_admin RLS context,PASS_INTERNAL
+sessions,ADMIN,public.auth_sessions,force logout,admin route permission + current_app_is_admin RLS context,PASS_INTERNAL
+community,MODERATOR,public.community_posts; public.community_reports,moderate/resolve,admin route permission + DB RLS admin context,PASS_INTERNAL
+notices,CONTENT_ADMIN,public.notices,publish/archive,admin route permission + DB RLS admin context,PASS_INTERNAL
+ads,ADS_PARTNER_ADMIN,public.partner_accounts; public.ad_campaigns; public.ad_events,campaign lifecycle/report,admin route permission + DB privacy constraints,PASS_INTERNAL
+growth,CONTENT_ADMIN,public.growth_tasks; public.growth_content_items,LV UP content/task lifecycle,admin route permission + DB RLS admin context,PASS_INTERNAL
+audit,AUDITOR_READONLY,public.admin_audit_logs,minimal read,audit:read:minimal only; mutations denied by route RBAC,PASS_INTERNAL
+rbac,SUPER_ADMIN,public.admin_roles; public.admin_role_members,role membership mutation,role:manage plus reason/MFA; mutation audit,PASS_INTERNAL
