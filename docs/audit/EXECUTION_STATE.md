@@ -1,18 +1,24 @@
-# 급여납치 실행 상태 체크포인트
+# Salary Hijacking Execution State Checkpoint
 
-## 2026-08-03 11:25 KST
+## 2026-08-28 20:12 KST
 
-### Canonical Repository
+STATUS: PHASE_12_ARTIFACT_LINEAGE_CLOSED
+CONTINUING: false
+FALSE_COMPLETION_FORBIDDEN: true
 
-- Root: `C:/Users/PC/Desktop/salary-hijacking-platform`
+## Canonical Repository
+
+- Canonical root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current checked HEAD before this checkpoint edit / QA_EVIDENCE_SHA: `e603f27ecc93020f5beb870bad2cb48ce895b684`
-- RC_SOURCE_SHA: `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`
-- Note: `2177696c2e19f7b32f62969e72c19d43378c49d7`, `ce3b9aaf389398a2d6060d124c9ac7d4ed815d0f`, `a401ccc7a6191a3881c6ca9c48b567f3ecb0963d`, `e43a4b7f0f5a4e17dd5b6a0f2862228828c738f9`, `94eb8281bc3348ea92f65607e5b61ece0ed28335`, `bcd12cd555940c4a5f1363eab6395307ed58fe56`, `87eae4bb8b8670c5210329d00525a9f481af3e54`, `dad8a10f3add434adc8c2bb5e31a22eb0f69eeff`, `136cecda4f99a5ff88d187d00d9f58fd800e4f24`, and `e603f27ecc93020f5beb870bad2cb48ce895b684` are audit/quality/status/storage-cleanup commits. They do not invalidate the unchanged app/API source state at `98d7cd62032ca2a182e7dcfbbcc61bfd3f703264`.
-- Source of truth: `docs/audit/IMPLEMENTATION_MATRIX.csv`
-- Do not use: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
+- Current HEAD: `f84f50cf7834062eeaf5b21d8193a12443b81294`
+- RC_SOURCE_SHA: `08005cff94e4f0661d2ae809d7d508379ab3092a`
+- APPLICATION_RC_SOURCE_SHA: `08005cff94e4f0661d2ae809d7d508379ab3092a`
+- RC_SOURCE_FINGERPRINT: `90045513FD9C672C30116747A7E5A8D7E582BE47BF5DB17026B4FD69EA490D49`
+- Current source state: dirty by design; `services/api/wrangler.toml` restores the production cron entry removed by HEAD because production trigger changes are not approved for this goal.
+- Truth source: `docs/audit/IMPLEMENTATION_MATRIX.csv`
+- Ignored old roots: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
 
-### Current Truth Matrix
+## Truth Matrix
 
 - Rows: 423
 - RESOLVED: 20
@@ -25,113 +31,84 @@
 - `PROJECT_COMPLETION_100`: false
 - `COMMERCIAL_LAUNCH_READY`: false
 
-`check:truthful-completion` is expected to fail while these rows remain open.
+`corepack pnpm run check:truthful-completion` is expected to fail until all open matrix rows are closed with current-HEAD runtime evidence.
 
-### Storage Gate
+## Storage Gate
 
-- Artifact budget: PASS, 9.61GB available
-- System drive: PASS, 33.7GB available / 15GB required
-- Work drive: PASS, 33.7GB available / 25GB required
-- Android build-start: FAIL, 33.7GB available / 35GB required
+- Artifact storage: PASS, 9.61GB available
+- System drive: PASS, 33.75GB available / 15GB required
+- Work drive: PASS, 33.75GB available / 25GB required
+- Android local build-start: NOT_REQUIRED_FOR_CURRENT_CI_ARTIFACT; Linux GitHub Actions qaRelease build PASS.
 - Latest storage evidence: `artifacts/storage/storage-report.json`
-- Cleanup at 2026-08-03 09:39 KST: `clean:junk` removed 7 generated paths and freed 32.1MB. Removed paths were `.wrangler` worker caches and temp/jest/node caches only.
-- Cleanup hardening at current HEAD: `scripts/dev/clean-generated-junk.mjs` now includes allowlisted external generated build caches under `D:/salary-hijacking-artifacts` such as Gradle homes, Android subproject/build workspaces, APK patch dirs, Kotlin daemon dirs, moved caches, node-test temps, and qa-release logs. Its focused test now covers configured external artifact roots and passed 15/15 tests. A later `clean:junk` pass reduced the dry-run candidate count from 118 to 93, but long-running Windows deletes timed out and direct shell deletion is blocked by local command policy, so the Android build-start storage gate remains FAIL.
+- Cleanup this checkpoint: removed temporary CI ZIP/extract folders under `D:/salary-hijacking-artifacts/release-artifacts-ci/20260803-e04bba7` and `D:/salary-hijacking-artifacts/mobile-artifacts-ci/20260803-e04bba7`, 45,385,842 bytes total.
 
-Heavy Android Gradle/APK/AAB/export/full visual capture work remains blocked until the Android build-start free-space gate is met or Android packaging is moved to an approved Linux/CI route. Low-storage source, focused test, Cloudflare, Neon, and UI implementation work may continue.
+Heavy local Android Gradle/APK/AAB/export/full visual capture remains outside this checkpoint. Current x86_64 qaRelease artifact evidence is from Linux GitHub Actions Run `33164569125`.
 
-### Running Process Snapshot
+## Current-Source Verification
 
-- Expected app MCP/helper node processes are running.
-- Android emulator and adb are running.
-- No duplicate Gradle/Java Android build process was observed in the latest process snapshot.
+- `corepack pnpm --filter @salary-hijacking/mobile run check:eas`: PASS.
+- Focused startup/route contract: PASS, 36/36 tests.
+- `corepack pnpm --filter @salary-hijacking/api run typecheck`: PASS.
+- `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS.
+- `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
+- `corepack pnpm --filter @salary-hijacking/mobile run format:check`: PASS.
+- Full mobile Jest regression: PASS, 103 suites / 853 tests.
+- Root format check attempted but timed out at 304 seconds; it must be rerun with a longer timeout before any current-source release claim.
+- `corepack pnpm run check:artifact-lineage`: PASS for current RC source `08005cff94e4f0661d2ae809d7d508379ab3092a` and `release/evidence/build-artifacts.json`.
 
-### Android Build Attempt Closure
+## Cloudflare/Staging
 
-The latest Windows ARM64 qaRelease attempts are not valid current artifacts.
-
-- `76be0c8-arm64-subst-dcache-long-20260802-234600`: failed during Gradle/plugin artifact downloads with `java.io.IOException` while writing Gradle/Netty artifacts, consistent with the storage gate failure.
-- `76be0c8-arm64-subst-dcache-20260802-223901`: failed at `:app:createBundleQaReleaseJsAndAssets` because `Z:/apps/mobile` disappeared during Metro config resolution, then Gradle could not update `last-build.bin`.
-- `76be0c8-arm64-dcache-20260802-203619`: failed with CMake/Ninja `build.ninja still dirty after 100 tries`.
-- Earlier Windows attempts also show Gradle temporary workspace move failures.
-
-Per the master goal, do not add another Windows workaround build loop for this failure family. Next Android packaging should use a clean Linux/CI route or wait until the storage hard gate is satisfied and a single canonical build path is selected.
-
-### Cloudflare/Staging
-
-- Wrangler OAuth login: PASS.
-- `wrangler whoami`: PASS.
-- Staging-only secret gap reduction: PASS. API staging now lists `AUTH_JWT_SECRET`, `HASH_SECRET`, `RATE_LIMIT_HASH_SECRET`, `AUDIT_HASH_SECRET`, and `OPERATION_WEBHOOK_TOKEN`. Notifications staging now lists `NOTIFICATIONS_SERVICE_TOKEN` and `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN`. Scheduler staging now lists `SCHEDULER_SERVICE_TOKEN` and `SCHEDULER_OPERATION_WEBHOOK_TOKEN`. Secret values were generated for staging only and were not printed or committed.
-- API staging current deploy: PASS, version `e4c902b4-30d3-42d2-ad1f-a8624d54c497`.
-- Notifications staging current deploy: PASS, version `cbdc7ab4-3359-41d0-a569-24315761c017`.
-- Canonical API host DNS: PASS for `api-staging.salaryhijacking.com`.
-- `https://api-staging.salaryhijacking.com/health`: HTTP 200.
-- `https://api-staging.salaryhijacking.com/ready`: HTTP 200.
-- `https://api-staging.salary-hijacking.com/health`: unresolved/failed and must not be used as canonical evidence.
+- Wrangler OAuth whoami: PASS.
+- Canonical API host: `https://api-staging.salaryhijacking.com`.
+- API staging `/health`: HTTP 200.
+- API staging `/api/v1/ready`: HTTP 200.
 - Notifications staging `/health`: HTTP 200.
-- Scheduler staging `/health` and `/ready`: HTTP 200.
-- Current public health evidence: `D:/salary-hijacking-artifacts/qa/public-health-e603f27-current.json`.
-- Scheduler staging deploy at 2026-08-03 09:09 KST: PARTIAL/FAIL. Worker upload, workers.dev route, queue producers, and queue consumer were deployed, but Cloudflare `/schedules` API returned HTTP 400 and the cron trigger did not close. `D-016` must remain open.
-- Scheduler trigger retry at 2026-08-03 09:42 KST: PARTIAL/FAIL. `wrangler triggers deploy --config services/scheduler/wrangler.toml --env staging` uploaded worker routing, queue producers, and queue consumer, but the Cloudflare `/schedules` API again returned HTTP 400. Evidence: `D:/salary-hijacking-artifacts/qa/cloudflare-scheduler-trigger-deploy-20260803-current.log`.
-- Official Cloudflare docs confirm Cron Triggers are configured from Wrangler config and Cloudflare account limits include a 5 Cron Trigger limit on Free plans. Existing root/production cron ownership must not be removed automatically because production trigger deletion remains an external approval gate. The scheduler cron blocker therefore remains `EXTERNAL_BLOCKER` unless an obsolete staging/legacy trigger is proven safe to remove or the account limit is changed.
-- GitHub Actions current-HEAD deploy-admin run `30779067621`: Verify admin console PASS on `ubuntu-latest`, including install, lint, typecheck, tests, OpenNext build, output verification, secret-output scan, and artifact `admin-opennext-1` digest `sha256:cd470b8315543c412ce101336d51486dff05dcaac57dfd3ded62f2c90b273275`. The actual deploy job was skipped because the run was push-triggered, so Admin staging public deploy/health remains UNVERIFIED.
-- Persistent staging route without DB: PASS as a blocker guard. `POST /api/v1/auth/register` returned HTTP 503 with `APP_DATABASE_URL_REQUIRED`, proving staging/production persistent routes no longer fall through to in-memory success when DB credentials are absent.
-- Evidence: `D:/salary-hijacking-artifacts/qa/staging-api-persistent-db-required-98d7cd6-20260803.json`
+- Scheduler staging `/health`: HTTP 200.
+- Scheduler cron: PASS for staging canonical schedule `0 23 * * *` via `wrangler triggers deploy --env staging`.
+- API staging secret list contains auth/hash secrets but no `DATABASE_URL` secret. Register/login currently return HTTP 503 with `APP_DATABASE_URL_REQUIRED`.
+- Admin staging public deploy/custom-domain health: UNVERIFIED.
+- D-016 remains EXTERNAL_BLOCKER because Admin staging deploy-health and API DATABASE_URL secret/persistence E2E remain open.
+- Evidence: `D:/salary-hijacking-artifacts/qa/cloudflare-staging-health-cron-e04bba7-20260803.json`.
 
-Do not report Cloudflare credentials unavailable. Remaining staging blockers are Scheduler cron activation, Admin staging deploy/DNS, DB credentials/application role evidence, FCM/service account evidence, and authenticated persistence evidence.
+## Neon/Staging DB
 
-### Mobile Runtime Source Defect Scan
+- Neon project: `still-feather-22153967` / `salary-hijacking`.
+- Branch/database checked: `br-fragrant-sky-aj5kk2c3` / `neondb`.
+- Public application tables: 39.
+- RLS enabled: 39/39.
+- FORCE RLS: 29.
+- RLS disabled: 0.
+- Default MCP execution role `neondb_owner` has `rolbypassrls=true`, so owner-role reads are not RLS isolation proof.
+- A temporary non-login `NOBYPASSRLS` probe role was created on staging, used for a read-only A/B isolation smoke on `variable_expenses`, then privileges were revoked and the role was dropped.
+- Probe result: user A saw 3 owned rows only; user B saw 2 owned rows only; remaining probe roles: 0.
+- Forward-recovery rehearsal on the app staging branch created/inserted/dropped a temporary rehearsal table and confirmed remaining rehearsal tables: 0.
+- D-017 remains EXTERNAL_BLOCKER until authenticated API persistence E2E passes through deployed staging with a secure DATABASE_URL secret path.
+- Evidence: `D:/salary-hijacking-artifacts/qa/neon-rls-ab-isolation-e04bba7-20260803.json`.
 
-- Root bootstrap fallback environment is `staging`, not `development`.
-- Korean strings in `apps/mobile/app/_layout.tsx` and the related test file are valid UTF-8 when read with UTF-8 decoding.
-- Any mojibake displayed by default PowerShell output is a console decoding issue, not source content evidence.
-- Static grep still finds non-final local/dev values in development/test/capture contexts; these must not be embedded into final release-like APK evidence.
-- `SYSTEM_ALERT_WINDOW` appears in `blockedPermissions` and config tests, not as an allowed app permission in app config.
-- Focused startup/route contract test: PASS, 36/36 tests.
-- Mobile typecheck: PASS.
-- Mobile lint: PASS.
-- Mobile format check: PASS.
-- Full mobile Jest regression: PASS, 103/103 suites and 852/852 tests.
+## CI Artifact Inspection
 
-### D-013 Gate
+- Android QA workflow: `Build Android QA Release`, Run `33164569125`, Job `98826790795`, PASS.
+- Artifact ID: `9683220578`.
+- Artifact digest: `sha256:d66beb07aa69aa09b86d3862d19f9946fbd7699409edd12ce67c605cc4a80d67`.
+- APK SHA-256: `b5e88f014ec096b204f58e085dd81f72e832b91b732b98ab1a6fd010a80e7d21`.
+- Embedded bundle SHA-256: `07d899be5fe27763a6900f1c33cebe599597ff6f9525ae7818e8d1a01fa02cf7`.
+- Signer certificate SHA-256: `d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3`.
+- ABI: `x86_64`.
+- Application ID: `com.salaryhijacking.mobile`.
+- Version: `1.0.0` / `1`.
+- Environment: `staging`.
+- Static security: debuggable=false, cleartext=false, allowBackup=false, app API local/emulator hosts=0, obsolete staging host=0.
+- Historical `b4bddd943257c68c23fb633983f4e990a588bdc3` APK evidence is preserved only as previous-known-good/stale evidence in `release/evidence/build-artifacts.json`; it is not current lineage.
 
-Keep `D-013` as FAIL until all 304 Stitch states have current-HEAD production-route interaction, Android visual regression, accessibility, safe-area, keyboard, and status-state evidence from the same APK lineage.
+## Current Blockers
 
-### Neon/Staging DB
+- D-013 FAIL: Stitch 304 production-route Android interaction/visual/a11y/safe-area/keyboard evidence missing from same signed RC APK.
+- D-026 FAIL: PHASE 12 x86_64 qaRelease artifact/static lineage is PASS, but D-026 remains open for PHASE 13 physical/Galaxy runtime plus later Stitch/device gates.
+- D-015 EXTERNAL_BLOCKER: physical ARM64 device/logcat or approved equivalent still needed.
+- D-016 EXTERNAL_BLOCKER: Admin staging deploy-health and API DATABASE_URL secret/persistence E2E remain open.
+- D-017 PASS: Phase 2 database closure and PITR/RPO/RTO evidence remain PASS.
+- D-021/D-028 EXTERNAL_BLOCKER: external runtime/mobile release gates remain open per matrix.
 
-- Neon project metadata: PASS, project `still-feather-22153967` / `salary-hijacking`.
-- Observed read-write branch computes without exposing DB URLs:
-  - `br-fragrant-sky-aj5kk2c3` / `ep-young-sunset-ajgi3bab`
-  - `br-icy-frog-aj3b1bl9` / `ep-restless-mouse-aj80bf0j`
-- MCP read-only metadata query against `br-fragrant-sky-aj5kk2c3` / `neondb` showed 39 application tables, 39/39 RLS enabled, and 29 FORCE RLS.
-- MCP read-only metadata query against `br-icy-frog-aj3b1bl9` / `neondb` showed 0 application tables.
-- Observed login roles are `cloud_admin`, `neon_service`, and `neondb_owner`; all have `rolbypassrls=true`, so this is not non-BYPASSRLS user A/B isolation evidence.
-- Local `neonctl` and `psql` are not available on PATH. The repository `scripts/db/migrate.sh` still requires a DB URL or direct DB URL, which was not requested, printed, or recorded.
-- Evidence: `D:/salary-hijacking-artifacts/qa/neon-metadata-no-connection-string-20260803.json`; `D:/salary-hijacking-artifacts/qa/neon-rls-current-e603f27.json`
-- Remaining blocker: live non-BYPASSRLS user A/B isolation, staging rollback/forward recovery, and authenticated app persistence still require a safe application-role/bearer path. Connection strings, tokens, passwords, and DB URLs were intentionally not requested or recorded.
+## Next Exact Command
 
-### D-026 Gate
-
-Keep `D-026` as FAIL until the same signed RC APK has current-HEAD static inspection, clean/upgrade install, cold start 20/20, background/resume 20/20, route smoke, authenticated staging DB persistence, standalone notifications route proof, service E2E, `D-013` acceptance, and physical Samsung ARM64 logcat QA.
-
-Current-HEAD supporting CI evidence at `e603f27ecc93020f5beb870bad2cb48ce895b684`:
-
-- `ci` run `30779067623`: PASS.
-- `release` run `30779067618`: PASS with supporting artifacts including `release-artifacts-1` digest `sha256:9c35947e300daabd864db1290182a11b89d3e97237f565efd8f53764b7c267ee`, `cloudflare-runtime-proof-1` digest `sha256:c36b7ff23b151aef3cbfd665fd34b9685486e3c34b8a8b99b3a3c710898701a1`, `database-command-proof-1` digest `sha256:c142e2a15ee6d345835facf7b532b3db179b4bf1b0f68ab8b8373fabe97c674c`, `public-url-proof-1` digest `sha256:2933507dd29f3f6bfef4712daba29a2e99ece5c1fad5020d7e1f0d24d7d5afb7`, `security-audit-proof-1` digest `sha256:874c798fc6255ac0a565ce2eebc52567475958607ec6a63e97254d843ab0fe15`, `runtime-secret-proof-1` digest `sha256:00469b2db4beb8d6ffbe07522cd11660d4adb3843253100048a08ec20ab19f45`, and `github-runtime-secret-proof-1` digest `sha256:7474bf9eabda627d76e726bf7e30dc5e78782b6ced0bd014e50dbf7d54a43b56`.
-- `mobile-build` run `30779067613`: PASS with `mobile-verification-reports-1` digest `sha256:6162c4fb3e9153266fd5d101feac7e1f6bb8efc2c6b7dd495030db7634f5ac6b` and `mobile-native-proof-1` digest `sha256:151209053b693cd9b1faf9daafa99f3a61818758de710f18e21194b029801d37`.
-- `deploy-api` run `30779067632`: PASS.
-- `deploy-admin` run `30779067621`: Admin verify PASS; deploy job skipped.
-- `security-scan` run `30779067625`: PASS with `security-contract-reports-1` digest `sha256:fde5fdbea618c221afeaad69b07c08eb2728ac392d09468429e43c3d4e9eb82b`.
-
-These GitHub artifacts are supporting evidence only. They do not close `D-026` because the same signed RC APK still lacks authenticated staging persistence, Stitch 304 Android visual/accessibility, scheduler cron or approved equivalent, Admin public staging deploy-health, and physical Samsung ARM64 logcat evidence.
-
-### Next Exact Actions
-
-1. Avoid heavy Android builds while the 35GB build-start gate fails.
-2. Continue closing source and staging defects that do not require heavy local builds.
-3. Prefer Linux/CI Android packaging if another Windows Gradle/CMake/path-lock failure would be repeated.
-4. Do not change `D-013` or `D-026` to PASS without current-HEAD runtime evidence.
-5. Do not create a safe-entry APK, new audit framework, evidence count sync phase, or completion report.
-6. Keep `check:artifact-lineage` failing until a new same-RC APK/build-info/bundle hash is generated from `RC_SOURCE_SHA`.
-7. `clean:junk` now completed successfully after a longer monitored run; keep using dry-run first before future cleanup.
-
-CONTINUING=true
+Do not start PHASE 13 automatically. Next entry decision: use the same current-source x86_64 qaRelease artifact lineage from Run `33164569125` as the input for PHASE 13 device/runtime planning, while preserving D-013, D-016, and D-026 as not commercially closed.

@@ -1,106 +1,106 @@
 {
-  "schemaVersion": 4,
-  "generatedAt": "2026-07-31T13:29:00.684Z",
+  "schemaVersion": 5,
+  "generatedAt": "2026-08-28T11:12:00.000Z",
+  "lineageStatus": "CURRENT_SOURCE_X86_64_QARELEASE_APK_STATIC_VERIFIED",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
   "applicationId": "com.salaryhijacking.mobile",
   "versionName": "1.0.0",
   "versionCode": 1,
   "buildType": "qaRelease",
-  "gitCommit": "b4bddd943257c68c23fb633983f4e990a588bdc3",
+  "gitCommit": "08005cff94e4f0661d2ae809d7d508379ab3092a",
+  "applicationRcSourceSha": "08005cff94e4f0661d2ae809d7d508379ab3092a",
+  "sourceFingerprint": "90045513FD9C672C30116747A7E5A8D7E582BE47BF5DB17026B4FD69EA490D49",
+  "sourceFileCount": 325,
   "minSdk": 24,
   "targetSdk": 35,
   "abis": [
-    "arm64-v8a",
     "x86_64"
   ],
   "signed": true,
-  "artifactModel": "split-qa-release-like-apks-current-head-staging",
-  "primaryPhoneApk": {
-    "abi": "arm64-v8a",
-    "file": "D:/salary-hijacking-artifacts/android/b4bddd9-staging-arm64/salary-hijacking-qa-release-like-b4bddd9-staging-arm64.apk",
-    "sha256": "F5ADD73DAA85C6C0C16EFCA7760F7525DE77A1089CDCF0E9B8195AEDE19593E2",
-    "bundleSha256": "AA907DB3CA695CB7E5377816A9867D24AE7DF62867386677A528694D7DA87357",
-    "sizeBytes": 32109934,
-    "signerVerifyLog": "D:/salary-hijacking-artifacts/qa/apksigner-verify-b4bddd9-staging-arm64-20260731.txt",
-    "badgingLog": "D:/salary-hijacking-artifacts/qa/aapt-badging-b4bddd9-staging-arm64-20260731.txt",
-    "staticInspectionLog": "D:/salary-hijacking-artifacts/qa/apk-static-inspection-b4bddd9-staging-arm64-20260731.json"
+  "artifactModel": "github-actions-linux-x86_64-qaRelease-current-source-staging",
+  "workflow": {
+    "name": "Build Android QA Release",
+    "runId": "33164569125",
+    "jobId": "98826790795",
+    "event": "push",
+    "status": "completed",
+    "conclusion": "success",
+    "artifactId": "9683220578",
+    "artifactName": "android-qa-release-x86_64-08005cff94e4f0661d2ae809d7d508379ab3092a",
+    "artifactDigest": "sha256:d66beb07aa69aa09b86d3862d19f9946fbd7699409edd12ce67c605cc4a80d67",
+    "artifactExpiresAt": "2026-09-04T10:53:24Z",
+    "archiveDownloadUrl": "https://api.github.com/repos/jinbizman-boop/salary-hijacking/actions/artifacts/9683220578/zip"
   },
   "emulatorApk": {
     "abi": "x86_64",
-    "file": "D:/salary-hijacking-artifacts/android/b4bddd9-staging/salary-hijacking-qa-release-like-b4bddd9-staging-x86_64.apk",
-    "sha256": "6F68C4253DBFDD29F2AF02E3608432A6CE36B43FF5BD60E52BC21217A83B4E54",
-    "bundleSha256": "AA907DB3CA695CB7E5377816A9867D24AE7DF62867386677A528694D7DA87357",
-    "sizeBytes": 32350249,
-    "signerVerifyLog": "D:/salary-hijacking-artifacts/qa/apksigner-verify-b4bddd9-staging-x86_64-20260731.txt",
-    "badgingLog": "D:/salary-hijacking-artifacts/qa/aapt-badging-b4bddd9-staging-x86_64-20260731.txt",
-    "staticInspectionLog": "D:/salary-hijacking-artifacts/qa/apk-static-inspection-b4bddd9-staging-x86_64-20260731.json"
+    "file": "https://api.github.com/repos/jinbizman-boop/salary-hijacking/actions/artifacts/9683220578/zip",
+    "artifactName": "android-qa-release-x86_64-08005cff94e4f0661d2ae809d7d508379ab3092a",
+    "sha256": "B5E88F014EC096B204F58E085DD81F72E832B91B732B98AB1A6FD010A80E7D21",
+    "bundleSha256": "07D899BE5FE27763A6900F1C33CEBE599597FF6F9525AE7818E8D1A01FA02CF7",
+    "sizeBytes": 32357177,
+    "signerCertificateSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
+    "staticInspection": {
+      "pass": true,
+      "tool": "scripts/release/inspect-android-apk-static.mjs",
+      "expectedAbis": [
+        "x86_64"
+      ],
+      "nativeAbis": [
+        "x86_64"
+      ],
+      "bundleSourceMatch": "PASS",
+      "apiBaseUrl": "https://api-staging.salaryhijacking.com",
+      "apiEnvironment": "staging",
+      "appApiLocalhostOrEmulatorHost": 0,
+      "obsoleteHyphenatedStagingHost": 0,
+      "debuggable": false,
+      "cleartextTraffic": false,
+      "allowBackup": false,
+      "dangerousUnexpectedPermissions": 0,
+      "oldExposedSignerUsed": 0,
+      "firebaseConfigPackageMatch": "PASS_WORKFLOW_MATERIALIZED_CONFIG_FOR_com.salaryhijacking.mobile",
+      "frameworkLocalhostLiteral": "EXPO_METRO_RUNTIME_NON_API_LOCALHOST_8081_PRESENT"
+    }
   },
-  "sha256": "F5ADD73DAA85C6C0C16EFCA7760F7525DE77A1089CDCF0E9B8195AEDE19593E2",
-  "bundleSha256": "AA907DB3CA695CB7E5377816A9867D24AE7DF62867386677A528694D7DA87357",
-  "file": "D:/salary-hijacking-artifacts/android/b4bddd9-staging-arm64/salary-hijacking-qa-release-like-b4bddd9-staging-arm64.apk",
-  "sourceFile": "apps/mobile build outputs were cleaned after preserving current-head split APKs to D:/salary-hijacking-artifacts/android/b4bddd9-staging*",
-  "fileName": "salary-hijacking-qa-release-like-b4bddd9-staging-arm64.apk",
-  "artifactMirrorPath": "D:/salary-hijacking-artifacts/android/b4bddd9-staging-arm64",
-  "buildCommand": "node apps/mobile/scripts/expo-local-android-debug-build.mjs --build-type qaRelease --architecture arm64-v8a / x86_64 with staging env and QA signing env",
-  "buildLogs": {
-    "arm64": "D:/salary-hijacking-artifacts/android/b4bddd9-staging-arm64/qa-release-build-b4bddd9-staging-arm64.log",
-    "x86_64": "D:/salary-hijacking-artifacts/android/b4bddd9-staging/qa-release-build-b4bddd9-staging-x86_64.log"
+  "sha256": "B5E88F014EC096B204F58E085DD81F72E832B91B732B98AB1A6FD010A80E7D21",
+  "bundleSha256": "07D899BE5FE27763A6900F1C33CEBE599597FF6F9525AE7818E8D1A01FA02CF7",
+  "file": "https://api.github.com/repos/jinbizman-boop/salary-hijacking/actions/artifacts/9683220578/zip",
+  "fileName": "salary-hijacking-qaRelease-x86_64.apk",
+  "buildCommand": "GitHub Actions Build Android QA Release / Build x86_64 qaRelease APK",
+  "toolchain": {
+    "runnerImage": "ubuntu-24.04",
+    "nodeVersion": "22",
+    "pnpmVersion": "10.24.0",
+    "jdkVersion": "Temurin 17.0.20-1 x64",
+    "androidSdk": "/usr/local/lib/android/sdk",
+    "androidBuildTools": "35.0.0",
+    "ndkVersion": "27.1.12297006",
+    "gradleVersion": "8.13"
   },
-  "staticInspection": {
-    "path": "D:/salary-hijacking-artifacts/qa/apk-static-inspection-b4bddd9-staging-arm64-20260731.json",
-    "pass": true,
-    "checks": {
-      "apiBaseUrlIsStagingHttps": true,
-      "appEnvironmentIsStaging": true,
-      "operationsEnvironmentIsStaging": true,
-      "releaseChannelIsStaging": true,
-      "e2eBuildDisabled": true,
-      "crashReportingEnabled": true,
-      "allowBackupDisabled": true,
-      "debuggableDisabled": true,
-      "cleartextTrafficDisabled": true,
-      "systemAlertWindowAbsent": true,
-      "localhost8787Absent": true,
-      "exactDevelopmentEnvironmentFallbackAbsent": true,
-      "safeEntryAbsent": true,
-      "fallbackConfigAbsent": true
-    },
-    "note": "Current HEAD b4bddd9 staging ARM64 and x86_64 split APKs pass static embedded config and manifest security inspection. Generic library strings are not treated as runtime fallback markers."
+  "rootCauseClosure": {
+    "originalFailingRunId": "33070999722",
+    "staleIncorrectClassification": "FAIL_MISSING_SECRET",
+    "actualOriginalFailure": "Metro could not resolve expo-localization from apps/mobile/src/i18n/index.ts during :app:createBundleQaReleaseJsAndAssets.",
+    "cleanResolutionEvidence": "expo-localization package, runtime entry, and Metro Android resolution all PASS from apps/mobile; dependency was already declared and locked.",
+    "fixedBuildInputDefects": [
+      "Expo prebuild regenerated Android without preserving qaRelease task/signing config.",
+      "Gradle/Metro qaRelease bundling inherited NODE_ENV=test and blocked Expo Router production Babel replacement.",
+      "App-code local API bridge host literals were embedded in the QA release bundle."
+    ]
   },
+  "historicalArtifacts": [
+    {
+      "classification": "HISTORICAL_PREVIOUS_KNOWN_GOOD_NOT_CURRENT",
+      "sourceCommit": "b4bddd943257c68c23fb633983f4e990a588bdc3",
+      "artifactModel": "split-qa-release-like-apks-stale",
+      "note": "Preserved as historical evidence only. It is not current PHASE 12 RC lineage and is intentionally not exposed as a current gitCommit field."
+    }
+  ],
   "runtimeEvidence": {
-    "status": "CURRENT_HEAD_X86_64_EMULATOR_AUTH_GATE_LIFECYCLE_AND_NOTIFICATION_DEEPLINK_PASS_ARM64_PHYSICAL_BLOCKED",
-    "device": "Google sdk_gphone64_x86_64 Android 15 API 35 emulator",
-    "cleanInstall": {
-      "outDir": "D:/salary-hijacking-artifacts/qa/b4bddd9-emulator-current-runtime-20260731-correct-package",
-      "apkSha256": "6F68C4253DBFDD29F2AF02E3608432A6CE36B43FF5BD60E52BC21217A83B4E54",
-      "coldStartSuccess": 20,
-      "coldStartTotal": 20,
-      "backgroundResumeSuccess": 20,
-      "backgroundResumeTotal": 20,
-      "strictFatalLineCount": 0,
-      "notificationDeepLinkStarted": true,
-      "notificationScreenshot": "D:/salary-hijacking-artifacts/qa/b4bddd9-emulator-current-runtime-20260731-correct-package/notification-deeplink.png",
-      "fullLogcat": "D:/salary-hijacking-artifacts/qa/b4bddd9-emulator-current-runtime-20260731-correct-package/logcat-full.txt",
-      "strictTargetFatalFilter": "D:/salary-hijacking-artifacts/qa/b4bddd9-emulator-current-runtime-20260731-correct-package/strict-target-fatal.txt"
-    },
-    "upgradeInstall": {
-      "summary": "D:/salary-hijacking-artifacts/qa/emulator-b4bddd9-staging-x86_64-upgrade-20260731/summary.json",
-      "apkSha256": "6F68C4253DBFDD29F2AF02E3608432A6CE36B43FF5BD60E52BC21217A83B4E54",
-      "coldStartSuccess": 20,
-      "coldStartTotal": 20,
-      "backgroundResumeSuccess": 20,
-      "backgroundResumeTotal": 20,
-      "strictFatalLineCount": 0,
-      "fullLogcat": "D:/salary-hijacking-artifacts/qa/emulator-b4bddd9-staging-x86_64-upgrade-20260731/logcat-full.txt",
-      "exitInfo": "D:/salary-hijacking-artifacts/qa/emulator-b4bddd9-staging-x86_64-upgrade-20260731/exit-info.txt"
-    },
-    "physicalPhone": {
-      "verified": false,
-      "blocker": "No physical Samsung ARM64 device is connected; ARM64 APK has static/signing/manifest proof only."
-    },
-    "note": "Current HEAD x86_64 emulator auth-gate lifecycle and notification deep-link startup evidence only. This does not close authenticated staging DB persistence, Stitch 304 production-route visual/a11y, Cloudflare staging trigger/Admin health, or physical Samsung ARM64 QA.",
-    "packageName": "com.salaryhijacking.mobile",
-    "launcherActivity": "com.salaryhijacking.mobile.MainActivity"
+    "status": "NOT_STARTED_IN_THIS_TASK",
+    "note": "This PHASE 12 closure validates source-to-bundle-to-x86_64-APK-to-signer-to-env artifact lineage and static security. PHASE 13 device/runtime work was not started."
   },
-  "status": "QA_RELEASE_SPLIT_APKS_STATIC_AND_X86_64_EMULATOR_AUTH_GATE_VERIFIED_REMAINING_GATES_OPEN",
-  "truthfulScope": "Not final, not 100%, not commercial launch ready. D-013 and D-026 remain FAIL until all current-HEAD acceptance criteria have runtime evidence."
+  "status": "PHASE_12_ARTIFACT_LINEAGE_PASS_X86_64_QARELEASE_STATIC_VERIFIED",
+  "truthfulScope": "PHASE 12 artifact lineage/static gate is closed for the current x86_64 qaRelease APK. This does not close Stitch 304 visual acceptance, physical Android/Galaxy runtime, Play publish, or commercial launch readiness."
 }
