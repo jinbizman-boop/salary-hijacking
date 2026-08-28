@@ -129,7 +129,9 @@ test("qaRelease preflight disables the embedded E2E build flag", () => {
     androidToolHomeDir: rootDir,
     buildType: "qaRelease",
     env: {
+      BABEL_ENV: "test",
       LOCALAPPDATA: localAppData,
+      NODE_ENV: "test",
       PATHEXT: ".EXE;.CMD;.BAT;.COM",
       PROGRAMFILES: path.join(rootDir, "Program Files"),
       ...qaSigningEnv(rootDir),
@@ -141,6 +143,8 @@ test("qaRelease preflight disables the embedded E2E build flag", () => {
   });
 
   assert.equal(result.ok, true, result.failures.join("\n"));
+  assert.equal(result.env.BABEL_ENV, "production");
+  assert.equal(result.env.NODE_ENV, "production");
   assert.equal(result.env.EXPO_PUBLIC_E2E_BUILD, "false");
   assert.equal(result.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT, "0");
   assert.equal(result.gradleArgs[0], "assembleQaRelease");
