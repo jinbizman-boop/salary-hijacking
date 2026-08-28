@@ -1631,6 +1631,51 @@ export const ensureAndroidDebugNdkAbiFilters = ({
   }
 };
 
+const insertIntoGradleBlock = (source, blockName, addition) => {
+  const match = new RegExp(`${blockName}\\s*\\{`, "u").exec(source);
+  if (!match) return source;
+
+  const openBraceIndex = source.indexOf("{", match.index);
+  let depth = 0;
+  for (let index = openBraceIndex; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === "{") {
+      depth += 1;
+    } else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return `${source.slice(0, index).trimEnd()}\n${addition}\n${source.slice(index)}`;
+      }
+    }
+  }
+
+  return source;
+};
+
+const qaSigningConfigBlock = [
+  "        qa {",
+  "            if (salaryHijackingHasQaSigning) {",
+  "                storeFile file(salaryHijackingQaKeystoreFile)",
+  "                storePassword salaryHijackingQaKeystorePassword",
+  "                keyAlias salaryHijackingQaKeyAlias",
+  "                keyPassword salaryHijackingQaKeyPassword",
+  "            }",
+  "        }",
+].join("\n");
+
+const qaReleaseBuildTypeBlock = [
+  "        qaRelease {",
+  "            initWith release",
+  "            matchingFallbacks = ['release']",
+  "            debuggable false",
+  "            jniDebuggable false",
+  "            renderscriptDebuggable false",
+  "            if (salaryHijackingHasQaSigning) {",
+  "                signingConfig signingConfigs.qa",
+  "            }",
+  "        }",
+].join("\n");
+
 export const ensureAndroidDebugQaApplicationConfig = ({ mobileRootDir }) => {
   const appBuildGradlePath = path.join(
     mobileRootDir,
@@ -1649,6 +1694,20 @@ export const ensureAndroidDebugQaApplicationConfig = ({ mobileRootDir }) => {
       [
         'def salaryHijackingDebugApplicationIdSuffix = (findProperty("salaryHijackingDebugApplicationIdSuffix") ?: "").toString()',
         'def salaryHijackingDebugVersionCode = (findProperty("salaryHijackingDebugVersionCode") ?: "").toString()',
+        "",
+        "android {",
+      ].join("\n"),
+    );
+  }
+  if (!nextSource.includes("salaryHijackingQaKeystoreFile")) {
+    nextSource = nextSource.replace(
+      /android\s*\{/u,
+      [
+        'def salaryHijackingQaKeystoreFile = (findProperty("salaryHijackingQaKeystoreFile") ?: System.getenv("SALARY_HIJACKING_QA_KEYSTORE_FILE") ?: "").toString()',
+        'def salaryHijackingQaKeystorePassword = (findProperty("salaryHijackingQaKeystorePassword") ?: System.getenv("SALARY_HIJACKING_QA_KEYSTORE_PASSWORD") ?: "").toString()',
+        'def salaryHijackingQaKeyAlias = (findProperty("salaryHijackingQaKeyAlias") ?: System.getenv("SALARY_HIJACKING_QA_KEY_ALIAS") ?: "").toString()',
+        'def salaryHijackingQaKeyPassword = (findProperty("salaryHijackingQaKeyPassword") ?: System.getenv("SALARY_HIJACKING_QA_KEY_PASSWORD") ?: "").toString()',
+        "def salaryHijackingHasQaSigning = salaryHijackingQaKeystoreFile && salaryHijackingQaKeystorePassword && salaryHijackingQaKeyAlias && salaryHijackingQaKeyPassword",
         "",
         "android {",
       ].join("\n"),
@@ -1677,6 +1736,29 @@ export const ensureAndroidDebugQaApplicationConfig = ({ mobileRootDir }) => {
         "            }",
         "$2",
       ].join("\n"),
+    );
+  }
+
+  if (!/signingConfigs\s*\{[\s\S]*?\bqa\s*\{/u.test(nextSource)) {
+    if (/signingConfigs\s*\{/u.test(nextSource)) {
+      nextSource = insertIntoGradleBlock(
+        nextSource,
+        "signingConfigs",
+        qaSigningConfigBlock,
+      );
+    } else {
+      nextSource = nextSource.replace(
+        /(\s*)buildTypes\s*\{/u,
+        `$1signingConfigs {\n${qaSigningConfigBlock}\n$1}\n$1buildTypes {`,
+      );
+    }
+  }
+
+  if (!/buildTypes\s*\{[\s\S]*?\bqaRelease\s*\{/u.test(nextSource)) {
+    nextSource = insertIntoGradleBlock(
+      nextSource,
+      "buildTypes",
+      qaReleaseBuildTypeBlock,
     );
   }
 

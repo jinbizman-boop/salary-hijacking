@@ -2491,6 +2491,57 @@ test("patches Android debug builds to honor QA application id suffix properties"
   );
 });
 
+test("restores qaRelease build type and QA signing after Expo prebuild regenerates Gradle files", () => {
+  const rootDir = makeWorkspace();
+  const buildGradlePath = path.join(rootDir, "android", "app", "build.gradle");
+  touch(
+    buildGradlePath,
+    [
+      "android {",
+      "    defaultConfig {",
+      "        applicationId 'com.salaryhijacking.mobile'",
+      "        versionCode 1",
+      '        versionName "1.0.0"',
+      "    }",
+      "    signingConfigs {",
+      "        debug {",
+      "            storeFile file('debug.keystore')",
+      "            storePassword 'android'",
+      "            keyAlias 'androiddebugkey'",
+      "            keyPassword 'android'",
+      "        }",
+      "    }",
+      "    buildTypes {",
+      "        debug {",
+      "            signingConfig signingConfigs.debug",
+      "        }",
+      "        release {",
+      "            matchingFallbacks = ['release']",
+      "            debuggable false",
+      "        }",
+      "    }",
+      "}",
+      "apply plugin: 'com.google.gms.google-services'",
+      "",
+    ].join("\n"),
+  );
+
+  ensureAndroidDebugQaApplicationConfig({ mobileRootDir: rootDir });
+  ensureAndroidDebugQaApplicationConfig({ mobileRootDir: rootDir });
+
+  const source = fs.readFileSync(buildGradlePath, "utf8");
+
+  assert.match(source, /def salaryHijackingQaKeystoreFile = /u);
+  assert.match(source, /def salaryHijackingHasQaSigning = /u);
+  assert.match(source, /signingConfigs\s*\{[\s\S]*?qa\s*\{/u);
+  assert.match(source, /storeFile file\(salaryHijackingQaKeystoreFile\)/u);
+  assert.match(source, /buildTypes\s*\{[\s\S]*?qaRelease\s*\{/u);
+  assert.match(source, /initWith release/u);
+  assert.match(source, /signingConfig signingConfigs\.qa/u);
+  assert.equal(source.match(/\bqaRelease\s*\{/gu)?.length, 1);
+  assert.equal(source.match(/\bqa\s*\{/gu)?.length, 1);
+});
+
 test("build invocations warm native CMake outputs for every requested APK ABI", () => {
   const rootDir = makeWorkspace();
   writeMobileFixture(rootDir);

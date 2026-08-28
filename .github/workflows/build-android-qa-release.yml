@@ -215,6 +215,11 @@ jobs:
         working-directory: apps/mobile
         run: |
           set -euo pipefail
+          node scripts/validate-android-qa-bundle-preflight.mjs
+          rm -rf build/qa/android/metro-preflight
+          pnpm exec expo export \
+            --platform android \
+            --output-dir build/qa/android/metro-preflight
           node scripts/expo-local-android-debug-build.mjs \
             --check \
             --build-type qaRelease \
