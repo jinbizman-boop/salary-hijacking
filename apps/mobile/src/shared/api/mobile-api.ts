@@ -21,7 +21,11 @@ import type { ProfileApiClient } from "../../features/profile/types";
 import { createUploadsApi } from "../../features/uploads/api";
 import type { UploadsApiClient } from "../../features/uploads/types";
 import { readMobileApiBaseUrl } from "./api-base";
-import { isValidUrlString, parseMobileBaseUrlParts } from "./url-validation";
+import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "./url-validation";
 import {
   attachMobileBearerToken,
   type MobileBearerTokenStore,
@@ -180,10 +184,7 @@ function normalizeMobileFactoryBaseUrl(value: string): string {
     if (!baseUrlParts || baseUrlParts.containsCredentials) {
       throw new Error("MOBILE_API_INVALID_BASE_URL");
     }
-    const localHost =
-      baseUrlParts.hostname === "localhost" ||
-      baseUrlParts.hostname === "127.0.0.1" ||
-      baseUrlParts.hostname === "10.0.2.2";
+    const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
     if (
       baseUrlParts.protocol !== "https:" &&
       !(baseUrlParts.protocol === "http:" && localHost)

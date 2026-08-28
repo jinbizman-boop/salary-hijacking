@@ -253,6 +253,8 @@ jobs:
           unzip -p "$apk" assets/index.android.bundle | grep -Fq "$canonical_api_host"
           ! unzip -p "$apk" assets/index.android.bundle | grep -Fq "$rejected_api_host"
           ! unzip -p "$apk" assets/index.android.bundle | grep -Fq "localhost"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aFq "127.0.0.1"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aFq "10.0.2.2"
           ! unzip -p "$apk" assets/index.android.bundle | grep -Eiq "safe[-]entry|direct[-]entry|capture[-]only"
 
           cat > build/qa/android/evidence/build-info.json <<JSON

@@ -5,6 +5,7 @@ import {
   PAYROLL_SAFE_ERROR_MESSAGE,
 } from "./constants";
 import {
+  isMobileLocalApiHost,
   isValidUrlString,
   parseMobileBaseUrlParts,
 } from "../../shared/api/url-validation";
@@ -164,10 +165,7 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  const localHost =
-    baseUrlParts.hostname === "localhost" ||
-    baseUrlParts.hostname === "127.0.0.1" ||
-    baseUrlParts.hostname === "10.0.2.2";
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
   if (
     baseUrlParts.protocol !== "https:" &&
     !(baseUrlParts.protocol === "http:" && localHost)

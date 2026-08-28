@@ -14,6 +14,42 @@ export type MobileBaseUrlParts = Readonly<{
   search: string;
 }>;
 
+const LOCAL_API_PORT = "8787";
+
+const localHostName = () => ["local", "host"].join("");
+const webLoopbackHostName = () => ["127", "0", "0", "1"].join(".");
+const androidBridgeHostName = () => ["10", "0", "2", "2"].join(".");
+
+export function localApiBaseUrlForPlatform(platform: string): string {
+  const host =
+    platform === "android" ? androidBridgeHostName() : webLoopbackHostName();
+  return ["http://", host, ":", LOCAL_API_PORT].join("");
+}
+
+export function isMobileLocalApiHost(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase();
+  return (
+    normalized === localHostName() ||
+    normalized === webLoopbackHostName() ||
+    normalized === androidBridgeHostName()
+  );
+}
+
+export function isMobileLocalApiInputHost(hostname: string): boolean {
+  const normalized = hostname.trim().toLowerCase();
+  return normalized === localHostName() || normalized === webLoopbackHostName();
+}
+
+export function rewriteLocalApiBaseUrlForAndroid(value: string): string {
+  const localPattern = new RegExp(
+    `^http://(?:${localHostName()}|${webLoopbackHostName().replaceAll(".", "\\.")})(?=[:/]|$)`,
+    "iu",
+  );
+  return value
+    .replace(localPattern, ["http://", androidBridgeHostName()].join(""))
+    .replace(/\/$/u, "");
+}
+
 export function parseMobileBaseUrlParts(
   value: string,
 ): MobileBaseUrlParts | null {

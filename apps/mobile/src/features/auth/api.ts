@@ -3,6 +3,7 @@ import {
   normalizeMobileSignupResponse,
 } from "../../shared/api/auth-response";
 import {
+  isMobileLocalApiHost,
   isValidUrlString,
   parseMobileBaseUrlParts,
 } from "../../shared/api/url-validation";
@@ -167,10 +168,7 @@ function normalizeBaseUrl(value: string): string {
     throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
   }
 
-  const localHost =
-    baseUrlParts.hostname === "localhost" ||
-    baseUrlParts.hostname === "127.0.0.1" ||
-    baseUrlParts.hostname === "10.0.2.2";
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
   if (
     baseUrlParts.protocol !== "https:" &&
     !(baseUrlParts.protocol === "http:" && localHost)

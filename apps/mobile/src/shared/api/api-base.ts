@@ -1,6 +1,12 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
-import { isValidUrlString, parseMobileBaseUrlParts } from "./url-validation";
+import {
+  isMobileLocalApiInputHost,
+  isValidUrlString,
+  localApiBaseUrlForPlatform,
+  parseMobileBaseUrlParts,
+  rewriteLocalApiBaseUrlForAndroid,
+} from "./url-validation";
 
 declare const process: {
   readonly env: {
@@ -43,9 +49,7 @@ export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   if (options.environment === "production") return PRODUCTION_API_BASE_URL;
   if (hadCandidate) return STAGING_API_BASE_URL;
   if (options.environment === "local") {
-    return options.platform === "android"
-      ? "http://10.0.2.2:8787"
-      : "http://127.0.0.1:8787";
+    return localApiBaseUrlForPlatform(options.platform);
   }
   return STAGING_API_BASE_URL;
 }
@@ -82,9 +86,7 @@ function normalizeApiBase(
     if (!isValidUrlString(stripped)) throw new Error("INVALID_URL");
     const baseUrlParts = parseMobileBaseUrlParts(stripped);
     if (!baseUrlParts || baseUrlParts.containsCredentials) return "";
-    const localHost =
-      baseUrlParts.hostname === "localhost" ||
-      baseUrlParts.hostname === "127.0.0.1";
+    const localHost = isMobileLocalApiInputHost(baseUrlParts.hostname);
 
     if (environment === "production" && baseUrlParts.protocol !== "https:") {
       return "";
@@ -101,12 +103,7 @@ function normalizeApiBase(
     }
 
     if (platform === "android" && localHost) {
-      return stripped
-        .replace(
-          /^http:\/\/(?:localhost|127\.0\.0\.1)(?=[:/]|$)/iu,
-          "http://10.0.2.2",
-        )
-        .replace(/\/$/u, "");
+      return rewriteLocalApiBaseUrlForAndroid(stripped);
     }
 
     return stripped;

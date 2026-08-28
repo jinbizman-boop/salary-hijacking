@@ -36,6 +36,8 @@ export const FORBIDDEN_STARTUP_BUNDLE_MARKERS = [
   "mock-only",
   "fallbackPlanFixedExpenseRows",
   "fallbackNotifications",
+  "127.0.0.1:8787",
+  "10.0.2.2:8787",
   "5,780,000",
   "5,500,000",
   "2,700,000",
