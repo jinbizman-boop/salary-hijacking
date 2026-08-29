@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Text } from "react-native";
+import { StyleSheet, Text } from "react-native";
 
 import {
   PasswordRecoveryHero,
@@ -9,7 +9,12 @@ import {
 import { AUTH_PASSWORD_RESET_CONFIRM_PATH } from "../../src/features/auth/constants";
 import type { AuthPasswordResetConfirmRequest } from "../../src/features/auth/types";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
-import { AppShell } from "../../src/shared/components";
+import {
+  AppHeader,
+  AppShell,
+  SurfaceCard,
+  salaryHijackingDesignSystem,
+} from "../../src/shared/components";
 
 const SCREEN_VERSION = "4.1.0-auth-recovery-components";
 
@@ -53,7 +58,10 @@ export default function ResetPasswordScreen(): React.ReactElement {
   );
 
   return (
-    <AppShell accessibilityLabel="Salary Hijacking reset password screen">
+    <AppShell
+      accessibilityLabel="Salary Hijacking reset password screen"
+      header={<AppHeader subtitle="계정 복구" title="비밀번호 재설정" />}
+    >
       <PasswordRecoveryHero mode="reset" />
       <ResetPasswordForm
         loading={submitting}
@@ -62,7 +70,11 @@ export default function ResetPasswordScreen(): React.ReactElement {
         }}
         token={token}
       />
-      <Text accessibilityLiveRegion="polite">{message}</Text>
+      <SurfaceCard accessibilityLabel="비밀번호 재설정 처리 상태">
+        <Text accessibilityLiveRegion="polite" style={styles.statusMessage}>
+          {message}
+        </Text>
+      </SurfaceCard>
     </AppShell>
   );
 }
@@ -87,3 +99,11 @@ export function assertMobileResetPasswordScreenCompleteness(): {
 
   return { ok: checks.length >= 8, version: SCREEN_VERSION, checks };
 }
+
+const styles = StyleSheet.create({
+  statusMessage: {
+    ...salaryHijackingDesignSystem.typography.bodyS,
+    color: salaryHijackingDesignSystem.colors.text.secondary,
+    textAlign: "center",
+  },
+});

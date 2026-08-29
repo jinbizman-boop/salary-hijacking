@@ -1,16 +1,21 @@
 import {
   Image,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
   type ImageSourcePropType,
-  useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { appIconAssets } from "../../../shared/assets/icons";
+import {
+  AppHeader,
+  AppShell,
+  PrimaryButton,
+  SurfaceCard,
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import {
   NOTIFICATIONS_PATH,
   NOTIFICATIONS_UNREAD_COUNT_PATH,
@@ -18,12 +23,7 @@ import {
 import type { NotificationItem as ApiNotificationItem } from "../types";
 
 const SCREEN_VERSION = "5.3.1-notifications-readable-korean";
-const BRAND_GREEN = "#209252";
-const TEXT_BLACK = "#191B1F";
-const MUTED = "#6D737A";
-const LINE = "#E7EBEF";
-const SOFT_GREEN = "#EAF8EF";
-const BLUE = "#2E83C8";
+const designSystem = salaryHijackingDesignSystem;
 
 export type NotificationHref =
   | "/salary"
@@ -141,9 +141,6 @@ export function NotificationScreen({
   unreadCount,
   variant = "default",
 }: NotificationScreenProps): React.ReactElement {
-  const insets = useOptionalSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const contentWidth = Math.min(width, 430);
   const showsHistory =
     variant === "default" ||
     variant === "all-read" ||
@@ -159,64 +156,23 @@ export function NotificationScreen({
     : ([] as readonly ScreenNotificationItem[]);
 
   return (
-    <View
+    <AppShell
       accessibilityLabel="급여납치 알림 독립 화면"
-      style={styles.screen}
-      testID="notifications-standalone-screen"
+      header={
+        <AppHeader
+          actionLabel="알림 설정 열기"
+          actionText="설정"
+          onAction={onSettings}
+          onBack={onBack}
+          subtitle="서버 기준 읽음 상태와 딥링크를 확인해요"
+          title="알림"
+          variant="TITLE_ACTION"
+        />
+      }
     >
-      <View style={[styles.safeTop, { paddingTop: insets.top }]}>
-        <View
-          accessibilityLabel="급여납치 알림 상단 영역"
-          style={[styles.topBar, { width: contentWidth }]}
-        >
-          <Pressable
-            accessibilityLabel="이전 화면으로 돌아가기"
-            accessibilityRole="button"
-            hitSlop={12}
-            onPress={onBack}
-            style={styles.headerButton}
-          >
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={appIconAssets.common.left}
-              style={styles.headerIcon}
-            />
-          </Pressable>
-          <Pressable
-            accessibilityLabel="알림 설정 열기"
-            accessibilityRole="button"
-            onPress={onSettings}
-            style={styles.settingsButton}
-          >
-            <Text allowFontScaling={false} style={styles.settingsText}>
-              설정
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <ScrollView
-        accessibilityLabel="급여납치 알림 화면"
-        bounces={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + 18, width: contentWidth },
-        ]}
-        contentInsetAdjustmentBehavior="automatic"
-        showsVerticalScrollIndicator={false}
-        style={styles.scroll}
-      >
-        <View style={styles.titleRow}>
-          <View style={styles.titleLeft}>
-            <Text allowFontScaling={false} style={styles.title}>
-              알림
-            </Text>
-            <Text allowFontScaling={false} style={styles.chevron}>
-              ⌄
-            </Text>
-          </View>
-          <Text allowFontScaling={false} style={styles.newNotice}>
+      <View testID="notifications-standalone-screen">
+        <View style={styles.noticeRow}>
+          <Text style={styles.newNotice}>
             {typeof unreadCount === "number" && unreadCount > 0
               ? `새로운 알림 ${unreadCount}개`
               : "새로운 알림이 있어요"}
@@ -230,9 +186,7 @@ export function NotificationScreen({
             onPress={onMarkAllRead}
             style={styles.markAllReadButton}
           >
-            <Text allowFontScaling={false} style={styles.markAllReadText}>
-              모두 읽음
-            </Text>
+            <Text style={styles.markAllReadText}>모두 읽음</Text>
           </Pressable>
         ) : null}
 
@@ -289,9 +243,7 @@ export function NotificationScreen({
         ) : null}
 
         {historyLabel ? (
-          <Text allowFontScaling={false} style={styles.historyTitle}>
-            {historyLabel}
-          </Text>
+          <Text style={styles.historyTitle}>{historyLabel}</Text>
         ) : null}
         <View style={styles.list}>
           {items.map((item) => (
@@ -320,29 +272,22 @@ export function NotificationScreen({
               <View style={styles.notificationBody}>
                 <View style={styles.metaRow}>
                   <Text
-                    allowFontScaling={false}
                     numberOfLines={1}
                     style={styles.subtitle}
                   >
                     {item.subtitle}
                   </Text>
-                  <Text allowFontScaling={false} style={styles.time}>
-                    {item.time}
-                  </Text>
+                  <Text style={styles.time}>{item.time}</Text>
                 </View>
-                <Text
-                  allowFontScaling={false}
-                  numberOfLines={2}
-                  style={styles.notificationTitle}
-                >
+                <Text numberOfLines={2} style={styles.notificationTitle}>
                   {item.title}
                 </Text>
               </View>
             </Pressable>
           ))}
         </View>
-      </ScrollView>
-    </View>
+      </View>
+    </AppShell>
   );
 }
 
@@ -421,7 +366,7 @@ function NotificationStateCard({
   tone?: "default" | "warning" | "danger";
 }>): React.ReactElement {
   return (
-    <View
+    <SurfaceCard
       accessibilityLabel={title}
       style={[
         styles.stateCard,
@@ -429,31 +374,14 @@ function NotificationStateCard({
         tone === "danger" ? styles.stateCardDanger : null,
       ]}
     >
-      <Text allowFontScaling={false} style={styles.stateTitle}>
-        {title}
-      </Text>
+      <Text style={styles.stateTitle}>{title}</Text>
       <Text style={styles.stateBody}>{body}</Text>
-      <Pressable
-        accessibilityLabel={primaryLabel}
-        accessibilityRole="button"
-        onPress={onPrimary}
-        style={styles.stateButton}
-      >
-        <Text allowFontScaling={false} style={styles.stateButtonText}>
-          {primaryLabel}
-        </Text>
-      </Pressable>
-    </View>
+      <PrimaryButton label={primaryLabel} onPress={onPrimary ?? noop} />
+    </SurfaceCard>
   );
 }
 
-function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
-  try {
-    return useSafeAreaInsets();
-  } catch {
-    return { bottom: 0, left: 0, right: 0, top: 0 };
-  }
-}
+function noop(): void {}
 
 export function assertMobileNotificationsIndexCompleteness(): {
   readonly checks: readonly string[];
@@ -480,197 +408,98 @@ export function assertMobileNotificationsIndexCompleteness(): {
 }
 
 const styles = StyleSheet.create({
-  chevron: {
-    color: MUTED,
-    fontSize: 22,
-    fontWeight: "900",
-    marginTop: 2,
-  },
-  content: {
-    alignSelf: "center",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 18,
-  },
-  headerButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 46,
-    minWidth: 46,
-  },
-  headerIcon: {
-    height: 25,
-    tintColor: TEXT_BLACK,
-    width: 25,
+  historyTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
+    marginBottom: designSystem.spacing[2],
   },
   highlightRow: {
-    backgroundColor: SOFT_GREEN,
-  },
-  historyTitle: {
-    color: TEXT_BLACK,
-    fontSize: 18,
-    fontWeight: "900",
-    lineHeight: 25,
-    marginBottom: 10,
+    backgroundColor: componentColors.primaryGreenSoft,
   },
   list: {
-    marginHorizontal: -18,
+    gap: designSystem.spacing[2],
   },
   markAllReadButton: {
     alignSelf: "flex-end",
-    backgroundColor: SOFT_GREEN,
-    borderRadius: 999,
-    marginBottom: 14,
-    minHeight: 38,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: designSystem.radius.full,
+    marginBottom: designSystem.spacing[3],
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[4],
+    paddingVertical: designSystem.spacing[2],
   },
   markAllReadText: {
-    color: "#16844A",
-    fontSize: 13,
-    fontWeight: "900",
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
   },
   metaRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 8,
+    gap: designSystem.spacing[2],
     justifyContent: "space-between",
   },
   newNotice: {
-    color: BLUE,
-    fontSize: 12,
-    fontWeight: "900",
-    paddingTop: 10,
+    color: designSystem.colors.semantic.info,
+    ...designSystem.typography.labelS,
+    paddingTop: designSystem.spacing[2],
   },
   notificationBody: {
     flex: 1,
-    gap: 7,
+    gap: designSystem.spacing[1],
     minWidth: 0,
   },
   notificationIcon: {
-    height: 23,
-    width: 23,
+    height: designSystem.spacing[6],
+    width: designSystem.spacing[6],
   },
   notificationRow: {
     alignItems: "flex-start",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: LINE,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: componentColors.surface,
+    borderColor: componentColors.line,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: designSystem.radius.lg,
     flexDirection: "row",
-    gap: 14,
-    minHeight: 86,
-    paddingHorizontal: 20,
-    paddingVertical: 17,
+    gap: designSystem.spacing[3],
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[10],
+    paddingHorizontal: designSystem.spacing[5],
+    paddingVertical: designSystem.spacing[4],
   },
   notificationTitle: {
-    color: TEXT_BLACK,
-    fontSize: 19,
-    fontWeight: "900",
-    letterSpacing: 0,
-    lineHeight: 27,
-  },
-  safeTop: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-  },
-  screen: {
-    backgroundColor: "#FFFFFF",
-    flex: 1,
-  },
-  scroll: {
-    backgroundColor: "#FFFFFF",
-    flex: 1,
-  },
-  settingsButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 46,
-    minWidth: 54,
-  },
-  settingsText: {
-    color: TEXT_BLACK,
-    fontSize: 16,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
   },
   stateBody: {
-    color: MUTED,
-    fontSize: 14,
-    fontWeight: "700",
-    lineHeight: 21,
-  },
-  stateButton: {
-    alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: BRAND_GREEN,
-    borderRadius: 12,
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 112,
-    paddingHorizontal: 18,
-  },
-  stateButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
   },
   stateCard: {
-    backgroundColor: "#F7F9FF",
-    borderColor: LINE,
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 10,
-    marginBottom: 18,
-    padding: 18,
+    marginBottom: designSystem.spacing[5],
   },
   stateCardDanger: {
-    backgroundColor: "#FFF6F6",
-    borderColor: "#F3D4D4",
+    backgroundColor: designSystem.colors.semantic.dangerSoft,
+    borderColor: designSystem.colors.semantic.danger,
   },
   stateCardWarning: {
-    backgroundColor: "#FFF8ED",
-    borderColor: "#F4DFBF",
+    backgroundColor: designSystem.colors.semantic.warningSoft,
+    borderColor: designSystem.colors.semantic.warning,
   },
   stateTitle: {
-    color: TEXT_BLACK,
-    fontSize: 21,
-    fontWeight: "900",
-    lineHeight: 28,
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
   },
   subtitle: {
-    color: MUTED,
+    color: componentColors.textSecondary,
     flex: 1,
-    fontSize: 10,
-    fontWeight: "800",
-    lineHeight: 15,
+    ...designSystem.typography.caption,
   },
   time: {
-    color: TEXT_BLACK,
-    fontSize: 10,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.caption,
   },
-  title: {
-    color: TEXT_BLACK,
-    fontSize: 31,
-    fontWeight: "900",
-    letterSpacing: 0,
-    lineHeight: 41,
-  },
-  titleLeft: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-  },
-  titleRow: {
+  noticeRow: {
     alignItems: "flex-start",
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingBottom: 14,
-    paddingTop: 14,
-  },
-  topBar: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 58,
-    paddingHorizontal: 12,
+    paddingBottom: designSystem.spacing[3],
   },
 });

@@ -72,4 +72,17 @@ describe("shared native overlays", () => {
       /\b(fontSize|lineHeight|gap|padding|borderRadius|elevation):\s*\d+/,
     );
   });
+
+  it("keeps bottom sheet styling on canonical overlay design tokens", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "BottomSheet.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("salaryHijackingDesignSystem");
+    expect(source).not.toMatch(/#[0-9A-Fa-f]{6,8}\b/u);
+    expect(source).not.toMatch(
+      /\b(fontSize|lineHeight|gap|padding|paddingHorizontal|paddingVertical|borderRadius|elevation):\s*\d+/,
+    );
+  });
 });

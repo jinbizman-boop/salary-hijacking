@@ -572,6 +572,20 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).not.toContain("rawFinancialData=false");
   });
 
+  it("keeps onboarding on the canonical native shell and design tokens", () => {
+    const onboarding = readFileSync(ONBOARDING_SCREEN, "utf8");
+
+    expect(onboarding).toContain("AppShell");
+    expect(onboarding).toContain("AppHeader");
+    expect(onboarding).toContain("PrimaryButton");
+    expect(onboarding).toContain("SurfaceCard");
+    expect(onboarding).toContain("salaryHijackingDesignSystem");
+    expect(onboarding).not.toMatch(/#[0-9A-Fa-f]{6,8}\b/u);
+    expect(onboarding).not.toMatch(
+      /\b(fontSize|lineHeight|gap|padding|paddingHorizontal|paddingVertical|borderRadius|elevation):\s*\d+/,
+    );
+  });
+
   it("prevents duplicate onboarding completion before the profile API acknowledges it", () => {
     const onboarding = readFileSync(ONBOARDING_SCREEN, "utf8");
 

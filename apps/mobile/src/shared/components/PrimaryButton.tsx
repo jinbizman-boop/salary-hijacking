@@ -1,6 +1,13 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { componentColors, componentRadius, componentSpacing } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type PrimaryButtonProps = Readonly<{
   label: string;
@@ -66,9 +73,8 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   text: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
+    color: componentColors.surface,
+    ...designSystem.typography.labelL,
   },
   secondaryText: {
     color: componentColors.primaryGreenDark,

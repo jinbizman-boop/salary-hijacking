@@ -199,4 +199,80 @@ describe("Stitch production route registry", () => {
       expect(result?.nativeComponent).toBe("ProfileDetailScreen/ConfirmDialog");
     }
   });
+
+  it("maps growth detail Stitch states to the current native route components", () => {
+    const expected = [
+      [
+        "SCR-013",
+        "/level/reading",
+        "apps/mobile/app/level/reading.tsx",
+        "ReadingLevelScreen/ReadingContentCard",
+      ],
+      [
+        "SCR-014",
+        "/level/news",
+        "apps/mobile/app/level/news.tsx",
+        "NewsLevelScreen/NewsBalanceCard",
+      ],
+      [
+        "SCR-015",
+        "/level/english",
+        "apps/mobile/app/level/english.tsx",
+        "EnglishLevelScreen/EnglishLessonCard",
+      ],
+      [
+        "SCR-016",
+        "/level/health",
+        "apps/mobile/app/level/health.tsx",
+        "HealthLevelScreen/WorkoutTimerCard",
+      ],
+    ] as const;
+
+    for (const [
+      primaryCode,
+      productionRoute,
+      routeFile,
+      nativeComponent,
+    ] of expected) {
+      const result = resolveProductionStitchState({
+        artifactType: "screen",
+        primaryCode,
+        routeOrOverlay: productionRoute,
+        stateCode: "DEFAULT",
+        variantSlug: primaryCode.toLowerCase(),
+      });
+
+      expect(result?.routeFile).toBe(routeFile);
+      expect(result?.implementationFile).toBe(routeFile);
+      expect(result?.nativeComponent).toBe(nativeComponent);
+      expect(result?.nativeComponent).not.toContain(
+        "CleanFintechLevelDetailScreen",
+      );
+    }
+  });
+
+  it("maps plan detail Stitch states to the current PlanScreen implementation", () => {
+    const expected = [
+      "SCR-009",
+      "SCR-010",
+      "SCR-011",
+    ] as const;
+
+    for (const primaryCode of expected) {
+      const result = resolveProductionStitchState({
+        artifactType: "screen",
+        primaryCode,
+        routeOrOverlay: "/plan",
+        stateCode: "DEFAULT",
+        variantSlug: primaryCode.toLowerCase(),
+      });
+
+      expect(result?.productionRoute).toBe("/plan");
+      expect(result?.routeFile).toBe("apps/mobile/app/(tabs)/plan/index.tsx");
+      expect(result?.implementationFile).toBe(
+        "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+      );
+      expect(result?.nativeComponent).toBe("PlanScreen");
+    }
+  });
 });

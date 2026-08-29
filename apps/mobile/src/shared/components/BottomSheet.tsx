@@ -5,8 +5,10 @@ import {
   componentColors,
   componentRadius,
   componentSpacing,
-  componentTypography,
+  salaryHijackingDesignSystem,
 } from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type BottomSheetAction = Readonly<{
   key: string;
@@ -105,7 +107,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "flex-end",
     paddingHorizontal: componentSpacing.lg,
-    backgroundColor: "rgba(11, 29, 20, 0.32)",
+    backgroundColor: designSystem.colors.overlay,
   },
   sheet: {
     gap: componentSpacing.md,
@@ -113,11 +115,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: componentRadius.modal,
     borderTopRightRadius: componentRadius.modal,
     backgroundColor: componentColors.surface,
-    shadowColor: componentColors.shadow,
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 1,
-    shadowRadius: 20,
-    elevation: 10,
+    ...designSystem.elevation.high,
   },
   handle: {
     width: 48,
@@ -135,13 +133,11 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
     color: componentColors.textPrimary,
-    fontSize: componentTypography.sectionTitle,
-    fontWeight: "900",
-    lineHeight: 26,
+    ...designSystem.typography.titleM,
   },
   closeButton: {
-    minWidth: 52,
-    minHeight: 44,
+    minWidth: designSystem.header.actionSize + designSystem.spacing[2],
+    minHeight: designSystem.layout.touchTarget,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: componentRadius.button,
@@ -149,14 +145,13 @@ const styles = StyleSheet.create({
   },
   closeText: {
     color: componentColors.primaryGreenDark,
-    fontSize: componentTypography.button,
-    fontWeight: "900",
+    ...designSystem.typography.labelL,
   },
   actions: {
     gap: componentSpacing.sm,
   },
   action: {
-    minHeight: 64,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[5],
     flexDirection: "row",
     alignItems: "center",
     gap: componentSpacing.md,
@@ -178,15 +173,11 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "900",
-    lineHeight: 22,
+    ...designSystem.typography.labelL,
   },
   actionDescription: {
     color: componentColors.textSecondary,
-    fontSize: componentTypography.caption,
-    fontWeight: "700",
-    lineHeight: 17,
+    ...designSystem.typography.caption,
   },
   disabled: {
     opacity: 0.48,

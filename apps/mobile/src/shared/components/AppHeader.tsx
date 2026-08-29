@@ -1,5 +1,6 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
+import { appIconAssets } from "../assets/icons";
 import { appImageAssets } from "../assets/images";
 import { componentColors, salaryHijackingDesignSystem } from "./tokens";
 
@@ -10,6 +11,11 @@ export type AppHeaderProps = Readonly<{
   subtitle?: string;
   rightAccessory?: React.ReactNode;
   brandLabel?: string;
+  actionLabel?: string;
+  actionText?: string;
+  onAction?: (() => void) | undefined;
+  onBack?: (() => void) | undefined;
+  variant?: (typeof designSystem.header.variants)[number];
 }>;
 
 export function AppHeader({
@@ -17,12 +23,45 @@ export function AppHeader({
   subtitle,
   rightAccessory,
   brandLabel = "SALARY HIJACKING",
+  actionLabel,
+  actionText,
+  onAction,
+  onBack,
 }: AppHeaderProps): React.ReactElement {
+  const accessory =
+    rightAccessory ??
+    (onAction && actionText ? (
+      <Pressable
+        accessibilityLabel={actionLabel ?? actionText}
+        accessibilityRole="button"
+        onPress={onAction}
+        style={styles.actionButton}
+      >
+        <Text style={styles.actionText}>{actionText}</Text>
+      </Pressable>
+    ) : null);
+
   return (
     <View
       accessibilityLabel={subtitle ? `${title} ${subtitle}` : title}
       style={styles.header}
     >
+      {onBack ? (
+        <Pressable
+          accessibilityLabel="이전 화면으로 돌아가기"
+          accessibilityRole="button"
+          hitSlop={designSystem.spacing[3]}
+          onPress={onBack}
+          style={styles.backButton}
+        >
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="contain"
+            source={appIconAssets.common.left}
+            style={styles.backIcon}
+          />
+        </Pressable>
+      ) : null}
       <View style={styles.left}>
         <View style={styles.brandRow}>
           <Image
@@ -39,7 +78,7 @@ export function AppHeader({
           <Text style={styles.title}>{title}</Text>
         </View>
       </View>
-      {rightAccessory}
+      {accessory}
     </View>
   );
 }
@@ -51,6 +90,31 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: designSystem.spacing[3],
+  },
+  actionButton: {
+    minHeight: designSystem.header.actionSize,
+    minWidth: designSystem.header.actionSize + designSystem.spacing[2],
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: designSystem.radius.full,
+    backgroundColor: componentColors.primaryGreenSoft,
+  },
+  actionText: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
+  },
+  backButton: {
+    minHeight: designSystem.header.actionSize,
+    minWidth: designSystem.header.actionSize,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: designSystem.radius.full,
+    backgroundColor: componentColors.surface,
+  },
+  backIcon: {
+    height: designSystem.spacing[6],
+    width: designSystem.spacing[6],
+    tintColor: componentColors.textPrimary,
   },
   left: {
     flex: 1,

@@ -1043,10 +1043,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       onboardingRoute.match(/disabled=\{submitting !== null\}/gu),
     ).toHaveLength(2);
     expect(
-      onboardingRoute.match(
-        /accessibilityState=\{\{\s*disabled: submitting !== null\s*\}\}/gu,
-      ) ?? [],
+      onboardingRoute.match(/disabled=\{submitting !== null\}/gu) ?? [],
     ).toHaveLength(2);
+    expect(onboardingRoute).toContain("PrimaryButton");
   });
 
   it("keeps verify-email screen recoverable with server-side resend instead of a dead end", () => {

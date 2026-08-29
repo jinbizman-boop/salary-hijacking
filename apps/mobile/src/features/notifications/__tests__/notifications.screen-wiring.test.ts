@@ -83,6 +83,28 @@ describe("notifications screen wiring", () => {
     expect(componentSource).not.toContain("bottomTabs");
   });
 
+  it("keeps the notification list on canonical shell, header, and design tokens", () => {
+    const componentSource = readFileSync(
+      join(
+        __dirname,
+        "..",
+        "components",
+        "NotificationScreen.tsx",
+      ),
+      "utf8",
+    );
+
+    expect(componentSource).toContain("AppShell");
+    expect(componentSource).toContain("AppHeader");
+    expect(componentSource).toContain("PrimaryButton");
+    expect(componentSource).toContain("SurfaceCard");
+    expect(componentSource).toContain("salaryHijackingDesignSystem");
+    expect(componentSource).not.toMatch(/#[0-9A-Fa-f]{6,8}\b/u);
+    expect(componentSource).not.toMatch(
+      /\b(fontSize|lineHeight|gap|padding|paddingHorizontal|paddingVertical|borderRadius|elevation):\s*\d+/,
+    );
+  });
+
   it("keeps notification settings on the canonical AppHeader and design tokens", () => {
     const componentSource = readFileSync(
       join(
