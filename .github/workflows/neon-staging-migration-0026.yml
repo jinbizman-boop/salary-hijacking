@@ -1,0 +1,129 @@
+name: neon-staging-migration-0026
+
+on:
+  workflow_dispatch:
+    inputs:
+      migration_source_ref:
+        description: "Branch, tag, or commit containing migration 0026 source"
+        required: true
+        default: "codex/payroll-reminder-launch-ready-100-20260714"
+        type: string
+
+concurrency:
+  group: neon-staging-migration-0026
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  DEFAULT_MIGRATION_SOURCE_REF: codex/payroll-reminder-launch-ready-100-20260714
+
+jobs:
+  apply-staging-migration-0026:
+    name: Apply migration 0026 to Neon staging only
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: staging
+
+    env:
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+    steps:
+      - name: Checkout requested migration source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.migration_source_ref }}
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Validate staging-only migration context
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/neon-staging-migration-0026/status
+
+          if [ -z "${{ inputs.migration_source_ref }}" ]; then
+            echo "::error::migration_source_ref is required."
+            exit 1
+          fi
+
+          if [ -z "${STAGING_DATABASE_URL:-}" ]; then
+            echo "::error::Missing staging environment secret: STAGING_DATABASE_URL"
+            exit 1
+          fi
+
+          echo "Staging migration environment secret is present; value was not printed."
+          echo "Migration source ref: ${{ inputs.migration_source_ref }}"
+          git rev-parse HEAD > artifacts/neon-staging-migration-0026/status/checked-out-source-sha.txt
+          touch artifacts/neon-staging-migration-0026/status/staging-database-url-present
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run staging migration workflow contract
+        run: node scripts/release/neon-staging-migration-0026-workflow-contract.test.mjs
+
+      - name: Read-only Neon staging connection preflight
+        run: |
+          set -euo pipefail
+
+          node scripts/release/neon-staging-connection-preflight.mjs \
+            --out artifacts/neon-staging-migration-0026/neon-staging-connection-preflight.json
+
+          touch artifacts/neon-staging-migration-0026/status/neon-staging-preflight-ok
+
+      - name: Apply and verify staging migration 0026
+        run: |
+          set -euo pipefail
+
+          node scripts/release/neon-staging-migration-0026.mjs \
+            --out artifacts/neon-staging-migration-0026/evidence.json \
+            --ledger-row-out artifacts/neon-staging-migration-0026/MIGRATION_LEDGER_0026_ROW.csv
+
+          touch artifacts/neon-staging-migration-0026/status/migration-0026-verified
+
+      - name: Write no-secret summary
+        if: always()
+        run: |
+          {
+            echo "## Neon staging migration 0026"
+            echo ""
+            echo "- Workflow ref: $GITHUB_REF"
+            echo "- Workflow commit: $GITHUB_SHA"
+            echo "- Migration source ref: ${{ inputs.migration_source_ref }}"
+            echo "- Environment: staging"
+            echo "- Migration: 0026_notification_native_push_token_contract"
+            echo "- Secret values printed: no"
+            echo "- Raw push tokens printed: no"
+            echo "- Production database modified: no"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload no-secret migration 0026 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-staging-migration-0026-evidence-${{ github.run_attempt }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            artifacts/neon-staging-migration-0026/**
