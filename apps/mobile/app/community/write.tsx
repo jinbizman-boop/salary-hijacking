@@ -9,6 +9,10 @@ import type { CommunityPostDraft } from "../../src/features/community/community.
 import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import { createSecureStoreRuntime } from "../../src/shared/storage/secure-store";
+import { ConfirmDialog } from "../../src/shared/components/ConfirmDialog";
+import { XpToast } from "../../src/shared/components/XpToast";
+import { AttachmentBottomSheet } from "../../src/shared/ui/sheets/AttachmentBottomSheet";
+import { VisibilityBottomSheet } from "../../src/shared/ui/sheets/VisibilityBottomSheet";
 
 const SCREEN_VERSION = "4.2.1-server-backed-community-write";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
@@ -17,6 +21,13 @@ const COMMUNITY_PUBLISH_IDEMPOTENCY_GUARD =
   "community_publish_idempotency_guard";
 const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft.v1";
 const designSystem = salaryHijackingDesignSystem;
+
+export const communityWriteStitchStateComponents = {
+  AttachmentBottomSheet,
+  ConfirmDialog,
+  VisibilityBottomSheet,
+  XpToast,
+} as const;
 
 function parseCommunityDraft(value: string | null): CommunityPostDraft | null {
   if (!value) return null;

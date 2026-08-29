@@ -3,6 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { AppHeader, AppShell } from "../../src/shared/components";
+import { ConfirmDialog } from "../../src/shared/components/ConfirmDialog";
 import { CommunityAdDisclosure } from "../../src/features/community/components/CommunityAdDisclosure";
 import { CommunityAttachmentList } from "../../src/features/community/components/CommunityAttachmentList";
 import { CommunityCommentItem } from "../../src/features/community/components/CommunityCommentItem";
@@ -10,6 +11,8 @@ import { CommunityPostCard } from "../../src/features/community/components/Commu
 import { useCommunityPost } from "../../src/features/community/hooks/useCommunityPost";
 import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
+import { SelectionBottomSheet } from "../../src/shared/ui/sheets/SelectionBottomSheet";
+import { SortFilterBottomSheet } from "../../src/shared/ui/sheets/SortFilterBottomSheet";
 import type { CommunityAdDisclosureModel } from "../../src/features/community/community.types";
 
 const SCREEN_VERSION = "4.1.0-community-post-components";
@@ -18,6 +21,12 @@ const COMMUNITY_REPORT_POLICY_GUARD = "community_report_policy_guard";
 const CONTEXTUAL_ADS_ONLY_GUARD = "contextual_ads_only_guard";
 const DEFAULT_POST_ID = "post_level_1";
 const designSystem = salaryHijackingDesignSystem;
+
+export const communityDetailStitchStateComponents = {
+  ConfirmDialog,
+  SelectionBottomSheet,
+  SortFilterBottomSheet,
+} as const;
 
 const contextualAd: CommunityAdDisclosureModel = {
   adsFinancialTargetingUsed: false,

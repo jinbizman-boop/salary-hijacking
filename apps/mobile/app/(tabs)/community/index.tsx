@@ -20,6 +20,7 @@ import type {
 } from "../../../src/features/community/community.types";
 import { useCommunityFeed } from "../../../src/features/community/hooks/useCommunityFeed";
 import { createMobileCommunityService } from "../../../src/shared/api/mobile-api";
+import { SortFilterBottomSheet } from "../../../src/shared/ui/sheets/SortFilterBottomSheet";
 
 const SCREEN_VERSION = "4.3.0-server-backed-community";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
@@ -28,6 +29,10 @@ const COMMUNITY_TABS: readonly CommunityBoardType[] = [
   "LEVEL_CERTIFICATION",
   "HEALTH_ROUTINE",
 ];
+
+export const communityStitchOverlayComponents = {
+  SortFilterBottomSheet,
+} as const;
 
 const closedDraft: CommunityPostDraft = {
   anonymous: true,

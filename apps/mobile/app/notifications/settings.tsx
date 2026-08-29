@@ -9,6 +9,11 @@ import {
 } from "../../src/features/notifications/controller";
 import { NotificationSettingsScreen } from "../../src/features/notifications/components";
 import { createMobileNotificationsApi } from "../../src/shared/api/mobile-api";
+import { DevicePermissionBottomSheet } from "../../src/shared/ui/sheets/DevicePermissionBottomSheet";
+
+export const notificationSettingsStitchStateComponents = {
+  DevicePermissionBottomSheet,
+} as const;
 
 export default function NotificationsSettingsRoute(): React.ReactElement {
   const router = useRouter();

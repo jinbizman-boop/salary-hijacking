@@ -8,15 +8,19 @@ import {
   SignupAgreementCard,
   SignupForm,
   SignupHero,
-  authVisualColors,
   clampValue,
 } from "../../src/features/auth/components";
 import { AUTH_REGISTER_PATH } from "../../src/features/auth/constants";
 import { routeAfterSignup } from "../../src/features/auth/navigation";
 import type { AuthRegisterRequest } from "../../src/features/auth/types";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
+import {
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../../src/shared/components/tokens";
 
 const SCREEN_VERSION = "5.0.0-auth-signup-reference-layout";
+const designSystem = salaryHijackingDesignSystem;
 
 export default function SignupScreen(): React.ReactElement {
   const signupRouter = useRouter();
@@ -66,11 +70,9 @@ export default function SignupScreen(): React.ReactElement {
         accessibilityLiveRegion="polite"
         style={{
           alignSelf: "center",
-          color: authVisualColors.ink,
-          fontSize: 12,
-          fontWeight: "700",
-          lineHeight: 17,
-          marginTop: 10,
+          color: componentColors.textPrimary,
+          ...designSystem.typography.labelS,
+          marginTop: designSystem.spacing[2],
           maxWidth: 365,
           opacity: 0.72,
           textAlign: "center",

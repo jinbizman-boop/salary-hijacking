@@ -21,10 +21,15 @@ import {
 } from "../../../src/features/level/controller";
 import type { GrowthDashboard } from "../../../src/features/level/types";
 import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
+import { XpToast } from "../../../src/shared/components/XpToast";
 
 const SCREEN_VERSION = "4.2.1-server-runtime-lv-main";
 const GROWTH_DASHBOARD_ENDPOINT = "/api/v1/growth/dashboard";
 const LEVEL_VISIBLE_COPY_CONTRACT = ["오늘의 성장", "균형 읽기"] as const;
+
+export const levelStitchOverlayComponents = {
+  XpToast,
+} as const;
 
 const levelRoutes: Readonly<Record<string, string>> = {
   reading: "/level/reading",

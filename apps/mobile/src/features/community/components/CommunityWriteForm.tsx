@@ -1,5 +1,10 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
+import { PrimaryButton } from "../../../shared/components/PrimaryButton";
+import {
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components/tokens";
 import { COMMUNITY_BOARD_TYPES } from "../community.constants";
 import type {
   CommunityBoardType,
@@ -7,6 +12,8 @@ import type {
   CommunityValidationResult,
 } from "../community.types";
 import { CommunityModerationBanner } from "./CommunityModerationBanner";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type CommunityWriteFormProps = Readonly<{
   draft: CommunityPostDraft;
@@ -78,6 +85,7 @@ export function CommunityWriteForm({
         maxLength={120}
         onChangeText={(title) => onChange({ ...draft, title })}
         placeholder="제목을 입력하세요"
+        placeholderTextColor={componentColors.disabledGray}
         style={styles.input}
         value={draft.title}
       />
@@ -89,6 +97,7 @@ export function CommunityWriteForm({
         multiline
         onChangeText={(content) => onChange({ ...draft, content })}
         placeholder="개인정보와 실제 금융 금액은 입력하지 마세요"
+        placeholderTextColor={componentColors.disabledGray}
         style={[styles.input, styles.contentInput]}
         textAlignVertical="top"
         value={draft.content}
@@ -108,6 +117,7 @@ export function CommunityWriteForm({
           })
         }
         placeholder="쉼표로 구분"
+        placeholderTextColor={componentColors.disabledGray}
         style={styles.input}
         value={draft.tags.join(", ")}
       />
@@ -148,18 +158,12 @@ export function CommunityWriteForm({
             <Text style={styles.previewButtonLabel}>미리보기</Text>
           </Pressable>
         ) : null}
-        <Pressable
+        <PrimaryButton
           accessibilityLabel="게시글 발행"
-          accessibilityRole="button"
-          accessibilityState={{ disabled }}
           disabled={disabled}
+          label={submitting ? "완료 중" : "완료"}
           onPress={onSubmit}
-          style={[styles.submitButton, disabled && styles.submitButtonDisabled]}
-        >
-          <Text style={styles.submitButtonLabel}>
-            {submitting ? "완료 중" : "완료"}
-          </Text>
-        </Pressable>
+        />
       </View>
     </View>
   );
@@ -167,117 +171,97 @@ export function CommunityWriteForm({
 
 const styles = StyleSheet.create({
   form: {
-    gap: 10,
+    gap: designSystem.spacing[3],
   },
   label: {
-    color: "#1F2937",
-    fontSize: 13,
-    fontWeight: "700",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelM,
   },
   boardOptions: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: designSystem.spacing[2],
   },
   boardOption: {
-    minHeight: 38,
+    minHeight: designSystem.layout.touchTarget,
     justifyContent: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.sm,
+    backgroundColor: componentColors.surface,
   },
   boardOptionSelected: {
-    borderColor: "#176B5B",
-    backgroundColor: "#E8F4F1",
+    borderColor: componentColors.primaryGreen,
+    backgroundColor: componentColors.primaryGreenSoft,
   },
   boardLabel: {
-    color: "#4B5563",
-    fontSize: 12,
-    fontWeight: "600",
+    color: componentColors.textSecondary,
+    ...designSystem.typography.labelS,
   },
   boardLabelSelected: {
-    color: "#155E52",
+    color: componentColors.primaryGreenDark,
   },
   input: {
-    minHeight: 46,
-    paddingHorizontal: 12,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
+    paddingHorizontal: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
-    color: "#111827",
-    fontSize: 14,
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.sm,
+    backgroundColor: componentColors.surface,
+    color: componentColors.textPrimary,
+    ...designSystem.typography.bodyS,
   },
   contentInput: {
     minHeight: 180,
-    paddingTop: 12,
+    paddingTop: designSystem.spacing[3],
   },
   switchRow: {
-    minHeight: 48,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: designSystem.spacing[3],
   },
   switchLabel: {
-    color: "#1F2937",
-    fontSize: 14,
-    fontWeight: "600",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelL,
   },
   switchTrack: {
     width: 48,
     height: 28,
     justifyContent: "center",
     paddingHorizontal: 3,
-    borderRadius: 14,
-    backgroundColor: "#D1D5DB",
+    borderRadius: designSystem.radius.full,
+    backgroundColor: componentColors.disabledGray,
   },
   switchTrackOn: {
-    backgroundColor: "#176B5B",
+    backgroundColor: componentColors.primaryGreen,
   },
   switchThumb: {
     width: 22,
     height: 22,
-    borderRadius: 11,
-    backgroundColor: "#FFFFFF",
+    borderRadius: designSystem.radius.full,
+    backgroundColor: componentColors.surface,
   },
   switchThumbOn: {
     alignSelf: "flex-end",
   },
   actions: {
     flexDirection: "row",
-    gap: 10,
+    gap: designSystem.spacing[2],
   },
   previewButton: {
-    minHeight: 48,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#176B5B",
-    borderRadius: 8,
+    borderColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.sm,
   },
   previewButtonLabel: {
-    color: "#176B5B",
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  submitButton: {
-    minHeight: 48,
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 8,
-    backgroundColor: "#176B5B",
-  },
-  submitButtonDisabled: {
-    backgroundColor: "#9CA3AF",
-  },
-  submitButtonLabel: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "800",
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.labelL,
   },
 });

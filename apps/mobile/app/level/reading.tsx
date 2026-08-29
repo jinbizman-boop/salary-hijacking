@@ -18,13 +18,19 @@ import {
 import { GROWTH_CONTENTS_PATH } from "../../src/features/level/constants";
 import type { GrowthContentItem } from "../../src/features/level/types";
 import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
+import { ShareBottomSheet } from "../../src/shared/ui/sheets/ShareBottomSheet";
 
 const SCREEN_VERSION = "4.1.1-level-detail-server-content";
 
+export const readingStitchStateComponents = {
+  ShareBottomSheet,
+} as const;
+
 export default function ReadingLevelScreen(): React.ReactElement {
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
-  const [serverContent, setServerContent] =
-    useState<GrowthContentItem | null>(null);
+  const [serverContent, setServerContent] = useState<GrowthContentItem | null>(
+    null,
+  );
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);

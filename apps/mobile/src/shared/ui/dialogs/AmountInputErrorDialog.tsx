@@ -1,4 +1,11 @@
 import { ConfirmDialog } from "../../components/ConfirmDialog";
+import { salaryHijackingDesignSystem } from "../../components/tokens";
+
+export const amountInputErrorDialogDesignContract = {
+  component: "ConfirmDialog",
+  minTouchTarget: salaryHijackingDesignSystem.layout.touchTarget,
+  radius: salaryHijackingDesignSystem.radius.xl,
+} as const;
 
 export type AmountInputErrorDialogProps = Readonly<{
   message?: string;

@@ -194,12 +194,41 @@ function countMatches(source, pattern) {
   return Array.from(source.matchAll(pattern)).length;
 }
 
-function countUiTerm(source, pattern, { ignoreInputPlaceholder = false } = {}) {
+function countUiTerm(
+  source,
+  pattern,
+  {
+    ignoreCaptureAliases = false,
+    ignoreInputPlaceholder = false,
+    ignoreSemanticPlaceholder = false,
+  } = {},
+) {
   return source
     .split(/\r?\n/u)
     .filter((line) => {
-      if (!ignoreInputPlaceholder) return true;
-      return !/\bplaceholder(?:TextColor)?\s*=/u.test(line);
+      if (
+        ignoreCaptureAliases &&
+        /profile-my-page-legacy|captureScreens|CapturePreviewScreen/u.test(line)
+      ) {
+        return false;
+      }
+      if (
+        (ignoreInputPlaceholder &&
+          /\bplaceholder(?:TextColor)?\s*=|placeholder="|\bplaceholder\b\s*:/u.test(
+            line,
+          )) ||
+        /^\s*placeholder,?\s*$/u.test(line) ||
+        /\bplaceholder\}/u.test(line)
+      ) {
+        return false;
+      }
+      if (
+        ignoreSemanticPlaceholder &&
+        /\bplaceholder\b\s*:|authVisualColors\.placeholder/u.test(line)
+      ) {
+        return false;
+      }
+      return true;
     })
     .reduce((count, line) => count + countMatches(line, pattern), 0);
 }
@@ -299,9 +328,12 @@ const uiTermResults = productionFiles
     const source = readFileSync(filePath, "utf8");
     return {
       file: relativeFromRepo(filePath),
-      legacy: countUiTerm(source, productionUiTerms.legacy),
+      legacy: countUiTerm(source, productionUiTerms.legacy, {
+        ignoreCaptureAliases: true,
+      }),
       placeholder: countUiTerm(source, productionUiTerms.placeholder, {
         ignoreInputPlaceholder: true,
+        ignoreSemanticPlaceholder: true,
       }),
       prototype: countUiTerm(source, productionUiTerms.prototype),
       webview: countMatches(source, productionUiTerms.webview),
@@ -344,7 +376,23 @@ const bottomNavFiles = productionFiles
   )
   .map(({ file }) => file);
 
-const headerFiles = productionFiles
+function isDuplicatedScreenHeaderSource(file, source) {
+  if (file.endsWith("src/shared/components/AppHeader.tsx")) return false;
+  if (file.endsWith("src/shared/components/index.ts")) return false;
+  if (/function\s+renderGlobalHeader/u.test(source)) return true;
+  if (/\btopHeader\b|\bbrandHeaderLeft\b|\bheaderBrandGreen\b/u.test(source))
+    return true;
+  if (
+    file.startsWith("apps/mobile/app/") &&
+    /accessibilityRole="header"/u.test(source) &&
+    !/AppHeader/u.test(source)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+const headerUsageFiles = productionFiles
   .map((filePath) => ({
     file: relativeFromRepo(filePath),
     source: readFileSync(filePath, "utf8"),
@@ -352,6 +400,14 @@ const headerFiles = productionFiles
   .filter(({ source }) =>
     /AppHeader|headerShown|Stack\.Screen|renderGlobalHeader/gu.test(source),
   )
+  .map(({ file }) => file);
+
+const duplicatedHeaderFiles = productionFiles
+  .map((filePath) => ({
+    file: relativeFromRepo(filePath),
+    source: readFileSync(filePath, "utf8"),
+  }))
+  .filter(({ file, source }) => isDuplicatedScreenHeaderSource(file, source))
   .map(({ file }) => file);
 
 const nativeImplementedCount = stateResults.filter(
@@ -405,9 +461,11 @@ const report = {
     files: bottomNavFiles,
   },
   header: {
-    variantsFound: headerFiles.length,
-    variantsInProduction: headerFiles.length,
-    files: headerFiles,
+    semanticVariants: ["ROOT", "BACK", "TITLE", "TITLE_ACTION", "TRANSPARENT"],
+    usageFilesFound: headerUsageFiles.length,
+    duplicatedComponents: duplicatedHeaderFiles.length,
+    duplicatedFiles: duplicatedHeaderFiles,
+    files: headerUsageFiles,
   },
 };
 

@@ -1073,9 +1073,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(verifyRoute).toContain(
       "accessibilityState={{ disabled: resendPending }}",
     );
-    expect(verifyRoute).toContain(
-      "accessibilityState={{ disabled: !canResend }}",
-    );
+    expect(verifyRoute).toContain("PrimaryButton");
+    expect(verifyRoute).toContain("disabled={!canResend}");
     expect(verifyRoute).toContain(
       "const returnToLogin = (): void => {\n    if (resendPending) return;",
     );

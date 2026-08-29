@@ -1,4 +1,11 @@
 import { BottomSheet } from "../../components/BottomSheet";
+import { salaryHijackingDesignSystem } from "../../components/tokens";
+
+export const attachmentBottomSheetDesignContract = {
+  component: "BottomSheet",
+  minTouchTarget: salaryHijackingDesignSystem.layout.touchTarget,
+  radius: salaryHijackingDesignSystem.radius.xl,
+} as const;
 
 export type AttachmentBottomSheetProps = Readonly<{
   onClose: () => void;

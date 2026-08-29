@@ -1,6 +1,10 @@
 import { router } from "expo-router";
 
 import { SalaryHomeScreen } from "../../../src/features/salary/components";
+import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
+import { ErrorState } from "../../../src/shared/components/ErrorState";
+import { AmountInputErrorDialog } from "../../../src/shared/ui/dialogs/AmountInputErrorDialog";
+import { SelectionBottomSheet } from "../../../src/shared/ui/sheets/SelectionBottomSheet";
 
 const SCREEN_VERSION = "4.3.0-salary-home-ui";
 const SALARY_SUMMARY_ENDPOINT = "/api/v1/salary/summary";
@@ -13,6 +17,13 @@ const SALARY_VISIBLE_COPY_CONTRACT = [
   "사용자님이 설정한 일일 사용 예산",
   "사용자님이 사용한 금일 변동 지출",
 ] as const;
+
+export const salaryStitchOverlayComponents = {
+  AmountInputErrorDialog,
+  ConfirmDialog,
+  ErrorState,
+  SelectionBottomSheet,
+} as const;
 
 export default function SalaryIndexScreen(): React.ReactElement {
   return (

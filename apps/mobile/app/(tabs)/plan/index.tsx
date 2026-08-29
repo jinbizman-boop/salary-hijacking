@@ -1,8 +1,17 @@
 import { PlanScreen } from "../../../src/features/plan/components";
+import { XpToast } from "../../../src/shared/components/XpToast";
+import { DateSelectionBottomSheet } from "../../../src/shared/ui/sheets/DateSelectionBottomSheet";
+import { RecurrenceBottomSheet } from "../../../src/shared/ui/sheets/RecurrenceBottomSheet";
 
 const SCREEN_VERSION = "4.3.0-plan-ui";
 const PLAN_FIXED_EXPENSES_ENDPOINT = "/api/v1/fixed-expenses";
 const PLAN_SAVINGS_ENDPOINT = "/api/v1/savings";
+
+export const planStitchOverlayComponents = {
+  DateSelectionBottomSheet,
+  RecurrenceBottomSheet,
+  XpToast,
+} as const;
 
 export default function PlanIndexScreen(): React.ReactElement {
   return <PlanScreen />;
