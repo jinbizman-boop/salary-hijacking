@@ -76,11 +76,11 @@ checks.push({
 });
 
 const failed = checks.filter((check) => check.status === "FAIL");
-console.log(
-  JSON.stringify(
+process.stdout.write(
+  `${JSON.stringify(
     { checks, status: failed.length === 0 ? "PASS" : "FAIL" },
     null,
     2,
-  ),
+  )}\n`,
 );
 if (failed.length > 0) process.exit(1);

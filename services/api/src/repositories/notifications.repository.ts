@@ -14,10 +14,16 @@ import type {
   NotificationsRouteRuntime,
   PaginationInput,
 } from "../routes/notifications.routes";
+import {
+  createSecurityKeyRingFromEnv,
+  decryptString,
+  encryptString,
+} from "@salary-hijacking/security/encryption";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];
 type DbRow = Record<string, unknown>;
+type EnvRecord = Readonly<Record<string, string | undefined>>;
 
 export interface NotificationsDbQueryOptions<TEnv = unknown> {
   readonly operationName: string;
@@ -152,6 +158,128 @@ function envText<TEnv>(env: TEnv, key: string): string | null {
   if (!env || typeof env !== "object") return null;
   const value = (env as Record<string, unknown>)[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function securityEnv<TEnv>(env: TEnv): EnvRecord | null {
+  if (!env || typeof env !== "object") return null;
+  const source = env as Record<string, unknown>;
+  const primaryKid =
+    typeof source.SALARY_HIJACKING_SECURITY_PRIMARY_KID === "string"
+      ? source.SALARY_HIJACKING_SECURITY_PRIMARY_KID
+      : typeof source.SECURITY_PRIMARY_KID === "string"
+        ? source.SECURITY_PRIMARY_KID
+        : undefined;
+  const keys =
+    typeof source.SALARY_HIJACKING_SECURITY_KEYS === "string"
+      ? source.SALARY_HIJACKING_SECURITY_KEYS
+      : typeof source.SECURITY_KEYS === "string"
+        ? source.SECURITY_KEYS
+        : undefined;
+  return primaryKid && keys
+    ? {
+        SALARY_HIJACKING_SECURITY_PRIMARY_KID: primaryKid,
+        SALARY_HIJACKING_SECURITY_KEYS: keys,
+      }
+    : null;
+}
+
+async function encryptPushTokenForDelivery<TEnv>(
+  pushToken: string,
+  tokenSecretRef: string,
+  runtime: NotificationsRouteRuntime<TEnv>,
+): Promise<string | null> {
+  const env = securityEnv(runtime.env);
+  if (!env) return null;
+  return encryptString(pushToken, {
+    keyRing: createSecurityKeyRingFromEnv(env),
+    context: {
+      purpose: "notification.push-token",
+      dataClass: "device",
+      userId: userIdFromRuntime(runtime),
+      subjectId: tokenSecretRef,
+      fieldName: "pushToken",
+      requestId: runtime.requestId,
+      runtime: "edge",
+    },
+    nowIso: runtime.now.toISOString(),
+  });
+}
+
+async function decryptPushTokenForDelivery<TEnv>(
+  ciphertext: string,
+  tokenSecretRef: string,
+  runtime: NotificationsRouteRuntime<TEnv>,
+): Promise<string> {
+  const env = securityEnv(runtime.env);
+  if (!env) {
+    throw new NotificationRepositoryError(
+      500,
+      "NOTIFICATION_PUSH_TOKEN_KEYRING_REQUIRED",
+      "푸시 토큰 복호화 키가 설정되어 있지 않습니다.",
+    );
+  }
+  return decryptString(ciphertext, {
+    keyRing: createSecurityKeyRingFromEnv(env),
+    context: {
+      purpose: "notification.push-token",
+      dataClass: "device",
+      userId: userIdFromRuntime(runtime),
+      subjectId: tokenSecretRef,
+      fieldName: "pushToken",
+      requestId: runtime.requestId,
+      runtime: "edge",
+    },
+  });
+}
+
+function notificationsWorkerUrl<TEnv>(env: TEnv): string | null {
+  return (
+    envText(env, "NOTIFICATIONS_WORKER_URL") ??
+    envText(env, "NOTIFICATIONS_SERVICE_URL") ??
+    envText(env, "NOTIFICATIONS_STAGING_WORKER_URL")
+  );
+}
+
+function notificationsServiceToken<TEnv>(env: TEnv): string | null {
+  return (
+    envText(env, "NOTIFICATIONS_SERVICE_TOKEN") ??
+    envText(env, "API_NOTIFICATIONS_SERVICE_TOKEN") ??
+    envText(env, "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN")
+  );
+}
+
+function notificationWorkerType(type: NotificationType): string {
+  if (type === "PAYMENT_DUE") return "FIXED_PAYMENT_DUE";
+  if (type === "BUDGET_WARNING") return "BUDGET_REMAINING";
+  if (type === "BUDGET_EXCEEDED") return "BUDGET_OVER";
+  if (type === "SAVINGS_GOAL") return "SAVINGS_DUE";
+  if (type === "LEVEL_UP") return "GROWTH_LEVEL_UP";
+  if (type === "GROWTH_REMINDER") return "GROWTH_TASK";
+  if (type === "COMMUNITY") return "COMMUNITY_COMMENT";
+  if (type === "CONTENT_RECOMMENDATION") return "NOTICE";
+  if (type === "AD_PARTNER") return "NOTICE";
+  return type;
+}
+
+function notificationImportance(priority: NotificationPriority): string {
+  if (priority === "URGENT") return "SYSTEM_REQUIRED";
+  if (priority === "HIGH") return "TRANSACTIONAL";
+  if (priority === "LOW") return "BEHAVIORAL";
+  return "SYSTEM_REQUIRED";
+}
+
+function notificationTargetScreen(input: NotificationCreateInput): string {
+  const direct =
+    typeof input.metadata.targetScreen === "string"
+      ? input.metadata.targetScreen.trim().toUpperCase()
+      : "";
+  if (direct) return direct.slice(0, 160);
+  if (input.deeplink?.includes("notifications")) return "NOTIFICATIONS";
+  if (input.type === "BUDGET_EXCEEDED" || input.type === "BUDGET_WARNING")
+    return "DAILY_BUDGET";
+  if (input.type === "SAVINGS_GOAL") return "SAVINGS";
+  if (input.type === "COMMUNITY") return "COMMUNITY";
+  return "NOTIFICATIONS";
 }
 
 export function shouldUseNeonNotificationsRepository<TEnv>(env: TEnv): boolean {
@@ -562,6 +690,135 @@ function queryText<TEnv>(
     operationName,
     env: runtime.env,
   });
+}
+
+async function dispatchPushToRegisteredDevices<TEnv>(
+  repositoryQuery: NotificationsDbQuery<TEnv>,
+  runtime: NotificationsRouteRuntime<TEnv>,
+  input: NotificationCreateInput,
+  notification: JsonRecord,
+): Promise<JsonRecord> {
+  if (!input.channels.includes("PUSH")) {
+    return {
+      attempted: false,
+      reason: "PUSH_CHANNEL_NOT_REQUESTED",
+      sentCount: 0,
+      failureCount: 0,
+      rawPushTokenExposed: false,
+    };
+  }
+
+  const workerUrl = notificationsWorkerUrl(runtime.env);
+  const serviceToken = notificationsServiceToken(runtime.env);
+  if (!workerUrl || !serviceToken) {
+    return {
+      attempted: false,
+      reason: "NOTIFICATIONS_WORKER_AUTH_NOT_CONFIGURED",
+      sentCount: 0,
+      failureCount: 0,
+      rawPushTokenExposed: false,
+    };
+  }
+
+  const tokenRows = await queryText(
+    repositoryQuery,
+    runtime,
+    "notifications.listActivePushTokenSecrets",
+    `
+      select
+        push_token_id,
+        device_id,
+        provider,
+        token_hash,
+        token_secret_ref,
+        token_ciphertext
+      from public.notification_push_tokens
+      where user_id = $1::uuid
+        and status = 'ACTIVE'
+        and provider = 'FCM'
+        and token_ciphertext is not null
+      order by last_seen_at desc nulls last, created_at desc
+      limit 10
+    `,
+    [userIdFromRuntime(runtime)],
+  );
+
+  let sentCount = 0;
+  let failureCount = 0;
+  const outcomes: JsonRecord[] = [];
+  for (const row of tokenRows.rows) {
+    const tokenSecretRef = toText(row.token_secret_ref);
+    const tokenCiphertext = toText(row.token_ciphertext);
+    if (!tokenSecretRef || !tokenCiphertext) continue;
+    const token = await decryptPushTokenForDelivery(
+      tokenCiphertext,
+      tokenSecretRef,
+      runtime,
+    );
+    const response = await globalThis.fetch(
+      new URL("/notifications/v1/send", workerUrl).toString(),
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "x-request-id": runtime.requestId,
+          "x-service-token": serviceToken,
+        },
+        body: JSON.stringify({
+          token,
+          notification: {
+            title: input.title,
+            body: input.message,
+          },
+          data: {
+            notificationId:
+              typeof notification.notificationId === "string"
+                ? notification.notificationId
+                : `ntf_${runtime.requestId}`,
+            userId: userIdFromRuntime(runtime),
+            type: notificationWorkerType(input.type),
+            importance: notificationImportance(input.priority),
+            targetScreen: notificationTargetScreen(input),
+            ...(input.deeplink ? { deeplink: input.deeplink } : {}),
+            idempotencyKey:
+              typeof notification.notificationId === "string"
+                ? `notification:${notification.notificationId}:fcm`
+                : `notification:${runtime.requestId}:fcm`,
+          },
+          android: {
+            priority: "HIGH",
+            channelId: "salary-hijacking-default",
+            clickAction: "OPEN_NOTIFICATION",
+          },
+        }),
+      },
+    );
+    const responseBody = (await response.json().catch(() => ({}))) as unknown;
+    const safeBody = sanitizeRecord(responseBody);
+    const status =
+      response.ok && JSON.stringify(safeBody).includes('"SENT"')
+        ? "SENT"
+        : response.ok
+          ? "ACCEPTED"
+          : "FAILED";
+    if (status === "SENT" || status === "ACCEPTED") sentCount += 1;
+    else failureCount += 1;
+    outcomes.push({
+      status,
+      httpStatus: response.status,
+      tokenHashPresent: typeof row.token_hash === "string",
+      provider: row.provider === "FCM" ? "FCM" : "UNKNOWN",
+    });
+  }
+
+  return {
+    attempted: true,
+    targetCount: tokenRows.rows.length,
+    sentCount,
+    failureCount,
+    rawPushTokenExposed: false,
+    outcomes,
+  };
 }
 
 function userIdFromRuntime<TEnv>(
@@ -1213,6 +1470,20 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
     async registerDevice(input: NotificationDeviceInput, runtime) {
       const pushTokenHash = await hashHex(input.pushToken);
       const fingerprintHash = await hashHex(input.deviceId);
+      const provider = String(input.provider ?? "FCM").toUpperCase();
+      const tokenSource = String(input.tokenSource ?? "NATIVE_DEVICE").toUpperCase();
+      const userId = userIdFromRuntime(runtime);
+      const pushTokenSecretRef = [
+        "notifications",
+        "push-token",
+        provider.toLowerCase(),
+        pushTokenHash.slice(0, 32),
+      ].join(":");
+      const encryptedPushToken = await encryptPushTokenForDelivery(
+        input.pushToken,
+        pushTokenSecretRef,
+        runtime,
+      );
       const result = await queryText(
         repositoryQuery,
         runtime,
@@ -1221,7 +1492,10 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           insert into public.user_devices (
             user_id,
             platform,
+            push_token_provider,
+            push_token_source,
             push_token_hash,
+            push_token_secret_ref,
             device_fingerprint_hash,
             app_version,
             status,
@@ -1233,33 +1507,124 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
             $3,
             $4,
             $5,
+            $6,
+            $7,
+            $8,
             'ACTIVE',
-            $6::timestamptz
+            $9::timestamptz
           )
           on conflict (user_id, device_fingerprint_hash)
             where device_fingerprint_hash is not null and status = 'ACTIVE'
           do update
             set platform = excluded.platform,
+                push_token_provider = excluded.push_token_provider,
+                push_token_source = excluded.push_token_source,
                 push_token_hash = excluded.push_token_hash,
+                push_token_secret_ref = excluded.push_token_secret_ref,
                 app_version = excluded.app_version,
                 last_seen_at = excluded.last_seen_at,
                 updated_at = now()
-          returning device_id, platform, app_version, status, last_seen_at, created_at, updated_at
+          returning
+            device_id,
+            platform,
+            push_token_provider,
+            push_token_source,
+            push_token_secret_ref,
+            app_version,
+            status,
+            last_seen_at,
+            created_at,
+            updated_at
         `,
         [
-          userIdFromRuntime(runtime),
+          userId,
           devicePlatform(input.platform),
+          provider,
+          tokenSource,
           pushTokenHash,
+          pushTokenSecretRef,
           fingerprintHash,
           input.appVersion,
           runtime.now.toISOString(),
         ],
       );
       const row = result.rows[0] ?? {};
+      if (encryptedPushToken) {
+        await queryText(
+          repositoryQuery,
+          runtime,
+          "notifications.registerPushTokenSecret",
+          `
+            insert into public.notification_push_tokens (
+              user_id,
+              device_id,
+              platform,
+              provider,
+              token_hash,
+              token_secret_ref,
+              token_ciphertext,
+              push_permission_status,
+              status,
+              app_version,
+              last_seen_at,
+              raw_push_token_included,
+              raw_financial_source_data_included,
+              raw_token_included,
+              raw_pii_included,
+              raw_secret_included
+            )
+            values (
+              $1::uuid,
+              $2::uuid,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7,
+              'AUTHORIZED',
+              'ACTIVE',
+              $8,
+              $9::timestamptz,
+              false,
+              false,
+              false,
+              false,
+              false
+            )
+            on conflict (token_hash)
+              where status = 'ACTIVE'
+            do update
+              set user_id = excluded.user_id,
+                  device_id = excluded.device_id,
+                  platform = excluded.platform,
+                  provider = excluded.provider,
+                  token_secret_ref = excluded.token_secret_ref,
+                  token_ciphertext = excluded.token_ciphertext,
+                  push_permission_status = excluded.push_permission_status,
+                  app_version = excluded.app_version,
+                  last_seen_at = excluded.last_seen_at,
+                  updated_at = now()
+          `,
+          [
+            userId,
+            String(row.device_id ?? input.deviceId),
+            devicePlatform(input.platform),
+            provider,
+            pushTokenHash,
+            pushTokenSecretRef,
+            encryptedPushToken,
+            input.appVersion,
+            runtime.now.toISOString(),
+          ],
+        );
+      }
       return {
         deviceId: String(row.device_id ?? input.deviceId),
         platform: String(row.platform ?? input.platform),
+        provider: String(row.push_token_provider ?? provider),
+        tokenSource: String(row.push_token_source ?? tokenSource),
         pushTokenHashOnly: true,
+        pushTokenSecretRef: toText(row.push_token_secret_ref),
         rawPushTokenExposed: false,
         appVersion: toText(row.app_version) ?? input.appVersion,
         locale: input.locale,
@@ -1311,7 +1676,16 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         runtime,
         "notifications.listDevices",
         `
-          select device_id, platform, app_version, status, last_seen_at, created_at, updated_at
+          select
+            device_id,
+            platform,
+            push_token_provider,
+            push_token_source,
+            app_version,
+            status,
+            last_seen_at,
+            created_at,
+            updated_at
           from public.user_devices
           where user_id = $1::uuid
             and status = 'ACTIVE'
@@ -1322,6 +1696,9 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
       return result.rows.map((row) => ({
         deviceId: String(row.device_id ?? ""),
         platform: String(row.platform ?? "UNKNOWN"),
+        provider: String(row.push_token_provider ?? "UNKNOWN"),
+        tokenSource: String(row.push_token_source ?? "UNKNOWN"),
+        pushTokenHashOnly: true,
         appVersion: toText(row.app_version),
         status: String(row.status ?? "ACTIVE"),
         lastSeenAt: toIsoOrNull(row.last_seen_at),
@@ -1335,9 +1712,16 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         { ...input, title: `[TEST] ${input.title}` },
         runtime,
       );
+      const pushDelivery = await dispatchPushToRegisteredDevices(
+        repositoryQuery,
+        runtime,
+        input,
+        notification,
+      );
       return {
         delivered: notification.notificationId !== null,
         notification,
+        pushDelivery,
         dryRun: false,
         ...privacyFlags(),
       };

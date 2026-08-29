@@ -15,8 +15,10 @@ import type {
   NotificationChannel,
   NotificationDevice,
   NotificationDevicePlatform,
+  NotificationDeviceProvider,
   NotificationDeviceRegistrationRequest,
   NotificationDeviceStatus,
+  NotificationDeviceTokenSource,
   NotificationItem,
   NotificationListResult,
   NotificationPriority,
@@ -107,6 +109,18 @@ const NOTIFICATION_DEVICE_STATUSES = new Set<NotificationDeviceStatus>([
   "ACTIVE",
   "REVOKED",
 ]);
+
+const NOTIFICATION_DEVICE_PROVIDERS = new Set<NotificationDeviceProvider>([
+  "FCM",
+  "APNS",
+  "EXPO",
+]);
+
+const NOTIFICATION_DEVICE_TOKEN_SOURCES =
+  new Set<NotificationDeviceTokenSource>([
+    "NATIVE_DEVICE",
+    "EXPO_PUSH_SERVICE",
+  ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -563,6 +577,30 @@ function normalizeDeviceStatus(value: unknown): NotificationDeviceStatus {
   return invalidNotificationsResponse();
 }
 
+function normalizeDeviceProvider(
+  value: unknown,
+): NotificationDeviceProvider {
+  if (
+    typeof value === "string" &&
+    NOTIFICATION_DEVICE_PROVIDERS.has(value as NotificationDeviceProvider)
+  ) {
+    return value as NotificationDeviceProvider;
+  }
+  return invalidNotificationsResponse();
+}
+
+function normalizeDeviceTokenSource(
+  value: unknown,
+): NotificationDeviceTokenSource {
+  if (
+    typeof value === "string" &&
+    NOTIFICATION_DEVICE_TOKEN_SOURCES.has(value as NotificationDeviceTokenSource)
+  ) {
+    return value as NotificationDeviceTokenSource;
+  }
+  return invalidNotificationsResponse();
+}
+
 function normalizePushTokenPreview(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (
@@ -593,9 +631,13 @@ function normalizeNotificationDevice(value: unknown): NotificationDevice {
   return {
     deviceId: value.deviceId.trim(),
     platform: normalizeDevicePlatform(value.platform),
+    provider: normalizeDeviceProvider(value.provider ?? "FCM"),
     pushTokenHashOnly: true,
     pushTokenPreview: normalizePushTokenPreview(value.pushTokenPreview),
     status: normalizeDeviceStatus(value.status),
+    tokenSource: normalizeDeviceTokenSource(
+      value.tokenSource ?? "NATIVE_DEVICE",
+    ),
     registeredAt: value.registeredAt,
     updatedAt: value.updatedAt,
     revokedAt: normalizeNullableTimestamp(value.revokedAt),
@@ -671,17 +713,58 @@ function validRegistrationRequest(
       "deviceId",
       "locale",
       "platform",
+      "provider",
       "pushToken",
+      "tokenSource",
     ]) &&
     typeof request.deviceId === "string" &&
     /^[A-Za-z0-9_.:-]+$/u.test(request.deviceId) &&
     NOTIFICATION_DEVICE_PLATFORMS.has(request.platform) &&
+    NOTIFICATION_DEVICE_PROVIDERS.has(
+      request.provider ?? providerForPlatform(request.platform),
+    ) &&
+    NOTIFICATION_DEVICE_TOKEN_SOURCES.has(
+      request.tokenSource ?? tokenSourceForProvider(request.provider),
+    ) &&
     typeof request.pushToken === "string" &&
     request.pushToken.trim().length > 0 &&
-    request.pushToken.length <= 500 &&
+    request.pushToken.length <= 4096 &&
+    validTokenForProvider(request) &&
     optionalSafeText(request.appVersion, 80) &&
     optionalSafeText(request.locale, 40)
   );
+}
+
+function providerForPlatform(
+  platform: NotificationDevicePlatform,
+): NotificationDeviceProvider {
+  if (platform === "IOS") return "APNS";
+  if (platform === "ANDROID") return "FCM";
+  return "EXPO";
+}
+
+function tokenSourceForProvider(
+  provider: NotificationDeviceProvider | undefined,
+): NotificationDeviceTokenSource {
+  return provider === "EXPO" ? "EXPO_PUSH_SERVICE" : "NATIVE_DEVICE";
+}
+
+function isExpoPushServiceToken(value: string): boolean {
+  return /\b(?:Expo|Exponent)PushToken\[[A-Za-z0-9_-]{8,}\]/u.test(value);
+}
+
+function validTokenForProvider(
+  request: NotificationDeviceRegistrationRequest,
+): boolean {
+  const provider = request.provider ?? providerForPlatform(request.platform);
+  const tokenSource = request.tokenSource ?? tokenSourceForProvider(provider);
+  if (provider === "FCM") {
+    return tokenSource === "NATIVE_DEVICE" && !isExpoPushServiceToken(request.pushToken);
+  }
+  if (provider === "APNS") {
+    return tokenSource === "NATIVE_DEVICE" && !isExpoPushServiceToken(request.pushToken);
+  }
+  return tokenSource === "EXPO_PUSH_SERVICE" && isExpoPushServiceToken(request.pushToken);
 }
 
 function normalizeRegistrationDevicePlatform(
@@ -707,13 +790,33 @@ function normalizeRegistrationRequest(
       "deviceId",
       "locale",
       "platform",
+      "provider",
       "pushToken",
+      "tokenSource",
     ])
   ) {
     return null;
   }
   const platform = normalizeRegistrationDevicePlatform(request.platform);
   if (!platform) return null;
+  const provider =
+    typeof request.provider === "string" &&
+    NOTIFICATION_DEVICE_PROVIDERS.has(
+      request.provider.trim().toUpperCase() as NotificationDeviceProvider,
+    )
+      ? (request.provider.trim().toUpperCase() as NotificationDeviceProvider)
+      : providerForPlatform(platform);
+  const tokenSource =
+    typeof request.tokenSource === "string" &&
+    NOTIFICATION_DEVICE_TOKEN_SOURCES.has(
+      request.tokenSource
+        .trim()
+        .toUpperCase() as NotificationDeviceTokenSource,
+    )
+      ? (request.tokenSource
+          .trim()
+          .toUpperCase() as NotificationDeviceTokenSource)
+      : tokenSourceForProvider(provider);
   const normalizedRequest = {
     ...(request.appVersion !== undefined
       ? { appVersion: request.appVersion }
@@ -721,7 +824,9 @@ function normalizeRegistrationRequest(
     deviceId: request.deviceId,
     ...(request.locale !== undefined ? { locale: request.locale } : {}),
     platform,
+    provider,
     pushToken: request.pushToken,
+    tokenSource,
   } as NotificationDeviceRegistrationRequest;
   return validRegistrationRequest(normalizedRequest) ? normalizedRequest : null;
 }

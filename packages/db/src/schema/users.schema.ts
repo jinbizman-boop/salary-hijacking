@@ -630,6 +630,21 @@ export const usersSchemaTables = [
         defaultSql: "'NOT_DETERMINED'",
         checks: [enumCheck("push_permission_status", pushPermissionStatuses)],
       }),
+      col("push_token_provider", varchar(24), {
+        notNull: true,
+        defaultSql: "'FCM'",
+        checks: [enumCheck("push_token_provider", ["FCM", "APNS", "EXPO"])],
+      }),
+      col("push_token_source", varchar(32), {
+        notNull: true,
+        defaultSql: "'NATIVE_DEVICE'",
+        checks: [
+          enumCheck("push_token_source", [
+            "NATIVE_DEVICE",
+            "EXPO_PUSH_SERVICE",
+          ]),
+        ],
+      }),
       col("push_token_hash", varchar(512), { sensitivity: "secret" }),
       col("push_token_secret_ref", varchar(512), { sensitivity: "secret" }),
       col("device_fingerprint_hash", varchar(512)),
@@ -644,6 +659,7 @@ export const usersSchemaTables = [
     ],
     constraints: [
       "constraint user_devices_revoked_check check (revoked_at is null or status in ('REVOKED', 'EXPIRED', 'BLOCKED'))",
+      "constraint user_devices_android_native_fcm check (platform <> 'ANDROID' or (push_token_provider = 'FCM' and push_token_source = 'NATIVE_DEVICE'))",
       ...secureChecks,
     ],
   }),

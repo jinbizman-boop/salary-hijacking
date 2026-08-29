@@ -54,7 +54,7 @@ type Operation =
   | "SCHEDULED"
   | "SYSTEM";
 type OperationStatus = "SUCCESS" | "FAILURE" | "DENIED" | "SKIPPED";
-type ServiceAuthMode = "HASH" | "PLAINTEXT" | "DEVELOPMENT_BYPASS";
+type ServiceAuthMode = "HASH" | "PLAINTEXT_DEV_ONLY" | "DEVELOPMENT_BYPASS";
 type JsonPrimitiveInput = string | number | boolean | null;
 type MutableSendInput = {
   -readonly [K in keyof FcmSendInput]?: FcmSendInput[K];
@@ -526,6 +526,9 @@ async function assertServiceAuthorized(
   runtime: Runtime,
 ): Promise<ServiceAuthMode> {
   const token = bearerOrServiceToken(runtime.request);
+  const environment = environmentOf(runtime.env).toLowerCase();
+  const requiresHashContract =
+    environment === "production" || environment === "staging";
   const expectedHash = firstText(
     envText(runtime.env, "NOTIFICATIONS_SERVICE_TOKEN_SHA256"),
     envText(runtime.env, "SERVICE_TOKEN_SHA256"),
@@ -554,6 +557,14 @@ async function assertServiceAuthorized(
     return "HASH";
   }
 
+  if (requiresHashContract) {
+    throw new NotificationsHttpError(
+      500,
+      "NOTIFICATIONS_SERVICE_TOKEN_SHA256_REQUIRED",
+      "staging/production 환경에는 서비스 토큰 SHA-256 binding이 필요합니다.",
+    );
+  }
+
   if (expectedPlain) {
     if (!token || !constantTimeEqual(token, expectedPlain)) {
       throw new NotificationsHttpError(
@@ -562,15 +573,7 @@ async function assertServiceAuthorized(
         "서비스 토큰이 올바르지 않습니다.",
       );
     }
-    return "PLAINTEXT";
-  }
-
-  if (environmentOf(runtime.env) === "production") {
-    throw new NotificationsHttpError(
-      500,
-      "NOTIFICATIONS_SERVICE_TOKEN_NOT_CONFIGURED",
-      "production 환경에는 서비스 토큰 hash가 필요합니다.",
-    );
+    return "PLAINTEXT_DEV_ONLY";
   }
 
   return "DEVELOPMENT_BYPASS";

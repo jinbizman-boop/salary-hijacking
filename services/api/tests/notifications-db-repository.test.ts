@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import {
+  createSecurityKeyRingFromEnv,
+  encryptString,
+} from "@salary-hijacking/security/encryption";
 import {
   createNeonNotificationsRepository,
   shouldUseNeonNotificationsRepository,
@@ -7,6 +11,11 @@ import type { NotificationsRouteRuntime } from "../src/routes/notifications.rout
 
 const userId = "11111111-1111-4111-8111-111111111111";
 const notificationId = "22222222-2222-4222-8222-222222222222";
+const securityEnv = {
+  SALARY_HIJACKING_SECURITY_PRIMARY_KID: "test-primary",
+  SALARY_HIJACKING_SECURITY_KEYS:
+    "test-primary:AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE:active",
+};
 
 function notificationCursor(createdAt: string, id: string): string {
   return Buffer.from(
@@ -17,10 +26,11 @@ function notificationCursor(createdAt: string, id: string): string {
 
 function createRuntime(
   path = "/api/v1/notifications",
+  env: Record<string, string> = {},
 ): NotificationsRouteRuntime<unknown> {
   return {
     request: new Request(`https://api.test${path}`),
-    env: { APP_ENV: "test" },
+    env: { APP_ENV: "test", ...env },
     execution: { waitUntil: (_promise: Promise<unknown>) => undefined },
     url: new URL(`https://api.test${path}`),
     path,
@@ -303,6 +313,146 @@ describe("Neon notifications repository", () => {
     });
   });
 
+  it("persists native FCM token metadata and secret reference without returning raw tokens", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        if (options.operationName === "notifications.registerDevice") {
+          return {
+            rows: [
+              {
+                app_version: "1.0.0",
+                created_at: "2026-07-03T04:00:00.000Z",
+                device_id: "33333333-3333-4333-8333-333333333333",
+                platform: "ANDROID",
+                push_token_secret_ref: "secretref_push_device_android_native",
+                push_token_source: "NATIVE_DEVICE",
+                push_token_provider: "FCM",
+                status: "ACTIVE",
+                updated_at: "2026-07-03T04:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "notifications.registerPushTokenSecret") {
+          return { rows: [], rowCount: 1 };
+        }
+        return { rows: [], rowCount: 0 };
+      },
+    });
+
+    const result = await repository.registerDevice(
+      {
+        appVersion: "1.0.0",
+        deviceId: "device-android-native",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        provider: "FCM",
+        pushToken: "fcm_native_registration_token_abcdef123456",
+        tokenSource: "NATIVE_DEVICE",
+      },
+      createRuntime("/api/v1/notifications/devices", securityEnv),
+    );
+
+    expect(result).toMatchObject({
+      deviceId: "33333333-3333-4333-8333-333333333333",
+      platform: "ANDROID",
+      provider: "FCM",
+      tokenSource: "NATIVE_DEVICE",
+      pushTokenHashOnly: true,
+      pushTokenSecretRef: "secretref_push_device_android_native",
+      rawPushTokenExposed: false,
+      status: "ACTIVE",
+    });
+    expect(JSON.stringify(result)).not.toContain(
+      "fcm_native_registration_token_abcdef123456",
+    );
+    expect(calls.map((call) => call.operationName)).toContain(
+      "notifications.registerDevice",
+    );
+    expect(calls.map((call) => call.operationName)).toContain(
+      "notifications.registerPushTokenSecret",
+    );
+    expect(calls[0]?.sqlText).toContain("push_token_provider");
+    expect(calls[0]?.sqlText).toContain("push_token_source");
+    expect(calls[0]?.sqlText).toContain("push_token_secret_ref");
+    expect(calls[0]?.params).toContain("FCM");
+    expect(calls[0]?.params).toContain("NATIVE_DEVICE");
+    expect(calls[0]?.params).not.toContain(
+      "fcm_native_registration_token_abcdef123456",
+    );
+    const secretCall = calls.find(
+      (call) => call.operationName === "notifications.registerPushTokenSecret",
+    );
+    expect(secretCall?.sqlText).toContain("notification_push_tokens");
+    expect(secretCall?.sqlText).toContain("token_ciphertext");
+    expect(secretCall?.params).not.toContain(
+      "fcm_native_registration_token_abcdef123456",
+    );
+    expect(
+      secretCall?.params.some(
+        (param) => typeof param === "string" && param.startsWith("shjenc:v2:"),
+      ),
+    ).toBe(true);
+  });
+
+  it("returns native token metadata on device readback without exposing raw tokens", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonNotificationsRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return {
+          rows: [
+            {
+              app_version: "1.0.0",
+              created_at: "2026-07-03T04:00:00.000Z",
+              device_id: "33333333-3333-4333-8333-333333333333",
+              last_seen_at: "2026-07-03T04:10:00.000Z",
+              platform: "ANDROID",
+              push_token_provider: "FCM",
+              push_token_source: "NATIVE_DEVICE",
+              status: "ACTIVE",
+              updated_at: "2026-07-03T04:10:00.000Z",
+            },
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    const result = await repository.listDevices(
+      createRuntime("/api/v1/notifications/devices"),
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        deviceId: "33333333-3333-4333-8333-333333333333",
+        platform: "ANDROID",
+        provider: "FCM",
+        tokenSource: "NATIVE_DEVICE",
+        pushTokenHashOnly: true,
+        rawPushTokenExposed: false,
+        status: "ACTIVE",
+      }),
+    ]);
+    expect(calls[0]?.operationName).toBe("notifications.listDevices");
+    expect(calls[0]?.sqlText).toContain("push_token_provider");
+    expect(calls[0]?.sqlText).toContain("push_token_source");
+    expect(JSON.stringify(result)).not.toContain(
+      "fcm_native_registration_token_abcdef123456",
+    );
+  });
+
   it("persists notification preferences in user_settings including quiet hours and timezone", async () => {
     const calls: Array<{
       readonly operationName: string;
@@ -445,6 +595,122 @@ describe("Neon notifications repository", () => {
       status: 409,
       code: "NOTIFICATION_IDEMPOTENCY_CONFLICT",
     });
+  });
+
+  it("dispatches PUSH test notifications through the Worker using encrypted native FCM tokens only", async () => {
+    const runtime = createRuntime("/api/v1/notifications/test", {
+      ...securityEnv,
+      NOTIFICATIONS_WORKER_URL: "https://notifications.test",
+      NOTIFICATIONS_SERVICE_TOKEN: "test-service-token",
+    });
+    const tokenSecretRef = "notifications:push-token:fcm:testhash";
+    const encryptedToken = await encryptString(
+      "fcm_native_registration_token_abcdef123456",
+      {
+        keyRing: createSecurityKeyRingFromEnv(securityEnv),
+        context: {
+          purpose: "notification.push-token",
+          dataClass: "device",
+          userId,
+          subjectId: tokenSecretRef,
+          fieldName: "pushToken",
+          requestId: runtime.requestId,
+          runtime: "edge",
+        },
+        nowIso: runtime.now.toISOString(),
+      },
+    );
+    const calls: Array<{
+      readonly operationName: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            status: "SENT",
+            tokenHash: "hash-only",
+            provider: "FCM",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const repository = createNeonNotificationsRepository({
+      query: async (_sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, params });
+        if (options.operationName === "notifications.create.dedupeLookup") {
+          return { rows: [], rowCount: 0 };
+        }
+        if (options.operationName === "notifications.listActivePushTokenSecrets") {
+          return {
+            rows: [
+              {
+                device_id: "33333333-3333-4333-8333-333333333333",
+                provider: "FCM",
+                push_token_id: "44444444-4444-4444-8444-444444444444",
+                token_ciphertext: encryptedToken,
+                token_hash:
+                  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                token_secret_ref: tokenSecretRef,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        return {
+          rows: [
+            notificationRow({
+              dedupe_key: "FCM_TEST:111",
+              dedupe_request_hash: String(params.at(-1)),
+              notification_id: notificationId,
+              type: "NOTICE",
+            }),
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    try {
+      const result = await repository.test(
+        {
+          type: "NOTICE",
+          title: "QA notification",
+          message: "Phase 13 FCM runtime test",
+          priority: "HIGH",
+          channels: ["IN_APP", "PUSH"],
+          deeplink: "salaryhijacking://notifications",
+          scheduledAt: null,
+          expiresAt: null,
+          metadata: { idempotencyKey: "FCM_TEST:111" },
+        },
+        runtime,
+      );
+
+      expect(result.pushDelivery).toMatchObject({
+        attempted: true,
+        sentCount: 1,
+        failureCount: 0,
+        rawPushTokenExposed: false,
+      });
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      const request = fetcher.mock.calls[0]?.[0];
+      expect(String(request)).toBe("https://notifications.test/notifications/v1/send");
+      const init = fetcher.mock.calls[0]?.[1] as RequestInit;
+      expect(init.headers).toMatchObject({
+        "x-service-token": "test-service-token",
+      });
+      expect(JSON.stringify(result)).not.toContain(
+        "fcm_native_registration_token_abcdef123456",
+      );
+      expect(calls.map((call) => call.operationName)).toContain(
+        "notifications.listActivePushTokenSecrets",
+      );
+    } finally {
+      fetcher.mockRestore();
+    }
   });
 
   it("maps budget warnings to the migration-backed notification type", async () => {

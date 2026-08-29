@@ -16,6 +16,10 @@ export type NotificationStatus = "UNREAD" | "READ" | "ARCHIVED" | "DELETED";
 export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 export type NotificationDevicePlatform = "IOS" | "ANDROID" | "WEB";
 export type NotificationDeviceStatus = "ACTIVE" | "REVOKED";
+export type NotificationDeviceProvider = "FCM" | "APNS" | "EXPO";
+export type NotificationDeviceTokenSource =
+  | "NATIVE_DEVICE"
+  | "EXPO_PUSH_SERVICE";
 
 export type NotificationItem = Readonly<{
   notificationId: string;
@@ -104,9 +108,11 @@ export type NotificationPreferencesUpdateRequest = Readonly<
 export type NotificationDevice = Readonly<{
   deviceId: string;
   platform: NotificationDevicePlatform;
+  provider: NotificationDeviceProvider;
   pushTokenHashOnly: true;
   pushTokenPreview: string | null;
   status: NotificationDeviceStatus;
+  tokenSource: NotificationDeviceTokenSource;
   registeredAt: string;
   updatedAt: string;
   revokedAt: string | null;
@@ -117,7 +123,9 @@ export type NotificationDeviceRegistrationRequest = Readonly<{
   deviceId: string;
   locale?: string | null;
   platform: NotificationDevicePlatform;
+  provider?: NotificationDeviceProvider;
   pushToken: string;
+  tokenSource?: NotificationDeviceTokenSource;
 }>;
 
 export type NotificationsApiClient = Readonly<{

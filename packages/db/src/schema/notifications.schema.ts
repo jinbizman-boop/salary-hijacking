@@ -779,6 +779,14 @@ export const notificationsSchemaTables = [
         ],
       },
       {
+        name: "token_ciphertext",
+        type: "text",
+        sensitivity: "S5",
+        checks: [
+          "token_ciphertext is null or token_ciphertext like 'shjenc:v2:%'",
+        ],
+      },
+      {
         name: "push_permission_status",
         type: "varchar(32)",
         notNull: true,
@@ -807,6 +815,7 @@ export const notificationsSchemaTables = [
     ],
     constraints: [
       "constraint notification_push_tokens_no_raw_token_ref check (raw_push_token_included = false)",
+      "constraint notification_push_tokens_secret_ref_or_ciphertext check (token_secret_ref is not null or token_ciphertext is not null)",
       "constraint notification_push_tokens_revoked_status check (revoked_at is null or status in ('REVOKED', 'EXPIRED', 'BLOCKED'))",
       "constraint notification_push_tokens_permission_active check (status <> 'ACTIVE' or push_permission_status in ('AUTHORIZED', 'PROVISIONAL', 'EPHEMERAL'))",
     ],

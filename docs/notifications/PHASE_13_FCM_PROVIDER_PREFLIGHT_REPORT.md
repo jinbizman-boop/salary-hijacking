@@ -1,7 +1,7 @@
 # PHASE 13 FCM Provider Runtime Preflight
 
 Generated: 2026-08-29
-Updated: 2026-08-29 after user-reported staging FCM credential registration
+Updated: 2026-08-29 after post-deploy credential recheck
 
 ## Scope
 
@@ -55,6 +55,7 @@ Worker: `salary-hijacking-notifications-staging`
 
 Observed staging secret names after a fresh `wrangler secret list --env staging` check from `services/notifications`:
 
+- `GOOGLE_SERVICE_ACCOUNT_JSON`
 - `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN`
 - `NOTIFICATIONS_SERVICE_TOKEN`
 
@@ -62,11 +63,12 @@ Required FCM provider credential presence:
 
 | Credential | Presence |
 | --- | --- |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | MISSING |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | PRESENT |
 | `FCM_CLIENT_EMAIL` | MISSING |
 | `FCM_PRIVATE_KEY` | MISSING |
 | `FCM_PROJECT_ID` | PRESENT as staging var |
 | `NOTIFICATIONS_SERVICE_TOKEN_SHA256` | MISSING |
+| `NOTIFICATIONS_SERVICE_TOKEN` | PRESENT |
 | `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN` | PRESENT |
 
 The notifications Worker supports either `GOOGLE_SERVICE_ACCOUNT_JSON` or the pair `FCM_CLIENT_EMAIL` + `FCM_PRIVATE_KEY`, with `FCM_PROJECT_ID`.
@@ -77,26 +79,30 @@ Available internal provider path:
 
 - `POST /notifications/v1/send`
 - service authorization required
-- FCM HTTP v1 client requires Firebase service-account credentials before provider send can be executed
+- FCM HTTP v1 client can use the deployed `GOOGLE_SERVICE_ACCOUNT_JSON`
 
-Because no Firebase service-account credential binding is visible on the staging Worker, REL-006 provider-backed foreground/background/tap/deeplink runtime was not executed.
+Provider-backed foreground/background/tap/deeplink runtime was not executed in this pass because the deployed Worker requires a service token for `/send`, `/multicast`, `/topic`, `/condition`, and `/validate`; Cloudflare secrets are write-only and the raw `NOTIFICATIONS_SERVICE_TOKEN` value is not available in the local runtime or evidence.
+
+The current strict same-RC Android APK also registers its notification token through `Notifications.getExpoPushTokenAsync(...)`, then the API stores only `push_token_hash` and returns `pushTokenHashOnly: true`. The current deployed FCM Worker sends through FCM HTTP v1 and requires a raw FCM registration token at send time. No current evidence path exposes a raw token, and evidence must remain token-free.
 
 Additional checks:
 
 - The Worker-name override plus `--env staging` was rejected because Wrangler resolved it as `salary-hijacking-notifications-staging-staging`; the config-based invocation from `services/notifications` is the canonical check used here.
-- A delayed recheck still reported only `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN` and `NOTIFICATIONS_SERVICE_TOKEN`.
+- The post-deploy recheck reported `GOOGLE_SERVICE_ACCOUNT_JSON`, `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN`, and `NOTIFICATIONS_SERVICE_TOKEN`.
 - `/health` and `/ready` stayed HTTP 200; `/ready` redacts FCM client status and cannot substitute for provider-backed delivery evidence.
+- A request to the Worker send family without service authorization returned HTTP 403 before provider send; this cannot be used as provider-auth evidence.
+- The user-facing API `POST /api/v1/notifications/test` creates an in-app notification record only; it does not exercise the FCM provider send path.
 
 ## REL-006 Decision
 
 | Gate | Status |
 | --- | --- |
-| FCM device token registration | PARTIAL_PERMISSION_GRANTED_PROVIDER_RUNTIME_BLOCKED |
-| FCM provider auth | EXTERNAL_BLOCKER_CREDENTIAL_BINDING_MISSING |
-| FCM foreground delivery | NOT_RUN_PROVIDER_CREDENTIAL_MISSING |
-| FCM background delivery | NOT_RUN_PROVIDER_CREDENTIAL_MISSING |
-| FCM tap | NOT_RUN_PROVIDER_CREDENTIAL_MISSING |
-| FCM deeplink | NOT_RUN_PROVIDER_CREDENTIAL_MISSING |
+| FCM device token registration | PARTIAL_CURRENT_RC_REGISTERS_EXPO_PUSH_TOKEN_HASH_ONLY |
+| FCM provider auth | BLOCKED_SERVICE_AUTH_CALLER_TOKEN_NOT_AVAILABLE |
+| FCM foreground delivery | NOT_RUN_PROVIDER_SEND_BLOCKED |
+| FCM background delivery | NOT_RUN_PROVIDER_SEND_BLOCKED |
+| FCM tap | NOT_RUN_PROVIDER_SEND_BLOCKED |
+| FCM deeplink | NOT_RUN_PROVIDER_SEND_BLOCKED |
 | Duplicate delivery count | UNVERIFIED_PROVIDER_SEND_BLOCKED |
 | Fatal count | 0 for device/package preflight and existing Galaxy runtime |
 | ANR count | 0 for device/package preflight and existing Galaxy runtime |
@@ -105,10 +111,10 @@ REL-006 remains `PARTIAL_EXTERNAL_FCM_PROVIDER_RUNTIME`.
 
 ## Required User Action
 
-Configure staging Worker Firebase provider credentials, without exposing values:
+Use one of the following token-safe paths, without exposing secret or raw push-token values in chat/evidence:
 
-- Preferred: add `GOOGLE_SERVICE_ACCOUNT_JSON`
-- Alternate: add both `FCM_CLIENT_EMAIL` and `FCM_PRIVATE_KEY`
-- If hashed service-token auth is mandatory for the deployed staging contract, add `NOTIFICATIONS_SERVICE_TOKEN_SHA256`
+- Run an already-authorized staging server-side notification send path that can target the Galaxy's real FCM registration token and return only privacy-safe delivery evidence.
+- Or make the Worker `/send` service authorization available to the local validation harness via a secret-safe local environment mechanism, and provide a token-safe way to obtain or target the Galaxy's real FCM registration token.
+- If the product decision is that the Android client should register native FCM tokens rather than Expo push tokens for this Worker, approve a new application RC remediation. That would require source changes and must not be applied to the frozen PHASE 12/13 RC.
 
-After credential presence is restored, rerun provider-backed push delivery on the same Galaxy device and same strict same-RC ARM64 APK.
+After the authorized send path and deliverable token path are available, rerun provider-backed push delivery on the same Galaxy device and same strict same-RC ARM64 APK.
