@@ -1,6 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { componentColors } from "./tokens";
+import {
+  componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
 
 export type EmptyStateProps = Readonly<{
   title: string;
@@ -24,18 +28,17 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
-    padding: 18,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.lg,
     alignItems: "center",
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 17,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleM,
   },
   description: {
     color: componentColors.textSecondary,
-    fontSize: 13,
+    ...salaryHijackingDesignSystem.typography.bodyS,
     textAlign: "center",
   },
 });

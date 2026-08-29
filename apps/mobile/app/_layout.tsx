@@ -11,6 +11,7 @@ import {
   MOBILE_ACCESS_TOKEN_KEY,
 } from "../src/shared/storage/auth-token";
 import { appImageAssets } from "../src/shared/assets/images";
+import { AppHeader } from "../src/shared/components/AppHeader";
 import {
   componentColors,
   salaryHijackingDesignSystem,
@@ -990,7 +991,7 @@ export default function MobileRootLayout(): unknown {
       testID: ROOT_E2E_TEST_ID,
     },
     shouldShowRuntimeChrome
-      ? renderGlobalHeader(
+      ? renderRootAppHeader(
           state.payload,
           state.status,
           currentRouteKey,
@@ -1071,7 +1072,7 @@ function renderCaptureScreen(kind: CaptureScreenKind): unknown {
   return h(CapturePreviewScreen, { kind });
 }
 
-function renderGlobalHeader(
+function renderRootAppHeader(
   payload: RootPayload,
   status: RootStatus,
   _routeKey: string,
@@ -1084,51 +1085,24 @@ function renderGlobalHeader(
       : status === "ERROR"
         ? styles.dangerText
         : styles.reviewText;
-  return h(
-    NativeRuntimeRef.View,
-    { style: styles.header },
-    h(
-      NativeRuntimeRef.Pressable,
-      {
-        accessibilityRole: "button",
-        accessibilityLabel: "급여 홈",
-        onPress: goHome,
-        style: styles.logoButton,
-      },
-      h(NativeRuntimeRef.Image, {
-        accessibilityIgnoresInvertColors: true,
-        accessibilityLabel: "급여납치 공식 BI",
-        resizeMode: "contain",
-        source: OFFICIAL_BI_LOGO,
-        style: styles.headerLogoImage,
-      }),
-    ),
-    h(
-      NativeRuntimeRef.View,
-      { style: styles.headerBody },
-      h(
-        NativeRuntimeRef.Text,
-        { style: styles.headerKicker },
-        "SALARY HIJACKING",
-      ),
-      h(NativeRuntimeRef.Text, { style: styles.headerTitle }, "급여납치"),
-      h(
-        NativeRuntimeRef.Text,
-        { style: styles.headerMeta },
-        rootHeaderMessage(payload, status),
-      ),
-    ),
-    h(
-      NativeRuntimeRef.Pressable,
-      {
-        accessibilityRole: "button",
-        accessibilityLabel: "마이페이지",
-        onPress: goProfile,
-        style: styles.profileButton,
-      },
-      h(NativeRuntimeRef.Text, { style: statusStyle }, rootStatusLabel(status)),
-    ),
+  const profileAction = h(
+    NativeRuntimeRef.Pressable,
+    {
+      accessibilityRole: "button",
+      accessibilityLabel: "마이페이지",
+      onPress: goProfile,
+      style: styles.profileButton,
+    },
+    h(NativeRuntimeRef.Text, { style: statusStyle }, rootStatusLabel(status)),
   );
+
+  return h(AppHeader as ElementType, {
+    onBrandPress: goHome,
+    rightAccessory: profileAction,
+    subtitle: rootHeaderMessage(payload, status),
+    title: "급여납치",
+    variant: "ROOT",
+  });
 }
 
 function renderGate(
@@ -1166,7 +1140,9 @@ function renderGate(
       h(NativeRuntimeRef.Text, { style: styles.gateTitle }, title),
       h(NativeRuntimeRef.Text, { style: styles.gateMessage }, message),
       retrying
-        ? h(NativeRuntimeRef.ActivityIndicator, { color: "#209252" })
+        ? h(NativeRuntimeRef.ActivityIndicator, {
+            color: designSystem.colors.brand.primary,
+          })
         : h(
             NativeRuntimeRef.Pressable,
             {
@@ -1833,45 +1809,6 @@ export function assertMobileRootLayoutCompleteness(): {
 
 const styles = NativeRuntimeRef.StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: componentColors.background },
-  header: {
-    alignItems: "center",
-    backgroundColor: componentColors.surface,
-    borderBottomColor: designSystem.colors.border.soft,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    gap: designSystem.spacing[3],
-    paddingHorizontal: designSystem.spacing[4],
-    paddingBottom: designSystem.spacing[4],
-    paddingTop: designSystem.spacing[4],
-  },
-  logoButton: {
-    alignItems: "center",
-    backgroundColor: componentColors.surface,
-    borderRadius: designSystem.radius.lg,
-    height: designSystem.layout.touchTarget,
-    justifyContent: "center",
-    width: designSystem.layout.touchTarget,
-  },
-  headerLogoImage: {
-    borderRadius: designSystem.radius.lg,
-    height: designSystem.spacing[10],
-    width: designSystem.spacing[10],
-  },
-  headerBody: { flex: 1, gap: designSystem.spacing[1] },
-  headerKicker: {
-    color: componentColors.primaryGreen,
-    ...designSystem.typography.labelS,
-  },
-  headerTitle: {
-    color: componentColors.textPrimary,
-    fontFamily: "Freesentation-9Black",
-    ...designSystem.typography.titleXL,
-  },
-  headerMeta: {
-    color: componentColors.textSecondary,
-    fontFamily: "Freesentation-6SemiBold",
-    ...designSystem.typography.caption,
-  },
   profileButton: {
     alignItems: "center",
     backgroundColor: componentColors.surface,

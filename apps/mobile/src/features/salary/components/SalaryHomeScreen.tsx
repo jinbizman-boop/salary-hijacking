@@ -29,8 +29,10 @@ import type {
   PlanSavingsDepositRequest,
 } from "../../../features/plan/types";
 import { appIconAssets } from "../../../shared/assets/icons";
-import { appImageAssets } from "../../../shared/assets/images";
-import { salaryHijackingDesignSystem } from "../../../shared/components";
+import {
+  AppHeader,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
@@ -58,14 +60,28 @@ import {
 const designSystem = salaryHijackingDesignSystem;
 const salaryScreenColors = {
   brand: designSystem.colors.brand.primary,
+  brandSoft: designSystem.colors.brand.primarySoft,
+  brandSurface: designSystem.colors.brand.surface,
+  dangerBorder: designSystem.colors.semantic.dangerSoft,
+  dangerSurface: designSystem.colors.semantic.dangerSoft,
   hero: designSystem.colors.brand.secondary,
+  info: designSystem.colors.semantic.info,
+  inverse: designSystem.colors.text.inverse,
   line: designSystem.colors.border.default,
+  muted: designSystem.colors.text.secondary,
   money: designSystem.colors.semantic.warning,
   paid: designSystem.colors.text.disabled,
+  screen: designSystem.colors.surface.subtle,
+  soft: designSystem.colors.surface.soft,
+  surface: designSystem.colors.surface.default,
   text: designSystem.colors.text.primary,
   warning: designSystem.colors.semantic.warningStrong,
   danger: designSystem.colors.semantic.dangerStrong,
 } as const;
+const salaryScreenSpacing = designSystem.spacing;
+const salaryScreenRadius = designSystem.radius;
+const salaryScreenTypography = designSystem.typography;
+const salaryScreenElevation = designSystem.elevation;
 const SALARY_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
@@ -129,7 +145,6 @@ export function SalaryHomeScreen({
   const scrollRef = useRef<ScrollView | null>(null);
   const variableFormTopRef = useRef(0);
   const contentWidth = Math.min(width, 430);
-  const scale = clamp(width / 393, 0.9, 1.08);
   const [tick, setTick] = useState(0);
   const [state, setState] = useState(() =>
     createSalaryHomeVariantState(getPayrollReminderState(), previewVariant),
@@ -655,37 +670,27 @@ export function SalaryHomeScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.topHeader, { height: 54 * scale }]}>
-          <View style={styles.brandHeaderLeft}>
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={appImageAssets.brand.platformLogo}
-              style={[
-                styles.headerLogo,
-                { height: 24 * scale, width: 24 * scale },
-              ]}
-            />
-            <Text allowFontScaling={false} style={styles.headerBrand}>
-              <Text style={styles.headerBrandGreen}>SALARY </Text>
-              HIJACKING
-            </Text>
-          </View>
-          <Pressable
-            accessibilityLabel="알림 화면 열기"
-            accessibilityRole="button"
-            hitSlop={10}
-            onPress={onOpenNotifications}
-            style={styles.iconButton}
-          >
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={appIconAssets.common.alarm}
-              style={styles.alarmIcon}
-            />
-          </Pressable>
-        </View>
+        <AppHeader
+          rightAccessory={
+            <Pressable
+              accessibilityLabel="알림 화면 열기"
+              accessibilityRole="button"
+              hitSlop={designSystem.spacing[3]}
+              onPress={onOpenNotifications}
+              style={styles.headerActionButton}
+            >
+              <Image
+                accessibilityIgnoresInvertColors
+                resizeMode="contain"
+                source={appIconAssets.common.alarm}
+                style={styles.headerActionIcon}
+              />
+            </Pressable>
+          }
+          subtitle="서버 권위 급여 홈"
+          title="급여"
+          variant="ROOT"
+        />
 
         {salaryError ? (
           <Text
@@ -1576,86 +1581,72 @@ function normalizeCategory(value: string): ReminderCategory {
   return "기타";
 }
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
-
 const styles = StyleSheet.create({
   addInlineButton: {
     alignItems: "center",
-    backgroundColor: "#EDF7F1",
-    borderRadius: 5,
+    backgroundColor: salaryScreenColors.brandSoft,
+    borderRadius: salaryScreenRadius.sm,
     justifyContent: "center",
     minHeight: 40,
   },
   addInlineText: {
     color: salaryScreenColors.brand,
-    fontSize: 13,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
   },
   addText: {
     color: salaryScreenColors.text,
-    fontSize: 13,
-    fontWeight: "900",
-    marginTop: 8,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+    marginTop: salaryScreenSpacing[2],
   },
   adDish: {
     alignItems: "flex-end",
     alignSelf: "stretch",
-    backgroundColor: "#F2E6D0",
+    backgroundColor: salaryScreenColors.brandSurface,
     flex: 0.38,
-    padding: 8,
+    padding: salaryScreenSpacing[2],
   },
   adDiscount: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 5,
-    color: "#7A2DBA",
-    fontSize: 15,
-    fontWeight: "900",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    backgroundColor: salaryScreenColors.surface,
+    borderRadius: salaryScreenRadius.sm,
+    color: salaryScreenColors.info,
+    fontSize: salaryScreenTypography.labelL.fontSize,
+    fontWeight: salaryScreenTypography.labelL.fontWeight,
+    paddingHorizontal: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[1],
   },
   adLeft: {
     flex: 0.62,
     justifyContent: "center",
-    paddingHorizontal: 18,
+    paddingHorizontal: salaryScreenSpacing[5],
   },
   adSmall: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "900",
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
     opacity: 0.82,
   },
   adText: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
-    marginTop: 4,
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.labelL.fontSize,
+    fontWeight: salaryScreenTypography.labelL.fontWeight,
+    marginTop: salaryScreenSpacing[1],
   },
   adTitle: {
-    color: "#FFFFFF",
-    fontSize: 17,
-    fontWeight: "900",
-    marginTop: 4,
-  },
-  alarmIcon: {
-    height: 27,
-    tintColor: salaryScreenColors.text,
-    width: 27,
-  },
-  brandHeaderLeft: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 5,
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    marginTop: salaryScreenSpacing[1],
   },
   budgetAmount: {
     color: salaryScreenColors.text,
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
     minWidth: 76,
   },
   budgetIcon: {
-    borderRadius: 12,
+    borderRadius: salaryScreenRadius.md,
     height: 25,
     width: 25,
   },
@@ -1664,13 +1655,13 @@ const styles = StyleSheet.create({
     borderBottomColor: salaryScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
-    gap: 10,
+    gap: salaryScreenSpacing[2],
     minHeight: 52,
   },
   budgetSummary: {
     flexDirection: "row",
-    gap: 5,
-    marginBottom: 10,
+    gap: salaryScreenSpacing[1],
+    marginBottom: salaryScreenSpacing[2],
   },
   budgetSummaryItem: {
     flex: 1,
@@ -1679,61 +1670,57 @@ const styles = StyleSheet.create({
   },
   budgetSummaryLabel: {
     backgroundColor: salaryScreenColors.brand,
-    color: "#FFFFFF",
+    color: salaryScreenColors.inverse,
     flex: 1,
-    fontSize: 10,
-    fontWeight: "900",
-    paddingVertical: 7,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
+    paddingVertical: salaryScreenSpacing[2],
     textAlign: "center",
   },
   budgetSummaryValue: {
-    backgroundColor: "#F5F7F8",
+    backgroundColor: salaryScreenColors.soft,
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 10,
-    fontWeight: "800",
-    paddingVertical: 7,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
+    paddingVertical: salaryScreenSpacing[2],
     textAlign: "center",
   },
   budgetText: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
     minWidth: 0,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: salaryScreenColors.surface,
     borderColor: salaryScreenColors.line,
-    borderRadius: 3,
+    borderRadius: salaryScreenRadius.md,
     borderWidth: 1,
-    elevation: 3,
-    marginHorizontal: 8,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 16,
-    shadowColor: "#17251D",
-    shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    ...salaryScreenElevation.low,
+    marginHorizontal: salaryScreenSpacing[2],
+    marginTop: salaryScreenSpacing[3],
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[4],
   },
   cardTitle: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 17,
-    fontWeight: "900",
-    marginBottom: 13,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    marginBottom: salaryScreenSpacing[3],
   },
   content: {
     alignSelf: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: salaryScreenColors.surface,
   },
   editRow: {
     alignItems: "center",
     borderBottomColor: salaryScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
-    gap: 8,
+    gap: salaryScreenSpacing[2],
     justifyContent: "space-between",
     minHeight: 38,
   },
@@ -1749,270 +1736,263 @@ const styles = StyleSheet.create({
   },
   editRowMoney: {
     color: salaryScreenColors.brand,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
   },
   editRowText: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
   },
   emptyBody: {
-    color: "#5F6971",
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 20,
-    marginTop: 6,
+    color: salaryScreenColors.muted,
+    fontSize: salaryScreenTypography.bodyS.fontSize,
+    fontWeight: salaryScreenTypography.bodyS.fontWeight,
+    lineHeight: salaryScreenTypography.bodyS.lineHeight,
+    marginTop: salaryScreenSpacing[1],
   },
   emptyState: {
-    backgroundColor: "#F7F8FA",
+    backgroundColor: salaryScreenColors.soft,
     borderColor: salaryScreenColors.line,
-    borderRadius: 10,
+    borderRadius: salaryScreenRadius.md,
     borderWidth: 1,
-    marginTop: 12,
-    padding: 16,
+    marginTop: salaryScreenSpacing[3],
+    padding: salaryScreenSpacing[4],
   },
   emptyTitle: {
     color: salaryScreenColors.text,
-    fontSize: 16,
-    fontWeight: "900",
-    lineHeight: 22,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    lineHeight: salaryScreenTypography.titleM.lineHeight,
   },
   errorText: {
-    backgroundColor: "#FFF4F1",
-    borderColor: "#F1B7A8",
-    borderRadius: 5,
+    backgroundColor: salaryScreenColors.dangerSurface,
+    borderColor: salaryScreenColors.dangerBorder,
+    borderRadius: salaryScreenRadius.sm,
     borderWidth: 1,
     color: salaryScreenColors.danger,
-    fontSize: 13,
-    fontWeight: "900",
-    marginHorizontal: 8,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+    marginHorizontal: salaryScreenSpacing[2],
+    marginTop: salaryScreenSpacing[2],
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[2],
   },
   fixedAmount: {
     color: salaryScreenColors.text,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.labelL.fontSize,
+    fontWeight: salaryScreenTypography.labelL.fontWeight,
     minWidth: 75,
   },
   fixedIcon: {
-    borderRadius: 8,
+    borderRadius: salaryScreenRadius.sm,
     height: 31,
     width: 31,
   },
   fixedLabel: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
     minWidth: 0,
   },
   fixedRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
+    gap: salaryScreenSpacing[3],
     minHeight: 46,
   },
   formCaption: {
-    color: "#4A4F55",
-    fontSize: 12,
-    fontWeight: "800",
+    color: salaryScreenColors.muted,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
   },
   googleAd: {
-    backgroundColor: "#76209D",
+    backgroundColor: salaryScreenColors.info,
     flexDirection: "row",
     height: 74,
     overflow: "hidden",
     width: "100%",
   },
-  headerBrand: {
-    color: salaryScreenColors.text,
-    fontSize: 19,
-    fontWeight: "900",
-    letterSpacing: 0,
+  headerActionButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: designSystem.header.actionSize,
+    minWidth: designSystem.header.actionSize,
   },
-  headerBrandGreen: {
-    color: salaryScreenColors.brand,
-  },
-  headerLogo: {
-    borderRadius: 12,
+  headerActionIcon: {
+    height: designSystem.navigation.bottomTabs.iconSize,
+    tintColor: salaryScreenColors.text,
+    width: designSystem.navigation.bottomTabs.iconSize,
   },
   heroAmount: {
     color: salaryScreenColors.money,
-    fontSize: 29,
-    fontWeight: "900",
-    marginTop: 4,
+    fontSize: salaryScreenTypography.amountL.fontSize,
+    fontWeight: salaryScreenTypography.amountL.fontWeight,
+    marginTop: salaryScreenSpacing[1],
   },
   heroCoin: {
     height: 68,
-    marginBottom: 4,
-    marginTop: 14,
+    marginBottom: salaryScreenSpacing[1],
+    marginTop: salaryScreenSpacing[3],
     width: 68,
   },
   heroDate: {
-    color: "#EAF6EF",
-    fontSize: 15,
-    fontWeight: "700",
+    color: salaryScreenColors.brandSoft,
+    fontSize: salaryScreenTypography.bodyM.fontSize,
+    fontWeight: salaryScreenTypography.bodyM.fontWeight,
   },
   heroLeft: {
     flex: 1.2,
     justifyContent: "space-between",
     minWidth: 0,
-    paddingLeft: 18,
-    paddingVertical: 16,
+    paddingLeft: salaryScreenSpacing[5],
+    paddingVertical: salaryScreenSpacing[4],
   },
   heroPanel: {
     backgroundColor: salaryScreenColors.hero,
     flexDirection: "row",
     minHeight: 270,
-    paddingBottom: 10,
-    paddingRight: 10,
+    paddingBottom: salaryScreenSpacing[2],
+    paddingRight: salaryScreenSpacing[2],
     width: "100%",
   },
   heroRight: {
     flex: 1,
-    gap: 7,
+    gap: salaryScreenSpacing[2],
     justifyContent: "center",
     minWidth: 0,
   },
   heroSub: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-    marginTop: 4,
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.bodyL.fontSize,
+    fontWeight: salaryScreenTypography.bodyL.fontWeight,
+    marginTop: salaryScreenSpacing[1],
   },
   heroTitle: {
-    color: "#FFFFFF",
-    fontSize: 23,
-    fontWeight: "900",
-    lineHeight: 31,
-    marginTop: 6,
-  },
-  iconButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 44,
-    minWidth: 44,
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.titleL.fontSize,
+    fontWeight: salaryScreenTypography.titleL.fontWeight,
+    lineHeight: salaryScreenTypography.titleL.lineHeight,
+    marginTop: salaryScreenSpacing[1],
   },
   inlineForm: {
-    backgroundColor: "#F8FAF9",
+    backgroundColor: salaryScreenColors.soft,
     borderColor: salaryScreenColors.line,
-    borderRadius: 5,
+    borderRadius: salaryScreenRadius.sm,
     borderWidth: 1,
-    gap: 8,
-    marginBottom: 12,
-    padding: 10,
+    gap: salaryScreenSpacing[2],
+    marginBottom: salaryScreenSpacing[3],
+    padding: salaryScreenSpacing[3],
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: salaryScreenColors.surface,
     borderColor: salaryScreenColors.line,
-    borderRadius: 5,
+    borderRadius: salaryScreenRadius.sm,
     borderWidth: 1,
     color: salaryScreenColors.text,
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: salaryScreenTypography.bodyM.fontSize,
+    fontWeight: salaryScreenTypography.bodyM.fontWeight,
     minHeight: 48,
-    paddingHorizontal: 12,
+    paddingHorizontal: salaryScreenSpacing[3],
   },
   itemEditor: {
-    gap: 8,
+    gap: salaryScreenSpacing[2],
   },
   metricBox: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 4,
+    backgroundColor: salaryScreenColors.surface,
+    borderRadius: salaryScreenRadius.sm,
     flexDirection: "row",
-    gap: 4,
+    gap: salaryScreenSpacing[1],
     justifyContent: "space-between",
     minHeight: 45,
-    paddingHorizontal: 8,
+    paddingHorizontal: salaryScreenSpacing[2],
   },
   metricEmphasis: {
     borderColor: salaryScreenColors.money,
     borderWidth: 2,
   },
   metricLabel: {
-    color: "#4A4F55",
+    color: salaryScreenColors.muted,
     flexShrink: 0,
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
   },
   metricValue: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
     minWidth: 0,
     textAlign: "right",
   },
   paydayCard: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 5,
+    backgroundColor: salaryScreenColors.surface,
+    borderRadius: salaryScreenRadius.sm,
     flex: 1,
     justifyContent: "center",
     minHeight: 66,
-    paddingHorizontal: 4,
+    paddingHorizontal: salaryScreenSpacing[1],
   },
   paydayDanger: {
     color: salaryScreenColors.danger,
   },
   paydayLabel: {
-    color: "#4A4F55",
-    fontSize: 10,
-    fontWeight: "900",
+    color: salaryScreenColors.muted,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
   },
   paydayRow: {
     flexDirection: "row",
-    gap: 7,
+    gap: salaryScreenSpacing[2],
   },
   paydayValue: {
     color: salaryScreenColors.brand,
-    fontSize: 16,
-    fontWeight: "900",
-    marginTop: 5,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    marginTop: salaryScreenSpacing[1],
   },
   saveButton: {
     alignItems: "center",
     backgroundColor: salaryScreenColors.brand,
-    borderRadius: 5,
+    borderRadius: salaryScreenRadius.md,
     justifyContent: "center",
     minHeight: 44,
-    paddingHorizontal: 14,
+    paddingHorizontal: salaryScreenSpacing[3],
   },
   saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
   },
   screen: {
-    backgroundColor: "#F3F4F5",
+    backgroundColor: salaryScreenColors.screen,
     flex: 1,
   },
   smallActionButton: {
     alignItems: "center",
-    backgroundColor: "#EDF7F1",
-    borderRadius: 5,
+    backgroundColor: salaryScreenColors.brandSoft,
+    borderRadius: salaryScreenRadius.sm,
     justifyContent: "center",
     minHeight: 32,
-    paddingHorizontal: 10,
+    paddingHorizontal: salaryScreenSpacing[2],
   },
   smallActionText: {
     color: salaryScreenColors.brand,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
   },
   statusGray: {
     alignItems: "center",
     backgroundColor: salaryScreenColors.paid,
-    borderRadius: 2,
+    borderRadius: salaryScreenRadius.sm,
     justifyContent: "center",
     minHeight: 29,
     minWidth: 62,
-    paddingHorizontal: 8,
+    paddingHorizontal: salaryScreenSpacing[2],
   },
   statusGreen: {
     backgroundColor: salaryScreenColors.brand,
@@ -2021,31 +2001,31 @@ const styles = StyleSheet.create({
     backgroundColor: salaryScreenColors.warning,
   },
   statusText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "900",
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
   },
   tableHeader: {
     flexDirection: "row",
-    gap: 2,
+    gap: salaryScreenSpacing[1] / 2,
   },
   tableActionButton: {
     alignItems: "center",
     backgroundColor: salaryScreenColors.brand,
-    borderRadius: 3,
+    borderRadius: salaryScreenRadius.sm,
     justifyContent: "center",
     minHeight: 28,
     minWidth: 38,
-    paddingHorizontal: 6,
+    paddingHorizontal: salaryScreenSpacing[1],
   },
   tableActionText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "900",
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
   },
   tableActions: {
     flexDirection: "row",
-    gap: 4,
+    gap: salaryScreenSpacing[1],
     justifyContent: "flex-end",
     minWidth: 82,
   },
@@ -2054,18 +2034,18 @@ const styles = StyleSheet.create({
   },
   tableHeaderText: {
     backgroundColor: salaryScreenColors.brand,
-    color: "#FFFFFF",
+    color: salaryScreenColors.inverse,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "900",
-    paddingVertical: 8,
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
+    paddingVertical: salaryScreenSpacing[2],
     textAlign: "center",
   },
   tableMoney: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 13,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
     textAlign: "center",
   },
   tableRow: {
@@ -2078,77 +2058,69 @@ const styles = StyleSheet.create({
   tableText: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
     textAlign: "center",
   },
   titleRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 8,
-  },
-  topHeader: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    width: "100%",
+    gap: salaryScreenSpacing[2],
   },
   variableForm: {
-    backgroundColor: "#F8FAF9",
+    backgroundColor: salaryScreenColors.soft,
     borderColor: salaryScreenColors.line,
-    borderRadius: 5,
+    borderRadius: salaryScreenRadius.sm,
     borderWidth: 1,
-    gap: 8,
-    marginBottom: 12,
-    padding: 10,
+    gap: salaryScreenSpacing[2],
+    marginBottom: salaryScreenSpacing[3],
+    padding: salaryScreenSpacing[3],
   },
   variableHeader: {
-    marginBottom: 5,
+    marginBottom: salaryScreenSpacing[1],
   },
   variableTotal: {
     alignSelf: "flex-end",
     flexDirection: "row",
-    marginTop: -3,
+    marginTop: -salaryScreenSpacing[1],
   },
   variableTotalLabel: {
     backgroundColor: salaryScreenColors.brand,
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "900",
-    paddingHorizontal: 18,
-    paddingVertical: 7,
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
+    paddingHorizontal: salaryScreenSpacing[5],
+    paddingVertical: salaryScreenSpacing[2],
   },
   variableTotalValue: {
-    backgroundColor: "#F5F7F8",
+    backgroundColor: salaryScreenColors.soft,
     color: salaryScreenColors.text,
-    fontSize: 10,
-    fontWeight: "900",
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
     minWidth: 82,
-    paddingVertical: 7,
+    paddingVertical: salaryScreenSpacing[2],
     textAlign: "center",
   },
   variantBanner: {
-    backgroundColor: "#F2FBF6",
-    borderColor: "#D3EFDF",
-    borderRadius: 12,
+    backgroundColor: salaryScreenColors.brandSoft,
+    borderColor: salaryScreenColors.brandSurface,
+    borderRadius: salaryScreenRadius.md,
     borderWidth: 1,
-    gap: 4,
-    marginBottom: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 13,
+    gap: salaryScreenSpacing[1],
+    marginBottom: salaryScreenSpacing[2],
+    paddingHorizontal: salaryScreenSpacing[4],
+    paddingVertical: salaryScreenSpacing[3],
   },
   variantBody: {
-    color: "#496154",
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 19,
+    color: salaryScreenColors.muted,
+    fontSize: salaryScreenTypography.bodyS.fontSize,
+    fontWeight: salaryScreenTypography.bodyS.fontWeight,
+    lineHeight: salaryScreenTypography.bodyS.lineHeight,
   },
   variantTitle: {
     color: salaryScreenColors.brand,
-    fontSize: 16,
-    fontWeight: "900",
-    lineHeight: 22,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    lineHeight: salaryScreenTypography.titleM.lineHeight,
   },
 });

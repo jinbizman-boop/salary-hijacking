@@ -1,5 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
+
 export type OverspendNoticeProps = Readonly<{
   overspentLabel: string;
   onOpenPlan?: () => void;
@@ -38,40 +47,40 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    padding: 14,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.sm,
     borderWidth: 1,
-    borderColor: "#F2B8B5",
-    borderRadius: 8,
-    backgroundColor: "#FFF1F1",
+    borderColor: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
+    borderRadius: componentRadius.card,
+    backgroundColor: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
   },
   copy: {
     flex: 1,
-    gap: 3,
+    gap: componentSpacing.xs,
   },
   title: {
-    color: "#9B1C1C",
-    fontSize: 14,
-    fontWeight: "800",
+    color: componentColors.dangerRed,
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
   description: {
-    color: "#6F1D1B",
-    fontSize: 13,
-    lineHeight: 19,
+    color: componentColors.textPrimary,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   button: {
     minHeight: 40,
     justifyContent: "center",
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    backgroundColor: "#9B1C1C",
+    paddingHorizontal: componentSpacing.sm,
+    borderRadius: componentRadius.button,
+    backgroundColor: componentColors.dangerRed,
   },
   buttonPressed: {
     opacity: 0.78,
   },
   buttonLabel: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
 });

@@ -1,10 +1,18 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type {
   CommunityPostDraft,
   CommunityValidationResult,
 } from "../community.types";
 import { CommunityWriteForm } from "./CommunityWriteForm";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type ComposeBottomSheetProps = Readonly<{
   open: boolean;
@@ -64,46 +72,46 @@ export function ComposeBottomSheet({
 
 const styles = StyleSheet.create({
   sheet: {
-    gap: 14,
-    padding: 18,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    gap: componentSpacing.md,
+    padding: componentSpacing.lg,
+    borderTopLeftRadius: componentRadius.card,
+    borderTopRightRadius: componentRadius.card,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    backgroundColor: componentColors.surface,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: componentSpacing.sm,
   },
   title: {
-    color: "#111827",
-    fontSize: 18,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   subtitle: {
-    color: "#6B7280",
-    fontSize: 12,
-    fontWeight: "700",
+    color: componentColors.textSecondary,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   closeButton: {
     minWidth: 44,
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
-    backgroundColor: "#F3F4F6",
+    borderRadius: componentRadius.button,
+    backgroundColor: componentColors.surfaceSoft,
   },
   closeText: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   guard: {
-    color: "#6B7280",
-    fontSize: 11,
-    fontWeight: "700",
+    color: componentColors.textSecondary,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 28,
     justifyContent: "center",
-    paddingHorizontal: 3,
+    paddingHorizontal: designSystem.spacing[1],
     borderRadius: designSystem.radius.full,
     backgroundColor: componentColors.disabledGray,
   },

@@ -9,8 +9,16 @@ import {
 } from "react-native";
 
 import { appIconAssets } from "../../../shared/assets/icons";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { AuthSocialProvider } from "../types";
 import { TextLink, authVisualColors } from "./AuthVisualFrame";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
@@ -19,24 +27,24 @@ const SOCIAL_PROVIDERS: readonly {
   readonly provider?: AuthSocialProvider;
 }[] = [
   {
-    backgroundColor: "#03C75A",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
     icon: appIconAssets.social.naver,
     label: "네이버 로그인",
     provider: "NAVER",
   },
   {
-    backgroundColor: "#FEE500",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.kakao,
     icon: appIconAssets.social.kakao,
     label: "카카오 로그인",
     provider: "KAKAO",
   },
   {
-    backgroundColor: "#1877F2",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.facebook,
     icon: appIconAssets.social.facebook,
     label: "페이스북 로그인 준비 중",
   },
   {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.google,
     icon: appIconAssets.social.google,
     label: "구글 로그인",
     provider: "GOOGLE",
@@ -109,19 +117,19 @@ const styles = StyleSheet.create({
   autoLogin: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 4,
+    gap: componentSpacing.xs,
   },
   autoLoginText: {
     color: authVisualColors.ink,
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: typography.bodyS.fontSize,
+    fontWeight: typography.bodyS.fontWeight,
     includeFontPadding: false,
     letterSpacing: 0,
-    lineHeight: 20,
+    lineHeight: typography.bodyS.lineHeight,
   },
   checkbox: {
     alignItems: "center",
-    borderColor: "#303030",
+    borderColor: componentColors.textPrimary,
     borderWidth: 1,
     height: 14,
     justifyContent: "center",
@@ -134,28 +142,28 @@ const styles = StyleSheet.create({
   },
   divider: {
     color: authVisualColors.ink,
-    fontSize: 14,
-    fontWeight: "800",
+    fontSize: typography.bodyS.fontSize,
+    fontWeight: typography.bodyS.fontWeight,
     includeFontPadding: false,
-    lineHeight: 20,
+    lineHeight: typography.bodyS.lineHeight,
   },
   iconRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 9,
+    gap: componentSpacing.sm,
     justifyContent: "center",
   },
   memberRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 4,
+    gap: componentSpacing.xs,
     justifyContent: "center",
-    marginTop: 10,
+    marginTop: componentSpacing.sm,
   },
   socialButton: {
     alignItems: "center",
-    borderColor: "#E5E7EB",
-    borderRadius: 6,
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.button,
     borderWidth: StyleSheet.hairlineWidth,
     height: 42,
     justifyContent: "center",

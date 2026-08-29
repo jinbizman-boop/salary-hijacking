@@ -1,5 +1,14 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
+
 export type BudgetSkeletonProps = Readonly<{
   label?: string;
 }>;
@@ -13,7 +22,7 @@ export function BudgetSkeleton({
       accessibilityRole="progressbar"
       style={styles.container}
     >
-      <ActivityIndicator color="#176B5B" size="small" />
+      <ActivityIndicator color={componentColors.primaryGreen} size="small" />
       <Text style={styles.label}>{label}</Text>
       <View style={styles.lineWide} />
       <View style={styles.lineShort} />
@@ -25,27 +34,27 @@ const styles = StyleSheet.create({
   container: {
     minHeight: 188,
     justifyContent: "center",
-    gap: 12,
-    padding: 20,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.lg,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surface,
   },
   label: {
-    color: "#4B5563",
-    fontSize: 14,
+    color: componentColors.textSecondary,
+    fontSize: typography.bodyS.fontSize,
   },
   lineWide: {
     width: "76%",
     height: 18,
-    borderRadius: 4,
-    backgroundColor: "#EEF0F2",
+    borderRadius: salaryHijackingDesignSystem.radius.sm,
+    backgroundColor: componentColors.line,
   },
   lineShort: {
     width: "48%",
     height: 12,
-    borderRadius: 4,
-    backgroundColor: "#EEF0F2",
+    borderRadius: salaryHijackingDesignSystem.radius.sm,
+    backgroundColor: componentColors.line,
   },
 });

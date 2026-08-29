@@ -6,7 +6,11 @@ import {
   componentRadius,
   componentSpacing,
   componentTypography,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
+const elevation = salaryHijackingDesignSystem.elevation;
 
 export type SalaryHeroCardProps = Readonly<{
   title: string;
@@ -46,10 +50,10 @@ export function SalaryHeroCard({
 
 const styles = StyleSheet.create({
   amount: {
-    color: "#FFF65A",
+    color: salaryHijackingDesignSystem.colors.semantic.warning,
     fontSize: componentTypography.heroAmount,
-    fontWeight: "900",
-    lineHeight: 42,
+    fontWeight: typography.amountXL.fontWeight,
+    lineHeight: typography.amountXL.lineHeight,
   },
   card: {
     minHeight: 226,
@@ -60,38 +64,35 @@ const styles = StyleSheet.create({
     padding: componentSpacing.lg,
     borderRadius: componentRadius.card,
     backgroundColor: componentColors.primaryGreen,
-    shadowColor: componentColors.shadow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 1,
-    shadowRadius: 18,
-    elevation: 5,
+    ...elevation.medium,
   },
   copy: {
     flex: 1,
-    gap: 5,
+    gap: componentSpacing.xs,
   },
   date: {
-    color: "#DDFBE5",
-    fontSize: 14,
-    fontWeight: "800",
+    color: componentColors.primaryGreenSoft,
+    fontSize: typography.bodyS.fontSize,
+    fontWeight: typography.bodyS.fontWeight,
   },
   guard: {
-    color: "rgba(255, 255, 255, 0.72)",
-    fontSize: 11,
-    fontWeight: "700",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
+    opacity: 0.72,
   },
   icon: {
     width: 82,
     height: 82,
   },
   subtitle: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   title: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.titleXL.fontSize,
+    fontWeight: typography.titleXL.fontWeight,
   },
 });

@@ -204,6 +204,12 @@ export const salaryHijackingDesignSystem = {
       labelTypography: "labelS",
     },
   },
+  providerBrand: {
+    facebook: "#1877F2",
+    google: "#FFFFFF",
+    kakao: "#FEE500",
+    naver: "#03C75A",
+  },
   header: {
     variants: ["ROOT", "BACK", "TITLE", "TITLE_ACTION", "TRANSPARENT"],
     height: 56,
@@ -212,7 +218,12 @@ export const salaryHijackingDesignSystem = {
     dividerColor: "#E7EBEF",
   },
   components: {
-    buttons: ["PrimaryButton", "SecondaryButton", "TertiaryButton", "IconButton"],
+    buttons: [
+      "PrimaryButton",
+      "SecondaryButton",
+      "TertiaryButton",
+      "IconButton",
+    ],
     fields: ["TextField", "AmountField", "SearchField", "SelectField"],
     cards: ["Card", "FinanceHeroCard", "MetricCard", "ContentCard"],
     lists: ["ListRow", "FinanceListRow", "SettingListRow"],

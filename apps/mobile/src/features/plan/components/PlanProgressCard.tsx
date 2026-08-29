@@ -6,6 +6,7 @@ import {
   SurfaceCard,
   componentColors,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type PlanProgressCardProps = Readonly<{
@@ -48,26 +49,22 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: componentColors.primaryGreen,
-    fontSize: 12,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelS,
     textTransform: "uppercase",
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 26,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleXL,
   },
   footer: {
     gap: componentSpacing.xs,
   },
   caption: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    ...salaryHijackingDesignSystem.typography.caption,
   },
   guard: {
     color: componentColors.textMuted,
-    fontSize: 12,
-    fontWeight: "700",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

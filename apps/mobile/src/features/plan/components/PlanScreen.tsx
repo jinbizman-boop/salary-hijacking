@@ -39,8 +39,10 @@ import {
   createMobilePlanCommitmentsApi,
 } from "../../../shared/api/mobile-api";
 import { appIconAssets } from "../../../shared/assets/icons";
-import { appImageAssets } from "../../../shared/assets/images";
-import { salaryHijackingDesignSystem } from "../../../shared/components";
+import {
+  AppHeader,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
   configurePayrollReminderStatePersistence,
@@ -59,10 +61,22 @@ const designSystem = salaryHijackingDesignSystem;
 const planScreenColors = {
   brand: designSystem.colors.brand.primary,
   danger: designSystem.colors.semantic.dangerStrong,
+  dangerBorder: designSystem.colors.semantic.dangerSoft,
+  dangerSurface: designSystem.colors.semantic.dangerSoft,
+  disabled: designSystem.colors.text.disabled,
+  inverse: designSystem.colors.text.inverse,
   line: designSystem.colors.border.default,
+  lineStrong: designSystem.colors.border.strong,
   muted: designSystem.colors.text.secondary,
+  screen: designSystem.colors.surface.subtle,
+  soft: designSystem.colors.surface.soft,
+  surface: designSystem.colors.surface.default,
   text: designSystem.colors.text.primary,
 } as const;
+const planScreenSpacing = designSystem.spacing;
+const planScreenRadius = designSystem.radius;
+const planScreenTypography = designSystem.typography;
+const planScreenElevation = designSystem.elevation;
 const PLAN_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uACC4\uD68D\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
@@ -128,7 +142,6 @@ export function PlanScreen({
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
   const contentWidth = Math.min(width, 430);
-  const scale = clamp(width / 393, 0.9, 1.08);
   const [state, setState] = useState(getPayrollReminderState());
   const [monthlyTarget, setMonthlyTarget] = useState(0);
   const [payrollDraft, setPayrollDraft] = useState<PayrollDraft>({
@@ -585,29 +598,7 @@ export function PlanScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.topHeader, { height: 54 * scale }]}>
-          <View style={styles.brandHeaderLeft}>
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={appImageAssets.brand.platformLogo}
-              style={[
-                styles.headerLogo,
-                { height: 24 * scale, width: 24 * scale },
-              ]}
-            />
-            <Text allowFontScaling={false} style={styles.headerBrand}>
-              <Text style={styles.headerBrandGreen}>SALARY </Text>
-              HIJACKING
-            </Text>
-          </View>
-          <Image
-            accessibilityIgnoresInvertColors
-            resizeMode="contain"
-            source={appIconAssets.common.settings}
-            style={styles.headerSettingsIcon}
-          />
-        </View>
+        <AppHeader subtitle="서버 권위 계획" title="계획" variant="ROOT" />
 
         {planError ? (
           <Text
@@ -1378,36 +1369,31 @@ function clamp(value: number, min: number, max: number): number {
 const styles = StyleSheet.create({
   addText: {
     color: planScreenColors.text,
-    fontSize: 13,
-    fontWeight: "900",
-    marginTop: 8,
-  },
-  brandHeaderLeft: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 5,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
+    marginTop: planScreenSpacing[2],
   },
   content: {
     alignSelf: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: planScreenColors.surface,
   },
   deleteButton: {
     alignItems: "center",
     backgroundColor: planScreenColors.danger,
-    borderRadius: 3,
+    borderRadius: planScreenRadius.sm,
     justifyContent: "center",
     minHeight: 42,
-    paddingHorizontal: 14,
+    paddingHorizontal: planScreenSpacing[3],
   },
   deleteButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
+    color: planScreenColors.inverse,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
   },
   editMoney: {
     color: planScreenColors.brand,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: planScreenTypography.labelS.fontSize,
+    fontWeight: planScreenTypography.labelS.fontWeight,
   },
   editRow: {
     alignItems: "center",
@@ -1419,41 +1405,41 @@ const styles = StyleSheet.create({
   editText: {
     color: planScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: planScreenTypography.labelS.fontSize,
+    fontWeight: planScreenTypography.labelS.fontWeight,
   },
   errorText: {
-    backgroundColor: "#FFF4F1",
-    borderColor: "#F1B7A8",
-    borderRadius: 5,
+    backgroundColor: planScreenColors.dangerSurface,
+    borderColor: planScreenColors.dangerBorder,
+    borderRadius: planScreenRadius.sm,
     borderWidth: 1,
     color: planScreenColors.danger,
-    fontSize: 13,
-    fontWeight: "900",
-    marginHorizontal: 8,
-    marginTop: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
+    marginHorizontal: planScreenSpacing[2],
+    marginTop: planScreenSpacing[2],
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[2],
   },
   goalCard: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: planScreenColors.surface,
     borderColor: planScreenColors.line,
-    borderRadius: 2,
+    borderRadius: planScreenRadius.md,
     borderWidth: 1,
-    elevation: 3,
+    ...planScreenElevation.low,
     flexDirection: "row",
-    gap: 12,
+    gap: planScreenSpacing[3],
     justifyContent: "space-between",
-    marginHorizontal: 8,
-    marginTop: 12,
+    marginHorizontal: planScreenSpacing[2],
+    marginTop: planScreenSpacing[3],
     minHeight: 112,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: planScreenSpacing[4],
+    paddingVertical: planScreenSpacing[4],
   },
   goalCopy: {
     flex: 1,
-    gap: 12,
+    gap: planScreenSpacing[3],
     minWidth: 0,
   },
   goalMeta: {
@@ -1462,62 +1448,45 @@ const styles = StyleSheet.create({
   },
   goalMetaRow: {
     flexDirection: "row",
-    gap: 18,
+    gap: planScreenSpacing[5],
   },
   goalPercent: {
     color: planScreenColors.brand,
-    fontSize: 45,
-    fontWeight: "900",
+    fontSize: planScreenTypography.display.fontSize,
+    fontWeight: planScreenTypography.display.fontWeight,
     minWidth: 116,
     textAlign: "right",
   },
   goalTitle: {
     color: planScreenColors.text,
-    fontSize: 17,
-    fontWeight: "900",
-  },
-  headerBrand: {
-    color: planScreenColors.text,
-    fontSize: 19,
-    fontWeight: "900",
-    letterSpacing: 0,
-  },
-  headerBrandGreen: {
-    color: planScreenColors.brand,
-  },
-  headerLogo: {
-    borderRadius: 12,
-  },
-  headerSettingsIcon: {
-    height: 30,
-    tintColor: planScreenColors.text,
-    width: 30,
+    fontSize: planScreenTypography.titleM.fontSize,
+    fontWeight: planScreenTypography.titleM.fontWeight,
   },
   inlineForm: {
-    backgroundColor: "#F8FAF9",
+    backgroundColor: planScreenColors.soft,
     borderColor: planScreenColors.line,
-    borderRadius: 5,
+    borderRadius: planScreenRadius.sm,
     borderWidth: 1,
-    gap: 8,
-    marginTop: 10,
-    padding: 10,
+    gap: planScreenSpacing[2],
+    marginTop: planScreenSpacing[2],
+    padding: planScreenSpacing[3],
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: planScreenColors.surface,
     borderColor: planScreenColors.line,
-    borderRadius: 5,
+    borderRadius: planScreenRadius.sm,
     borderWidth: 1,
     color: planScreenColors.text,
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: planScreenTypography.bodyM.fontSize,
+    fontWeight: planScreenTypography.bodyM.fontWeight,
     minHeight: 48,
-    paddingHorizontal: 12,
+    paddingHorizontal: planScreenSpacing[3],
   },
   livingMoney: {
     color: planScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: planScreenTypography.labelS.fontSize,
+    fontWeight: planScreenTypography.labelS.fontWeight,
     textAlign: "center",
   },
   livingRow: {
@@ -1528,80 +1497,80 @@ const styles = StyleSheet.create({
     minHeight: 38,
   },
   livingRows: {
-    marginTop: 10,
+    marginTop: planScreenSpacing[2],
   },
   livingText: {
     color: planScreenColors.text,
     flex: 1,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: planScreenTypography.labelS.fontSize,
+    fontWeight: planScreenTypography.labelS.fontWeight,
     textAlign: "center",
   },
   metaGreen: {
     color: planScreenColors.brand,
-    fontSize: 17,
-    fontWeight: "900",
-    marginTop: 2,
+    fontSize: planScreenTypography.titleM.fontSize,
+    fontWeight: planScreenTypography.titleM.fontWeight,
+    marginTop: planScreenSpacing[1] / 2,
   },
   metaLabel: {
     color: planScreenColors.muted,
-    fontSize: 10,
-    fontWeight: "900",
+    fontSize: planScreenTypography.caption.fontSize,
+    fontWeight: planScreenTypography.caption.fontWeight,
   },
   metaRed: {
     color: planScreenColors.danger,
-    fontSize: 17,
-    fontWeight: "900",
-    marginTop: 2,
+    fontSize: planScreenTypography.titleM.fontSize,
+    fontWeight: planScreenTypography.titleM.fontWeight,
+    marginTop: planScreenSpacing[1] / 2,
   },
   saveButton: {
     alignItems: "center",
     backgroundColor: planScreenColors.brand,
-    borderRadius: 5,
+    borderRadius: planScreenRadius.md,
     justifyContent: "center",
     minHeight: 44,
-    paddingHorizontal: 14,
+    paddingHorizontal: planScreenSpacing[3],
   },
   saveButtonDisabled: {
-    backgroundColor: "#A8B0B6",
+    backgroundColor: planScreenColors.disabled,
   },
   saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "900",
+    color: planScreenColors.inverse,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
   },
   screen: {
-    backgroundColor: "#F3F4F5",
+    backgroundColor: planScreenColors.screen,
     flex: 1,
   },
   sectionCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: planScreenColors.surface,
     borderColor: planScreenColors.line,
-    borderRadius: 2,
+    borderRadius: planScreenRadius.md,
     borderWidth: 1,
-    elevation: 2,
-    marginHorizontal: 8,
-    marginTop: 11,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    ...planScreenElevation.low,
+    marginHorizontal: planScreenSpacing[2],
+    marginTop: planScreenSpacing[3],
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[3],
   },
   sectionSettingsIcon: {
     height: 28,
-    tintColor: "#42464B",
+    tintColor: planScreenColors.text,
     width: 28,
   },
   sectionTitle: {
     color: planScreenColors.text,
     flex: 1,
-    fontSize: 16,
-    fontWeight: "900",
+    fontSize: planScreenTypography.titleM.fontSize,
+    fontWeight: planScreenTypography.titleM.fontWeight,
     minWidth: 0,
   },
   sectionTitleRow: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: planScreenSpacing[2],
   },
   smallIconButton: {
     alignItems: "center",
@@ -1610,37 +1579,37 @@ const styles = StyleSheet.create({
     minWidth: 38,
   },
   table: {
-    borderColor: "#E4E7EA",
+    borderColor: planScreenColors.line,
     borderLeftWidth: StyleSheet.hairlineWidth,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   tableCell: {
     alignItems: "center",
-    borderBottomColor: "#E4E7EA",
+    borderBottomColor: planScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderRightColor: "#E4E7EA",
+    borderRightColor: planScreenColors.line,
     borderRightWidth: StyleSheet.hairlineWidth,
     flex: 1,
     justifyContent: "center",
     minHeight: 34,
-    paddingHorizontal: 3,
+    paddingHorizontal: planScreenSpacing[1],
   },
   tableHeaderCell: {
     alignItems: "center",
     backgroundColor: planScreenColors.brand,
-    borderBottomColor: "#D6E8DD",
+    borderBottomColor: planScreenColors.lineStrong,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderRightColor: "#D6E8DD",
+    borderRightColor: planScreenColors.lineStrong,
     borderRightWidth: StyleSheet.hairlineWidth,
     flex: 1,
     justifyContent: "center",
     minHeight: 30,
-    paddingHorizontal: 4,
+    paddingHorizontal: planScreenSpacing[1],
   },
   tableHeaderText: {
-    color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "900",
+    color: planScreenColors.inverse,
+    fontSize: planScreenTypography.caption.fontSize,
+    fontWeight: planScreenTypography.caption.fontWeight,
     textAlign: "center",
   },
   tableRow: {
@@ -1649,16 +1618,8 @@ const styles = StyleSheet.create({
   },
   tableText: {
     color: planScreenColors.text,
-    fontSize: 9.5,
-    fontWeight: "700",
+    fontSize: planScreenTypography.caption.fontSize,
+    fontWeight: planScreenTypography.caption.fontWeight,
     textAlign: "center",
-  },
-  topHeader: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    width: "100%",
   },
 });

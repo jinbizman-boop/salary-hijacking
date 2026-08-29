@@ -1,8 +1,16 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { SurfaceCard, componentColors } from "../../../shared/components";
+import {
+  SurfaceCard,
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
 import { ContentPolicyPills } from "./ContentPolicyPills";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type WorkoutTimerCardProps = Readonly<{
   content: GrowthContentItem;
@@ -41,37 +49,37 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
-    gap: 12,
+    gap: componentSpacing.sm,
   },
   timer: {
     color: componentColors.primaryGreen,
-    fontSize: 30,
-    fontWeight: "900",
+    fontSize: typography.amountL.fontSize,
+    fontWeight: typography.amountL.fontWeight,
   },
   safe: {
     color: componentColors.primaryGreen,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   notice: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: typography.caption.fontSize,
+    lineHeight: typography.caption.lineHeight,
   },
   button: {
     minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
+    borderRadius: componentRadius.button,
     backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: "#FFFFFF",
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontWeight: typography.labelM.fontWeight,
   },
 });

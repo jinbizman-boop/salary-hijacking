@@ -1,6 +1,11 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { SurfaceCard, componentColors } from "../../../shared/components";
+import {
+  SurfaceCard,
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
 import { ContentPolicyPills } from "./ContentPolicyPills";
 
@@ -34,28 +39,25 @@ export function EnglishLessonCard({
 const styles = StyleSheet.create({
   mode: {
     color: componentColors.primaryGreen,
-    fontSize: 12,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleM,
   },
   summary: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    ...salaryHijackingDesignSystem.typography.bodyS,
   },
   button: {
     minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
+    borderRadius: componentRadius.card,
     backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: "#FFFFFF",
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    ...salaryHijackingDesignSystem.typography.labelL,
   },
 });

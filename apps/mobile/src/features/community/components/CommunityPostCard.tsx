@@ -1,8 +1,16 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "../../../shared/components";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { CommunityPost } from "../community.types";
 import { CommunityModerationBanner } from "./CommunityModerationBanner";
+
+const typography = salaryHijackingDesignSystem.typography;
+const elevation = salaryHijackingDesignSystem.elevation;
 
 export type CommunityPostCardProps = Readonly<{
   post: CommunityPost;
@@ -74,17 +82,17 @@ export function CommunityPostCard({
 const styles = StyleSheet.create({
   author: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   board: {
     color: componentColors.primaryGreen,
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   body: {
-    gap: 8,
-    padding: 16,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.md,
   },
   card: {
     overflow: "hidden",
@@ -92,24 +100,20 @@ const styles = StyleSheet.create({
     borderColor: componentColors.line,
     borderRadius: componentRadius.card,
     backgroundColor: componentColors.surface,
-    shadowColor: componentColors.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 3,
+    ...elevation.low,
   },
   count: {
     color: componentColors.textMuted,
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   footer: {
     minHeight: 42,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-end",
-    gap: 16,
-    paddingHorizontal: 16,
+    gap: componentSpacing.md,
+    paddingHorizontal: componentSpacing.md,
     borderTopWidth: 1,
     borderTopColor: componentColors.line,
   },
@@ -124,20 +128,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: componentSpacing.sm,
   },
   pressed: {
     backgroundColor: componentColors.surfaceSoft,
   },
   preview: {
     color: componentColors.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "800",
-    lineHeight: 22,
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
+    lineHeight: typography.titleM.lineHeight,
   },
 });

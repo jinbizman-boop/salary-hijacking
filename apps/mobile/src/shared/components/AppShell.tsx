@@ -7,7 +7,11 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { componentColors, componentSpacing } from "./tokens";
+import {
+  componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
 
 export type AppShellProps = Readonly<{
   children: React.ReactNode;
@@ -34,7 +38,12 @@ export function AppShell({
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: 96 + insets.bottom },
+          {
+            paddingBottom:
+              salaryHijackingDesignSystem.navigation.bottomTabs.visualHeight +
+              salaryHijackingDesignSystem.spacing[6] +
+              insets.bottom,
+          },
         ]}
         automaticallyAdjustKeyboardInsets
         contentInsetAdjustmentBehavior="automatic"

@@ -7,11 +7,16 @@ import {
   AppHeader,
   AppShell,
   componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { ProfileApiClient, ProfileSnapshot } from "../types";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileMenuCard, type ProfileMenuKey } from "./ProfileMenuCard";
 import { ProfileStatGrid, type ProfileStats } from "./ProfileStatGrid";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type ProfileScreenProps = Readonly<{
   onSelectMenu: (key: ProfileMenuKey) => void;
@@ -104,14 +109,14 @@ function profileStatsFromSnapshot(
 
 const styles = StyleSheet.create({
   errorText: {
-    backgroundColor: "#FFF4F1",
-    borderColor: "#F1B7A8",
-    borderRadius: 6,
+    backgroundColor: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
+    borderColor: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
+    borderRadius: componentRadius.card,
     borderWidth: 1,
     color: componentColors.dangerRed,
-    fontSize: 13,
-    fontWeight: "800",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    fontSize: typography.bodyS.fontSize,
+    fontWeight: typography.bodyS.fontWeight,
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.sm,
   },
 });

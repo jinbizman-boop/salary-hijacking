@@ -4,6 +4,7 @@ import {
   SurfaceCard,
   componentColors,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type PasswordRecoveryHeroProps = Readonly<{
@@ -32,25 +33,21 @@ export function PasswordRecoveryHero({
 const styles = StyleSheet.create({
   eyebrow: {
     color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.labelS,
     textTransform: "uppercase",
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 26,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleXL,
   },
   description: {
     marginTop: componentSpacing.xs,
     color: componentColors.textSecondary,
-    fontSize: 15,
-    lineHeight: 22,
+    ...salaryHijackingDesignSystem.typography.bodyM,
   },
   guard: {
     marginTop: componentSpacing.sm,
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

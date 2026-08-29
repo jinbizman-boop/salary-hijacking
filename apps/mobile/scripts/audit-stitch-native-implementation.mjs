@@ -413,10 +413,15 @@ const duplicatedHeaderFiles = productionFiles
 const nativeImplementedCount = stateResults.filter(
   (result) => result.nativeImplemented,
 ).length;
+const designSystemCoveredCount = stateResults.filter(
+  (result) => result.nativeImplemented && result.designSystemUsed,
+).length;
 const report = {
   stitchExpected: catalog.length,
   stitchNativeImplementedCount: nativeImplementedCount,
   stitchNativeUnimplementedCount: catalog.length - nativeImplementedCount,
+  stitchDesignSystemCoveredCount: designSystemCoveredCount,
+  stitchDesignSystemBypassCount: catalog.length - designSystemCoveredCount,
   stitchRuntimeVisualVerifiedCount: 30,
   stitchRuntimeVisualPendingCount: catalog.length - 30,
   unimplementedByReason: Object.fromEntries(

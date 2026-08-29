@@ -1,8 +1,15 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { SurfaceCard, componentColors } from "../../../shared/components";
+import {
+  SurfaceCard,
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
 import { ContentPolicyPills } from "./ContentPolicyPills";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type NewsBalanceCardProps = Readonly<{
   content: GrowthContentItem;
@@ -37,33 +44,33 @@ export function NewsBalanceCard({
 const styles = StyleSheet.create({
   label: {
     color: componentColors.primaryGreen,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   summary: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   viewpoint: {
     color: componentColors.textPrimary,
-    fontSize: 13,
-    fontWeight: "800",
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
   button: {
     minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
+    borderRadius: componentRadius.button,
     backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: "#FFFFFF",
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontWeight: typography.labelM.fontWeight,
   },
 });

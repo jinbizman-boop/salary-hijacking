@@ -30,7 +30,12 @@ describe("shared mobile components", () => {
     expect(source).toContain('keyboardDismissMode="interactive"');
     expect(source).toContain('keyboardShouldPersistTaps="handled"');
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
-    expect(source).toContain("paddingBottom: 96 + insets.bottom");
+    expect(source).toContain("paddingBottom:");
+    expect(source).toContain(
+      "salaryHijackingDesignSystem.navigation.bottomTabs.visualHeight",
+    );
+    expect(source).toContain("salaryHijackingDesignSystem.spacing[6]");
+    expect(source).toContain("insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
   });
 
@@ -113,6 +118,7 @@ describe("shared mobile components", () => {
 
   it("renders AppHeader semantic variants with canonical back and action controls", () => {
     const onBack = jest.fn();
+    const onBrandPress = jest.fn();
     const onAction = jest.fn();
     const screen = render(
       <AppHeader
@@ -120,6 +126,7 @@ describe("shared mobile components", () => {
         actionText="설정"
         onAction={onAction}
         onBack={onBack}
+        onBrandPress={onBrandPress}
         subtitle="서버 기준"
         title="알림"
         variant="TITLE_ACTION"
@@ -129,9 +136,11 @@ describe("shared mobile components", () => {
     fireEvent.press(
       screen.getByRole("button", { name: "이전 화면으로 돌아가기" }),
     );
+    fireEvent.press(screen.getByRole("button", { name: "급여 홈" }));
     fireEvent.press(screen.getByRole("button", { name: "알림 설정 열기" }));
 
     expect(onBack).toHaveBeenCalledTimes(1);
+    expect(onBrandPress).toHaveBeenCalledTimes(1);
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 

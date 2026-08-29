@@ -6,6 +6,8 @@ import {
   SurfaceCard,
   componentColors,
   componentSpacing,
+  componentRadius,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { AuthPasswordResetConfirmRequest } from "../types";
 
@@ -50,22 +52,20 @@ export function ResetPasswordForm({
 const styles = StyleSheet.create({
   title: {
     color: componentColors.textPrimary,
-    fontSize: 20,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.amountM,
   },
   input: {
     minHeight: 50,
     paddingHorizontal: componentSpacing.md,
     borderWidth: 1,
     borderColor: componentColors.line,
-    borderRadius: 8,
+    borderRadius: componentRadius.button,
     backgroundColor: componentColors.surface,
     color: componentColors.textPrimary,
-    fontSize: 15,
+    ...salaryHijackingDesignSystem.typography.bodyM,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

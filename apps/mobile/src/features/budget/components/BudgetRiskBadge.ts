@@ -7,8 +7,16 @@ import {
   type ViewStyle,
 } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import { BUDGET_RISK_LABELS } from "../constants";
 import type { BudgetRiskLevel } from "../types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type BudgetRiskBadgeProps = Readonly<{
   riskLevel: BudgetRiskLevel;
@@ -18,10 +26,22 @@ export type BudgetRiskBadgeProps = Readonly<{
 const COLORS: Readonly<
   Record<BudgetRiskLevel, Readonly<{ background: string; foreground: string }>>
 > = {
-  SAFE: { background: "#E3F5EC", foreground: "#116149" },
-  WATCH: { background: "#FFF4CE", foreground: "#7A4D00" },
-  WARNING: { background: "#FDE8D7", foreground: "#9A3B00" },
-  OVER: { background: "#FDE2E2", foreground: "#9B1C1C" },
+  SAFE: {
+    background: componentColors.primaryGreenSoft,
+    foreground: componentColors.primaryGreenDark,
+  },
+  WATCH: {
+    background: salaryHijackingDesignSystem.colors.semantic.warningSoft,
+    foreground: componentColors.warningOrange,
+  },
+  WARNING: {
+    background: salaryHijackingDesignSystem.colors.semantic.warningSoft,
+    foreground: componentColors.warningOrange,
+  },
+  OVER: {
+    background: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
+    foreground: componentColors.dangerRed,
+  },
 };
 
 export function BudgetRiskBadge({
@@ -49,11 +69,11 @@ const styles = StyleSheet.create({
     minHeight: 28,
     alignSelf: "flex-start",
     justifyContent: "center",
-    paddingHorizontal: 10,
-    borderRadius: 8,
+    paddingHorizontal: componentSpacing.sm,
+    borderRadius: componentRadius.button,
   },
   label: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
 });

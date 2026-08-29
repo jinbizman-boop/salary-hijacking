@@ -15,6 +15,7 @@ export type AppHeaderProps = Readonly<{
   actionText?: string;
   onAction?: (() => void) | undefined;
   onBack?: (() => void) | undefined;
+  onBrandPress?: (() => void) | undefined;
   variant?: (typeof designSystem.header.variants)[number];
 }>;
 
@@ -27,6 +28,7 @@ export function AppHeader({
   actionText,
   onAction,
   onBack,
+  onBrandPress,
 }: AppHeaderProps): React.ReactElement {
   const accessory =
     rightAccessory ??
@@ -63,7 +65,13 @@ export function AppHeader({
         </Pressable>
       ) : null}
       <View style={styles.left}>
-        <View style={styles.brandRow}>
+        <Pressable
+          accessibilityLabel="급여 홈"
+          accessibilityRole={onBrandPress ? "button" : undefined}
+          disabled={!onBrandPress}
+          onPress={onBrandPress}
+          style={styles.brandRow}
+        >
           <Image
             accessibilityIgnoresInvertColors
             accessibilityLabel="급여납치 공식 BI"
@@ -72,7 +80,7 @@ export function AppHeader({
             style={styles.logo}
           />
           <Text style={styles.brandText}>{brandLabel}</Text>
-        </View>
+        </Pressable>
         <View style={styles.copy}>
           {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
           <Text style={styles.title}>{title}</Text>

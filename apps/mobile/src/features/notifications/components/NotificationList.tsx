@@ -3,9 +3,13 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SurfaceCard,
   componentColors,
+  componentRadius,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { NotificationItem } from "../types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type NotificationListProps = Readonly<{
   items: readonly NotificationItem[];
@@ -70,13 +74,13 @@ export function NotificationList({
 const styles = StyleSheet.create({
   body: {
     flex: 1,
-    gap: 4,
+    gap: componentSpacing.xs,
   },
   dot: {
     backgroundColor: componentColors.primaryGreen,
-    borderRadius: 999,
+    borderRadius: componentRadius.pill,
     height: 10,
-    marginTop: 6,
+    marginTop: componentSpacing.xs,
     width: 10,
   },
   dotRead: {
@@ -84,30 +88,30 @@ const styles = StyleSheet.create({
   },
   filter: {
     backgroundColor: componentColors.primaryGreenSoft,
-    borderRadius: 999,
+    borderRadius: componentRadius.pill,
     color: componentColors.primaryGreenDark,
-    fontSize: 11,
-    fontWeight: "900",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.xs,
   },
   filters: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: componentSpacing.xs,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   list: {
     gap: componentSpacing.sm,
   },
   message: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   metaRow: {
     alignItems: "center",
@@ -117,13 +121,13 @@ const styles = StyleSheet.create({
   },
   priority: {
     color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   route: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   row: {
     alignItems: "flex-start",
@@ -136,12 +140,12 @@ const styles = StyleSheet.create({
   },
   rowTitle: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
 });

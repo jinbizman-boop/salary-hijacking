@@ -8,11 +8,13 @@ import {
   AppShell,
   PrimaryButton,
   SurfaceCard,
+  salaryHijackingDesignSystem,
 } from "../../src/shared/components";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
 import { salaryHijackingTheme as theme } from "../../src/shared/styles/clean-fintech-theme";
 
 const SCREEN_VERSION = "4.0.1-readable-korean";
+const designSystem = salaryHijackingDesignSystem;
 const VERIFY_EMAIL_PATH = "/api/v1/auth/verify-email";
 const VERIFY_EMAIL_RESEND_PATH = "/api/v1/auth/verify-email/resend";
 
@@ -112,8 +114,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
           style={{
             color: theme.color.brand.primary,
             fontFamily: theme.font.native.black,
-            fontSize: 12,
-            fontWeight: "900",
+            ...designSystem.typography.labelS,
           }}
         >
           개인정보 원문 없이 서버에서 인증 상태를 확인해요.
@@ -148,8 +149,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
             style={{
               color: theme.color.text.primary,
               fontFamily: theme.font.native.bold,
-              fontSize: 13,
-              fontWeight: "800",
+              ...designSystem.typography.labelM,
             }}
           >
             메일 주소
@@ -171,7 +171,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
               borderWidth: 1,
               color: theme.color.text.primary,
               fontFamily: theme.font.native.medium,
-              fontSize: 15,
+              ...designSystem.typography.bodyM,
               minHeight: 48,
               paddingHorizontal: theme.spacing[12],
             }}

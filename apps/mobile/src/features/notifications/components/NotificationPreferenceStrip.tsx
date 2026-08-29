@@ -5,6 +5,7 @@ import {
   SurfaceCard,
   componentColors,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type NotificationPreferenceStripProps = Readonly<{
@@ -49,8 +50,7 @@ const styles = StyleSheet.create({
   },
   status: {
     color: componentColors.textPrimary,
-    fontSize: 14,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelM,
   },
   statusGroup: {
     flex: 1,

@@ -1,8 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "../../../shared/components";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import { COMMUNITY_BOARD_LABELS } from "../community.constants";
 import type { CommunityBoardType } from "../community.types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type CommunityTabBarProps = Readonly<{
   tabs: readonly CommunityBoardType[];
@@ -54,18 +61,18 @@ export function CommunityTabBar({
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   tabs: {
     flexDirection: "row",
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   tab: {
     minHeight: 44,
     minWidth: 92,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: componentSpacing.sm,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.pill,
@@ -77,20 +84,20 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   tabCount: {
     color: componentColors.textMuted,
-    fontSize: 10,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   selectedLabel: {
-    color: "#FFFFFF",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
   },
   guard: {
     color: componentColors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

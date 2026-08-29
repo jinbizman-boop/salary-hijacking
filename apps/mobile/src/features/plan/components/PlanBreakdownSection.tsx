@@ -3,10 +3,14 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   SurfaceCard,
   componentColors,
+  componentRadius,
   componentSpacing,
   formatKrwAmount,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { PlanCommitmentsSnapshot } from "../types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type PlanBreakdownSectionProps = Readonly<{
   snapshot: PlanCommitmentsSnapshot;
@@ -87,8 +91,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   summaryGrid: {
     flexDirection: "row",
@@ -98,18 +102,18 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: componentSpacing.xs,
     padding: componentSpacing.md,
-    borderRadius: 16,
+    borderRadius: componentRadius.card,
     backgroundColor: componentColors.primaryGreenSoft,
   },
   summaryLabel: {
     color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   summaryValue: {
     color: componentColors.textPrimary,
-    fontSize: 17,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   list: {
     gap: componentSpacing.sm,
@@ -126,25 +130,25 @@ const styles = StyleSheet.create({
   },
   rowText: {
     flex: 1,
-    gap: 3,
+    gap: componentSpacing.xs,
   },
   rowTitle: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   rowMeta: {
     color: componentColors.textSecondary,
-    fontSize: 12,
+    fontSize: typography.caption.fontSize,
   },
   rowAmount: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   guard: {
     color: componentColors.textMuted,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

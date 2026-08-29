@@ -15,7 +15,7 @@ import {
   componentColors,
   componentRadius,
   componentSpacing,
-  componentTypography,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components/tokens";
 
 export type FixedSavingsFormValue = Readonly<{
@@ -124,15 +124,11 @@ const styles = StyleSheet.create({
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: componentTypography.title,
-    fontWeight: "900",
-    lineHeight: 34,
+    ...salaryHijackingDesignSystem.typography.titleXL,
   },
   description: {
     color: componentColors.textSecondary,
-    fontSize: componentTypography.body,
-    fontWeight: "700",
-    lineHeight: 23,
+    ...salaryHijackingDesignSystem.typography.bodyL,
   },
   input: {
     minHeight: 56,
@@ -142,8 +138,7 @@ const styles = StyleSheet.create({
     borderRadius: componentRadius.button,
     backgroundColor: componentColors.surface,
     color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "700",
+    ...salaryHijackingDesignSystem.typography.bodyL,
   },
   actions: {
     flexDirection: "row",

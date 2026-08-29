@@ -17,7 +17,11 @@ const excludedPathFragments = [
   "stitch-production-route-registry.ts",
 ];
 
-const referencePathFragments = ["app/capture/", "src/features/capture/"];
+const referencePathFragments = [
+  "app/capture/",
+  "src/features/capture/",
+  "src/shared/styles/clean-fintech-screens.tsx",
+];
 
 const rawHexPattern = /#[0-9A-Fa-f]{6,8}\b/gu;
 const rawFontSizePattern = /\bfontSize\s*:\s*(?:Math\.)?\d+(?:\.\d+)?\b/gu;

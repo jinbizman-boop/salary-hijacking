@@ -19,6 +19,7 @@ import type {
   AuthSocialProvider,
 } from "../../src/features/auth/types";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
+import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components";
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
 const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
@@ -108,10 +109,8 @@ export default function LoginScreen(): React.ReactElement {
         style={{
           alignSelf: "center",
           color: authVisualColors.ink,
-          fontSize: 12,
-          fontWeight: "700",
-          lineHeight: 17,
-          marginTop: 10,
+          ...designSystem.typography.labelS,
+          marginTop: designSystem.spacing[2],
           maxWidth: 365,
           opacity: 0.72,
           textAlign: "center",

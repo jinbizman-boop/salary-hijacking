@@ -1,8 +1,16 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { SurfaceCard, componentColors } from "../../../shared/components";
+import {
+  SurfaceCard,
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
 import { ContentPolicyPills } from "./ContentPolicyPills";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type ReadingContentCardProps = Readonly<{
   content: GrowthContentItem;
@@ -59,39 +67,39 @@ function RecordPreview({
 const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
-    gap: 10,
+    gap: componentSpacing.sm,
   },
   category: {
     color: componentColors.primaryGreen,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   primaryAction: {
     minHeight: 44,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
+    borderRadius: componentRadius.button,
     backgroundColor: componentColors.primaryGreen,
   },
   primaryText: {
-    color: "#FFFFFF",
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontWeight: typography.labelM.fontWeight,
   },
   recordLabel: {
     color: componentColors.textPrimary,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   recordPreview: {
-    gap: 4,
-    padding: 14,
-    borderRadius: 18,
+    gap: componentSpacing.xs,
+    padding: componentSpacing.sm,
+    borderRadius: componentRadius.card,
     backgroundColor: componentColors.surfaceSoft,
   },
   recordQuestion: {
     color: componentColors.textSecondary,
-    fontSize: 12,
+    fontSize: typography.bodyS.fontSize,
   },
   secondaryAction: {
     minHeight: 44,
@@ -100,25 +108,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderWidth: 1,
     borderColor: componentColors.line,
-    borderRadius: 14,
+    borderRadius: componentRadius.button,
     backgroundColor: componentColors.surfaceSoft,
   },
   secondaryText: {
     color: componentColors.primaryGreenDark,
-    fontWeight: "900",
+    fontWeight: typography.labelM.fontWeight,
   },
   source: {
     color: componentColors.textSecondary,
-    fontSize: 12,
+    fontSize: typography.caption.fontSize,
   },
   summary: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 20,
-    fontWeight: "900",
+    fontSize: typography.titleL.fontSize,
+    fontWeight: typography.titleL.fontWeight,
   },
 });

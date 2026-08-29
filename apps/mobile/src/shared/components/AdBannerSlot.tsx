@@ -1,6 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type AdBannerSlotProps = Readonly<{
   label: "광고" | "제휴" | "제휴/광고";
@@ -27,30 +34,30 @@ export function AdBannerSlot({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 5,
-    padding: 16,
+    gap: componentSpacing.xs,
+    padding: componentSpacing.md,
     borderWidth: 1,
-    borderColor: "#F0D263",
+    borderColor: salaryHijackingDesignSystem.colors.semantic.warning,
     borderRadius: componentRadius.card,
-    backgroundColor: "#FFF7D6",
+    backgroundColor: salaryHijackingDesignSystem.colors.semantic.warningSoft,
   },
   label: {
-    color: "#795A00",
-    fontSize: 11,
-    fontWeight: "900",
+    color: componentColors.warningOrange,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   description: {
     color: componentColors.textSecondary,
-    fontSize: 12,
+    fontSize: typography.caption.fontSize,
   },
   guard: {
     color: componentColors.textPrimary,
-    fontSize: 11,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

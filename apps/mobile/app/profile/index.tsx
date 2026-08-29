@@ -8,7 +8,16 @@ import {
   View,
 } from "react-native";
 
+import {
+  AppHeader,
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../src/shared/components";
+
 const SCREEN_VERSION = "1.0.1-profile-hub-copy-restored";
+const typography = salaryHijackingDesignSystem.typography;
 const MENU = [
   { label: "프로필 설정", route: "/profile/settings" },
   { label: "계정 설정", route: "/profile/account" },
@@ -24,8 +33,7 @@ export default function ProfileHubScreen(): React.ReactElement {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.kicker}>MY</Text>
-        <Text style={styles.title}>내 급여납치 설정</Text>
+        <AppHeader subtitle="MY" title="내 급여납치 설정" variant="ROOT" />
         <Text style={styles.body}>
           성과 확인, 프로필, 계정, 문의, 공지사항으로 이동하는 MY 허브입니다.
           금융 원문 데이터는 이 화면에 저장하거나 호출하지 않습니다.
@@ -90,54 +98,63 @@ export function assertMobileProfileHubCompleteness(): {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: "#F7F8FA", flex: 1 },
-  content: { gap: 16, padding: 20 },
-  kicker: {
-    color: "#209252",
-    fontSize: 12,
-    fontWeight: "900",
-    marginTop: 10,
+  safeArea: { backgroundColor: componentColors.background, flex: 1 },
+  content: { gap: componentSpacing.md, padding: componentSpacing.lg },
+  body: {
+    color: componentColors.textSecondary,
+    fontSize: typography.bodyM.fontSize,
+    lineHeight: typography.bodyM.lineHeight,
   },
-  title: {
-    color: "#202327",
-    fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 38,
-  },
-  body: { color: "#4B535B", fontSize: 15, lineHeight: 23 },
   privacyPill: {
     alignSelf: "flex-start",
-    backgroundColor: "#EAF6EF",
-    borderColor: "#D9F0E3",
-    borderRadius: 999,
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: componentColors.primaryGreenTint,
+    borderRadius: componentRadius.pill,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.sm,
   },
-  privacyText: { color: "#12663A", fontSize: 11, fontWeight: "800" },
+  privacyText: {
+    color: componentColors.primaryGreenDark,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
+  },
   card: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#EEF0F2",
-    borderRadius: 20,
+    backgroundColor: componentColors.surface,
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.card,
     borderWidth: 1,
     overflow: "hidden",
   },
   row: {
     alignItems: "center",
-    borderBottomColor: "#EEF0F2",
+    borderBottomColor: componentColors.line,
     borderBottomWidth: 1,
     flexDirection: "row",
     minHeight: 54,
-    paddingHorizontal: 16,
+    paddingHorizontal: componentSpacing.md,
   },
-  rowTitle: { color: "#202327", flex: 1, fontSize: 15, fontWeight: "800" },
-  rowArrow: { color: "#ADB3B8", fontSize: 26, fontWeight: "700" },
+  rowTitle: {
+    color: componentColors.textPrimary,
+    flex: 1,
+    fontSize: typography.bodyM.fontSize,
+    fontWeight: typography.bodyM.fontWeight,
+  },
+  rowArrow: {
+    color: componentColors.disabledGray,
+    fontSize: typography.titleXL.fontSize,
+    fontWeight: typography.titleXL.fontWeight,
+  },
   homeButton: {
     alignItems: "center",
-    backgroundColor: "#209252",
-    borderRadius: 16,
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: componentRadius.button,
     justifyContent: "center",
     minHeight: 52,
   },
-  homeButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "900" },
+  homeButtonText: {
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
+  },
 });

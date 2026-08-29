@@ -4,7 +4,10 @@ import {
   SurfaceCard,
   componentColors,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type NotificationSummaryCardProps = Readonly<{
   unreadCount: number;
@@ -40,8 +43,8 @@ export function NotificationSummaryCard({
 const styles = StyleSheet.create({
   count: {
     color: componentColors.primaryGreenDark,
-    fontSize: 42,
-    fontWeight: "900",
+    fontSize: typography.display.fontSize,
+    fontWeight: typography.display.fontWeight,
   },
   countRow: {
     alignItems: "flex-end",
@@ -50,8 +53,8 @@ const styles = StyleSheet.create({
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   header: {
     alignItems: "center",
@@ -61,18 +64,18 @@ const styles = StyleSheet.create({
   },
   important: {
     color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "800",
-    paddingBottom: 7,
+    fontSize: typography.bodyL.fontSize,
+    fontWeight: typography.bodyL.fontWeight,
+    paddingBottom: componentSpacing.xs,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 22,
-    fontWeight: "900",
+    fontSize: typography.titleL.fontSize,
+    fontWeight: typography.titleL.fontWeight,
   },
   updatedAt: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

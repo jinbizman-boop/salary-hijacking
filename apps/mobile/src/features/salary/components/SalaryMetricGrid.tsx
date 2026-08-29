@@ -4,6 +4,8 @@ import {
   MoneyText,
   SurfaceCard,
   componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type SalaryMetric = Readonly<{
@@ -42,16 +44,14 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: componentSpacing.md,
   },
   label: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
   value: {
     color: componentColors.textPrimary,
-    fontSize: 26,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.amountL,
   },
 });
