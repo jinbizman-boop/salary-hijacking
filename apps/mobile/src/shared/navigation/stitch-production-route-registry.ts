@@ -165,37 +165,43 @@ const screenSurfaces = {
     routeFile: "apps/mobile/app/(tabs)/profile/index.tsx",
   },
   "SCR-022": {
-    implementationFile: "apps/mobile/app/profile/settings.tsx",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
     nativeComponent: "ProfileDetailScreen",
     productionRoute: "/profile/settings",
     routeFile: "apps/mobile/app/profile/settings.tsx",
   },
   "SCR-023": {
-    implementationFile: "apps/mobile/app/profile/account.tsx",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
     nativeComponent: "ProfileDetailScreen",
     productionRoute: "/profile/account",
     routeFile: "apps/mobile/app/profile/account.tsx",
   },
   "SCR-024": {
-    implementationFile: "apps/mobile/app/profile/community.tsx",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
     nativeComponent: "ProfileDetailScreen",
     productionRoute: "/profile/community",
     routeFile: "apps/mobile/app/profile/community.tsx",
   },
   "SCR-025": {
-    implementationFile: "apps/mobile/app/profile/level.tsx",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
     nativeComponent: "ProfileDetailScreen",
     productionRoute: "/profile/level",
     routeFile: "apps/mobile/app/profile/level.tsx",
   },
   "SCR-026": {
-    implementationFile: "apps/mobile/app/profile/support.tsx",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
     nativeComponent: "ProfileDetailScreen",
     productionRoute: "/profile/support",
     routeFile: "apps/mobile/app/profile/support.tsx",
   },
   "SCR-027": {
-    implementationFile: "apps/mobile/app/profile/notices.tsx",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
     nativeComponent: "ProfileDetailScreen",
     productionRoute: "/profile/notices",
     routeFile: "apps/mobile/app/profile/notices.tsx",
@@ -340,14 +346,16 @@ const overlaySurfaces = {
     routeFile: "apps/mobile/app/community/[postId].tsx",
   },
   "MOD-009": {
-    implementationFile: "apps/mobile/src/shared/components/ConfirmDialog.tsx",
-    nativeComponent: "ConfirmDialog",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+    nativeComponent: "ProfileDetailScreen/ConfirmDialog",
     productionRoute: "/profile/settings",
     routeFile: "apps/mobile/app/profile/settings.tsx",
   },
   "MOD-010": {
-    implementationFile: "apps/mobile/src/shared/components/ConfirmDialog.tsx",
-    nativeComponent: "ConfirmDialog",
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+    nativeComponent: "ProfileDetailScreen/ConfirmDialog",
     productionRoute: "/profile/account",
     routeFile: "apps/mobile/app/profile/account.tsx",
   },

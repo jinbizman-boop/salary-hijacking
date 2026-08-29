@@ -1,4 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 import { BottomSheet, ConfirmDialog } from "..";
 
@@ -57,5 +59,17 @@ describe("shared native overlays", () => {
 
     expect(onSelect).toHaveBeenCalledWith("food");
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps confirm dialog styling on canonical overlay design tokens", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "ConfirmDialog.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("salaryHijackingDesignSystem");
+    expect(source).not.toMatch(
+      /\b(fontSize|lineHeight|gap|padding|borderRadius|elevation):\s*\d+/,
+    );
   });
 });

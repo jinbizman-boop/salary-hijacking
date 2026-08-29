@@ -1,12 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { PrimaryButton } from "./PrimaryButton";
-import {
-  componentColors,
-  componentRadius,
-  componentSpacing,
-  componentTypography,
-} from "./tokens";
+import { componentColors, salaryHijackingDesignSystem } from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type ConfirmDialogProps = Readonly<{
   title: string;
@@ -65,55 +62,46 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    padding: componentSpacing.lg,
-    backgroundColor: "rgba(11, 29, 20, 0.42)",
+    padding: designSystem.spacing[5],
+    backgroundColor: designSystem.colors.overlay,
   },
   dialog: {
-    gap: componentSpacing.lg,
-    padding: componentSpacing.lg,
+    gap: designSystem.spacing[5],
+    padding: designSystem.spacing[5],
     borderWidth: 1,
     borderColor: componentColors.line,
-    borderRadius: componentRadius.modal,
+    borderRadius: designSystem.radius.xl,
     backgroundColor: componentColors.surface,
-    shadowColor: componentColors.shadow,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 1,
-    shadowRadius: 24,
-    elevation: 8,
+    ...designSystem.elevation.high,
   },
   copy: {
-    gap: componentSpacing.sm,
+    gap: designSystem.spacing[2],
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: componentTypography.sectionTitle,
-    fontWeight: "900",
-    lineHeight: 26,
+    ...designSystem.typography.titleM,
   },
   description: {
     color: componentColors.textSecondary,
-    fontSize: componentTypography.body,
-    fontWeight: "600",
-    lineHeight: 22,
+    ...designSystem.typography.bodyM,
   },
   actions: {
     flexDirection: "row",
-    gap: componentSpacing.sm,
+    gap: designSystem.spacing[2],
   },
   cancelButton: {
-    minHeight: 52,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[2],
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
     borderColor: componentColors.line,
-    borderRadius: componentRadius.button,
+    borderRadius: designSystem.radius.md,
     backgroundColor: componentColors.surfaceSoft,
   },
   cancelText: {
     color: componentColors.textSecondary,
-    fontSize: componentTypography.button,
-    fontWeight: "800",
+    ...designSystem.typography.labelL,
   },
   pressed: {
     opacity: 0.82,

@@ -3,8 +3,10 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   SurfaceCard,
   componentColors,
-  componentRadius,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type ProfileHeaderProps = Readonly<{
   avatarEmoji: string;
@@ -42,43 +44,38 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: designSystem.spacing[3],
   },
   avatar: {
-    width: 64,
-    height: 64,
+    width: designSystem.spacing[8] + designSystem.spacing[8],
+    height: designSystem.spacing[8] + designSystem.spacing[8],
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: componentRadius.pill,
+    borderRadius: designSystem.radius.full,
     backgroundColor: componentColors.primaryGreenSoft,
   },
   avatarText: {
     color: componentColors.primaryGreenDark,
-    fontSize: 22,
-    fontWeight: "900",
+    ...designSystem.typography.titleL,
   },
   copy: {
     flex: 1,
-    gap: 4,
+    gap: designSystem.spacing[1],
   },
   name: {
     color: componentColors.textPrimary,
-    fontSize: 24,
-    fontWeight: "900",
+    ...designSystem.typography.titleXL,
   },
   title: {
     color: componentColors.primaryGreen,
-    fontSize: 14,
-    fontWeight: "900",
+    ...designSystem.typography.labelM,
   },
   meta: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    ...designSystem.typography.caption,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    ...designSystem.typography.labelS,
   },
 });

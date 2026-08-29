@@ -1,24 +1,17 @@
 import { useState } from "react";
-import {
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-  useWindowDimensions,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
-import { appIconAssets } from "../../../shared/assets/icons";
+import {
+  AppHeader,
+  AppShell,
+  PrimaryButton,
+  SurfaceCard,
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { NotificationPreferenceState } from "../controller";
 
-const BRAND_GREEN = "#209252";
-const TEXT_BLACK = "#191B1F";
-const MUTED = "#6D737A";
-const LINE = "#E7EBEF";
-const SOFT_GREEN = "#EAF8EF";
+const designSystem = salaryHijackingDesignSystem;
 
 export type NotificationSettingsScreenProps = Readonly<{
   onBack?: (() => void) | undefined;
@@ -58,9 +51,6 @@ export function NotificationSettingsScreen({
   onSavePreferences,
   preferences: serverPreferences,
 }: NotificationSettingsScreenProps): React.ReactElement {
-  const insets = useOptionalSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const contentWidth = Math.min(width, 430);
   const [localPreferences, setLocalPreferences] =
     useState<Record<PreferenceKey, boolean>>(initialPreferences);
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
@@ -95,46 +85,35 @@ export function NotificationSettingsScreen({
   }
 
   return (
-    <View
+    <AppShell
       accessibilityLabel="급여납치 알림 설정 독립 화면"
-      style={styles.screen}
-      testID="notification-settings-standalone-screen"
+      header={
+        <AppHeader
+          rightAccessory={
+            onBack ? (
+              <Pressable
+                accessibilityLabel="알림 화면으로 돌아가기"
+                accessibilityRole="button"
+                hitSlop={designSystem.spacing[3]}
+                onPress={onBack}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Text allowFontScaling={false} style={styles.headerActionText}>
+                  뒤로
+                </Text>
+              </Pressable>
+            ) : null
+          }
+          subtitle="푸시/급여/LV/커뮤니티"
+          title="알림 설정"
+        />
+      }
     >
-      <View style={[styles.safeTop, { paddingTop: insets.top }]}>
-        <View style={[styles.topBar, { width: contentWidth }]}>
-          <Pressable
-            accessibilityLabel="알림 화면으로 돌아가기"
-            accessibilityRole="button"
-            hitSlop={12}
-            onPress={onBack}
-            style={styles.headerButton}
-          >
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={appIconAssets.common.left}
-              style={styles.headerIcon}
-            />
-          </Pressable>
-          <Text allowFontScaling={false} style={styles.headerTitle}>
-            알림 설정
-          </Text>
-          <View style={styles.headerSpacer} />
-        </View>
-      </View>
-
-      <ScrollView
-        accessibilityLabel="급여납치 알림 설정 화면"
-        bounces={false}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: insets.bottom + 28, width: contentWidth },
-        ]}
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.summaryCard}>
+      <View testID="notification-settings-standalone-screen">
+        <SurfaceCard accessibilityLabel="알림 설정 요약">
           <Text allowFontScaling={false} style={styles.summaryTitle}>
             필요한 알림만 안전하게 받을게요
           </Text>
@@ -142,9 +121,9 @@ export function NotificationSettingsScreen({
             급여, 예산, LV UP, 커뮤니티 알림을 직접 켜고 끌 수 있습니다. 푸시
             토큰과 민감 금융 원문은 화면에 표시하지 않습니다.
           </Text>
-        </View>
+        </SurfaceCard>
 
-        <View style={styles.card}>
+        <SurfaceCard accessibilityLabel="알림 수신 항목">
           <PreferenceRow
             description="앱 밖에서도 중요한 알림을 받습니다."
             enabled={preferences.push}
@@ -187,44 +166,45 @@ export function NotificationSettingsScreen({
             label="방해 금지 시간"
             onToggle={() => toggle("quietHours")}
           />
+        </SurfaceCard>
+
+        <View style={styles.actionStack}>
+          <PrimaryButton
+            accessibilityLabel="알림 설정 저장"
+            disabled={status === "saving"}
+            label={status === "saving" ? "저장 중" : "저장"}
+            onPress={() => {
+              void save();
+            }}
+          />
+
+          {status === "saved" ? (
+            <Text accessibilityLiveRegion="polite" style={styles.savedText}>
+              알림 설정을 저장했습니다.
+            </Text>
+          ) : null}
+          {status === "error" ? (
+            <Text accessibilityLiveRegion="polite" style={styles.errorText}>
+              저장하지 못했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.
+            </Text>
+          ) : null}
+
+          <Pressable
+            accessibilityLabel="Android 시스템 알림 설정 열기"
+            accessibilityRole="button"
+            onPress={onOpenSystemSettings}
+            style={({ pressed }) => [
+              styles.systemButton,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text allowFontScaling={false} style={styles.systemButtonText}>
+              시스템 알림 설정 열기
+            </Text>
+          </Pressable>
         </View>
-
-        <Pressable
-          accessibilityLabel="알림 설정 저장"
-          accessibilityRole="button"
-          onPress={() => {
-            void save();
-          }}
-          style={styles.saveButton}
-        >
-          <Text allowFontScaling={false} style={styles.saveButtonText}>
-            {status === "saving" ? "저장 중" : "저장"}
-          </Text>
-        </Pressable>
-
-        {status === "saved" ? (
-          <Text accessibilityLiveRegion="polite" style={styles.savedText}>
-            알림 설정을 저장했습니다.
-          </Text>
-        ) : null}
-        {status === "error" ? (
-          <Text accessibilityLiveRegion="polite" style={styles.errorText}>
-            저장하지 못했습니다. 네트워크 상태를 확인하고 다시 시도해 주세요.
-          </Text>
-        ) : null}
-
-        <Pressable
-          accessibilityLabel="Android 시스템 알림 설정 열기"
-          accessibilityRole="button"
-          onPress={onOpenSystemSettings}
-          style={styles.systemButton}
-        >
-          <Text allowFontScaling={false} style={styles.systemButtonText}>
-            시스템 알림 설정 열기
-          </Text>
-        </Pressable>
-      </ScrollView>
-    </View>
+      </View>
+    </AppShell>
   );
 }
 
@@ -250,154 +230,89 @@ function PreferenceRow({
       <Switch
         accessibilityLabel={`${label} ${enabled ? "켜짐" : "꺼짐"}`}
         onValueChange={onToggle}
-        thumbColor="#FFFFFF"
-        trackColor={{ false: "#D5DDD7", true: BRAND_GREEN }}
+        thumbColor={designSystem.colors.text.inverse}
+        trackColor={{
+          false: designSystem.colors.border.strong,
+          true: designSystem.colors.brand.primary,
+        }}
         value={enabled}
       />
     </View>
   );
 }
 
-function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
-  try {
-    return useSafeAreaInsets();
-  } catch {
-    return { bottom: 0, left: 0, right: 0, top: 0 };
-  }
-}
-
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderColor: LINE,
-    borderRadius: 18,
-    borderWidth: 1,
-    overflow: "hidden",
-  },
-  content: {
-    alignSelf: "center",
-    gap: 14,
-    paddingHorizontal: 18,
-    paddingTop: 14,
+  actionStack: {
+    gap: designSystem.spacing[3],
+    paddingTop: designSystem.spacing[5],
   },
   errorText: {
-    color: "#BA1A1A",
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 19,
+    color: designSystem.colors.semantic.dangerStrong,
     textAlign: "center",
+    ...designSystem.typography.labelM,
   },
-  headerButton: {
+  headerAction: {
     alignItems: "center",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: designSystem.radius.md,
     justifyContent: "center",
-    minHeight: 46,
-    minWidth: 46,
+    minHeight: designSystem.layout.touchTarget,
+    minWidth: designSystem.layout.touchTarget + designSystem.spacing[4],
+    paddingHorizontal: designSystem.spacing[3],
   },
-  headerIcon: {
-    height: 25,
-    tintColor: TEXT_BLACK,
-    width: 25,
-  },
-  headerSpacer: {
-    minWidth: 46,
-  },
-  headerTitle: {
-    color: TEXT_BLACK,
-    fontSize: 20,
-    fontWeight: "900",
+  headerActionText: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.labelM,
   },
   preferenceCopy: {
     flex: 1,
-    gap: 4,
-    minWidth: 0,
+    gap: designSystem.spacing[1],
+    minWidth: designSystem.spacing[0],
   },
   preferenceDescription: {
-    color: MUTED,
-    fontSize: 12,
-    fontWeight: "700",
-    lineHeight: 17,
+    color: componentColors.textSecondary,
+    ...designSystem.typography.caption,
   },
   preferenceLabel: {
-    color: TEXT_BLACK,
-    fontSize: 16,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.bodyL,
   },
   preferenceRow: {
     alignItems: "center",
-    borderBottomColor: LINE,
+    borderBottomColor: componentColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
-    gap: 12,
-    minHeight: 76,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    gap: designSystem.spacing[3],
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[8],
+    paddingVertical: designSystem.spacing[3],
   },
-  safeTop: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: LINE,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  saveButton: {
-    alignItems: "center",
-    backgroundColor: BRAND_GREEN,
-    borderRadius: 13,
-    justifyContent: "center",
-    minHeight: 52,
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "900",
+  pressed: {
+    opacity: 0.82,
   },
   savedText: {
-    color: BRAND_GREEN,
-    fontSize: 13,
-    fontWeight: "900",
+    color: componentColors.primaryGreen,
     textAlign: "center",
-  },
-  screen: {
-    backgroundColor: "#F7F9FF",
-    flex: 1,
-  },
-  summaryCard: {
-    backgroundColor: SOFT_GREEN,
-    borderColor: "#D9F0E3",
-    borderRadius: 18,
-    borderWidth: 1,
-    gap: 8,
-    padding: 16,
+    ...designSystem.typography.labelM,
   },
   summaryText: {
-    color: MUTED,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 20,
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
   },
   summaryTitle: {
-    color: TEXT_BLACK,
-    fontSize: 18,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
   },
   systemButton: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: LINE,
-    borderRadius: 13,
+    backgroundColor: componentColors.surface,
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.md,
     borderWidth: 1,
     justifyContent: "center",
-    minHeight: 50,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[2],
   },
   systemButtonText: {
-    color: TEXT_BLACK,
-    fontSize: 14,
-    fontWeight: "900",
-  },
-  topBar: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: 58,
-    paddingHorizontal: 12,
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelM,
   },
 });

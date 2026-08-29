@@ -151,4 +151,52 @@ describe("Stitch production route registry", () => {
       })?.productionRoute,
     ).toBe("/(auth)/signup");
   });
+  it("maps profile detail Stitch screens to the shared production RN implementation", () => {
+    const expected = [
+      ["SCR-022", "/profile/settings", "apps/mobile/app/profile/settings.tsx"],
+      ["SCR-023", "/profile/account", "apps/mobile/app/profile/account.tsx"],
+      ["SCR-024", "/profile/community", "apps/mobile/app/profile/community.tsx"],
+      ["SCR-025", "/profile/level", "apps/mobile/app/profile/level.tsx"],
+      ["SCR-026", "/profile/support", "apps/mobile/app/profile/support.tsx"],
+      ["SCR-027", "/profile/notices", "apps/mobile/app/profile/notices.tsx"],
+    ] as const;
+
+    for (const [primaryCode, productionRoute, routeFile] of expected) {
+      const result = resolveProductionStitchState({
+        artifactType: "screen",
+        primaryCode,
+        routeOrOverlay: productionRoute,
+        stateCode: "DEFAULT",
+        variantSlug: primaryCode.toLowerCase(),
+      });
+
+      expect(result?.routeFile).toBe(routeFile);
+      expect(result?.implementationFile).toBe(
+        "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+      );
+      expect(result?.nativeComponent).toBe("ProfileDetailScreen");
+    }
+  });
+
+  it("maps profile modal Stitch states through the profile detail RN component", () => {
+    const profileModals = [
+      ["MOD-009", "/profile/settings"],
+      ["MOD-010", "/profile/account"],
+    ] as const;
+
+    for (const [primaryCode, productionRoute] of profileModals) {
+      const result = resolveProductionStitchState({
+        artifactType: "overlay",
+        primaryCode,
+        routeOrOverlay: productionRoute,
+        stateCode: "MODAL",
+        variantSlug: primaryCode.toLowerCase(),
+      });
+
+      expect(result?.implementationFile).toBe(
+        "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+      );
+      expect(result?.nativeComponent).toBe("ProfileDetailScreen/ConfirmDialog");
+    }
+  });
 });

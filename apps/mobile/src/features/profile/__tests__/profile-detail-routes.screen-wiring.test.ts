@@ -77,4 +77,23 @@ describe("profile detail route wiring", () => {
     expect(source).toContain("프로필 변경은 서버 기록 기준으로 관리돼요");
     expect(source).toContain("금융 원문은 광고 추천에 사용하지 않아요");
   });
+
+  it("uses canonical design tokens and shared modal behavior in profile detail surfaces", () => {
+    const detailSource = readFileSync(
+      join(__dirname, "..", "components", "ProfileDetailScreen.tsx"),
+      "utf8",
+    );
+    const headerSource = readFileSync(
+      join(__dirname, "..", "components", "ProfileHeader.tsx"),
+      "utf8",
+    );
+
+    expect(detailSource).not.toContain("Alert.alert");
+    expect(detailSource).toContain("ConfirmDialog");
+    expect(detailSource).toContain("salaryHijackingDesignSystem");
+    expect(headerSource).toContain("salaryHijackingDesignSystem");
+    expect(`${detailSource}\n${headerSource}`).not.toMatch(
+      /\b(fontSize|lineHeight|gap|borderRadius):\s*\d+/,
+    );
+  });
 });

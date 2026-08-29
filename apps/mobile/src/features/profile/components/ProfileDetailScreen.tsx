@@ -1,15 +1,20 @@
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 import {
   AppHeader,
   AppShell,
+  ConfirmDialog,
   PrimaryButton,
   ProgressBar,
   SurfaceCard,
   componentColors,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileStatGrid } from "./ProfileStatGrid";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type ProfileDetailVariant =
   | "settings"
@@ -117,11 +122,12 @@ export function ProfileDetailScreen({
   variant,
 }: ProfileDetailScreenProps): React.ReactElement {
   const content = contentByVariant[variant];
+  const [actionNoticeVisible, setActionNoticeVisible] = useState(false);
   const showActionNotice = (): void => {
-    Alert.alert(
-      "기능 준비",
-      "이 항목은 서버 권위 API 확인 후 안전하게 처리됩니다.",
-    );
+    setActionNoticeVisible(true);
+  };
+  const hideActionNotice = (): void => {
+    setActionNoticeVisible(false);
   };
 
   return (
@@ -179,6 +185,17 @@ export function ProfileDetailScreen({
         프로필 변경은 서버 기록 기준으로 관리돼요
       </Text>
       <Text style={styles.guard}>금융 원문은 광고 추천에 사용하지 않아요</Text>
+
+      {actionNoticeVisible ? (
+        <ConfirmDialog
+          cancelLabel="닫기"
+          confirmLabel="확인"
+          description="이 항목은 서버 권위 API 확인 후 안전하게 처리됩니다."
+          onCancel={hideActionNotice}
+          onConfirm={hideActionNotice}
+          title="기능 준비"
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -190,40 +207,34 @@ export function profileDetailEndpoint(variant: ProfileDetailVariant): string {
 const styles = StyleSheet.create({
   bullet: {
     color: componentColors.primaryGreenDark,
-    fontSize: 14,
-    fontWeight: "900",
+    ...designSystem.typography.labelM,
   },
   cardTitle: {
     color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
   },
   description: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    lineHeight: 22,
+    ...designSystem.typography.bodyM,
   },
   endpoint: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    ...designSystem.typography.labelS,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    ...designSystem.typography.labelS,
   },
   row: {
     flexDirection: "row",
-    gap: 8,
+    gap: designSystem.spacing[2],
   },
   rowText: {
     flex: 1,
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
+    ...designSystem.typography.bodyS,
   },
   rows: {
-    gap: 8,
+    gap: designSystem.spacing[2],
   },
 });
