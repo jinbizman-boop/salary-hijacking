@@ -70,12 +70,13 @@ Generated: 2026-08-29
 | Golden FORM source status | plan screen no longer owns local brand/text/muted/line/error color constants; plan screen colors now derive from `salaryHijackingDesignSystem` while preserving server-authoritative plan and budget behavior |
 | Golden GROWTH source status | LV UP hero and action grid now derive color, typography, spacing, and radius directly from `salaryHijackingDesignSystem` while preserving server-authoritative growth dashboard behavior |
 | Golden SOCIAL source status | community popular-post cards now derive color, typography, spacing, and radius directly from `salaryHijackingDesignSystem` while preserving server-backed feed/detail navigation behavior |
+| Community route style normalization | `/community/write` and `/community/[postId]` route-local text/surface styles now derive from `salaryHijackingDesignSystem` semantic colors, typography, spacing, and radius while preserving server-backed write/detail behavior |
 | Global navigation source status | Expo Router tab shell and shared BottomTabBar now derive active/inactive/background/border/touch-target labels from the canonical design system |
 | Shared state source status | Common state screen error treatment now derives from semantic design tokens |
-| Raw style guard | `apps/mobile/scripts/audit-design-system-usage.mjs` added; current baseline remains `BASELINE_VIOLATIONS_PRESENT` |
-| Raw color violations | 316 |
-| Raw typography violations | 363 |
-| Raw spacing violations | 330 |
+| Raw style guard | `apps/mobile/scripts/audit-design-system-usage.mjs` reports production UI and capture/reference tooling separately; current production baseline remains `BASELINE_VIOLATIONS_PRESENT` |
+| Raw color violations | 303 total; 303 production UI; 0 capture/reference |
+| Raw typography violations | 352 total; 332 production UI; 20 capture/reference |
+| Raw spacing violations | 325 total; 322 production UI; 3 capture/reference |
 | Bottom nav variants found | 6 source references |
 | Bottom nav variants in production | 1 canonical five-tab production navigation |
 | Header variants found | 14 source references |
@@ -84,7 +85,7 @@ Generated: 2026-08-29
 | Placeholder UI count | 3 production-source term hits excluding TextInput placeholder props |
 | Prototype UI count | 0 production-source term hits |
 | WebView UI count | 0 production-source term hits |
-| Capture-only count | 134 capture/reference-tooling term hits, separated from production UI counts |
+| Capture-only count | 134 capture/reference-tooling term hits in the Stitch native audit, separated from production UI counts; production capture-only count is 0 |
 | UI remediation requires new application RC | true |
 
 ## Completion Truth

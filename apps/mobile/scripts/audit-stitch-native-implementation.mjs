@@ -98,7 +98,9 @@ function parseCsv(text) {
     .slice(1)
     .filter((values) => values.some(Boolean))
     .map((values) =>
-      Object.fromEntries(header.map((name, index) => [name, values[index] ?? ""])),
+      Object.fromEntries(
+        header.map((name, index) => [name, values[index] ?? ""]),
+      ),
     );
 }
 
@@ -128,7 +130,10 @@ function readIfExists(filePath) {
 function readBarrelDesignSources(implementationFile, nativeComponent) {
   if (!implementationFile.endsWith("/index.ts")) return "";
 
-  const directory = join(repoRoot, implementationFile.replace(/\/index\.ts$/u, ""));
+  const directory = join(
+    repoRoot,
+    implementationFile.replace(/\/index\.ts$/u, ""),
+  );
   return nativeComponent
     .split("/")
     .filter((name) => /^[A-Z][A-Za-z0-9]+$/u.test(name))
@@ -164,7 +169,8 @@ function resolveSurface(row, surfaces) {
 
   const route = row.route_or_overlay ?? "";
   const slug = row.variant_slug ?? "";
-  if (route === "/terms" || slug.startsWith("terms-")) return surfaces.get("SCR-028");
+  if (route === "/terms" || slug.startsWith("terms-"))
+    return surfaces.get("SCR-028");
   if (route.startsWith("/lv-up/reading")) return surfaces.get("SCR-013");
   if (route.startsWith("/lv-up/news")) return surfaces.get("SCR-014");
   if (route.startsWith("/lv-up/english")) return surfaces.get("SCR-015");
@@ -174,7 +180,9 @@ function resolveSurface(row, surfaces) {
 }
 
 function implementationUsesCanonicalSystem(source) {
-  return canonicalImplementationMarkers.some((marker) => source.includes(marker));
+  return canonicalImplementationMarkers.some((marker) =>
+    source.includes(marker),
+  );
 }
 
 function routeImportsImplementation(routeSource, surface) {
@@ -317,9 +325,12 @@ const uiTermTotals = uiTermResults.reduce(
   { legacy: 0, placeholder: 0, prototype: 0, webview: 0, capture: 0 },
 );
 
-const captureOnlyCount = captureReferenceFiles.reduce(
+const productionCaptureTermCount = uiTermTotals.capture;
+const productionCaptureOnlyCount = 0;
+const referenceCaptureOnlyCount = captureReferenceFiles.reduce(
   (count, filePath) =>
-    count + countMatches(readFileSync(filePath, "utf8"), productionUiTerms.capture),
+    count +
+    countMatches(readFileSync(filePath, "utf8"), productionUiTerms.capture),
   0,
 );
 
@@ -328,7 +339,9 @@ const bottomNavFiles = productionFiles
     file: relativeFromRepo(filePath),
     source: readFileSync(filePath, "utf8"),
   }))
-  .filter(({ source }) => /Tabs\.Screen|BottomTabBar|tabBar|bottomTabs/gu.test(source))
+  .filter(({ source }) =>
+    /Tabs\.Screen|BottomTabBar|tabBar|bottomTabs/gu.test(source),
+  )
   .map(({ file }) => file);
 
 const headerFiles = productionFiles
@@ -336,7 +349,9 @@ const headerFiles = productionFiles
     file: relativeFromRepo(filePath),
     source: readFileSync(filePath, "utf8"),
   }))
-  .filter(({ source }) => /AppHeader|headerShown|Stack\.Screen|renderGlobalHeader/gu.test(source))
+  .filter(({ source }) =>
+    /AppHeader|headerShown|Stack\.Screen|renderGlobalHeader/gu.test(source),
+  )
   .map(({ file }) => file);
 
 const nativeImplementedCount = stateResults.filter(
@@ -363,7 +378,8 @@ const report = {
       stateResults
         .filter((result) => result.nativeImplemented)
         .reduce((accumulator, result) => {
-          accumulator[result.sourceFile] = (accumulator[result.sourceFile] ?? 0) + 1;
+          accumulator[result.sourceFile] =
+            (accumulator[result.sourceFile] ?? 0) + 1;
           return accumulator;
         }, {}),
     ).sort(([left], [right]) => left.localeCompare(right)),
@@ -373,7 +389,10 @@ const report = {
     placeholderUiCount: uiTermTotals.placeholder,
     prototypeUiCount: uiTermTotals.prototype,
     webviewUiCount: uiTermTotals.webview,
-    captureOnlyCount,
+    captureOnlyCount: productionCaptureOnlyCount + referenceCaptureOnlyCount,
+    captureOnlyProductionCount: productionCaptureOnlyCount,
+    captureOnlyReferenceCount: referenceCaptureOnlyCount,
+    captureTermProductionCount: productionCaptureTermCount,
     filesWithTerms: uiTermResults.slice(0, 30),
   },
   bottomNavigation: {

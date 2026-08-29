@@ -9,6 +9,7 @@ import { CommunityCommentItem } from "../../src/features/community/components/Co
 import { CommunityPostCard } from "../../src/features/community/components/CommunityPostCard";
 import { useCommunityPost } from "../../src/features/community/hooks/useCommunityPost";
 import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
+import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import type { CommunityAdDisclosureModel } from "../../src/features/community/community.types";
 
 const SCREEN_VERSION = "4.1.0-community-post-components";
@@ -16,6 +17,7 @@ const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
 const COMMUNITY_REPORT_POLICY_GUARD = "community_report_policy_guard";
 const CONTEXTUAL_ADS_ONLY_GUARD = "contextual_ads_only_guard";
 const DEFAULT_POST_ID = "post_level_1";
+const designSystem = salaryHijackingDesignSystem;
 
 const contextualAd: CommunityAdDisclosureModel = {
   adsFinancialTargetingUsed: false,
@@ -134,37 +136,31 @@ export function assertMobileCommunityPostCompleteness(): {
 
 const styles = StyleSheet.create({
   body: {
-    color: "#111827",
-    fontSize: 15,
-    lineHeight: 23,
+    ...designSystem.typography.bodyM,
+    color: designSystem.colors.text.primary,
   },
   error: {
-    color: "#9B1C1C",
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
+    ...designSystem.typography.labelM,
+    color: designSystem.colors.semantic.danger,
   },
   meta: {
-    color: "#6B7280",
-    fontSize: 12,
-    fontWeight: "700",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.text.secondary,
   },
   section: {
-    gap: 10,
+    gap: designSystem.spacing[3],
   },
   sectionTitle: {
-    color: "#1F2937",
-    fontSize: 16,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
+    color: designSystem.colors.text.primary,
   },
   tag: {
-    color: "#155E52",
-    fontSize: 12,
-    fontWeight: "800",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.semantic.info,
   },
   tags: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: designSystem.spacing[2],
   },
 });
