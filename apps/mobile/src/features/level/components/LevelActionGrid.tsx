@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "../../../shared/components";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type LevelActionItem = Readonly<{
   key: string;
@@ -39,28 +41,27 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
+    gap: designSystem.spacing[3],
   },
   card: {
+    backgroundColor: designSystem.colors.surface.default,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    flex: 1,
+    gap: designSystem.spacing[1],
+    justifyContent: "center",
     minHeight: 86,
     minWidth: "47%",
-    flex: 1,
-    justifyContent: "center",
-    gap: 5,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: componentColors.line,
-    borderRadius: componentRadius.card,
-    backgroundColor: componentColors.surface,
+    padding: designSystem.spacing[4],
   },
   label: {
-    color: componentColors.textPrimary,
-    fontSize: 17,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
+    color: designSystem.colors.text.primary,
+    fontFamily: designSystem.font.native.black,
   },
   description: {
-    color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.text.secondary,
   },
 });

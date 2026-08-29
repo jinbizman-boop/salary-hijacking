@@ -3,6 +3,7 @@ import { Image, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { appIconAssets } from "../../src/shared/assets/icons";
+import { salaryHijackingDesignSystem } from "../../src/shared/components";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
 type TabName =
@@ -21,6 +22,7 @@ type TabDefinition = Readonly<{
 }>;
 
 const LAYOUT_VERSION = "4.0.6-runtime-confirmed-index-tabs";
+const designSystem = salaryHijackingDesignSystem;
 
 const tabs: readonly TabDefinition[] = [
   {
@@ -74,34 +76,35 @@ export default function TabsLayout(): React.ReactElement {
         lazy: true,
         sceneStyle: { backgroundColor: salaryHijackingTheme.color.surface.app },
         tabBarAccessibilityLabel: "급여납치 하단 탭 내비게이션",
-        tabBarActiveTintColor: "#209252",
+        tabBarActiveTintColor: designSystem.navigation.bottomTabs.activeColor,
         tabBarHideOnKeyboard: true,
-        tabBarInactiveTintColor: "#ADB3B8",
+        tabBarInactiveTintColor:
+          designSystem.navigation.bottomTabs.inactiveColor,
         tabBarItemStyle: {
-          borderRadius: salaryHijackingTheme.radius.md,
+          borderRadius: designSystem.radius.lg,
           marginHorizontal: 0,
-          minHeight: salaryHijackingTheme.layout.touchTarget,
+          minHeight: designSystem.layout.touchTarget,
           minWidth: 0,
           paddingHorizontal: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "800",
-          letterSpacing: 0,
+          fontSize: designSystem.typography.labelS.fontSize,
+          fontWeight: designSystem.typography.labelS.fontWeight,
+          letterSpacing: designSystem.typography.labelS.letterSpacing,
         },
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#EEF0F2",
+          backgroundColor: designSystem.navigation.bottomTabs.background,
+          borderTopColor: designSystem.navigation.bottomTabs.borderColor,
           borderTopWidth: 1,
-          elevation: 8,
+          elevation: designSystem.elevation.high.elevation,
           height: tabBarHeight,
           left: 0,
-          paddingBottom: Math.max(insets.bottom, 10),
-          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, designSystem.spacing[3]),
+          paddingTop: designSystem.spacing[2],
           right: 0,
-          shadowColor: "#0F2319",
+          shadowColor: designSystem.elevation.low.shadowColor,
           shadowOffset: { width: 0, height: -8 },
-          shadowOpacity: 0.06,
+          shadowOpacity: designSystem.elevation.low.shadowOpacity,
           shadowRadius: 18,
           width: "100%",
         },
@@ -118,8 +121,10 @@ export default function TabsLayout(): React.ReactElement {
               <View
                 style={{
                   alignItems: "center",
-                  backgroundColor: focused ? "#EAF6EF" : "transparent",
-                  borderRadius: salaryHijackingTheme.radius.full,
+                  backgroundColor: focused
+                    ? designSystem.colors.brand.primarySoft
+                    : "transparent",
+                  borderRadius: designSystem.radius.full,
                   height: 30,
                   justifyContent: "center",
                   width: 32,
@@ -132,7 +137,9 @@ export default function TabsLayout(): React.ReactElement {
                   style={{
                     height: Math.max(20, Math.min(26, size)),
                     opacity: focused ? 1 : 0.46,
-                    tintColor: focused ? color : "#ADB3B8",
+                    tintColor: focused
+                      ? color
+                      : designSystem.navigation.bottomTabs.inactiveColor,
                     width: Math.max(20, Math.min(26, size)),
                   }}
                 />

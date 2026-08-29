@@ -6,7 +6,10 @@ import {
   componentRadius,
   componentSpacing,
   componentTypography,
+  salaryHijackingDesignSystem,
 } from "../../components/tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type CommonStateScreenKind =
   | "empty"
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
     backgroundColor: componentColors.primaryGreenSoft,
   },
   errorBadge: {
-    backgroundColor: "#FDECEC",
+    backgroundColor: designSystem.colors.semantic.dangerSoft,
   },
   badgeText: {
     color: componentColors.primaryGreenDark,
@@ -81,13 +84,13 @@ const styles = StyleSheet.create({
   title: {
     color: componentColors.textPrimary,
     fontSize: componentTypography.title,
-    fontWeight: "900",
-    lineHeight: 34,
+    fontWeight: designSystem.typography.titleXL.fontWeight,
+    lineHeight: designSystem.typography.titleXL.lineHeight,
   },
   description: {
     color: componentColors.textSecondary,
     fontSize: componentTypography.body,
-    fontWeight: "700",
-    lineHeight: 23,
+    fontWeight: designSystem.typography.bodyM.fontWeight,
+    lineHeight: designSystem.typography.bodyM.lineHeight,
   },
 });

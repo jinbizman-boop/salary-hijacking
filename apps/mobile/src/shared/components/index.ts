@@ -31,4 +31,5 @@ export {
   componentRadius,
   componentSpacing,
   componentTypography,
+  salaryHijackingDesignSystem,
 } from "./tokens";

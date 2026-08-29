@@ -12,19 +12,18 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { appImageAssets } from "../../../shared/assets/images";
+import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
 
-const BRAND_GREEN = "#209252";
-const BRAND_INK = "#202327";
-const BRAND_MUTED = "#6D737A";
-const FIELD_LINE = "#E4E7EA";
 const AUTH_VISUAL_MIN_BOTTOM_SAFE_GAP = 36;
 const EUREKA_WORLD_LOGO_ASPECT_RATIO = 177 / 1280;
+const designSystem = salaryHijackingDesignSystem;
 
 export const authVisualColors = {
-  brandGreen: BRAND_GREEN,
-  fieldLine: FIELD_LINE,
-  ink: BRAND_INK,
-  muted: BRAND_MUTED,
+  brandGreen: designSystem.colors.brand.primary,
+  fieldLine: designSystem.colors.border.default,
+  ink: designSystem.colors.text.primary,
+  muted: designSystem.colors.text.secondary,
+  placeholder: designSystem.colors.text.disabled,
 } as const;
 
 export function clampValue(value: number, min: number, max: number): number {
@@ -169,21 +168,23 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   brandSubtitle: {
-    color: BRAND_INK,
-    fontWeight: "800",
+    color: authVisualColors.ink,
+    fontSize: designSystem.typography.titleL.fontSize,
+    fontWeight: designSystem.typography.titleL.fontWeight,
     includeFontPadding: false,
-    letterSpacing: 0,
-    lineHeight: 31,
-    marginTop: 8,
+    letterSpacing: designSystem.typography.titleL.letterSpacing,
+    lineHeight: designSystem.typography.titleL.lineHeight,
+    marginTop: designSystem.spacing[2],
     textAlign: "center",
   },
   brandTitle: {
-    color: BRAND_GREEN,
-    fontWeight: "900",
+    color: authVisualColors.brandGreen,
+    fontSize: designSystem.typography.display.fontSize,
+    fontWeight: designSystem.typography.display.fontWeight,
     includeFontPadding: false,
-    letterSpacing: 0,
-    lineHeight: 68,
-    marginTop: 18,
+    letterSpacing: designSystem.typography.display.letterSpacing,
+    lineHeight: designSystem.typography.display.lineHeight,
+    marginTop: designSystem.spacing[5],
     textAlign: "center",
   },
   eurekaRow: {
@@ -192,19 +193,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   frame: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: designSystem.colors.surface.default,
     flex: 1,
   },
   frameContent: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: designSystem.colors.surface.default,
   },
   linkText: {
-    color: BRAND_INK,
-    fontSize: 14,
-    fontWeight: "800",
+    color: authVisualColors.ink,
+    fontSize: designSystem.typography.labelM.fontSize,
+    fontWeight: designSystem.typography.labelM.fontWeight,
     includeFontPadding: false,
-    letterSpacing: 0,
-    lineHeight: 20,
+    letterSpacing: designSystem.typography.labelM.letterSpacing,
+    lineHeight: designSystem.typography.labelM.lineHeight,
   },
 });
 

@@ -40,6 +40,7 @@ import {
 } from "../../../shared/api/mobile-api";
 import { appIconAssets } from "../../../shared/assets/icons";
 import { appImageAssets } from "../../../shared/assets/images";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
   configurePayrollReminderStatePersistence,
@@ -54,11 +55,14 @@ import {
   type ReminderCategory,
 } from "../../payroll-reminders/interactive-state";
 
-const BRAND_GREEN = "#209252";
-const TEXT_BLACK = "#191B1F";
-const LINE = "#E7EBEF";
-const MUTED = "#6D737A";
-const DANGER_RED = "#B92133";
+const designSystem = salaryHijackingDesignSystem;
+const planScreenColors = {
+  brand: designSystem.colors.brand.primary,
+  danger: designSystem.colors.semantic.dangerStrong,
+  line: designSystem.colors.border.default,
+  muted: designSystem.colors.text.secondary,
+  text: designSystem.colors.text.primary,
+} as const;
 const PLAN_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uACC4\uD68D\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
@@ -1373,7 +1377,7 @@ function clamp(value: number, min: number, max: number): number {
 
 const styles = StyleSheet.create({
   addText: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     fontSize: 13,
     fontWeight: "900",
     marginTop: 8,
@@ -1389,7 +1393,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     alignItems: "center",
-    backgroundColor: DANGER_RED,
+    backgroundColor: planScreenColors.danger,
     borderRadius: 3,
     justifyContent: "center",
     minHeight: 42,
@@ -1401,19 +1405,19 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   editMoney: {
-    color: BRAND_GREEN,
+    color: planScreenColors.brand,
     fontSize: 12,
     fontWeight: "900",
   },
   editRow: {
     alignItems: "center",
-    borderBottomColor: LINE,
+    borderBottomColor: planScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     minHeight: 38,
   },
   editText: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "800",
@@ -1423,7 +1427,7 @@ const styles = StyleSheet.create({
     borderColor: "#F1B7A8",
     borderRadius: 5,
     borderWidth: 1,
-    color: DANGER_RED,
+    color: planScreenColors.danger,
     fontSize: 13,
     fontWeight: "900",
     marginHorizontal: 8,
@@ -1434,7 +1438,7 @@ const styles = StyleSheet.create({
   goalCard: {
     alignItems: "center",
     backgroundColor: "#FFFFFF",
-    borderColor: LINE,
+    borderColor: planScreenColors.line,
     borderRadius: 2,
     borderWidth: 1,
     elevation: 3,
@@ -1461,37 +1465,37 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   goalPercent: {
-    color: BRAND_GREEN,
+    color: planScreenColors.brand,
     fontSize: 45,
     fontWeight: "900",
     minWidth: 116,
     textAlign: "right",
   },
   goalTitle: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     fontSize: 17,
     fontWeight: "900",
   },
   headerBrand: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     fontSize: 19,
     fontWeight: "900",
     letterSpacing: 0,
   },
   headerBrandGreen: {
-    color: BRAND_GREEN,
+    color: planScreenColors.brand,
   },
   headerLogo: {
     borderRadius: 12,
   },
   headerSettingsIcon: {
     height: 30,
-    tintColor: TEXT_BLACK,
+    tintColor: planScreenColors.text,
     width: 30,
   },
   inlineForm: {
     backgroundColor: "#F8FAF9",
-    borderColor: LINE,
+    borderColor: planScreenColors.line,
     borderRadius: 5,
     borderWidth: 1,
     gap: 8,
@@ -1500,17 +1504,17 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#FFFFFF",
-    borderColor: LINE,
+    borderColor: planScreenColors.line,
     borderRadius: 5,
     borderWidth: 1,
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     fontSize: 15,
     fontWeight: "700",
     minHeight: 48,
     paddingHorizontal: 12,
   },
   livingMoney: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "900",
@@ -1518,7 +1522,7 @@ const styles = StyleSheet.create({
   },
   livingRow: {
     alignItems: "center",
-    borderBottomColor: LINE,
+    borderBottomColor: planScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     minHeight: 38,
@@ -1527,32 +1531,32 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   livingText: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "700",
     textAlign: "center",
   },
   metaGreen: {
-    color: BRAND_GREEN,
+    color: planScreenColors.brand,
     fontSize: 17,
     fontWeight: "900",
     marginTop: 2,
   },
   metaLabel: {
-    color: MUTED,
+    color: planScreenColors.muted,
     fontSize: 10,
     fontWeight: "900",
   },
   metaRed: {
-    color: DANGER_RED,
+    color: planScreenColors.danger,
     fontSize: 17,
     fontWeight: "900",
     marginTop: 2,
   },
   saveButton: {
     alignItems: "center",
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: planScreenColors.brand,
     borderRadius: 5,
     justifyContent: "center",
     minHeight: 44,
@@ -1572,7 +1576,7 @@ const styles = StyleSheet.create({
   },
   sectionCard: {
     backgroundColor: "#FFFFFF",
-    borderColor: LINE,
+    borderColor: planScreenColors.line,
     borderRadius: 2,
     borderWidth: 1,
     elevation: 2,
@@ -1587,7 +1591,7 @@ const styles = StyleSheet.create({
     width: 28,
   },
   sectionTitle: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     flex: 1,
     fontSize: 16,
     fontWeight: "900",
@@ -1623,7 +1627,7 @@ const styles = StyleSheet.create({
   },
   tableHeaderCell: {
     alignItems: "center",
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: planScreenColors.brand,
     borderBottomColor: "#D6E8DD",
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderRightColor: "#D6E8DD",
@@ -1644,7 +1648,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   tableText: {
-    color: TEXT_BLACK,
+    color: planScreenColors.text,
     fontSize: 9.5,
     fontWeight: "700",
     textAlign: "center",

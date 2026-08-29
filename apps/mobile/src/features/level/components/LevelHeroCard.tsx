@@ -3,9 +3,11 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   ProgressBar,
   SurfaceCard,
-  componentColors,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { GrowthDashboard } from "../types";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type LevelHeroCardProps = Readonly<{
   dashboard: GrowthDashboard;
@@ -38,34 +40,33 @@ export function LevelHeroCard({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
     alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
     justifyContent: "space-between",
-    gap: 12,
   },
   kicker: {
-    color: componentColors.primaryGreen,
-    fontSize: 12,
-    fontWeight: "900",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.brand.primary,
+    fontFamily: designSystem.font.native.extraBold,
   },
   level: {
-    color: componentColors.textPrimary,
-    fontSize: 34,
-    fontWeight: "900",
+    ...designSystem.typography.display,
+    color: designSystem.colors.text.primary,
+    fontFamily: designSystem.font.native.black,
   },
   exp: {
-    color: componentColors.textSecondary,
-    fontSize: 14,
-    fontWeight: "800",
+    ...designSystem.typography.bodyS,
+    color: designSystem.colors.text.secondary,
+    fontFamily: designSystem.font.native.extraBold,
   },
   suggestion: {
-    color: componentColors.textPrimary,
-    fontSize: 14,
-    lineHeight: 20,
+    ...designSystem.typography.bodyS,
+    color: designSystem.colors.text.primary,
   },
   guard: {
-    color: componentColors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
+    ...designSystem.typography.caption,
+    color: designSystem.colors.text.muted,
+    fontFamily: designSystem.font.native.bold,
   },
 });

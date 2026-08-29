@@ -5,6 +5,7 @@ import {
   CapturePreviewScreen,
   type CapturePreviewKind,
 } from "../../src/features/capture";
+import { resolveCaptureKindForStitchSlug } from "../../src/features/capture/stitch-state-registry";
 
 const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
   Object.freeze({
@@ -299,7 +300,9 @@ export default function CaptureScreen(): React.ReactElement {
     : typeof paramScreen === "string"
       ? paramScreen
       : (readCaptureScreenFromPath(pathname) ?? readCaptureScreenFromWindow());
-  const kind = captureScreens[String(rawScreen ?? "")] ?? "salary";
+  const screen = String(rawScreen ?? "");
+  const kind =
+    captureScreens[screen] ?? resolveCaptureKindForStitchSlug(screen) ?? "salary";
   return <CapturePreviewScreen kind={kind} />;
 }
 

@@ -9,6 +9,7 @@ import {
   CapturePreviewScreen,
   type CapturePreviewKind,
 } from "../src/features/capture";
+import { resolveCaptureKindForStitchSlug } from "../src/features/capture/stitch-state-registry";
 import { MOBILE_ACCESS_TOKEN_KEY } from "../src/shared/storage/auth-token";
 
 const SCREEN_VERSION = "4.1.0-launch-components";
@@ -439,7 +440,8 @@ export function resolveCaptureScreenKindForUrl(
   if (!url.searchParams.has("capture")) return null;
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts[0] !== "capture") return null;
-  return captureScreens[parts[1] ?? ""] ?? null;
+  const screen = parts[1] ?? "";
+  return captureScreens[screen] ?? resolveCaptureKindForStitchSlug(screen);
 }
 
 function isUsableAccessToken(value: string | null): boolean {

@@ -3,6 +3,9 @@ import { StyleSheet, TextInput, View } from "react-native";
 
 import type { AuthRegisterRequest } from "../types";
 import { authVisualColors } from "./AuthVisualFrame";
+import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type SignupFormProps = Readonly<{
   onSubmit: (request: AuthRegisterRequest) => void;
@@ -35,7 +38,7 @@ export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
         inputMode="email"
         onChangeText={setEmail}
         placeholder="아이디"
-        placeholderTextColor="#D6D9DC"
+        placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="next"
         style={styles.input}
         textContentType="username"
@@ -47,7 +50,7 @@ export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
         autoCapitalize="none"
         onChangeText={setNickname}
         placeholder="닉네임"
-        placeholderTextColor="#D6D9DC"
+        placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="next"
         style={styles.input}
         textContentType="nickname"
@@ -61,7 +64,7 @@ export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
         onChangeText={setPassword}
         onSubmitEditing={submit}
         placeholder="비밀번호"
-        placeholderTextColor="#D6D9DC"
+        placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="done"
         secureTextEntry
         style={styles.input}
@@ -79,16 +82,16 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: designSystem.colors.surface.default,
     borderColor: authVisualColors.fieldLine,
-    borderRadius: 0,
+    borderRadius: designSystem.radius.md,
     borderWidth: 1,
     color: authVisualColors.ink,
-    fontSize: 17,
-    fontWeight: "700",
-    height: 55,
+    fontSize: designSystem.typography.bodyL.fontSize,
+    fontWeight: designSystem.typography.bodyL.fontWeight,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[3],
     includeFontPadding: false,
-    letterSpacing: 0,
-    paddingHorizontal: 17,
+    letterSpacing: designSystem.typography.bodyL.letterSpacing,
+    paddingHorizontal: designSystem.spacing[4],
   },
 });

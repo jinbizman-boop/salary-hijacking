@@ -1,7 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { componentColors, componentRadius } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type BottomTabItem = Readonly<{
   key: string;
@@ -29,7 +35,7 @@ export function BottomTabBar({
         styles.bar,
         {
           minHeight: 76 + insets.bottom,
-          paddingBottom: 12 + insets.bottom,
+          paddingBottom: designSystem.spacing[3] + insets.bottom,
         },
       ]}
     >
@@ -64,18 +70,18 @@ function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
 
 const styles = StyleSheet.create({
   bar: {
-    minHeight: 76,
+    minHeight: designSystem.navigation.bottomTabs.visualHeight,
     flexDirection: "row",
     justifyContent: "space-around",
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    gap: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[3],
+    paddingTop: designSystem.spacing[3],
     borderTopWidth: 1,
     borderTopColor: componentColors.line,
     backgroundColor: componentColors.surface,
   },
   item: {
-    minHeight: 44,
+    minHeight: designSystem.layout.touchTarget,
     minWidth: 64,
     alignItems: "center",
     justifyContent: "center",
@@ -86,8 +92,8 @@ const styles = StyleSheet.create({
   },
   label: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: designSystem.typography.labelS.fontSize,
+    fontWeight: designSystem.typography.labelS.fontWeight,
   },
   selectedLabel: {
     color: componentColors.primaryGreen,

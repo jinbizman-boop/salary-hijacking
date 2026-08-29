@@ -11,6 +11,7 @@ import {
   updatePayrollReminderState,
   type PlanItem,
 } from "../../payroll-reminders/interactive-state";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
 import {
   resetSalaryHomePreviewCacheForTests,
   SalaryHomeScreen,
@@ -119,7 +120,10 @@ describe("salary reference screen interactions", () => {
     });
     expect(overdueReminder.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ backgroundColor: "#E9872F" }),
+        expect.objectContaining({
+          backgroundColor:
+            salaryHijackingDesignSystem.colors.semantic.warningStrong,
+        }),
       ]),
     );
   });

@@ -5570,22 +5570,21 @@ async function createNativeNotificationRegistrationRequest(): Promise<Notificati
     throw new Error("NOTIFICATION_PERMISSION_DENIED");
   }
 
-  const easProjectId =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId;
-  const tokenResult =
-    typeof easProjectId === "string" && easProjectId.trim()
-      ? await Notifications.getExpoPushTokenAsync({ projectId: easProjectId })
-      : await Notifications.getExpoPushTokenAsync();
+  const tokenResult = await Notifications.getDevicePushTokenAsync();
   const pushToken = tokenResult.data.trim();
   if (!pushToken) throw new Error("NOTIFICATION_PUSH_TOKEN_UNAVAILABLE");
+  const platform = notificationPlatform();
+  const provider =
+    platform === "IOS" ? "APNS" : platform === "ANDROID" ? "FCM" : "EXPO";
 
   return {
     appVersion: Constants.expoConfig?.version ?? null,
     deviceId: await readOrCreateNotificationDeviceId(),
     locale: "ko-KR",
-    platform: notificationPlatform(),
+    platform,
+    provider,
     pushToken,
+    tokenSource: provider === "EXPO" ? "EXPO_PUSH_SERVICE" : "NATIVE_DEVICE",
   };
 }
 
@@ -5923,15 +5922,22 @@ function NotificationsScreen(): React.ReactElement {
     setNotificationDeviceActionPending("register");
     setSyncLabel("푸시 기기 등록을 서버에 저장하고 있어요.");
     void createNativeNotificationRegistrationRequest()
-      .then((registrationRequest) =>
-        notificationsApi.registerDevice({
+      .then((registrationRequest) => {
+        const request: NotificationDeviceRegistrationRequest = {
           appVersion: registrationRequest.appVersion ?? null,
           deviceId: registrationRequest.deviceId,
           locale: registrationRequest.locale ?? null,
           platform: registrationRequest.platform,
+          ...(registrationRequest.provider
+            ? { provider: registrationRequest.provider }
+            : {}),
           pushToken: registrationRequest.pushToken,
-        }),
-      )
+          ...(registrationRequest.tokenSource
+            ? { tokenSource: registrationRequest.tokenSource }
+            : {}),
+        };
+        return notificationsApi.registerDevice(request);
+      })
       .then((registeredDevice) => {
         setServerNotificationDevices((current) => [
           registeredDevice,
@@ -5942,7 +5948,7 @@ function NotificationsScreen(): React.ReactElement {
         setSyncLabel("서버에 푸시 기기 등록을 저장했어요.");
       })
       .catch(() => {
-        setSyncLabel("푸시 권한, Expo 설정, 또는 서버 연결을 확인해 주세요.");
+        setSyncLabel("푸시 권한, 기기 토큰, 또는 서버 연결을 확인해 주세요.");
       })
       .finally(() => {
         notificationDeviceActionInFlightRef.current = null;

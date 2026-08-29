@@ -1,7 +1,10 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import { salaryHijackingDesignSystem } from "../../../shared/components";
 import { COMMUNITY_BOARD_LABELS } from "../community.constants";
 import type { CommunityPost } from "../community.types";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type PopularPostSectionProps = Readonly<{
   posts: readonly CommunityPost[];
@@ -51,65 +54,63 @@ export function PopularPostSection({
 
 const styles = StyleSheet.create({
   section: {
-    gap: 10,
+    gap: designSystem.spacing[3],
   },
   header: {
-    flexDirection: "row",
     alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
     justifyContent: "space-between",
-    gap: 12,
   },
   title: {
-    color: "#111827",
-    fontSize: 18,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
+    color: designSystem.colors.text.primary,
+    fontFamily: designSystem.font.native.black,
   },
   card: {
-    gap: 8,
-    padding: 16,
+    backgroundColor: designSystem.colors.surface.default,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.md,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    gap: designSystem.spacing[2],
+    padding: designSystem.spacing[4],
   },
   pressed: {
-    backgroundColor: "#F8FAFC",
+    backgroundColor: designSystem.colors.surface.subtle,
   },
   meta: {
-    flexDirection: "row",
     alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
     justifyContent: "space-between",
-    gap: 12,
   },
   board: {
-    color: "#176B5B",
-    fontSize: 11,
-    fontWeight: "900",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.brand.primaryPressed,
+    fontFamily: designSystem.font.native.black,
   },
   author: {
-    color: "#6B7280",
-    fontSize: 12,
-    fontWeight: "700",
+    ...designSystem.typography.caption,
+    color: designSystem.colors.text.secondary,
+    fontFamily: designSystem.font.native.bold,
   },
   postTitle: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "900",
-    lineHeight: 22,
+    ...designSystem.typography.titleM,
+    color: designSystem.colors.text.primary,
+    fontFamily: designSystem.font.native.black,
   },
   preview: {
-    color: "#4B5563",
-    fontSize: 14,
-    lineHeight: 20,
+    ...designSystem.typography.bodyS,
+    color: designSystem.colors.text.secondary,
   },
   counts: {
-    color: "#6B7280",
-    fontSize: 12,
-    fontWeight: "700",
+    ...designSystem.typography.caption,
+    color: designSystem.colors.text.secondary,
+    fontFamily: designSystem.font.native.bold,
   },
   guard: {
-    color: "#6B7280",
-    fontSize: 11,
-    fontWeight: "700",
+    ...designSystem.typography.caption,
+    color: designSystem.colors.text.secondary,
+    fontFamily: designSystem.font.native.bold,
   },
 });

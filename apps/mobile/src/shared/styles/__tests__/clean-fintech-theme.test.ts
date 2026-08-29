@@ -25,7 +25,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHijackingTheme.color.brand.primary).toBe("#209252");
     expect(salaryHijackingTheme.color.brand.secondary).toBe("#2FA86A");
     expect(salaryHijackingTheme.color.brand.soft).toBe("#EAF6EF");
-    expect(salaryHijackingTheme.color.surface.app).toBe("#F7F8FA");
+    expect(salaryHijackingTheme.color.surface.app).toBe("#F7F9FA");
     expect(salaryHijackingTheme.color.surface.card).toBe("#FFFFFF");
     expect(salaryHijackingTheme.color.semantic.danger).toBe("#D74B4B");
     expect(salaryHijackingTheme.layout.bottomTabHeight).toBe(76);
@@ -154,9 +154,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "\uAE09\uC5EC\uB0A9\uCE58 \uD558\uB2E8 \uD0ED \uB0B4\uBE44\uAC8C\uC774\uC158",
     );
     expect(tabs).not.toMatch(mojibakePattern);
-    expect(tabs).toContain("#209252");
-    expect(tabs).toContain("#ADB3B8");
-    expect(tabs).toContain("#FFFFFF");
+    expect(tabs).toContain("salaryHijackingDesignSystem");
+    expect(tabs).toContain("designSystem.navigation.bottomTabs.activeColor");
+    expect(tabs).toContain("designSystem.navigation.bottomTabs.inactiveColor");
+    expect(tabs).toContain("designSystem.navigation.bottomTabs.background");
     expect(tabs).not.toContain("#020617");
   });
 
@@ -164,7 +165,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const config = mobileSource("app.config.ts");
 
     expect(config).toContain("#209252");
-    expect(config).toContain("#F7F8FA");
+    expect(config).toContain("#F7F9FA");
     expect(config).toContain('const SERVICE_NAME = "급여납치"');
     expect(config).toContain('"급여금액"');
     expect(config).toContain('"계좌번호"');
@@ -1617,8 +1618,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(notificationsApi).toContain("NOTIFICATIONS_DEVICES_PATH");
     expect(cleanScreens).toContain("serverNotificationDevices");
     expect(cleanScreens).toContain("registerNotificationDevice");
+    expect(cleanScreens).toContain("getDevicePushTokenAsync");
+    expect(cleanScreens).not.toContain("getExpoPushTokenAsync");
+    expect(cleanScreens).toContain('provider === "EXPO"');
+    expect(cleanScreens).toContain('"NATIVE_DEVICE"');
     expect(cleanScreens).toContain("revokeNotificationDevice");
-    expect(cleanScreens).toContain(".registerDevice({");
+    expect(cleanScreens).toContain(
+      "const request: NotificationDeviceRegistrationRequest = {",
+    );
+    expect(cleanScreens).toContain(".registerDevice(request)");
     expect(cleanScreens).toContain(".revokeDevice(");
     expect(cleanScreens).toContain("notificationDeviceActionPending");
     expect(cleanScreens).toContain(

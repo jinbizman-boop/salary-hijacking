@@ -30,6 +30,7 @@ import type {
 } from "../../../features/plan/types";
 import { appIconAssets } from "../../../shared/assets/icons";
 import { appImageAssets } from "../../../shared/assets/images";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
@@ -54,14 +55,17 @@ import {
   type VariableExpenseItem,
 } from "../../payroll-reminders/interactive-state";
 
-const BRAND_GREEN = "#209252";
-const HERO_GREEN = "#259849";
-const TEXT_BLACK = "#191B1F";
-const LINE = "#E7EBEF";
-const PAID_GRAY = "#C7C9CC";
-const WARNING_ORANGE = "#E9872F";
-const MONEY_YELLOW = "#F8F439";
-const DANGER_RED = "#B92133";
+const designSystem = salaryHijackingDesignSystem;
+const salaryScreenColors = {
+  brand: designSystem.colors.brand.primary,
+  hero: designSystem.colors.brand.secondary,
+  line: designSystem.colors.border.default,
+  money: designSystem.colors.semantic.warning,
+  paid: designSystem.colors.text.disabled,
+  text: designSystem.colors.text.primary,
+  warning: designSystem.colors.semantic.warningStrong,
+  danger: designSystem.colors.semantic.dangerStrong,
+} as const;
 const SALARY_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
@@ -1585,12 +1589,12 @@ const styles = StyleSheet.create({
     minHeight: 40,
   },
   addInlineText: {
-    color: BRAND_GREEN,
+    color: salaryScreenColors.brand,
     fontSize: 13,
     fontWeight: "900",
   },
   addText: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 13,
     fontWeight: "900",
     marginTop: 8,
@@ -1636,7 +1640,7 @@ const styles = StyleSheet.create({
   },
   alarmIcon: {
     height: 27,
-    tintColor: TEXT_BLACK,
+    tintColor: salaryScreenColors.text,
     width: 27,
   },
   brandHeaderLeft: {
@@ -1645,7 +1649,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   budgetAmount: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 17,
     fontWeight: "900",
     minWidth: 76,
@@ -1657,7 +1661,7 @@ const styles = StyleSheet.create({
   },
   budgetRow: {
     alignItems: "center",
-    borderBottomColor: LINE,
+    borderBottomColor: salaryScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: 10,
@@ -1674,7 +1678,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   budgetSummaryLabel: {
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: salaryScreenColors.brand,
     color: "#FFFFFF",
     flex: 1,
     fontSize: 10,
@@ -1684,7 +1688,7 @@ const styles = StyleSheet.create({
   },
   budgetSummaryValue: {
     backgroundColor: "#F5F7F8",
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 10,
     fontWeight: "800",
@@ -1692,7 +1696,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   budgetText: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "700",
@@ -1700,7 +1704,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderColor: LINE,
+    borderColor: salaryScreenColors.line,
     borderRadius: 3,
     borderWidth: 1,
     elevation: 3,
@@ -1714,7 +1718,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   cardTitle: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 17,
     fontWeight: "900",
@@ -1726,7 +1730,7 @@ const styles = StyleSheet.create({
   },
   editRow: {
     alignItems: "center",
-    borderBottomColor: LINE,
+    borderBottomColor: salaryScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: 8,
@@ -1744,12 +1748,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   editRowMoney: {
-    color: BRAND_GREEN,
+    color: salaryScreenColors.brand,
     fontSize: 12,
     fontWeight: "900",
   },
   editRowText: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "800",
@@ -1763,14 +1767,14 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     backgroundColor: "#F7F8FA",
-    borderColor: LINE,
+    borderColor: salaryScreenColors.line,
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 12,
     padding: 16,
   },
   emptyTitle: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 16,
     fontWeight: "900",
     lineHeight: 22,
@@ -1780,7 +1784,7 @@ const styles = StyleSheet.create({
     borderColor: "#F1B7A8",
     borderRadius: 5,
     borderWidth: 1,
-    color: DANGER_RED,
+    color: salaryScreenColors.danger,
     fontSize: 13,
     fontWeight: "900",
     marginHorizontal: 8,
@@ -1789,7 +1793,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   fixedAmount: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 15,
     fontWeight: "900",
     minWidth: 75,
@@ -1800,7 +1804,7 @@ const styles = StyleSheet.create({
     width: 31,
   },
   fixedLabel: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "700",
@@ -1825,19 +1829,19 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   headerBrand: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 19,
     fontWeight: "900",
     letterSpacing: 0,
   },
   headerBrandGreen: {
-    color: BRAND_GREEN,
+    color: salaryScreenColors.brand,
   },
   headerLogo: {
     borderRadius: 12,
   },
   heroAmount: {
-    color: MONEY_YELLOW,
+    color: salaryScreenColors.money,
     fontSize: 29,
     fontWeight: "900",
     marginTop: 4,
@@ -1861,7 +1865,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   heroPanel: {
-    backgroundColor: HERO_GREEN,
+    backgroundColor: salaryScreenColors.hero,
     flexDirection: "row",
     minHeight: 270,
     paddingBottom: 10,
@@ -1895,7 +1899,7 @@ const styles = StyleSheet.create({
   },
   inlineForm: {
     backgroundColor: "#F8FAF9",
-    borderColor: LINE,
+    borderColor: salaryScreenColors.line,
     borderRadius: 5,
     borderWidth: 1,
     gap: 8,
@@ -1904,10 +1908,10 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: "#FFFFFF",
-    borderColor: LINE,
+    borderColor: salaryScreenColors.line,
     borderRadius: 5,
     borderWidth: 1,
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 15,
     fontWeight: "700",
     minHeight: 48,
@@ -1927,7 +1931,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   metricEmphasis: {
-    borderColor: MONEY_YELLOW,
+    borderColor: salaryScreenColors.money,
     borderWidth: 2,
   },
   metricLabel: {
@@ -1937,7 +1941,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   metricValue: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 17,
     fontWeight: "900",
@@ -1954,7 +1958,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   paydayDanger: {
-    color: DANGER_RED,
+    color: salaryScreenColors.danger,
   },
   paydayLabel: {
     color: "#4A4F55",
@@ -1966,14 +1970,14 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   paydayValue: {
-    color: BRAND_GREEN,
+    color: salaryScreenColors.brand,
     fontSize: 16,
     fontWeight: "900",
     marginTop: 5,
   },
   saveButton: {
     alignItems: "center",
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: salaryScreenColors.brand,
     borderRadius: 5,
     justifyContent: "center",
     minHeight: 44,
@@ -1997,13 +2001,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   smallActionText: {
-    color: BRAND_GREEN,
+    color: salaryScreenColors.brand,
     fontSize: 12,
     fontWeight: "900",
   },
   statusGray: {
     alignItems: "center",
-    backgroundColor: PAID_GRAY,
+    backgroundColor: salaryScreenColors.paid,
     borderRadius: 2,
     justifyContent: "center",
     minHeight: 29,
@@ -2011,10 +2015,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   statusGreen: {
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: salaryScreenColors.brand,
   },
   statusOverdue: {
-    backgroundColor: WARNING_ORANGE,
+    backgroundColor: salaryScreenColors.warning,
   },
   statusText: {
     color: "#FFFFFF",
@@ -2027,7 +2031,7 @@ const styles = StyleSheet.create({
   },
   tableActionButton: {
     alignItems: "center",
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: salaryScreenColors.brand,
     borderRadius: 3,
     justifyContent: "center",
     minHeight: 28,
@@ -2046,10 +2050,10 @@ const styles = StyleSheet.create({
     minWidth: 82,
   },
   tableDeleteButton: {
-    backgroundColor: PAID_GRAY,
+    backgroundColor: salaryScreenColors.paid,
   },
   tableHeaderText: {
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: salaryScreenColors.brand,
     color: "#FFFFFF",
     flex: 1,
     fontSize: 12,
@@ -2058,7 +2062,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   tableMoney: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 13,
     fontWeight: "900",
@@ -2066,13 +2070,13 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     alignItems: "center",
-    borderBottomColor: LINE,
+    borderBottomColor: salaryScreenColors.line,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     minHeight: 42,
   },
   tableText: {
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     flex: 1,
     fontSize: 12,
     fontWeight: "700",
@@ -2093,7 +2097,7 @@ const styles = StyleSheet.create({
   },
   variableForm: {
     backgroundColor: "#F8FAF9",
-    borderColor: LINE,
+    borderColor: salaryScreenColors.line,
     borderRadius: 5,
     borderWidth: 1,
     gap: 8,
@@ -2109,7 +2113,7 @@ const styles = StyleSheet.create({
     marginTop: -3,
   },
   variableTotalLabel: {
-    backgroundColor: BRAND_GREEN,
+    backgroundColor: salaryScreenColors.brand,
     color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "900",
@@ -2118,7 +2122,7 @@ const styles = StyleSheet.create({
   },
   variableTotalValue: {
     backgroundColor: "#F5F7F8",
-    color: TEXT_BLACK,
+    color: salaryScreenColors.text,
     fontSize: 10,
     fontWeight: "900",
     minWidth: 82,
@@ -2142,7 +2146,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   variantTitle: {
-    color: BRAND_GREEN,
+    color: salaryScreenColors.brand,
     fontSize: 16,
     fontWeight: "900",
     lineHeight: 22,

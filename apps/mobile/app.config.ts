@@ -285,7 +285,7 @@ function webConfig(): JsonRecord {
     shortName: SERVICE_NAME,
     lang: DEFAULT_LOCALE,
     themeColor: "#209252",
-    backgroundColor: "#F7F8FA",
+    backgroundColor: "#F7F9FA",
   };
 }
 
