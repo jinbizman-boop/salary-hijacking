@@ -1,6 +1,7 @@
 # PHASE 13 FCM Provider Runtime Preflight
 
 Generated: 2026-08-29
+Updated: 2026-08-29 after user-reported staging FCM credential registration
 
 ## Scope
 
@@ -52,7 +53,7 @@ Worker: `salary-hijacking-notifications-staging`
 
 ## Credential Presence
 
-Observed staging secret names:
+Observed staging secret names after a fresh `wrangler secret list --env staging` check from `services/notifications`:
 
 - `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN`
 - `NOTIFICATIONS_SERVICE_TOKEN`
@@ -78,7 +79,13 @@ Available internal provider path:
 - service authorization required
 - FCM HTTP v1 client requires Firebase service-account credentials before provider send can be executed
 
-Because no Firebase service-account credential binding is present in the staging Worker, REL-006 provider-backed foreground/background/tap/deeplink runtime was not executed.
+Because no Firebase service-account credential binding is visible on the staging Worker, REL-006 provider-backed foreground/background/tap/deeplink runtime was not executed.
+
+Additional checks:
+
+- The Worker-name override plus `--env staging` was rejected because Wrangler resolved it as `salary-hijacking-notifications-staging-staging`; the config-based invocation from `services/notifications` is the canonical check used here.
+- A delayed recheck still reported only `NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN` and `NOTIFICATIONS_SERVICE_TOKEN`.
+- `/health` and `/ready` stayed HTTP 200; `/ready` redacts FCM client status and cannot substitute for provider-backed delivery evidence.
 
 ## REL-006 Decision
 
