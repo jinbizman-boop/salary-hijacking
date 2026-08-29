@@ -1,27 +1,27 @@
 # Android QA Build Report
 
 LINUX_BUILD_WORKFLOW=Build Android QA Release
-LINUX_BUILD_RUN_ID=33164569125
-LINUX_BUILD_JOB_ID=98826790795
+LINUX_BUILD_RUN_NUMBER=23
+LINUX_BUILD_RUN_ID=33247658350
+LINUX_BUILD_JOB_ID=99087834742
 LINUX_BUILD_STATUS=PASS
+CONTROL_PLANE_REF=main
+CONTROL_PLANE_SHA=6c689525cc8be6b21c3cd08b6a58bdc0efec9a03
+APPLICATION_BUILD_SOURCE=cdee45a0a23142d9c63c79967c734cbdc65cdae3
 
+Checkout frozen RC source=PASS
+Verify RC source lineage=PASS
+Compute current mobile source fingerprint=PASS
 Validate staging QA secrets are present=PASS
 Materialize QA signing and Firebase config=PASS
-Install JS dependencies=PASS
-Validate canonical staging API URL=PASS
+Install dependencies=PASS
 qaRelease build preflight=PASS
 Build full Expo Router qaRelease APK=PASS
 Verify qaRelease APK contract=PASS
 Upload QA APK and no-secret metadata=PASS
 
-ROOT_CAUSE_33070999722=Metro reported `expo-localization` unresolved, but clean current-source preflight proved package, runtime entry, and Metro resolution from `apps/mobile` all PASS. The stale missing-secret diagnosis was incorrect. Follow-on first failing operations were deterministic Android qaRelease build-input defects: Expo prebuild regenerated Android without preserving the `qaRelease` task/signing, and the Gradle/Metro bundle inherited `NODE_ENV=test`, preventing Expo Router's production Babel transform from replacing `process.env.EXPO_ROUTER_APP_ROOT`.
-FIX=Restore qaRelease Gradle config after Expo prebuild, force `NODE_ENV=production` and `BABEL_ENV=production` for Android qaRelease Gradle bundle generation, add deterministic preflight checks for `expo-localization` app resolution, Metro Android resolution, Expo export, and the qaRelease helper, and remove app-code local API bridge host literals from the production bundle.
-
 ANDROID_QA_REQUIRED_SECRET_NAMES=SALARY_HIJACKING_QA_KEYSTORE_BASE64;SALARY_HIJACKING_QA_KEYSTORE_PASSWORD;SALARY_HIJACKING_QA_KEY_ALIAS;SALARY_HIJACKING_QA_KEY_PASSWORD;GOOGLE_SERVICES_JSON_BASE64
 ANDROID_QA_SECRET_PRESENCE=PRESENT_VERIFIED_WITHOUT_VALUES
-
-EXPO_AUTH_REQUIRED=false
-EXPO_AUTH_AVAILABLE=NOT_REQUIRED_FOR_CANONICAL_CI_BUILD
 
 NODE_VERSION=22
 PNPM_VERSION=10.24.0
@@ -33,7 +33,16 @@ GRADLE_VERSION=8.13
 
 X86_64_QARELEASE=PASS
 APK_GENERATED=true
-APK_ARTIFACT_ID=9683220578
-APK_ARTIFACT_DIGEST=sha256:d66beb07aa69aa09b86d3862d19f9946fbd7699409edd12ce67c605cc4a80d67
+APK_ARTIFACT_ID=9713471510
+APK_ARTIFACT_NAME=android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3
+APK_ARTIFACT_DIGEST=sha256:199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e
+ZIP_SHA256=199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e
+APK_SHA256=6f8a89b9f3a43c30ca5af165f77585aa5512e3142340170ca2f6afca0186f798
+BUNDLE_SHA256=ef6ed45e69895b409c465f2c2b1e6e073337fdc724e280e4643fef55609931b0
+SIGNER_SHA256=d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3
 
-No production deploy, Play upload, Phase 10 Stitch acceptance, Phase 11 hardening, ARM64 release build, or Phase 13 physical runtime work was started.
+SOURCE_PRE_RC_GATE=PASS
+NEW_APPLICATION_RC_SOURCE_SHA=cdee45a0a23142d9c63c79967c734cbdc65cdae3
+NEW_RC_SOURCE_FINGERPRINT=DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553
+
+No PHASE 14 work was started. D-013 and D-026 remain pending new-RC runtime evidence.

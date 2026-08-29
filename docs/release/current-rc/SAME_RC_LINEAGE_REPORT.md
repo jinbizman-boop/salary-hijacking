@@ -1,29 +1,38 @@
 # Same-RC Lineage Report
 
 TASK_STATUS=PASS
-TASK_INTERNAL_STATUS=PASS
-TASK_EXTERNAL_STATUS=NONE
+TASK_INTERNAL_STATUS=PASS_SOURCE_PRE_RC_GATE
+TASK_EXTERNAL_STATUS=RUNTIME_PENDING
 
-CURRENT_REPOSITORY_HEAD_BEFORE=646732c70e0a667e064b8b54e939e8d25f63dc76
-CURRENT_REPOSITORY_HEAD_AFTER=f84f50cf7834062eeaf5b21d8193a12443b81294
-CURRENT_REPOSITORY_HEAD_AFTER_BUILD_FIX=08005cff94e4f0661d2ae809d7d508379ab3092a
+CONTROL_PLANE_REF=main
+CONTROL_PLANE_SHA=6c689525cc8be6b21c3cd08b6a58bdc0efec9a03
+APPLICATION_BUILD_SOURCE=cdee45a0a23142d9c63c79967c734cbdc65cdae3
 
-APPLICATION_RC_SOURCE_SHA_BEFORE=80cc5cdfb0758478791b19196e2812e7fa6d671f
-APPLICATION_RC_SOURCE_SHA_AFTER=08005cff94e4f0661d2ae809d7d508379ab3092a
-RC_SOURCE_FINGERPRINT_AFTER=90045513FD9C672C30116747A7E5A8D7E582BE47BF5DB17026B4FD69EA490D49
-RC_SOURCE_COMMIT=08005cff94e4f0661d2ae809d7d508379ab3092a
+APPLICATION_RC_SOURCE_SHA=cdee45a0a23142d9c63c79967c734cbdc65cdae3
+RC_SOURCE_FINGERPRINT=DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553
+RC_SOURCE_COMMIT=cdee45a0a23142d9c63c79967c734cbdc65cdae3
+SOURCE_FILE_COUNT=337
 
-OLD_RC_SOURCE_SHA=80cc5cdfb0758478791b19196e2812e7fa6d671f
+OLD_APPLICATION_RC_SOURCE_SHA=08005cff94e4f0661d2ae809d7d508379ab3092a
 OLD_RC_CURRENT=false
-PREVIOUS_APK_CURRENT=false
+OLD_RC_CLASSIFICATION=HISTORICAL_KNOWN_GOOD_BASELINE_NOT_CURRENT
 
 WORKFLOW=Build Android QA Release
-WORKFLOW_RUN_ID=33164569125
-WORKFLOW_JOB_ID=98826790795
-ARTIFACT_ID=9683220578
-ARTIFACT_NAME=android-qa-release-x86_64-08005cff94e4f0661d2ae809d7d508379ab3092a
-ARTIFACT_DIGEST=sha256:d66beb07aa69aa09b86d3862d19f9946fbd7699409edd12ce67c605cc4a80d67
+WORKFLOW_RUN_NUMBER=23
+WORKFLOW_RUN_ID=33247658350
+WORKFLOW_JOB_ID=99087834742
+ARTIFACT_ID=9713471510
+ARTIFACT_NAME=android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3
+ARTIFACT_DIGEST=sha256:199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e
+ZIP_SHA256=199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e
+APK_SHA256=6f8a89b9f3a43c30ca5af165f77585aa5512e3142340170ca2f6afca0186f798
+BUNDLE_SHA256=ef6ed45e69895b409c465f2c2b1e6e073337fdc724e280e4643fef55609931b0
+SIGNER_SHA256=d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3
 
-The previous `FAIL_MISSING_SECRET` classification is stale. The current successful run verified staging QA secret presence, materialized signing and Firebase config, built the full Expo Router `qaRelease` APK, verified the APK contract, and uploaded the no-secret artifact.
+SOURCE_PRE_RC_GATE=PASS
+D_013=FAIL_PENDING_NEW_RC_RUNTIME
+D_016=PARTIAL
+D_017=PASS
+D_026=FAIL_PENDING_NEW_RC_RUNTIME
 
-The original Run ID `33070999722` failed in the `Build full Expo Router qaRelease APK` step after Metro reported that `expo-localization` could not be resolved from `apps/mobile/src/i18n/index.ts`. Clean current-source preflight showed `expo-localization` is declared, locked, physically resolved from `apps/mobile`, and resolvable by Metro. The actual release-blocking build defects fixed in this closure were the regenerated Expo prebuild Gradle config dropping the `qaRelease` task, the qaRelease Metro bundle inheriting `NODE_ENV=test`, and app-code local API bridge host literals being embedded into the bundle. The final CI run verifies these fixes without rotating or changing staging QA secrets.
+The workflow control-plane commit and application source commit are intentionally distinct. Artifact lineage for the application source is `cdee45a0a23142d9c63c79967c734cbdc65cdae3`. The previous `08005cff94e4f0661d2ae809d7d508379ab3092a` artifacts remain historical baseline evidence only and are not current RC artifacts.

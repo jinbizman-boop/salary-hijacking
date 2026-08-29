@@ -1,114 +1,98 @@
 # Salary Hijacking Execution State Checkpoint
 
-## 2026-08-28 20:12 KST
+## 2026-08-29 20:32 KST
 
-STATUS: PHASE_12_ARTIFACT_LINEAGE_CLOSED
+STATUS: NEW_APPLICATION_RC_FROZEN_PRE_RUNTIME
 CONTINUING: false
 FALSE_COMPLETION_FORBIDDEN: true
+PHASE_14_STARTED: false
 
 ## Canonical Repository
 
 - Canonical root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current HEAD: `f84f50cf7834062eeaf5b21d8193a12443b81294`
-- RC_SOURCE_SHA: `08005cff94e4f0661d2ae809d7d508379ab3092a`
-- APPLICATION_RC_SOURCE_SHA: `08005cff94e4f0661d2ae809d7d508379ab3092a`
-- RC_SOURCE_FINGERPRINT: `90045513FD9C672C30116747A7E5A8D7E582BE47BF5DB17026B4FD69EA490D49`
-- Current source state: dirty by design; `services/api/wrangler.toml` restores the production cron entry removed by HEAD because production trigger changes are not approved for this goal.
+- Current HEAD: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
+- RC_SOURCE_SHA: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
+- APPLICATION_RC_SOURCE_SHA: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
+- RC_SOURCE_FINGERPRINT: `DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553`
+- Workflow control-plane for x86 qaRelease candidate: `main@6c689525cc8be6b21c3cd08b6a58bdc0efec9a03`
+- Application build source: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
 - Truth source: `docs/audit/IMPLEMENTATION_MATRIX.csv`
-- Ignored old roots: `C:/Users/PC/Desktop/salary-hijacking-main`, `C:/Users/PC/Desktop/salary-hijacking-work`
+- Historical baseline RC: `08005cff94e4f0661d2ae809d7d508379ab3092a`
 
-## Truth Matrix
+## Source Pre-RC Gate
 
-- Rows: 423
-- RESOLVED: 20
-- RESOLVED_DIAGNOSTIC_ONLY: 1
-- UNVERIFIED: 395
-- FAIL: 2
-- EXTERNAL_BLOCKER: 5
-- `D-013`: FAIL
-- `D-026`: FAIL
-- `PROJECT_COMPLETION_100`: false
-- `COMMERCIAL_LAUNCH_READY`: false
+- SOURCE_PRE_RC_GATE: PASS
+- GitHub Actions workflow: `Build Android QA Release`
+- GitHub Actions run: `33247658350`
+- GitHub Actions job: `99087834742`
+- Artifact ID: `9713471510`
+- Artifact name: `android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3`
+- Artifact digest: `sha256:199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e`
+- ZIP SHA-256: `199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e`
+- APK SHA-256: `6f8a89b9f3a43c30ca5af165f77585aa5512e3142340170ca2f6afca0186f798`
+- Embedded bundle SHA-256: `ef6ed45e69895b409c465f2c2b1e6e073337fdc724e280e4643fef55609931b0`
+- Signer certificate SHA-256: `d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3`
+- ABI: `x86_64`
+- Application ID: `com.salaryhijacking.mobile`
+- Version: `1.0.0` / `1`
+- Environment: `staging`
 
-`corepack pnpm run check:truthful-completion` is expected to fail until all open matrix rows are closed with current-HEAD runtime evidence.
+## Source Verification
 
-## Storage Gate
+- Stitch native implementation: PASS, 304/304.
+- Stitch design-system coverage: PASS, 304/304.
+- Product required extension states: PASS, 20/20.
+- Production routes migrated: PASS, 28/28.
+- Header duplicated components: 0.
+- Bottom navigation variants in production: 1.
+- Modal states: PASS, 30/30.
+- Bottom sheet states: PASS, 16/16.
+- Legacy UI count: 0.
+- Placeholder UI count: 0.
+- Prototype UI count: 0.
+- WebView UI count: 0.
+- Capture-only production count: 0.
+- Production raw style violations: color 0, typography 0, spacing 0, radius 0, elevation 0, icon size 0.
+- FCM source contract: PASS.
+- FCM native token: PASS.
+- FCM service-auth source: PASS.
+- FCM service-auth staging binding: PASS_SECRET_PRESENCE_CONFIRMED.
+- NEW_RC_CANDIDATE_D017: PASS.
 
-- Artifact storage: PASS, 9.61GB available
-- System drive: PASS, 33.75GB available / 15GB required
-- Work drive: PASS, 33.75GB available / 25GB required
-- Android local build-start: NOT_REQUIRED_FOR_CURRENT_CI_ARTIFACT; Linux GitHub Actions qaRelease build PASS.
-- Latest storage evidence: `artifacts/storage/storage-report.json`
-- Cleanup this checkpoint: removed temporary CI ZIP/extract folders under `D:/salary-hijacking-artifacts/release-artifacts-ci/20260803-e04bba7` and `D:/salary-hijacking-artifacts/mobile-artifacts-ci/20260803-e04bba7`, 45,385,842 bytes total.
+## Static/Build Verification
 
-Heavy local Android Gradle/APK/AAB/export/full visual capture remains outside this checkpoint. Current x86_64 qaRelease artifact evidence is from Linux GitHub Actions Run `33164569125`.
+- Mobile lint: PASS.
+- Mobile typecheck: PASS.
+- Mobile tests: PASS, 110 suites / 879 tests.
+- API contract: PASS.
+- API focused tests: PASS, 42 files / 195 tests.
+- Notification tests: PASS, 8 files / 38 tests.
+- Migration checksum: PASS.
+- RLS regression: PASS.
+- A/B isolation: PASS.
+- Privacy scan: PASS.
+- Security scan: PASS.
+- Secret scan: PASS via repository security/privacy/no-secret gates and APK embedded-secret inspection.
+- Git diff check: PASS.
+- Expo Router Android export: PASS.
+- Metro Android production bundle: PASS.
+- QA bundle preflight: PASS.
+- x86 qaRelease static inspection: PASS.
 
-## Current-Source Verification
+## Current Defect State
 
-- `corepack pnpm --filter @salary-hijacking/mobile run check:eas`: PASS.
-- Focused startup/route contract: PASS, 36/36 tests.
-- `corepack pnpm --filter @salary-hijacking/api run typecheck`: PASS.
-- `corepack pnpm --filter @salary-hijacking/mobile run lint`: PASS.
-- `corepack pnpm --filter @salary-hijacking/mobile run typecheck`: PASS.
-- `corepack pnpm --filter @salary-hijacking/mobile run format:check`: PASS.
-- Full mobile Jest regression: PASS, 103 suites / 853 tests.
-- Root format check attempted but timed out at 304 seconds; it must be rerun with a longer timeout before any current-source release claim.
-- `corepack pnpm run check:artifact-lineage`: PASS for current RC source `08005cff94e4f0661d2ae809d7d508379ab3092a` and `release/evidence/build-artifacts.json`.
+- D-013: FAIL_PENDING_NEW_RC_RUNTIME.
+- D-016: PARTIAL.
+- D-017: PASS.
+- D-026: FAIL_PENDING_NEW_RC_RUNTIME.
+- PROJECT_COMPLETION_100: false.
+- COMMERCIAL_LAUNCH_READY: false.
 
-## Cloudflare/Staging
+## Runtime Boundary
 
-- Wrangler OAuth whoami: PASS.
-- Canonical API host: `https://api-staging.salaryhijacking.com`.
-- API staging `/health`: HTTP 200.
-- API staging `/api/v1/ready`: HTTP 200.
-- Notifications staging `/health`: HTTP 200.
-- Scheduler staging `/health`: HTTP 200.
-- Scheduler cron: PASS for staging canonical schedule `0 23 * * *` via `wrangler triggers deploy --env staging`.
-- API staging secret list contains auth/hash secrets but no `DATABASE_URL` secret. Register/login currently return HTTP 503 with `APP_DATABASE_URL_REQUIRED`.
-- Admin staging public deploy/custom-domain health: UNVERIFIED.
-- D-016 remains EXTERNAL_BLOCKER because Admin staging deploy-health and API DATABASE_URL secret/persistence E2E remain open.
-- Evidence: `D:/salary-hijacking-artifacts/qa/cloudflare-staging-health-cron-e04bba7-20260803.json`.
+New RC runtime evidence has not started. The previous `08005cff94e4f0661d2ae809d7d508379ab3092a` x86, ARM64, Galaxy, lifecycle, and authenticated E2E evidence remains historical known-good baseline evidence only and is not reused as PASS evidence for `cdee45a0a23142d9c63c79967c734cbdc65cdae3`.
 
-## Neon/Staging DB
+## Next Exact Track
 
-- Neon project: `still-feather-22153967` / `salary-hijacking`.
-- Branch/database checked: `br-fragrant-sky-aj5kk2c3` / `neondb`.
-- Public application tables: 39.
-- RLS enabled: 39/39.
-- FORCE RLS: 29.
-- RLS disabled: 0.
-- Default MCP execution role `neondb_owner` has `rolbypassrls=true`, so owner-role reads are not RLS isolation proof.
-- A temporary non-login `NOBYPASSRLS` probe role was created on staging, used for a read-only A/B isolation smoke on `variable_expenses`, then privileges were revoked and the role was dropped.
-- Probe result: user A saw 3 owned rows only; user B saw 2 owned rows only; remaining probe roles: 0.
-- Forward-recovery rehearsal on the app staging branch created/inserted/dropped a temporary rehearsal table and confirmed remaining rehearsal tables: 0.
-- D-017 remains EXTERNAL_BLOCKER until authenticated API persistence E2E passes through deployed staging with a secure DATABASE_URL secret path.
-- Evidence: `D:/salary-hijacking-artifacts/qa/neon-rls-ab-isolation-e04bba7-20260803.json`.
-
-## CI Artifact Inspection
-
-- Android QA workflow: `Build Android QA Release`, Run `33164569125`, Job `98826790795`, PASS.
-- Artifact ID: `9683220578`.
-- Artifact digest: `sha256:d66beb07aa69aa09b86d3862d19f9946fbd7699409edd12ce67c605cc4a80d67`.
-- APK SHA-256: `b5e88f014ec096b204f58e085dd81f72e832b91b732b98ab1a6fd010a80e7d21`.
-- Embedded bundle SHA-256: `07d899be5fe27763a6900f1c33cebe599597ff6f9525ae7818e8d1a01fa02cf7`.
-- Signer certificate SHA-256: `d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3`.
-- ABI: `x86_64`.
-- Application ID: `com.salaryhijacking.mobile`.
-- Version: `1.0.0` / `1`.
-- Environment: `staging`.
-- Static security: debuggable=false, cleartext=false, allowBackup=false, app API local/emulator hosts=0, obsolete staging host=0.
-- Historical `b4bddd943257c68c23fb633983f4e990a588bdc3` APK evidence is preserved only as previous-known-good/stale evidence in `release/evidence/build-artifacts.json`; it is not current lineage.
-
-## Current Blockers
-
-- D-013 FAIL: Stitch 304 production-route Android interaction/visual/a11y/safe-area/keyboard evidence missing from same signed RC APK.
-- D-026 FAIL: PHASE 12 x86_64 qaRelease artifact/static lineage is PASS, but D-026 remains open for PHASE 13 physical/Galaxy runtime plus later Stitch/device gates.
-- D-015 EXTERNAL_BLOCKER: physical ARM64 device/logcat or approved equivalent still needed.
-- D-016 EXTERNAL_BLOCKER: Admin staging deploy-health and API DATABASE_URL secret/persistence E2E remain open.
-- D-017 PASS: Phase 2 database closure and PITR/RPO/RTO evidence remain PASS.
-- D-021/D-028 EXTERNAL_BLOCKER: external runtime/mobile release gates remain open per matrix.
-
-## Next Exact Command
-
-Do not start PHASE 13 automatically. Next entry decision: use the same current-source x86_64 qaRelease artifact lineage from Run `33164569125` as the input for PHASE 13 device/runtime planning, while preserving D-013, D-016, and D-026 as not commercially closed.
+Do not start PHASE 14. Next PHASE 13 work is new-RC runtime validation: x86 authenticated E2E, session restore, cold/resume 20/20, ARM64 same-RC build/static, Galaxy SM-S921N runtime, native FCM registration/provider foreground/background/tap/deeplink, and Stitch 304 plus 20 required-extension visual/a11y/keyboard/safe-area evidence.
