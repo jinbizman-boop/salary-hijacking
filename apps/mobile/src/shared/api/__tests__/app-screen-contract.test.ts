@@ -318,7 +318,7 @@ describe("mobile app screen API and route contracts", () => {
     );
     expect(source).toContain("if (!hasAccessToken)");
     expect(source).toContain(
-      'await persistSessionStatus(fallbackSession, "AUTH_REQUIRED")',
+      'void persistSessionStatus(fallbackSession, "AUTH_REQUIRED")',
     );
     expect(source).toContain('status: "AUTH_REQUIRED"');
     expect(source.indexOf("if (!hasAccessToken)")).toBeLessThan(
@@ -331,6 +331,22 @@ describe("mobile app screen API and route contracts", () => {
     );
     expect(source).toContain("return Boolean(token?.trim())");
     expect(source).toMatch(/catch\s*\{\s*return true;\s*\}/u);
+  });
+
+  it("does not let launcher home restoration wait indefinitely on deep-link probing", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("ROOT_DEEP_LINK_RESOLUTION_TIMEOUT_MS = 250");
+    expect(source).toContain("resolveInitialRootDeepLinkRoute");
+    expect(source).toContain("Promise.race");
+    expect(source).toContain("ROOT_DEEP_LINK_RESOLUTION_TIMEOUT");
+    expect(source).toContain("clearTimeout(timer)");
+    expect(source).toContain(
+      'if (routeKey === "root" && initialDeepLinkRoute === "PENDING") return true',
+    );
+    expect(source.indexOf('initialDeepLinkRoute === "PENDING"')).toBeLessThan(
+      source.indexOf("initialDeepLinkRoute === null"),
+    );
   });
 
   it("uses a fresh cached authenticated session to render home before bootstrap networking", () => {

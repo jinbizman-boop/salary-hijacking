@@ -179,6 +179,7 @@ const PROFILE_ROUTE = "/profile";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
 const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
 const ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS = 60_000;
+const ROOT_DEEP_LINK_RESOLUTION_TIMEOUT_MS = 250;
 const ROOT_DEEP_LINK_ROUTES = new Set([
   "/salary",
   "/plan",
@@ -370,7 +371,9 @@ export default function MobileRootLayout(): unknown {
         ? await readCachedSessionStatus()
         : fallbackSession;
       if (!hasAccessToken) {
-        await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");
+        void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
+          () => undefined,
+        );
         setState((prev: RootState) => ({
           ...prev,
           payload: { ...prev.payload, session: fallbackSession },
@@ -1119,10 +1122,22 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
 async function resolveInitialRootDeepLinkRoute(): Promise<string | null> {
   const mod = loadModule("expo-linking") as Partial<LinkingRuntime>;
   if (typeof mod.getInitialURL !== "function") return null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
   try {
-    return normalizeRootDeepLinkRoute(await mod.getInitialURL());
+    const href = await Promise.race([
+      mod.getInitialURL(),
+      new Promise<"ROOT_DEEP_LINK_RESOLUTION_TIMEOUT">((resolve) => {
+        timer = setTimeout(() => {
+          resolve("ROOT_DEEP_LINK_RESOLUTION_TIMEOUT");
+        }, ROOT_DEEP_LINK_RESOLUTION_TIMEOUT_MS);
+      }),
+    ]);
+    if (href === "ROOT_DEEP_LINK_RESOLUTION_TIMEOUT") return null;
+    return normalizeRootDeepLinkRoute(href);
   } catch {
     return null;
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -1155,6 +1170,7 @@ function shouldRouteAuthenticatedStateToHome(
   routeKey: string,
   initialDeepLinkRoute: InitialDeepLinkRoute,
 ): boolean {
+  if (routeKey === "root" && initialDeepLinkRoute === "PENDING") return true;
   if (routeKey === "root" && initialDeepLinkRoute === null) return true;
   return isAuthenticatedAuthRoute(routeKey);
 }
