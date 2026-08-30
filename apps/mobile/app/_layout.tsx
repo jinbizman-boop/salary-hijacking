@@ -278,6 +278,7 @@ let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
 let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
 
 function hideNativeSplashSafely(): void {
+  if (NativeRuntimeRef.Platform.OS !== "web") return;
   void getSplashScreenRuntime().hideAsync().catch(() => false);
 }
 
