@@ -575,11 +575,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       )?.[0] ?? "";
 
     for (const visibleCopy of [
-      "급여 계획을 서버 기준으로 저장했어요.",
+      "급여 계획을 안전하게 저장했어요.",
       "고정지출을 삭제했어요.",
       "고정저축 목표를 삭제했어요.",
-      "고정지출을 서버 기준으로 수정했어요.",
-      "저축 목표를 서버 기준으로 수정했어요.",
+      "고정지출을 수정했어요.",
+      "저축 목표를 수정했어요.",
     ]) {
       expect(planSource).toContain(visibleCopy);
     }
@@ -2102,7 +2102,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("closeMyLevelProgress");
     expect(cleanScreens).toContain('myLevelRouter.replace("/profile")');
     expect(cleanScreens).toContain("onPress={closeMyLevelProgress}");
-    expect(cleanScreens).toContain("서버 기준으로 최신 현황을 확인했어요.");
+    expect(cleanScreens).toContain("최신 현황을 확인했어요.");
     expect(cleanScreens).toContain("안전한 성장 루틴");
     expect(source("profile/level.tsx")).toContain(
       '<ProfileDetailScreen variant="level" />',
@@ -2118,7 +2118,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         /export function CleanFintechMyLevelProgressScreen\(\): React\.ReactElement \{[\s\S]*?function LevelScreen\(\): React\.ReactElement/u,
       )?.[0] ?? "";
 
-    expect(myLevelSource).toContain("서버 기준으로 최신 현황을 확인했어요.");
+    expect(myLevelSource).toContain("최신 현황을 확인했어요.");
     expect(myLevelSource).toContain("안전한 성장 루틴");
     expect(myLevelSource).toContain("완료된 성장 루틴");
     expect(myLevelSource).not.toContain("rawFinancialDataExposed=false");
@@ -2306,9 +2306,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("profileDisplayBio");
     expect(cleanScreens).toContain("profileOccupationCategory");
     expect(cleanScreens).toContain("submitProfileSettings");
-    expect(profileSettingsSource).toContain(
-      "프로필 설정을 서버 기준으로 저장했어요.",
-    );
+    expect(profileSettingsSource).toContain("프로필 설정을 안전하게 저장했어요.");
     expect(profileSettingsSource).not.toContain(
       "rawFinancialDataExposed=false",
     );

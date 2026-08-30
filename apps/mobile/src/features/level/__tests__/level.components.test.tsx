@@ -70,7 +70,7 @@ describe("level feature components", () => {
 
     expect(screen.getByText("LV 7")).toBeTruthy();
     expect(screen.getByLabelText("LV UP 진행률 88%")).toBeTruthy();
-    expect(screen.getByText("서버 기준 XP")).toBeTruthy();
+    expect(screen.getByText("성장 XP")).toBeTruthy();
     fireEvent.press(screen.getByRole("button", { name: "뉴스 균형 읽기" }));
     expect(onSelect).toHaveBeenCalledWith("news");
   });

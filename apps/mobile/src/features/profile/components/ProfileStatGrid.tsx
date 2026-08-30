@@ -52,7 +52,7 @@ export function ProfileStatGrid({
         <Text style={styles.level}>
           {(stats.selfCareScore / 20).toFixed(1)}점
         </Text>
-        <Text style={styles.meta}>서버 기준 성과</Text>
+        <Text style={styles.meta}>성과 점수</Text>
       </SurfaceCard>
     </View>
   );

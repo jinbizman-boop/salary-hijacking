@@ -15,7 +15,7 @@ export function MissionCompleteDialog({
     <ConfirmDialog
       cancelLabel="닫기"
       confirmLabel="확인"
-      description={`${missionTitle} 완료 기록이 저장되었습니다. XP ${xp}가 서버 기준으로 반영됩니다.`}
+      description={`${missionTitle} 완료 기록이 저장되었습니다. XP ${xp}가 성장 기록에 반영됩니다.`}
       onCancel={onConfirm}
       onConfirm={onConfirm}
       title="LV UP 완료"

@@ -272,9 +272,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileHub).toContain("/salary");
     expect(profileHub).toContain("router.push(item.route as never)");
     expect(profileHub).toContain('router.replace("/salary" as never)');
-    expect(profileHub).toContain(
-      "\uC11C\uBC84 \uAE30\uC900\uC73C\uB85C MY \uB370\uC774\uD130\uB97C \uD655\uC778\uD574\uC694.",
-    );
+    expect(profileHub).toContain("최신 MY 기록을 안전하게 확인해요.");
     expect(profileHub).toContain(
       "\uAE08\uC735 \uC6D0\uBB38\uC740 \uAD11\uACE0\uB098 \uBD84\uC11D\uC5D0 \uC4F0\uC9C0 \uC54A\uC544\uC694.",
     );
@@ -685,7 +683,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(onboarding).toContain("finishOnboarding");
     expect(onboarding).toContain("/plan");
     expect(onboarding).toContain("/salary");
-    expect(onboarding).toContain("서버 기준으로 급여 계획을 저장해요.");
+    expect(onboarding).toContain("급여 계획을 안전하게 저장해요.");
     expect(onboarding).toContain("금융 원문은 광고나 분석에 쓰지 않아요.");
     expect(onboarding).not.toContain("serverAuthority=true");
     expect(onboarding).not.toContain("rawFinancialData=false");

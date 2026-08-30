@@ -74,8 +74,11 @@ describe("profile detail route wiring", () => {
     expect(source).toContain("AppShell");
     expect(source).toContain("AppHeader");
     expect(source).toContain("SurfaceCard");
-    expect(source).toContain("프로필 변경은 서버 기록 기준으로 관리돼요");
+    expect(source).toContain("프로필 변경은 안전하게 저장돼요");
     expect(source).toContain("금융 원문은 광고 추천에 사용하지 않아요");
+    expect(source).not.toContain("<Text style={styles.endpoint}>");
+    expect(source).not.toContain("서버 기록 기준");
+    expect(source).not.toContain("서버 기준으로");
   });
 
   it("uses canonical design tokens and shared modal behavior in profile detail surfaces", () => {

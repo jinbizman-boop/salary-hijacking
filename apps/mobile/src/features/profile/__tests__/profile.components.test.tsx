@@ -92,7 +92,7 @@ describe("profile feature components", () => {
     expect(screen.getByText("18Lv")).toBeTruthy();
     expect(screen.getByLabelText("레벨 업 진행률 88%")).toBeTruthy();
     expect(screen.getByText("4.1점")).toBeTruthy();
-    expect(screen.getByText("서버 기준 성과")).toBeTruthy();
+    expect(screen.getByText("성과 점수")).toBeTruthy();
   });
 
   it("renders expected my page menu actions as accessible buttons", () => {

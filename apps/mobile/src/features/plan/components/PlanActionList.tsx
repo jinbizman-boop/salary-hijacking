@@ -40,7 +40,7 @@ export function PlanActionList({
           />
         </View>
       ))}
-      <Text style={styles.guard}>저장 후 서버 기준으로 다시 계산돼요</Text>
+      <Text style={styles.guard}>저장 후 최신 기준으로 다시 계산돼요</Text>
     </SurfaceCard>
   );
 }

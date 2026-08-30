@@ -81,7 +81,7 @@ export function assertMobileForgotPasswordScreenCompleteness(): {
     "PasswordRecoveryHero",
     "ForgotPasswordForm",
     "authApi.requestPasswordReset",
-    "서버 기준 비밀번호 재설정",
+    "비밀번호 재설정",
     "raw_credential_component_guard",
     "raw_email_log_component_guard",
   ] as const;

@@ -164,7 +164,7 @@ export function NotificationScreen({
           actionText="설정"
           onAction={onSettings}
           onBack={onBack}
-          subtitle="서버 기준 읽음 상태와 딥링크를 확인해요"
+          subtitle="읽음 상태와 딥링크를 확인해요"
           title="알림"
           variant="TITLE_ACTION"
         />
@@ -192,7 +192,7 @@ export function NotificationScreen({
 
         {isRefreshing ? (
           <NotificationStateCard
-            body="서버 기준 알림과 읽음 상태를 확인하고 있습니다."
+            body="알림과 읽음 상태를 확인하고 있습니다."
             primaryLabel="새로고침"
             title="알림을 불러오는 중입니다"
             onPrimary={onRetry}
@@ -218,7 +218,7 @@ export function NotificationScreen({
         ) : null}
         {variant === "error" ? (
           <NotificationStateCard
-            body="서버 응답을 확인하지 못했습니다. 민감한 금융 원문 없이 다시 요청할 수 있어요."
+            body="알림 상태를 확인하지 못했습니다. 민감한 금융 원문 없이 다시 요청할 수 있어요."
             primaryLabel="다시 시도"
             title="알림을 불러오지 못했어요"
             tone="danger"

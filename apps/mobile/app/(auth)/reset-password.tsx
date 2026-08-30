@@ -92,7 +92,7 @@ export function assertMobileResetPasswordScreenCompleteness(): {
     "PasswordRecoveryHero",
     "ResetPasswordForm",
     "authApi.confirmPasswordReset",
-    "서버 기준 비밀번호 재설정",
+    "비밀번호 재설정",
     "reset_token_component_guard",
     "password_render_component_guard",
   ] as const;

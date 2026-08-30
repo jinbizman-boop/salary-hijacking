@@ -26,7 +26,7 @@ export function PlanProgressCard({
     <SurfaceCard accessibilityLabel="plan-progress-card">
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Plan</Text>
-        <Text style={styles.guard}>서버 기준 저장</Text>
+        <Text style={styles.guard}>안전 저장</Text>
       </View>
       <Text style={styles.title}>{title}</Text>
       <MoneyText amount={currentAmountMinor} />

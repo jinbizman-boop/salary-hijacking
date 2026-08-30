@@ -40,7 +40,7 @@ export default function ProfileHubScreen(): React.ReactElement {
         </Text>
         <View style={styles.privacyPill}>
           <Text style={styles.privacyText}>
-            서버 기준으로 MY 데이터를 확인해요.
+            최신 MY 기록을 안전하게 확인해요.
           </Text>
           <Text style={styles.privacyText}>
             금융 원문은 광고나 분석에 쓰지 않아요.

@@ -25,7 +25,7 @@ export function SalaryHeroCard({
 }: SalaryHeroCardProps): React.ReactElement {
   return (
     <View
-      accessibilityLabel={`${title} ${subtitle} 서버 기준 계산`}
+      accessibilityLabel={`${title} ${subtitle} 최신 계산`}
       style={styles.card}
     >
       <View style={styles.copy}>
@@ -35,7 +35,7 @@ export function SalaryHeroCard({
         <Text style={styles.amount}>
           {savedAmount.toLocaleString("ko-KR")}원
         </Text>
-        <Text style={styles.guard}>서버 기준 계산</Text>
+        <Text style={styles.guard}>최신 계산</Text>
       </View>
       <Image
         accessibilityIgnoresInvertColors

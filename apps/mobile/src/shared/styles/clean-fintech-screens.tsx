@@ -293,7 +293,7 @@ const serverUnavailableNotifications: readonly NotificationScreenItem[] = [
     id: "fallback_goal",
     icon: "🏅",
     title: "목표 달성",
-    message: "누적 납치금액 서버 기준 달성",
+    message: "누적 납치금액 목표 달성",
     type: "SAVINGS_GOAL",
     priority: "HIGH",
     isMandatory: false,
@@ -1257,7 +1257,7 @@ export function CleanFintechSplashScreen(): React.ReactElement {
         </Text>
         <SectionCard>
           <Text style={styles.sectionTitle}>이번 달 내가 지켜낼 돈</Text>
-          <Text style={styles.money}>서버 기준 금액</Text>
+          <Text style={styles.money}>확인된 금액</Text>
           <Text style={styles.bodyText}>
             스플래시는 1.2초 안에 로그인 또는 급여 홈으로 자연스럽게 이어지는 첫
             화면 기준입니다.
@@ -1673,7 +1673,7 @@ export function CleanFintechSettingsScreen({
       })
       .then((snapshot) => {
         setProfileNickname(snapshot.user.nickname);
-        setProfileSettingsToast("프로필 설정을 서버 기준으로 저장했어요.");
+        setProfileSettingsToast("프로필 설정을 안전하게 저장했어요.");
       })
       .catch(() => {
         setProfileSettingsToast(
@@ -2118,7 +2118,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
     readonly CommunityComment[]
   >(fallbackPostDetail.comments);
   const [toast, setToast] = useState(
-    "내 게시글과 댓글을 서버 기준으로 확인하는 중이에요.",
+    "내 게시글과 댓글을 최신 기록으로 확인하는 중이에요.",
   );
   const [myCommunityActionPending, setMyCommunityActionPending] = useState<
     string | null
@@ -2367,7 +2367,7 @@ export function CleanFintechPostDetailScreen({
   const [reportReasonText, setReportReasonText] =
     useState("운영 정책 위반으로 신고합니다.");
   const [toast, setToast] = useState(
-    "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
+    "커뮤니티 상세와 댓글을 최신 기록으로 확인하는 중이에요.",
   );
   const activeDetail = serverCommunityDetail ?? fallbackPostDetail;
   const activeComments =
@@ -3810,7 +3810,7 @@ function SalaryHomeScreen(): React.ReactElement {
           ),
         );
         setToast(
-          `${paid.title} ${formatMoney(paid.amountMinor)}원 납부를 서버 기준으로 기록했어요.`,
+          `${paid.title} ${formatMoney(paid.amountMinor)}원 납부를 기록했어요.`,
         );
       } catch {
         setToast(
@@ -3825,7 +3825,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
 
   const metrics: readonly MoneyMetric[] = [
-    { label: "수령금액", value: "서버 기준 금액" },
+    { label: "수령금액", value: "확인된 금액" },
     { label: "지출금액", value: `${formatMoney(preview.monthlyExpense)}원` },
     {
       label: "이번 달 납치금액",
@@ -3839,7 +3839,7 @@ function SalaryHomeScreen(): React.ReactElement {
       <View style={prioritizeDailyBudget ? styles.webCaptureHidden : undefined}>
         <MoneyHeroCard
           label="이번 달 내가 지켜낸 돈"
-          value="서버 기준 금액"
+          value="확인된 금액"
           description="지난달보다 +420,000원 더 지켰어요"
         />
         <MetricGrid metrics={metrics} />
@@ -4079,7 +4079,7 @@ function VariableExpenseActionRow({
       <View style={styles.flex}>
         <Text style={styles.listTitle}>{item.name}</Text>
         <Text style={styles.listMeta}>
-          {formatMoney(item.amount)}원 · 서버 기준 {item.category} ·{" "}
+          {formatMoney(item.amount)}원 · {item.category} ·{" "}
           {item.paymentMethod}
         </Text>
       </View>
@@ -4156,7 +4156,7 @@ function fixedExpenseRowFromServer(
     amountMinor: item.amountMinor,
     id: item.id,
     lastPaidAt: item.lastPaidAt,
-    meta: `${item.dueLabel} · 서버 기준 ${item.status}`,
+    meta: `${item.dueLabel} · ${item.status}`,
     paidTotalMinor: item.paidTotalMinor,
     title: item.title,
   };
@@ -4169,7 +4169,7 @@ function savingsGoalRowFromServer(
     amountMinor: item.fixedSaveAmountMinor,
     currentAmountMinor: item.currentAmountMinor,
     id: item.id,
-    meta: `목표 ${formatMoney(item.targetAmountMinor)}원 · 서버 기준 ${item.status}`,
+    meta: `목표 ${formatMoney(item.targetAmountMinor)}원 · ${item.status}`,
     title: item.title,
   };
 }
@@ -4305,7 +4305,7 @@ function PlanScreen(): React.ReactElement {
         });
         setServerPayrollCalculation(result.calculation);
         if (result.updatedPlan) applyServerPayrollPlan(result.updatedPlan);
-        setPlanToast("서버 기준으로 급여 계획을 다시 계산했어요.");
+        setPlanToast("급여 계획을 최신 기준으로 다시 계산했어요.");
       } catch {
         setServerPayrollCalculation(null);
         setPlanToast("서버 재계산 전 로컬 미리보기로 계산해요.");
@@ -4354,7 +4354,7 @@ function PlanScreen(): React.ReactElement {
           serverPayrollPlan?.variableExpenseReserveMinor ?? 0,
       });
       applyServerPayrollPlan(saved);
-      setPlanToast("급여 계획을 서버 기준으로 저장했어요.");
+        setPlanToast("급여 계획을 안전하게 저장했어요.");
     } catch {
       setPlanToast("급여 계획 저장에 실패했어요. 다시 시도해 주세요.");
     } finally {
@@ -4575,7 +4575,7 @@ function PlanScreen(): React.ReactElement {
 
       planCommitmentUpdateInFlightRef.current = `fixed:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
-      setPlanToast("고정지출을 서버 기준으로 수정하는 중이에요.");
+      setPlanToast("고정지출을 수정하는 중이에요.");
       try {
         const updated = await planCommitmentsApi.updateFixedExpense(item.id, {
           amountMinor,
@@ -4597,7 +4597,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(`${updated.title} 고정지출을 서버 기준으로 수정했어요.`);
+        setPlanToast(`${updated.title} 고정지출을 수정했어요.`);
       } catch {
         setPlanToast("고정지출 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4642,7 +4642,7 @@ function PlanScreen(): React.ReactElement {
 
       planCommitmentUpdateInFlightRef.current = `savings:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
-      setPlanToast("고정저축 목표를 서버 기준으로 수정하는 중이에요.");
+      setPlanToast("고정저축 목표를 수정하는 중이에요.");
       try {
         const updated = await planCommitmentsApi.updateSavingsGoal(item.id, {
           fixedSaveAmountMinor,
@@ -4661,7 +4661,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(`${updated.title} 저축 목표를 서버 기준으로 수정했어요.`);
+        setPlanToast(`${updated.title} 저축 목표를 수정했어요.`);
       } catch {
         setPlanToast("고정저축 목표 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4702,7 +4702,7 @@ function PlanScreen(): React.ReactElement {
           current.map((goal) => (goal.id === deposited.id ? deposited : goal)),
         );
         setPlanToast(
-          `${deposited.title} ${formatMoney(item.amountMinor)}원 납입을 서버 기준으로 기록했어요.`,
+          `${deposited.title} ${formatMoney(item.amountMinor)}원 납입을 기록했어요.`,
         );
       } catch {
         setPlanToast("고정저축 납입 기록에 실패했어요. 다시 시도해 주세요.");
@@ -4748,7 +4748,7 @@ function PlanScreen(): React.ReactElement {
             <Text style={styles.sectionTitle}>목표 달성률</Text>
             <Text style={styles.money}>{achievement}%</Text>
           </View>
-          <StatusPill label={recalculatingPlan ? "재계산" : "서버 기준"} />
+          <StatusPill label={recalculatingPlan ? "재계산" : "최신 기준"} />
         </View>
         <ProgressBar value={achievement} />
         <Text style={styles.bodyText}>
@@ -4763,7 +4763,7 @@ function PlanScreen(): React.ReactElement {
           <StatusPill label="서버 저장" />
         </View>
         <Text style={styles.bodyText}>
-          급여, 고정지출, 고정저축 입력값을 서버 기준 계획으로 저장하고 응답
+          급여, 고정지출, 고정저축 입력값을 최신 계획으로 저장하고 응답
           계산값으로 화면을 다시 맞춥니다.
         </Text>
         <Pressable
@@ -4980,7 +4980,7 @@ function missionFromGrowthTask(task: GrowthTask): Mission {
     title: task.title,
     description:
       task.note ??
-      `${task.progressCount}/${task.targetCount}회 진행 · 서버 권위 LV UP 과제`,
+      `${task.progressCount}/${task.targetCount}회 진행 · LV UP 과제`,
     routeLabel: completed ? "완료됨" : `${task.expReward} XP 받기`,
     xp: task.expReward,
     progressCount: task.progressCount,
@@ -5017,7 +5017,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
   >(null);
   const myLevelMissionCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [toast, setToast] = useState(
-    "내 레벨업 현황을 서버 기준으로 확인하는 중이에요.",
+    "내 레벨업 현황을 최신 기록으로 확인하는 중이에요.",
   );
 
   const refreshMyLevelProgress = useCallback(async (): Promise<void> => {
@@ -5035,7 +5035,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
       setMyLevelActiveTasks(activeTasks.items);
       setMyLevelCompletedTasks(completedTasks.items);
       setToast(
-        `${dashboard.todaySuggestion} · 서버 기준으로 최신 현황을 확인했어요.`,
+        `${dashboard.todaySuggestion} · 최신 현황을 확인했어요.`,
       );
     } catch {
       setMyLevelDashboard(null);
@@ -5134,7 +5134,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         </View>
         <ProgressBar value={progress} />
         <Text style={styles.bodyText}>
-          {formatMoney(totalExp)} / 999 XP · 서버 기준
+          {formatMoney(totalExp)} / 999 XP · 최신 기록
         </Text>
       </SectionCard>
       <Toast message={toast} />
@@ -6712,7 +6712,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
         <SalaryLogo large />
         <Text style={styles.loginTitle}>비밀번호 찾기</Text>
         <Text style={styles.loginSubtitle}>
-          서버 권위 인증으로 계정 복구 요청을 안전하게 보냅니다
+          계정 복구 요청을 안전하게 보냅니다
         </Text>
         <Toast message={toast} />
         <SectionCard>
@@ -6895,7 +6895,7 @@ function LoginScreen(): React.ReactElement {
   const loginSubmitInFlightRef = useRef(false);
   const socialLoginSubmitInFlightRef = useRef(false);
   const [toast, setToast] = useState(
-    "서버 권위 인증으로 급여 데이터를 안전하게 불러옵니다.",
+    "급여 데이터를 안전하게 불러옵니다.",
   );
   const loginAuthApi = useMemo(() => createMobileAuthApi(), []);
   const socialRedirectUri = useMemo(

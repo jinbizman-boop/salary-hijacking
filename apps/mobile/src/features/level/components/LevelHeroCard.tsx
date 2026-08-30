@@ -21,10 +21,10 @@ export function LevelHeroCard({
     Math.round((dashboard.profile.totalExp % 1000) / 10),
   );
   return (
-    <SurfaceCard accessibilityLabel="LV UP 서버 기준 요약">
+    <SurfaceCard accessibilityLabel="LV UP 성장 요약">
       <View style={styles.row}>
         <View>
-          <Text style={styles.kicker}>서버 기준 XP</Text>
+          <Text style={styles.kicker}>성장 XP</Text>
           <Text style={styles.level}>LV {dashboard.profile.level}</Text>
         </View>
         <Text style={styles.exp}>

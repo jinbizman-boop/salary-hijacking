@@ -78,7 +78,7 @@ export default function OnboardingScreen(): React.ReactElement {
       accessibilityLabel="급여납치 온보딩 화면"
       header={
         <AppHeader
-          subtitle="서버 기준으로 급여 계획을 저장해요"
+          subtitle="급여 계획을 안전하게 저장해요"
           title="월급이 사라지기 전에 먼저 붙잡아요"
         />
       }
@@ -86,7 +86,7 @@ export default function OnboardingScreen(): React.ReactElement {
       <View style={styles.content}>
         <SurfaceCard accessibilityLabel="온보딩 보안 안내" style={styles.badge}>
           <Text style={styles.badgeText}>
-            서버 기준으로 급여 계획을 저장해요.
+            급여 계획을 안전하게 저장해요.
           </Text>
           <Text style={styles.badgeText}>
             금융 원문은 광고나 분석에 쓰지 않아요.
