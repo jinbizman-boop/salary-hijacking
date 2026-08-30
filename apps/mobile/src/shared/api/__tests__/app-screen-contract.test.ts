@@ -540,6 +540,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain(
       "return resolveCaptureScreenKindForUrl(location.href)",
     );
+    expect(rootLayout).not.toContain("CAPTURE_SCREENS");
+    expect(rootLayout).not.toContain("salary-no-plan");
+    expect(rootLayout).not.toContain("profile-withdrawal-requested");
 
     const screenshotScript = readFileSync(
       join(
@@ -580,7 +583,7 @@ describe("mobile app screen API and route contracts", () => {
       "expense-delete-blocked",
       "expense-invalidate-reason",
     ]) {
-      expect(rootLayout).toContain(`"${expenseCapture}"`);
+      expect(rootLayout).not.toContain(`"${expenseCapture}"`);
       expect(capturePreviewScreen).toContain(`"${expenseCapture}"`);
       expect(screenshotScript).toContain(`/capture/${expenseCapture}`);
     }
