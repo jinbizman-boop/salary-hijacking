@@ -1,10 +1,8 @@
-import * as Linking from "expo-linking";
-import * as SplashScreen from "expo-splash-screen";
 import { useRouter } from "expo-router";
 import { useEffect, type ReactElement } from "react";
-import { Platform } from "react-native";
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from "react-native";
 
-import { SplashLaunchScreen } from "../src/features/auth/components";
+import { salaryHijackingDesignSystem } from "../src/shared/components/tokens";
 
 declare function require(moduleName: string): unknown;
 
@@ -39,24 +37,41 @@ type CapturePreviewModule = Readonly<{
   CapturePreviewScreen?: CapturePreviewComponent;
   resolveCapturePreviewKind?: (screen: string) => CapturePreviewKind | null;
 }>;
-void SplashScreen.preventAutoHideAsync().catch(() => undefined);
+type LinkingRuntime = Readonly<{
+  addEventListener?: (
+    event: "url",
+    listener: (event: { readonly url: string }) => void,
+  ) => { readonly remove: () => void };
+  getInitialURL?: () => Promise<string | null>;
+  parseInitialURLAsync?: () => Promise<{
+    scheme: string | null;
+    hostname: string | null;
+    path: string | null;
+  }>;
+}>;
+type SplashScreenRuntime = Readonly<{
+  hideAsync?: () => Promise<boolean>;
+}>;
+let cachedLinkingRuntime: LinkingRuntime | null = null;
+let cachedSplashRuntime: SplashScreenRuntime | null = null;
 
-export default function MobileIndexScreen(): React.ReactElement {
+export default function MobileIndexScreen(): ReactElement {
   const router = useRouter();
   const captureScreenKind = readCaptureScreenKind();
 
   useEffect(() => {
     if (captureScreenKind) {
-      void SplashScreen.hideAsync().catch(() => undefined);
+      hideNativeSplashSafely();
       return undefined;
     }
 
     let mounted = true;
-    const subscription = Linking.addEventListener("url", ({ url }) => {
+    const linking = getLinkingRuntime();
+    const subscription = linking.addEventListener?.("url", ({ url }) => {
       const route = normalizeInitialDeepLinkRoute(url);
       if (route) router.replace(route as never);
     });
-    void SplashScreen.hideAsync().catch(() => undefined);
+    hideNativeSplashSafely();
     void resolveInitialDeepLinkRoute().then((route) => {
       if (!mounted) return;
       if (route) router.replace(route as never);
@@ -64,7 +79,7 @@ export default function MobileIndexScreen(): React.ReactElement {
 
     return () => {
       mounted = false;
-      subscription.remove();
+      subscription?.remove();
     };
   }, [captureScreenKind, router]);
 
@@ -73,15 +88,17 @@ export default function MobileIndexScreen(): React.ReactElement {
     return <CapturePreviewScreen kind={captureScreenKind} />;
   }
 
-  return <SplashLaunchScreen routeDelayMs={SPLASH_ROUTE_DELAY_MS} />;
+  return <LaunchTransitionScreen />;
 }
 
 export async function resolveInitialDeepLinkRoute(): Promise<AppRoute | null> {
+  const linking = getLinkingRuntime();
   try {
-    const raw = await Linking.getInitialURL();
-    const route = normalizeInitialDeepLinkRoute(raw);
+    const raw = await linking.getInitialURL?.();
+    const route = normalizeInitialDeepLinkRoute(raw ?? null);
     if (route) return route;
-    const parsed = await Linking.parseInitialURLAsync();
+    const parsed = await linking.parseInitialURLAsync?.();
+    if (!parsed) return null;
     return normalizeInitialDeepLinkRoute(parsedToHref(parsed));
   } catch {
     return null;
@@ -165,8 +182,43 @@ function loadCapturePreviewScreen(): CapturePreviewComponent {
     return mod.CapturePreviewScreen;
   }
   return function CapturePreviewFallback(): ReactElement {
-    return <SplashLaunchScreen routeDelayMs={SPLASH_ROUTE_DELAY_MS} />;
+    return <LaunchTransitionScreen />;
   };
+}
+
+function LaunchTransitionScreen(): ReactElement {
+  const launchIsImmediate = SPLASH_ROUTE_DELAY_MS === 0;
+  return (
+    <View
+      accessibilityHint={launchIsImmediate ? "즉시 이동 준비" : undefined}
+      accessibilityLabel="급여납치 시작 화면"
+      style={styles.launch}
+    >
+      <Text style={styles.title}>급여납치</Text>
+      <Text style={styles.message}>앱을 준비하고 있어요</Text>
+      <ActivityIndicator
+        color={salaryHijackingDesignSystem.colors.brand.primary}
+        size="small"
+      />
+    </View>
+  );
+}
+
+function hideNativeSplashSafely(): void {
+  if (Platform.OS !== "web") return;
+  void getSplashRuntime().hideAsync?.().catch(() => undefined);
+}
+
+function getLinkingRuntime(): LinkingRuntime {
+  if (cachedLinkingRuntime) return cachedLinkingRuntime;
+  cachedLinkingRuntime = require("expo-linking") as LinkingRuntime;
+  return cachedLinkingRuntime;
+}
+
+function getSplashRuntime(): SplashScreenRuntime {
+  if (cachedSplashRuntime) return cachedSplashRuntime;
+  cachedSplashRuntime = require("expo-splash-screen") as SplashScreenRuntime;
+  return cachedSplashRuntime;
 }
 
 function readBrowserLocation(): Readonly<{ href: string }> | null {
@@ -185,9 +237,9 @@ export function assertMobileIndexCompleteness(): {
   const checks = [
     "Salary Hijacking launch components",
     "SALARY HIJACKING",
-    "SplashLaunchScreen",
+    "LaunchTransitionScreen",
     "CapturePreviewScreen",
-    "SplashScreen.hideAsync",
+    "hideNativeSplashSafely",
     "SPLASH_ROUTE_DELAY_MS = 0",
     "no preview auth bypass",
     "resolveInitialDeepLinkRoute",
@@ -201,3 +253,24 @@ export function assertMobileIndexCompleteness(): {
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
 }
+
+const styles = StyleSheet.create({
+  launch: {
+    alignItems: "center",
+    backgroundColor: salaryHijackingDesignSystem.colors.surface.default,
+    flex: 1,
+    gap: salaryHijackingDesignSystem.spacing[3],
+    justifyContent: "center",
+    padding: salaryHijackingDesignSystem.spacing[6],
+  },
+  message: {
+    color: salaryHijackingDesignSystem.colors.text.secondary,
+    ...salaryHijackingDesignSystem.typography.bodyM,
+    textAlign: "center",
+  },
+  title: {
+    color: salaryHijackingDesignSystem.colors.brand.primary,
+    ...salaryHijackingDesignSystem.typography.titleXL,
+    textAlign: "center",
+  },
+});

@@ -657,7 +657,7 @@ describe("mobile app screen API and route contracts", () => {
     );
     expect(indexScreen).toContain("resolveCaptureScreenKindForUrl");
     expect(indexScreen).toContain("loadCapturePreviewScreen");
-    expect(indexScreen).toContain("SplashLaunchScreen");
+    expect(indexScreen).toContain("LaunchTransitionScreen");
     expect(indexScreen).toContain("readBrowserLocation");
     expect(indexScreen).toContain(
       "return resolveCaptureScreenKindForUrl(location.href)",
@@ -734,7 +734,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toMatch(
       /function readBrowserLocation\(\):[\s\S]*?NativeRuntimeRef\.Platform\.OS !== "web"[\s\S]*?window\.location/u,
     );
-    expect(indexScreen).toContain('import { Platform } from "react-native"');
+    expect(indexScreen).toContain("Platform");
     expect(indexScreen).toMatch(
       /function readBrowserLocation\(\):[\s\S]*?Platform\.OS !== "web"[\s\S]*?window\.location/u,
     );
@@ -761,20 +761,24 @@ describe("mobile app screen API and route contracts", () => {
   it("does not leave the launch route stuck on a static splash screen", () => {
     const source = readFileSync(INDEX_SCREEN, "utf8");
 
-    expect(source).toContain("SplashScreen.hideAsync");
+    expect(source).toContain("hideNativeSplashSafely");
+    expect(source).not.toContain('import * as SplashScreen from "expo-splash-screen"');
+    expect(source).not.toContain('import { SplashLaunchScreen } from "../src/features/auth/components"');
     expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 0");
     expect(source).toContain("resolveInitialDeepLinkRoute");
     expect(source).toContain("normalizeInitialDeepLinkRoute");
-    expect(source).toContain('Linking.addEventListener("url"');
-    expect(source).toContain("Linking.getInitialURL");
-    expect(source).toContain("Linking.parseInitialURLAsync");
+    expect(source).toContain('addEventListener?.("url"');
+    expect(source).toContain("linking.getInitialURL?.()");
+    expect(source).toContain("linking.parseInitialURLAsync?.()");
+    expect(source).toContain('require("expo-linking")');
+    expect(source).not.toContain('import * as Linking from "expo-linking"');
     expect(source).toContain("parsedToHref");
     expect(source).not.toContain("pathname || SALARY_HOME_ROUTE");
     expect(source).toContain('return pathname === "/" ? null : pathname;');
     expect(source).toContain('"/community/write"');
     expect(source).toContain("router.replace(route as never)");
     expect(source).not.toContain("setTimeout(() =>");
-    expect(source).toContain("SplashLaunchScreen");
+    expect(source).toContain("LaunchTransitionScreen");
     expect(source).not.toMatch(
       /export default function MobileIndexScreen\(\): React\.ReactElement \{\s*return <CleanFintechSplashScreen \/>;\s*\}/u,
     );
