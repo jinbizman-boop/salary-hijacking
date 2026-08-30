@@ -1,7 +1,14 @@
-import * as WebBrowser from "expo-web-browser";
+/* eslint-disable @typescript-eslint/no-require-imports */
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 
 import {
   AuthVisualFrame,
@@ -16,11 +23,12 @@ import type {
   AuthSocialProvider,
 } from "../../src/features/auth/types";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
-import { appIconAssets } from "../../src/shared/assets/icons";
 import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components";
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
 const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
+const loginBackIcon =
+  require("../../src/shared/assets/icons/common/left.png") as ImageSourcePropType;
 
 export default function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
@@ -68,7 +76,8 @@ export default function LoginScreen(): React.ReactElement {
           );
           return;
         }
-        await WebBrowser.openAuthSessionAsync(
+        const webBrowser = await import("expo-web-browser");
+        await webBrowser.openAuthSessionAsync(
           result.authorizationUrl,
           OAUTH_REDIRECT_URI,
         );
@@ -109,7 +118,7 @@ export default function LoginScreen(): React.ReactElement {
         <Image
           accessibilityIgnoresInvertColors
           resizeMode="contain"
-          source={appIconAssets.common.left}
+          source={loginBackIcon}
           style={styles.backIcon}
         />
       </Pressable>

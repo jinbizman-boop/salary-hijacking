@@ -1,6 +1,12 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+/* eslint-disable @typescript-eslint/no-require-imports */
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 
-import { appIconAssets } from "../../../shared/assets/icons";
 import {
   componentColors,
   componentRadius,
@@ -11,6 +17,8 @@ import {
 
 const typography = salaryHijackingDesignSystem.typography;
 const elevation = salaryHijackingDesignSystem.elevation;
+const salaryHeroCoinsIcon =
+  require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType;
 
 export type SalaryHeroCardProps = Readonly<{
   title: string;
@@ -41,7 +49,7 @@ export function SalaryHeroCard({
         accessibilityIgnoresInvertColors
         accessibilityLabel="납치 금액 코인 아이콘"
         resizeMode="contain"
-        source={appIconAssets.money.coins}
+        source={salaryHeroCoinsIcon}
         style={styles.icon}
       />
     </View>

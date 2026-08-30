@@ -1,10 +1,20 @@
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+/* eslint-disable @typescript-eslint/no-require-imports */
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 
-import { appIconAssets } from "../assets/icons";
-import { appImageAssets } from "../assets/images";
 import { componentColors, salaryHijackingDesignSystem } from "./tokens";
 
 const designSystem = salaryHijackingDesignSystem;
+const headerBackIcon =
+  require("../assets/icons/common/left.png") as ImageSourcePropType;
+const headerBrandLogo =
+  require("../assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 
 export type AppHeaderProps = Readonly<{
   title: string;
@@ -59,7 +69,7 @@ export function AppHeader({
           <Image
             accessibilityIgnoresInvertColors
             resizeMode="contain"
-            source={appIconAssets.common.left}
+            source={headerBackIcon}
             style={styles.backIcon}
           />
         </Pressable>
@@ -76,7 +86,7 @@ export function AppHeader({
             accessibilityIgnoresInvertColors
             accessibilityLabel="급여납치 공식 BI"
             resizeMode="contain"
-            source={appImageAssets.brand.platformLogo}
+            source={headerBrandLogo}
             style={styles.logo}
           />
           <Text style={styles.brandText}>{brandLabel}</Text>

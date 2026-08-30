@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Image,
   Pressable,
@@ -7,7 +8,6 @@ import {
   type ImageSourcePropType,
 } from "react-native";
 
-import { appIconAssets } from "../../../shared/assets/icons";
 import {
   componentColors,
   componentRadius,
@@ -19,6 +19,10 @@ import { authVisualColors } from "./AuthVisualFrame";
 
 const typography = salaryHijackingDesignSystem.typography;
 const designSystem = salaryHijackingDesignSystem;
+const kakaoIcon =
+  require("../../../shared/assets/icons/social/kakao.png") as ImageSourcePropType;
+const naverIcon =
+  require("../../../shared/assets/icons/social/naver.png") as ImageSourcePropType;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
@@ -30,14 +34,14 @@ const SOCIAL_PROVIDERS: readonly {
   {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.kakao,
     foregroundColor: componentColors.textPrimary,
-    icon: appIconAssets.social.kakao,
+    icon: kakaoIcon,
     label: "카카오로 계속하기",
     provider: "KAKAO",
   },
   {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
     foregroundColor: designSystem.colors.text.inverse,
-    icon: appIconAssets.social.naver,
+    icon: naverIcon,
     label: "네이버로 계속하기",
     provider: "NAVER",
   },

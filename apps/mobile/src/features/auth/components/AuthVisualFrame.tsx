@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Image,
   KeyboardAvoidingView,
@@ -7,16 +8,20 @@ import {
   StyleSheet,
   Text,
   View,
+  type ImageSourcePropType,
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { appImageAssets } from "../../../shared/assets/images";
 import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
 
 const AUTH_VISUAL_MIN_BOTTOM_SAFE_GAP = 36;
 const EUREKA_WORLD_LOGO_ASPECT_RATIO = 177 / 1280;
 const designSystem = salaryHijackingDesignSystem;
+const platformLogo =
+  require("../../../shared/assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
+const eurekaWorldLogo =
+  require("../../../shared/assets/images/brand/eureka-world-logo.jpg") as ImageSourcePropType;
 
 export const authVisualColors = {
   brandGreen: designSystem.colors.brand.primary,
@@ -100,7 +105,7 @@ export function AuthBrandLogo({
       <Image
         accessibilityIgnoresInvertColors
         resizeMode="contain"
-        source={appImageAssets.brand.platformLogo}
+        source={platformLogo}
         style={{ height: iconSize, width: iconSize }}
       />
       <Text
@@ -132,7 +137,7 @@ export function EurekaWorldMark(): React.ReactElement {
         accessibilityIgnoresInvertColors
         accessibilityLabel="Eureka World 공식 로고"
         resizeMode="contain"
-        source={appImageAssets.brand.eurekaWorldLogo}
+        source={eurekaWorldLogo}
         style={{ height: logoHeight, width: logoWidth }}
       />
     </View>

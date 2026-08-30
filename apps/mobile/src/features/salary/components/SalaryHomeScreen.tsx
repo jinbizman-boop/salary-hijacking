@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as SecureStore from "expo-secure-store";
@@ -11,6 +12,7 @@ import {
   Text,
   TextInput,
   View,
+  type ImageSourcePropType,
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,8 +30,6 @@ import type {
   PlanFixedExpensePaymentRequest,
   PlanSavingsDepositRequest,
 } from "../../../features/plan/types";
-import { appIconAssets } from "../../../shared/assets/icons";
-import { appImageAssets } from "../../../shared/assets/images";
 import { salaryHijackingDesignSystem } from "../../../shared/components";
 import {
   createMobileBudgetApi,
@@ -80,6 +80,14 @@ const salaryScreenSpacing = designSystem.spacing;
 const salaryScreenRadius = designSystem.radius;
 const salaryScreenTypography = designSystem.typography;
 const salaryScreenElevation = designSystem.elevation;
+const salaryCoinsIcon =
+  require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType;
+const salaryAlarmIcon =
+  require("../../../shared/assets/icons/common/alarm.png") as ImageSourcePropType;
+const salarySettingsIcon =
+  require("../../../shared/assets/icons/common/settings.png") as ImageSourcePropType;
+const salaryBrandLogo =
+  require("../../../shared/assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 const SALARY_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
@@ -701,7 +709,7 @@ export function SalaryHomeScreen({
             <Image
               accessibilityIgnoresInvertColors
               resizeMode="contain"
-              source={appIconAssets.money.coins}
+              source={salaryCoinsIcon}
               style={styles.heroCoin}
             />
             <Text allowFontScaling={false} style={styles.heroSub}>
@@ -1108,7 +1116,7 @@ function BrandHeader({
           accessibilityIgnoresInvertColors
           accessibilityLabel="급여납치 로고"
           resizeMode="contain"
-          source={appImageAssets.brand.platformLogo}
+          source={salaryBrandLogo}
           style={styles.brandLogo}
         />
         <View style={styles.brandCopy}>
@@ -1131,7 +1139,7 @@ function BrandHeader({
           <Image
             accessibilityIgnoresInvertColors
             resizeMode="contain"
-            source={appIconAssets.common.alarm}
+            source={salaryAlarmIcon}
             style={styles.headerActionIcon}
           />
         </Pressable>
@@ -1145,7 +1153,7 @@ function BrandHeader({
           <Image
             accessibilityIgnoresInvertColors
             resizeMode="contain"
-            source={appIconAssets.common.settings}
+            source={salarySettingsIcon}
             style={styles.headerActionIcon}
           />
         </Pressable>
