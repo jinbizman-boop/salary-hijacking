@@ -564,6 +564,28 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
+  it("keeps pending root auth redirects off the launch Slot and duplicated chrome path", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(rootLayout).toContain("const isRouteTransitionPending =");
+    expect(rootLayout).toContain("shouldRouteAuthenticatedStateToHome");
+    expect(rootLayout).toContain(
+      "state.status === \"AUTH_REQUIRED\" && !isPublic",
+    );
+    expect(rootLayout).toMatch(
+      /state\.status === "VERIFY_EMAIL" &&\s*currentRouteKey !== "\(auth\)\/verify-email"/u,
+    );
+    expect(rootLayout).toMatch(
+      /state\.status === "ONBOARDING" && currentRouteKey !== "onboarding"/u,
+    );
+    expect(rootLayout).toMatch(
+      /shouldRenderSlot\s*=\s*[\s\S]*!isRouteTransitionPending/u,
+    );
+    expect(rootLayout).toContain(
+      "const shouldShowRuntimeChrome = !shouldRenderSlot && !isRouteTransitionPending",
+    );
+  });
+
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");

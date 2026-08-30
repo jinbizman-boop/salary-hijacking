@@ -351,6 +351,18 @@ export default function MobileRootLayout(): unknown {
     () => isPublicRoute(segments),
     [segments],
   );
+  const isRouteTransitionPending =
+    captureScreenKind === null &&
+    !isCaptureBrowserPath() &&
+    (((state.status === "READY" || state.status === "OFFLINE") &&
+      shouldRouteAuthenticatedStateToHome(
+        currentRouteKey,
+        initialDeepLinkRoute,
+      )) ||
+      (state.status === "AUTH_REQUIRED" && !isPublic) ||
+      (state.status === "VERIFY_EMAIL" &&
+        currentRouteKey !== "(auth)/verify-email") ||
+      (state.status === "ONBOARDING" && currentRouteKey !== "onboarding"));
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
@@ -509,10 +521,9 @@ export default function MobileRootLayout(): unknown {
 
   const shouldRenderSlot =
     captureScreenKind !== null ||
-    state.status === "READY" ||
-    state.status === "OFFLINE" ||
-    isPublic;
-  const shouldShowRuntimeChrome = !shouldRenderSlot;
+    (!isRouteTransitionPending &&
+      (state.status === "READY" || state.status === "OFFLINE" || isPublic));
+  const shouldShowRuntimeChrome = !shouldRenderSlot && !isRouteTransitionPending;
 
   if (!fontsReady && !fontLoadTimedOut) {
     return h(
