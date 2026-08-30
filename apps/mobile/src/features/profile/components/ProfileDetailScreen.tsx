@@ -63,7 +63,7 @@ const contentByVariant: Record<ProfileDetailVariant, ProfileDetailContent> = {
   level: {
     actionLabel: "LV UP 기록 확인",
     description:
-      "레벨, XP, 미션 완료 여부는 서버 권위 성장 기록으로 계산합니다.",
+      "레벨, XP, 미션 완료 여부를 저장된 성장 기록 기준으로 보여줍니다.",
     endpoint: "/api/v1/growth/users/me/level-progress",
     rows: [
       "중복 완료는 서버 idempotency key와 일일 XP cap으로 차단",
@@ -190,7 +190,7 @@ export function ProfileDetailScreen({
         <ConfirmDialog
           cancelLabel="닫기"
           confirmLabel="확인"
-          description="이 항목은 서버 권위 API 확인 후 안전하게 처리됩니다."
+          description="이 항목은 저장된 계정 상태를 확인한 뒤 안전하게 처리됩니다."
           onCancel={hideActionNotice}
           onConfirm={hideActionNotice}
           title="기능 준비"

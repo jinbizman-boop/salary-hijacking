@@ -207,8 +207,8 @@ const REQUIRED_TOKENS_BY_FILE = {
   "apps/admin/wrangler.jsonc": [
     "salary-hijacking-admin",
     "salary-hijacking-admin-staging",
-    "staging-admin.salaryhijacking.com",
-    '"APP_PUBLIC_BASE_URL": "https://staging-admin.salaryhijacking.com"',
+    "admin-staging.salaryhijacking.com",
+    '"APP_PUBLIC_BASE_URL": "https://admin-staging.salaryhijacking.com"',
     ".open-next/worker.js",
     ".open-next/assets",
     "nodejs_compat",

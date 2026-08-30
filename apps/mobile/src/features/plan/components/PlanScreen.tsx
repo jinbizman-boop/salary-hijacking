@@ -598,7 +598,7 @@ export function PlanScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <AppHeader subtitle="서버 권위 계획" title="계획" variant="ROOT" />
+        <AppHeader subtitle="월급을 지키는 계획" title="계획" variant="ROOT" />
 
         {planError ? (
           <Text

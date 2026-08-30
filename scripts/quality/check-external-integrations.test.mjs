@@ -353,10 +353,10 @@ export default {
     "staging": {
       "name": "salary-hijacking-admin-staging",
       "routes": [
-        { "pattern": "staging-admin.salaryhijacking.com", "custom_domain": true }
+        { "pattern": "admin-staging.salaryhijacking.com", "custom_domain": true }
       ],
       "vars": {
-        "APP_PUBLIC_BASE_URL": "https://staging-admin.salaryhijacking.com"
+        "APP_PUBLIC_BASE_URL": "https://admin-staging.salaryhijacking.com"
       }
     }
   }

@@ -33,6 +33,7 @@ const CAPTURE_ROUTE_SCREEN = join(APP_ROOT, "capture", "[screen].tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
+const SRC_ROOT = join(process.cwd(), "src");
 const TAB_SCREEN_SOURCES = Object.freeze({
   salary: join(APP_ROOT, "(tabs)", "salary", "index.tsx"),
   level: join(APP_ROOT, "(tabs)", "level", "index.tsx"),
@@ -58,6 +59,30 @@ function collectAppSourceFiles(directory: string): readonly string[] {
     const stats = statSync(path);
     if (stats.isDirectory()) {
       files.push(...collectAppSourceFiles(path));
+      continue;
+    }
+    if (/\.(?:ts|tsx)$/.test(entry)) files.push(path);
+  }
+
+  return files;
+}
+
+function collectProductionUiSourceFiles(directory: string): readonly string[] {
+  const files: string[] = [];
+
+  for (const entry of readdirSync(directory)) {
+    const path = join(directory, entry);
+    const stats = statSync(path);
+    if (stats.isDirectory()) {
+      if (
+        path.includes(join("src", "features", "capture")) ||
+        path.includes(join("src", "shared", "styles")) ||
+        path.includes(join("src", "shared", "navigation")) ||
+        path.includes("__tests__")
+      ) {
+        continue;
+      }
+      files.push(...collectProductionUiSourceFiles(path));
       continue;
     }
     if (/\.(?:ts|tsx)$/.test(entry)) files.push(path);
@@ -287,9 +312,13 @@ describe("mobile app screen API and route contracts", () => {
     mojibakeMarkers.forEach((marker) => {
       expect(source).not.toContain(marker);
     });
-    expect(source).toContain("급여납치 앱을 안전하게 시작합니다");
-    expect(source).toContain("앱 상태를 확인하고 있어요");
+    expect(source).toContain("급여납치 앱을 준비하고 있어요");
+    expect(source).toContain("앱을 준비하고 있어요");
     expect(source).toContain("앱 시작 요청이 실패했습니다");
+    expect(source).not.toContain("서버 권위 앱 상태 확인 중");
+    expect(source).not.toContain("서버 권위 설정");
+    expect(source).not.toContain("개인정보 보호 경계를 확인");
+    expect(source).not.toContain("앱 상태를 확인하고 있어요");
   });
 
   it("wraps unreadable root bootstrap response bodies before fallback handling", () => {
@@ -327,9 +356,35 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("renderGate");
     expect(source).toContain("/api/v1/mobile/bootstrap");
     expect(source).toContain("/api/v1/mobile/bootstrap");
-    expect(source).toContain("앱 상태를 확인하고 있어요");
-    expect(source).toContain("급여납치 앱을 안전하게 시작합니다.");
+    expect(source).toContain("앱을 준비하고 있어요");
+    expect(source).toContain("급여납치 앱을 준비하고 있어요.");
+    expect(source).not.toContain("개인정보 보호 경계");
+    expect(source).not.toContain("환경 검사");
+    expect(source).not.toContain("토큰 검증");
+    expect(source).not.toContain("DB 검사");
     expect(source).not.toMatch(MOJIBAKE_PATTERN);
+  });
+
+  it("does not expose server-authority implementation language in production UI copy", () => {
+    const files = [
+      ...collectProductionUiSourceFiles(APP_ROOT),
+      ...collectProductionUiSourceFiles(join(SRC_ROOT, "features")),
+    ];
+    const violations = files.flatMap((path) => {
+      const source = readFileSync(path, "utf8");
+      return [
+        "서버 권위",
+        "server authority",
+        "app state validation",
+        "privacy boundary validation",
+        "environment validation",
+        "bootstrap diagnostics",
+      ]
+        .filter((marker) => source.includes(marker))
+        .map((marker) => `${relative(process.cwd(), path)} exposes ${marker}`);
+    });
+
+    expect(violations).toEqual([]);
   });
 
   it("does not let cached offline sessions bypass verify-email, onboarding, or MFA gates", () => {

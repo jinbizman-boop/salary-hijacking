@@ -839,7 +839,7 @@ export default function MobileRootLayout(): unknown {
     payload: fallbackPayload,
     retrying: false,
     navigationEpoch: 0,
-    toast: { kind: "info", message: "급여납치 앱을 안전하게 시작합니다." },
+    toast: { kind: "info", message: "급여납치 앱을 준비하고 있어요." },
   });
 
   const currentRouteKey = ReactRuntimeRef.useMemo(
@@ -1141,7 +1141,7 @@ function renderGate(
           ? "온보딩을 완료하세요"
           : status === "ERROR"
             ? "앱 시작 실패"
-            : "앱 상태를 확인하고 있어요";
+            : "앱을 준비하고 있어요";
   const message =
     status === "AUTH_REQUIRED"
       ? "안전한 세션 확인 후 급여와 예산 데이터를 불러옵니다."
@@ -1151,7 +1151,7 @@ function renderGate(
           ? "급여일, 고정지출, 고정저축, 일일예산 기본 설정을 완료하세요."
           : status === "OFFLINE"
             ? "네트워크 없이 마지막 세션 상태로 표시합니다."
-            : "세션과 개인정보 보호 상태를 확인합니다.";
+            : "잠시만 기다려 주세요.";
 
   return h(
     NativeRuntimeRef.ScrollView,
@@ -1203,7 +1203,7 @@ function renderRuntimeGuard(_payload: RootPayload): null {
 }
 
 function rootHeaderMessage(payload: RootPayload, status: RootStatus): string {
-  if (status === "BOOTSTRAPPING") return "안전하게 앱을 준비하고 있어요.";
+  if (status === "BOOTSTRAPPING") return "급여납치 앱을 준비하고 있어요.";
   if (status === "AUTH_REQUIRED") return "인증 화면으로 이동합니다.";
   if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
   if (status === "ERROR") return "서비스 오류 상태입니다.";
