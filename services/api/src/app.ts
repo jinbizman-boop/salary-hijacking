@@ -1237,6 +1237,14 @@ function bootstrapAccountStatus(headers: Headers): BootstrapAccountStatus {
   );
 }
 
+function bootstrapSessionExpiresAt(headers: Headers): string | null {
+  const value = headerText(headers, "x-auth-session-expires-at");
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Date(timestamp).toISOString();
+}
+
 function mfaRequiredFor(role: BootstrapRole, mfaVerified: boolean): boolean {
   return (
     (role === "OPERATOR" ||
@@ -1309,7 +1317,7 @@ async function mobileBootstrap<TEnv>(
         onboardingCompleted: authenticated && accountReady,
         mfaRequired: authenticated && mfaRequiredFor(role, mfaVerified),
         accountStatus,
-        sessionExpiresAt: null,
+        sessionExpiresAt: authenticated ? bootstrapSessionExpiresAt(headers) : null,
         rawFinancialDataExposed: false,
         rawPersonalDataExposed: false,
         rawPushTokenExposed: false,

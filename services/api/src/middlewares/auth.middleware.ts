@@ -53,6 +53,7 @@ const CLIENT_ADMIN_OPERATION_HEADERS = new Set([
 
 const AUTH_CONTEXT_SOURCE_HEADER = "x-auth-context-source";
 const AUTH_CONTEXT_VERSION_HEADER = "x-auth-context-version";
+const AUTH_SESSION_EXPIRES_AT_HEADER = "x-auth-session-expires-at";
 
 export type UserRole =
   | "GUEST"
@@ -1694,6 +1695,15 @@ function appendAuthHeaders(
     if (principal.sessionId) headers.set("x-session-id", principal.sessionId);
     if (principal.deviceId) headers.set("x-device-id", principal.deviceId);
     if (principal.tokenId) headers.set("x-auth-token-id", principal.tokenId);
+    if (
+      typeof principal.expiresAtEpochSeconds === "number" &&
+      Number.isFinite(principal.expiresAtEpochSeconds)
+    ) {
+      headers.set(
+        AUTH_SESSION_EXPIRES_AT_HEADER,
+        new Date(principal.expiresAtEpochSeconds * 1000).toISOString(),
+      );
+    }
 
     headers.set(
       "x-auth-mfa-verified",
