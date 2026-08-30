@@ -254,14 +254,6 @@ const SENSITIVE_KEYWORDS = [
   "세션",
   "기기토큰",
 ] as const;
-const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
-  "Freesentation-4Regular": require("../assets/fonts/Freesentation-4Regular.ttf"),
-  "Freesentation-5Medium": require("../assets/fonts/Freesentation-5Medium.ttf"),
-  "Freesentation-6SemiBold": require("../assets/fonts/Freesentation-6SemiBold.ttf"),
-  "Freesentation-7Bold": require("../assets/fonts/Freesentation-7Bold.ttf"),
-  "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
-  "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
-});
 const EMPTY_FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({});
 const OFFICIAL_BI_LOGO = appImageAssets.brand.platformLogo as unknown;
 const ReactRuntimeRef = loadReactRuntime();
@@ -326,7 +318,9 @@ class RootAuthExpiredError extends Error {
 }
 
 export default function MobileRootLayout(): unknown {
-  const [fontsLoaded] = FontRuntimeRef.useFonts(FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : FONT_ASSETS);
+  const [fontsLoaded] = FontRuntimeRef.useFonts(
+    FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : loadRootFontAssets(),
+  );
   const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded;
   const [fontLoadTimedOut, setFontLoadTimedOut] =
     ReactRuntimeRef.useState(false);
@@ -1267,6 +1261,11 @@ function loadRouterRuntime(): RouterRuntime {
   };
 }
 function loadFontRuntime(): FontRuntime {
+  if (NativeRuntimeRef.Platform.OS !== "web") {
+    return {
+      useFonts: (): readonly [boolean, Error | null] => [true, null],
+    };
+  }
   const mod = loadModule("expo-font") as Partial<FontRuntime>;
   return {
     useFonts:
@@ -1275,6 +1274,18 @@ function loadFontRuntime(): FontRuntime {
         : (): readonly [boolean, Error | null] => [true, null],
   };
 }
+
+function loadRootFontAssets(): Readonly<Record<string, unknown>> {
+  return {
+    "Freesentation-4Regular": require("../assets/fonts/Freesentation-4Regular.ttf"),
+    "Freesentation-5Medium": require("../assets/fonts/Freesentation-5Medium.ttf"),
+    "Freesentation-6SemiBold": require("../assets/fonts/Freesentation-6SemiBold.ttf"),
+    "Freesentation-7Bold": require("../assets/fonts/Freesentation-7Bold.ttf"),
+    "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
+    "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
+  };
+}
+
 function loadSplashScreenRuntime(): SplashScreenRuntime {
   const mod = loadModule("expo-splash-screen") as Partial<SplashScreenRuntime>;
   return {
