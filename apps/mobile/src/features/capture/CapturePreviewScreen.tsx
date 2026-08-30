@@ -40,6 +40,7 @@ import {
 } from "../../shared/components";
 import { SalaryHomeScreen } from "../salary/components";
 import { PlanScreen } from "../plan/components";
+import { resolveCaptureKindForStitchSlug } from "./stitch-state-registry";
 import {
   NotificationPreferenceStrip,
   NotificationScreen,
@@ -620,6 +621,17 @@ const contentByKind: Partial<Record<CapturePreviewKind, CaptureContent>> = {
 export type CapturePreviewScreenProps = Readonly<{
   kind: CapturePreviewKind;
 }>;
+
+export function resolveCapturePreviewKind(
+  screen: string,
+): CapturePreviewKind | null {
+  const normalized = screen.trim();
+  if (!/^[A-Za-z0-9_-]{1,96}$/u.test(normalized)) return null;
+  return (
+    resolveCaptureKindForStitchSlug(normalized) ??
+    (normalized as CapturePreviewKind)
+  );
+}
 
 export function CapturePreviewScreen({
   kind,

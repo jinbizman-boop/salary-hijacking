@@ -5,7 +5,6 @@
 
 import { createAuthApi } from "../src/features/auth/api";
 import { subscribeAuthSessionChange } from "../src/features/auth/navigation";
-import { CapturePreviewScreen } from "../src/features/capture";
 import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
 import {
   attachMobileBearerToken,
@@ -114,6 +113,9 @@ type ConstantsRuntime = Readonly<{
       operations?: Readonly<{ e2eBuild?: unknown }>;
     }>;
   }>;
+}>;
+type CapturePreviewModule = Readonly<{
+  CapturePreviewScreen?: ElementType;
 }>;
 type CaptureScreenKind =
   | "salary"
@@ -1145,7 +1147,14 @@ export function ErrorBoundary({
 }
 
 function renderCaptureScreen(kind: CaptureScreenKind): unknown {
-  return h(CapturePreviewScreen, { kind });
+  return h(loadCapturePreviewScreen(), { kind });
+}
+
+function loadCapturePreviewScreen(): ElementType {
+  const mod = loadModule("../src/features/capture") as Partial<
+    CapturePreviewModule
+  >;
+  return mod.CapturePreviewScreen ?? NativeRuntimeRef.View;
 }
 
 function renderRootAppHeader(
@@ -1769,6 +1778,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-constants");
       case "expo-secure-store":
         return require("expo-secure-store");
+      case "../src/features/capture":
+        return require("../src/features/capture");
       default:
         return {};
     }

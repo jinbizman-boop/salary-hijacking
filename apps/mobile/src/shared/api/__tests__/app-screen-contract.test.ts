@@ -500,12 +500,21 @@ describe("mobile app screen API and route contracts", () => {
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
+    const capturePreviewScreen = readFileSync(CAPTURE_PREVIEW_SCREEN, "utf8");
     const captureRouteScreen = readFileSync(CAPTURE_ROUTE_SCREEN, "utf8");
 
     expect(rootLayout).toContain("INITIAL_CAPTURE_SCREEN_KIND");
     expect(rootLayout).toContain("readInitialCaptureScreenKind");
-    expect(rootLayout).toContain("CapturePreviewScreen");
-    expect(indexScreen).toContain("resolveCaptureKindForStitchSlug");
+    expect(rootLayout).not.toContain(
+      'import { CapturePreviewScreen } from "../src/features/capture"',
+    );
+    expect(rootLayout).toContain("loadCapturePreviewScreen");
+    expect(indexScreen).not.toContain(
+      'from "../src/features/capture/stitch-state-registry"',
+    );
+    expect(indexScreen).not.toContain("const captureScreens");
+    expect(indexScreen).toContain("resolveCaptureScreenKindLazily");
+    expect(capturePreviewScreen).toContain("resolveCapturePreviewKind");
     expect(captureRouteScreen).toContain("resolveCaptureKindForStitchSlug");
     expect(rootLayout).not.toContain("CleanFintechScreen");
     expect(rootLayout).not.toContain("CleanFintechLevelDetailScreen");
@@ -521,7 +530,7 @@ describe("mobile app screen API and route contracts", () => {
       'if (next === "READY" && captureScreenKind) return',
     );
     expect(indexScreen).toContain("resolveCaptureScreenKindForUrl");
-    expect(indexScreen).toContain("CapturePreviewScreen");
+    expect(indexScreen).toContain("loadCapturePreviewScreen");
     expect(indexScreen).toContain("SplashLaunchScreen");
     expect(indexScreen).toContain("readBrowserLocation");
     expect(indexScreen).toContain(
@@ -572,7 +581,7 @@ describe("mobile app screen API and route contracts", () => {
       "expense-invalidate-reason",
     ]) {
       expect(rootLayout).toContain(`"${expenseCapture}"`);
-      expect(indexScreen).toContain(`"${expenseCapture}"`);
+      expect(capturePreviewScreen).toContain(`"${expenseCapture}"`);
       expect(screenshotScript).toContain(`/capture/${expenseCapture}`);
     }
   });
