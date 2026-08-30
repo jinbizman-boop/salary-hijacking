@@ -305,6 +305,22 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('if (typeof authApi !== "function") return false');
   });
 
+  it("keeps API base and e2e config resolution off the root module-load path", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).not.toContain(
+      'import { readMobileApiBaseUrl } from "../src/shared/api/api-base";',
+    );
+    expect(source).not.toContain("const API_BASE_URL = readMobileApiBaseUrl()");
+    expect(source).not.toContain("const IS_E2E_BUILD = readMobileE2eBuildEnabled()");
+    expect(source).toContain("function readRootMobileApiBaseUrl()");
+    expect(source).toContain("function isMobileE2eBuildEnabled()");
+    expect(source).toContain('loadModule("../src/shared/api/api-base")');
+    expect(source).toContain(
+      "const apiBaseUrl = readRootMobileApiBaseUrl()",
+    );
+  });
+
   it("bounds root bootstrap network waits before resolving the public login destination", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

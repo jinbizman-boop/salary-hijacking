@@ -4,7 +4,6 @@
  */
 
 import { subscribeAuthSessionChange } from "../src/features/auth/navigation";
-import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
 import {
   attachMobileBearerToken,
   MOBILE_ACCESS_TOKEN_KEY,
@@ -125,6 +124,9 @@ type RootAuthApiModule = Readonly<{
   }) => {
     refresh: () => Promise<unknown>;
   };
+}>;
+type RootApiBaseModule = Readonly<{
+  readMobileApiBaseUrl?: () => string;
 }>;
 
 type SessionSnapshot = Readonly<{
@@ -269,10 +271,9 @@ const RouterRuntimeRef = loadRouterRuntime();
 const SecureStoreRuntimeRef = loadSecureStoreRuntime();
 const FontRuntimeRef = loadFontRuntime();
 const SplashScreenRuntimeRef = loadSplashScreenRuntime();
-const API_BASE_URL = readMobileApiBaseUrl();
-const IS_E2E_BUILD = readMobileE2eBuildEnabled();
 const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
 const SPLASH_FORCE_HIDE_FALLBACK_MS = 800;
+let cachedRootApiBaseUrl: string | null = null;
 
 void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
 
@@ -366,7 +367,7 @@ export default function MobileRootLayout(): unknown {
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
-    if (IS_E2E_BUILD) {
+    if (isMobileE2eBuildEnabled()) {
       setState((prev: RootState) => ({
         ...prev,
         payload: fallbackPayload,
@@ -811,6 +812,7 @@ async function fetchJson(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
+  const apiBaseUrl = readRootMobileApiBaseUrl();
   const headers = new Headers(init.headers);
   headers.set("accept", "application/json");
   headers.set("x-client-platform", String(NativeRuntimeRef.Platform.OS));
@@ -822,7 +824,7 @@ async function fetchJson(
   await attachMobileBearerToken(headers, SecureStoreRuntimeRef);
   if (init.body && !headers.has("content-type"))
     headers.set("content-type", "application/json");
-  return fetchWithTimeout(`${API_BASE_URL}${path}`, {
+  return fetchWithTimeout(`${apiBaseUrl}${path}`, {
     ...init,
     headers,
     credentials: "include",
@@ -870,8 +872,9 @@ async function refreshRootAccessToken(): Promise<boolean> {
   try {
     const authApi = loadRootAuthApi().createAuthApi;
     if (typeof authApi !== "function") return false;
+    const apiBaseUrl = readRootMobileApiBaseUrl();
     await authApi({
-      baseUrl: API_BASE_URL,
+      baseUrl: apiBaseUrl,
       createCorrelationId,
       platform: rootAuthPlatform(),
       tokenStore: SecureStoreRuntimeRef,
@@ -1213,7 +1216,17 @@ function safeBootstrapErrorMessage(
   return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했습니다.";
 }
 
-function readMobileE2eBuildEnabled(): boolean {
+function readRootMobileApiBaseUrl(): string {
+  if (cachedRootApiBaseUrl) return cachedRootApiBaseUrl;
+  const mod = loadModule("../src/shared/api/api-base") as RootApiBaseModule;
+  cachedRootApiBaseUrl =
+    typeof mod.readMobileApiBaseUrl === "function"
+      ? mod.readMobileApiBaseUrl()
+      : "https://api-staging.salaryhijacking.com";
+  return cachedRootApiBaseUrl;
+}
+
+function isMobileE2eBuildEnabled(): boolean {
   const mod = loadModule("expo-constants") as Partial<ConstantsRuntime> & {
     readonly default?: Partial<ConstantsRuntime>;
   };
@@ -1358,6 +1371,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-secure-store");
       case "../src/features/auth/api":
         return require("../src/features/auth/api");
+      case "../src/shared/api/api-base":
+        return require("../src/shared/api/api-base");
       case "../src/shared/components/AppHeader":
         return require("../src/shared/components/AppHeader");
       case "../src/features/capture":
