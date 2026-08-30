@@ -286,6 +286,93 @@ test("fails when a Wrangler package still allows Node 20 runtimes", async () => 
   }
 });
 
+test("fails when the API workspace dependency prebuild omits the security package", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
+
+  try {
+    await writeNodeVersion(rootDir);
+    await mkdir(path.join(rootDir, "services/api"), { recursive: true });
+    await writeFile(
+      path.join(rootDir, "services/api/.node-version"),
+      "22.16.0\n",
+      "utf8",
+    );
+    await writeJson(path.join(rootDir, "services/api/package.json"), {
+      name: "@salary-hijacking/api",
+      engines: {
+        node: ">=22.0.0 <25",
+      },
+      dependencies: {
+        "@salary-hijacking/security": "workspace:*",
+        "@salary-hijacking/utils": "workspace:*",
+      },
+      devDependencies: {
+        wrangler: "^4.107.0",
+      },
+      scripts: {
+        "prepare:workspace-deps":
+          "corepack pnpm --filter @salary-hijacking/utils build",
+        build:
+          "corepack pnpm run clean:dist && corepack pnpm run typecheck && corepack pnpm run build:js",
+        deploy: "corepack pnpm exec wrangler deploy --config wrangler.toml",
+      },
+    });
+
+    const result = runPackageManagerScriptCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /services\/api\/package\.json scripts\.prepare:workspace-deps/,
+    );
+    assert.match(result.failures.join("\n"), /@salary-hijacking\/security/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when API Vitest scripts do not prepare workspace dependencies", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
+
+  try {
+    await writeNodeVersion(rootDir);
+    await mkdir(path.join(rootDir, "services/api"), { recursive: true });
+    await writeFile(
+      path.join(rootDir, "services/api/.node-version"),
+      "22.16.0\n",
+      "utf8",
+    );
+    await writeJson(path.join(rootDir, "services/api/package.json"), {
+      name: "@salary-hijacking/api",
+      engines: {
+        node: ">=22.0.0 <25",
+      },
+      dependencies: {
+        "@salary-hijacking/security": "workspace:*",
+        "@salary-hijacking/utils": "workspace:*",
+      },
+      devDependencies: {
+        wrangler: "^4.107.0",
+      },
+      scripts: {
+        "prepare:workspace-deps":
+          "corepack pnpm --filter @salary-hijacking/security build && corepack pnpm --filter @salary-hijacking/utils build",
+        test: "vitest run --passWithNoTests",
+        "test:unit": "vitest run tests/unit --passWithNoTests",
+        deploy: "corepack pnpm exec wrangler deploy --config wrangler.toml",
+      },
+    });
+
+    const result = runPackageManagerScriptCheck({ rootDir });
+
+    assert.equal(result.ok, false);
+    assert.match(result.failures.join("\n"), /scripts\.test/);
+    assert.match(result.failures.join("\n"), /prepare:workspace-deps/);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when Wrangler packages lack a root Node version pin for Cloudflare builds", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-pnpm-check-"));
 

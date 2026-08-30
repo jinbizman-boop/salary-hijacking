@@ -237,6 +237,42 @@ function checkRootCloudflareDeployEntrypoints(
   }
 }
 
+function checkApiWorkspaceDependencyPrebuild(
+  relativePath,
+  packageJson,
+  failures,
+) {
+  if (relativePath !== "services/api/package.json") return;
+  if (!hasPackageDependency(packageJson, "@salary-hijacking/security")) return;
+
+  const prepareScript = packageJson.scripts?.["prepare:workspace-deps"];
+  if (typeof prepareScript !== "string") {
+    failures.push(
+      `${relativePath} scripts.prepare:workspace-deps: missing API workspace dependency prebuild script`,
+    );
+    return;
+  }
+
+  for (const packageName of [
+    "@salary-hijacking/security",
+    "@salary-hijacking/utils",
+  ]) {
+    if (prepareScript.includes(`--filter ${packageName}`)) continue;
+    failures.push(
+      `${relativePath} scripts.prepare:workspace-deps: must build ${packageName} before API typecheck/build so clean CI can resolve workspace subpath exports`,
+    );
+  }
+
+  for (const scriptName of ["test", "test:unit", "test:integration", "test:e2e"]) {
+    const scriptValue = packageJson.scripts?.[scriptName];
+    if (typeof scriptValue !== "string") continue;
+    if (scriptValue.includes("run prepare:workspace-deps")) continue;
+    failures.push(
+      `${relativePath} scripts.${scriptName}: must run prepare:workspace-deps before Vitest so clean local/CI focused tests can resolve workspace subpath exports`,
+    );
+  }
+}
+
 export function runPackageManagerScriptCheck(options = {}) {
   const rootDir = options.rootDir ?? process.cwd();
   const failures = [];
@@ -292,6 +328,7 @@ export function runPackageManagerScriptCheck(options = {}) {
     }
 
     checkRootCloudflareDeployEntrypoints(relativePath, packageJson, failures);
+    checkApiWorkspaceDependencyPrebuild(relativePath, packageJson, failures);
   }
 
   if (hasWranglerPackage) {
