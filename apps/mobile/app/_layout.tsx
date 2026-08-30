@@ -3,7 +3,6 @@
  * 정적 import와 JSX 없이 Expo Router, React Native, Expo 모듈을 안전하게 로딩한다.
  */
 
-import { createAuthApi } from "../src/features/auth/api";
 import { subscribeAuthSessionChange } from "../src/features/auth/navigation";
 import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
 import {
@@ -117,6 +116,16 @@ type CapturePreviewModule = Readonly<{
   resolveCapturePreviewKind?: (screen: string) => string | null;
 }>;
 type CaptureScreenKind = string;
+type RootAuthApiModule = Readonly<{
+  createAuthApi?: (options: {
+    baseUrl: string;
+    createCorrelationId: () => string;
+    platform: "ios" | "android" | "web";
+    tokenStore: SecureStoreRuntime;
+  }) => {
+    refresh: () => Promise<unknown>;
+  };
+}>;
 
 type SessionSnapshot = Readonly<{
   authenticated: boolean;
@@ -848,7 +857,9 @@ async function parseJsonResponse(response: Response): Promise<unknown> {
 
 async function refreshRootAccessToken(): Promise<boolean> {
   try {
-    await createAuthApi({
+    const authApi = loadRootAuthApi().createAuthApi;
+    if (typeof authApi !== "function") return false;
+    await authApi({
       baseUrl: API_BASE_URL,
       createCorrelationId,
       platform: rootAuthPlatform(),
@@ -1294,6 +1305,10 @@ function loadRootAppHeader(): ElementType {
   return mod.AppHeader ?? NativeRuntimeRef.View;
 }
 
+function loadRootAuthApi(): RootAuthApiModule {
+  return loadModule("../src/features/auth/api") as RootAuthApiModule;
+}
+
 function loadSplashScreenRuntime(): SplashScreenRuntime {
   const mod = loadModule("expo-splash-screen") as Partial<SplashScreenRuntime>;
   return {
@@ -1330,6 +1345,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-constants");
       case "expo-secure-store":
         return require("expo-secure-store");
+      case "../src/features/auth/api":
+        return require("../src/features/auth/api");
       case "../src/shared/components/AppHeader":
         return require("../src/shared/components/AppHeader");
       case "../src/features/capture":

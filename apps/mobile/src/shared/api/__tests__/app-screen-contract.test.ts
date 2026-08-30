@@ -293,6 +293,18 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("keeps the full auth API client off the native launch critical path", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).not.toContain(
+      'import { createAuthApi } from "../src/features/auth/api";',
+    );
+    expect(source).toContain("function loadRootAuthApi()");
+    expect(source).toContain('loadModule("../src/features/auth/api")');
+    expect(source).toContain("const authApi = loadRootAuthApi().createAuthApi");
+    expect(source).toContain('if (typeof authApi !== "function") return false');
+  });
+
   it("bounds root bootstrap network waits before resolving the public login destination", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
