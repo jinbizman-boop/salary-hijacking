@@ -465,7 +465,7 @@ describe("mobile app screen API and route contracts", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
 
-    expect(rootLayout).toContain("shouldRouteReadyStateToHome");
+    expect(rootLayout).toContain("shouldRouteAuthenticatedStateToHome");
     expect(rootLayout).toContain("isAuthenticatedAuthRoute(routeKey)");
     expect(rootLayout).toContain(
       'return routeKey === "root" || isAuthenticatedAuthRoute(routeKey)',
@@ -474,6 +474,19 @@ describe("mobile app screen API and route contracts", () => {
     expect(indexScreen).toContain("resolveInitialDeepLinkRoute");
     expect(indexScreen).not.toContain("MOBILE_ACCESS_TOKEN_KEY");
     expect(indexScreen).not.toContain("resolveInitialRoute");
+  });
+
+  it("routes cached offline authenticated root sessions away from the launch splash", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(rootLayout).toContain("shouldRouteAuthenticatedStateToHome");
+    expect(rootLayout).toMatch(
+      /if\s*\(\s*\(\s*next === "READY"\s*\|\|\s*next === "OFFLINE"\s*\)\s*&&\s*shouldRouteAuthenticatedStateToHome\(currentRouteKey\)\s*\)/u,
+    );
+    expect(rootLayout).toContain("router.replace(SALARY_HOME_ROUTE as never)");
+    expect(rootLayout.indexOf('next === "OFFLINE"')).toBeLessThan(
+      rootLayout.indexOf("renderGate(state.status, state.retrying, bootstrap)"),
+    );
   });
 
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {

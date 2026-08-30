@@ -961,7 +961,10 @@ export default function MobileRootLayout(): unknown {
     const next = state.status;
     if (next === "READY" && captureScreenKind) return;
     if (next === "READY" && isCaptureBrowserPath()) return;
-    if (next === "READY" && shouldRouteReadyStateToHome(currentRouteKey))
+    if (
+      (next === "READY" || next === "OFFLINE") &&
+      shouldRouteAuthenticatedStateToHome(currentRouteKey)
+    )
       router.replace(SALARY_HOME_ROUTE as never);
     if (next === "AUTH_REQUIRED" && !isPublic)
       router.replace(AUTH_LOGIN_ROUTE as never);
@@ -1550,7 +1553,7 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
   );
 }
 
-function shouldRouteReadyStateToHome(routeKey: string): boolean {
+function shouldRouteAuthenticatedStateToHome(routeKey: string): boolean {
   return routeKey === "root" || isAuthenticatedAuthRoute(routeKey);
 }
 
