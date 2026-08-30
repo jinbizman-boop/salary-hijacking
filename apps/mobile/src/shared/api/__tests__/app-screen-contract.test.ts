@@ -677,6 +677,16 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("loadSplashScreenRuntime");
     expect(source).toContain("SplashScreenRuntimeRef.hideAsync");
     expect(source).toContain("fontsLoaded");
+    expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
+    expect(source).toContain(
+      "FontRuntimeRef.useFonts(FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : FONT_ASSETS)",
+    );
+    expect(source).toContain(
+      "const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded",
+    );
+    expect(source).not.toContain(
+      "if (!fontsLoaded && !fontLoadTimedOut)",
+    );
     expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 800");
     expect(source).toContain("hideNativeSplashSafely");
     expect(source).toContain("onLayout: hideNativeSplashSafely");

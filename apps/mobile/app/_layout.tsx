@@ -260,9 +260,11 @@ const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
   "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
   "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
 });
+const EMPTY_FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({});
 const OFFICIAL_BI_LOGO = appImageAssets.brand.platformLogo as unknown;
 const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
+const FONTS_EMBEDDED_IN_NATIVE = NativeRuntimeRef.Platform.OS !== "web";
 const RouterRuntimeRef = loadRouterRuntime();
 const SecureStoreRuntimeRef = loadSecureStoreRuntime();
 const FontRuntimeRef = loadFontRuntime();
@@ -322,7 +324,8 @@ class RootAuthExpiredError extends Error {
 }
 
 export default function MobileRootLayout(): unknown {
-  const [fontsLoaded] = FontRuntimeRef.useFonts(FONT_ASSETS);
+  const [fontsLoaded] = FontRuntimeRef.useFonts(FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : FONT_ASSETS);
+  const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded;
   const [fontLoadTimedOut, setFontLoadTimedOut] =
     ReactRuntimeRef.useState(false);
   const router = RouterRuntimeRef.useRouter();
@@ -450,17 +453,17 @@ export default function MobileRootLayout(): unknown {
   }, []);
 
   ReactRuntimeRef.useEffect((): void => {
-    if (fontsLoaded) hideNativeSplashSafely();
-  }, [fontsLoaded]);
+    if (fontsReady) hideNativeSplashSafely();
+  }, [fontsReady]);
 
   ReactRuntimeRef.useEffect((): (() => void) => {
-    if (fontsLoaded) return (): void => undefined;
+    if (fontsReady) return (): void => undefined;
     const timer = setTimeout(() => {
       setFontLoadTimedOut(true);
       hideNativeSplashSafely();
     }, SPLASH_FORCE_HIDE_FALLBACK_MS);
     return (): void => clearTimeout(timer);
-  }, [fontsLoaded]);
+  }, [fontsReady]);
 
   ReactRuntimeRef.useEffect((): void => {
     const next = state.status;
@@ -494,7 +497,7 @@ export default function MobileRootLayout(): unknown {
     isPublic;
   const shouldShowRuntimeChrome = !shouldRenderSlot;
 
-  if (!fontsLoaded && !fontLoadTimedOut) {
+  if (!fontsReady && !fontLoadTimedOut) {
     return h(
       NativeRuntimeRef.SafeAreaView,
       {
