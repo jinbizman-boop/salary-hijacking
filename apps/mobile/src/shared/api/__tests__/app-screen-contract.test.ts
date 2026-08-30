@@ -321,6 +321,27 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
+  it("keeps secure storage runtime resolution off the root module-load path", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).not.toContain(
+      'from "../src/shared/storage/auth-token"',
+    );
+    expect(source).not.toContain(
+      'from "../src/shared/storage/secure-store"',
+    );
+    expect(source).not.toContain(
+      "const SecureStoreRuntimeRef = loadSecureStoreRuntime()",
+    );
+    expect(source).toContain(
+      'const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token"',
+    );
+    expect(source).toContain("function getSecureStoreRuntime()");
+    expect(source).toContain(
+      'loadModule("../src/shared/storage/secure-store")',
+    );
+  });
+
   it("bounds root bootstrap network waits before resolving the public login destination", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
@@ -355,7 +376,7 @@ describe("mobile app screen API and route contracts", () => {
       ),
     );
     expect(source).toContain(
-      "const token = await SecureStoreRuntimeRef.getItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
+      "const token = await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
     );
     expect(source).toContain("return Boolean(token?.trim())");
     expect(source).toMatch(/catch\s*\{\s*return true;\s*\}/u);
@@ -460,10 +481,10 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("RootAuthExpiredError");
     expect(source).toContain("clearRootAuthenticatedSession");
     expect(source).toContain(
-      "await SecureStoreRuntimeRef.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
+      "await getSecureStoreRuntime().deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
     );
     expect(source).toContain(
-      "await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY)",
+      "await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY)",
     );
     expect(source).toContain('status: "AUTH_REQUIRED"');
     expect(source).toContain("router.replace(AUTH_LOGIN_ROUTE as never)");

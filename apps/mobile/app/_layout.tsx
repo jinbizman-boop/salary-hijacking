@@ -5,14 +5,9 @@
 
 import { subscribeAuthSessionChange } from "../src/features/auth/navigation";
 import {
-  attachMobileBearerToken,
-  MOBILE_ACCESS_TOKEN_KEY,
-} from "../src/shared/storage/auth-token";
-import {
   componentColors,
   salaryHijackingDesignSystem,
 } from "../src/shared/components/tokens";
-import { createSecureStoreRuntime } from "../src/shared/storage/secure-store";
 
 declare function require(moduleName: string): unknown;
 
@@ -128,6 +123,12 @@ type RootAuthApiModule = Readonly<{
 type RootApiBaseModule = Readonly<{
   readMobileApiBaseUrl?: () => string;
 }>;
+type RootSecureStoreModule = Readonly<{
+  createSecureStoreRuntime?: (
+    platform: string,
+    nativeStore: Partial<SecureStoreRuntime>,
+  ) => SecureStoreRuntime;
+}>;
 
 type SessionSnapshot = Readonly<{
   authenticated: boolean;
@@ -185,6 +186,7 @@ const AUTH_VERIFY_ROUTE = "/(auth)/verify-email";
 const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
+const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
 const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
 const ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS = 60_000;
@@ -268,12 +270,12 @@ const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
 const FONTS_EMBEDDED_IN_NATIVE = NativeRuntimeRef.Platform.OS !== "web";
 const RouterRuntimeRef = loadRouterRuntime();
-const SecureStoreRuntimeRef = loadSecureStoreRuntime();
 const FontRuntimeRef = loadFontRuntime();
 const SplashScreenRuntimeRef = loadSplashScreenRuntime();
 const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
 const SPLASH_FORCE_HIDE_FALLBACK_MS = 800;
 let cachedRootApiBaseUrl: string | null = null;
+let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
 
 void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
 
@@ -821,7 +823,7 @@ async function fetchJson(
   headers.set("x-raw-personal-data-exposed", "false");
   headers.set("x-raw-push-token-exposed", "false");
   headers.set("x-ad-financial-targeting-used", "false");
-  await attachMobileBearerToken(headers, SecureStoreRuntimeRef);
+  await attachRootMobileBearerToken(headers);
   if (init.body && !headers.has("content-type"))
     headers.set("content-type", "application/json");
   return fetchWithTimeout(`${apiBaseUrl}${path}`, {
@@ -877,11 +879,9 @@ async function refreshRootAccessToken(): Promise<boolean> {
       baseUrl: apiBaseUrl,
       createCorrelationId,
       platform: rootAuthPlatform(),
-      tokenStore: SecureStoreRuntimeRef,
+      tokenStore: getSecureStoreRuntime(),
     }).refresh();
-    const token = await SecureStoreRuntimeRef.getItemAsync(
-      MOBILE_ACCESS_TOKEN_KEY,
-    );
+    const token = await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
     return Boolean(token?.trim());
   } catch {
     return false;
@@ -890,7 +890,7 @@ async function refreshRootAccessToken(): Promise<boolean> {
 
 async function hasStoredAccessToken(): Promise<boolean> {
   try {
-    const token = await SecureStoreRuntimeRef.getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    const token = await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
     return Boolean(token?.trim());
   } catch {
     return true;
@@ -899,9 +899,9 @@ async function hasStoredAccessToken(): Promise<boolean> {
 
 async function clearRootAuthenticatedSession(): Promise<void> {
   try {
-    await SecureStoreRuntimeRef.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
   } finally {
-    await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY);
   }
 }
 
@@ -1052,17 +1052,17 @@ async function persistSessionStatus(
     rawPushTokenExposed: false,
     adsFinancialTargetingUsed: false,
   });
-  await SecureStoreRuntimeRef.setItemAsync(SECURE_SESSION_KEY, safe);
+  await getSecureStoreRuntime().setItemAsync(SECURE_SESSION_KEY, safe);
 }
 
 async function readCachedSessionStatus(): Promise<SessionSnapshot> {
-  const cached = await SecureStoreRuntimeRef.getItemAsync(SECURE_SESSION_KEY);
+  const cached = await getSecureStoreRuntime().getItemAsync(SECURE_SESSION_KEY);
   if (!cached) return fallbackSession;
   try {
     const parsed = JSON.parse(cached) as Partial<SessionSnapshot>;
     return normalizeSession({ ...fallbackSession, ...parsed });
   } catch {
-    await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY);
     return fallbackSession;
   }
 }
@@ -1226,6 +1226,27 @@ function readRootMobileApiBaseUrl(): string {
   return cachedRootApiBaseUrl;
 }
 
+function getSecureStoreRuntime(): SecureStoreRuntime {
+  if (cachedSecureStoreRuntime) return cachedSecureStoreRuntime;
+  cachedSecureStoreRuntime = loadSecureStoreRuntime();
+  return cachedSecureStoreRuntime;
+}
+
+async function attachRootMobileBearerToken(headers: Headers): Promise<Headers> {
+  const token = normalizeBearerToken(
+    await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY),
+  );
+  if (token) headers.set("authorization", `Bearer ${token}`);
+  return headers;
+}
+
+function normalizeBearerToken(value: string | null): string | null {
+  const token = value?.trim();
+  if (!token || token.length > 8_192) return null;
+  if (/\s/u.test(token)) return null;
+  return token;
+}
+
 function isMobileE2eBuildEnabled(): boolean {
   const mod = loadModule("expo-constants") as Partial<ConstantsRuntime> & {
     readonly default?: Partial<ConstantsRuntime>;
@@ -1348,7 +1369,10 @@ function loadSplashScreenRuntime(): SplashScreenRuntime {
 }
 function loadSecureStoreRuntime(): SecureStoreRuntime {
   const mod = loadModule("expo-secure-store") as Partial<SecureStoreRuntime>;
-  return createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod);
+  const helper = loadModule("../src/shared/storage/secure-store") as RootSecureStoreModule;
+  return typeof helper.createSecureStoreRuntime === "function"
+    ? helper.createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod)
+    : fallbackSecureStoreRuntime();
 }
 function loadModule(moduleName: string): unknown {
   try {
@@ -1373,6 +1397,8 @@ function loadModule(moduleName: string): unknown {
         return require("../src/features/auth/api");
       case "../src/shared/api/api-base":
         return require("../src/shared/api/api-base");
+      case "../src/shared/storage/secure-store":
+        return require("../src/shared/storage/secure-store");
       case "../src/shared/components/AppHeader":
         return require("../src/shared/components/AppHeader");
       case "../src/features/capture":
@@ -1430,6 +1456,13 @@ function fallbackUseState<TValue>(
     initial,
     (_next: TValue | ((previous: TValue) => TValue)): void => undefined,
   ];
+}
+function fallbackSecureStoreRuntime(): SecureStoreRuntime {
+  return {
+    getItemAsync: async (): Promise<string | null> => null,
+    setItemAsync: async (): Promise<void> => undefined,
+    deleteItemAsync: async (): Promise<void> => undefined,
+  };
 }
 function fallbackStyleCreate<
   TStyles extends Record<string, Readonly<Record<string, unknown>>>,
