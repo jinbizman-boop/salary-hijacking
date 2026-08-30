@@ -30,6 +30,7 @@ const CAPTURE_PREVIEW_SCREEN = join(
   "CapturePreviewScreen.tsx",
 );
 const CAPTURE_ROUTE_SCREEN = join(APP_ROOT, "capture", "[screen].tsx");
+const CAPTURE_WEB_ROUTE_SCREEN = join(APP_ROOT, "capture", "[screen].web.tsx");
 const ONBOARDING_SCREEN = join(APP_ROOT, "onboarding.tsx");
 const VERIFY_EMAIL_SCREEN = join(APP_ROOT, "(auth)", "verify-email.tsx");
 const OAUTH_CALLBACK_SCREEN = join(APP_ROOT, "auth", "oauth", "callback.tsx");
@@ -628,6 +629,7 @@ describe("mobile app screen API and route contracts", () => {
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
     const capturePreviewScreen = readFileSync(CAPTURE_PREVIEW_SCREEN, "utf8");
     const captureRouteScreen = readFileSync(CAPTURE_ROUTE_SCREEN, "utf8");
+    const captureWebRouteScreen = readFileSync(CAPTURE_WEB_ROUTE_SCREEN, "utf8");
 
     expect(rootLayout).toContain("INITIAL_CAPTURE_SCREEN_KIND");
     expect(rootLayout).toContain("readInitialCaptureScreenKind");
@@ -641,7 +643,10 @@ describe("mobile app screen API and route contracts", () => {
     expect(indexScreen).not.toContain("const captureScreens");
     expect(indexScreen).toContain("resolveCaptureScreenKindLazily");
     expect(capturePreviewScreen).toContain("resolveCapturePreviewKind");
-    expect(captureRouteScreen).toContain("resolveCaptureKindForStitchSlug");
+    expect(captureRouteScreen).not.toContain("resolveCaptureKindForStitchSlug");
+    expect(captureRouteScreen).not.toContain("CapturePreviewScreen");
+    expect(captureWebRouteScreen).toContain("resolveCapturePreviewKindLazily");
+    expect(captureWebRouteScreen).toContain("loadCapturePreviewScreen");
     expect(rootLayout).not.toContain("CleanFintechScreen");
     expect(rootLayout).not.toContain("CleanFintechLevelDetailScreen");
     expect(rootLayout).not.toContain("CleanFintechMyLevelProgressScreen");
@@ -717,13 +722,16 @@ describe("mobile app screen API and route contracts", () => {
 
   it("keeps screenshot capture routes web-only so native production cannot show preview screens", () => {
     const source = readFileSync(CAPTURE_ROUTE_SCREEN, "utf8");
+    const webSource = readFileSync(CAPTURE_WEB_ROUTE_SCREEN, "utf8");
 
-    expect(source).toContain('import { Platform } from "react-native"');
-    expect(source).toContain('Platform.OS !== "web"');
     expect(source).toContain('<Redirect href="/salary" />');
-    expect(source.indexOf('Platform.OS !== "web"')).toBeLessThan(
-      source.indexOf("<CapturePreviewScreen"),
-    );
+    expect(source).not.toContain('import { Platform } from "react-native"');
+    expect(source).not.toContain("CapturePreviewScreen");
+    expect(source).not.toContain("captureScreens");
+    expect(webSource).toContain("resolveCapturePreviewKindLazily");
+    expect(webSource).toContain("loadCapturePreviewScreen");
+    expect(webSource).not.toContain("captureScreens");
+    expect(webSource).not.toContain("from \"../../src/features/capture\"");
   });
 
   it("keeps root and launch capture preview rendering behind a web platform guard", () => {

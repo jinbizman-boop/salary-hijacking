@@ -22,6 +22,16 @@ const workspaceRoot = path.resolve(projectRoot, "../..");
 const realWorkspaceRoot = fs.realpathSync.native(workspaceRoot);
 const config = getDefaultConfig(projectRoot);
 
+config.transformer = {
+  ...config.transformer,
+  getTransformOptions: async () => ({
+    transform: {
+      experimentalImportSupport: false,
+      inlineRequires: true,
+    },
+  }),
+};
+
 function appendUniquePath(paths, nextPath) {
   const normalizedNextPath = path.resolve(nextPath).toLowerCase();
   if (

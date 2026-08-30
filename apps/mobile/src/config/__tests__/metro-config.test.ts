@@ -16,6 +16,14 @@ type ResolverContext = Readonly<{
 
 type MetroConfig = Readonly<{
   watchFolders?: readonly string[];
+  transformer?: Readonly<{
+    getTransformOptions?: () => Promise<{
+      transform: Readonly<{
+        experimentalImportSupport: boolean;
+        inlineRequires: boolean;
+      }>;
+    }>;
+  }>;
   resolver: Readonly<{
     resolveRequest: (
       context: ResolverContext,
@@ -75,6 +83,17 @@ const testMobileAppEntry = nodePath.resolve(
 );
 
 describe("mobile Metro dependency resolution", () => {
+  it("enables inline requires for Android release startup", async () => {
+    await expect(
+      metroConfig.transformer?.getTransformOptions?.(),
+    ).resolves.toMatchObject({
+      transform: {
+        experimentalImportSupport: false,
+        inlineRequires: true,
+      },
+    });
+  });
+
   it("watches the workspace root so the Android root entry can be bundled", () => {
     const normalizedWatchFolders = new Set(
       (metroConfig.watchFolders ?? []).map((entry) =>
