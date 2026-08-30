@@ -468,6 +468,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain("shouldRouteAuthenticatedStateToHome");
     expect(rootLayout).toContain("isAuthenticatedAuthRoute(routeKey)");
     expect(rootLayout).toContain(
+      'routeKey === "root" && initialDeepLinkRoute === null',
+    );
+    expect(rootLayout).toContain("resolveInitialRootDeepLinkRoute");
+    expect(rootLayout).toContain("ROOT_DEEP_LINK_ROUTES");
+    expect(rootLayout).not.toContain(
       'return routeKey === "root" || isAuthenticatedAuthRoute(routeKey)',
     );
     expect(indexScreen).not.toContain("resolveInitialLaunchTarget");
@@ -481,7 +486,10 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(rootLayout).toContain("shouldRouteAuthenticatedStateToHome");
     expect(rootLayout).toMatch(
-      /if\s*\(\s*\(\s*next === "READY"\s*\|\|\s*next === "OFFLINE"\s*\)\s*&&\s*shouldRouteAuthenticatedStateToHome\(currentRouteKey\)\s*\)/u,
+      /if\s*\(\s*\(\s*next === "READY"\s*\|\|\s*next === "OFFLINE"\s*\)\s*&&\s*shouldRouteAuthenticatedStateToHome\(currentRouteKey,\s*initialDeepLinkRoute\)\s*\)/u,
+    );
+    expect(rootLayout).toContain(
+      'if (routeKey === "root" && initialDeepLinkRoute === null) return true',
     );
     expect(rootLayout).toContain("router.replace(SALARY_HOME_ROUTE as never)");
     expect(rootLayout.indexOf('next === "OFFLINE"')).toBeLessThan(

@@ -100,6 +100,9 @@ type SplashScreenRuntime = Readonly<{
   hideAsync: () => Promise<boolean>;
   preventAutoHideAsync: () => Promise<boolean>;
 }>;
+type LinkingRuntime = Readonly<{
+  getInitialURL: () => Promise<string | null>;
+}>;
 type SecureStoreRuntime = Readonly<{
   getItemAsync: (key: string) => Promise<string | null>;
   setItemAsync: (key: string, value: string) => Promise<void>;
@@ -424,6 +427,7 @@ type RootState = Readonly<{
   navigationEpoch: number;
   toast: Readonly<{ kind: ToastKind; message: string }>;
 }>;
+type InitialDeepLinkRoute = string | null | "PENDING";
 
 const ROOT_LAYOUT_VERSION = "3.1.0";
 const designSystem = salaryHijackingDesignSystem;
@@ -435,6 +439,26 @@ const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
 const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
+const ROOT_DEEP_LINK_ROUTES = new Set([
+  "/salary",
+  "/plan",
+  "/level",
+  "/level/reading",
+  "/level/news",
+  "/level/english",
+  "/level/health",
+  "/notifications",
+  "/notifications/settings",
+  "/community",
+  "/community/write",
+  "/profile",
+  "/profile/settings",
+  "/profile/community",
+  "/profile/level",
+  "/profile/notices",
+  "/profile/support",
+  "/profile/account",
+]);
 const PUBLIC_SEGMENTS = [
   "(auth)",
   "login",
@@ -842,6 +866,8 @@ export default function MobileRootLayout(): unknown {
     navigationEpoch: 0,
     toast: { kind: "info", message: "급여납치 앱을 준비하고 있어요." },
   });
+  const [initialDeepLinkRoute, setInitialDeepLinkRoute] =
+    ReactRuntimeRef.useState<InitialDeepLinkRoute>("PENDING");
 
   const currentRouteKey = ReactRuntimeRef.useMemo(
     () => normalizeSegments(segments).join("/") || "root",
@@ -928,6 +954,16 @@ export default function MobileRootLayout(): unknown {
     void bootstrap();
   }, [bootstrap]);
 
+  ReactRuntimeRef.useEffect((): (() => void) => {
+    let mounted = true;
+    void resolveInitialRootDeepLinkRoute().then((route) => {
+      if (mounted) setInitialDeepLinkRoute(route);
+    });
+    return (): void => {
+      mounted = false;
+    };
+  }, []);
+
   ReactRuntimeRef.useEffect(
     (): (() => void) =>
       subscribeAuthSessionChange(() => {
@@ -963,7 +999,7 @@ export default function MobileRootLayout(): unknown {
     if (next === "READY" && isCaptureBrowserPath()) return;
     if (
       (next === "READY" || next === "OFFLINE") &&
-      shouldRouteAuthenticatedStateToHome(currentRouteKey)
+      shouldRouteAuthenticatedStateToHome(currentRouteKey, initialDeepLinkRoute)
     )
       router.replace(SALARY_HOME_ROUTE as never);
     if (next === "AUTH_REQUIRED" && !isPublic)
@@ -976,6 +1012,7 @@ export default function MobileRootLayout(): unknown {
     captureScreenKind,
     currentRouteKey,
     isPublic,
+    initialDeepLinkRoute,
     router,
     state.navigationEpoch,
     state.status,
@@ -1553,8 +1590,47 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
   );
 }
 
-function shouldRouteAuthenticatedStateToHome(routeKey: string): boolean {
-  return routeKey === "root" || isAuthenticatedAuthRoute(routeKey);
+async function resolveInitialRootDeepLinkRoute(): Promise<string | null> {
+  const mod = loadModule("expo-linking") as Partial<LinkingRuntime>;
+  if (typeof mod.getInitialURL !== "function") return null;
+  try {
+    return normalizeRootDeepLinkRoute(await mod.getInitialURL());
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRootDeepLinkRoute(href: string | null): string | null {
+  if (!href) return null;
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
+  }
+  const route = rootRoutePathFromUrl(url);
+  if (!route) return null;
+  if (ROOT_DEEP_LINK_ROUTES.has(route)) return route;
+  if (/^\/community\/[A-Za-z0-9_-]{1,80}$/u.test(route)) return route;
+  return null;
+}
+
+function rootRoutePathFromUrl(url: URL): string | null {
+  const pathname = url.pathname.startsWith("/")
+    ? url.pathname
+    : `/${url.pathname}`;
+  if (url.protocol === "https:") return pathname === "/" ? null : pathname;
+  const host = url.hostname;
+  if (!host || host === "app") return pathname === "/" ? null : pathname;
+  return `/${[host, pathname.replace(/^\//u, "")].filter(Boolean).join("/")}`;
+}
+
+function shouldRouteAuthenticatedStateToHome(
+  routeKey: string,
+  initialDeepLinkRoute: InitialDeepLinkRoute,
+): boolean {
+  if (routeKey === "root" && initialDeepLinkRoute === null) return true;
+  return isAuthenticatedAuthRoute(routeKey);
 }
 
 function normalizeSegments(segments: readonly string[]): readonly string[] {
@@ -1687,6 +1763,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-font");
       case "expo-splash-screen":
         return require("expo-splash-screen");
+      case "expo-linking":
+        return require("expo-linking");
       case "expo-constants":
         return require("expo-constants");
       case "expo-secure-store":
