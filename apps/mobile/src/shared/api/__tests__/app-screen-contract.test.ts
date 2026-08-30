@@ -299,6 +299,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1800");
     expect(source).toContain("fetchWithTimeout");
     expect(source).toContain("AbortController");
+    expect(source).toContain("Promise.race");
+    expect(source).toContain("ROOT_BOOTSTRAP_REQUEST_TIMEOUT");
     expect(source).toContain("clearTimeout(timer)");
     expect(source).toContain(
       "const cachedStatus = offlineStatusFromCachedSession(cached, isPublic)",

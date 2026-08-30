@@ -1273,16 +1273,21 @@ async function fetchWithTimeout(
   input: string,
   init: RequestInit,
 ): Promise<Response> {
-  if (init.signal) return fetch(input, init);
-  const controller = new AbortController();
-  const timer = setTimeout(
-    () => controller.abort(),
-    ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS,
-  );
+  const controller = init.signal ? null : new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller?.abort();
+      reject(new Error("ROOT_BOOTSTRAP_REQUEST_TIMEOUT"));
+    }, ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS);
+  });
+  const fetchInit: RequestInit = init.signal
+    ? init
+    : { ...init, signal: controller?.signal ?? null };
   try {
-    return await fetch(input, { ...init, signal: controller.signal });
+    return await Promise.race([fetch(input, fetchInit), timeout]);
   } finally {
-    clearTimeout(timer);
+    if (timer) clearTimeout(timer);
   }
 }
 
