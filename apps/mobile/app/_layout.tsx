@@ -525,7 +525,10 @@ export default function MobileRootLayout(): unknown {
     captureScreenKind !== null ||
     (!isRouteTransitionPending &&
       (state.status === "READY" || state.status === "OFFLINE" || isPublic));
-  const shouldShowRuntimeChrome = !shouldRenderSlot && !isRouteTransitionPending;
+  const shouldShowRuntimeChrome =
+    state.status !== "BOOTSTRAPPING" &&
+    !shouldRenderSlot &&
+    !isRouteTransitionPending;
 
   if (!fontsReady && !fontLoadTimedOut) {
     return h(

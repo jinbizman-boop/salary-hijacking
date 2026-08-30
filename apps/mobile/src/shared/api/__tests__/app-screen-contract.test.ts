@@ -619,7 +619,7 @@ describe("mobile app screen API and route contracts", () => {
       /shouldRenderSlot\s*=\s*[\s\S]*!isRouteTransitionPending/u,
     );
     expect(rootLayout).toContain(
-      "const shouldShowRuntimeChrome = !shouldRenderSlot && !isRouteTransitionPending",
+      'state.status !== "BOOTSTRAPPING"',
     );
   });
 
