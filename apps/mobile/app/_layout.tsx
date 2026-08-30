@@ -271,16 +271,14 @@ const NativeRuntimeRef = loadNativeRuntime();
 const FONTS_EMBEDDED_IN_NATIVE = NativeRuntimeRef.Platform.OS !== "web";
 const RouterRuntimeRef = loadRouterRuntime();
 const FontRuntimeRef = loadFontRuntime();
-const SplashScreenRuntimeRef = loadSplashScreenRuntime();
 const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
-const SPLASH_FORCE_HIDE_FALLBACK_MS = 800;
+const SPLASH_FORCE_HIDE_FALLBACK_MS = 250;
 let cachedRootApiBaseUrl: string | null = null;
 let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
-
-void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
+let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
 
 function hideNativeSplashSafely(): void {
-  void SplashScreenRuntimeRef.hideAsync().catch(() => false);
+  void getSplashScreenRuntime().hideAsync().catch(() => false);
 }
 
 const fallbackSession: SessionSnapshot = Object.freeze({
@@ -1230,6 +1228,12 @@ function getSecureStoreRuntime(): SecureStoreRuntime {
   if (cachedSecureStoreRuntime) return cachedSecureStoreRuntime;
   cachedSecureStoreRuntime = loadSecureStoreRuntime();
   return cachedSecureStoreRuntime;
+}
+
+function getSplashScreenRuntime(): SplashScreenRuntime {
+  if (cachedSplashScreenRuntime) return cachedSplashScreenRuntime;
+  cachedSplashScreenRuntime = loadSplashScreenRuntime();
+  return cachedSplashScreenRuntime;
 }
 
 async function attachRootMobileBearerToken(headers: Headers): Promise<Headers> {

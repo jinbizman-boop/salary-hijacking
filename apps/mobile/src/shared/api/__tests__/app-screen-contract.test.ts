@@ -800,8 +800,13 @@ describe("mobile app screen API and route contracts", () => {
   it("hides the native splash once the React root is ready to render", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
-    expect(source).toContain("loadSplashScreenRuntime");
-    expect(source).toContain("SplashScreenRuntimeRef.hideAsync");
+    expect(source).not.toContain(
+      "const SplashScreenRuntimeRef = loadSplashScreenRuntime()",
+    );
+    expect(source).not.toContain(
+      "void SplashScreenRuntimeRef.preventAutoHideAsync()",
+    );
+    expect(source).toContain("getSplashScreenRuntime().hideAsync");
     expect(source).toContain("fontsLoaded");
     expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
     expect(source).toContain("function loadRootFontAssets()");
@@ -820,7 +825,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain(
       "if (!fontsLoaded && !fontLoadTimedOut)",
     );
-    expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 800");
+    expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 250");
     expect(source).toContain("hideNativeSplashSafely");
     expect(source).toContain("onLayout: hideNativeSplashSafely");
     expect(source).toMatch(/setTimeout\(\s*hideNativeSplashSafely/);
