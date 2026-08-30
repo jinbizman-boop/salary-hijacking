@@ -247,6 +247,8 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(profileSource).toContain("ProfileScreen");
     expect(profileSource).toContain("/api/v1/users/me/my-page-summary");
+    expect(profileSource).toContain('ACCOUNT_SETTINGS: "/profile/account"');
+    expect(profileSource).not.toContain('ACCOUNT_SETTINGS: "/profile/settings"');
     expect(profileSource).not.toContain("LV 7 Budget Builder");
   });
 

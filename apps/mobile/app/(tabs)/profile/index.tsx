@@ -16,7 +16,7 @@ const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
   MY_LEVEL: "/profile/level",
   SUPPORT: "/profile/support",
   NOTICES: "/profile/notices",
-  ACCOUNT_SETTINGS: "/profile/settings",
+  ACCOUNT_SETTINGS: "/profile/account",
 };
 
 export default function ProfileIndexScreen(): React.ReactElement {
