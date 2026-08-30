@@ -730,7 +730,7 @@ export function SalaryHomeScreen({
             <HeroMetric label="지출 금액" value={formatKrw(currentSpent)} />
             <HeroMetric
               emphasized
-              label="목표 달성률"
+              label="저축 금액"
               value={formatKrw(currentHijacked)}
             />
           </View>
@@ -962,6 +962,12 @@ export function SalaryHomeScreen({
             </Text>
           </Pressable>
         </VariableExpenseSection>
+
+        <FinanceInsightSection
+          dailyRemaining={dailyRemaining}
+          protectedAmount={currentHijacked}
+          variableTotal={variableTotal}
+        />
 
         <SponsoredSlot />
       </ScrollView>
@@ -1425,6 +1431,51 @@ function SponsoredSlot(): React.ReactElement {
         <Text allowFontScaling={false} style={styles.adDiscount}>
           10%
         </Text>
+      </View>
+    </View>
+  );
+}
+
+function FinanceInsightSection({
+  dailyRemaining,
+  protectedAmount,
+  variableTotal,
+}: Readonly<{
+  dailyRemaining: number;
+  protectedAmount: number;
+  variableTotal: number;
+}>): React.ReactElement {
+  const performanceCopy =
+    protectedAmount > variableTotal
+      ? "지켜낸 금액이 변동지출보다 커서 흐름이 안정적이에요."
+      : "변동지출이 커지고 있어요. 빠른 추가 후 계획을 다시 맞춰보세요.";
+  const riskCopy =
+    dailyRemaining > 0
+      ? `오늘은 ${formatKrw(dailyRemaining)}까지 안전하게 사용할 수 있어요.`
+      : "오늘 예산을 모두 사용했어요. 다음 지출은 한 번 더 확인해 주세요.";
+
+  return (
+    <View accessibilityLabel="성과/위험 인사이트" style={styles.insightCard}>
+      <Text allowFontScaling={false} style={styles.cardTitle}>
+        성과/위험 인사이트
+      </Text>
+      <View style={styles.insightRow}>
+        <View style={styles.insightPill}>
+          <Text allowFontScaling={false} style={styles.insightLabel}>
+            성과
+          </Text>
+          <Text allowFontScaling={false} style={styles.insightText}>
+            {performanceCopy}
+          </Text>
+        </View>
+        <View style={styles.insightPill}>
+          <Text allowFontScaling={false} style={styles.insightLabel}>
+            위험
+          </Text>
+          <Text allowFontScaling={false} style={styles.insightText}>
+            {riskCopy}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -2003,6 +2054,44 @@ const styles = StyleSheet.create({
     gap: salaryScreenSpacing[2],
     marginBottom: salaryScreenSpacing[3],
     padding: salaryScreenSpacing[3],
+  },
+  insightCard: {
+    backgroundColor: salaryScreenColors.surface,
+    borderColor: salaryScreenColors.line,
+    borderRadius: salaryScreenRadius.md,
+    borderWidth: 1,
+    ...salaryScreenElevation.low,
+    gap: salaryScreenSpacing[3],
+    marginHorizontal: salaryScreenSpacing[2],
+    marginTop: salaryScreenSpacing[3],
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[4],
+  },
+  insightLabel: {
+    color: salaryScreenColors.brand,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+  },
+  insightPill: {
+    backgroundColor: salaryScreenColors.brandSoft,
+    borderColor: salaryScreenColors.brandSurface,
+    borderRadius: salaryScreenRadius.md,
+    borderWidth: 1,
+    flex: 1,
+    gap: salaryScreenSpacing[1],
+    minWidth: 0,
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[3],
+  },
+  insightRow: {
+    flexDirection: "row",
+    gap: salaryScreenSpacing[2],
+  },
+  insightText: {
+    color: salaryScreenColors.text,
+    fontSize: salaryScreenTypography.bodyS.fontSize,
+    fontWeight: salaryScreenTypography.bodyS.fontWeight,
+    lineHeight: salaryScreenTypography.bodyS.lineHeight,
   },
   input: {
     backgroundColor: salaryScreenColors.surface,

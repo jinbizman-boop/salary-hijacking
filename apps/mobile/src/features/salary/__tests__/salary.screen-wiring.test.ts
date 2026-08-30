@@ -88,4 +88,37 @@ describe("salary tab screen wiring", () => {
     expect(variableIndex).toBeGreaterThan(fixedIndex);
     expect(adIndex).toBeGreaterThan(variableIndex);
   });
+
+  it("renders the HOME-002 hero summary as received, spent, and saved amounts", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    const receivedIndex = source.indexOf('label="수령 금액"');
+    const spentIndex = source.indexOf('label="지출 금액"');
+    const savedIndex = source.indexOf('label="저축 금액"');
+    const dailySafeIndex = source.indexOf("DailySafeToSpendCard");
+
+    expect(receivedIndex).toBeGreaterThanOrEqual(0);
+    expect(spentIndex).toBeGreaterThan(receivedIndex);
+    expect(savedIndex).toBeGreaterThan(spentIndex);
+    expect(savedIndex).toBeLessThan(dailySafeIndex);
+    expect(source).not.toContain('label="목표 달성률"');
+  });
+
+  it("places the HOME-006 finance insight before the sponsored slot", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    const variableIndex = source.indexOf("VariableExpenseSection");
+    const insightIndex = source.indexOf("<FinanceInsightSection");
+    const adIndex = source.indexOf("<SponsoredSlot");
+
+    expect(source).toContain("성과/위험 인사이트");
+    expect(insightIndex).toBeGreaterThan(variableIndex);
+    expect(insightIndex).toBeLessThan(adIndex);
+  });
 });
