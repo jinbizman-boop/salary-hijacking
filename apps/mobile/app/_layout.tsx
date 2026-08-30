@@ -178,6 +178,7 @@ const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
 const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
+const ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS = 60_000;
 const ROOT_DEEP_LINK_ROUTES = new Set([
   "/salary",
   "/plan",
@@ -365,6 +366,9 @@ export default function MobileRootLayout(): unknown {
     }
     try {
       const hasAccessToken = await hasStoredAccessToken();
+      const cachedSession = hasAccessToken
+        ? await readCachedSessionStatus()
+        : fallbackSession;
       if (!hasAccessToken) {
         await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");
         setState((prev: RootState) => ({
@@ -376,6 +380,16 @@ export default function MobileRootLayout(): unknown {
           toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
         }));
         return;
+      }
+      if (canUseCachedAuthenticatedLaunch(cachedSession, currentRouteKey)) {
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: cachedAuthenticatedPayload(cachedSession),
+          status: "READY",
+          retrying: true,
+          navigationEpoch: prev.navigationEpoch + 1,
+          toast: { kind: "success", message: statusMessage("READY") },
+        }));
       }
       const response = await requestJsonWithAuthRefresh<RootResponse>(
         "/api/v1/mobile/bootstrap",
@@ -420,7 +434,7 @@ export default function MobileRootLayout(): unknown {
         },
       }));
     }
-  }, [isPublic]);
+  }, [currentRouteKey, isPublic]);
 
   ReactRuntimeRef.useEffect((): void => {
     void bootstrap();
@@ -973,6 +987,35 @@ function offlineStatusFromCachedSession(
   return "OFFLINE";
 }
 
+function cachedAuthenticatedPayload(session: SessionSnapshot): RootPayload {
+  return {
+    ...fallbackPayload,
+    session,
+  };
+}
+
+function canUseCachedAuthenticatedLaunch(
+  session: SessionSnapshot,
+  routeKey: string,
+): boolean {
+  if (!isFreshCompleteSession(session)) return false;
+  if (routeKey === "root") return true;
+  return isAuthenticatedAuthRoute(routeKey);
+}
+
+function isFreshCompleteSession(session: SessionSnapshot): boolean {
+  if (!session.authenticated) return false;
+  if (session.mfaRequired) return false;
+  if (!session.emailVerified) return false;
+  if (!session.onboardingCompleted) return false;
+  if (!session.sessionExpiresAt) return false;
+  const expiresAt = Date.parse(session.sessionExpiresAt);
+  return (
+    Number.isFinite(expiresAt) &&
+    expiresAt - Date.now() >= ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS
+  );
+}
+
 async function persistSessionStatus(
   session: SessionSnapshot,
   status: RootStatus,
@@ -983,6 +1026,7 @@ async function persistSessionStatus(
     emailVerified: session.emailVerified,
     onboardingCompleted: session.onboardingCompleted,
     mfaRequired: session.mfaRequired,
+    sessionExpiresAt: session.sessionExpiresAt,
     status,
     rawFinancialDataExposed: false,
     rawPersonalDataExposed: false,

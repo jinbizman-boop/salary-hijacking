@@ -333,6 +333,45 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toMatch(/catch\s*\{\s*return true;\s*\}/u);
   });
 
+  it("uses a fresh cached authenticated session to render home before bootstrap networking", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS");
+    expect(source).toMatch(
+      /const cachedSession = hasAccessToken\s*\?\s*await readCachedSessionStatus\(\)\s*:\s*fallbackSession/u,
+    );
+    expect(source).toContain(
+      "canUseCachedAuthenticatedLaunch(cachedSession, currentRouteKey)",
+    );
+    expect(source).toContain("payload: cachedAuthenticatedPayload(cachedSession)");
+    expect(source).toContain('status: "READY"');
+    expect(source).toContain("retrying: true");
+    expect(source.indexOf("canUseCachedAuthenticatedLaunch")).toBeLessThan(
+      source.indexOf(
+        'requestJsonWithAuthRefresh<RootResponse>(\n        "/api/v1/mobile/bootstrap"',
+      ),
+    );
+    expect(source).toContain("sessionExpiresAt: session.sessionExpiresAt");
+  });
+
+  it("limits cached authenticated launch to fresh complete root or auth recovery routes", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toMatch(
+      /function canUseCachedAuthenticatedLaunch\(\s*session: SessionSnapshot,\s*routeKey: string,\s*\): boolean/u,
+    );
+    expect(source).toContain("isFreshCompleteSession(session)");
+    expect(source).toContain('routeKey === "root"');
+    expect(source).toContain("isAuthenticatedAuthRoute(routeKey)");
+    expect(source).toContain("Date.parse(session.sessionExpiresAt)");
+    expect(source).toContain(
+      "expiresAt - Date.now() >= ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS",
+    );
+    expect(source).toContain("if (session.mfaRequired) return false");
+    expect(source).toContain("if (!session.emailVerified) return false");
+    expect(source).toContain("if (!session.onboardingCompleted) return false");
+  });
+
   it("keeps root bootstrap runtime fallback on staging instead of development", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
