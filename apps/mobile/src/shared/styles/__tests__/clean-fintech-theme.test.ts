@@ -99,7 +99,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         .toUpperCase(),
     ).toBe(officialBiSha256);
     expect(cleanScreens).toContain("appImageAssets.brand.platformLogo");
-    expect(rootLayout).toContain("appImageAssets.brand.platformLogo");
+    expect(rootLayout).toContain("function loadOfficialBiLogo()");
+    expect(rootLayout).toContain(
+      'require("../src/shared/assets/images/brand/salary-hijacking-platform-logo.png")',
+    );
+    expect(rootLayout).not.toContain(
+      'import { appImageAssets } from "../src/shared/assets/images";',
+    );
     expect(screenshotScript).toContain("salary-hijacking-platform-logo.png");
     expect(screenshotScript).toContain("/__brand-logo");
   });

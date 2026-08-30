@@ -10,7 +10,6 @@ import {
   attachMobileBearerToken,
   MOBILE_ACCESS_TOKEN_KEY,
 } from "../src/shared/storage/auth-token";
-import { appImageAssets } from "../src/shared/assets/images";
 import { AppHeader } from "../src/shared/components/AppHeader";
 import {
   componentColors,
@@ -255,7 +254,6 @@ const SENSITIVE_KEYWORDS = [
   "기기토큰",
 ] as const;
 const EMPTY_FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({});
-const OFFICIAL_BI_LOGO = appImageAssets.brand.platformLogo as unknown;
 const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
 const FONTS_EMBEDDED_IN_NATIVE = NativeRuntimeRef.Platform.OS !== "web";
@@ -524,7 +522,7 @@ export default function MobileRootLayout(): unknown {
           accessibilityIgnoresInvertColors: true,
           accessibilityLabel: "급여납치 공식 BI",
           resizeMode: "contain",
-          source: OFFICIAL_BI_LOGO,
+          source: loadOfficialBiLogo(),
           style: styles.fontLoadingLogo,
         }),
         h(
@@ -596,7 +594,7 @@ export function ErrorBoundary({
         accessibilityIgnoresInvertColors: true,
         accessibilityLabel: "급여납치 공식 BI",
         resizeMode: "contain",
-        source: OFFICIAL_BI_LOGO,
+        source: loadOfficialBiLogo(),
         style: styles.errorBoundaryLogo,
       }),
       h(
@@ -1284,6 +1282,10 @@ function loadRootFontAssets(): Readonly<Record<string, unknown>> {
     "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
     "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
   };
+}
+
+function loadOfficialBiLogo(): unknown {
+  return require("../src/shared/assets/images/brand/salary-hijacking-platform-logo.png");
 }
 
 function loadSplashScreenRuntime(): SplashScreenRuntime {
