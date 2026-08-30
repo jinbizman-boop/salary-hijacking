@@ -9,7 +9,7 @@ import { SplashLaunchScreen } from "../src/features/auth/components";
 declare function require(moduleName: string): unknown;
 
 const SCREEN_VERSION = "4.1.0-launch-components";
-const SPLASH_ROUTE_DELAY_MS = 1200;
+const SPLASH_ROUTE_DELAY_MS = 0;
 const COLD_DEEP_LINK_ROUTES = new Set([
   "/salary",
   "/plan",
@@ -57,18 +57,14 @@ export default function MobileIndexScreen(): React.ReactElement {
       if (route) router.replace(route as never);
     });
     void SplashScreen.hideAsync().catch(() => undefined);
-    const timer = setTimeout(() => {
-      void resolveInitialDeepLinkRoute()
-        .then((route) => {
-          if (!mounted) return;
-          if (route) router.replace(route as never);
-        });
-    }, SPLASH_ROUTE_DELAY_MS);
+    void resolveInitialDeepLinkRoute().then((route) => {
+      if (!mounted) return;
+      if (route) router.replace(route as never);
+    });
 
     return () => {
       mounted = false;
       subscription.remove();
-      clearTimeout(timer);
     };
   }, [captureScreenKind, router]);
 
@@ -192,7 +188,7 @@ export function assertMobileIndexCompleteness(): {
     "SplashLaunchScreen",
     "CapturePreviewScreen",
     "SplashScreen.hideAsync",
-    "SPLASH_ROUTE_DELAY_MS = 1200",
+    "SPLASH_ROUTE_DELAY_MS = 0",
     "no preview auth bypass",
     "resolveInitialDeepLinkRoute",
     "normalizeInitialDeepLinkRoute",

@@ -633,7 +633,7 @@ describe("mobile app screen API and route contracts", () => {
     const source = readFileSync(INDEX_SCREEN, "utf8");
 
     expect(source).toContain("SplashScreen.hideAsync");
-    expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 1200");
+    expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 0");
     expect(source).toContain("resolveInitialDeepLinkRoute");
     expect(source).toContain("normalizeInitialDeepLinkRoute");
     expect(source).toContain('Linking.addEventListener("url"');
@@ -644,7 +644,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('return pathname === "/" ? null : pathname;');
     expect(source).toContain('"/community/write"');
     expect(source).toContain("router.replace(route as never)");
-    expect(source).toContain("setTimeout");
+    expect(source).not.toContain("setTimeout(() =>");
     expect(source).toContain("SplashLaunchScreen");
     expect(source).not.toMatch(
       /export default function MobileIndexScreen\(\): React\.ReactElement \{\s*return <CleanFintechSplashScreen \/>;\s*\}/u,
