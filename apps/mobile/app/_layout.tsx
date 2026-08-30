@@ -525,6 +525,8 @@ export default function MobileRootLayout(): unknown {
     captureScreenKind !== null ||
     (!isRouteTransitionPending &&
       (state.status === "READY" || state.status === "OFFLINE" || isPublic));
+  const shouldRenderLightweightTransition =
+    state.status === "BOOTSTRAPPING" || isRouteTransitionPending;
   const shouldShowRuntimeChrome =
     state.status !== "BOOTSTRAPPING" &&
     !shouldRenderSlot &&
@@ -589,6 +591,8 @@ export default function MobileRootLayout(): unknown {
             ? renderCaptureScreen(captureScreenKind)
             : h(RouterRuntimeRef.Slot, { key: currentRouteKey }),
         )
+      : shouldRenderLightweightTransition
+        ? renderLightweightLaunchTransition()
       : renderGate(state.status, state.retrying, bootstrap),
     shouldShowRuntimeChrome ? renderRuntimeGuard(state.payload) : null,
   );
@@ -745,6 +749,25 @@ function renderGate(
             ),
           ),
     ),
+  );
+}
+
+function renderLightweightLaunchTransition(): unknown {
+  return h(
+    NativeRuntimeRef.View,
+    {
+      accessibilityLabel: "급여납치 앱 준비 중",
+      style: styles.lightweightTransition,
+    },
+    h(NativeRuntimeRef.Text, { style: styles.lightweightTransitionTitle }, "급여납치"),
+    h(
+      NativeRuntimeRef.Text,
+      { style: styles.lightweightTransitionText },
+      "앱을 준비하고 있어요",
+    ),
+    h(NativeRuntimeRef.ActivityIndicator, {
+      color: designSystem.colors.brand.primary,
+    }),
   );
 }
 
@@ -1661,6 +1684,23 @@ const styles = NativeRuntimeRef.StyleSheet.create({
     textAlign: "center",
   },
   gateMessage: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+    textAlign: "center",
+  },
+  lightweightTransition: {
+    alignItems: "center",
+    flex: 1,
+    gap: designSystem.spacing[2],
+    justifyContent: "center",
+    padding: designSystem.spacing[5],
+  },
+  lightweightTransitionTitle: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.titleXL,
+    textAlign: "center",
+  },
+  lightweightTransitionText: {
     color: componentColors.textSecondary,
     ...designSystem.typography.bodyS,
     textAlign: "center",
