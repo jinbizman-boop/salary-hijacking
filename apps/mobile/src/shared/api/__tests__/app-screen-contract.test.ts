@@ -293,6 +293,20 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("x-ad-financial-targeting-used");
   });
 
+  it("bounds root bootstrap network waits before resolving the public login destination", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1800");
+    expect(source).toContain("fetchWithTimeout");
+    expect(source).toContain("AbortController");
+    expect(source).toContain("clearTimeout(timer)");
+    expect(source).toContain(
+      "const cachedStatus = offlineStatusFromCachedSession(cached, isPublic)",
+    );
+    expect(source).toContain('status: cachedStatus');
+    expect(source).toContain("router.replace(AUTH_LOGIN_ROUTE as never)");
+  });
+
   it("keeps root bootstrap runtime fallback on staging instead of development", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

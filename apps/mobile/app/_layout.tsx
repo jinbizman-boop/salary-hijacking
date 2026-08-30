@@ -434,6 +434,7 @@ const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
+const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1800;
 const PUBLIC_SEGMENTS = [
   "(auth)",
   "login",
@@ -1261,11 +1262,28 @@ async function fetchJson(
   await attachMobileBearerToken(headers, SecureStoreRuntimeRef);
   if (init.body && !headers.has("content-type"))
     headers.set("content-type", "application/json");
-  return fetch(`${API_BASE_URL}${path}`, {
+  return fetchWithTimeout(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
     credentials: "include",
   });
+}
+
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit,
+): Promise<Response> {
+  if (init.signal) return fetch(input, init);
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(),
+    ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS,
+  );
+  try {
+    return await fetch(input, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function parseJsonResponse(response: Response): Promise<unknown> {
