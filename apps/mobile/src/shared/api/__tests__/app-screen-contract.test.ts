@@ -358,12 +358,25 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain(
       "await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY)",
     );
-    expect(source).toContain('status: isPublic ? "READY" : "AUTH_REQUIRED"');
+    expect(source).toContain('status: "AUTH_REQUIRED"');
     expect(source).toContain("router.replace(AUTH_LOGIN_ROUTE as never)");
     expect(source).toContain("error instanceof RootAuthExpiredError");
     expect(source).not.toContain(
       'const cachedStatus = cached.authenticated ? "OFFLINE" : "AUTH_REQUIRED"',
     );
+  });
+
+  it("keeps unauthenticated public auth routes out of READY state", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain('if (!payload.session.authenticated) return "AUTH_REQUIRED"');
+    expect(source).toContain('if (!session.authenticated) return "AUTH_REQUIRED"');
+    expect(source).toContain('status: "AUTH_REQUIRED"');
+    expect(source.indexOf('if (!session.authenticated) return "AUTH_REQUIRED"')).toBeLessThan(
+      source.indexOf('if (isPublic) return "READY"'),
+    );
+    expect(source).not.toContain('return isPublic ? "READY" : "AUTH_REQUIRED"');
+    expect(source).not.toContain('status: isPublic ? "READY" : "AUTH_REQUIRED"');
   });
 
   it("keeps the root bootstrap gate copy user-facing while tied to authenticated status checks", () => {

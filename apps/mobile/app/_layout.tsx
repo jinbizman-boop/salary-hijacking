@@ -885,7 +885,7 @@ export default function MobileRootLayout(): unknown {
         setState((prev: RootState) => ({
           ...prev,
           payload: { ...prev.payload, session: fallbackSession },
-          status: isPublic ? "READY" : "AUTH_REQUIRED",
+          status: "AUTH_REQUIRED",
           retrying: false,
           navigationEpoch: prev.navigationEpoch + 1,
           toast: {
@@ -1413,8 +1413,7 @@ function normalizeFlags(
 
 function resolveStatus(payload: RootPayload, isPublic: boolean): RootStatus {
   if (payload.config.maintenanceMode && !isPublic) return "ERROR";
-  if (!payload.session.authenticated)
-    return isPublic ? "READY" : "AUTH_REQUIRED";
+  if (!payload.session.authenticated) return "AUTH_REQUIRED";
   if (payload.session.mfaRequired) return "AUTH_REQUIRED";
   if (!payload.session.emailVerified) return "VERIFY_EMAIL";
   if (!payload.session.onboardingCompleted) return "ONBOARDING";
@@ -1425,8 +1424,8 @@ function offlineStatusFromCachedSession(
   session: SessionSnapshot,
   isPublic: boolean,
 ): RootStatus {
-  if (isPublic) return "READY";
   if (!session.authenticated) return "AUTH_REQUIRED";
+  if (isPublic) return "READY";
   if (session.mfaRequired) return "AUTH_REQUIRED";
   if (!session.emailVerified) return "VERIFY_EMAIL";
   if (!session.onboardingCompleted) return "ONBOARDING";
