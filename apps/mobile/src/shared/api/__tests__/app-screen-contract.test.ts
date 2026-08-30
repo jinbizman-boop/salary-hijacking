@@ -735,11 +735,13 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
     expect(source).toContain("function loadRootFontAssets()");
     expect(source).toContain("function loadOfficialBiLogo()");
+    expect(source).toContain("function loadRootAppHeader()");
     expect(source).toMatch(
       /FontRuntimeRef\.useFonts\(\s*FONTS_EMBEDDED_IN_NATIVE \? EMPTY_FONT_ASSETS : loadRootFontAssets\(\),?\s*\)/u,
     );
     expect(source).not.toContain("const FONT_ASSETS");
     expect(source).not.toContain('import { appImageAssets } from "../src/shared/assets/images";');
+    expect(source).not.toContain('import { AppHeader } from "../src/shared/components/AppHeader";');
     expect(source).not.toContain("const OFFICIAL_BI_LOGO");
     expect(source).toContain(
       "const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded",

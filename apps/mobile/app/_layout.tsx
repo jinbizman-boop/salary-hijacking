@@ -10,7 +10,6 @@ import {
   attachMobileBearerToken,
   MOBILE_ACCESS_TOKEN_KEY,
 } from "../src/shared/storage/auth-token";
-import { AppHeader } from "../src/shared/components/AppHeader";
 import {
   componentColors,
   salaryHijackingDesignSystem,
@@ -660,7 +659,7 @@ function renderRootAppHeader(
     h(NativeRuntimeRef.Text, { style: statusStyle }, rootStatusLabel(status)),
   );
 
-  return h(AppHeader as ElementType, {
+  return h(loadRootAppHeader(), {
     onBrandPress: goHome,
     rightAccessory: profileAction,
     subtitle: rootHeaderMessage(payload, status),
@@ -1288,6 +1287,13 @@ function loadOfficialBiLogo(): unknown {
   return require("../src/shared/assets/images/brand/salary-hijacking-platform-logo.png");
 }
 
+function loadRootAppHeader(): ElementType {
+  const mod = loadModule("../src/shared/components/AppHeader") as Readonly<{
+    AppHeader?: ElementType;
+  }>;
+  return mod.AppHeader ?? NativeRuntimeRef.View;
+}
+
 function loadSplashScreenRuntime(): SplashScreenRuntime {
   const mod = loadModule("expo-splash-screen") as Partial<SplashScreenRuntime>;
   return {
@@ -1324,6 +1330,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-constants");
       case "expo-secure-store":
         return require("expo-secure-store");
+      case "../src/shared/components/AppHeader":
+        return require("../src/shared/components/AppHeader");
       case "../src/features/capture":
         return require("../src/features/capture");
       default:
