@@ -296,7 +296,7 @@ describe("mobile app screen API and route contracts", () => {
   it("bounds root bootstrap network waits before resolving the public login destination", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
-    expect(source).toContain("ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1800");
+    expect(source).toContain("ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200");
     expect(source).toContain("fetchWithTimeout");
     expect(source).toContain("AbortController");
     expect(source).toContain("Promise.race");
@@ -307,6 +307,30 @@ describe("mobile app screen API and route contracts", () => {
     );
     expect(source).toContain('status: cachedStatus');
     expect(source).toContain("router.replace(AUTH_LOGIN_ROUTE as never)");
+  });
+
+  it("resolves clean unauthenticated launches without waiting for bootstrap networking", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("async function hasStoredAccessToken()");
+    expect(source).toContain(
+      "const hasAccessToken = await hasStoredAccessToken()",
+    );
+    expect(source).toContain("if (!hasAccessToken)");
+    expect(source).toContain(
+      'await persistSessionStatus(fallbackSession, "AUTH_REQUIRED")',
+    );
+    expect(source).toContain('status: "AUTH_REQUIRED"');
+    expect(source.indexOf("if (!hasAccessToken)")).toBeLessThan(
+      source.indexOf(
+        'requestJsonWithAuthRefresh<RootResponse>(\n        "/api/v1/mobile/bootstrap"',
+      ),
+    );
+    expect(source).toContain(
+      "const token = await SecureStoreRuntimeRef.getItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
+    );
+    expect(source).toContain("return Boolean(token?.trim())");
+    expect(source).toMatch(/catch\s*\{\s*return true;\s*\}/u);
   });
 
   it("keeps root bootstrap runtime fallback on staging instead of development", () => {
@@ -620,7 +644,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("loadSplashScreenRuntime");
     expect(source).toContain("SplashScreenRuntimeRef.hideAsync");
     expect(source).toContain("fontsLoaded");
-    expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 2500");
+    expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 800");
     expect(source).toContain("hideNativeSplashSafely");
     expect(source).toContain("onLayout: hideNativeSplashSafely");
     expect(source).toMatch(/setTimeout\(\s*hideNativeSplashSafely/);

@@ -434,7 +434,7 @@ const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
-const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1800;
+const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
 const PUBLIC_SEGMENTS = [
   "(auth)",
   "login",
@@ -777,7 +777,7 @@ const SplashScreenRuntimeRef = loadSplashScreenRuntime();
 const API_BASE_URL = readMobileApiBaseUrl();
 const IS_E2E_BUILD = readMobileE2eBuildEnabled();
 const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
-const SPLASH_FORCE_HIDE_FALLBACK_MS = 2500;
+const SPLASH_FORCE_HIDE_FALLBACK_MS = 800;
 
 void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
 
@@ -866,6 +866,19 @@ export default function MobileRootLayout(): unknown {
       return;
     }
     try {
+      const hasAccessToken = await hasStoredAccessToken();
+      if (!hasAccessToken) {
+        await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: { ...prev.payload, session: fallbackSession },
+          status: "AUTH_REQUIRED",
+          retrying: false,
+          navigationEpoch: prev.navigationEpoch + 1,
+          toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
+        }));
+        return;
+      }
       const response = await requestJsonWithAuthRefresh<RootResponse>(
         "/api/v1/mobile/bootstrap",
       );
@@ -1320,6 +1333,15 @@ async function refreshRootAccessToken(): Promise<boolean> {
     return Boolean(token?.trim());
   } catch {
     return false;
+  }
+}
+
+async function hasStoredAccessToken(): Promise<boolean> {
+  try {
+    const token = await SecureStoreRuntimeRef.getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    return Boolean(token?.trim());
+  } catch {
+    return true;
   }
 }
 
