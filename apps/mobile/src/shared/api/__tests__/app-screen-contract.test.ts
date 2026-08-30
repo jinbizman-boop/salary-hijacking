@@ -580,10 +580,12 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).not.toContain(
       'return routeKey === "root" || isAuthenticatedAuthRoute(routeKey)',
     );
+    expect(indexScreen).toContain("root auth gate owns launch routing");
     expect(indexScreen).not.toContain("resolveInitialLaunchTarget");
-    expect(indexScreen).toContain("resolveInitialDeepLinkRoute");
+    expect(indexScreen).not.toContain("resolveInitialDeepLinkRoute");
     expect(indexScreen).not.toContain("MOBILE_ACCESS_TOKEN_KEY");
     expect(indexScreen).not.toContain("resolveInitialRoute");
+    expect(indexScreen).not.toContain("router.replace");
   });
 
   it("routes cached offline authenticated root sessions away from the launch splash", () => {
@@ -641,7 +643,7 @@ describe("mobile app screen API and route contracts", () => {
       'from "../src/features/capture/stitch-state-registry"',
     );
     expect(indexScreen).not.toContain("const captureScreens");
-    expect(indexScreen).toContain("resolveCaptureScreenKindLazily");
+    expect(indexScreen).not.toContain("resolveCaptureScreenKindLazily");
     expect(capturePreviewScreen).toContain("resolveCapturePreviewKind");
     expect(captureRouteScreen).not.toContain("resolveCaptureKindForStitchSlug");
     expect(captureRouteScreen).not.toContain("CapturePreviewScreen");
@@ -660,13 +662,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain(
       'if (next === "READY" && captureScreenKind) return',
     );
-    expect(indexScreen).toContain("resolveCaptureScreenKindForUrl");
-    expect(indexScreen).toContain("loadCapturePreviewScreen");
-    expect(indexScreen).toContain("LaunchTransitionScreen");
-    expect(indexScreen).toContain("readBrowserLocation");
-    expect(indexScreen).toContain(
-      "return resolveCaptureScreenKindForUrl(location.href)",
-    );
+    expect(indexScreen).not.toContain("resolveCaptureScreenKindForUrl");
+    expect(indexScreen).not.toContain("loadCapturePreviewScreen");
+    expect(indexScreen).not.toContain("LaunchTransitionScreen");
+    expect(indexScreen).not.toContain("readBrowserLocation");
+    expect(indexScreen).toContain("no index capture preview runtime");
     expect(rootLayout).toContain("readBrowserLocation");
     expect(rootLayout).toContain(
       "return resolveCaptureScreenKindForUrl(location.href)",
@@ -734,7 +734,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(webSource).not.toContain("from \"../../src/features/capture\"");
   });
 
-  it("keeps root and launch capture preview rendering behind a web platform guard", () => {
+  it("keeps root capture preview rendering behind a web platform guard and index production-only", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
 
@@ -742,10 +742,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toMatch(
       /function readBrowserLocation\(\):[\s\S]*?NativeRuntimeRef\.Platform\.OS !== "web"[\s\S]*?window\.location/u,
     );
-    expect(indexScreen).toContain("Platform");
-    expect(indexScreen).toMatch(
-      /function readBrowserLocation\(\):[\s\S]*?Platform\.OS !== "web"[\s\S]*?window\.location/u,
-    );
+    expect(indexScreen).not.toContain("Platform");
+    expect(indexScreen).not.toContain("window.location");
+    expect(indexScreen).toContain("root auth gate owns launch routing");
   });
 
   it("keeps screenshot captures representative of the real planned UI surfaces", () => {
@@ -766,27 +765,26 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("건강");
   });
 
-  it("does not leave the launch route stuck on a static splash screen", () => {
+  it("keeps the launch route as a thin root auth gate entry", () => {
     const source = readFileSync(INDEX_SCREEN, "utf8");
 
-    expect(source).toContain("hideNativeSplashSafely");
+    expect(source).toContain("root auth gate owns launch routing");
+    expect(source).not.toContain("hideNativeSplashSafely");
     expect(source).not.toContain('import * as SplashScreen from "expo-splash-screen"');
     expect(source).not.toContain('import { SplashLaunchScreen } from "../src/features/auth/components"');
-    expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 0");
-    expect(source).toContain("resolveInitialDeepLinkRoute");
-    expect(source).toContain("normalizeInitialDeepLinkRoute");
-    expect(source).toContain('addEventListener?.("url"');
-    expect(source).toContain("linking.getInitialURL?.()");
-    expect(source).toContain("linking.parseInitialURLAsync?.()");
-    expect(source).toContain('require("expo-linking")');
+    expect(source).not.toContain("SPLASH_ROUTE_DELAY_MS");
+    expect(source).not.toContain("resolveInitialDeepLinkRoute");
+    expect(source).not.toContain("normalizeInitialDeepLinkRoute");
+    expect(source).not.toContain('addEventListener?.("url"');
+    expect(source).not.toContain("linking.getInitialURL?.()");
+    expect(source).not.toContain("linking.parseInitialURLAsync?.()");
+    expect(source).not.toContain('require("expo-linking")');
     expect(source).not.toContain('import * as Linking from "expo-linking"');
-    expect(source).toContain("parsedToHref");
+    expect(source).not.toContain("parsedToHref");
     expect(source).not.toContain("pathname || SALARY_HOME_ROUTE");
-    expect(source).toContain('return pathname === "/" ? null : pathname;');
-    expect(source).toContain('"/community/write"');
-    expect(source).toContain("router.replace(route as never)");
+    expect(source).not.toContain("router.replace");
     expect(source).not.toContain("setTimeout(() =>");
-    expect(source).toContain("LaunchTransitionScreen");
+    expect(source).not.toContain("LaunchTransitionScreen");
     expect(source).not.toMatch(
       /export default function MobileIndexScreen\(\): React\.ReactElement \{\s*return <CleanFintechSplashScreen \/>;\s*\}/u,
     );
