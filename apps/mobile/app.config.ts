@@ -160,7 +160,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
       reactCompiler: false,
     },
     runtimeVersion: { policy: "appVersion" satisfies RuntimePolicy },
-    updates: updatesConfig(updatesUrl),
+    updates: updatesConfig(updatesUrl, environment),
     extra: {
       ...existingExtra,
       eas: { projectId: easProjectId },
@@ -331,10 +331,14 @@ function pluginConfig(): readonly PluginEntry[] {
   ];
 }
 
-function updatesConfig(updatesUrl: string | null): JsonRecord {
+function updatesConfig(
+  updatesUrl: string | null,
+  environment: EnvironmentName,
+): JsonRecord {
   const base: Record<string, JsonValue> = {
     enabled: true,
-    checkAutomatically: "ON_LOAD",
+    checkAutomatically:
+      environment === "production" ? "ON_LOAD" : "ON_ERROR_RECOVERY",
     fallbackToCacheTimeout: 0,
   };
   if (updatesUrl) base.url = updatesUrl;
