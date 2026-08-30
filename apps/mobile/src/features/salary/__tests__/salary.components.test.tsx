@@ -30,21 +30,11 @@ describe("salary reference screen interactions", () => {
     const displayName = "\uAE40\uD14C\uC2A4\uD2B8";
     const screen = render(<SalaryHomeScreen displayName={displayName} />);
 
-    expect(
-      screen.getByText(
-        `${displayName}\uB2D8\uC774 \uC124\uC815\uD55C \uAE08\uC77C \uACE0\uC815 \uC9C0\uCD9C`,
-      ),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(
-        `${displayName}\uB2D8\uC774 \uC124\uC815\uD55C \uC77C\uC77C \uC0AC\uC6A9 \uC608\uC0B0`,
-      ),
-    ).toBeTruthy();
-    expect(
-      screen.getByText(
-        `${displayName}\uB2D8\uC774 \uC0AC\uC6A9\uD55C \uAE08\uC77C \uBCC0\uB3D9 \uC9C0\uCD9C`,
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText(`${displayName}님, 오늘도 지켜냈어요`)).toBeTruthy();
+    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("오늘 사용 가능 금액")).toBeTruthy();
+    expect(screen.getByText("예정 고정지출")).toBeTruthy();
+    expect(screen.getByText("변동지출")).toBeTruthy();
     expect(screen.queryByText(/^\uD64D\uAE38\uB3D9/u)).toBeNull();
   });
 
@@ -71,7 +61,7 @@ describe("salary reference screen interactions", () => {
     expect(
       noPlan.getByText("계획 탭에서 급여일과 고정지출을 설정해 주세요."),
     ).toBeTruthy();
-    expect(noPlan.getByText("내 급여 납치 현황")).toBeTruthy();
+    expect(noPlan.getByText("지켜낸 돈")).toBeTruthy();
     noPlan.unmount();
 
     const offline = render(<SalaryHomeScreen previewVariant="offline" />);
@@ -79,7 +69,7 @@ describe("salary reference screen interactions", () => {
     expect(
       offline.getByText("저장된 급여 데이터를 안전하게 보여드리고 있어요."),
     ).toBeTruthy();
-    expect(offline.getByText("내 급여 납치 현황")).toBeTruthy();
+    expect(offline.getByText("지켜낸 돈")).toBeTruthy();
     offline.unmount();
 
     const compact = render(<SalaryHomeScreen previewVariant="compact" />);

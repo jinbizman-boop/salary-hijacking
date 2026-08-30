@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Image,
   Pressable,
@@ -16,38 +15,31 @@ import {
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { AuthSocialProvider } from "../types";
-import { TextLink, authVisualColors } from "./AuthVisualFrame";
+import { authVisualColors } from "./AuthVisualFrame";
 
 const typography = salaryHijackingDesignSystem.typography;
+const designSystem = salaryHijackingDesignSystem;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
+  readonly foregroundColor: string;
   readonly icon: ImageSourcePropType;
   readonly label: string;
-  readonly provider?: AuthSocialProvider;
+  readonly provider: AuthSocialProvider;
 }[] = [
   {
-    backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
-    icon: appIconAssets.social.naver,
-    label: "네이버 로그인",
-    provider: "NAVER",
-  },
-  {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.kakao,
+    foregroundColor: componentColors.textPrimary,
     icon: appIconAssets.social.kakao,
-    label: "카카오 로그인",
+    label: "카카오로 계속하기",
     provider: "KAKAO",
   },
   {
-    backgroundColor: salaryHijackingDesignSystem.providerBrand.facebook,
-    icon: appIconAssets.social.facebook,
-    label: "페이스북 로그인 준비 중",
-  },
-  {
-    backgroundColor: salaryHijackingDesignSystem.providerBrand.google,
-    icon: appIconAssets.social.google,
-    label: "구글 로그인",
-    provider: "GOOGLE",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
+    foregroundColor: designSystem.colors.text.inverse,
+    icon: appIconAssets.social.naver,
+    label: "네이버로 계속하기",
+    provider: "NAVER",
   },
 ];
 
@@ -58,13 +50,17 @@ export type SocialLoginButtonsProps = Readonly<{
 
 export function SocialLoginButtons({
   onSelectProvider,
-  onSignupPress,
 }: SocialLoginButtonsProps): React.ReactElement {
-  const [rememberMe, setRememberMe] = useState(false);
-
   return (
     <View accessibilityLabel="소셜 로그인" style={styles.wrap}>
-      <View style={styles.iconRow}>
+      <View accessibilityElementsHidden style={styles.dividerRow}>
+        <View style={styles.line} />
+        <Text allowFontScaling={false} style={styles.orText}>
+          또는
+        </Text>
+        <View style={styles.line} />
+      </View>
+      <View style={styles.buttonStack}>
         {SOCIAL_PROVIDERS.map((provider) => (
           <Pressable
             accessibilityLabel={provider.label}
@@ -72,7 +68,7 @@ export function SocialLoginButtons({
             hitSlop={8}
             key={provider.provider ?? provider.label}
             onPress={() => {
-              if (provider.provider) onSelectProvider(provider.provider);
+              onSelectProvider(provider.provider);
             }}
             style={[
               styles.socialButton,
@@ -85,27 +81,25 @@ export function SocialLoginButtons({
               source={provider.icon}
               style={styles.socialIcon}
             />
+            <Text
+              allowFontScaling={false}
+              style={[styles.socialLabel, { color: provider.foregroundColor }]}
+            >
+              {provider.label}
+            </Text>
           </Pressable>
         ))}
-      </View>
-      <View style={styles.memberRow}>
-        <TextLink label="회원가입" onPress={onSignupPress} />
-        <Text allowFontScaling={false} style={styles.divider}>
-          |
-        </Text>
         <Pressable
-          accessibilityLabel="자동 로그인"
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: rememberMe }}
-          hitSlop={10}
-          onPress={() => setRememberMe((value) => !value)}
-          style={styles.autoLogin}
+          accessibilityLabel="Apple로 로그인"
+          accessibilityRole="button"
+          onPress={() => onSelectProvider("APPLE")}
+          style={[styles.socialButton, styles.appleButton]}
         >
-          <View style={styles.checkbox}>
-            {rememberMe ? <View style={styles.checkboxFill} /> : null}
-          </View>
-          <Text allowFontScaling={false} style={styles.autoLoginText}>
-            자동 로그인
+          <Text allowFontScaling={false} style={styles.appleGlyph}>
+            Apple
+          </Text>
+          <Text allowFontScaling={false} style={styles.appleLabel}>
+            Apple로 로그인
           </Text>
         </Pressable>
       </View>
@@ -114,67 +108,67 @@ export function SocialLoginButtons({
 }
 
 const styles = StyleSheet.create({
-  autoLogin: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: componentSpacing.xs,
+  appleButton: {
+    backgroundColor: designSystem.colors.surface.default,
+    borderColor: designSystem.colors.surface.default,
   },
-  autoLoginText: {
+  appleGlyph: {
     color: authVisualColors.ink,
-    fontSize: typography.bodyS.fontSize,
-    fontWeight: typography.bodyS.fontWeight,
-    includeFontPadding: false,
-    letterSpacing: 0,
-    lineHeight: typography.bodyS.lineHeight,
+    ...typography.labelM,
+    width: 52,
   },
-  checkbox: {
-    alignItems: "center",
-    borderColor: componentColors.textPrimary,
-    borderWidth: 1,
-    height: 14,
-    justifyContent: "center",
-    width: 14,
-  },
-  checkboxFill: {
-    backgroundColor: authVisualColors.brandGreen,
-    height: 8,
-    width: 8,
-  },
-  divider: {
+  appleLabel: {
     color: authVisualColors.ink,
-    fontSize: typography.bodyS.fontSize,
-    fontWeight: typography.bodyS.fontWeight,
-    includeFontPadding: false,
-    lineHeight: typography.bodyS.lineHeight,
+    ...typography.labelL,
+    flex: 1,
+    textAlign: "center",
   },
-  iconRow: {
-    alignItems: "center",
-    flexDirection: "row",
+  buttonStack: {
     gap: componentSpacing.sm,
-    justifyContent: "center",
   },
-  memberRow: {
+  dividerRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: componentSpacing.xs,
-    justifyContent: "center",
-    marginTop: componentSpacing.sm,
+    gap: componentSpacing.md,
+    marginBottom: componentSpacing.lg,
+    marginTop: componentSpacing.xxl,
+  },
+  line: {
+    backgroundColor: designSystem.colors.border.default,
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  orText: {
+    color: authVisualColors.muted,
+    ...typography.caption,
+    minWidth: 34,
+    textAlign: "center",
   },
   socialButton: {
     alignItems: "center",
     borderColor: componentColors.line,
     borderRadius: componentRadius.button,
     borderWidth: StyleSheet.hairlineWidth,
-    height: 42,
-    justifyContent: "center",
+    flexDirection: "row",
+    gap: componentSpacing.md,
+    minHeight: 56,
+    justifyContent: "flex-start",
     overflow: "hidden",
-    width: 42,
+    paddingHorizontal: componentSpacing.lg,
+    width: "100%",
   },
   socialIcon: {
-    height: 30,
-    width: 30,
+    height: 28,
+    width: 52,
+  },
+  socialLabel: {
+    ...typography.labelL,
+    flex: 1,
+    textAlign: "center",
   },
   wrap: {
-    alignItems: "center",
+    alignSelf: "center",
+    maxWidth: 365,
+    width: "100%",
   },
 });

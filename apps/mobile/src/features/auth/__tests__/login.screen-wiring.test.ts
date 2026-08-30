@@ -13,7 +13,6 @@ describe("login screen wiring", () => {
 
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).toContain("AuthVisualFrame");
-    expect(source).toContain("LoginHero");
     expect(source).toContain("LoginCredentialForm");
     expect(source).toContain("SocialLoginButtons");
     expect(source).toContain("AUTH_LOGIN_PATH");
@@ -42,9 +41,43 @@ describe("login screen wiring", () => {
     expect(source).not.toContain("clampValue(height * 0.245, 118, 245)");
     expect(source).not.toContain("clampValue(height * 0.125, 68, 130)");
     expect(source).not.toContain("clampValue(height * 0.072, 38, 78)");
-    expect(source).toContain("clampValue(height * 0.18, 86, 172)");
-    expect(source).toContain("clampValue(height * 0.075, 40, 82)");
-    expect(source).toContain("clampValue(height * 0.045, 24, 46)");
+    expect(source).toContain("styles.topSpacer");
+    expect(source).toContain("styles.formGap");
+    expect(source).not.toContain("EurekaWorldMark");
+  });
+
+  it("matches the final login reference structure instead of the stale centered splash composition", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+    const authFrame = readFileSync(
+      join(__dirname, "..", "components", "AuthVisualFrame.tsx"),
+      "utf8",
+    );
+    const credentials = readFileSync(
+      join(__dirname, "..", "components", "LoginCredentialForm.tsx"),
+      "utf8",
+    );
+    const social = readFileSync(
+      join(__dirname, "..", "components", "SocialLoginButtons.tsx"),
+      "utf8",
+    );
+    const combined = [source, authFrame, credentials, social].join("\n");
+
+    expect(combined).toContain("Salary Hijacking");
+    expect(combined).toContain("금융의 주도권을 되찾으세요");
+    expect(combined).toContain("로그인");
+    expect(combined).toContain("아이디를 입력하세요");
+    expect(combined).toContain("비밀번호를 입력하세요");
+    expect(combined).toContain("비밀번호 찾기");
+    expect(combined).toContain("카카오로 계속하기");
+    expect(combined).toContain("네이버로 계속하기");
+    expect(combined).toContain("Apple로 로그인");
+    expect(source).not.toContain("EurekaWorldMark");
+    expect([source, credentials, social].join("\n")).not.toContain(
+      "서버 인증으로 급여 데이터를 안전하게 불러옵니다.",
+    );
   });
 
   it("does not leave production signup submit as a no-op callback", () => {
@@ -144,7 +177,7 @@ describe("login screen wiring", () => {
     expect(source).toContain("급여납치");
     expect(source).toContain("아이디");
     expect(source).toContain("비밀번호");
-    expect(source).toContain("회원가입");
+    expect(source).toContain("비밀번호 찾기");
     expect(source).toContain("자동 로그인");
     expect(source).not.toMatch(MOJIBAKE_PATTERN);
   });

@@ -193,7 +193,7 @@ export const salaryHijackingDesignSystem = {
   },
   navigation: {
     bottomTabs: {
-      labels: ["급여", "계획", "LV", "커뮤니티", "MY"],
+      labels: ["홈", "계획", "LV UP", "커뮤니티", "MY"],
       visualHeight: 74,
       safeAreaAware: true,
       iconSize: 22,

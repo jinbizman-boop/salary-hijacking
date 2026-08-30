@@ -89,10 +89,10 @@ describe("mobile app screen API and route contracts", () => {
     expect(violations).toEqual([]);
   });
 
-  it("keeps bottom tab labels readable Korean without mojibake", () => {
+  it("keeps bottom tab labels aligned with the final visual reference without mojibake", () => {
     const source = readFileSync(TABS_LAYOUT_SCREEN, "utf8");
 
-    for (const label of ["급여", "계획", "LV", "커뮤니티", "MY"]) {
+    for (const label of ["홈", "계획", "LV UP", "커뮤니티", "MY"]) {
       expect(source).toContain(`title: "${label}"`);
     }
     expect(source).toContain(
@@ -150,10 +150,11 @@ describe("mobile app screen API and route contracts", () => {
     );
     const combinedRuntimeSurface = salaryHomeSource;
 
+    expect(combinedRuntimeSurface).toContain("\uC9C0\uCF1C\uB0B8 \uB3C8");
+    expect(combinedRuntimeSurface).toContain("\uB204\uC801 \uB0A9\uCE58\uAE08\uC561");
     expect(combinedRuntimeSurface).toContain(
-      "\uB0B4 \uAE09\uC5EC \uB0A9\uCE58",
+      "\uC624\uB298 \uC0AC\uC6A9 \uAC00\uB2A5 \uAE08\uC561",
     );
-    expect(combinedRuntimeSurface).toContain("\uD604\uD669");
     expect(combinedRuntimeSurface).toContain("\uC0AC\uC6A9 \uC608\uC815");
     expect(combinedRuntimeSurface).toContain("\uC0AC\uC6A9 \uC644\uB8CC");
 
@@ -199,8 +200,9 @@ describe("mobile app screen API and route contracts", () => {
     const communitySource = readFileSync(TAB_SCREEN_SOURCES.community, "utf8");
     const profileSource = readFileSync(TAB_SCREEN_SOURCES.profile, "utf8");
 
-    expect(tabLayoutSource).toContain('title: "\uAE09\uC5EC"');
+    expect(tabLayoutSource).toContain('title: "\uD648"');
     expect(tabLayoutSource).toContain('title: "\uACC4\uD68D"');
+    expect(tabLayoutSource).toContain('title: "LV UP"');
     expect(tabLayoutSource).toContain('title: "\uCEE4\uBBA4\uB2C8\uD2F0"');
     expect(tabLayoutSource).toContain(
       '"\uAE09\uC5EC\uB0A9\uCE58 \uD558\uB2E8 \uD0ED \uB0B4\uBE44\uAC8C\uC774\uC158"',
@@ -286,7 +288,7 @@ describe("mobile app screen API and route contracts", () => {
       expect(source).not.toContain(marker);
     });
     expect(source).toContain("급여납치 앱을 안전하게 시작합니다");
-    expect(source).toContain("서버 권위 앱 상태 확인 중");
+    expect(source).toContain("앱 상태를 확인하고 있어요");
     expect(source).toContain("앱 시작 요청이 실패했습니다");
   });
 
@@ -319,13 +321,13 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
-  it("keeps the root bootstrap gate copy tied to server-authoritative status checks", () => {
+  it("keeps the root bootstrap gate copy user-facing while tied to authenticated status checks", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
     expect(source).toContain("renderGate");
     expect(source).toContain("/api/v1/mobile/bootstrap");
     expect(source).toContain("/api/v1/mobile/bootstrap");
-    expect(source).toContain("서버 권위 앱 상태 확인 중");
+    expect(source).toContain("앱 상태를 확인하고 있어요");
     expect(source).toContain("급여납치 앱을 안전하게 시작합니다.");
     expect(source).not.toMatch(MOJIBAKE_PATTERN);
   });
@@ -351,19 +353,19 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
-  it("lets the launch screen route root starts so cold deep links are not overwritten", () => {
+  it("keeps launch routing subordinate to the root auth gate so login and home do not compete", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
 
     expect(rootLayout).toContain("shouldRouteReadyStateToHome");
     expect(rootLayout).toContain("isAuthenticatedAuthRoute(routeKey)");
-    expect(rootLayout).not.toContain(
-      'routeKey === "root" || isAuthenticatedAuthRoute(routeKey)',
+    expect(rootLayout).toContain(
+      'return routeKey === "root" || isAuthenticatedAuthRoute(routeKey)',
     );
-    expect(indexScreen).toContain("resolveInitialLaunchTarget");
+    expect(indexScreen).not.toContain("resolveInitialLaunchTarget");
     expect(indexScreen).toContain("resolveInitialDeepLinkRoute");
-    expect(indexScreen).toContain("if (deepLinkRoute) return deepLinkRoute");
-    expect(indexScreen).toContain("return resolveInitialRoute()");
+    expect(indexScreen).not.toContain("MOBILE_ACCESS_TOKEN_KEY");
+    expect(indexScreen).not.toContain("resolveInitialRoute");
   });
 
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {
@@ -494,8 +496,6 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(source).toContain("SplashScreen.hideAsync");
     expect(source).toContain("SPLASH_ROUTE_DELAY_MS = 1200");
-    expect(source).toContain("resolveInitialRoute");
-    expect(source).toContain("resolveInitialLaunchTarget");
     expect(source).toContain("resolveInitialDeepLinkRoute");
     expect(source).toContain("normalizeInitialDeepLinkRoute");
     expect(source).toContain('Linking.addEventListener("url"');
@@ -505,7 +505,6 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain("pathname || SALARY_HOME_ROUTE");
     expect(source).toContain('return pathname === "/" ? null : pathname;');
     expect(source).toContain('"/community/write"');
-    expect(source).toContain("MOBILE_ACCESS_TOKEN_KEY");
     expect(source).toContain("router.replace(route as never)");
     expect(source).toContain("setTimeout");
     expect(source).toContain("SplashLaunchScreen");
@@ -521,7 +520,6 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(splashSource).toContain("급여납치 시작 화면");
     expect(splashSource).toContain("AuthBrandLogo");
-    expect(splashSource).toContain("EurekaWorldMark");
     expect(splashSource).toContain("clampValue");
     expect(captureSource).toContain("안전 화면");
     expect(captureSource).toContain("자동 이동");

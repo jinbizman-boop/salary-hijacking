@@ -29,10 +29,8 @@ import type {
   PlanSavingsDepositRequest,
 } from "../../../features/plan/types";
 import { appIconAssets } from "../../../shared/assets/icons";
-import {
-  AppHeader,
-  salaryHijackingDesignSystem,
-} from "../../../shared/components";
+import { appImageAssets } from "../../../shared/assets/images";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
@@ -105,6 +103,7 @@ export type SalaryHomePreviewVariant =
 export type SalaryHomeScreenProps = Readonly<{
   displayName?: string | undefined;
   onOpenNotifications?: (() => void) | undefined;
+  onOpenSettings?: (() => void) | undefined;
   planCommitmentsApi?:
     | Partial<
         Pick<
@@ -136,6 +135,7 @@ export function resetSalaryHomePreviewCacheForTests(): void {
 export function SalaryHomeScreen({
   displayName = "\uC0AC\uC6A9\uC790",
   onOpenNotifications,
+  onOpenSettings,
   planCommitmentsApi,
   previewVariant = "default",
   variableExpenseApi,
@@ -670,26 +670,9 @@ export function SalaryHomeScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <AppHeader
-          rightAccessory={
-            <Pressable
-              accessibilityLabel="알림 화면 열기"
-              accessibilityRole="button"
-              hitSlop={designSystem.spacing[3]}
-              onPress={onOpenNotifications}
-              style={styles.headerActionButton}
-            >
-              <Image
-                accessibilityIgnoresInvertColors
-                resizeMode="contain"
-                source={appIconAssets.common.alarm}
-                style={styles.headerActionIcon}
-              />
-            </Pressable>
-          }
-          subtitle="서버 권위 급여 홈"
-          title="급여"
-          variant="ROOT"
+        <BrandHeader
+          onOpenNotifications={onOpenNotifications}
+          onOpenSettings={onOpenSettings}
         />
 
         {salaryError ? (
@@ -704,13 +687,16 @@ export function SalaryHomeScreen({
 
         <SalaryHomeVariantBanner variant={previewVariant} />
 
-        <View style={styles.heroPanel}>
+        <ProtectedMoneyHeroCard>
           <View style={styles.heroLeft}>
             <Text allowFontScaling={false} style={styles.heroDate}>
               {kst.text}
             </Text>
+            <Text allowFontScaling={false} style={styles.heroGreeting}>
+              {displayName}님, 오늘도 지켜냈어요
+            </Text>
             <Text allowFontScaling={false} style={styles.heroTitle}>
-              내 급여 납치{"\n"}현황
+              지켜낸 돈
             </Text>
             <Image
               accessibilityIgnoresInvertColors
@@ -719,7 +705,7 @@ export function SalaryHomeScreen({
               style={styles.heroCoin}
             />
             <Text allowFontScaling={false} style={styles.heroSub}>
-              전체 누적 납치 금액
+              누적 납치금액
             </Text>
             <Text allowFontScaling={false} style={styles.heroAmount}>
               {formatKrw(state.financialSummary.cumulativeHijacked)}
@@ -744,38 +730,16 @@ export function SalaryHomeScreen({
             <HeroMetric label="지출 금액" value={formatKrw(currentSpent)} />
             <HeroMetric
               emphasized
-              label="납치 금액"
+              label="목표 달성률"
               value={formatKrw(currentHijacked)}
             />
           </View>
-        </View>
+        </ProtectedMoneyHeroCard>
 
-        <GoogleAdSlot />
-
-        <View style={styles.card}>
-          <Text allowFontScaling={false} style={styles.cardTitle}>
-            {displayName}님이 설정한 금일 고정 지출
-          </Text>
-          {visiblePlanReminderItems.length === 0 ? (
-            <SalaryEmptyState
-              body="계획 탭에서 급여일과 고정지출을 설정해 주세요."
-              title="아직 급여 계획이 없어요"
-            />
-          ) : null}
-          {visiblePlanReminderItems.map((item) => (
-            <PlanReminderRow
-              key={item.id}
-              item={item}
-              kstDay={kst.day}
-              onComplete={() => void completePlanReminder(item)}
-            />
-          ))}
-        </View>
-
-        <View style={styles.card}>
+        <DailySafeToSpendCard>
           <View style={styles.titleRow}>
             <Text allowFontScaling={false} style={styles.cardTitle}>
-              {displayName}님이 설정한 일일 사용 예산
+              오늘 사용 가능 금액
             </Text>
             <Pressable
               accessibilityLabel="일일 사용 예산 설정하기"
@@ -877,12 +841,32 @@ export function SalaryHomeScreen({
               onToggle={() => void toggleDailyItem(item)}
             />
           ))}
-        </View>
+        </DailySafeToSpendCard>
 
-        <View style={styles.card}>
+        <UpcomingFixedExpenseSection>
+          <Text allowFontScaling={false} style={styles.cardTitle}>
+            예정 고정지출
+          </Text>
+          {visiblePlanReminderItems.length === 0 ? (
+            <SalaryEmptyState
+              body="계획 탭에서 급여일과 고정지출을 설정해 주세요."
+              title="아직 급여 계획이 없어요"
+            />
+          ) : null}
+          {visiblePlanReminderItems.map((item) => (
+            <PlanReminderRow
+              key={item.id}
+              item={item}
+              kstDay={kst.day}
+              onComplete={() => void completePlanReminder(item)}
+            />
+          ))}
+        </UpcomingFixedExpenseSection>
+
+        <VariableExpenseSection>
           <View style={styles.variableHeader}>
             <Text allowFontScaling={false} style={styles.cardTitle}>
-              {displayName}님이 사용한 금일 변동 지출
+              변동지출
             </Text>
             <View
               accessibilityLabel={`변동 지출 합계 ${formatKrw(variableTotal)}`}
@@ -977,7 +961,9 @@ export function SalaryHomeScreen({
               +추가하기
             </Text>
           </Pressable>
-        </View>
+        </VariableExpenseSection>
+
+        <SponsoredSlot />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -1100,6 +1086,90 @@ function SalaryEmptyState({
       </Text>
     </View>
   );
+}
+
+function BrandHeader({
+  onOpenNotifications,
+  onOpenSettings,
+}: Readonly<{
+  onOpenNotifications?: (() => void) | undefined;
+  onOpenSettings?: (() => void) | undefined;
+}>): React.ReactElement {
+  return (
+    <View accessibilityLabel="급여납치 홈 헤더" style={styles.brandHeader}>
+      <View style={styles.brandIdentity}>
+        <Image
+          accessibilityIgnoresInvertColors
+          accessibilityLabel="급여납치 로고"
+          resizeMode="contain"
+          source={appImageAssets.brand.platformLogo}
+          style={styles.brandLogo}
+        />
+        <View style={styles.brandCopy}>
+          <Text allowFontScaling={false} style={styles.brandName}>
+            Salary Hijacking
+          </Text>
+          <Text allowFontScaling={false} style={styles.brandKorean}>
+            SALARY HIJACKING
+          </Text>
+        </View>
+      </View>
+      <View style={styles.brandActions}>
+        <Pressable
+          accessibilityLabel="알림 화면 열기"
+          accessibilityRole="button"
+          hitSlop={designSystem.spacing[3]}
+          onPress={onOpenNotifications}
+          style={styles.headerActionButton}
+        >
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="contain"
+            source={appIconAssets.common.alarm}
+            style={styles.headerActionIcon}
+          />
+        </Pressable>
+        <Pressable
+          accessibilityLabel="설정 화면 열기"
+          accessibilityRole="button"
+          hitSlop={designSystem.spacing[3]}
+          onPress={onOpenSettings}
+          style={styles.headerActionButton}
+        >
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="contain"
+            source={appIconAssets.common.settings}
+            style={styles.headerActionIcon}
+          />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+function ProtectedMoneyHeroCard({
+  children,
+}: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+  return <View style={styles.heroPanel}>{children}</View>;
+}
+
+function DailySafeToSpendCard({
+  children,
+}: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+  return <View style={styles.card}>{children}</View>;
+}
+
+function UpcomingFixedExpenseSection({
+  children,
+}: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+  return <View style={styles.card}>{children}</View>;
+}
+
+function VariableExpenseSection({
+  children,
+}: Readonly<{ children: React.ReactNode }>): React.ReactElement {
+  return <View style={styles.card}>{children}</View>;
 }
 
 function buildFixedExpensePaymentRequest(
@@ -1337,18 +1407,18 @@ function HeroMetric({
   );
 }
 
-function GoogleAdSlot(): React.ReactElement {
+function SponsoredSlot(): React.ReactElement {
   return (
-    <View accessibilityLabel="Google Ad 광고 영역" style={styles.googleAd}>
+    <View accessibilityLabel="Sponsored 광고 영역" style={styles.googleAd}>
       <View style={styles.adLeft}>
         <Text allowFontScaling={false} style={styles.adSmall}>
-          Google Ad
+          Sponsored
         </Text>
         <Text allowFontScaling={false} style={styles.adTitle}>
-          지금 강세일 특가!
+          생활비 혜택
         </Text>
         <Text allowFontScaling={false} style={styles.adText}>
-          짜장면 구매 타이밍
+          금융 데이터와 분리된 문맥형 안내
         </Text>
       </View>
       <View style={styles.adDish}>
@@ -1693,6 +1763,46 @@ const styles = StyleSheet.create({
     fontWeight: salaryScreenTypography.labelS.fontWeight,
     minWidth: 0,
   },
+  brandActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: salaryScreenSpacing[2],
+  },
+  brandCopy: {
+    gap: salaryScreenSpacing[1],
+  },
+  brandHeader: {
+    alignItems: "center",
+    backgroundColor: salaryScreenColors.surface,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    minHeight: designSystem.header.height,
+    paddingHorizontal: salaryScreenSpacing[5],
+    paddingVertical: salaryScreenSpacing[3],
+  },
+  brandIdentity: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: salaryScreenSpacing[3],
+    minWidth: 0,
+  },
+  brandKorean: {
+    color: salaryScreenColors.muted,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
+    letterSpacing: salaryScreenTypography.caption.letterSpacing,
+  },
+  brandLogo: {
+    borderRadius: salaryScreenRadius.md,
+    height: 44,
+    width: 44,
+  },
+  brandName: {
+    color: salaryScreenColors.brand,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    lineHeight: salaryScreenTypography.titleM.lineHeight,
+  },
   card: {
     backgroundColor: salaryScreenColors.surface,
     borderColor: salaryScreenColors.line,
@@ -1842,6 +1952,14 @@ const styles = StyleSheet.create({
     color: salaryScreenColors.brandSoft,
     fontSize: salaryScreenTypography.bodyM.fontSize,
     fontWeight: salaryScreenTypography.bodyM.fontWeight,
+  },
+  heroGreeting: {
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.bodyS.fontSize,
+    fontWeight: salaryScreenTypography.bodyS.fontWeight,
+    lineHeight: salaryScreenTypography.bodyS.lineHeight,
+    marginTop: salaryScreenSpacing[1],
+    opacity: 0.86,
   },
   heroLeft: {
     flex: 1.2,

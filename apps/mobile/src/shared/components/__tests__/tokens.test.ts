@@ -61,9 +61,9 @@ describe("shared component design tokens", () => {
       full: 999,
     });
     expect(salaryHijackingDesignSystem.navigation.bottomTabs.labels).toEqual([
-      "급여",
+      "홈",
       "계획",
-      "LV",
+      "LV UP",
       "커뮤니티",
       "MY",
     ]);

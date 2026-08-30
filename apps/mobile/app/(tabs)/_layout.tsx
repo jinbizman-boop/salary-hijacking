@@ -30,7 +30,7 @@ const tabs: readonly TabDefinition[] = [
     icon: appIconAssets.bottomTabs.salary,
     name: "salary/index",
     privacyBoundary: "payroll_home",
-    title: "급여",
+    title: "홈",
   },
   {
     href: "/plan",
@@ -44,7 +44,7 @@ const tabs: readonly TabDefinition[] = [
     icon: appIconAssets.bottomTabs.level,
     name: "level/index",
     privacyBoundary: "growth",
-    title: "LV",
+    title: "LV UP",
   },
   {
     href: "/community",

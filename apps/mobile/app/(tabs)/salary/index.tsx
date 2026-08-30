@@ -8,14 +8,15 @@ import { SelectionBottomSheet } from "../../../src/shared/ui/sheets/SelectionBot
 
 const SCREEN_VERSION = "4.3.0-salary-home-ui";
 const SALARY_SUMMARY_ENDPOINT = "/api/v1/salary/summary";
-const GOOGLE_AD_SLOT_LABEL = "Google 광고 영역";
+const SPONSORED_SLOT_LABEL = "Sponsored 광고 영역";
 const SALARY_VISIBLE_COPY_CONTRACT = [
+  "Salary Hijacking",
   "SALARY HIJACKING",
-  "내 급여 납치 현황",
-  "전체 누적 납치 금액",
-  "사용자님이 설정한 금일 고정 지출",
-  "사용자님이 설정한 일일 사용 예산",
-  "사용자님이 사용한 금일 변동 지출",
+  "지켜낸 돈",
+  "누적 납치금액",
+  "오늘 사용 가능 금액",
+  "예정 고정지출",
+  "변동지출",
 ] as const;
 
 export const salaryStitchOverlayComponents = {
@@ -29,6 +30,7 @@ export default function SalaryIndexScreen(): React.ReactElement {
   return (
     <SalaryHomeScreen
       onOpenNotifications={() => router.push("/notifications")}
+      onOpenSettings={() => router.push("/profile/settings")}
     />
   );
 }
@@ -41,7 +43,7 @@ export function assertMobileSalaryIndexCompleteness(): {
   const checks = [
     "SalaryHomeScreen",
     SALARY_SUMMARY_ENDPOINT,
-    GOOGLE_AD_SLOT_LABEL,
+    SPONSORED_SLOT_LABEL,
     ...SALARY_VISIBLE_COPY_CONTRACT,
     "server_authority_component_guard",
     "responsive_salary_home_guard",

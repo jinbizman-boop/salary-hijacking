@@ -4,6 +4,7 @@
  */
 
 import { createAuthApi } from "../src/features/auth/api";
+import { subscribeAuthSessionChange } from "../src/features/auth/navigation";
 import { CapturePreviewScreen } from "../src/features/capture";
 import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
 import {
@@ -420,6 +421,7 @@ type RootState = Readonly<{
   status: RootStatus;
   payload: RootPayload;
   retrying: boolean;
+  navigationEpoch: number;
   toast: Readonly<{ kind: ToastKind; message: string }>;
 }>;
 
@@ -836,6 +838,7 @@ export default function MobileRootLayout(): unknown {
     status: "BOOTSTRAPPING",
     payload: fallbackPayload,
     retrying: false,
+    navigationEpoch: 0,
     toast: { kind: "info", message: "급여납치 앱을 안전하게 시작합니다." },
   });
 
@@ -856,6 +859,7 @@ export default function MobileRootLayout(): unknown {
         payload: fallbackPayload,
         status: "READY",
         retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
         toast: { kind: "success", message: "E2E shell ready" },
       }));
       return;
@@ -872,6 +876,7 @@ export default function MobileRootLayout(): unknown {
         payload,
         status: nextStatus,
         retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
         toast: { kind: "success", message: statusMessage(nextStatus) },
       }));
     } catch (error) {
@@ -881,6 +886,7 @@ export default function MobileRootLayout(): unknown {
           payload: { ...prev.payload, session: fallbackSession },
           status: isPublic ? "READY" : "AUTH_REQUIRED",
           retrying: false,
+          navigationEpoch: prev.navigationEpoch + 1,
           toast: {
             kind: "error",
             message: safeBootstrapErrorMessage("auth-expired"),
@@ -895,6 +901,7 @@ export default function MobileRootLayout(): unknown {
         payload: { ...prev.payload, session: cached },
         status: cachedStatus,
         retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
         toast: {
           kind: "error",
           message: safeBootstrapErrorMessage("offline-fallback"),
@@ -906,6 +913,14 @@ export default function MobileRootLayout(): unknown {
   ReactRuntimeRef.useEffect((): void => {
     void bootstrap();
   }, [bootstrap]);
+
+  ReactRuntimeRef.useEffect(
+    (): (() => void) =>
+      subscribeAuthSessionChange(() => {
+        void bootstrap();
+      }),
+    [bootstrap],
+  );
 
   ReactRuntimeRef.useEffect((): (() => void) => {
     const timer = setTimeout(
@@ -940,7 +955,14 @@ export default function MobileRootLayout(): unknown {
       router.replace(AUTH_VERIFY_ROUTE as never);
     if (next === "ONBOARDING" && currentRouteKey !== "onboarding")
       router.replace(ONBOARDING_ROUTE as never);
-  }, [captureScreenKind, currentRouteKey, isPublic, router, state.status]);
+  }, [
+    captureScreenKind,
+    currentRouteKey,
+    isPublic,
+    router,
+    state.navigationEpoch,
+    state.status,
+  ]);
 
   const shouldRenderSlot =
     captureScreenKind !== null ||
@@ -1119,7 +1141,7 @@ function renderGate(
           ? "온보딩을 완료하세요"
           : status === "ERROR"
             ? "앱 시작 실패"
-            : "서버 권위 앱 상태 확인 중";
+            : "앱 상태를 확인하고 있어요";
   const message =
     status === "AUTH_REQUIRED"
       ? "안전한 세션 확인 후 급여와 예산 데이터를 불러옵니다."
@@ -1129,7 +1151,7 @@ function renderGate(
           ? "급여일, 고정지출, 고정저축, 일일예산 기본 설정을 완료하세요."
           : status === "OFFLINE"
             ? "네트워크 없이 마지막 세션 상태로 표시합니다."
-            : "서버 권위 설정과 개인정보 보호 경계를 확인합니다.";
+            : "세션과 개인정보 보호 상태를 확인합니다.";
 
   return h(
     NativeRuntimeRef.ScrollView,
@@ -1485,7 +1507,7 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
 }
 
 function shouldRouteReadyStateToHome(routeKey: string): boolean {
-  return isAuthenticatedAuthRoute(routeKey);
+  return routeKey === "root" || isAuthenticatedAuthRoute(routeKey);
 }
 
 function normalizeSegments(segments: readonly string[]): readonly string[] {

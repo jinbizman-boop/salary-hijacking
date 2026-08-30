@@ -13,13 +13,9 @@ describe("salary launch readiness interactions", () => {
   it("renders Korean launch copy and keeps planned/completed reminder direction", () => {
     const screen = render(<SalaryHomeScreen />);
 
-    expect(screen.getByText("내 급여 납치 현황")).toBeTruthy();
-    expect(screen.getByText("전체 누적 납치 금액")).toBeTruthy();
-    expect(
-      screen.getByText(
-        "\uC0AC\uC6A9\uC790\uB2D8\uC774 \uC124\uC815\uD55C \uC77C\uC77C \uC0AC\uC6A9 \uC608\uC0B0",
-      ),
-    ).toBeTruthy();
+    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("누적 납치금액")).toBeTruthy();
+    expect(screen.getByText("오늘 사용 가능 금액")).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
 

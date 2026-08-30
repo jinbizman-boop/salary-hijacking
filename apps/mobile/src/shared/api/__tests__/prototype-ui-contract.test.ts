@@ -20,9 +20,9 @@ describe("mobile prototype UI contract", () => {
     expect(source).toContain("appIconAssets.bottomTabs.level");
     expect(source).toContain("appIconAssets.bottomTabs.community");
     expect(source).toContain("appIconAssets.bottomTabs.profile");
-    expect(source).toContain('title: "급여"');
+    expect(source).toContain('title: "홈"');
     expect(source).toContain('title: "계획"');
-    expect(source).toContain('title: "LV"');
+    expect(source).toContain('title: "LV UP"');
     expect(source).toContain('title: "커뮤니티"');
     expect(source).toContain('title: "MY"');
   });
@@ -50,10 +50,13 @@ describe("mobile prototype UI contract", () => {
       expect(source).toContain("SALARY HIJACKING");
     }
 
-    expect(salary).toContain("내 급여 납치");
-    expect(salary).toContain("전체 누적 납치 금액");
-    expect(salary).toContain("님이 설정한 금일 고정 지출");
-    expect(salary).toContain("님이 설정한 일일 사용 예산");
+    expect(salary).toContain("Salary Hijacking");
+    expect(salary).toContain("지켜낸 돈");
+    expect(salary).toContain("누적 납치금액");
+    expect(salary).toContain("오늘 사용 가능 금액");
+    expect(salary).toContain("예정 고정지출");
+    expect(salary).toContain("변동지출");
+    expect(salary).toContain("Sponsored 광고 영역");
     expect(salary).toContain("사용 예정");
     expect(salary).toContain("사용 완료");
 
@@ -72,7 +75,7 @@ describe("mobile prototype UI contract", () => {
     );
     expect(notifications).toContain("Today, Business Conversation");
     expect(notifications).not.toContain("BottomNavigation");
-    expect(notifications).not.toContain('title: "급여"');
+    expect(notifications).not.toContain('title: "홈"');
   });
 
   it("does not keep mojibake copy in core prototype screens", () => {

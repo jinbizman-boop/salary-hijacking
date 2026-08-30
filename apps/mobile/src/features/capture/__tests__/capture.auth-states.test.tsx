@@ -8,7 +8,7 @@ describe("auth capture states", () => {
       <CapturePreviewScreen kind="login-credential-error" />,
     );
     expect(error.getByText("로그인 요청을 완료하지 못했습니다.")).toBeTruthy();
-    expect(error.getByPlaceholderText("아이디")).toBeTruthy();
+    expect(error.getByPlaceholderText("아이디를 입력하세요")).toBeTruthy();
 
     const recovery = render(
       <CapturePreviewScreen kind="login-password-recovery" />,

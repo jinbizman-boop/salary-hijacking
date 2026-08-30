@@ -10,12 +10,9 @@ import {
   type CapturePreviewKind,
 } from "../src/features/capture";
 import { resolveCaptureKindForStitchSlug } from "../src/features/capture/stitch-state-registry";
-import { MOBILE_ACCESS_TOKEN_KEY } from "../src/shared/storage/auth-token";
 
 const SCREEN_VERSION = "4.1.0-launch-components";
 const SPLASH_ROUTE_DELAY_MS = 1200;
-const LOGIN_ROUTE = "/(auth)/login";
-const SALARY_HOME_ROUTE = "/salary";
 const COLD_DEEP_LINK_ROUTES = new Set([
   "/salary",
   "/plan",
@@ -36,7 +33,6 @@ const COLD_DEEP_LINK_ROUTES = new Set([
   "/profile/account",
 ]);
 
-type InitialRoute = typeof LOGIN_ROUTE | typeof SALARY_HOME_ROUTE;
 type AppRoute = string;
 const captureScreens: Readonly<Record<string, CapturePreviewKind>> =
   Object.freeze({
@@ -330,13 +326,10 @@ export default function MobileIndexScreen(): React.ReactElement {
     });
     void SplashScreen.hideAsync().catch(() => undefined);
     const timer = setTimeout(() => {
-      void resolveInitialLaunchTarget()
+      void resolveInitialDeepLinkRoute()
         .then((route) => {
           if (!mounted) return;
-          router.replace(route as never);
-        })
-        .catch(() => {
-          if (mounted) router.replace(LOGIN_ROUTE as never);
+          if (route) router.replace(route as never);
         });
     }, SPLASH_ROUTE_DELAY_MS);
 
@@ -352,21 +345,6 @@ export default function MobileIndexScreen(): React.ReactElement {
   }
 
   return <SplashLaunchScreen routeDelayMs={SPLASH_ROUTE_DELAY_MS} />;
-}
-
-export async function resolveInitialLaunchTarget(): Promise<AppRoute> {
-  const deepLinkRoute = await resolveInitialDeepLinkRoute();
-  if (deepLinkRoute) return deepLinkRoute;
-  return resolveInitialRoute();
-}
-
-export async function resolveInitialRoute(): Promise<InitialRoute> {
-  try {
-    const token = await SplashSecureStore.getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
-    return isUsableAccessToken(token) ? SALARY_HOME_ROUTE : LOGIN_ROUTE;
-  } catch {
-    return LOGIN_ROUTE;
-  }
 }
 
 export async function resolveInitialDeepLinkRoute(): Promise<AppRoute | null> {
@@ -444,11 +422,6 @@ export function resolveCaptureScreenKindForUrl(
   return captureScreens[screen] ?? resolveCaptureKindForStitchSlug(screen);
 }
 
-function isUsableAccessToken(value: string | null): boolean {
-  const token = value?.trim();
-  return Boolean(token && token.length <= 8192 && !/\s/u.test(token));
-}
-
 function readBrowserLocation(): Readonly<{ href: string }> | null {
   if (Platform.OS !== "web") return null;
   if (typeof window === "undefined") return null;
@@ -456,17 +429,6 @@ function readBrowserLocation(): Readonly<{ href: string }> | null {
   if (!location || typeof location.href !== "string") return null;
   return location;
 }
-
-const SplashSecureStore = {
-  async getItemAsync(key: string): Promise<string | null> {
-    try {
-      const store = await import("expo-secure-store");
-      return await store.getItemAsync(key);
-    } catch {
-      return null;
-    }
-  },
-};
 
 export function assertMobileIndexCompleteness(): {
   readonly ok: boolean;
@@ -480,14 +442,10 @@ export function assertMobileIndexCompleteness(): {
     "CapturePreviewScreen",
     "SplashScreen.hideAsync",
     "SPLASH_ROUTE_DELAY_MS = 1200",
-    LOGIN_ROUTE,
-    SALARY_HOME_ROUTE,
     "no preview auth bypass",
-    "resolveInitialRoute",
-    "resolveInitialLaunchTarget",
     "resolveInitialDeepLinkRoute",
     "normalizeInitialDeepLinkRoute",
-    "server authoritative session check",
+    "root auth gate session check",
     "financial raw data hidden",
     "personal raw data hidden",
     "token raw data hidden",

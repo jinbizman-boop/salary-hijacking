@@ -1,4 +1,8 @@
-import { routeAfterLogin, routeAfterSignup } from "../navigation";
+import {
+  routeAfterLogin,
+  routeAfterSignup,
+  subscribeAuthSessionChange,
+} from "../navigation";
 import type {
   MobileAuthResponse,
   MobileSignupResponse,
@@ -11,7 +15,7 @@ function routerSpy(): {
 }
 
 describe("auth navigation", () => {
-  it("routes verified and onboarded login sessions to salary home", () => {
+  it("resolves verified and onboarded login sessions without navigating outside the root auth gate", () => {
     const { router } = routerSpy();
     const response: MobileAuthResponse = {
       data: {
@@ -28,7 +32,7 @@ describe("auth navigation", () => {
     };
 
     expect(routeAfterLogin(router, response)).toBe("/salary");
-    expect(router.replace).toHaveBeenCalledWith("/salary");
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   it("keeps email verification and onboarding gates ahead of salary home", () => {
@@ -79,5 +83,42 @@ describe("auth navigation", () => {
 
     expect(routeAfterSignup(router, response)).toBe("/(auth)/verify-email");
     expect(router.replace).toHaveBeenCalledWith("/(auth)/verify-email");
+  });
+
+  it("publishes authenticated session changes for the root gate to consume exactly once", () => {
+    const events: string[] = [];
+    const unsubscribe = subscribeAuthSessionChange((event) => {
+      events.push(event.reason);
+    });
+
+    routeAfterLogin(routerSpy().router, {
+      data: {
+        status: "AUTHENTICATED",
+        accessToken: "access-token",
+        expiresAt: "2026-07-21T00:00:00.000Z",
+        user: {
+          id: "user_1",
+          emailVerified: true,
+          onboardingCompleted: true,
+          role: "USER",
+        },
+      },
+    });
+    unsubscribe();
+    routeAfterLogin(routerSpy().router, {
+      data: {
+        status: "AUTHENTICATED",
+        accessToken: "access-token",
+        expiresAt: "2026-07-21T00:00:00.000Z",
+        user: {
+          id: "user_1",
+          emailVerified: true,
+          onboardingCompleted: true,
+          role: "USER",
+        },
+      },
+    });
+
+    expect(events).toEqual(["authenticated"]);
   });
 });

@@ -19,8 +19,8 @@ describe("reference mobile screens Korean copy guard", () => {
     const screen = render(<SalaryHomeScreen />);
     const tree = serializedTree(screen);
 
-    expect(screen.getByText(/내 급여 납치/u)).toBeTruthy();
-    expect(screen.getByText("전체 누적 납치 금액")).toBeTruthy();
+    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("누적 납치금액")).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
     expect(tree).not.toMatch(/[�]|湲|援|移|鍮|諛|吏|꾩|뚯|/u);

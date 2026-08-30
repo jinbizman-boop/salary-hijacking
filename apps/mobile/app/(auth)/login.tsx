@@ -1,16 +1,13 @@
 import * as WebBrowser from "expo-web-browser";
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
   AuthVisualFrame,
-  EurekaWorldMark,
   LoginCredentialForm,
-  LoginHero,
   SocialLoginButtons,
   authVisualColors,
-  clampValue,
 } from "../../src/features/auth/components";
 import { AUTH_LOGIN_PATH } from "../../src/features/auth/constants";
 import { routeAfterLogin } from "../../src/features/auth/navigation";
@@ -19,6 +16,7 @@ import type {
   AuthSocialProvider,
 } from "../../src/features/auth/types";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
+import { appIconAssets } from "../../src/shared/assets/icons";
 import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components";
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
@@ -26,18 +24,15 @@ const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
 
 export default function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
-  const { height } = useWindowDimensions();
   const authApi = useMemo(() => createMobileAuthApi(), []);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState(
-    "서버 인증으로 급여 데이터를 안전하게 불러옵니다.",
-  );
+  const [message, setMessage] = useState("");
 
   const handleLoginSubmit = useCallback(
     async (request: AuthLoginRequest): Promise<void> => {
       if (submitting) return;
       setSubmitting(true);
-      setMessage("로그인 요청을 서버에서 확인하고 있습니다.");
+      setMessage("로그인 정보를 확인하고 있습니다.");
       try {
         const response = await authApi.login(request);
         const route = routeAfterLogin(loginRouter, response);
@@ -93,47 +88,122 @@ export default function LoginScreen(): React.ReactElement {
     if (!submitting) loginRouter.push("/(auth)/signup");
   }, [loginRouter, submitting]);
 
+  const openForgotPassword = useCallback((): void => {
+    if (!submitting) loginRouter.push("/(auth)/forgot-password");
+  }, [loginRouter, submitting]);
+
+  const goBack = useCallback((): void => {
+    if (!submitting && typeof loginRouter.back === "function") loginRouter.back();
+  }, [loginRouter, submitting]);
+
   return (
     <AuthVisualFrame accessibilityLabel="급여납치 로그인 화면">
-      <View style={{ height: clampValue(height * 0.18, 86, 172) }} />
-      <LoginHero />
-      <View style={{ height: clampValue(height * 0.065, 32, 64) }} />
+      <View style={styles.topSpacer} />
+      <Pressable
+        accessibilityLabel="이전 화면으로 돌아가기"
+        accessibilityRole="button"
+        hitSlop={designSystem.spacing[3]}
+        onPress={goBack}
+        style={styles.backButton}
+      >
+        <Image
+          accessibilityIgnoresInvertColors
+          resizeMode="contain"
+          source={appIconAssets.common.left}
+          style={styles.backIcon}
+        />
+      </Pressable>
+      <View style={styles.brandBlock}>
+        <Text allowFontScaling={false} style={styles.brandTitle}>
+          Salary Hijacking
+        </Text>
+        <Text allowFontScaling={false} style={styles.brandSubtitle}>
+          금융의 주도권을 되찾으세요
+        </Text>
+      </View>
+      <View style={styles.formGap} />
       <LoginCredentialForm
         loading={submitting}
+        onForgotPasswordPress={openForgotPassword}
         onSubmit={(request) => {
           void handleLoginSubmit(request);
         }}
       />
-      <Text
-        accessibilityLiveRegion="polite"
-        style={{
-          alignSelf: "center",
-          color: authVisualColors.ink,
-          ...designSystem.typography.labelS,
-          marginTop: designSystem.spacing[2],
-          maxWidth: 365,
-          opacity: 0.72,
-          textAlign: "center",
-          width: "100%",
-        }}
-      >
-        {message}
-      </Text>
-      <View style={{ height: clampValue(height * 0.027, 16, 28) }} />
+      {message ? (
+        <Text accessibilityLiveRegion="polite" style={styles.message}>
+          {message}
+        </Text>
+      ) : null}
       <SocialLoginButtons
         onSelectProvider={(provider) => {
           void handleSocialProvider(provider);
         }}
-        onSignupPress={openSignup}
       />
-      <View
-        style={{ flex: 1, minHeight: clampValue(height * 0.075, 40, 82) }}
-      />
-      <EurekaWorldMark />
-      <View style={{ height: clampValue(height * 0.045, 24, 46) }} />
+      <Pressable
+        accessibilityLabel="회원가입"
+        accessibilityRole="button"
+        disabled={submitting}
+        onPress={openSignup}
+        style={styles.signupLink}
+      >
+        <Text allowFontScaling={false} style={styles.signupText}>
+          계정이 없으신가요? 회원가입
+        </Text>
+      </Pressable>
     </AuthVisualFrame>
   );
 }
+
+const styles = StyleSheet.create({
+  backButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    minWidth: designSystem.layout.touchTarget,
+  },
+  backIcon: {
+    height: designSystem.spacing[6],
+    tintColor: designSystem.colors.text.primary,
+    width: designSystem.spacing[6],
+  },
+  brandBlock: {
+    marginTop: designSystem.spacing[4],
+  },
+  brandSubtitle: {
+    color: designSystem.colors.text.primary,
+    ...designSystem.typography.titleM,
+    marginTop: designSystem.spacing[5],
+  },
+  brandTitle: {
+    color: authVisualColors.brandGreen,
+    ...designSystem.typography.titleXL,
+  },
+  formGap: {
+    height: designSystem.spacing[10] + designSystem.spacing[4],
+  },
+  message: {
+    alignSelf: "center",
+    color: authVisualColors.ink,
+    ...designSystem.typography.labelS,
+    marginTop: designSystem.spacing[2],
+    maxWidth: 365,
+    opacity: 0.72,
+    textAlign: "center",
+    width: "100%",
+  },
+  signupLink: {
+    alignSelf: "center",
+    marginTop: designSystem.spacing[5],
+    minHeight: designSystem.layout.touchTarget,
+  },
+  signupText: {
+    color: designSystem.colors.text.secondary,
+    ...designSystem.typography.bodyS,
+  },
+  topSpacer: {
+    height: designSystem.spacing[4],
+  },
+});
 
 export function assertMobileLoginScreenCompleteness(): {
   readonly ok: boolean;
@@ -144,16 +214,19 @@ export function assertMobileLoginScreenCompleteness(): {
     "Salary Hijacking auth feature components",
     AUTH_LOGIN_PATH,
     "AuthVisualFrame",
-    "LoginHero",
     "LoginCredentialForm",
     "SocialLoginButtons",
-    "급여납치",
-    "SALARY HIJACKING",
+    "Salary Hijacking",
+    "금융의 주도권을 되찾으세요",
+    "로그인",
     "아이디",
     "비밀번호",
+    "비밀번호 찾기",
+    "카카오로 계속하기",
+    "네이버로 계속하기",
+    "Apple로 로그인",
     "회원가입",
     "자동 로그인",
-    "Eureka World",
     "createMobileAuthApi",
     "authApi.login",
     "authApi.startOAuth",
@@ -163,5 +236,5 @@ export function assertMobileLoginScreenCompleteness(): {
     "financial_ad_targeting_component_guard",
   ] as const;
 
-  return { ok: checks.length >= 18, version: SCREEN_VERSION, checks };
+  return { ok: checks.length >= 20, version: SCREEN_VERSION, checks };
 }
