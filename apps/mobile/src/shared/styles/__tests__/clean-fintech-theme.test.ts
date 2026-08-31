@@ -33,13 +33,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHijackingTheme.font.native.regular).toBe(
       "Freesentation-4Regular",
     );
-    expect(salaryHijackingTheme.font.native.black).toBe("Freesentation-9Black");
+    expect(salaryHijackingTheme.font.native.black).toBe("Freesentation-7Bold");
     expect(salaryHijackingTheme.font.family).toContain(
       "var(--font-presentation)",
     );
   });
 
-  it("keeps Freesentation font assets bundled and embedded by the native app config", () => {
+  it("keeps Freesentation web assets available while embedding only launch-critical native fonts", () => {
     const rootLayout = source("_layout.tsx");
     const webRootFontAssets = mobileSource(
       "src/shared/styles/root-font-assets.web.ts",
@@ -48,7 +48,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/root-font-assets.native.ts",
     );
     const config = mobileSource("app.config.ts");
-    const expectedFonts = [
+    const webFonts = [
       "Freesentation-4Regular.ttf",
       "Freesentation-5Medium.ttf",
       "Freesentation-6SemiBold.ttf",
@@ -56,19 +56,33 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "Freesentation-8ExtraBold.ttf",
       "Freesentation-9Black.ttf",
     ];
+    const nativeFonts = [
+      "Freesentation-4Regular.ttf",
+      "Freesentation-6SemiBold.ttf",
+      "Freesentation-7Bold.ttf",
+    ];
 
     expect(rootLayout).toContain("expo-font");
     expect(rootLayout).toContain("useFonts");
     expect(config).toContain('"expo-font"');
 
-    for (const fontFile of expectedFonts) {
+    for (const fontFile of webFonts) {
       const fontPath = join(process.cwd(), "assets", "fonts", fontFile);
       expect(existsSync(fontPath)).toBe(true);
       expect(statSync(fontPath).size).toBeGreaterThan(2_000_000);
       expect(webRootFontAssets).toContain(fontFile);
       expect(nativeRootFontAssets).not.toContain(fontFile);
+    }
+
+    for (const fontFile of nativeFonts) {
       expect(config).toContain(`./assets/fonts/${fontFile}`);
     }
+
+    expect(config).not.toContain("./assets/fonts/Freesentation-5Medium.ttf");
+    expect(config).not.toContain(
+      "./assets/fonts/Freesentation-8ExtraBold.ttf",
+    );
+    expect(config).not.toContain("./assets/fonts/Freesentation-9Black.ttf");
   });
 
   it("keeps the official BI logo bundled and used by app and release branding", () => {

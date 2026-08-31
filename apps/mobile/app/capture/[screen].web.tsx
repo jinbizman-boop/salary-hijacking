@@ -32,13 +32,17 @@ export default function CaptureScreen(): React.ReactElement {
 function resolveCapturePreviewKindLazily(
   screen: string,
 ): CapturePreviewKind | null {
-  const mod = require("../../src/features/capture") as CapturePreviewModule;
+  const mod = require(
+    "../../src/features/capture/root-preview",
+  ) as CapturePreviewModule;
   const resolver = mod.resolveCapturePreviewKind;
   return typeof resolver === "function" ? resolver(screen) : null;
 }
 
 function loadCapturePreviewScreen(): CapturePreviewComponent {
-  const mod = require("../../src/features/capture") as CapturePreviewModule;
+  const mod = require(
+    "../../src/features/capture/root-preview",
+  ) as CapturePreviewModule;
   if (typeof mod.CapturePreviewScreen === "function") {
     return mod.CapturePreviewScreen;
   }

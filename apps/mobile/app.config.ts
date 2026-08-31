@@ -64,11 +64,8 @@ const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
 const FREESENTATION_FONT_ASSETS = [
   "./assets/fonts/Freesentation-4Regular.ttf",
-  "./assets/fonts/Freesentation-5Medium.ttf",
   "./assets/fonts/Freesentation-6SemiBold.ttf",
   "./assets/fonts/Freesentation-7Bold.ttf",
-  "./assets/fonts/Freesentation-8ExtraBold.ttf",
-  "./assets/fonts/Freesentation-9Black.ttf",
 ] as const;
 const LOCAL_API_BASE_URL = "http://127.0.0.1:8787";
 const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";

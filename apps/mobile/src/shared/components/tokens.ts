@@ -46,11 +46,11 @@ export const salaryHijackingDesignSystem = {
       'var(--font-presentation), "Presentation", "Pretendard", "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
     native: {
       regular: "Freesentation-4Regular",
-      medium: "Freesentation-5Medium",
+      medium: "Freesentation-4Regular",
       semibold: "Freesentation-6SemiBold",
       bold: "Freesentation-7Bold",
-      extraBold: "Freesentation-8ExtraBold",
-      black: "Freesentation-9Black",
+      extraBold: "Freesentation-7Bold",
+      black: "Freesentation-7Bold",
     },
     weight: {
       regular: "400",

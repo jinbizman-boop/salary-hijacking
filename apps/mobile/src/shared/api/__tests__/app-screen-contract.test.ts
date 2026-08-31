@@ -649,6 +649,12 @@ describe("mobile app screen API and route contracts", () => {
     expect(captureRouteScreen).not.toContain("CapturePreviewScreen");
     expect(captureWebRouteScreen).toContain("resolveCapturePreviewKindLazily");
     expect(captureWebRouteScreen).toContain("loadCapturePreviewScreen");
+    expect(captureWebRouteScreen).toContain(
+      "../../src/features/capture/root-preview",
+    );
+    expect(captureWebRouteScreen).not.toContain(
+      'require("../../src/features/capture")',
+    );
     expect(rootLayout).not.toContain("CleanFintechScreen");
     expect(rootLayout).not.toContain("CleanFintechLevelDetailScreen");
     expect(rootLayout).not.toContain("CleanFintechMyLevelProgressScreen");
@@ -662,6 +668,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain(
       'if (next === "READY" && captureScreenKind) return',
     );
+    expect(rootLayout).toContain("../src/features/capture/root-preview");
+    expect(rootLayout).not.toContain('require("../src/features/capture")');
     expect(indexScreen).not.toContain("resolveCaptureScreenKindForUrl");
     expect(indexScreen).not.toContain("loadCapturePreviewScreen");
     expect(indexScreen).not.toContain("LaunchTransitionScreen");

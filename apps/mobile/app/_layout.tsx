@@ -661,7 +661,7 @@ function renderCaptureScreen(kind: CaptureScreenKind): unknown {
 }
 
 function loadCapturePreviewScreen(): ElementType {
-  const mod = loadModule("../src/features/capture") as Partial<
+  const mod = loadModule("../src/features/capture/root-preview") as Partial<
     CapturePreviewModule
   >;
   return mod.CapturePreviewScreen ?? NativeRuntimeRef.View;
@@ -1148,7 +1148,9 @@ function resolveCaptureScreenKindForUrl(
   if (!url.searchParams.has("capture")) return null;
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts[0] !== "capture") return null;
-  const mod = loadModule("../src/features/capture") as Partial<CapturePreviewModule>;
+  const mod = loadModule(
+    "../src/features/capture/root-preview",
+  ) as Partial<CapturePreviewModule>;
   return typeof mod.resolveCapturePreviewKind === "function"
     ? (mod.resolveCapturePreviewKind(parts[1] ?? "") ?? null)
     : null;
@@ -1433,8 +1435,8 @@ function loadModule(moduleName: string): unknown {
         return require("../src/shared/storage/secure-store");
       case "../src/shared/components/AppHeader":
         return require("../src/shared/components/AppHeader");
-      case "../src/features/capture":
-        return require("../src/features/capture");
+      case "../src/features/capture/root-preview":
+        return require("../src/features/capture/root-preview");
       default:
         return {};
     }
@@ -1621,7 +1623,7 @@ export function assertMobileRootLayoutCompleteness(): {
     "expo_font_useFonts",
     "expo_splash_screen_hideAsync",
     "Freesentation-4Regular.ttf",
-    "Freesentation-9Black.ttf",
+    "Freesentation-7Bold.ttf",
     "typescript_strict_ready",
   ] as const;
   return { ok: checks.length >= 20, version: ROOT_LAYOUT_VERSION, checks };
@@ -1774,12 +1776,12 @@ const styles = NativeRuntimeRef.StyleSheet.create({
   },
   fontLoadingTitle: {
     color: componentColors.textPrimary,
-    fontFamily: "Freesentation-9Black",
+    fontFamily: designSystem.font.native.black,
     ...designSystem.typography.display,
   },
   fontLoadingText: {
     color: componentColors.textSecondary,
-    fontFamily: "Freesentation-6SemiBold",
+    fontFamily: designSystem.font.native.semibold,
     ...designSystem.typography.bodyS,
   },
   errorBoundary: {
@@ -1796,13 +1798,13 @@ const styles = NativeRuntimeRef.StyleSheet.create({
   },
   errorBoundaryTitle: {
     color: componentColors.textPrimary,
-    fontFamily: "Freesentation-8ExtraBold",
+    fontFamily: designSystem.font.native.extraBold,
     ...designSystem.typography.titleL,
     textAlign: "center",
   },
   errorBoundaryText: {
     color: componentColors.textSecondary,
-    fontFamily: "Freesentation-5Medium",
+    fontFamily: designSystem.font.native.medium,
     ...designSystem.typography.bodyS,
     textAlign: "center",
   },
