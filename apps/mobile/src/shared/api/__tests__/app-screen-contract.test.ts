@@ -681,6 +681,14 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain('state.status !== "BOOTSTRAPPING"');
   });
 
+  it("does not combine Expo Router href with custom tabBarButton in production tabs", () => {
+    const tabsLayout = readFileSync(TABS_LAYOUT_SCREEN, "utf8");
+
+    expect(tabsLayout).toContain("tabBarButton: renderMeasuredTabBarButton");
+    expect(tabsLayout).not.toContain("href: tab.href as never");
+    expect(tabsLayout).not.toMatch(/href:\s*[^,\n]+/u);
+  });
+
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");

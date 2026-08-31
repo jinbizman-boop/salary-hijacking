@@ -21,47 +21,41 @@ type TabName =
   | "profile/index";
 
 type TabDefinition = Readonly<{
-  href: string;
   icon: ImageSourcePropType;
   name: TabName;
   privacyBoundary: string;
   title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.6-runtime-confirmed-index-tabs";
+const LAYOUT_VERSION = "4.0.7-runtime-safe-measured-tabs";
 const designSystem = salaryHijackingDesignSystem;
 
 const tabs: readonly TabDefinition[] = [
   {
-    href: "/salary",
     icon: bottomTabIconAssets.salary,
     name: "salary/index",
     privacyBoundary: "payroll_home",
     title: "홈",
   },
   {
-    href: "/plan",
     icon: bottomTabIconAssets.plan,
     name: "plan/index",
     privacyBoundary: "payroll_plan",
     title: "계획",
   },
   {
-    href: "/level",
     icon: bottomTabIconAssets.level,
     name: "level/index",
     privacyBoundary: "growth",
     title: "LV UP",
   },
   {
-    href: "/community",
     icon: bottomTabIconAssets.community,
     name: "community/index",
     privacyBoundary: "anonymous_community",
     title: "커뮤니티",
   },
   {
-    href: "/profile",
     icon: bottomTabIconAssets.profile,
     name: "profile/index",
     privacyBoundary: "profile_privacy",
@@ -118,7 +112,6 @@ export default function TabsLayout(): React.ReactElement {
           key={tab.name}
           name={tab.name}
           options={{
-            href: tab.href as never,
             tabBarAccessibilityLabel: `${tab.title} \uD0ED ${tab.privacyBoundary}`,
             tabBarIcon: ({ color, focused, size }) => (
               <View
