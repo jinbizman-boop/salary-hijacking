@@ -23,7 +23,7 @@ import type {
   AuthSocialProvider,
 } from "../../src/features/auth/types";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
-import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components";
+import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components/tokens";
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
 const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";

@@ -3,7 +3,7 @@ import { Image, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { appIconAssets } from "../../src/shared/assets/icons";
-import { salaryHijackingDesignSystem } from "../../src/shared/components";
+import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
 type TabName =

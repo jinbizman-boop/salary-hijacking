@@ -50,6 +50,34 @@ describe("salary tab screen wiring", () => {
     expect(source).not.toContain("updatePreviewState");
   });
 
+  it("keeps salary home route and screen imports narrow for emulator startup", () => {
+    const route = readFileSync(
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "(tabs)",
+        "salary",
+        "index.tsx",
+      ),
+      "utf8",
+    );
+    const screen = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(route).not.toContain("../../../src/features/salary/components\";");
+    expect(route).toContain(
+      "../../../src/features/salary/components/SalaryHomeScreen",
+    );
+    expect(screen).not.toContain("../../../shared/components\";");
+    expect(screen).toContain("../../../shared/components/tokens");
+  });
+
   it("does not hardcode production salary hero amounts in the screen component", () => {
     const source = readFileSync(
       join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),

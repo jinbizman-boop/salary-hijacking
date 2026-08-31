@@ -30,7 +30,7 @@ import type {
   PlanFixedExpensePaymentRequest,
   PlanSavingsDepositRequest,
 } from "../../../features/plan/types";
-import { salaryHijackingDesignSystem } from "../../../shared/components";
+import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,

@@ -46,6 +46,40 @@ describe("login screen wiring", () => {
     expect(source).not.toContain("EurekaWorldMark");
   });
 
+  it("keeps first-run auth and tab routes from importing the shared component barrel for tokens", () => {
+    const login = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+    const tabs = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(tabs)", "_layout.tsx"),
+      "utf8",
+    );
+
+    expect(login).not.toContain(
+      'from "../../src/shared/components";',
+    );
+    expect(tabs).not.toContain(
+      'from "../../src/shared/components";',
+    );
+    expect(login).toContain(
+      'from "../../src/shared/components/tokens";',
+    );
+    expect(tabs).toContain(
+      'from "../../src/shared/components/tokens";',
+    );
+  });
+
+  it("keeps login child components off the shared component barrel during first render", () => {
+    const social = readFileSync(
+      join(__dirname, "..", "components", "SocialLoginButtons.tsx"),
+      "utf8",
+    );
+
+    expect(social).not.toContain('from "../../../shared/components";');
+    expect(social).toContain('from "../../../shared/components/tokens";');
+  });
+
   it("matches the final login reference structure instead of the stale centered splash composition", () => {
     const source = readFileSync(
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),

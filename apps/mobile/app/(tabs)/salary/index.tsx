@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 
-import { SalaryHomeScreen } from "../../../src/features/salary/components";
+import { SalaryHomeScreen } from "../../../src/features/salary/components/SalaryHomeScreen";
 import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
 import { ErrorState } from "../../../src/shared/components/ErrorState";
 import { AmountInputErrorDialog } from "../../../src/shared/ui/dialogs/AmountInputErrorDialog";

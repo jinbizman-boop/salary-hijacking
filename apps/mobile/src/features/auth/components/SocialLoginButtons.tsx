@@ -13,7 +13,7 @@ import {
   componentRadius,
   componentSpacing,
   salaryHijackingDesignSystem,
-} from "../../../shared/components";
+} from "../../../shared/components/tokens";
 import type { AuthSocialProvider } from "../types";
 import { authVisualColors } from "./AuthVisualFrame";
 
