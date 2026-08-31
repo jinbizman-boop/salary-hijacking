@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { useRouter } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Image,
   Pressable,
@@ -19,20 +19,27 @@ import { SocialLoginButtons } from "../../src/features/auth/components/SocialLog
 import { AUTH_LOGIN_PATH } from "../../src/features/auth/constants";
 import { routeAfterLogin } from "../../src/features/auth/navigation";
 import type {
+  AuthApiClient,
   AuthLoginRequest,
   AuthSocialProvider,
 } from "../../src/features/auth/types";
-import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
 import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components/tokens";
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
 const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
 const loginBackIcon =
   require("../../src/shared/assets/icons/common/left.png") as ImageSourcePropType;
+let mobileAuthApiPromise: Promise<AuthApiClient> | null = null;
+
+function getMobileAuthApi(): Promise<AuthApiClient> {
+  mobileAuthApiPromise ??= import("../../src/shared/api/mobile-api").then(
+    ({ createMobileAuthApi }) => createMobileAuthApi(),
+  );
+  return mobileAuthApiPromise;
+}
 
 export default function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
-  const authApi = useMemo(() => createMobileAuthApi(), []);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -42,6 +49,7 @@ export default function LoginScreen(): React.ReactElement {
       setSubmitting(true);
       setMessage("로그인 정보를 확인하고 있습니다.");
       try {
+        const authApi = await getMobileAuthApi();
         const response = await authApi.login(request);
         const route = routeAfterLogin(loginRouter, response);
         if (route === "ACCOUNT_REVIEW_REQUIRED") {
@@ -57,7 +65,7 @@ export default function LoginScreen(): React.ReactElement {
         setSubmitting(false);
       }
     },
-    [authApi, loginRouter, submitting],
+    [loginRouter, submitting],
   );
 
   const handleSocialProvider = useCallback(
@@ -66,6 +74,7 @@ export default function LoginScreen(): React.ReactElement {
       setSubmitting(true);
       setMessage(`${provider} OAuth 로그인을 시작합니다.`);
       try {
+        const authApi = await getMobileAuthApi();
         const result = await authApi.startOAuth({
           provider,
           redirectUri: OAUTH_REDIRECT_URI,
@@ -90,7 +99,7 @@ export default function LoginScreen(): React.ReactElement {
         setSubmitting(false);
       }
     },
-    [authApi, submitting],
+    [submitting],
   );
 
   const openSignup = useCallback((): void => {

@@ -27,7 +27,11 @@ describe("login screen wiring", () => {
 
     expect(source).not.toContain("onSubmit={() => undefined}");
     expect(source).not.toContain("onSelectProvider={() => undefined}");
-    expect(source).toContain("createMobileAuthApi");
+    expect(source).not.toContain(
+      'import { createMobileAuthApi } from "../../src/shared/api/mobile-api"',
+    );
+    expect(source).toContain('import("../../src/shared/api/mobile-api")');
+    expect(source).toContain("getMobileAuthApi");
     expect(source).toContain("authApi.login");
     expect(source).toContain("authApi.startOAuth");
   });
