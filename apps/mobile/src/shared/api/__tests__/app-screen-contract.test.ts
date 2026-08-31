@@ -830,7 +830,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
     expect(source).toContain("function loadRootFontAssets()");
     expect(source).toContain("../src/shared/styles/root-font-assets");
-    expect(source).toContain("function loadOfficialBiLogo()");
+    expect(source).not.toContain("function loadOfficialBiLogo()");
     expect(source).toContain("function loadRootAppHeader()");
     expect(source).toMatch(
       /FontRuntimeRef\.useFonts\(\s*FONTS_EMBEDDED_IN_NATIVE \? EMPTY_FONT_ASSETS : loadRootFontAssets\(\),?\s*\)/u,
@@ -849,6 +849,15 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("hideNativeSplashSafely");
     expect(source).toContain("onLayout: hideNativeSplashSafely");
     expect(source).toMatch(/setTimeout\(\s*hideNativeSplashSafely/);
+  });
+
+  it("keeps the root bootstrap surface independent from large brand image assets", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).not.toContain("salary-hijacking-platform-logo.png");
+    expect(source).not.toContain("loadOfficialBiLogo");
+    expect(source).toContain("renderLightweightLaunchTransition");
+    expect(source).toContain("lightweightTransitionBrandMark");
   });
 
   it("keeps root render failures on a safe retry screen instead of a blank app", () => {

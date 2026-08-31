@@ -547,13 +547,18 @@ export default function MobileRootLayout(): unknown {
       h(
         NativeRuntimeRef.View,
         { style: styles.fontLoading },
-        h(NativeRuntimeRef.Image, {
-          accessibilityIgnoresInvertColors: true,
-          accessibilityLabel: "급여납치 공식 BI",
-          resizeMode: "contain",
-          source: loadOfficialBiLogo(),
-          style: styles.fontLoadingLogo,
-        }),
+        h(
+          NativeRuntimeRef.View,
+          {
+            accessibilityLabel: "급여납치",
+            style: styles.fontLoadingBrandMark,
+          },
+          h(
+            NativeRuntimeRef.Text,
+            { style: styles.fontLoadingBrandInitial },
+            "급",
+          ),
+        ),
         h(
           NativeRuntimeRef.Text,
           { style: styles.fontLoadingTitle },
@@ -621,13 +626,18 @@ export function ErrorBoundary({
     h(
       NativeRuntimeRef.View,
       { style: styles.errorBoundary },
-      h(NativeRuntimeRef.Image, {
-        accessibilityIgnoresInvertColors: true,
-        accessibilityLabel: "급여납치 공식 BI",
-        resizeMode: "contain",
-        source: loadOfficialBiLogo(),
-        style: styles.errorBoundaryLogo,
-      }),
+      h(
+        NativeRuntimeRef.View,
+        {
+          accessibilityLabel: "급여납치",
+          style: styles.errorBoundaryBrandMark,
+        },
+        h(
+          NativeRuntimeRef.Text,
+          { style: styles.errorBoundaryBrandInitial },
+          "급",
+        ),
+      ),
       h(
         NativeRuntimeRef.Text,
         { style: styles.errorBoundaryTitle },
@@ -762,7 +772,7 @@ function renderLightweightLaunchTransition(): unknown {
       accessibilityLabel: "급여납치 앱 준비 중",
       style: styles.lightweightTransition,
     },
-    h(NativeRuntimeRef.Text, { style: styles.lightweightTransitionTitle }, "급여납치"),
+    h(NativeRuntimeRef.Text, { style: styles.lightweightTransitionBrandMark }, "급여납치"),
     h(
       NativeRuntimeRef.Text,
       { style: styles.lightweightTransitionText },
@@ -1371,10 +1381,6 @@ function loadRootFontAssets(): Readonly<Record<string, unknown>> {
     : EMPTY_FONT_ASSETS;
 }
 
-function loadOfficialBiLogo(): unknown {
-  return require("../src/shared/assets/images/brand/salary-hijacking-platform-logo.png");
-}
-
 function loadRootAppHeader(): ElementType {
   const mod = loadModule("../src/shared/components/AppHeader") as Readonly<{
     AppHeader?: ElementType;
@@ -1698,7 +1704,7 @@ const styles = NativeRuntimeRef.StyleSheet.create({
     justifyContent: "center",
     padding: designSystem.spacing[5],
   },
-  lightweightTransitionTitle: {
+  lightweightTransitionBrandMark: {
     color: componentColors.primaryGreen,
     ...designSystem.typography.titleXL,
     textAlign: "center",
@@ -1769,10 +1775,18 @@ const styles = NativeRuntimeRef.StyleSheet.create({
     justifyContent: "center",
     padding: designSystem.spacing[6],
   },
-  fontLoadingLogo: {
-    borderRadius: designSystem.spacing[10],
-    height: designSystem.spacing[10] * 2 + designSystem.spacing[4],
-    width: designSystem.spacing[10] * 2 + designSystem.spacing[4],
+  fontLoadingBrandMark: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.xl,
+    height: designSystem.spacing[10] + designSystem.spacing[6],
+    justifyContent: "center",
+    width: designSystem.spacing[10] + designSystem.spacing[6],
+  },
+  fontLoadingBrandInitial: {
+    color: componentColors.surface,
+    fontFamily: designSystem.font.native.bold,
+    ...designSystem.typography.titleXL,
   },
   fontLoadingTitle: {
     color: componentColors.textPrimary,
@@ -1791,10 +1805,18 @@ const styles = NativeRuntimeRef.StyleSheet.create({
     justifyContent: "center",
     padding: designSystem.spacing[6],
   },
-  errorBoundaryLogo: {
+  errorBoundaryBrandMark: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreenSoft,
     borderRadius: designSystem.radius.xl,
     height: designSystem.spacing[8] + designSystem.spacing[10],
+    justifyContent: "center",
     width: designSystem.spacing[8] + designSystem.spacing[10],
+  },
+  errorBoundaryBrandInitial: {
+    color: componentColors.primaryGreen,
+    fontFamily: designSystem.font.native.bold,
+    ...designSystem.typography.titleXL,
   },
   errorBoundaryTitle: {
     color: componentColors.textPrimary,

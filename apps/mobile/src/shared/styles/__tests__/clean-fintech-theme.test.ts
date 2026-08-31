@@ -85,7 +85,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(config).not.toContain("./assets/fonts/Freesentation-9Black.ttf");
   });
 
-  it("keeps the official BI logo bundled and used by app and release branding", () => {
+  it("keeps the official BI logo bundled for product screens and release branding", () => {
     const brandLogo = join(
       process.cwd(),
       "src",
@@ -120,8 +120,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         .toUpperCase(),
     ).toBe(officialBiSha256);
     expect(cleanScreens).toContain("appImageAssets.brand.platformLogo");
-    expect(rootLayout).toContain("function loadOfficialBiLogo()");
-    expect(rootLayout).toContain(
+    expect(rootLayout).not.toContain("function loadOfficialBiLogo()");
+    expect(rootLayout).not.toContain(
       'require("../src/shared/assets/images/brand/salary-hijacking-platform-logo.png")',
     );
     expect(rootLayout).not.toContain(
