@@ -1,9 +1,12 @@
+import { useCallback, useMemo } from "react";
 import { useRouter } from "expo-router";
 
 import {
   ProfileScreen,
   type ProfileMenuKey,
 } from "../../../src/features/profile/components";
+import { routeAfterLogout } from "../../../src/features/auth/navigation";
+import { createMobileAuthApi } from "../../../src/shared/api/mobile-api";
 
 const SCREEN_VERSION = "4.3.0-profile-server-summary";
 const PROFILE_MY_PAGE_SUMMARY_ENDPOINT = "/api/v1/users/me/my-page-summary";
@@ -21,9 +24,18 @@ const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
 
 export default function ProfileIndexScreen(): React.ReactElement {
   const router = useRouter();
+  const authApi = useMemo(() => createMobileAuthApi(), []);
+  const handleLogout = useCallback(async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      routeAfterLogout();
+    }
+  }, [authApi]);
 
   return (
     <ProfileScreen
+      onLogout={handleLogout}
       onSelectMenu={(key) => {
         router.push(profileMenuRoutes[key]);
       }}

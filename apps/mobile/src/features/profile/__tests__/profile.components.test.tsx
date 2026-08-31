@@ -1,4 +1,4 @@
-import { fireEvent, render } from "@testing-library/react-native";
+import { fireEvent, render, waitFor } from "@testing-library/react-native";
 
 import {
   ProfileHeader,
@@ -133,4 +133,21 @@ describe("profile feature components", () => {
     expect(onSelectMenu).toHaveBeenCalledWith("NOTICES");
     expect(getProfile).toHaveBeenCalledTimes(1);
   }, 15000);
+
+  it("exposes logout through a confirmation dialog before ending the session", async () => {
+    const onLogout = jest.fn().mockResolvedValue(undefined);
+    const screen = render(
+      <ProfileScreen onLogout={onLogout} onSelectMenu={jest.fn()} />,
+    );
+
+    fireEvent.press(screen.getByRole("button", { name: "로그아웃" }));
+
+    expect(screen.getByText("현재 기기의 자동 로그인 세션만 종료합니다.")).toBeTruthy();
+    expect(screen.getAllByText("로그아웃").length).toBeGreaterThanOrEqual(1);
+
+    const logoutButtons = screen.getAllByRole("button", { name: "로그아웃" });
+    fireEvent.press(logoutButtons[logoutButtons.length - 1]!);
+
+    await waitFor(() => expect(onLogout).toHaveBeenCalledTimes(1));
+  });
 });

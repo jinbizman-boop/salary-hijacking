@@ -6,11 +6,14 @@ import { createMobileProfileApi } from "../../../shared/api/mobile-api";
 import {
   AppHeader,
   AppShell,
+  PrimaryButton,
+  SurfaceCard,
   componentColors,
   componentRadius,
   componentSpacing,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { LogoutConfirmDialog } from "../../auth/components/LogoutConfirmDialog";
 import type { ProfileApiClient, ProfileSnapshot } from "../types";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileMenuCard, type ProfileMenuKey } from "./ProfileMenuCard";
@@ -20,6 +23,7 @@ const typography = salaryHijackingDesignSystem.typography;
 
 export type ProfileScreenProps = Readonly<{
   onSelectMenu: (key: ProfileMenuKey) => void;
+  onLogout?: () => Promise<void> | void;
   profileApi?: Partial<Pick<ProfileApiClient, "getProfile">> | null;
 }>;
 
@@ -32,11 +36,15 @@ const fallbackStats: ProfileStats = {
 };
 
 export function ProfileScreen({
+  onLogout,
   onSelectMenu,
   profileApi,
 }: ProfileScreenProps): React.ReactElement {
   const [snapshot, setSnapshot] = useState<ProfileSnapshot | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [logoutConfirmVisible, setLogoutConfirmVisible] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
+  const [logoutFailed, setLogoutFailed] = useState(false);
   const serverProfileApi = useMemo(
     () =>
       profileApi ??
@@ -64,6 +72,26 @@ export function ProfileScreen({
 
   const stats = profileStatsFromSnapshot(snapshot);
   const user = snapshot?.user;
+  const openLogoutConfirm = (): void => {
+    setLogoutFailed(false);
+    setLogoutConfirmVisible(true);
+  };
+  const closeLogoutConfirm = (): void => {
+    if (!logoutPending) setLogoutConfirmVisible(false);
+  };
+  const confirmLogout = async (): Promise<void> => {
+    if (!onLogout || logoutPending) return;
+    setLogoutPending(true);
+    setLogoutFailed(false);
+    try {
+      await onLogout();
+      setLogoutConfirmVisible(false);
+    } catch {
+      setLogoutFailed(true);
+    } finally {
+      setLogoutPending(false);
+    }
+  };
 
   return (
     <AppShell
@@ -90,6 +118,34 @@ export function ProfileScreen({
       />
       <ProfileStatGrid stats={stats} />
       <ProfileMenuCard onSelect={onSelectMenu} />
+      {onLogout ? (
+        <SurfaceCard accessibilityLabel="로그아웃">
+          <Text style={styles.logoutTitle}>로그아웃</Text>
+          <Text style={styles.logoutDescription}>
+            현재 기기의 자동 로그인 세션만 종료합니다.
+          </Text>
+          {logoutFailed ? (
+            <Text accessibilityRole="alert" style={styles.errorText}>
+              로그아웃을 완료하지 못했어요. 네트워크 상태를 확인해 주세요.
+            </Text>
+          ) : null}
+          <PrimaryButton
+            accessibilityLabel={logoutPending ? "로그아웃 중" : "로그아웃"}
+            disabled={logoutPending}
+            label={logoutPending ? "로그아웃 중" : "로그아웃"}
+            onPress={openLogoutConfirm}
+            variant="secondary"
+          />
+        </SurfaceCard>
+      ) : null}
+      {logoutConfirmVisible ? (
+        <LogoutConfirmDialog
+          onCancel={closeLogoutConfirm}
+          onConfirm={() => {
+            void confirmLogout();
+          }}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -118,5 +174,14 @@ const styles = StyleSheet.create({
     fontWeight: typography.bodyS.fontWeight,
     paddingHorizontal: componentSpacing.sm,
     paddingVertical: componentSpacing.sm,
+  },
+  logoutDescription: {
+    color: componentColors.textSecondary,
+    marginTop: componentSpacing.xs,
+    ...salaryHijackingDesignSystem.typography.bodyS,
+  },
+  logoutTitle: {
+    color: componentColors.textPrimary,
+    ...salaryHijackingDesignSystem.typography.titleM,
   },
 });

@@ -1,5 +1,6 @@
 import {
   routeAfterLogin,
+  routeAfterLogout,
   routeAfterSignup,
   subscribeAuthSessionChange,
 } from "../navigation";
@@ -120,5 +121,17 @@ describe("auth navigation", () => {
     });
 
     expect(events).toEqual(["authenticated"]);
+  });
+
+  it("publishes logout session changes without route-local navigation", () => {
+    const events: string[] = [];
+    const unsubscribe = subscribeAuthSessionChange((event) => {
+      events.push(`${event.reason}:${event.targetRoute}`);
+    });
+
+    expect(routeAfterLogout()).toBe("/(auth)/login");
+    unsubscribe();
+
+    expect(events).toEqual(["logged_out:/(auth)/login"]);
   });
 });

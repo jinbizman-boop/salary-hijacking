@@ -22,7 +22,10 @@ describe("profile tab screen wiring", () => {
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).toContain("ProfileScreen");
     expect(source).toContain("/api/v1/users/me/my-page-summary");
+    expect(source).toContain("createMobileAuthApi");
+    expect(source).toContain("routeAfterLogout");
     expect(source).toContain("onSelectMenu");
+    expect(source).toContain("onLogout");
     expect(source).not.toContain(forbiddenFixtureName);
     expect(source).not.toMatch(
       /totalHijackSaved:\s*5780000|levelXp:\s*880|selfCareScore:\s*84/u,

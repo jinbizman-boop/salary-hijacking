@@ -9,7 +9,7 @@ const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_ROUTE = "/salary";
 
 export type AuthSessionChangeEvent = Readonly<{
-  reason: "authenticated";
+  reason: "authenticated" | "logged_out";
   targetRoute: string;
 }>;
 
@@ -45,6 +45,14 @@ export function routeAfterLogin(
   const targetRoute = resolveAuthenticatedUserRoute(response.data.user);
   publishAuthSessionChange({ reason: "authenticated", targetRoute });
   return targetRoute;
+}
+
+export function routeAfterLogout(): string {
+  publishAuthSessionChange({
+    reason: "logged_out",
+    targetRoute: "/(auth)/login",
+  });
+  return "/(auth)/login";
 }
 
 function resolveAuthenticatedUserRoute(
