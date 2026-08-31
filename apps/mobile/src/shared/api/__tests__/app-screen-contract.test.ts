@@ -821,6 +821,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("fontsLoaded");
     expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
     expect(source).toContain("function loadRootFontAssets()");
+    expect(source).toContain("../src/shared/styles/root-font-assets");
     expect(source).toContain("function loadOfficialBiLogo()");
     expect(source).toContain("function loadRootAppHeader()");
     expect(source).toMatch(

@@ -41,6 +41,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
   it("keeps Freesentation font assets bundled and embedded by the native app config", () => {
     const rootLayout = source("_layout.tsx");
+    const webRootFontAssets = mobileSource(
+      "src/shared/styles/root-font-assets.web.ts",
+    );
+    const nativeRootFontAssets = mobileSource(
+      "src/shared/styles/root-font-assets.native.ts",
+    );
     const config = mobileSource("app.config.ts");
     const expectedFonts = [
       "Freesentation-4Regular.ttf",
@@ -59,7 +65,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       const fontPath = join(process.cwd(), "assets", "fonts", fontFile);
       expect(existsSync(fontPath)).toBe(true);
       expect(statSync(fontPath).size).toBeGreaterThan(2_000_000);
-      expect(rootLayout).toContain(fontFile);
+      expect(webRootFontAssets).toContain(fontFile);
+      expect(nativeRootFontAssets).not.toContain(fontFile);
       expect(config).toContain(`./assets/fonts/${fontFile}`);
     }
   });

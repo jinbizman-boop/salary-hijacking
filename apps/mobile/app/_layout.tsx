@@ -129,6 +129,9 @@ type RootSecureStoreModule = Readonly<{
     nativeStore: Partial<SecureStoreRuntime>,
   ) => SecureStoreRuntime;
 }>;
+type RootFontAssetsModule = Readonly<{
+  getRootFontAssets?: () => Readonly<Record<string, unknown>>;
+}>;
 
 type SessionSnapshot = Readonly<{
   authenticated: boolean;
@@ -1360,14 +1363,10 @@ function loadFontRuntime(): FontRuntime {
 }
 
 function loadRootFontAssets(): Readonly<Record<string, unknown>> {
-  return {
-    "Freesentation-4Regular": require("../assets/fonts/Freesentation-4Regular.ttf"),
-    "Freesentation-5Medium": require("../assets/fonts/Freesentation-5Medium.ttf"),
-    "Freesentation-6SemiBold": require("../assets/fonts/Freesentation-6SemiBold.ttf"),
-    "Freesentation-7Bold": require("../assets/fonts/Freesentation-7Bold.ttf"),
-    "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
-    "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
-  };
+  const mod = loadModule("../src/shared/styles/root-font-assets") as RootFontAssetsModule;
+  return typeof mod.getRootFontAssets === "function"
+    ? mod.getRootFontAssets()
+    : EMPTY_FONT_ASSETS;
 }
 
 function loadOfficialBiLogo(): unknown {
@@ -1428,6 +1427,8 @@ function loadModule(moduleName: string): unknown {
         return require("../src/features/auth/api");
       case "../src/shared/api/api-base":
         return require("../src/shared/api/api-base");
+      case "../src/shared/styles/root-font-assets":
+        return require("../src/shared/styles/root-font-assets");
       case "../src/shared/storage/secure-store":
         return require("../src/shared/storage/secure-store");
       case "../src/shared/components/AppHeader":
