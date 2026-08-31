@@ -59,4 +59,21 @@ describe("plan tab screen wiring", () => {
 
     expect(source).not.toMatch(/500000|700000|2000000|2700000|2,500,000|88%/u);
   });
+
+  it("keeps payroll plan save wired to the release-safe interaction marker", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "PlanScreen.tsx"),
+      "utf8",
+    );
+    const saveButtonIndex = source.indexOf(
+      'accessibilityLabel="payroll-plan-save-button"',
+    );
+    const markerIndex = source.indexOf(
+      'markReleasePerf("interaction.plan_save.press")',
+      saveButtonIndex,
+    );
+
+    expect(saveButtonIndex).toBeGreaterThanOrEqual(0);
+    expect(markerIndex).toBeGreaterThan(saveButtonIndex);
+  });
 });

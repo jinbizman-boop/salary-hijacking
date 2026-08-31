@@ -712,6 +712,9 @@ export function PlanScreen({
             <Pressable
               accessibilityLabel="payroll-plan-save-button"
               accessibilityRole="button"
+              onPressIn={() => {
+                markReleasePerf("interaction.plan_save.press");
+              }}
               onPress={() => {
                 void savePayrollPlan();
               }}
