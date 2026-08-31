@@ -57,7 +57,7 @@ export function AppShell({
         {header}
         <View style={styles.stack}>{children}</View>
       </ScrollView>
-      {overlay}
+      {overlay ? <View style={styles.overlay}>{overlay}</View> : null}
       {bottomTabBar}
     </KeyboardAvoidingView>
   );
@@ -82,5 +82,9 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: componentSpacing.lg,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
   },
 });

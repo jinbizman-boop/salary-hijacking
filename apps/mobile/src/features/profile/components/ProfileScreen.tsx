@@ -116,7 +116,7 @@ export function ProfileScreen({
     >
       {loadFailed ? (
         <Text accessibilityRole="alert" style={styles.errorText}>
-          서버 프로필을 불러오지 못해 안전한 기본 화면을 표시합니다.
+          프로필 정보를 불러오지 못해 안전한 기본 화면을 표시합니다.
         </Text>
       ) : null}
       <ProfileHeader

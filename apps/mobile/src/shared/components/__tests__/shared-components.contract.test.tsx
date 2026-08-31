@@ -44,7 +44,10 @@ describe("shared mobile components", () => {
 
     expect(source).toContain("overlay?: React.ReactNode");
     expect(source).toContain("overlay,");
-    expect(source).toMatch(/<\/ScrollView>\s*\{overlay\}/);
+    expect(source).toMatch(
+      /<\/ScrollView>\s*\{overlay \? <View style=\{styles\.overlay\}>\{overlay\}<\/View> : null\}/,
+    );
+    expect(source).toContain("...StyleSheet.absoluteFillObject");
   });
 
   it("keeps every launch-critical input shell on the keyboard-safe contract", () => {
