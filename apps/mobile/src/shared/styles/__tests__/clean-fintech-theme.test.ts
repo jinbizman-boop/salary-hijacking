@@ -33,6 +33,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHijackingTheme.font.native.regular).toBe(
       "Freesentation-4Regular",
     );
+    expect(salaryHijackingTheme.font.native.semibold).toBe(
+      "Freesentation-7Bold",
+    );
     expect(salaryHijackingTheme.font.native.black).toBe("Freesentation-7Bold");
     expect(salaryHijackingTheme.font.family).toContain(
       "var(--font-presentation)",
@@ -56,11 +59,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "Freesentation-8ExtraBold.ttf",
       "Freesentation-9Black.ttf",
     ];
-    const nativeFonts = [
-      "Freesentation-4Regular.ttf",
-      "Freesentation-6SemiBold.ttf",
-      "Freesentation-7Bold.ttf",
-    ];
+    const nativeFonts = ["Freesentation-4Regular.ttf", "Freesentation-7Bold.ttf"];
 
     expect(rootLayout).toContain("expo-font");
     expect(rootLayout).toContain("useFonts");
@@ -79,6 +78,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
 
     expect(config).not.toContain("./assets/fonts/Freesentation-5Medium.ttf");
+    expect(config).not.toContain(
+      "./assets/fonts/Freesentation-6SemiBold.ttf",
+    );
     expect(config).not.toContain(
       "./assets/fonts/Freesentation-8ExtraBold.ttf",
     );
