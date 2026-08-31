@@ -103,6 +103,16 @@ export function ProfileScreen({
           title="마이페이지"
         />
       }
+      overlay={
+        logoutConfirmVisible ? (
+          <LogoutConfirmDialog
+            onCancel={closeLogoutConfirm}
+            onConfirm={() => {
+              void confirmLogout();
+            }}
+          />
+        ) : null
+      }
     >
       {loadFailed ? (
         <Text accessibilityRole="alert" style={styles.errorText}>
@@ -137,14 +147,6 @@ export function ProfileScreen({
             variant="secondary"
           />
         </SurfaceCard>
-      ) : null}
-      {logoutConfirmVisible ? (
-        <LogoutConfirmDialog
-          onCancel={closeLogoutConfirm}
-          onConfirm={() => {
-            void confirmLogout();
-          }}
-        />
       ) : null}
     </AppShell>
   );

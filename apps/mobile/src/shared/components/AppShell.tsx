@@ -19,6 +19,7 @@ export type AppShellProps = Readonly<{
   children: React.ReactNode;
   header?: React.ReactNode;
   bottomTabBar?: React.ReactNode;
+  overlay?: React.ReactNode;
   accessibilityLabel?: string;
 }>;
 
@@ -26,6 +27,7 @@ export function AppShell({
   children,
   header,
   bottomTabBar,
+  overlay,
   accessibilityLabel = "급여납치 모바일 화면",
 }: AppShellProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
@@ -55,6 +57,7 @@ export function AppShell({
         {header}
         <View style={styles.stack}>{children}</View>
       </ScrollView>
+      {overlay}
       {bottomTabBar}
     </KeyboardAvoidingView>
   );

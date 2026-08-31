@@ -39,6 +39,14 @@ describe("shared mobile components", () => {
     expect(source).toContain("paddingTop: insets.top");
   });
 
+  it("renders modal overlays outside the scroll content so actions stay reachable", () => {
+    const source = readFileSync(join(__dirname, "..", "AppShell.tsx"), "utf8");
+
+    expect(source).toContain("overlay?: React.ReactNode");
+    expect(source).toContain("overlay,");
+    expect(source).toMatch(/<\/ScrollView>\s*\{overlay\}/);
+  });
+
   it("keeps every launch-critical input shell on the keyboard-safe contract", () => {
     const inputShells = [
       join(
