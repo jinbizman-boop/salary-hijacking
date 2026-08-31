@@ -200,6 +200,10 @@ export function SalaryHomeScreen({
   }, []);
 
   useEffect(() => {
+    markReleasePerf("route.home.shell_interactive", { route: "salary" });
+  }, []);
+
+  useEffect(() => {
     let mounted = true;
     const current = getPayrollReminderState();
     configurePayrollReminderStatePersistence(payrollReminderSecureStore);

@@ -78,6 +78,17 @@ describe("salary tab screen wiring", () => {
     expect(screen).toContain("../../../shared/components/tokens");
   });
 
+  it("emits the release home-shell marker from the rendered salary home screen", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("markReleasePerf");
+    expect(source).toContain('"route.home.shell_interactive"');
+    expect(source).toContain('{ route: "salary" }');
+  });
+
   it("does not hardcode production salary hero amounts in the screen component", () => {
     const source = readFileSync(
       join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
