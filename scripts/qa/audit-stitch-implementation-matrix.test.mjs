@@ -5,6 +5,7 @@ import {
   auditStitchImplementationMatrix,
   parseArgs,
   parseCsv,
+  readRepoClassifiedCatalog,
 } from "./audit-stitch-implementation-matrix.mjs";
 
 const header = [
@@ -230,6 +231,17 @@ test("passes when the matrix covers catalog rows plus synthetic SCR-029", () => 
   assert.deepEqual(result.missingCatalogInstanceCodes, []);
   assert.deepEqual(result.mojibakeRows, []);
   assert.deepEqual(result.corruptPngRowsMissingHtmlPrimaryReference, []);
+});
+
+test("reads the committed canonical Stitch CSV when the source zip is unavailable", () => {
+  const catalog = readRepoClassifiedCatalog();
+
+  assert.equal(catalog.source, "repo-canonical-csv");
+  assert.equal(catalog.screens.length, 304);
+  assert.equal(
+    catalog.screens.every((screen) => screen.instance_code),
+    true,
+  );
 });
 
 test("fails when catalog rows are missing or Korean names are mojibake", () => {

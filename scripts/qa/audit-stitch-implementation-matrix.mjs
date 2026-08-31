@@ -7,6 +7,10 @@ import { fileURLToPath } from "node:url";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const defaultZipPath =
   "C:/Users/PC/Downloads/stitch_salary_hijacking_design_system_classified.zip";
+const defaultRepoCatalogPath = resolve(
+  repoRoot,
+  "docs/design/stitch/2026-07-16/stitch-screen-inventory.csv",
+);
 const defaultMatrixPath = resolve(
   repoRoot,
   "docs/audit/IMPLEMENTATION_MATRIX.csv",
@@ -495,7 +499,21 @@ export function auditStitchImplementationMatrix({
   };
 }
 
+export function readRepoClassifiedCatalog(catalogPath = defaultRepoCatalogPath) {
+  const parsed = parseCsv(readFileSync(catalogPath, "utf8"));
+  return {
+    source: "repo-canonical-csv",
+    screens: parsed.rows.map((row) => ({
+      instance_code: row.instance_code,
+      primary_code: row.primary_code,
+      artifact_type: row.artifact_type,
+      png_status: "OK",
+    })),
+  };
+}
+
 function readClassifiedCatalog(zipPath) {
+  if (!existsSync(zipPath)) return readRepoClassifiedCatalog();
   const text = execFileSync(
     "tar",
     [
