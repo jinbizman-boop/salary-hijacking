@@ -56,6 +56,7 @@ export function VariableExpenseQuickAdd({
         accessibilityLabel="지출 추가하기"
         disabled={disabled}
         label="지출 추가하기"
+        perfMarker="interaction.quick_expense.press"
         onPress={() => onSubmit({ title: title.trim(), amount: safeAmount })}
       />
     </SurfaceCard>

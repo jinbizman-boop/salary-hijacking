@@ -212,6 +212,27 @@ describe("shared mobile components", () => {
     expect(screen.getByRole("button", { name: "재시도" })).toBeTruthy();
   });
 
+  it("emits optional release perf markers from canonical buttons", () => {
+    const info = jest.spyOn(globalThis.console, "info").mockImplementation();
+
+    const screen = render(
+      <PrimaryButton
+        accessibilityLabel="지출 추가"
+        label="지출 추가"
+        onPress={jest.fn()}
+        perfMarker="interaction.quick_expense.press"
+      />,
+    );
+
+    fireEvent(screen.getByRole("button", { name: "지출 추가" }), "pressIn");
+
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining("marker=interaction.quick_expense.press"),
+    );
+
+    info.mockRestore();
+  });
+
   it("labels contextual ads and announces money without exposing raw targeting data", () => {
     const screen = render(
       <>

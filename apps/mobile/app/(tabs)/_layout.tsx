@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
+import { markReleasePerf } from "../../src/shared/performance/release-perf";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
 type TabName =
@@ -70,6 +71,9 @@ export default function TabsLayout(): React.ReactElement {
   return (
     <Tabs
       initialRouteName="salary/index"
+      screenListeners={{
+        tabPress: () => markReleasePerf("interaction.bottom_tab.press"),
+      }}
       screenOptions={{
         freezeOnBlur: true,
         headerShown: false,

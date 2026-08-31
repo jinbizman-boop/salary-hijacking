@@ -43,6 +43,7 @@ import {
   AppHeader,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { markReleasePerf } from "../../../shared/performance/release-perf";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
   configurePayrollReminderStatePersistence,
@@ -1320,6 +1321,9 @@ function PlanItemForm({
         accessibilityRole="button"
         accessibilityState={{ disabled: savePending }}
         disabled={savePending}
+        onPressIn={() => {
+          if (!savePending) markReleasePerf("interaction.plan_save.press");
+        }}
         onPress={() => {
           void onSave();
         }}

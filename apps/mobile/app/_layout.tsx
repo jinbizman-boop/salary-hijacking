@@ -8,6 +8,7 @@ import {
   componentColors,
   salaryHijackingDesignSystem,
 } from "../src/shared/components/tokens";
+import { markReleasePerf } from "../src/shared/performance/release-perf";
 
 declare function require(moduleName: string): unknown;
 
@@ -280,12 +281,23 @@ const SPLASH_FORCE_HIDE_FALLBACK_MS = 250;
 let cachedRootApiBaseUrl: string | null = null;
 let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
 let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
+const emittedRootPerfMarkers = new Set<string>();
 
 function hideNativeSplashSafely(): void {
   if (NativeRuntimeRef.Platform.OS === "web") return;
   void getSplashScreenRuntime()
     .hideAsync()
     .catch(() => false);
+}
+
+function markRootPerfOnce(
+  marker: Parameters<typeof markReleasePerf>[0],
+  route: string,
+): void {
+  const key = `${marker}:${route}`;
+  if (emittedRootPerfMarkers.has(key)) return;
+  emittedRootPerfMarkers.add(key);
+  markReleasePerf(marker, { route });
 }
 
 const fallbackSession: SessionSnapshot = Object.freeze({
@@ -538,6 +550,26 @@ export default function MobileRootLayout(): unknown {
     state.status !== "BOOTSTRAPPING" &&
     !shouldRenderSlot &&
     !isRouteTransitionPending;
+
+  ReactRuntimeRef.useEffect((): void => {
+    if (shouldRenderLightweightTransition) {
+      markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
+    }
+    if (state.status === "AUTH_REQUIRED" && isPublic) {
+      markRootPerfOnce("route.login.interactive", currentRouteKey);
+    }
+    if (
+      (state.status === "READY" || state.status === "OFFLINE") &&
+      (currentRouteKey === "salary" || currentRouteKey === "(tabs)/salary")
+    ) {
+      markRootPerfOnce("route.home.shell_interactive", currentRouteKey);
+    }
+  }, [
+    currentRouteKey,
+    isPublic,
+    shouldRenderLightweightTransition,
+    state.status,
+  ]);
 
   if (!fontsReady && !fontLoadTimedOut) {
     return h(

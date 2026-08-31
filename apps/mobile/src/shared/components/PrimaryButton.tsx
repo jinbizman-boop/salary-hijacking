@@ -6,6 +6,10 @@ import {
   componentSpacing,
   salaryHijackingDesignSystem,
 } from "./tokens";
+import {
+  markReleasePerf,
+  type ReleasePerfMarkerName,
+} from "../performance/release-perf";
 
 const designSystem = salaryHijackingDesignSystem;
 
@@ -14,6 +18,7 @@ export type PrimaryButtonProps = Readonly<{
   onPress: () => void;
   accessibilityLabel?: string;
   disabled?: boolean;
+  perfMarker?: ReleasePerfMarkerName;
   variant?: "primary" | "secondary" | "danger";
 }>;
 
@@ -22,6 +27,7 @@ export function PrimaryButton({
   onPress,
   accessibilityLabel = label,
   disabled = false,
+  perfMarker,
   variant = "primary",
 }: PrimaryButtonProps): React.ReactElement {
   return (
@@ -30,6 +36,9 @@ export function PrimaryButton({
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
+      onPressIn={() => {
+        if (perfMarker && !disabled) markReleasePerf(perfMarker);
+      }}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
