@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { AuthLoginRequest } from "../types";
@@ -23,6 +23,10 @@ export function LoginCredentialForm({
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
+
+  useEffect(() => {
+    markReleasePerf("route.login.interactive");
+  }, []);
 
   const submit = (): void => {
     onSubmit({

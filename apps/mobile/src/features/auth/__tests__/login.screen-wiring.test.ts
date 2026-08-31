@@ -80,6 +80,16 @@ describe("login screen wiring", () => {
     expect(social).toContain('from "../../../shared/components/tokens";');
   });
 
+  it("emits the release login-interactive marker from the rendered credential form", () => {
+    const credentials = readFileSync(
+      join(__dirname, "..", "components", "LoginCredentialForm.tsx"),
+      "utf8",
+    );
+
+    expect(credentials).toContain("markReleasePerf");
+    expect(credentials).toContain('"route.login.interactive"');
+  });
+
   it("matches the final login reference structure instead of the stale centered splash composition", () => {
     const source = readFileSync(
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
