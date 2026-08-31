@@ -142,8 +142,8 @@ describe("mobile app screen API and route contracts", () => {
   it("keeps the Android entry on the full Expo Router production app registration", () => {
     const source = readFileSync(ANDROID_ENTRY, "utf8");
 
-    expect(source).toContain("react-native-gesture-handler");
     expect(source).toContain("expo-router/entry");
+    expect(source).not.toContain("react-native-gesture-handler");
     expect(source).not.toContain("./src/android-safe-entry");
     expect(source).not.toContain("./src/android-direct-entry");
     expect(source).not.toContain("AndroidReleaseCandidateApp");
