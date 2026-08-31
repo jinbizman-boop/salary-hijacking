@@ -18,7 +18,7 @@ export function assertMobileIndexCompleteness(): {
     "no index deep link redirect",
     "no index capture preview runtime",
     "no preview auth bypass",
-    "no static splash placeholder",
+    "canonical splash launch screen",
     "no auth token read",
     "no financial raw data",
     "no personal raw data",

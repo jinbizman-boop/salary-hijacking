@@ -32,9 +32,9 @@ describe("shared mobile components", () => {
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
     expect(source).toContain("paddingBottom:");
     expect(source).toContain(
-      "salaryHijackingDesignSystem.navigation.bottomTabs.visualHeight",
+      "designSystem.navigation.bottomTabs.visualHeight",
     );
-    expect(source).toContain("salaryHijackingDesignSystem.spacing[6]");
+    expect(source).toContain("componentSpacing.lg");
     expect(source).toContain("insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
   });
@@ -98,7 +98,7 @@ describe("shared mobile components", () => {
             onTabPress={onTabPress}
           />
         }
-        header={<AppHeader subtitle="서버 권위" title="급여납치" />}
+        header={<AppHeader subtitle="오늘의 흐름" title="급여납치" />}
       >
         <SurfaceCard accessibilityLabel="요약 카드">
           <MoneyText accessibilityLabel="이번 달 납치 금액" amount={5780000} />
@@ -107,7 +107,7 @@ describe("shared mobile components", () => {
       </AppShell>,
     );
 
-    expect(screen.getByLabelText("급여납치 서버 권위")).toBeTruthy();
+    expect(screen.getByLabelText("급여납치 오늘의 흐름")).toBeTruthy();
     expect(screen.getByLabelText("요약 카드")).toBeTruthy();
     expect(screen.getByText("5,780,000원")).toBeTruthy();
     expect(screen.getByLabelText("목표 진행률 72%")).toBeTruthy();

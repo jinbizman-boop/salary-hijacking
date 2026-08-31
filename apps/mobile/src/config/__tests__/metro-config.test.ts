@@ -1,3 +1,4 @@
+import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 
 type Resolution = Readonly<{
@@ -115,6 +116,44 @@ describe("mobile Metro dependency resolution", () => {
           : require.resolve(moduleName);
 
       expect(result.filePath).toBe(expectedEntry);
+      expect(fallbackResolver).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    "react-native/Libraries/Core/Devtools/getDevServer",
+    "expo-router/build/rsc/router/client",
+    "expo-router/build/rsc/router/client.js",
+  ])(
+    "aliases Android release dev fallback module %s away from localhost origins",
+    (moduleName) => {
+      const fallbackResolver = jest.fn(
+        (
+          _context: ResolverContext,
+          resolvedModuleName: string,
+          _platform: string | null,
+        ): Resolution => ({
+          type: "sourceFile",
+          filePath: resolvedModuleName,
+        }),
+      );
+      const context: ResolverContext = {
+        originModulePath: nodePath.join(testWorkspaceRoot, "index.android.js"),
+        resolveRequest: fallbackResolver,
+      };
+
+      const result = metroConfig.resolver.resolveRequest(
+        context,
+        moduleName,
+        "android",
+      );
+      const source = nodeFs.readFileSync(result.filePath, "utf8");
+
+      expect(result.filePath).toContain(
+        nodePath.join("src", "shared", "runtime"),
+      );
+      expect(source).not.toContain("localhost");
+      expect(source).not.toContain("8081");
       expect(fallbackResolver).not.toHaveBeenCalled();
     },
   );

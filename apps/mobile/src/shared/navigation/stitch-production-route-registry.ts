@@ -28,11 +28,10 @@ type ProductionSurface = Readonly<{
 
 const screenSurfaces = {
   "SCR-001": {
-    implementationFile:
-      "apps/mobile/src/features/auth/components/SplashLaunchScreen.tsx",
-    nativeComponent: "SplashLaunchScreen",
+    implementationFile: "apps/mobile/app/_layout.tsx",
+    nativeComponent: "renderLightweightLaunchTransition",
     productionRoute: "/",
-    routeFile: "apps/mobile/app/index.tsx",
+    routeFile: "apps/mobile/app/_layout.tsx",
   },
   "SCR-002": {
     implementationFile: "apps/mobile/src/features/auth/components/index.ts",

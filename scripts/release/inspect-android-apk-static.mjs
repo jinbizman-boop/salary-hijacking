@@ -38,6 +38,7 @@ export const FORBIDDEN_STARTUP_BUNDLE_MARKERS = [
   "fallbackNotifications",
   "127.0.0.1:8787",
   "10.0.2.2:8787",
+  "localhost:",
   "5,780,000",
   "5,500,000",
   "2,700,000",

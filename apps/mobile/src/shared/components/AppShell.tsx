@@ -13,6 +13,8 @@ import {
   salaryHijackingDesignSystem,
 } from "./tokens";
 
+const designSystem = salaryHijackingDesignSystem;
+
 export type AppShellProps = Readonly<{
   children: React.ReactNode;
   header?: React.ReactNode;
@@ -40,8 +42,8 @@ export function AppShell({
           styles.content,
           {
             paddingBottom:
-              salaryHijackingDesignSystem.navigation.bottomTabs.visualHeight +
-              salaryHijackingDesignSystem.spacing[6] +
+              designSystem.navigation.bottomTabs.visualHeight +
+              componentSpacing.lg +
               insets.bottom,
           },
         ]}

@@ -127,6 +127,30 @@ test("fails when Android APK embeds production sample finance or fallback datase
   );
 });
 
+test("fails when Android APK embeds any localhost runtime URL", () => {
+  const entries = [
+    "assets/index.android.bundle",
+    ...REQUIRED_STARTUP_NATIVE_LIBS.flatMap((lib) => [
+      `lib/arm64-v8a/${lib}`,
+      `lib/x86_64/${lib}`,
+    ]),
+  ];
+  const bundleText = [
+    ...REQUIRED_ROUTER_BUNDLE_MARKERS,
+    "http://localhost:8081/api/v1/community/posts",
+  ].join("\n");
+
+  const result = analyzeApkStaticContents({ bundleText, entries });
+
+  assert.equal(result.pass, false);
+  assert.equal(
+    result.forbiddenBundleMarkers.find(
+      (entry) => entry.marker === "localhost:",
+    )?.present,
+    true,
+  );
+});
+
 test("detects Windows CLI entry paths", () => {
   assert.equal(
     isMainModule(

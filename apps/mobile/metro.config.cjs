@@ -623,6 +623,33 @@ function tryResolveWorkspaceModule(moduleName, platform = null) {
   }
 }
 
+const androidReleaseRuntimeStubs = new Map([
+  [
+    "react-native/Libraries/Core/Devtools/getDevServer",
+    "src/shared/runtime/release-dev-server-stub.ts",
+  ],
+  [
+    "react-native/Libraries/Core/Devtools/getDevServer.js",
+    "src/shared/runtime/release-dev-server-stub.ts",
+  ],
+  [
+    "expo-router/build/rsc/router/client",
+    "src/shared/runtime/release-rsc-router-client-stub.tsx",
+  ],
+  [
+    "expo-router/build/rsc/router/client.js",
+    "src/shared/runtime/release-rsc-router-client-stub.tsx",
+  ],
+]);
+
+function tryResolveAndroidReleaseRuntimeStub(moduleName, platform) {
+  if (platform !== "android") return null;
+  const stubPath = androidReleaseRuntimeStubs.get(moduleName);
+  if (!stubPath) return null;
+  const resolved = path.join(projectRoot, stubPath);
+  return fs.existsSync(resolved) ? resolved : null;
+}
+
 function isWorkspaceAbsoluteModuleRequest(moduleName) {
   if (!path.isAbsolute(moduleName)) return false;
   const normalizedModuleName = normalizeForPrefix(moduleName);
@@ -636,6 +663,14 @@ function isWorkspaceAbsoluteModuleRequest(moduleName) {
 }
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const androidReleaseRuntimeStub = tryResolveAndroidReleaseRuntimeStub(
+    moduleName,
+    platform,
+  );
+  if (androidReleaseRuntimeStub !== null) {
+    return toWorkspaceSourceFile(androidReleaseRuntimeStub);
+  }
+
   if (isWorkspaceAbsoluteModuleRequest(moduleName)) {
     return toWorkspaceSourceFile(moduleName);
   }
@@ -729,6 +764,7 @@ Object.defineProperty(config, "__private", {
     patchMetroSerializerPreModules,
     patchMetroSerializerPolyfills,
     tryResolveWindowsDriveRootEntry,
+    tryResolveAndroidReleaseRuntimeStub,
     shouldAppendCanonicalNodeModules,
     shouldUseCanonicalProjectRoot,
     shouldDelegateReactNativeWebResolution,

@@ -34,7 +34,10 @@ export function BottomTabBar({
       style={[
         styles.bar,
         {
-          minHeight: 76 + insets.bottom,
+          minHeight:
+            designSystem.navigation.bottomTabs.visualHeight +
+            designSystem.spacing[2] +
+            insets.bottom,
           paddingBottom: designSystem.spacing[3] + insets.bottom,
         },
       ]}
@@ -82,7 +85,8 @@ const styles = StyleSheet.create({
   },
   item: {
     minHeight: designSystem.layout.touchTarget,
-    minWidth: 64,
+    minWidth:
+      designSystem.navigation.bottomTabs.iconSize + designSystem.spacing[10],
     alignItems: "center",
     justifyContent: "center",
     borderRadius: componentRadius.pill,
