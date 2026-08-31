@@ -589,6 +589,12 @@ export default function MobileRootLayout(): unknown {
     state.status !== "BOOTSTRAPPING" &&
     !shouldRenderSlot &&
     !isRouteTransitionPending;
+  const handleRootLayout = ReactRuntimeRef.useCallback((): void => {
+    hideNativeSplashSafely();
+    if (shouldRenderLightweightTransition) {
+      markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
+    }
+  }, [shouldRenderLightweightTransition]);
 
   ReactRuntimeRef.useEffect((): void => {
     if (shouldRenderLightweightTransition) {
@@ -652,7 +658,7 @@ export default function MobileRootLayout(): unknown {
     NativeRuntimeRef.SafeAreaView,
     {
       accessibilityLabel: "급여납치 모바일 루트",
-      onLayout: hideNativeSplashSafely,
+      onLayout: handleRootLayout,
       style: styles.safeArea,
       testID: ROOT_E2E_TEST_ID,
     },
