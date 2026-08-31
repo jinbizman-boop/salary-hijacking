@@ -14,7 +14,7 @@ describe("login screen wiring", () => {
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).toContain("AuthVisualFrame");
     expect(source).toContain("LoginCredentialForm");
-    expect(source).toContain("SocialLoginButtons");
+    expect(source).toContain("loadSocialLoginButtons");
     expect(source).toContain("AUTH_LOGIN_PATH");
     expect(source).toContain("raw_credential_component_guard");
   });
@@ -82,6 +82,29 @@ describe("login screen wiring", () => {
 
     expect(social).not.toContain('from "../../../shared/components";');
     expect(social).toContain('from "../../../shared/components/tokens";');
+  });
+
+  it("keeps first-run social login actions independent from PNG asset decode", () => {
+    const login = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+    const social = readFileSync(
+      join(__dirname, "..", "components", "SocialLoginButtons.tsx"),
+      "utf8",
+    );
+
+    expect(login).not.toContain(
+      'import { SocialLoginButtons } from "../../src/features/auth/components/SocialLoginButtons";',
+    );
+    expect(login).toMatch(
+      /import\(\s*"\.\.\/\.\.\/src\/features\/auth\/components\/SocialLoginButtons"\s*\)/u,
+    );
+    expect(login).toContain("socialLoginButtonsPromise");
+    expect(social).not.toContain('require("../../../shared/assets/icons/social');
+    expect(social).not.toContain("ImageSourcePropType");
+    expect(social).not.toContain("<Image");
+    expect(social).toContain("provider.shortLabel");
   });
 
   it("emits the release login-interactive marker from the rendered credential form", () => {

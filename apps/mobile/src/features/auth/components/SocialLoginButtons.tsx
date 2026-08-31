@@ -1,12 +1,4 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ImageSourcePropType,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
   componentColors,
@@ -19,31 +11,27 @@ import { authVisualColors } from "./AuthVisualFrame";
 
 const typography = salaryHijackingDesignSystem.typography;
 const designSystem = salaryHijackingDesignSystem;
-const kakaoIcon =
-  require("../../../shared/assets/icons/social/kakao.png") as ImageSourcePropType;
-const naverIcon =
-  require("../../../shared/assets/icons/social/naver.png") as ImageSourcePropType;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
   readonly foregroundColor: string;
-  readonly icon: ImageSourcePropType;
   readonly label: string;
   readonly provider: AuthSocialProvider;
+  readonly shortLabel: string;
 }[] = [
   {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.kakao,
     foregroundColor: componentColors.textPrimary,
-    icon: kakaoIcon,
     label: "카카오로 계속하기",
     provider: "KAKAO",
+    shortLabel: "Kakao",
   },
   {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
     foregroundColor: designSystem.colors.text.inverse,
-    icon: naverIcon,
     label: "네이버로 계속하기",
     provider: "NAVER",
+    shortLabel: "Naver",
   },
 ];
 
@@ -79,12 +67,13 @@ export function SocialLoginButtons({
               { backgroundColor: provider.backgroundColor },
             ]}
           >
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={provider.icon}
-              style={styles.socialIcon}
-            />
+            <Text
+              allowFontScaling={false}
+              accessibilityElementsHidden
+              style={[styles.socialMark, { color: provider.foregroundColor }]}
+            >
+              {provider.shortLabel}
+            </Text>
             <Text
               allowFontScaling={false}
               style={[styles.socialLabel, { color: provider.foregroundColor }]}
@@ -161,8 +150,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: componentSpacing.lg,
     width: "100%",
   },
-  socialIcon: {
-    height: 28,
+  socialMark: {
+    ...typography.labelM,
+    textAlign: "left",
     width: 52,
   },
   socialLabel: {

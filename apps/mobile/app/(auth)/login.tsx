@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import { useRouter } from "expo-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Image,
   Pressable,
@@ -15,7 +15,7 @@ import {
   authVisualColors,
 } from "../../src/features/auth/components/AuthVisualFrame";
 import { LoginCredentialForm } from "../../src/features/auth/components/LoginCredentialForm";
-import { SocialLoginButtons } from "../../src/features/auth/components/SocialLoginButtons";
+import type { SocialLoginButtonsProps } from "../../src/features/auth/components/SocialLoginButtons";
 import { AUTH_LOGIN_PATH } from "../../src/features/auth/constants";
 import { routeAfterLogin } from "../../src/features/auth/navigation";
 import type {
@@ -30,6 +30,12 @@ const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
 const loginBackIcon =
   require("../../src/shared/assets/icons/common/left.png") as ImageSourcePropType;
 let mobileAuthApiPromise: Promise<AuthApiClient> | null = null;
+let socialLoginButtonsPromise: Promise<SocialLoginButtonsComponent> | null =
+  null;
+
+type SocialLoginButtonsComponent = (
+  props: SocialLoginButtonsProps,
+) => React.ReactElement;
 
 function getMobileAuthApi(): Promise<AuthApiClient> {
   mobileAuthApiPromise ??= import("../../src/shared/api/mobile-api").then(
@@ -38,10 +44,29 @@ function getMobileAuthApi(): Promise<AuthApiClient> {
   return mobileAuthApiPromise;
 }
 
+function loadSocialLoginButtons(): Promise<SocialLoginButtonsComponent> {
+  socialLoginButtonsPromise ??= import(
+    "../../src/features/auth/components/SocialLoginButtons"
+  ).then(({ SocialLoginButtons }) => SocialLoginButtons);
+  return socialLoginButtonsPromise;
+}
+
 export default function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [SocialLoginButtonsComponent, setSocialLoginButtonsComponent] =
+    useState<SocialLoginButtonsComponent | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    void loadSocialLoginButtons().then((Component) => {
+      if (mounted) setSocialLoginButtonsComponent(() => Component);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const handleLoginSubmit = useCallback(
     async (request: AuthLoginRequest): Promise<void> => {
@@ -152,11 +177,15 @@ export default function LoginScreen(): React.ReactElement {
           {message}
         </Text>
       ) : null}
-      <SocialLoginButtons
-        onSelectProvider={(provider) => {
-          void handleSocialProvider(provider);
-        }}
-      />
+      {SocialLoginButtonsComponent ? (
+        <SocialLoginButtonsComponent
+          onSelectProvider={(provider) => {
+            void handleSocialProvider(provider);
+          }}
+        />
+      ) : (
+        <View accessibilityLabel="소셜 로그인 준비 중" style={styles.socialSlot} />
+      )}
       <Pressable
         accessibilityLabel="회원가입"
         accessibilityRole="button"
@@ -213,6 +242,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginTop: designSystem.spacing[5],
     minHeight: designSystem.layout.touchTarget,
+  },
+  socialSlot: {
+    alignSelf: "center",
+    minHeight: 244,
+    width: "100%",
   },
   signupText: {
     color: designSystem.colors.text.secondary,
