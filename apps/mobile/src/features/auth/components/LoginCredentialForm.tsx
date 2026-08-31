@@ -4,7 +4,10 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import type { AuthLoginRequest } from "../types";
 import { TextLink, authVisualColors } from "./AuthVisualFrame";
 import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
-import { markReleasePerf } from "../../../shared/performance/release-perf";
+import {
+  markReleaseInteractionPerf,
+  markReleasePerf,
+} from "../../../shared/performance/release-perf";
 
 const designSystem = salaryHijackingDesignSystem;
 
@@ -117,7 +120,9 @@ export function LoginCredentialForm({
         accessibilityRole="button"
         accessibilityState={{ disabled: loading }}
         disabled={loading}
-        onPressIn={() => markReleasePerf("interaction.login.submit.press")}
+        onPressIn={(event) =>
+          markReleaseInteractionPerf("interaction.login.submit.press", event)
+        }
         onPress={submit}
         style={({ pressed }) => [
           styles.submitButton,

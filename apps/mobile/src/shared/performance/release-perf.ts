@@ -8,7 +8,6 @@ export type ReleasePerfMarkerName =
   | "interaction.plan_save.press";
 
 type ReleasePerfFields = Readonly<Record<string, string | number | boolean>>;
-
 const SAFE_FIELD_KEY = /^[a-z][a-z0-9_]{0,31}$/u;
 const SAFE_FIELD_VALUE = /^[a-z0-9_.:/-]{0,80}$/iu;
 const SENSITIVE_FIELD_KEY_PATTERN =
@@ -33,5 +32,44 @@ export function markReleasePerf(
     `[SH_RELEASE_PERF] marker=${marker} t=${timestampMs}${
       safeFields ? ` ${safeFields}` : ""
     }`,
+  );
+}
+
+export function markReleaseInteractionPerf(
+  marker: ReleasePerfMarkerName,
+  event?: unknown,
+): void {
+  const nativeEvent =
+    event !== null &&
+    typeof event === "object" &&
+    "nativeEvent" in event &&
+    event.nativeEvent !== null &&
+    typeof event.nativeEvent === "object"
+      ? event.nativeEvent
+      : null;
+  const rawTimestamp =
+    nativeEvent !== null && "timestamp" in nativeEvent
+      ? Number(nativeEvent.timestamp)
+      : Number.NaN;
+  const nowEpochMs = Date.now();
+  const nowMonotonicMs =
+    typeof globalThis.performance?.now === "function"
+      ? globalThis.performance.now()
+      : null;
+  const latencyMs =
+    Number.isFinite(rawTimestamp) && rawTimestamp > 1_000_000_000_000
+      ? nowEpochMs - rawTimestamp
+      : Number.isFinite(rawTimestamp) &&
+          nowMonotonicMs !== null &&
+          Number.isFinite(nowMonotonicMs)
+        ? nowMonotonicMs - rawTimestamp
+        : null;
+  const safeLatency =
+    latencyMs !== null && Number.isFinite(latencyMs)
+      ? Math.min(10_000, Math.max(0, Math.round(latencyMs)))
+      : null;
+  markReleasePerf(
+    marker,
+    safeLatency === null ? {} : { feedback_ms: safeLatency },
   );
 }

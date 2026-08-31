@@ -7,7 +7,7 @@ import {
   salaryHijackingDesignSystem,
 } from "./tokens";
 import {
-  markReleasePerf,
+  markReleaseInteractionPerf,
   type ReleasePerfMarkerName,
 } from "../performance/release-perf";
 
@@ -36,8 +36,9 @@ export function PrimaryButton({
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPressIn={() => {
-        if (perfMarker && !disabled) markReleasePerf(perfMarker);
+      onPressIn={(event) => {
+        if (perfMarker && !disabled)
+          markReleaseInteractionPerf(perfMarker, event);
       }}
       onPress={onPress}
       style={({ pressed }) => [

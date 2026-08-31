@@ -35,7 +35,10 @@ import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
 } from "../../../shared/api/mobile-api";
-import { markReleasePerf } from "../../../shared/performance/release-perf";
+import {
+  markReleaseInteractionPerf,
+  markReleasePerf,
+} from "../../../shared/performance/release-perf";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
   configurePayrollReminderStatePersistence,
@@ -964,8 +967,11 @@ export function SalaryHomeScreen({
           <Pressable
             accessibilityLabel="변동 지출 추가하기"
             accessibilityRole="button"
-            onPressIn={() =>
-              markReleasePerf("interaction.quick_expense.press")
+            onPressIn={(event) =>
+              markReleaseInteractionPerf(
+                "interaction.quick_expense.press",
+                event,
+              )
             }
             onPress={() => {
               const nextOpen = !variableFormOpen;

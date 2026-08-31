@@ -43,7 +43,9 @@ import {
   AppHeader,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
-import { markReleasePerf } from "../../../shared/performance/release-perf";
+import {
+  markReleaseInteractionPerf,
+} from "../../../shared/performance/release-perf";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
   configurePayrollReminderStatePersistence,
@@ -712,8 +714,11 @@ export function PlanScreen({
             <Pressable
               accessibilityLabel="payroll-plan-save-button"
               accessibilityRole="button"
-              onPressIn={() => {
-                markReleasePerf("interaction.plan_save.press");
+              onPressIn={(event) => {
+                markReleaseInteractionPerf(
+                  "interaction.plan_save.press",
+                  event,
+                );
               }}
               onPress={() => {
                 void savePayrollPlan();
@@ -1324,8 +1329,9 @@ function PlanItemForm({
         accessibilityRole="button"
         accessibilityState={{ disabled: savePending }}
         disabled={savePending}
-        onPressIn={() => {
-          if (!savePending) markReleasePerf("interaction.plan_save.press");
+        onPressIn={(event) => {
+          if (!savePending)
+            markReleaseInteractionPerf("interaction.plan_save.press", event);
         }}
         onPress={() => {
           void onSave();

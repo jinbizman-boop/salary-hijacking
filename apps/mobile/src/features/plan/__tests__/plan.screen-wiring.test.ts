@@ -69,7 +69,7 @@ describe("plan tab screen wiring", () => {
       'accessibilityLabel="payroll-plan-save-button"',
     );
     const markerIndex = source.indexOf(
-      'markReleasePerf("interaction.plan_save.press")',
+      'markReleaseInteractionPerf(\n                  "interaction.plan_save.press"',
       saveButtonIndex,
     );
 
