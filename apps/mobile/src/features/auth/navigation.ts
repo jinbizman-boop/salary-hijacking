@@ -8,9 +8,20 @@ const VERIFY_EMAIL_ROUTE = "/(auth)/verify-email";
 const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_ROUTE = "/salary";
 
+type AuthSessionSnapshot = Readonly<{
+  authenticated: boolean;
+  role: MobileAuthSuccessPayload["user"]["role"];
+  emailVerified: boolean;
+  onboardingCompleted: boolean;
+  payrollReady: boolean;
+  mfaRequired: boolean;
+  sessionExpiresAt: string | null;
+}>;
+
 export type AuthSessionChangeEvent = Readonly<{
   reason: "authenticated" | "logged_out";
   targetRoute: string;
+  session?: AuthSessionSnapshot;
 }>;
 
 type AuthRouter = Readonly<{
@@ -41,7 +52,14 @@ export function routeAfterLogin(
     return "ACCOUNT_REVIEW_REQUIRED";
   }
   const targetRoute = resolveAuthenticatedUserRoute(response.data.user);
-  publishAuthSessionChange({ reason: "authenticated", targetRoute });
+  publishAuthSessionChange({
+    reason: "authenticated",
+    targetRoute,
+    session: snapshotFromAuthenticatedUser(
+      response.data.user,
+      response.data.expiresAt,
+    ),
+  });
   return targetRoute;
 }
 
@@ -60,6 +78,21 @@ function resolveAuthenticatedUserRoute(
   if (!user.onboardingCompleted) return ONBOARDING_ROUTE;
   if (!user.payrollReady) return ONBOARDING_ROUTE;
   return SALARY_ROUTE;
+}
+
+function snapshotFromAuthenticatedUser(
+  user: MobileAuthSuccessPayload["user"],
+  expiresAt: string,
+): AuthSessionSnapshot {
+  return {
+    authenticated: true,
+    role: user.role,
+    emailVerified: user.emailVerified,
+    onboardingCompleted: user.onboardingCompleted,
+    payrollReady: user.payrollReady,
+    mfaRequired: false,
+    sessionExpiresAt: expiresAt,
+  };
 }
 
 export function routeAfterSignup(

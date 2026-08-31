@@ -99,6 +99,11 @@ type SecureStoreRuntime = Readonly<{
   setItemAsync: (key: string, value: string) => Promise<void>;
   deleteItemAsync: (key: string) => Promise<void>;
 }>;
+type AsyncStorageRuntime = Readonly<{
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
+}>;
 type ConstantsRuntime = Readonly<{
   expoConfig?: Readonly<{
     extra?: Readonly<{
@@ -130,6 +135,9 @@ type RootSecureStoreModule = Readonly<{
     nativeStore: Partial<SecureStoreRuntime>,
   ) => SecureStoreRuntime;
 }>;
+type RootAsyncStorageModule =
+  | Partial<AsyncStorageRuntime>
+  | Readonly<{ default?: Partial<AsyncStorageRuntime> }>;
 type RootFontAssetsModule = Readonly<{
   getRootFontAssets?: () => Readonly<Record<string, unknown>>;
 }>;
@@ -193,6 +201,8 @@ const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
 const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
+const ROOT_PUBLIC_SESSION_HINT_KEY =
+  "salary_hijacking.root_public_session_hint.v1";
 const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
 const ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS = 60_000;
 const ROOT_DEEP_LINK_RESOLUTION_TIMEOUT_MS = 250;
@@ -280,6 +290,7 @@ const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
 const SPLASH_FORCE_HIDE_FALLBACK_MS = 250;
 let cachedRootApiBaseUrl: string | null = null;
 let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
+let cachedAsyncStorageRuntime: AsyncStorageRuntime | null = null;
 let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
 const emittedRootPerfMarkers = new Set<string>();
 
@@ -399,6 +410,32 @@ export default function MobileRootLayout(): unknown {
       return;
     }
     try {
+      const publicSessionHint = await readPublicSessionHint();
+      if (!publicSessionHint || publicSessionHint.authenticated === false) {
+        void persistPublicSessionHint(fallbackSession).catch(() => undefined);
+        void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
+          () => undefined,
+        );
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: { ...prev.payload, session: fallbackSession },
+          status: "AUTH_REQUIRED",
+          retrying: false,
+          navigationEpoch: prev.navigationEpoch + 1,
+          toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
+        }));
+        return;
+      }
+      if (canUseCachedAuthenticatedLaunch(publicSessionHint, currentRouteKey)) {
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: cachedAuthenticatedPayload(publicSessionHint),
+          status: "READY",
+          retrying: true,
+          navigationEpoch: prev.navigationEpoch + 1,
+          toast: { kind: "success", message: statusMessage("READY") },
+        }));
+      }
       const hasAccessToken = await hasStoredAccessToken();
       const cachedSession = hasAccessToken
         ? await readCachedSessionStatus()
@@ -433,6 +470,7 @@ export default function MobileRootLayout(): unknown {
       const payload = normalizePayload(response.data ?? {});
       const nextStatus = resolveStatus(payload, isPublic);
       await persistSessionStatus(payload.session, nextStatus);
+      await persistPublicSessionHint(payload.session);
       setState((prev: RootState) => ({
         ...prev,
         payload,
@@ -488,7 +526,8 @@ export default function MobileRootLayout(): unknown {
 
   ReactRuntimeRef.useEffect(
     (): (() => void) =>
-      subscribeAuthSessionChange(() => {
+      subscribeAuthSessionChange((event) => {
+        applyAuthSessionChange(event);
         void bootstrap();
       }),
     [bootstrap],
@@ -840,6 +879,30 @@ function renderToast(
   );
 }
 
+function applyAuthSessionChange(event: Readonly<{
+  reason: "authenticated" | "logged_out";
+  targetRoute: string;
+  session?: Partial<SessionSnapshot> | null;
+}>): void {
+  if (event.reason === "logged_out") {
+    void removePublicSessionHint().catch(() => undefined);
+    void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
+      () => undefined,
+    );
+    return;
+  }
+  if (!event.session) return;
+  const session = normalizeSession({
+    ...fallbackSession,
+    ...event.session,
+    authenticated: true,
+  });
+  void persistPublicSessionHint(session).catch(() => undefined);
+  void persistSessionStatus(session, resolveStatusForSession(session)).catch(
+    () => undefined,
+  );
+}
+
 function renderRuntimeGuard(_payload: RootPayload): null {
   return null;
 }
@@ -984,6 +1047,7 @@ async function clearRootAuthenticatedSession(): Promise<void> {
     await getSecureStoreRuntime().deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
   } finally {
     await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY);
+    await removePublicSessionHint();
   }
 }
 
@@ -1154,6 +1218,49 @@ async function readCachedSessionStatus(): Promise<SessionSnapshot> {
   }
 }
 
+async function readPublicSessionHint(): Promise<SessionSnapshot | null> {
+  const storage = getAsyncStorageRuntime();
+  if (!storage) return null;
+  const cached = await storage.getItem(ROOT_PUBLIC_SESSION_HINT_KEY);
+  if (!cached) return null;
+  try {
+    const parsed = JSON.parse(cached) as Partial<SessionSnapshot>;
+    return normalizeSession({ ...fallbackSession, ...parsed });
+  } catch {
+    await storage.removeItem(ROOT_PUBLIC_SESSION_HINT_KEY);
+    return null;
+  }
+}
+
+async function persistPublicSessionHint(
+  session: SessionSnapshot,
+): Promise<void> {
+  const storage = getAsyncStorageRuntime();
+  if (!storage) return;
+  await storage.setItem(
+    ROOT_PUBLIC_SESSION_HINT_KEY,
+    JSON.stringify({
+      authenticated: session.authenticated,
+      role: session.role,
+      emailVerified: session.emailVerified,
+      onboardingCompleted: session.onboardingCompleted,
+      payrollReady: session.payrollReady,
+      mfaRequired: session.mfaRequired,
+      sessionExpiresAt: session.sessionExpiresAt,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+    }),
+  );
+}
+
+async function removePublicSessionHint(): Promise<void> {
+  const storage = getAsyncStorageRuntime();
+  if (!storage) return;
+  await storage.removeItem(ROOT_PUBLIC_SESSION_HINT_KEY);
+}
+
 function isPublicRoute(segments: readonly string[]): boolean {
   const clean = normalizeSegments(segments);
   if (INITIAL_CAPTURE_SCREEN_KIND) return true;
@@ -1297,6 +1404,15 @@ function statusMessage(status: RootStatus): string {
   return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했습니다.";
 }
 
+function resolveStatusForSession(session: SessionSnapshot): RootStatus {
+  if (!session.authenticated) return "AUTH_REQUIRED";
+  if (session.mfaRequired) return "AUTH_REQUIRED";
+  if (!session.emailVerified) return "VERIFY_EMAIL";
+  if (!session.onboardingCompleted) return "ONBOARDING";
+  if (!session.payrollReady) return "ONBOARDING";
+  return "READY";
+}
+
 function safeBootstrapErrorMessage(
   reason: "auth-expired" | "offline-fallback",
 ): string {
@@ -1319,6 +1435,12 @@ function getSecureStoreRuntime(): SecureStoreRuntime {
   if (cachedSecureStoreRuntime) return cachedSecureStoreRuntime;
   cachedSecureStoreRuntime = loadSecureStoreRuntime();
   return cachedSecureStoreRuntime;
+}
+
+function getAsyncStorageRuntime(): AsyncStorageRuntime | null {
+  if (cachedAsyncStorageRuntime) return cachedAsyncStorageRuntime;
+  cachedAsyncStorageRuntime = loadAsyncStorageRuntime();
+  return cachedAsyncStorageRuntime;
 }
 
 function getSplashScreenRuntime(): SplashScreenRuntime {
@@ -1465,6 +1587,24 @@ function loadSecureStoreRuntime(): SecureStoreRuntime {
     ? helper.createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod)
     : fallbackSecureStoreRuntime();
 }
+function loadAsyncStorageRuntime(): AsyncStorageRuntime | null {
+  const mod = loadModule(
+    "@react-native-async-storage/async-storage",
+  ) as RootAsyncStorageModule;
+  const candidate =
+    "default" in mod && mod.default
+      ? mod.default
+      : (mod as Partial<AsyncStorageRuntime>);
+  return typeof candidate.getItem === "function" &&
+    typeof candidate.setItem === "function" &&
+    typeof candidate.removeItem === "function"
+    ? {
+        getItem: candidate.getItem.bind(candidate),
+        setItem: candidate.setItem.bind(candidate),
+        removeItem: candidate.removeItem.bind(candidate),
+      }
+    : null;
+}
 function loadModule(moduleName: string): unknown {
   try {
     switch (moduleName) {
@@ -1484,6 +1624,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-constants");
       case "expo-secure-store":
         return require("expo-secure-store");
+      case "@react-native-async-storage/async-storage":
+        return require("@react-native-async-storage/async-storage");
       case "../src/features/auth/api":
         return require("../src/features/auth/api");
       case "../src/shared/api/api-base":

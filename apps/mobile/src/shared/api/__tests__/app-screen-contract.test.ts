@@ -422,6 +422,42 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("sessionExpiresAt: session.sessionExpiresAt");
   });
 
+  it("uses a non-sensitive launch session hint before touching SecureStore on root startup", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("ROOT_PUBLIC_SESSION_HINT_KEY");
+    expect(source).toContain("readPublicSessionHint");
+    expect(source).toContain("persistPublicSessionHint");
+    expect(source).toContain("removePublicSessionHint");
+    expect(source).toContain("loadAsyncStorageRuntime");
+    expect(source).toContain('case "@react-native-async-storage/async-storage"');
+    expect(
+      source.indexOf("const publicSessionHint = await readPublicSessionHint()"),
+    ).toBeLessThan(
+      source.indexOf("const hasAccessToken = await hasStoredAccessToken()"),
+    );
+    expect(source).toContain("publicSessionHint.authenticated === false");
+    expect(source).toContain('status: "AUTH_REQUIRED"');
+    expect(source).not.toContain("userIdHash: publicSessionHint.userIdHash");
+  });
+
+  it("publishes login readiness to the root auth gate without screen-local home navigation", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const authNavigation = readFileSync(
+      join(process.cwd(), "src", "features", "auth", "navigation.ts"),
+      "utf8",
+    );
+
+    expect(authNavigation).toContain("snapshotFromAuthenticatedUser");
+    expect(authNavigation).toContain("session: snapshotFromAuthenticatedUser");
+    expect(authNavigation).toContain("response.data.expiresAt");
+    expect(authNavigation).toContain("sessionExpiresAt: expiresAt");
+    expect(rootLayout).toContain("applyAuthSessionChange");
+    expect(rootLayout).toContain("event.session");
+    expect(rootLayout).toContain("persistPublicSessionHint(session)");
+    expect(rootLayout).not.toContain("router.replace(event.targetRoute as never)");
+  });
+
   it("limits cached authenticated launch to fresh complete root or auth recovery routes", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
