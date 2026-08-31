@@ -47,7 +47,7 @@ export const salaryHijackingDesignSystem = {
     native: {
       regular: "Freesentation-4Regular",
       medium: "Freesentation-4Regular",
-      semibold: "Freesentation-6SemiBold",
+      semibold: "Freesentation-7Bold",
       bold: "Freesentation-7Bold",
       extraBold: "Freesentation-7Bold",
       black: "Freesentation-7Bold",

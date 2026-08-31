@@ -186,6 +186,12 @@ describe("mobile Detox E2E contract", () => {
         buildGradle.match(/qaRelease\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
 
       expect(manifest).toContain('android:allowBackup="false"');
+      expect(manifest).toContain(
+        'expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ERROR_RECOVERY_ONLY"',
+      );
+      expect(manifest).not.toContain(
+        'expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"',
+      );
       expect(buildGradle).toContain("qaRelease");
       expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
       expect(releaseBlock).not.toContain("matchingFallbacks = ['debug']");
