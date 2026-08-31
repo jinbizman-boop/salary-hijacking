@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { Image, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { appIconAssets } from "../../src/shared/assets/icons";
+import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
@@ -27,35 +27,35 @@ const designSystem = salaryHijackingDesignSystem;
 const tabs: readonly TabDefinition[] = [
   {
     href: "/salary",
-    icon: appIconAssets.bottomTabs.salary,
+    icon: bottomTabIconAssets.salary,
     name: "salary/index",
     privacyBoundary: "payroll_home",
     title: "홈",
   },
   {
     href: "/plan",
-    icon: appIconAssets.bottomTabs.plan,
+    icon: bottomTabIconAssets.plan,
     name: "plan/index",
     privacyBoundary: "payroll_plan",
     title: "계획",
   },
   {
     href: "/level",
-    icon: appIconAssets.bottomTabs.level,
+    icon: bottomTabIconAssets.level,
     name: "level/index",
     privacyBoundary: "growth",
     title: "LV UP",
   },
   {
     href: "/community",
-    icon: appIconAssets.bottomTabs.community,
+    icon: bottomTabIconAssets.community,
     name: "community/index",
     privacyBoundary: "anonymous_community",
     title: "커뮤니티",
   },
   {
     href: "/profile",
-    icon: appIconAssets.bottomTabs.profile,
+    icon: bottomTabIconAssets.profile,
     name: "profile/index",
     privacyBoundary: "profile_privacy",
     title: "MY",

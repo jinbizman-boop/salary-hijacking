@@ -99,7 +99,9 @@ describe("mobile asset registry policy", () => {
 
     for (const file of collectFiles(iconsRoot)) {
       const relativeFile = relativePosix(iconsRoot, file);
-      if (relativeFile === "index.ts") continue;
+      if (relativeFile === "index.ts" || relativeFile === "bottom-tabs.ts") {
+        continue;
+      }
       expect(relativeFile).toMatch(
         /^(?:bottom-tabs|common|money|level|community|profile|social|brands)\/[a-z0-9]+(?:-[a-z0-9]+)*\.png$/u,
       );
@@ -108,6 +110,14 @@ describe("mobile asset registry policy", () => {
     const registry = fs.readFileSync(path.join(iconsRoot, "index.ts"), "utf8");
     expect(registry).toContain("appIconAssets");
     expect(registry).not.toContain("`${");
+
+    const bottomTabsRegistry = fs.readFileSync(
+      path.join(iconsRoot, "bottom-tabs.ts"),
+      "utf8",
+    );
+    expect(bottomTabsRegistry).toContain("bottomTabIconAssets");
+    expect(bottomTabsRegistry).not.toContain("appIconAssets");
+    expect(bottomTabsRegistry).not.toContain("`${");
   });
 
   it("keeps only Expo launch images at apps/mobile/assets root", () => {
