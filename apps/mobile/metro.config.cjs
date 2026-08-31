@@ -449,6 +449,27 @@ patchMetroSerializerPreModules({
   serializer: config.serializer,
 });
 
+function enableAndroidReleaseInlineRequires(transformer) {
+  const previousGetTransformOptions = transformer.getTransformOptions;
+  transformer.getTransformOptions = async (...args) => {
+    const previousOptions =
+      typeof previousGetTransformOptions === "function"
+        ? await previousGetTransformOptions(...args)
+        : {};
+    return {
+      ...previousOptions,
+      transform: {
+        ...(previousOptions.transform ?? {}),
+        inlineRequires: true,
+      },
+    };
+  };
+  return transformer.getTransformOptions;
+}
+
+config.transformer ??= {};
+enableAndroidReleaseInlineRequires(config.transformer);
+
 function isBareModuleRequest(moduleName) {
   return !moduleName.startsWith(".") && !path.isAbsolute(moduleName);
 }
@@ -766,6 +787,7 @@ Object.defineProperty(config, "__private", {
     tryResolveWindowsDriveRootEntry,
     tryResolveAndroidReleaseRuntimeStub,
     shouldAppendCanonicalNodeModules,
+    enableAndroidReleaseInlineRequires,
     shouldUseCanonicalProjectRoot,
     shouldDelegateReactNativeWebResolution,
   },
