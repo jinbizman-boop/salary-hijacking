@@ -143,14 +143,22 @@ describe("login screen wiring", () => {
       join(__dirname, "..", "components", "AuthVisualFrame.tsx"),
       "utf8",
     );
+    const brandLogoSource = readFileSync(
+      join(__dirname, "..", "components", "AuthBrandLogo.tsx"),
+      "utf8",
+    );
 
     expect(source).toContain("KeyboardAvoidingView");
     expect(source).toContain('keyboardShouldPersistTaps="handled"');
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
     expect(source).toContain("AUTH_VISUAL_MIN_BOTTOM_SAFE_GAP");
-    expect(source).toContain("EUREKA_WORLD_LOGO_ASPECT_RATIO = 177 / 1280");
-    expect(source).not.toContain("logoWidth * 0.158");
-    expect(source).toContain(
+    expect(source).not.toContain("salary-hijacking-platform-logo.png");
+    expect(source).not.toContain("eureka-world-logo.jpg");
+    expect(brandLogoSource).toContain(
+      "EUREKA_WORLD_LOGO_ASPECT_RATIO = 177 / 1280",
+    );
+    expect(brandLogoSource).not.toContain("logoWidth * 0.158");
+    expect(brandLogoSource).toContain(
       "clampValue(width * 0.52, 190, Math.min(300, width * 0.84))",
     );
     expect(source).toMatch(
@@ -164,6 +172,7 @@ describe("login screen wiring", () => {
       join(__dirname, "..", "..", "..", "..", "app", "_layout.tsx"),
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "signup.tsx"),
+      join(__dirname, "..", "components", "AuthBrandLogo.tsx"),
       join(__dirname, "..", "components", "AuthVisualFrame.tsx"),
       join(__dirname, "..", "components", "LoginCredentialForm.tsx"),
       join(__dirname, "..", "components", "SignupForm.tsx"),

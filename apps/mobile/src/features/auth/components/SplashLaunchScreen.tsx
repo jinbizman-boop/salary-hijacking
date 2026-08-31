@@ -2,8 +2,10 @@ import { View, useWindowDimensions } from "react-native";
 
 import {
   AuthBrandLogo,
-  AuthVisualFrame,
   EurekaWorldMark,
+} from "./AuthBrandLogo";
+import {
+  AuthVisualFrame,
   clampValue,
 } from "./AuthVisualFrame";
 import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";

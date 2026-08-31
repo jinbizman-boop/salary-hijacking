@@ -12,10 +12,10 @@ import {
 
 import {
   AuthVisualFrame,
-  LoginCredentialForm,
-  SocialLoginButtons,
   authVisualColors,
-} from "../../src/features/auth/components";
+} from "../../src/features/auth/components/AuthVisualFrame";
+import { LoginCredentialForm } from "../../src/features/auth/components/LoginCredentialForm";
+import { SocialLoginButtons } from "../../src/features/auth/components/SocialLoginButtons";
 import { AUTH_LOGIN_PATH } from "../../src/features/auth/constants";
 import { routeAfterLogin } from "../../src/features/auth/navigation";
 import type {

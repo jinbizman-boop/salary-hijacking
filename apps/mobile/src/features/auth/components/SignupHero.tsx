@@ -4,7 +4,8 @@ import {
   componentSpacing,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
-import { AuthBrandLogo, authVisualColors } from "./AuthVisualFrame";
+import { AuthBrandLogo } from "./AuthBrandLogo";
+import { authVisualColors } from "./AuthVisualFrame";
 
 export function SignupHero(): React.ReactElement {
   return (
