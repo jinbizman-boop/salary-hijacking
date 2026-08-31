@@ -824,7 +824,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain(
       "void SplashScreenRuntimeRef.preventAutoHideAsync()",
     );
-    expect(source).toContain('if (NativeRuntimeRef.Platform.OS !== "web") return');
+    expect(source).toContain('if (NativeRuntimeRef.Platform.OS === "web") return');
     expect(source).toContain("getSplashScreenRuntime().hideAsync");
     expect(source).toContain("fontsLoaded");
     expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
