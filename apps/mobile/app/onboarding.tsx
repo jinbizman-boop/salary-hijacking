@@ -17,11 +17,11 @@ const designSystem = salaryHijackingDesignSystem;
 const STEPS = [
   "급여일과 예상 수령액을 먼저 확인해요.",
   "고정지출과 고정저축을 급여 직후 먼저 분리해요.",
-  "일일 예산과 생활비 기준을 서버 계산으로 확인해요.",
+  "일일 예산과 생활비 기준을 한눈에 확인해요.",
 ] as const;
 const ONBOARDING_SETUP_ENTRIES = [
   {
-    description: "KRW 정수만 입력하고 서버 계산으로 예상 납치금액을 확인해요.",
+    description: "KRW 정수만 입력하고 예상 납치금액을 확인해요.",
     title: "급여일과 월급",
   },
   {
@@ -46,7 +46,7 @@ export default function OnboardingScreen(): React.ReactElement {
   );
   const onboardingCompletionInFlightRef = useRef(false);
   const [message, setMessage] = useState(
-    "온보딩 완료를 서버 프로필 경계에 기록한 뒤 다음 화면으로 이동해요.",
+    "설정을 저장한 뒤 다음 화면으로 이동해요.",
   );
 
   const finishOnboarding = useCallback(
@@ -54,7 +54,7 @@ export default function OnboardingScreen(): React.ReactElement {
       if (submitting || onboardingCompletionInFlightRef.current) return;
       onboardingCompletionInFlightRef.current = true;
       setSubmitting(target);
-      setMessage("서버에 온보딩 완료를 기록하는 중입니다.");
+      setMessage("설정을 저장하는 중입니다.");
       void profileApi
         .completeOnboarding()
         .then(() => {
@@ -62,7 +62,7 @@ export default function OnboardingScreen(): React.ReactElement {
         })
         .catch(() => {
           setMessage(
-            "온보딩 완료를 서버에 기록하지 못했어요. 연결을 확인하고 다시 시도해 주세요.",
+            "설정을 저장하지 못했어요. 연결을 확인하고 다시 시도해 주세요.",
           );
         })
         .finally(() => {
@@ -96,8 +96,8 @@ export default function OnboardingScreen(): React.ReactElement {
         <Text style={styles.kicker}>SALARY HIJACKING</Text>
         <Text style={styles.title}>월급이 사라지기 전에 먼저 붙잡아요</Text>
         <Text style={styles.body}>
-          급여납치는 급여, 고정지출, 고정저축, 생활비를 먼저 분리하고 서버
-          기준으로 오늘 쓸 수 있는 돈과 지켜낸 돈을 보여줘요.
+          급여납치는 급여, 고정지출, 고정저축, 생활비를 먼저 분리하고 오늘
+          쓸 수 있는 돈과 지켜낸 돈을 보여줘요.
         </Text>
         <Text style={styles.notice}>{message}</Text>
 
@@ -128,14 +128,14 @@ export default function OnboardingScreen(): React.ReactElement {
         <PrimaryButton
           accessibilityLabel="목표: 급여 계획부터 설정하기"
           disabled={submitting !== null}
-          label={submitting === "/plan" ? "서버 기록 중" : "급여 계획부터 설정하기"}
+          label={submitting === "/plan" ? "저장 중" : "급여 계획부터 설정하기"}
           onPress={() => finishOnboarding("/plan")}
         />
 
         <PrimaryButton
           accessibilityLabel="목표: 이미 설정했어요"
           disabled={submitting !== null}
-          label={submitting === "/salary" ? "서버 기록 중" : "이미 설정했어요"}
+          label={submitting === "/salary" ? "저장 중" : "이미 설정했어요"}
           onPress={() => finishOnboarding("/salary")}
           variant="secondary"
         />
@@ -157,7 +157,6 @@ export function assertOnboardingScreenCompleteness(): {
     "createMobileProfileApi",
     "completeOnboarding",
     "finishOnboarding",
-    "server-authoritative onboarding completion",
     "financial raw data not used for ads or analytics",
     "KRW integer guidance",
     "payroll plan entry",

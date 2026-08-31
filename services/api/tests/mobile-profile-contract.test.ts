@@ -114,7 +114,7 @@ describe("mobile profile API contract", () => {
     });
   });
 
-  it("completes mobile onboarding through the server profile boundary", async () => {
+  it("completes mobile onboarding through the profile readiness boundary", async () => {
     const app = createProfileContractApp();
 
     const response = await app.fetch(
@@ -154,6 +154,60 @@ describe("mobile profile API contract", () => {
       rawPushTokenLogging: false,
       tokenHashOnly: true,
     });
+  });
+
+  it("persists onboarding completion through the profile readiness row", async () => {
+    const mutableUpdateCalls: unknown[] = [];
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      usersRoutesOptions: {
+        repository: {
+          activity: async () => ({ items: [], page: 1, pageSize: 10, total: 0 }),
+          getConsents: async () => ({}),
+          getExport: async () => null,
+          getMe: async () => ({
+            financialRawDataExposed: false,
+            nickname: "급여 방어자",
+            rawPersonalDataExposed: false,
+            status: "ACTIVE",
+            userId: "user_profile_contract",
+          }),
+          getSettings: async () => ({}),
+          listExports: async () => ({
+            items: [],
+            page: 1,
+            pageSize: 1,
+            total: 0,
+          }),
+          requestExport: async () => ({}),
+          restore: async () => ({}),
+          summary: async () => ({}),
+          updateConsents: async () => ({}),
+          updateMe: async (input: unknown) => {
+            mutableUpdateCalls.push(input);
+            return {};
+          },
+          updateSettings: async () => ({}),
+          withdraw: async () => ({}),
+        } as never,
+      },
+      now: () => new Date("2026-06-29T05:00:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/users/me/onboarding-complete", {
+        method: "POST",
+        headers: { ...authHeaders, "content-type": "application/json" },
+        body: JSON.stringify({}),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+
+    expect(response.status).toBe(200);
+    expect(mutableUpdateCalls).toEqual([{}]);
   });
 
   it("updates mobile account consent settings without enabling financial ad targeting", async () => {

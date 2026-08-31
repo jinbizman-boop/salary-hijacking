@@ -1414,6 +1414,7 @@ async function dispatch<TEnv>(rt: UsersRouteRuntime<TEnv>): Promise<Response> {
   }
   if (method === "POST" && relativePath === "/me/onboarding-complete") {
     onboardingCompleteInput(await body(rt.request));
+    await repository.updateMe({}, rt);
     await emit(rt, {
       event: "user_profile_updated",
       requestId: rt.requestId,
