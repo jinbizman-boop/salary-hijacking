@@ -58,6 +58,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ];
     const nativeFonts = [
       "Freesentation-4Regular.ttf",
+      "Freesentation-6SemiBold.ttf",
       "Freesentation-7Bold.ttf",
     ];
 
@@ -78,9 +79,6 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
 
     expect(config).not.toContain("./assets/fonts/Freesentation-5Medium.ttf");
-    expect(config).not.toContain(
-      "./assets/fonts/Freesentation-6SemiBold.ttf",
-    );
     expect(config).not.toContain(
       "./assets/fonts/Freesentation-8ExtraBold.ttf",
     );

@@ -64,6 +64,7 @@ const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
 const FREESENTATION_FONT_ASSETS = [
   "./assets/fonts/Freesentation-4Regular.ttf",
+  "./assets/fonts/Freesentation-6SemiBold.ttf",
   "./assets/fonts/Freesentation-7Bold.ttf",
 ] as const;
 const LOCAL_API_BASE_URL = "http://127.0.0.1:8787";
