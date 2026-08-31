@@ -1,5 +1,11 @@
 import { Tabs } from "expo-router";
-import { Image, View, type ImageSourcePropType } from "react-native";
+import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
+import {
+  Image,
+  Pressable,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
@@ -71,10 +77,6 @@ export default function TabsLayout(): React.ReactElement {
   return (
     <Tabs
       initialRouteName="salary/index"
-      screenListeners={{
-        tabPress: (event) =>
-          markReleaseInteractionPerf("interaction.bottom_tab.press", event),
-      }}
       screenOptions={{
         freezeOnBlur: true,
         headerShown: false,
@@ -147,11 +149,45 @@ export default function TabsLayout(): React.ReactElement {
               </View>
             ),
             tabBarLabel: tab.title,
+            tabBarButton: renderMeasuredTabBarButton,
             title: tab.title,
           }}
         />
       ))}
     </Tabs>
+  );
+}
+
+function renderMeasuredTabBarButton({
+  accessibilityLabel,
+  accessibilityState,
+  children,
+  onLongPress,
+  onPress,
+  testID,
+}: BottomTabBarButtonProps): React.ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={accessibilityState}
+      onLongPress={onLongPress}
+      onPress={onPress}
+      onPressIn={(event) =>
+        markReleaseInteractionPerf("interaction.bottom_tab.press", event)
+      }
+      style={({ pressed }) => [
+        {
+          alignItems: "center",
+          flex: 1,
+          justifyContent: "center",
+          opacity: pressed ? 0.92 : 1,
+        },
+      ]}
+      testID={testID}
+    >
+      {children}
+    </Pressable>
   );
 }
 

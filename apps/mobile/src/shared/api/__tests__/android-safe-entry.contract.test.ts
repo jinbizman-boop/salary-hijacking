@@ -9,7 +9,7 @@ const directEntryPath = join(mobileRoot, "src/android-direct-entry.tsx");
 describe("Android standalone production entry", () => {
   it("uses Expo Router for Android APK boot instead of the safe-entry shell", () => {
     expect(indexAndroid).toContain("expo-router/entry");
-    expect(indexAndroid).not.toContain("react-native-gesture-handler");
+    expect(indexAndroid).toContain("react-native-gesture-handler");
     expect(indexAndroid).not.toContain("./src/android-safe-entry");
     expect(indexAndroid).not.toContain("./src/android-direct-entry");
   });
