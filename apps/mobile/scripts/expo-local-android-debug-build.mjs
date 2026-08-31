@@ -2639,6 +2639,10 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     ...debugQaGradleProperties,
   ];
   const localDebugJsEngineGradleArgs = [];
+  const releaseLikeGradleProperties =
+    normalizedBuildType === "qaRelease"
+      ? ["-PEX_DEV_CLIENT_NETWORK_INSPECTOR=false"]
+      : [];
   const cmakeWarmupBuildTypes =
     nativeCmakeBuildTypesForAndroidBuild(normalizedBuildType);
   const expoModulesCoreConfigureExcludes = architectures.flatMap(
@@ -2692,6 +2696,7 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       androidGradleAssembleTask(variantName),
       "--no-daemon",
       ...stableLocalDebugGradleArgs,
+      ...releaseLikeGradleProperties,
       ...localDebugJsEngineGradleArgs,
       "-x",
       ":app:generateAutolinkingPackageList",

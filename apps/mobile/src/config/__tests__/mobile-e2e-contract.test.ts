@@ -218,6 +218,20 @@ describe("mobile Detox E2E contract", () => {
     );
   });
 
+  it("disables Expo dev-client network inspection in Android build properties", () => {
+    const config = appConfig({ config: {} });
+    const buildPropertiesPlugin = config.plugins?.find((plugin) =>
+      Array.isArray(plugin) && plugin[0] === "expo-build-properties",
+    );
+
+    expect(buildPropertiesPlugin).toEqual([
+      "expo-build-properties",
+      expect.objectContaining({
+        android: expect.objectContaining({ networkInspector: false }),
+      }),
+    ]);
+  });
+
   it("keeps Android custom scheme deep links on Expo Router paths instead of an /app prefix", () => {
     const config = appConfig({ config: {} });
     const intentFilters = config.android.intentFilters as ReadonlyArray<{

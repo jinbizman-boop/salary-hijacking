@@ -328,6 +328,7 @@ function pluginConfig(): readonly PluginEntry[] {
           minSdkVersion: 24,
           enableProguardInReleaseBuilds: true,
           enableShrinkResourcesInReleaseBuilds: true,
+          networkInspector: false,
         },
       },
     ],

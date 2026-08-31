@@ -1895,6 +1895,10 @@ test("build invocations can target qaRelease APK without AndroidTest packaging",
       "-PsalaryHijackingAndroidAbiFilters=x86_64,arm64-v8a",
     ),
   );
+  assert.ok(
+    invocations.gradleArgs.includes("-PEX_DEV_CLIENT_NETWORK_INSPECTOR=false"),
+    "qaRelease Gradle assemble must disable dev-client network inspection",
+  );
   assert.match(
     invocations.debugApkPath,
     /android[\\/]app[\\/]build[\\/]outputs[\\/]apk[\\/]qaRelease[\\/]app-qaRelease\.apk$/,
