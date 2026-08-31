@@ -83,7 +83,7 @@ export default function TabsLayout(): React.ReactElement {
         tabBarItemStyle: {
           borderRadius: designSystem.radius.lg,
           marginHorizontal: designSystem.spacing[0],
-          minHeight: designSystem.layout.touchTarget,
+          minHeight: salaryHijackingTheme.layout.touchTarget,
           minWidth: 0,
           paddingHorizontal: designSystem.spacing[0],
         },

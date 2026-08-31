@@ -124,6 +124,12 @@ export interface AuthSession {
   readonly createdAt: string;
 }
 
+export interface AuthReadiness {
+  readonly emailVerified: boolean;
+  readonly onboardingCompleted: boolean;
+  readonly payrollReady: boolean;
+}
+
 export interface OAuthStateRecord {
   readonly state: string;
   readonly provider: AuthProvider;
@@ -231,6 +237,10 @@ export interface AuthRepository<TEnv = unknown> {
     code: string,
     runtime: AuthRuntime<TEnv>,
   ): Promise<boolean>;
+  getUserReadiness?(
+    userId: string,
+    runtime: AuthRuntime<TEnv>,
+  ): Promise<AuthReadiness>;
 }
 
 export interface ProviderProfile {
@@ -723,7 +733,9 @@ function passwordHashNeedsUpgrade(passwordHash: string): boolean {
   if (parts.length === 3 && parts[0] === "sha256") return true;
   if (parts.length === 4 && parts[0] === "pbkdf2-sha256") {
     const iterations = Number.parseInt(parts[1] ?? "", 10);
-    return !Number.isInteger(iterations) || iterations < PBKDF2_SHA256_ITERATIONS;
+    return (
+      !Number.isInteger(iterations) || iterations < PBKDF2_SHA256_ITERATIONS
+    );
   }
   return false;
 }
@@ -794,10 +806,7 @@ function redactDiagnosticText(value: string): string {
       /\b(password|token|secret|authorization|cookie|email|phone)\s*=\s*[^\s,;]+/giu,
       "$1=[REDACTED]",
     )
-    .replace(
-      /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu,
-      "[REDACTED_EMAIL]",
-    );
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[REDACTED_EMAIL]");
 }
 
 function errorResponse(
@@ -958,6 +967,7 @@ async function issueTokens<TEnv>(
   runtime: AuthRuntime<TEnv>,
   deviceId: string | null,
   mfaVerified = false,
+  readiness: AuthReadiness = defaultAuthReadiness(user),
 ): Promise<AuthTokens> {
   const nowSeconds = Math.floor(runtime.now.getTime() / 1000);
   const sessionId = globalThis.crypto.randomUUID();
@@ -977,6 +987,9 @@ async function issueTokens<TEnv>(
       deviceId,
       provider: user.provider,
       accountStatus: user.accountStatus,
+      emailVerified: readiness.emailVerified,
+      onboardingCompleted: readiness.onboardingCompleted,
+      payrollReady: readiness.payrollReady,
       mfaVerified,
       iat: nowSeconds,
       nbf: nowSeconds,
@@ -1044,7 +1057,28 @@ function readRefreshToken<TEnv>(
   return token;
 }
 
-function userPublicView(user: AuthUser): JsonRecord {
+function defaultAuthReadiness(user: AuthUser): AuthReadiness {
+  const accountReady = user.accountStatus === "ACTIVE";
+  return {
+    emailVerified: accountReady,
+    onboardingCompleted: accountReady,
+    payrollReady: accountReady,
+  };
+}
+
+async function authReadinessFor<TEnv>(
+  user: AuthUser,
+  runtime: AuthRuntime<TEnv>,
+): Promise<AuthReadiness> {
+  return runtime.repository.getUserReadiness
+    ? runtime.repository.getUserReadiness(user.userId, runtime)
+    : defaultAuthReadiness(user);
+}
+
+function userPublicView(
+  user: AuthUser,
+  readiness: AuthReadiness = defaultAuthReadiness(user),
+): JsonRecord {
   return {
     userId: user.userId,
     nickname: user.nickname,
@@ -1052,6 +1086,9 @@ function userPublicView(user: AuthUser): JsonRecord {
     provider: user.provider,
     roles: [...user.roles].join(","),
     accountStatus: user.accountStatus,
+    emailVerified: readiness.emailVerified,
+    onboardingCompleted: readiness.onboardingCompleted,
+    payrollReady: readiness.payrollReady,
     level: user.level,
     mfaEnabled: user.mfaEnabled,
     createdAt: user.createdAt,
@@ -1169,11 +1206,13 @@ async function handleRegister<TEnv>(
     ).toISOString(),
     runtime,
   );
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     input.deviceId ?? null,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_register",
@@ -1188,7 +1227,7 @@ async function handleRegister<TEnv>(
     201,
     {
       data: {
-        user: userPublicView(user),
+        user: userPublicView(user, readiness),
         tokens,
         ...(exposeDeliveryTokens(runtime)
           ? { emailVerificationTokenForDelivery: verifyToken }
@@ -1254,11 +1293,13 @@ async function handleLogin<TEnv>(
       "관리자 권한이 필요합니다.",
     );
   await runtime.repository.updateLastLogin(user.userId, runtime);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     optionalStringField(body, "deviceId"),
     adminMode && !user.mfaEnabled,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_login_success",
@@ -1273,7 +1314,7 @@ async function handleLogin<TEnv>(
     200,
     {
       data: {
-        user: userPublicView(user),
+        user: userPublicView(user, readiness),
         tokens,
         mfaRequired: adminMode && user.mfaEnabled,
       },
@@ -1316,11 +1357,13 @@ async function handleSocialLogin<TEnv>(
   );
   assertActiveUser(user);
   await runtime.repository.updateLastLogin(user.userId, runtime);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     input.deviceId ?? null,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_social_login",
@@ -1333,7 +1376,7 @@ async function handleSocialLogin<TEnv>(
   return jsonResponse(
     runtime,
     200,
-    { data: { user: userPublicView(user), tokens } },
+    { data: { user: userPublicView(user, readiness), tokens } },
     { "set-cookie": refreshCookie(runtime, tokens.refreshToken) },
   );
 }
@@ -1374,7 +1417,11 @@ async function handleRefresh<TEnv>(
     );
   }
   if (new Date(session.expiresAt).getTime() <= runtime.now.getTime()) {
-    await runtime.repository.revokeSession(session.sessionId, "EXPIRED", runtime);
+    await runtime.repository.revokeSession(
+      session.sessionId,
+      "EXPIRED",
+      runtime,
+    );
     throw new AuthRouteError(
       401,
       "AUTH_REFRESH_TOKEN_INVALID",
@@ -1390,11 +1437,13 @@ async function handleRefresh<TEnv>(
     );
   assertActiveUser(user);
   await runtime.repository.revokeSession(session.sessionId, "ROTATED", runtime);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     optionalStringField(body, "deviceId") ?? session.deviceId,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_refresh",
@@ -1407,7 +1456,7 @@ async function handleRefresh<TEnv>(
   return jsonResponse(
     runtime,
     200,
-    { data: { user: userPublicView(user), tokens } },
+    { data: { user: userPublicView(user, readiness), tokens } },
     { "set-cookie": refreshCookie(runtime, tokens.refreshToken) },
   );
 }
@@ -1481,7 +1530,10 @@ async function handleMe<TEnv>(runtime: AuthRuntime<TEnv>): Promise<Response> {
       "AUTH_USER_NOT_FOUND",
       "사용자를 찾을 수 없습니다.",
     );
-  return jsonResponse(runtime, 200, { data: { user: userPublicView(user) } });
+  const readiness = await authReadinessFor(user, runtime);
+  return jsonResponse(runtime, 200, {
+    data: { user: userPublicView(user, readiness) },
+  });
 }
 
 async function handlePasswordResetRequest<TEnv>(
@@ -1628,8 +1680,9 @@ async function handleVerifyEmail<TEnv>(
     path: runtime.path,
     createdAt: runtime.now.toISOString(),
   });
+  const readiness = await authReadinessFor(user, runtime);
   return jsonResponse(runtime, 200, {
-    data: { verified: true, user: userPublicView(user) },
+    data: { verified: true, user: userPublicView(user, readiness) },
   });
 }
 
@@ -1794,11 +1847,13 @@ async function handleOAuthCallback<TEnv>(
     runtime,
   );
   assertActiveUser(user);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     input.deviceId ?? null,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_social_login",
@@ -1813,7 +1868,7 @@ async function handleOAuthCallback<TEnv>(
     200,
     {
       data: {
-        user: userPublicView(user),
+        user: userPublicView(user, readiness),
         tokens,
         redirectUri: stateRecord.redirectUri,
       },

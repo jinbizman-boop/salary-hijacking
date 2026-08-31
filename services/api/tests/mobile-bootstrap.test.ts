@@ -249,6 +249,49 @@ describe("GET /api/v1/mobile/bootstrap", () => {
     });
   });
 
+  it("does not hard-code onboarding or payroll readiness for authenticated mobile bootstrap", async () => {
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      now: () => new Date("2026-06-29T05:00:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/mobile/bootstrap", {
+        headers: {
+          "x-auth-context-source": "auth.middleware",
+          "x-authenticated-user-id": "user_12345",
+          "x-auth-primary-role": "USER",
+          "x-authenticated-roles": "USER",
+          "x-auth-account-status": "ACTIVE",
+          "x-auth-mfa-verified": "false",
+          "x-auth-onboarding-completed": "false",
+          "x-auth-payroll-ready": "false",
+        },
+      }),
+      { APP_ENV: "staging" },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly session?: Record<string, unknown>;
+        readonly digest?: Record<string, unknown>;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.data?.session).toMatchObject({
+      authenticated: true,
+      emailVerified: true,
+      onboardingCompleted: false,
+      payrollReady: false,
+    });
+    expect(body.data?.digest).toMatchObject({
+      payrollReady: false,
+    });
+  });
+
   it("propagates verified access token expiry into the mobile bootstrap session", async () => {
     const expiresAtEpochSeconds = Math.floor(
       Date.parse("2026-06-29T05:15:00.000Z") / 1000,
@@ -268,6 +311,9 @@ describe("GET /api/v1/mobile/bootstrap", () => {
             permissions: ["payroll:read"],
             sessionId: "session_abc",
             accountStatus: "ACTIVE",
+            emailVerified: true,
+            onboardingCompleted: true,
+            payrollReady: false,
             exp: expiresAtEpochSeconds,
           },
           rawToken: token,
@@ -291,6 +337,9 @@ describe("GET /api/v1/mobile/bootstrap", () => {
     expect(body.data?.session).toMatchObject({
       authenticated: true,
       sessionExpiresAt: "2026-06-29T05:15:00.000Z",
+      emailVerified: true,
+      onboardingCompleted: true,
+      payrollReady: false,
     });
     expect(body.data?.session).not.toHaveProperty("sessionId");
   });

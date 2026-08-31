@@ -1,13 +1,13 @@
-import type {
-  CommunityBoardType,
-  CommunityListResult,
-  CommunityRepository,
-  CommunityReportReason,
-  CommunityRouteRuntime,
-  JsonRecord,
-  PaginationInput,
+import {
+  CommunityHttpError,
+  type CommunityBoardType,
+  type CommunityListResult,
+  type CommunityRepository,
+  type CommunityReportReason,
+  type CommunityRouteRuntime,
+  type JsonRecord,
+  type PaginationInput,
 } from "../routes/community.routes";
-import { CommunityHttpError } from "../routes/community.routes";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];

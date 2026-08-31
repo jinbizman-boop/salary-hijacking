@@ -27,6 +27,7 @@ describe("auth navigation", () => {
           id: "user_1",
           emailVerified: true,
           onboardingCompleted: true,
+          payrollReady: true,
           role: "USER",
         },
       },
@@ -50,6 +51,7 @@ describe("auth navigation", () => {
             id: "user_1",
             emailVerified: false,
             onboardingCompleted: true,
+            payrollReady: true,
             role: "USER",
           },
         },
@@ -65,11 +67,34 @@ describe("auth navigation", () => {
             id: "user_1",
             emailVerified: true,
             onboardingCompleted: false,
+            payrollReady: true,
             role: "USER",
           },
         },
       }),
     ).toBe("/onboarding");
+  });
+
+  it("routes incomplete payroll setup through the setup gate without local navigation", () => {
+    const { router } = routerSpy();
+
+    expect(
+      routeAfterLogin(router, {
+        data: {
+          status: "AUTHENTICATED",
+          accessToken: "access-token",
+          expiresAt: "2026-07-21T00:00:00.000Z",
+          user: {
+            id: "user_1",
+            emailVerified: true,
+            onboardingCompleted: true,
+            payrollReady: false,
+            role: "USER",
+          },
+        },
+      }),
+    ).toBe("/onboarding");
+    expect(router.replace).not.toHaveBeenCalled();
   });
 
   it("routes signup email verification before onboarding and salary home", () => {
@@ -101,6 +126,7 @@ describe("auth navigation", () => {
           id: "user_1",
           emailVerified: true,
           onboardingCompleted: true,
+          payrollReady: true,
           role: "USER",
         },
       },
@@ -115,6 +141,7 @@ describe("auth navigation", () => {
           id: "user_1",
           emailVerified: true,
           onboardingCompleted: true,
+          payrollReady: true,
           role: "USER",
         },
       },

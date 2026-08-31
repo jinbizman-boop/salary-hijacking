@@ -1,6 +1,7 @@
 import type {
   AccountStatus,
   AuthProvider,
+  AuthReadiness,
   AuthRepository,
   AuthRole,
   AuthRuntime,
@@ -97,9 +98,9 @@ async function defaultQuery<TEnv>(
         text: string,
         values?: readonly DbValue[],
       ) => Promise<{
-      readonly rows: readonly DbRow[];
-      readonly rowCount: number | null;
-    }>;
+        readonly rows: readonly DbRow[];
+        readonly rowCount: number | null;
+      }>;
       connect: () => Promise<{
         query: (
           text: string,
@@ -282,6 +283,14 @@ function mapSession(row: DbRow | undefined): AuthSession | null {
     expiresAt: toIso(row.expires_at),
     revokedAt: toNullableIso(row.revoked_at),
     createdAt: toIso(row.created_at),
+  };
+}
+
+function mapReadiness(row: DbRow | undefined): AuthReadiness {
+  return {
+    emailVerified: row?.email_verified === true,
+    onboardingCompleted: row?.onboarding_completed === true,
+    payrollReady: row?.payroll_ready === true,
   };
 }
 
@@ -728,11 +737,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
           $3::timestamptz,
           $3::timestamptz
         from old_credentials`,
-        [
-          assertUuid(userId, "userId"),
-          passwordHash,
-          runtime.now.toISOString(),
-        ],
+        [assertUuid(userId, "userId"), passwordHash, runtime.now.toISOString()],
       );
     },
 
@@ -1104,6 +1109,33 @@ export function createNeonAuthRepository<TEnv = unknown>(
         [assertUuid(userId, "userId"), await sha256Hex(`mfa:${code}`)],
       );
       return result.rows.length > 0;
+    },
+
+    async getUserReadiness(userId, runtime): Promise<AuthReadiness> {
+      const result = await run(
+        runtime,
+        "auth.getUserReadiness",
+        `
+        select
+          (u.status = 'ACTIVE') as email_verified,
+          exists (
+            select 1
+            from public.user_profiles p
+            where p.user_id = u.user_id
+          ) as onboarding_completed,
+          exists (
+            select 1
+            from public.payroll_plans pp
+            where pp.user_id = u.user_id
+              and pp.status = 'ACTIVE'
+          ) as payroll_ready
+        from public.users u
+        where u.user_id = $1::uuid
+          and u.deleted_at is null
+        limit 1`,
+        [assertUuid(userId, "userId")],
+      );
+      return mapReadiness(result.rows[0]);
     },
   };
 }

@@ -17,9 +17,7 @@ type AuthRouter = Readonly<{
   replace: (href: string) => void;
 }>;
 
-const authSessionListeners = new Set<
-  (event: AuthSessionChangeEvent) => void
->();
+const authSessionListeners = new Set<(event: AuthSessionChangeEvent) => void>();
 
 export function subscribeAuthSessionChange(
   listener: (event: AuthSessionChangeEvent) => void,
@@ -60,6 +58,7 @@ function resolveAuthenticatedUserRoute(
 ): string {
   if (!user.emailVerified) return VERIFY_EMAIL_ROUTE;
   if (!user.onboardingCompleted) return ONBOARDING_ROUTE;
+  if (!user.payrollReady) return ONBOARDING_ROUTE;
   return SALARY_ROUTE;
 }
 
@@ -84,7 +83,8 @@ export function routeAfterSignup(
     }
     if (
       response.data.onboardingRequired ||
-      !response.data.user.onboardingCompleted
+      !response.data.user.onboardingCompleted ||
+      !response.data.user.payrollReady
     ) {
       router.replace(ONBOARDING_ROUTE);
       return ONBOARDING_ROUTE;

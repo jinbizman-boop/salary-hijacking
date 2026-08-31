@@ -177,7 +177,9 @@ describe("mobile app screen API and route contracts", () => {
     const combinedRuntimeSurface = salaryHomeSource;
 
     expect(combinedRuntimeSurface).toContain("\uC9C0\uCF1C\uB0B8 \uB3C8");
-    expect(combinedRuntimeSurface).toContain("\uB204\uC801 \uB0A9\uCE58\uAE08\uC561");
+    expect(combinedRuntimeSurface).toContain(
+      "\uB204\uC801 \uB0A9\uCE58\uAE08\uC561",
+    );
     expect(combinedRuntimeSurface).toContain(
       "\uC624\uB298 \uC0AC\uC6A9 \uAC00\uB2A5 \uAE08\uC561",
     );
@@ -249,7 +251,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileSource).toContain("ProfileScreen");
     expect(profileSource).toContain("/api/v1/users/me/my-page-summary");
     expect(profileSource).toContain('ACCOUNT_SETTINGS: "/profile/account"');
-    expect(profileSource).not.toContain('ACCOUNT_SETTINGS: "/profile/settings"');
+    expect(profileSource).not.toContain(
+      'ACCOUNT_SETTINGS: "/profile/settings"',
+    );
     expect(profileSource).not.toContain("LV 7 Budget Builder");
   });
 
@@ -313,24 +317,20 @@ describe("mobile app screen API and route contracts", () => {
       'import { readMobileApiBaseUrl } from "../src/shared/api/api-base";',
     );
     expect(source).not.toContain("const API_BASE_URL = readMobileApiBaseUrl()");
-    expect(source).not.toContain("const IS_E2E_BUILD = readMobileE2eBuildEnabled()");
+    expect(source).not.toContain(
+      "const IS_E2E_BUILD = readMobileE2eBuildEnabled()",
+    );
     expect(source).toContain("function readRootMobileApiBaseUrl()");
     expect(source).toContain("function isMobileE2eBuildEnabled()");
     expect(source).toContain('loadModule("../src/shared/api/api-base")');
-    expect(source).toContain(
-      "const apiBaseUrl = readRootMobileApiBaseUrl()",
-    );
+    expect(source).toContain("const apiBaseUrl = readRootMobileApiBaseUrl()");
   });
 
   it("keeps secure storage runtime resolution off the root module-load path", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
-    expect(source).not.toContain(
-      'from "../src/shared/storage/auth-token"',
-    );
-    expect(source).not.toContain(
-      'from "../src/shared/storage/secure-store"',
-    );
+    expect(source).not.toContain('from "../src/shared/storage/auth-token"');
+    expect(source).not.toContain('from "../src/shared/storage/secure-store"');
     expect(source).not.toContain(
       "const SecureStoreRuntimeRef = loadSecureStoreRuntime()",
     );
@@ -338,8 +338,8 @@ describe("mobile app screen API and route contracts", () => {
       'const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token"',
     );
     expect(source).toContain("function getSecureStoreRuntime()");
-    expect(source).toContain(
-      'loadModule("../src/shared/storage/secure-store")',
+    expect(source).toMatch(
+      /loadModule\(\s*"\.\.\/src\/shared\/storage\/secure-store",?\s*\)/u,
     );
   });
 
@@ -355,7 +355,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain(
       "const cachedStatus = offlineStatusFromCachedSession(cached, isPublic)",
     );
-    expect(source).toContain('status: cachedStatus');
+    expect(source).toContain("status: cachedStatus");
     expect(source).toContain("router.replace(AUTH_LOGIN_ROUTE as never)");
   });
 
@@ -376,8 +376,8 @@ describe("mobile app screen API and route contracts", () => {
         'requestJsonWithAuthRefresh<RootResponse>(\n        "/api/v1/mobile/bootstrap"',
       ),
     );
-    expect(source).toContain(
-      "const token = await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
+    expect(source).toMatch(
+      /const token = await getSecureStoreRuntime\(\)\.getItemAsync\(\s*MOBILE_ACCESS_TOKEN_KEY,?\s*\)/u,
     );
     expect(source).toContain("return Boolean(token?.trim())");
     expect(source).toMatch(/catch\s*\{\s*return true;\s*\}/u);
@@ -409,7 +409,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain(
       "canUseCachedAuthenticatedLaunch(cachedSession, currentRouteKey)",
     );
-    expect(source).toContain("payload: cachedAuthenticatedPayload(cachedSession)");
+    expect(source).toContain(
+      "payload: cachedAuthenticatedPayload(cachedSession)",
+    );
     expect(source).toContain('status: "READY"');
     expect(source).toContain("retrying: true");
     expect(source.indexOf("canUseCachedAuthenticatedLaunch")).toBeLessThan(
@@ -498,14 +500,20 @@ describe("mobile app screen API and route contracts", () => {
   it("keeps unauthenticated public auth routes out of READY state", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
-    expect(source).toContain('if (!payload.session.authenticated) return "AUTH_REQUIRED"');
-    expect(source).toContain('if (!session.authenticated) return "AUTH_REQUIRED"');
-    expect(source).toContain('status: "AUTH_REQUIRED"');
-    expect(source.indexOf('if (!session.authenticated) return "AUTH_REQUIRED"')).toBeLessThan(
-      source.indexOf('if (isPublic) return "READY"'),
+    expect(source).toContain(
+      'if (!payload.session.authenticated) return "AUTH_REQUIRED"',
     );
+    expect(source).toContain(
+      'if (!session.authenticated) return "AUTH_REQUIRED"',
+    );
+    expect(source).toContain('status: "AUTH_REQUIRED"');
+    expect(
+      source.indexOf('if (!session.authenticated) return "AUTH_REQUIRED"'),
+    ).toBeLessThan(source.indexOf('if (isPublic) return "READY"'));
     expect(source).not.toContain('return isPublic ? "READY" : "AUTH_REQUIRED"');
-    expect(source).not.toContain('status: isPublic ? "READY" : "AUTH_REQUIRED"');
+    expect(source).not.toContain(
+      'status: isPublic ? "READY" : "AUTH_REQUIRED"',
+    );
   });
 
   it("keeps the root bootstrap gate copy user-facing while tied to authenticated status checks", () => {
@@ -560,10 +568,23 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain(
       'if (!session.onboardingCompleted) return "ONBOARDING"',
     );
+    expect(source).toContain('if (!session.payrollReady) return "ONBOARDING"');
     expect(source).toContain('return "OFFLINE"');
     expect(source).not.toContain(
       'const cachedStatus = cached.authenticated ? "OFFLINE" : "AUTH_REQUIRED"',
     );
+  });
+
+  it("keeps payroll setup readiness in the root auth gate before salary home", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("payrollReady: boolean");
+    expect(source).toContain("payrollReady: Boolean(session.payrollReady)");
+    expect(source).toContain(
+      'if (!payload.session.payrollReady) return "ONBOARDING"',
+    );
+    expect(source).toContain("if (!session.payrollReady) return false");
+    expect(source).toContain("payrollReady: session.payrollReady");
   });
 
   it("keeps launch routing subordinate to the root auth gate so login and home do not compete", () => {
@@ -610,7 +631,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain("const isRouteTransitionPending =");
     expect(rootLayout).toContain("shouldRouteAuthenticatedStateToHome");
     expect(rootLayout).toContain(
-      "state.status === \"AUTH_REQUIRED\" && !isPublic",
+      'state.status === "AUTH_REQUIRED" && !isPublic',
     );
     expect(rootLayout).toMatch(
       /state\.status === "VERIFY_EMAIL" &&\s*currentRouteKey !== "\(auth\)\/verify-email"/u,
@@ -621,9 +642,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toMatch(
       /shouldRenderSlot\s*=\s*[\s\S]*!isRouteTransitionPending/u,
     );
-    expect(rootLayout).toContain(
-      'state.status !== "BOOTSTRAPPING"',
-    );
+    expect(rootLayout).toContain('state.status !== "BOOTSTRAPPING"');
   });
 
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {
@@ -631,7 +650,10 @@ describe("mobile app screen API and route contracts", () => {
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");
     const capturePreviewScreen = readFileSync(CAPTURE_PREVIEW_SCREEN, "utf8");
     const captureRouteScreen = readFileSync(CAPTURE_ROUTE_SCREEN, "utf8");
-    const captureWebRouteScreen = readFileSync(CAPTURE_WEB_ROUTE_SCREEN, "utf8");
+    const captureWebRouteScreen = readFileSync(
+      CAPTURE_WEB_ROUTE_SCREEN,
+      "utf8",
+    );
 
     expect(rootLayout).toContain("INITIAL_CAPTURE_SCREEN_KIND");
     expect(rootLayout).toContain("readInitialCaptureScreenKind");
@@ -739,7 +761,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(webSource).toContain("resolveCapturePreviewKindLazily");
     expect(webSource).toContain("loadCapturePreviewScreen");
     expect(webSource).not.toContain("captureScreens");
-    expect(webSource).not.toContain("from \"../../src/features/capture\"");
+    expect(webSource).not.toContain('from "../../src/features/capture"');
   });
 
   it("keeps root capture preview rendering behind a web platform guard and index production-only", () => {
@@ -778,8 +800,12 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(source).toContain("root auth gate owns launch routing");
     expect(source).not.toContain("hideNativeSplashSafely");
-    expect(source).not.toContain('import * as SplashScreen from "expo-splash-screen"');
-    expect(source).not.toContain('import { SplashLaunchScreen } from "../src/features/auth/components"');
+    expect(source).not.toContain(
+      'import * as SplashScreen from "expo-splash-screen"',
+    );
+    expect(source).not.toContain(
+      'import { SplashLaunchScreen } from "../src/features/auth/components"',
+    );
     expect(source).not.toContain("SPLASH_ROUTE_DELAY_MS");
     expect(source).not.toContain("resolveInitialDeepLinkRoute");
     expect(source).not.toContain("normalizeInitialDeepLinkRoute");
@@ -824,8 +850,10 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain(
       "void SplashScreenRuntimeRef.preventAutoHideAsync()",
     );
-    expect(source).toContain('if (NativeRuntimeRef.Platform.OS === "web") return');
-    expect(source).toContain("getSplashScreenRuntime().hideAsync");
+    expect(source).toContain(
+      'if (NativeRuntimeRef.Platform.OS === "web") return',
+    );
+    expect(source).toMatch(/getSplashScreenRuntime\(\)\s*\.\s*hideAsync\(\)/u);
     expect(source).toContain("fontsLoaded");
     expect(source).toContain("FONTS_EMBEDDED_IN_NATIVE");
     expect(source).toContain("function loadRootFontAssets()");
@@ -836,15 +864,17 @@ describe("mobile app screen API and route contracts", () => {
       /FontRuntimeRef\.useFonts\(\s*FONTS_EMBEDDED_IN_NATIVE \? EMPTY_FONT_ASSETS : loadRootFontAssets\(\),?\s*\)/u,
     );
     expect(source).not.toContain("const FONT_ASSETS");
-    expect(source).not.toContain('import { appImageAssets } from "../src/shared/assets/images";');
-    expect(source).not.toContain('import { AppHeader } from "../src/shared/components/AppHeader";');
+    expect(source).not.toContain(
+      'import { appImageAssets } from "../src/shared/assets/images";',
+    );
+    expect(source).not.toContain(
+      'import { AppHeader } from "../src/shared/components/AppHeader";',
+    );
     expect(source).not.toContain("const OFFICIAL_BI_LOGO");
     expect(source).toContain(
       "const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded",
     );
-    expect(source).not.toContain(
-      "if (!fontsLoaded && !fontLoadTimedOut)",
-    );
+    expect(source).not.toContain("if (!fontsLoaded && !fontLoadTimedOut)");
     expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 250");
     expect(source).toContain("hideNativeSplashSafely");
     expect(source).toContain("onLayout: hideNativeSplashSafely");

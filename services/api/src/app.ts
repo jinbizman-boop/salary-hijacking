@@ -1198,6 +1198,18 @@ function headerBool(headers: Headers, name: string): boolean {
   return headerText(headers, name)?.toLowerCase() === "true";
 }
 
+function headerBoolOr(
+  headers: Headers,
+  name: string,
+  fallback: boolean,
+): boolean {
+  const value = headerText(headers, name);
+  if (!value) return fallback;
+  if (value.toLowerCase() === "true") return true;
+  if (value.toLowerCase() === "false") return false;
+  return fallback;
+}
+
 function enumFrom<TValue extends readonly string[]>(
   values: TValue,
   value: string | null,
@@ -1306,6 +1318,15 @@ async function mobileBootstrap<TEnv>(
   const mfaVerified =
     authenticated && headerBool(headers, "x-auth-mfa-verified");
   const accountReady = accountStatus === "ACTIVE";
+  const emailVerified =
+    authenticated &&
+    headerBoolOr(headers, "x-auth-email-verified", accountReady);
+  const onboardingCompleted =
+    authenticated &&
+    headerBoolOr(headers, "x-auth-onboarding-completed", accountReady);
+  const payrollReady =
+    authenticated &&
+    headerBoolOr(headers, "x-auth-payroll-ready", accountReady);
 
   return json(200, runtime, {
     data: {
@@ -1313,11 +1334,14 @@ async function mobileBootstrap<TEnv>(
         authenticated,
         userIdHash: await hashForMobileSession(userId),
         role,
-        emailVerified: authenticated && accountReady,
-        onboardingCompleted: authenticated && accountReady,
+        emailVerified,
+        onboardingCompleted,
+        payrollReady,
         mfaRequired: authenticated && mfaRequiredFor(role, mfaVerified),
         accountStatus,
-        sessionExpiresAt: authenticated ? bootstrapSessionExpiresAt(headers) : null,
+        sessionExpiresAt: authenticated
+          ? bootstrapSessionExpiresAt(headers)
+          : null,
         rawFinancialDataExposed: false,
         rawPersonalDataExposed: false,
         rawPushTokenExposed: false,
@@ -1347,7 +1371,7 @@ async function mobileBootstrap<TEnv>(
         adsFinancialTargetingAllowed: false,
       },
       digest: {
-        payrollReady: true,
+        payrollReady,
         budgetReady: true,
         fixedExpenseReady: true,
         savingsReady: true,
@@ -1594,18 +1618,19 @@ async function coreDispatch<TEnv>(
             ? createNeonSavingsRepository<TEnv>()
             : undefined,
       } satisfies SavingsRoutesOptions<TEnv>);
-    const producerOptions: SavingsRoutesOptions<TEnv> = baseOptions.onSavingsEvent
-      ? baseOptions
-      : {
-          ...baseOptions,
-          onSavingsEvent: async (event, routeEnv, routeContext) => {
-            await phase5Producer.handleSavingsEvent(
-              event,
-              routeEnv,
-              routeContext,
-            );
-          },
-        };
+    const producerOptions: SavingsRoutesOptions<TEnv> =
+      baseOptions.onSavingsEvent
+        ? baseOptions
+        : {
+            ...baseOptions,
+            onSavingsEvent: async (event, routeEnv, routeContext) => {
+              await phase5Producer.handleSavingsEvent(
+                event,
+                routeEnv,
+                routeContext,
+              );
+            },
+          };
     const routeOptions: SavingsRoutesOptions<TEnv> =
       producerOptions.now || !options.now
         ? producerOptions
@@ -1616,9 +1641,10 @@ async function coreDispatch<TEnv>(
     return createSavingsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "growth") {
-    const phase6Producer = createPhase6GrowthCommunityNotificationProducer<TEnv>(
-      options.now ? { now: options.now } : {},
-    );
+    const phase6Producer =
+      createPhase6GrowthCommunityNotificationProducer<TEnv>(
+        options.now ? { now: options.now } : {},
+      );
     const baseOptions: GrowthRoutesOptions<TEnv> =
       options.growthRoutesOptions ??
       ({
@@ -1667,9 +1693,10 @@ async function coreDispatch<TEnv>(
     return createNotificationsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "community") {
-    const phase6Producer = createPhase6GrowthCommunityNotificationProducer<TEnv>(
-      options.now ? { now: options.now } : {},
-    );
+    const phase6Producer =
+      createPhase6GrowthCommunityNotificationProducer<TEnv>(
+        options.now ? { now: options.now } : {},
+      );
     const baseOptions: CommunityRoutesOptions<TEnv> =
       options.communityRoutesOptions ??
       ({
@@ -1863,8 +1890,9 @@ function adminReasonPresent(request: Request): boolean {
 }
 
 function adminBreakGlassRequested(request: Request): boolean {
-  return request.headers.get("x-admin-break-glass")?.trim().toLowerCase() ===
-    "true";
+  return (
+    request.headers.get("x-admin-break-glass")?.trim().toLowerCase() === "true"
+  );
 }
 
 function isAdminMutation(path: string, method: string): boolean {
@@ -1904,10 +1932,9 @@ function createAppAuditGate<TEnv>(
             code: breakGlass
               ? "ADMIN_BREAK_GLASS_REASON_REQUIRED"
               : "ADMIN_REASON_REQUIRED",
-            message:
-              breakGlass
-                ? "긴급 권한 사용에는 X-Admin-Reason 헤더가 필요합니다."
-                : "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
+            message: breakGlass
+              ? "긴급 권한 사용에는 X-Admin-Reason 헤더가 필요합니다."
+              : "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
             status: 400,
             requestId,
           },

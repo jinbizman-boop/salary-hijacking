@@ -131,6 +131,9 @@ export interface SalaryHijackingJwtClaims extends Record<string, unknown> {
   readonly tokenType?: string;
   readonly mfaVerified?: boolean;
   readonly mfaLevel?: number;
+  readonly emailVerified?: boolean;
+  readonly onboardingCompleted?: boolean;
+  readonly payrollReady?: boolean;
   readonly provider?: string;
 }
 
@@ -152,6 +155,9 @@ export interface AuthenticatedPrincipal {
   readonly tokenKind: AuthTokenKind;
   readonly accountStatus: AccountStatus;
   readonly mfaVerified: boolean;
+  readonly emailVerified: boolean;
+  readonly onboardingCompleted: boolean;
+  readonly payrollReady: boolean;
   readonly provider: string | null;
   readonly issuedAtEpochSeconds: number | null;
   readonly expiresAtEpochSeconds: number | null;
@@ -988,18 +994,18 @@ function normalizeRole(role: unknown): UserRole | null {
     .replace(/^ROLE_/, "");
   if (
     [
-    "GUEST",
-    "USER",
-    "OPERATOR",
-    "ADMIN",
-    "SUPER_ADMIN",
+      "GUEST",
+      "USER",
+      "OPERATOR",
+      "ADMIN",
+      "SUPER_ADMIN",
       "OPS_ADMIN",
       "MODERATOR",
       "CONTENT_ADMIN",
       "SUPPORT",
       "ADS_PARTNER_ADMIN",
       "AUDITOR_READONLY",
-    "SYSTEM",
+      "SYSTEM",
     ].includes(normalized)
   ) {
     return normalized as UserRole;
@@ -1037,6 +1043,17 @@ function normalizeStatus(value: unknown): AccountStatus {
   ].includes(normalized)
     ? (normalized as AccountStatus)
     : "ACTIVE";
+}
+
+function headerBooleanOr(
+  headers: Headers,
+  name: string,
+  fallback: boolean,
+): boolean {
+  const value = getHeader(headers, name);
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
 }
 
 function normalizePermissions(
@@ -1091,9 +1108,7 @@ function tokenKindFromClaims(
     return "SERVICE";
   }
 
-  if (
-    roles.some((role) => canonicalAdminRoles.has(role))
-  ) {
+  if (roles.some((role) => canonicalAdminRoles.has(role))) {
     return "ADMIN";
   }
 
@@ -1113,6 +1128,7 @@ function toPrincipal(
   const roles = normalizeRoles(claims);
   const permissions = normalizePermissions(claims, roles);
   const accountStatus = normalizeStatus(claims.accountStatus ?? claims.status);
+  const accountReady = accountStatus === "ACTIVE";
 
   return {
     userId: claims.sub,
@@ -1131,6 +1147,18 @@ function toPrincipal(
     accountStatus,
     mfaVerified:
       claims.mfaVerified === true || Number(claims.mfaLevel ?? 0) >= 2,
+    emailVerified:
+      typeof claims.emailVerified === "boolean"
+        ? claims.emailVerified
+        : accountReady,
+    onboardingCompleted:
+      typeof claims.onboardingCompleted === "boolean"
+        ? claims.onboardingCompleted
+        : accountReady,
+    payrollReady:
+      typeof claims.payrollReady === "boolean"
+        ? claims.payrollReady
+        : accountReady,
     provider: typeof claims.provider === "string" ? claims.provider : null,
     issuedAtEpochSeconds: typeof claims.iat === "number" ? claims.iat : null,
     expiresAtEpochSeconds: typeof claims.exp === "number" ? claims.exp : null,
@@ -1337,6 +1365,9 @@ async function verifyRawServiceToken<TEnv>(
     tokenKind: "SERVICE",
     accountStatus: "ACTIVE",
     mfaVerified: true,
+    emailVerified: true,
+    onboardingCompleted: true,
+    payrollReady: true,
     provider: "SERVICE_TOKEN",
     issuedAtEpochSeconds: null,
     expiresAtEpochSeconds: null,
@@ -1370,8 +1401,8 @@ function hasAnyPermission(
 }
 
 function isPrivileged(principal: AuthenticatedPrincipal): boolean {
-  return principal.roles.some((role) =>
-    role === "SYSTEM" || canonicalAdminRoles.has(role),
+  return principal.roles.some(
+    (role) => role === "SYSTEM" || canonicalAdminRoles.has(role),
   );
 }
 
@@ -1589,9 +1620,7 @@ async function assertRouteAuthorization<TEnv>(
   }
 
   if (policy.requireAdmin || isAdminPath(runtime.path)) {
-    if (
-      !principal.roles.some((role) => canonicalAdminRoles.has(role))
-    ) {
+    if (!principal.roles.some((role) => canonicalAdminRoles.has(role))) {
       throw new AuthFailure(
         "AUTH_PERMISSION_DENIED",
         "관리자 권한이 필요합니다.",
@@ -1691,6 +1720,18 @@ function appendAuthHeaders(
     headers.set("x-auth-primary-role", principal.primaryRole);
     headers.set("x-auth-token-kind", principal.tokenKind);
     headers.set("x-auth-account-status", principal.accountStatus);
+    headers.set(
+      "x-auth-email-verified",
+      principal.emailVerified ? "true" : "false",
+    );
+    headers.set(
+      "x-auth-onboarding-completed",
+      principal.onboardingCompleted ? "true" : "false",
+    );
+    headers.set(
+      "x-auth-payroll-ready",
+      principal.payrollReady ? "true" : "false",
+    );
 
     if (principal.sessionId) headers.set("x-session-id", principal.sessionId);
     if (principal.deviceId) headers.set("x-device-id", principal.deviceId);
@@ -1948,6 +1989,10 @@ export function getAuthContextFromRequest(
     normalizeRole(getHeader(request.headers, "x-auth-primary-role")) ??
     roles[0] ??
     "USER";
+  const accountStatus = normalizeStatus(
+    getHeader(request.headers, "x-auth-account-status"),
+  );
+  const accountReady = accountStatus === "ACTIVE";
 
   return {
     userId,
@@ -1964,10 +2009,23 @@ export function getAuthContextFromRequest(
         request.headers,
         "x-auth-token-kind",
       ) as AuthTokenKind | null) ?? "ACCESS",
-    accountStatus: normalizeStatus(
-      getHeader(request.headers, "x-auth-account-status"),
-    ),
+    accountStatus,
     mfaVerified: getHeader(request.headers, "x-auth-mfa-verified") === "true",
+    emailVerified: headerBooleanOr(
+      request.headers,
+      "x-auth-email-verified",
+      accountReady,
+    ),
+    onboardingCompleted: headerBooleanOr(
+      request.headers,
+      "x-auth-onboarding-completed",
+      accountReady,
+    ),
+    payrollReady: headerBooleanOr(
+      request.headers,
+      "x-auth-payroll-ready",
+      accountReady,
+    ),
     provider: null,
     issuedAtEpochSeconds: null,
     expiresAtEpochSeconds: null,

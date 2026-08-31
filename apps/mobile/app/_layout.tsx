@@ -139,6 +139,7 @@ type SessionSnapshot = Readonly<{
   role: UserRole;
   emailVerified: boolean;
   onboardingCompleted: boolean;
+  payrollReady: boolean;
   mfaRequired: boolean;
   sessionExpiresAt: string | null;
   rawFinancialDataExposed: false;
@@ -282,7 +283,9 @@ let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
 
 function hideNativeSplashSafely(): void {
   if (NativeRuntimeRef.Platform.OS === "web") return;
-  void getSplashScreenRuntime().hideAsync().catch(() => false);
+  void getSplashScreenRuntime()
+    .hideAsync()
+    .catch(() => false);
 }
 
 const fallbackSession: SessionSnapshot = Object.freeze({
@@ -291,6 +294,7 @@ const fallbackSession: SessionSnapshot = Object.freeze({
   role: "USER",
   emailVerified: false,
   onboardingCompleted: false,
+  payrollReady: false,
   mfaRequired: false,
   sessionExpiresAt: null,
   rawFinancialDataExposed: false,
@@ -601,7 +605,7 @@ export default function MobileRootLayout(): unknown {
         )
       : shouldRenderLightweightTransition
         ? renderLightweightLaunchTransition()
-      : renderGate(state.status, state.retrying, bootstrap),
+        : renderGate(state.status, state.retrying, bootstrap),
     shouldShowRuntimeChrome ? renderRuntimeGuard(state.payload) : null,
   );
 }
@@ -671,9 +675,9 @@ function renderCaptureScreen(kind: CaptureScreenKind): unknown {
 }
 
 function loadCapturePreviewScreen(): ElementType {
-  const mod = loadModule("../src/features/capture/root-preview") as Partial<
-    CapturePreviewModule
-  >;
+  const mod = loadModule(
+    "../src/features/capture/root-preview",
+  ) as Partial<CapturePreviewModule>;
   return mod.CapturePreviewScreen ?? NativeRuntimeRef.View;
 }
 
@@ -772,7 +776,11 @@ function renderLightweightLaunchTransition(): unknown {
       accessibilityLabel: "급여납치 앱 준비 중",
       style: styles.lightweightTransition,
     },
-    h(NativeRuntimeRef.Text, { style: styles.lightweightTransitionBrandMark }, "급여납치"),
+    h(
+      NativeRuntimeRef.Text,
+      { style: styles.lightweightTransitionBrandMark },
+      "급여납치",
+    ),
     h(
       NativeRuntimeRef.Text,
       { style: styles.lightweightTransitionText },
@@ -919,7 +927,9 @@ async function refreshRootAccessToken(): Promise<boolean> {
       platform: rootAuthPlatform(),
       tokenStore: getSecureStoreRuntime(),
     }).refresh();
-    const token = await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    const token = await getSecureStoreRuntime().getItemAsync(
+      MOBILE_ACCESS_TOKEN_KEY,
+    );
     return Boolean(token?.trim());
   } catch {
     return false;
@@ -928,7 +938,9 @@ async function refreshRootAccessToken(): Promise<boolean> {
 
 async function hasStoredAccessToken(): Promise<boolean> {
   try {
-    const token = await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    const token = await getSecureStoreRuntime().getItemAsync(
+      MOBILE_ACCESS_TOKEN_KEY,
+    );
     return Boolean(token?.trim());
   } catch {
     return true;
@@ -968,6 +980,7 @@ function normalizeSession(session: SessionSnapshot): SessionSnapshot {
     ),
     emailVerified: Boolean(session.emailVerified),
     onboardingCompleted: Boolean(session.onboardingCompleted),
+    payrollReady: Boolean(session.payrollReady),
     mfaRequired: Boolean(session.mfaRequired),
     sessionExpiresAt: session.sessionExpiresAt
       ? iso(session.sessionExpiresAt)
@@ -1029,6 +1042,7 @@ function resolveStatus(payload: RootPayload, isPublic: boolean): RootStatus {
   if (payload.session.mfaRequired) return "AUTH_REQUIRED";
   if (!payload.session.emailVerified) return "VERIFY_EMAIL";
   if (!payload.session.onboardingCompleted) return "ONBOARDING";
+  if (!payload.session.payrollReady) return "ONBOARDING";
   return "READY";
 }
 
@@ -1041,6 +1055,7 @@ function offlineStatusFromCachedSession(
   if (session.mfaRequired) return "AUTH_REQUIRED";
   if (!session.emailVerified) return "VERIFY_EMAIL";
   if (!session.onboardingCompleted) return "ONBOARDING";
+  if (!session.payrollReady) return "ONBOARDING";
   return "OFFLINE";
 }
 
@@ -1065,6 +1080,7 @@ function isFreshCompleteSession(session: SessionSnapshot): boolean {
   if (session.mfaRequired) return false;
   if (!session.emailVerified) return false;
   if (!session.onboardingCompleted) return false;
+  if (!session.payrollReady) return false;
   if (!session.sessionExpiresAt) return false;
   const expiresAt = Date.parse(session.sessionExpiresAt);
   return (
@@ -1082,6 +1098,7 @@ async function persistSessionStatus(
     role: session.role,
     emailVerified: session.emailVerified,
     onboardingCompleted: session.onboardingCompleted,
+    payrollReady: session.payrollReady,
     mfaRequired: session.mfaRequired,
     sessionExpiresAt: session.sessionExpiresAt,
     status,
@@ -1375,7 +1392,9 @@ function loadFontRuntime(): FontRuntime {
 }
 
 function loadRootFontAssets(): Readonly<Record<string, unknown>> {
-  const mod = loadModule("../src/shared/styles/root-font-assets") as RootFontAssetsModule;
+  const mod = loadModule(
+    "../src/shared/styles/root-font-assets",
+  ) as RootFontAssetsModule;
   return typeof mod.getRootFontAssets === "function"
     ? mod.getRootFontAssets()
     : EMPTY_FONT_ASSETS;
@@ -1407,7 +1426,9 @@ function loadSplashScreenRuntime(): SplashScreenRuntime {
 }
 function loadSecureStoreRuntime(): SecureStoreRuntime {
   const mod = loadModule("expo-secure-store") as Partial<SecureStoreRuntime>;
-  const helper = loadModule("../src/shared/storage/secure-store") as RootSecureStoreModule;
+  const helper = loadModule(
+    "../src/shared/storage/secure-store",
+  ) as RootSecureStoreModule;
   return typeof helper.createSecureStoreRuntime === "function"
     ? helper.createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod)
     : fallbackSecureStoreRuntime();
