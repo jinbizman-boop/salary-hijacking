@@ -138,7 +138,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
     userInterfaceStyle: "automatic",
     platforms: ["ios", "android", "web"],
     jsEngine: "hermes",
-    newArchEnabled: true,
+    newArchEnabled: false,
     icon: assetPathEnv("EXPO_PUBLIC_APP_ICON", DEFAULT_ICON),
     splash: {
       image: assetPathEnv("EXPO_PUBLIC_SPLASH_IMAGE", DEFAULT_SPLASH),

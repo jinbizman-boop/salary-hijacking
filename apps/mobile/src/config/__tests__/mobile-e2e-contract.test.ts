@@ -218,6 +218,14 @@ describe("mobile Detox E2E contract", () => {
     );
   });
 
+  it("keeps Android release-like builds on the startup-budget architecture", () => {
+    const gradleProperties = readRequiredText("android/gradle.properties");
+    const config = appConfig({ config: {} });
+
+    expect(config.newArchEnabled).toBe(false);
+    expect(gradleProperties).toContain("newArchEnabled=false");
+  });
+
   it("disables Expo dev-client network inspection in Android build properties", () => {
     const config = appConfig({ config: {} });
     const buildPropertiesPlugin = config.plugins?.find((plugin) =>
