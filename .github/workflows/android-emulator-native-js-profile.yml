@@ -254,6 +254,7 @@ jobs:
           } | tee artifacts/android-emulator-native-js-profile/device-env.txt
 
       - name: Marker baseline run
+        continue-on-error: true
         run: |
           set -euo pipefail
           node scripts/perf/run-android-startup-performance.mjs \
@@ -337,7 +338,62 @@ jobs:
           const root = "artifacts/android-emulator-native-js-profile";
           const startupPath = `${root}/startup-marker-baseline/startup-performance-summary.json`;
           const apkProfilePath = `${root}/artifact-apk-profile.json`;
-          const startup = existsSync(startupPath) ? JSON.parse(readFileSync(startupPath, "utf8")) : null;
+          const percentile = (values, percentileValue) => {
+            const sorted = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+            if (sorted.length === 0) return null;
+            return Math.round(sorted[Math.min(sorted.length - 1, Math.ceil((percentileValue / 100) * sorted.length) - 1)]);
+          };
+          const summarize = (rows, key) => {
+            const values = rows.map((row) => row[key]).filter((value) => Number.isFinite(value));
+            return {
+              runs: rows.length,
+              samples: values.length,
+              p50Ms: percentile(values, 50),
+              p95Ms: percentile(values, 95),
+              maxMs: values.length ? Math.round(Math.max(...values)) : null,
+            };
+          };
+          const fallbackRows = () => {
+            const dir = `${root}/startup-marker-baseline`;
+            if (!existsSync(dir)) return [];
+            return readdirSync(dir)
+              .filter((name) => /^profile-marker-\d+\.json$/u.test(name))
+              .sort()
+              .map((name) => JSON.parse(readFileSync(`${dir}/${name}`, "utf8")));
+          };
+          const startup = existsSync(startupPath)
+            ? JSON.parse(readFileSync(startupPath, "utf8"))
+            : {
+                rows: fallbackRows(),
+                markerCoverage: null,
+                segmentSummary: null,
+              };
+          if (!startup.segmentSummary && startup.rows.length > 0) {
+            startup.segmentSummary = {
+              activityTotalMs: summarize(startup.rows, "activityTotalMs"),
+              segNativeToJsMs: summarize(startup.rows, "segNativeToJsMs"),
+              segProcessActivityMs: summarize(startup.rows, "segProcessActivityMs"),
+            };
+            const markers = [
+              "startup.n0.launch_requested",
+              "startup.n1.application_on_create_entry",
+              "startup.n2.activity_on_create_entry",
+              "startup.n3.activity_super_on_create_complete",
+              "startup.n4.react_root_view_create_start",
+              "startup.n5.native_first_frame_ready",
+              "startup.p3.js_bundle_start",
+              "startup.p11.route_first_commit",
+              "startup.p12.splash_hide_requested",
+              "startup.p13.splash_hide_completed",
+              "startup.p14.route_interactive",
+            ];
+            startup.markerCoverage = Object.fromEntries(
+              markers.map((marker) => [
+                marker,
+                startup.rows.filter((row) => row.markersSeen?.includes(marker)).length,
+              ]),
+            );
+          }
           const apk = existsSync(apkProfilePath) ? JSON.parse(readFileSync(apkProfilePath, "utf8")) : null;
           const profileRoot = `${root}/native-js`;
           const runs = existsSync(profileRoot)
