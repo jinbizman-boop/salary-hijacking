@@ -311,18 +311,25 @@ jobs:
             adb shell pm clear "$PACKAGE_NAME" >/dev/null || true
             adb shell am force-stop "$PACKAGE_NAME" >/dev/null || true
             adb logcat -c || true
-            adb shell rm -f /data/local/tmp/sh-trace.perfetto-trace /data/local/tmp/sh-simpleperf.data /data/local/tmp/sh-simpleperf.log || true
-            adb shell 'perfetto -c /data/local/tmp/sh-perfetto.pbtxt --txt -o /data/local/tmp/sh-trace.perfetto-trace >/data/local/tmp/sh-perfetto.log 2>&1 &' || true
-            adb shell 'simpleperf record --app com.salaryhijacking.mobile -g -f 1000 --duration 8 -o /data/local/tmp/sh-simpleperf.data >/data/local/tmp/sh-simpleperf.log 2>&1 &' || true
-            sleep 1
+            adb shell rm -f /data/local/tmp/sh-trace.perfetto-trace /data/local/tmp/sh-simpleperf.data /data/local/tmp/sh-simpleperf.log /data/local/tmp/sh-simpleperf-stat.log || true
+            adb shell perfetto -c /data/local/tmp/sh-perfetto.pbtxt --txt -o /data/local/tmp/sh-trace.perfetto-trace > "$out/perfetto-host.log" 2>&1 &
+            perfetto_pid=$!
+            adb shell atrace -z -b 32768 -t 8 sched freq idle am wm view gfx binder_driver dalvik > "$out/atrace.txt" 2> "$out/atrace.err" &
+            atrace_pid=$!
+            adb shell simpleperf record -a -g -f 500 --duration 8 -o /data/local/tmp/sh-simpleperf.data >/data/local/tmp/sh-simpleperf.log 2>&1 &
+            simpleperf_pid=$!
+            sleep 0.6
             adb shell "log -t SH_RELEASE_PERF '[SH_RELEASE_PERF] marker=startup.n0.launch_requested route=bootstrap run_id=$label'; am start -W -n $ACTIVITY_NAME" | tee "$out/am-start.txt" || true
-            sleep 9
+            wait "$perfetto_pid" || true
+            wait "$atrace_pid" || true
+            wait "$simpleperf_pid" || true
             adb logcat -d -v epoch > "$out/logcat-epoch.txt" || true
             adb shell ps -A -o PID,PPID,NAME,ARGS > "$out/ps-after.txt" || true
             adb shell dumpsys meminfo "$PACKAGE_NAME" > "$out/meminfo.txt" || true
             adb shell cat /data/local/tmp/sh-perfetto.log > "$out/perfetto.log" || true
             adb pull /data/local/tmp/sh-trace.perfetto-trace "$out/sh-trace.perfetto-trace" >/dev/null 2>&1 || true
             adb shell cat /data/local/tmp/sh-simpleperf.log > "$out/simpleperf-record.log" || true
+            adb shell simpleperf stat -a --duration 3 > "$out/simpleperf-stat.txt" 2> "$out/simpleperf-stat.err" || true
             adb shell ls -l /data/local/tmp/sh-simpleperf.data > "$out/simpleperf-data-ls.txt" || true
             adb shell simpleperf report -i /data/local/tmp/sh-simpleperf.data --sort dso,symbol --children > "$out/simpleperf-report.txt" 2> "$out/simpleperf-report.err" || true
             adb pull /data/local/tmp/sh-simpleperf.data "$out/sh-simpleperf.data" >/dev/null 2>&1 || true
@@ -404,16 +411,25 @@ jobs:
             const perfettoTrace = `${dir}/sh-trace.perfetto-trace`;
             const simpleperfData = `${dir}/sh-simpleperf.data`;
             const simpleperfReport = `${dir}/simpleperf-report.txt`;
+            const atraceText = `${dir}/atrace.txt`;
+            const perfettoHostLog = `${dir}/perfetto-host.log`;
+            const simpleperfStat = `${dir}/simpleperf-stat.txt`;
             const simpleperfText = existsSync(simpleperfReport) ? readFileSync(simpleperfReport, "utf8").slice(0, 20000) : "";
+            const atraceHead = existsSync(atraceText) ? readFileSync(atraceText, "utf8").slice(0, 20000) : "";
             const hasHermes = /libhermes|Hermes|hbc|jsi/i.test(simpleperfText);
             const hasReactNative = /libreactnative|reactnative|ReactInstance|Catalyst|Fabric/i.test(simpleperfText);
             return {
               run,
               perfettoTraceBytes: existsSync(perfettoTrace) ? statSync(perfettoTrace).size : 0,
+              perfettoHostLogBytes: existsSync(perfettoHostLog) ? statSync(perfettoHostLog).size : 0,
+              atraceBytes: existsSync(atraceText) ? statSync(atraceText).size : 0,
               simpleperfDataBytes: existsSync(simpleperfData) ? statSync(simpleperfData).size : 0,
               simpleperfReportBytes: existsSync(simpleperfReport) ? statSync(simpleperfReport).size : 0,
+              simpleperfStatBytes: existsSync(simpleperfStat) ? statSync(simpleperfStat).size : 0,
               simpleperfHasHermesSymbols: hasHermes,
               simpleperfHasReactNativeSymbols: hasReactNative,
+              atraceMentionsPackage: /com\.salaryhijacking\.mobile/u.test(atraceHead),
+              atraceMentionsReactNative: /React|Hermes|mqt|JS|createReactContext/i.test(atraceHead),
               simpleperfTopLines: simpleperfText.split(/\r?\n/).slice(0, 40),
             };
           });
