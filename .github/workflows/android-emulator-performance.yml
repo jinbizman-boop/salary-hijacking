@@ -171,11 +171,19 @@ jobs:
       - name: Create KVM x86_64 AVD
         run: |
           set -euo pipefail
+          avdmanager list device | tee artifacts/android-emulator-performance/avd-devices.txt
+          device_args=()
+          if avdmanager list device | grep -q 'id: "pixel_6"'; then
+            device_args=(--device "pixel_6")
+          elif avdmanager list device | grep -q 'id: "pixel"'; then
+            device_args=(--device "pixel")
+          fi
+          echo "selected_device_args=${device_args[*]:-default}" | tee artifacts/android-emulator-performance/selected-avd-device.txt
           echo "no" | avdmanager create avd \
             --force \
             --name "$AVD_NAME" \
             --package "system-images;android-$API_LEVEL;$TARGET;$ABI" \
-            --device "pixel_6"
+            "${device_args[@]}"
           avd_config="$HOME/.android/avd/$AVD_NAME.avd/config.ini"
           {
             echo "hw.cpu.ncore=2"
@@ -277,7 +285,7 @@ jobs:
             --sample-label kvm
 
       - name: Auth visual smoke and fatal ANR scan
-        if: always()
+        if: success()
         run: |
           set -euo pipefail
           adb shell pm clear "$PACKAGE_NAME" || true
