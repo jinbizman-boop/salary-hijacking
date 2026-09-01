@@ -215,8 +215,13 @@ jobs:
             -cores 2 \
             -memory 2048 \
             > artifacts/android-emulator-performance/emulator.log 2>&1 &
-          adb wait-for-device
-          for i in $(seq 1 120); do
+          echo "$!" > artifacts/android-emulator-performance/emulator.pid
+          timeout 300 adb wait-for-device || {
+            echo "adb_wait_for_device=timeout" | tee artifacts/android-emulator-performance/emulator-start-failure.txt
+            tail -n 200 artifacts/android-emulator-performance/emulator.log || true
+            exit 1
+          }
+          for i in $(seq 1 60); do
             boot="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
             state="$(adb get-state 2>/dev/null || true)"
             if [ "$state" = "device" ] && [ "$boot" = "1" ]; then
@@ -224,8 +229,11 @@ jobs:
             fi
             sleep 5
           done
-          test "$(adb get-state)" = "device"
-          test "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1"
+          if [ "$(adb get-state)" != "device" ] || [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; then
+            echo "boot_completed=timeout" | tee artifacts/android-emulator-performance/emulator-start-failure.txt
+            tail -n 200 artifacts/android-emulator-performance/emulator.log || true
+            exit 1
+          fi
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
           adb shell settings put global animator_duration_scale 0
