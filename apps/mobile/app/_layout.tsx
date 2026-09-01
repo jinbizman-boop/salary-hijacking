@@ -359,6 +359,31 @@ class RootAuthExpiredError extends Error {
 }
 
 export default function MobileRootLayout(): unknown {
+  const [rootRuntimeMounted, setRootRuntimeMounted] =
+    ReactRuntimeRef.useState(false);
+
+  ReactRuntimeRef.useEffect((): void => {
+    setRootRuntimeMounted(true);
+  }, []);
+
+  if (!rootRuntimeMounted) {
+    markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
+    return h(
+      NativeRuntimeRef.SafeAreaView,
+      {
+        accessibilityLabel: "급여납치 모바일 루트",
+        onLayout: hideNativeSplashSafely,
+        style: styles.safeArea,
+        testID: ROOT_E2E_TEST_ID,
+      },
+      renderLightweightLaunchTransition(),
+    );
+  }
+
+  return h(MobileRootRuntime);
+}
+
+function MobileRootRuntime(): unknown {
   const [fontsLoaded] = FontRuntimeRef.useFonts(
     FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : loadRootFontAssets(),
   );
