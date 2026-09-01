@@ -82,9 +82,9 @@ class MainActivity : ReactActivity() {
   }
 
   private fun markStartupPerf(marker: String) {
-    Log.i(
-      "SH_RELEASE_PERF",
+    val line =
       "[SH_RELEASE_PERF] marker=${marker} t=${System.currentTimeMillis()} elapsed_ms=${SystemClock.elapsedRealtime()} route=bootstrap"
-    )
+    Log.i("SH_RELEASE_PERF", line)
+    System.out.println(line)
   }
 }

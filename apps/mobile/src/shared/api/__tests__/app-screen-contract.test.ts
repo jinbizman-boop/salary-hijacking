@@ -1020,13 +1020,13 @@ describe("mobile app screen API and route contracts", () => {
 
   it("keeps release startup markers segmentable without sensitive data", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
-    const androidEntry = readFileSync(ANDROID_ENTRY, "utf8");
     const mainActivity = readFileSync(ANDROID_MAIN_ACTIVITY, "utf8");
 
     expect(mainActivity).toContain("startup.p1.activity_on_create");
     expect(mainActivity).toContain("startup.p2.native_first_frame");
     expect(mainActivity).toContain("SystemClock.elapsedRealtime");
-    expect(androidEntry).toContain("startup.p3.js_bundle_start");
+    expect(mainActivity).toContain("System.out.println(line)");
+    expect(rootLayout).toContain("startup.p3.js_bundle_start");
     expect(rootLayout).toContain("startup.p4.root_module_evaluated");
     expect(rootLayout).toContain("startup.p5.auth_bootstrap_start");
     expect(rootLayout).toContain("startup.p6.secure_storage_read_complete");

@@ -319,6 +319,7 @@ function markRootPerfOnce(
   markReleasePerf(marker, { route });
 }
 
+markRootPerfOnce("startup.p3.js_bundle_start", "bootstrap");
 markRootPerfOnce("startup.p4.root_module_evaluated", "bootstrap");
 
 const fallbackSession: SessionSnapshot = Object.freeze({

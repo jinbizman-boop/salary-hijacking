@@ -1,5 +1,6 @@
 export type ReleasePerfMarkerName =
   | "bootstrap.transition.visible"
+  | "startup.p3.js_bundle_start"
   | "startup.p4.root_module_evaluated"
   | "startup.p5.auth_bootstrap_start"
   | "startup.p6.secure_storage_read_complete"
