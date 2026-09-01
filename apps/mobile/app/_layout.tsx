@@ -3,7 +3,10 @@
  * 정적 import와 JSX 없이 Expo Router, React Native, Expo 모듈을 안전하게 로딩한다.
  */
 
-import { subscribeAuthSessionChange } from "../src/features/auth/navigation";
+import {
+  subscribeAuthSessionChange,
+  type AuthSessionChangeEvent,
+} from "../src/features/auth/navigation";
 import {
   componentColors,
   salaryHijackingDesignSystem,
@@ -510,6 +513,27 @@ export default function MobileRootLayout(): unknown {
     }
   }, [currentRouteKey, isPublic]);
 
+  const applyAuthenticatedSessionChange = ReactRuntimeRef.useCallback(
+    (event: AuthSessionChangeEvent): void => {
+      if (event.reason !== "authenticated" || !event.session) return;
+      const session = normalizeSession({
+        ...fallbackSession,
+        ...event.session,
+        authenticated: true,
+      });
+      const nextStatus = resolveStatusForSession(session);
+      setState((prev: RootState) => ({
+        ...prev,
+        payload: cachedAuthenticatedPayload(session),
+        status: nextStatus,
+        retrying: true,
+        navigationEpoch: prev.navigationEpoch + 1,
+        toast: { kind: "success", message: statusMessage(nextStatus) },
+      }));
+    },
+    [],
+  );
+
   ReactRuntimeRef.useEffect((): void => {
     void bootstrap();
   }, [bootstrap]);
@@ -527,10 +551,10 @@ export default function MobileRootLayout(): unknown {
   ReactRuntimeRef.useEffect(
     (): (() => void) =>
       subscribeAuthSessionChange((event) => {
-        applyAuthSessionChange(event);
-        void bootstrap();
+        applyAuthenticatedSessionChange(event);
+        void applyAuthSessionChange(event).finally(() => bootstrap());
       }),
-    [bootstrap],
+    [applyAuthenticatedSessionChange, bootstrap],
   );
 
   ReactRuntimeRef.useEffect((): (() => void) => {
@@ -885,16 +909,14 @@ function renderToast(
   );
 }
 
-function applyAuthSessionChange(event: Readonly<{
+async function applyAuthSessionChange(event: Readonly<{
   reason: "authenticated" | "logged_out";
   targetRoute: string;
   session?: Partial<SessionSnapshot> | null;
-}>): void {
+}>): Promise<void> {
   if (event.reason === "logged_out") {
-    void removePublicSessionHint().catch(() => undefined);
-    void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
-      () => undefined,
-    );
+    await removePublicSessionHint();
+    await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");
     return;
   }
   if (!event.session) return;
@@ -903,10 +925,8 @@ function applyAuthSessionChange(event: Readonly<{
     ...event.session,
     authenticated: true,
   });
-  void persistPublicSessionHint(session).catch(() => undefined);
-  void persistSessionStatus(session, resolveStatusForSession(session)).catch(
-    () => undefined,
-  );
+  await persistPublicSessionHint(session);
+  await persistSessionStatus(session, resolveStatusForSession(session));
 }
 
 function renderRuntimeGuard(_payload: RootPayload): null {

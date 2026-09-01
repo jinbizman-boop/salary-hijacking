@@ -41,6 +41,7 @@ export function PrimaryButton({
           markReleaseInteractionPerf(perfMarker, event);
       }}
       onPress={onPress}
+      unstable_pressDelay={0}
       style={({ pressed }) => [
         styles.button,
         styles[variant],

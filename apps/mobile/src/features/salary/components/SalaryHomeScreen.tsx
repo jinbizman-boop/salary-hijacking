@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import * as SecureStore from "expo-secure-store";
 import {
   Image,
   KeyboardAvoidingView,
@@ -94,10 +93,9 @@ const salaryBrandLogo =
   require("../../../shared/assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 const SALARY_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
-const payrollReminderSecureStore = createSecureStoreRuntime(
-  Platform.OS,
-  SecureStore,
-);
+let cachedPayrollReminderSecureStore: ReturnType<
+  typeof createSecureStoreRuntime
+> | null = null;
 
 type ItemDraft = Readonly<{
   amount: string;
@@ -209,7 +207,7 @@ export function SalaryHomeScreen({
   useEffect(() => {
     let mounted = true;
     const current = getPayrollReminderState();
-    configurePayrollReminderStatePersistence(payrollReminderSecureStore);
+    configurePayrollReminderStatePersistence(getPayrollReminderSecureStore());
     if (process.env.JEST_WORKER_ID || previewVariant !== "default") {
       return undefined;
     }
@@ -1710,6 +1708,20 @@ function VariableExpenseTable({
       ))}
     </>
   );
+}
+
+function getPayrollReminderSecureStore(): ReturnType<
+  typeof createSecureStoreRuntime
+> {
+  if (cachedPayrollReminderSecureStore) return cachedPayrollReminderSecureStore;
+  const secureStoreModule = require("expo-secure-store") as Parameters<
+    typeof createSecureStoreRuntime
+  >[1];
+  cachedPayrollReminderSecureStore = createSecureStoreRuntime(
+    Platform.OS,
+    secureStoreModule,
+  );
+  return cachedPayrollReminderSecureStore;
 }
 
 function normalizeCategory(value: string): ReminderCategory {

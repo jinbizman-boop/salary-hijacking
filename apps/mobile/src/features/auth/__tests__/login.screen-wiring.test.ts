@@ -117,6 +117,20 @@ describe("login screen wiring", () => {
     expect(credentials).toContain('"route.login.interactive"');
   });
 
+  it("keeps login submit press feedback immediate for PERF-014", () => {
+    const credentials = readFileSync(
+      join(__dirname, "..", "components", "LoginCredentialForm.tsx"),
+      "utf8",
+    );
+    const primaryButton = readFileSync(
+      join(__dirname, "..", "..", "..", "shared", "components", "PrimaryButton.tsx"),
+      "utf8",
+    );
+
+    expect(credentials).toContain("unstable_pressDelay={0}");
+    expect(primaryButton).toContain("unstable_pressDelay={0}");
+  });
+
   it("matches the final login reference structure instead of the stale centered splash composition", () => {
     const source = readFileSync(
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),

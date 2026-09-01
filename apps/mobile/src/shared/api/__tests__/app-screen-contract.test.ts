@@ -458,6 +458,42 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).not.toContain("router.replace(event.targetRoute as never)");
   });
 
+  it("applies authenticated login readiness immediately before background bootstrap verification", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const listenerIndex = rootLayout.indexOf("subscribeAuthSessionChange((event) => {");
+    const immediateStateIndex = rootLayout.indexOf(
+      "applyAuthenticatedSessionChange(event)",
+      listenerIndex,
+    );
+    const bootstrapIndex = rootLayout.indexOf(
+      "finally(() => bootstrap())",
+      listenerIndex,
+    );
+
+    expect(listenerIndex).toBeGreaterThanOrEqual(0);
+    expect(immediateStateIndex).toBeGreaterThan(listenerIndex);
+    expect(bootstrapIndex).toBeGreaterThan(immediateStateIndex);
+    expect(rootLayout).toContain("resolveStatusForSession(session)");
+    expect(rootLayout).toContain("payload: cachedAuthenticatedPayload(session)");
+  });
+
+  it("waits for auth-session persistence before re-running bootstrap verification", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const listenerIndex = rootLayout.indexOf("subscribeAuthSessionChange((event) => {");
+    const persistThenBootstrapIndex = rootLayout.indexOf(
+      "void applyAuthSessionChange(event).finally(() => bootstrap())",
+      listenerIndex,
+    );
+    const oldRaceIndex = rootLayout.indexOf(
+      "applyAuthSessionChange(event);\n        void bootstrap();",
+      listenerIndex,
+    );
+
+    expect(listenerIndex).toBeGreaterThanOrEqual(0);
+    expect(persistThenBootstrapIndex).toBeGreaterThan(listenerIndex);
+    expect(oldRaceIndex).toBe(-1);
+  });
+
   it("limits cached authenticated launch to fresh complete root or auth recovery routes", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

@@ -124,6 +124,7 @@ export function LoginCredentialForm({
           markReleaseInteractionPerf("interaction.login.submit.press", event)
         }
         onPress={submit}
+        unstable_pressDelay={0}
         style={({ pressed }) => [
           styles.submitButton,
           pressed && !loading ? styles.submitPressed : null,

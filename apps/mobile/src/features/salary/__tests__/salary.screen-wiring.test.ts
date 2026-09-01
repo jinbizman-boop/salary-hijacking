@@ -78,6 +78,18 @@ describe("salary tab screen wiring", () => {
     expect(screen).toContain("../../../shared/components/tokens");
   });
 
+  it("keeps native secure storage off the salary home module evaluation path", () => {
+    const screen = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(screen).not.toContain('import * as SecureStore from "expo-secure-store"');
+    expect(screen).not.toContain("const payrollReminderSecureStore =");
+    expect(screen).toContain("getPayrollReminderSecureStore");
+    expect(screen).toContain('require("expo-secure-store")');
+  });
+
   it("emits the release home-shell marker from the rendered salary home screen", () => {
     const source = readFileSync(
       join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
