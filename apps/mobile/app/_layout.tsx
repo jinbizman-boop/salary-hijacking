@@ -53,6 +53,10 @@ type ReactRuntime = Readonly<{
     effect: () => void | (() => void),
     deps: readonly unknown[],
   ) => void;
+  useLayoutEffect: (
+    effect: () => void | (() => void),
+    deps: readonly unknown[],
+  ) => void;
   useMemo: <TValue>(factory: () => TValue, deps: readonly unknown[]) => TValue;
   useState: <TValue>(initial: TValue) => readonly [TValue, SetState<TValue>];
 }>;
@@ -718,14 +722,17 @@ export default function MobileRootLayout(): unknown {
     !shouldRenderSlot &&
     !isRouteTransitionPending;
   const handleRootLayout = ReactRuntimeRef.useCallback((): void => {
-    if (shouldRenderSlot) {
-      markRootPerfOnce("startup.p11.route_first_commit", currentRouteKey);
-    }
     hideNativeSplashSafely();
     if (shouldRenderLightweightTransition) {
       markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
     }
-  }, [currentRouteKey, shouldRenderLightweightTransition, shouldRenderSlot]);
+  }, [shouldRenderLightweightTransition]);
+
+  ReactRuntimeRef.useLayoutEffect((): void => {
+    if (shouldRenderSlot) {
+      markRootPerfOnce("startup.p11.route_first_commit", currentRouteKey);
+    }
+  }, [currentRouteKey, shouldRenderSlot]);
 
   ReactRuntimeRef.useEffect((): void => {
     if (shouldRenderSlot) {
@@ -1651,6 +1658,10 @@ function loadReactRuntime(): ReactRuntime {
         : fallbackUseCallback,
     useEffect:
       typeof mod.useEffect === "function" ? mod.useEffect : fallbackUseEffect,
+    useLayoutEffect:
+      typeof mod.useLayoutEffect === "function"
+        ? mod.useLayoutEffect
+        : fallbackUseEffect,
     useMemo: typeof mod.useMemo === "function" ? mod.useMemo : fallbackUseMemo,
     useState:
       typeof mod.useState === "function" ? mod.useState : fallbackUseState,

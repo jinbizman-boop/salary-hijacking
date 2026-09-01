@@ -1090,6 +1090,7 @@ describe("mobile app screen API and route contracts", () => {
       "startup.p10.route_component_mount_start",
     );
     expect(rootLayout).toContain("startup.p11.route_first_commit");
+    expect(rootLayout).toContain("ReactRuntimeRef.useLayoutEffect");
     expect(rootLayout).toContain("startup.p12.splash_hide_requested");
     expect(rootLayout).toContain("startup.p13.splash_hide_completed");
     expect(rootLayout).toContain("startup.p14.route_interactive");
