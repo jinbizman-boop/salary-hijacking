@@ -14,6 +14,11 @@ const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const TABS_LAYOUT_SCREEN = join(APP_ROOT, "(tabs)", "_layout.tsx");
 const ANDROID_ENTRY = join(process.cwd(), "index.android.js");
+const ANDROID_QA_BUILD_SCRIPT = join(
+  process.cwd(),
+  "scripts",
+  "expo-local-android-debug-build.mjs",
+);
 const ANDROID_MAIN_ACTIVITY = join(
   process.cwd(),
   "android",
@@ -1020,12 +1025,56 @@ describe("mobile app screen API and route contracts", () => {
 
   it("keeps release startup markers segmentable without sensitive data", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const buildScript = readFileSync(ANDROID_QA_BUILD_SCRIPT, "utf8");
     const mainActivity = readFileSync(ANDROID_MAIN_ACTIVITY, "utf8");
+    const mainApplication = readFileSync(
+      join(
+        process.cwd(),
+        "android/app/src/main/java/com/salaryhijacking/mobile/MainApplication.kt",
+      ),
+      "utf8",
+    );
+    const startupMarkers = readFileSync(
+      join(
+        process.cwd(),
+        "android/app/src/main/java/com/salaryhijacking/mobile/StartupPerfMarkers.kt",
+      ),
+      "utf8",
+    );
+    const proguardRules = readFileSync(
+      join(process.cwd(), "android/app/proguard-rules.pro"),
+      "utf8",
+    );
 
-    expect(mainActivity).toContain("startup.p1.activity_on_create");
-    expect(mainActivity).toContain("startup.p2.native_first_frame");
-    expect(mainActivity).toContain("SystemClock.elapsedRealtime");
-    expect(mainActivity).toContain("System.out.println(line)");
+    expect(mainApplication).toContain(
+      "startup.n1.application_on_create_entry",
+    );
+    expect(mainActivity).toContain("startup.n2.activity_on_create_entry");
+    expect(mainActivity).toContain(
+      "startup.n3.activity_super_on_create_complete",
+    );
+    expect(mainActivity).toContain(
+      "startup.n4.react_root_view_create_start",
+    );
+    expect(mainActivity).toContain("startup.n5.native_first_frame_ready");
+    expect(startupMarkers).toContain("SystemClock.elapsedRealtime");
+    expect(startupMarkers).toContain("System.out.println(line)");
+    expect(startupMarkers).toContain("@Volatile");
+    expect(proguardRules).toContain(
+      "-keep class com.salaryhijacking.mobile.StartupPerfMarkers",
+    );
+    expect(buildScript).toContain("ensureAndroidStartupPerfMarkers");
+    expect(buildScript).toContain("startupPerfMarkerSource");
+    expect(buildScript).toContain("startup.n1.application_on_create_entry");
+    expect(buildScript).toContain("startup.n2.activity_on_create_entry");
+    expect(buildScript).toContain(
+      "startup.n3.activity_super_on_create_complete",
+    );
+    expect(buildScript).toContain("startup.n4.react_root_view_create_start");
+    expect(buildScript).toContain("startup.n5.native_first_frame_ready");
+    expect(buildScript).toContain(
+      "-keep class com.salaryhijacking.mobile.StartupPerfMarkers",
+    );
     expect(rootLayout).toContain("startup.p3.js_bundle_start");
     expect(rootLayout).toContain("startup.p4.root_module_evaluated");
     expect(rootLayout).toContain("startup.p5.auth_bootstrap_start");

@@ -2,8 +2,7 @@ package com.salaryhijacking.mobile
 
 import android.os.Build
 import android.os.Bundle
-import android.os.SystemClock
-import android.util.Log
+import android.view.ViewTreeObserver
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -17,7 +16,7 @@ class MainActivity : ReactActivity() {
   private var firstFrameMarked = false
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    markStartupPerf("startup.p1.activity_on_create")
+    StartupPerfMarkers.mark("startup.n2.activity_on_create_entry")
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
@@ -25,13 +24,14 @@ class MainActivity : ReactActivity() {
     // @generated begin expo-splashscreen - expo prebuild (DO NOT MODIFY) sync-f3ff59a738c56c9a6119210cb55f0b613eb8b6af
     // @generated end expo-splashscreen
     super.onCreate(null)
+    StartupPerfMarkers.mark("startup.n3.activity_super_on_create_complete")
   }
 
   override fun onWindowFocusChanged(hasFocus: Boolean) {
     super.onWindowFocusChanged(hasFocus)
     if (hasFocus && !firstFrameMarked) {
       firstFrameMarked = true
-      markStartupPerf("startup.p2.native_first_frame")
+      StartupPerfMarkers.mark("startup.n5.native_first_frame_ready")
     }
   }
 
@@ -55,8 +55,19 @@ class MainActivity : ReactActivity() {
               fabricEnabled
           ){
             override fun createRootView(): ReactRootView {
+              StartupPerfMarkers.mark("startup.n4.react_root_view_create_start")
               return ReactRootView(this@MainActivity).apply {
                 setBackgroundResource(R.drawable.ic_launcher_background)
+                viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                  override fun onPreDraw(): Boolean {
+                    if (!firstFrameMarked) {
+                      firstFrameMarked = true
+                      StartupPerfMarkers.mark("startup.n5.native_first_frame_ready")
+                    }
+                    viewTreeObserver.removeOnPreDrawListener(this)
+                    return true
+                  }
+                })
               }
             }
           })
@@ -81,10 +92,4 @@ class MainActivity : ReactActivity() {
       super.invokeDefaultOnBackPressed()
   }
 
-  private fun markStartupPerf(marker: String) {
-    val line =
-      "[SH_RELEASE_PERF] marker=${marker} t=${System.currentTimeMillis()} elapsed_ms=${SystemClock.elapsedRealtime()} route=bootstrap"
-    Log.i("SH_RELEASE_PERF", line)
-    System.out.println(line)
-  }
 }
