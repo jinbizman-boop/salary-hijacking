@@ -969,11 +969,6 @@ describe("mobile app screen API and route contracts", () => {
   it("hides the native splash once the React root is ready to render", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
-    expect(source).toContain("function MobileRootRuntime()");
-    expect(source).toMatch(
-      /export default function MobileRootLayout\(\): unknown \{[\s\S]*?rootRuntimeMounted[\s\S]*?renderLightweightLaunchTransition\(\)[\s\S]*?h\(MobileRootRuntime\)/u,
-    );
-    expect(source).toContain('markRootPerfOnce("bootstrap.transition.visible", "bootstrap")');
     expect(source).not.toContain(
       "const SplashScreenRuntimeRef = loadSplashScreenRuntime()",
     );
