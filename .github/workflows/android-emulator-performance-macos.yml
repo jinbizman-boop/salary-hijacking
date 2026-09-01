@@ -1,0 +1,292 @@
+name: Android Emulator Performance macOS HVF
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: GitHub Actions run id containing the exact x86_64 QA APK artifact.
+        required: true
+        default: "33501708537"
+      source_sha:
+        description: Exact instrumentation source SHA represented by the artifact.
+        required: true
+        default: a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      artifact_name:
+        description: Exact x86_64 QA APK artifact name.
+        required: true
+        default: android-qa-release-x86_64-a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      runs:
+        description: Startup runs for the HVF comparison batch.
+        required: true
+        default: "10"
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - ".github/workflows/android-emulator-performance-macos.yml"
+
+permissions:
+  actions: read
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id || '33501708537' }}
+  SOURCE_SHA: ${{ github.event.inputs.source_sha || 'a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  SOURCE_ARTIFACT_NAME: ${{ github.event.inputs.artifact_name || 'android-qa-release-x86_64-a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  STARTUP_RUNS: ${{ github.event.inputs.runs || '10' }}
+  API_LEVEL: "35"
+  ABI: x86_64
+  TARGET: google_apis
+  AVD_NAME: salary_perf_hvf_x86
+  PACKAGE_NAME: com.salaryhijacking.mobile
+  ACTIVITY_NAME: com.salaryhijacking.mobile/.MainActivity
+  TZ: Asia/Seoul
+
+jobs:
+  macos-hvf-performance:
+    name: macOS HVF x86_64 emulator performance
+    runs-on: macos-13
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout performance harness source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: macOS emulator preflight
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/android-emulator-performance-macos
+          {
+            echo "uname=$(uname -a)"
+            echo "sw_vers=$(sw_vers | tr '\n' ';')"
+            echo "sysctl_cpu=$(sysctl -n machdep.cpu.brand_string || true)"
+            echo "logical_cpu=$(sysctl -n hw.logicalcpu || true)"
+            echo "mem_bytes=$(sysctl -n hw.memsize || true)"
+            echo "ANDROID_HOME=${ANDROID_HOME:-}"
+            echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-}"
+          } | tee artifacts/android-emulator-performance-macos/preflight.txt
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Android SDK components
+        run: |
+          set -euo pipefail
+          android_sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/Library/Android/sdk}}"
+          sdkmanager_cmd="$android_sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          echo "ANDROID_SDK_ROOT=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "$android_sdk_root/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/emulator" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/build-tools/35.0.0" >> "$GITHUB_PATH"
+
+          yes | "$sdkmanager_cmd" --licenses >/dev/null || true
+          "$sdkmanager_cmd" \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-$API_LEVEL" \
+            "build-tools;35.0.0" \
+            "system-images;android-$API_LEVEL;$TARGET;$ABI"
+
+      - name: Download exact x86_64 QA artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          name: ${{ env.SOURCE_ARTIFACT_NAME }}
+          path: artifacts/android-emulator-performance-macos/input
+
+      - name: Verify artifact lineage and static metadata
+        run: |
+          set -euo pipefail
+          apk="$(find artifacts/android-emulator-performance-macos/input -name '*.apk' -type f | head -n 1)"
+          info="$(find artifacts/android-emulator-performance-macos/input -name 'build-info.json' -type f | head -n 1)"
+          test -s "$apk"
+          test -s "$info"
+          node <<'NODE'
+          const { createHash } = require("node:crypto");
+          const { readFileSync, writeFileSync } = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const apk = execFileSync("bash", ["-lc", "find artifacts/android-emulator-performance-macos/input -name '*.apk' -type f | head -n 1"], { encoding: "utf8" }).trim();
+          const infoPath = execFileSync("bash", ["-lc", "find artifacts/android-emulator-performance-macos/input -name 'build-info.json' -type f | head -n 1"], { encoding: "utf8" }).trim();
+          const info = JSON.parse(readFileSync(infoPath, "utf8"));
+          const apkSha = createHash("sha256").update(readFileSync(apk)).digest("hex");
+          const expectedSource = process.env.SOURCE_SHA;
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: info.sourceCommit,
+            checkedOutSha: info.checkedOutSha,
+            sourceLineageMatch: info.sourceCommit === expectedSource && info.checkedOutSha === expectedSource,
+            applicationId: info.applicationId,
+            architecture: info.architecture,
+            apkSha256: apkSha,
+            buildInfoApkSha256: info.apkSha256,
+            apkShaMatch: apkSha === info.apkSha256,
+            bundleSha256: info.bundleSha256,
+            signerCertificateSha256: info.signerCertificateSha256,
+            embeddedEnvironment: info.embeddedEnvironment,
+            apiBaseUrl: info.apiBaseUrl,
+          };
+          if (!result.sourceLineageMatch || !result.apkShaMatch || result.architecture !== "x86_64") {
+            console.error(JSON.stringify(result, null, 2));
+            process.exit(1);
+          }
+          writeFileSync("artifacts/android-emulator-performance-macos/artifact-lineage.json", JSON.stringify(result, null, 2));
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+          echo "APK_PATH=$apk" >> "$GITHUB_ENV"
+
+      - name: Create HVF x86_64 AVD
+        run: |
+          set -euo pipefail
+          avdmanager list device | tee artifacts/android-emulator-performance-macos/avd-devices.txt
+          device_args=()
+          if grep -q '"pixel_6"' artifacts/android-emulator-performance-macos/avd-devices.txt; then
+            device_args=(--device "pixel_6")
+          elif grep -q '"pixel"' artifacts/android-emulator-performance-macos/avd-devices.txt; then
+            device_args=(--device "pixel")
+          fi
+          printf "no\n" | avdmanager create avd \
+            --force \
+            --name "$AVD_NAME" \
+            --package "system-images;android-$API_LEVEL;$TARGET;$ABI" \
+            "${device_args[@]}"
+          avdmanager list avd | tee artifacts/android-emulator-performance-macos/avd-list-after-create.txt
+          avd_config="$(find "$HOME" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
+          test -s "$avd_config"
+          avd_home="$(dirname "$(dirname "$avd_config")")"
+          echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$avd_home" | tee artifacts/android-emulator-performance-macos/avd-home.txt
+          {
+            echo "hw.cpu.ncore=2"
+            echo "hw.ramSize=2048"
+            echo "vm.heapSize=256"
+            echo "hw.lcd.width=1080"
+            echo "hw.lcd.height=2400"
+            echo "hw.lcd.density=420"
+            echo "hw.gpu.enabled=yes"
+            echo "hw.gpu.mode=host"
+            echo "fastboot.forceColdBoot=yes"
+            echo "fastboot.forceFastBoot=no"
+          } >> "$avd_config"
+          cat "$avd_config" | tee artifacts/android-emulator-performance-macos/avd-config.ini
+
+      - name: Start HVF emulator
+        run: |
+          set -euo pipefail
+          emulator -accel-check | tee artifacts/android-emulator-performance-macos/accel-check.txt
+          emulator -list-avds | tee artifacts/android-emulator-performance-macos/emulator-list-avds.txt
+          nohup emulator \
+            -avd "$AVD_NAME" \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot \
+            -gpu host \
+            -cores 2 \
+            -memory 2048 \
+            > artifacts/android-emulator-performance-macos/emulator.log 2>&1 &
+          echo "$!" > artifacts/android-emulator-performance-macos/emulator.pid
+          for i in $(seq 1 84); do
+            state="$(adb get-state 2>/dev/null || true)"
+            boot="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            if [ "$state" = "device" ] && [ "$boot" = "1" ]; then
+              break
+            fi
+            sleep 5
+          done
+          if [ "$(adb get-state 2>/dev/null || true)" != "device" ] || [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)" != "1" ]; then
+            echo "boot_completed=timeout" | tee artifacts/android-emulator-performance-macos/emulator-start-failure.txt
+            tail -n 200 artifacts/android-emulator-performance-macos/emulator.log || true
+            exit 1
+          fi
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          {
+            echo "device_state=$(adb get-state)"
+            echo "boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')"
+            echo "model=$(adb shell getprop ro.product.model | tr -d '\r')"
+            echo "android=$(adb shell getprop ro.build.version.release | tr -d '\r')"
+            echo "abi=$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
+            echo "egl=$(adb shell getprop ro.hardware.egl | tr -d '\r')"
+            echo "hwui=$(adb shell getprop debug.hwui.renderer | tr -d '\r')"
+            echo "network_profile=github_macos_runner_default"
+            adb shell dumpsys SurfaceFlinger | grep -Ei 'GLES|OpenGL|SwiftShader|ANGLE|renderer|Metal' | head -n 20 || true
+          } | tee artifacts/android-emulator-performance-macos/device-env.txt
+
+      - name: Marker smoke
+        run: |
+          set -euo pipefail
+          apk_sha="$(shasum -a 256 "$APK_PATH" | awk '{print $1}')"
+          node scripts/perf/run-android-startup-performance.mjs \
+            --apk "$APK_PATH" \
+            --source-sha "$SOURCE_SHA" \
+            --apk-sha "$apk_sha" \
+            --out-dir artifacts/android-emulator-performance-macos/marker-smoke \
+            --runs 3 \
+            --sample-label macos-smoke
+
+      - name: PERF-010 HVF startup benchmark
+        run: |
+          set -euo pipefail
+          apk_sha="$(shasum -a 256 "$APK_PATH" | awk '{print $1}')"
+          node scripts/perf/run-android-startup-performance.mjs \
+            --apk "$APK_PATH" \
+            --source-sha "$SOURCE_SHA" \
+            --apk-sha "$apk_sha" \
+            --out-dir artifacts/android-emulator-performance-macos/perf010-hvf \
+            --runs "$STARTUP_RUNS" \
+            --install skip \
+            --sample-label macos-hvf
+
+      - name: Summarize HVF performance gates
+        if: always()
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const { readFileSync, writeFileSync, existsSync } = require("node:fs");
+          const summaryPath = "artifacts/android-emulator-performance-macos/perf010-hvf/startup-performance-summary.json";
+          const perf = existsSync(summaryPath) ? JSON.parse(readFileSync(summaryPath, "utf8")) : null;
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: process.env.SOURCE_SHA,
+            sourceRunId: process.env.SOURCE_RUN_ID,
+            artifactName: process.env.SOURCE_ARTIFACT_NAME,
+            perf010Runs: perf?.segmentSummary?.activityTotalMs?.runs ?? 0,
+            perf010RawMs: perf?.rows?.map((row) => row.activityTotalMs) ?? [],
+            perf010P50Ms: perf?.segmentSummary?.activityTotalMs?.p50Ms ?? null,
+            perf010P95Ms: perf?.segmentSummary?.activityTotalMs?.p95Ms ?? null,
+            perf010MaxMs: perf?.segmentSummary?.activityTotalMs?.maxMs ?? null,
+            perf010: (perf?.segmentSummary?.activityTotalMs?.p95Ms ?? Infinity) <= 2000 ? "PASS" : "FAIL",
+            stableRouteVisibleP95Ms: perf?.segmentSummary?.totalStableRouteVisibleMs?.p95Ms ?? null,
+            dominantSegment: perf?.startupOverallP95DominantSegment ?? null,
+            dominantSegmentP95Ms: perf?.startupOverallP95DominantP95Ms ?? null,
+            markerCoverage: perf?.markerCoverage ?? null,
+          };
+          writeFileSync("artifacts/android-emulator-performance-macos/final-summary.json", JSON.stringify(result, null, 2));
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+          find artifacts/android-emulator-performance-macos -maxdepth 3 -type f -print0 | xargs -0 shasum -a 256 > artifacts/android-emulator-performance-macos/SHA256SUMS.txt
+
+      - name: Upload no-secret HVF performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-performance-macos-a54c31fd-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: artifacts/android-emulator-performance-macos/
