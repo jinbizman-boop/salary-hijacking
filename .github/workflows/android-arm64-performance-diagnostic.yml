@@ -1,0 +1,344 @@
+name: Android ARM64 Performance Diagnostic
+
+on:
+  workflow_dispatch:
+    inputs:
+      application_source_sha:
+        description: Exact app instrumentation source SHA to build.
+        required: true
+        default: a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      upload_apk:
+        description: Upload the no-secret diagnostic APK artifact.
+        required: true
+        default: true
+        type: boolean
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - ".github/workflows/android-arm64-performance-diagnostic.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-arm64-performance-diagnostic-${{ github.event.inputs.application_source_sha || 'a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  NODE_ENV: test
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  APPLICATION_SOURCE_SHA: ${{ github.event.inputs.application_source_sha || 'a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  QA_ANDROID_ARCHITECTURE: arm64-v8a
+  QA_APK_OUTPUT: build/qa/android/salary-hijacking-qaRelease-arm64-v8a.apk
+  APP_ENV: staging
+  EXPO_PUBLIC_API_BASE_URL: https://api-staging.salaryhijacking.com
+  EXPO_PUBLIC_DEEPLINK_HOST: staging.salaryhijacking.com
+  EXPO_PUBLIC_RELEASE_CHANNEL: staging
+  EXPO_PUBLIC_CRASH_REPORTING_ENABLED: "true"
+  EXPO_PUBLIC_E2E_BUILD: "false"
+  GOOGLE_SERVICES_JSON: ./secrets/firebase/google-services.json
+
+jobs:
+  build-arm64-diagnostic:
+    name: Build arm64-v8a diagnostic qaRelease APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment:
+      name: staging
+
+    steps:
+      - name: Checkout exact app instrumentation source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.APPLICATION_SOURCE_SHA }}
+          path: source
+
+      - name: Verify application source lineage
+        working-directory: source
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$APPLICATION_SOURCE_SHA"
+          printf 'APPLICATION_BUILD_SOURCE_SHA=%s\n' "$APPLICATION_SOURCE_SHA"
+          printf 'CONTROL_PLANE_WORKFLOW_SHA=%s\n' "$GITHUB_SHA"
+
+      - name: Compute mobile source fingerprint
+        working-directory: source
+        run: |
+          set -euo pipefail
+          node <<'NODE' >> "$GITHUB_ENV"
+          const { createHash } = require("node:crypto");
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const root = process.cwd();
+          const mobileRoot = path.join(root, "apps", "mobile");
+          const include = new Set([".ts", ".tsx", ".js", ".json", ".cjs", ".mjs", ".kt", ".gradle"]);
+          const skip = new Set(["node_modules", ".expo", "coverage", "dist", "build"]);
+          const sha256 = (value) => createHash("sha256").update(value).digest("hex").toUpperCase();
+          const walk = (dir) => fs.readdirSync(dir).flatMap((name) => {
+            const absolute = path.join(dir, name);
+            const stat = fs.statSync(absolute);
+            if (stat.isDirectory()) return skip.has(name) ? [] : walk(absolute);
+            return include.has(path.extname(name)) ? [absolute] : [];
+          });
+          const files = walk(mobileRoot)
+            .map((file) => path.relative(root, file).split(path.sep).join("/"))
+            .sort();
+          const digestInput = files.map((file) => `${file}:${sha256(fs.readFileSync(path.join(root, file)))}`).join("\n");
+          console.log(`RC_SOURCE_FINGERPRINT=${sha256(digestInput)}`);
+          console.log(`RC_SOURCE_FILE_COUNT=${files.length}`);
+          NODE
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: source/pnpm-lock.yaml
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK components
+        run: |
+          set -euo pipefail
+          android_sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager_cmd="$android_sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          echo "ANDROID_SDK_ROOT=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "$android_sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/emulator" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/build-tools/35.0.0" >> "$GITHUB_PATH"
+          yes | "$sdkmanager_cmd" --licenses >/dev/null || true
+          "$sdkmanager_cmd" \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.1.12297006" \
+            "cmake;3.22.1"
+
+      - name: Install dependencies
+        working-directory: source
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate staging QA secrets are present
+        env:
+          QA_KEYSTORE_BASE64: ${{ secrets.SALARY_HIJACKING_QA_KEYSTORE_BASE64 }}
+          QA_KEYSTORE_PASSWORD: ${{ secrets.SALARY_HIJACKING_QA_KEYSTORE_PASSWORD }}
+          QA_KEY_ALIAS: ${{ secrets.SALARY_HIJACKING_QA_KEY_ALIAS }}
+          QA_KEY_PASSWORD: ${{ secrets.SALARY_HIJACKING_QA_KEY_PASSWORD }}
+          FIREBASE_ANDROID_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in \
+            QA_KEYSTORE_BASE64 \
+            QA_KEYSTORE_PASSWORD \
+            QA_KEY_ALIAS \
+            QA_KEY_PASSWORD \
+            FIREBASE_ANDROID_JSON_BASE64
+          do
+            if [ -z "${!name:-}" ]; then
+              missing+=("$name")
+            fi
+          done
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf '::error::Missing staging Environment secret(s): %s\n' "${missing[*]}"
+            exit 2
+          fi
+          printf 'Staging QA secret presence verified without exposing values.\n'
+
+      - name: Materialize QA signing and Firebase config
+        working-directory: source
+        env:
+          QA_KEYSTORE_BASE64: ${{ secrets.SALARY_HIJACKING_QA_KEYSTORE_BASE64 }}
+          QA_KEYSTORE_PASSWORD: ${{ secrets.SALARY_HIJACKING_QA_KEYSTORE_PASSWORD }}
+          QA_KEY_ALIAS: ${{ secrets.SALARY_HIJACKING_QA_KEY_ALIAS }}
+          QA_KEY_PASSWORD: ${{ secrets.SALARY_HIJACKING_QA_KEY_PASSWORD }}
+          FIREBASE_ANDROID_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$QA_KEYSTORE_BASE64"
+          echo "::add-mask::$QA_KEYSTORE_PASSWORD"
+          echo "::add-mask::$QA_KEY_ALIAS"
+          echo "::add-mask::$QA_KEY_PASSWORD"
+          echo "::add-mask::$FIREBASE_ANDROID_JSON_BASE64"
+
+          qa_dir="$RUNNER_TEMP/salary-hijacking-qa-signing"
+          mkdir -p "$qa_dir" "apps/mobile/secrets/firebase"
+          printf '%s' "$QA_KEYSTORE_BASE64" | base64 --decode > "$qa_dir/qa-release.jks"
+          printf '%s' "$FIREBASE_ANDROID_JSON_BASE64" | base64 --decode > "apps/mobile/secrets/firebase/google-services.json"
+          chmod 600 "$qa_dir/qa-release.jks" "apps/mobile/secrets/firebase/google-services.json"
+
+          {
+            echo "SALARY_HIJACKING_QA_KEYSTORE_FILE=$qa_dir/qa-release.jks"
+            echo "SALARY_HIJACKING_QA_KEYSTORE_PASSWORD=$QA_KEYSTORE_PASSWORD"
+            echo "SALARY_HIJACKING_QA_KEY_ALIAS=$QA_KEY_ALIAS"
+            echo "SALARY_HIJACKING_QA_KEY_PASSWORD=$QA_KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: qaRelease build preflight
+        working-directory: source/apps/mobile
+        run: |
+          set -euo pipefail
+          node scripts/validate-android-qa-bundle-preflight.mjs
+          rm -rf build/qa/android/metro-preflight
+          pnpm exec expo export \
+            --platform android \
+            --output-dir build/qa/android/metro-preflight
+          node scripts/expo-local-android-debug-build.mjs \
+            --check \
+            --build-type qaRelease \
+            --architecture "$QA_ANDROID_ARCHITECTURE" \
+            --output "$QA_APK_OUTPUT"
+
+      - name: Build full Expo Router qaRelease APK
+        working-directory: source/apps/mobile
+        run: |
+          set -euo pipefail
+          node scripts/expo-local-android-debug-build.mjs \
+            --build-type qaRelease \
+            --architecture "$QA_ANDROID_ARCHITECTURE" \
+            --output "$QA_APK_OUTPUT"
+
+      - name: Verify ARM64 diagnostic APK contract
+        working-directory: source/apps/mobile
+        run: |
+          set -euo pipefail
+          apk="$QA_APK_OUTPUT"
+          test -s "$apk"
+          mkdir -p build/qa/android/evidence
+
+          apk_sha="$(sha256sum "$apk" | awk '{print $1}')"
+          bundle_sha="$(unzip -p "$apk" assets/index.android.bundle | sha256sum | awk '{print $1}')"
+          signer="$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n 1)"
+
+          unzip -l "$apk" | grep -q "lib/arm64-v8a/"
+          ! unzip -l "$apk" | grep -q "lib/x86_64/"
+
+          manifest_dump="$(mktemp)"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" > "$manifest_dump"
+          grep -q "package: name='com.salaryhijacking.mobile'" "$manifest_dump"
+
+          xml_dump="$(mktemp)"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$apk" AndroidManifest.xml > "$xml_dump"
+          ! grep -q "android:debuggable.*0xffffffff" "$xml_dump"
+          grep -q "android:allowBackup.*0x0" "$xml_dump"
+          ! grep -q "android:usesCleartextTraffic.*0xffffffff" "$xml_dump"
+
+          canonical_api_host="https://api-staging.salaryhijacking.com"
+          rejected_api_host="https://api-staging.salary""-hijacking.com"
+          unzip -p "$apk" assets/index.android.bundle | grep -aFq "$canonical_api_host"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aFq "$rejected_api_host"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aFq "localhost"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aFq "127.0.0.1"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aFq "10.0.2.2"
+          ! unzip -p "$apk" assets/index.android.bundle | grep -aEiq "safe[-]entry|direct[-]entry|capture[-]only|sk-[A-Za-z0-9]"
+
+          node <<'NODE'
+          const { readFileSync, writeFileSync } = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const apk = process.env.QA_APK_OUTPUT;
+          const entriesJson = execFileSync("python3", [
+            "-c",
+            "import json, zipfile, sys; z=zipfile.ZipFile(sys.argv[1]); print(json.dumps([i.filename for i in z.infolist()]))",
+            apk,
+          ], { encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+          const entries = JSON.parse(entriesJson);
+          const readEntry = (name) => {
+            try {
+              return execFileSync("unzip", ["-p", apk, name], { encoding: "latin1", maxBuffer: 64 * 1024 * 1024 });
+            } catch {
+              return "";
+            }
+          };
+          const dexText = entries.filter((name) => /^classes.*\.dex$/u.test(name)).map(readEntry).join("\n");
+          const bundleText = readEntry("assets/index.android.bundle");
+          const nativeMarkers = [
+            "startup.n1.application_on_create_entry",
+            "startup.n2.activity_on_create_entry",
+            "startup.n3.activity_super_on_create_complete",
+            "startup.n4.react_root_view_create_start",
+            "startup.n5.native_first_frame_ready",
+          ];
+          const jsMarkers = [
+            "startup.p3.js_bundle_start",
+            "startup.p11.route_first_commit",
+            "startup.p12.splash_hide_requested",
+            "startup.p13.splash_hide_completed",
+            "startup.p14.route_interactive",
+          ];
+          const native = Object.fromEntries(nativeMarkers.map((marker) => [marker, dexText.includes(marker)]));
+          const js = Object.fromEntries(jsMarkers.map((marker) => [marker, bundleText.includes(marker)]));
+          const allPresent = Object.values(native).every(Boolean) && Object.values(js).every(Boolean);
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            native,
+            js,
+            allPresent,
+          };
+          writeFileSync("build/qa/android/evidence/marker-proof.json", JSON.stringify(result, null, 2));
+          if (!allPresent) {
+            console.error(JSON.stringify(result, null, 2));
+            process.exit(1);
+          }
+          NODE
+
+          cat > build/qa/android/evidence/build-info.json <<JSON
+          {
+            "schemaVersion": 1,
+            "artifactKind": "DIAGNOSTIC_ARM64_INSTRUMENTATION_ARTIFACT",
+            "secretsRedacted": true,
+            "containsSecretValues": false,
+            "applicationBuildSourceSha": "$APPLICATION_SOURCE_SHA",
+            "sourceCommit": "$APPLICATION_SOURCE_SHA",
+            "sourceFingerprint": "$RC_SOURCE_FINGERPRINT",
+            "sourceFileCount": ${RC_SOURCE_FILE_COUNT:-0},
+            "checkedOutSha": "$(git -C ../.. rev-parse HEAD)",
+            "controlPlaneWorkflowSha": "$GITHUB_SHA",
+            "branch": "$GITHUB_REF_NAME",
+            "buildType": "qaRelease",
+            "architecture": "arm64-v8a",
+            "applicationId": "com.salaryhijacking.mobile",
+            "apkSha256": "$apk_sha",
+            "bundleSha256": "$bundle_sha",
+            "signerCertificateSha256": "$signer",
+            "embeddedEnvironment": "staging",
+            "apiBaseUrl": "https://api-staging.salaryhijacking.com",
+            "debuggable": false,
+            "cleartext": false,
+            "allowBackup": false,
+            "markerProof": "build/qa/android/evidence/marker-proof.json",
+            "buildTimestampUtc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          JSON
+
+      - name: Upload ARM64 diagnostic APK and no-secret metadata
+        if: ${{ github.event.inputs.upload_apk != 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-arm64-performance-diagnostic-a54c31fd-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            source/apps/mobile/${{ env.QA_APK_OUTPUT }}
+            source/apps/mobile/build/qa/android/evidence/build-info.json
+            source/apps/mobile/build/qa/android/evidence/marker-proof.json
