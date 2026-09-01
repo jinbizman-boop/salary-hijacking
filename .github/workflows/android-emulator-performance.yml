@@ -185,7 +185,7 @@ jobs:
             --package "system-images;android-$API_LEVEL;$TARGET;$ABI" \
             "${device_args[@]}"
           avdmanager list avd | tee artifacts/android-emulator-performance/avd-list-after-create.txt
-          avd_config="$(find "$HOME/.android/avd" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
+          avd_config="$(find "$HOME" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
           test -s "$avd_config"
           {
             echo "hw.cpu.ncore=2"
