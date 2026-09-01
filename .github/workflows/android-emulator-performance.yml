@@ -31,7 +31,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-emulator-performance-${{ github.ref }}
+  group: android-emulator-performance-v2-${{ github.ref }}
   cancel-in-progress: true
 
 defaults:
