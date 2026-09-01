@@ -299,8 +299,13 @@ const emittedRootPerfMarkers = new Set<string>();
 
 function hideNativeSplashSafely(): void {
   if (NativeRuntimeRef.Platform.OS === "web") return;
+  markRootPerfOnce("startup.p12.splash_hide_requested", "bootstrap");
   void getSplashScreenRuntime()
     .hideAsync()
+    .then(() => {
+      markRootPerfOnce("startup.p13.splash_hide_completed", "bootstrap");
+      return true;
+    })
     .catch(() => false);
 }
 
@@ -313,6 +318,8 @@ function markRootPerfOnce(
   emittedRootPerfMarkers.add(key);
   markReleasePerf(marker, { route });
 }
+
+markRootPerfOnce("startup.p4.root_module_evaluated", "bootstrap");
 
 const fallbackSession: SessionSnapshot = Object.freeze({
   authenticated: false,
@@ -424,8 +431,11 @@ export default function MobileRootLayout(): unknown {
   );
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
+    markRootPerfOnce("startup.p5.auth_bootstrap_start", "bootstrap");
     setState((prev: RootState) => ({ ...prev, retrying: true }));
     if (isMobileE2eBuildEnabled()) {
+      markRootPerfOnce("startup.p8.readiness_decision_complete", "bootstrap");
+      markRootPerfOnce("startup.p9.destination_resolved", "salary");
       setState((prev: RootState) => ({
         ...prev,
         payload: fallbackPayload,
@@ -439,6 +449,19 @@ export default function MobileRootLayout(): unknown {
     try {
       const publicSessionHint = await readPublicSessionHint();
       if (!publicSessionHint || publicSessionHint.authenticated === false) {
+        markRootPerfOnce(
+          "startup.p6.secure_storage_read_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce(
+          "startup.p7.session_validation_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce(
+          "startup.p8.readiness_decision_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce("startup.p9.destination_resolved", "login");
         setAuthRequiredBeforePersistence();
         persistUnauthenticatedLaunchState();
         return;
@@ -450,6 +473,11 @@ export default function MobileRootLayout(): unknown {
           "public-hint",
         )
       ) {
+        markRootPerfOnce(
+          "startup.p8.readiness_decision_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce("startup.p9.destination_resolved", "salary");
         setState((prev: RootState) => ({
           ...prev,
           payload: cachedAuthenticatedPayload(publicSessionHint),
@@ -463,7 +491,20 @@ export default function MobileRootLayout(): unknown {
       const cachedSession = hasAccessToken
         ? await readCachedSessionStatus()
         : fallbackSession;
+      markRootPerfOnce(
+        "startup.p6.secure_storage_read_complete",
+        "bootstrap",
+      );
       if (!hasAccessToken) {
+        markRootPerfOnce(
+          "startup.p7.session_validation_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce(
+          "startup.p8.readiness_decision_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce("startup.p9.destination_resolved", "login");
         setAuthRequiredBeforePersistence();
         void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
           () => undefined,
@@ -477,6 +518,11 @@ export default function MobileRootLayout(): unknown {
           "secure-session",
         )
       ) {
+        markRootPerfOnce(
+          "startup.p8.readiness_decision_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce("startup.p9.destination_resolved", "salary");
         setState((prev: RootState) => ({
           ...prev,
           payload: cachedAuthenticatedPayload(cachedSession),
@@ -489,8 +535,20 @@ export default function MobileRootLayout(): unknown {
       const response = await requestJsonWithAuthRefresh<RootResponse>(
         "/api/v1/mobile/bootstrap",
       );
+      markRootPerfOnce(
+        "startup.p7.session_validation_complete",
+        "bootstrap",
+      );
       const payload = normalizePayload(response.data ?? {});
       const nextStatus = resolveStatus(payload, isPublic);
+      markRootPerfOnce(
+        "startup.p8.readiness_decision_complete",
+        "bootstrap",
+      );
+      markRootPerfOnce(
+        "startup.p9.destination_resolved",
+        statusRouteCategory(nextStatus),
+      );
       await persistSessionStatus(payload.session, nextStatus);
       await persistPublicSessionHint(payload.session);
       setState((prev: RootState) => ({
@@ -503,6 +561,15 @@ export default function MobileRootLayout(): unknown {
       }));
     } catch (error) {
       if (error instanceof RootAuthExpiredError) {
+        markRootPerfOnce(
+          "startup.p7.session_validation_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce(
+          "startup.p8.readiness_decision_complete",
+          "bootstrap",
+        );
+        markRootPerfOnce("startup.p9.destination_resolved", "login");
         setState((prev: RootState) => ({
           ...prev,
           payload: { ...prev.payload, session: fallbackSession },
@@ -518,6 +585,18 @@ export default function MobileRootLayout(): unknown {
       }
       const cached = await readCachedSessionStatus();
       const cachedStatus = offlineStatusFromCachedSession(cached, isPublic);
+      markRootPerfOnce(
+        "startup.p7.session_validation_complete",
+        "bootstrap",
+      );
+      markRootPerfOnce(
+        "startup.p8.readiness_decision_complete",
+        "bootstrap",
+      );
+      markRootPerfOnce(
+        "startup.p9.destination_resolved",
+        statusRouteCategory(cachedStatus),
+      );
       setState((prev: RootState) => ({
         ...prev,
         payload: { ...prev.payload, session: cached },
@@ -638,28 +717,40 @@ export default function MobileRootLayout(): unknown {
     !shouldRenderSlot &&
     !isRouteTransitionPending;
   const handleRootLayout = ReactRuntimeRef.useCallback((): void => {
+    if (shouldRenderSlot) {
+      markRootPerfOnce("startup.p11.route_first_commit", currentRouteKey);
+    }
     hideNativeSplashSafely();
     if (shouldRenderLightweightTransition) {
       markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
     }
-  }, [shouldRenderLightweightTransition]);
+  }, [currentRouteKey, shouldRenderLightweightTransition, shouldRenderSlot]);
 
   ReactRuntimeRef.useEffect((): void => {
+    if (shouldRenderSlot) {
+      markRootPerfOnce(
+        "startup.p10.route_component_mount_start",
+        currentRouteKey,
+      );
+    }
     if (shouldRenderLightweightTransition) {
       markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
     }
     if (state.status === "AUTH_REQUIRED" && isPublic) {
+      markRootPerfOnce("startup.p14.route_interactive", currentRouteKey);
       markRootPerfOnce("route.login.interactive", currentRouteKey);
     }
     if (
       (state.status === "READY" || state.status === "OFFLINE") &&
       (currentRouteKey === "salary" || currentRouteKey === "(tabs)/salary")
     ) {
+      markRootPerfOnce("startup.p14.route_interactive", currentRouteKey);
       markRootPerfOnce("route.home.shell_interactive", currentRouteKey);
     }
   }, [
     currentRouteKey,
     isPublic,
+    shouldRenderSlot,
     shouldRenderLightweightTransition,
     state.status,
   ]);
@@ -1191,6 +1282,14 @@ function resolveStatus(payload: RootPayload, isPublic: boolean): RootStatus {
   if (!payload.session.onboardingCompleted) return "ONBOARDING";
   if (!payload.session.payrollReady) return "ONBOARDING";
   return "READY";
+}
+
+function statusRouteCategory(status: RootStatus): string {
+  if (status === "READY" || status === "OFFLINE") return "salary";
+  if (status === "AUTH_REQUIRED") return "login";
+  if (status === "VERIFY_EMAIL") return "verify-email";
+  if (status === "ONBOARDING") return "onboarding";
+  return "bootstrap";
 }
 
 function offlineStatusFromCachedSession(

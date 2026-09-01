@@ -14,6 +14,18 @@ const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const TABS_LAYOUT_SCREEN = join(APP_ROOT, "(tabs)", "_layout.tsx");
 const ANDROID_ENTRY = join(process.cwd(), "index.android.js");
+const ANDROID_MAIN_ACTIVITY = join(
+  process.cwd(),
+  "android",
+  "app",
+  "src",
+  "main",
+  "java",
+  "com",
+  "salaryhijacking",
+  "mobile",
+  "MainActivity.kt",
+);
 const SPLASH_LAUNCH_SCREEN = join(
   process.cwd(),
   "src",
@@ -1004,6 +1016,37 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("hideNativeSplashSafely");
     expect(source).toContain("onLayout: hideNativeSplashSafely");
     expect(source).toMatch(/setTimeout\(\s*hideNativeSplashSafely/);
+  });
+
+  it("keeps release startup markers segmentable without sensitive data", () => {
+    const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const androidEntry = readFileSync(ANDROID_ENTRY, "utf8");
+    const mainActivity = readFileSync(ANDROID_MAIN_ACTIVITY, "utf8");
+
+    expect(mainActivity).toContain("startup.p1.activity_on_create");
+    expect(mainActivity).toContain("startup.p2.native_first_frame");
+    expect(mainActivity).toContain("SystemClock.elapsedRealtime");
+    expect(androidEntry).toContain("startup.p3.js_bundle_start");
+    expect(rootLayout).toContain("startup.p4.root_module_evaluated");
+    expect(rootLayout).toContain("startup.p5.auth_bootstrap_start");
+    expect(rootLayout).toContain("startup.p6.secure_storage_read_complete");
+    expect(rootLayout).toContain(
+      "startup.p7.session_validation_complete",
+    );
+    expect(rootLayout).toContain(
+      "startup.p8.readiness_decision_complete",
+    );
+    expect(rootLayout).toContain("startup.p9.destination_resolved");
+    expect(rootLayout).toContain(
+      "startup.p10.route_component_mount_start",
+    );
+    expect(rootLayout).toContain("startup.p11.route_first_commit");
+    expect(rootLayout).toContain("startup.p12.splash_hide_requested");
+    expect(rootLayout).toContain("startup.p13.splash_hide_completed");
+    expect(rootLayout).toContain("startup.p14.route_interactive");
+    expect(rootLayout).not.toContain("startup.email");
+    expect(rootLayout).not.toContain("startup.token");
+    expect(rootLayout).not.toContain("startup.amount");
   });
 
   it("keeps the root bootstrap surface independent from large brand image assets", () => {
