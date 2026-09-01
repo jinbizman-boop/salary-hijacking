@@ -383,6 +383,27 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toMatch(/catch\s*\{\s*return true;\s*\}/u);
   });
 
+  it("renders the unauthenticated login destination before background cache persistence", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const unauthStart = source.indexOf(
+      "const setAuthRequiredBeforePersistence = ReactRuntimeRef.useCallback",
+    );
+    const persistStart = source.indexOf(
+      "const persistUnauthenticatedLaunchState = ReactRuntimeRef.useCallback",
+    );
+
+    expect(unauthStart).toBeGreaterThanOrEqual(0);
+    expect(persistStart).toBeGreaterThan(unauthStart);
+    expect(source).toContain("setAuthRequiredBeforePersistence();");
+    expect(source).toContain("persistUnauthenticatedLaunchState();");
+    expect(source).not.toContain(
+      'await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");\n        setState((prev: RootState) => ({',
+    );
+    expect(source).not.toContain(
+      'await persistPublicSessionHint(fallbackSession);\n        setState((prev: RootState) => ({',
+    );
+  });
+
   it("does not let launcher home restoration wait indefinitely on deep-link probing", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 

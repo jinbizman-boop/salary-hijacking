@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { AuthLoginRequest } from "../types";
@@ -10,6 +10,7 @@ import {
 } from "../../../shared/performance/release-perf";
 
 const designSystem = salaryHijackingDesignSystem;
+let loginInteractiveMarkerEmitted = false;
 
 export type LoginCredentialFormProps = Readonly<{
   onSubmit: (request: AuthLoginRequest) => void;
@@ -27,9 +28,10 @@ export function LoginCredentialForm({
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
 
-  useEffect(() => {
+  if (!loginInteractiveMarkerEmitted) {
+    loginInteractiveMarkerEmitted = true;
     markReleasePerf("route.login.interactive");
-  }, []);
+  }
 
   const submit = (): void => {
     onSubmit({

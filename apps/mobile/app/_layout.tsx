@@ -399,6 +399,30 @@ export default function MobileRootLayout(): unknown {
         currentRouteKey !== "(auth)/verify-email") ||
       (state.status === "ONBOARDING" && currentRouteKey !== "onboarding"));
 
+  const setAuthRequiredBeforePersistence = ReactRuntimeRef.useCallback(
+    (): void => {
+      setState((prev: RootState) => ({
+        ...prev,
+        payload: { ...prev.payload, session: fallbackSession },
+        status: "AUTH_REQUIRED",
+        retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
+        toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
+      }));
+    },
+    [],
+  );
+
+  const persistUnauthenticatedLaunchState = ReactRuntimeRef.useCallback(
+    (): void => {
+      void persistPublicSessionHint(fallbackSession).catch(() => undefined);
+      void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
+        () => undefined,
+      );
+    },
+    [],
+  );
+
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
     if (isMobileE2eBuildEnabled()) {
@@ -415,18 +439,8 @@ export default function MobileRootLayout(): unknown {
     try {
       const publicSessionHint = await readPublicSessionHint();
       if (!publicSessionHint || publicSessionHint.authenticated === false) {
-        void persistPublicSessionHint(fallbackSession).catch(() => undefined);
-        void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
-          () => undefined,
-        );
-        setState((prev: RootState) => ({
-          ...prev,
-          payload: { ...prev.payload, session: fallbackSession },
-          status: "AUTH_REQUIRED",
-          retrying: false,
-          navigationEpoch: prev.navigationEpoch + 1,
-          toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
-        }));
+        setAuthRequiredBeforePersistence();
+        persistUnauthenticatedLaunchState();
         return;
       }
       if (
@@ -450,17 +464,10 @@ export default function MobileRootLayout(): unknown {
         ? await readCachedSessionStatus()
         : fallbackSession;
       if (!hasAccessToken) {
+        setAuthRequiredBeforePersistence();
         void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
           () => undefined,
         );
-        setState((prev: RootState) => ({
-          ...prev,
-          payload: { ...prev.payload, session: fallbackSession },
-          status: "AUTH_REQUIRED",
-          retrying: false,
-          navigationEpoch: prev.navigationEpoch + 1,
-          toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
-        }));
         return;
       }
       if (
@@ -523,7 +530,12 @@ export default function MobileRootLayout(): unknown {
         },
       }));
     }
-  }, [currentRouteKey, isPublic]);
+  }, [
+    currentRouteKey,
+    isPublic,
+    persistUnauthenticatedLaunchState,
+    setAuthRequiredBeforePersistence,
+  ]);
 
   const applyAuthenticatedSessionChange = ReactRuntimeRef.useCallback(
     (event: AuthSessionChangeEvent): void => {
@@ -883,6 +895,7 @@ function renderGate(
 }
 
 function renderLightweightLaunchTransition(): unknown {
+  markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
   return h(
     NativeRuntimeRef.View,
     {

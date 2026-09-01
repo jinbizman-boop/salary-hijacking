@@ -93,6 +93,7 @@ const salaryBrandLogo =
   require("../../../shared/assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 const SALARY_SAVE_ERROR =
   "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
+let salaryHomeShellMarkerEmitted = false;
 let cachedPayrollReminderSecureStore: ReturnType<
   typeof createSecureStoreRuntime
 > | null = null;
@@ -195,13 +196,14 @@ export function SalaryHomeScreen({
     [planCommitmentsApi],
   );
 
+  if (!salaryHomeShellMarkerEmitted) {
+    salaryHomeShellMarkerEmitted = true;
+    markReleasePerf("route.home.shell_interactive", { route: "salary" });
+  }
+
   useEffect(() => {
     const timer = setInterval(() => setTick((value) => value + 1), 60_000);
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    markReleasePerf("route.home.shell_interactive", { route: "salary" });
   }, []);
 
   useEffect(() => {
