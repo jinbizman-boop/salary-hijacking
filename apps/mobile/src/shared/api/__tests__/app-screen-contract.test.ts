@@ -399,15 +399,18 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
-  it("does not render root Home from a cached authenticated session before bootstrap verification", () => {
+  it("does not render root Home from a public session hint before secure session verification", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
     expect(source).toContain("ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS");
     expect(source).toMatch(
+      /canUseCachedAuthenticatedLaunch\(\s*publicSessionHint,\s*currentRouteKey,\s*"public-hint",?\s*\)/u,
+    );
+    expect(source).toMatch(
       /const cachedSession = hasAccessToken\s*\?\s*await readCachedSessionStatus\(\)\s*:\s*fallbackSession/u,
     );
-    expect(source).toContain(
-      "canUseCachedAuthenticatedLaunch(cachedSession, currentRouteKey)",
+    expect(source).toMatch(
+      /canUseCachedAuthenticatedLaunch\(\s*cachedSession,\s*currentRouteKey,\s*"secure-session",?\s*\)/u,
     );
     expect(source).toContain(
       "payload: cachedAuthenticatedPayload(cachedSession)",
@@ -419,8 +422,12 @@ describe("mobile app screen API and route contracts", () => {
         'requestJsonWithAuthRefresh<RootResponse>(\n        "/api/v1/mobile/bootstrap"',
       ),
     );
-    expect(source).not.toContain('if (routeKey === "root") return true');
-    expect(source).toContain("return isAuthenticatedAuthRoute(routeKey)");
+    expect(source).toContain(
+      'source === "secure-session" && isLauncherRootRoute(routeKey)',
+    );
+    expect(source).toContain(
+      'if (source === "public-hint") return isAuthenticatedAuthRoute(routeKey)',
+    );
     expect(source).toContain("sessionExpiresAt: session.sessionExpiresAt");
   });
 
@@ -496,7 +503,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(oldRaceIndex).toBe(-1);
   });
 
-  it("limits cached authenticated launch to verified auth recovery routes", () => {
+  it("limits public-hint launch to auth recovery routes but allows secure root restoration", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const launchFunctionStart = source.indexOf(
       "function canUseCachedAuthenticatedLaunch(",
@@ -510,8 +517,14 @@ describe("mobile app screen API and route contracts", () => {
     expect(launchFunctionStart).toBeGreaterThanOrEqual(0);
     expect(launchFunctionEnd).toBeGreaterThan(launchFunctionStart);
     expect(launchFunction).toContain("isFreshCompleteSession(session)");
-    expect(launchFunction).not.toContain('routeKey === "root"');
-    expect(launchFunction).toContain("isAuthenticatedAuthRoute(routeKey)");
+    expect(launchFunction).toContain('source: "public-hint" | "secure-session"');
+    expect(launchFunction).toContain(
+      'if (source === "public-hint") return isAuthenticatedAuthRoute(routeKey)',
+    );
+    expect(launchFunction).toContain(
+      'source === "secure-session" && isLauncherRootRoute(routeKey)',
+    );
+    expect(source).toContain("function isLauncherRootRoute(routeKey: string)");
     expect(source).toContain("isFreshCompleteSession(session)");
     expect(source).toContain("isAuthenticatedAuthRoute(routeKey)");
     expect(source).toContain("Date.parse(session.sessionExpiresAt)");

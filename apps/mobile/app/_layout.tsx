@@ -429,7 +429,13 @@ export default function MobileRootLayout(): unknown {
         }));
         return;
       }
-      if (canUseCachedAuthenticatedLaunch(publicSessionHint, currentRouteKey)) {
+      if (
+        canUseCachedAuthenticatedLaunch(
+          publicSessionHint,
+          currentRouteKey,
+          "public-hint",
+        )
+      ) {
         setState((prev: RootState) => ({
           ...prev,
           payload: cachedAuthenticatedPayload(publicSessionHint),
@@ -457,7 +463,13 @@ export default function MobileRootLayout(): unknown {
         }));
         return;
       }
-      if (canUseCachedAuthenticatedLaunch(cachedSession, currentRouteKey)) {
+      if (
+        canUseCachedAuthenticatedLaunch(
+          cachedSession,
+          currentRouteKey,
+          "secure-session",
+        )
+      ) {
         setState((prev: RootState) => ({
           ...prev,
           payload: cachedAuthenticatedPayload(cachedSession),
@@ -1191,9 +1203,18 @@ function cachedAuthenticatedPayload(session: SessionSnapshot): RootPayload {
 function canUseCachedAuthenticatedLaunch(
   session: SessionSnapshot,
   routeKey: string,
+  source: "public-hint" | "secure-session",
 ): boolean {
   if (!isFreshCompleteSession(session)) return false;
-  return isAuthenticatedAuthRoute(routeKey);
+  if (source === "public-hint") return isAuthenticatedAuthRoute(routeKey);
+  return (
+    isAuthenticatedAuthRoute(routeKey) ||
+    (source === "secure-session" && isLauncherRootRoute(routeKey))
+  );
+}
+
+function isLauncherRootRoute(routeKey: string): boolean {
+  return routeKey === "root";
 }
 
 function isFreshCompleteSession(session: SessionSnapshot): boolean {

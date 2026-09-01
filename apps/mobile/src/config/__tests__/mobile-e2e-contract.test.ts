@@ -222,8 +222,8 @@ describe("mobile Detox E2E contract", () => {
     const gradleProperties = readRequiredText("android/gradle.properties");
     const config = appConfig({ config: {} });
 
-    expect(config.newArchEnabled).toBe(false);
-    expect(gradleProperties).toContain("newArchEnabled=false");
+    expect(config.newArchEnabled).toBe(true);
+    expect(gradleProperties).toContain("newArchEnabled=true");
   });
 
   it("disables Expo dev-client network inspection in Android build properties", () => {
