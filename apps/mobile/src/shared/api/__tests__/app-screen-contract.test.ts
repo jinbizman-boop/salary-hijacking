@@ -985,8 +985,14 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("../src/shared/styles/root-font-assets");
     expect(source).not.toContain("function loadOfficialBiLogo()");
     expect(source).toContain("function loadRootAppHeader()");
+    expect(source).not.toContain("const FontRuntimeRef = loadFontRuntime()");
+    expect(source).toContain("let cachedFontRuntime: FontRuntime | null = null");
+    expect(source).toContain("function resolveRootFontsReady()");
     expect(source).toMatch(
-      /FontRuntimeRef\.useFonts\(\s*FONTS_EMBEDDED_IN_NATIVE \? EMPTY_FONT_ASSETS : loadRootFontAssets\(\),?\s*\)/u,
+      /if \(FONTS_EMBEDDED_IN_NATIVE\) return true;/u,
+    );
+    expect(source).toMatch(
+      /getFontRuntime\(\)\.useFonts\(loadRootFontAssets\(\)\)/u,
     );
     expect(source).not.toContain("const FONT_ASSETS");
     expect(source).not.toContain(
@@ -996,9 +1002,7 @@ describe("mobile app screen API and route contracts", () => {
       'import { AppHeader } from "../src/shared/components/AppHeader";',
     );
     expect(source).not.toContain("const OFFICIAL_BI_LOGO");
-    expect(source).toContain(
-      "const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded",
-    );
+    expect(source).toContain("const fontsReady = resolveRootFontsReady()");
     expect(source).not.toContain("if (!fontsLoaded && !fontLoadTimedOut)");
     expect(source).toContain("SPLASH_FORCE_HIDE_FALLBACK_MS = 250");
     expect(source).toContain("hideNativeSplashSafely");

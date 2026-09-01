@@ -288,10 +288,10 @@ const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
 const FONTS_EMBEDDED_IN_NATIVE = NativeRuntimeRef.Platform.OS !== "web";
 const RouterRuntimeRef = loadRouterRuntime();
-const FontRuntimeRef = loadFontRuntime();
 const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
 const SPLASH_FORCE_HIDE_FALLBACK_MS = 250;
 let cachedRootApiBaseUrl: string | null = null;
+let cachedFontRuntime: FontRuntime | null = null;
 let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
 let cachedAsyncStorageRuntime: AsyncStorageRuntime | null = null;
 let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
@@ -359,10 +359,7 @@ class RootAuthExpiredError extends Error {
 }
 
 export default function MobileRootLayout(): unknown {
-  const [fontsLoaded] = FontRuntimeRef.useFonts(
-    FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : loadRootFontAssets(),
-  );
-  const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded;
+  const fontsReady = resolveRootFontsReady();
   const [fontLoadTimedOut, setFontLoadTimedOut] =
     ReactRuntimeRef.useState(false);
   const router = RouterRuntimeRef.useRouter();
@@ -1602,6 +1599,18 @@ function loadFontRuntime(): FontRuntime {
         ? mod.useFonts
         : (): readonly [boolean, Error | null] => [true, null],
   };
+}
+
+function getFontRuntime(): FontRuntime {
+  if (cachedFontRuntime) return cachedFontRuntime;
+  cachedFontRuntime = loadFontRuntime();
+  return cachedFontRuntime;
+}
+
+function resolveRootFontsReady(): boolean {
+  if (FONTS_EMBEDDED_IN_NATIVE) return true;
+  const [fontsLoaded] = getFontRuntime().useFonts(loadRootFontAssets());
+  return fontsLoaded;
 }
 
 function loadRootFontAssets(): Readonly<Record<string, unknown>> {
