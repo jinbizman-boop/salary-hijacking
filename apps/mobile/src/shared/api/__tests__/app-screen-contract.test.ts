@@ -404,6 +404,23 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
+  it("renders the lightweight launch transition before creating full root chrome styles", () => {
+    const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const earlyTransitionReturn = source.indexOf(
+      "if (shouldRenderLightweightTransition) {",
+    );
+    const fullRootReturn = source.indexOf("shouldShowRuntimeChrome");
+
+    expect(source).toContain("const launchStyles =");
+    expect(source).toContain("function getRootStyles()");
+    expect(source).toContain("const styles = createLazyRootStyles()");
+    expect(earlyTransitionReturn).toBeGreaterThanOrEqual(0);
+    expect(earlyTransitionReturn).toBeLessThan(fullRootReturn);
+    expect(source).toContain("style: launchStyles.safeArea");
+    expect(source).toContain("renderLightweightLaunchTransition()");
+    expect(source).toContain("style: launchStyles.lightweightTransition");
+  });
+
   it("does not let launcher home restoration wait indefinitely on deep-link probing", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
@@ -759,7 +776,12 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toMatch(
       /shouldRenderSlot\s*=\s*[\s\S]*!isRouteTransitionPending/u,
     );
-    expect(rootLayout).toContain('state.status !== "BOOTSTRAPPING"');
+    expect(rootLayout).toContain(
+      'state.status === "BOOTSTRAPPING" || isRouteTransitionPending',
+    );
+    expect(rootLayout).toContain("if (shouldRenderLightweightTransition) {");
+    expect(rootLayout.indexOf("if (shouldRenderLightweightTransition) {"))
+      .toBeLessThan(rootLayout.indexOf("h(RouterRuntimeRef.Slot"));
   });
 
   it("does not combine Expo Router href with custom tabBarButton in production tabs", () => {

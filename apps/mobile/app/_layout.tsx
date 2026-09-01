@@ -296,6 +296,56 @@ let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
 let cachedAsyncStorageRuntime: AsyncStorageRuntime | null = null;
 let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
 const emittedRootPerfMarkers = new Set<string>();
+const launchStyles = NativeRuntimeRef.StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: componentColors.background },
+  fontLoading: {
+    alignItems: "center",
+    flex: 1,
+    gap: designSystem.spacing[2],
+    justifyContent: "center",
+    padding: designSystem.spacing[6],
+  },
+  fontLoadingBrandMark: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.xl,
+    height: designSystem.spacing[10] + designSystem.spacing[6],
+    justifyContent: "center",
+    width: designSystem.spacing[10] + designSystem.spacing[6],
+  },
+  fontLoadingBrandInitial: {
+    color: componentColors.surface,
+    fontFamily: designSystem.font.native.bold,
+    ...designSystem.typography.titleXL,
+  },
+  fontLoadingTitle: {
+    color: componentColors.textPrimary,
+    fontFamily: designSystem.font.native.black,
+    ...designSystem.typography.display,
+  },
+  fontLoadingText: {
+    color: componentColors.textSecondary,
+    fontFamily: designSystem.font.native.semibold,
+    ...designSystem.typography.bodyS,
+  },
+  lightweightTransition: {
+    alignItems: "center",
+    flex: 1,
+    gap: designSystem.spacing[2],
+    justifyContent: "center",
+    padding: designSystem.spacing[5],
+  },
+  lightweightTransitionBrandMark: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.titleXL,
+    textAlign: "center",
+  },
+  lightweightTransitionText: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+    textAlign: "center",
+  },
+});
 
 function hideNativeSplashSafely(): void {
   if (NativeRuntimeRef.Platform.OS === "web") return;
@@ -633,10 +683,6 @@ export default function MobileRootLayout(): unknown {
       (state.status === "READY" || state.status === "OFFLINE" || isPublic));
   const shouldRenderLightweightTransition =
     state.status === "BOOTSTRAPPING" || isRouteTransitionPending;
-  const shouldShowRuntimeChrome =
-    state.status !== "BOOTSTRAPPING" &&
-    !shouldRenderSlot &&
-    !isRouteTransitionPending;
   const handleRootLayout = ReactRuntimeRef.useCallback((): void => {
     hideNativeSplashSafely();
     if (shouldRenderLightweightTransition) {
@@ -670,37 +716,52 @@ export default function MobileRootLayout(): unknown {
       {
         accessibilityLabel: "급여납치 폰트를 불러오는 중",
         onLayout: hideNativeSplashSafely,
-        style: styles.safeArea,
+        style: launchStyles.safeArea,
         testID: ROOT_E2E_TEST_ID,
       },
       h(
         NativeRuntimeRef.View,
-        { style: styles.fontLoading },
+        { style: launchStyles.fontLoading },
         h(
           NativeRuntimeRef.View,
           {
             accessibilityLabel: "급여납치",
-            style: styles.fontLoadingBrandMark,
+            style: launchStyles.fontLoadingBrandMark,
           },
           h(
             NativeRuntimeRef.Text,
-            { style: styles.fontLoadingBrandInitial },
+            { style: launchStyles.fontLoadingBrandInitial },
             "급",
           ),
         ),
         h(
           NativeRuntimeRef.Text,
-          { style: styles.fontLoadingTitle },
+          { style: launchStyles.fontLoadingTitle },
           "급여납치",
         ),
         h(
           NativeRuntimeRef.Text,
-          { style: styles.fontLoadingText },
+          { style: launchStyles.fontLoadingText },
           "Freesentation 글꼴을 적용하고 있어요.",
         ),
       ),
     );
   }
+
+  if (shouldRenderLightweightTransition) {
+    return h(
+      NativeRuntimeRef.SafeAreaView,
+      {
+        accessibilityLabel: "급여납치 모바일 루트",
+        onLayout: handleRootLayout,
+        style: launchStyles.safeArea,
+        testID: ROOT_E2E_TEST_ID,
+      },
+      renderLightweightLaunchTransition(),
+    );
+  }
+
+  const shouldShowRuntimeChrome = !shouldRenderSlot && !isRouteTransitionPending;
 
   return h(
     NativeRuntimeRef.SafeAreaView,
@@ -900,16 +961,16 @@ function renderLightweightLaunchTransition(): unknown {
     NativeRuntimeRef.View,
     {
       accessibilityLabel: "급여납치 앱 준비 중",
-      style: styles.lightweightTransition,
+      style: launchStyles.lightweightTransition,
     },
     h(
       NativeRuntimeRef.Text,
-      { style: styles.lightweightTransitionBrandMark },
+      { style: launchStyles.lightweightTransitionBrandMark },
       "급여납치",
     ),
     h(
       NativeRuntimeRef.Text,
-      { style: styles.lightweightTransitionText },
+      { style: launchStyles.lightweightTransitionText },
       "앱을 준비하고 있어요",
     ),
     h(NativeRuntimeRef.ActivityIndicator, {
@@ -1889,7 +1950,25 @@ export function assertMobileRootLayoutCompleteness(): {
   return { ok: checks.length >= 20, version: ROOT_LAYOUT_VERSION, checks };
 }
 
-const styles = NativeRuntimeRef.StyleSheet.create({
+const styles = createLazyRootStyles();
+let cachedRootStyles: ReturnType<typeof createRootStyles> | null = null;
+
+function createLazyRootStyles(): ReturnType<typeof createRootStyles> {
+  return new Proxy({} as ReturnType<typeof createRootStyles>, {
+    get(_target, prop: string): unknown {
+      return getRootStyles()[prop as keyof ReturnType<typeof createRootStyles>];
+    },
+  }) as ReturnType<typeof createRootStyles>;
+}
+
+function getRootStyles(): ReturnType<typeof createRootStyles> {
+  if (cachedRootStyles) return cachedRootStyles;
+  cachedRootStyles = createRootStyles();
+  return cachedRootStyles;
+}
+
+function createRootStyles() {
+  return NativeRuntimeRef.StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: componentColors.background },
   profileButton: {
     alignItems: "center",
@@ -2084,4 +2163,5 @@ const styles = NativeRuntimeRef.StyleSheet.create({
     ...designSystem.typography.bodyS,
     textAlign: "center",
   },
-});
+  });
+}
