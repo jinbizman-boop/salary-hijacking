@@ -1,0 +1,408 @@
+name: Android Emulator Native JS Profile
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: GitHub Actions run id containing the exact x86_64 QA APK artifact.
+        required: true
+        default: "33501708537"
+      source_sha:
+        description: Exact instrumentation source SHA represented by the artifact.
+        required: true
+        default: a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      artifact_name:
+        description: Exact x86_64 QA APK artifact name.
+        required: true
+        default: android-qa-release-x86_64-a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      runs:
+        description: Startup marker runs before system tracing.
+        required: true
+        default: "8"
+      profile_runs:
+        description: Native/JS profile trace runs.
+        required: true
+        default: "5"
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - ".github/workflows/android-emulator-native-js-profile.yml"
+      - "scripts/perf/run-android-startup-performance.mjs"
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: android-emulator-native-js-profile-${{ github.run_id }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id || '33501708537' }}
+  SOURCE_SHA: ${{ github.event.inputs.source_sha || 'a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  SOURCE_ARTIFACT_NAME: ${{ github.event.inputs.artifact_name || 'android-qa-release-x86_64-a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  STARTUP_RUNS: ${{ github.event.inputs.runs || '8' }}
+  PROFILE_RUNS: ${{ github.event.inputs.profile_runs || '5' }}
+  API_LEVEL: "35"
+  ABI: x86_64
+  TARGET: google_apis
+  AVD_NAME: salary_native_js_profile_x86
+  PACKAGE_NAME: com.salaryhijacking.mobile
+  ACTIVITY_NAME: com.salaryhijacking.mobile/.MainActivity
+  TZ: Asia/Seoul
+
+jobs:
+  native-js-profile:
+    name: KVM x86_64 Native-to-JS profile
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout diagnostic harness source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: KVM and Android SDK preflight
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/android-emulator-native-js-profile
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm || true
+          fi
+          android_sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager_cmd="$android_sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          echo "ANDROID_SDK_ROOT=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "$android_sdk_root/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/emulator" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/build-tools/35.0.0" >> "$GITHUB_PATH"
+          {
+            echo "uname=$(uname -a)"
+            echo "id=$(id)"
+            echo "kvm_present=$([ -e /dev/kvm ] && echo yes || echo no)"
+            if [ -e /dev/kvm ]; then
+              ls -l /dev/kvm
+              echo "kvm_readable=$([ -r /dev/kvm ] && echo yes || echo no)"
+              echo "kvm_writable=$([ -w /dev/kvm ] && echo yes || echo no)"
+            fi
+            echo "android_sdk_root=$android_sdk_root"
+          } | tee artifacts/android-emulator-native-js-profile/preflight.txt
+          yes | "$sdkmanager_cmd" --licenses >/dev/null || true
+          "$sdkmanager_cmd" \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-$API_LEVEL" \
+            "build-tools;35.0.0" \
+            "system-images;android-$API_LEVEL;$TARGET;$ABI"
+
+      - name: Download exact x86_64 QA artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          name: ${{ env.SOURCE_ARTIFACT_NAME }}
+          path: artifacts/android-emulator-native-js-profile/input
+
+      - name: Verify artifact lineage and inspect APK payload
+        run: |
+          set -euo pipefail
+          apk="$(find artifacts/android-emulator-native-js-profile/input -name '*.apk' -type f | head -n 1)"
+          info="$(find artifacts/android-emulator-native-js-profile/input -name 'build-info.json' -type f | head -n 1)"
+          test -s "$apk"
+          test -s "$info"
+          echo "APK_PATH=$apk" >> "$GITHUB_ENV"
+          node <<'NODE'
+          const { createHash } = require("node:crypto");
+          const { readFileSync, writeFileSync } = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const apk = execFileSync("bash", ["-lc", "find artifacts/android-emulator-native-js-profile/input -name '*.apk' -type f | head -n 1"], { encoding: "utf8" }).trim();
+          const infoPath = execFileSync("bash", ["-lc", "find artifacts/android-emulator-native-js-profile/input -name 'build-info.json' -type f | head -n 1"], { encoding: "utf8" }).trim();
+          const info = JSON.parse(readFileSync(infoPath, "utf8"));
+          const apkSha = createHash("sha256").update(readFileSync(apk)).digest("hex");
+          const expectedSource = process.env.SOURCE_SHA;
+          const entriesJson = execFileSync("python3", ["-c", `
+import json, zipfile, sys
+apk=sys.argv[1]
+rows=[]
+with zipfile.ZipFile(apk) as z:
+    for i in z.infolist():
+        rows.append({"name": i.filename, "size": i.file_size, "compressed": i.compress_size, "method": i.compress_type})
+print(json.dumps(rows))
+`, apk], { encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+          const entries = JSON.parse(entriesJson);
+          const sum = (filter) => entries.filter(filter).reduce((acc, entry) => acc + entry.size, 0);
+          const top = (filter, count = 20) => entries.filter(filter).sort((a, b) => b.size - a.size).slice(0, count);
+          const bundleEntries = top((entry) => /(^assets\/index\.android\.bundle$|\.hbc$|\.bundle$|hermes|bytecode)/i.test(entry.name), 20);
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: info.sourceCommit,
+            checkedOutSha: info.checkedOutSha,
+            sourceLineageMatch: info.sourceCommit === expectedSource && info.checkedOutSha === expectedSource,
+            applicationId: info.applicationId,
+            architecture: info.architecture,
+            apkSha256: apkSha,
+            apkShaMatch: apkSha === info.apkSha256,
+            bundleSha256: info.bundleSha256,
+            signerCertificateSha256: info.signerCertificateSha256,
+            embeddedEnvironment: info.embeddedEnvironment,
+            apiBaseUrl: info.apiBaseUrl,
+            apkTotalBytes: readFileSync(apk).length,
+            entryUncompressedTotalBytes: entries.reduce((acc, entry) => acc + entry.size, 0),
+            dexTotalBytes: sum((entry) => /\.dex$/i.test(entry.name)),
+            nativeLibTotalBytes: sum((entry) => /^lib\/[^/]+\/.*\.so$/i.test(entry.name)),
+            jsBundleBytes: bundleEntries.find((entry) => entry.name === "assets/index.android.bundle")?.size ?? null,
+            fontTotalBytes: sum((entry) => /\.(ttf|otf)$/i.test(entry.name)),
+            largestStartupAssets: top((entry) => /^(assets|lib|res)\//i.test(entry.name), 30),
+            largestNativeLibs: top((entry) => /^lib\/[^/]+\/.*\.so$/i.test(entry.name), 30),
+            jsBundleCandidates: bundleEntries,
+            compressionMethods: Object.fromEntries([...new Set(entries.map((entry) => entry.method))].map((method) => [method, entries.filter((entry) => entry.method === method).length])),
+          };
+          if (!result.sourceLineageMatch || !result.apkShaMatch || result.architecture !== "x86_64") {
+            console.error(JSON.stringify(result, null, 2));
+            process.exit(1);
+          }
+          writeFileSync("artifacts/android-emulator-native-js-profile/artifact-apk-profile.json", JSON.stringify(result, null, 2));
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+
+      - name: Create KVM x86_64 AVD
+        run: |
+          set -euo pipefail
+          avdmanager list device | tee artifacts/android-emulator-native-js-profile/avd-devices.txt
+          device_args=()
+          if grep -q '"pixel_6"' artifacts/android-emulator-native-js-profile/avd-devices.txt; then
+            device_args=(--device "pixel_6")
+          elif grep -q '"pixel"' artifacts/android-emulator-native-js-profile/avd-devices.txt; then
+            device_args=(--device "pixel")
+          fi
+          printf "no\n" | avdmanager create avd \
+            --force \
+            --name "$AVD_NAME" \
+            --package "system-images;android-$API_LEVEL;$TARGET;$ABI" \
+            "${device_args[@]}"
+          avd_config="$(find "$HOME" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
+          test -s "$avd_config"
+          avd_home="$(dirname "$(dirname "$avd_config")")"
+          echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
+          {
+            echo "hw.cpu.ncore=2"
+            echo "hw.ramSize=2048"
+            echo "vm.heapSize=256"
+            echo "hw.lcd.width=1080"
+            echo "hw.lcd.height=2400"
+            echo "hw.lcd.density=420"
+            echo "hw.gpu.enabled=yes"
+            echo "hw.gpu.mode=swiftshader_indirect"
+            echo "fastboot.forceColdBoot=yes"
+            echo "fastboot.forceFastBoot=no"
+          } >> "$avd_config"
+          cat "$avd_config" | tee artifacts/android-emulator-native-js-profile/avd-config.ini
+
+      - name: Start KVM emulator
+        run: |
+          set -euo pipefail
+          emulator -accel-check | tee artifacts/android-emulator-native-js-profile/accel-check.txt
+          nohup emulator \
+            -avd "$AVD_NAME" \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot \
+            -gpu swiftshader_indirect \
+            -cores 2 \
+            -memory 2048 \
+            > artifacts/android-emulator-native-js-profile/emulator.log 2>&1 &
+          echo "$!" > artifacts/android-emulator-native-js-profile/emulator.pid
+          timeout 300 adb wait-for-device || {
+            tail -n 200 artifacts/android-emulator-native-js-profile/emulator.log || true
+            exit 1
+          }
+          for i in $(seq 1 60); do
+            boot="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            state="$(adb get-state 2>/dev/null || true)"
+            if [ "$state" = "device" ] && [ "$boot" = "1" ]; then
+              break
+            fi
+            sleep 5
+          done
+          if [ "$(adb get-state)" != "device" ] || [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; then
+            tail -n 200 artifacts/android-emulator-native-js-profile/emulator.log || true
+            exit 1
+          fi
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          {
+            echo "device_state=$(adb get-state)"
+            echo "boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')"
+            echo "model=$(adb shell getprop ro.product.model | tr -d '\r')"
+            echo "android=$(adb shell getprop ro.build.version.release | tr -d '\r')"
+            echo "abi=$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
+            echo "egl=$(adb shell getprop ro.hardware.egl | tr -d '\r')"
+            echo "hwui=$(adb shell getprop debug.hwui.renderer | tr -d '\r')"
+            echo "network_profile=github_hosted_runner_default"
+            adb shell dumpsys SurfaceFlinger | grep -Ei 'GLES|OpenGL|SwiftShader|ANGLE|renderer' | head -n 20 || true
+            adb shell 'command -v perfetto || true'
+            adb shell 'command -v simpleperf || true'
+            adb shell 'command -v atrace || true'
+          } | tee artifacts/android-emulator-native-js-profile/device-env.txt
+
+      - name: Marker baseline run
+        run: |
+          set -euo pipefail
+          node scripts/perf/run-android-startup-performance.mjs \
+            --apk "$APK_PATH" \
+            --source-sha "$SOURCE_SHA" \
+            --apk-sha "$(sha256sum "$APK_PATH" | awk '{print $1}')" \
+            --out-dir artifacts/android-emulator-native-js-profile/startup-marker-baseline \
+            --runs "$STARTUP_RUNS" \
+            --sample-label profile-marker
+
+      - name: Perfetto and simpleperf native-to-JS profile
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/android-emulator-native-js-profile/native-js
+          adb install -r "$APK_PATH" >/dev/null
+          cat > artifacts/android-emulator-native-js-profile/native-js/perfetto-config.pbtxt <<'EOF'
+          buffers: {
+            size_kb: 16384
+            fill_policy: RING_BUFFER
+          }
+          duration_ms: 9000
+          data_sources: {
+            config {
+              name: "linux.process_stats"
+              process_stats_config { scan_all_processes_on_start: true }
+            }
+          }
+          data_sources: {
+            config {
+              name: "linux.ftrace"
+              ftrace_config {
+                ftrace_events: "sched/sched_switch"
+                ftrace_events: "sched/sched_wakeup"
+                ftrace_events: "sched/sched_waking"
+                ftrace_events: "power/cpu_frequency"
+                ftrace_events: "power/cpu_idle"
+                ftrace_events: "task/task_newtask"
+                ftrace_events: "task/task_rename"
+                atrace_categories: "am"
+                atrace_categories: "wm"
+                atrace_categories: "view"
+                atrace_categories: "gfx"
+                atrace_categories: "binder_driver"
+                atrace_categories: "dalvik"
+              }
+            }
+          }
+          EOF
+          adb push artifacts/android-emulator-native-js-profile/native-js/perfetto-config.pbtxt /data/local/tmp/sh-perfetto.pbtxt >/dev/null || true
+          for run in $(seq 1 "$PROFILE_RUNS"); do
+            label="native-js-$(printf '%02d' "$run")"
+            out="artifacts/android-emulator-native-js-profile/native-js/$label"
+            mkdir -p "$out"
+            adb shell pm clear "$PACKAGE_NAME" >/dev/null || true
+            adb shell am force-stop "$PACKAGE_NAME" >/dev/null || true
+            adb logcat -c || true
+            adb shell rm -f /data/local/tmp/sh-trace.perfetto-trace /data/local/tmp/sh-simpleperf.data /data/local/tmp/sh-simpleperf.log || true
+            adb shell 'perfetto -c /data/local/tmp/sh-perfetto.pbtxt --txt -o /data/local/tmp/sh-trace.perfetto-trace >/data/local/tmp/sh-perfetto.log 2>&1 &' || true
+            adb shell 'simpleperf record --app com.salaryhijacking.mobile -g -f 1000 --duration 8 -o /data/local/tmp/sh-simpleperf.data >/data/local/tmp/sh-simpleperf.log 2>&1 &' || true
+            sleep 1
+            adb shell "log -t SH_RELEASE_PERF '[SH_RELEASE_PERF] marker=startup.n0.launch_requested route=bootstrap run_id=$label'; am start -W -n $ACTIVITY_NAME" | tee "$out/am-start.txt" || true
+            sleep 9
+            adb logcat -d -v epoch > "$out/logcat-epoch.txt" || true
+            adb shell ps -A -o PID,PPID,NAME,ARGS > "$out/ps-after.txt" || true
+            adb shell dumpsys meminfo "$PACKAGE_NAME" > "$out/meminfo.txt" || true
+            adb shell cat /data/local/tmp/sh-perfetto.log > "$out/perfetto.log" || true
+            adb pull /data/local/tmp/sh-trace.perfetto-trace "$out/sh-trace.perfetto-trace" >/dev/null 2>&1 || true
+            adb shell cat /data/local/tmp/sh-simpleperf.log > "$out/simpleperf-record.log" || true
+            adb shell ls -l /data/local/tmp/sh-simpleperf.data > "$out/simpleperf-data-ls.txt" || true
+            adb shell simpleperf report -i /data/local/tmp/sh-simpleperf.data --sort dso,symbol --children > "$out/simpleperf-report.txt" 2> "$out/simpleperf-report.err" || true
+            adb pull /data/local/tmp/sh-simpleperf.data "$out/sh-simpleperf.data" >/dev/null 2>&1 || true
+            sleep 1
+          done
+
+      - name: Summarize Native-to-JS profile evidence
+        if: always()
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const { existsSync, readdirSync, readFileSync, statSync, writeFileSync } = require("node:fs");
+          const root = "artifacts/android-emulator-native-js-profile";
+          const startupPath = `${root}/startup-marker-baseline/startup-performance-summary.json`;
+          const apkProfilePath = `${root}/artifact-apk-profile.json`;
+          const startup = existsSync(startupPath) ? JSON.parse(readFileSync(startupPath, "utf8")) : null;
+          const apk = existsSync(apkProfilePath) ? JSON.parse(readFileSync(apkProfilePath, "utf8")) : null;
+          const profileRoot = `${root}/native-js`;
+          const runs = existsSync(profileRoot)
+            ? readdirSync(profileRoot, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort()
+            : [];
+          const profileRuns = runs.map((run) => {
+            const dir = `${profileRoot}/${run}`;
+            const perfettoTrace = `${dir}/sh-trace.perfetto-trace`;
+            const simpleperfData = `${dir}/sh-simpleperf.data`;
+            const simpleperfReport = `${dir}/simpleperf-report.txt`;
+            const simpleperfText = existsSync(simpleperfReport) ? readFileSync(simpleperfReport, "utf8").slice(0, 20000) : "";
+            const hasHermes = /libhermes|Hermes|hbc|jsi/i.test(simpleperfText);
+            const hasReactNative = /libreactnative|reactnative|ReactInstance|Catalyst|Fabric/i.test(simpleperfText);
+            return {
+              run,
+              perfettoTraceBytes: existsSync(perfettoTrace) ? statSync(perfettoTrace).size : 0,
+              simpleperfDataBytes: existsSync(simpleperfData) ? statSync(simpleperfData).size : 0,
+              simpleperfReportBytes: existsSync(simpleperfReport) ? statSync(simpleperfReport).size : 0,
+              simpleperfHasHermesSymbols: hasHermes,
+              simpleperfHasReactNativeSymbols: hasReactNative,
+              simpleperfTopLines: simpleperfText.split(/\r?\n/).slice(0, 40),
+            };
+          });
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: process.env.SOURCE_SHA,
+            startupRuns: startup?.segmentSummary?.activityTotalMs?.runs ?? 0,
+            perf010P50Ms: startup?.segmentSummary?.activityTotalMs?.p50Ms ?? null,
+            perf010P95Ms: startup?.segmentSummary?.activityTotalMs?.p95Ms ?? null,
+            nativeToJsP50Ms: startup?.segmentSummary?.segNativeToJsMs?.p50Ms ?? null,
+            nativeToJsP95Ms: startup?.segmentSummary?.segNativeToJsMs?.p95Ms ?? null,
+            processActivityP95Ms: startup?.segmentSummary?.segProcessActivityMs?.p95Ms ?? null,
+            markerCoverage: startup?.markerCoverage ?? null,
+            apkTotalBytes: apk?.apkTotalBytes ?? null,
+            dexTotalBytes: apk?.dexTotalBytes ?? null,
+            nativeLibTotalBytes: apk?.nativeLibTotalBytes ?? null,
+            jsBundleBytes: apk?.jsBundleBytes ?? null,
+            fontTotalBytes: apk?.fontTotalBytes ?? null,
+            largestStartupAssets: apk?.largestStartupAssets ?? [],
+            largestNativeLibs: apk?.largestNativeLibs ?? [],
+            jsBundleCandidates: apk?.jsBundleCandidates ?? [],
+            profileRunCount: profileRuns.length,
+            traceTool: "perfetto_with_simpleperf_fallback_and_atrace_not_required",
+            profileRuns,
+          };
+          writeFileSync(`${root}/native-js-profile-summary.json`, JSON.stringify(result, null, 2));
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+          find artifacts/android-emulator-native-js-profile -maxdepth 5 -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/android-emulator-native-js-profile/SHA256SUMS.txt
+
+      - name: Upload no-secret Native-to-JS profile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-native-js-profile-a54c31fd-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: artifacts/android-emulator-native-js-profile/
