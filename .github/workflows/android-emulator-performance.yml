@@ -187,6 +187,9 @@ jobs:
           avdmanager list avd | tee artifacts/android-emulator-performance/avd-list-after-create.txt
           avd_config="$(find "$HOME" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
           test -s "$avd_config"
+          avd_home="$(dirname "$(dirname "$avd_config")")"
+          echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$avd_home" | tee artifacts/android-emulator-performance/avd-home.txt
           {
             echo "hw.cpu.ncore=2"
             echo "hw.ramSize=2048"
@@ -205,6 +208,7 @@ jobs:
         run: |
           set -euo pipefail
           emulator -accel-check | tee artifacts/android-emulator-performance/accel-check.txt
+          emulator -list-avds | tee artifacts/android-emulator-performance/emulator-list-avds.txt
           nohup emulator \
             -avd "$AVD_NAME" \
             -no-window \
