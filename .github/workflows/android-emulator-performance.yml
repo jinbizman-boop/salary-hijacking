@@ -173,18 +173,20 @@ jobs:
           set -euo pipefail
           avdmanager list device | tee artifacts/android-emulator-performance/avd-devices.txt
           device_args=()
-          if avdmanager list device | grep -q 'id: "pixel_6"'; then
+          if grep -q '"pixel_6"' artifacts/android-emulator-performance/avd-devices.txt; then
             device_args=(--device "pixel_6")
-          elif avdmanager list device | grep -q 'id: "pixel"'; then
+          elif grep -q '"pixel"' artifacts/android-emulator-performance/avd-devices.txt; then
             device_args=(--device "pixel")
           fi
           echo "selected_device_args=${device_args[*]:-default}" | tee artifacts/android-emulator-performance/selected-avd-device.txt
-          echo "no" | avdmanager create avd \
+          printf "no\n" | avdmanager create avd \
             --force \
             --name "$AVD_NAME" \
             --package "system-images;android-$API_LEVEL;$TARGET;$ABI" \
             "${device_args[@]}"
-          avd_config="$HOME/.android/avd/$AVD_NAME.avd/config.ini"
+          avdmanager list avd | tee artifacts/android-emulator-performance/avd-list-after-create.txt
+          avd_config="$(find "$HOME/.android/avd" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
+          test -s "$avd_config"
           {
             echo "hw.cpu.ncore=2"
             echo "hw.ramSize=2048"
