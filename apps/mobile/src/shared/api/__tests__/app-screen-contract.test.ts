@@ -399,7 +399,7 @@ describe("mobile app screen API and route contracts", () => {
     );
   });
 
-  it("uses a fresh cached authenticated session to render home before bootstrap networking", () => {
+  it("does not render root Home from a cached authenticated session before bootstrap verification", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
     expect(source).toContain("ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS");
@@ -419,6 +419,8 @@ describe("mobile app screen API and route contracts", () => {
         'requestJsonWithAuthRefresh<RootResponse>(\n        "/api/v1/mobile/bootstrap"',
       ),
     );
+    expect(source).not.toContain('if (routeKey === "root") return true');
+    expect(source).toContain("return isAuthenticatedAuthRoute(routeKey)");
     expect(source).toContain("sessionExpiresAt: session.sessionExpiresAt");
   });
 
@@ -494,14 +496,23 @@ describe("mobile app screen API and route contracts", () => {
     expect(oldRaceIndex).toBe(-1);
   });
 
-  it("limits cached authenticated launch to fresh complete root or auth recovery routes", () => {
+  it("limits cached authenticated launch to verified auth recovery routes", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
-
-    expect(source).toMatch(
-      /function canUseCachedAuthenticatedLaunch\(\s*session: SessionSnapshot,\s*routeKey: string,\s*\): boolean/u,
+    const launchFunctionStart = source.indexOf(
+      "function canUseCachedAuthenticatedLaunch(",
     );
+    const launchFunctionEnd = source.indexOf(
+      "function isFreshCompleteSession(",
+      launchFunctionStart,
+    );
+    const launchFunction = source.slice(launchFunctionStart, launchFunctionEnd);
+
+    expect(launchFunctionStart).toBeGreaterThanOrEqual(0);
+    expect(launchFunctionEnd).toBeGreaterThan(launchFunctionStart);
+    expect(launchFunction).toContain("isFreshCompleteSession(session)");
+    expect(launchFunction).not.toContain('routeKey === "root"');
+    expect(launchFunction).toContain("isAuthenticatedAuthRoute(routeKey)");
     expect(source).toContain("isFreshCompleteSession(session)");
-    expect(source).toContain('routeKey === "root"');
     expect(source).toContain("isAuthenticatedAuthRoute(routeKey)");
     expect(source).toContain("Date.parse(session.sessionExpiresAt)");
     expect(source).toContain(

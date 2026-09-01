@@ -1193,7 +1193,6 @@ function canUseCachedAuthenticatedLaunch(
   routeKey: string,
 ): boolean {
   if (!isFreshCompleteSession(session)) return false;
-  if (routeKey === "root") return true;
   return isAuthenticatedAuthRoute(routeKey);
 }
 
