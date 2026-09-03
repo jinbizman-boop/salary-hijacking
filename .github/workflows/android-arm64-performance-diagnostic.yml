@@ -100,7 +100,6 @@ jobs:
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
         with:
           package_json_file: source/package.json
-          version: 10.24.0
           run_install: false
 
       - name: Setup Node.js
