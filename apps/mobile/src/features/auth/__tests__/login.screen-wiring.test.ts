@@ -132,6 +132,26 @@ describe("login screen wiring", () => {
     expect(social).toContain("borderColor: designSystem.colors.border.strong");
   });
 
+  it("prioritizes the credential CTA when the Android soft keyboard is visible", () => {
+    const login = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+    const credentials = readFileSync(
+      join(__dirname, "..", "components", "LoginCredentialForm.tsx"),
+      "utf8",
+    );
+
+    expect(login).toContain("Keyboard.addListener");
+    expect(login).toContain("keyboardVisible");
+    expect(login).toContain("keyboardCompact={keyboardVisible}");
+    expect(login).toMatch(/!\s*keyboardVisible\s*&&\s*SocialLoginButtonsComponent/u);
+    expect(credentials).toContain("keyboardCompact?: boolean");
+    expect(credentials).toContain("styles.titleKeyboardHidden");
+    expect(credentials).toContain("styles.inputCompact");
+    expect(credentials).toContain("styles.submitButtonCompact");
+  });
+
   it("emits the release login-interactive marker from the rendered credential form", () => {
     const credentials = readFileSync(
       join(__dirname, "..", "components", "LoginCredentialForm.tsx"),

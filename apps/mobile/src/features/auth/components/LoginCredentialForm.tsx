@@ -16,9 +16,11 @@ export type LoginCredentialFormProps = Readonly<{
   onSubmit: (request: AuthLoginRequest) => void;
   onForgotPasswordPress?: () => void;
   loading?: boolean;
+  keyboardCompact?: boolean;
 }>;
 
 export function LoginCredentialForm({
+  keyboardCompact = false,
   loading = false,
   onForgotPasswordPress,
   onSubmit,
@@ -43,10 +45,16 @@ export function LoginCredentialForm({
 
   return (
     <View accessibilityLabel="로그인 입력" style={styles.form}>
-      <Text allowFontScaling={false} style={styles.title}>
+      <Text
+        allowFontScaling={false}
+        style={[styles.title, keyboardCompact ? styles.titleKeyboardHidden : null]}
+      >
         로그인
       </Text>
-      <Text allowFontScaling={false} style={styles.label}>
+      <Text
+        allowFontScaling={false}
+        style={[styles.label, keyboardCompact ? styles.labelCompact : null]}
+      >
         아이디
       </Text>
       <TextInput
@@ -61,14 +69,22 @@ export function LoginCredentialForm({
         placeholder="아이디를 입력하세요"
         placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="next"
-        style={styles.input}
+        style={[styles.input, keyboardCompact ? styles.inputCompact : null]}
         textContentType="username"
         value={email}
       />
-      <Text allowFontScaling={false} style={styles.label}>
+      <Text
+        allowFontScaling={false}
+        style={[styles.label, keyboardCompact ? styles.labelCompact : null]}
+      >
         비밀번호
       </Text>
-      <View style={styles.passwordField}>
+      <View
+        style={[
+          styles.passwordField,
+          keyboardCompact ? styles.passwordFieldCompact : null,
+        ]}
+      >
         <TextInput
           accessibilityLabel="비밀번호"
           allowFontScaling={false}
@@ -81,7 +97,10 @@ export function LoginCredentialForm({
           placeholderTextColor={authVisualColors.placeholder}
           returnKeyType="done"
           secureTextEntry={!passwordVisible}
-          style={styles.passwordInput}
+          style={[
+            styles.passwordInput,
+            keyboardCompact ? styles.passwordInputCompact : null,
+          ]}
           textContentType="password"
           value={password}
         />
@@ -99,7 +118,9 @@ export function LoginCredentialForm({
           </Text>
         </Pressable>
       </View>
-      <View style={styles.optionRow}>
+      <View
+        style={[styles.optionRow, keyboardCompact ? styles.optionRowCompact : null]}
+      >
         <Pressable
           accessibilityLabel="자동 로그인"
           accessibilityRole="checkbox"
@@ -129,6 +150,7 @@ export function LoginCredentialForm({
         unstable_pressDelay={0}
         style={({ pressed }) => [
           styles.submitButton,
+          keyboardCompact ? styles.submitButtonCompact : null,
           pressed && !loading ? styles.submitPressed : null,
           loading ? styles.submitDisabled : null,
         ]}
@@ -183,17 +205,27 @@ const styles = StyleSheet.create({
     letterSpacing: designSystem.typography.bodyL.letterSpacing,
     paddingHorizontal: designSystem.spacing[4],
   },
+  inputCompact: {
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
+  },
   label: {
     color: authVisualColors.ink,
     ...designSystem.typography.labelL,
     marginBottom: designSystem.spacing[2],
     marginTop: designSystem.spacing[4],
   },
+  labelCompact: {
+    marginBottom: designSystem.spacing[1],
+    marginTop: designSystem.spacing[2],
+  },
   optionRow: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: designSystem.spacing[4],
+  },
+  optionRowCompact: {
+    marginTop: designSystem.spacing[2],
   },
   optionText: {
     color: authVisualColors.ink,
@@ -209,12 +241,18 @@ const styles = StyleSheet.create({
     minHeight: designSystem.layout.touchTarget + designSystem.spacing[3],
     paddingHorizontal: designSystem.spacing[4],
   },
+  passwordFieldCompact: {
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
+  },
   passwordInput: {
     color: authVisualColors.ink,
     flex: 1,
     ...designSystem.typography.bodyL,
     minHeight: designSystem.layout.touchTarget + designSystem.spacing[3],
     padding: designSystem.spacing[0],
+  },
+  passwordInputCompact: {
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
   },
   submitButton: {
     alignItems: "center",
@@ -224,6 +262,10 @@ const styles = StyleSheet.create({
     marginTop: designSystem.spacing[5],
     minHeight: 56,
     ...designSystem.elevation.low,
+  },
+  submitButtonCompact: {
+    marginTop: designSystem.spacing[3],
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[1],
   },
   submitDisabled: {
     backgroundColor: designSystem.colors.text.disabled,
@@ -239,6 +281,9 @@ const styles = StyleSheet.create({
     color: authVisualColors.ink,
     ...designSystem.typography.display,
     marginBottom: designSystem.spacing[1],
+  },
+  titleKeyboardHidden: {
+    display: "none",
   },
   visibilityButton: {
     alignItems: "center",

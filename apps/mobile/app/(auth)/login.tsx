@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
   Image,
+  Keyboard,
   Pressable,
   StyleSheet,
   Text,
@@ -58,9 +59,10 @@ export default function LoginScreen(): React.ReactElement {
   const { height } = useWindowDimensions();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [SocialLoginButtonsComponent, setSocialLoginButtonsComponent] =
     useState<SocialLoginButtonsComponent | null>(null);
-  const compactHeight = height < 940;
+  const compactHeight = height < 940 || keyboardVisible;
 
   useEffect(() => {
     let mounted = true;
@@ -69,6 +71,20 @@ export default function LoginScreen(): React.ReactElement {
     });
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
+      setKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
     };
   }, []);
 
@@ -163,23 +179,42 @@ export default function LoginScreen(): React.ReactElement {
           style={styles.backIcon}
         />
       </Pressable>
-      <View style={compactHeight ? styles.brandBlockCompact : styles.brandBlock}>
+      <View
+        style={
+          keyboardVisible
+            ? styles.brandBlockKeyboard
+            : compactHeight
+              ? styles.brandBlockCompact
+              : styles.brandBlock
+        }
+      >
         <Text allowFontScaling={false} style={styles.brandTitle}>
           Salary Hijacking
         </Text>
-        <Text
-          allowFontScaling={false}
-          style={
-            compactHeight
-              ? styles.brandSubtitleCompact
-              : styles.brandSubtitle
-          }
-        >
-          금융의 주도권을 되찾으세요
-        </Text>
+        {!keyboardVisible ? (
+          <Text
+            allowFontScaling={false}
+            style={
+              compactHeight
+                ? styles.brandSubtitleCompact
+                : styles.brandSubtitle
+            }
+          >
+            금융의 주도권을 되찾으세요
+          </Text>
+        ) : null}
       </View>
-      <View style={compactHeight ? styles.formGapCompact : styles.formGap} />
+      <View
+        style={
+          keyboardVisible
+            ? styles.formGapKeyboard
+            : compactHeight
+              ? styles.formGapCompact
+              : styles.formGap
+        }
+      />
       <LoginCredentialForm
+        keyboardCompact={keyboardVisible}
         loading={submitting}
         onForgotPasswordPress={openForgotPassword}
         onSubmit={(request) => {
@@ -191,30 +226,32 @@ export default function LoginScreen(): React.ReactElement {
           {message}
         </Text>
       ) : null}
-      {SocialLoginButtonsComponent ? (
+      {!keyboardVisible && SocialLoginButtonsComponent ? (
         <SocialLoginButtonsComponent
           compact={compactHeight}
           onSelectProvider={(provider) => {
             void handleSocialProvider(provider);
           }}
         />
-      ) : (
+      ) : !keyboardVisible ? (
         <View
           accessibilityLabel="소셜 로그인 준비 중"
           style={styles.socialSlot}
         />
-      )}
-      <Pressable
-        accessibilityLabel="회원가입"
-        accessibilityRole="button"
-        disabled={submitting}
-        onPress={openSignup}
-        style={styles.signupLink}
-      >
-        <Text allowFontScaling={false} style={styles.signupText}>
-          계정이 없으신가요? 회원가입
-        </Text>
-      </Pressable>
+      ) : null}
+      {!keyboardVisible ? (
+        <Pressable
+          accessibilityLabel="회원가입"
+          accessibilityRole="button"
+          disabled={submitting}
+          onPress={openSignup}
+          style={styles.signupLink}
+        >
+          <Text allowFontScaling={false} style={styles.signupText}>
+            계정이 없으신가요? 회원가입
+          </Text>
+        </Pressable>
+      ) : null}
     </AuthVisualFrame>
   );
 }
@@ -237,6 +274,9 @@ const styles = StyleSheet.create({
   brandBlockCompact: {
     marginTop: designSystem.spacing[2],
   },
+  brandBlockKeyboard: {
+    marginTop: designSystem.spacing[0],
+  },
   brandSubtitle: {
     color: designSystem.colors.text.primary,
     ...designSystem.typography.titleM,
@@ -256,6 +296,9 @@ const styles = StyleSheet.create({
   },
   formGapCompact: {
     height: designSystem.spacing[4],
+  },
+  formGapKeyboard: {
+    height: designSystem.spacing[1],
   },
   message: {
     alignSelf: "center",
