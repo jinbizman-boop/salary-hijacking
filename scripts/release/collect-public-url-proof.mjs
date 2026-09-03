@@ -46,6 +46,14 @@ const SENSITIVE_PUBLIC_PAGE_PATTERN =
 const SENSITIVE_PUBLIC_HEADER_PATTERN =
   /(set-cookie|authorization|cookie|email|phone|token|session|auth|device|account|card|loan|database_url|jwt_secret|private_key|service_account|fcm_server_key|salary|expense|saving|hijack)/i;
 
+const SAFE_PUBLIC_HEADER_NAMES = new Set([
+  "access-control-allow-headers",
+  "link",
+  "permissions-policy",
+  "x-server-authority",
+  "x-service-name",
+]);
+
 const normalizeBaseUrl = (baseUrl) => {
   const value = String(baseUrl ?? DEFAULT_BASE_URL).trim() || DEFAULT_BASE_URL;
   let parsed;
@@ -126,6 +134,21 @@ const hasStoreReviewLinks = (body) =>
 
 const hasSensitiveHeader = (headers) => {
   for (const [name, value] of headers.entries()) {
+    const normalizedName = name.toLowerCase();
+    const normalizedValue = String(value ?? "").trim().toLowerCase();
+    if (SAFE_PUBLIC_HEADER_NAMES.has(normalizedName)) continue;
+    if (
+      normalizedName === "x-raw-push-token-exposed" ||
+      normalizedName === "x-financial-raw-data-exposed"
+    ) {
+      if (normalizedValue === "false") continue;
+    }
+    if (
+      normalizedName === "x-ad-financial-targeting" &&
+      normalizedValue === "separated"
+    ) {
+      continue;
+    }
     const header = `${name}:${value}`;
     if (
       SENSITIVE_PUBLIC_HEADER_PATTERN.test(header) ||
