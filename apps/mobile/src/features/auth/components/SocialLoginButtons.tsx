@@ -48,23 +48,28 @@ const SOCIAL_PROVIDERS: readonly {
 ];
 
 export type SocialLoginButtonsProps = Readonly<{
+  compact?: boolean;
   onSelectProvider: (provider: AuthSocialProvider) => void;
   onSignupPress?: () => void;
 }>;
 
 export function SocialLoginButtons({
+  compact = false,
   onSelectProvider,
 }: SocialLoginButtonsProps): React.ReactElement {
   return (
     <View accessibilityLabel="소셜 로그인" style={styles.wrap}>
-      <View accessibilityElementsHidden style={styles.dividerRow}>
+      <View
+        accessibilityElementsHidden
+        style={[styles.dividerRow, compact ? styles.dividerRowCompact : null]}
+      >
         <View style={styles.line} />
         <Text allowFontScaling={false} style={styles.orText}>
           또는
         </Text>
         <View style={styles.line} />
       </View>
-      <View style={styles.buttonStack}>
+      <View style={[styles.buttonStack, compact ? styles.buttonStackCompact : null]}>
         {SOCIAL_PROVIDERS.map((provider) => (
           <Pressable
             accessibilityLabel={provider.label}
@@ -140,12 +145,19 @@ const styles = StyleSheet.create({
   buttonStack: {
     gap: componentSpacing.sm,
   },
+  buttonStackCompact: {
+    gap: designSystem.spacing[2],
+  },
   dividerRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: componentSpacing.md,
     marginBottom: componentSpacing.lg,
     marginTop: componentSpacing.xxl,
+  },
+  dividerRowCompact: {
+    marginBottom: designSystem.spacing[3],
+    marginTop: designSystem.spacing[6],
   },
   line: {
     backgroundColor: designSystem.colors.border.default,

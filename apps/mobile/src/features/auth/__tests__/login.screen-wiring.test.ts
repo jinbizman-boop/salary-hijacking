@@ -46,7 +46,9 @@ describe("login screen wiring", () => {
     expect(source).not.toContain("clampValue(height * 0.125, 68, 130)");
     expect(source).not.toContain("clampValue(height * 0.072, 38, 78)");
     expect(source).toContain("styles.topSpacer");
+    expect(source).toContain("topSpacerCompact");
     expect(source).toContain("styles.formGap");
+    expect(source).toContain("height < 940");
     expect(source).not.toContain("EurekaWorldMark");
   });
 
@@ -119,9 +121,13 @@ describe("login screen wiring", () => {
     );
 
     expect(login).toContain("formGapCompact");
+    expect(login).toContain("brandSubtitleCompact");
+    expect(login).toContain("compact={compactHeight}");
     expect(credentials).toContain("minHeight: designSystem.layout.touchTarget");
     expect(credentials).toContain("color: designSystem.colors.text.inverse");
     expect(credentials).toContain("borderRadius: designSystem.radius.sm");
+    expect(social).toContain("dividerRowCompact");
+    expect(social).toContain("buttonStackCompact");
     expect(social).toContain("styles.iconSlot");
     expect(social).toContain("borderColor: designSystem.colors.border.strong");
   });

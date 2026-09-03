@@ -60,7 +60,7 @@ export default function LoginScreen(): React.ReactElement {
   const [message, setMessage] = useState("");
   const [SocialLoginButtonsComponent, setSocialLoginButtonsComponent] =
     useState<SocialLoginButtonsComponent | null>(null);
-  const compactHeight = height < 760;
+  const compactHeight = height < 940;
 
   useEffect(() => {
     let mounted = true;
@@ -146,7 +146,9 @@ export default function LoginScreen(): React.ReactElement {
 
   return (
     <AuthVisualFrame accessibilityLabel="급여납치 로그인 화면">
-      <View style={styles.topSpacer} />
+      <View
+        style={compactHeight ? styles.topSpacerCompact : styles.topSpacer}
+      />
       <Pressable
         accessibilityLabel="이전 화면으로 돌아가기"
         accessibilityRole="button"
@@ -161,11 +163,18 @@ export default function LoginScreen(): React.ReactElement {
           style={styles.backIcon}
         />
       </Pressable>
-      <View style={styles.brandBlock}>
+      <View style={compactHeight ? styles.brandBlockCompact : styles.brandBlock}>
         <Text allowFontScaling={false} style={styles.brandTitle}>
           Salary Hijacking
         </Text>
-        <Text allowFontScaling={false} style={styles.brandSubtitle}>
+        <Text
+          allowFontScaling={false}
+          style={
+            compactHeight
+              ? styles.brandSubtitleCompact
+              : styles.brandSubtitle
+          }
+        >
           금융의 주도권을 되찾으세요
         </Text>
       </View>
@@ -184,6 +193,7 @@ export default function LoginScreen(): React.ReactElement {
       ) : null}
       {SocialLoginButtonsComponent ? (
         <SocialLoginButtonsComponent
+          compact={compactHeight}
           onSelectProvider={(provider) => {
             void handleSocialProvider(provider);
           }}
@@ -224,10 +234,18 @@ const styles = StyleSheet.create({
   brandBlock: {
     marginTop: designSystem.spacing[4],
   },
+  brandBlockCompact: {
+    marginTop: designSystem.spacing[2],
+  },
   brandSubtitle: {
     color: designSystem.colors.text.primary,
     ...designSystem.typography.titleM,
     marginTop: designSystem.spacing[5],
+  },
+  brandSubtitleCompact: {
+    color: designSystem.colors.text.primary,
+    ...designSystem.typography.titleM,
+    marginTop: designSystem.spacing[3],
   },
   brandTitle: {
     color: authVisualColors.brandGreen,
@@ -237,7 +255,7 @@ const styles = StyleSheet.create({
     height: designSystem.spacing[10] + designSystem.spacing[4],
   },
   formGapCompact: {
-    height: designSystem.spacing[8],
+    height: designSystem.spacing[4],
   },
   message: {
     alignSelf: "center",
@@ -265,6 +283,9 @@ const styles = StyleSheet.create({
   },
   topSpacer: {
     height: designSystem.spacing[4],
+  },
+  topSpacerCompact: {
+    height: designSystem.spacing[2],
   },
 });
 
