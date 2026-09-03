@@ -1,17 +1,5 @@
 export type ReleasePerfMarkerName =
   | "bootstrap.transition.visible"
-  | "startup.p3.js_bundle_start"
-  | "startup.p4.root_module_evaluated"
-  | "startup.p5.auth_bootstrap_start"
-  | "startup.p6.secure_storage_read_complete"
-  | "startup.p7.session_validation_complete"
-  | "startup.p8.readiness_decision_complete"
-  | "startup.p9.destination_resolved"
-  | "startup.p10.route_component_mount_start"
-  | "startup.p11.route_first_commit"
-  | "startup.p12.splash_hide_requested"
-  | "startup.p13.splash_hide_completed"
-  | "startup.p14.route_interactive"
   | "route.login.interactive"
   | "route.home.shell_interactive"
   | "interaction.login.submit.press"
@@ -32,10 +20,6 @@ export function markReleasePerf(
   const logger = globalThis.console?.info;
   if (typeof logger !== "function") return;
   const timestampMs = Math.round(Date.now());
-  const monotonicMs =
-    typeof globalThis.performance?.now === "function"
-      ? Math.round(globalThis.performance.now())
-      : null;
   const safeFields = Object.entries(fields)
     .filter(([key, value]) => {
       if (!SAFE_FIELD_KEY.test(key)) return false;
@@ -46,8 +30,6 @@ export function markReleasePerf(
     .join(" ");
   logger(
     `[SH_RELEASE_PERF] marker=${marker} t=${timestampMs}${
-      monotonicMs === null ? "" : ` mono_ms=${monotonicMs}`
-    }${
       safeFields ? ` ${safeFields}` : ""
     }`,
   );

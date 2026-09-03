@@ -26,36 +26,6 @@ describe("release-safe performance markers", () => {
     expect(line).not.toContain("secret-token-value");
   });
 
-  it("emits startup markers with monotonic timestamps and safe route categories", () => {
-    const info = jest.fn();
-    globalThis.console = { ...originalConsole, info };
-    const originalPerformance = globalThis.performance;
-    Object.defineProperty(globalThis, "performance", {
-      configurable: true,
-      value: { now: () => 42.4 },
-    });
-
-    markReleasePerf("startup.p8.readiness_decision_complete", {
-      route: "bootstrap",
-      token: "raw-token",
-      user: "raw-user",
-    });
-
-    Object.defineProperty(globalThis, "performance", {
-      configurable: true,
-      value: originalPerformance,
-    });
-    expect(info).toHaveBeenCalledTimes(1);
-    const line = String(info.mock.calls[0]?.[0] ?? "");
-    expect(line).toContain(
-      "marker=startup.p8.readiness_decision_complete",
-    );
-    expect(line).toContain("mono_ms=42");
-    expect(line).toContain("route=bootstrap");
-    expect(line).not.toContain("raw-token");
-    expect(line).not.toContain("raw-user");
-  });
-
   it("emits interaction feedback latency from native event timing", () => {
     const info = jest.fn();
     globalThis.console = { ...originalConsole, info };
