@@ -1,4 +1,12 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+/* eslint-disable @typescript-eslint/no-require-imports */
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 
 import {
   componentColors,
@@ -11,27 +19,31 @@ import { authVisualColors } from "./AuthVisualFrame";
 
 const typography = salaryHijackingDesignSystem.typography;
 const designSystem = salaryHijackingDesignSystem;
+const kakaoIcon =
+  require("../../../shared/assets/icons/social/kakao.png") as ImageSourcePropType;
+const naverIcon =
+  require("../../../shared/assets/icons/social/naver.png") as ImageSourcePropType;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
   readonly foregroundColor: string;
+  readonly icon: ImageSourcePropType;
   readonly label: string;
   readonly provider: AuthSocialProvider;
-  readonly shortLabel: string;
 }[] = [
   {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.kakao,
     foregroundColor: componentColors.textPrimary,
+    icon: kakaoIcon,
     label: "카카오로 계속하기",
     provider: "KAKAO",
-    shortLabel: "Kakao",
   },
   {
     backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
     foregroundColor: designSystem.colors.text.inverse,
+    icon: naverIcon,
     label: "네이버로 계속하기",
     provider: "NAVER",
-    shortLabel: "Naver",
   },
 ];
 
@@ -67,13 +79,20 @@ export function SocialLoginButtons({
               { backgroundColor: provider.backgroundColor },
             ]}
           >
-            <Text
-              allowFontScaling={false}
+            <View
               accessibilityElementsHidden
-              style={[styles.socialMark, { color: provider.foregroundColor }]}
+              style={[
+                styles.iconSlot,
+                provider.provider === "KAKAO" ? styles.kakaoIconSlot : null,
+              ]}
             >
-              {provider.shortLabel}
-            </Text>
+              <Image
+                accessibilityIgnoresInvertColors
+                resizeMode="contain"
+                source={provider.icon}
+                style={styles.socialIcon}
+              />
+            </View>
             <Text
               allowFontScaling={false}
               style={[styles.socialLabel, { color: provider.foregroundColor }]}
@@ -88,9 +107,11 @@ export function SocialLoginButtons({
           onPress={() => onSelectProvider("APPLE")}
           style={[styles.socialButton, styles.appleButton]}
         >
-          <Text allowFontScaling={false} style={styles.appleGlyph}>
-            Apple
-          </Text>
+          <View accessibilityElementsHidden style={styles.iconSlot}>
+            <Text allowFontScaling={false} style={styles.appleGlyph}>
+              Apple
+            </Text>
+          </View>
           <Text allowFontScaling={false} style={styles.appleLabel}>
             Apple로 로그인
           </Text>
@@ -103,12 +124,12 @@ export function SocialLoginButtons({
 const styles = StyleSheet.create({
   appleButton: {
     backgroundColor: designSystem.colors.surface.default,
-    borderColor: designSystem.colors.surface.default,
+    borderColor: designSystem.colors.border.strong,
   },
   appleGlyph: {
     color: authVisualColors.ink,
     ...typography.labelM,
-    width: 52,
+    textAlign: "center",
   },
   appleLabel: {
     color: authVisualColors.ink,
@@ -131,6 +152,16 @@ const styles = StyleSheet.create({
     flex: 1,
     height: StyleSheet.hairlineWidth,
   },
+  iconSlot: {
+    alignItems: "center",
+    height: 28,
+    justifyContent: "center",
+    width: 52,
+  },
+  kakaoIconSlot: {
+    borderRadius: designSystem.radius.full,
+    overflow: "hidden",
+  },
   orText: {
     color: authVisualColors.muted,
     ...typography.caption,
@@ -150,10 +181,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: componentSpacing.lg,
     width: "100%",
   },
-  socialMark: {
-    ...typography.labelM,
-    textAlign: "left",
-    width: 52,
+  socialIcon: {
+    height: 28,
+    width: 28,
   },
   socialLabel: {
     ...typography.labelL,

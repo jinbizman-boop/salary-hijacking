@@ -60,18 +60,10 @@ describe("login screen wiring", () => {
       "utf8",
     );
 
-    expect(login).not.toContain(
-      'from "../../src/shared/components";',
-    );
-    expect(tabs).not.toContain(
-      'from "../../src/shared/components";',
-    );
-    expect(login).toContain(
-      'from "../../src/shared/components/tokens";',
-    );
-    expect(tabs).toContain(
-      'from "../../src/shared/components/tokens";',
-    );
+    expect(login).not.toContain('from "../../src/shared/components";');
+    expect(tabs).not.toContain('from "../../src/shared/components";');
+    expect(login).toContain('from "../../src/shared/components/tokens";');
+    expect(tabs).toContain('from "../../src/shared/components/tokens";');
   });
 
   it("keeps login child components off the shared component barrel during first render", () => {
@@ -84,7 +76,7 @@ describe("login screen wiring", () => {
     expect(social).toContain('from "../../../shared/components/tokens";');
   });
 
-  it("keeps first-run social login actions independent from PNG asset decode", () => {
+  it("keeps social login icon assets deferred behind the lazy social component", () => {
     const login = readFileSync(
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
       "utf8",
@@ -101,10 +93,37 @@ describe("login screen wiring", () => {
       /import\(\s*"\.\.\/\.\.\/src\/features\/auth\/components\/SocialLoginButtons"\s*\)/u,
     );
     expect(login).toContain("socialLoginButtonsPromise");
-    expect(social).not.toContain('require("../../../shared/assets/icons/social');
-    expect(social).not.toContain("ImageSourcePropType");
-    expect(social).not.toContain("<Image");
-    expect(social).toContain("provider.shortLabel");
+    expect(social).toContain(
+      'require("../../../shared/assets/icons/social/kakao.png")',
+    );
+    expect(social).toContain(
+      'require("../../../shared/assets/icons/social/naver.png")',
+    );
+    expect(social).toContain("ImageSourcePropType");
+    expect(social).toContain("<Image");
+    expect(social).not.toContain("provider.shortLabel");
+  });
+
+  it("keeps the production login form commercially polished for contrast and touch targets", () => {
+    const login = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+    const credentials = readFileSync(
+      join(__dirname, "..", "components", "LoginCredentialForm.tsx"),
+      "utf8",
+    );
+    const social = readFileSync(
+      join(__dirname, "..", "components", "SocialLoginButtons.tsx"),
+      "utf8",
+    );
+
+    expect(login).toContain("formGapCompact");
+    expect(credentials).toContain("minHeight: designSystem.layout.touchTarget");
+    expect(credentials).toContain("color: designSystem.colors.text.inverse");
+    expect(credentials).toContain("borderRadius: designSystem.radius.sm");
+    expect(social).toContain("styles.iconSlot");
+    expect(social).toContain("borderColor: designSystem.colors.border.strong");
   });
 
   it("emits the release login-interactive marker from the rendered credential form", () => {
@@ -123,7 +142,15 @@ describe("login screen wiring", () => {
       "utf8",
     );
     const primaryButton = readFileSync(
-      join(__dirname, "..", "..", "..", "shared", "components", "PrimaryButton.tsx"),
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "shared",
+        "components",
+        "PrimaryButton.tsx",
+      ),
       "utf8",
     );
 

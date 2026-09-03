@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ImageSourcePropType,
 } from "react-native";
@@ -45,18 +46,21 @@ function getMobileAuthApi(): Promise<AuthApiClient> {
 }
 
 function loadSocialLoginButtons(): Promise<SocialLoginButtonsComponent> {
-  socialLoginButtonsPromise ??= import(
-    "../../src/features/auth/components/SocialLoginButtons"
-  ).then(({ SocialLoginButtons }) => SocialLoginButtons);
+  socialLoginButtonsPromise ??=
+    import("../../src/features/auth/components/SocialLoginButtons").then(
+      ({ SocialLoginButtons }) => SocialLoginButtons,
+    );
   return socialLoginButtonsPromise;
 }
 
 export default function LoginScreen(): React.ReactElement {
   const loginRouter = useRouter();
+  const { height } = useWindowDimensions();
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [SocialLoginButtonsComponent, setSocialLoginButtonsComponent] =
     useState<SocialLoginButtonsComponent | null>(null);
+  const compactHeight = height < 760;
 
   useEffect(() => {
     let mounted = true;
@@ -136,7 +140,8 @@ export default function LoginScreen(): React.ReactElement {
   }, [loginRouter, submitting]);
 
   const goBack = useCallback((): void => {
-    if (!submitting && typeof loginRouter.back === "function") loginRouter.back();
+    if (!submitting && typeof loginRouter.back === "function")
+      loginRouter.back();
   }, [loginRouter, submitting]);
 
   return (
@@ -164,7 +169,7 @@ export default function LoginScreen(): React.ReactElement {
           금융의 주도권을 되찾으세요
         </Text>
       </View>
-      <View style={styles.formGap} />
+      <View style={compactHeight ? styles.formGapCompact : styles.formGap} />
       <LoginCredentialForm
         loading={submitting}
         onForgotPasswordPress={openForgotPassword}
@@ -184,7 +189,10 @@ export default function LoginScreen(): React.ReactElement {
           }}
         />
       ) : (
-        <View accessibilityLabel="소셜 로그인 준비 중" style={styles.socialSlot} />
+        <View
+          accessibilityLabel="소셜 로그인 준비 중"
+          style={styles.socialSlot}
+        />
       )}
       <Pressable
         accessibilityLabel="회원가입"
@@ -227,6 +235,9 @@ const styles = StyleSheet.create({
   },
   formGap: {
     height: designSystem.spacing[10] + designSystem.spacing[4],
+  },
+  formGapCompact: {
+    height: designSystem.spacing[8],
   },
   message: {
     alignSelf: "center",
