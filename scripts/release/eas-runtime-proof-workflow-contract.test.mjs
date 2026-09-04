@@ -24,7 +24,9 @@ test("EAS runtime proof workflow is manual and no-write", () => {
     /eas-runtime-proof-\$\{\{\s*github\.run_attempt\s*\}\}/u,
   );
   assert.match(workflow, /stripAnsi/u);
+  assert.match(workflow, /normalizeKey/u);
   assert.match(workflow, /readProjectInfo/u);
+  assert.match(workflow, /projectid/u);
   assert.doesNotMatch(workflow, /\beas\s+build\b/u);
   assert.doesNotMatch(workflow, /\beas\s+submit\b/u);
   assert.doesNotMatch(
@@ -69,7 +71,9 @@ test("mobile build workflow can collect no-write EAS runtime proof without start
     /mobile-eas-runtime-proof-\$\{\{\s*github\.run_attempt\s*\}\}/u,
   );
   assert.match(mobileBuildWorkflow, /stripAnsi/u);
+  assert.match(mobileBuildWorkflow, /normalizeKey/u);
   assert.match(mobileBuildWorkflow, /readProjectInfo/u);
+  assert.match(mobileBuildWorkflow, /projectid/u);
 
   const proofJob = mobileBuildWorkflow.slice(
     mobileBuildWorkflow.indexOf("eas-runtime-proof:"),
