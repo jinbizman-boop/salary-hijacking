@@ -399,7 +399,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     environment:
-      name: mobile-preview
+      name: staging
 
     permissions:
       contents: read

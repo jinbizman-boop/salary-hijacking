@@ -11,7 +11,7 @@ const mobileBuildWorkflow = fs.readFileSync(
 
 test("EAS runtime proof workflow is manual and no-write", () => {
   assert.match(workflow, /^on:\n\s+workflow_dispatch:/mu);
-  assert.match(workflow, /environment:\n\s+name:\s+mobile-preview/u);
+  assert.match(workflow, /environment:\n\s+name:\s+staging/u);
   assert.match(workflow, /EXPO_TOKEN:\s+\$\{\{\s*secrets\.EXPO_TOKEN\s*\}\}/u);
   assert.match(
     workflow,
@@ -48,7 +48,7 @@ test("mobile build workflow can collect no-write EAS runtime proof without start
     mobileBuildWorkflow,
     /if:\s+github\.event_name == 'workflow_dispatch'/u,
   );
-  assert.match(mobileBuildWorkflow, /environment:\n\s+name:\s+mobile-preview/u);
+  assert.match(mobileBuildWorkflow, /environment:\n\s+name:\s+staging/u);
   assert.match(
     mobileBuildWorkflow,
     /EXPO_TOKEN:\s+\$\{\{\s*secrets\.EXPO_TOKEN\s*\}\}/u,
