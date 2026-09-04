@@ -30,6 +30,25 @@ describe("signup feature components", () => {
     });
   });
 
+  it("submits register fields from the visible signup CTA", () => {
+    const onSubmit = jest.fn();
+    const screen = render(<SignupForm onSubmit={onSubmit} />);
+
+    fireEvent.changeText(screen.getByLabelText("아이디"), "new@example.com");
+    fireEvent.changeText(screen.getByLabelText("닉네임"), "월급수비대");
+    fireEvent.changeText(screen.getByLabelText("비밀번호"), "Password123");
+    fireEvent.press(screen.getByLabelText("회원가입 완료"));
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      email: "new@example.com",
+      nickname: "월급수비대",
+      password: "Password123",
+      privacyAccepted: true,
+      termsAccepted: true,
+      marketingAccepted: false,
+    });
+  });
+
   it("renders agreement status with contextual marketing off by default", () => {
     const screen = render(
       <SignupAgreementCard
