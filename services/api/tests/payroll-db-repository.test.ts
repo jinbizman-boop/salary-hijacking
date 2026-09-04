@@ -157,6 +157,73 @@ describe("Neon payroll repository", () => {
     expect(calls[0]?.params[1]).toBe("2026-09");
   });
 
+  it("activates a DB-backed payroll plan with statement-scoped RLS context", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonPayrollRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName.endsWith(".activate.archiveExisting")) {
+          return {
+            rows: [],
+            rowCount: 0,
+          };
+        }
+        if (options.operationName.endsWith(".activate")) {
+          return {
+            rows: [
+              {
+                payroll_plan_id: planId,
+                year_month: "2026-07",
+                payday: 25,
+                expected_salary_amount: "2700000",
+                expected_expense_amount: "1370000",
+                target_hijack_amount: "1870000",
+                expected_hijack_amount: "1330000",
+                confirmed_hijack_amount: "0",
+                status: "ACTIVE",
+                archived_at: null,
+                closed_at: null,
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const activated = await repository.activatePlan(
+      planId,
+      "launch persistence synthetic activate",
+      createRuntime(),
+    );
+
+    expect(activated).toMatchObject({
+      planId,
+      status: "ACTIVE",
+      serverAuthority: true,
+      financialRawDataExposed: false,
+    });
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "payroll.activate.archiveExisting",
+      "payroll.activate",
+    ]);
+    expect(calls[0]?.sqlText).toContain("with _app_context");
+    expect(calls[0]?.sqlText).toContain("returning payroll_plan_id");
+    expect(calls[1]?.sqlText).toContain("set status = 'ACTIVE'");
+    expect(JSON.stringify(activated)).not.toContain(userId);
+  });
+
   it("closes payroll plans by recalculating once, locking daily budgets, and returning cumulative hijack", async () => {
     const calls: Array<{
       readonly operationName: string;

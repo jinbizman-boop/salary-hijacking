@@ -604,6 +604,7 @@ export function createNeonPayrollRepository<TEnv = unknown>(
               archived_at = now()
           where payroll_plan_id = $1::uuid
             and user_id = $2::uuid
+          returning payroll_plan_id
         `,
         [
           assertUuid(planId, "planId"),
@@ -624,6 +625,7 @@ export function createNeonPayrollRepository<TEnv = unknown>(
           where user_id = $1::uuid
             and status = 'ACTIVE'
             and payroll_plan_id <> $2::uuid
+          returning payroll_plan_id
         `,
         [
           assertUuid(runtime.principal.userId, "principal.userId"),
