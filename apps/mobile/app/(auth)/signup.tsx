@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { Text, View, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, View, useWindowDimensions } from "react-native";
 
 import {
   AuthVisualFrame,
@@ -25,6 +25,7 @@ const designSystem = salaryHijackingDesignSystem;
 export default function SignupScreen(): React.ReactElement {
   const signupRouter = useRouter();
   const { height } = useWindowDimensions();
+  const compactHeight = height < 940;
   const authApi = useMemo(() => createMobileAuthApi(), []);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState(
@@ -57,9 +58,24 @@ export default function SignupScreen(): React.ReactElement {
 
   return (
     <AuthVisualFrame accessibilityLabel="급여납치 회원가입 화면">
-      <View style={{ height: clampValue(height * 0.19, 88, 190) }} />
+      <View
+        style={[
+          styles.signupTopSpacer,
+          {
+            height: compactHeight
+              ? clampValue(height * 0.115, 48, 112)
+              : clampValue(height * 0.15, 72, 146),
+          },
+        ]}
+      />
       <SignupHero />
-      <View style={{ height: clampValue(height * 0.055, 28, 58) }} />
+      <View
+        style={{
+          height: compactHeight
+            ? designSystem.spacing[5]
+            : clampValue(height * 0.045, 24, 44),
+        }}
+      />
       <SignupForm
         loading={submitting}
         onSubmit={(request) => {
@@ -88,13 +104,37 @@ export default function SignupScreen(): React.ReactElement {
         termsAccepted
       />
       <View
-        style={{ flex: 1, minHeight: clampValue(height * 0.11, 58, 118) }}
+        style={[
+          styles.signupFlexibleSpacer,
+          {
+            minHeight: compactHeight
+              ? designSystem.spacing[6]
+              : clampValue(height * 0.06, 32, 72),
+          },
+        ]}
       />
       <EurekaWorldMark />
-      <View style={{ height: clampValue(height * 0.072, 38, 78) }} />
+      <View
+        style={[
+          styles.signupFooterSpacer,
+          {
+            height: compactHeight
+              ? designSystem.spacing[2]
+              : clampValue(height * 0.035, 20, 42),
+          },
+        ]}
+      />
     </AuthVisualFrame>
   );
 }
+
+const styles = StyleSheet.create({
+  signupFlexibleSpacer: {
+    flex: 1,
+  },
+  signupFooterSpacer: {},
+  signupTopSpacer: {},
+});
 
 export function assertMobileSignupScreenCompleteness(): {
   readonly ok: boolean;

@@ -16,4 +16,18 @@ describe("signup screen wiring", () => {
     expect(source).toContain("AUTH_REGISTER_PATH");
     expect(source).toContain("raw_credential_component_guard");
   });
+
+  it("keeps the signup footer clear of Android system navigation on first view", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "signup.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("clampValue(height * 0.19, 88, 190)");
+    expect(source).not.toContain("clampValue(height * 0.11, 58, 118)");
+    expect(source).not.toContain("clampValue(height * 0.072, 38, 78)");
+    expect(source).toContain("styles.signupTopSpacer");
+    expect(source).toContain("styles.signupFooterSpacer");
+    expect(source).toContain("compactHeight");
+  });
 });
