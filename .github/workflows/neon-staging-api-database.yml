@@ -2,11 +2,18 @@ name: neon-staging-api-database
 
 on:
   workflow_dispatch:
+    inputs:
+      application_source_sha:
+        description: "Production application source SHA represented by runtime persistence evidence."
+        required: false
+        default: ""
   push:
     branches:
       - codex/payroll-reminder-launch-ready-100-20260714
     paths:
       - ".github/workflows/neon-staging-api-database.yml"
+      - "scripts/release/collect-staging-authenticated-persistence-proof.mjs"
+      - "scripts/release/collect-staging-authenticated-persistence-proof.test.mjs"
       - "scripts/release/neon-staging-connection-preflight.mjs"
       - "scripts/release/neon-staging-api-database-workflow-contract.test.mjs"
       - "services/api/**"
@@ -34,6 +41,7 @@ env:
   API_SERVICE_DIR: services/api
   STAGING_API_BASE_URL: https://api-staging.salaryhijacking.com
   PRODUCTION_ADMIN_READY_URL: https://admin.salaryhijacking.com/admin/api/v1/ready
+  APPLICATION_SOURCE_SHA: ${{ inputs.application_source_sha || github.sha }}
 
 jobs:
   preflight-sync-deploy-api-staging:
@@ -215,6 +223,15 @@ jobs:
 
           console.log("API staging public health/readiness diagnostics collected without secret exposure; Cloudflare challenges are classified separately from application health.");
           NODE
+
+      - name: Verify authenticated staging API persistence
+        run: |
+          set -euo pipefail
+
+          node scripts/release/collect-staging-authenticated-persistence-proof.mjs \
+            --out artifacts/neon-staging/authenticated-persistence-proof.json
+
+          touch artifacts/neon-staging/status/authenticated-staging-api-persistence-ok
 
       - name: Verify production admin read-only regression
         run: |

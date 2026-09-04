@@ -10,6 +10,7 @@ const preflight = fs.readFileSync(preflightPath, "utf8");
 
 assert.match(workflow, /name:\s*neon-staging-api-database/u);
 assert.match(workflow, /workflow_dispatch:/u);
+assert.match(workflow, /application_source_sha:/u);
 assert.match(workflow, /environment:\s*\n\s+name:\s*staging/u);
 assert.match(
   workflow,
@@ -30,6 +31,11 @@ assert.doesNotMatch(
 assert.doesNotMatch(workflow, /wrangler deploy --env production/u);
 assert.doesNotMatch(workflow, /api\.salaryhijacking\.com/u);
 assert.match(workflow, /salary-hijacking-api-staging|--env staging/u);
+assert.match(workflow, /collect-staging-authenticated-persistence-proof\.mjs/u);
+assert.match(
+  workflow,
+  /APPLICATION_SOURCE_SHA:\s*\$\{\{\s*inputs\.application_source_sha \|\| github\.sha\s*\}\}/u,
+);
 
 const preflightIndex = workflow.indexOf(
   "Read-only Neon staging connection preflight",
@@ -38,6 +44,9 @@ const secretPutIndex = workflow.indexOf(
   "Sync staging database secret to Cloudflare API staging",
 );
 const deployIndex = workflow.indexOf("Deploy API staging Worker");
+const persistenceIndex = workflow.indexOf(
+  "Verify authenticated staging API persistence",
+);
 
 assert.ok(preflightIndex > -1, "preflight step missing");
 assert.ok(
@@ -47,6 +56,10 @@ assert.ok(
 assert.ok(
   deployIndex > secretPutIndex,
   "staging deploy must run after secret put",
+);
+assert.ok(
+  persistenceIndex > deployIndex,
+  "authenticated persistence proof must run after staging deploy",
 );
 
 assert.match(preflight, /projectName:\s*"salary-hijacking"/u);
