@@ -142,6 +142,25 @@ function assertUuid(value: string, field: string): string {
   return value;
 }
 
+function sqlLiteral(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function withUserContext(sqlText: string, userId: string): string {
+  return `
+    with _app_context as (
+      select
+        set_config('app.current_user_id', ${sqlLiteral(assertUuid(userId, "principal.userId"))}, true),
+        set_config('app.is_admin', 'false', true)
+    ),
+    _app_query as (
+      ${sqlText}
+    )
+    select _app_query.*
+    from _app_context, _app_query
+  `;
+}
+
 function assertKrw(value: number, field: string): number {
   if (!Number.isSafeInteger(value) || value <= 0) {
     throw new Error(`${field} must be a positive safe integer KRW amount.`);
@@ -431,7 +450,7 @@ function queryText<TEnv>(
   sqlText: string,
   params: readonly DbValue[],
 ): Promise<FixedExpensesDbQueryResult> {
-  return repositoryQuery(sqlText, params, {
+  return repositoryQuery(withUserContext(sqlText, runtime.principal.userId), params, {
     operationName,
     env: runtime.env,
   });

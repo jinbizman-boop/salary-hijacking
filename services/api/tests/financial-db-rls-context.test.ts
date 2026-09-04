@@ -6,6 +6,7 @@ const repositoryFiles = [
   "daily-budgets.repository.ts",
   "variable-expenses.repository.ts",
   "savings.repository.ts",
+  "fixed-expenses.repository.ts",
 ] as const;
 
 describe("financial DB repositories RLS context", () => {
@@ -17,12 +18,13 @@ describe("financial DB repositories RLS context", () => {
         "utf8",
       );
 
-      expect(source).toContain("principalUserId");
+      expect(source).toContain("runtime.principal.userId");
       expect(source).toContain("set_config('app.current_user_id'");
       expect(source).toContain("set_config('app.is_admin'");
-      expect(source).toContain("begin");
-      expect(source).toContain("commit");
-      expect(source).toContain("rollback");
+      expect(source).toContain("withUserContext");
+      expect(source).toContain("with _app_context");
+      expect(source).toContain("_app_query as");
+      expect(source).toContain("from _app_context, _app_query");
     },
   );
 });
