@@ -7,6 +7,10 @@ on:
         description: "Production application source SHA represented by runtime persistence evidence."
         required: false
         default: ""
+      staging_api_base_url:
+        description: "Approved staging API base URL for authenticated persistence proof."
+        required: false
+        default: "https://salary-hijacking-api-staging.jinbizman.workers.dev"
   push:
     branches:
       - codex/payroll-reminder-launch-ready-100-20260714
@@ -39,7 +43,7 @@ env:
   TZ: Asia/Seoul
   STAGING_BRANCH: codex/payroll-reminder-launch-ready-100-20260714
   API_SERVICE_DIR: services/api
-  STAGING_API_BASE_URL: https://api-staging.salaryhijacking.com
+  STAGING_API_BASE_URL: ${{ inputs.staging_api_base_url || 'https://salary-hijacking-api-staging.jinbizman.workers.dev' }}
   PRODUCTION_ADMIN_READY_URL: https://admin.salaryhijacking.com/admin/api/v1/ready
   APPLICATION_SOURCE_SHA: ${{ inputs.application_source_sha || github.sha }}
 
@@ -82,6 +86,15 @@ jobs:
             echo "::error::This workflow may only run on $STAGING_BRANCH."
             exit 1
           fi
+
+          case "${STAGING_API_BASE_URL:-}" in
+            "https://api-staging.salaryhijacking.com"|"https://salary-hijacking-api-staging.jinbizman.workers.dev")
+              ;;
+            *)
+              echo "::error::STAGING_API_BASE_URL must be an approved staging API endpoint."
+              exit 1
+              ;;
+          esac
 
           if [ -z "${STAGING_DATABASE_URL:-}" ]; then
             echo "::error::Missing staging environment secret: STAGING_DATABASE_URL"

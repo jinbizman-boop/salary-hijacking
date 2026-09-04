@@ -11,7 +11,16 @@ const preflight = fs.readFileSync(preflightPath, "utf8");
 assert.match(workflow, /name:\s*neon-staging-api-database/u);
 assert.match(workflow, /workflow_dispatch:/u);
 assert.match(workflow, /application_source_sha:/u);
+assert.match(workflow, /staging_api_base_url:/u);
 assert.match(workflow, /environment:\s*\n\s+name:\s*staging/u);
+assert.match(
+  workflow,
+  /https:\/\/salary-hijacking-api-staging\.jinbizman\.workers\.dev/u,
+);
+assert.match(
+  workflow,
+  /STAGING_API_BASE_URL must be an approved staging API endpoint/u,
+);
 assert.match(
   workflow,
   /STAGING_DATABASE_URL:\s*\$\{\{\s*secrets\.STAGING_DATABASE_URL\s*\}\}/u,
