@@ -158,9 +158,21 @@ const accessTokenFrom = (result) => {
 
 const idFrom = (result, key) => {
   const value = result.data?.data?.[key];
-  assert.equal(typeof value, "string", `${key} was not returned`);
+  assert.equal(
+    typeof value,
+    "string",
+    `${key} was not returned; safe_shape=${JSON.stringify(safeResponseShape(result))}`,
+  );
   assert.match(value, UUID_PATTERN, `${key} is not a UUID`);
   return value;
+};
+
+const assertStepOk = (result, label) => {
+  assert.equal(
+    result.ok,
+    true,
+    `${label} failed; safe_shape=${JSON.stringify(safeResponseShape(result))}`,
+  );
 };
 
 const readbackStep = async (baseUrl, bearer, apiPath) => {
@@ -408,7 +420,7 @@ async function main() {
       },
     });
     const planId = idFrom(payroll, "planId");
-    await jsonFetch(
+    const payrollActivation = await jsonFetch(
       baseUrl,
       `/api/v1/payroll/${encodeURIComponent(planId)}/activate`,
       {
@@ -417,6 +429,7 @@ async function main() {
         body: { reason: "launch persistence synthetic activate" },
       },
     );
+    assertStepOk(payrollActivation, "payroll activation");
 
     const budget = await jsonFetch(baseUrl, "/api/v1/daily-budgets/", {
       method: "POST",
