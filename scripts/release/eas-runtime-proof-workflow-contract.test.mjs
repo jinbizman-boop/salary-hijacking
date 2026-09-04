@@ -71,6 +71,7 @@ test("mobile build workflow can collect no-write EAS runtime proof without start
     mobileBuildWorkflow.indexOf("eas-runtime-proof:"),
     mobileBuildWorkflow.indexOf("eas-build:"),
   );
+  assert.doesNotMatch(proofJob, /needs:\n\s+- verify-mobile/u);
   assert.doesNotMatch(proofJob, /\beas\s+build\b/u);
   assert.doesNotMatch(proofJob, /\beas\s+submit\b/u);
 });

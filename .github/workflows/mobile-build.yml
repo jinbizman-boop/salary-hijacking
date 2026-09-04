@@ -396,8 +396,6 @@ jobs:
     name: Verify EAS runtime proof without build
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs:
-      - verify-mobile
     if: github.event_name == 'workflow_dispatch'
 
     environment:
