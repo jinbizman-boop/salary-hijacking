@@ -3,6 +3,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  StatusBar,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,6 +40,10 @@ export function AppShell({
       keyboardVerticalOffset={insets.top}
       style={[styles.safe, { paddingTop: insets.top }]}
     >
+      <StatusBar
+        backgroundColor={componentColors.background}
+        barStyle="dark-content"
+      />
       <ScrollView
         contentContainerStyle={[
           styles.content,

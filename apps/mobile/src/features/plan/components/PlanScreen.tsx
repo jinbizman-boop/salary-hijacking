@@ -8,6 +8,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  StatusBar,
   Text,
   TextInput,
   View,
@@ -144,7 +145,8 @@ export function PlanScreen({
 }: PlanScreenProps = {}): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const contentWidth = Math.min(width, 430);
+  const horizontalGutter = planScreenSpacing[5];
+  const contentWidth = Math.min(Math.max(width - horizontalGutter * 2, 0), 430);
   const [state, setState] = useState(getPayrollReminderState());
   const [monthlyTarget, setMonthlyTarget] = useState(0);
   const [payrollDraft, setPayrollDraft] = useState<PayrollDraft>({
@@ -584,6 +586,10 @@ export function PlanScreen({
       keyboardVerticalOffset={insets.top}
       style={styles.screen}
     >
+      <StatusBar
+        backgroundColor={planScreenColors.surface}
+        barStyle="dark-content"
+      />
       <ScrollView
         accessibilityLabel="\uAE09\uC5EC\uB0A9\uCE58 \uACC4\uD68D \uD654\uBA74"
         automaticallyAdjustKeyboardInsets

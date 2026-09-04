@@ -37,6 +37,9 @@ describe("shared mobile components", () => {
     expect(source).toContain("componentSpacing.lg");
     expect(source).toContain("insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
+    expect(source).toContain("StatusBar");
+    expect(source).toContain('barStyle="dark-content"');
+    expect(source).toContain("backgroundColor={componentColors.background}");
   });
 
   it("renders modal overlays outside the scroll content so actions stay reachable", () => {

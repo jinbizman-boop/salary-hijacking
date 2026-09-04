@@ -15,4 +15,12 @@ describe("plan screen design system integration", () => {
     expect(source).not.toContain("const MUTED =");
     expect(source).not.toContain("const DANGER_RED =");
   });
+
+  it("keeps the commercial runtime frame inside Android safe visual gutters", () => {
+    expect(source).toContain("horizontalGutter");
+    expect(source).toContain("width - horizontalGutter * 2");
+    expect(source).toContain("StatusBar");
+    expect(source).toContain('barStyle="dark-content"');
+    expect(source).toContain("backgroundColor={planScreenColors.surface}");
+  });
 });

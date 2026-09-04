@@ -49,12 +49,14 @@ describe("mobile profile API contract", () => {
     expect(body.data?.user).toMatchObject({
       idHash: expect.stringMatching(/^sha256:[a-f0-9]{32}$/),
       role: "USER",
+      emailVerified: true,
       rawEmailExposed: false,
       rawPhoneExposed: false,
       rawFinancialDataExposed: false,
       rawPushTokenExposed: false,
       adsFinancialTargetingUsed: false,
     });
+    expect(typeof body.data?.user?.emailVerified).toBe("boolean");
     expect(body.data?.user).not.toHaveProperty("userId");
     expect(body.data?.user).not.toHaveProperty("email");
     expect(body.data?.summary).toMatchObject({

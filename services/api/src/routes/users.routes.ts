@@ -274,6 +274,7 @@ const forbiddenProfile = [
   "sensitiveFinancialTargetingConsent",
 ];
 const publicBooleanFlags = [
+  "emailVerified",
   "rawEmailExposed",
   "rawPhoneExposed",
   "rawFinancialDataExposed",
