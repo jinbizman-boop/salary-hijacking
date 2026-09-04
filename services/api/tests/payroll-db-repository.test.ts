@@ -53,6 +53,7 @@ describe("Neon payroll repository", () => {
       readonly operationName: string;
       readonly sqlText: string;
       readonly params: readonly unknown[];
+      readonly principalUserId: string | undefined;
     }> = [];
     const repository = createNeonPayrollRepository({
       query: async (sqlText, params, options) => {
@@ -60,6 +61,7 @@ describe("Neon payroll repository", () => {
           operationName: options.operationName,
           sqlText,
           params,
+          principalUserId: options.principalUserId,
         });
         if (options.operationName.endsWith(".create")) {
           return {
@@ -112,6 +114,7 @@ describe("Neon payroll repository", () => {
       readonly operationName: string;
       readonly sqlText: string;
       readonly params: readonly unknown[];
+      readonly principalUserId: string | undefined;
     }> = [];
     const repository = createNeonPayrollRepository({
       query: async (sqlText, params, options) => {
@@ -119,6 +122,7 @@ describe("Neon payroll repository", () => {
           operationName: options.operationName,
           sqlText,
           params,
+          principalUserId: options.principalUserId,
         });
         if (options.operationName.endsWith(".create")) {
           return {
@@ -162,6 +166,7 @@ describe("Neon payroll repository", () => {
       readonly operationName: string;
       readonly sqlText: string;
       readonly params: readonly unknown[];
+      readonly principalUserId: string | undefined;
     }> = [];
     const repository = createNeonPayrollRepository({
       query: async (sqlText, params, options) => {
@@ -169,6 +174,7 @@ describe("Neon payroll repository", () => {
           operationName: options.operationName,
           sqlText,
           params,
+          principalUserId: options.principalUserId,
         });
         if (options.operationName.endsWith(".activate.archiveExisting")) {
           return {
@@ -218,7 +224,7 @@ describe("Neon payroll repository", () => {
       "payroll.activate.archiveExisting",
       "payroll.activate",
     ]);
-    expect(calls[0]?.sqlText).toContain("with _app_context");
+    expect(calls[0]?.principalUserId).toBe(userId);
     expect(calls[0]?.sqlText).toContain("returning payroll_plan_id");
     expect(calls[1]?.sqlText).toContain("set status = 'ACTIVE'");
     expect(JSON.stringify(activated)).not.toContain(userId);

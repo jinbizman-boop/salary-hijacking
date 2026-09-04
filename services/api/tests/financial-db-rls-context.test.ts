@@ -21,10 +21,10 @@ describe("financial DB repositories RLS context", () => {
       expect(source).toContain("runtime.principal.userId");
       expect(source).toContain("set_config('app.current_user_id'");
       expect(source).toContain("set_config('app.is_admin'");
-      expect(source).toContain("withUserContext");
-      expect(source).toContain("with _app_context");
-      expect(source).toContain("_app_query as");
-      expect(source).toContain("from _app_context, _app_query");
+      expect(source).toContain("principalUserId");
+      expect(source).toContain('await client.query("begin")');
+      expect(source).toContain('await client.query("commit")');
+      expect(source).toContain('await client.query("rollback")');
     },
   );
 });

@@ -16,6 +16,7 @@ type DbRow = Record<string, unknown>;
 export interface VariableExpensesDbQueryOptions<TEnv = unknown> {
   readonly operationName: string;
   readonly env: TEnv;
+  readonly principalUserId?: string;
 }
 
 export interface VariableExpensesDbQueryResult<TRow extends DbRow = DbRow> {
@@ -122,6 +123,16 @@ async function defaultQuery<TEnv>(
         readonly rows: readonly DbRow[];
         readonly rowCount: number | null;
       }>;
+      connect: () => Promise<{
+        query: (
+          text: string,
+          values?: readonly DbValue[],
+        ) => Promise<{
+          readonly rows: readonly DbRow[];
+          readonly rowCount: number | null;
+        }>;
+        release: () => void;
+      }>;
       end: () => Promise<void>;
     };
     readonly neonConfig?: { fetchConnectionCache?: boolean };
@@ -136,9 +147,23 @@ async function defaultQuery<TEnv>(
     connectionTimeoutMillis: 10_000,
     statement_timeout: 30_000,
   });
+  const client = await pool.connect();
   try {
-    return await pool.query(sqlText, [...params]);
+    await client.query("begin");
+    if (options.principalUserId) {
+      await client.query(
+        "select set_config('app.current_user_id', $1, true), set_config('app.is_admin', 'false', true)",
+        [options.principalUserId],
+      );
+    }
+    const result = await client.query(sqlText, [...params]);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback").catch(() => undefined);
+    throw error;
   } finally {
+    client.release();
     await pool.end();
   }
 }
@@ -148,25 +173,6 @@ function assertUuid(value: string, field: string): string {
     throw new Error(`${field} must be a UUID for DB-backed variable expenses.`);
   }
   return value;
-}
-
-function sqlLiteral(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
-
-function withUserContext(sqlText: string, userId: string): string {
-  return `
-    with _app_context as (
-      select
-        set_config('app.current_user_id', ${sqlLiteral(assertUuid(userId, "principal.userId"))}, true),
-        set_config('app.is_admin', 'false', true)
-    ),
-    _app_query as (
-      ${sqlText}
-    )
-    select _app_query.*
-    from _app_context, _app_query
-  `;
 }
 
 function assertKrw(value: number, field: string): number {
@@ -328,9 +334,10 @@ function queryText<TEnv>(
   sqlText: string,
   params: readonly DbValue[],
 ): Promise<VariableExpensesDbQueryResult> {
-  return repositoryQuery(withUserContext(sqlText, runtime.principal.userId), params, {
+  return repositoryQuery(sqlText, params, {
     operationName,
     env: runtime.env,
+    principalUserId: assertUuid(runtime.principal.userId, "principal.userId"),
   });
 }
 
