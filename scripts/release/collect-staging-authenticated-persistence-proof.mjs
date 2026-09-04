@@ -46,6 +46,27 @@ const metric = (ok, status) => ({
   status: typeof status === "number" ? status : ok ? 200 : 0,
 });
 
+const objectKeys = (value) =>
+  value && typeof value === "object" && !Array.isArray(value)
+    ? Object.keys(value).sort()
+    : [];
+
+const safeResponseShape = (result) => ({
+  status: result.status,
+  ok: result.ok,
+  topLevelKeys: objectKeys(result.data),
+  dataKeys: objectKeys(result.data?.data),
+  tokenContainerKeys: objectKeys(
+    result.data?.data?.tokens ?? result.data?.tokens,
+  ),
+  errorCode:
+    typeof result.data?.error?.code === "string"
+      ? result.data.error.code
+      : typeof result.data?.code === "string"
+        ? result.data.code
+        : null,
+});
+
 const todayInSeoul = () =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Seoul",
@@ -121,8 +142,16 @@ const jsonFetch = async (
 };
 
 const accessTokenFrom = (result) => {
-  const token = result.data?.data?.tokens?.accessToken;
-  assert.equal(typeof token, "string", "register did not return access token");
+  const token =
+    result.data?.data?.tokens?.accessToken ??
+    result.data?.data?.accessToken ??
+    result.data?.tokens?.accessToken ??
+    result.data?.accessToken;
+  assert.equal(
+    typeof token,
+    "string",
+    `register did not return access token; safe_shape=${JSON.stringify(safeResponseShape(result))}`,
+  );
   assert.ok(token.length >= 20, "register access token is unexpectedly short");
   return token;
 };
