@@ -122,7 +122,7 @@ async function defaultQuery<TEnv>(
     await client.query("begin");
     if (options.principalUserId) {
       await client.query(
-        "select set_config('app.current_user_id', $1, true), set_config('app.is_admin', 'false', true)",
+        "select set_config('app.current_user_id', $1, false), set_config('app.is_admin', 'false', false)",
         [options.principalUserId],
       );
     }
@@ -133,6 +133,11 @@ async function defaultQuery<TEnv>(
     await client.query("rollback").catch(() => undefined);
     throw error;
   } finally {
+    await client
+      .query(
+        "select set_config('app.current_user_id', '', false), set_config('app.is_admin', '', false)",
+      )
+      .catch(() => undefined);
     client.release();
     await pool.end();
   }
