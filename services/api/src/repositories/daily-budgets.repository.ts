@@ -518,6 +518,11 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
         runtime,
         "dailyBudgets.create",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           insert into public.daily_budgets (
             user_id,
             budget_date,
@@ -528,7 +533,8 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
             status,
             calculated_at
           )
-          values ($1::uuid, $2::date, $3::bigint, 0, $3::bigint, 0, 'OPEN', now())
+          select $1::uuid, $2::date, $3::bigint, 0, $3::bigint, 0, 'OPEN', now()
+          from _app_context
           on conflict (user_id, budget_date)
           do update set
             daily_limit_amount = excluded.daily_limit_amount,

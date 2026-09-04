@@ -494,6 +494,11 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.create",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           insert into public.payroll_plans (
             user_id,
             year_month,
@@ -505,7 +510,8 @@ export function createNeonPayrollRepository<TEnv = unknown>(
             confirmed_hijack_amount,
             status
           )
-          values ($1::uuid, $2, $3::smallint, $4::bigint, $5::bigint, $6::bigint, $7::bigint, 0, 'DRAFT')
+          select $1::uuid, $2, $3::smallint, $4::bigint, $5::bigint, $6::bigint, $7::bigint, 0, 'DRAFT'
+          from _app_context
           returning *
         `,
         [
@@ -606,9 +612,15 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.delete",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $2::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           update public.payroll_plans
           set status = 'ARCHIVED',
               archived_at = now()
+          from _app_context
           where payroll_plan_id = $1::uuid
             and user_id = $2::uuid
           returning payroll_plan_id
@@ -626,13 +638,19 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.activate.archiveExisting",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           update public.payroll_plans
           set status = 'ARCHIVED',
               archived_at = now()
-          where user_id = $1::uuid
-            and status = 'ACTIVE'
-            and payroll_plan_id <> $2::uuid
-          returning payroll_plan_id
+          from _app_context
+          where public.payroll_plans.user_id = $1::uuid
+            and public.payroll_plans.status = 'ACTIVE'
+            and public.payroll_plans.payroll_plan_id <> $2::uuid
+          returning public.payroll_plans.payroll_plan_id
         `,
         [
           assertUuid(runtime.principal.userId, "principal.userId"),
@@ -644,13 +662,19 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.activate",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $2::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           update public.payroll_plans
           set status = 'ACTIVE',
               archived_at = null,
               closed_at = null
-          where payroll_plan_id = $1::uuid
-            and user_id = $2::uuid
-          returning *
+          from _app_context
+          where public.payroll_plans.payroll_plan_id = $1::uuid
+            and public.payroll_plans.user_id = $2::uuid
+          returning public.payroll_plans.*
         `,
         [
           assertUuid(planId, "planId"),

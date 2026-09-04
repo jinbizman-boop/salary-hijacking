@@ -631,9 +631,14 @@ export function createNeonSavingsRepository<TEnv = unknown>(
         runtime,
         "savings.createGoal",
         `
-          with selected_plan as (
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          ),
+          selected_plan as (
             select payroll_plan_id
-            from public.payroll_plans
+            from public.payroll_plans, _app_context
             where user_id = $1::uuid
               and status = 'ACTIVE'
             order by year_month desc, updated_at desc, payroll_plan_id desc

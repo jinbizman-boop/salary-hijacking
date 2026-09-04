@@ -600,9 +600,14 @@ export function createNeonVariableExpensesRepository<TEnv = unknown>(
         runtime,
         "variableExpenses.create",
         `
-          with selected_budget as (
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          ),
+          selected_budget as (
             select daily_budget_id
-            from public.daily_budgets
+            from public.daily_budgets, _app_context
             where daily_budget_id = $2::uuid
               and user_id = $1::uuid
               and status <> 'CLOSED'

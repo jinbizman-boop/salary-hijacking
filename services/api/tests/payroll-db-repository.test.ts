@@ -225,7 +225,9 @@ describe("Neon payroll repository", () => {
       "payroll.activate",
     ]);
     expect(calls[0]?.principalUserId).toBe(userId);
-    expect(calls[0]?.sqlText).toContain("returning payroll_plan_id");
+    expect(calls[0]?.sqlText).toContain(
+      "returning public.payroll_plans.payroll_plan_id",
+    );
     expect(calls[1]?.sqlText).toContain("set status = 'ACTIVE'");
     expect(JSON.stringify(activated)).not.toContain(userId);
   });
