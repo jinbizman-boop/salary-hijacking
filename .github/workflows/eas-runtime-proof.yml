@@ -1,0 +1,129 @@
+name: EAS Runtime Proof
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  eas-runtime-proof:
+    name: Verify EAS token and project metadata
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: mobile-preview
+    env:
+      CI: "true"
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+      MOBILE_APP_DIR: apps/mobile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Verify secret presence without value readback
+        run: |
+          set -euo pipefail
+          if [ -z "${EXPO_TOKEN:-}" ]; then
+            echo "::error::Missing secret: EXPO_TOKEN"
+            exit 1
+          fi
+          if [ -z "${EAS_PROJECT_ID:-}" ]; then
+            echo "::error::Missing secret: EAS_PROJECT_ID"
+            exit 1
+          fi
+          echo "EAS runtime secret names materialized; values were not printed."
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Query EAS identity and project metadata
+        id: eas_proof
+        working-directory: ${{ env.MOBILE_APP_DIR }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../../release
+
+          pnpm dlx eas-cli@latest whoami --non-interactive > ../../release/eas-whoami.redacted.txt
+          pnpm dlx eas-cli@latest project:info --non-interactive --json > ../../release/eas-project-info.raw.json
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const configuredProjectId = process.env.EAS_PROJECT_ID || "";
+          const whoami = fs.readFileSync("../../release/eas-whoami.redacted.txt", "utf8").trim();
+          const projectInfo = JSON.parse(fs.readFileSync("../../release/eas-project-info.raw.json", "utf8"));
+          const remoteProjectId =
+            projectInfo?.id ||
+            projectInfo?.projectId ||
+            projectInfo?.project?.id ||
+            projectInfo?.project?.projectId ||
+            "";
+
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
+
+          const evidence = {
+            schemaVersion: 1,
+            generatedAt: new Date().toISOString(),
+            secretsRedacted: true,
+            containsSecretValues: false,
+            commands: {
+              whoami: "pnpm dlx eas-cli@latest whoami --non-interactive",
+              projectInfo: "pnpm dlx eas-cli@latest project:info --non-interactive --json",
+            },
+            checks: {
+              expoTokenPresent: Boolean(process.env.EXPO_TOKEN),
+              easProjectIdPresent: Boolean(configuredProjectId),
+              easAuthenticated: Boolean(whoami),
+              easProjectMetadataPresent: Boolean(remoteProjectId),
+              easProjectIdRemoteMatch: Boolean(remoteProjectId) && remoteProjectId === configuredProjectId,
+            },
+            proof: {
+              accountNameHash: hash(whoami),
+              projectIdConfiguredHash: hash(configuredProjectId),
+              projectIdRemoteHash: hash(remoteProjectId),
+            },
+          };
+
+          const serialized = JSON.stringify(evidence, null, 2);
+          if (/eas_[A-Za-z0-9_-]{20,}|EXPO_TOKEN=|BEGIN [A-Z ]+PRIVATE KEY|postgres(?:ql)?:\/\//i.test(serialized)) {
+            throw new Error("EAS proof evidence contains a forbidden secret-shaped value.");
+          }
+          if (!evidence.checks.expoTokenPresent || !evidence.checks.easProjectIdPresent) {
+            throw new Error("Required EAS runtime secrets were not present.");
+          }
+          if (!evidence.checks.easAuthenticated || !evidence.checks.easProjectIdRemoteMatch) {
+            throw new Error("EAS runtime auth or project id match failed.");
+          }
+
+          fs.writeFileSync("../../release/eas-runtime-proof.local.json", `${serialized}\n`, "utf8");
+          fs.rmSync("../../release/eas-project-info.raw.json", { force: true });
+          NODE
+
+      - name: Upload EAS runtime proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: eas-runtime-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: release/eas-runtime-proof.local.json
