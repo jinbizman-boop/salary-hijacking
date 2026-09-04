@@ -14,11 +14,21 @@ import type { NotificationPreferenceState } from "../controller";
 const designSystem = salaryHijackingDesignSystem;
 
 export type NotificationSettingsScreenProps = Readonly<{
+  notificationDeviceCount?: number | undefined;
+  notificationDeviceMessage?: string | undefined;
+  notificationDeviceStatus?:
+    | "denied"
+    | "error"
+    | "idle"
+    | "registered"
+    | "registering"
+    | undefined;
   onBack?: (() => void) | undefined;
   onOpenSystemSettings?: (() => void) | undefined;
   onPreferencesChange?:
     | ((preferences: NotificationPreferenceState) => void)
     | undefined;
+  onRegisterDevice?: (() => Promise<void> | void) | undefined;
   onSavePreferences?:
     | ((preferences: NotificationPreferenceState) => Promise<void> | void)
     | undefined;
@@ -45,9 +55,13 @@ const initialPreferences: Record<PreferenceKey, boolean> = {
 };
 
 export function NotificationSettingsScreen({
+  notificationDeviceCount = 0,
+  notificationDeviceMessage,
+  notificationDeviceStatus = "idle",
   onBack,
   onOpenSystemSettings,
   onPreferencesChange,
+  onRegisterDevice,
   onSavePreferences,
   preferences: serverPreferences,
 }: NotificationSettingsScreenProps): React.ReactElement {
@@ -168,6 +182,42 @@ export function NotificationSettingsScreen({
           />
         </SurfaceCard>
 
+        <SurfaceCard accessibilityLabel="푸시 기기">
+          <Text allowFontScaling={false} style={styles.summaryTitle}>
+            푸시 기기
+          </Text>
+          <Text style={styles.summaryText}>
+            {notificationDeviceCount > 0
+              ? `등록된 기기 ${notificationDeviceCount}대`
+              : "기기 등록 전에는 원문 푸시 토큰을 보관하지 않아요."}
+          </Text>
+          <Text accessibilityLiveRegion="polite" style={styles.deviceStatus}>
+            {notificationDeviceMessage ??
+              notificationDeviceStatusMessage(notificationDeviceStatus)}
+          </Text>
+          <PrimaryButton
+            accessibilityLabel={
+              notificationDeviceCount > 0
+                ? "푸시 기기 다시 등록"
+                : "푸시 기기 등록"
+            }
+            disabled={
+              notificationDeviceStatus === "registering" || !onRegisterDevice
+            }
+            label={
+              notificationDeviceStatus === "registering"
+                ? "등록 중"
+                : notificationDeviceCount > 0
+                  ? "다시 등록"
+                  : "기기 등록"
+            }
+            onPress={() => {
+              void onRegisterDevice?.();
+            }}
+            variant={notificationDeviceCount > 0 ? "secondary" : "primary"}
+          />
+        </SurfaceCard>
+
         <View style={styles.actionStack}>
           <PrimaryButton
             accessibilityLabel="알림 설정 저장"
@@ -206,6 +256,26 @@ export function NotificationSettingsScreen({
       </View>
     </AppShell>
   );
+}
+
+function notificationDeviceStatusMessage(
+  status: NonNullable<
+    NotificationSettingsScreenProps["notificationDeviceStatus"]
+  >,
+): string {
+  if (status === "registered") {
+    return "서버에 푸시 기기 등록을 저장했어요.";
+  }
+  if (status === "denied") {
+    return "알림 권한이 꺼져 있어요. 앱은 계속 사용할 수 있습니다.";
+  }
+  if (status === "error") {
+    return "푸시 기기를 등록하지 못했어요. 잠시 후 다시 시도해 주세요.";
+  }
+  if (status === "registering") {
+    return "푸시 기기 등록을 서버에 저장하고 있어요.";
+  }
+  return "알림을 켜면 이 기기에 안전하게 전송할 준비를 합니다.";
 }
 
 function PreferenceRow({
@@ -250,6 +320,10 @@ const styles = StyleSheet.create({
     color: designSystem.colors.semantic.dangerStrong,
     textAlign: "center",
     ...designSystem.typography.labelM,
+  },
+  deviceStatus: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.caption,
   },
   headerAction: {
     alignItems: "center",

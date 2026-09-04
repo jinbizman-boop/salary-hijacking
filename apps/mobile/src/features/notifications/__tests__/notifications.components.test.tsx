@@ -227,6 +227,11 @@ describe("notifications feature components", () => {
     ).toBeTruthy();
     expect(screen.getByText("알림 설정")).toBeTruthy();
     expect(screen.getByText("급여/납치금액")).toBeTruthy();
+    expect(screen.getByText("푸시 기기")).toBeTruthy();
+    expect(
+      screen.getByText("기기 등록 전에는 원문 푸시 토큰을 보관하지 않아요."),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "푸시 기기 등록" })).toBeTruthy();
     expect(screen.queryByLabelText("급여납치 하단 탭 내비게이션")).toBeNull();
 
     fireEvent.press(screen.getByRole("button", { name: "알림 설정 저장" }));
@@ -244,5 +249,28 @@ describe("notifications feature components", () => {
     expect(onOpenSystemSettings).toHaveBeenCalledTimes(1);
     expectNoMojibake(jsonText(screen));
     jest.useRealTimers();
+  });
+
+  it("renders registered native device status without exposing raw push tokens", () => {
+    const onRegisterDevice = jest.fn();
+    const screen = render(
+      <NotificationSettingsScreen
+        notificationDeviceCount={1}
+        notificationDeviceStatus="registered"
+        onRegisterDevice={onRegisterDevice}
+      />,
+    );
+
+    expect(screen.getByText("푸시 기기")).toBeTruthy();
+    expect(screen.getByText("등록된 기기 1대")).toBeTruthy();
+    expect(
+      screen.getByText("서버에 푸시 기기 등록을 저장했어요."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/fcm-native-token-value|pushToken/iu)).toBeNull();
+
+    fireEvent.press(
+      screen.getByRole("button", { name: "푸시 기기 다시 등록" }),
+    );
+    expect(onRegisterDevice).toHaveBeenCalledTimes(1);
   });
 });

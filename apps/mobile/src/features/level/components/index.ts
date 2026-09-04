@@ -7,6 +7,7 @@ export {
   type LevelActionGridProps,
   type LevelActionItem,
 } from "./LevelActionGrid";
+export { LevelGoalCard, type LevelGoalCardProps } from "./LevelGoalCard";
 export { LevelHeroCard, type LevelHeroCardProps } from "./LevelHeroCard";
 export { NewsBalanceCard, type NewsBalanceCardProps } from "./NewsBalanceCard";
 export {

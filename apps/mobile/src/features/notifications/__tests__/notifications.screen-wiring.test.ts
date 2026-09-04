@@ -74,10 +74,15 @@ describe("notifications screen wiring", () => {
     expect(routeSource).toContain("NotificationSettingsScreen");
     expect(routeSource).toContain("createMobileNotificationsApi");
     expect(routeSource).toContain("loadNotificationPreferences");
+    expect(routeSource).toContain("registerNativeNotificationDevice");
     expect(routeSource).toContain("saveNotificationPreferences");
+    expect(routeSource).toContain("listDevices");
     expect(routeSource).toContain("Linking.openSettings");
     expect(componentSource).toContain("알림 설정");
     expect(componentSource).toContain("푸시 알림");
+    expect(componentSource).toContain("푸시 기기");
+    expect(componentSource).toContain("기기 등록");
+    expect(componentSource).toContain("원문 푸시 토큰");
     expect(componentSource).toContain("금융 원문");
     expect(componentSource).not.toContain("BottomTabBar");
     expect(componentSource).not.toContain("bottomTabs");
@@ -85,12 +90,7 @@ describe("notifications screen wiring", () => {
 
   it("keeps the notification list on canonical shell, header, and design tokens", () => {
     const componentSource = readFileSync(
-      join(
-        __dirname,
-        "..",
-        "components",
-        "NotificationScreen.tsx",
-      ),
+      join(__dirname, "..", "components", "NotificationScreen.tsx"),
       "utf8",
     );
 
@@ -107,12 +107,7 @@ describe("notifications screen wiring", () => {
 
   it("keeps notification settings on the canonical AppHeader and design tokens", () => {
     const componentSource = readFileSync(
-      join(
-        __dirname,
-        "..",
-        "components",
-        "NotificationSettingsScreen.tsx",
-      ),
+      join(__dirname, "..", "components", "NotificationSettingsScreen.tsx"),
       "utf8",
     );
 

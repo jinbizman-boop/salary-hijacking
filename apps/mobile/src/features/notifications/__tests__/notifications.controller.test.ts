@@ -2,9 +2,12 @@ import {
   loadNotificationPreferences,
   loadNotificationSnapshot,
   openNotificationWithServerRead,
+  registerNativeNotificationDevice,
+  revokeNativeNotificationDevice,
   saveNotificationPreferences,
 } from "../controller";
 import type {
+  NotificationDevice,
   NotificationItem,
   NotificationsApiClient,
   NotificationUnreadCount,
@@ -28,6 +31,19 @@ const unreadNotification: NotificationItem = {
   status: "UNREAD",
   title: "독서 레벨업 알림",
   type: "LEVEL_UP",
+};
+
+const registeredDevice: NotificationDevice = {
+  deviceId: "salary-hijacking-android-device-1",
+  platform: "ANDROID",
+  provider: "FCM",
+  pushTokenHashOnly: true,
+  pushTokenPreview: "fcm:sha256:4f2c",
+  status: "ACTIVE",
+  tokenSource: "NATIVE_DEVICE",
+  registeredAt: "2026-09-05T00:00:00.000Z",
+  updatedAt: "2026-09-05T00:00:00.000Z",
+  revokedAt: null,
 };
 
 function createApi(overrides: Partial<NotificationsApiClient> = {}) {
@@ -185,5 +201,93 @@ describe("notifications controller", () => {
       quietHoursStart: null,
       savingsGoalEnabled: true,
     });
+  });
+
+  it("registers a native FCM device through the authenticated notification API without returning the raw token", async () => {
+    const api = createApi({
+      registerDevice: jest.fn(async () => registeredDevice),
+    });
+
+    await expect(
+      registerNativeNotificationDevice(api, {
+        appVersion: "1.0.0",
+        getDeviceId: async () => "salary-hijacking-android-device-1",
+        getDevicePushToken: async () => "fcm-native-token-value",
+        getPermissionStatus: async () => "GRANTED",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        requestPermission: jest.fn(),
+      }),
+    ).resolves.toEqual({
+      device: registeredDevice,
+      permissionStatus: "GRANTED",
+      provider: "FCM",
+      status: "REGISTERED",
+      tokenSource: "NATIVE_DEVICE",
+    });
+
+    expect(api.registerDevice).toHaveBeenCalledWith({
+      appVersion: "1.0.0",
+      deviceId: "salary-hijacking-android-device-1",
+      locale: "ko-KR",
+      platform: "ANDROID",
+      provider: "FCM",
+      pushToken: "fcm-native-token-value",
+      tokenSource: "NATIVE_DEVICE",
+    });
+  });
+
+  it("does not request or register a native push token when notification permission is denied", async () => {
+    const getDevicePushToken = jest.fn();
+    const requestPermission = jest.fn();
+    const api = createApi({
+      registerDevice: jest.fn(),
+    });
+
+    await expect(
+      registerNativeNotificationDevice(api, {
+        appVersion: "1.0.0",
+        getDeviceId: async () => "salary-hijacking-android-device-1",
+        getDevicePushToken,
+        getPermissionStatus: async () => "DENIED",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        requestPermission,
+      }),
+    ).resolves.toEqual({
+      device: null,
+      permissionStatus: "DENIED",
+      provider: "FCM",
+      status: "PERMISSION_DENIED",
+      tokenSource: "NATIVE_DEVICE",
+    });
+
+    expect(requestPermission).not.toHaveBeenCalled();
+    expect(getDevicePushToken).not.toHaveBeenCalled();
+    expect(api.registerDevice).not.toHaveBeenCalled();
+  });
+
+  it("revokes the current native notification device without requiring a raw push token", async () => {
+    const api = createApi({
+      revokeDevice: jest.fn(async () => ({
+        ...registeredDevice,
+        revokedAt: "2026-09-05T00:01:00.000Z",
+        status: "REVOKED" as const,
+        updatedAt: "2026-09-05T00:01:00.000Z",
+      })),
+    });
+
+    await expect(
+      revokeNativeNotificationDevice(api, {
+        getDeviceId: async () => "salary-hijacking-android-device-1",
+      }),
+    ).resolves.toEqual({
+      deviceId: "salary-hijacking-android-device-1",
+      status: "REVOKED",
+    });
+
+    expect(api.revokeDevice).toHaveBeenCalledWith(
+      "salary-hijacking-android-device-1",
+    );
   });
 });

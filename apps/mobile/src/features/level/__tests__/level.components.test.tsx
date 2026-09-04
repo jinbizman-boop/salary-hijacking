@@ -3,6 +3,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 import {
   EnglishLessonCard,
   LevelActionGrid,
+  LevelGoalCard,
   LevelHeroCard,
   NewsBalanceCard,
   ReadingContentCard,
@@ -141,5 +142,38 @@ describe("level feature components", () => {
     expect(screen.getByText("독서 기록 완료 +30 XP")).toBeTruthy();
     expect(screen.getByText("중복 없이 한 번만 반영했어요")).toBeTruthy();
     expect(screen.queryByText("READING_COMPLETE +30 XP")).toBeNull();
+  });
+
+  it("renders LV UP goal source cards with separate activity and edit actions", () => {
+    const onDetail = jest.fn();
+    const onEdit = jest.fn();
+    const onQuickComplete = jest.fn();
+    const screen = render(
+      <LevelGoalCard
+        goal={{
+          detailCta: "독서하기",
+          domain: "READING",
+          editCta: "목표 수정",
+          progressLabel: "오늘 0 / 1페이지",
+          quickCompleteCta: "빠른 완료",
+          sourceLabel: "기본 목표",
+          streakLabel: "0일 연속",
+          subtitle: "하루 1페이지",
+          title: "독서",
+        }}
+        onDetail={onDetail}
+        onEdit={onEdit}
+        onQuickComplete={onQuickComplete}
+      />,
+    );
+
+    expect(screen.getByText("기본 목표")).toBeTruthy();
+    expect(screen.getByText("하루 1페이지")).toBeTruthy();
+    fireEvent.press(screen.getByRole("button", { name: "독서하기" }));
+    fireEvent.press(screen.getByRole("button", { name: "빠른 완료" }));
+    fireEvent.press(screen.getByRole("button", { name: "목표 수정" }));
+    expect(onDetail).toHaveBeenCalledWith("READING");
+    expect(onQuickComplete).toHaveBeenCalledWith("READING");
+    expect(onEdit).toHaveBeenCalledWith("READING");
   });
 });

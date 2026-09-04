@@ -1,5 +1,9 @@
 import type { NotificationHref } from "./components/NotificationScreen";
 import type {
+  NotificationDevice,
+  NotificationDevicePlatform,
+  NotificationDeviceProvider,
+  NotificationDeviceTokenSource,
   NotificationItem,
   NotificationPreferences,
   NotificationPreferencesUpdateRequest,
@@ -31,6 +35,46 @@ export type NotificationPreferenceState = Readonly<{
   push: boolean;
   quietHours: boolean;
   salary: boolean;
+}>;
+
+export type NativeNotificationPermissionStatus =
+  | "DENIED"
+  | "GRANTED"
+  | "UNDETERMINED";
+
+export type NativeNotificationRegistrationDependencies = Readonly<{
+  appVersion: string | null;
+  getDeviceId: () => Promise<string>;
+  getDevicePushToken: () => Promise<string>;
+  getPermissionStatus: () => Promise<NativeNotificationPermissionStatus>;
+  locale: string | null;
+  platform: NotificationDevicePlatform;
+  requestPermission: () => Promise<NativeNotificationPermissionStatus>;
+}>;
+
+export type NativeNotificationRegistrationResult =
+  | Readonly<{
+      device: NotificationDevice;
+      permissionStatus: "GRANTED";
+      provider: NotificationDeviceProvider;
+      status: "REGISTERED";
+      tokenSource: NotificationDeviceTokenSource;
+    }>
+  | Readonly<{
+      device: null;
+      permissionStatus: "DENIED" | "UNDETERMINED";
+      provider: NotificationDeviceProvider;
+      status: "PERMISSION_DENIED";
+      tokenSource: NotificationDeviceTokenSource;
+    }>;
+
+export type NativeNotificationRevokeDependencies = Readonly<{
+  getDeviceId: () => Promise<string>;
+}>;
+
+export type NativeNotificationRevokeResult = Readonly<{
+  deviceId: string;
+  status: "REVOKED";
 }>;
 
 const ALLOWED_NOTIFICATION_HREFS = new Set<NotificationHref>([
@@ -135,4 +179,76 @@ export function preferenceUpdateFromState(
     quietHoursStart: state.quietHours ? "22:00" : null,
     savingsGoalEnabled: state.salary,
   };
+}
+
+export async function registerNativeNotificationDevice(
+  api: NotificationsApiClient,
+  dependencies: NativeNotificationRegistrationDependencies,
+): Promise<NativeNotificationRegistrationResult> {
+  const provider = providerForNativePlatform(dependencies.platform);
+  const tokenSource = tokenSourceForNativeProvider(provider);
+  let permissionStatus = await dependencies.getPermissionStatus();
+
+  if (permissionStatus === "UNDETERMINED") {
+    permissionStatus = await dependencies.requestPermission();
+  }
+
+  if (permissionStatus !== "GRANTED") {
+    return {
+      device: null,
+      permissionStatus,
+      provider,
+      status: "PERMISSION_DENIED",
+      tokenSource,
+    };
+  }
+
+  const pushToken = (await dependencies.getDevicePushToken()).trim();
+  if (!pushToken) {
+    throw new Error("NOTIFICATION_PUSH_TOKEN_UNAVAILABLE");
+  }
+
+  const device = await api.registerDevice({
+    appVersion: dependencies.appVersion,
+    deviceId: await dependencies.getDeviceId(),
+    locale: dependencies.locale,
+    platform: dependencies.platform,
+    provider,
+    pushToken,
+    tokenSource,
+  });
+
+  return {
+    device,
+    permissionStatus,
+    provider,
+    status: "REGISTERED",
+    tokenSource,
+  };
+}
+
+export async function revokeNativeNotificationDevice(
+  api: NotificationsApiClient,
+  dependencies: NativeNotificationRevokeDependencies,
+): Promise<NativeNotificationRevokeResult> {
+  const deviceId = await dependencies.getDeviceId();
+  await api.revokeDevice(deviceId);
+  return {
+    deviceId,
+    status: "REVOKED",
+  };
+}
+
+function providerForNativePlatform(
+  platform: NotificationDevicePlatform,
+): NotificationDeviceProvider {
+  if (platform === "IOS") return "APNS";
+  if (platform === "ANDROID") return "FCM";
+  return "EXPO";
+}
+
+function tokenSourceForNativeProvider(
+  provider: NotificationDeviceProvider,
+): NotificationDeviceTokenSource {
+  return provider === "EXPO" ? "EXPO_PUSH_SERVICE" : "NATIVE_DEVICE";
 }

@@ -23,7 +23,12 @@ describe("level tab screen wiring", () => {
     expect(source).not.toContain("normalizeGrowthDashboardForCleanFintech");
     expect(source).toContain("AppShell");
     expect(source).toContain("LevelHeroCard");
+    expect(source).toContain("LevelGoalCard");
     expect(source).toContain("LevelActionGrid");
+    expect(source).toContain("buildGrowthGoalCards");
+    expect(source).toContain("가볍게 기본 목표로 시작할까요?");
+    expect(source).toContain("AD-APP-LVUP-01");
+    expect(source).toContain("AD-APP-LVUP-02");
     expect(source).not.toContain("<XpRewardToast");
     expect(source).toContain("createMobileGrowthApi");
     expect(source).toContain("loadGrowthDashboardSnapshot");
