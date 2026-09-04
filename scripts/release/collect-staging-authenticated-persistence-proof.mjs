@@ -257,11 +257,49 @@ const dbUserIdByEmail = async (sql, email) => {
 const cleanupSyntheticUser = async (sql, email) => {
   const rows = await sql.begin(async (tx) => {
     await setAdminContext(tx);
-    return tx`
-      delete from public.users
+    const users = await tx`
+      select user_id
+      from public.users
       where email = ${email}
-      returning user_id
+      order by created_at desc
     `;
+    const userIds = users.map((row) => row.user_id).filter(Boolean);
+    if (userIds.length === 0) return [];
+
+    const deletedUsers = [];
+    for (const userId of userIds) {
+      await tx`
+        delete from public.variable_expenses
+        where user_id = ${userId}::uuid
+      `;
+      await tx`
+        delete from public.daily_budgets
+        where user_id = ${userId}::uuid
+      `;
+      await tx`
+        delete from public.savings_plans
+        where user_id = ${userId}::uuid
+      `;
+      await tx`
+        delete from public.fixed_expenses
+        where user_id = ${userId}::uuid
+      `;
+      await tx`
+        delete from public.payroll_calculation_snapshots
+        where user_id = ${userId}::uuid
+      `;
+      await tx`
+        delete from public.payroll_plans
+        where user_id = ${userId}::uuid
+      `;
+      const deleted = await tx`
+        delete from public.users
+        where user_id = ${userId}::uuid
+        returning user_id
+      `;
+      deletedUsers.push(...deleted);
+    }
+    return deletedUsers;
   });
   const residual = await sql.begin(async (tx) => {
     await setAdminContext(tx);
