@@ -445,6 +445,9 @@ jobs:
 
       - name: Query EAS identity and project metadata
         working-directory: ${{ env.MOBILE_APP_DIR }}
+        env:
+          NO_COLOR: "1"
+          TERM: dumb
         run: |
           set -euo pipefail
 
@@ -456,12 +459,29 @@ jobs:
           const crypto = require("node:crypto");
           const fs = require("node:fs");
 
+          const stripAnsi = (value) =>
+            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+          const readProjectInfo = (file) => {
+            const raw = stripAnsi(fs.readFileSync(file, "utf8"));
+            try {
+              return JSON.parse(raw);
+            } catch {
+              const entries = {};
+              for (const line of raw.split(/\r?\n/u)) {
+                const match = line.match(/^\s*([A-Za-z][A-Za-z0-9_:-]*)\s{2,}(.+?)\s*$/u);
+                if (match) entries[match[1]] = match[2].trim();
+              }
+              return entries;
+            }
+          };
+
           const configuredProjectId = process.env.EAS_PROJECT_ID || "";
           const whoami = fs.readFileSync("../../release/eas-whoami.redacted.txt", "utf8").trim();
-          const projectInfo = JSON.parse(fs.readFileSync("../../release/eas-project-info.raw.json", "utf8"));
+          const projectInfo = readProjectInfo("../../release/eas-project-info.raw.json");
           const remoteProjectId =
             projectInfo?.id ||
             projectInfo?.projectId ||
+            projectInfo?.projectID ||
             projectInfo?.project?.id ||
             projectInfo?.project?.projectId ||
             "";
