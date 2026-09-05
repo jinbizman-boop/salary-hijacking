@@ -27,6 +27,7 @@ function notificationCursor(createdAt: string, id: string): string {
 function createRuntime(
   path = "/api/v1/notifications",
   env: Record<string, string> = {},
+  requestId = "notifications-db-repository-test",
 ): NotificationsRouteRuntime<unknown> {
   return {
     request: new Request(`https://api.test${path}`),
@@ -36,7 +37,7 @@ function createRuntime(
     path,
     relativePath: path.replace("/api/v1/notifications", "") || "/",
     method: "GET",
-    requestId: "notifications-db-repository-test",
+    requestId,
     now: new Date("2026-07-03T04:00:00.000Z"),
     principal: {
       userId,
@@ -598,28 +599,29 @@ describe("Neon notifications repository", () => {
   });
 
   it("dispatches PUSH test notifications through the Worker using encrypted native FCM tokens only", async () => {
-    const runtime = createRuntime("/api/v1/notifications/test", {
+    const registrationRuntime = createRuntime(
+      "/api/v1/notifications/devices",
+      {
+        ...securityEnv,
+        NOTIFICATIONS_WORKER_URL: "https://notifications.test",
+        NOTIFICATIONS_SERVICE_TOKEN: "test-service-token",
+      },
+      "fcm-token-registration-request",
+    );
+    const sendRuntime = createRuntime("/api/v1/notifications/test", {
       ...securityEnv,
       NOTIFICATIONS_WORKER_URL: "https://notifications.test",
       NOTIFICATIONS_SERVICE_TOKEN: "test-service-token",
-    });
-    const tokenSecretRef = "notifications:push-token:fcm:testhash";
-    const encryptedToken = await encryptString(
-      "fcm_native_registration_token_abcdef123456",
-      {
-        keyRing: createSecurityKeyRingFromEnv(securityEnv),
-        context: {
-          purpose: "notification.push-token",
-          dataClass: "device",
-          userId,
-          subjectId: tokenSecretRef,
-          fieldName: "pushToken",
-          requestId: runtime.requestId,
-          runtime: "edge",
-        },
-        nowIso: runtime.now.toISOString(),
-      },
-    );
+    }, "fcm-token-send-request");
+    const persistedPushTokenSecret: {
+      ciphertext: string | null;
+      tokenHash: string | null;
+      tokenSecretRef: string | null;
+    } = {
+      ciphertext: null,
+      tokenHash: null,
+      tokenSecretRef: null,
+    };
     const calls: Array<{
       readonly operationName: string;
       readonly params: readonly unknown[];
@@ -640,20 +642,46 @@ describe("Neon notifications repository", () => {
     const repository = createNeonNotificationsRepository({
       query: async (_sqlText, params, options) => {
         calls.push({ operationName: options.operationName, params });
+        if (options.operationName === "notifications.registerDevice") {
+          return {
+            rows: [
+              {
+                app_version: "1.0.0",
+                created_at: "2026-07-03T04:00:00.000Z",
+                device_id: "33333333-3333-4333-8333-333333333333",
+                platform: "ANDROID",
+                push_token_provider: "FCM",
+                push_token_source: "NATIVE_DEVICE",
+                push_token_secret_ref: String(params[5]),
+                status: "ACTIVE",
+                updated_at: "2026-07-03T04:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "notifications.registerPushTokenSecret") {
+          persistedPushTokenSecret.tokenHash = String(params[4]);
+          persistedPushTokenSecret.tokenSecretRef = String(params[5]);
+          persistedPushTokenSecret.ciphertext = String(params[6]);
+          return { rows: [], rowCount: 1 };
+        }
         if (options.operationName === "notifications.create.dedupeLookup") {
           return { rows: [], rowCount: 0 };
         }
         if (options.operationName === "notifications.listActivePushTokenSecrets") {
+          expect(persistedPushTokenSecret.ciphertext).toEqual(
+            expect.stringMatching(/^shjenc:v2:/),
+          );
           return {
             rows: [
               {
                 device_id: "33333333-3333-4333-8333-333333333333",
                 provider: "FCM",
                 push_token_id: "44444444-4444-4444-8444-444444444444",
-                token_ciphertext: encryptedToken,
-                token_hash:
-                  "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                token_secret_ref: tokenSecretRef,
+                token_ciphertext: persistedPushTokenSecret.ciphertext,
+                token_hash: persistedPushTokenSecret.tokenHash,
+                token_secret_ref: persistedPushTokenSecret.tokenSecretRef,
               },
             ],
             rowCount: 1,
@@ -674,6 +702,19 @@ describe("Neon notifications repository", () => {
     });
 
     try {
+      await repository.registerDevice(
+        {
+          appVersion: "1.0.0",
+          deviceId: "device-android-native",
+          locale: "ko-KR",
+          platform: "ANDROID",
+          provider: "FCM",
+          pushToken: "fcm_native_registration_token_abcdef123456",
+          tokenSource: "NATIVE_DEVICE",
+        },
+        registrationRuntime,
+      );
+
       const result = await repository.test(
         {
           type: "NOTICE",
@@ -686,7 +727,7 @@ describe("Neon notifications repository", () => {
           expiresAt: null,
           metadata: { idempotencyKey: "FCM_TEST:111" },
         },
-        runtime,
+        sendRuntime,
       );
 
       expect(result.pushDelivery).toMatchObject({
@@ -707,6 +748,121 @@ describe("Neon notifications repository", () => {
       );
       expect(calls.map((call) => call.operationName)).toContain(
         "notifications.listActivePushTokenSecrets",
+      );
+    } finally {
+      fetcher.mockRestore();
+    }
+  });
+
+  it("revokes legacy unreadable push token ciphertexts without exposing raw tokens or aborting notification creation", async () => {
+    const legacyRuntime = createRuntime(
+      "/api/v1/notifications/devices",
+      securityEnv,
+      "legacy-request-scoped-aad",
+    );
+    const sendRuntime = createRuntime("/api/v1/notifications/test", {
+      ...securityEnv,
+      NOTIFICATIONS_WORKER_URL: "https://notifications.test",
+      NOTIFICATIONS_SERVICE_TOKEN: "test-service-token",
+    }, "stable-send-request");
+    const tokenSecretRef = "notifications:push-token:fcm:legacyhash";
+    const legacyEncryptedToken = await encryptString(
+      "fcm_native_registration_token_legacyabcdef",
+      {
+        keyRing: createSecurityKeyRingFromEnv(securityEnv),
+        context: {
+          purpose: "notification.push-token",
+          dataClass: "device",
+          userId,
+          subjectId: tokenSecretRef,
+          fieldName: "pushToken",
+          requestId: legacyRuntime.requestId,
+          runtime: "edge",
+        },
+        nowIso: legacyRuntime.now.toISOString(),
+      },
+    );
+    const calls: Array<{
+      readonly operationName: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+    const repository = createNeonNotificationsRepository({
+      query: async (_sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, params });
+        if (options.operationName === "notifications.create.dedupeLookup") {
+          return { rows: [], rowCount: 0 };
+        }
+        if (options.operationName === "notifications.listActivePushTokenSecrets") {
+          return {
+            rows: [
+              {
+                device_id: "33333333-3333-4333-8333-333333333333",
+                provider: "FCM",
+                push_token_id: "44444444-4444-4444-8444-444444444444",
+                token_ciphertext: legacyEncryptedToken,
+                token_hash:
+                  "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                token_secret_ref: tokenSecretRef,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        return {
+          rows: [
+            notificationRow({
+              dedupe_key: "FCM_TEST_LEGACY:111",
+              dedupe_request_hash: String(params.at(-1)),
+              notification_id: notificationId,
+              type: "NOTICE",
+            }),
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    try {
+      const result = await repository.test(
+        {
+          type: "NOTICE",
+          title: "QA notification",
+          message: "Phase 13 FCM legacy token safety test",
+          priority: "HIGH",
+          channels: ["IN_APP", "PUSH"],
+          deeplink: "salaryhijacking://notifications",
+          scheduledAt: null,
+          expiresAt: null,
+          metadata: { idempotencyKey: "FCM_TEST_LEGACY:111" },
+        },
+        sendRuntime,
+      );
+
+      expect(result.pushDelivery).toMatchObject({
+        attempted: true,
+        targetCount: 1,
+        sentCount: 0,
+        failureCount: 1,
+        rawPushTokenExposed: false,
+        outcomes: [
+          expect.objectContaining({
+            status: "TOKEN_REQUIRES_REREGISTRATION",
+            provider: "FCM",
+          }),
+        ],
+      });
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(JSON.stringify(result)).not.toContain(
+        "fcm_native_registration_token_legacyabcdef",
+      );
+      expect(calls.map((call) => call.operationName)).toContain(
+        "notifications.revokeUnreadablePushTokenSecret",
       );
     } finally {
       fetcher.mockRestore();

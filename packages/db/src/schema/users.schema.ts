@@ -10,13 +10,11 @@ export const authProviders = [
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ] as const;
 export const socialAuthProviders = [
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ] as const;
 export const userStatuses = [
   "PENDING_EMAIL_VERIFICATION",
@@ -1304,13 +1302,7 @@ export const getUsersSchemaCompletenessReport =
       for (const table of usersSchemaRequiredTableNames)
         if (!columnNames(table).has(safety.name))
           missing.push(`missing safety column ${safety.name} on ${table}`);
-    for (const provider of [
-      "EMAIL",
-      "NAVER",
-      "KAKAO",
-      "GOOGLE",
-      "APPLE",
-    ] as const)
+    for (const provider of ["EMAIL", "NAVER", "KAKAO", "GOOGLE"] as const)
       if (!authProviders.includes(provider))
         missing.push(`missing provider: ${provider}`);
     for (const role of [

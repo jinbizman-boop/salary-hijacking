@@ -205,7 +205,6 @@ export const salaryHijackingDesignSystem = {
     },
   },
   providerBrand: {
-    facebook: "#1877F2",
     google: "#FFFFFF",
     kakao: "#FEE500",
     naver: "#03C75A",

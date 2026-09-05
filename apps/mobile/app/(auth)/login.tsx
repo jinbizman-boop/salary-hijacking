@@ -351,7 +351,7 @@ export function assertMobileLoginScreenCompleteness(): {
     "비밀번호 찾기",
     "카카오로 계속하기",
     "네이버로 계속하기",
-    "Apple로 로그인",
+    "Google로 계속하기",
     "회원가입",
     "자동 로그인",
     "createMobileAuthApi",

@@ -198,7 +198,6 @@ async function encryptPushTokenForDelivery<TEnv>(
       userId: userIdFromRuntime(runtime),
       subjectId: tokenSecretRef,
       fieldName: "pushToken",
-      requestId: runtime.requestId,
       runtime: "edge",
     },
     nowIso: runtime.now.toISOString(),
@@ -226,7 +225,6 @@ async function decryptPushTokenForDelivery<TEnv>(
       userId: userIdFromRuntime(runtime),
       subjectId: tokenSecretRef,
       fieldName: "pushToken",
-      requestId: runtime.requestId,
       runtime: "edge",
     },
   });
@@ -750,11 +748,44 @@ async function dispatchPushToRegisteredDevices<TEnv>(
     const tokenSecretRef = toText(row.token_secret_ref);
     const tokenCiphertext = toText(row.token_ciphertext);
     if (!tokenSecretRef || !tokenCiphertext) continue;
-    const token = await decryptPushTokenForDelivery(
-      tokenCiphertext,
-      tokenSecretRef,
-      runtime,
-    );
+    let token: string;
+    try {
+      token = await decryptPushTokenForDelivery(
+        tokenCiphertext,
+        tokenSecretRef,
+        runtime,
+      );
+    } catch {
+      const pushTokenId = toText(row.push_token_id);
+      if (pushTokenId && uuidPattern.test(pushTokenId)) {
+        await queryText(
+          repositoryQuery,
+          runtime,
+          "notifications.revokeUnreadablePushTokenSecret",
+          `
+            update public.notification_push_tokens
+            set status = 'REVOKED',
+                revoked_at = coalesce(revoked_at, $3::timestamptz),
+                updated_at = now()
+            where push_token_id = $1::uuid
+              and user_id = $2::uuid
+              and status = 'ACTIVE'
+          `,
+          [
+            pushTokenId,
+            userIdFromRuntime(runtime),
+            runtime.now.toISOString(),
+          ],
+        );
+      }
+      failureCount += 1;
+      outcomes.push({
+        status: "TOKEN_REQUIRES_REREGISTRATION",
+        tokenHashPresent: typeof row.token_hash === "string",
+        provider: row.provider === "FCM" ? "FCM" : "UNKNOWN",
+      });
+      continue;
+    }
     const response = await globalThis.fetch(
       new URL("/notifications/v1/send", workerUrl).toString(),
       {

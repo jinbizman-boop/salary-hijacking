@@ -47,6 +47,10 @@ const productionApiBaseUrl = "https://api.salaryhijacking.com";
 const stagingApiBaseUrl = "https://api-staging.salaryhijacking.com";
 const placeholderEasProjectId = "00000000-0000-4000-8000-000000000000";
 const validEasProjectId = "11111111-1111-4111-8111-111111111111";
+const validProductionAdMobEnv = {
+  ADMOB_ANDROID_APP_ID: "ca-app-pub-1234567890123456~1234567890",
+  ADMOB_IOS_APP_ID: "ca-app-pub-1234567890123456~0987654321",
+} as const;
 const originalEnv = process.env;
 
 afterEach(() => {
@@ -317,6 +321,7 @@ describe("mobile Detox E2E contract", () => {
   it("fails production app config when the EAS project id is missing or still the placeholder", () => {
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: "",
       EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
@@ -325,6 +330,7 @@ describe("mobile Detox E2E contract", () => {
 
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: placeholderEasProjectId,
       EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
@@ -333,6 +339,7 @@ describe("mobile Detox E2E contract", () => {
 
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: validEasProjectId,
       EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
@@ -374,6 +381,7 @@ describe("mobile Detox E2E contract", () => {
 
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: validEasProjectId,
       EXPO_PUBLIC_API_BASE_URL: "http://localhost:8787",

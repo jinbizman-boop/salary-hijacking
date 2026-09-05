@@ -6,6 +6,7 @@ import { createMobileProfileApi } from "../../../shared/api/mobile-api";
 import {
   AppHeader,
   AppShell,
+  AdBannerSlot,
   PrimaryButton,
   SurfaceCard,
   componentColors,
@@ -127,6 +128,12 @@ export function ProfileScreen({
         rawPersonalDataExposed={false}
       />
       <ProfileStatGrid stats={stats} />
+      <AdBannerSlot
+        description="MY 화면 맥락과 분리된 비개인화 광고 영역입니다."
+        label="광고"
+        placement="AD-APP-MY-01"
+        title="나의 관리 흐름에 맞춘 추천"
+      />
       <ProfileMenuCard onSelect={onSelectMenu} />
       {onLogout ? (
         <SurfaceCard accessibilityLabel="로그아웃">

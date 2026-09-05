@@ -24,7 +24,7 @@ export type AuthRefreshRequest = Readonly<{
   deviceId?: string;
 }>;
 
-export type AuthSocialProvider = "KAKAO" | "NAVER" | "GOOGLE" | "APPLE";
+export type AuthSocialProvider = "KAKAO" | "NAVER" | "GOOGLE";
 
 export type AuthOAuthStartRequest = Readonly<{
   provider: AuthSocialProvider;

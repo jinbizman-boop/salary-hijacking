@@ -60,6 +60,8 @@ const DEFAULT_FAVICON = "./assets/favicon.png";
 const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
 const DEFAULT_ANDROID_GOOGLE_SERVICES_FILE =
   "./secrets/firebase/google-services.json";
+const ADMOB_TEST_ANDROID_APP_ID = "ca-app-pub-3940256099942544~3347511713";
+const ADMOB_TEST_IOS_APP_ID = "ca-app-pub-3940256099942544~1458002511";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
 const FREESENTATION_FONT_ASSETS = [
@@ -155,7 +157,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
     ios: iosConfig(buildNumber),
     android: androidConfig(versionCode),
     web: webConfig(),
-    plugins: pluginConfig(),
+    plugins: pluginConfig(environment),
     experiments: {
       typedRoutes: true,
       tsconfigPaths: true,
@@ -299,7 +301,7 @@ function webConfig(): JsonRecord {
   };
 }
 
-function pluginConfig(): readonly PluginEntry[] {
+function pluginConfig(environment: EnvironmentName): readonly PluginEntry[] {
   return [
     "expo-router",
     "expo-secure-store",
@@ -315,6 +317,21 @@ function pluginConfig(): readonly PluginEntry[] {
         color: DEFAULT_NOTIFICATION_COLOR,
         defaultChannel: DEFAULT_CHANNEL_ID,
         enableBackgroundRemoteNotifications: true,
+      },
+    ],
+    [
+      "react-native-google-mobile-ads",
+      {
+        androidAppId: admobAppIdEnv(
+          "ADMOB_ANDROID_APP_ID",
+          ADMOB_TEST_ANDROID_APP_ID,
+          environment,
+        ),
+        iosAppId: admobAppIdEnv(
+          "ADMOB_IOS_APP_ID",
+          ADMOB_TEST_IOS_APP_ID,
+          environment,
+        ),
       },
     ],
     [
@@ -391,6 +408,7 @@ function privacyFlags(): JsonRecord {
 function adsFlags(): JsonRecord {
   return {
     enabled: boolEnv("EXPO_PUBLIC_ADS_ENABLED", true),
+    provider: "ADMOB",
     partnerEnabled: boolEnv("EXPO_PUBLIC_PARTNER_ENABLED", true),
     contextualOnly: true,
     nonPersonalizedDefault: true,
@@ -399,6 +417,7 @@ function adsFlags(): JsonRecord {
     expenseAmountTargetingAllowed: false,
     savingsAmountTargetingAllowed: false,
     userIdentifierSharedWithAdvertisers: false,
+    sdkRequestNonPersonalizedAdsOnly: true,
     labelRequired: "광고/제휴",
   };
 }
@@ -600,6 +619,20 @@ function plainEnv(key: string, fallback: string): string {
 function optionalPlainEnv(key: string): string | undefined {
   const raw = process.env?.[key]?.trim();
   return raw ? scrubPublicValue(raw).slice(0, 140) : undefined;
+}
+
+function admobAppIdEnv(
+  key: string,
+  fallback: string,
+  environment: EnvironmentName,
+): string {
+  const raw = process.env?.[key]?.trim();
+  const value = raw && /^ca-app-pub-\d{16}~\d{10}$/u.test(raw) ? raw : "";
+  if (value) return value;
+  if (environment === "production") {
+    throw new Error(`${key} must be configured for production AdMob builds.`);
+  }
+  return fallback;
 }
 
 function assetPathEnv(key: string, fallback: string): string {

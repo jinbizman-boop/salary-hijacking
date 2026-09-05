@@ -2136,8 +2136,6 @@ export const authMiddlewareContract = Object.freeze({
     "NAVER",
     "KAKAO",
     "GOOGLE",
-    "APPLE",
-    "FACEBOOK",
   ],
   rbacRoles: [
     "GUEST",

@@ -29,9 +29,7 @@ export type AuthProvider =
   | "EMAIL"
   | "NAVER"
   | "KAKAO"
-  | "GOOGLE"
-  | "APPLE"
-  | "FACEBOOK";
+  | "GOOGLE";
 export type AuthRole = "USER" | "OPERATOR" | "ADMIN" | "SUPER_ADMIN" | "SYSTEM";
 export type AccountStatus =
   | "ACTIVE"
@@ -533,9 +531,7 @@ function assertStrongPassword(password: string): void {
 function normalizeProvider(value: unknown): AuthProvider {
   const provider = typeof value === "string" ? value.trim().toUpperCase() : "";
   if (
-    ["EMAIL", "NAVER", "KAKAO", "GOOGLE", "APPLE", "FACEBOOK"].includes(
-      provider,
-    )
+    ["EMAIL", "NAVER", "KAKAO", "GOOGLE"].includes(provider)
   )
     return provider as AuthProvider;
   throw new AuthRouteError(
@@ -587,7 +583,6 @@ function oauthClientId<TEnv>(
   if (provider === "KAKAO") return envText(runtime.env, "KAKAO_REST_API_KEY");
   if (provider === "NAVER") return envText(runtime.env, "NAVER_CLIENT_ID");
   if (provider === "GOOGLE") return envText(runtime.env, "GOOGLE_CLIENT_ID");
-  if (provider === "APPLE") return envText(runtime.env, "APPLE_CLIENT_ID");
   return null;
 }
 
@@ -596,7 +591,6 @@ function oauthAuthorizeEndpoint(provider: AuthProvider): string | null {
   if (provider === "NAVER") return "https://nid.naver.com/oauth2.0/authorize";
   if (provider === "GOOGLE")
     return "https://accounts.google.com/o/oauth2/v2/auth";
-  if (provider === "APPLE") return "https://appleid.apple.com/auth/authorize";
   return null;
 }
 
@@ -606,7 +600,6 @@ function oauthAuthorizationUrl<TEnv>(
   redirectUri: string,
   state: string,
   codeChallenge: string,
-  nonce?: string | null,
 ): string | null {
   const endpoint = oauthAuthorizeEndpoint(provider);
   const clientId = oauthClientId(provider, runtime);
@@ -618,9 +611,7 @@ function oauthAuthorizationUrl<TEnv>(
   url.searchParams.set("state", state);
   url.searchParams.set("code_challenge", codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
-  if (provider === "GOOGLE" || provider === "APPLE")
-    url.searchParams.set("scope", "openid email profile");
-  if (provider === "APPLE" && nonce) url.searchParams.set("nonce", nonce);
+  if (provider === "GOOGLE") url.searchParams.set("scope", "openid email profile");
   return url.toString();
 }
 
@@ -1342,14 +1333,19 @@ async function handleSocialLogin<TEnv>(
     nickname: optionalStringField(body, "nickname"),
     deviceId: optionalStringField(body, "deviceId"),
   };
-  const profile = runtime.options.verifySocialToken
-    ? await runtime.options.verifySocialToken(input, runtime)
-    : {
-        provider,
-        subject: await sha256Hex(`${provider}:${input.providerToken}`),
-        email: input.email,
-        nickname: input.nickname,
-      };
+  if (!runtime.options.verifySocialToken)
+    throw new AuthRouteError(
+      501,
+      "AUTH_PROVIDER_VERIFICATION_REQUIRED",
+      "소셜 로그인 제공자 검증 구성이 필요합니다.",
+    );
+  const profile = await runtime.options.verifySocialToken(input, runtime);
+  if (profile.provider !== provider)
+    throw new AuthRouteError(
+      400,
+      "AUTH_PROVIDER_PROFILE_MISMATCH",
+      "소셜 로그인 제공자 검증 결과가 일치하지 않습니다.",
+    );
   const user = await runtime.repository.upsertSocialUser(
     input,
     profile.subject,
@@ -1714,7 +1710,6 @@ async function handleOAuthStart<TEnv>(
     runtime.url.searchParams.get("codeChallenge"),
   );
   const codeVerifier = clientCodeChallenge ? null : randomToken("pkce");
-  const nonce = provider === "APPLE" ? randomToken("onc") : null;
   const codeChallenge =
     clientCodeChallenge ?? (await pkceS256Challenge(codeVerifier ?? ""));
   await runtime.repository.storeOAuthState(
@@ -1724,7 +1719,7 @@ async function handleOAuthStart<TEnv>(
       codeVerifierHash: clientCodeChallenge
         ? `s256:${clientCodeChallenge}`
         : await sha256Hex(codeVerifier ?? ""),
-      nonceHash: nonce ? await sha256Hex(nonce) : null,
+      nonceHash: null,
       redirectUri,
       createdAt: runtime.now.toISOString(),
       expiresAt: new Date(
@@ -1739,13 +1734,11 @@ async function handleOAuthStart<TEnv>(
     redirectUri,
     state,
     codeChallenge,
-    nonce,
   );
   return jsonResponse(runtime, 200, {
     data: {
       provider,
       state,
-      ...(nonce ? { nonce } : {}),
       codeChallenge,
       codeChallengeMethod: "S256",
       redirectUri,
@@ -1791,22 +1784,6 @@ async function handleOAuthCallback<TEnv>(
       "AUTH_OAUTH_STATE_INVALID",
       "OAuth state가 유효하지 않습니다.",
     );
-  if (stateRecord.provider === "APPLE") {
-    const nonce =
-      stringField(body, "nonce", false) ||
-      runtime.url.searchParams.get("nonce") ||
-      "";
-    if (
-      !nonce ||
-      !stateRecord.nonceHash ||
-      !constantTimeEqual(await sha256Hex(nonce), stateRecord.nonceHash)
-    )
-      throw new AuthRouteError(
-        400,
-        "AUTH_OAUTH_NONCE_INVALID",
-        "OAuth nonce validation failed.",
-      );
-  }
   const storedPkce = stateRecord.codeVerifierHash;
   const isClientChallenge = storedPkce.startsWith("s256:");
   const expectedPkce = isClientChallenge
@@ -1821,19 +1798,24 @@ async function handleOAuthCallback<TEnv>(
       "AUTH_PKCE_INVALID",
       "PKCE 검증에 실패했습니다.",
     );
-  const profile = runtime.options.exchangeOAuthCode
-    ? await runtime.options.exchangeOAuthCode(
-        stateRecord.provider,
-        code,
-        codeVerifier,
-        runtime,
-      )
-    : {
-        provider: stateRecord.provider,
-        subject: await sha256Hex(`${stateRecord.provider}:${code}`),
-        email: null,
-        nickname: null,
-      };
+  if (!runtime.options.exchangeOAuthCode)
+    throw new AuthRouteError(
+      501,
+      "AUTH_PROVIDER_VERIFICATION_REQUIRED",
+      "OAuth provider code 검증 구성이 필요합니다.",
+    );
+  const profile = await runtime.options.exchangeOAuthCode(
+    stateRecord.provider,
+    code,
+    codeVerifier,
+    runtime,
+  );
+  if (profile.provider !== stateRecord.provider)
+    throw new AuthRouteError(
+      400,
+      "AUTH_PROVIDER_PROFILE_MISMATCH",
+      "OAuth provider 검증 결과가 일치하지 않습니다.",
+    );
   const input: SocialLoginInput = {
     provider: profile.provider,
     providerToken: code,
@@ -2238,7 +2220,7 @@ export const authRoutesManifest = Object.freeze({
     "POST /admin/auth/mfa/verify",
   ],
   supportsEmailLogin: true,
-  supportsSocialLogin: ["NAVER", "KAKAO", "GOOGLE", "APPLE", "FACEBOOK"],
+  supportsSocialLogin: ["NAVER", "KAKAO", "GOOGLE"],
   supportsOAuthPkce: true,
   supportsRefreshTokenRotation: true,
   supportsAdminMfa: true,
@@ -2258,7 +2240,7 @@ export function assertAuthRoutesCompleteness(): {
 } {
   const checks = [
     "email_register_login",
-    "naver_kakao_google_apple_facebook_social_login",
+    "naver_kakao_google_social_login",
     "oauth_pkce_start_callback",
     "jwt_hs256_access_token_issue",
     "refresh_token_rotation_hash_storage",

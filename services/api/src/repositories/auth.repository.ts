@@ -62,8 +62,6 @@ const authProviders = new Set<AuthProvider>([
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
-  "FACEBOOK",
 ]);
 
 const uuidPattern =

@@ -211,7 +211,8 @@ describe("login screen wiring", () => {
     expect(combined).toContain("비밀번호 찾기");
     expect(combined).toContain("카카오로 계속하기");
     expect(combined).toContain("네이버로 계속하기");
-    expect(combined).toContain("Apple로 로그인");
+    expect(combined).toContain("Google로 계속하기");
+    expect(combined).not.toContain("Apple로 로그인");
     expect(source).not.toContain("EurekaWorldMark");
     expect([source, credentials, social].join("\n")).not.toContain(
       "서버 인증으로 급여 데이터를 안전하게 불러옵니다.",

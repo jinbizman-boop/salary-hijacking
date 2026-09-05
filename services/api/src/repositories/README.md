@@ -173,7 +173,7 @@ Repository 내부에서 `new Date()`를 직접 호출하지 않는다. 반드시
 - 비밀번호 평문 저장 금지.
 - refresh token 원문 저장 금지. 해시만 저장한다.
 - `ACTIVE`, `SUSPENDED`, `WITHDRAWN`, `DELETED`, `LOCKED` 상태를 조회 조건에 반영한다.
-- 소셜 로그인 provider는 `NAVER`, `KAKAO`, `GOOGLE`, `APPLE`, `FACEBOOK` 확장을 고려한다.
+- Android launch 소셜 로그인 provider는 `NAVER`, `KAKAO`, `GOOGLE`만 활성화한다.
 
 ### 6.2 급여/계획
 

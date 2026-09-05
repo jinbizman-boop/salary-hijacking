@@ -55,7 +55,6 @@ export const appIconAssets = {
     kakao: require("./social/kakao.png") as ImageSourcePropType,
     naver: require("./social/naver.png") as ImageSourcePropType,
     google: require("./social/google.png") as ImageSourcePropType,
-    facebook: require("./social/facebook.png") as ImageSourcePropType,
   },
   brands: {
     chatGpt: require("./brands/chat-gpt.png") as ImageSourcePropType,

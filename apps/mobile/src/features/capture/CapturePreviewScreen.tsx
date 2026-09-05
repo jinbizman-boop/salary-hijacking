@@ -448,7 +448,7 @@ const contentByKind: Partial<Record<CapturePreviewKind, CaptureContent>> = {
   },
   login: {
     body: "이메일, 비밀번호, 소셜 로그인, MFA 경계를 통과해 서버 세션을 확인합니다.",
-    detailRows: ["이메일", "비밀번호", "카카오", "네이버", "Google", "Apple"],
+    detailRows: ["이메일", "비밀번호", "카카오", "네이버", "Google"],
     heroAmount: "안전 로그인",
     heroLabel: "토큰 원문 미노출",
     metrics: [

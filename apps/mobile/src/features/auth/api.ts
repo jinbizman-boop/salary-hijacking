@@ -100,7 +100,6 @@ const SOCIAL_PROVIDERS = new Set<AuthSocialProvider>([
   "KAKAO",
   "NAVER",
   "GOOGLE",
-  "APPLE",
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {

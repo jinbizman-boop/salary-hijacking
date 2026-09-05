@@ -170,14 +170,12 @@ export const AuthProviderSchema = z.enum([
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ]);
 
 export const SocialAuthProviderSchema = z.enum([
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ]);
 
 export const UserStatusSchema = z.enum([

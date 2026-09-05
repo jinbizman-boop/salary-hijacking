@@ -58,12 +58,12 @@ describe("login feature components", () => {
 
     fireEvent.press(screen.getByRole("button", { name: "카카오로 계속하기" }));
     fireEvent.press(screen.getByRole("button", { name: "네이버로 계속하기" }));
-    fireEvent.press(screen.getByRole("button", { name: "Apple로 로그인" }));
+    fireEvent.press(screen.getByRole("button", { name: "Google로 계속하기" }));
 
     expect(onSelectProvider).toHaveBeenNthCalledWith(1, "KAKAO");
     expect(onSelectProvider).toHaveBeenNthCalledWith(2, "NAVER");
-    expect(onSelectProvider).toHaveBeenNthCalledWith(3, "APPLE");
+    expect(onSelectProvider).toHaveBeenNthCalledWith(3, "GOOGLE");
     expect(onSelectProvider).toHaveBeenCalledTimes(3);
-    expect(screen.queryByRole("button", { name: /페이스북|구글/u })).toBeNull();
+    expect(screen.queryByRole("button", { name: /페이스북|Apple/u })).toBeNull();
   });
 });

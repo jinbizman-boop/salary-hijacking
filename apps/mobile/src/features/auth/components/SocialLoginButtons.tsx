@@ -23,6 +23,8 @@ const kakaoIcon =
   require("../../../shared/assets/icons/social/kakao.png") as ImageSourcePropType;
 const naverIcon =
   require("../../../shared/assets/icons/social/naver.png") as ImageSourcePropType;
+const googleIcon =
+  require("../../../shared/assets/icons/social/google.png") as ImageSourcePropType;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
@@ -44,6 +46,13 @@ const SOCIAL_PROVIDERS: readonly {
     icon: naverIcon,
     label: "네이버로 계속하기",
     provider: "NAVER",
+  },
+  {
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.google,
+    foregroundColor: authVisualColors.ink,
+    icon: googleIcon,
+    label: "Google로 계속하기",
+    provider: "GOOGLE",
   },
 ];
 
@@ -82,6 +91,7 @@ export function SocialLoginButtons({
             style={[
               styles.socialButton,
               { backgroundColor: provider.backgroundColor },
+              provider.provider === "GOOGLE" ? styles.googleButton : null,
             ]}
           >
             <View
@@ -106,42 +116,12 @@ export function SocialLoginButtons({
             </Text>
           </Pressable>
         ))}
-        <Pressable
-          accessibilityLabel="Apple로 로그인"
-          accessibilityRole="button"
-          onPress={() => onSelectProvider("APPLE")}
-          style={[styles.socialButton, styles.appleButton]}
-        >
-          <View accessibilityElementsHidden style={styles.iconSlot}>
-            <Text allowFontScaling={false} style={styles.appleGlyph}>
-              Apple
-            </Text>
-          </View>
-          <Text allowFontScaling={false} style={styles.appleLabel}>
-            Apple로 로그인
-          </Text>
-        </Pressable>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  appleButton: {
-    backgroundColor: designSystem.colors.surface.default,
-    borderColor: designSystem.colors.border.strong,
-  },
-  appleGlyph: {
-    color: authVisualColors.ink,
-    ...typography.labelM,
-    textAlign: "center",
-  },
-  appleLabel: {
-    color: authVisualColors.ink,
-    ...typography.labelL,
-    flex: 1,
-    textAlign: "center",
-  },
   buttonStack: {
     gap: componentSpacing.sm,
   },
@@ -169,6 +149,9 @@ const styles = StyleSheet.create({
     height: 28,
     justifyContent: "center",
     width: 52,
+  },
+  googleButton: {
+    borderColor: designSystem.colors.border.strong,
   },
   kakaoIconSlot: {
     borderRadius: designSystem.radius.full,

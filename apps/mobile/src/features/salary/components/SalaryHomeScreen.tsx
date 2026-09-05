@@ -30,6 +30,7 @@ import type {
   PlanSavingsDepositRequest,
 } from "../../../features/plan/types";
 import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
+import { AdBannerSlot } from "../../../shared/components/AdBannerSlot";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
@@ -1437,24 +1438,12 @@ function HeroMetric({
 
 function SponsoredSlot(): React.ReactElement {
   return (
-    <View accessibilityLabel="Sponsored 광고 영역" style={styles.googleAd}>
-      <View style={styles.adLeft}>
-        <Text allowFontScaling={false} style={styles.adSmall}>
-          Sponsored
-        </Text>
-        <Text allowFontScaling={false} style={styles.adTitle}>
-          생활비 혜택
-        </Text>
-        <Text allowFontScaling={false} style={styles.adText}>
-          금융 데이터와 분리된 문맥형 안내
-        </Text>
-      </View>
-      <View style={styles.adDish}>
-        <Text allowFontScaling={false} style={styles.adDiscount}>
-          10%
-        </Text>
-      </View>
-    </View>
+    <AdBannerSlot
+      description="생활비 문맥과 분리된 비개인화 광고 영역입니다."
+      label="광고"
+      placement="AD-APP-SALARY-01"
+      title="생활 흐름에 맞춘 추천"
+    />
   );
 }
 

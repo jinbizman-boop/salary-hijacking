@@ -32,7 +32,6 @@ const requiredIconFiles = [
   "social/kakao.png",
   "social/naver.png",
   "social/google.png",
-  "social/facebook.png",
   "brands/chat-gpt.png",
   "brands/youtube.png",
   "brands/netflix.png",
@@ -81,6 +80,17 @@ function relativePosix(root: string, file: string): string {
 }
 
 describe("mobile asset registry policy", () => {
+  it("keeps the Android launch social icon set aligned with Kakao, Naver, and Google only", () => {
+    const iconsRoot = path.join(mobileRoot, "src", "shared", "assets", "icons");
+    const socialRoot = path.join(iconsRoot, "social");
+    const socialFiles = fs
+      .readdirSync(socialRoot)
+      .filter((file) => file.endsWith(".png"))
+      .sort();
+
+    expect(socialFiles).toEqual(["google.png", "kakao.png", "naver.png"]);
+  });
+
   it("keeps runtime icons in src/shared/assets/icons with kebab-case file names", () => {
     const iconsRoot = path.join(mobileRoot, "src", "shared", "assets", "icons");
 

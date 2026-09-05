@@ -106,7 +106,8 @@ export default function LevelIndexScreen(): React.ReactElement {
       <AdBannerSlot
         description="성장 루틴 문맥과 분리된 제휴 영역입니다."
         label="광고"
-        title={LVUP_AD_HEADER_SLOT}
+        placement={LVUP_AD_HEADER_SLOT}
+        title="성장에 방해되지 않는 추천"
       />
       <SurfaceCard accessibilityLabel="LV UP 첫 목표 선택">
         <Text style={styles.choiceTitle}>{initialGoalChoice.title}</Text>
@@ -181,7 +182,8 @@ export default function LevelIndexScreen(): React.ReactElement {
       <AdBannerSlot
         description="오늘 성장 활동 이후에만 표시되는 광고 슬롯입니다."
         label="광고"
-        title={LVUP_AD_SUMMARY_SLOT}
+        placement={LVUP_AD_SUMMARY_SLOT}
+        title="오늘의 추천"
       />
       {serverDashboard ? <LevelHeroCard dashboard={serverDashboard} /> : null}
       {!serverDashboard && !loadError ? (

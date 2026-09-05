@@ -112,14 +112,13 @@ type ScreenKind =
   | "community"
   | "profile"
   | "login";
-type LoginSocialProvider = "KAKAO" | "NAVER" | "GOOGLE" | "APPLE";
+type LoginSocialProvider = "KAKAO" | "NAVER" | "GOOGLE";
 
 const SOCIAL_LOGIN_LABELS: ReadonlyArray<
   Readonly<{ label: string; provider: LoginSocialProvider }>
 > = [
   { label: "Kakao", provider: "KAKAO" },
   { label: "Naver", provider: "NAVER" },
-  { label: "Apple", provider: "APPLE" },
   { label: "Google", provider: "GOOGLE" },
 ];
 
