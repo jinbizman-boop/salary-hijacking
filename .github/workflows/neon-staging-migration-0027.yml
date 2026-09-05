@@ -8,6 +8,18 @@ on:
         required: true
         default: "codex/payroll-reminder-launch-ready-100-20260714"
         type: string
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - ".github/workflows/neon-staging-migration-0027.yml"
+      - "scripts/release/neon-staging-migration-0027.mjs"
+      - "scripts/release/neon-staging-migration-0027-workflow-contract.test.mjs"
+      - "scripts/release/neon-staging-connection-preflight.mjs"
+      - "database/migrations/0027_android_launch_social_provider_contract.sql"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
 
 concurrency:
   group: neon-staging-migration-0027
@@ -25,6 +37,7 @@ env:
   FORCE_COLOR: "1"
   TZ: Asia/Seoul
   DEFAULT_MIGRATION_SOURCE_REF: codex/payroll-reminder-launch-ready-100-20260714
+  MIGRATION_SOURCE_REF: ${{ inputs.migration_source_ref || github.sha }}
 
 jobs:
   apply-staging-migration-0027:
@@ -41,7 +54,7 @@ jobs:
       - name: Checkout requested migration source
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.migration_source_ref }}
+          ref: ${{ env.MIGRATION_SOURCE_REF }}
           persist-credentials: false
 
       - name: Setup pnpm
@@ -62,7 +75,7 @@ jobs:
 
           mkdir -p artifacts/neon-staging-migration-0027/status
 
-          if [ -z "${{ inputs.migration_source_ref }}" ]; then
+          if [ -z "${MIGRATION_SOURCE_REF:-}" ]; then
             echo "::error::migration_source_ref is required."
             exit 1
           fi
@@ -73,7 +86,7 @@ jobs:
           fi
 
           echo "Staging migration environment secret is present; value was not printed."
-          echo "Migration source ref: ${{ inputs.migration_source_ref }}"
+          echo "Migration source ref: ${MIGRATION_SOURCE_REF}"
           git rev-parse HEAD > artifacts/neon-staging-migration-0027/status/checked-out-source-sha.txt
           touch artifacts/neon-staging-migration-0027/status/staging-database-url-present
 
@@ -109,7 +122,7 @@ jobs:
             echo ""
             echo "- Workflow ref: $GITHUB_REF"
             echo "- Workflow commit: $GITHUB_SHA"
-            echo "- Migration source ref: ${{ inputs.migration_source_ref }}"
+            echo "- Migration source ref: ${MIGRATION_SOURCE_REF}"
             echo "- Environment: staging"
             echo "- Migration: 0027_android_launch_social_provider_contract"
             echo "- Secret values printed: no"

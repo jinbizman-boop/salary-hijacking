@@ -9,6 +9,7 @@ const runner = fs.readFileSync(runnerPath, "utf8");
 
 assert.match(workflow, /name:\s*neon-staging-migration-0027/u);
 assert.match(workflow, /workflow_dispatch:/u);
+assert.match(workflow, /push:\s*\n\s+branches:\s*\n\s+- codex\/payroll-reminder-launch-ready-100-20260714/u);
 assert.match(workflow, /migration_source_ref:/u);
 assert.match(
   workflow,
@@ -32,7 +33,8 @@ assert.match(
   /DEFAULT_MIGRATION_SOURCE_REF:\s*codex\/payroll-reminder-launch-ready-100-20260714/u,
 );
 assert.match(workflow, /Checkout requested migration source/u);
-assert.match(workflow, /ref:\s*\$\{\{\s*inputs\.migration_source_ref\s*\}\}/u);
+assert.match(workflow, /MIGRATION_SOURCE_REF:\s*\$\{\{\s*inputs\.migration_source_ref\s*\|\|\s*github\.sha\s*\}\}/u);
+assert.match(workflow, /ref:\s*\$\{\{\s*env\.MIGRATION_SOURCE_REF\s*\}\}/u);
 assert.match(workflow, /persist-credentials:\s*false/u);
 assert.match(workflow, /neon-staging-connection-preflight\.mjs/u);
 assert.match(workflow, /neon-staging-migration-0027\.mjs/u);
