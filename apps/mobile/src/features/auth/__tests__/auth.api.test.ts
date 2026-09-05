@@ -1,4 +1,7 @@
-import { MOBILE_ACCESS_TOKEN_KEY } from "../../../shared/storage/auth-token";
+import {
+  MOBILE_ACCESS_TOKEN_KEY,
+  MOBILE_REFRESH_TOKEN_KEY,
+} from "../../../shared/storage/auth-token";
 import { createAuthApi } from "../api";
 import {
   AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX,
@@ -98,7 +101,7 @@ describe("auth api", () => {
     });
   });
 
-  it("logs in through the server auth API and stores only the access token", async () => {
+  it("logs in through the server auth API and stores the server session credential securely", async () => {
     const calls: Request[] = [];
     const stored = new Map<string, string>();
     const api = createAuthApi({
@@ -131,6 +134,7 @@ describe("auth api", () => {
       now: () => now,
       platform: "android",
       tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
         setItemAsync: async (key, value) => {
           stored.set(key, value);
         },
@@ -154,9 +158,7 @@ describe("auth api", () => {
     });
     expect(JSON.stringify(result)).not.toContain("refresh.cookie.token");
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("access.jwt.token");
-    expect(Array.from(stored.values()).join(" ")).not.toContain(
-      "refresh.cookie.token",
-    );
+    expect(stored.get(MOBILE_REFRESH_TOKEN_KEY)).toBe("refresh.cookie.token");
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.method).toBe("POST");
@@ -393,7 +395,7 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("registers with required consents and stores the authenticated access token", async () => {
+  it("registers with required consents and stores the authenticated session credential", async () => {
     const stored = new Map<string, string>();
     const api = createAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
@@ -453,6 +455,7 @@ describe("auth api", () => {
       onboardingRequired: false,
     });
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("new.access.jwt");
+    expect(stored.get(MOBILE_REFRESH_TOKEN_KEY)).toBe("new.refresh.cookie");
   });
 
   it("rejects signup without required legal consents before fetch", async () => {
@@ -568,6 +571,7 @@ describe("auth api", () => {
         }),
       platform: "android",
       tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
         setItemAsync: async (key, value) => {
           stored.set(key, value);
         },
@@ -702,6 +706,7 @@ describe("auth api", () => {
       now: () => now,
       platform: "android",
       tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
         setItemAsync: async (key, value) => {
           stored.set(key, value);
         },
@@ -1069,10 +1074,9 @@ describe("auth api", () => {
       user: { id: "usr_oauth", role: "USER" },
     });
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("oauth.access.jwt");
+    expect(stored.get(MOBILE_REFRESH_TOKEN_KEY)).toBe("oauth.refresh.cookie");
     expect(JSON.stringify(result)).not.toContain("stored-code-verifier");
-    expect(Array.from(stored.values()).join(" ")).not.toContain(
-      "oauth.refresh.cookie",
-    );
+    expect(JSON.stringify(result)).not.toContain("oauth.refresh.cookie");
     expect(deleted).toContain(
       `${AUTH_OAUTH_PKCE_VERIFIER_KEY_PREFIX}oauth-state-2`,
     );
@@ -1233,9 +1237,11 @@ describe("auth api", () => {
     expect(calls).toHaveLength(0);
   });
 
-  it("refreshes the access token through the server refresh cookie without storing refresh tokens", async () => {
+  it("refreshes through the persisted server session credential and stores the rotated credential", async () => {
     const calls: Request[] = [];
-    const stored = new Map<string, string>();
+    const stored = new Map<string, string>([
+      [MOBILE_REFRESH_TOKEN_KEY, "stored.refresh.cookie"],
+    ]);
     const api = createAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
       createCorrelationId: () => "auth-refresh-test",
@@ -1249,6 +1255,7 @@ describe("auth api", () => {
         expect(normalized.credentials).toBe("include");
         expect(JSON.parse(await normalized.text())).toEqual({
           deviceId: "device-1",
+          refreshToken: "stored.refresh.cookie",
         });
         return jsonResponse({
           data: {
@@ -1268,6 +1275,7 @@ describe("auth api", () => {
       now: () => now,
       platform: "android",
       tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
         setItemAsync: async (key, value) => {
           stored.set(key, value);
         },
@@ -1281,15 +1289,17 @@ describe("auth api", () => {
       accessToken: "refreshed.access.jwt",
     });
     expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("refreshed.access.jwt");
-    expect(Array.from(stored.values()).join(" ")).not.toContain(
-      "rotated.refresh.cookie",
-    );
+    expect(stored.get(MOBILE_REFRESH_TOKEN_KEY)).toBe("rotated.refresh.cookie");
+    expect(JSON.stringify(result)).not.toContain("rotated.refresh.cookie");
     expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
   });
 
-  it("logs out through the server and clears only the local access token", async () => {
+  it("logs out through the server and clears the persisted session credential", async () => {
     const calls: Request[] = [];
     const deleted: string[] = [];
+    const stored = new Map<string, string>([
+      [MOBILE_REFRESH_TOKEN_KEY, "stored.logout.refresh"],
+    ]);
     const api = createAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
       createCorrelationId: () => "auth-logout-test",
@@ -1301,11 +1311,14 @@ describe("auth api", () => {
           "https://api.salaryhijacking.com/api/v1/auth/logout",
         );
         expect(normalized.credentials).toBe("include");
-        expect(JSON.parse(await normalized.text())).toEqual({});
+        expect(JSON.parse(await normalized.text())).toEqual({
+          refreshToken: "stored.logout.refresh",
+        });
         return jsonResponse({ data: { revoked: true } });
       },
       platform: "ios",
       tokenStore: {
+        getItemAsync: async (key) => stored.get(key) ?? null,
         setItemAsync: async () => undefined,
         deleteItemAsync: async (key) => {
           deleted.push(key);
@@ -1316,11 +1329,14 @@ describe("auth api", () => {
     const result = await api.logout();
 
     expect(result).toEqual({ revoked: true });
-    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+    expect(deleted).toEqual([
+      MOBILE_ACCESS_TOKEN_KEY,
+      MOBILE_REFRESH_TOKEN_KEY,
+    ]);
     expect(calls[0]?.headers.get("x-raw-personal-data-exposed")).toBe("false");
   });
 
-  it("clears the local access token even when server logout is rejected", async () => {
+  it("clears local session credentials even when server logout is rejected", async () => {
     const deleted: string[] = [];
     const api = createAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
@@ -1338,10 +1354,13 @@ describe("auth api", () => {
     await expect(api.logout()).rejects.toMatchObject({
       code: "AUTH_SESSION_REVOKE_FAILED",
     });
-    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+    expect(deleted).toEqual([
+      MOBILE_ACCESS_TOKEN_KEY,
+      MOBILE_REFRESH_TOKEN_KEY,
+    ]);
   });
 
-  it("clears the local access token when refresh is rejected by the server", async () => {
+  it("clears local session credentials when refresh is rejected by the server", async () => {
     const deleted: string[] = [];
     const api = createAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
@@ -1359,6 +1378,52 @@ describe("auth api", () => {
     await expect(api.refresh()).rejects.toMatchObject({
       code: "AUTH_REFRESH_TOKEN_INVALID",
     });
-    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+    expect(deleted).toEqual([
+      MOBILE_ACCESS_TOKEN_KEY,
+      MOBILE_REFRESH_TOKEN_KEY,
+    ]);
+  });
+
+  it("does not commit login success when secure session persistence fails", async () => {
+    const stored = new Map<string, string>();
+    const deleted: string[] = [];
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            user: {
+              userId: "usr_store_failure",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "partial.access.jwt",
+              refreshToken: "partial.refresh.cookie",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        }),
+      platform: "android",
+      tokenStore: {
+        setItemAsync: async (key, value) => {
+          if (key === MOBILE_REFRESH_TOKEN_KEY) throw new Error("store failed");
+          stored.set(key, value);
+        },
+        deleteItemAsync: async (key) => {
+          deleted.push(key);
+          stored.delete(key);
+        },
+      },
+    });
+
+    await expect(
+      api.login({ email: "user@example.com", password: "server-password" }),
+    ).rejects.toMatchObject({ code: "AUTH_TOKEN_STORE_FAILED" });
+    expect(stored.size).toBe(0);
+    expect(deleted).toEqual([
+      MOBILE_ACCESS_TOKEN_KEY,
+      MOBILE_REFRESH_TOKEN_KEY,
+    ]);
   });
 });

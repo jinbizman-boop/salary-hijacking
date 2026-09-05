@@ -337,6 +337,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain(
       'const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token"',
     );
+    expect(source).toContain(
+      'const MOBILE_REFRESH_TOKEN_KEY = "salary-hijacking.mobile.refresh-token"',
+    );
     expect(source).toContain("function getSecureStoreRuntime()");
     expect(source).toMatch(
       /loadModule\(\s*"\.\.\/src\/shared\/storage\/secure-store",?\s*\)/u,
@@ -363,15 +366,21 @@ describe("mobile app screen API and route contracts", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
 
     expect(source).toContain("async function hasStoredAccessToken()");
+    expect(source).toContain("async function hasStoredRefreshToken()");
     expect(source).toContain(
       "const hasAccessToken = await hasStoredAccessToken()",
     );
-    expect(source).toContain("if (!hasAccessToken)");
+    expect(source).toContain(
+      "const hasRefreshToken = await hasStoredRefreshToken()",
+    );
+    expect(source).toContain("if (!hasAccessToken && !hasRefreshToken)");
     expect(source).toContain(
       'void persistSessionStatus(fallbackSession, "AUTH_REQUIRED")',
     );
     expect(source).toContain('status: "AUTH_REQUIRED"');
-    expect(source.indexOf("if (!hasAccessToken)")).toBeLessThan(
+    expect(
+      source.indexOf("if (!hasAccessToken && !hasRefreshToken)"),
+    ).toBeLessThan(
       source.indexOf(
         'requestJsonWithAuthRefresh<RootResponse>(\n        "/api/v1/mobile/bootstrap"',
       ),
@@ -428,7 +437,7 @@ describe("mobile app screen API and route contracts", () => {
       /canUseCachedAuthenticatedLaunch\(\s*publicSessionHint,\s*currentRouteKey,\s*"public-hint",?\s*\)/u,
     );
     expect(source).toMatch(
-      /const cachedSession = hasAccessToken\s*\?\s*await readCachedSessionStatus\(\)\s*:\s*fallbackSession/u,
+      /const cachedSession = hasAccessToken\s*\|\|\s*hasRefreshToken\s*\?\s*await readCachedSessionStatus\(\)\s*:\s*fallbackSession/u,
     );
     expect(source).toMatch(
       /canUseCachedAuthenticatedLaunch\(\s*cachedSession,\s*currentRouteKey,\s*"secure-session",?\s*\)/u,
@@ -602,6 +611,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("clearRootAuthenticatedSession");
     expect(source).toContain(
       "await getSecureStoreRuntime().deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY)",
+    );
+    expect(source).toContain(
+      "await getSecureStoreRuntime().deleteItemAsync(MOBILE_REFRESH_TOKEN_KEY)",
     );
     expect(source).toContain(
       "await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY)",

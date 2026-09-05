@@ -203,6 +203,7 @@ const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
 const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token";
+const MOBILE_REFRESH_TOKEN_KEY = "salary-hijacking.mobile.refresh-token";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
 const ROOT_PUBLIC_SESSION_HINT_KEY =
   "salary_hijacking.root_public_session_hint.v1";
@@ -460,10 +461,11 @@ export default function MobileRootLayout(): unknown {
         }));
       }
       const hasAccessToken = await hasStoredAccessToken();
-      const cachedSession = hasAccessToken
+      const hasRefreshToken = await hasStoredRefreshToken();
+      const cachedSession = hasAccessToken || hasRefreshToken
         ? await readCachedSessionStatus()
         : fallbackSession;
-      if (!hasAccessToken) {
+      if (!hasAccessToken && !hasRefreshToken) {
         setAuthRequiredBeforePersistence();
         void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
           () => undefined,
@@ -1093,9 +1095,21 @@ async function hasStoredAccessToken(): Promise<boolean> {
   }
 }
 
+async function hasStoredRefreshToken(): Promise<boolean> {
+  try {
+    const token = await getSecureStoreRuntime().getItemAsync(
+      MOBILE_REFRESH_TOKEN_KEY,
+    );
+    return Boolean(token?.trim());
+  } catch {
+    return true;
+  }
+}
+
 async function clearRootAuthenticatedSession(): Promise<void> {
   try {
     await getSecureStoreRuntime().deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(MOBILE_REFRESH_TOKEN_KEY);
   } finally {
     await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY);
     await removePublicSessionHint();
