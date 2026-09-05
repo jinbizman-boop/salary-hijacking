@@ -821,11 +821,11 @@ const PUBLIC_WEB_STYLE = `
     .nav { display: flex; align-items: center; justify-content: space-between; min-height: 68px; gap: 18px; }
     .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
     .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--green); color: #fff; font-weight: 900; }
-    .brand strong { display: block; font-size: 17px; letter-spacing: 0; }
-    .brand span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
-    .nav-links { display: flex; align-items: center; gap: 18px; font-size: 14px; }
+    .brand strong { display: block; font-size: 16px; letter-spacing: 0; }
+    .brand span { display: block; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 18px; font-size: 13px; }
     .nav-links a { color: #314239; text-decoration: none; white-space: nowrap; }
-    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 8px; padding: 0 18px; border: 1px solid var(--line); text-decoration: none; font-weight: 900; cursor: pointer; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 8px; padding: 0 18px; border: 1px solid var(--line); text-decoration: none; font-size: 15px; font-weight: 900; cursor: pointer; }
     .primary { background: var(--green); border-color: var(--green); color: #fff; }
     .secondary { background: #fff; color: var(--green-dark); }
     section { padding: 82px 0; }
@@ -836,18 +836,18 @@ const PUBLIC_WEB_STYLE = `
     .hero-grid { display: grid; grid-template-columns: 1.04fr .96fr; gap: 52px; align-items: center; }
     .kicker { color: var(--green-dark); font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
     h1, h2, h3, p { letter-spacing: 0; }
-    h1 { margin: 16px 0 18px; font-size: clamp(40px, 6vw, 72px); line-height: 1.06; }
-    h2 { margin: 12px 0 16px; font-size: clamp(28px, 4vw, 46px); line-height: 1.15; }
-    h3 { margin: 0 0 10px; font-size: 20px; line-height: 1.3; }
-    p { color: var(--muted); font-size: 17px; line-height: 1.8; }
-    .lead { font-size: 19px; color: #3a4840; }
+    h1 { margin: 16px 0 18px; font-size: clamp(36px, 5vw, 60px); line-height: 1.08; }
+    h2 { margin: 12px 0 16px; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.18; }
+    h3 { margin: 0 0 10px; font-size: 18px; line-height: 1.34; }
+    p { color: var(--muted); font-size: 16px; line-height: 1.76; }
+    .lead { font-size: 18px; color: #3a4840; }
     .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
     .device { position: relative; width: min(430px, 100%); margin: 0 auto; border: 1px solid rgba(24,33,29,.12); border-radius: 34px; padding: 16px; background: #111b15; box-shadow: var(--shadow); }
     .screen { border-radius: 24px; background: #f8fbf8; overflow: hidden; padding: 18px; min-height: 500px; }
     .status { display: flex; justify-content: space-between; color: #5b6860; font-size: 12px; font-weight: 800; margin-bottom: 22px; }
     .money-panel { background: #fff; border: 1px solid #dfe9e2; border-radius: 8px; padding: 18px; box-shadow: 0 10px 30px rgba(17,144,85,.08); }
     .money-panel small { color: var(--muted); font-weight: 800; }
-    .money-panel b { display: block; margin-top: 8px; color: var(--green-dark); font-size: 32px; line-height: 1.1; }
+    .money-panel b { display: block; margin-top: 8px; color: var(--green-dark); font-size: 28px; line-height: 1.12; }
     .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
     .mini { background: var(--mint); border-radius: 8px; padding: 12px; min-height: 82px; }
     .mini:nth-child(2) { background: #fff4dc; }
@@ -900,14 +900,16 @@ const PUBLIC_WEB_STYLE = `
       .field.full { grid-column: auto; }
       .hero { padding: 28px 0 24px; }
       .hero-grid { gap: 24px; }
-      h1 { font-size: 34px; }
-      .lead { font-size: 16px; line-height: 1.65; }
+      h1 { font-size: 31px; }
+      h2 { font-size: 24px; }
+      p { font-size: 15px; }
+      .lead { font-size: 15px; line-height: 1.65; }
       .cta-row { margin-top: 18px; }
       .device { border-radius: 22px; padding: 8px; max-width: 250px; }
       .screen { border-radius: 16px; min-height: 220px; padding: 12px; }
       .status { margin-bottom: 12px; }
       .money-panel { padding: 12px; }
-      .money-panel b { font-size: 24px; }
+      .money-panel b { font-size: 22px; }
       .money-panel p { margin: 8px 0 0; font-size: 13px; }
       .mini-grid { display: none; }
     }`;
