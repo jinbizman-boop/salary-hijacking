@@ -59,7 +59,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "Freesentation-8ExtraBold.ttf",
       "Freesentation-9Black.ttf",
     ];
-    const nativeFonts = ["Freesentation-4Regular.ttf", "Freesentation-7Bold.ttf"];
+    const nativeFonts = [
+      "Freesentation-4Regular.ttf",
+      "Freesentation-7Bold.ttf",
+    ];
 
     expect(rootLayout).toContain("expo-font");
     expect(rootLayout).toContain("useFonts");
@@ -78,12 +81,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
 
     expect(config).not.toContain("./assets/fonts/Freesentation-5Medium.ttf");
-    expect(config).not.toContain(
-      "./assets/fonts/Freesentation-6SemiBold.ttf",
-    );
-    expect(config).not.toContain(
-      "./assets/fonts/Freesentation-8ExtraBold.ttf",
-    );
+    expect(config).not.toContain("./assets/fonts/Freesentation-6SemiBold.ttf");
+    expect(config).not.toContain("./assets/fonts/Freesentation-8ExtraBold.ttf");
     expect(config).not.toContain("./assets/fonts/Freesentation-9Black.ttf");
   });
 
@@ -1000,7 +999,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("onPress={openForgotPassword}");
   });
 
-  it("keeps login social buttons starting the server OAuth flow instead of no-op buttons", () => {
+  it("keeps login social buttons starting the server social-auth flow without protocol copy", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
@@ -1025,11 +1024,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "onPress={() => startSocialLogin(provider)}",
     );
-    expect(cleanScreens).toContain("OAuth 로그인을 시작하는 중입니다.");
-    expect(cleanScreens).toContain("OAuth 인증 창을 열었어요.");
+    expect(cleanScreens).toContain("로그인을 시작하는 중입니다.");
+    expect(cleanScreens).toContain("로그인 화면을 열었어요.");
     expect(cleanScreens).toContain(
-      "OAuth 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+      "로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.",
     );
+    expect(cleanScreens).not.toContain("OAuth 로그인을 시작하는 중입니다.");
+    expect(cleanScreens).not.toContain("OAuth 인증 창을 열었어요.");
+    expect(cleanScreens).not.toContain("인증 URL");
     expect(cleanScreens).not.toMatch(
       /OAuth could not start|Please try again later|browser session was opened|server OAuth start request is in progress/u,
     );
@@ -2338,7 +2340,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("profileDisplayBio");
     expect(cleanScreens).toContain("profileOccupationCategory");
     expect(cleanScreens).toContain("submitProfileSettings");
-    expect(profileSettingsSource).toContain("프로필 설정을 안전하게 저장했어요.");
+    expect(profileSettingsSource).toContain(
+      "프로필 설정을 안전하게 저장했어요.",
+    );
     expect(profileSettingsSource).not.toContain(
       "rawFinancialDataExposed=false",
     );

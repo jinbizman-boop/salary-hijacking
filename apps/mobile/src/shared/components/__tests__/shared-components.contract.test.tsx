@@ -31,9 +31,7 @@ describe("shared mobile components", () => {
     expect(source).toContain('keyboardShouldPersistTaps="handled"');
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
     expect(source).toContain("paddingBottom:");
-    expect(source).toContain(
-      "designSystem.navigation.bottomTabs.visualHeight",
-    );
+    expect(source).toContain("designSystem.navigation.bottomTabs.visualHeight");
     expect(source).toContain("componentSpacing.lg");
     expect(source).toContain("insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
@@ -252,6 +250,9 @@ describe("shared mobile components", () => {
     expect(
       screen.getByText("민감 금융 데이터로 맞춤 타겟팅하지 않아요."),
     ).toBeTruthy();
+    expect(screen.queryByText("RESERVED")).toBeNull();
+    expect(screen.queryByText("NO_FILL")).toBeNull();
+    expect(screen.queryByText("ERROR")).toBeNull();
     expect(screen.getByLabelText("오늘 남은 예산 7,000원")).toBeTruthy();
   });
 });

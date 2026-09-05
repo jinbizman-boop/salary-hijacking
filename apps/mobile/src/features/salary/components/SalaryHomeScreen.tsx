@@ -825,11 +825,14 @@ export function SalaryHomeScreen({
                     accessibilityLabel={`${item.content} 삭제하기`}
                     accessibilityRole="button"
                     onPress={() => void deleteDailyItem(item)}
-                    style={[styles.tableActionButton, styles.tableDeleteButton]}
+                    style={[
+                      styles.compactActionButton,
+                      styles.compactDeleteButton,
+                    ]}
                   >
                     <Text
                       allowFontScaling={false}
-                      style={styles.tableActionText}
+                      style={styles.compactActionText}
                     >
                       삭제
                     </Text>
@@ -960,7 +963,7 @@ export function SalaryHomeScreen({
               </Pressable>
             </View>
           ) : null}
-          <VariableExpenseTable
+          <VariableExpenseList
             onDelete={deleteVariableExpense}
             onEdit={openVariableEditor}
             rows={state.variableExpenses}
@@ -1638,7 +1641,7 @@ function EditableItemForm({
   );
 }
 
-function VariableExpenseTable({
+function VariableExpenseList({
   onDelete,
   onEdit,
   rows,
@@ -1648,56 +1651,49 @@ function VariableExpenseTable({
   rows: readonly VariableExpenseItem[];
 }>) {
   return (
-    <>
-      <View style={styles.tableHeader}>
-        <Text allowFontScaling={false} style={styles.tableHeaderText}>
-          항목
-        </Text>
-        <Text allowFontScaling={false} style={styles.tableHeaderText}>
-          세부 내용
-        </Text>
-        <Text allowFontScaling={false} style={styles.tableHeaderText}>
-          사용 금액
-        </Text>
-      </View>
+    <View style={styles.variableList}>
       {rows.map((row) => (
-        <View key={row.id} style={styles.tableRow}>
-          <Text allowFontScaling={false} style={styles.tableText}>
-            {row.category}
-          </Text>
-          <Text allowFontScaling={false} style={styles.tableText}>
-            {row.content}
-          </Text>
-          <Text allowFontScaling={false} style={styles.tableMoney}>
-            {formatKrw(row.amount)}
-          </Text>
-          <View style={styles.tableActions}>
-            <Pressable
-              accessibilityLabel={`${row.content} 변동 지출 수정`}
-              accessibilityRole="button"
-              onPress={() => onEdit(row)}
-              style={styles.tableActionButton}
-              testID={`variable-expense-edit-${row.id}`}
-            >
-              <Text allowFontScaling={false} style={styles.tableActionText}>
-                수정
-              </Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel={`${row.content} 변동 지출 삭제`}
-              accessibilityRole="button"
-              onPress={() => void onDelete(row)}
-              style={[styles.tableActionButton, styles.tableDeleteButton]}
-              testID={`variable-expense-delete-${row.id}`}
-            >
-              <Text allowFontScaling={false} style={styles.tableActionText}>
-                삭제
-              </Text>
-            </Pressable>
+        <View key={row.id} style={styles.variableRow}>
+          <View style={styles.variableRowCopy}>
+            <Text allowFontScaling={false} style={styles.variableCategory}>
+              {row.category}
+            </Text>
+            <Text allowFontScaling={false} style={styles.variableContent}>
+              {row.content}
+            </Text>
+          </View>
+          <View style={styles.variableRowTrailing}>
+            <Text allowFontScaling={false} style={styles.variableMoney}>
+              {formatKrw(row.amount)}
+            </Text>
+            <View style={styles.compactActions}>
+              <Pressable
+                accessibilityLabel={`${row.content} 변동 지출 수정`}
+                accessibilityRole="button"
+                onPress={() => onEdit(row)}
+                style={styles.compactActionButton}
+                testID={`variable-expense-edit-${row.id}`}
+              >
+                <Text allowFontScaling={false} style={styles.compactActionText}>
+                  수정
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel={`${row.content} 변동 지출 삭제`}
+                accessibilityRole="button"
+                onPress={() => void onDelete(row)}
+                style={[styles.compactActionButton, styles.compactDeleteButton]}
+                testID={`variable-expense-delete-${row.id}`}
+              >
+                <Text allowFontScaling={false} style={styles.compactActionText}>
+                  삭제
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       ))}
-    </>
+    </View>
   );
 }
 
@@ -2204,6 +2200,28 @@ const styles = StyleSheet.create({
     backgroundColor: salaryScreenColors.screen,
     flex: 1,
   },
+  compactActionButton: {
+    alignItems: "center",
+    backgroundColor: salaryScreenColors.brand,
+    borderRadius: salaryScreenRadius.sm,
+    justifyContent: "center",
+    minHeight: 32,
+    minWidth: 42,
+    paddingHorizontal: salaryScreenSpacing[2],
+  },
+  compactActionText: {
+    color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.caption.fontSize,
+    fontWeight: salaryScreenTypography.caption.fontWeight,
+  },
+  compactActions: {
+    flexDirection: "row",
+    gap: salaryScreenSpacing[1],
+    justifyContent: "flex-end",
+  },
+  compactDeleteButton: {
+    backgroundColor: salaryScreenColors.paid,
+  },
   smallActionButton: {
     alignItems: "center",
     backgroundColor: salaryScreenColors.brandSoft,
@@ -2237,67 +2255,21 @@ const styles = StyleSheet.create({
     fontSize: salaryScreenTypography.caption.fontSize,
     fontWeight: salaryScreenTypography.caption.fontWeight,
   },
-  tableHeader: {
-    flexDirection: "row",
-    gap: salaryScreenSpacing[1] / 2,
-  },
-  tableActionButton: {
-    alignItems: "center",
-    backgroundColor: salaryScreenColors.brand,
-    borderRadius: salaryScreenRadius.sm,
-    justifyContent: "center",
-    minHeight: 28,
-    minWidth: 38,
-    paddingHorizontal: salaryScreenSpacing[1],
-  },
-  tableActionText: {
-    color: salaryScreenColors.inverse,
-    fontSize: salaryScreenTypography.caption.fontSize,
-    fontWeight: salaryScreenTypography.caption.fontWeight,
-  },
-  tableActions: {
-    flexDirection: "row",
-    gap: salaryScreenSpacing[1],
-    justifyContent: "flex-end",
-    minWidth: 82,
-  },
-  tableDeleteButton: {
-    backgroundColor: salaryScreenColors.paid,
-  },
-  tableHeaderText: {
-    backgroundColor: salaryScreenColors.brand,
-    color: salaryScreenColors.inverse,
-    flex: 1,
-    fontSize: salaryScreenTypography.labelS.fontSize,
-    fontWeight: salaryScreenTypography.labelS.fontWeight,
-    paddingVertical: salaryScreenSpacing[2],
-    textAlign: "center",
-  },
-  tableMoney: {
-    color: salaryScreenColors.text,
-    flex: 1,
-    fontSize: salaryScreenTypography.labelM.fontSize,
-    fontWeight: salaryScreenTypography.labelM.fontWeight,
-    textAlign: "center",
-  },
-  tableRow: {
-    alignItems: "center",
-    borderBottomColor: salaryScreenColors.line,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    minHeight: 42,
-  },
-  tableText: {
-    color: salaryScreenColors.text,
-    flex: 1,
-    fontSize: salaryScreenTypography.labelS.fontSize,
-    fontWeight: salaryScreenTypography.labelS.fontWeight,
-    textAlign: "center",
-  },
   titleRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: salaryScreenSpacing[2],
+  },
+  variableCategory: {
+    color: salaryScreenColors.brand,
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
+  },
+  variableContent: {
+    color: salaryScreenColors.text,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+    lineHeight: salaryScreenTypography.labelM.lineHeight,
   },
   variableForm: {
     backgroundColor: salaryScreenColors.soft,
@@ -2315,6 +2287,38 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     flexDirection: "row",
     marginTop: -salaryScreenSpacing[1],
+  },
+  variableList: {
+    gap: salaryScreenSpacing[2],
+  },
+  variableMoney: {
+    color: salaryScreenColors.text,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+    textAlign: "right",
+  },
+  variableRow: {
+    alignItems: "center",
+    backgroundColor: salaryScreenColors.soft,
+    borderColor: salaryScreenColors.line,
+    borderRadius: salaryScreenRadius.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: salaryScreenSpacing[3],
+    justifyContent: "space-between",
+    minHeight: 72,
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[2],
+  },
+  variableRowCopy: {
+    flex: 1,
+    gap: salaryScreenSpacing[1],
+    minWidth: 0,
+  },
+  variableRowTrailing: {
+    alignItems: "flex-end",
+    gap: salaryScreenSpacing[2],
+    minWidth: 110,
   },
   variableTotalLabel: {
     backgroundColor: salaryScreenColors.brand,

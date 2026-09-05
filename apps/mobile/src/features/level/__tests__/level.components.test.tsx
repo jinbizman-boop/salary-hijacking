@@ -133,6 +133,59 @@ describe("level feature components", () => {
     expect(onRecord).toHaveBeenCalledWith(baseContent);
   });
 
+  it("renders the V3 activity to record to growth loop on focus cards", () => {
+    const onRecord = jest.fn();
+    const screen = render(
+      <>
+        <ReadingContentCard
+          content={baseContent}
+          onRecord={onRecord}
+          onStart={jest.fn()}
+        />
+        <NewsBalanceCard
+          content={{
+            ...baseContent,
+            contentId: "cnt_news",
+            contentType: "NEWS",
+            title: "출근 전 뉴스 읽기",
+          }}
+          onRecord={onRecord}
+        />
+        <EnglishLessonCard
+          content={{
+            ...baseContent,
+            contentId: "cnt_english",
+            contentType: "ENGLISH",
+            title: "오늘 영어 5문장",
+          }}
+          onRecord={onRecord}
+        />
+        <WorkoutTimerCard
+          content={{
+            ...baseContent,
+            contentId: "cnt_health",
+            contentType: "HEALTH",
+            title: "10분 회복 루틴",
+          }}
+          onRecord={onRecord}
+        />
+      </>,
+    );
+
+    expect(screen.getByText("오늘 목표")).toBeTruthy();
+    expect(screen.getByText("실제 페이지")).toBeTruthy();
+    expect(screen.getByText("독서 카드 작성")).toBeTruthy();
+    expect(screen.getByText("한 줄 기록")).toBeTruthy();
+    expect(screen.getByText("streak / XP")).toBeTruthy();
+    expect(screen.getByText("기사 선택")).toBeTruthy();
+    expect(screen.getByText("관점 비교 선택")).toBeTruthy();
+    expect(screen.getByText("영어 기본 목표")).toBeTruthy();
+    expect(screen.getByText("session complete")).toBeTruthy();
+    expect(screen.getByText("10분 루틴")).toBeTruthy();
+    expect(screen.getByText("timer / progress")).toBeTruthy();
+    expect(screen.getByText("actual duration")).toBeTruthy();
+  });
+
   it("renders XP reward toast with user-facing server authority copy", () => {
     const screen = render(
       <XpRewardToast earnedXp={30} rewardSource="READING_COMPLETE" />,

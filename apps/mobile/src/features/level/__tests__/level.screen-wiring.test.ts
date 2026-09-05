@@ -37,4 +37,32 @@ describe("level tab screen wiring", () => {
     expect(source).toContain("normalizeGrowthDashboardForLevel");
     expect(source).toContain("normalizeGrowthDashboardForTest");
   });
+
+  it("wires the V3 default, recommended, and custom goal decisions into the LV UP screen", () => {
+    const source = readFileSync(
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "(tabs)",
+        "level",
+        "index.tsx",
+      ),
+      "utf8",
+    );
+
+    expect(source).toContain("buildGrowthGoalSourceDecision");
+    expect(source).toContain("createCustomGrowthGoal");
+    expect(source).toContain("materializeDailyMissionSnapshot");
+    expect(source).toContain("추천 수락");
+    expect(source).toContain("추천 수정 적용");
+    expect(source).toContain("추천 거절");
+    expect(source).toContain("직접 목표 저장");
+    expect(source).toContain("오늘 미션 snapshot");
+    expect(source).toContain("recommendationAutoApplied");
+    expect(source).toContain("historicalMissionMutationCount");
+  });
 });

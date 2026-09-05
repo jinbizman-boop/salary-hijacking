@@ -236,6 +236,7 @@ const LEGAL_PAGE_PATHS = [
   "/support",
   "/terms",
   "/partners",
+  "/contact",
 ] as const;
 const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
 const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
@@ -266,6 +267,7 @@ export interface AppEnv extends Record<string, unknown> {
   readonly CORS_ALLOWED_ORIGINS?: string;
   readonly ALLOWED_ORIGINS?: string;
   readonly APP_PUBLIC_BASE_URL?: string;
+  readonly ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS?: string;
 }
 
 export interface CorsOptions<TEnv = unknown> {
@@ -576,6 +578,7 @@ export const appManifest = Object.freeze({
     privacyUrl: "https://salaryhijacking.com/privacy",
     supportUrl: "https://salaryhijacking.com/support",
     termsUrl: "https://salaryhijacking.com/terms",
+    contactUrl: "https://salaryhijacking.com/contact",
     rawFinancialDataExposed: false,
     adsFinancialTargetingUsed: false,
   }),
@@ -717,6 +720,7 @@ function legalPageTitle(path: string): string | null {
   if (path === "/privacy") return "개인정보 처리방침";
   if (path === "/support") return "고객 지원";
   if (path === "/terms") return "이용약관";
+  if (path === "/contact") return "문의";
   return null;
 }
 
@@ -736,6 +740,13 @@ function legalPageBody(title: string): readonly string[] {
       "보안 또는 개인정보 이슈는 개인정보 보호 담당 메일로 별도 접수하며, 실제 금융 원문 데이터는 문의 본문에 포함하지 않는 것을 권장합니다.",
     ];
   }
+  if (title === "문의") {
+    return [
+      "급여납치 서비스, 제휴, 개인정보, 보안 문의는 목적에 맞는 공식 이메일로 접수합니다.",
+      "고객 지원은 support@salaryhijacking.com, 개인정보 문의는 privacy@salaryhijacking.com으로 접수합니다.",
+      "문의 본문에는 비밀번호, 인증 토큰, 계좌, 카드, 급여, 지출, 저축 원문을 포함하지 않는 것을 권장합니다.",
+    ];
+  }
   return [
     "급여납치는 월급 흐름을 계획하고 남길 돈을 먼저 분리하도록 돕는 개인 재무 자기관리 서비스입니다.",
     "급여, 예산, 지출, 저축, 납치금액의 최종 계산은 서버 권위 API와 검증된 데이터 기준을 따릅니다.",
@@ -744,16 +755,48 @@ function legalPageBody(title: string): readonly string[] {
   ];
 }
 
+function publicPageDescription(title: string): string {
+  if (title === "개인정보 처리방침")
+    return "급여납치 개인정보 처리방침은 급여, 지출, 저축, 알림, 광고 데이터를 분리하고 필요한 정보만 처리하는 원칙을 설명합니다.";
+  if (title === "고객 지원")
+    return "급여납치 고객 지원은 계정, 예산, 커뮤니티 신고, 개인정보 요청을 안전하게 접수하는 공식 안내입니다.";
+  if (title === "문의")
+    return "급여납치 서비스, 제휴, 개인정보, 보안 문의를 위한 공식 연락처 안내입니다.";
+  return "급여납치 이용약관은 서버 권위 계산, 사용자 책임, 커뮤니티와 광고 분리 원칙을 안내합니다.";
+}
+
+function publicHtmlHead({
+  canonicalUrl,
+  description,
+  title,
+}: Readonly<{
+  canonicalUrl: string;
+  description: string;
+  title: string;
+}>): string {
+  return `<meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="${escapeHtml(description)}" />
+  <meta property="og:title" content="${escapeHtml(title)}" />
+  <meta property="og:description" content="${escapeHtml(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+  <title>${escapeHtml(title)}</title>
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`;
+}
+
 function partnerBenefitsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
   const origin = canonicalOrigin(runtime);
   const canonicalUrl = `${origin}/partners`;
   const body = `<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>제휴 혜택 | 급여납치</title>
-  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  ${publicHtmlHead({
+    canonicalUrl,
+    description:
+      "급여납치 제휴 혜택은 금융 금액 기반 타겟팅 없이 생활 맥락에 맞춘 안내를 제공하는 정책을 설명합니다.",
+    title: "제휴 혜택 | 급여납치",
+  })}
   <style>
     :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
     body { margin: 0; background: #f7f8fa; color: #202327; }
@@ -806,10 +849,12 @@ function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
   const body = `<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>급여납치 | Salary Hijacking</title>
-  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  ${publicHtmlHead({
+    canonicalUrl,
+    description:
+      "급여납치는 월급이 사라지기 전에 예산, 지출, 저축, LV UP을 한 곳에서 관리하는 금융 생활 앱입니다.",
+    title: "급여납치 | Salary Hijacking",
+  })}
   <style>
     :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
     body { margin: 0; background: #f7f8fa; color: #202327; }
@@ -869,10 +914,11 @@ function legalPageResponse<TEnv>(
   const body = `<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(title)} | 급여납치</title>
-  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  ${publicHtmlHead({
+    canonicalUrl,
+    description: publicPageDescription(title),
+    title: `${title} | 급여납치`,
+  })}
   <style>
     :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
     body { margin: 0; background: #f7f8fa; color: #202327; }
@@ -910,6 +956,107 @@ function legalPageResponse<TEnv>(
       [REQUEST_ID_HEADER]: runtime.requestId,
     },
   });
+}
+
+function publicRobotsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  const origin = canonicalOrigin(runtime);
+  const body = `User-agent: *
+Allow: /
+Sitemap: ${origin}/sitemap.xml
+`;
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "public, max-age=3600",
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
+}
+
+function publicSitemapResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  const origin = canonicalOrigin(runtime);
+  const paths = [
+    "/",
+    "/privacy",
+    "/terms",
+    "/support",
+    "/partners",
+    "/contact",
+  ];
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${paths
+  .map((path) => `  <url><loc>${escapeHtml(`${origin}${path}`)}</loc></url>`)
+  .join("\n")}
+</urlset>
+`;
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "application/xml; charset=utf-8",
+      "cache-control": "public, max-age=3600",
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
+}
+
+function publicAndroidAssetLinksResponse<TEnv>(
+  runtime: AppRuntime<TEnv>,
+): Response {
+  const fingerprints = parseAndroidCertFingerprints(
+    envString(runtime.env, "ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS"),
+  );
+  if (fingerprints.length === 0) {
+    return json(503, runtime, {
+      error: {
+        code: "ANDROID_APP_LINK_CERT_FINGERPRINT_REQUIRED",
+        message:
+          "Android App Links require explicit public SHA-256 signing certificate fingerprints.",
+        status: 503,
+        requestId: runtime.requestId,
+      },
+      data: {
+        packageName: "com.salaryhijacking.mobile",
+        configured: false,
+      },
+    });
+  }
+
+  return new Response(
+    runtime.method === "HEAD"
+      ? null
+      : JSON.stringify([
+          {
+            relation: ["delegate_permission/common.handle_all_urls"],
+            target: {
+              namespace: "android_app",
+              package_name: "com.salaryhijacking.mobile",
+              sha256_cert_fingerprints: fingerprints,
+            },
+          },
+        ]),
+    {
+      status: 200,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=3600",
+        [REQUEST_ID_HEADER]: runtime.requestId,
+      },
+    },
+  );
+}
+
+function parseAndroidCertFingerprints(value: string | null): readonly string[] {
+  if (!value) return [];
+  const fingerprintPattern = /^[0-9A-F]{2}(?::[0-9A-F]{2}){31}$/u;
+  return value
+    .split(/[,\n]/u)
+    .map((entry) => entry.trim().toUpperCase())
+    .filter(
+      (entry, index, entries) =>
+        fingerprintPattern.test(entry) && entries.indexOf(entry) === index,
+    );
 }
 
 function notFound(runtime: AppRuntime): Response {
@@ -1074,6 +1221,10 @@ function applySecurityHeaders<TEnv>(
   headers.set("x-app-version", APP_VERSION);
   headers.set("x-content-type-options", "nosniff");
   headers.set("x-frame-options", "DENY");
+  headers.set(
+    "strict-transport-security",
+    "max-age=31536000; includeSubDomains; preload",
+  );
   headers.set("referrer-policy", "no-referrer");
   headers.set(
     "permissions-policy",
@@ -1149,6 +1300,7 @@ function publicAppConfig<TEnv>(
       privacyUrl: `${origin}/privacy`,
       supportUrl: `${origin}/support`,
       termsUrl: `${origin}/terms`,
+      contactUrl: `${origin}/contact`,
     },
   };
 }
@@ -1415,6 +1567,21 @@ async function coreDispatch<TEnv>(
 
   if (path === "/partners" && (method === "GET" || method === "HEAD")) {
     return partnerBenefitsResponse(runtime);
+  }
+
+  if (path === "/robots.txt" && (method === "GET" || method === "HEAD")) {
+    return publicRobotsResponse(runtime);
+  }
+
+  if (path === "/sitemap.xml" && (method === "GET" || method === "HEAD")) {
+    return publicSitemapResponse(runtime);
+  }
+
+  if (
+    path === "/.well-known/assetlinks.json" &&
+    (method === "GET" || method === "HEAD")
+  ) {
+    return publicAndroidAssetLinksResponse(runtime);
   }
 
   if (["/health", "/live", "/_health", `${API_PREFIX}/health`].includes(path)) {
@@ -1807,7 +1974,7 @@ function buildAuthOptions<TEnv>(
     {
       id: "root-manifest-public",
       pattern:
-        /^\/(manifest|health|ready|live|_health|privacy|support|terms|partners)(?:\/|$)/,
+        /^\/(manifest|health|ready|live|_health|privacy|support|terms|partners|contact|robots\.txt|sitemap\.xml|\.well-known\/assetlinks\.json)(?:\/|$)/,
       public: true,
     },
   ] as const;

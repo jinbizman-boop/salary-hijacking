@@ -15,4 +15,14 @@ describe("salary home design system integration", () => {
     expect(source).not.toContain("const WARNING_ORANGE =");
     expect(source).not.toContain("const DANGER_RED =");
   });
+
+  it("renders variable expenses as mobile-native rows instead of a spreadsheet table", () => {
+    expect(source).toContain("VariableExpenseList");
+    expect(source).not.toContain("function VariableExpenseTable");
+    expect(source).not.toContain("styles.tableHeader");
+    expect(source).not.toContain("styles.tableRow");
+    expect(source).not.toContain("styles.tableText");
+    expect(source).not.toContain("styles.tableMoney");
+    expect(source).not.toContain("tableHeaderText");
+  });
 });

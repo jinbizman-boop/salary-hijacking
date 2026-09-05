@@ -91,7 +91,8 @@ let cachedGoogleMobileAdsSdk: GoogleMobileAdsSdk | null | undefined;
 function loadGoogleMobileAdsSdk(): GoogleMobileAdsSdk | null {
   if (cachedGoogleMobileAdsSdk !== undefined) return cachedGoogleMobileAdsSdk;
   try {
-    const sdk = require("react-native-google-mobile-ads") as Partial<GoogleMobileAdsSdk>;
+    const sdk =
+      require("react-native-google-mobile-ads") as Partial<GoogleMobileAdsSdk>;
     if (!sdk.BannerAd || !sdk.BannerAdSize || !sdk.TestIds) {
       cachedGoogleMobileAdsSdk = null;
       return cachedGoogleMobileAdsSdk;
@@ -163,7 +164,7 @@ export function AdBannerSlot({
       : null;
 
   if (adLoadState === "NO_FILL" || adLoadState === "ERROR") {
-    return <View accessibilityLabel={`${title} ${adLoadState}`} />;
+    return <View accessibilityLabel={`${title} 광고 영역`} />;
   }
 
   return (
@@ -172,14 +173,13 @@ export function AdBannerSlot({
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       {adBanner ? (
-        <View accessibilityLabel={`${title} AdMob banner`} style={styles.banner}>
+        <View accessibilityLabel={`${title} 광고 배너`} style={styles.banner}>
           {adBanner}
         </View>
       ) : null}
       <Text style={styles.guard}>
         민감 금융 데이터로 맞춤 타겟팅하지 않아요.
       </Text>
-      <Text style={styles.state}>{adLoadState}</Text>
     </View>
   );
 }
@@ -216,11 +216,5 @@ const styles = StyleSheet.create({
     color: componentColors.textPrimary,
     fontSize: typography.caption.fontSize,
     fontWeight: typography.caption.fontWeight,
-  },
-  state: {
-    color: componentColors.textMuted,
-    fontSize: 1,
-    height: 1,
-    opacity: 0,
   },
 });

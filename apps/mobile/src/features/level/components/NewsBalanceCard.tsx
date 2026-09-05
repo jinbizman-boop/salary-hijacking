@@ -7,6 +7,7 @@ import {
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
+import { ActivityFlowChecklist } from "./ActivityFlowChecklist";
 import { ContentPolicyPills } from "./ContentPolicyPills";
 
 const typography = salaryHijackingDesignSystem.typography;
@@ -28,6 +29,18 @@ export function NewsBalanceCard({
       <Text style={styles.viewpoint}>
         관점 태그 {content.viewpointTag ?? "FACT_BRIEF"}
       </Text>
+      <ActivityFlowChecklist
+        steps={[
+          { label: "기사 선택", value: content.sourceTitle },
+          { label: "읽음", value: `${content.estimatedMinutes}분 요약 확인` },
+          { label: "한 줄 생각", value: content.recordQuestion },
+          {
+            label: "관점 비교 선택",
+            value: content.viewpointTag ?? "FACT_BRIEF",
+          },
+          { label: "완료", value: `${content.xpReward} XP 기록` },
+        ]}
+      />
       <ContentPolicyPills content={content} />
       <Pressable
         accessibilityLabel="기록하기"

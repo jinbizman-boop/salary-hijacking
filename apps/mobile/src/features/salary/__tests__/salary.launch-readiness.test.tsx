@@ -28,16 +28,15 @@ describe("salary launch readiness interactions", () => {
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("keeps the variable expense form above the saved table and persists rows across remounts", () => {
+  it("keeps the variable expense form above mobile-native saved rows and persists rows across remounts", () => {
     const first = render(<SalaryHomeScreen />);
 
     fireEvent.press(first.getByRole("button", { name: "변동 지출 추가하기" }));
     expect(
       first.getByText("금일 사용한 변동 지출을 바로 저장합니다"),
     ).toBeTruthy();
-    expect(first.getByText("항목")).toBeTruthy();
-    expect(first.getByText("세부 내용")).toBeTruthy();
-    expect(first.getAllByText("사용 금액").length).toBeGreaterThanOrEqual(1);
+    expect(first.getByText("사용 금액 합계")).toBeTruthy();
+    expect(first.queryByText("세부 내용")).toBeNull();
 
     fireEvent.changeText(
       first.getByLabelText("변동 지출 항목 입력"),

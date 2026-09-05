@@ -29,6 +29,26 @@ import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/co
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
 const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
+const SOCIAL_LOGIN_STATUS_COPY = {
+  GOOGLE: {
+    opening: "Google 로그인을 시작합니다.",
+    pending: "Google 로그인을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.",
+    opened: "Google 인증 화면을 열었습니다.",
+    failed: "Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  },
+  KAKAO: {
+    opening: "카카오 로그인을 시작합니다.",
+    pending: "카카오 로그인을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.",
+    opened: "카카오 인증 화면을 열었습니다.",
+    failed: "카카오 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  },
+  NAVER: {
+    opening: "네이버 로그인을 시작합니다.",
+    pending: "네이버 로그인을 준비하는 중입니다. 잠시 후 다시 시도해 주세요.",
+    opened: "네이버 인증 화면을 열었습니다.",
+    failed: "네이버 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+  },
+} as const;
 const loginBackIcon =
   require("../../src/shared/assets/icons/common/left.png") as ImageSourcePropType;
 let mobileAuthApiPromise: Promise<AuthApiClient> | null = null;
@@ -116,8 +136,9 @@ export default function LoginScreen(): React.ReactElement {
   const handleSocialProvider = useCallback(
     async (provider: AuthSocialProvider): Promise<void> => {
       if (submitting) return;
+      const copy = SOCIAL_LOGIN_STATUS_COPY[provider];
       setSubmitting(true);
-      setMessage(`${provider} OAuth 로그인을 시작합니다.`);
+      setMessage(copy.opening);
       try {
         const authApi = await getMobileAuthApi();
         const result = await authApi.startOAuth({
@@ -125,9 +146,7 @@ export default function LoginScreen(): React.ReactElement {
           redirectUri: OAUTH_REDIRECT_URI,
         });
         if (!result.authorizationUrl) {
-          setMessage(
-            `${provider} 인증 URL이 아직 준비되지 않았습니다. 서버 설정을 확인해야 합니다.`,
-          );
+          setMessage(copy.pending);
           return;
         }
         const webBrowser = await import("expo-web-browser");
@@ -135,11 +154,9 @@ export default function LoginScreen(): React.ReactElement {
           result.authorizationUrl,
           OAUTH_REDIRECT_URI,
         );
-        setMessage(`${provider} 인증 창을 열었습니다.`);
+        setMessage(copy.opened);
       } catch {
-        setMessage(
-          `${provider} 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.`,
-        );
+        setMessage(copy.failed);
       } finally {
         setSubmitting(false);
       }
@@ -195,9 +212,7 @@ export default function LoginScreen(): React.ReactElement {
           <Text
             allowFontScaling={false}
             style={
-              compactHeight
-                ? styles.brandSubtitleCompact
-                : styles.brandSubtitle
+              compactHeight ? styles.brandSubtitleCompact : styles.brandSubtitle
             }
           >
             금융의 주도권을 되찾으세요

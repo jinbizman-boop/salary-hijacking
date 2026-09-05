@@ -648,25 +648,30 @@ export function PlanScreen({
           </Text>
         </View>
 
-        <PlanSection
+        <MobilePlanSection
           open={openSection === "payroll"}
-          rows={[
-            [
-              `\uB9E4\uC6D4 ${clamp(parseKrwInput(payrollDraft.payday) || 25, 1, 31)}\uC77C`,
-              formatKrw(parseKrwInput(payrollDraft.payrollAmount)),
-              formatKrw(parseKrwInput(payrollDraft.expenseAmount)),
-              formatKrw(parseKrwInput(payrollDraft.hijackAmount)),
-            ],
+          summary={[
+            {
+              label: "\uAE09\uC5EC \uBC1B\uB294\uB0A0",
+              value: `\uB9E4\uC6D4 ${clamp(parseKrwInput(payrollDraft.payday) || 25, 1, 31)}\uC77C`,
+            },
+            {
+              label: "\uC218\uB839 \uC608\uC0C1 \uAE09\uC5EC",
+              value: formatKrw(parseKrwInput(payrollDraft.payrollAmount)),
+            },
+            {
+              label: "\uC9C0\uCD9C \uC608\uC0C1 \uAE08\uC561",
+              value: formatKrw(parseKrwInput(payrollDraft.expenseAmount)),
+            },
+            {
+              label: "\uC608\uC0C1 \uB0A9\uCE58 \uAE08\uC561",
+              tone: "brand",
+              value: formatKrw(parseKrwInput(payrollDraft.hijackAmount)),
+            },
           ]}
           settingLabel="내 급여 납치 계획/설정 설정"
           settingTestID="payroll-section-settings-button"
           title="내 급여 납치 계획/설정"
-          headers={[
-            "\uAE09\uC5EC \uBC1B\uB294\uB0A0",
-            "\uC218\uB839 \uC608\uC0C1 \uAE09\uC5EC",
-            "\uC9C0\uCD9C \uC608\uC0C1 \uAE08\uC561",
-            "\uC608\uC0C1 \uB0A9\uCE58 \uAE08\uC561",
-          ]}
           onToggle={() =>
             setOpenSection(openSection === "payroll" ? null : "payroll")
           }
@@ -736,7 +741,7 @@ export function PlanScreen({
               </Text>
             </Pressable>
           </View>
-        </PlanSection>
+        </MobilePlanSection>
 
         <EditablePlanSection
           editingId={editingId}
@@ -768,19 +773,26 @@ export function PlanScreen({
           setDraft={setDraft}
         />
 
-        <PlanSection
+        <MobilePlanSection
           open={openSection === "living"}
-          rows={[
-            [
-              formatKrw(state.dailyLimit),
-              String(state.livingDays),
-              formatKrw(livingTotal),
-            ],
+          summary={[
+            {
+              label: "일일 생활비 총액",
+              value: formatKrw(state.dailyLimit),
+            },
+            {
+              label: "일수",
+              value: `${state.livingDays}일`,
+            },
+            {
+              label: "월별 생활비 총액",
+              tone: "brand",
+              value: formatKrw(livingTotal),
+            },
           ]}
           settingLabel="일일 생활비 계획/설정 설정"
           settingTestID="living-section-settings-button"
           title="일일 생활비 계획/설정"
-          headers={["일일 생활비 총액", "일수", "월별 생활비 총액"]}
           onToggle={() => {
             setOpenSection(openSection === "living" ? null : "living");
             clearDraft();
@@ -820,37 +832,28 @@ export function PlanScreen({
               +추가하기
             </Text>
           </Pressable>
-          <View style={styles.livingRows}>
-            {state.dailyItems.map((item) => (
-              <Pressable
-                accessibilityLabel={`${item.content} 수정하기`}
-                accessibilityRole="button"
-                key={item.id}
-                onPress={() => {
-                  setOpenSection("living");
-                  setEditingId(item.id);
-                  setDraft({
-                    amount: String(item.amount),
-                    category: item.category,
-                    content: item.content,
-                    day: "1",
-                  });
-                }}
-                style={styles.livingRow}
-                testID={`living-item-edit-${item.id}`}
-              >
-                <Text allowFontScaling={false} style={styles.livingText}>
-                  {item.category}
-                </Text>
-                <Text allowFontScaling={false} style={styles.livingText}>
-                  {item.content}
-                </Text>
-                <Text allowFontScaling={false} style={styles.livingMoney}>
-                  {formatKrw(item.amount)}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
+          <PlanCommitmentList
+            items={state.dailyItems.map((item) => ({
+              amount: item.amount,
+              category: item.category,
+              content: item.content,
+              dayLabel: "매일",
+              id: item.id,
+              testID: `living-item-edit-${item.id}`,
+            }))}
+            onPress={(itemId) => {
+              const item = state.dailyItems.find((row) => row.id === itemId);
+              if (!item) return;
+              setOpenSection("living");
+              setEditingId(item.id);
+              setDraft({
+                amount: String(item.amount),
+                category: item.category,
+                content: item.content,
+                day: "1",
+              });
+            }}
+          />
           {draft.content || draft.amount || draft.day ? (
             <PlanItemForm
               draft={draft}
@@ -860,7 +863,7 @@ export function PlanScreen({
               savePending={livingItemSavePending}
             />
           ) : null}
-        </PlanSection>
+        </MobilePlanSection>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -1105,23 +1108,36 @@ function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
   }
 }
 
-function PlanSection({
+type PlanSummaryItem = Readonly<{
+  label: string;
+  tone?: "brand" | "danger" | "default";
+  value: string;
+}>;
+
+type PlanListItem = Readonly<{
+  amount: number;
+  category: string;
+  content: string;
+  dayLabel: string;
+  id: string;
+  testID: string;
+}>;
+
+function MobilePlanSection({
   children,
-  headers,
   onToggle,
   open,
-  rows,
   settingLabel,
   settingTestID,
+  summary,
   title,
 }: Readonly<{
   children?: React.ReactNode;
-  headers: readonly string[];
   onToggle: () => void;
   open: boolean;
-  rows: readonly (readonly string[])[];
   settingLabel: string;
   settingTestID?: string;
+  summary: readonly PlanSummaryItem[];
   title: string;
 }>) {
   return (
@@ -1143,7 +1159,7 @@ function PlanSection({
           />
         </Pressable>
       </View>
-      <PlanTable headers={headers} rows={rows} />
+      <PlanSummaryGrid summary={summary} />
       {open ? children : null}
     </View>
   );
@@ -1176,21 +1192,29 @@ function EditablePlanSection({
   settingLabel: string;
   title: string;
 }>) {
+  const total = items.reduce((sum, item) => sum + item.amount, 0);
+  const nextItem = items[0];
   return (
-    <PlanSection
-      headers={["지출일", "구분명", "소비명", "단가", "수량", "금액"]}
+    <MobilePlanSection
       onToggle={() => onOpenEditor(section)}
       open={open}
-      rows={items.map((item) => [
-        `${item.day}일`,
-        item.category,
-        item.content,
-        "-",
-        "1",
-        formatKrw(item.amount),
-      ])}
       settingLabel={settingLabel}
       settingTestID={`${section}-section-settings-button`}
+      summary={[
+        {
+          label: "등록 항목",
+          value: `${items.length}개`,
+        },
+        {
+          label: section === "fixed" ? "월 고정지출" : "월 고정저축",
+          tone: section === "fixed" ? "danger" : "brand",
+          value: formatKrw(total),
+        },
+        {
+          label: "다음 예정",
+          value: nextItem ? `${nextItem.day}일 ${nextItem.content}` : "대기",
+        },
+      ]}
       title={title}
     >
       <Pressable
@@ -1203,23 +1227,20 @@ function EditablePlanSection({
           +추가하기
         </Text>
       </Pressable>
-      {items.map((item) => (
-        <Pressable
-          accessibilityLabel={`${item.content} 수정하기`}
-          accessibilityRole="button"
-          key={`edit-${item.id}`}
-          onPress={() => onOpenEditor(section, item)}
-          style={styles.editRow}
-          testID={`${section}-item-edit-${item.id}`}
-        >
-          <Text allowFontScaling={false} style={styles.editText}>
-            수정: {item.content}
-          </Text>
-          <Text allowFontScaling={false} style={styles.editMoney}>
-            금액 {formatKrw(item.amount)}
-          </Text>
-        </Pressable>
-      ))}
+      <PlanCommitmentList
+        items={items.map((item) => ({
+          amount: item.amount,
+          category: item.category,
+          content: item.content,
+          dayLabel: `${item.day}일`,
+          id: item.id,
+          testID: `${section}-item-edit-${item.id}`,
+        }))}
+        onPress={(itemId) => {
+          const item = items.find((row) => row.id === itemId);
+          if (item) onOpenEditor(section, item);
+        }}
+      />
       {(draft.content || draft.amount || draft.day) && open ? (
         <PlanItemForm
           draft={draft}
@@ -1229,51 +1250,85 @@ function EditablePlanSection({
           onDelete={editingId ? onDelete : undefined}
         />
       ) : null}
-    </PlanSection>
+    </MobilePlanSection>
   );
 }
 
-function PlanTable({
-  headers,
-  rows,
+function PlanSummaryGrid({
+  summary,
 }: Readonly<{
-  headers: readonly string[];
-  rows: readonly (readonly string[])[];
+  summary: readonly PlanSummaryItem[];
 }>) {
   return (
-    <View style={styles.table}>
-      <View style={styles.tableRow}>
-        {headers.map((header, headerIndex) => (
-          <View
-            key={`header-${headerIndex}-${header}`}
-            style={styles.tableHeaderCell}
+    <View accessibilityLabel="계획 요약" style={styles.summaryGrid}>
+      {summary.map((item) => (
+        <View key={`${item.label}-${item.value}`} style={styles.summaryTile}>
+          <Text allowFontScaling={false} style={styles.summaryLabel}>
+            {item.label}
+          </Text>
+          <Text
+            allowFontScaling={false}
+            numberOfLines={2}
+            style={[
+              styles.summaryValue,
+              item.tone === "brand" ? styles.summaryValueBrand : null,
+              item.tone === "danger" ? styles.summaryValueDanger : null,
+            ]}
           >
-            <Text
-              adjustsFontSizeToFit
-              allowFontScaling={false}
-              numberOfLines={1}
-              style={styles.tableHeaderText}
-            >
-              {header}
+            {item.value}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+function PlanCommitmentList({
+  items,
+  onPress,
+}: Readonly<{
+  items: readonly PlanListItem[];
+  onPress: (itemId: string) => void;
+}>) {
+  if (items.length === 0) {
+    return (
+      <View style={styles.emptyPlanList}>
+        <Text allowFontScaling={false} style={styles.emptyPlanTitle}>
+          아직 등록된 항목이 없습니다
+        </Text>
+        <Text allowFontScaling={false} style={styles.emptyPlanBody}>
+          추가하기로 이번 급여주기에 필요한 계획을 넣어두세요.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.planList}>
+      {items.map((item) => (
+        <Pressable
+          accessibilityLabel={`${item.content} 수정하기`}
+          accessibilityRole="button"
+          key={`edit-${item.id}`}
+          onPress={() => onPress(item.id)}
+          style={({ pressed }) => [
+            styles.planListRow,
+            pressed ? styles.planListRowPressed : null,
+          ]}
+          testID={item.testID}
+        >
+          <View style={styles.planListMain}>
+            <Text allowFontScaling={false} style={styles.planListTitle}>
+              {item.content}
+            </Text>
+            <Text allowFontScaling={false} style={styles.planListMeta}>
+              {item.dayLabel} · {item.category}
             </Text>
           </View>
-        ))}
-      </View>
-      {rows.map((row, index) => (
-        <View key={`row-${index}`} style={styles.tableRow}>
-          {row.map((cell, cellIndex) => (
-            <View key={`${cell}-${cellIndex}`} style={styles.tableCell}>
-              <Text
-                adjustsFontSizeToFit
-                allowFontScaling={false}
-                numberOfLines={1}
-                style={styles.tableText}
-              >
-                {cell}
-              </Text>
-            </View>
-          ))}
-        </View>
+          <Text allowFontScaling={false} style={styles.planListMoney}>
+            {formatKrw(item.amount)}
+          </Text>
+        </Pressable>
       ))}
     </View>
   );
@@ -1501,30 +1556,6 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: planScreenSpacing[3],
   },
-  livingMoney: {
-    color: planScreenColors.text,
-    flex: 1,
-    fontSize: planScreenTypography.labelS.fontSize,
-    fontWeight: planScreenTypography.labelS.fontWeight,
-    textAlign: "center",
-  },
-  livingRow: {
-    alignItems: "center",
-    borderBottomColor: planScreenColors.line,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    minHeight: 38,
-  },
-  livingRows: {
-    marginTop: planScreenSpacing[2],
-  },
-  livingText: {
-    color: planScreenColors.text,
-    flex: 1,
-    fontSize: planScreenTypography.labelS.fontSize,
-    fontWeight: planScreenTypography.labelS.fontWeight,
-    textAlign: "center",
-  },
   metaGreen: {
     color: planScreenColors.brand,
     fontSize: planScreenTypography.titleM.fontSize,
@@ -1597,48 +1628,99 @@ const styles = StyleSheet.create({
     minHeight: 38,
     minWidth: 38,
   },
-  table: {
+  emptyPlanBody: {
+    color: planScreenColors.muted,
+    fontSize: planScreenTypography.bodyS.fontSize,
+    fontWeight: planScreenTypography.bodyS.fontWeight,
+    lineHeight: planScreenTypography.bodyS.lineHeight,
+    marginTop: planScreenSpacing[1],
+  },
+  emptyPlanList: {
+    backgroundColor: planScreenColors.soft,
     borderColor: planScreenColors.line,
-    borderLeftWidth: StyleSheet.hairlineWidth,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderRadius: planScreenRadius.md,
+    borderWidth: 1,
+    marginTop: planScreenSpacing[2],
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[3],
   },
-  tableCell: {
-    alignItems: "center",
-    borderBottomColor: planScreenColors.line,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderRightColor: planScreenColors.line,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 34,
-    paddingHorizontal: planScreenSpacing[1],
-  },
-  tableHeaderCell: {
-    alignItems: "center",
-    backgroundColor: planScreenColors.brand,
-    borderBottomColor: planScreenColors.lineStrong,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderRightColor: planScreenColors.lineStrong,
-    borderRightWidth: StyleSheet.hairlineWidth,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 30,
-    paddingHorizontal: planScreenSpacing[1],
-  },
-  tableHeaderText: {
-    color: planScreenColors.inverse,
-    fontSize: planScreenTypography.caption.fontSize,
-    fontWeight: planScreenTypography.caption.fontWeight,
-    textAlign: "center",
-  },
-  tableRow: {
-    flexDirection: "row",
-    width: "100%",
-  },
-  tableText: {
+  emptyPlanTitle: {
     color: planScreenColors.text,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
+  },
+  planList: {
+    gap: planScreenSpacing[2],
+    marginTop: planScreenSpacing[2],
+  },
+  planListMain: {
+    flex: 1,
+    minWidth: 0,
+  },
+  planListMeta: {
+    color: planScreenColors.muted,
     fontSize: planScreenTypography.caption.fontSize,
     fontWeight: planScreenTypography.caption.fontWeight,
-    textAlign: "center",
+    marginTop: planScreenSpacing[1] / 2,
+  },
+  planListMoney: {
+    color: planScreenColors.brand,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
+    marginLeft: planScreenSpacing[2],
+  },
+  planListRow: {
+    alignItems: "center",
+    backgroundColor: planScreenColors.surface,
+    borderColor: planScreenColors.line,
+    borderRadius: planScreenRadius.md,
+    borderWidth: 1,
+    flexDirection: "row",
+    minHeight: 58,
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[2],
+  },
+  planListRowPressed: {
+    backgroundColor: planScreenColors.soft,
+  },
+  planListTitle: {
+    color: planScreenColors.text,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
+  },
+  summaryGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: planScreenSpacing[2],
+  },
+  summaryLabel: {
+    color: planScreenColors.muted,
+    fontSize: planScreenTypography.caption.fontSize,
+    fontWeight: planScreenTypography.caption.fontWeight,
+  },
+  summaryTile: {
+    backgroundColor: planScreenColors.soft,
+    borderColor: planScreenColors.line,
+    borderRadius: planScreenRadius.md,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 74,
+    minWidth: "47%",
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[2],
+  },
+  summaryValue: {
+    color: planScreenColors.text,
+    fontSize: planScreenTypography.labelL.fontSize,
+    fontWeight: planScreenTypography.labelL.fontWeight,
+    lineHeight: planScreenTypography.labelL.lineHeight,
+    marginTop: planScreenSpacing[1] / 2,
+  },
+  summaryValueBrand: {
+    color: planScreenColors.brand,
+  },
+  summaryValueDanger: {
+    color: planScreenColors.danger,
   },
 });

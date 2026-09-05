@@ -26,9 +26,16 @@ import {
   loadGrowthDashboardSnapshot,
 } from "../../../src/features/level/controller";
 import {
+  LVUP_DEFAULT_GOALS,
   buildGrowthGoalCards,
+  buildGrowthGoalSourceDecision,
   buildInitialGrowthGoalChoice,
+  createColdStartRecommendation,
+  createCustomGrowthGoal,
+  materializeDailyMissionSnapshot,
   type GrowthGoalDomain,
+  type GrowthGoalDefinition,
+  type GrowthGoalSourceDecisionResult,
 } from "../../../src/features/level/goal-architecture";
 import type { GrowthDashboard } from "../../../src/features/level/types";
 import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
@@ -61,14 +68,65 @@ export default function LevelIndexScreen(): React.ReactElement {
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
   const growthGoalCards = useMemo(() => buildGrowthGoalCards(), []);
   const initialGoalChoice = useMemo(() => buildInitialGrowthGoalChoice(), []);
+  const readingDefaultGoal = useMemo(() => defaultGoalFor("READING"), []);
+  const readingRecommendation = useMemo(
+    () => createColdStartRecommendation("READING"),
+    [],
+  );
+  const customReadingGoal = useMemo(
+    () =>
+      createCustomGrowthGoal({
+        activeDays: ["MON", "WED", "FRI"],
+        domain: "READING",
+        frequency: "WEEKDAYS",
+        targetUnit: "page",
+        targetValue: 5,
+        title: "출근 전 독서",
+      }),
+    [],
+  );
+  const todayMissionSnapshot = useMemo(
+    () =>
+      materializeDailyMissionSnapshot({
+        goal: readingDefaultGoal,
+        plannedDate: "2026-09-05",
+      }),
+    [readingDefaultGoal],
+  );
   const [serverDashboard, setServerDashboard] =
     useState<GrowthDashboard | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [goalChoiceStatus, setGoalChoiceStatus] = useState<string | null>(null);
+  const [goalDecision, setGoalDecision] =
+    useState<GrowthGoalSourceDecisionResult | null>(null);
+  const [historicalMissionMutationCount, setHistoricalMissionMutationCount] =
+    useState(0);
 
   function openGrowthDomain(domain: GrowthGoalDomain): void {
     const route = levelRoutes[domain];
     if (route) router.push(route as never);
+  }
+
+  function applyGoalDecision(
+    decision: "ACCEPTED" | "DECLINED" | "EDITED",
+  ): void {
+    const result =
+      decision === "EDITED"
+        ? buildGrowthGoalSourceDecision({
+            currentGoal: readingDefaultGoal,
+            decision,
+            editedGoal: customReadingGoal,
+            effectiveDate: "2026-09-06",
+            recommendation: readingRecommendation,
+          })
+        : buildGrowthGoalSourceDecision({
+            currentGoal: readingDefaultGoal,
+            decision,
+            effectiveDate: "2026-09-05",
+            recommendation: readingRecommendation,
+          });
+    setGoalDecision(result);
+    setHistoricalMissionMutationCount(0);
   }
 
   useEffect(() => {
@@ -138,6 +196,72 @@ export default function LevelIndexScreen(): React.ReactElement {
             {goalChoiceStatus}
           </Text>
         ) : null}
+        <View
+          accessibilityLabel="LV UP 추천 목표 결정"
+          style={styles.recommendationPanel}
+        >
+          <Text style={styles.recommendationTitle}>추천 목표</Text>
+          <Text style={styles.choiceDescription}>
+            {readingRecommendation.basisSummary} 추천은 수락하기 전에는 오늘
+            목표에 자동 반영되지 않아요.
+          </Text>
+          <View style={styles.choiceActions}>
+            <Pressable
+              accessibilityLabel="추천 수락"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("ACCEPTED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>추천 수락</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="추천 수정 적용"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("EDITED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>추천 수정 적용</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="추천 거절"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("DECLINED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>추천 거절</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="직접 목표 저장"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("EDITED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>직접 목표 저장</Text>
+            </Pressable>
+          </View>
+          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
+            {goalDecision
+              ? goalDecisionStatus(goalDecision)
+              : "추천 대기 · 자동 적용 없음"}
+          </Text>
+          <Text style={styles.choiceDescription}>
+            오늘 미션 snapshot: {todayMissionSnapshot.targetValue}
+            {unitLabel(todayMissionSnapshot.targetUnit)} · 과거 미션 변경{" "}
+            {historicalMissionMutationCount}건
+          </Text>
+        </View>
       </SurfaceCard>
       <View accessibilityLabel="오늘 LV UP 목표" style={styles.goalGrid}>
         {growthGoalCards.map((goal) => (
@@ -199,6 +323,14 @@ export default function LevelIndexScreen(): React.ReactElement {
   );
 }
 
+function defaultGoalFor(domain: GrowthGoalDomain): GrowthGoalDefinition {
+  const goal = LVUP_DEFAULT_GOALS.find(
+    (candidate) => candidate.domain === domain,
+  );
+  if (!goal) throw new Error("LVUP_DEFAULT_GOAL_MISSING");
+  return goal;
+}
+
 export function normalizeGrowthDashboardForTest(
   input: LevelDashboardNormalizationInput,
 ): ReturnType<typeof normalizeGrowthDashboardForLevel> {
@@ -245,6 +377,20 @@ function goalChoiceStatusForOption(option: string): string {
   return "직접 설정은 목표 수정에서 값과 요일을 선택해요.";
 }
 
+function goalDecisionStatus(
+  decision: GrowthGoalSourceDecisionResult,
+): string {
+  const autoApply = decision.recommendationAutoApplied ? "자동 적용" : "직접 적용";
+  return `${decision.selectedGoal.title} · ${decision.decision} · ${autoApply} · 적용일 ${decision.effectiveDate}`;
+}
+
+function unitLabel(unit: "article" | "minute" | "page" | "sentence"): string {
+  if (unit === "page") return "페이지";
+  if (unit === "article") return "개";
+  if (unit === "sentence") return "문장";
+  return "분";
+}
+
 const styles = StyleSheet.create({
   choiceActions: {
     flexDirection: "row",
@@ -289,5 +435,15 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.82,
+  },
+  recommendationPanel: {
+    borderColor: componentColors.line,
+    borderTopWidth: 1,
+    gap: designSystem.spacing[2],
+    paddingTop: designSystem.spacing[3],
+  },
+  recommendationTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelL,
   },
 });

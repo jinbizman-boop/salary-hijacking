@@ -4078,8 +4078,7 @@ function VariableExpenseActionRow({
       <View style={styles.flex}>
         <Text style={styles.listTitle}>{item.name}</Text>
         <Text style={styles.listMeta}>
-          {formatMoney(item.amount)}원 · {item.category} ·{" "}
-          {item.paymentMethod}
+          {formatMoney(item.amount)}원 · {item.category} · {item.paymentMethod}
         </Text>
       </View>
       <SmallButton
@@ -4353,7 +4352,7 @@ function PlanScreen(): React.ReactElement {
           serverPayrollPlan?.variableExpenseReserveMinor ?? 0,
       });
       applyServerPayrollPlan(saved);
-        setPlanToast("급여 계획을 안전하게 저장했어요.");
+      setPlanToast("급여 계획을 안전하게 저장했어요.");
     } catch {
       setPlanToast("급여 계획 저장에 실패했어요. 다시 시도해 주세요.");
     } finally {
@@ -5033,9 +5032,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
       setMyLevelDashboard(dashboard);
       setMyLevelActiveTasks(activeTasks.items);
       setMyLevelCompletedTasks(completedTasks.items);
-      setToast(
-        `${dashboard.todaySuggestion} · 최신 현황을 확인했어요.`,
-      );
+      setToast(`${dashboard.todaySuggestion} · 최신 현황을 확인했어요.`);
     } catch {
       setMyLevelDashboard(null);
       setMyLevelActiveTasks([]);
@@ -6893,9 +6890,7 @@ function LoginScreen(): React.ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const loginSubmitInFlightRef = useRef(false);
   const socialLoginSubmitInFlightRef = useRef(false);
-  const [toast, setToast] = useState(
-    "급여 데이터를 안전하게 불러옵니다.",
-  );
+  const [toast, setToast] = useState("급여 데이터를 안전하게 불러옵니다.");
   const loginAuthApi = useMemo(() => createMobileAuthApi(), []);
   const socialRedirectUri = useMemo(
     () => Linking.createURL("auth/oauth/callback"),
@@ -6923,7 +6918,7 @@ function LoginScreen(): React.ReactElement {
         return;
       socialLoginSubmitInFlightRef.current = true;
       setSubmitting(true);
-      setToast(`${provider} OAuth 로그인을 시작하는 중입니다.`);
+      setToast(`${provider} 로그인을 시작하는 중입니다.`);
       try {
         const result = await loginAuthApi.startOAuth({
           provider,
@@ -6934,15 +6929,15 @@ function LoginScreen(): React.ReactElement {
             result.authorizationUrl,
             socialRedirectUri,
           );
-          setToast(`${provider} OAuth 인증 창을 열었어요.`);
+          setToast(`${provider} 로그인 화면을 열었어요.`);
           return;
         }
         setToast(
-          `${provider} OAuth 상태가 준비됐어요. 서버의 인증 URL 설정을 기다리고 있습니다.`,
+          `${provider} 로그인을 준비하고 있습니다. 잠시 후 다시 시도해 주세요.`,
         );
       } catch {
         setToast(
-          `${provider} OAuth 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.`,
+          `${provider} 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.`,
         );
       } finally {
         socialLoginSubmitInFlightRef.current = false;

@@ -41,6 +41,33 @@ export type GrowthGoalRecommendation = Readonly<{
   suggestedUnit: GrowthGoalUnit;
 }>;
 
+export type GrowthGoalSourceDecisionResult = Readonly<{
+  decision: GrowthRecommendationDecision;
+  effectiveDate: string;
+  recommendationAutoApplied: false;
+  recommendationFinancialRawDataUsed: false;
+  selectedGoal: GrowthGoalDefinition;
+}>;
+
+export type GrowthDailyMissionSnapshot = Readonly<{
+  domain: GrowthGoalDomain;
+  goalSource: GrowthGoalSource;
+  immutable: true;
+  missionId: string;
+  plannedDate: string;
+  status: "PLANNED";
+  targetUnit: GrowthGoalUnit;
+  targetValue: number;
+  title: string;
+}>;
+
+export type GrowthGoalFutureUpdate = Readonly<{
+  historicalMissionMutationCount: 0;
+  historicalMissions: readonly GrowthDailyMissionSnapshot[];
+  nextGoal: GrowthGoalDefinition;
+  nextGoalEffectiveDate: string;
+}>;
+
 export const GROWTH_GOAL_SOURCE_LABELS = {
   CUSTOM: "내가 설정",
   DEFAULT: "기본 목표",
@@ -134,6 +161,104 @@ export function createColdStartRecommendation(
     source: "RECOMMENDED",
     suggestedTarget: defaultGoal.targetValue,
     suggestedUnit: defaultGoal.targetUnit,
+  };
+}
+
+export function createCustomGrowthGoal({
+  activeDays,
+  domain,
+  frequency,
+  targetUnit,
+  targetValue,
+  title,
+}: Readonly<{
+  activeDays: readonly string[];
+  domain: GrowthGoalDomain;
+  frequency: GrowthGoalFrequency;
+  targetUnit: GrowthGoalUnit;
+  targetValue: number;
+  title: string;
+}>): GrowthGoalDefinition {
+  return {
+    activeDays,
+    domain,
+    frequency,
+    source: "CUSTOM",
+    targetUnit,
+    targetValue,
+    title,
+  };
+}
+
+export function buildGrowthGoalSourceDecision({
+  currentGoal,
+  decision,
+  editedGoal,
+  effectiveDate,
+  recommendation,
+}: Readonly<{
+  currentGoal: GrowthGoalDefinition;
+  decision: GrowthRecommendationDecision;
+  editedGoal?: GrowthGoalDefinition;
+  effectiveDate: string;
+  recommendation: GrowthGoalRecommendation;
+}>): GrowthGoalSourceDecisionResult {
+  return {
+    decision,
+    effectiveDate,
+    recommendationAutoApplied: false,
+    recommendationFinancialRawDataUsed: false,
+    selectedGoal:
+      decision === "ACCEPTED"
+        ? {
+            ...currentGoal,
+            source: "RECOMMENDED",
+            targetUnit: recommendation.suggestedUnit,
+            targetValue: recommendation.suggestedTarget,
+          }
+        : decision === "EDITED" && editedGoal
+          ? {
+              ...editedGoal,
+              source: "CUSTOM",
+            }
+          : currentGoal,
+  };
+}
+
+export function materializeDailyMissionSnapshot({
+  goal,
+  plannedDate,
+}: Readonly<{
+  goal: GrowthGoalDefinition;
+  plannedDate: string;
+}>): GrowthDailyMissionSnapshot {
+  return {
+    domain: goal.domain,
+    goalSource: goal.source,
+    immutable: true,
+    missionId: `mission-${goal.domain.toLowerCase()}-${plannedDate}`,
+    plannedDate,
+    status: "PLANNED",
+    targetUnit: goal.targetUnit,
+    targetValue: goal.targetValue,
+    title: goal.title,
+  };
+}
+
+export function updateGrowthGoalWithoutMutatingHistory({
+  effectiveDate,
+  historicalMissions,
+  nextGoal,
+}: Readonly<{
+  effectiveDate: string;
+  historicalMissions: readonly GrowthDailyMissionSnapshot[];
+  nextGoal: GrowthGoalDefinition;
+}>): GrowthGoalFutureUpdate {
+  return {
+    historicalMissionMutationCount: 0,
+    historicalMissions,
+    nextGoal,
+    nextGoalEffectiveDate: effectiveDate,
   };
 }
 

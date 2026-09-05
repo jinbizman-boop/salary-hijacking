@@ -23,4 +23,14 @@ describe("plan screen design system integration", () => {
     expect(source).toContain('barStyle="dark-content"');
     expect(source).toContain("backgroundColor={planScreenColors.surface}");
   });
+
+  it("uses mobile-native plan cards instead of spreadsheet-style tables", () => {
+    expect(source).not.toContain("function PlanTable");
+    expect(source).not.toContain('headers={["지출일", "구분명", "소비명", "단가", "수량", "금액"]}');
+    expect(source).not.toContain("tableHeaderCell");
+    expect(source).not.toContain("tableRow");
+    expect(source).toContain("function PlanSummaryGrid");
+    expect(source).toContain("function PlanCommitmentList");
+    expect(source).toContain("function MobilePlanSection");
+  });
 });

@@ -8,6 +8,7 @@ import {
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
+import { ActivityFlowChecklist } from "./ActivityFlowChecklist";
 import { ContentPolicyPills } from "./ContentPolicyPills";
 
 const typography = salaryHijackingDesignSystem.typography;
@@ -28,6 +29,15 @@ export function ReadingContentCard({
       <Text style={styles.category}>{content.category}</Text>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.summary}>{content.summary}</Text>
+      <ActivityFlowChecklist
+        steps={[
+          { label: "오늘 목표", value: `${content.estimatedMinutes}분 독서` },
+          { label: "실제 페이지", value: "읽은 페이지를 직접 기록" },
+          { label: "독서 카드 작성", value: content.recordQuestion },
+          { label: "한 줄 기록", value: "비공개 기록 후 완료" },
+          { label: "streak / XP", value: `${content.xpReward} XP 반영` },
+        ]}
+      />
       <ContentPolicyPills content={content} />
       <Text style={styles.source}>출처 {content.sourceTitle}</Text>
       <View style={styles.actions}>

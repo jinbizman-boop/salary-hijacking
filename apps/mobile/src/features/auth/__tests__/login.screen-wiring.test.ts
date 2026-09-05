@@ -145,7 +145,9 @@ describe("login screen wiring", () => {
     expect(login).toContain("Keyboard.addListener");
     expect(login).toContain("keyboardVisible");
     expect(login).toContain("keyboardCompact={keyboardVisible}");
-    expect(login).toMatch(/!\s*keyboardVisible\s*&&\s*SocialLoginButtonsComponent/u);
+    expect(login).toMatch(
+      /!\s*keyboardVisible\s*&&\s*SocialLoginButtonsComponent/u,
+    );
     expect(credentials).toContain("keyboardCompact?: boolean");
     expect(credentials).toContain("styles.titleKeyboardHidden");
     expect(credentials).toContain("styles.inputCompact");
@@ -217,6 +219,21 @@ describe("login screen wiring", () => {
     expect([source, credentials, social].join("\n")).not.toContain(
       "서버 인증으로 급여 데이터를 안전하게 불러옵니다.",
     );
+  });
+
+  it("keeps social login status copy commercial and free of protocol jargon", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("SOCIAL_LOGIN_STATUS_COPY");
+    expect(source).toContain("카카오 로그인을 시작합니다.");
+    expect(source).toContain("네이버 로그인을 시작합니다.");
+    expect(source).toContain("Google 로그인을 시작합니다.");
+    expect(source).not.toContain("OAuth 로그인을 시작합니다.");
+    expect(source).not.toContain("인증 URL");
+    expect(source).not.toContain("서버 설정을 확인");
   });
 
   it("does not leave production signup submit as a no-op callback", () => {
