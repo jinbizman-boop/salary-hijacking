@@ -181,6 +181,77 @@ async function verifyRole(sql) {
   };
 }
 
+async function cleanupUnsupportedTransientOauthStates(sql) {
+  const [preflight] = await sql`
+    select
+      (
+        select count(*)::int
+        from public.auth_identities
+        where provider not in ('EMAIL', 'PASSWORD', 'GOOGLE', 'KAKAO', 'NAVER')
+      ) as unsupported_identity_rows,
+      (
+        select count(*)::int
+        from public.auth_oauth_states
+        where provider not in ('GOOGLE', 'KAKAO', 'NAVER')
+      ) as unsupported_oauth_state_rows,
+      (
+        select count(*)::int
+        from public.auth_oauth_states
+        where provider not in ('GOOGLE', 'KAKAO', 'NAVER')
+          and consumed_at is null
+          and expires_at > now()
+      ) as unsupported_active_oauth_state_rows,
+      (
+        select count(*)::int
+        from public.auth_oauth_states
+        where provider not in ('GOOGLE', 'KAKAO', 'NAVER')
+          and (
+            consumed_at is not null
+            or expires_at <= now()
+          )
+      ) as unsupported_cleanup_eligible_oauth_state_rows
+  `;
+
+  assert.equal(
+    Number(preflight.unsupported_identity_rows),
+    0,
+    "unsupported auth identity provider rows require reviewed operator cleanup",
+  );
+  assert.equal(
+    Number(preflight.unsupported_active_oauth_state_rows),
+    0,
+    "active unsupported OAuth state rows require reviewed operator cleanup",
+  );
+
+  const [deleted] = await sql`
+    with deleted_rows as (
+      delete from public.auth_oauth_states
+      where provider not in ('GOOGLE', 'KAKAO', 'NAVER')
+        and (
+          consumed_at is not null
+          or expires_at <= now()
+        )
+      returning state
+    )
+    select count(*)::int as deleted_count
+    from deleted_rows
+  `;
+
+  return {
+    unsupportedIdentityRows: 0,
+    unsupportedOauthStateRowsBefore: Number(
+      preflight.unsupported_oauth_state_rows,
+    ),
+    unsupportedActiveOauthStateRows: 0,
+    cleanupEligibleTransientOauthStateRows: Number(
+      preflight.unsupported_cleanup_eligible_oauth_state_rows,
+    ),
+    cleanedTransientOauthStateRows: Number(deleted.deleted_count),
+    cleanupPolicy:
+      "STAGING_ONLY_EXPIRED_OR_CONSUMED_OAUTH_STATES_NO_IDENTITY_OR_USER_DATA_DELETE",
+  };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const outputPath =
@@ -238,6 +309,8 @@ async function main() {
     assert.equal(session.database_name, EXPECTED.databaseName);
 
     const ledgerBefore = await readLedger(sql);
+    const transientOauthStateCleanup =
+      await cleanupUnsupportedTransientOauthStates(sql);
     const startedAt = performance.now();
     await sql.unsafe(migrationSql);
     await sql.unsafe(migrationSql);
@@ -317,6 +390,7 @@ async function main() {
         idempotencyRerun: "PASS",
         executionDurationMs: durationMs,
       },
+      transientOauthStateCleanup,
       providerContract,
       role,
       status: "PASS",
