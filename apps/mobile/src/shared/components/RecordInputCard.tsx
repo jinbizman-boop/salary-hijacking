@@ -1,7 +1,14 @@
 import { StyleSheet, Text, TextInput, View } from "react-native";
 
 import { PrimaryButton } from "./PrimaryButton";
-import { componentColors, componentRadius, componentSpacing } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type RecordInputCardProps = Readonly<{
   label: string;
@@ -26,7 +33,7 @@ export function RecordInputCard({
         multiline
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor="#9AA3AA"
+        placeholderTextColor={componentColors.disabledGray}
         style={styles.input}
         value={value}
       />
@@ -37,25 +44,27 @@ export function RecordInputCard({
 
 const styles = StyleSheet.create({
   card: {
-    gap: componentSpacing.sm,
-    padding: componentSpacing.md,
+    gap: componentSpacing.md,
+    padding: componentSpacing.lg,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.card,
     backgroundColor: componentColors.surface,
+    ...designSystem.elevation.low,
   },
   label: {
     color: componentColors.textPrimary,
-    fontSize: 14,
-    fontWeight: "800",
+    ...designSystem.typography.labelM,
   },
   input: {
-    minHeight: 78,
-    padding: 12,
+    minHeight: 112,
+    padding: componentSpacing.md,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.button,
+    backgroundColor: componentColors.surfaceSoft,
     color: componentColors.textPrimary,
+    ...designSystem.typography.bodyL,
     textAlignVertical: "top",
   },
 });

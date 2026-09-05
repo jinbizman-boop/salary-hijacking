@@ -16,6 +16,7 @@
 import { z } from "zod";
 
 import * as AuthContract from "./auth/auth.schema";
+import * as AnalyticsContract from "./analytics/analytics.schema";
 import * as ErrorCodeContract from "./common/error-code.schema";
 import * as ResponseContract from "./common/response.schema";
 import * as CommunityContract from "./community/community.schema";
@@ -27,6 +28,7 @@ import * as PayrollContract from "./payroll/payroll.schema";
 
 export {
   AuthContract,
+  AnalyticsContract,
   ErrorCodeContract,
   ResponseContract,
   CommunityContract,
@@ -51,6 +53,7 @@ export const API_CONTRACT_COMPLETION_STATUS =
 
 export const API_CONTRACT_REQUIRED_MODULES = [
   "auth",
+  "analytics",
   "common",
   "community",
   "payroll",
@@ -68,6 +71,7 @@ export const API_CONTRACT_ENDPOINT_DOMAINS = [
 
 export const ApiContractDomainSchema = z.enum([
   "auth",
+  "analytics",
   "common",
   "community",
   "payroll",
@@ -80,6 +84,7 @@ export const ApiContractEndpointDomainSchema = z.enum([
 ]);
 
 export const ApiContractRuntimeSchema = z.enum([
+  "web",
   "mobile",
   "admin",
   "api",
@@ -194,6 +199,15 @@ export const API_CONTRACT_MODULES: Readonly<
     runtimeConsumers: ["mobile", "admin", "api", "qa"],
     description:
       "이메일/소셜 로그인, 세션, 토큰, 기기, 동의, MFA, 관리자 RBAC 인증 계약",
+  },
+  analytics: {
+    domain: "analytics",
+    version: AnalyticsContract.ANALYTICS_CONTRACT_VERSION,
+    status: "ACTIVE",
+    endpointCount: 0,
+    runtimeConsumers: ["web", "mobile", "admin", "api", "qa", "release"],
+    description:
+      "Web/Mobile/Admin 공통 privacy-safe analytics event taxonomy, consent boundary, retention and duplicate detection contract",
   },
   common: {
     domain: "common",
@@ -313,11 +327,12 @@ export type ApiContractRegistryShape = Readonly<{
   routes: typeof API_ROUTE_PATHS;
   endpoints: typeof API_ENDPOINT_CONTRACTS;
   endpointDescriptors: typeof API_ENDPOINT_DESCRIPTORS;
-  schemas: Readonly<{
-    auth: unknown;
-    common: unknown;
-    community: unknown;
-    payroll: unknown;
+    schemas: Readonly<{
+      auth: unknown;
+      analytics: unknown;
+      common: unknown;
+      community: unknown;
+      payroll: unknown;
   }>;
   policies: Readonly<{
     serverAuthority: Readonly<Record<string, unknown>>;
@@ -344,6 +359,7 @@ export const ApiContractRegistry: ApiContractRegistryShape = Object.freeze({
   endpointDescriptors: API_ENDPOINT_DESCRIPTORS,
   schemas: {
     auth: AuthContract.AuthSchemas,
+    analytics: AnalyticsContract.AnalyticsSchemas,
     common: {
       errorCode: ErrorCodeContract.ErrorCodeRegistry,
       response: ResponseContract.ResponseSchemas,
@@ -641,12 +657,12 @@ export const validateApiContractRegistry = (
       });
     }
 
-    if (domain === "common") {
+    if (domain === "common" || domain === "analytics") {
       if (module.endpointCount !== 0) {
         pushIssue(issues, {
           severity: "error",
-          code: "COMMON_MODULE_ENDPOINT_COUNT_NOT_ZERO",
-          message: "Common module must not own runtime HTTP endpoints.",
+          code: "NON_ENDPOINT_MODULE_ENDPOINT_COUNT_NOT_ZERO",
+          message: `${domain} module must not own runtime HTTP endpoints.`,
           domain,
         });
       }
@@ -780,6 +796,9 @@ export type ApiContractRegistryValidationResult =
 export type AuthEndpointKey = AuthContract.AuthEndpointKey;
 export type CommunityEndpointKey = CommunityContract.CommunityEndpointKey;
 export type PayrollEndpointKey = PayrollContract.PayrollEndpointKey;
+export type AnalyticsEvent = AnalyticsContract.AnalyticsEvent;
+export type AnalyticsPrivacyParameter =
+  AnalyticsContract.AnalyticsPrivacyParameter;
 
 export type ErrorCode = ErrorCodeContract.ErrorCode;
 export type StandardError = ErrorCodeContract.StandardError;

@@ -443,6 +443,29 @@ function errorResponse(
   path: string,
   error: unknown,
 ): Response {
+  if (error instanceof Error && !(error instanceof FixedExpenseHttpError)) {
+    const message = error.message.toLowerCase();
+    if (message.includes("closed"))
+      return errorResponse(
+        requestId,
+        path,
+        new FixedExpenseHttpError(
+          409,
+          "FIXED_EXPENSE_CYCLE_CLOSED",
+          "마감된 급여주기의 고정지출은 변경할 수 없습니다.",
+        ),
+      );
+    if (message.includes("not found") || message.includes("failed"))
+      return errorResponse(
+        requestId,
+        path,
+        new FixedExpenseHttpError(
+          404,
+          "FIXED_EXPENSE_NOT_FOUND",
+          "고정지출을 찾을 수 없습니다.",
+        ),
+      );
+  }
   const normalized =
     error instanceof FixedExpenseHttpError
       ? error

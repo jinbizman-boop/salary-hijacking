@@ -40,6 +40,10 @@ export type NotificationChannel = "IN_APP" | "PUSH" | "EMAIL";
 export type NotificationStatus = "UNREAD" | "READ" | "ARCHIVED" | "DELETED";
 export type NotificationPriority = "LOW" | "NORMAL" | "HIGH" | "URGENT";
 export type NotificationDevicePlatform = "IOS" | "ANDROID" | "WEB";
+export type NotificationDeviceProvider = "FCM" | "APNS" | "EXPO";
+export type NotificationDeviceTokenSource =
+  | "NATIVE_DEVICE"
+  | "EXPO_PUSH_SERVICE";
 export type NotificationRole =
   | "USER"
   | "OPERATOR"
@@ -75,6 +79,8 @@ export interface PaginationInput {
   readonly pageSize: number;
   readonly offset: number;
   readonly limit: number;
+  readonly cursor?: string | null;
+  readonly mode?: "cursor" | "offset";
 }
 
 export interface NotificationListResult<TItem extends JsonRecord = JsonRecord> {
@@ -82,6 +88,10 @@ export interface NotificationListResult<TItem extends JsonRecord = JsonRecord> {
   readonly page: number;
   readonly pageSize: number;
   readonly total: number;
+  readonly cursor?: string | null;
+  readonly nextCursor?: string | null;
+  readonly hasMore?: boolean;
+  readonly limit?: number;
 }
 
 export interface NotificationCreateInput {
@@ -118,7 +128,9 @@ export interface NotificationPreferenceInput {
 export interface NotificationDeviceInput {
   readonly deviceId: string;
   readonly platform: NotificationDevicePlatform;
+  readonly provider: NotificationDeviceProvider;
   readonly pushToken: string;
+  readonly tokenSource: NotificationDeviceTokenSource;
   readonly appVersion: string | null;
   readonly locale: string | null;
 }
@@ -300,7 +312,10 @@ const safePrivacyFlagKeys = new Set([
   "rawfinancialdataexposed",
   "rawpersonaldataexposed",
   "rawpushtokenexposed",
+  "pushtokenhashonly",
+  "provider",
   "sensitivefinancialdataexposed",
+  "tokensource",
   "financialrawdataexposed",
   "financialrawaccountdataexposed",
 ]);
@@ -465,9 +480,28 @@ function errorResponse(
   path: string,
   error: unknown,
 ): Response {
+  const repositoryError =
+    error &&
+    typeof error === "object" &&
+    typeof (error as { readonly status?: unknown }).status === "number" &&
+    typeof (error as { readonly code?: unknown }).code === "string"
+      ? (error as {
+          readonly status: number;
+          readonly code: string;
+          readonly message?: string;
+          readonly details?: JsonValue | null;
+        })
+      : null;
   const normalized =
     error instanceof NotificationHttpError
       ? error
+      : repositoryError
+        ? new NotificationHttpError(
+            repositoryError.status,
+            repositoryError.code,
+            repositoryError.message ?? "알림 API 요청을 처리할 수 없습니다.",
+            repositoryError.details ?? null,
+          )
       : new NotificationHttpError(
           500,
           "NOTIFICATION_ROUTE_INTERNAL_ERROR",
@@ -760,6 +794,71 @@ function normalizePlatform(value: unknown): NotificationDevicePlatform {
   );
 }
 
+function normalizeDeviceProvider(
+  value: unknown,
+  platform: NotificationDevicePlatform,
+): NotificationDeviceProvider {
+  const fallback =
+    platform === "ANDROID" ? "FCM" : platform === "IOS" ? "APNS" : "EXPO";
+  const provider =
+    typeof value === "string" ? value.trim().toUpperCase() : fallback;
+  if (provider === "FCM" || provider === "APNS" || provider === "EXPO")
+    return provider;
+  throw new NotificationHttpError(
+    400,
+    "NOTIFICATION_PROVIDER_INVALID",
+    "푸시 provider 값이 올바르지 않습니다.",
+  );
+}
+
+function normalizeDeviceTokenSource(
+  value: unknown,
+  provider: NotificationDeviceProvider,
+): NotificationDeviceTokenSource {
+  const fallback =
+    provider === "EXPO" ? "EXPO_PUSH_SERVICE" : "NATIVE_DEVICE";
+  const source =
+    typeof value === "string" ? value.trim().toUpperCase() : fallback;
+  if (source === "NATIVE_DEVICE" || source === "EXPO_PUSH_SERVICE")
+    return source;
+  throw new NotificationHttpError(
+    400,
+    "NOTIFICATION_TOKEN_SOURCE_INVALID",
+    "푸시 토큰 source 값이 올바르지 않습니다.",
+  );
+}
+
+function isExpoPushServiceToken(value: string): boolean {
+  return /\b(?:Expo|Exponent)PushToken\[[A-Za-z0-9_-]{8,}\]/u.test(value);
+}
+
+function assertDeviceTokenContract(
+  platform: NotificationDevicePlatform,
+  provider: NotificationDeviceProvider,
+  tokenSource: NotificationDeviceTokenSource,
+  pushToken: string,
+): void {
+  if (
+    (platform === "ANDROID" || provider === "FCM") &&
+    (provider !== "FCM" ||
+      tokenSource !== "NATIVE_DEVICE" ||
+      isExpoPushServiceToken(pushToken))
+  ) {
+    throw new NotificationHttpError(
+      400,
+      "NOTIFICATION_NATIVE_FCM_TOKEN_REQUIRED",
+      "Android FCM 등록에는 native device token이 필요합니다.",
+    );
+  }
+  if (provider === "EXPO" && tokenSource !== "EXPO_PUSH_SERVICE") {
+    throw new NotificationHttpError(
+      400,
+      "NOTIFICATION_EXPO_TOKEN_SOURCE_REQUIRED",
+      "Expo provider 등록에는 Expo Push Service token source가 필요합니다.",
+    );
+  }
+}
+
 function pagination(url: URL): PaginationInput {
   const page = Math.max(
     1,
@@ -770,12 +869,26 @@ function pagination(url: URL): PaginationInput {
     Math.min(
       MAX_PAGE_SIZE,
       Number.parseInt(
-        url.searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE),
+        url.searchParams.get("limit") ??
+          url.searchParams.get("pageSize") ??
+          String(DEFAULT_PAGE_SIZE),
         10,
       ) || DEFAULT_PAGE_SIZE,
     ),
   );
-  return { page, pageSize, offset: (page - 1) * pageSize, limit: pageSize };
+  const cursor = url.searchParams.get("cursor");
+  const cursorMode =
+    Boolean(cursor && cursor.trim()) ||
+    url.searchParams.has("limit") ||
+    (!url.searchParams.has("page") && !url.searchParams.has("pageSize"));
+  return {
+    page,
+    pageSize,
+    offset: (page - 1) * pageSize,
+    limit: pageSize,
+    cursor: cursor && cursor.trim() ? cursor.trim() : null,
+    mode: cursorMode ? "cursor" : "offset",
+  };
 }
 
 function queryRecord(url: URL): JsonRecord {
@@ -810,6 +923,10 @@ function listResult<TItem extends JsonRecord>(
     page: page.page,
     pageSize: page.pageSize,
     total: items.length,
+    cursor: page.cursor ?? null,
+    nextCursor: null,
+    hasMore: page.offset + page.limit < items.length,
+    limit: page.limit,
   };
 }
 
@@ -944,10 +1061,18 @@ function preferenceInput(
 }
 
 function deviceInput(body: Record<string, unknown>): NotificationDeviceInput {
+  const platform = normalizePlatform(body.platform);
+  const provider = normalizeDeviceProvider(body.provider, platform);
+  const tokenSource = normalizeDeviceTokenSource(body.tokenSource, provider);
+  const pushToken = stringField(body, "pushToken", { maxLength: 4096 });
+  assertDeviceTokenContract(platform, provider, tokenSource, pushToken);
+
   return {
     deviceId: stringField(body, "deviceId", { maxLength: 160 }),
-    platform: normalizePlatform(body.platform),
-    pushToken: stringField(body, "pushToken", { maxLength: 500 }),
+    platform,
+    provider,
+    pushToken,
+    tokenSource,
     appVersion: optionalStringField(body, "appVersion", 80),
     locale: optionalStringField(body, "locale", 20),
   };
@@ -1282,8 +1407,10 @@ function createInMemoryNotificationsRepository<
         deviceId: input.deviceId,
         userId: runtime.principal.userId,
         platform: input.platform,
+        provider: input.provider,
         pushTokenHashOnly: true,
         pushTokenPreview: `${input.pushToken.slice(0, 6)}***`,
+        tokenSource: input.tokenSource,
         appVersion: input.appVersion,
         locale: input.locale,
         status: "ACTIVE",

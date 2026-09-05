@@ -712,9 +712,9 @@ export const notificationsSchemaTables = [
       "constraint notifications_dedupe_key_required_for_push check (push_required = false or dedupe_key is not null)",
       "constraint notifications_marketing_type_check check (marketing = false or type in ('AD_PROMOTION', 'EVENT_REWARD'))",
       "constraint notifications_ad_marketing_check check (type <> 'AD_PROMOTION' or marketing = true)",
-      "constraint notifications_sent_status_consistency check (sent_at is null or status in ('SENT', 'DELIVERED', 'READ'))",
-      "constraint notifications_delivered_status_consistency check (delivered_at is null or status in ('DELIVERED', 'READ'))",
-      "constraint notifications_read_status_consistency check ((read_at is null and read_status <> 'READ') or (read_at is not null and read_status = 'READ' and status in ('READ', 'DELIVERED', 'SENT')))",
+      "constraint notifications_sent_status_consistency check (sent_at is null or status in ('SENT', 'DELIVERED', 'READ', 'CANCELLED', 'DELETED'))",
+      "constraint notifications_delivered_status_consistency check (delivered_at is null or status in ('DELIVERED', 'READ', 'CANCELLED', 'DELETED'))",
+      "constraint notifications_read_status_consistency check (read_at is null or (read_status = 'READ' and status in ('READ', 'DELIVERED', 'SENT', 'CANCELLED')) or (read_status = 'DELETED' and status = 'DELETED'))",
       "constraint notifications_deleted_status_consistency check ((deleted_at is null and read_status <> 'DELETED' and status <> 'DELETED') or (deleted_at is not null and read_status = 'DELETED' and status = 'DELETED'))",
       "constraint notifications_suppressed_status_consistency check (suppressed_at is null or status = 'SUPPRESSED')",
       "constraint notifications_cancelled_status_consistency check (cancelled_at is null or status = 'CANCELLED')",
@@ -779,6 +779,14 @@ export const notificationsSchemaTables = [
         ],
       },
       {
+        name: "token_ciphertext",
+        type: "text",
+        sensitivity: "S5",
+        checks: [
+          "token_ciphertext is null or token_ciphertext like 'shjenc:v2:%'",
+        ],
+      },
+      {
         name: "push_permission_status",
         type: "varchar(32)",
         notNull: true,
@@ -807,6 +815,7 @@ export const notificationsSchemaTables = [
     ],
     constraints: [
       "constraint notification_push_tokens_no_raw_token_ref check (raw_push_token_included = false)",
+      "constraint notification_push_tokens_secret_ref_or_ciphertext check (token_secret_ref is not null or token_ciphertext is not null)",
       "constraint notification_push_tokens_revoked_status check (revoked_at is null or status in ('REVOKED', 'EXPIRED', 'BLOCKED'))",
       "constraint notification_push_tokens_permission_active check (status <> 'ACTIVE' or push_permission_status in ('AUTHORIZED', 'PROVISIONAL', 'EPHEMERAL'))",
     ],

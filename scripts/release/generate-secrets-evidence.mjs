@@ -39,8 +39,16 @@ export const DEFAULT_SECRET_STORES = Object.freeze({
   EAS_PROJECT_ID: ["GitHub Environments", "EAS project settings"],
   GITHUB_TOKEN: ["GitHub Actions runtime"],
   GITHUB_REPOSITORY: ["GitHub Actions runtime", "release external evidence"],
-  SENTRY_DSN: ["GitHub Environments", "provider secret store"],
-  SLACK_WEBHOOK_URL: ["GitHub Environments", "provider secret store"],
+  SENTRY_DSN: [
+    "GitHub Environments",
+    "Cloudflare Worker secret",
+    "provider secret store",
+  ],
+  SLACK_WEBHOOK_URL: [
+    "GitHub Environments",
+    "Cloudflare Worker secret",
+    "provider secret store",
+  ],
 });
 
 const approvedSecretStoreSet = new Set(

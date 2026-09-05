@@ -1,6 +1,11 @@
 import { StyleSheet, View } from "react-native";
 
-import { componentColors } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
 
 export type ProgressBarProps = Readonly<{
   value: number;
@@ -26,14 +31,14 @@ export function ProgressBar({
 
 const styles = StyleSheet.create({
   track: {
-    height: 8,
+    height: componentSpacing.sm,
     overflow: "hidden",
-    borderRadius: 999,
-    backgroundColor: "#E9EEF1",
+    borderRadius: componentRadius.pill,
+    backgroundColor: salaryHijackingDesignSystem.colors.border.soft,
   },
   fill: {
     height: "100%",
-    borderRadius: 999,
+    borderRadius: componentRadius.pill,
     backgroundColor: componentColors.primaryGreen,
   },
 });

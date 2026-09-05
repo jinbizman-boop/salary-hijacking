@@ -7,12 +7,16 @@ export {
   type NotificationPreferenceStripProps,
 } from "./NotificationPreferenceStrip";
 export {
+  NotificationSettingsScreen,
+  type NotificationSettingsScreenProps,
+} from "./NotificationSettingsScreen";
+export {
   NotificationSummaryCard,
   type NotificationSummaryCardProps,
 } from "./NotificationSummaryCard";
 export {
-  NotificationReferenceScreen,
   assertMobileNotificationsIndexCompleteness,
-  type NotificationReferenceHref,
-  type NotificationReferenceScreenProps,
-} from "./NotificationReferenceScreen";
+  NotificationScreen,
+  type NotificationHref,
+  type NotificationScreenProps,
+} from "./NotificationScreen";

@@ -1,0 +1,5 @@
+PROVIDER,STATUS,CONTRACT,INTERNAL_EVIDENCE,EXTERNAL_USER_ACTION_REQUIRED
+GOOGLE,CODE_COMPLETE_EXTERNAL_CONFIG,state and PKCE start/callback contract present,OAuth route and mobile callback source inspected in Phase 3; no token logging evidence,Google console client/redirect configuration and runtime smoke
+APPLE,CODE_COMPLETE_EXTERNAL_CONFIG,"state PKCE nonce hash binding, nonce expiry and single-use internal path",APPLE_NONCE_INTERNAL=PASS; local/staging start path internal checks complete,Apple developer console/client/redirect configuration and runtime login
+NAVER,CODE_COMPLETE_EXTERNAL_CONFIG,state and PKCE start/callback contract present,OAuth route and mobile callback source inspected in Phase 3; no token logging evidence,Naver console application/redirect configuration and runtime smoke
+KAKAO,CODE_COMPLETE_EXTERNAL_CONFIG,state and PKCE start/callback contract present,OAuth route and mobile callback source inspected in Phase 3; no token logging evidence,Kakao console application/redirect configuration and runtime smoke

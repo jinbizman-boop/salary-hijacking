@@ -32,7 +32,6 @@ const requiredIconFiles = [
   "social/kakao.png",
   "social/naver.png",
   "social/google.png",
-  "social/facebook.png",
   "brands/chat-gpt.png",
   "brands/youtube.png",
   "brands/netflix.png",
@@ -81,6 +80,17 @@ function relativePosix(root: string, file: string): string {
 }
 
 describe("mobile asset registry policy", () => {
+  it("keeps the Android launch social icon set aligned with Kakao, Naver, and Google only", () => {
+    const iconsRoot = path.join(mobileRoot, "src", "shared", "assets", "icons");
+    const socialRoot = path.join(iconsRoot, "social");
+    const socialFiles = fs
+      .readdirSync(socialRoot)
+      .filter((file) => file.endsWith(".png"))
+      .sort();
+
+    expect(socialFiles).toEqual(["google.png", "kakao.png", "naver.png"]);
+  });
+
   it("keeps runtime icons in src/shared/assets/icons with kebab-case file names", () => {
     const iconsRoot = path.join(mobileRoot, "src", "shared", "assets", "icons");
 
@@ -99,7 +109,9 @@ describe("mobile asset registry policy", () => {
 
     for (const file of collectFiles(iconsRoot)) {
       const relativeFile = relativePosix(iconsRoot, file);
-      if (relativeFile === "index.ts") continue;
+      if (relativeFile === "index.ts" || relativeFile === "bottom-tabs.ts") {
+        continue;
+      }
       expect(relativeFile).toMatch(
         /^(?:bottom-tabs|common|money|level|community|profile|social|brands)\/[a-z0-9]+(?:-[a-z0-9]+)*\.png$/u,
       );
@@ -108,6 +120,14 @@ describe("mobile asset registry policy", () => {
     const registry = fs.readFileSync(path.join(iconsRoot, "index.ts"), "utf8");
     expect(registry).toContain("appIconAssets");
     expect(registry).not.toContain("`${");
+
+    const bottomTabsRegistry = fs.readFileSync(
+      path.join(iconsRoot, "bottom-tabs.ts"),
+      "utf8",
+    );
+    expect(bottomTabsRegistry).toContain("bottomTabIconAssets");
+    expect(bottomTabsRegistry).not.toContain("appIconAssets");
+    expect(bottomTabsRegistry).not.toContain("`${");
   });
 
   it("keeps only Expo launch images at apps/mobile/assets root", () => {
@@ -172,6 +192,14 @@ describe("mobile asset registry policy", () => {
       path.resolve(mobileRoot, "..", "..", "release", "evidence"),
       path.resolve(mobileRoot, "..", "..", "docs"),
     ];
+    const allowedDesignReferenceRoot = path.resolve(
+      mobileRoot,
+      "..",
+      "..",
+      "docs",
+      "design",
+      "stitch",
+    );
     const runtimeAssetBasenames = new Set([
       ...expoAssetFiles,
       ...requiredIconFiles.map((file) => path.basename(file)),
@@ -186,7 +214,7 @@ describe("mobile asset registry policy", () => {
           (file) =>
             !allowedRuntimeRoots.some((allowedRoot) =>
               file.startsWith(allowedRoot),
-            ),
+            ) && !file.startsWith(allowedDesignReferenceRoot),
         )
         .map((file) => relativePosix(mobileRoot, file));
     });

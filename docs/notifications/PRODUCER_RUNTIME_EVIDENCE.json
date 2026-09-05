@@ -1,0 +1,177 @@
+{
+  "PHASE_5_PRODUCER_RUNTIME": "PASS_STAGING_RUNTIME",
+  "failures": [],
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "startedAt": "2026-08-26T14:10:54.171Z",
+  "finishedAt": "2026-08-26T14:11:24.774Z",
+  "syntheticUser": {
+    "emailHash": "ec9db984c64ee28a"
+  },
+  "savingGoalIdHash": "45ecdba5bbd25b80",
+  "budgetThreshold": {
+    "status": "PASS",
+    "warningCount": 1,
+    "exceededCount": 1,
+    "duplicateCount": 0,
+    "clientOverrideCreated": false
+  },
+  "savings": {
+    "dueStatus": "PASS",
+    "dueCount": 1,
+    "dueDuplicates": 0,
+    "goalStatus": "PASS",
+    "goalCount": 1,
+    "goalDuplicates": 0
+  },
+  "polling": {
+    "warningPollCount": 1,
+    "exceededPollCount": 1,
+    "duePollCount": 1,
+    "goalPollCount": 1
+  },
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-5c9702b57d1faa4d",
+      "durationMs": 707
+    },
+    {
+      "step": "ready",
+      "method": "GET",
+      "path": "/api/v1/ready",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-4c1fdc9572a33353",
+      "durationMs": 184
+    },
+    {
+      "step": "register",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-producer-3d525f5d8105e6b2",
+      "durationMs": 1975
+    },
+    {
+      "step": "payroll_create",
+      "method": "POST",
+      "path": "/api/v1/payroll/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-producer-ce96ba5313bb6366",
+      "durationMs": 1206
+    },
+    {
+      "step": "payroll_activate",
+      "method": "POST",
+      "path": "/api/v1/payroll/bd24d9d1-db53-4b34-90a6-f9f26fc6e6c1/activate",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-0e71da5ba073dfba",
+      "durationMs": 1081
+    },
+    {
+      "step": "budget_override_low_no_event",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/impact",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-7e74ed31f49add34",
+      "durationMs": 824
+    },
+    {
+      "step": "budget_warning_expense_create",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-producer-7ca4117e08816f50",
+      "durationMs": 1334
+    },
+    {
+      "step": "budget_warning",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/impact",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-e372a0d6a68670f1",
+      "durationMs": 1122
+    },
+    {
+      "step": "budget_warning_replay",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/impact",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-7c717b4cda356591",
+      "durationMs": 784
+    },
+    {
+      "step": "budget_exceeded_expense_create",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-producer-6b5dcbc6458f7441",
+      "durationMs": 1335
+    },
+    {
+      "step": "budget_exceeded",
+      "method": "POST",
+      "path": "/api/v1/variable-expenses/impact",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-35a0334ba2f14f4d",
+      "durationMs": 807
+    },
+    {
+      "step": "saving_due_create",
+      "method": "POST",
+      "path": "/api/v1/savings/",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase5-producer-055e2fb4adcfd612",
+      "durationMs": 783
+    },
+    {
+      "step": "saving_goal_first_hit",
+      "method": "PATCH",
+      "path": "/api/v1/savings/6e074e60-3bfa-46e6-b8a2-debde602fc81",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-659aed3eabc33aee",
+      "durationMs": 786
+    },
+    {
+      "step": "saving_goal_first_hit_replay",
+      "method": "PATCH",
+      "path": "/api/v1/savings/6e074e60-3bfa-46e6-b8a2-debde602fc81",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-afb8d05e230c1307",
+      "durationMs": 770
+    },
+    {
+      "step": "notification_list_poll",
+      "method": "GET",
+      "path": "/api/v1/notifications?limit=100",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase5-producer-1383aa627f6757fe",
+      "durationMs": 580
+    }
+  ],
+  "productionMutation": false,
+  "rawTokensStored": false,
+  "rawFinancialValuesStored": false,
+  "notes": [
+    "Synthetic staging user only.",
+    "No raw access token, password, PII, or financial amount is written to evidence.",
+    "Provider delivery and natural cron observation remain external tracks."
+  ]
+}

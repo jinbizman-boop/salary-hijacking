@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-29T11:32:00.000Z",
+  "classification": "NEW_APPLICATION_RC_FROZEN_PRE_RUNTIME",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "currentRepositoryHead": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
+  "sourceCommit": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
+  "applicationRcSourceSha": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
+  "rcSourceFingerprint": "DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553",
+  "sourceFileCount": 337,
+  "sourceFingerprintMethod": "GitHub Actions Build Android QA Release source fingerprint for committed mobile source/build input files; node_modules, .expo, coverage, dist, and build are excluded",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "workflowControlPlaneRef": "main",
+  "workflowControlPlaneSha": "6c689525cc8be6b21c3cd08b6a58bdc0efec9a03",
+  "oldApplicationRcSourceSha": "08005cff94e4f0661d2ae809d7d508379ab3092a",
+  "oldRcClassification": "HISTORICAL_KNOWN_GOOD_BASELINE_NOT_CURRENT",
+  "sourcePreRcGate": "PASS",
+  "newRcRuntimeStarted": false,
+  "d013": "FAIL_PENDING_NEW_RC_RUNTIME",
+  "d026": "FAIL_PENDING_NEW_RC_RUNTIME"
+}

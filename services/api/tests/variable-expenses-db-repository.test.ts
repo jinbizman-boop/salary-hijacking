@@ -59,7 +59,7 @@ describe("Neon variable expense repository", () => {
           sqlText,
           params,
         });
-        if (options.operationName.endsWith(".findByIdempotency")) {
+        if (options.operationName.endsWith(".findCreateByIdempotency")) {
           return { rows: [], rowCount: 0 };
         }
         if (options.operationName.endsWith(".ensureDailyBudget")) {
@@ -81,6 +81,7 @@ describe("Neon variable expense repository", () => {
                 amount: "5000",
                 status: "ACTIVE",
                 idempotency_key: "mobile-variable-expense-contract-1",
+                idempotency_request_hash: "1234567890abcdef1234567890abcdef",
                 created_at: "2026-07-02T03:00:00.000Z",
                 updated_at: "2026-07-02T03:00:00.000Z",
               },
@@ -111,12 +112,13 @@ describe("Neon variable expense repository", () => {
     });
     expect(created).not.toHaveProperty("userId");
     expect(calls.map((call) => call.operationName)).toEqual([
-      "variableExpenses.findByIdempotency",
       "variableExpenses.ensureDailyBudget",
+      "variableExpenses.findCreateByIdempotency",
       "variableExpenses.create",
     ]);
-    expect(calls[1]?.sqlText).toContain("insert into public.daily_budgets");
+    expect(calls[0]?.sqlText).toContain("insert into public.daily_budgets");
     expect(calls[2]?.sqlText).toContain("insert into public.variable_expenses");
+    expect(calls[2]?.sqlText).toContain("idempotency_request_hash");
     expect(JSON.stringify(created)).not.toContain(userId);
   });
 

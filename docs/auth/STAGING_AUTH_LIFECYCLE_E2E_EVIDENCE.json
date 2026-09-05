@@ -1,0 +1,395 @@
+{
+  "timestamp": "2026-08-17T10:41:09.310Z",
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "startedAt": "2026-08-17T10:40:43.171Z",
+  "finishedAt": "2026-08-17T10:41:09.310Z",
+  "syntheticUsers": {
+    "a": {
+      "emailHash": "c3d0e4390a40fa86"
+    },
+    "b": {
+      "emailHash": "7778ef50fc58084c"
+    },
+    "c": {
+      "emailHash": "94df26e20ebe3c48"
+    }
+  },
+  "steps": [
+    {
+      "step": "health",
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-20ee9f481e967c5a",
+      "dataFlags": {
+        "status": "ok",
+        "service": "salary-hijacking-api",
+        "version": "3.1.0",
+        "uptime": "edge",
+        "routeCount": 12
+      },
+      "pass": true
+    },
+    {
+      "step": "ready",
+      "method": "GET",
+      "path": "/api/v1/ready",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-1f67d5625123614a",
+      "dataFlags": {
+        "status": "ready",
+        "environment": "staging",
+        "serverAuthorityEnabled": true,
+        "rawFinancialDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "adsFinancialTargetingUsed": false,
+        "privacyMode": "STRICT",
+        "smokeSafe": true,
+        "completeness": true
+      },
+      "pass": true
+    },
+    {
+      "step": "register_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase3-34dce7329d9f3315",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "register_user_b",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase3-0b04be6a46afca26",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "register_user_c",
+      "method": "POST",
+      "path": "/api/v1/auth/register",
+      "status": 201,
+      "errorCode": null,
+      "requestId": "phase3-ba4f171afd642fac",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "auth_me_user_a",
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-98fdcb12f08f296f",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "users_me_user_a",
+      "method": "GET",
+      "path": "/api/v1/users/me",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-1cf32403a7e75122",
+      "dataFlags": {
+        "adTargetingSeparated": "[REDACTED]",
+        "createdAt": "2026-08-17T10:41:00.177Z",
+        "financialRawDataExposed": false,
+        "level": 1,
+        "nickname": "phase3A",
+        "status": "ACTIVE",
+        "updatedAt": "2026-08-17T10:41:00.177Z",
+        "userId": "5168270f-e955-469f-ba8d-2c3a5dc87c96",
+        "withdrawalRequested": false
+      },
+      "pass": true
+    },
+    {
+      "step": "refresh_rotate_r1_to_r2",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-2b6caeace15c4b56",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "refresh_reuse_r1",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "status": 401,
+      "errorCode": "AUTH_REFRESH_TOKEN_REUSED",
+      "requestId": "phase3-15be8c335c8ec90a",
+      "dataFlags": {},
+      "pass": false
+    },
+    {
+      "step": "refresh_family_revoked_r2",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "status": 401,
+      "errorCode": "AUTH_REFRESH_TOKEN_REUSED",
+      "requestId": "phase3-02f60db8774d7e48",
+      "dataFlags": {},
+      "pass": false
+    },
+    {
+      "step": "login_after_reuse_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-5d3ba65640bd82cd",
+      "dataFlags": {
+        "mfaRequired": false
+      },
+      "pass": true
+    },
+    {
+      "step": "logout_current_by_refresh",
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-35cdf9bb530d566e",
+      "dataFlags": {
+        "revoked": true
+      },
+      "pass": true
+    },
+    {
+      "step": "refresh_after_logout_current",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "status": 401,
+      "errorCode": "AUTH_REFRESH_TOKEN_REUSED",
+      "requestId": "phase3-ee7cfdaebfd3f9d6",
+      "dataFlags": {},
+      "pass": false
+    },
+    {
+      "step": "login_for_account_lifecycle_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-d7b9cd3600fabf3c",
+      "dataFlags": {
+        "mfaRequired": false
+      },
+      "pass": true
+    },
+    {
+      "step": "logout_all_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/logout-all",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-e75be14d6361fb69",
+      "dataFlags": {
+        "revokedSessions": 1
+      },
+      "pass": true
+    },
+    {
+      "step": "refresh_after_logout_all",
+      "method": "POST",
+      "path": "/api/v1/auth/refresh",
+      "status": 401,
+      "errorCode": "AUTH_REFRESH_TOKEN_REUSED",
+      "requestId": "phase3-c65baed94ab0e5a4",
+      "dataFlags": {},
+      "pass": false
+    },
+    {
+      "step": "login_after_logout_all_user_a",
+      "method": "POST",
+      "path": "/api/v1/auth/login",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-c5421c1e3d9f77e8",
+      "dataFlags": {
+        "mfaRequired": false
+      },
+      "pass": true
+    },
+    {
+      "step": "password_reset_request",
+      "method": "POST",
+      "path": "/api/v1/auth/password-reset",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-c6376b0580842fe3",
+      "dataFlags": {
+        "accepted": true,
+        "resetDeliveryQueued": true
+      },
+      "pass": true
+    },
+    {
+      "step": "onboarding_complete",
+      "method": "POST",
+      "path": "/api/v1/users/me/onboarding-complete",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-9bda2629d1b0795a",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "consents_get_before",
+      "method": "GET",
+      "path": "/api/v1/users/consents",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-993483f7e1cb29e7",
+      "dataFlags": {
+        "adPartnerAccepted": false,
+        "adPartnerFinancialRawDataUsed": false,
+        "analyticsAccepted": false,
+        "consentVersion": "v1",
+        "contentRecommendationAccepted": false,
+        "marketingAccepted": false,
+        "privacyAccepted": true,
+        "sensitiveFinancialTargetingAccepted": false,
+        "termsAccepted": true,
+        "updatedAt": "2026-08-17T10:41:12.810Z"
+      },
+      "pass": true
+    },
+    {
+      "step": "consents_update",
+      "method": "PATCH",
+      "path": "/api/v1/users/consents",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-fc3bc051d830f658",
+      "dataFlags": {
+        "adPartnerAccepted": false,
+        "adPartnerFinancialRawDataUsed": false,
+        "analyticsAccepted": false,
+        "consentVersion": "phase3-runtime-2026-08-17",
+        "contentRecommendationAccepted": true,
+        "marketingAccepted": false,
+        "privacyAccepted": true,
+        "sensitiveFinancialTargetingAccepted": false,
+        "termsAccepted": true,
+        "updatedAt": "2026-08-17T10:41:13.558Z"
+      },
+      "pass": true
+    },
+    {
+      "step": "consents_get_after",
+      "method": "GET",
+      "path": "/api/v1/users/consents",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-617de5b8e43327a8",
+      "dataFlags": {
+        "adPartnerAccepted": false,
+        "adPartnerFinancialRawDataUsed": false,
+        "analyticsAccepted": false,
+        "consentVersion": "phase3-runtime-2026-08-17",
+        "contentRecommendationAccepted": true,
+        "marketingAccepted": false,
+        "privacyAccepted": true,
+        "sensitiveFinancialTargetingAccepted": false,
+        "termsAccepted": true,
+        "updatedAt": "2026-08-17T10:41:14.335Z"
+      },
+      "pass": true
+    },
+    {
+      "step": "privacy_export_request_user_a",
+      "method": "POST",
+      "path": "/api/v1/users/me/privacy-export",
+      "status": 202,
+      "errorCode": null,
+      "requestId": "phase3-3757db9cf4f982a5",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "privacy_export_list_user_a",
+      "method": "GET",
+      "path": "/api/v1/users/me/privacy-exports",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-c8d1cfc99d38c2e2",
+      "dataFlags": {
+        "page": 1,
+        "pageSize": 20,
+        "total": 1
+      },
+      "pass": true
+    },
+    {
+      "step": "support_ticket_create_user_a",
+      "method": "POST",
+      "path": "/api/v1/users/me/support-tickets",
+      "status": 202,
+      "errorCode": null,
+      "requestId": "phase3-21dfe80a58e2d6ae",
+      "dataFlags": {
+        "adsFinancialTargetingUsed": false,
+        "category": "PRIVACY",
+        "createdAt": "2026-08-17T10:41:17.452Z",
+        "id": "7ffb01a6-dd4b-4bde-a420-89ff2144a830",
+        "rawFinancialDataExposed": false,
+        "rawPersonalDataExposed": false,
+        "status": "OPEN",
+        "subject": "Phase 3 account help"
+      },
+      "pass": true
+    },
+    {
+      "step": "withdrawal_request_user_c",
+      "method": "POST",
+      "path": "/api/v1/users/me/withdrawal-request",
+      "status": 202,
+      "errorCode": null,
+      "requestId": "phase3-d0168988c15965c9",
+      "dataFlags": {},
+      "pass": true
+    },
+    {
+      "step": "withdraw_confirm_user_c",
+      "method": "POST",
+      "path": "/api/v1/users/me/withdraw",
+      "status": 200,
+      "errorCode": null,
+      "requestId": "phase3-f7046ad85ac606ac",
+      "dataFlags": {
+        "deleteCommunityContent": false,
+        "status": "WITHDRAWN",
+        "userId": "8e62f49e-9fc6-4719-920b-396df3d3061b",
+        "withdrawnAt": "2026-08-17T10:41:18.960Z"
+      },
+      "pass": true
+    }
+  ],
+  "assertions": {
+    "coreRegisterLoginRefreshLogout": true,
+    "passwordResetRequestNoRawToken": true,
+    "consentRuntime": true,
+    "privacyExportRuntime": true,
+    "supportRuntime": true,
+    "withdrawalRuntime": true
+  },
+  "secretValuesStored": false,
+  "rawTokensStored": false,
+  "productionMutation": false,
+  "notes": [
+    "No raw access, refresh, reset, email verification, OAuth, MFA token, password, or connection string is written.",
+    "Password reset confirm remains external-email-delivery blocked on non-local staging because delivery token is intentionally not exposed.",
+    "Direct Neon DB readback was not executed locally because STAGING_DATABASE_URL is not present in the local shell."
+  ]
+}

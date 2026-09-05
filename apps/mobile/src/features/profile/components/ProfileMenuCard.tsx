@@ -4,6 +4,8 @@ import {
   PrimaryButton,
   SurfaceCard,
   componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type ProfileMenuKey =
@@ -75,22 +77,20 @@ export function ProfileMenuCard({
 const styles = StyleSheet.create({
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
   row: {
     minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
+    gap: componentSpacing.sm,
   },
   stack: {
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   title: {
     color: componentColors.primaryGreenDark,
-    fontSize: 19,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleM,
   },
 });

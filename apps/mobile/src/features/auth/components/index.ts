@@ -1,10 +1,5 @@
-export {
-  AuthBrandLogo,
-  AuthVisualFrame,
-  EurekaWorldMark,
-  authVisualColors,
-  clampValue,
-} from "./AuthVisualFrame";
+export { AuthBrandLogo, EurekaWorldMark } from "./AuthBrandLogo";
+export { AuthVisualFrame, authVisualColors, clampValue } from "./AuthVisualFrame";
 export {
   LoginCredentialForm,
   type LoginCredentialFormProps,

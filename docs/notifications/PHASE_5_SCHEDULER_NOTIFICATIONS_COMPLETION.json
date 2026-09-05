@@ -1,0 +1,237 @@
+{
+  "timestamp": "2026-08-26T14:14:10.721Z",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "currentRepositoryHead": "7aaf2e9394fc13f84c77b278ead246a0dc9485f7",
+  "remoteHead": "7aaf2e9394fc13f84c77b278ead246a0dc9485f7",
+  "applicationRcSourceSha": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "phase5Status": "EXTERNAL_BLOCKER",
+  "phase5InternalStatus": "PASS",
+  "phase5ExternalStatus": "BLOCKED_NATURAL_CRON_FCM_DEVICE_AND_PHYSICAL_PUSH_RUNTIME",
+  "database": {
+    "project": "salary-hijacking",
+    "projectId": "still-feather-22153967",
+    "branch": "staging",
+    "branchId": "br-fragrant-sky-aj5kk2c3",
+    "migrationCount": 24,
+    "migrationLedger": "24/24 VERIFIED_APPLIED"
+  },
+  "status": {
+    "notiRequirementsPass": 8,
+    "notiRequirementsPartial": 0,
+    "notiRequirementsFail": 0,
+    "notiRequirementsExternal": 2,
+    "notificationList": "PASS",
+    "cursorDuplicates": 0,
+    "cursorMissingRows": 0,
+    "notificationPreferences": "PASS",
+    "deviceTokenLifecycle": "PASS",
+    "paydayInternalRuntime": "PASS_INTERNAL_DEPLOYED_CONTRACT",
+    "paydayReminder": "EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW",
+    "fixedExpenseInternalRuntime": "PASS_INTERNAL_DEPLOYED_CONTRACT",
+    "fixedExpenseReminder": "EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW",
+    "budgetThreshold": "PASS",
+    "budgetThresholdDuplicates": 0,
+    "clientNotificationThresholdOverride": 0,
+    "savingDueRuntime": "PASS",
+    "savingDueDuplicates": 0,
+    "savingGoalNotification": "PASS",
+    "goalNotificationDuplicates": 0,
+    "growthCommunityNotificationContract": "CONTRACT_READY_PENDING_PHASE_6",
+    "deeplinkContract": "PASS",
+    "deeplinkRuntime": "PASS_CONTRACT_DEVICE_RUNTIME_SEPARATE",
+    "quietHours": "PASS_FOR_SUPPORTED_TIMEZONE_SET",
+    "notificationTimezone": "PASS_FOR_SUPPORTED_TIMEZONE_SET",
+    "invalidTokenCleanup": "PASS_INTERNAL_FCM_EXTERNAL_BLOCKER",
+    "queueRuntime": "PASS_INTERNAL_DEPLOYED",
+    "queueRetry": "PASS_INTERNAL",
+    "queueTerminalDlq": "PASS_INTERNAL",
+    "poisonMessageHandling": "PASS",
+    "notificationDuplicateRecords": 0,
+    "notificationDuplicateDeliveries": 0,
+    "concurrentDeliveryDuplicates": "PASS_INTERNAL_SIMULATED_ONLY",
+    "cronConfig": "PASS",
+    "cronInternalRuntime": "PASS_INTERNAL_DEPLOYED_CONTRACT",
+    "cronNaturalExecution": "EXTERNAL_TIME_WINDOW_BLOCKER",
+    "cronDuplicateEvents": "PASS_INTERNAL_SCHEDULER_IDEMPOTENCY_CONTRACT",
+    "fcmInternal": "PASS",
+    "fcmExternalRuntime": "EXTERNAL_BLOCKER_VALID_DEVICE_TOKEN_REQUIRED",
+    "rawFinancialPushExposure": 0,
+    "rawPiiPushExposure": 0,
+    "notificationCrossUserLeak": 0,
+    "notificationRlsEscape": 0,
+    "perf008": "PASS",
+    "perf008P95Ms": 660.42,
+    "perf016": "EXTERNAL_BLOCKER_VALID_FCM_DEVICE_TOKEN_REQUIRED",
+    "perf017": "PASS_INTERNAL_GENERATION_RUNTIME",
+    "perf017Generated": 100000,
+    "perf017DurationMs": 62,
+    "perf017Duplicates": 0,
+    "perf018": "PASS_ENGINE_MODEL_CAPABILITY_UNVERIFIED",
+    "perf018Processed": 1000000,
+    "perf018DurationMs": 850,
+    "perf018Duplicates": 0,
+    "perf025": "PASS_INTERNAL_MEASUREMENT_CONTRACT",
+    "queueLagP50Ms": 20,
+    "queueLagP95Ms": 34,
+    "queueLagP99Ms": 35,
+    "notificationErrorTaxonomyDrift": 0,
+    "phase6EntryReadiness": "READY_WITH_SEPARATE_EXTERNAL_NOTIFICATION_TRACK",
+    "d013": "FAIL",
+    "d016": "PARTIAL",
+    "d017": "PASS",
+    "d026": "FAIL",
+    "projectCompletion100": false,
+    "commercialLaunchReady": false
+  },
+  "blockers": {
+    "internal": [],
+    "external": [
+      "Natural Cloudflare cron observation window",
+      "Valid real FCM device token/provider runtime",
+      "Physical Android foreground/background/terminated push runtime under D-026/PH13",
+      "Phase 3 external OAuth/email/Admin MFA tracks remain separate"
+    ]
+  },
+  "evidence": {
+    "stagingRuntime": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json",
+    "directIdMatrix": "docs/notifications/NOTIFICATION_DIRECT_ID_RUNTIME_MATRIX.csv",
+    "cursorMatrix": "docs/notifications/NOTIFICATION_CURSOR_RUNTIME_MATRIX.csv",
+    "load100k": "docs/notifications/NOTIFICATION_LOAD_100K_REPORT.md",
+    "batch1m": "docs/notifications/SCHEDULER_BATCH_1M_REPORT.md",
+    "queueLag": "docs/notifications/QUEUE_LAG_RUNTIME_EVIDENCE.json",
+    "producerRuntime": "docs/notifications/PRODUCER_RUNTIME_EVIDENCE.json",
+    "migration0024": "database/migrations/0024_notification_archive_terminal_constraints.sql",
+    "noProductionMutation": true,
+    "noPhase6Work": true,
+    "rawSecretsStored": false,
+    "rawTokensStored": false,
+    "rawPushTokensStored": false,
+    "rawFinancialValuesStored": false
+  },
+  "outputFiles": [
+    {
+      "path": "docs/notifications/PHASE_5_REQUIREMENT_MATRIX.csv",
+      "sha256": "C53A7ED8B88888A1C5CCD0AA41C12031901225298DB6CE5C74B21F0C572B432F"
+    },
+    {
+      "path": "docs/notifications/PHASE_5_CURRENT_RUNTIME_INVENTORY.md",
+      "sha256": "36815C6764810C6F3CBC7EE0899B1006F754C4B06AD6B28482C47FFD04CCC5EF"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_EVENT_MATRIX.csv",
+      "sha256": "E36802C8647AD22EFF6EC95C6BDFAD2B26D64D268FFE048E0663B89B5E362AE5"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_EVENT_CONTRACT.md",
+      "sha256": "B1C262E22FD2014CD53E15CC86D28A3143E718286ACAF25EBBED22D2D3FD47D4"
+    },
+    {
+      "path": "docs/notifications/CRON_SCHEDULE_INVENTORY.csv",
+      "sha256": "1A08D908360BF29DAC94BA52928604E10EF553E8E8DBB4779F8E00EACE20A43C"
+    },
+    {
+      "path": "docs/notifications/CRON_QUEUE_RUNTIME_REPORT.md",
+      "sha256": "F3C559691480174855C74C2BAAB110A15C962D14F563ED80379241876F1A890B"
+    },
+    {
+      "path": "docs/notifications/QUEUE_RUNTIME_MATRIX.csv",
+      "sha256": "15A5A9A6B0C611713E293C98F2C5D0D033593CA0703C61DB1334E8FB239AA478"
+    },
+    {
+      "path": "docs/notifications/QUEUE_RETRY_EVIDENCE.json",
+      "sha256": "4CB9E56B823BE06E00B8E169AE959BB15E86DF8D411FD8F0B877C0102C273596"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_CROSS_USER_REPORT.md",
+      "sha256": "FDBE8354AA49C11715898F56A49F85C87C66E9AFA8804008E54BF964BD24E9EF"
+    },
+    {
+      "path": "docs/notifications/PUSH_DEEPLINK_MATRIX.csv",
+      "sha256": "26348541C9953605C3966E0613B5CDED6D09BECCABB9606A825173AE6AD9ED2C"
+    },
+    {
+      "path": "docs/notifications/PUSH_DEEPLINK_REPORT.md",
+      "sha256": "A2154F2C9F40087B4F44B2C9B51C13F75C296858DA9FF58894A6576559C6C47A"
+    },
+    {
+      "path": "docs/notifications/PUSH_PRIVACY_AUDIT.csv",
+      "sha256": "E9DBD39F1E68B46CB91B2392BEC1D786FF7D03704CFC57EBCE192EC2E41CE02A"
+    },
+    {
+      "path": "docs/notifications/QUIET_HOURS_TIMEZONE_REPORT.md",
+      "sha256": "41C761D21ED5842E07861B770E68558238CA66AEC924204C457847FB2AFBCD7B"
+    },
+    {
+      "path": "docs/notifications/DEVICE_TOKEN_LIFECYCLE_REPORT.md",
+      "sha256": "8D28DF081D055A1744E3E874759A242E023D9DE6F6F67A8DABFF956C7CA3B60F"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_LOAD_REPORT.md",
+      "sha256": "533D4C184C8B7E7BF4C0B9817B1C9B59FA52100251FF552A0F958B5EA57579BC"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_CURSOR_PAGINATION_REPORT.md",
+      "sha256": "C0398E1E870D43616F66C8503BEF8E168B4006E7D571603C1BA7C84F9F1FDBD8"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_CURSOR_RUNTIME_MATRIX.csv",
+      "sha256": "9376B7EF65A9AE11DA028AADC42C7E3B2DCF6E9707A12E5ABB5163580A7375D8"
+    },
+    {
+      "path": "docs/notifications/BUDGET_THRESHOLD_RUNTIME_REPORT.md",
+      "sha256": "492F54FE91E7825A05AFE2F4905F05A73C1C44AB61E09BC176FF15D917E0CA5D"
+    },
+    {
+      "path": "docs/notifications/SAVING_GOAL_RUNTIME_REPORT.md",
+      "sha256": "78D62845A7CB6342F9D11EDFB2DC21E95D1C2C353A239CE79CFDF0FE7DBBF2C2"
+    },
+    {
+      "path": "docs/notifications/PAYDAY_SCHEDULER_RUNTIME_REPORT.md",
+      "sha256": "C2DCCF05BB5E2705F939BFCEC5DDB3887026A4D5E819C30CDE66DF728AF89C32"
+    },
+    {
+      "path": "docs/notifications/FIXED_EXPENSE_SCHEDULER_RUNTIME_REPORT.md",
+      "sha256": "5CA670E0F0C6F66C1088C37D51EBFB097CD9923B7DDFC7793C7AC8C0B6EA611D"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_LOAD_100K_REPORT.md",
+      "sha256": "6D2B69752AC8328A314B5C026BC9FEC4365659638F7480A00AB43CF7E4F7B74C"
+    },
+    {
+      "path": "docs/notifications/SCHEDULER_BATCH_1M_REPORT.md",
+      "sha256": "211D81E28C623143F661A17A966C3D7174A9F478F78A6040B7F60D9E33176E82"
+    },
+    {
+      "path": "docs/notifications/QUEUE_LAG_RUNTIME_REPORT.md",
+      "sha256": "AAC42E5A299511F1A570817F16AC6DC6B32B71706E5A0E3FEC57287E0CD5B1EA"
+    },
+    {
+      "path": "docs/notifications/QUEUE_LAG_RUNTIME_EVIDENCE.json",
+      "sha256": "D1FE70C6FCA2821290F32F70E0B634AA12EAAD44A13F47E2954CB0D62300E154"
+    },
+    {
+      "path": "docs/notifications/PRODUCER_RUNTIME_EVIDENCE.json",
+      "sha256": "C7DC290F59B7969655FD87EA837F1DD4D7C9E7325833D7329A162CD1BC984AF7"
+    },
+    {
+      "path": "docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json",
+      "sha256": "2B42D64E60373A62046D0163989E7133E2880558E68BB8DF452C22DB72CB9755"
+    },
+    {
+      "path": "docs/notifications/NOTIFICATION_DIRECT_ID_RUNTIME_MATRIX.csv",
+      "sha256": "74725832F4DC584D73EC08965DA7162F2ED5A828CE468CC904EC4E9992748CF3"
+    },
+    {
+      "path": "database/migrations/0024_notification_archive_terminal_constraints.sql",
+      "sha256": "25A75B580308DC0A4E5CABFFA542A66C3C6199044728E98056D392DAEE855E19"
+    },
+    {
+      "path": "docs/database/MIGRATION_LEDGER.csv",
+      "sha256": "FB50957F80C712EA335BD05631FD9978F9F64832502350B825BAC3BBF1012344"
+    },
+    {
+      "path": "docs/notifications/PHASE_5_SCHEDULER_NOTIFICATIONS_COMPLETION.json",
+      "sha256": "9846815A8D8CBE38B6A83086F507E3DE350F5DE1313A4A4AAC4EF4687DB1E22C"
+    }
+  ]
+}

@@ -38,7 +38,7 @@ on:
       - "package.json"
 
 concurrency:
-  group: android-qa-release-${{ github.ref }}-${{ github.event.inputs.source_ref || github.sha }}-${{ github.event.inputs.architecture || 'x86_64' }}
+  group: android-qa-release-${{ github.ref }}-${{ github.event.inputs.source_ref || github.event.inputs.application_rc_source_sha || github.sha }}-${{ github.event.inputs.architecture || 'x86_64' }}
   cancel-in-progress: false
 
 permissions:
@@ -93,6 +93,7 @@ jobs:
           printf 'WORKFLOW_CONTROL_REF=%s\n' "$GITHUB_REF_NAME"
           printf 'APPLICATION_BUILD_REF=%s\n' "$APPLICATION_BUILD_REF"
           printf 'APPLICATION_RC_SOURCE_SHA=%s\n' "$RC_SOURCE_SHA"
+          printf 'CONTROL_PLANE_WORKFLOW_SHA=%s\n' "$GITHUB_SHA"
 
       - name: Compute current mobile source fingerprint
         run: |

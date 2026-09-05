@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createApp } from "../src/app";
+import type { VerifiedJwt } from "../src/middlewares/auth.middleware";
 
 const testContext = Object.freeze({
   waitUntil: (_promise: Promise<unknown>) => undefined,
@@ -178,6 +179,7 @@ describe("GET /api/v1/mobile/bootstrap", () => {
   });
 
   it("returns the mobile entry payload from trusted auth context headers", async () => {
+    const sessionExpiresAt = "2026-06-29T05:15:00.000Z";
     const app = createApp({
       enableAuth: false,
       enableAuditGate: false,
@@ -195,6 +197,7 @@ describe("GET /api/v1/mobile/bootstrap", () => {
           "x-auth-account-status": "ACTIVE",
           "x-auth-mfa-verified": "false",
           "x-session-id": "session_abc",
+          "x-auth-session-expires-at": sessionExpiresAt,
         },
       }),
       { APP_ENV: "development" },
@@ -216,6 +219,7 @@ describe("GET /api/v1/mobile/bootstrap", () => {
       onboardingCompleted: true,
       mfaRequired: false,
       accountStatus: "ACTIVE",
+      sessionExpiresAt,
       rawFinancialDataExposed: false,
       rawPersonalDataExposed: false,
       rawPushTokenExposed: false,
@@ -243,5 +247,100 @@ describe("GET /api/v1/mobile/bootstrap", () => {
       pushConsent: "UNKNOWN",
       privacyPassRate: "100.00%",
     });
+  });
+
+  it("does not hard-code onboarding or payroll readiness for authenticated mobile bootstrap", async () => {
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      now: () => new Date("2026-06-29T05:00:00.000Z"),
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/mobile/bootstrap", {
+        headers: {
+          "x-auth-context-source": "auth.middleware",
+          "x-authenticated-user-id": "user_12345",
+          "x-auth-primary-role": "USER",
+          "x-authenticated-roles": "USER",
+          "x-auth-account-status": "ACTIVE",
+          "x-auth-mfa-verified": "false",
+          "x-auth-onboarding-completed": "false",
+          "x-auth-payroll-ready": "false",
+        },
+      }),
+      { APP_ENV: "staging" },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly session?: Record<string, unknown>;
+        readonly digest?: Record<string, unknown>;
+      };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.data?.session).toMatchObject({
+      authenticated: true,
+      emailVerified: true,
+      onboardingCompleted: false,
+      payrollReady: false,
+    });
+    expect(body.data?.digest).toMatchObject({
+      payrollReady: false,
+    });
+  });
+
+  it("propagates verified access token expiry into the mobile bootstrap session", async () => {
+    const expiresAtEpochSeconds = Math.floor(
+      Date.parse("2026-06-29T05:15:00.000Z") / 1000,
+    );
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+      now: () => new Date("2026-06-29T05:00:00.000Z"),
+      authOptions: {
+        verifyJwt: async (token): Promise<VerifiedJwt> => ({
+          header: { alg: "test" },
+          claims: {
+            iss: "salary-hijacking-api",
+            aud: "salary-hijacking-mobile",
+            sub: "user_12345",
+            roles: ["USER"],
+            permissions: ["payroll:read"],
+            sessionId: "session_abc",
+            accountStatus: "ACTIVE",
+            emailVerified: true,
+            onboardingCompleted: true,
+            payrollReady: false,
+            exp: expiresAtEpochSeconds,
+          },
+          rawToken: token,
+          tokenKind: "ACCESS",
+        }),
+      },
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/mobile/bootstrap", {
+        headers: { authorization: "Bearer test-access-token" },
+      }),
+      { APP_ENV: "development" },
+      testContext,
+    );
+    const body = (await response.json()) as {
+      readonly data?: { readonly session?: Record<string, unknown> };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.data?.session).toMatchObject({
+      authenticated: true,
+      sessionExpiresAt: "2026-06-29T05:15:00.000Z",
+      emailVerified: true,
+      onboardingCompleted: true,
+      payrollReady: false,
+    });
+    expect(body.data?.session).not.toHaveProperty("sessionId");
   });
 });

@@ -1,0 +1,158 @@
+{
+  "staticEvidence": {
+    "langKo": true,
+    "hasMainLandmark": true,
+    "hasHeading": true,
+    "formLabels": true,
+    "imageAltComplete": true,
+    "focusVisible": true,
+    "reducedMotion": true,
+    "responsiveMedia": true,
+    "phoneRatioPreserved": true,
+    "noThirdPartyTracking": true,
+    "noLocalAbsolutePaths": true,
+    "companySsot": true,
+    "contactSsot": true,
+    "securityHeaders": true,
+    "redirects": true,
+    "missingRefs": [],
+    "pageBytes": {
+      "/": 18980,
+      "/privacy": 3999,
+      "/terms": 3500,
+      "/support": 2459,
+      "/partners": 2362
+    },
+    "assetBytes": {
+      "./assets/brand/favicon.png": 3174,
+      "./assets/styles.css": 14330,
+      "./assets/brand/app-icon.png": 206318,
+      "./assets/screens/plan-settings.png": 146136,
+      "./assets/screens/salary-home.png": 1189309,
+      "./assets/screens/level-main.png": 1068353,
+      "./assets/screens/reading.png": 1284710,
+      "./assets/screens/english.png": 1233474,
+      "./assets/screens/health.png": 1158950,
+      "./assets/screens/community-free.png": 1092080,
+      "./assets/screens/community-write.png": 954620,
+      "./privacy.html": 3999,
+      "./terms.html": 3500,
+      "./support.html": 2459,
+      "./partners.html": 2362,
+      "./assets/app.js": 2183,
+      "./index.html": 18980
+    }
+  },
+  "runtimeEvidence": {
+    "collectedAt": "2026-08-27T11:03:25.109Z",
+    "baseUrl": "LOCAL_STATIC_RUNTIME_REDACTED",
+    "pageResults": [
+      {
+        "page": "/",
+        "file": "index.html",
+        "httpStatus": 200,
+        "bytes": 13654,
+        "canonicalPresent": true,
+        "titlePresent": true,
+        "descriptionPresent": true,
+        "ogPresent": true,
+        "langKo": true
+      },
+      {
+        "page": "/privacy",
+        "file": "privacy.html",
+        "httpStatus": 200,
+        "bytes": 2455,
+        "canonicalPresent": true,
+        "titlePresent": true,
+        "descriptionPresent": true,
+        "ogPresent": true,
+        "langKo": true
+      },
+      {
+        "page": "/terms",
+        "file": "terms.html",
+        "httpStatus": 200,
+        "bytes": 2183,
+        "canonicalPresent": true,
+        "titlePresent": true,
+        "descriptionPresent": true,
+        "ogPresent": true,
+        "langKo": true
+      },
+      {
+        "page": "/support",
+        "file": "support.html",
+        "httpStatus": 200,
+        "bytes": 1763,
+        "canonicalPresent": true,
+        "titlePresent": true,
+        "descriptionPresent": true,
+        "ogPresent": true,
+        "langKo": true
+      },
+      {
+        "page": "/partners",
+        "file": "partners.html",
+        "httpStatus": 200,
+        "bytes": 1660,
+        "canonicalPresent": true,
+        "titlePresent": true,
+        "descriptionPresent": true,
+        "ogPresent": true,
+        "langKo": true
+      }
+    ],
+    "assetResults": [
+      {
+        "asset": "assets/brand/favicon.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/styles.css",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/brand/app-icon.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/plan-settings.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/salary-home.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/level-main.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/reading.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/english.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/health.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/community-free.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/screens/community-write.png",
+        "httpStatus": 200
+      },
+      {
+        "asset": "assets/app.js",
+        "httpStatus": 200
+      }
+    ],
+    "elapsedMs": 95
+  }
+}

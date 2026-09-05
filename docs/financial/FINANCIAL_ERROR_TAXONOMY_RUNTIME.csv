@@ -1,0 +1,12 @@
+endpoint,scenario,httpStatus,errorCode,expected,status
+POST /api/v1/variable-expenses/,mass_assignment_client_calculated_fields,403,AUTH_RESOURCE_OWNER_MISMATCH,2xx with server-owned fields ignored or 4xx validation,PASS
+POST /api/v1/variable-expenses/,negative,400,VARIABLE_EXPENSE_AMOUNT_RANGE_INVALID,4xx,PASS
+POST /api/v1/variable-expenses/,decimal,400,VARIABLE_EXPENSE_AMOUNT_REQUIRED,4xx,PASS
+POST /api/v1/variable-expenses/,string,400,VARIABLE_EXPENSE_AMOUNT_REQUIRED,4xx,PASS
+POST /api/v1/variable-expenses/,comma,400,VARIABLE_EXPENSE_AMOUNT_REQUIRED,4xx,PASS
+POST /api/v1/variable-expenses/,scientific,400,VARIABLE_EXPENSE_AMOUNT_REQUIRED,4xx,PASS
+POST /api/v1/variable-expenses/,overflow,400,VARIABLE_EXPENSE_AMOUNT_RANGE_INVALID,4xx,PASS
+PATCH /api/v1/fixed-expenses/[UUID],closed_cycle_mutation,404,FIXED_EXPENSE_NOT_FOUND,409/404,PASS
+PATCH /api/v1/savings/[UUID],closed_cycle_mutation,404,SAVINGS_GOAL_NOT_FOUND,409/404,PASS
+PATCH /api/v1/daily-budgets/[UUID],closed_cycle_mutation,404,DAILY_BUDGET_NOT_FOUND,409/404,PASS
+PATCH /api/v1/variable-expenses/[UUID],closed_cycle_mutation,404,VARIABLE_EXPENSE_NOT_FOUND,409/404,PASS

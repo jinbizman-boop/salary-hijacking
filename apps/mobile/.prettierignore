@@ -1,5 +1,10 @@
 node_modules
 .expo
+.tmp
+.local-native-bin
+.gradle-local-debug
+.gradle-qa-*
+.localappdata
 .turbo
 coverage
 dist

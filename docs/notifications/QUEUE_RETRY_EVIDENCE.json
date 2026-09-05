@@ -1,0 +1,18 @@
+{
+  "status": "PASS_INTERNAL",
+  "tests": [
+    "services/notifications/tests/unit/scheduled-cron-contract.test.ts",
+    "services/notifications/tests/unit/retry-queue-policy.test.ts"
+  ],
+  "poisonMessageHandling": "PASS",
+  "retryPolicy": {
+    "maxAttempts": 5,
+    "baseDelaySeconds": 30,
+    "maxDelaySeconds": 21600,
+    "jitterRatio": 0.2
+  },
+  "invalidTokenCleanupToggle": "NOTIFICATION_RETRY_INVALID_TOKEN_CLEANUP_ENABLED",
+  "duplicateProtectionToggle": "NOTIFICATION_RETRY_DUPLICATE_PROTECTION_ENABLED",
+  "fcmExternalRuntime": "EXTERNAL_BLOCKER_VALID_DEVICE_TOKEN_REQUIRED",
+  "rawSecretsStored": false
+}

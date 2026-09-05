@@ -1,6 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { componentColors, componentRadius } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type BottomTabItem = Readonly<{
   key: string;
@@ -19,8 +26,22 @@ export function BottomTabBar({
   items,
   onTabPress,
 }: BottomTabBarProps): React.ReactElement {
+  const insets = useOptionalSafeAreaInsets();
+
   return (
-    <View accessibilityRole="tablist" style={styles.bar}>
+    <View
+      accessibilityRole="tablist"
+      style={[
+        styles.bar,
+        {
+          minHeight:
+            designSystem.navigation.bottomTabs.visualHeight +
+            designSystem.spacing[2] +
+            insets.bottom,
+          paddingBottom: designSystem.spacing[3] + insets.bottom,
+        },
+      ]}
+    >
       {items.map((item) => {
         const selected = item.key === activeKey;
         return (
@@ -42,20 +63,30 @@ export function BottomTabBar({
   );
 }
 
+function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
+  try {
+    return useSafeAreaInsets();
+  } catch {
+    return { bottom: 0, left: 0, right: 0, top: 0 };
+  }
+}
+
 const styles = StyleSheet.create({
   bar: {
-    minHeight: 68,
+    minHeight: designSystem.navigation.bottomTabs.visualHeight,
     flexDirection: "row",
     justifyContent: "space-around",
-    gap: 8,
-    padding: 10,
+    gap: designSystem.spacing[2],
+    paddingHorizontal: designSystem.spacing[3],
+    paddingTop: designSystem.spacing[3],
     borderTopWidth: 1,
     borderTopColor: componentColors.line,
     backgroundColor: componentColors.surface,
   },
   item: {
-    minHeight: 44,
-    minWidth: 64,
+    minHeight: designSystem.layout.touchTarget,
+    minWidth:
+      designSystem.navigation.bottomTabs.iconSize + designSystem.spacing[10],
     alignItems: "center",
     justifyContent: "center",
     borderRadius: componentRadius.pill,
@@ -65,10 +96,10 @@ const styles = StyleSheet.create({
   },
   label: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: designSystem.typography.labelS.fontSize,
+    fontWeight: designSystem.typography.labelS.fontWeight,
   },
   selectedLabel: {
-    color: componentColors.primaryGreenDark,
+    color: componentColors.primaryGreen,
   },
 });

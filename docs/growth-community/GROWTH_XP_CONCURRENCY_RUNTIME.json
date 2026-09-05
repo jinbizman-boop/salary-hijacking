@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-08-26T15:23:56.238Z",
+  "source": "staging API synthetic runtime",
+  "taskIdHash": "3daf29324b4f458d",
+  "repeatedRequests": 10,
+  "statuses": {
+    "201": 10
+  },
+  "allReplaySafe": true,
+  "clientXpOverrideAccepted": false,
+  "rawTokensStored": false,
+  "rawPiiStored": false
+}

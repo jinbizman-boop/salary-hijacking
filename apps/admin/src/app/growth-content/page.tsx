@@ -100,64 +100,9 @@ type State = {
   readonly form: ContentForm;
 };
 
-const fallbackItems: readonly GrowthContentItem[] = [
-  {
-    id: "growth-reading-sample",
-    title: "출근 전 7분 금융 독해",
-    type: "READING",
-    status: "DRAFT",
-    category: "reading",
-    difficulty: "EASY",
-    estimatedMinutes: 7,
-    xpReward: 12,
-    summary:
-      "원문 전체를 저장하지 않고 자체 요약과 미션만 운영하는 독해 콘텐츠.",
-    missionPrompt: "오늘 배운 문장 하나를 예산 습관으로 바꿔 적기",
-    recordQuestion: "내 지출 결정을 바꿀 한 문장은 무엇인가요?",
-    sourceTitle: "Owned editorial summary",
-    sourceAuthor: "Salary Hijacking Content Ops",
-    sourceUrl: "https://salaryhijacking.com/content-policy",
-    licenseType: "OWNED",
-    copyrightStatus: "VERIFIED",
-    safetyLevel: "LOW",
-    viewpointTag: "editorial-summary",
-    medicalDisclaimer: false,
-    painStopNotice: false,
-    beginnerSafe: true,
-    adTargetingSeparated: true,
-    fullTextStored: false,
-    noFullBookOrArticle: true,
-    updatedAt: "2026-07-10T00:00:00.000Z",
-  },
-  {
-    id: "growth-health-sample",
-    title: "점심 후 3분 목 풀기",
-    type: "HEALTH",
-    status: "REVIEW",
-    category: "health",
-    difficulty: "EASY",
-    estimatedMinutes: 3,
-    xpReward: 8,
-    summary:
-      "통증이 있으면 즉시 중단하고 전문가 상담을 안내하는 초보자용 움직임.",
-    missionPrompt: "통증 없이 가능한 범위에서 천천히 3회 반복",
-    recordQuestion: "불편감 없이 수행했나요?",
-    sourceTitle: "Internal wellness safety checklist",
-    sourceAuthor: "Salary Hijacking Content Ops",
-    sourceUrl: "https://salaryhijacking.com/wellness-safety",
-    licenseType: "OWNED",
-    copyrightStatus: "VERIFIED",
-    safetyLevel: "LOW",
-    viewpointTag: "health-safety",
-    medicalDisclaimer: true,
-    painStopNotice: true,
-    beginnerSafe: true,
-    adTargetingSeparated: true,
-    fullTextStored: false,
-    noFullBookOrArticle: true,
-    updatedAt: "2026-07-10T00:00:00.000Z",
-  },
-] as const;
+const LIVE_DATA_UNAVAILABLE =
+  "LIVE_DATA_UNAVAILABLE: ?? API ??? ??? ?? ???? ???? ????.";
+const EMPTY_GROWTH_ITEMS: readonly GrowthContentItem[] = [] as const;
 
 const emptyForm: ContentForm = {
   id: "",
@@ -187,12 +132,12 @@ const emptyForm: ContentForm = {
 };
 
 let state: State = {
-  items: fallbackItems,
-  total: fallbackItems.length,
+  items: EMPTY_GROWTH_ITEMS,
+  total: 0,
   query: "",
   status: "ALL",
   type: "ALL",
-  selectedId: fallbackItems[0]?.id ?? null,
+  selectedId: null,
   reason: "",
   busy: false,
   loadedAt: "-",
@@ -200,7 +145,7 @@ let state: State = {
     type: "info",
     message: "LV UP 콘텐츠 운영 콘솔이 준비되었습니다.",
   },
-  form: { ...emptyForm, ...(fallbackItems[0] ?? {}) },
+  form: emptyForm,
 };
 
 let mounted = false;
@@ -317,13 +262,14 @@ async function loadContents(root: HTMLElement): Promise<void> {
     const response = await api<ApiListResponse>(
       `${API_BASE}?${params.toString()}`,
     );
-    const items = response.data?.items?.length
-      ? response.data.items
-      : fallbackItems;
+    const items = response.data?.items ?? EMPTY_GROWTH_ITEMS;
     patch(
       {
         items,
         total: response.data?.total ?? items.length,
+        selectedId: items.some((item) => item.id === state.selectedId)
+          ? state.selectedId
+          : (items[0]?.id ?? null),
         loadedAt: new Date().toISOString(),
         toast: {
           type: "success",
@@ -336,9 +282,14 @@ async function loadContents(root: HTMLElement): Promise<void> {
   } catch (error) {
     patch(
       {
-        items: fallbackItems,
-        total: fallbackItems.length,
-        toast: { type: "error", message: errorMessage(error) },
+        items: EMPTY_GROWTH_ITEMS,
+        total: 0,
+        selectedId: null,
+        form: emptyForm,
+        toast: {
+          type: "error",
+          message: `${LIVE_DATA_UNAVAILABLE} ${errorMessage(error)}`,
+        },
         busy: false,
       },
       root,

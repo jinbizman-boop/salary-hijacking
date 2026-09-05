@@ -19,9 +19,38 @@ const SECRETS_EVIDENCE_PATH = "release/secrets-evidence.json";
 const CLOUDFLARE_RUNTIME_EVIDENCE_PATH =
   "release/cloudflare-runtime-evidence.json";
 const DATABASE_EVIDENCE_PATH = "release/database-evidence.json";
+const DATABASE_COMMAND_PROOF_PATHS = [
+  "release/database-command-proof.local.json",
+  "artifacts/qa/collect-staging-smoke-proof-dns-failed-20260729.json",
+];
 const PUBLIC_URL_EVIDENCE_PATH = "release/public-url-evidence.json";
 const SECURITY_AUDIT_EVIDENCE_PATH = "release/security-audit-evidence.json";
 const GAP_REGISTER_PATH = "docs/codex/100-completion/05_GAP_REGISTER.md";
+const FINAL_RELEASE_REPORT_PATHS = [
+  "docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md",
+  "docs/codex/100-completion/FINAL_ANDROID_DEVICE_REPORT.md",
+  "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+];
+const STALE_MOBILE_APK_REPORT_REFERENCES = [
+  {
+    label: "old latest-source APK filename",
+    pattern: /salary-hijacking-phone-arm64-latest-source-debug\.apk/iu,
+  },
+  {
+    label: "old iteration APK filename",
+    pattern:
+      /salary-hijacking-phone-arm64-iteration(?:007|094|100)-debug\.apk/iu,
+  },
+  {
+    label: "old APK artifact branch",
+    pattern: /codex-apk-artifacts-2026071[34]-iteration(?:007|094|100)/iu,
+  },
+  {
+    label: "old APK SHA256",
+    pattern:
+      /(?:4B23C8C5560BA3BBF1748FFAC72740B171F2149B1464E88B4DC53F851811F97F|073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91|4FAB0126C48258C92DF90DABD1CDBAB8D6C76664F667EB37071B461DF1F6A6BF|4661878AE771A39D13879AD2E95749F17735BE74AE8916049438D69368345C36)/iu,
+  },
+];
 const MOBILE_RUNTIME_ROOTS = ["apps/mobile/app", "apps/mobile/src"];
 const MOBILE_ROUTE_ROOTS = ["apps/mobile/app"];
 const MOBILE_FEATURE_ROOTS = ["apps/mobile/src/features"];
@@ -43,6 +72,8 @@ const MOBILE_RUNTIME_EXTENSIONS = new Set([
   ".cjs",
 ]);
 const MOBILE_INCOMPLETE_RUNTIME_MARKER_PATTERN = /\b(?:TODO|FIXME)\b/u;
+const MOBILE_STALE_SAFE_ENTRY_EVIDENCE_PATTERN =
+  /\b(?:android-safe-entry|android-direct-entry|safe-entry|qa-direct-safe-entry|safe-current-splash-hide|direct-current|1\.0\.1-android-safe-entry)\b/iu;
 const MOBILE_ROUTE_FALLBACK_BOUNDARY_PATTERNS = [
   {
     label: "clean-fintech-screens",
@@ -549,6 +580,38 @@ const isPlainObject = (value) =>
 
 const stringArray = (value) =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+
+const containsStaleSafeEntryEvidence = (value) => {
+  const seen = new Set();
+  const visit = (item) => {
+    if (item === null || item === undefined) return false;
+    if (typeof item === "string") {
+      return MOBILE_STALE_SAFE_ENTRY_EVIDENCE_PATTERN.test(item);
+    }
+    if (typeof item === "number" || typeof item === "boolean") return false;
+    if (typeof item !== "object") return false;
+    if (seen.has(item)) return false;
+    seen.add(item);
+    if (Array.isArray(item)) return item.some(visit);
+    if (
+      typeof item.marker === "string" &&
+      item.present === false &&
+      MOBILE_STALE_SAFE_ENTRY_EVIDENCE_PATTERN.test(item.marker)
+    ) {
+      return Object.entries(item).some(([key, nested]) => {
+        if (key === "marker" || key === "present") return false;
+        return (
+          MOBILE_STALE_SAFE_ENTRY_EVIDENCE_PATTERN.test(key) || visit(nested)
+        );
+      });
+    }
+    return Object.entries(item).some(
+      ([key, nested]) =>
+        MOBILE_STALE_SAFE_ENTRY_EVIDENCE_PATTERN.test(key) || visit(nested),
+    );
+  };
+  return visit(value);
+};
 
 const normalizeSlug = (value) =>
   String(value ?? "")
@@ -1424,6 +1487,14 @@ const readJsonIfPresent = (rootDir, relativePath) => {
   } catch {
     return null;
   }
+};
+
+const readFirstJsonEvidence = (rootDir, relativePaths) => {
+  for (const relativePath of relativePaths) {
+    const value = readJsonIfPresent(rootDir, relativePath);
+    if (value) return value;
+  }
+  return null;
 };
 
 const containsRawSecretEvidenceValue = (value) => {
@@ -2549,9 +2620,27 @@ const checkDatabaseEvidence = (
   );
 
   const smoke = isPlainObject(evidence.smoke) ? evidence.smoke : {};
+  const databaseCommandProof =
+    readFirstJsonEvidence(rootDir, DATABASE_COMMAND_PROOF_PATHS) ?? {};
+  const databaseCommandProofCommands = isPlainObject(
+    databaseCommandProof.commands,
+  )
+    ? databaseCommandProof.commands
+    : {};
+  const safeCommandProofReason = (key) => {
+    const command = isPlainObject(databaseCommandProofCommands[key])
+      ? databaseCommandProofCommands[key]
+      : {};
+    const reason = typeof command.reason === "string" ? command.reason : "";
+    return /^[A-Z0-9_ ]{3,80}$/u.test(reason) ||
+      /^missing [A-Z0-9_]{3,80}$/u.test(reason)
+      ? reason
+      : "";
+  };
   const smokeChecks = [
     {
       key: "stagingApiSmokeVerified",
+      proofKey: "stagingApiSmoke",
       name: "database:staging-api-smoke",
       pass: "staging API smoke proof is recorded",
       fail: "staging API smoke proof is missing",
@@ -2560,6 +2649,7 @@ const checkDatabaseEvidence = (
     },
     {
       key: "adminSmokeVerified",
+      proofKey: "adminSmoke",
       name: "database:admin-smoke",
       pass: "admin smoke proof is recorded",
       fail: "admin smoke proof is missing",
@@ -2567,6 +2657,7 @@ const checkDatabaseEvidence = (
     },
     {
       key: "serverAuthoritySmokeVerified",
+      proofKey: "serverAuthoritySmoke",
       name: "database:server-authority-smoke",
       pass: "server-authority smoke proof is recorded",
       fail: "server-authority smoke proof is missing",
@@ -2575,13 +2666,24 @@ const checkDatabaseEvidence = (
     },
     {
       key: "privacySmokeVerified",
+      proofKey: "privacySmoke",
       name: "database:privacy-smoke",
       pass: "privacy smoke proof is recorded",
       fail: "privacy smoke proof is missing",
       blocker: "Database evidence must prove privacy-safe API smoke responses",
     },
     {
+      key: "persistenceE2eSmokeVerified",
+      proofKey: "persistenceE2eSmoke",
+      name: "database:persistence-e2e-smoke",
+      pass: "authenticated payroll/plan/budget persistence smoke proof is recorded",
+      fail: "authenticated payroll/plan/budget persistence smoke proof is missing",
+      blocker:
+        "Database evidence must prove authenticated staging read-after-write persistence for payroll plan, daily budget, variable expense, and salary home synchronization",
+    },
+    {
       key: "noRawFinancialDataInSmokePayloads",
+      proofKey: "",
       name: "database:smoke-payload-redaction",
       pass: "smoke payload redaction proof is recorded",
       fail: "smoke payload redaction proof is missing",
@@ -2591,12 +2693,17 @@ const checkDatabaseEvidence = (
   ];
   for (const smokeCheck of smokeChecks) {
     const ok = smoke[smokeCheck.key] === true;
+    const proofReason = ok ? "" : safeCommandProofReason(smokeCheck.proofKey);
     addDatabaseCheck(
       checks,
       blockers,
       ok ? "PASS" : "BLOCKED",
       smokeCheck.name,
-      ok ? smokeCheck.pass : smokeCheck.fail,
+      ok
+        ? smokeCheck.pass
+        : proofReason
+          ? `${smokeCheck.fail}: ${proofReason}`
+          : smokeCheck.fail,
       smokeCheck.blocker,
     );
   }
@@ -2619,6 +2726,51 @@ const readTextIfPresent = (rootDir, relativePath) => {
   const filePath = path.join(rootDir, relativePath);
   if (!fs.existsSync(filePath)) return null;
   return fs.readFileSync(filePath, "utf8");
+};
+const checkFinalReleaseReportApkReferences = (rootDir, checks, blockers) => {
+  const missingReports = [];
+  const staleMatches = [];
+
+  for (const reportPath of FINAL_RELEASE_REPORT_PATHS) {
+    const text = readTextIfPresent(rootDir, reportPath);
+    if (typeof text !== "string") {
+      missingReports.push(reportPath);
+      continue;
+    }
+
+    for (const staleReference of STALE_MOBILE_APK_REPORT_REFERENCES) {
+      staleReference.pattern.lastIndex = 0;
+      if (staleReference.pattern.test(text)) {
+        staleMatches.push(`${reportPath}: ${staleReference.label}`);
+      }
+    }
+  }
+
+  const ok = missingReports.length === 0 && staleMatches.length === 0;
+  const detail = ok
+    ? "final release reports do not reference stale preview APK artifacts"
+    : [
+        missingReports.length > 0
+          ? `missing final release reports: ${missingReports.join(", ")}`
+          : "",
+        staleMatches.length > 0
+          ? `stale APK references found in final reports: ${staleMatches.join(", ")}`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("; ");
+
+  addCheck(
+    checks,
+    ok ? "PASS" : "BLOCKED",
+    "docs:final-report-apk-references",
+    detail,
+  );
+  if (!ok) {
+    blockers.push(
+      "final release reports must point at current mobile preview APK evidence without stale APK artifact names or hashes",
+    );
+  }
 };
 
 const isMobileRuntimeFile = (relativePath) => {
@@ -2844,7 +2996,6 @@ const normalizeGitStatusPath = (line) => {
 };
 
 const isMobilePreviewSourcePath = (filePath) =>
-  filePath === "package.json" ||
   filePath === "pnpm-lock.yaml" ||
   filePath.startsWith("apps/mobile/") ||
   filePath.startsWith("packages/");
@@ -3354,6 +3505,7 @@ const checkMobileNativeEvidence = (
   checks,
   blockers,
   commandExists,
+  gitHeadResult,
 ) => {
   const evidence = readJsonIfPresent(rootDir, MOBILE_NATIVE_EVIDENCE_PATH);
   if (!evidence) {
@@ -3449,20 +3601,36 @@ const checkMobileNativeEvidence = (
   const ios = isPlainObject(evidence.ios) ? evidence.ios : {};
   const localAdbAvailable = commandExists("adb");
   const localEmulatorAvailable = commandExists("emulator");
+  const localHead = gitHeadResult?.ok ? parseGitSha(gitHeadResult.output) : "";
+  const androidBuildGitCommit = parseGitSha(
+    android.productionBuildGitCommit ?? android.gitCommit ?? evidence.gitCommit,
+  );
+  const androidArtifactSha256 = normalizeSha256Hex(
+    android.productionArtifactSha256 ?? android.aabSha256,
+  );
+  const androidBuildLineageOk =
+    Boolean(androidBuildGitCommit) &&
+    Boolean(androidArtifactSha256) &&
+    (!localHead || androidBuildGitCommit === localHead);
 
   const androidBuildOk =
     android.productionBuildVerified === true &&
     android.productionBuildProfile === "production" &&
-    android.productionArtifactType === "aab";
+    android.productionArtifactType === "aab" &&
+    androidBuildLineageOk;
   addMobileCheck(
     checks,
     blockers,
     androidBuildOk ? "PASS" : "BLOCKED",
     "mobile:native:android-build",
     androidBuildOk
-      ? "Android production EAS build evidence is verified as an AAB"
-      : "Android production EAS AAB build evidence is missing",
-    "Android production EAS build must be verified as an app-bundle/AAB before Play Store release",
+      ? "Android production EAS build evidence is verified as a current-head AAB with artifact SHA256"
+      : localHead &&
+          androidBuildGitCommit &&
+          androidBuildGitCommit !== localHead
+        ? `Android production EAS AAB evidence was built from HEAD ${shortGitSha(androidBuildGitCommit)} but local HEAD is ${shortGitSha(localHead)}`
+        : "Android production EAS AAB build evidence is missing current HEAD lineage or artifact SHA256",
+    "Android production EAS build must be verified as a current-head app-bundle/AAB with artifact SHA256 before Play Store release",
   );
 
   const androidE2eEvidenceOk =
@@ -3526,8 +3694,12 @@ const checkMobileNativeEvidence = (
   );
 };
 
-const isSha256Hex = (value) =>
-  typeof value === "string" && /^[a-f0-9]{64}$/i.test(value.trim());
+const normalizeSha256Hex = (value) =>
+  typeof value === "string" && /^[a-f0-9]{64}$/i.test(value.trim())
+    ? value.trim().toUpperCase()
+    : "";
+
+const isSha256Hex = (value) => normalizeSha256Hex(value).length === 64;
 
 const checkMobilePreviewEvidence = (
   rootDir,
@@ -3617,20 +3789,25 @@ const checkMobilePreviewEvidence = (
   );
 
   const android = isPlainObject(evidence.android) ? evidence.android : {};
+  const staleSafeEntryPreviewEvidence =
+    containsStaleSafeEntryEvidence(evidence);
   const apkOk =
     android.debugApkBuilt === true &&
     android.debugApkSigned === true &&
     isSha256Hex(android.debugApkSha256) &&
-    android.downloadVerified === true;
+    android.downloadVerified === true &&
+    !staleSafeEntryPreviewEvidence;
   addMobileCheck(
     checks,
     blockers,
     apkOk ? "PASS" : "BLOCKED",
     "mobile:preview:apk",
     apkOk
-      ? `current-head debug APK build, signing, and download proof are verified (${android.debugApkSha256})`
-      : "current-head debug APK build, signing, download proof, or SHA256 is missing",
-    "current-head preview/debug APK evidence must prove build, signing, download, and SHA256 without embedding artifact secrets",
+      ? `current-head release-like QA APK build, signing, and download proof are verified (${android.debugApkSha256})`
+      : staleSafeEntryPreviewEvidence
+        ? "current-head preview/QA APK evidence is stale because it still references safe-entry/direct-entry packaging"
+        : "current-head release-like QA APK build, signing, download proof, or SHA256 is missing",
+    "current-head preview/QA APK evidence must prove build, signing, download, and SHA256 without embedding artifact secrets",
   );
 
   const latestSourceChangesPackaged =
@@ -3695,6 +3872,137 @@ const checkMobilePreviewEvidence = (
     "latest source changes must be packaged into a fresh Android preview APK before the artifact can be treated as launch QA ready",
   );
 
+  const staticInspectionSummary = isPlainObject(
+    evidence.latestStaticApkInspectionSummary,
+  )
+    ? evidence.latestStaticApkInspectionSummary
+    : {};
+  const staticInspectionPath =
+    typeof evidence.latestStaticApkInspection === "string"
+      ? evidence.latestStaticApkInspection.trim()
+      : "";
+  const staticInspection = staticInspectionPath
+    ? readJsonIfPresent(rootDir, staticInspectionPath)
+    : null;
+  const staticInspectionSource = isPlainObject(staticInspection)
+    ? staticInspection
+    : staticInspectionSummary;
+  const staleSafeEntryStaticEvidence = containsStaleSafeEntryEvidence(
+    staticInspectionSource,
+  );
+  const staticInspectionAbis = stringArray(staticInspectionSource.nativeAbis);
+  const requiredStaticArm64Libs = Array.isArray(
+    staticInspectionSource.requiredArm64Libs,
+  )
+    ? staticInspectionSource.requiredArm64Libs
+    : [];
+  const requiredStaticX86Libs = Array.isArray(
+    staticInspectionSource.requiredX86_64Libs,
+  )
+    ? staticInspectionSource.requiredX86_64Libs
+    : [];
+  const requiredStaticBundleMarkers = Array.isArray(
+    staticInspectionSource.requiredBundleMarkers,
+  )
+    ? staticInspectionSource.requiredBundleMarkers
+    : [];
+  const forbiddenStaticBundleMarkers = Array.isArray(
+    staticInspectionSource.forbiddenBundleMarkers,
+  )
+    ? staticInspectionSource.forbiddenBundleMarkers
+    : [];
+  const staticRequiredLibsOk =
+    (requiredStaticArm64Libs.length === 0 ||
+      requiredStaticArm64Libs.every((item) => item?.present === true)) &&
+    (requiredStaticX86Libs.length === 0 ||
+      requiredStaticX86Libs.every((item) => item?.present === true));
+  const staticBundleMarkersOk =
+    (requiredStaticBundleMarkers.length === 0 ||
+      requiredStaticBundleMarkers.every((item) => item?.present === true)) &&
+    (forbiddenStaticBundleMarkers.length === 0 ||
+      forbiddenStaticBundleMarkers.every((item) => item?.present === false));
+  const expectedStaticApkSha = normalizeSha256Hex(
+    android.latestSourcePackagedApkSha256 || android.debugApkSha256,
+  );
+  const staticApkSha = normalizeSha256Hex(staticInspectionSource.apkSha256);
+  const staticApkShaMatches =
+    expectedStaticApkSha.length === 64 && staticApkSha === expectedStaticApkSha;
+  const staticApkInspectionOk =
+    evidence.latestStaticApkInspectionPass === true &&
+    !staleSafeEntryPreviewEvidence &&
+    !staleSafeEntryStaticEvidence &&
+    staticInspectionPath.length > 0 &&
+    staticInspectionSource.pass === true &&
+    staticInspectionSource.hasBundle === true &&
+    isSha256Hex(staticInspectionSource.bundleSha256) &&
+    staticInspectionAbis.includes("arm64-v8a") &&
+    staticInspectionAbis.includes("x86_64") &&
+    Number.isInteger(staticInspectionSource.arm64LibCount) &&
+    staticInspectionSource.arm64LibCount > 0 &&
+    Number.isInteger(staticInspectionSource.x86_64LibCount) &&
+    staticInspectionSource.x86_64LibCount > 0 &&
+    staticRequiredLibsOk &&
+    staticBundleMarkersOk &&
+    staticApkShaMatches &&
+    staticInspectionSource.rawDeviceIdentifiersStored !== true &&
+    staticInspectionSource.rawLogcatStored !== true &&
+    staticInspectionSource.secretValuesStored !== true;
+  addMobileCheck(
+    checks,
+    blockers,
+    staticApkInspectionOk ? "PASS" : "BLOCKED",
+    "mobile:preview:static-apk-inspection",
+    staticApkInspectionOk
+      ? `static APK inspection verifies embedded Expo Router bundle markers, ARM64/x86_64 startup libraries, and matching APK SHA256 (${staticApkSha})`
+      : staleSafeEntryPreviewEvidence || staleSafeEntryStaticEvidence
+        ? "static APK inspection evidence is stale because it still references safe-entry/direct-entry APK packaging"
+        : "static APK inspection evidence is missing, failed, stale, unsafe, or does not prove embedded bundle plus ARM64/x86_64 startup libraries",
+    "static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, Expo Router/root markers, and matching APK SHA256 without raw logcat, raw device identifiers, or secret values",
+  );
+
+  const finalStableQaApk = isPlainObject(evidence.finalStableQaApk)
+    ? evidence.finalStableQaApk
+    : {};
+  const finalStableSha = normalizeSha256Hex(finalStableQaApk.sha256);
+  const finalStableExpectedSha =
+    staticApkSha.length === 64 ? staticApkSha : expectedStaticApkSha;
+  const finalStableSourceFresh = latestSourcePreviewApkOk;
+  const finalStableRuntimeOk =
+    finalStableSourceFresh &&
+    finalStableQaApk.fileName === "salary-hijacking-qa-universal.apk" &&
+    !staleSafeEntryPreviewEvidence &&
+    !containsStaleSafeEntryEvidence(finalStableQaApk) &&
+    finalStableSha.length === 64 &&
+    finalStableSha === finalStableExpectedSha &&
+    Number.isInteger(finalStableQaApk.sizeBytes) &&
+    finalStableQaApk.sizeBytes > 0 &&
+    String(finalStableQaApk.emulatorLifecycleProof ?? "").length > 0 &&
+    finalStableQaApk.emulatorColdStarts === "10/10 PASS" &&
+    finalStableQaApk.emulatorBackgroundResume === "10/10 PASS" &&
+    finalStableQaApk.emulatorFatalMarkerCount === 0 &&
+    String(finalStableQaApk.launcherMonkeyProof ?? "").length > 0 &&
+    finalStableQaApk.launcherMonkeyStatus === "PASS" &&
+    String(finalStableQaApk.upgradeInstallProof ?? "").length > 0 &&
+    String(finalStableQaApk.upgradeInstallStatus ?? "").startsWith("PASS") &&
+    finalStableQaApk.upgradeColdStarts === "10/10 PASS" &&
+    finalStableQaApk.upgradeBackgroundResume === "10/10 PASS" &&
+    finalStableQaApk.upgradeFatalMarkerCount === 0;
+  addMobileCheck(
+    checks,
+    blockers,
+    finalStableRuntimeOk ? "PASS" : "BLOCKED",
+    "mobile:preview:final-stable-runtime",
+    finalStableRuntimeOk
+      ? `final stable QA APK clean install, launcher startup, upgrade install, and zero-fatal emulator runtime proof are verified (${finalStableSha})`
+      : !finalStableSourceFresh
+        ? "final stable QA APK runtime proof is stale because mobile source changes are not packaged into the latest APK evidence"
+        : staleSafeEntryPreviewEvidence ||
+            containsStaleSafeEntryEvidence(finalStableQaApk)
+          ? "final stable QA APK runtime proof is stale because it still references safe-entry/direct-entry packaging"
+          : "final stable QA APK runtime proof is missing, stale, incomplete, or does not match the inspected APK SHA256",
+    "final stable QA APK runtime proof must include clean install, launcher, upgrade, and zero fatal markers for salary-hijacking-qa-universal.apk",
+  );
+
   const hasPhoneTargetEvidence =
     android.phoneTargetDebugApkBuilt !== undefined ||
     android.phoneTargetDebugApkSigned !== undefined ||
@@ -3726,10 +4034,10 @@ const checkMobilePreviewEvidence = (
     "mobile:preview:phone-target-apk",
     phoneTargetApkOk
       ? hasPhoneTargetEvidence
-        ? `phone-target debug APK build, signing, download, arm64-v8a ABI filter, and Expo core native library proof are verified (${android.phoneTargetDebugApkSha256})`
-        : "phone-target debug APK proof is not supplied and remains optional"
-      : "phone-target debug APK build, signing, download, single arm64-v8a ABI filter, Expo core native library proof, or SHA256 is missing",
-    "phone-target preview/debug APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256 without embedding artifact secrets; x86 emulator smoke is verified by the separate emulator APK evidence",
+        ? `phone-target preview/QA APK build, signing, download, arm64-v8a ABI filter, and Expo core native library proof are verified (${android.phoneTargetDebugApkSha256})`
+        : "phone-target preview/QA APK proof is not supplied and remains optional"
+      : "phone-target preview/QA APK build, signing, download, single arm64-v8a ABI filter, Expo core native library proof, or SHA256 is missing",
+    "phone-target preview/QA APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256 without embedding artifact secrets; x86 emulator smoke is verified by the separate emulator APK evidence",
   );
 
   const emulatorQaOk =
@@ -3740,6 +4048,20 @@ const checkMobilePreviewEvidence = (
     android.navigationSmokeVerified === true &&
     android.backgroundForegroundVerified === true &&
     android.notificationNoBottomTabVerified === true;
+  const missingEmulatorQaProbes = [
+    android.emulatorInstallVerified === true ? "" : "emulatorInstallVerified",
+    Number.isInteger(android.coldStartRuns) && android.coldStartRuns >= 5
+      ? ""
+      : "coldStartRuns>=5",
+    android.coldStartFatalCount === 0 ? "" : "coldStartFatalCount=0",
+    android.navigationSmokeVerified === true ? "" : "navigationSmokeVerified",
+    android.backgroundForegroundVerified === true
+      ? ""
+      : "backgroundForegroundVerified",
+    android.notificationNoBottomTabVerified === true
+      ? ""
+      : "notificationNoBottomTabVerified",
+  ].filter(Boolean);
   addMobileCheck(
     checks,
     blockers,
@@ -3747,7 +4069,7 @@ const checkMobilePreviewEvidence = (
     "mobile:preview:emulator-qa",
     emulatorQaOk
       ? `Android emulator install, ${android.coldStartRuns} cold starts, navigation, notification no-tab, and background/foreground QA are verified`
-      : "Android emulator install, cold start, navigation, notification, or background/foreground QA proof is missing",
+      : `missing emulator QA probes: ${missingEmulatorQaProbes.join(", ")}`,
     "preview APK must install and run on Android emulator with zero fatal markers before release QA",
   );
 
@@ -3783,6 +4105,19 @@ const checkMobilePreviewEvidence = (
         "containsRawDeviceIdentifier",
       ].filter((flagName) => phoneProofPrivacy[flagName] === true)
     : [];
+  const expectedPhoneProofApkSha = normalizeSha256Hex(
+    android.phoneTargetDebugApkSha256 || android.debugApkSha256,
+  );
+  const phoneProofApkSha = normalizeSha256Hex(phoneProofAndroid.apkSha256);
+  const phoneProofApkMatchesEvidence =
+    !phoneProof ||
+    (expectedPhoneProofApkSha.length === 64 &&
+      phoneProofApkSha === expectedPhoneProofApkSha);
+  const phoneProofInstalledPackageVerified =
+    phoneProofAndroid.installedPackageVerified === true &&
+    typeof phoneProofAndroid.installedPackagePathHash === "string" &&
+    /^[A-F0-9]{64}$/.test(phoneProofAndroid.installedPackagePathHash) &&
+    phoneProofAndroid.packageInfoProbe?.rawPackageInfoStored === false;
   const phoneProofValid =
     phoneProof?.schemaVersion === 1 &&
     phoneProof.secretsRedacted === true &&
@@ -3790,8 +4125,10 @@ const checkMobilePreviewEvidence = (
     !containsRawSecretEvidenceValue(phoneProof) &&
     phoneProofAppIdentityMismatches.length === 0 &&
     phoneProofUnsafeFlags.length === 0 &&
+    phoneProofApkMatchesEvidence &&
     phoneProofAndroid.physicalPhoneVerified === true &&
     phoneProofAndroid.installVerified === true &&
+    phoneProofInstalledPackageVerified &&
     Number.isInteger(phoneProofAndroid.coldStartRuns) &&
     phoneProofAndroid.coldStartRuns >= MIN_PHYSICAL_PHONE_RELIABILITY_RUNS &&
     phoneProofAndroid.coldStartFatalCount === 0 &&
@@ -3827,10 +4164,15 @@ const checkMobilePreviewEvidence = (
             ? `physical phone proof does not prove ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs`
             : phoneProofMissingQaFields.length > 0
               ? `physical phone proof does not prove persistence, keyboard/safe-area, navigation, and background/foreground QA: missing ${phoneProofMissingQaFields.join(", ")}`
-              : typeof phoneProofAndroid.physicalPhoneBlocker === "string" &&
-                  phoneProofAndroid.physicalPhoneBlocker.trim()
-                ? phoneProofAndroid.physicalPhoneBlocker
-                : "physical phone proof is present but does not prove install, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, and raw-logcat redaction";
+              : !phoneProofApkMatchesEvidence
+                ? "physical phone proof APK SHA256 does not match the current preview APK evidence"
+                : !phoneProofInstalledPackageVerified
+                  ? "physical phone proof does not prove installed package verification without raw package info storage"
+                  : typeof phoneProofAndroid.physicalPhoneBlocker ===
+                        "string" &&
+                      phoneProofAndroid.physicalPhoneBlocker.trim()
+                    ? phoneProofAndroid.physicalPhoneBlocker
+                    : "physical phone proof is present but does not prove install, installed package verification, cold-start count, persistence, keyboard/safe-area, navigation, background/foreground, zero fatal markers, raw-logcat redaction, and raw-package-info redaction";
 
   addMobileCheck(
     checks,
@@ -3844,7 +4186,7 @@ const checkMobilePreviewEvidence = (
       : android.physicalPhoneVerified === true
         ? "Physical phone preview QA is verified"
         : "Physical phone preview QA remains tracked as pending",
-    `physical phone preview QA proof must be no-secret, app-identity aligned, install verified, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
+    `physical phone preview QA proof must be no-secret, app-identity aligned, installed APK SHA256 matched to current preview evidence, install verified, installed package verified without raw package info storage, ${MIN_PHYSICAL_PHONE_RELIABILITY_RUNS} cold-start and background/foreground runs verified, persistence verified, keyboard/safe-area verified, navigation/background verified, zero-fatal, and raw-logcat redacted`,
   );
 };
 
@@ -4095,6 +4437,7 @@ const checkMobileReleaseReadiness = (
     checks,
     blockers,
     commandExists,
+    gitHead(),
   );
   checkMobilePreviewEvidence(
     rootDir,
@@ -4201,6 +4544,7 @@ export const analyzeReleaseReadiness = ({
     addCheck(checks, "BLOCKED", "docs:gap-register", detail);
     blockers.push(detail);
   }
+  checkFinalReleaseReportApkReferences(rootDir, checks, blockers);
 
   const migrationsDir = path.join(rootDir, "database", "migrations");
   const migrationCount = fs.existsSync(migrationsDir)

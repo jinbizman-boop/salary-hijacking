@@ -5,6 +5,8 @@ import {
   ProgressBar,
   SurfaceCard,
   componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type ProfileStats = Readonly<{
@@ -50,7 +52,7 @@ export function ProfileStatGrid({
         <Text style={styles.level}>
           {(stats.selfCareScore / 20).toFixed(1)}점
         </Text>
-        <Text style={styles.meta}>서버 기준 성과</Text>
+        <Text style={styles.meta}>성과 점수</Text>
       </SurfaceCard>
     </View>
   );
@@ -58,21 +60,18 @@ export function ProfileStatGrid({
 
 const styles = StyleSheet.create({
   grid: {
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   label: {
     color: componentColors.primaryGreenDark,
-    fontSize: 13,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.labelM,
   },
   level: {
     color: componentColors.textPrimary,
-    fontSize: 24,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.amountL,
   },
   meta: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

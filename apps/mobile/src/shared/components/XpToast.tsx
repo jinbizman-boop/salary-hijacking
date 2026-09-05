@@ -1,6 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type XpToastProps = Readonly<{
   earnedXp: number;
@@ -26,14 +32,13 @@ export function XpToast({
 const styles = StyleSheet.create({
   toast: {
     alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
+    paddingHorizontal: designSystem.spacing[4],
+    paddingVertical: designSystem.spacing[2],
     borderRadius: componentRadius.pill,
     backgroundColor: componentColors.primaryGreenSoft,
   },
   text: {
     color: componentColors.primaryGreenDark,
-    fontSize: 13,
-    fontWeight: "900",
+    ...designSystem.typography.labelM,
   },
 });

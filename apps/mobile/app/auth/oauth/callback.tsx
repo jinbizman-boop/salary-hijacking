@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ActivityIndicator, SafeAreaView, Text, View } from "react-native";
+import { ActivityIndicator, Text } from "react-native";
 
 import { createMobileAuthApi } from "../../../src/shared/api/mobile-api";
+import {
+  AppHeader,
+  AppShell,
+  SurfaceCard,
+} from "../../../src/shared/components";
 import { salaryHijackingTheme as theme } from "../../../src/shared/styles/clean-fintech-theme";
 
 const SCREEN_VERSION = "4.0.0-clean-fintech";
@@ -77,28 +82,11 @@ export default function OAuthCallbackScreen(): React.ReactElement {
   }, [authApi, code, error, router, state]);
 
   return (
-    <SafeAreaView
-      style={{
-        alignItems: "center",
-        backgroundColor: theme.color.surface.app,
-        flex: 1,
-        justifyContent: "center",
-        padding: theme.spacing[24],
-      }}
+    <AppShell
+      accessibilityLabel="소셜 로그인 콜백 화면"
+      header={<AppHeader subtitle="계정 연결" title="소셜 로그인" />}
     >
-      <View
-        style={{
-          alignItems: "center",
-          backgroundColor: theme.color.surface.card,
-          borderColor: theme.color.surface.lineSoft,
-          borderRadius: theme.radius.lg,
-          borderWidth: 1,
-          gap: theme.spacing[12],
-          maxWidth: 360,
-          padding: theme.spacing[24],
-          width: "100%",
-        }}
-      >
+      <SurfaceCard accessibilityLabel="소셜 로그인 상태">
         {status === "PENDING" ? (
           <ActivityIndicator color={theme.color.brand.primary} />
         ) : null}
@@ -125,8 +113,8 @@ export default function OAuthCallbackScreen(): React.ReactElement {
         >
           서버 인증 결과와 계정 상태를 확인한 뒤 다음 화면으로 이동합니다.
         </Text>
-      </View>
-    </SafeAreaView>
+      </SurfaceCard>
+    </AppShell>
   );
 }
 

@@ -1,17 +1,17 @@
 /** apps/mobile/app/_layout.tsx
- * 급여납치 모바일 앱 루트 레이아웃 최종본.
- * 정적 import와 JSX 없이 Expo Router·React Native 런타임 모듈을 지연 로딩한다.
+ * 급여납치 모바일 루트 레이아웃.
+ * 정적 import와 JSX 없이 Expo Router, React Native, Expo 모듈을 안전하게 로딩한다.
  */
 
-import { createAuthApi } from "../src/features/auth/api";
-import { CapturePreviewScreen } from "../src/features/capture";
-import { readMobileApiBaseUrl } from "../src/shared/api/api-base";
 import {
-  attachMobileBearerToken,
-  MOBILE_ACCESS_TOKEN_KEY,
-} from "../src/shared/storage/auth-token";
-import { appImageAssets } from "../src/shared/assets/images";
-import { createSecureStoreRuntime } from "../src/shared/storage/secure-store";
+  subscribeAuthSessionChange,
+  type AuthSessionChangeEvent,
+} from "../src/features/auth/navigation";
+import {
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../src/shared/components/tokens";
+import { markReleasePerf } from "../src/shared/performance/release-perf";
 
 declare function require(moduleName: string): unknown;
 
@@ -94,10 +94,18 @@ type SplashScreenRuntime = Readonly<{
   hideAsync: () => Promise<boolean>;
   preventAutoHideAsync: () => Promise<boolean>;
 }>;
+type LinkingRuntime = Readonly<{
+  getInitialURL: () => Promise<string | null>;
+}>;
 type SecureStoreRuntime = Readonly<{
   getItemAsync: (key: string) => Promise<string | null>;
   setItemAsync: (key: string, value: string) => Promise<void>;
   deleteItemAsync: (key: string) => Promise<void>;
+}>;
+type AsyncStorageRuntime = Readonly<{
+  getItem: (key: string) => Promise<string | null>;
+  setItem: (key: string, value: string) => Promise<void>;
+  removeItem: (key: string) => Promise<void>;
 }>;
 type ConstantsRuntime = Readonly<{
   expoConfig?: Readonly<{
@@ -106,22 +114,36 @@ type ConstantsRuntime = Readonly<{
     }>;
   }>;
 }>;
-type CaptureScreenKind =
-  | "salary"
-  | "plan"
-  | "level"
-  | "notifications"
-  | "community"
-  | "community-write"
-  | "profile"
-  | "profile-level"
-  | "login"
-  | "signup"
-  | "splash"
-  | "reading"
-  | "news"
-  | "english"
-  | "health";
+type CapturePreviewModule = Readonly<{
+  CapturePreviewScreen?: ElementType;
+  resolveCapturePreviewKind?: (screen: string) => string | null;
+}>;
+type CaptureScreenKind = string;
+type RootAuthApiModule = Readonly<{
+  createAuthApi?: (options: {
+    baseUrl: string;
+    createCorrelationId: () => string;
+    platform: "ios" | "android" | "web";
+    tokenStore: SecureStoreRuntime;
+  }) => {
+    refresh: () => Promise<unknown>;
+  };
+}>;
+type RootApiBaseModule = Readonly<{
+  readMobileApiBaseUrl?: () => string;
+}>;
+type RootSecureStoreModule = Readonly<{
+  createSecureStoreRuntime?: (
+    platform: string,
+    nativeStore: Partial<SecureStoreRuntime>,
+  ) => SecureStoreRuntime;
+}>;
+type RootAsyncStorageModule =
+  | Partial<AsyncStorageRuntime>
+  | Readonly<{ default?: Partial<AsyncStorageRuntime> }>;
+type RootFontAssetsModule = Readonly<{
+  getRootFontAssets?: () => Readonly<Record<string, unknown>>;
+}>;
 
 type SessionSnapshot = Readonly<{
   authenticated: boolean;
@@ -129,6 +151,7 @@ type SessionSnapshot = Readonly<{
   role: UserRole;
   emailVerified: boolean;
   onboardingCompleted: boolean;
+  payrollReady: boolean;
   mfaRequired: boolean;
   sessionExpiresAt: string | null;
   rawFinancialDataExposed: false;
@@ -166,17 +189,47 @@ type RootState = Readonly<{
   status: RootStatus;
   payload: RootPayload;
   retrying: boolean;
+  navigationEpoch: number;
   toast: Readonly<{ kind: ToastKind; message: string }>;
 }>;
+type InitialDeepLinkRoute = string | null | "PENDING";
 
 const ROOT_LAYOUT_VERSION = "3.1.0";
+const designSystem = salaryHijackingDesignSystem;
 const ROOT_E2E_TEST_ID = "salary-hijacking-mobile-root";
 const AUTH_LOGIN_ROUTE = "/(auth)/login";
 const AUTH_VERIFY_ROUTE = "/(auth)/verify-email";
 const ONBOARDING_ROUTE = "/onboarding";
 const SALARY_HOME_ROUTE = "/salary";
 const PROFILE_ROUTE = "/profile";
+const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token";
+const MOBILE_REFRESH_TOKEN_KEY = "salary-hijacking.mobile.refresh-token";
 const SECURE_SESSION_KEY = "salary_hijacking.session_status.v1";
+const ROOT_PUBLIC_SESSION_HINT_KEY =
+  "salary_hijacking.root_public_session_hint.v1";
+const ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS = 1200;
+const ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS = 60_000;
+const ROOT_DEEP_LINK_RESOLUTION_TIMEOUT_MS = 250;
+const ROOT_DEEP_LINK_ROUTES = new Set([
+  "/salary",
+  "/plan",
+  "/level",
+  "/level/reading",
+  "/level/news",
+  "/level/english",
+  "/level/health",
+  "/notifications",
+  "/notifications/settings",
+  "/community",
+  "/community/write",
+  "/profile",
+  "/profile/settings",
+  "/profile/community",
+  "/profile/level",
+  "/profile/notices",
+  "/profile/support",
+  "/profile/account",
+]);
 const PUBLIC_SEGMENTS = [
   "(auth)",
   "login",
@@ -226,52 +279,40 @@ const SENSITIVE_KEYWORDS = [
   "납치",
   "대출",
   "부채",
+  "인증",
   "푸시",
+  "세션",
   "기기토큰",
 ] as const;
-const FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({
-  "Freesentation-4Regular": require("../assets/fonts/Freesentation-4Regular.ttf"),
-  "Freesentation-5Medium": require("../assets/fonts/Freesentation-5Medium.ttf"),
-  "Freesentation-6SemiBold": require("../assets/fonts/Freesentation-6SemiBold.ttf"),
-  "Freesentation-7Bold": require("../assets/fonts/Freesentation-7Bold.ttf"),
-  "Freesentation-8ExtraBold": require("../assets/fonts/Freesentation-8ExtraBold.ttf"),
-  "Freesentation-9Black": require("../assets/fonts/Freesentation-9Black.ttf"),
-});
-const OFFICIAL_BI_LOGO = appImageAssets.brand.platformLogo as unknown;
-const CAPTURE_SCREENS: Readonly<Record<string, CaptureScreenKind>> =
-  Object.freeze({
-    community: "community",
-    "community-write": "community-write",
-    english: "english",
-    health: "health",
-    level: "level",
-    login: "login",
-    news: "news",
-    notifications: "notifications",
-    plan: "plan",
-    profile: "profile",
-    "profile-level": "profile-level",
-    reading: "reading",
-    salary: "salary",
-    signup: "signup",
-    splash: "splash",
-  });
-
+const EMPTY_FONT_ASSETS: Readonly<Record<string, unknown>> = Object.freeze({});
 const ReactRuntimeRef = loadReactRuntime();
 const NativeRuntimeRef = loadNativeRuntime();
+const FONTS_EMBEDDED_IN_NATIVE = NativeRuntimeRef.Platform.OS !== "web";
 const RouterRuntimeRef = loadRouterRuntime();
-const SecureStoreRuntimeRef = loadSecureStoreRuntime();
 const FontRuntimeRef = loadFontRuntime();
-const SplashScreenRuntimeRef = loadSplashScreenRuntime();
-const API_BASE_URL = readMobileApiBaseUrl();
-const IS_E2E_BUILD = readMobileE2eBuildEnabled();
 const INITIAL_CAPTURE_SCREEN_KIND = readInitialCaptureScreenKind();
-const SPLASH_FORCE_HIDE_FALLBACK_MS = 2500;
-
-void SplashScreenRuntimeRef.preventAutoHideAsync().catch(() => false);
+const SPLASH_FORCE_HIDE_FALLBACK_MS = 250;
+let cachedRootApiBaseUrl: string | null = null;
+let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
+let cachedAsyncStorageRuntime: AsyncStorageRuntime | null = null;
+let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
+const emittedRootPerfMarkers = new Set<string>();
 
 function hideNativeSplashSafely(): void {
-  void SplashScreenRuntimeRef.hideAsync().catch(() => false);
+  if (NativeRuntimeRef.Platform.OS === "web") return;
+  void getSplashScreenRuntime()
+    .hideAsync()
+    .catch(() => false);
+}
+
+function markRootPerfOnce(
+  marker: Parameters<typeof markReleasePerf>[0],
+  route: string,
+): void {
+  const key = `${marker}:${route}`;
+  if (emittedRootPerfMarkers.has(key)) return;
+  emittedRootPerfMarkers.add(key);
+  markReleasePerf(marker, { route });
 }
 
 const fallbackSession: SessionSnapshot = Object.freeze({
@@ -280,6 +321,7 @@ const fallbackSession: SessionSnapshot = Object.freeze({
   role: "USER",
   emailVerified: false,
   onboardingCompleted: false,
+  payrollReady: false,
   mfaRequired: false,
   sessionExpiresAt: null,
   rawFinancialDataExposed: false,
@@ -289,7 +331,7 @@ const fallbackSession: SessionSnapshot = Object.freeze({
 });
 const fallbackConfig: AppConfigSnapshot = Object.freeze({
   apiVersion: "v1",
-  environment: "development",
+  environment: "staging",
   maintenanceMode: false,
   minSupportedBuild: "0",
   featureFlags: {},
@@ -318,7 +360,10 @@ class RootAuthExpiredError extends Error {
 }
 
 export default function MobileRootLayout(): unknown {
-  const [fontsLoaded] = FontRuntimeRef.useFonts(FONT_ASSETS);
+  const [fontsLoaded] = FontRuntimeRef.useFonts(
+    FONTS_EMBEDDED_IN_NATIVE ? EMPTY_FONT_ASSETS : loadRootFontAssets(),
+  );
+  const fontsReady = FONTS_EMBEDDED_IN_NATIVE || fontsLoaded;
   const [fontLoadTimedOut, setFontLoadTimedOut] =
     ReactRuntimeRef.useState(false);
   const router = RouterRuntimeRef.useRouter();
@@ -328,8 +373,11 @@ export default function MobileRootLayout(): unknown {
     status: "BOOTSTRAPPING",
     payload: fallbackPayload,
     retrying: false,
-    toast: { kind: "info", message: "급여납치 앱을 안전하게 시작합니다." },
+    navigationEpoch: 0,
+    toast: { kind: "info", message: "급여납치 앱을 준비하고 있어요." },
   });
+  const [initialDeepLinkRoute, setInitialDeepLinkRoute] =
+    ReactRuntimeRef.useState<InitialDeepLinkRoute>("PENDING");
 
   const currentRouteKey = ReactRuntimeRef.useMemo(
     () => normalizeSegments(segments).join("/") || "root",
@@ -339,31 +387,120 @@ export default function MobileRootLayout(): unknown {
     () => isPublicRoute(segments),
     [segments],
   );
+  const isRouteTransitionPending =
+    captureScreenKind === null &&
+    !isCaptureBrowserPath() &&
+    (((state.status === "READY" || state.status === "OFFLINE") &&
+      shouldRouteAuthenticatedStateToHome(
+        currentRouteKey,
+        initialDeepLinkRoute,
+      )) ||
+      (state.status === "AUTH_REQUIRED" && !isPublic) ||
+      (state.status === "VERIFY_EMAIL" &&
+        currentRouteKey !== "(auth)/verify-email") ||
+      (state.status === "ONBOARDING" && currentRouteKey !== "onboarding"));
+
+  const setAuthRequiredBeforePersistence = ReactRuntimeRef.useCallback(
+    (): void => {
+      setState((prev: RootState) => ({
+        ...prev,
+        payload: { ...prev.payload, session: fallbackSession },
+        status: "AUTH_REQUIRED",
+        retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
+        toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
+      }));
+    },
+    [],
+  );
+
+  const persistUnauthenticatedLaunchState = ReactRuntimeRef.useCallback(
+    (): void => {
+      void persistPublicSessionHint(fallbackSession).catch(() => undefined);
+      void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
+        () => undefined,
+      );
+    },
+    [],
+  );
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
-    if (IS_E2E_BUILD) {
+    if (isMobileE2eBuildEnabled()) {
       setState((prev: RootState) => ({
         ...prev,
         payload: fallbackPayload,
         status: "READY",
         retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
         toast: { kind: "success", message: "E2E shell ready" },
       }));
       return;
     }
     try {
+      const publicSessionHint = await readPublicSessionHint();
+      if (!publicSessionHint || publicSessionHint.authenticated === false) {
+        setAuthRequiredBeforePersistence();
+        persistUnauthenticatedLaunchState();
+        return;
+      }
+      if (
+        canUseCachedAuthenticatedLaunch(
+          publicSessionHint,
+          currentRouteKey,
+          "public-hint",
+        )
+      ) {
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: cachedAuthenticatedPayload(publicSessionHint),
+          status: "READY",
+          retrying: true,
+          navigationEpoch: prev.navigationEpoch + 1,
+          toast: { kind: "success", message: statusMessage("READY") },
+        }));
+      }
+      const hasAccessToken = await hasStoredAccessToken();
+      const hasRefreshToken = await hasStoredRefreshToken();
+      const cachedSession = hasAccessToken || hasRefreshToken
+        ? await readCachedSessionStatus()
+        : fallbackSession;
+      if (!hasAccessToken && !hasRefreshToken) {
+        setAuthRequiredBeforePersistence();
+        void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
+          () => undefined,
+        );
+        return;
+      }
+      if (
+        canUseCachedAuthenticatedLaunch(
+          cachedSession,
+          currentRouteKey,
+          "secure-session",
+        )
+      ) {
+        setState((prev: RootState) => ({
+          ...prev,
+          payload: cachedAuthenticatedPayload(cachedSession),
+          status: "READY",
+          retrying: true,
+          navigationEpoch: prev.navigationEpoch + 1,
+          toast: { kind: "success", message: statusMessage("READY") },
+        }));
+      }
       const response = await requestJsonWithAuthRefresh<RootResponse>(
         "/api/v1/mobile/bootstrap",
       );
       const payload = normalizePayload(response.data ?? {});
       const nextStatus = resolveStatus(payload, isPublic);
       await persistSessionStatus(payload.session, nextStatus);
+      await persistPublicSessionHint(payload.session);
       setState((prev: RootState) => ({
         ...prev,
         payload,
         status: nextStatus,
         retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
         toast: { kind: "success", message: statusMessage(nextStatus) },
       }));
     } catch (error) {
@@ -371,8 +508,9 @@ export default function MobileRootLayout(): unknown {
         setState((prev: RootState) => ({
           ...prev,
           payload: { ...prev.payload, session: fallbackSession },
-          status: isPublic ? "READY" : "AUTH_REQUIRED",
+          status: "AUTH_REQUIRED",
           retrying: false,
+          navigationEpoch: prev.navigationEpoch + 1,
           toast: {
             kind: "error",
             message: safeBootstrapErrorMessage("auth-expired"),
@@ -387,17 +525,63 @@ export default function MobileRootLayout(): unknown {
         payload: { ...prev.payload, session: cached },
         status: cachedStatus,
         retrying: false,
+        navigationEpoch: prev.navigationEpoch + 1,
         toast: {
           kind: "error",
           message: safeBootstrapErrorMessage("offline-fallback"),
         },
       }));
     }
-  }, [isPublic]);
+  }, [
+    currentRouteKey,
+    isPublic,
+    persistUnauthenticatedLaunchState,
+    setAuthRequiredBeforePersistence,
+  ]);
+
+  const applyAuthenticatedSessionChange = ReactRuntimeRef.useCallback(
+    (event: AuthSessionChangeEvent): void => {
+      if (event.reason !== "authenticated" || !event.session) return;
+      const session = normalizeSession({
+        ...fallbackSession,
+        ...event.session,
+        authenticated: true,
+      });
+      const nextStatus = resolveStatusForSession(session);
+      setState((prev: RootState) => ({
+        ...prev,
+        payload: cachedAuthenticatedPayload(session),
+        status: nextStatus,
+        retrying: true,
+        navigationEpoch: prev.navigationEpoch + 1,
+        toast: { kind: "success", message: statusMessage(nextStatus) },
+      }));
+    },
+    [],
+  );
 
   ReactRuntimeRef.useEffect((): void => {
     void bootstrap();
   }, [bootstrap]);
+
+  ReactRuntimeRef.useEffect((): (() => void) => {
+    let mounted = true;
+    void resolveInitialRootDeepLinkRoute().then((route) => {
+      if (mounted) setInitialDeepLinkRoute(route);
+    });
+    return (): void => {
+      mounted = false;
+    };
+  }, []);
+
+  ReactRuntimeRef.useEffect(
+    (): (() => void) =>
+      subscribeAuthSessionChange((event) => {
+        applyAuthenticatedSessionChange(event);
+        void applyAuthSessionChange(event).finally(() => bootstrap());
+      }),
+    [applyAuthenticatedSessionChange, bootstrap],
+  );
 
   ReactRuntimeRef.useEffect((): (() => void) => {
     const timer = setTimeout(
@@ -408,23 +592,26 @@ export default function MobileRootLayout(): unknown {
   }, []);
 
   ReactRuntimeRef.useEffect((): void => {
-    if (fontsLoaded) hideNativeSplashSafely();
-  }, [fontsLoaded]);
+    if (fontsReady) hideNativeSplashSafely();
+  }, [fontsReady]);
 
   ReactRuntimeRef.useEffect((): (() => void) => {
-    if (fontsLoaded) return (): void => undefined;
+    if (fontsReady) return (): void => undefined;
     const timer = setTimeout(() => {
       setFontLoadTimedOut(true);
       hideNativeSplashSafely();
     }, SPLASH_FORCE_HIDE_FALLBACK_MS);
     return (): void => clearTimeout(timer);
-  }, [fontsLoaded]);
+  }, [fontsReady]);
 
   ReactRuntimeRef.useEffect((): void => {
     const next = state.status;
     if (next === "READY" && captureScreenKind) return;
     if (next === "READY" && isCaptureBrowserPath()) return;
-    if (next === "READY" && shouldRouteReadyStateToHome(currentRouteKey))
+    if (
+      (next === "READY" || next === "OFFLINE") &&
+      shouldRouteAuthenticatedStateToHome(currentRouteKey, initialDeepLinkRoute)
+    )
       router.replace(SALARY_HOME_ROUTE as never);
     if (next === "AUTH_REQUIRED" && !isPublic)
       router.replace(AUTH_LOGIN_ROUTE as never);
@@ -432,16 +619,54 @@ export default function MobileRootLayout(): unknown {
       router.replace(AUTH_VERIFY_ROUTE as never);
     if (next === "ONBOARDING" && currentRouteKey !== "onboarding")
       router.replace(ONBOARDING_ROUTE as never);
-  }, [captureScreenKind, currentRouteKey, isPublic, router, state.status]);
+  }, [
+    captureScreenKind,
+    currentRouteKey,
+    isPublic,
+    initialDeepLinkRoute,
+    router,
+    state.navigationEpoch,
+    state.status,
+  ]);
 
   const shouldRenderSlot =
     captureScreenKind !== null ||
-    state.status === "READY" ||
-    state.status === "OFFLINE" ||
-    isPublic;
-  const shouldShowRuntimeChrome = !shouldRenderSlot;
+    (!isRouteTransitionPending &&
+      (state.status === "READY" || state.status === "OFFLINE" || isPublic));
+  const shouldRenderLightweightTransition =
+    state.status === "BOOTSTRAPPING" || isRouteTransitionPending;
+  const shouldShowRuntimeChrome =
+    state.status !== "BOOTSTRAPPING" &&
+    !shouldRenderSlot &&
+    !isRouteTransitionPending;
+  const handleRootLayout = ReactRuntimeRef.useCallback((): void => {
+    hideNativeSplashSafely();
+    if (shouldRenderLightweightTransition) {
+      markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
+    }
+  }, [shouldRenderLightweightTransition]);
 
-  if (!fontsLoaded && !fontLoadTimedOut) {
+  ReactRuntimeRef.useEffect((): void => {
+    if (shouldRenderLightweightTransition) {
+      markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
+    }
+    if (state.status === "AUTH_REQUIRED" && isPublic) {
+      markRootPerfOnce("route.login.interactive", currentRouteKey);
+    }
+    if (
+      (state.status === "READY" || state.status === "OFFLINE") &&
+      (currentRouteKey === "salary" || currentRouteKey === "(tabs)/salary")
+    ) {
+      markRootPerfOnce("route.home.shell_interactive", currentRouteKey);
+    }
+  }, [
+    currentRouteKey,
+    isPublic,
+    shouldRenderLightweightTransition,
+    state.status,
+  ]);
+
+  if (!fontsReady && !fontLoadTimedOut) {
     return h(
       NativeRuntimeRef.SafeAreaView,
       {
@@ -453,13 +678,18 @@ export default function MobileRootLayout(): unknown {
       h(
         NativeRuntimeRef.View,
         { style: styles.fontLoading },
-        h(NativeRuntimeRef.Image, {
-          accessibilityIgnoresInvertColors: true,
-          accessibilityLabel: "급여납치 공식 BI",
-          resizeMode: "contain",
-          source: OFFICIAL_BI_LOGO,
-          style: styles.fontLoadingLogo,
-        }),
+        h(
+          NativeRuntimeRef.View,
+          {
+            accessibilityLabel: "급여납치",
+            style: styles.fontLoadingBrandMark,
+          },
+          h(
+            NativeRuntimeRef.Text,
+            { style: styles.fontLoadingBrandInitial },
+            "급",
+          ),
+        ),
         h(
           NativeRuntimeRef.Text,
           { style: styles.fontLoadingTitle },
@@ -478,12 +708,12 @@ export default function MobileRootLayout(): unknown {
     NativeRuntimeRef.SafeAreaView,
     {
       accessibilityLabel: "급여납치 모바일 루트",
-      onLayout: hideNativeSplashSafely,
+      onLayout: handleRootLayout,
       style: styles.safeArea,
       testID: ROOT_E2E_TEST_ID,
     },
     shouldShowRuntimeChrome
-      ? renderGlobalHeader(
+      ? renderRootAppHeader(
           state.payload,
           state.status,
           currentRouteKey,
@@ -500,7 +730,9 @@ export default function MobileRootLayout(): unknown {
             ? renderCaptureScreen(captureScreenKind)
             : h(RouterRuntimeRef.Slot, { key: currentRouteKey }),
         )
-      : renderGate(state.status, state.retrying, bootstrap),
+      : shouldRenderLightweightTransition
+        ? renderLightweightLaunchTransition()
+        : renderGate(state.status, state.retrying, bootstrap),
     shouldShowRuntimeChrome ? renderRuntimeGuard(state.payload) : null,
   );
 }
@@ -525,17 +757,22 @@ export function ErrorBoundary({
     h(
       NativeRuntimeRef.View,
       { style: styles.errorBoundary },
-      h(NativeRuntimeRef.Image, {
-        accessibilityIgnoresInvertColors: true,
-        accessibilityLabel: "급여납치 공식 BI",
-        resizeMode: "contain",
-        source: OFFICIAL_BI_LOGO,
-        style: styles.errorBoundaryLogo,
-      }),
+      h(
+        NativeRuntimeRef.View,
+        {
+          accessibilityLabel: "급여납치",
+          style: styles.errorBoundaryBrandMark,
+        },
+        h(
+          NativeRuntimeRef.Text,
+          { style: styles.errorBoundaryBrandInitial },
+          "급",
+        ),
+      ),
       h(
         NativeRuntimeRef.Text,
         { style: styles.errorBoundaryTitle },
-        "앱 화면을 다시 준비하고 있어요.",
+        "이 화면을 다시 준비하고 있어요.",
       ),
       h(
         NativeRuntimeRef.Text,
@@ -561,10 +798,17 @@ export function ErrorBoundary({
 }
 
 function renderCaptureScreen(kind: CaptureScreenKind): unknown {
-  return h(CapturePreviewScreen, { kind });
+  return h(loadCapturePreviewScreen(), { kind });
 }
 
-function renderGlobalHeader(
+function loadCapturePreviewScreen(): ElementType {
+  const mod = loadModule(
+    "../src/features/capture/root-preview",
+  ) as Partial<CapturePreviewModule>;
+  return mod.CapturePreviewScreen ?? NativeRuntimeRef.View;
+}
+
+function renderRootAppHeader(
   payload: RootPayload,
   status: RootStatus,
   _routeKey: string,
@@ -577,51 +821,24 @@ function renderGlobalHeader(
       : status === "ERROR"
         ? styles.dangerText
         : styles.reviewText;
-  return h(
-    NativeRuntimeRef.View,
-    { style: styles.header },
-    h(
-      NativeRuntimeRef.Pressable,
-      {
-        accessibilityRole: "button",
-        accessibilityLabel: "급여 홈",
-        onPress: goHome,
-        style: styles.logoButton,
-      },
-      h(NativeRuntimeRef.Image, {
-        accessibilityIgnoresInvertColors: true,
-        accessibilityLabel: "급여납치 공식 BI",
-        resizeMode: "contain",
-        source: OFFICIAL_BI_LOGO,
-        style: styles.headerLogoImage,
-      }),
-    ),
-    h(
-      NativeRuntimeRef.View,
-      { style: styles.headerBody },
-      h(
-        NativeRuntimeRef.Text,
-        { style: styles.headerKicker },
-        "SALARY HIJACKING",
-      ),
-      h(NativeRuntimeRef.Text, { style: styles.headerTitle }, "급여납치"),
-      h(
-        NativeRuntimeRef.Text,
-        { style: styles.headerMeta },
-        rootHeaderMessage(payload, status),
-      ),
-    ),
-    h(
-      NativeRuntimeRef.Pressable,
-      {
-        accessibilityRole: "button",
-        accessibilityLabel: "마이페이지",
-        onPress: goProfile,
-        style: styles.profileButton,
-      },
-      h(NativeRuntimeRef.Text, { style: statusStyle }, rootStatusLabel(status)),
-    ),
+  const profileAction = h(
+    NativeRuntimeRef.Pressable,
+    {
+      accessibilityRole: "button",
+      accessibilityLabel: "마이페이지",
+      onPress: goProfile,
+      style: styles.profileButton,
+    },
+    h(NativeRuntimeRef.Text, { style: statusStyle }, rootStatusLabel(status)),
   );
+
+  return h(loadRootAppHeader(), {
+    onBrandPress: goHome,
+    rightAccessory: profileAction,
+    subtitle: rootHeaderMessage(payload, status),
+    title: "급여납치",
+    variant: "ROOT",
+  });
 }
 
 function renderGate(
@@ -638,17 +855,17 @@ function renderGate(
           ? "온보딩을 완료하세요"
           : status === "ERROR"
             ? "앱 시작 실패"
-            : "서버 권위 앱 상태 확인 중";
+            : "앱을 준비하고 있어요";
   const message =
     status === "AUTH_REQUIRED"
-      ? "안전한 세션 확인 후 급여·예산 데이터를 불러옵니다."
+      ? "안전한 세션 확인 후 급여와 예산 데이터를 불러옵니다."
       : status === "VERIFY_EMAIL"
         ? "계정 보호를 위해 인증을 완료해야 합니다."
         : status === "ONBOARDING"
           ? "급여일, 고정지출, 고정저축, 일일예산 기본 설정을 완료하세요."
           : status === "OFFLINE"
             ? "네트워크 없이 마지막 세션 상태로 표시합니다."
-            : "서버 권위 설정과 개인정보 보호 경계를 확인합니다.";
+            : "잠시만 기다려 주세요.";
 
   return h(
     NativeRuntimeRef.ScrollView,
@@ -659,7 +876,9 @@ function renderGate(
       h(NativeRuntimeRef.Text, { style: styles.gateTitle }, title),
       h(NativeRuntimeRef.Text, { style: styles.gateMessage }, message),
       retrying
-        ? h(NativeRuntimeRef.ActivityIndicator, { color: "#209252" })
+        ? h(NativeRuntimeRef.ActivityIndicator, {
+            color: designSystem.colors.brand.primary,
+          })
         : h(
             NativeRuntimeRef.Pressable,
             {
@@ -674,6 +893,30 @@ function renderGate(
             ),
           ),
     ),
+  );
+}
+
+function renderLightweightLaunchTransition(): unknown {
+  markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
+  return h(
+    NativeRuntimeRef.View,
+    {
+      accessibilityLabel: "급여납치 앱 준비 중",
+      style: styles.lightweightTransition,
+    },
+    h(
+      NativeRuntimeRef.Text,
+      { style: styles.lightweightTransitionBrandMark },
+      "급여납치",
+    ),
+    h(
+      NativeRuntimeRef.Text,
+      { style: styles.lightweightTransitionText },
+      "앱을 준비하고 있어요",
+    ),
+    h(NativeRuntimeRef.ActivityIndicator, {
+      color: designSystem.colors.brand.primary,
+    }),
   );
 }
 
@@ -693,24 +936,44 @@ function renderToast(
   );
 }
 
+async function applyAuthSessionChange(event: Readonly<{
+  reason: "authenticated" | "logged_out";
+  targetRoute: string;
+  session?: Partial<SessionSnapshot> | null;
+}>): Promise<void> {
+  if (event.reason === "logged_out") {
+    await removePublicSessionHint();
+    await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");
+    return;
+  }
+  if (!event.session) return;
+  const session = normalizeSession({
+    ...fallbackSession,
+    ...event.session,
+    authenticated: true,
+  });
+  await persistPublicSessionHint(session);
+  await persistSessionStatus(session, resolveStatusForSession(session));
+}
+
 function renderRuntimeGuard(_payload: RootPayload): null {
   return null;
 }
 
 function rootHeaderMessage(payload: RootPayload, status: RootStatus): string {
-  if (status === "BOOTSTRAPPING") return "안전하게 앱을 준비하고 있어요";
-  if (status === "AUTH_REQUIRED") return "로그인 후 급여 현황을 확인하세요";
-  if (status === "OFFLINE") return "오프라인 보호 모드로 표시 중";
-  if (status === "ERROR") return "점검 상태를 확인하고 있어요";
+  if (status === "BOOTSTRAPPING") return "급여납치 앱을 준비하고 있어요.";
+  if (status === "AUTH_REQUIRED") return "인증 화면으로 이동합니다.";
+  if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
+  if (status === "ERROR") return "서비스 오류 상태입니다.";
   return payload.config.privacyMode === "STRICT"
     ? "개인정보 보호 모드 적용 중"
-    : "급여 현황을 확인하세요";
+    : "급여 현황을 확인하세요.";
 }
 
 function rootStatusLabel(status: RootStatus): string {
-  if (status === "READY") return "준비 완료";
-  if (status === "OFFLINE") return "오프라인";
-  if (status === "ERROR") return "점검";
+  if (status === "READY") return "앱 준비가 완료되었습니다.";
+  if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
+  if (status === "ERROR") return "서비스 오류 상태입니다.";
   return "확인 중";
 }
 
@@ -745,6 +1008,7 @@ async function fetchJson(
   path: string,
   init: RequestInit = {},
 ): Promise<Response> {
+  const apiBaseUrl = readRootMobileApiBaseUrl();
   const headers = new Headers(init.headers);
   headers.set("accept", "application/json");
   headers.set("x-client-platform", String(NativeRuntimeRef.Platform.OS));
@@ -753,14 +1017,36 @@ async function fetchJson(
   headers.set("x-raw-personal-data-exposed", "false");
   headers.set("x-raw-push-token-exposed", "false");
   headers.set("x-ad-financial-targeting-used", "false");
-  await attachMobileBearerToken(headers, SecureStoreRuntimeRef);
+  await attachRootMobileBearerToken(headers);
   if (init.body && !headers.has("content-type"))
     headers.set("content-type", "application/json");
-  return fetch(`${API_BASE_URL}${path}`, {
+  return fetchWithTimeout(`${apiBaseUrl}${path}`, {
     ...init,
     headers,
     credentials: "include",
   });
+}
+
+async function fetchWithTimeout(
+  input: string,
+  init: RequestInit,
+): Promise<Response> {
+  const controller = init.signal ? null : new AbortController();
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      controller?.abort();
+      reject(new Error("ROOT_BOOTSTRAP_REQUEST_TIMEOUT"));
+    }, ROOT_BOOTSTRAP_REQUEST_TIMEOUT_MS);
+  });
+  const fetchInit: RequestInit = init.signal
+    ? init
+    : { ...init, signal: controller?.signal ?? null };
+  try {
+    return await Promise.race([fetch(input, fetchInit), timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 async function parseJsonResponse(response: Response): Promise<unknown> {
@@ -780,13 +1066,16 @@ async function parseJsonResponse(response: Response): Promise<unknown> {
 
 async function refreshRootAccessToken(): Promise<boolean> {
   try {
-    await createAuthApi({
-      baseUrl: API_BASE_URL,
+    const authApi = loadRootAuthApi().createAuthApi;
+    if (typeof authApi !== "function") return false;
+    const apiBaseUrl = readRootMobileApiBaseUrl();
+    await authApi({
+      baseUrl: apiBaseUrl,
       createCorrelationId,
       platform: rootAuthPlatform(),
-      tokenStore: SecureStoreRuntimeRef,
+      tokenStore: getSecureStoreRuntime(),
     }).refresh();
-    const token = await SecureStoreRuntimeRef.getItemAsync(
+    const token = await getSecureStoreRuntime().getItemAsync(
       MOBILE_ACCESS_TOKEN_KEY,
     );
     return Boolean(token?.trim());
@@ -795,11 +1084,35 @@ async function refreshRootAccessToken(): Promise<boolean> {
   }
 }
 
+async function hasStoredAccessToken(): Promise<boolean> {
+  try {
+    const token = await getSecureStoreRuntime().getItemAsync(
+      MOBILE_ACCESS_TOKEN_KEY,
+    );
+    return Boolean(token?.trim());
+  } catch {
+    return true;
+  }
+}
+
+async function hasStoredRefreshToken(): Promise<boolean> {
+  try {
+    const token = await getSecureStoreRuntime().getItemAsync(
+      MOBILE_REFRESH_TOKEN_KEY,
+    );
+    return Boolean(token?.trim());
+  } catch {
+    return true;
+  }
+}
+
 async function clearRootAuthenticatedSession(): Promise<void> {
   try {
-    await SecureStoreRuntimeRef.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(MOBILE_REFRESH_TOKEN_KEY);
   } finally {
-    await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY);
+    await removePublicSessionHint();
   }
 }
 
@@ -828,6 +1141,7 @@ function normalizeSession(session: SessionSnapshot): SessionSnapshot {
     ),
     emailVerified: Boolean(session.emailVerified),
     onboardingCompleted: Boolean(session.onboardingCompleted),
+    payrollReady: Boolean(session.payrollReady),
     mfaRequired: Boolean(session.mfaRequired),
     sessionExpiresAt: session.sessionExpiresAt
       ? iso(session.sessionExpiresAt)
@@ -845,7 +1159,7 @@ function normalizeConfig(config: AppConfigSnapshot): AppConfigSnapshot {
     environment: enumOf(
       ["local", "development", "staging", "production"] as const,
       config.environment,
-      "development",
+      "staging",
     ),
     maintenanceMode: Boolean(config.maintenanceMode),
     minSupportedBuild: scrub(config.minSupportedBuild) || "0",
@@ -885,11 +1199,11 @@ function normalizeFlags(
 
 function resolveStatus(payload: RootPayload, isPublic: boolean): RootStatus {
   if (payload.config.maintenanceMode && !isPublic) return "ERROR";
-  if (!payload.session.authenticated)
-    return isPublic ? "READY" : "AUTH_REQUIRED";
+  if (!payload.session.authenticated) return "AUTH_REQUIRED";
   if (payload.session.mfaRequired) return "AUTH_REQUIRED";
   if (!payload.session.emailVerified) return "VERIFY_EMAIL";
   if (!payload.session.onboardingCompleted) return "ONBOARDING";
+  if (!payload.session.payrollReady) return "ONBOARDING";
   return "READY";
 }
 
@@ -897,12 +1211,51 @@ function offlineStatusFromCachedSession(
   session: SessionSnapshot,
   isPublic: boolean,
 ): RootStatus {
-  if (isPublic) return "READY";
   if (!session.authenticated) return "AUTH_REQUIRED";
+  if (isPublic) return "READY";
   if (session.mfaRequired) return "AUTH_REQUIRED";
   if (!session.emailVerified) return "VERIFY_EMAIL";
   if (!session.onboardingCompleted) return "ONBOARDING";
+  if (!session.payrollReady) return "ONBOARDING";
   return "OFFLINE";
+}
+
+function cachedAuthenticatedPayload(session: SessionSnapshot): RootPayload {
+  return {
+    ...fallbackPayload,
+    session,
+  };
+}
+
+function canUseCachedAuthenticatedLaunch(
+  session: SessionSnapshot,
+  routeKey: string,
+  source: "public-hint" | "secure-session",
+): boolean {
+  if (!isFreshCompleteSession(session)) return false;
+  if (source === "public-hint") return isAuthenticatedAuthRoute(routeKey);
+  return (
+    isAuthenticatedAuthRoute(routeKey) ||
+    (source === "secure-session" && isLauncherRootRoute(routeKey))
+  );
+}
+
+function isLauncherRootRoute(routeKey: string): boolean {
+  return routeKey === "root";
+}
+
+function isFreshCompleteSession(session: SessionSnapshot): boolean {
+  if (!session.authenticated) return false;
+  if (session.mfaRequired) return false;
+  if (!session.emailVerified) return false;
+  if (!session.onboardingCompleted) return false;
+  if (!session.payrollReady) return false;
+  if (!session.sessionExpiresAt) return false;
+  const expiresAt = Date.parse(session.sessionExpiresAt);
+  return (
+    Number.isFinite(expiresAt) &&
+    expiresAt - Date.now() >= ROOT_CACHED_SESSION_LAUNCH_MIN_TTL_MS
+  );
 }
 
 async function persistSessionStatus(
@@ -914,26 +1267,71 @@ async function persistSessionStatus(
     role: session.role,
     emailVerified: session.emailVerified,
     onboardingCompleted: session.onboardingCompleted,
+    payrollReady: session.payrollReady,
     mfaRequired: session.mfaRequired,
+    sessionExpiresAt: session.sessionExpiresAt,
     status,
     rawFinancialDataExposed: false,
     rawPersonalDataExposed: false,
     rawPushTokenExposed: false,
     adsFinancialTargetingUsed: false,
   });
-  await SecureStoreRuntimeRef.setItemAsync(SECURE_SESSION_KEY, safe);
+  await getSecureStoreRuntime().setItemAsync(SECURE_SESSION_KEY, safe);
 }
 
 async function readCachedSessionStatus(): Promise<SessionSnapshot> {
-  const cached = await SecureStoreRuntimeRef.getItemAsync(SECURE_SESSION_KEY);
+  const cached = await getSecureStoreRuntime().getItemAsync(SECURE_SESSION_KEY);
   if (!cached) return fallbackSession;
   try {
     const parsed = JSON.parse(cached) as Partial<SessionSnapshot>;
     return normalizeSession({ ...fallbackSession, ...parsed });
   } catch {
-    await SecureStoreRuntimeRef.deleteItemAsync(SECURE_SESSION_KEY);
+    await getSecureStoreRuntime().deleteItemAsync(SECURE_SESSION_KEY);
     return fallbackSession;
   }
+}
+
+async function readPublicSessionHint(): Promise<SessionSnapshot | null> {
+  const storage = getAsyncStorageRuntime();
+  if (!storage) return null;
+  const cached = await storage.getItem(ROOT_PUBLIC_SESSION_HINT_KEY);
+  if (!cached) return null;
+  try {
+    const parsed = JSON.parse(cached) as Partial<SessionSnapshot>;
+    return normalizeSession({ ...fallbackSession, ...parsed });
+  } catch {
+    await storage.removeItem(ROOT_PUBLIC_SESSION_HINT_KEY);
+    return null;
+  }
+}
+
+async function persistPublicSessionHint(
+  session: SessionSnapshot,
+): Promise<void> {
+  const storage = getAsyncStorageRuntime();
+  if (!storage) return;
+  await storage.setItem(
+    ROOT_PUBLIC_SESSION_HINT_KEY,
+    JSON.stringify({
+      authenticated: session.authenticated,
+      role: session.role,
+      emailVerified: session.emailVerified,
+      onboardingCompleted: session.onboardingCompleted,
+      payrollReady: session.payrollReady,
+      mfaRequired: session.mfaRequired,
+      sessionExpiresAt: session.sessionExpiresAt,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+      rawPushTokenExposed: false,
+      adsFinancialTargetingUsed: false,
+    }),
+  );
+}
+
+async function removePublicSessionHint(): Promise<void> {
+  const storage = getAsyncStorageRuntime();
+  if (!storage) return;
+  await storage.removeItem(ROOT_PUBLIC_SESSION_HINT_KEY);
 }
 
 function isPublicRoute(segments: readonly string[]): boolean {
@@ -964,6 +1362,7 @@ function readBrowserLocation(): Readonly<{
   href: string;
   pathname: string;
 }> | null {
+  if (NativeRuntimeRef.Platform.OS !== "web") return null;
   if (typeof window === "undefined") return null;
   const location = window.location;
   if (
@@ -988,7 +1387,12 @@ function resolveCaptureScreenKindForUrl(
   if (!url.searchParams.has("capture")) return null;
   const parts = url.pathname.split("/").filter(Boolean);
   if (parts[0] !== "capture") return null;
-  return CAPTURE_SCREENS[parts[1] ?? ""] ?? null;
+  const mod = loadModule(
+    "../src/features/capture/root-preview",
+  ) as Partial<CapturePreviewModule>;
+  return typeof mod.resolveCapturePreviewKind === "function"
+    ? (mod.resolveCapturePreviewKind(parts[1] ?? "") ?? null)
+    : null;
 }
 
 function isAuthenticatedAuthRoute(routeKey: string): boolean {
@@ -1000,7 +1404,59 @@ function isAuthenticatedAuthRoute(routeKey: string): boolean {
   );
 }
 
-function shouldRouteReadyStateToHome(routeKey: string): boolean {
+async function resolveInitialRootDeepLinkRoute(): Promise<string | null> {
+  const mod = loadModule("expo-linking") as Partial<LinkingRuntime>;
+  if (typeof mod.getInitialURL !== "function") return null;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const href = await Promise.race([
+      mod.getInitialURL(),
+      new Promise<"ROOT_DEEP_LINK_RESOLUTION_TIMEOUT">((resolve) => {
+        timer = setTimeout(() => {
+          resolve("ROOT_DEEP_LINK_RESOLUTION_TIMEOUT");
+        }, ROOT_DEEP_LINK_RESOLUTION_TIMEOUT_MS);
+      }),
+    ]);
+    if (href === "ROOT_DEEP_LINK_RESOLUTION_TIMEOUT") return null;
+    return normalizeRootDeepLinkRoute(href);
+  } catch {
+    return null;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+function normalizeRootDeepLinkRoute(href: string | null): string | null {
+  if (!href) return null;
+  let url: URL;
+  try {
+    url = new URL(href);
+  } catch {
+    return null;
+  }
+  const route = rootRoutePathFromUrl(url);
+  if (!route) return null;
+  if (ROOT_DEEP_LINK_ROUTES.has(route)) return route;
+  if (/^\/community\/[A-Za-z0-9_-]{1,80}$/u.test(route)) return route;
+  return null;
+}
+
+function rootRoutePathFromUrl(url: URL): string | null {
+  const pathname = url.pathname.startsWith("/")
+    ? url.pathname
+    : `/${url.pathname}`;
+  if (url.protocol === "https:") return pathname === "/" ? null : pathname;
+  const host = url.hostname;
+  if (!host || host === "app") return pathname === "/" ? null : pathname;
+  return `/${[host, pathname.replace(/^\//u, "")].filter(Boolean).join("/")}`;
+}
+
+function shouldRouteAuthenticatedStateToHome(
+  routeKey: string,
+  initialDeepLinkRoute: InitialDeepLinkRoute,
+): boolean {
+  if (routeKey === "root" && initialDeepLinkRoute === "PENDING") return true;
+  if (routeKey === "root" && initialDeepLinkRoute === null) return true;
   return isAuthenticatedAuthRoute(routeKey);
 }
 
@@ -1017,8 +1473,17 @@ function statusMessage(status: RootStatus): string {
   if (status === "VERIFY_EMAIL") return "이메일 인증 화면으로 이동합니다.";
   if (status === "ONBOARDING") return "온보딩 화면으로 이동합니다.";
   if (status === "OFFLINE") return "오프라인 보호 모드입니다.";
-  if (status === "ERROR") return "서비스 점검 상태입니다.";
-  return "서버 권위 앱 상태를 확인하고 있어요.";
+  if (status === "ERROR") return "서비스 오류 상태입니다.";
+  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했습니다.";
+}
+
+function resolveStatusForSession(session: SessionSnapshot): RootStatus {
+  if (!session.authenticated) return "AUTH_REQUIRED";
+  if (session.mfaRequired) return "AUTH_REQUIRED";
+  if (!session.emailVerified) return "VERIFY_EMAIL";
+  if (!session.onboardingCompleted) return "ONBOARDING";
+  if (!session.payrollReady) return "ONBOARDING";
+  return "READY";
 }
 
 function safeBootstrapErrorMessage(
@@ -1026,10 +1491,53 @@ function safeBootstrapErrorMessage(
 ): string {
   if (reason === "auth-expired")
     return "세션이 만료되어 다시 로그인이 필요합니다.";
-  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했어요.";
+  return "앱 시작 정보를 불러오지 못해 안전한 로컬 상태로 전환했습니다.";
 }
 
-function readMobileE2eBuildEnabled(): boolean {
+function readRootMobileApiBaseUrl(): string {
+  if (cachedRootApiBaseUrl) return cachedRootApiBaseUrl;
+  const mod = loadModule("../src/shared/api/api-base") as RootApiBaseModule;
+  cachedRootApiBaseUrl =
+    typeof mod.readMobileApiBaseUrl === "function"
+      ? mod.readMobileApiBaseUrl()
+      : "https://api-staging.salaryhijacking.com";
+  return cachedRootApiBaseUrl;
+}
+
+function getSecureStoreRuntime(): SecureStoreRuntime {
+  if (cachedSecureStoreRuntime) return cachedSecureStoreRuntime;
+  cachedSecureStoreRuntime = loadSecureStoreRuntime();
+  return cachedSecureStoreRuntime;
+}
+
+function getAsyncStorageRuntime(): AsyncStorageRuntime | null {
+  if (cachedAsyncStorageRuntime) return cachedAsyncStorageRuntime;
+  cachedAsyncStorageRuntime = loadAsyncStorageRuntime();
+  return cachedAsyncStorageRuntime;
+}
+
+function getSplashScreenRuntime(): SplashScreenRuntime {
+  if (cachedSplashScreenRuntime) return cachedSplashScreenRuntime;
+  cachedSplashScreenRuntime = loadSplashScreenRuntime();
+  return cachedSplashScreenRuntime;
+}
+
+async function attachRootMobileBearerToken(headers: Headers): Promise<Headers> {
+  const token = normalizeBearerToken(
+    await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY),
+  );
+  if (token) headers.set("authorization", `Bearer ${token}`);
+  return headers;
+}
+
+function normalizeBearerToken(value: string | null): string | null {
+  const token = value?.trim();
+  if (!token || token.length > 8_192) return null;
+  if (/\s/u.test(token)) return null;
+  return token;
+}
+
+function isMobileE2eBuildEnabled(): boolean {
   const mod = loadModule("expo-constants") as Partial<ConstantsRuntime> & {
     readonly default?: Partial<ConstantsRuntime>;
   };
@@ -1096,6 +1604,11 @@ function loadRouterRuntime(): RouterRuntime {
   };
 }
 function loadFontRuntime(): FontRuntime {
+  if (NativeRuntimeRef.Platform.OS !== "web") {
+    return {
+      useFonts: (): readonly [boolean, Error | null] => [true, null],
+    };
+  }
   const mod = loadModule("expo-font") as Partial<FontRuntime>;
   return {
     useFonts:
@@ -1104,6 +1617,27 @@ function loadFontRuntime(): FontRuntime {
         : (): readonly [boolean, Error | null] => [true, null],
   };
 }
+
+function loadRootFontAssets(): Readonly<Record<string, unknown>> {
+  const mod = loadModule(
+    "../src/shared/styles/root-font-assets",
+  ) as RootFontAssetsModule;
+  return typeof mod.getRootFontAssets === "function"
+    ? mod.getRootFontAssets()
+    : EMPTY_FONT_ASSETS;
+}
+
+function loadRootAppHeader(): ElementType {
+  const mod = loadModule("../src/shared/components/AppHeader") as Readonly<{
+    AppHeader?: ElementType;
+  }>;
+  return mod.AppHeader ?? NativeRuntimeRef.View;
+}
+
+function loadRootAuthApi(): RootAuthApiModule {
+  return loadModule("../src/features/auth/api") as RootAuthApiModule;
+}
+
 function loadSplashScreenRuntime(): SplashScreenRuntime {
   const mod = loadModule("expo-splash-screen") as Partial<SplashScreenRuntime>;
   return {
@@ -1119,7 +1653,30 @@ function loadSplashScreenRuntime(): SplashScreenRuntime {
 }
 function loadSecureStoreRuntime(): SecureStoreRuntime {
   const mod = loadModule("expo-secure-store") as Partial<SecureStoreRuntime>;
-  return createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod);
+  const helper = loadModule(
+    "../src/shared/storage/secure-store",
+  ) as RootSecureStoreModule;
+  return typeof helper.createSecureStoreRuntime === "function"
+    ? helper.createSecureStoreRuntime(NativeRuntimeRef.Platform.OS, mod)
+    : fallbackSecureStoreRuntime();
+}
+function loadAsyncStorageRuntime(): AsyncStorageRuntime | null {
+  const mod = loadModule(
+    "@react-native-async-storage/async-storage",
+  ) as RootAsyncStorageModule;
+  const candidate =
+    "default" in mod && mod.default
+      ? mod.default
+      : (mod as Partial<AsyncStorageRuntime>);
+  return typeof candidate.getItem === "function" &&
+    typeof candidate.setItem === "function" &&
+    typeof candidate.removeItem === "function"
+    ? {
+        getItem: candidate.getItem.bind(candidate),
+        setItem: candidate.setItem.bind(candidate),
+        removeItem: candidate.removeItem.bind(candidate),
+      }
+    : null;
 }
 function loadModule(moduleName: string): unknown {
   try {
@@ -1134,10 +1691,26 @@ function loadModule(moduleName: string): unknown {
         return require("expo-font");
       case "expo-splash-screen":
         return require("expo-splash-screen");
+      case "expo-linking":
+        return require("expo-linking");
       case "expo-constants":
         return require("expo-constants");
       case "expo-secure-store":
         return require("expo-secure-store");
+      case "@react-native-async-storage/async-storage":
+        return require("@react-native-async-storage/async-storage");
+      case "../src/features/auth/api":
+        return require("../src/features/auth/api");
+      case "../src/shared/api/api-base":
+        return require("../src/shared/api/api-base");
+      case "../src/shared/styles/root-font-assets":
+        return require("../src/shared/styles/root-font-assets");
+      case "../src/shared/storage/secure-store":
+        return require("../src/shared/storage/secure-store");
+      case "../src/shared/components/AppHeader":
+        return require("../src/shared/components/AppHeader");
+      case "../src/features/capture/root-preview":
+        return require("../src/features/capture/root-preview");
       default:
         return {};
     }
@@ -1192,6 +1765,13 @@ function fallbackUseState<TValue>(
     (_next: TValue | ((previous: TValue) => TValue)): void => undefined,
   ];
 }
+function fallbackSecureStoreRuntime(): SecureStoreRuntime {
+  return {
+    getItemAsync: async (): Promise<string | null> => null,
+    setItemAsync: async (): Promise<void> => undefined,
+    deleteItemAsync: async (): Promise<void> => undefined,
+  };
+}
 function fallbackStyleCreate<
   TStyles extends Record<string, Readonly<Record<string, unknown>>>,
 >(stylesArg: TStyles): TStyles {
@@ -1217,12 +1797,12 @@ function errorMessage(value: unknown, status: number): string {
       return safeMessage(message);
   }
   if (status === 401) return "로그인이 필요합니다.";
-  if (status === 403) return "앱 접근이 제한되었습니다.";
+  if (status === 403) return "접근이 제한되었습니다.";
   if (status === 409) return "세션 상태가 변경되었습니다. 다시 확인하세요.";
   if (status === 426) return "앱 업데이트가 필요합니다.";
   if (status === 429) return "요청이 많습니다. 잠시 후 다시 시도하세요.";
-  if (status >= 500) return "서버 점검 또는 일시 장애입니다.";
-  return `앱 시작 요청에 실패했습니다. (${status})`;
+  if (status >= 500) return "서버 오류 또는 일시 장애입니다.";
+  return `앱 시작 요청이 실패했습니다. (${status})`;
 }
 function sanitize(value: unknown): JsonValue {
   if (value === null || value === undefined) return null;
@@ -1317,175 +1897,205 @@ export function assertMobileRootLayoutCompleteness(): {
     "expo_font_useFonts",
     "expo_splash_screen_hideAsync",
     "Freesentation-4Regular.ttf",
-    "Freesentation-9Black.ttf",
+    "Freesentation-7Bold.ttf",
     "typescript_strict_ready",
   ] as const;
   return { ok: checks.length >= 20, version: ROOT_LAYOUT_VERSION, checks };
 }
 
 const styles = NativeRuntimeRef.StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#F7F8FA" },
-  header: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderBottomColor: "#EEF0F2",
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingBottom: 14,
-    paddingTop: 14,
-  },
-  logoButton: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    height: 46,
-    justifyContent: "center",
-    width: 46,
-  },
-  headerLogoImage: { borderRadius: 18, height: 42, width: 42 },
-  headerBody: { flex: 1, gap: 2 },
-  headerKicker: { color: "#209252", fontSize: 11, fontWeight: "900" },
-  headerTitle: {
-    color: "#202327",
-    fontFamily: "Freesentation-9Black",
-    fontSize: 23,
-    fontWeight: "900",
-  },
-  headerMeta: {
-    color: "#6D737A",
-    fontFamily: "Freesentation-6SemiBold",
-    fontSize: 11,
-    fontWeight: "800",
-  },
+  safeArea: { flex: 1, backgroundColor: componentColors.background },
   profileButton: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E7EBEF",
-    borderRadius: 16,
+    backgroundColor: componentColors.surface,
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.lg,
     borderWidth: 1,
-    minHeight: 44,
+    minHeight: designSystem.layout.touchTarget,
     justifyContent: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: designSystem.spacing[3],
   },
   toast: {
-    borderRadius: 16,
+    borderRadius: designSystem.radius.lg,
     borderWidth: 1,
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    marginHorizontal: designSystem.spacing[4],
+    marginTop: designSystem.spacing[3],
+    paddingHorizontal: designSystem.spacing[4],
+    paddingVertical: designSystem.spacing[3],
   },
   toastInfo: {
-    backgroundColor: "#EAF6EF",
-    borderColor: "#D9F0E3",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.brand.surface,
   },
   toastSuccess: {
-    backgroundColor: "#EAF6EF",
-    borderColor: "#D9F0E3",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.brand.surface,
   },
   toastError: {
-    backgroundColor: "#FFF1F1",
-    borderColor: "#F3C4C4",
+    backgroundColor: designSystem.colors.semantic.dangerSoft,
+    borderColor: designSystem.colors.semantic.danger,
   },
-  toastText: { color: "#202327", fontSize: 13, lineHeight: 19 },
-  slotHost: { flex: 1, backgroundColor: "#F7F8FA" },
-  gateScroll: { flex: 1, backgroundColor: "#F7F8FA" },
-  gateContent: { flexGrow: 1, justifyContent: "center", padding: 20 },
+  toastText: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelM,
+  },
+  slotHost: { flex: 1, backgroundColor: componentColors.background },
+  gateScroll: { flex: 1, backgroundColor: componentColors.background },
+  gateContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: designSystem.spacing[5],
+  },
   gateCard: {
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#EEF0F2",
-    borderRadius: 24,
+    backgroundColor: componentColors.surface,
+    borderColor: designSystem.colors.border.soft,
+    borderRadius: designSystem.radius.xl,
     borderWidth: 1,
-    gap: 14,
-    padding: 22,
+    gap: designSystem.spacing[4],
+    padding: designSystem.spacing[6],
   },
   gateTitle: {
-    color: "#202327",
-    fontSize: 22,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleL,
     textAlign: "center",
   },
   gateMessage: {
-    color: "#6D737A",
-    fontSize: 14,
-    lineHeight: 21,
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+    textAlign: "center",
+  },
+  lightweightTransition: {
+    alignItems: "center",
+    flex: 1,
+    gap: designSystem.spacing[2],
+    justifyContent: "center",
+    padding: designSystem.spacing[5],
+  },
+  lightweightTransitionBrandMark: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.titleXL,
+    textAlign: "center",
+  },
+  lightweightTransitionText: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
     textAlign: "center",
   },
   primaryButton: {
     alignItems: "center",
-    backgroundColor: "#209252",
-    borderRadius: 16,
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.lg,
     justifyContent: "center",
-    minHeight: 48,
-    paddingHorizontal: 16,
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[4],
   },
-  primaryButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "900" },
-  safeText: { color: "#209252", fontSize: 11, fontWeight: "900" },
-  reviewText: { color: "#856600", fontSize: 11, fontWeight: "900" },
-  dangerText: { color: "#D74B4B", fontSize: 11, fontWeight: "900" },
+  primaryButtonText: {
+    color: componentColors.surface,
+    ...designSystem.typography.labelL,
+  },
+  safeText: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.labelS,
+  },
+  reviewText: {
+    color: designSystem.colors.semantic.warningStrong,
+    ...designSystem.typography.labelS,
+  },
+  dangerText: {
+    color: componentColors.dangerRed,
+    ...designSystem.typography.labelS,
+  },
   guardBox: {
-    borderColor: "#D9F0E3",
-    borderRadius: 20,
+    borderColor: designSystem.colors.brand.surface,
+    borderRadius: designSystem.radius.xl,
     borderWidth: 1,
-    gap: 10,
-    margin: 16,
-    padding: 12,
+    gap: designSystem.spacing[2],
+    margin: designSystem.spacing[4],
+    padding: designSystem.spacing[3],
   },
-  guardTitle: { color: "#209252", fontSize: 13, fontWeight: "900" },
-  guardGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  guardTitle: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.labelM,
+  },
+  guardGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: designSystem.spacing[2],
+  },
   guardPill: {
-    backgroundColor: "#EAF6EF",
-    borderColor: "#D9F0E3",
-    borderRadius: 999,
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.brand.surface,
+    borderRadius: designSystem.radius.full,
     borderWidth: 1,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: designSystem.spacing[1],
   },
-  guardPillText: { color: "#12663A", fontSize: 10, fontWeight: "800" },
+  guardPillText: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.caption,
+  },
   buttonDisabled: { opacity: 0.48 },
   fontLoading: {
     alignItems: "center",
     flex: 1,
-    gap: 10,
+    gap: designSystem.spacing[2],
     justifyContent: "center",
-    padding: 24,
+    padding: designSystem.spacing[6],
   },
-  fontLoadingLogo: { borderRadius: 40, height: 96, width: 96 },
+  fontLoadingBrandMark: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.xl,
+    height: designSystem.spacing[10] + designSystem.spacing[6],
+    justifyContent: "center",
+    width: designSystem.spacing[10] + designSystem.spacing[6],
+  },
+  fontLoadingBrandInitial: {
+    color: componentColors.surface,
+    fontFamily: designSystem.font.native.bold,
+    ...designSystem.typography.titleXL,
+  },
   fontLoadingTitle: {
-    color: "#202327",
-    fontFamily: "Freesentation-9Black",
-    fontSize: 34,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    fontFamily: designSystem.font.native.black,
+    ...designSystem.typography.display,
   },
   fontLoadingText: {
-    color: "#6D737A",
-    fontFamily: "Freesentation-6SemiBold",
-    fontSize: 14,
-    fontWeight: "700",
+    color: componentColors.textSecondary,
+    fontFamily: designSystem.font.native.semibold,
+    ...designSystem.typography.bodyS,
   },
   errorBoundary: {
     alignItems: "center",
     flex: 1,
-    gap: 12,
+    gap: designSystem.spacing[3],
     justifyContent: "center",
-    padding: 24,
+    padding: designSystem.spacing[6],
   },
-  errorBoundaryLogo: { borderRadius: 28, height: 72, width: 72 },
+  errorBoundaryBrandMark: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: designSystem.radius.xl,
+    height: designSystem.spacing[8] + designSystem.spacing[10],
+    justifyContent: "center",
+    width: designSystem.spacing[8] + designSystem.spacing[10],
+  },
+  errorBoundaryBrandInitial: {
+    color: componentColors.primaryGreen,
+    fontFamily: designSystem.font.native.bold,
+    ...designSystem.typography.titleXL,
+  },
   errorBoundaryTitle: {
-    color: "#202327",
-    fontFamily: "Freesentation-8ExtraBold",
-    fontSize: 22,
-    fontWeight: "900",
+    color: componentColors.textPrimary,
+    fontFamily: designSystem.font.native.extraBold,
+    ...designSystem.typography.titleL,
     textAlign: "center",
   },
   errorBoundaryText: {
-    color: "#6D737A",
-    fontFamily: "Freesentation-5Medium",
-    fontSize: 14,
-    lineHeight: 21,
+    color: componentColors.textSecondary,
+    fontFamily: designSystem.font.native.medium,
+    ...designSystem.typography.bodyS,
     textAlign: "center",
   },
 });

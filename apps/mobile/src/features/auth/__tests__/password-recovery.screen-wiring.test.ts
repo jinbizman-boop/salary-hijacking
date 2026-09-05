@@ -19,6 +19,9 @@ describe("password recovery screen wiring", () => {
 
     expect(source).not.toContain("CleanFintechForgotPasswordScreen");
     expect(source).toContain("AppShell");
+    expect(source).toContain("AppHeader");
+    expect(source).toContain("SurfaceCard");
+    expect(source).toContain("salaryHijackingDesignSystem");
     expect(source).toContain("PasswordRecoveryHero");
     expect(source).toContain("ForgotPasswordForm");
     expect(source).toContain("AUTH_PASSWORD_RESET_PATH");
@@ -42,6 +45,9 @@ describe("password recovery screen wiring", () => {
 
     expect(source).not.toContain("CleanFintechResetPasswordScreen");
     expect(source).toContain("AppShell");
+    expect(source).toContain("AppHeader");
+    expect(source).toContain("SurfaceCard");
+    expect(source).toContain("salaryHijackingDesignSystem");
     expect(source).toContain("PasswordRecoveryHero");
     expect(source).toContain("ResetPasswordForm");
     expect(source).toContain("AUTH_PASSWORD_RESET_CONFIRM_PATH");

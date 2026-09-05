@@ -112,14 +112,13 @@ type ScreenKind =
   | "community"
   | "profile"
   | "login";
-type LoginSocialProvider = "KAKAO" | "NAVER" | "GOOGLE" | "APPLE";
+type LoginSocialProvider = "KAKAO" | "NAVER" | "GOOGLE";
 
 const SOCIAL_LOGIN_LABELS: ReadonlyArray<
   Readonly<{ label: string; provider: LoginSocialProvider }>
 > = [
   { label: "Kakao", provider: "KAKAO" },
   { label: "Naver", provider: "NAVER" },
-  { label: "Apple", provider: "APPLE" },
   { label: "Google", provider: "GOOGLE" },
 ];
 
@@ -251,7 +250,7 @@ const fixedExpenses = [
   { name: "유튜브 프리미엄", amount: "15,000원", status: "납부완료" },
 ] as const;
 
-const fallbackPlanFixedExpenseRows: readonly PlanCommitmentRow[] = [
+const serverUnavailablePlanFixedExpenseRows: readonly PlanCommitmentRow[] = [
   {
     amountMinor: 30_000,
     id: "fallback-fixed-chatgpt",
@@ -287,13 +286,13 @@ const variableExpenses: readonly VariableExpenseEntry[] = [
   { id: "store", name: "편의점", amount: 4500, icon: appIcons.expense },
 ] as const;
 
-const fallbackNotifications: readonly NotificationScreenItem[] = [
+const serverUnavailableNotifications: readonly NotificationScreenItem[] = [
   {
     deeplink: "/plan",
     id: "fallback_goal",
     icon: "🏅",
     title: "목표 달성",
-    message: "누적 납치금액 5,780,000원 달성",
+    message: "누적 납치금액 목표 달성",
     type: "SAVINGS_GOAL",
     priority: "HIGH",
     isMandatory: false,
@@ -1145,6 +1144,7 @@ export function CleanFintechWriteScreen(): React.ReactElement {
           </Pressable>
           <Text style={styles.composeTitle}>글쓰기</Text>
           <Pressable
+            accessibilityLabel="게시글 작성 완료"
             accessibilityRole="button"
             accessibilityState={{
               disabled: !valid || submitting || uploadingAttachment,
@@ -1256,7 +1256,7 @@ export function CleanFintechSplashScreen(): React.ReactElement {
         </Text>
         <SectionCard>
           <Text style={styles.sectionTitle}>이번 달 내가 지켜낼 돈</Text>
-          <Text style={styles.money}>1,927,000원</Text>
+          <Text style={styles.money}>확인된 금액</Text>
           <Text style={styles.bodyText}>
             스플래시는 1.2초 안에 로그인 또는 급여 홈으로 자연스럽게 이어지는 첫
             화면 기준입니다.
@@ -1396,6 +1396,7 @@ export function CleanFintechSignupScreen(): React.ReactElement {
           ))}
         </SectionCard>
         <Pressable
+          accessibilityLabel="회원가입 완료"
           accessibilityRole="button"
           accessibilityState={{ disabled: !valid || submitting }}
           disabled={!valid || submitting}
@@ -1671,7 +1672,7 @@ export function CleanFintechSettingsScreen({
       })
       .then((snapshot) => {
         setProfileNickname(snapshot.user.nickname);
-        setProfileSettingsToast("프로필 설정을 서버 기준으로 저장했어요.");
+        setProfileSettingsToast("프로필 설정을 안전하게 저장했어요.");
       })
       .catch(() => {
         setProfileSettingsToast(
@@ -1781,6 +1782,7 @@ export function CleanFintechSettingsScreen({
             value={profileOccupationCategory}
           />
           <Pressable
+            accessibilityLabel="프로필 설정 저장"
             accessibilityRole="button"
             accessibilityState={{
               disabled: !profileSettingsValid || profileSettingsSaving,
@@ -1841,6 +1843,7 @@ export function CleanFintechSettingsScreen({
             }}
           />
           <Pressable
+            accessibilityLabel="계정 동의 설정 저장"
             accessibilityRole="button"
             accessibilityState={{ disabled: accountSettingsSaving }}
             disabled={accountSettingsSaving}
@@ -2037,6 +2040,7 @@ export function CleanFintechSupportScreen(): React.ReactElement {
           </Pressable>
           <Text style={styles.composeTitle}>1:1 문의</Text>
           <Pressable
+            accessibilityLabel="1대1 문의 접수 완료"
             accessibilityRole="button"
             accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
@@ -2113,7 +2117,7 @@ export function CleanFintechMyCommunityScreen(): React.ReactElement {
     readonly CommunityComment[]
   >(fallbackPostDetail.comments);
   const [toast, setToast] = useState(
-    "내 게시글과 댓글을 서버 기준으로 확인하는 중이에요.",
+    "내 게시글과 댓글을 최신 기록으로 확인하는 중이에요.",
   );
   const [myCommunityActionPending, setMyCommunityActionPending] = useState<
     string | null
@@ -2362,7 +2366,7 @@ export function CleanFintechPostDetailScreen({
   const [reportReasonText, setReportReasonText] =
     useState("운영 정책 위반으로 신고합니다.");
   const [toast, setToast] = useState(
-    "커뮤니티 상세와 댓글을 서버 기준으로 확인하는 중이에요.",
+    "커뮤니티 상세와 댓글을 최신 기록으로 확인하는 중이에요.",
   );
   const activeDetail = serverCommunityDetail ?? fallbackPostDetail;
   const activeComments =
@@ -3155,6 +3159,7 @@ export function CleanFintechPostDetailScreen({
         />
         <View style={styles.attachmentRow}>
           <Pressable
+            accessibilityLabel={liked ? "게시글 좋아요 취소" : "게시글 좋아요"}
             accessibilityRole="button"
             accessibilityState={{
               disabled: likePending || communityDetailActionBusy,
@@ -3328,6 +3333,7 @@ export function CleanFintechPostDetailScreen({
             value={commentDraft}
           />
           <Pressable
+            accessibilityLabel="댓글 등록"
             accessibilityRole="button"
             accessibilityState={{
               disabled:
@@ -3644,12 +3650,6 @@ function SalaryHomeScreen(): React.ReactElement {
 
     const nextIndex = addedExpenses.length + 1;
     const expenseTitle = expenseTitleDraft.trim() || `추가 지출 ${nextIndex}`;
-    const offlineEntry = {
-      amount,
-      icon: appIcons.expense,
-      id: `offline-expense-${nextIndex}-${amount}`,
-      name: expenseTitle,
-    } satisfies VariableExpenseEntry;
     setExpenseDraft("");
     setExpenseTitleDraft("");
 
@@ -3695,9 +3695,10 @@ function SalaryHomeScreen(): React.ReactElement {
         `서버에 지출을 기록했어요. ${formatMoney(result.netAmountMinor)}원 기준으로 다시 계산했습니다.`,
       );
     } catch {
-      setAddedExpenses((current) => [...current, offlineEntry]);
+      setExpenseDraft(String(amount));
+      setExpenseTitleDraft(expenseTitle);
       setToast(
-        `${formatMoney(amount)}원 지출을 오프라인 미리보기로 반영했어요. 서버 연결 후 다시 동기화가 필요합니다.`,
+        "서버 저장이 실패해 지출을 반영하지 않았습니다. 입력값은 유지했으니 연결을 확인한 뒤 다시 저장해 주세요.",
       );
     } finally {
       expenseCreateInFlightRef.current = false;
@@ -3808,7 +3809,7 @@ function SalaryHomeScreen(): React.ReactElement {
           ),
         );
         setToast(
-          `${paid.title} ${formatMoney(paid.amountMinor)}원 납부를 서버 기준으로 기록했어요.`,
+          `${paid.title} ${formatMoney(paid.amountMinor)}원 납부를 기록했어요.`,
         );
       } catch {
         setToast(
@@ -3823,7 +3824,7 @@ function SalaryHomeScreen(): React.ReactElement {
   );
 
   const metrics: readonly MoneyMetric[] = [
-    { label: "수령금액", value: "2,700,000원" },
+    { label: "수령금액", value: "확인된 금액" },
     { label: "지출금액", value: `${formatMoney(preview.monthlyExpense)}원` },
     {
       label: "이번 달 납치금액",
@@ -3837,7 +3838,7 @@ function SalaryHomeScreen(): React.ReactElement {
       <View style={prioritizeDailyBudget ? styles.webCaptureHidden : undefined}>
         <MoneyHeroCard
           label="이번 달 내가 지켜낸 돈"
-          value="5,780,000원"
+          value="확인된 금액"
           description="지난달보다 +420,000원 더 지켰어요"
         />
         <MetricGrid metrics={metrics} />
@@ -3929,6 +3930,7 @@ function SalaryHomeScreen(): React.ReactElement {
             value={dailyBudgetDraft}
           />
           <Pressable
+            accessibilityLabel="오늘 예산 저장"
             accessibilityRole="button"
             accessibilityState={{
               disabled: salaryHomeDailyBudgetSubmitDisabled,
@@ -4076,8 +4078,7 @@ function VariableExpenseActionRow({
       <View style={styles.flex}>
         <Text style={styles.listTitle}>{item.name}</Text>
         <Text style={styles.listMeta}>
-          {formatMoney(item.amount)}원 · 서버 기준 {item.category} ·{" "}
-          {item.paymentMethod}
+          {formatMoney(item.amount)}원 · {item.category} · {item.paymentMethod}
         </Text>
       </View>
       <SmallButton
@@ -4153,7 +4154,7 @@ function fixedExpenseRowFromServer(
     amountMinor: item.amountMinor,
     id: item.id,
     lastPaidAt: item.lastPaidAt,
-    meta: `${item.dueLabel} · 서버 기준 ${item.status}`,
+    meta: `${item.dueLabel} · ${item.status}`,
     paidTotalMinor: item.paidTotalMinor,
     title: item.title,
   };
@@ -4166,7 +4167,7 @@ function savingsGoalRowFromServer(
     amountMinor: item.fixedSaveAmountMinor,
     currentAmountMinor: item.currentAmountMinor,
     id: item.id,
-    meta: `목표 ${formatMoney(item.targetAmountMinor)}원 · 서버 기준 ${item.status}`,
+    meta: `목표 ${formatMoney(item.targetAmountMinor)}원 · ${item.status}`,
     title: item.title,
   };
 }
@@ -4177,7 +4178,7 @@ function PlanScreen(): React.ReactElement {
     () => createMobilePlanCommitmentsApi(),
     [],
   );
-  const [salary, setSalary] = useState("2700000");
+  const [salary, setSalary] = useState("");
   const [expense, setExpense] = useState("773000");
   const [target, setTarget] = useState("2200000");
   const [serverPayrollPlan, setServerPayrollPlan] =
@@ -4302,7 +4303,7 @@ function PlanScreen(): React.ReactElement {
         });
         setServerPayrollCalculation(result.calculation);
         if (result.updatedPlan) applyServerPayrollPlan(result.updatedPlan);
-        setPlanToast("서버 기준으로 급여 계획을 다시 계산했어요.");
+        setPlanToast("급여 계획을 최신 기준으로 다시 계산했어요.");
       } catch {
         setServerPayrollCalculation(null);
         setPlanToast("서버 재계산 전 로컬 미리보기로 계산해요.");
@@ -4351,7 +4352,7 @@ function PlanScreen(): React.ReactElement {
           serverPayrollPlan?.variableExpenseReserveMinor ?? 0,
       });
       applyServerPayrollPlan(saved);
-      setPlanToast("급여 계획을 서버 기준으로 저장했어요.");
+      setPlanToast("급여 계획을 안전하게 저장했어요.");
     } catch {
       setPlanToast("급여 계획 저장에 실패했어요. 다시 시도해 주세요.");
     } finally {
@@ -4572,7 +4573,7 @@ function PlanScreen(): React.ReactElement {
 
       planCommitmentUpdateInFlightRef.current = `fixed:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
-      setPlanToast("고정지출을 서버 기준으로 수정하는 중이에요.");
+      setPlanToast("고정지출을 수정하는 중이에요.");
       try {
         const updated = await planCommitmentsApi.updateFixedExpense(item.id, {
           amountMinor,
@@ -4594,7 +4595,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(`${updated.title} 고정지출을 서버 기준으로 수정했어요.`);
+        setPlanToast(`${updated.title} 고정지출을 수정했어요.`);
       } catch {
         setPlanToast("고정지출 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4639,7 +4640,7 @@ function PlanScreen(): React.ReactElement {
 
       planCommitmentUpdateInFlightRef.current = `savings:${item.id}`;
       setUpdatingPlanCommitmentId(item.id);
-      setPlanToast("고정저축 목표를 서버 기준으로 수정하는 중이에요.");
+      setPlanToast("고정저축 목표를 수정하는 중이에요.");
       try {
         const updated = await planCommitmentsApi.updateSavingsGoal(item.id, {
           fixedSaveAmountMinor,
@@ -4658,7 +4659,7 @@ function PlanScreen(): React.ReactElement {
           );
           return next;
         });
-        setPlanToast(`${updated.title} 저축 목표를 서버 기준으로 수정했어요.`);
+        setPlanToast(`${updated.title} 저축 목표를 수정했어요.`);
       } catch {
         setPlanToast("고정저축 목표 수정에 실패했어요. 다시 시도해 주세요.");
       } finally {
@@ -4699,7 +4700,7 @@ function PlanScreen(): React.ReactElement {
           current.map((goal) => (goal.id === deposited.id ? deposited : goal)),
         );
         setPlanToast(
-          `${deposited.title} ${formatMoney(item.amountMinor)}원 납입을 서버 기준으로 기록했어요.`,
+          `${deposited.title} ${formatMoney(item.amountMinor)}원 납입을 기록했어요.`,
         );
       } catch {
         setPlanToast("고정저축 납입 기록에 실패했어요. 다시 시도해 주세요.");
@@ -4724,7 +4725,7 @@ function PlanScreen(): React.ReactElement {
   );
   const fixedExpenseRows = planCommitmentsHydrated
     ? serverFixedExpenses.map(fixedExpenseRowFromServer)
-    : fallbackPlanFixedExpenseRows;
+    : serverUnavailablePlanFixedExpenseRows;
   const savingsRows = planCommitmentsHydrated
     ? serverSavingsGoals.map(savingsGoalRowFromServer)
     : fallbackPlanSavingsRows;
@@ -4745,7 +4746,7 @@ function PlanScreen(): React.ReactElement {
             <Text style={styles.sectionTitle}>목표 달성률</Text>
             <Text style={styles.money}>{achievement}%</Text>
           </View>
-          <StatusPill label={recalculatingPlan ? "재계산" : "서버 기준"} />
+          <StatusPill label={recalculatingPlan ? "재계산" : "최신 기준"} />
         </View>
         <ProgressBar value={achievement} />
         <Text style={styles.bodyText}>
@@ -4760,10 +4761,11 @@ function PlanScreen(): React.ReactElement {
           <StatusPill label="서버 저장" />
         </View>
         <Text style={styles.bodyText}>
-          급여, 고정지출, 고정저축 입력값을 서버 기준 계획으로 저장하고 응답
+          급여, 고정지출, 고정저축 입력값을 최신 계획으로 저장하고 응답
           계산값으로 화면을 다시 맞춥니다.
         </Text>
         <Pressable
+          accessibilityLabel="급여 계획 서버 저장"
           accessibilityRole="button"
           accessibilityState={{ disabled: savingPayrollPlan }}
           disabled={savingPayrollPlan}
@@ -4857,6 +4859,7 @@ function PlanScreen(): React.ReactElement {
           value={planFixedExpenseAmount}
         />
         <Pressable
+          accessibilityLabel="고정 지출 서버 저장"
           accessibilityRole="button"
           accessibilityState={{ disabled: planFixedExpenseSubmitDisabled }}
           disabled={planFixedExpenseSubmitDisabled}
@@ -4921,6 +4924,7 @@ function PlanScreen(): React.ReactElement {
           value={planSavingsGoalAmount}
         />
         <Pressable
+          accessibilityLabel="고정 저축 서버 저장"
           accessibilityRole="button"
           accessibilityState={{ disabled: planSavingsGoalSubmitDisabled }}
           disabled={planSavingsGoalSubmitDisabled}
@@ -4974,7 +4978,7 @@ function missionFromGrowthTask(task: GrowthTask): Mission {
     title: task.title,
     description:
       task.note ??
-      `${task.progressCount}/${task.targetCount}회 진행 · 서버 권위 LV UP 과제`,
+      `${task.progressCount}/${task.targetCount}회 진행 · LV UP 과제`,
     routeLabel: completed ? "완료됨" : `${task.expReward} XP 받기`,
     xp: task.expReward,
     progressCount: task.progressCount,
@@ -5011,7 +5015,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
   >(null);
   const myLevelMissionCompletionInFlightRef = useRef<Set<string>>(new Set());
   const [toast, setToast] = useState(
-    "내 레벨업 현황을 서버 기준으로 확인하는 중이에요.",
+    "내 레벨업 현황을 최신 기록으로 확인하는 중이에요.",
   );
 
   const refreshMyLevelProgress = useCallback(async (): Promise<void> => {
@@ -5028,9 +5032,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
       setMyLevelDashboard(dashboard);
       setMyLevelActiveTasks(activeTasks.items);
       setMyLevelCompletedTasks(completedTasks.items);
-      setToast(
-        `${dashboard.todaySuggestion} · 서버 기준으로 최신 현황을 확인했어요.`,
-      );
+      setToast(`${dashboard.todaySuggestion} · 최신 현황을 확인했어요.`);
     } catch {
       setMyLevelDashboard(null);
       setMyLevelActiveTasks([]);
@@ -5128,7 +5130,7 @@ export function CleanFintechMyLevelProgressScreen(): React.ReactElement {
         </View>
         <ProgressBar value={progress} />
         <Text style={styles.bodyText}>
-          {formatMoney(totalExp)} / 999 XP · 서버 기준
+          {formatMoney(totalExp)} / 999 XP · 최신 기록
         </Text>
       </SectionCard>
       <Toast message={toast} />
@@ -5356,6 +5358,7 @@ function LevelScreen(): React.ReactElement {
           const missionPending = submittingMissionId === mission.id;
           return (
             <Pressable
+              accessibilityLabel={`${mission.title} ${done ? "완료됨" : "열기"}`}
               accessibilityState={{ disabled: missionPending }}
               accessibilityRole="button"
               disabled={missionPending}
@@ -5563,22 +5566,21 @@ async function createNativeNotificationRegistrationRequest(): Promise<Notificati
     throw new Error("NOTIFICATION_PERMISSION_DENIED");
   }
 
-  const easProjectId =
-    Constants.expoConfig?.extra?.eas?.projectId ??
-    Constants.easConfig?.projectId;
-  const tokenResult =
-    typeof easProjectId === "string" && easProjectId.trim()
-      ? await Notifications.getExpoPushTokenAsync({ projectId: easProjectId })
-      : await Notifications.getExpoPushTokenAsync();
+  const tokenResult = await Notifications.getDevicePushTokenAsync();
   const pushToken = tokenResult.data.trim();
   if (!pushToken) throw new Error("NOTIFICATION_PUSH_TOKEN_UNAVAILABLE");
+  const platform = notificationPlatform();
+  const provider =
+    platform === "IOS" ? "APNS" : platform === "ANDROID" ? "FCM" : "EXPO";
 
   return {
     appVersion: Constants.expoConfig?.version ?? null,
     deviceId: await readOrCreateNotificationDeviceId(),
     locale: "ko-KR",
-    platform: notificationPlatform(),
+    platform,
+    provider,
     pushToken,
+    tokenSource: provider === "EXPO" ? "EXPO_PUSH_SERVICE" : "NATIVE_DEVICE",
   };
 }
 
@@ -5587,9 +5589,10 @@ function NotificationsScreen(): React.ReactElement {
   const notificationRouter = useRouter();
   const [serverNotifications, setServerNotifications] = useState<
     readonly NotificationScreenItem[]
-  >(fallbackNotifications);
+  >(serverUnavailableNotifications);
   const [unreadCount, setUnreadCount] = useState(
-    fallbackNotifications.filter((item) => item.status === "UNREAD").length,
+    serverUnavailableNotifications.filter((item) => item.status === "UNREAD")
+      .length,
   );
   const [serverNotificationPreferences, setServerNotificationPreferences] =
     useState<NotificationPreferences | null>(null);
@@ -5620,7 +5623,7 @@ function NotificationsScreen(): React.ReactElement {
       try {
         const [listResult, unreadResult, preferencesResult, devicesResult] =
           await Promise.all([
-            notificationsApi.list({ page: 1, pageSize: 20 }),
+            notificationsApi.list({ limit: 20 }),
             notificationsApi.unreadCount(),
             notificationsApi.getPreferences(),
             notificationsApi.listDevices(),
@@ -5633,7 +5636,9 @@ function NotificationsScreen(): React.ReactElement {
           )
           .map(toNotificationScreenItem);
         setServerNotifications(
-          nextNotifications.length ? nextNotifications : fallbackNotifications,
+          nextNotifications.length
+            ? nextNotifications
+            : serverUnavailableNotifications,
         );
         setUnreadCount(unreadResult.unreadCount);
         setServerNotificationPreferences(preferencesResult);
@@ -5641,12 +5646,13 @@ function NotificationsScreen(): React.ReactElement {
         setSyncLabel("서버 알림 기준으로 동기화됐어요.");
       } catch {
         if (!mounted) return;
-        setServerNotifications(fallbackNotifications);
+        setServerNotifications(serverUnavailableNotifications);
         setServerNotificationPreferences(null);
         setServerNotificationDevices([]);
         setUnreadCount(
-          fallbackNotifications.filter((item) => item.status === "UNREAD")
-            .length,
+          serverUnavailableNotifications.filter(
+            (item) => item.status === "UNREAD",
+          ).length,
         );
         setSyncLabel("서버 연결 전이라 앱 기준 예시 알림을 보여줘요.");
       }
@@ -5912,15 +5918,22 @@ function NotificationsScreen(): React.ReactElement {
     setNotificationDeviceActionPending("register");
     setSyncLabel("푸시 기기 등록을 서버에 저장하고 있어요.");
     void createNativeNotificationRegistrationRequest()
-      .then((registrationRequest) =>
-        notificationsApi.registerDevice({
+      .then((registrationRequest) => {
+        const request: NotificationDeviceRegistrationRequest = {
           appVersion: registrationRequest.appVersion ?? null,
           deviceId: registrationRequest.deviceId,
           locale: registrationRequest.locale ?? null,
           platform: registrationRequest.platform,
+          ...(registrationRequest.provider
+            ? { provider: registrationRequest.provider }
+            : {}),
           pushToken: registrationRequest.pushToken,
-        }),
-      )
+          ...(registrationRequest.tokenSource
+            ? { tokenSource: registrationRequest.tokenSource }
+            : {}),
+        };
+        return notificationsApi.registerDevice(request);
+      })
       .then((registeredDevice) => {
         setServerNotificationDevices((current) => [
           registeredDevice,
@@ -5931,7 +5944,7 @@ function NotificationsScreen(): React.ReactElement {
         setSyncLabel("서버에 푸시 기기 등록을 저장했어요.");
       })
       .catch(() => {
-        setSyncLabel("푸시 권한, Expo 설정, 또는 서버 연결을 확인해 주세요.");
+        setSyncLabel("푸시 권한, 기기 토큰, 또는 서버 연결을 확인해 주세요.");
       })
       .finally(() => {
         notificationDeviceActionInFlightRef.current = null;
@@ -6264,6 +6277,7 @@ function CommunityScreen(): React.ReactElement {
         ))}
       </SectionCard>
       <Pressable
+        accessibilityLabel="커뮤니티 글쓰기 열기"
         accessibilityRole="button"
         onPress={openCommunityWrite}
         style={styles.fab}
@@ -6694,7 +6708,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
         <SalaryLogo large />
         <Text style={styles.loginTitle}>비밀번호 찾기</Text>
         <Text style={styles.loginSubtitle}>
-          서버 권위 인증으로 계정 복구 요청을 안전하게 보냅니다
+          계정 복구 요청을 안전하게 보냅니다
         </Text>
         <Toast message={toast} />
         <SectionCard>
@@ -6711,6 +6725,7 @@ export function CleanFintechForgotPasswordScreen(): React.ReactElement {
             value={email}
           />
           <Pressable
+            accessibilityLabel="비밀번호 재설정 메일 받기"
             accessibilityRole="button"
             accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
@@ -6840,6 +6855,7 @@ export function CleanFintechResetPasswordScreen({
                 {AUTH_PASSWORD_POLICY_MESSAGE}
               </Text>
               <Pressable
+                accessibilityLabel="비밀번호 변경"
                 accessibilityRole="button"
                 accessibilityState={{ disabled: !valid || submitting }}
                 disabled={!valid || submitting}
@@ -6874,9 +6890,7 @@ function LoginScreen(): React.ReactElement {
   const [submitting, setSubmitting] = useState(false);
   const loginSubmitInFlightRef = useRef(false);
   const socialLoginSubmitInFlightRef = useRef(false);
-  const [toast, setToast] = useState(
-    "서버 권위 인증으로 급여 데이터를 안전하게 불러옵니다.",
-  );
+  const [toast, setToast] = useState("급여 데이터를 안전하게 불러옵니다.");
   const loginAuthApi = useMemo(() => createMobileAuthApi(), []);
   const socialRedirectUri = useMemo(
     () => Linking.createURL("auth/oauth/callback"),
@@ -6904,7 +6918,7 @@ function LoginScreen(): React.ReactElement {
         return;
       socialLoginSubmitInFlightRef.current = true;
       setSubmitting(true);
-      setToast(`${provider} OAuth 로그인을 시작하는 중입니다.`);
+      setToast(`${provider} 로그인을 시작하는 중입니다.`);
       try {
         const result = await loginAuthApi.startOAuth({
           provider,
@@ -6915,15 +6929,15 @@ function LoginScreen(): React.ReactElement {
             result.authorizationUrl,
             socialRedirectUri,
           );
-          setToast(`${provider} OAuth 인증 창을 열었어요.`);
+          setToast(`${provider} 로그인 화면을 열었어요.`);
           return;
         }
         setToast(
-          `${provider} OAuth 상태가 준비됐어요. 서버의 인증 URL 설정을 기다리고 있습니다.`,
+          `${provider} 로그인을 준비하고 있습니다. 잠시 후 다시 시도해 주세요.`,
         );
       } catch {
         setToast(
-          `${provider} OAuth 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.`,
+          `${provider} 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.`,
         );
       } finally {
         socialLoginSubmitInFlightRef.current = false;
@@ -7012,6 +7026,7 @@ function LoginScreen(): React.ReactElement {
             value={password}
           />
           <Pressable
+            accessibilityLabel="로그인"
             accessibilityRole="button"
             accessibilityState={{ disabled: !valid || submitting }}
             disabled={!valid || submitting}
@@ -7320,6 +7335,7 @@ function PillRow({
       <View style={styles.pillRow}>
         {items.map((item) => (
           <Pressable
+            accessibilityLabel={`${item} 탭`}
             accessibilityRole="tab"
             accessibilityState={{ disabled, selected: item === selected }}
             disabled={disabled}
@@ -7374,6 +7390,7 @@ function ToggleRow({
 }>): React.ReactElement {
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: active, disabled }}
       disabled={disabled}
@@ -7399,6 +7416,7 @@ function SmallButton({
 }>): React.ReactElement {
   return (
     <Pressable
+      accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}

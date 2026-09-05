@@ -4,6 +4,11 @@ import {
   PAYROLL_RECALCULATE_PATH,
   PAYROLL_SAFE_ERROR_MESSAGE,
 } from "./constants";
+import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import type {
   PayrollApiClient,
   PayrollCalculation,
@@ -141,9 +146,8 @@ function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
 
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new PayrollApiError(
       0,
@@ -152,7 +156,8 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new PayrollApiError(
       0,
       "PAYROLL_INVALID_BASE_URL",
@@ -160,11 +165,11 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new PayrollApiError(
       0,
       "PAYROLL_INSECURE_BASE_URL",

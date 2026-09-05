@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-19T04:11:38.072Z",
+  "gitHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+  "apkSourceGitHead": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+  "draftPullRequest": {
+    "number": 2,
+    "url": "https://github.com/jinbizman-boop/salary-hijacking/pull/2",
+    "base": "main",
+    "head": "codex/payroll-reminder-launch-ready-100-20260714",
+    "status": "open draft",
+    "headSha": "ee5df3101f53b596a9b818e731a82b41f953ea02",
+    "headShaObservation": "Local current HEAD Android debug APK rebuild succeeded; feature branch evidence must be pushed after this evidence update.",
+    "updatedAt": "2026-07-19T13:11:39+09:00",
+    "merged": false,
+    "mergeable": true
+  },
+  "releaseReadiness": "BLOCKED",
+  "blockers": [
+    {
+      "id": "GAP-003",
+      "severity": "P0",
+      "area": "Mobile startup",
+      "status": "BLOCKED",
+      "reason": "ADB is available but no physical Android phone is attached, so install/package-verification/cold-start/logcat startup proof cannot be produced.",
+      "evidence": "release/evidence/physical-phone/adb-devices.txt",
+      "nextCommand": "node scripts/release/run-physical-phone-qa.mjs --runs 20",
+      "humanActionRequired": true
+    },
+    {
+      "id": "GAP-004",
+      "severity": "P1",
+      "area": "Salary home",
+      "status": "PARTIAL",
+      "reason": "Automated tests and emulator evidence exist, but physical phone relaunch/persistence flow evidence is missing.",
+      "evidence": "docs/codex/100-completion/05_GAP_REGISTER.md",
+      "nextCommand": "Run node scripts/release/run-physical-phone-qa.mjs --runs 20 on an attached phone, then inspect the generated no-secret proof for salary persistence.",
+      "humanActionRequired": true
+    },
+    {
+      "id": "GAP-005",
+      "severity": "P1",
+      "area": "Plan",
+      "status": "PARTIAL",
+      "reason": "Automated tests and server-authority evidence exist, but physical phone recurrence/persistence flow evidence is missing.",
+      "evidence": "docs/codex/100-completion/05_GAP_REGISTER.md",
+      "nextCommand": "Run node scripts/release/run-physical-phone-qa.mjs --runs 20 on an attached phone, then inspect the generated no-secret proof for plan recurrence/persistence.",
+      "humanActionRequired": true
+    },
+    {
+      "id": "GAP-006",
+      "severity": "P1",
+      "area": "UI safe-area/keyboard",
+      "status": "BLOCKED",
+      "reason": "17 visual screenshots and 105 responsive web checks exist, but physical safe-area/keyboard matrix is not verified without an attached phone.",
+      "evidence": "release/evidence/mobile-ui/capture-summary.json",
+      "nextCommand": "Run node scripts/release/run-physical-phone-qa.mjs --runs 20 on an attached phone; the runner includes keyboard/safe-area probe evidence.",
+      "humanActionRequired": true
+    },
+    {
+      "id": "GAP-008",
+      "severity": "P0",
+      "area": "External release approval",
+      "status": "BLOCKED",
+      "reason": "Draft PR #2 is open for the release branch, but production AAB, Play upload/submit, main merge, and production release actions are not approved for automatic execution.",
+      "evidence": "docs/codex/100-completion/05_GAP_REGISTER.md",
+      "nextCommand": "After physical phone QA and explicit approval, review and merge https://github.com/jinbizman-boop/salary-hijacking/pull/2, then run production release commands documented in release/store and release evidence.",
+      "humanActionRequired": true
+    }
+  ]
+}

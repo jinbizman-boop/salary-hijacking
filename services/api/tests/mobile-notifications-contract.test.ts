@@ -216,4 +216,118 @@ describe("mobile notifications API contract", () => {
     expect(archive).not.toHaveBeenCalled();
     expect(deleteNotification).not.toHaveBeenCalled();
   });
+
+  it("passes native FCM token metadata through device registration without exposing raw tokens", async () => {
+    const capturedInputs: unknown[] = [];
+    const repository: NotificationsRepository<unknown> = {
+      ...createMobileNotificationsRepository(),
+      registerDevice: async (input) => {
+        capturedInputs.push(input);
+        return {
+          deviceId: "device-android-native",
+          platform: "ANDROID",
+          provider: "FCM",
+          tokenSource: "NATIVE_DEVICE",
+          pushTokenHashOnly: true,
+          pushTokenSecretRef: "secretref_push_device_android_native",
+          rawPushTokenExposed: false,
+          status: "ACTIVE",
+          registeredAt: "2026-07-03T04:00:00.000Z",
+          updatedAt: "2026-07-03T04:00:00.000Z",
+        };
+      },
+    };
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      notificationsRoutesOptions: { repository },
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/notifications/devices", {
+        body: JSON.stringify({
+          appVersion: "1.0.0",
+          deviceId: "device-android-native",
+          locale: "ko-KR",
+          platform: "ANDROID",
+          provider: "FCM",
+          pushToken: "fcm_native_registration_token_abcdef123456",
+          tokenSource: "NATIVE_DEVICE",
+        }),
+        headers: authHeaders,
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(201);
+    expect(capturedInputs).toEqual([
+      expect.objectContaining({
+        deviceId: "device-android-native",
+        platform: "ANDROID",
+        provider: "FCM",
+        pushToken: "fcm_native_registration_token_abcdef123456",
+        tokenSource: "NATIVE_DEVICE",
+      }),
+    ]);
+    expect(body).toMatchObject({
+      data: {
+        deviceId: "device-android-native",
+        provider: "FCM",
+        tokenSource: "NATIVE_DEVICE",
+        pushTokenHashOnly: true,
+        rawPushTokenExposed: false,
+      },
+    });
+    expect(JSON.stringify(body)).not.toContain(
+      "fcm_native_registration_token_abcdef123456",
+    );
+  });
+
+  it("rejects Expo Push Service tokens for Android FCM registration before repository writes", async () => {
+    const registerDevice = vi.fn<NotificationsRepository<unknown>["registerDevice"]>(
+      async () => ({
+        deviceId: "device-android-native",
+        platform: "ANDROID",
+        pushTokenHashOnly: true,
+      }),
+    );
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      notificationsRoutesOptions: {
+        repository: {
+          ...createMobileNotificationsRepository(),
+          registerDevice,
+        },
+      },
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/notifications/devices", {
+        body: JSON.stringify({
+          deviceId: "device-android-native",
+          platform: "ANDROID",
+          provider: "FCM",
+          pushToken: "ExponentPushToken[abcdef123456]",
+          tokenSource: "NATIVE_DEVICE",
+        }),
+        headers: authHeaders,
+        method: "POST",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(400);
+    expect(body).toMatchObject({
+      error: { code: "NOTIFICATION_NATIVE_FCM_TOKEN_REQUIRED" },
+    });
+    expect(registerDevice).not.toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,10 @@
 import { StyleSheet, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { BudgetRiskLevel } from "../types";
 
 export type BudgetProgressBarProps = Readonly<{
@@ -9,10 +14,10 @@ export type BudgetProgressBarProps = Readonly<{
 }>;
 
 const FILL_COLORS: Readonly<Record<BudgetRiskLevel, string>> = {
-  SAFE: "#16855B",
-  WATCH: "#B87300",
-  WARNING: "#D05200",
-  OVER: "#C53030",
+  SAFE: componentColors.primaryGreen,
+  WATCH: salaryHijackingDesignSystem.colors.semantic.warningStrong,
+  WARNING: salaryHijackingDesignSystem.colors.semantic.warningStrong,
+  OVER: componentColors.dangerRed,
 };
 
 export function BudgetProgressBar({
@@ -53,12 +58,12 @@ const styles = StyleSheet.create({
   track: {
     width: "100%",
     height: 10,
-    borderRadius: 5,
-    backgroundColor: "#E5E7EB",
+    borderRadius: componentRadius.pill,
+    backgroundColor: componentColors.line,
     overflow: "hidden",
   },
   fill: {
     height: "100%",
-    borderRadius: 5,
+    borderRadius: componentRadius.pill,
   },
 });

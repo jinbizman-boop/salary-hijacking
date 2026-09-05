@@ -1,0 +1,376 @@
+name: Android Emulator Performance
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: GitHub Actions run id containing the exact x86_64 QA APK artifact.
+        required: true
+        default: "33501708537"
+      source_sha:
+        description: Exact instrumentation source SHA represented by the artifact.
+        required: true
+        default: a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      artifact_name:
+        description: Exact x86_64 QA APK artifact name.
+        required: true
+        default: android-qa-release-x86_64-a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d
+      runs:
+        description: Startup runs per benchmark batch.
+        required: true
+        default: "20"
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - ".github/workflows/android-emulator-performance.yml"
+      - "scripts/perf/run-android-startup-performance.mjs"
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: android-emulator-performance-${{ github.run_id }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  SOURCE_RUN_ID: ${{ github.event.inputs.source_run_id || '33501708537' }}
+  SOURCE_SHA: ${{ github.event.inputs.source_sha || 'a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  SOURCE_ARTIFACT_NAME: ${{ github.event.inputs.artifact_name || 'android-qa-release-x86_64-a54c31fd1e3b791f7a18f2d9cbcb136f8fd2603d' }}
+  STARTUP_RUNS: ${{ github.event.inputs.runs || '20' }}
+  API_LEVEL: "35"
+  ABI: x86_64
+  TARGET: google_apis
+  AVD_NAME: salary_perf_kvm_x86
+  PACKAGE_NAME: com.salaryhijacking.mobile
+  ACTIVITY_NAME: com.salaryhijacking.mobile/.MainActivity
+  TZ: Asia/Seoul
+
+jobs:
+  emulator-performance:
+    name: KVM x86_64 emulator performance
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout performance harness source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: KVM and Android emulator preflight
+        id: preflight
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/android-emulator-performance
+          if [ -e /dev/kvm ]; then
+            sudo chmod 666 /dev/kvm || true
+          fi
+          {
+            echo "uname=$(uname -a)"
+            echo "id=$(id)"
+            echo "kvm_present=$([ -e /dev/kvm ] && echo yes || echo no)"
+            if [ -e /dev/kvm ]; then
+              ls -l /dev/kvm
+              if [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+                echo "kvm_accessible=yes"
+              else
+                echo "kvm_accessible=no"
+              fi
+            fi
+            echo "ANDROID_HOME=${ANDROID_HOME:-}"
+            echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-}"
+            if command -v emulator >/dev/null 2>&1; then
+              emulator -version || true
+            else
+              echo "emulator_command=missing_before_sdk_install"
+            fi
+          } | tee artifacts/android-emulator-performance/preflight.txt
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Android SDK components
+        run: |
+          set -euo pipefail
+          android_sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager_cmd="$android_sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          echo "ANDROID_SDK_ROOT=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "$android_sdk_root/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/emulator" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/build-tools/35.0.0" >> "$GITHUB_PATH"
+
+          yes | "$sdkmanager_cmd" --licenses >/dev/null || true
+          "$sdkmanager_cmd" \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-$API_LEVEL" \
+            "build-tools;35.0.0" \
+            "system-images;android-$API_LEVEL;$TARGET;$ABI"
+
+      - name: Download exact x86_64 QA artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          name: ${{ env.SOURCE_ARTIFACT_NAME }}
+          path: artifacts/android-emulator-performance/input
+
+      - name: Verify artifact lineage and static metadata
+        run: |
+          set -euo pipefail
+          apk="$(find artifacts/android-emulator-performance/input -name '*.apk' -type f | head -n 1)"
+          info="$(find artifacts/android-emulator-performance/input -name 'build-info.json' -type f | head -n 1)"
+          test -s "$apk"
+          test -s "$info"
+          node <<'NODE'
+          const { createHash } = require("node:crypto");
+          const { readFileSync, writeFileSync } = require("node:fs");
+          const { execFileSync } = require("node:child_process");
+          const apk = execFileSync("bash", ["-lc", "find artifacts/android-emulator-performance/input -name '*.apk' -type f | head -n 1"], { encoding: "utf8" }).trim();
+          const infoPath = execFileSync("bash", ["-lc", "find artifacts/android-emulator-performance/input -name 'build-info.json' -type f | head -n 1"], { encoding: "utf8" }).trim();
+          const info = JSON.parse(readFileSync(infoPath, "utf8"));
+          const sha256 = (buffer) => createHash("sha256").update(buffer).digest("hex");
+          const apkSha = sha256(readFileSync(apk));
+          const expectedSource = process.env.SOURCE_SHA;
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: info.sourceCommit,
+            checkedOutSha: info.checkedOutSha,
+            sourceLineageMatch: info.sourceCommit === expectedSource && info.checkedOutSha === expectedSource,
+            applicationId: info.applicationId,
+            architecture: info.architecture,
+            apkSha256: apkSha,
+            buildInfoApkSha256: info.apkSha256,
+            apkShaMatch: apkSha === info.apkSha256,
+            bundleSha256: info.bundleSha256,
+            signerCertificateSha256: info.signerCertificateSha256,
+            embeddedEnvironment: info.embeddedEnvironment,
+            apiBaseUrl: info.apiBaseUrl,
+          };
+          if (!result.sourceLineageMatch || !result.apkShaMatch || result.architecture !== "x86_64") {
+            console.error(JSON.stringify(result, null, 2));
+            process.exit(1);
+          }
+          writeFileSync("artifacts/android-emulator-performance/artifact-lineage.json", JSON.stringify(result, null, 2));
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+          echo "APK_PATH=$apk" >> "$GITHUB_ENV"
+
+      - name: Create KVM x86_64 AVD
+        run: |
+          set -euo pipefail
+          avdmanager list device | tee artifacts/android-emulator-performance/avd-devices.txt
+          device_args=()
+          if grep -q '"pixel_6"' artifacts/android-emulator-performance/avd-devices.txt; then
+            device_args=(--device "pixel_6")
+          elif grep -q '"pixel"' artifacts/android-emulator-performance/avd-devices.txt; then
+            device_args=(--device "pixel")
+          fi
+          echo "selected_device_args=${device_args[*]:-default}" | tee artifacts/android-emulator-performance/selected-avd-device.txt
+          printf "no\n" | avdmanager create avd \
+            --force \
+            --name "$AVD_NAME" \
+            --package "system-images;android-$API_LEVEL;$TARGET;$ABI" \
+            "${device_args[@]}"
+          avdmanager list avd | tee artifacts/android-emulator-performance/avd-list-after-create.txt
+          avd_config="$(find "$HOME" -path "*/$AVD_NAME.avd/config.ini" -type f | head -n 1)"
+          test -s "$avd_config"
+          avd_home="$(dirname "$(dirname "$avd_config")")"
+          echo "ANDROID_AVD_HOME=$avd_home" >> "$GITHUB_ENV"
+          echo "ANDROID_AVD_HOME=$avd_home" | tee artifacts/android-emulator-performance/avd-home.txt
+          {
+            echo "hw.cpu.ncore=2"
+            echo "hw.ramSize=2048"
+            echo "vm.heapSize=256"
+            echo "hw.lcd.width=1080"
+            echo "hw.lcd.height=2400"
+            echo "hw.lcd.density=420"
+            echo "hw.gpu.enabled=yes"
+            echo "hw.gpu.mode=swiftshader_indirect"
+            echo "fastboot.forceColdBoot=yes"
+            echo "fastboot.forceFastBoot=no"
+          } >> "$avd_config"
+          cat "$avd_config" | tee artifacts/android-emulator-performance/avd-config.ini
+
+      - name: Start KVM emulator
+        run: |
+          set -euo pipefail
+          emulator -accel-check | tee artifacts/android-emulator-performance/accel-check.txt
+          emulator -list-avds | tee artifacts/android-emulator-performance/emulator-list-avds.txt
+          nohup emulator \
+            -avd "$AVD_NAME" \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot \
+            -gpu swiftshader_indirect \
+            -cores 2 \
+            -memory 2048 \
+            > artifacts/android-emulator-performance/emulator.log 2>&1 &
+          echo "$!" > artifacts/android-emulator-performance/emulator.pid
+          timeout 300 adb wait-for-device || {
+            echo "adb_wait_for_device=timeout" | tee artifacts/android-emulator-performance/emulator-start-failure.txt
+            tail -n 200 artifacts/android-emulator-performance/emulator.log || true
+            exit 1
+          }
+          for i in $(seq 1 60); do
+            boot="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+            state="$(adb get-state 2>/dev/null || true)"
+            if [ "$state" = "device" ] && [ "$boot" = "1" ]; then
+              break
+            fi
+            sleep 5
+          done
+          if [ "$(adb get-state)" != "device" ] || [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]; then
+            echo "boot_completed=timeout" | tee artifacts/android-emulator-performance/emulator-start-failure.txt
+            tail -n 200 artifacts/android-emulator-performance/emulator.log || true
+            exit 1
+          fi
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          {
+            echo "device_state=$(adb get-state)"
+            echo "boot_completed=$(adb shell getprop sys.boot_completed | tr -d '\r')"
+            echo "model=$(adb shell getprop ro.product.model | tr -d '\r')"
+            echo "android=$(adb shell getprop ro.build.version.release | tr -d '\r')"
+            echo "abi=$(adb shell getprop ro.product.cpu.abi | tr -d '\r')"
+            echo "egl=$(adb shell getprop ro.hardware.egl | tr -d '\r')"
+            echo "hwui=$(adb shell getprop debug.hwui.renderer | tr -d '\r')"
+            echo "cpu_abi_list=$(adb shell getprop ro.product.cpu.abilist | tr -d '\r')"
+            echo "network_profile=github_hosted_runner_default"
+            adb shell dumpsys SurfaceFlinger | grep -Ei 'GLES|OpenGL|SwiftShader|ANGLE|renderer' | head -n 20 || true
+          } | tee artifacts/android-emulator-performance/device-env.txt
+
+      - name: Marker smoke
+        run: |
+          set -euo pipefail
+          node scripts/perf/run-android-startup-performance.mjs \
+            --apk "$APK_PATH" \
+            --source-sha "$SOURCE_SHA" \
+            --apk-sha "$(sha256sum "$APK_PATH" | awk '{print $1}')" \
+            --out-dir artifacts/android-emulator-performance/marker-smoke \
+            --runs 3 \
+            --sample-label smoke
+          node <<'NODE'
+          const { readFileSync } = require("node:fs");
+          const summary = JSON.parse(readFileSync("artifacts/android-emulator-performance/marker-smoke/startup-performance-summary.json", "utf8"));
+          const required = [
+            "startup.n1.application_on_create_entry",
+            "startup.n2.activity_on_create_entry",
+            "startup.n3.activity_super_on_create_complete",
+            "startup.n4.react_root_view_create_start",
+            "startup.n5.native_first_frame_ready",
+            "startup.p3.js_bundle_start",
+            "startup.p11.route_first_commit",
+            "startup.p12.splash_hide_requested",
+            "startup.p13.splash_hide_completed",
+            "startup.p14.route_interactive",
+          ];
+          const missing = required.filter((marker) => summary.markerCoverage[marker] !== 3);
+          if (missing.length > 0) {
+            console.error(JSON.stringify({ missing, markerCoverage: summary.markerCoverage }, null, 2));
+            process.exit(1);
+          }
+          NODE
+
+      - name: PERF-010 KVM startup benchmark
+        run: |
+          set -euo pipefail
+          node scripts/perf/run-android-startup-performance.mjs \
+            --apk "$APK_PATH" \
+            --source-sha "$SOURCE_SHA" \
+            --apk-sha "$(sha256sum "$APK_PATH" | awk '{print $1}')" \
+            --out-dir artifacts/android-emulator-performance/perf010-kvm \
+            --runs "$STARTUP_RUNS" \
+            --install skip \
+            --sample-label kvm
+
+      - name: Auth visual smoke and fatal ANR scan
+        if: success()
+        run: |
+          set -euo pipefail
+          adb shell pm clear "$PACKAGE_NAME" || true
+          adb shell am force-stop "$PACKAGE_NAME" || true
+          adb logcat -c || true
+          adb shell am start -W -n "$ACTIVITY_NAME" | tee artifacts/android-emulator-performance/auth-visual-start.txt
+          sleep 8
+          adb shell uiautomator dump /sdcard/window.xml >/dev/null
+          adb shell cat /sdcard/window.xml > artifacts/android-emulator-performance/window.xml
+          adb logcat -d -v time > artifacts/android-emulator-performance/logcat-final.txt
+          node <<'NODE'
+          const { readFileSync, writeFileSync } = require("node:fs");
+          const xml = readFileSync("artifacts/android-emulator-performance/window.xml", "utf8");
+          const logs = readFileSync("artifacts/android-emulator-performance/logcat-final.txt", "utf8");
+          const internalCopyPattern = /서버 권위|server authority|debug|QA|staging|internal|test mode|mock|capture/iu;
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            loginReferenceCoreVisible:
+              /급여납치 로그인 화면|Salary Hijacking|금융의 주도권을 되찾으세요|로그인/u.test(xml),
+            internalCopyVisible: internalCopyPattern.test(xml),
+            fatalCount: (logs.match(/FATAL EXCEPTION|E AndroidRuntime|Process com\.salaryhijacking\.mobile.*has died/gu) ?? []).length,
+            anrCount: (logs.match(/ANR in com\.salaryhijacking\.mobile|Input dispatching timed out/gu) ?? []).length,
+          };
+          writeFileSync("artifacts/android-emulator-performance/auth-visual-fatal-summary.json", JSON.stringify(result, null, 2));
+          if (!result.loginReferenceCoreVisible || result.internalCopyVisible || result.fatalCount !== 0 || result.anrCount !== 0) {
+            console.error(JSON.stringify(result, null, 2));
+            process.exit(1);
+          }
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+
+      - name: Summarize performance gates
+        if: always()
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const { readFileSync, writeFileSync, existsSync } = require("node:fs");
+          const summaryPath = "artifacts/android-emulator-performance/perf010-kvm/startup-performance-summary.json";
+          const perf = existsSync(summaryPath) ? JSON.parse(readFileSync(summaryPath, "utf8")) : null;
+          const result = {
+            schemaVersion: 1,
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: process.env.SOURCE_SHA,
+            sourceRunId: process.env.SOURCE_RUN_ID,
+            artifactName: process.env.SOURCE_ARTIFACT_NAME,
+            ciKvmDevicePresent: existsSync("/dev/kvm"),
+            ciKvmAccessible: existsSync("/dev/kvm"),
+            perf010Runs: perf?.segmentSummary?.activityTotalMs?.runs ?? 0,
+            perf010RawMs: perf?.rows?.map((row) => row.activityTotalMs) ?? [],
+            perf010P50Ms: perf?.segmentSummary?.activityTotalMs?.p50Ms ?? null,
+            perf010P95Ms: perf?.segmentSummary?.activityTotalMs?.p95Ms ?? null,
+            perf010MaxMs: perf?.segmentSummary?.activityTotalMs?.maxMs ?? null,
+            perf010: (perf?.segmentSummary?.activityTotalMs?.p95Ms ?? Infinity) <= 2000 ? "PASS" : "FAIL",
+            stableRouteVisibleP95Ms: perf?.segmentSummary?.totalStableRouteVisibleMs?.p95Ms ?? null,
+            dominantSegment: perf?.startupOverallP95DominantSegment ?? null,
+            dominantSegmentP95Ms: perf?.startupOverallP95DominantP95Ms ?? null,
+            markerCoverage: perf?.markerCoverage ?? null,
+          };
+          writeFileSync("artifacts/android-emulator-performance/final-summary.json", JSON.stringify(result, null, 2));
+          console.log(JSON.stringify(result, null, 2));
+          NODE
+          find artifacts/android-emulator-performance -maxdepth 3 -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/android-emulator-performance/SHA256SUMS.txt
+
+      - name: Upload no-secret performance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-performance-a54c31fd-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: artifacts/android-emulator-performance/

@@ -1,0 +1,11 @@
+eventType,producer,consumer,idempotencyKey,privacy,status
+PAYDAY_REMINDER,scheduler,notifications worker,user+payrollCycle+reminderType,minimal identifiers only,PARTIAL_NATURAL_CRON_PENDING
+FIXED_EXPENSE_REMINDER,scheduler,notifications worker,user+expenseInstance+reminderType,minimal identifiers only,PARTIAL_NATURAL_CRON_PENDING
+BUDGET_THRESHOLD,api/scheduler,notifications worker,user+budget+threshold+period,no raw amount in payload,PARTIAL_PRODUCER_RUNTIME_PENDING
+SAVING_DUE,scheduler,notifications worker,user+savingPlan+period+reminderType,minimal identifiers only,PARTIAL_PRODUCER_RUNTIME_PENDING
+SAVING_GOAL,api,notifications worker,user+goal+milestone,minimal identifiers only,PARTIAL_PRODUCER_RUNTIME_PENDING
+GROWTH_COMPLETION,growth api,notifications worker,user+task+period+notificationType,Phase 6 producer,CONTRACT_READY_PENDING_PHASE_6
+COMMUNITY_ACTIVITY,community api,notifications worker,actor+target+eventType,privacy/blocking policy required,CONTRACT_READY_PENDING_PHASE_6
+NOTICE_PUBLISHED,admin api,notifications worker,notice+audience+version,no raw PII,CONTRACT_READY
+PAY_CYCLE_CLOSE,scheduler,api/db and notifications,cycle+close,financial data by reference,PARTIAL_NATURAL_CRON_PENDING
+TOKEN_CLEANUP,notifications worker,user_devices,device+provider+terminalReason,token hash only,PASS_INTERNAL

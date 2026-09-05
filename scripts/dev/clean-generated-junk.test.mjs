@@ -28,6 +28,21 @@ test("removes repository generated junk while preserving dependencies, local sec
     );
     await touch(path.join(rootDir, "apps", "mobile", ".expo", "web", "cache"));
     await touch(
+      path.join(rootDir, "apps", "mobile", ".local-native-bin", "npm.cmd"),
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        ".localappdata",
+        "npm-cache",
+        "_cacache",
+        "index-v5",
+        "cache.bin",
+      ),
+    );
+    await touch(
       path.join(
         rootDir,
         "apps",
@@ -166,6 +181,14 @@ test("removes repository generated junk while preserving dependencies, local sec
     assert.equal(existsSync(path.join(rootDir, ".tmp")), false);
     assert.equal(
       existsSync(path.join(rootDir, "apps", "mobile", ".expo")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", ".local-native-bin")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", ".localappdata")),
       false,
     );
     assert.equal(
@@ -325,7 +348,7 @@ test("removes repository generated junk while preserving dependencies, local sec
           "salary-hijacking-phone-arm64-debug.apk",
         ),
       ),
-      true,
+      false,
     );
     assert.equal(
       existsSync(
@@ -339,7 +362,7 @@ test("removes repository generated junk while preserving dependencies, local sec
           "salary-hijacking-e2e.apk",
         ),
       ),
-      true,
+      false,
     );
     assert.equal(existsSync(path.join(rootDir, "docs", "source.md")), true);
   } finally {
@@ -366,6 +389,311 @@ test("dry run reports generated junk without deleting it", async () => {
     assert.equal(existsSync(target), true);
   } finally {
     await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("removes high-volume repository build outputs and temporary APK patch artifacts", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-builds-"));
+
+  try {
+    await touch(
+      path.join(
+        rootDir,
+        "apps",
+        "mobile",
+        "build",
+        "phone",
+        "android",
+        "salary-hijacking-qa-direct-universal.apk",
+      ),
+      "PK\u0003\u0004",
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "artifacts",
+        "tmp",
+        "apk-bundle-patch",
+        "patched-aligned.apk",
+      ),
+      "PK\u0003\u0004",
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "build",
+        "android-subproject-build",
+        "expo-modules-core",
+        "intermediates",
+        "generated.bin",
+      ),
+    );
+    await touch(path.join(rootDir, "docs", "source.md"));
+
+    const result = await cleanGeneratedJunk({ rootDir, tempRoots: [] });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(
+      existsSync(path.join(rootDir, "apps", "mobile", "build")),
+      false,
+    );
+    assert.equal(existsSync(path.join(rootDir, "artifacts", "tmp")), false);
+    assert.equal(existsSync(path.join(rootDir, "build")), false);
+    assert.equal(existsSync(path.join(rootDir, "docs", "source.md")), true);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("removes stale Android APK artifacts while preserving final QA and triage APKs", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-apks-"));
+  const mirrorRoot = await mkdtemp(
+    path.join(tmpdir(), "salary-junk-apk-mirror-"),
+  );
+  const downloadsRoot = await mkdtemp(
+    path.join(tmpdir(), "salary-junk-apk-downloads-"),
+  );
+
+  try {
+    const repoApkRoot = path.join(rootDir, "artifacts", "android");
+    const keepFinal = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk",
+    );
+    const keepFinalSha = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk.sha256",
+    );
+    const staleFinalSignature = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk.idsig",
+    );
+    const staleFinalVerifyLog = path.join(
+      repoApkRoot,
+      "salary-hijacking-qa-universal.apk.verify.txt",
+    );
+    const staleOriginal = path.join(
+      repoApkRoot,
+      "salary-hijacking-original-safe-patched-current-universal.apk",
+    );
+    const staleDiagnostic = path.join(
+      mirrorRoot,
+      "salary-hijacking-qa-direct-current-universal.apk",
+    );
+    const staleUpgradeBase = path.join(
+      downloadsRoot,
+      "salary-hijacking-original-direct-current-universal.apk",
+    );
+    const staleReleaseLikeArm64 = path.join(
+      downloadsRoot,
+      "salary-hijacking-qa-release-like-arm64-eureka-fit-20260729.apk",
+    );
+    const staleReleaseLikeArm64Sha = path.join(
+      downloadsRoot,
+      "salary-hijacking-qa-release-like-arm64-eureka-fit-20260729.apk.sha256",
+    );
+    const staleBuildInfo = path.join(
+      repoApkRoot,
+      "build-info-safe-current-splash-hide-universal.json",
+    );
+    const staleChecksum = path.join(
+      repoApkRoot,
+      "checksums-direct-current.txt",
+    );
+    const staleManifest = path.join(repoApkRoot, "final-qa-apk-manifest.json");
+    const oldProbe = path.join(repoApkRoot, "probe-copy.apk");
+    const oldArm64 = path.join(
+      downloadsRoot,
+      "salary-hijacking-original-direct-current-arm64.apk",
+    );
+    const oldCrashfix = path.join(
+      mirrorRoot,
+      "salary-hijacking-qa-universal-crashfix.apk",
+    );
+    const unrelatedText = path.join(downloadsRoot, "salary-hijacking-note.txt");
+
+    await touch(keepFinal, "PK\u0003\u0004");
+    await touch(keepFinalSha, "sha256");
+    await touch(staleFinalSignature, "signature");
+    await touch(staleFinalVerifyLog, "verified");
+    await touch(staleOriginal, "PK\u0003\u0004");
+    await touch(staleDiagnostic, "PK\u0003\u0004");
+    await touch(staleUpgradeBase, "PK\u0003\u0004");
+    await touch(staleReleaseLikeArm64, "PK\u0003\u0004");
+    await touch(staleReleaseLikeArm64Sha, "sha256");
+    await touch(staleBuildInfo, "{}");
+    await touch(staleChecksum, "sha256");
+    await touch(staleManifest, "{}");
+    await touch(oldProbe, "PK\u0003\u0004");
+    await touch(oldArm64, "PK\u0003\u0004");
+    await touch(oldCrashfix, "PK\u0003\u0004");
+    await touch(unrelatedText, "keep");
+
+    const result = await cleanGeneratedJunk({
+      androidArtifactRoots: [repoApkRoot, mirrorRoot, downloadsRoot],
+      rootDir,
+      tempRoots: [],
+    });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(existsSync(keepFinal), true);
+    assert.equal(existsSync(keepFinalSha), true);
+    assert.equal(existsSync(staleFinalSignature), false);
+    assert.equal(existsSync(staleFinalVerifyLog), false);
+    assert.equal(existsSync(staleOriginal), false);
+    assert.equal(existsSync(staleDiagnostic), false);
+    assert.equal(existsSync(staleUpgradeBase), false);
+    assert.equal(existsSync(staleReleaseLikeArm64), false);
+    assert.equal(existsSync(staleReleaseLikeArm64Sha), false);
+    assert.equal(existsSync(staleBuildInfo), false);
+    assert.equal(existsSync(staleChecksum), false);
+    assert.equal(existsSync(staleManifest), false);
+    assert.equal(existsSync(unrelatedText), true);
+    assert.equal(existsSync(oldProbe), false);
+    assert.equal(existsSync(oldArm64), false);
+    assert.equal(existsSync(oldCrashfix), false);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+    await rm(mirrorRoot, { recursive: true, force: true });
+    await rm(downloadsRoot, { recursive: true, force: true });
+  }
+});
+
+test("preserves QA evidence logs while cleaning generated junk", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-evidence-"));
+
+  try {
+    const qaLog = path.join(
+      rootDir,
+      "artifacts",
+      "qa",
+      "release-preflight.log",
+    );
+    const finalQaLog = path.join(
+      rootDir,
+      "release",
+      "evidence",
+      "final-qa-command-logs",
+      "apk-arm64-apksigner-verify.log",
+    );
+    const tempLog = path.join(rootDir, "tmp", "transient.log");
+
+    await touch(qaLog, "qa evidence");
+    await touch(finalQaLog, "final evidence");
+    await touch(tempLog, "temporary log");
+
+    const result = await cleanGeneratedJunk({ rootDir, tempRoots: [] });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(existsSync(qaLog), true);
+    assert.equal(existsSync(finalQaLog), true);
+    assert.equal(existsSync(tempLog), false);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("removes stale Gradle caches under artifacts while preserving QA runtime evidence", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-gradle-"));
+
+  try {
+    const qaRuntimeEvidence = path.join(
+      rootDir,
+      "artifacts",
+      "qa",
+      "android-qa-universal-route-fixed-runtime-20260729",
+      "logcat.txt",
+    );
+    await touch(
+      path.join(
+        rootDir,
+        "artifacts",
+        "qa",
+        "gradle-home-20260720",
+        "cache.bin",
+      ),
+    );
+    await touch(
+      path.join(rootDir, "artifacts", "qa", "gradle-user-home", "cache.bin"),
+    );
+    await touch(
+      path.join(rootDir, "artifacts", "tmp", "gradle-temp", "cache.bin"),
+    );
+    await touch(
+      path.join(rootDir, "artifacts", "tmp", "gradle-home", "cache.bin"),
+    );
+    await touch(qaRuntimeEvidence, "runtime evidence");
+
+    const result = await cleanGeneratedJunk({ rootDir, tempRoots: [] });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "qa", "gradle-home-20260720")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "qa", "gradle-user-home")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "tmp", "gradle-temp")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(rootDir, "artifacts", "tmp", "gradle-home")),
+      false,
+    );
+    assert.equal(existsSync(qaRuntimeEvidence), true);
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("removes generated junk from configured external artifact roots", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-junk-root-"));
+  const externalRoot = await mkdtemp(path.join(tmpdir(), "salary-artifacts-"));
+
+  try {
+    await touch(path.join(externalRoot, "gradle-home-20260729", "cache.bin"));
+    await touch(path.join(externalRoot, "gradle-user-home-x86", "cache.bin"));
+    await touch(path.join(externalRoot, "android-subprojects", "build.bin"));
+    await touch(path.join(externalRoot, "qa-release-build-20260726.log"));
+    await touch(path.join(externalRoot, "qa", "runtime", "summary.json"));
+    await touch(path.join(externalRoot, "keystores", "qa-keystore.jks"));
+
+    const result = await cleanGeneratedJunk({
+      rootDir,
+      tempRoots: [externalRoot],
+    });
+
+    assert.equal(result.errors.length, 0);
+    assert.equal(
+      existsSync(path.join(externalRoot, "gradle-home-20260729")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "gradle-user-home-x86")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "android-subprojects")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "qa-release-build-20260726.log")),
+      false,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "qa", "runtime", "summary.json")),
+      true,
+    );
+    assert.equal(
+      existsSync(path.join(externalRoot, "keystores", "qa-keystore.jks")),
+      true,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+    await rm(externalRoot, { recursive: true, force: true });
   }
 });
 

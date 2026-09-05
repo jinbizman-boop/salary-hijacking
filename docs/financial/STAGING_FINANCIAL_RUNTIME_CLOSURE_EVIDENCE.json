@@ -1,0 +1,46 @@
+{
+  "timestamp": "2026-08-17T14:29:25.496Z",
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "workerVersion": "0d625b99-e466-4c85-99b1-e41733872b75",
+  "startedAt": "2026-08-17T14:28:39.117Z",
+  "finishedAt": "2026-08-17T14:29:25.496Z",
+  "syntheticUsers": {
+    "ownerHash": "5700efaefbe7bf32",
+    "attackerHash": "beba543cbd50368c"
+  },
+  "status": "PASS",
+  "counts": {
+    "directRows": 16,
+    "directFail": 0,
+    "idempotencyRows": 4,
+    "idempotencyFail": 0,
+    "errorRows": 11,
+    "errorFail": 0,
+    "closedMutationDenied": 4
+  },
+  "assertions": {
+    "financialCrossUserAuthz": "PASS",
+    "financialCrossUserLeak": 0,
+    "financialRlsEscape": 0,
+    "massAssignmentEscape": 0,
+    "clientCalculationOverride": 0,
+    "idempotencyDuplicateRecords": 0,
+    "concurrencyLostUpdates": 0,
+    "payrollFinalization": "PASS",
+    "finalizationDuplicateTransitions": 0,
+    "cumulativeHijack": "PASS",
+    "cumulativeDoubleCount": 0,
+    "closedCycleMutation": "PASS",
+    "moneyIntegerModel": "PASS",
+    "errorTaxonomyDrift": 0
+  },
+  "secretValuesStored": false,
+  "rawTokensStored": false,
+  "rawFinancialValuesStored": false,
+  "productionMutation": false,
+  "artifactRefs": [
+    "docs/financial/FINANCIAL_DIRECT_ID_RUNTIME_MATRIX.csv",
+    "docs/financial/FINANCIAL_IDEMPOTENCY_RUNTIME_MATRIX.csv",
+    "docs/financial/FINANCIAL_ERROR_TAXONOMY_RUNTIME.csv"
+  ]
+}

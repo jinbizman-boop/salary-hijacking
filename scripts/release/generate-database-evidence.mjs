@@ -7,6 +7,8 @@ const RELEASE_TARGETS_PATH = "release/release-targets.json";
 const DEFAULT_PROOF_PATH = "release/database-proof.local.json";
 const DEFAULT_COMMAND_PROOF_PATH = "release/database-command-proof.local.json";
 const DEFAULT_OUTPUT_PATH = "release/database-evidence.json";
+const DEFAULT_STATIC_RLS_AUDIT_PATH =
+  "artifacts/qa/d017-db-rls-rollback-static-current.json";
 
 const RAW_SECRET_PATTERN =
   /(postgres(?:ql)?:\/\/|mysql:\/\/|mongodb(?:\+srv)?:\/\/|redis:\/\/|:\/\/[^/\s]+:[^@\s]+@|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[a-z0-9_-]{16,}|ghp_[a-z0-9_]{16,}|xox[baprs]-[a-z0-9-]+)/i;
@@ -107,6 +109,15 @@ const boolFrom = (source, key, fallback = false) =>
 const proofSection = (proof, key) =>
   isPlainObject(proof?.[key]) ? proof[key] : {};
 
+const staticRlsRollbackAuditVerified = (rootDir) => {
+  const audit = readJsonIfPresent(rootDir, DEFAULT_STATIC_RLS_AUDIT_PATH);
+  return (
+    audit?.ok === true &&
+    audit?.failedChecks === 0 &&
+    audit?.destructiveStatementCount === 0
+  );
+};
+
 const commandVerified = (commands, key) =>
   isPlainObject(commands?.[key]) && commands[key].verified === true;
 
@@ -119,6 +130,9 @@ const databaseNextEvidenceRequired = (evidence) => {
   const missing = [];
   if (!evidence.migrations.migrationValidationVerified) {
     missing.push("Safe migration validation against a non-production target");
+  }
+  if (!evidence.migrations.staticRlsRollbackAuditVerified) {
+    missing.push("Static RLS policy and destructive DDL audit proof");
   }
   if (!evidence.migrations.stagingMigrationExecuted) {
     missing.push("Staging migration execution proof");
@@ -143,6 +157,11 @@ const databaseNextEvidenceRequired = (evidence) => {
     !evidence.smoke.noRawFinancialDataInSmokePayloads
   ) {
     missing.push("Privacy/redaction smoke proof");
+  }
+  if (!evidence.smoke.persistenceE2eSmokeVerified) {
+    missing.push(
+      "Authenticated payroll/plan/budget persistence read-after-write smoke proof",
+    );
   }
   if (!evidence.rollback.rollbackRehearsalVerified) {
     missing.push("Database rollback rehearsal proof");
@@ -290,6 +309,7 @@ export const buildDatabaseEvidence = ({
     migrations: {
       migrationFilesVerified: migrationFileCount > 0,
       migrationFileCount,
+      staticRlsRollbackAuditVerified: staticRlsRollbackAuditVerified(rootDir),
       migrationValidationVerified:
         boolFrom(migrations, "migrationValidationVerified") ||
         commandVerified(commands, "migrationValidation"),
@@ -322,12 +342,16 @@ export const buildDatabaseEvidence = ({
       privacySmokeVerified:
         boolFrom(smoke, "privacySmokeVerified") ||
         commandVerified(commands, "privacySmoke"),
+      persistenceE2eSmokeVerified:
+        boolFrom(smoke, "persistenceE2eSmokeVerified") ||
+        commandVerified(commands, "persistenceE2eSmoke"),
       noRawFinancialDataInSmokePayloads:
         boolFrom(smoke, "noRawFinancialDataInSmokePayloads") ||
         (commandNoRawPayloadStored(commands, "stagingApiSmoke") &&
           commandNoRawPayloadStored(commands, "adminSmoke") &&
           commandNoRawPayloadStored(commands, "serverAuthoritySmoke") &&
-          commandNoRawPayloadStored(commands, "privacySmoke")),
+          commandNoRawPayloadStored(commands, "privacySmoke") &&
+          commandNoRawPayloadStored(commands, "persistenceE2eSmoke")),
       note: "Smoke proof must be based on deployed staging API/Admin responses with sensitive payloads redacted.",
     },
     rollback: {

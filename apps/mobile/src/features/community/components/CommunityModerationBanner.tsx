@@ -1,9 +1,17 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type {
   CommunityValidationIssue,
   ModerationStatus,
 } from "../community.types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type CommunityModerationBannerProps = Readonly<{
   status: ModerationStatus;
@@ -49,27 +57,27 @@ export function CommunityModerationBanner({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 4,
-    padding: 12,
-    borderRadius: 8,
+    gap: componentSpacing.xs,
+    padding: componentSpacing.sm,
+    borderRadius: componentRadius.card,
   },
   informational: {
-    backgroundColor: "#EDF7F4",
+    backgroundColor: componentColors.primaryGreenSoft,
   },
   critical: {
-    backgroundColor: "#FFF1F1",
+    backgroundColor: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
   },
   title: {
-    color: "#155E52",
-    fontSize: 13,
-    fontWeight: "700",
+    color: componentColors.primaryGreenDark,
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
   issue: {
-    color: "#355F57",
-    fontSize: 12,
-    lineHeight: 18,
+    color: componentColors.textSecondary,
+    fontSize: typography.caption.fontSize,
+    lineHeight: typography.caption.lineHeight,
   },
   criticalText: {
-    color: "#9B1C1C",
+    color: componentColors.dangerRed,
   },
 });

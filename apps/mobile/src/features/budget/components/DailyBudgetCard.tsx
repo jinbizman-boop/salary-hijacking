@@ -1,11 +1,20 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { BudgetActionHint, BudgetViewModel } from "../types";
 import { BudgetProgressBar } from "./BudgetProgressBar";
 import { BudgetRiskBadge } from "./BudgetRiskBadge";
 import { BudgetSkeleton } from "./BudgetSkeleton";
 import { OverspendNotice } from "./OverspendNotice";
 import { RemainingAmountCard } from "./RemainingAmountCard";
+
+const typography = salaryHijackingDesignSystem.typography;
+const elevation = salaryHijackingDesignSystem.elevation;
 
 export type DailyBudgetCardProps = Readonly<{
   viewModel?: BudgetViewModel | null;
@@ -134,99 +143,100 @@ export function DailyBudgetCard({
 
 const styles = StyleSheet.create({
   card: {
-    gap: 16,
-    padding: 20,
+    gap: componentSpacing.md,
+    padding: componentSpacing.lg,
     borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surface,
+    ...elevation.low,
   },
   header: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 12,
+    gap: componentSpacing.sm,
   },
   metrics: {
     flexDirection: "row",
-    gap: 12,
+    gap: componentSpacing.sm,
   },
   metric: {
     flex: 1,
-    gap: 3,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: "#F5F7F8",
+    gap: componentSpacing.xs,
+    padding: componentSpacing.sm,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surfaceSoft,
   },
   metricLabel: {
-    color: "#6B7280",
-    fontSize: 12,
+    color: componentColors.textSecondary,
+    fontSize: typography.caption.fontSize,
   },
   metricValue: {
-    color: "#111827",
-    fontSize: 16,
-    fontWeight: "700",
+    color: componentColors.textPrimary,
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   stale: {
-    color: "#7A4D00",
-    fontSize: 13,
-    lineHeight: 19,
+    color: componentColors.warningOrange,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   error: {
-    color: "#9B1C1C",
-    fontSize: 13,
-    lineHeight: 19,
+    color: componentColors.dangerRed,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   emptyTitle: {
-    color: "#111827",
-    fontSize: 18,
-    fontWeight: "800",
+    color: componentColors.textPrimary,
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   emptyDescription: {
-    color: "#4B5563",
-    fontSize: 14,
-    lineHeight: 21,
+    color: componentColors.textSecondary,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   hint: {
-    gap: 3,
-    padding: 12,
+    gap: componentSpacing.xs,
+    padding: componentSpacing.sm,
     borderLeftWidth: 3,
-    borderLeftColor: "#176B5B",
-    backgroundColor: "#F0F7F5",
+    borderLeftColor: componentColors.primaryGreen,
+    backgroundColor: componentColors.primaryGreenSoft,
   },
   hintTitle: {
-    color: "#154D42",
-    fontSize: 14,
-    fontWeight: "700",
+    color: componentColors.primaryGreenDark,
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
   hintDescription: {
-    color: "#355F57",
-    fontSize: 13,
-    lineHeight: 19,
+    color: componentColors.textSecondary,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   secondaryButton: {
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#176B5B",
-    borderRadius: 8,
+    borderColor: componentColors.primaryGreen,
+    borderRadius: componentRadius.button,
   },
   secondaryButtonLabel: {
-    color: "#176B5B",
-    fontSize: 14,
-    fontWeight: "700",
+    color: componentColors.primaryGreen,
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
   refreshButton: {
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 8,
-    backgroundColor: "#176B5B",
+    borderRadius: componentRadius.button,
+    backgroundColor: componentColors.primaryGreen,
   },
   refreshButtonLabel: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "700",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
 });

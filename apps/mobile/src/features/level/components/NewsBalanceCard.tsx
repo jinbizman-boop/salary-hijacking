@@ -1,8 +1,16 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { SurfaceCard, componentColors } from "../../../shared/components";
+import {
+  SurfaceCard,
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
+import { ActivityFlowChecklist } from "./ActivityFlowChecklist";
 import { ContentPolicyPills } from "./ContentPolicyPills";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type NewsBalanceCardProps = Readonly<{
   content: GrowthContentItem;
@@ -21,6 +29,18 @@ export function NewsBalanceCard({
       <Text style={styles.viewpoint}>
         관점 태그 {content.viewpointTag ?? "FACT_BRIEF"}
       </Text>
+      <ActivityFlowChecklist
+        steps={[
+          { label: "기사 선택", value: content.sourceTitle },
+          { label: "읽음", value: `${content.estimatedMinutes}분 요약 확인` },
+          { label: "한 줄 생각", value: content.recordQuestion },
+          {
+            label: "관점 비교 선택",
+            value: content.viewpointTag ?? "FACT_BRIEF",
+          },
+          { label: "완료", value: `${content.xpReward} XP 기록` },
+        ]}
+      />
       <ContentPolicyPills content={content} />
       <Pressable
         accessibilityLabel="기록하기"
@@ -36,34 +56,34 @@ export function NewsBalanceCard({
 
 const styles = StyleSheet.create({
   label: {
-    color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    color: componentColors.primaryGreen,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   summary: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   viewpoint: {
     color: componentColors.textPrimary,
-    fontSize: 13,
-    fontWeight: "800",
+    fontSize: typography.labelM.fontSize,
+    fontWeight: typography.labelM.fontWeight,
   },
   button: {
-    minHeight: 44,
+    minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
-    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: componentRadius.button,
+    backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: componentColors.primaryGreenDark,
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontWeight: typography.labelM.fontWeight,
   },
 });

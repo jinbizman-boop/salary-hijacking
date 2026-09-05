@@ -5,6 +5,7 @@ import {
   SurfaceCard,
   componentColors,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 
 export type PlanActionItem = Readonly<{
@@ -39,7 +40,7 @@ export function PlanActionList({
           />
         </View>
       ))}
-      <Text style={styles.guard}>저장 후 서버 기준으로 다시 계산돼요</Text>
+      <Text style={styles.guard}>저장 후 최신 기준으로 다시 계산돼요</Text>
     </SurfaceCard>
   );
 }
@@ -47,8 +48,7 @@ export function PlanActionList({
 const styles = StyleSheet.create({
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleM,
   },
   row: {
     flexDirection: "row",
@@ -59,21 +59,18 @@ const styles = StyleSheet.create({
   },
   textBlock: {
     flex: 1,
-    gap: 3,
+    gap: salaryHijackingDesignSystem.spacing[1],
   },
   label: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelL,
   },
   description: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
+    ...salaryHijackingDesignSystem.typography.caption,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

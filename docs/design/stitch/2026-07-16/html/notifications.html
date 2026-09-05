@@ -1,0 +1,294 @@
+<!DOCTYPE html><html class="light" lang="ko" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#e5eeff",
+                    "outline": "#6e7a6f",
+                    "surface-dim": "#cbdbf5",
+                    "error-container": "#ffdad6",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#213145",
+                    "secondary-fixed": "#a6f4b5",
+                    "on-primary": "#ffffff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-secondary-fixed-variant": "#005226",
+                    "primary-fixed": "#8ef9ad",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed": "#161d1b",
+                    "primary-fixed-dim": "#72dc93",
+                    "tertiary-container": "#6f7673",
+                    "on-primary-fixed": "#00210d",
+                    "on-tertiary-container": "#f7fefa",
+                    "on-tertiary-fixed-variant": "#414846",
+                    "on-primary-fixed-variant": "#005229",
+                    "on-primary-container": "#f6fff4",
+                    "tertiary-fixed": "#dde4e0",
+                    "inverse-primary": "#72dc93",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#0b1c30",
+                    "secondary": "#1f6c3a",
+                    "surface-container-highest": "#d3e4fe",
+                    "tertiary": "#565e5b",
+                    "on-error": "#ffffff",
+                    "on-surface": "#0b1c30",
+                    "surface-variant": "#d3e4fe",
+                    "secondary-container": "#a4f1b2",
+                    "surface-container-high": "#dce9ff",
+                    "primary-container": "#078648",
+                    "primary": "#006a37",
+                    "surface": "#f8f9ff",
+                    "surface-tint": "#006d39",
+                    "on-secondary-container": "#24703e",
+                    "tertiary-fixed-dim": "#c1c8c4",
+                    "outline-variant": "#bdcabd",
+                    "surface-bright": "#f8f9ff",
+                    "on-secondary-fixed": "#00210b",
+                    "on-surface-variant": "#3e4a40",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary-fixed-dim": "#8bd79b",
+                    "background": "#f8f9ff",
+                    "unread-bg": "#F3FAF6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xl": "32px",
+                    "md": "16px",
+                    "margin-mobile": "16px",
+                    "gutter": "16px",
+                    "margin-desktop": "48px",
+                    "lg": "24px",
+                    "base": "8px",
+                    "sm": "12px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Noto Sans"],
+                    "body-md": ["Noto Sans"],
+                    "label-md": ["Noto Sans"],
+                    "headline-lg-mobile": ["Noto Sans"],
+                    "headline-lg": ["Noto Sans"],
+                    "title-md": ["Noto Sans"],
+                    "display-lg": ["Noto Sans"],
+                    "label-sm": ["Noto Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "title-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["11px", {"lineHeight": "16px", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background-color: #f8f9ff;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .unread-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #209252;
+        }
+        .transition-soft {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant flex items-center justify-between px-margin-mobile h-[56px]">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high transition-soft p-2 rounded-full">
+                arrow_back
+            </button>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-surface">알림</h1>
+</div>
+<div class="flex items-center">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-high transition-soft p-2 rounded-full">
+                settings
+            </button>
+</div>
+</header>
+<main class="pt-[56px] pb-10 max-w-2xl mx-auto">
+<!-- Filter Tabs & Quick Actions -->
+<div class="sticky top-[56px] bg-surface z-40 px-margin-mobile py-sm border-b border-outline-variant/30">
+<div class="flex items-center justify-between">
+<div class="flex gap-2 overflow-x-auto">
+<button class="h-10 px-4 rounded-full bg-primary text-on-primary font-label-md text-label-md transition-soft shrink-0">전체</button>
+<button class="h-10 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:bg-surface-dim transition-soft shrink-0">활동</button>
+<button class="h-10 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:bg-surface-dim transition-soft shrink-0">뉴스</button>
+<button class="h-10 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:bg-surface-dim transition-soft shrink-0">미확인</button><button class="h-10 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:bg-surface-dim transition-soft shrink-0">업데이트</button><button class="h-10 px-4 rounded-full bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:bg-surface-dim transition-soft shrink-0">커리어</button></div>
+<button class="text-primary font-label-md text-label-md hover:underline active:opacity-70">
+                    전체 읽음
+                </button>
+</div>
+</div>
+<!-- Notification List -->
+<div class="mt-xs">
+<!-- Group: 오늘 -->
+<section>
+<div class="px-margin-mobile py-4">
+<h2 class="text-label-md font-label-md text-outline">오늘</h2>
+</div>
+<!-- Unread Notification 1: 급여일 -->
+<div class="bg-unread-bg border-l-[3px] border-primary px-margin-mobile py-md flex gap-md cursor-pointer active:bg-surface-dim transition-soft relative">
+<div class="w-12 h-12 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-primary-container" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">급여 입금 알림</h3>
+<div class="flex items-center gap-1.5">
+<span class="text-label-sm text-outline">방금 전</span>
+<div class="unread-indicator"></div>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            반가운 급여가 입금되었습니다! 이번 달 고정 지출을 제외한 가용 금액은 <span class="text-primary font-bold">1,240,000원</span>입니다.
+                        </p>
+</div>
+</div>
+<!-- Unread Notification 2: 급여일 (추가 상세) -->
+<div class="bg-unread-bg border-l-[3px] border-primary px-margin-mobile py-md flex gap-md cursor-pointer active:bg-surface-dim transition-soft relative">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">자산 보고서가 도착했습니다</h3>
+<div class="flex items-center gap-1.5">
+<span class="text-label-sm text-outline">1시간 전</span>
+<div class="unread-indicator"></div>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            지난달 대비 총 자산이 4.2% 증가했습니다. 상세한 분석 결과를 확인해보세요.
+                        </p>
+</div>
+</div>
+<!-- Unread Notification 3: 급여 관련 안내 -->
+<div class="bg-unread-bg border-l-[3px] border-primary px-margin-mobile py-md flex gap-md cursor-pointer active:bg-surface-dim transition-soft relative">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-semibold text-on-surface">연말정산 미리보기 서비스 오픈</h3>
+<div class="flex items-center gap-1.5">
+<span class="text-label-sm text-outline">3시간 전</span>
+<div class="unread-indicator"></div>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            올해 절세 전략은 세우셨나요? 현재까지의 소비 데이터를 바탕으로 예상 환급금을 계산해드립니다.
+                        </p>
+</div>
+</div>
+</section>
+<!-- Group: 어제 -->
+<section class="mt-4">
+<div class="px-margin-mobile py-4">
+<h2 class="text-label-md font-label-md text-outline">어제</h2>
+</div>
+<!-- Read Notification: 고정지출 예정 -->
+<div class="bg-surface px-margin-mobile py-md flex gap-md cursor-pointer active:bg-surface-container-low transition-soft">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline">event_repeat</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-normal text-on-surface">고정 지출 예정 안내</h3>
+<span class="text-label-sm text-outline">어제</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            내일(26일) 정기 보험료 125,000원이 출금될 예정입니다. 계좌 잔액을 확인해주세요.
+                        </p>
+</div>
+</div>
+</section>
+<!-- Group: 이번 주 -->
+<section class="mt-4">
+<div class="px-margin-mobile py-4">
+<h2 class="text-label-md font-label-md text-outline">이번 주</h2>
+</div>
+<!-- Read Notification: 예산 초과 -->
+<div class="bg-surface px-margin-mobile py-md flex gap-md cursor-pointer active:bg-surface-container-low transition-soft">
+<div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-normal text-on-surface">식비 예산 초과 경고</h3>
+<span class="text-label-sm text-outline">3일 전</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            이번 달 식비가 목표 예산의 90%를 달성했습니다. 합리적인 소비를 권장합니다.
+                        </p>
+</div>
+</div>
+<!-- Read Notification: 기타 -->
+<div class="bg-surface px-margin-mobile py-md flex gap-md cursor-pointer active:bg-surface-container-low transition-soft">
+<div class="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline">inventory_2</span>
+</div>
+<div class="flex-1 space-y-1">
+<div class="flex justify-between items-start">
+<h3 class="font-body-lg text-body-lg font-normal text-on-surface">계약 갱신 알림</h3>
+<span class="text-label-sm text-outline">5일 전</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            구독 중인 '연봉 비서 Pro' 서비스의 갱신일이 다가오고 있습니다.
+                        </p>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Interactive script for demo purposes -->
+<script>
+        document.querySelectorAll('.active\\:bg-surface-dim').forEach(item => {
+            item.addEventListener('click', function() {
+                // Mock marking as read
+                this.classList.remove('bg-unread-bg', 'border-l-[3px]', 'border-primary');
+                this.classList.add('bg-surface');
+                const indicator = this.querySelector('.unread-indicator');
+                if (indicator) indicator.remove();
+                const title = this.querySelector('h3');
+                if (title) title.classList.replace('font-semibold', 'font-normal');
+            });
+        });
+    </script>
+</body></html>

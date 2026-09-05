@@ -179,4 +179,35 @@ describe("Neon auth repository", () => {
     expect(calls[0]?.params).not.toContain("rfr_raw-token");
     expect(calls[0]?.params).not.toContain("raw-device-id");
   });
+
+  it("upgrades legacy password credentials by rotating only active SHA-256 hashes", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonAuthRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, sqlText, params });
+        return { rows: [], rowCount: 1 };
+      },
+    });
+
+    await repository.upgradePasswordHash?.(
+      userId,
+      "pbkdf2-sha256$310000$salt$hash",
+      createRuntime(),
+    );
+
+    expect(calls[0]?.operationName).toBe("auth.upgradePasswordHash");
+    expect(calls[0]?.sqlText).toContain("credential_hash like 'sha256$%'");
+    expect(calls[0]?.sqlText).toContain("status = 'ROTATED'");
+    expect(calls[0]?.sqlText).toContain("'pbkdf2-sha256'");
+    expect(calls[0]?.params).toEqual([
+      userId,
+      "pbkdf2-sha256$310000$salt$hash",
+      "2026-07-03T05:00:00.000Z",
+    ]);
+    expect(calls[0]?.params).not.toContain("PlainPassword123!");
+  });
 });

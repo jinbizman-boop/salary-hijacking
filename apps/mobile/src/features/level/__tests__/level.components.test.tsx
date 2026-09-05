@@ -3,6 +3,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 import {
   EnglishLessonCard,
   LevelActionGrid,
+  LevelGoalCard,
   LevelHeroCard,
   NewsBalanceCard,
   ReadingContentCard,
@@ -70,7 +71,7 @@ describe("level feature components", () => {
 
     expect(screen.getByText("LV 7")).toBeTruthy();
     expect(screen.getByLabelText("LV UP 진행률 88%")).toBeTruthy();
-    expect(screen.getByText("서버 기준 XP")).toBeTruthy();
+    expect(screen.getByText("성장 XP")).toBeTruthy();
     fireEvent.press(screen.getByRole("button", { name: "뉴스 균형 읽기" }));
     expect(onSelect).toHaveBeenCalledWith("news");
   });
@@ -132,6 +133,59 @@ describe("level feature components", () => {
     expect(onRecord).toHaveBeenCalledWith(baseContent);
   });
 
+  it("renders the V3 activity to record to growth loop on focus cards", () => {
+    const onRecord = jest.fn();
+    const screen = render(
+      <>
+        <ReadingContentCard
+          content={baseContent}
+          onRecord={onRecord}
+          onStart={jest.fn()}
+        />
+        <NewsBalanceCard
+          content={{
+            ...baseContent,
+            contentId: "cnt_news",
+            contentType: "NEWS",
+            title: "출근 전 뉴스 읽기",
+          }}
+          onRecord={onRecord}
+        />
+        <EnglishLessonCard
+          content={{
+            ...baseContent,
+            contentId: "cnt_english",
+            contentType: "ENGLISH",
+            title: "오늘 영어 5문장",
+          }}
+          onRecord={onRecord}
+        />
+        <WorkoutTimerCard
+          content={{
+            ...baseContent,
+            contentId: "cnt_health",
+            contentType: "HEALTH",
+            title: "10분 회복 루틴",
+          }}
+          onRecord={onRecord}
+        />
+      </>,
+    );
+
+    expect(screen.getByText("오늘 목표")).toBeTruthy();
+    expect(screen.getByText("실제 페이지")).toBeTruthy();
+    expect(screen.getByText("독서 카드 작성")).toBeTruthy();
+    expect(screen.getByText("한 줄 기록")).toBeTruthy();
+    expect(screen.getByText("streak / XP")).toBeTruthy();
+    expect(screen.getByText("기사 선택")).toBeTruthy();
+    expect(screen.getByText("관점 비교 선택")).toBeTruthy();
+    expect(screen.getByText("영어 기본 목표")).toBeTruthy();
+    expect(screen.getByText("session complete")).toBeTruthy();
+    expect(screen.getByText("10분 루틴")).toBeTruthy();
+    expect(screen.getByText("timer / progress")).toBeTruthy();
+    expect(screen.getByText("actual duration")).toBeTruthy();
+  });
+
   it("renders XP reward toast with user-facing server authority copy", () => {
     const screen = render(
       <XpRewardToast earnedXp={30} rewardSource="READING_COMPLETE" />,
@@ -141,5 +195,38 @@ describe("level feature components", () => {
     expect(screen.getByText("독서 기록 완료 +30 XP")).toBeTruthy();
     expect(screen.getByText("중복 없이 한 번만 반영했어요")).toBeTruthy();
     expect(screen.queryByText("READING_COMPLETE +30 XP")).toBeNull();
+  });
+
+  it("renders LV UP goal source cards with separate activity and edit actions", () => {
+    const onDetail = jest.fn();
+    const onEdit = jest.fn();
+    const onQuickComplete = jest.fn();
+    const screen = render(
+      <LevelGoalCard
+        goal={{
+          detailCta: "독서하기",
+          domain: "READING",
+          editCta: "목표 수정",
+          progressLabel: "오늘 0 / 1페이지",
+          quickCompleteCta: "빠른 완료",
+          sourceLabel: "기본 목표",
+          streakLabel: "0일 연속",
+          subtitle: "하루 1페이지",
+          title: "독서",
+        }}
+        onDetail={onDetail}
+        onEdit={onEdit}
+        onQuickComplete={onQuickComplete}
+      />,
+    );
+
+    expect(screen.getByText("기본 목표")).toBeTruthy();
+    expect(screen.getByText("하루 1페이지")).toBeTruthy();
+    fireEvent.press(screen.getByRole("button", { name: "독서하기" }));
+    fireEvent.press(screen.getByRole("button", { name: "빠른 완료" }));
+    fireEvent.press(screen.getByRole("button", { name: "목표 수정" }));
+    expect(onDetail).toHaveBeenCalledWith("READING");
+    expect(onQuickComplete).toHaveBeenCalledWith("READING");
+    expect(onEdit).toHaveBeenCalledWith("READING");
   });
 });

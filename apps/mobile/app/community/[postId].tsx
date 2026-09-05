@@ -3,12 +3,16 @@ import { useLocalSearchParams } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { AppHeader, AppShell } from "../../src/shared/components";
+import { ConfirmDialog } from "../../src/shared/components/ConfirmDialog";
 import { CommunityAdDisclosure } from "../../src/features/community/components/CommunityAdDisclosure";
 import { CommunityAttachmentList } from "../../src/features/community/components/CommunityAttachmentList";
 import { CommunityCommentItem } from "../../src/features/community/components/CommunityCommentItem";
 import { CommunityPostCard } from "../../src/features/community/components/CommunityPostCard";
 import { useCommunityPost } from "../../src/features/community/hooks/useCommunityPost";
 import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
+import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
+import { SelectionBottomSheet } from "../../src/shared/ui/sheets/SelectionBottomSheet";
+import { SortFilterBottomSheet } from "../../src/shared/ui/sheets/SortFilterBottomSheet";
 import type { CommunityAdDisclosureModel } from "../../src/features/community/community.types";
 
 const SCREEN_VERSION = "4.1.0-community-post-components";
@@ -16,6 +20,13 @@ const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
 const COMMUNITY_REPORT_POLICY_GUARD = "community_report_policy_guard";
 const CONTEXTUAL_ADS_ONLY_GUARD = "contextual_ads_only_guard";
 const DEFAULT_POST_ID = "post_level_1";
+const designSystem = salaryHijackingDesignSystem;
+
+export const communityDetailStitchStateComponents = {
+  ConfirmDialog,
+  SelectionBottomSheet,
+  SortFilterBottomSheet,
+} as const;
 
 const contextualAd: CommunityAdDisclosureModel = {
   adsFinancialTargetingUsed: false,
@@ -54,7 +65,7 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
     >
       {detail ? (
         <>
-          <CommunityPostCard post={detail.post} onPress={() => undefined} />
+          <CommunityPostCard post={detail.post} />
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>본문</Text>
@@ -134,37 +145,31 @@ export function assertMobileCommunityPostCompleteness(): {
 
 const styles = StyleSheet.create({
   body: {
-    color: "#111827",
-    fontSize: 15,
-    lineHeight: 23,
+    ...designSystem.typography.bodyM,
+    color: designSystem.colors.text.primary,
   },
   error: {
-    color: "#9B1C1C",
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
+    ...designSystem.typography.labelM,
+    color: designSystem.colors.semantic.danger,
   },
   meta: {
-    color: "#6B7280",
-    fontSize: 12,
-    fontWeight: "700",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.text.secondary,
   },
   section: {
-    gap: 10,
+    gap: designSystem.spacing[3],
   },
   sectionTitle: {
-    color: "#1F2937",
-    fontSize: 16,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
+    color: designSystem.colors.text.primary,
   },
   tag: {
-    color: "#155E52",
-    fontSize: 12,
-    fontWeight: "800",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.semantic.info,
   },
   tags: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: designSystem.spacing[2],
   },
 });

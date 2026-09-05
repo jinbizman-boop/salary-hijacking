@@ -10,7 +10,7 @@
 # Cron은 Cloudflare 기준 UTC로 실행된다. 기본값 23:00 UTC = 08:00 Asia/Seoul.
 
 name = "salary-hijacking-scheduler"
-main = "src/index.ts"
+main = "src/phase5-entrypoint.ts"
 compatibility_date = "2026-06-15"
 workers_dev = true
 minify = true

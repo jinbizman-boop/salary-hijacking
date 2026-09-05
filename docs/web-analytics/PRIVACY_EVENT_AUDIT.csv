@@ -1,0 +1,10 @@
+EVENT,VERSION,PARAMETER,CLASSIFICATION,ALLOWED,REASON,TEST,STATUS
+screen_view,1,page_id,non_sensitive_operational,YES,Stable public page identifier only.,analytics.schema.test.ts,PASS
+daily_budget_viewed,1,budget_status,aggregate,YES,Status bucket only; no KRW value.,analytics.schema.test.ts,PASS
+expense_created,1,expense_amount,raw_financial,NO,Exact expense amount is prohibited.,analytics.schema.test.ts,PASS
+saving_created,1,saving_amount,raw_financial,NO,Exact saving amount is prohibited.,analytics.schema.test.ts,PASS
+partner_inquiry_submitted,1,email,pii,NO,Partner contact email must not enter analytics.,analytics.schema.test.ts,PASS
+community_post_created,1,post_body,free_text,NO,Community body text must not enter analytics.,analytics.schema.test.ts,PASS
+login_completed,1,access_token,token_or_secret,NO,Tokens are never analytics payload.,analytics.schema.test.ts,PASS
+ad_click,1,ad_slot,non_sensitive_operational,YES,Slot id contains no user finance data.,analytics.schema.test.ts,PASS
+experiment_exposed,1,variant,non_sensitive_operational,YES,Experiment variant contains no raw user data.,analytics.schema.test.ts,PASS

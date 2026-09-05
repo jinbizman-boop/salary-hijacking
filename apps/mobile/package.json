@@ -2,11 +2,11 @@
   "name": "@salary-hijacking/mobile",
   "version": "1.0.0",
   "private": true,
-  "description": "Salary Hijacking Expo React Native mobile app.",
+  "description": "급여납치 Salary Hijacking Expo React Native mobile app.",
   "license": "UNLICENSED",
   "type": "module",
   "main": "expo-router/entry",
-  "packageManager": "pnpm@10.0.0",
+  "packageManager": "pnpm@10.24.0",
   "engines": {
     "node": ">=20.11.0",
     "pnpm": ">=10.0.0 <11"
@@ -151,6 +151,7 @@
     "react-native": "0.79.6",
     "react-native-edge-to-edge": "1.6.0",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-google-mobile-ads": "15.8.3",
     "react-native-is-edge-to-edge": "1.3.1",
     "react-native-reanimated": "~3.17.0",
     "react-native-safe-area-context": "5.4.0",
@@ -219,6 +220,13 @@
     ]
   },
   "expo": {
+    "autolinking": {
+      "android": {
+        "exclude": [
+          "expo-updates"
+        ]
+      }
+    },
     "install": {
       "exclude": [
         "@react-navigation/bottom-tabs",

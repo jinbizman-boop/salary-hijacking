@@ -21,6 +21,12 @@ export type AdminRole =
   | "OPERATOR"
   | "ADMIN"
   | "SUPER_ADMIN"
+  | "OPS_ADMIN"
+  | "MODERATOR"
+  | "CONTENT_ADMIN"
+  | "SUPPORT"
+  | "ADS_PARTNER_ADMIN"
+  | "AUDITOR_READONLY"
   | "ADM_OWNER"
   | "ADM_OPS"
   | "ADM_COMMUNITY"
@@ -37,6 +43,8 @@ export type AdminPermission =
   | "user:manage"
   | "community:read"
   | "community:moderate"
+  | "support:read"
+  | "support:manage"
   | "report:read"
   | "report:manage"
   | "notice:read"
@@ -103,6 +111,14 @@ export interface AdminPrincipal {
   readonly permissions: readonly string[];
   readonly mfaVerified: boolean;
   readonly policyId: string | null;
+  readonly breakGlass:
+    | {
+        readonly active: true;
+        readonly scope: string;
+        readonly expiresAt: string;
+        readonly reason: string;
+      }
+    | null;
 }
 
 export interface PaginationInput {
@@ -362,6 +378,55 @@ const rolePermissions: Record<AdminRole, readonly AdminPermission[]> = {
     "metrics:read",
   ],
   SUPER_ADMIN: ["*"],
+  OPS_ADMIN: [
+    "admin:read",
+    "admin:write",
+    "user:read",
+    "user:manage",
+    "community:read",
+    "community:moderate",
+    "report:read",
+    "report:manage",
+    "notice:read",
+    "notice:write",
+    "notification:send",
+    "incident:manage",
+    "metrics:read",
+  ],
+  MODERATOR: [
+    "admin:read",
+    "community:read",
+    "community:moderate",
+    "report:read",
+    "report:manage",
+    "metrics:read",
+  ],
+  CONTENT_ADMIN: [
+    "admin:read",
+    "growth:read",
+    "growth:manage",
+    "notice:read",
+    "notice:write",
+    "metrics:read",
+  ],
+  SUPPORT: [
+    "admin:read",
+    "user:read",
+    "community:read",
+    "report:read",
+    "support:read",
+    "support:manage",
+    "metrics:read",
+  ],
+  ADS_PARTNER_ADMIN: [
+    "admin:read",
+    "ad:read",
+    "ad:manage",
+    "partner:read",
+    "partner:manage",
+    "metrics:read",
+  ],
+  AUDITOR_READONLY: ["admin:read", "audit:read:minimal", "metrics:read"],
   ADM_OWNER: ["*"],
   ADM_OPS: [
     "admin:read",
@@ -420,6 +485,25 @@ const rolePermissions: Record<AdminRole, readonly AdminPermission[]> = {
   ],
   ADM_AUDITOR: ["admin:read", "audit:read:minimal", "metrics:read"],
 };
+
+const legacyRoleAliases: Record<string, AdminRole> = {
+  OWNER: "SUPER_ADMIN",
+  PLATFORM_ADMIN: "OPS_ADMIN",
+  BACKEND_ADMIN: "OPS_ADMIN",
+  SECURITY_ADMIN: "OPS_ADMIN",
+  MODERATION_ADMIN: "MODERATOR",
+  MODERATOR_ADMIN: "MODERATOR",
+  PRODUCT_ADMIN: "CONTENT_ADMIN",
+  SUPPORT_ADMIN: "SUPPORT",
+  ADS_ADMIN: "ADS_PARTNER_ADMIN",
+};
+
+const breakGlassAllowedScopes = new Set<AdminPermission>([
+  "role:manage",
+  "user:manage",
+  "incident:manage",
+]);
+const BREAK_GLASS_MAX_TTL_MS = 2 * 60 * 60 * 1000;
 
 const sensitiveKeyFragments = [
   "password",
@@ -524,6 +608,12 @@ function normalizeAdminRole(value: string): AdminRole | null {
       "OPERATOR",
       "ADMIN",
       "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+      "SUPPORT",
+      "ADS_PARTNER_ADMIN",
+      "AUDITOR_READONLY",
       "ADM_OWNER",
       "ADM_OPS",
       "ADM_COMMUNITY",
@@ -536,7 +626,78 @@ function normalizeAdminRole(value: string): AdminRole | null {
   ) {
     return normalized as AdminRole;
   }
-  return null;
+  return legacyRoleAliases[normalized] ?? null;
+}
+
+function breakGlassContextFromRequest(
+  request: Request,
+  permissions: readonly string[],
+): AdminPrincipal["breakGlass"] {
+  const active = header(request, "x-admin-break-glass");
+  if (!active || active.toLowerCase() !== "true") return null;
+
+  const reason =
+    header(request, "x-admin-break-glass-reason") ??
+    header(request, "x-admin-reason");
+  if (!reason) {
+    throw new AdminHttpError(
+      400,
+      "ADMIN_BREAK_GLASS_REASON_REQUIRED",
+      "긴급 권한 사용에는 사유가 필요합니다.",
+    );
+  }
+
+  const scope = header(request, "x-admin-break-glass-scope");
+  if (!scope || !breakGlassAllowedScopes.has(scope as AdminPermission)) {
+    throw new AdminHttpError(
+      400,
+      "ADMIN_BREAK_GLASS_SCOPE_INVALID",
+      "긴급 권한 범위가 올바르지 않습니다.",
+      { allowed: [...breakGlassAllowedScopes].join(",") },
+    );
+  }
+
+  const expiresAt = header(request, "x-admin-break-glass-expires-at");
+  const expiresTime = expiresAt ? Date.parse(expiresAt) : Number.NaN;
+  const now = Date.now();
+  if (
+    !expiresAt ||
+    !Number.isFinite(expiresTime) ||
+    expiresTime <= now ||
+    expiresTime - now > BREAK_GLASS_MAX_TTL_MS
+  ) {
+    throw new AdminHttpError(
+      400,
+      "ADMIN_BREAK_GLASS_EXPIRY_INVALID",
+      "긴급 권한 만료 시각은 현재 이후 2시간 이내여야 합니다.",
+    );
+  }
+
+  if (
+    !permissions.includes("*") &&
+    !permissions.includes("incident:manage")
+  ) {
+    throw new AdminHttpError(
+      403,
+      "ADMIN_BREAK_GLASS_FORBIDDEN",
+      "긴급 권한을 활성화할 권한이 없습니다.",
+    );
+  }
+
+  return {
+    active: true,
+    scope,
+    expiresAt,
+    reason: reason.slice(0, 500),
+  };
+}
+
+function permissionsWithBreakGlass(
+  permissions: readonly string[],
+  breakGlass: AdminPrincipal["breakGlass"],
+): readonly string[] {
+  if (!breakGlass) return permissions;
+  return [...new Set([...permissions, breakGlass.scope])];
 }
 
 function authContextFromRequest(
@@ -596,12 +757,15 @@ function authContextFromRequest(
       "관리자 2단계 인증이 필요합니다.",
     );
 
+  const breakGlass = breakGlassContextFromRequest(request, permissions);
+
   return {
     adminId,
     roles,
-    permissions,
+    permissions: permissionsWithBreakGlass(permissions, breakGlass),
     mfaVerified,
     policyId: header(request, "x-auth-policy-id"),
+    breakGlass,
   };
 }
 
@@ -1577,21 +1741,22 @@ async function dispatchAdminRoute<TEnv>(
 
   if (method === "POST" && relativePath === "/ads/campaigns") {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 201, {
-      data: await repository.createAdCampaign(
-        await parseJsonBody(runtime.request),
-        runtime,
-      ),
+      data: await repository.createAdCampaign(input, runtime),
     });
   }
 
   match = matchRoute(relativePath, /^\/ads\/campaigns\/([^/]+)$/);
   if (method === "PATCH" && match) {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 200, {
       data: await repository.updateAdCampaign(
         idFromMatch(match, 1),
-        await parseJsonBody(runtime.request),
+        input,
         runtime,
       ),
     });
@@ -1600,11 +1765,13 @@ async function dispatchAdminRoute<TEnv>(
   match = matchRoute(relativePath, /^\/ads\/campaigns\/([^/]+)\/activate$/);
   if (method === "POST" && match) {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 200, {
       data: await repository.changeAdCampaignStatus(
         idFromMatch(match, 1),
         "ACTIVE",
-        await parseJsonBody(runtime.request),
+        input,
         runtime,
       ),
     });
@@ -1613,11 +1780,13 @@ async function dispatchAdminRoute<TEnv>(
   match = matchRoute(relativePath, /^\/ads\/campaigns\/([^/]+)\/pause$/);
   if (method === "POST" && match) {
     requirePermission(runtime.principal, ["ad:manage"]);
+    const input = await parseJsonBody(runtime.request);
+    assertAdPolicy(input);
     return jsonResponse(runtime, 200, {
       data: await repository.changeAdCampaignStatus(
         idFromMatch(match, 1),
         "PAUSED",
-        await parseJsonBody(runtime.request),
+        input,
         runtime,
       ),
     });

@@ -3,16 +3,24 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  StatusBar,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { componentColors, componentSpacing } from "./tokens";
+import {
+  componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type AppShellProps = Readonly<{
   children: React.ReactNode;
   header?: React.ReactNode;
   bottomTabBar?: React.ReactNode;
+  overlay?: React.ReactNode;
   accessibilityLabel?: string;
 }>;
 
@@ -20,6 +28,7 @@ export function AppShell({
   children,
   header,
   bottomTabBar,
+  overlay,
   accessibilityLabel = "급여납치 모바일 화면",
 }: AppShellProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
@@ -31,10 +40,19 @@ export function AppShell({
       keyboardVerticalOffset={insets.top}
       style={[styles.safe, { paddingTop: insets.top }]}
     >
+      <StatusBar
+        backgroundColor={componentColors.background}
+        barStyle="dark-content"
+      />
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingBottom: 96 + insets.bottom },
+          {
+            paddingBottom:
+              designSystem.navigation.bottomTabs.visualHeight +
+              componentSpacing.lg +
+              insets.bottom,
+          },
         ]}
         automaticallyAdjustKeyboardInsets
         contentInsetAdjustmentBehavior="automatic"
@@ -44,6 +62,7 @@ export function AppShell({
         {header}
         <View style={styles.stack}>{children}</View>
       </ScrollView>
+      {overlay ? <View style={styles.overlay}>{overlay}</View> : null}
       {bottomTabBar}
     </KeyboardAvoidingView>
   );
@@ -68,5 +87,9 @@ const styles = StyleSheet.create({
   },
   stack: {
     gap: componentSpacing.lg,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
   },
 });

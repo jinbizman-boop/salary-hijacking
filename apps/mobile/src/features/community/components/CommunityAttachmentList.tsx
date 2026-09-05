@@ -1,6 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { CommunityAttachment } from "../community.types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type CommunityAttachmentListProps = Readonly<{
   attachments: readonly CommunityAttachment[];
@@ -43,35 +51,35 @@ export function CommunityAttachmentList({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   item: {
     minHeight: 40,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
-    paddingHorizontal: 12,
+    gap: componentSpacing.sm,
+    paddingHorizontal: componentSpacing.sm,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.card,
   },
   name: {
     flex: 1,
-    color: "#1F2937",
-    fontSize: 13,
+    color: componentColors.textPrimary,
+    fontSize: typography.bodyS.fontSize,
   },
   clean: {
-    color: "#116149",
-    fontSize: 12,
-    fontWeight: "700",
+    color: componentColors.primaryGreenDark,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   pending: {
-    color: "#7A4D00",
-    fontSize: 13,
+    color: componentColors.warningOrange,
+    fontSize: typography.bodyS.fontSize,
   },
   rejected: {
-    color: "#9B1C1C",
-    fontSize: 13,
+    color: componentColors.dangerRed,
+    fontSize: typography.bodyS.fontSize,
   },
 });

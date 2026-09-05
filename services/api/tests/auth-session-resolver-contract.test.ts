@@ -39,6 +39,14 @@ vi.mock("@neondatabase/serverless", () => {
       };
     }
 
+    async connect() {
+      return {
+        query: (text: string, values?: readonly unknown[]) =>
+          this.query(text, values),
+        release: () => undefined,
+      };
+    }
+
     async end() {
       return undefined;
     }
@@ -80,6 +88,7 @@ function createPayrollRepository(): PayrollRepository<unknown> {
     activatePlan: notUsed,
     pausePlan: notUsed,
     archivePlan: notUsed,
+    closePlan: notUsed,
     home: async (_runtime: PayrollRouteRuntime<unknown>) => ({
       currentPlan: null,
       headline: "Protected payroll route reached",
@@ -134,8 +143,11 @@ describe("API auth DB session resolver", () => {
 
     expect(response.status).toBe(401);
     expect(body.error?.code).toBe("AUTH_SESSION_REVOKED");
-    expect(observedQueries[0]?.text).toContain("public.auth_sessions");
-    expect(observedQueries[0]?.values).toContain(sessionId);
+    const sessionQuery = observedQueries.find((query) =>
+      query.text.includes("public.auth_sessions"),
+    );
+    expect(sessionQuery?.values).toContain(sessionId);
+    expect(observedQueries[0]?.text).toContain("set_config");
     expect(JSON.stringify(body)).not.toContain("postgres://");
   });
 
@@ -161,6 +173,9 @@ describe("API auth DB session resolver", () => {
     expect(response.status).toBe(200);
     expect(body.error?.code).toBeUndefined();
     expect(body.data?.headline).toBe("Protected payroll route reached");
-    expect(observedQueries[0]?.values).toContain(sessionId);
+    const sessionQuery = observedQueries.find((query) =>
+      query.text.includes("public.auth_sessions"),
+    );
+    expect(sessionQuery?.values).toContain(sessionId);
   });
 });

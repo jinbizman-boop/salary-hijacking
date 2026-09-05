@@ -3,9 +3,11 @@ import { StyleSheet, Text, View } from "react-native";
 import {
   ProgressBar,
   SurfaceCard,
-  componentColors,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { GrowthDashboard } from "../types";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type LevelHeroCardProps = Readonly<{
   dashboard: GrowthDashboard;
@@ -19,10 +21,10 @@ export function LevelHeroCard({
     Math.round((dashboard.profile.totalExp % 1000) / 10),
   );
   return (
-    <SurfaceCard accessibilityLabel="LV UP 서버 기준 요약">
+    <SurfaceCard accessibilityLabel="LV UP 성장 요약">
       <View style={styles.row}>
         <View>
-          <Text style={styles.kicker}>서버 기준 XP</Text>
+          <Text style={styles.kicker}>성장 XP</Text>
           <Text style={styles.level}>LV {dashboard.profile.level}</Text>
         </View>
         <Text style={styles.exp}>
@@ -38,34 +40,33 @@ export function LevelHeroCard({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row",
     alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
     justifyContent: "space-between",
-    gap: 12,
   },
   kicker: {
-    color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.brand.primary,
+    fontFamily: designSystem.font.native.extraBold,
   },
   level: {
-    color: componentColors.textPrimary,
-    fontSize: 30,
-    fontWeight: "900",
+    ...designSystem.typography.display,
+    color: designSystem.colors.text.primary,
+    fontFamily: designSystem.font.native.black,
   },
   exp: {
-    color: componentColors.textSecondary,
-    fontSize: 14,
-    fontWeight: "800",
+    ...designSystem.typography.bodyS,
+    color: designSystem.colors.text.secondary,
+    fontFamily: designSystem.font.native.extraBold,
   },
   suggestion: {
-    color: componentColors.textPrimary,
-    fontSize: 14,
-    lineHeight: 20,
+    ...designSystem.typography.bodyS,
+    color: designSystem.colors.text.primary,
   },
   guard: {
-    color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "700",
+    ...designSystem.typography.caption,
+    color: designSystem.colors.text.muted,
+    fontFamily: designSystem.font.native.bold,
   },
 });

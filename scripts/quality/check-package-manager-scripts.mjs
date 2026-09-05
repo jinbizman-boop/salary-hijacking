@@ -71,6 +71,46 @@ function usesCorepackPnpmShimRunner(script) {
   return script.includes("scripts/dev/run-with-corepack-pnpm.mjs turbo run");
 }
 
+function hasPackageDependency(packageJson, dependencyName) {
+  return [
+    packageJson.dependencies,
+    packageJson.devDependencies,
+    packageJson.optionalDependencies,
+  ].some(
+    (dependencies) =>
+      dependencies &&
+      typeof dependencies === "object" &&
+      typeof dependencies[dependencyName] === "string",
+  );
+}
+
+function requiresNode22ForWrangler(packageJson) {
+  if (!hasPackageDependency(packageJson, "wrangler")) return false;
+
+  const nodeRange = packageJson.engines?.node;
+  if (typeof nodeRange !== "string") return true;
+
+  return !/(?:^|[<>=~^* xX|&(), -])>=?\s*22(?:\.|\s|$)/.test(nodeRange);
+}
+
+function readNodeVersion(directoryPath) {
+  for (const fileName of [".node-version", ".nvmrc"]) {
+    const filePath = path.join(directoryPath, fileName);
+    if (!fs.existsSync(filePath)) continue;
+    const value = fs.readFileSync(filePath, "utf8").trim();
+    if (value) return { fileName, value };
+  }
+  return null;
+}
+
+function isNode22OrNewerVersion(value) {
+  const normalized = String(value ?? "")
+    .trim()
+    .replace(/^v/u, "");
+  const major = Number.parseInt(normalized.split(".")[0] ?? "", 10);
+  return Number.isInteger(major) && major >= 22;
+}
+
 const CLOUDFLARE_DEPLOY_SCRIPT_REQUIREMENTS = {
   "deploy:cloudflare-api": [
     "--filter @salary-hijacking/api",
@@ -197,10 +237,47 @@ function checkRootCloudflareDeployEntrypoints(
   }
 }
 
+function checkApiWorkspaceDependencyPrebuild(
+  relativePath,
+  packageJson,
+  failures,
+) {
+  if (relativePath !== "services/api/package.json") return;
+  if (!hasPackageDependency(packageJson, "@salary-hijacking/security")) return;
+
+  const prepareScript = packageJson.scripts?.["prepare:workspace-deps"];
+  if (typeof prepareScript !== "string") {
+    failures.push(
+      `${relativePath} scripts.prepare:workspace-deps: missing API workspace dependency prebuild script`,
+    );
+    return;
+  }
+
+  for (const packageName of [
+    "@salary-hijacking/security",
+    "@salary-hijacking/utils",
+  ]) {
+    if (prepareScript.includes(`--filter ${packageName}`)) continue;
+    failures.push(
+      `${relativePath} scripts.prepare:workspace-deps: must build ${packageName} before API typecheck/build so clean CI can resolve workspace subpath exports`,
+    );
+  }
+
+  for (const scriptName of ["test", "test:unit", "test:integration", "test:e2e"]) {
+    const scriptValue = packageJson.scripts?.[scriptName];
+    if (typeof scriptValue !== "string") continue;
+    if (scriptValue.includes("run prepare:workspace-deps")) continue;
+    failures.push(
+      `${relativePath} scripts.${scriptName}: must run prepare:workspace-deps before Vitest so clean local/CI focused tests can resolve workspace subpath exports`,
+    );
+  }
+}
+
 export function runPackageManagerScriptCheck(options = {}) {
   const rootDir = options.rootDir ?? process.cwd();
   const failures = [];
   const checkedFiles = [];
+  let hasWranglerPackage = false;
 
   for (const packagePath of walkPackageJsonFiles(rootDir)) {
     const relativePath = toPosix(path.relative(rootDir, packagePath));
@@ -208,6 +285,15 @@ export function runPackageManagerScriptCheck(options = {}) {
 
     const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
     const scripts = packageJson.scripts;
+    if (hasPackageDependency(packageJson, "wrangler"))
+      hasWranglerPackage = true;
+
+    if (requiresNode22ForWrangler(packageJson)) {
+      failures.push(
+        `${relativePath} engines.node: Wrangler requires Node 22 or newer; set a Node 22+ range so Cloudflare build images and local dry-runs do not execute Wrangler on Node 20`,
+      );
+    }
+
     if (!scripts || typeof scripts !== "object") continue;
 
     for (const [scriptName, scriptValue] of Object.entries(scripts)) {
@@ -242,6 +328,38 @@ export function runPackageManagerScriptCheck(options = {}) {
     }
 
     checkRootCloudflareDeployEntrypoints(relativePath, packageJson, failures);
+    checkApiWorkspaceDependencyPrebuild(relativePath, packageJson, failures);
+  }
+
+  if (hasWranglerPackage) {
+    const rootNodeVersion = readNodeVersion(rootDir);
+    if (!rootNodeVersion) {
+      failures.push(
+        ".node-version: missing Node 22+ version pin for Cloudflare Workers Builds",
+      );
+    } else if (!isNode22OrNewerVersion(rootNodeVersion.value)) {
+      failures.push(
+        `${rootNodeVersion.fileName}: Cloudflare Workers Builds must pin Node 22 or newer, got ${rootNodeVersion.value}`,
+      );
+    }
+  }
+
+  for (const packagePath of walkPackageJsonFiles(rootDir)) {
+    const packageDir = path.dirname(packagePath);
+    const relativePath = toPosix(path.relative(rootDir, packagePath));
+    const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+    if (!hasPackageDependency(packageJson, "wrangler")) continue;
+
+    const packageNodeVersion = readNodeVersion(packageDir);
+    if (!packageNodeVersion) {
+      failures.push(
+        `${toPosix(path.dirname(relativePath))}/.node-version: missing Node 22+ version pin for Worker package builds`,
+      );
+    } else if (!isNode22OrNewerVersion(packageNodeVersion.value)) {
+      failures.push(
+        `${toPosix(path.dirname(relativePath))}/${packageNodeVersion.fileName}: Worker package builds must pin Node 22 or newer, got ${packageNodeVersion.value}`,
+      );
+    }
   }
 
   return {

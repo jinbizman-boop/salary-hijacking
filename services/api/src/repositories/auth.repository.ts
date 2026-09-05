@@ -1,6 +1,7 @@
 import type {
   AccountStatus,
   AuthProvider,
+  AuthReadiness,
   AuthRepository,
   AuthRole,
   AuthRuntime,
@@ -61,8 +62,6 @@ const authProviders = new Set<AuthProvider>([
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
-  "FACEBOOK",
 ]);
 
 const uuidPattern =
@@ -100,6 +99,16 @@ async function defaultQuery<TEnv>(
         readonly rows: readonly DbRow[];
         readonly rowCount: number | null;
       }>;
+      connect: () => Promise<{
+        query: (
+          text: string,
+          values?: readonly DbValue[],
+        ) => Promise<{
+          readonly rows: readonly DbRow[];
+          readonly rowCount: number | null;
+        }>;
+        release: () => void;
+      }>;
       end: () => Promise<void>;
     };
     readonly neonConfig?: { fetchConnectionCache?: boolean };
@@ -114,9 +123,12 @@ async function defaultQuery<TEnv>(
     connectionTimeoutMillis: 10_000,
     statement_timeout: 30_000,
   });
+  const client = await pool.connect();
   try {
-    return await pool.query(sqlText, [...params]);
+    await client.query("select set_config('app.is_admin', 'true', false)");
+    return await client.query(sqlText, [...params]);
   } finally {
+    client.release();
     await pool.end();
   }
 }
@@ -272,6 +284,14 @@ function mapSession(row: DbRow | undefined): AuthSession | null {
   };
 }
 
+function mapReadiness(row: DbRow | undefined): AuthReadiness {
+  return {
+    emailVerified: row?.email_verified === true,
+    onboardingCompleted: row?.onboarding_completed === true,
+    payrollReady: row?.payroll_ready === true,
+  };
+}
+
 function sessionActiveFromRow(
   row: DbRow | undefined,
   now: Date,
@@ -306,6 +326,10 @@ function mapOAuthState(row: DbRow | undefined): OAuthStateRecord | null {
     state: String(row.state),
     provider: providerFrom(row.provider),
     codeVerifierHash: String(row.code_verifier_hash),
+    nonceHash:
+      row.nonce_hash === null || row.nonce_hash === undefined
+        ? null
+        : String(row.nonce_hash),
     redirectUri: String(row.redirect_uri),
     createdAt: toIso(row.created_at),
     expiresAt: toIso(row.expires_at),
@@ -501,7 +525,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
             'PASSWORD_HASH',
             'ACTIVE',
             $4,
-            'sha256',
+            'pbkdf2-sha256',
             $6::timestamptz,
             $6::timestamptz
           from new_identity
@@ -675,6 +699,46 @@ export function createNeonAuthRepository<TEnv = unknown>(
       );
     },
 
+    async upgradePasswordHash(userId, passwordHash, runtime): Promise<void> {
+      await run(
+        runtime,
+        "auth.upgradePasswordHash",
+        `
+        with old_credentials as (
+          update public.auth_credentials
+          set status = 'ROTATED',
+              rotated_at = $3::timestamptz,
+              updated_at = $3::timestamptz
+          where user_id = $1::uuid
+            and kind = 'PASSWORD_HASH'
+            and status = 'ACTIVE'
+            and credential_hash like 'sha256$%'
+          returning user_id, identity_id
+        )
+        insert into public.auth_credentials (
+          user_id,
+          identity_id,
+          kind,
+          status,
+          credential_hash,
+          algorithm,
+          created_at,
+          updated_at
+        )
+        select
+          user_id,
+          identity_id,
+          'PASSWORD_HASH',
+          'ACTIVE',
+          $2,
+          'pbkdf2-sha256',
+          $3::timestamptz,
+          $3::timestamptz
+        from old_credentials`,
+        [assertUuid(userId, "userId"), passwordHash, runtime.now.toISOString()],
+      );
+    },
+
     async createSession(input, runtime): Promise<AuthSession> {
       const deviceHash = input.deviceId
         ? await sha256Hex(`auth-device:${input.deviceId}`)
@@ -739,19 +803,48 @@ export function createNeonAuthRepository<TEnv = unknown>(
         runtime,
         "auth.findSessionByRefreshHash",
         `
-        update public.auth_sessions
-        set last_used_at = $2::timestamptz,
-            updated_at = $2::timestamptz
-        where refresh_token_hash = $1
-          and status = 'ACTIVE'
-          and revoked_at is null
-        returning
+        with matched as (
+          select
+            session_id,
+            user_id,
+            refresh_token_hash,
+            expires_at,
+            revoked_at,
+            created_at,
+            status
+          from public.auth_sessions
+          where refresh_token_hash = $1
+          limit 1
+        ),
+        touched as (
+          update public.auth_sessions
+          set last_used_at = $2::timestamptz,
+              updated_at = $2::timestamptz
+          where session_id in (
+            select session_id
+            from matched
+            where status = 'ACTIVE'
+              and revoked_at is null
+          )
+          returning
+            session_id,
+            user_id,
+            refresh_token_hash,
+            expires_at,
+            revoked_at,
+            created_at
+        )
+        select * from touched
+        union all
+        select
           session_id,
           user_id,
           refresh_token_hash,
           expires_at,
           revoked_at,
-          created_at`,
+          created_at
+        from matched
+        where not exists (select 1 from touched)`,
         [refreshTokenHash, runtime.now.toISOString()],
       );
       return mapSession(result.rows[0]);
@@ -926,7 +1019,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
             'PASSWORD_HASH',
             'ACTIVE',
             $2,
-            'sha256',
+            'pbkdf2-sha256',
             $3::timestamptz,
             $3::timestamptz
           from old_credentials
@@ -958,16 +1051,18 @@ export function createNeonAuthRepository<TEnv = unknown>(
           state,
           provider,
           code_verifier_hash,
+          nonce_hash,
           redirect_uri,
           expires_at,
           created_at
         )
-        values ($1, $2, $3, $4, $5::timestamptz, $6::timestamptz)
+        values ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz)
         on conflict (state) do nothing`,
         [
           record.state,
           record.provider,
           record.codeVerifierHash,
+          record.nonceHash ?? null,
           record.redirectUri,
           record.expiresAt,
           runtime.now.toISOString(),
@@ -989,6 +1084,7 @@ export function createNeonAuthRepository<TEnv = unknown>(
           state,
           provider,
           code_verifier_hash,
+          nonce_hash,
           redirect_uri,
           created_at,
           expires_at`,
@@ -1011,6 +1107,33 @@ export function createNeonAuthRepository<TEnv = unknown>(
         [assertUuid(userId, "userId"), await sha256Hex(`mfa:${code}`)],
       );
       return result.rows.length > 0;
+    },
+
+    async getUserReadiness(userId, runtime): Promise<AuthReadiness> {
+      const result = await run(
+        runtime,
+        "auth.getUserReadiness",
+        `
+        select
+          (u.status = 'ACTIVE') as email_verified,
+          exists (
+            select 1
+            from public.user_profiles p
+            where p.user_id = u.user_id
+          ) as onboarding_completed,
+          exists (
+            select 1
+            from public.payroll_plans pp
+            where pp.user_id = u.user_id
+              and pp.status = 'ACTIVE'
+          ) as payroll_ready
+        from public.users u
+        where u.user_id = $1::uuid
+          and u.deleted_at is null
+        limit 1`,
+        [assertUuid(userId, "userId")],
+      );
+      return mapReadiness(result.rows[0]);
     },
   };
 }

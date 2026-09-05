@@ -6,7 +6,12 @@ import {
   ProgressBar,
   SurfaceCard,
   componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type DailyBudgetSectionProps = Readonly<{
   configuredAmount: number;
@@ -21,7 +26,7 @@ export function DailyBudgetSection({
   spentAmount,
   remainingAmount,
   onRefresh,
-  title = "홍길동님이 설정한 일일 사용 예산",
+  title = "사용자님이 설정한 일일 사용 예산",
 }: DailyBudgetSectionProps): React.ReactElement {
   const usageRate =
     configuredAmount > 0
@@ -71,50 +76,53 @@ export function DailyBudgetSection({
 const styles = StyleSheet.create({
   amountCell: {
     flex: 1,
-    gap: 4,
+    gap: componentSpacing.xs,
+    padding: componentSpacing.sm,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surfaceSoft,
   },
   amountLabel: {
-    color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    color: componentColors.primaryGreenDark,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   amountRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: componentSpacing.sm,
   },
   badge: {
     overflow: "hidden",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.xs,
+    borderRadius: componentRadius.pill,
     backgroundColor: componentColors.primaryGreenSoft,
     color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   caption: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: typography.caption.fontSize,
+    lineHeight: typography.caption.lineHeight,
   },
   dangerBadge: {
-    backgroundColor: "#FDECEC",
+    backgroundColor: salaryHijackingDesignSystem.colors.semantic.dangerSoft,
     color: componentColors.dangerRed,
   },
   dangerText: {
     color: componentColors.dangerRed,
-    fontWeight: "800",
+    fontWeight: typography.labelM.fontWeight,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   title: {
     flex: 1,
     color: componentColors.textPrimary,
-    fontSize: 16,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
 });

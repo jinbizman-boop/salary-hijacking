@@ -7,14 +7,27 @@ import { CommunityWriteForm } from "../../src/features/community/components/Comm
 import { useCommunityWrite } from "../../src/features/community/hooks/useCommunityWrite";
 import type { CommunityPostDraft } from "../../src/features/community/community.types";
 import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
+import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import { createSecureStoreRuntime } from "../../src/shared/storage/secure-store";
+import { ConfirmDialog } from "../../src/shared/components/ConfirmDialog";
+import { XpToast } from "../../src/shared/components/XpToast";
+import { AttachmentBottomSheet } from "../../src/shared/ui/sheets/AttachmentBottomSheet";
+import { VisibilityBottomSheet } from "../../src/shared/ui/sheets/VisibilityBottomSheet";
 
-const SCREEN_VERSION = "4.2.0-prototype-community-write";
+const SCREEN_VERSION = "4.2.1-server-backed-community-write";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
 const RAW_FINANCIAL_DATA_GUARD = "raw_financial_data_not_allowed_guard";
 const COMMUNITY_PUBLISH_IDEMPOTENCY_GUARD =
   "community_publish_idempotency_guard";
 const COMMUNITY_WRITE_DRAFT_KEY = "salary-hijacking.community.write-draft.v1";
+const designSystem = salaryHijackingDesignSystem;
+
+export const communityWriteStitchStateComponents = {
+  AttachmentBottomSheet,
+  ConfirmDialog,
+  VisibilityBottomSheet,
+  XpToast,
+} as const;
 
 function parseCommunityDraft(value: string | null): CommunityPostDraft | null {
   if (!value) return null;
@@ -149,49 +162,41 @@ export function assertMobileCommunityWriteCompleteness(): Readonly<{
 
 const styles = StyleSheet.create({
   error: {
-    color: "#9B1C1C",
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 19,
+    ...designSystem.typography.labelM,
+    color: designSystem.colors.semantic.danger,
   },
   iconText: {
-    color: "#32373B",
-    fontSize: 12,
-    fontWeight: "900",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.text.primary,
   },
   notice: {
-    gap: 6,
-    padding: 14,
+    gap: designSystem.spacing[2],
+    padding: designSystem.spacing[3],
     borderWidth: 1,
-    borderColor: "#D6E4DE",
-    borderRadius: 8,
-    backgroundColor: "#F3FAF7",
+    borderColor: designSystem.colors.border.strong,
+    borderRadius: designSystem.radius.sm,
+    backgroundColor: designSystem.colors.brand.primarySoft,
   },
   noticeText: {
-    color: "#4B5563",
-    fontSize: 13,
-    lineHeight: 19,
+    ...designSystem.typography.bodyS,
+    color: designSystem.colors.text.secondary,
   },
   noticeTitle: {
-    color: "#155E52",
-    fontSize: 18,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
+    color: designSystem.colors.semantic.info,
   },
   optionText: {
-    color: "#209252",
-    fontSize: 12,
-    fontWeight: "900",
+    ...designSystem.typography.labelS,
+    color: designSystem.colors.brand.primary,
   },
   success: {
-    color: "#116149",
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 19,
+    ...designSystem.typography.labelM,
+    color: designSystem.colors.semantic.success,
   },
   toolbar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
+    gap: designSystem.spacing[2],
   },
 });

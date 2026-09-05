@@ -5,7 +5,12 @@ import {
   PrimaryButton,
   SurfaceCard,
   componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type VariableExpenseDraft = Readonly<{
   title: string;
@@ -32,7 +37,7 @@ export function VariableExpenseQuickAdd({
           accessibilityLabel="지출 제목"
           onChangeText={setTitle}
           placeholder="예: 점심"
-          placeholderTextColor="#9AA3AA"
+          placeholderTextColor={componentColors.disabledGray}
           style={styles.input}
           value={title}
         />
@@ -41,7 +46,7 @@ export function VariableExpenseQuickAdd({
           keyboardType="number-pad"
           onChangeText={setAmountText}
           placeholder="예: 6500"
-          placeholderTextColor="#9AA3AA"
+          placeholderTextColor={componentColors.disabledGray}
           style={styles.input}
           value={amountText}
         />
@@ -51,6 +56,7 @@ export function VariableExpenseQuickAdd({
         accessibilityLabel="지출 추가하기"
         disabled={disabled}
         label="지출 추가하기"
+        perfMarker="interaction.quick_expense.press"
         onPress={() => onSubmit({ title: title.trim(), amount: safeAmount })}
       />
     </SurfaceCard>
@@ -60,24 +66,30 @@ export function VariableExpenseQuickAdd({
 const styles = StyleSheet.create({
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   row: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  input: {
-    minHeight: 48,
-    flex: 1,
-    paddingHorizontal: 12,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.sm,
     borderWidth: 1,
     borderColor: componentColors.line,
-    borderRadius: 14,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surfaceRaised,
+  },
+  input: {
+    minHeight: 56,
+    paddingHorizontal: componentSpacing.sm,
+    borderWidth: 1,
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.button,
+    backgroundColor: componentColors.surface,
     color: componentColors.textPrimary,
+    fontSize: typography.bodyL.fontSize,
+    fontWeight: typography.bodyL.fontWeight,
   },
   caption: {
     color: componentColors.textSecondary,
-    fontSize: 12,
+    fontSize: typography.caption.fontSize,
   },
 });

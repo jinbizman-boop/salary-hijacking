@@ -45,6 +45,8 @@ const requiredMobileAssetNames = [
   "favicon.png",
 ];
 const fixtureWorkspaces = new Set();
+const fixtureGitHead = "735eb533fb46c396eda857aafa33215587de032f";
+const fixtureArtifactSha256 = "b".repeat(64);
 
 const cleanupWorkspaces = () => {
   for (const rootDir of fixtureWorkspaces) {
@@ -409,6 +411,28 @@ const writeExternalEvidence = (rootDir, overrides = {}) => {
 };
 
 const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
+  const defaultAppIdentity = {
+    appSlug: "salary-hijacking",
+    androidPackage: "com.salaryhijacking.mobile",
+    iosBundleIdentifier: "com.salaryhijacking.mobile",
+  };
+  const defaultAndroid = {
+    productionBuildVerified: true,
+    productionBuildProfile: "production",
+    productionArtifactType: "aab",
+    productionBuildGitCommit: fixtureGitHead,
+    productionArtifactSha256: fixtureArtifactSha256,
+    storeSubmitDryRunVerified: true,
+    nativeE2eVerified: true,
+    nativeE2eConfiguration: "android.emu.debug",
+    localAdbAvailable: true,
+    localEmulatorAvailable: true,
+  };
+  const defaultIos = {
+    productionBuildVerified: true,
+    productionBuildProfile: "production",
+    storeSubmitDryRunVerified: true,
+  };
   const evidence = {
     schemaVersion: 1,
     observedAt: new Date().toISOString(),
@@ -416,27 +440,31 @@ const writeMobileNativeEvidence = (rootDir, overrides = {}) => {
     secretsRedacted: true,
     containsSecretValues: false,
     appIdentity: {
-      appSlug: "salary-hijacking",
-      androidPackage: "com.salaryhijacking.mobile",
-      iosBundleIdentifier: "com.salaryhijacking.mobile",
+      ...defaultAppIdentity,
+      ...(overrides.appIdentity ?? {}),
     },
     android: {
-      productionBuildVerified: true,
-      productionBuildProfile: "production",
-      productionArtifactType: "aab",
-      storeSubmitDryRunVerified: true,
-      nativeE2eVerified: true,
-      nativeE2eConfiguration: "android.emu.debug",
-      localAdbAvailable: true,
-      localEmulatorAvailable: true,
+      ...defaultAndroid,
+      ...(overrides.android ?? {}),
     },
     ios: {
-      productionBuildVerified: true,
-      productionBuildProfile: "production",
-      storeSubmitDryRunVerified: true,
+      ...defaultIos,
+      ...(overrides.ios ?? {}),
     },
     note: "Fixture contains no EAS token, store credential, or binary URL.",
     ...overrides,
+  };
+  evidence.appIdentity = {
+    ...defaultAppIdentity,
+    ...(overrides.appIdentity ?? {}),
+  };
+  evidence.android = {
+    ...defaultAndroid,
+    ...(overrides.android ?? {}),
+  };
+  evidence.ios = {
+    ...defaultIos,
+    ...(overrides.ios ?? {}),
   };
 
   write(
@@ -463,6 +491,8 @@ const writeMobilePreviewEvidence = (rootDir, overrides = {}) => {
       debugApkSigned: true,
       debugApkSha256:
         "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      latestSourcePackagedApkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
       downloadVerified: true,
       emulatorInstallVerified: true,
       coldStartRuns: 5,
@@ -471,6 +501,36 @@ const writeMobilePreviewEvidence = (rootDir, overrides = {}) => {
       backgroundForegroundVerified: true,
       notificationNoBottomTabVerified: true,
       physicalPhoneVerified: false,
+    },
+    latestStaticApkInspection: "artifacts/qa/test-static-apk-inspection.json",
+    latestStaticApkInspectionPass: true,
+    latestStaticApkInspectionSummary: {
+      apkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      bundleSha256: "A".repeat(64),
+      nativeAbis: ["arm64-v8a", "x86_64"],
+      arm64LibCount: 15,
+      x86_64LibCount: 15,
+      hasBundle: true,
+      pass: true,
+    },
+    finalStableQaApk: {
+      fileName: "salary-hijacking-qa-universal.apk",
+      sha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      sizeBytes: 93983937,
+      emulatorLifecycleProof: "artifacts/qa/final-lifecycle/summary.json",
+      emulatorColdStarts: "10/10 PASS",
+      emulatorBackgroundResume: "10/10 PASS",
+      emulatorFatalMarkerCount: 0,
+      launcherMonkeyProof: "artifacts/qa/final-launcher/summary.json",
+      launcherMonkeyStatus: "PASS",
+      upgradeInstallProof: "artifacts/qa/final-upgrade/summary.json",
+      upgradeInstallStatus:
+        "PASS_FROM_PREVIOUS_ORIGINAL_PACKAGE_UNIVERSAL_APK_ON_EMULATOR",
+      upgradeColdStarts: "10/10 PASS",
+      upgradeBackgroundResume: "10/10 PASS",
+      upgradeFatalMarkerCount: 0,
     },
     privacy: {
       containsEasToken: false,
@@ -654,6 +714,7 @@ const writeDatabaseEvidence = (rootDir, overrides = {}) => {
       adminSmokeVerified: true,
       serverAuthoritySmokeVerified: true,
       privacySmokeVerified: true,
+      persistenceE2eSmokeVerified: true,
       noRawFinancialDataInSmokePayloads: true,
     },
     rollback: {
@@ -775,6 +836,21 @@ const makeWorkspace = () => {
     rootDir,
     "docs/codex/09_VALIDATION_PROTOCOL.md",
     "# Validation Protocol\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/08_RELEASE_GATE_MATRIX.md",
+    "# Release Gate Matrix\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_ANDROID_DEVICE_REPORT.md",
+    "# Final Android Device Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
+  );
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+    "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration138-debug.apk\n",
   );
   write(rootDir, "release/README.md", "# Release\n");
   writeReleaseTargets(rootDir);
@@ -1676,6 +1752,85 @@ test("blocks when database migration, seed, and smoke evidence is missing", () =
   assert.match(report, /database:evidence/);
 });
 
+test("blocks database evidence without authenticated persistence read-after-write smoke", () => {
+  const rootDir = makeWorkspace();
+  writeDatabaseEvidence(rootDir, {
+    smoke: {
+      stagingApiSmokeVerified: true,
+      adminSmokeVerified: true,
+      serverAuthoritySmokeVerified: true,
+      privacySmokeVerified: true,
+      persistenceE2eSmokeVerified: false,
+      noRawFinancialDataInSmokePayloads: true,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /database:persistence-e2e-smoke/);
+  assert.match(report, /read-after-write persistence/);
+});
+
+test("surfaces no-secret staging command proof failure reasons in database blockers", () => {
+  const rootDir = makeWorkspace();
+  writeDatabaseEvidence(rootDir, {
+    smoke: {
+      stagingApiSmokeVerified: false,
+      adminSmokeVerified: false,
+      serverAuthoritySmokeVerified: false,
+      privacySmokeVerified: false,
+      persistenceE2eSmokeVerified: false,
+      noRawFinancialDataInSmokePayloads: false,
+    },
+  });
+  write(
+    rootDir,
+    "artifacts/qa/collect-staging-smoke-proof-dns-failed-20260729.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        commands: {
+          stagingApiSmoke: { verified: false, reason: "DNS_UNRESOLVED" },
+          adminSmoke: { verified: false, reason: "DNS_UNRESOLVED" },
+          serverAuthoritySmoke: { verified: false, reason: "DNS_UNRESOLVED" },
+          privacySmoke: { verified: false, reason: "DNS_UNRESOLVED" },
+          persistenceE2eSmoke: {
+            verified: false,
+            reason: "missing STAGING_PERSISTENCE_E2E_BEARER",
+          },
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /database:staging-api-smoke/);
+  assert.match(report, /DNS_UNRESOLVED/);
+  assert.match(report, /STAGING_PERSISTENCE_E2E_BEARER/);
+  assert.doesNotMatch(report, /api-staging\.salaryhijacking\.com/);
+});
+
 test("staging seed payroll recalculation reasons match migration constraint", () => {
   const migration = fs.readFileSync(
     path.join(
@@ -2454,6 +2609,31 @@ test("blocks when mobile native release evidence is missing or unverified", () =
   assert.match(report, /mobile:native:evidence/);
 });
 
+test("blocks stale APK references in final release reports", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "docs/codex/100-completion/FINAL_RELEASE_READINESS_REPORT.md",
+    "# Final Release Readiness Report\nCurrent APK: salary-hijacking-phone-arm64-iteration094-debug.apk\nSHA256: 073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91\n",
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /docs:final-report-apk-references/);
+  assert.match(report, /stale APK references/);
+  assert.doesNotMatch(
+    report,
+    /073A807EADB4F8CD0EB1571F396DEF6CC7B486876B564CBFEA4901267E70BA91/,
+  );
+});
 test("blocks when current-head mobile preview evidence is missing", () => {
   const rootDir = makeWorkspace();
   fs.rmSync(path.join(rootDir, "release", "mobile-preview-evidence.json"), {
@@ -2488,9 +2668,45 @@ test("passes current-head mobile preview evidence without treating physical phon
 
   assert.equal(result.ok, true);
   assert.match(report, /mobile:preview:apk/);
+  assert.match(report, /current-head release-like QA APK/);
+  assert.doesNotMatch(report, /current-head debug APK/);
   assert.match(report, /mobile:preview:emulator-qa/);
   assert.match(report, /mobile:preview:physical-phone/);
   assert.match(report, /Physical phone preview QA remains tracked as pending/);
+});
+
+test("reports the exact missing emulator QA probes instead of generic startup failure", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      emulatorInstallVerified: true,
+      coldStartRuns: 10,
+      coldStartFatalCount: 0,
+      navigationSmokeVerified: false,
+      backgroundForegroundVerified: true,
+      notificationNoBottomTabVerified: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:emulator-qa/);
+  assert.match(
+    report,
+    /missing emulator QA probes: navigationSmokeVerified, notificationNoBottomTabVerified/,
+  );
+  assert.doesNotMatch(
+    report,
+    /install, cold start, navigation, notification, or background\/foreground QA proof is missing/,
+  );
 });
 
 test("uses local no-secret physical phone proof when present", () => {
@@ -2509,8 +2725,16 @@ test("uses local no-secret physical phone proof when present", () => {
           iosBundleIdentifier: "com.salaryhijacking.mobile",
         },
         android: {
+          apkSha256:
+            "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
           physicalPhoneVerified: true,
           installVerified: true,
+          installedPackageVerified: true,
+          installedPackagePathHash:
+            "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+          packageInfoProbe: {
+            rawPackageInfoStored: false,
+          },
           coldStartRuns: 20,
           coldStartFatalCount: 0,
           navigationSmokeVerified: true,
@@ -2555,6 +2779,137 @@ test("uses local no-secret physical phone proof when present", () => {
     report,
     /Physical phone preview QA is verified by local no-secret proof/,
   );
+});
+
+test("blocks physical phone proof for a stale APK hash", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          apkSha256:
+            "10C3FC2ED13C90F19DEFDE57062B88ED220D74623B3EC251C6CE03BBCC8101D8",
+          physicalPhoneVerified: true,
+          installVerified: true,
+          coldStartRuns: 20,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 20,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /APK SHA256 does not match/);
+});
+
+test("blocks physical phone proof without installed package verification", () => {
+  const rootDir = makeWorkspace();
+  write(
+    rootDir,
+    "release/mobile-preview-phone-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          apkSha256:
+            "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+          physicalPhoneVerified: true,
+          installVerified: true,
+          installedPackageVerified: false,
+          installedPackagePathHash: null,
+          packageInfoProbe: {
+            rawPackageInfoStored: false,
+          },
+          coldStartRuns: 20,
+          coldStartFatalCount: 0,
+          navigationSmokeVerified: true,
+          backgroundForegroundVerified: true,
+          backgroundForegroundRuns: 20,
+          persistenceVerified: true,
+          keyboardSafeAreaVerified: true,
+          logcatSummary: {
+            fatalExceptionCount: 0,
+            reactNativeFatalCount: 0,
+            expoErrorCount: 0,
+            rawLogcatStored: false,
+          },
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsSigningKey: false,
+          containsReviewerPassword: false,
+          containsRawLogcat: false,
+          containsSecretValues: false,
+          containsRawDeviceIdentifier: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:physical-phone/);
+  assert.match(report, /installed package verification/i);
 });
 
 test("blocks physical phone proof that lacks persistence and keyboard safe-area QA", () => {
@@ -2709,6 +3064,154 @@ test("passes current-head mobile preview evidence with phone-target APK proof", 
   );
 });
 
+test("blocks when final stable QA APK runtime proof is missing", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    finalStableQaApk: undefined,
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:final-stable-runtime/);
+  assert.match(
+    report,
+    /final stable QA APK runtime proof must include clean install, launcher, upgrade, and zero fatal markers/,
+  );
+});
+
+test("blocks when static APK inspection evidence is incomplete", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    latestStaticApkInspectionPass: false,
+    latestStaticApkInspectionSummary: {
+      apkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      nativeAbis: ["x86_64"],
+      arm64LibCount: 0,
+      x86_64LibCount: 15,
+      hasBundle: true,
+      pass: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:static-apk-inspection/);
+  assert.match(
+    report,
+    /static APK inspection must prove embedded JS bundle, ARM64 and x86_64 startup libraries, Expo Router\/root markers, and matching APK SHA256/,
+  );
+});
+
+test("blocks stale safe-entry preview evidence even when older booleans are true", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    source:
+      "stale safe-entry APK evidence must not be accepted for final launch QA",
+    android: {
+      latestSourceChangesEvidence: [
+        "apps/mobile/src/android-safe-entry.tsx",
+        "D:/salary-hijacking-artifacts/apk/salary-hijacking-qa-universal-safe-entry.apk",
+      ],
+    },
+    latestStaticApkInspectionSummary: {
+      apkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      bundleSha256: "A".repeat(64),
+      nativeAbis: ["arm64-v8a", "x86_64"],
+      arm64LibCount: 15,
+      x86_64LibCount: 15,
+      hasBundle: true,
+      pass: true,
+      forbiddenBundleMarkers: [{ marker: "android-safe-entry", present: true }],
+    },
+    finalStableQaApk: {
+      note: "safe-entry patched APK shell",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:preview:apk/);
+  assert.match(report, /mobile:preview:static-apk-inspection/);
+  assert.match(report, /mobile:preview:final-stable-runtime/);
+  assert.match(report, /safe-entry/i);
+});
+
+test("accepts static inspection evidence when forbidden safe-entry markers are absent", () => {
+  const rootDir = makeWorkspace();
+  writeMobilePreviewEvidence(rootDir, {
+    latestStaticApkInspectionSummary: {
+      apkSha256:
+        "BD55D440BE081499FF743A3F25B45C91850FA42AC919CD4B80F8C9E0D40938E9",
+      bundleSha256: "A".repeat(64),
+      nativeAbis: ["arm64-v8a", "x86_64"],
+      arm64LibCount: 15,
+      x86_64LibCount: 15,
+      requiredArm64Libs: [
+        { name: "lib/arm64-v8a/libexpo-modules-core.so", present: true },
+      ],
+      requiredX86_64Libs: [
+        { name: "lib/x86_64/libexpo-modules-core.so", present: true },
+      ],
+      requiredBundleMarkers: [
+        { marker: "salary-hijacking-mobile-root", present: true },
+      ],
+      forbiddenBundleMarkers: [
+        { marker: "android-safe-entry", present: false },
+        { marker: "android-direct-entry", present: false },
+      ],
+      hasBundle: true,
+      pass: true,
+      rawDeviceIdentifiersStored: false,
+      rawLogcatStored: false,
+      secretValuesStored: false,
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.match(
+    report,
+    /static APK inspection verifies embedded Expo Router bundle markers/,
+  );
+  assert.doesNotMatch(
+    report,
+    /static APK inspection evidence is stale because it still references safe-entry\/direct-entry APK packaging/,
+  );
+});
+
 test("blocks when mobile preview APK does not package the latest source changes", () => {
   const rootDir = makeWorkspace();
   writeMobilePreviewEvidence(rootDir, {
@@ -2760,6 +3263,30 @@ test("blocks latest-source preview APK evidence when mobile source has uncommitt
   assert.match(
     report,
     /uncommitted mobile source changes exist after the latest preview APK evidence/,
+  );
+});
+
+test("blocks final stable runtime proof when mobile source changes are not packaged", () => {
+  const rootDir = makeWorkspace();
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({
+      ok: true,
+      output: " M apps/mobile/app/(tabs)/_layout.tsx\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, false);
+  assert.match(report, /BLOCKED mobile:preview:latest-source-apk/);
+  assert.match(report, /BLOCKED mobile:preview:final-stable-runtime/);
+  assert.match(
+    report,
+    /final stable QA APK runtime proof is stale because mobile source changes are not packaged/,
   );
 });
 
@@ -2830,6 +3357,11 @@ test("blocks latest-source preview APK evidence when packaged HEAD is stale", ()
 
 test("passes latest-source preview APK evidence when only evidence docs changed after packaging", () => {
   const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "2222222222222222222222222222222222222222",
+    },
+  });
   writeMobilePreviewEvidence(rootDir, {
     android: {
       latestSourcePackagedHead: "1111111111111111111111111111111111111111",
@@ -2849,6 +3381,45 @@ test("passes latest-source preview APK evidence when only evidence docs changed 
       ok: true,
       output:
         "docs/codex/100-completion/110_ITERATION_100_CURRENT_HEAD_APK_REFRESH.md\nrelease/mobile-preview-evidence.json\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /only non-mobile evidence or documentation changed after APK packaging/,
+  );
+});
+
+test("passes latest-source preview APK evidence when only root package engine policy changed after packaging", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "2222222222222222222222222222222222222222",
+    },
+  });
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourcePackagedHead: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output:
+        "package.json\nscripts/quality/check-package-manager-scripts.mjs\n",
     }),
     gitRemote: matchingGitRemote,
   });
@@ -2925,7 +3496,7 @@ test("blocks when phone-target mobile preview APK evidence is incomplete", () =>
   assert.match(report, /mobile:preview:phone-target-apk/);
   assert.match(
     report,
-    /phone-target preview\/debug APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256/,
+    /phone-target preview\/QA APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256/,
   );
   assert.doesNotMatch(report, /not-a-sha/);
 });
@@ -3075,6 +3646,67 @@ test("blocks when mobile native release evidence app identity drifts from releas
   );
 });
 
+test("blocks mobile native production AAB evidence without current-head artifact lineage", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "",
+      productionArtifactSha256: "",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: () => ({ ok: true, output: fixtureGitHead }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: `${fixtureGitHead}\trefs/heads/main`,
+    }),
+  });
+
+  const report = formatReleaseReadinessReport(result);
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:native:android-build/);
+  assert.match(
+    report,
+    /Android production EAS AAB build evidence is missing current HEAD lineage or artifact SHA256/,
+  );
+});
+
+test("blocks mobile native production AAB evidence built from a stale HEAD", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "c".repeat(40),
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: () => ({ ok: true, output: fixtureGitHead }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: `${fixtureGitHead}\trefs/heads/main`,
+    }),
+  });
+
+  const report = formatReleaseReadinessReport(result);
+  assert.equal(result.ok, false);
+  assert.match(report, /mobile:native:android-build/);
+  assert.match(
+    report,
+    /built from HEAD cccccccccccc but local HEAD is 735eb533fb46/,
+  );
+});
+
 test("uses EAS mobile native evidence when local Android tools are unavailable", () => {
   const rootDir = makeWorkspace();
   const result = analyzeReleaseReadiness({
@@ -3083,6 +3715,7 @@ test("uses EAS mobile native evidence when local Android tools are unavailable",
     commandExists: (command) => !["adb", "emulator"].includes(command),
     gitStatus: () => ({ ok: true, output: "" }),
     gitRemote: matchingGitRemote,
+    gitHead: () => ({ ok: true, output: fixtureGitHead }),
   });
   const report = formatReleaseReadinessReport(result);
 

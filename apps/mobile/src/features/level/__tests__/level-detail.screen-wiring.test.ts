@@ -39,6 +39,10 @@ describe("level detail screen wiring", () => {
       expect(source).toContain(component);
       expect(source).toContain("XpRewardToast");
       expect(source).toContain("GROWTH_CONTENTS_PATH");
+      expect(source).toContain("createMobileGrowthApi");
+      expect(source).toContain("loadGrowthContentForType");
+      expect(source).toContain("completeGrowthContentWithServerAuthority");
+      expect(source).not.toContain("onRecord={() => undefined}");
       expect(source).toContain(guard);
     },
   );

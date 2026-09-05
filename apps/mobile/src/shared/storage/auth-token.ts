@@ -1,4 +1,5 @@
 export const MOBILE_ACCESS_TOKEN_KEY = "salary-hijacking.mobile.access-token";
+export const MOBILE_REFRESH_TOKEN_KEY = "salary-hijacking.mobile.refresh-token";
 
 export type MobileBearerTokenStore = Readonly<{
   getItemAsync: (key: string) => Promise<string | null>;

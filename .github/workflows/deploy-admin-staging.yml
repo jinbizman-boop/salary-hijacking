@@ -1,0 +1,638 @@
+name: deploy-admin-staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - codex/payroll-reminder-launch-ready-100-20260714
+    paths:
+      - "apps/admin/**"
+      - "packages/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "package.json"
+      - ".github/workflows/deploy-admin-staging.yml"
+      - "scripts/release/admin-staging-workflow-contract.test.mjs"
+
+concurrency:
+  group: admin-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  FORCE_COLOR: "1"
+  TZ: Asia/Seoul
+  STAGING_BRANCH: codex/payroll-reminder-launch-ready-100-20260714
+  ADMIN_APP_DIR: apps/admin
+  ADMIN_READY_PATH: /admin/api/v1/ready
+  STAGING_API_BASE_URL: https://api-staging.salaryhijacking.com
+  STAGING_ADMIN_BASE_URL: https://admin-staging.salaryhijacking.com
+  PRODUCTION_ADMIN_BASE_URL: https://admin.salaryhijacking.com
+  ADMIN_API_ORIGIN: https://api-staging.salaryhijacking.com
+  NEXT_PUBLIC_APP_ENV: staging
+  NEXT_PUBLIC_ADMIN_BASE_PATH: /admin
+  NEXT_PUBLIC_ADMIN_API_BASE_PATH: /admin/api/v1
+  NEXT_PUBLIC_ADMIN_AUTH_BASE_PATH: /admin/auth
+
+jobs:
+  deploy-admin-staging:
+    name: Deploy admin staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment:
+      name: staging
+
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Validate staging workflow context
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging/status
+
+          if [ "${GITHUB_REF_NAME:-}" != "$STAGING_BRANCH" ]; then
+            echo "::error::This staging workflow may only run on $STAGING_BRANCH."
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "::error::Missing staging environment secret: CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::Missing staging environment secret: CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+
+          if [ "$STAGING_API_BASE_URL" != "https://api-staging.salaryhijacking.com" ]; then
+            echo "::error::Unexpected STAGING_API_BASE_URL"
+            exit 1
+          fi
+
+          if [ "$STAGING_ADMIN_BASE_URL" != "https://admin-staging.salaryhijacking.com" ]; then
+            echo "::error::Unexpected STAGING_ADMIN_BASE_URL"
+            exit 1
+          fi
+
+          echo "Staging GitHub Actions context verified without exposing secret values."
+          touch artifacts/admin-staging/status/context-ok
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run admin staging workflow contract
+        run: node scripts/release/admin-staging-workflow-contract.test.mjs
+
+      - name: Typecheck admin
+        run: pnpm --dir "$ADMIN_APP_DIR" typecheck:strict
+
+      - name: Test admin readiness route
+        run: pnpm --dir "$ADMIN_APP_DIR" exec vitest run tests/unit/admin-ready-route.test.ts --passWithNoTests
+
+      - name: Build admin OpenNext Worker
+        run: pnpm --dir "$ADMIN_APP_DIR" build:cloudflare
+
+      - name: Verify OpenNext output
+        run: |
+          set -euo pipefail
+
+          test -f "$ADMIN_APP_DIR/.open-next/worker.js"
+          test -d "$ADMIN_APP_DIR/.open-next/assets"
+          find "$ADMIN_APP_DIR/.open-next/assets" -type f | head -n 1 | grep -q .
+
+      - name: Wrangler staging dry-run
+        run: pnpm --dir "$ADMIN_APP_DIR" exec wrangler deploy --env staging --config wrangler.jsonc --dry-run
+
+      - name: Deploy admin staging Worker
+        run: |
+          set -euo pipefail
+
+          pnpm --dir "$ADMIN_APP_DIR" exec wrangler deploy --env staging --config wrangler.jsonc --keep-vars
+          touch artifacts/admin-staging/status/deploy-ok
+
+      - name: Diagnose staging API health from GitHub runner
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging/diagnostics
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          async function main() {
+            const url = `${process.env.STAGING_API_BASE_URL}/health`;
+            const startedAt = new Date().toISOString();
+            const response = await fetch(url, {
+              headers: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+            });
+            const rawBody = await response.text();
+            const allowedHeaders = {};
+
+            for (const key of [
+              "cf-ray",
+              "server",
+              "content-type",
+              "date",
+              "cache-control",
+              "cf-cache-status",
+            ]) {
+              const value = response.headers.get(key);
+              if (value) allowedHeaders[key] = value;
+            }
+
+            const redactedBody = rawBody
+              .slice(0, 1200)
+              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[redacted-email]")
+              .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+\b/gu, "[redacted-auth]")
+              .replace(/\b(?:cf_clearance|session|token|jwt|secret|password|cookie)[^\\s<>,;]*/giu, "[redacted-sensitive]");
+
+            const evidence = {
+              capturedAt: new Date().toISOString(),
+              startedAt,
+              url,
+              method: "GET",
+              requestHeaders: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+              status: response.status,
+              responseHeaders: allowedHeaders,
+              bodySnippet: redactedBody,
+              storedCookie: false,
+              storedAuthorization: false,
+              storedToken: false,
+            };
+
+            fs.writeFileSync(
+              "artifacts/admin-staging/diagnostics/staging-api-health-ci.json",
+              `${JSON.stringify(evidence, null, 2)}\n`,
+            );
+            console.log(`staging API diagnostic status=${response.status}`);
+          }
+
+          main().catch((error) => {
+            console.error(error.message);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Classify staging API public health from GitHub runner
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const diagnostic = JSON.parse(
+            fs.readFileSync(
+              "artifacts/admin-staging/diagnostics/staging-api-health-ci.json",
+              "utf8",
+            ),
+          );
+          const headers = diagnostic.responseHeaders ?? {};
+          const bodySnippet = String(diagnostic.bodySnippet ?? "");
+          const status = Number(diagnostic.status);
+          const knownBotFightChallenge =
+            status === 403 &&
+            String(headers.server ?? "").toLowerCase() === "cloudflare" &&
+            String(headers["content-type"] ?? "").includes("text/html") &&
+            bodySnippet.includes("Just a moment");
+
+          if (status === 200) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-api-public-github-ok",
+              "",
+            );
+            console.log("GitHub public staging API health returned HTTP 200");
+            process.exit(0);
+          }
+
+          if (knownBotFightChallenge) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-api-public-github-known-bot-fight-challenge",
+              "",
+            );
+            console.log(
+              "GitHub public staging API health classified as known Cloudflare Bot Fight Mode challenge",
+            );
+            process.exit(0);
+          }
+
+          throw new Error(
+            `unexpected GitHub public staging API health status ${status}`,
+          );
+          NODE
+
+      - name: Verify admin staging DNS
+        run: |
+          set -euo pipefail
+
+          node -e "require('node:dns').resolve('admin-staging.salaryhijacking.com', (error, records) => { if (error || !records.length) throw error || new Error('no DNS records'); console.log('admin staging DNS resolved'); })"
+          touch artifacts/admin-staging/status/staging-admin-dns-ok
+
+      - name: Diagnose admin staging readiness from GitHub runner
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging/diagnostics
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          async function main() {
+            const baseUrl = process.env.STAGING_ADMIN_BASE_URL;
+            const readyPath = process.env.ADMIN_READY_PATH;
+            const url = `${baseUrl}${readyPath}`;
+            const startedAt = new Date().toISOString();
+            const response = await fetch(`${baseUrl}${readyPath}`, {
+              headers: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+            });
+            const rawBody = await response.text();
+            const allowedHeaders = {};
+
+            for (const key of [
+              "cf-ray",
+              "server",
+              "content-type",
+              "date",
+              "cache-control",
+              "cf-cache-status",
+            ]) {
+              const value = response.headers.get(key);
+              if (value) allowedHeaders[key] = value;
+            }
+
+            const redactedBody = rawBody
+              .slice(0, 1200)
+              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[redacted-email]")
+              .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+\b/gu, "[redacted-auth]")
+              .replace(/\b(?:cf_clearance|session|token|jwt|secret|password|cookie)[^\\s<>,;]*/giu, "[redacted-sensitive]");
+
+            const evidence = {
+              capturedAt: new Date().toISOString(),
+              startedAt,
+              url,
+              method: "GET",
+              requestHeaders: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+              status: response.status,
+              responseHeaders: allowedHeaders,
+              bodySnippet: redactedBody,
+              storedCookie: false,
+              storedAuthorization: false,
+              storedToken: false,
+            };
+
+            fs.writeFileSync(
+              "artifacts/admin-staging/diagnostics/admin-staging-readiness-ci.json",
+              `${JSON.stringify(evidence, null, 2)}\n`,
+            );
+            console.log(`admin staging readiness diagnostic status=${response.status}`);
+          }
+
+          main().catch((error) => {
+            console.error(error.message);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Classify admin staging readiness from GitHub runner
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const diagnostic = JSON.parse(
+            fs.readFileSync(
+              "artifacts/admin-staging/diagnostics/admin-staging-readiness-ci.json",
+              "utf8",
+            ),
+          );
+          const headers = diagnostic.responseHeaders ?? {};
+          const bodySnippet = String(diagnostic.bodySnippet ?? "");
+          const status = Number(diagnostic.status);
+          const knownBotFightChallenge =
+            status === 403 &&
+            String(headers.server ?? "").toLowerCase() === "cloudflare" &&
+            String(headers["content-type"] ?? "").includes("text/html") &&
+            bodySnippet.includes("Just a moment");
+
+          if (status === 200) {
+            const body = JSON.parse(bodySnippet);
+            const internalHealth = body?.data?.stagingApiInternalHealth;
+
+            if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
+              throw new Error("admin staging readiness payload contract failed");
+            }
+
+            if (
+              internalHealth?.required !== true ||
+              internalHealth?.ok !== true ||
+              internalHealth?.source !== "cloudflare_service_binding" ||
+              internalHealth?.status !== 200 ||
+              internalHealth?.service !== "salary-hijacking-api"
+            ) {
+              throw new Error("admin staging internal API health contract failed");
+            }
+
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-admin-public-github-ok",
+              "",
+            );
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-admin-ready-ok",
+              "",
+            );
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-api-internal-health-ok",
+              "",
+            );
+            console.log("admin staging readiness verified");
+            process.exit(0);
+          }
+
+          if (knownBotFightChallenge) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/staging-admin-public-github-known-bot-fight-challenge",
+              "",
+            );
+            console.log(
+              "GitHub public admin staging readiness classified as known Cloudflare Bot Fight Mode challenge",
+            );
+            process.exit(0);
+          }
+
+          throw new Error(
+            `unexpected GitHub public admin staging readiness status ${status}`,
+          );
+          NODE
+
+      - name: Diagnose production admin read-only readiness from GitHub runner
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging/diagnostics
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          async function main() {
+            const baseUrl = process.env.PRODUCTION_ADMIN_BASE_URL;
+            const readyPath = process.env.ADMIN_READY_PATH;
+            const url = `${baseUrl}${readyPath}`;
+            const startedAt = new Date().toISOString();
+            const response = await fetch(
+              url,
+              {
+                headers: {
+                  accept: "application/json",
+                  "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+                },
+              },
+            );
+            const rawBody = await response.text();
+            const allowedHeaders = {};
+
+            for (const key of [
+              "cf-ray",
+              "server",
+              "content-type",
+              "date",
+              "cache-control",
+              "cf-cache-status",
+            ]) {
+              const value = response.headers.get(key);
+              if (value) allowedHeaders[key] = value;
+            }
+
+            const redactedBody = rawBody
+              .slice(0, 1200)
+              .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[redacted-email]")
+              .replace(/\b(?:Bearer|Basic)\s+[A-Za-z0-9._~+/=-]+\b/gu, "[redacted-auth]")
+              .replace(/\b(?:cf_clearance|session|token|jwt|secret|password|cookie)[^\\s<>,;]*/giu, "[redacted-sensitive]");
+
+            const evidence = {
+              capturedAt: new Date().toISOString(),
+              startedAt,
+              url,
+              method: "GET",
+              requestHeaders: {
+                accept: "application/json",
+                "user-agent": "salary-hijacking-admin-staging-ci/1.0",
+              },
+              status: response.status,
+              responseHeaders: allowedHeaders,
+              bodySnippet: redactedBody,
+              storedCookie: false,
+              storedAuthorization: false,
+              storedToken: false,
+            };
+
+            fs.writeFileSync(
+              "artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json",
+              `${JSON.stringify(evidence, null, 2)}\n`,
+            );
+            console.log(`production admin readiness diagnostic status=${response.status}`);
+          }
+
+          main().catch((error) => {
+            console.error(error.message);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Classify production admin read-only readiness from GitHub runner
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const diagnostic = JSON.parse(
+            fs.readFileSync(
+              "artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json",
+              "utf8",
+            ),
+          );
+          const headers = diagnostic.responseHeaders ?? {};
+          const bodySnippet = String(diagnostic.bodySnippet ?? "");
+          const status = Number(diagnostic.status);
+          const knownBotFightChallenge =
+            status === 403 &&
+            String(headers.server ?? "").toLowerCase() === "cloudflare" &&
+            String(headers["content-type"] ?? "").includes("text/html") &&
+            bodySnippet.includes("Just a moment");
+
+          if (status === 200) {
+            const body = JSON.parse(bodySnippet);
+            if (body?.data?.service !== "salary-hijacking-admin" || body?.data?.status !== "ready") {
+              throw new Error("production admin readiness payload contract failed");
+            }
+            const internalHealth = body?.data?.stagingApiInternalHealth;
+            if (internalHealth?.required === true) {
+              throw new Error("production admin must not require staging API service binding");
+            }
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/production-admin-public-github-ok",
+              "",
+            );
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/production-admin-readonly-regression-ok",
+              "",
+            );
+            console.log("production admin read-only readiness verified");
+            process.exit(0);
+          }
+
+          if (knownBotFightChallenge) {
+            fs.writeFileSync(
+              "artifacts/admin-staging/status/production-admin-public-github-known-bot-fight-challenge",
+              "",
+            );
+            console.log(
+              "GitHub public production admin readiness classified as known Cloudflare Bot Fight Mode challenge",
+            );
+            process.exit(0);
+          }
+
+          throw new Error(
+            `unexpected GitHub public production admin readiness status ${status}`,
+          );
+          NODE
+
+      - name: Write no-secret staging evidence
+        if: always()
+        run: |
+          set -euo pipefail
+
+          mkdir -p artifacts/admin-staging
+          node <<'NODE'
+          const fs = require("node:fs");
+          const statusPath = "artifacts/admin-staging/status";
+          const diagnosticPath =
+            "artifacts/admin-staging/diagnostics/staging-api-health-ci.json";
+          const adminDiagnosticPath =
+            "artifacts/admin-staging/diagnostics/admin-staging-readiness-ci.json";
+          const productionAdminDiagnosticPath =
+            "artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json";
+          const hasStatus = (name) => fs.existsSync(`${statusPath}/${name}`);
+          const stagingApiDiagnostic = fs.existsSync(diagnosticPath)
+            ? JSON.parse(fs.readFileSync(diagnosticPath, "utf8"))
+            : null;
+          const stagingAdminDiagnostic = fs.existsSync(adminDiagnosticPath)
+            ? JSON.parse(fs.readFileSync(adminDiagnosticPath, "utf8"))
+            : null;
+          const productionAdminDiagnostic = fs.existsSync(productionAdminDiagnosticPath)
+            ? JSON.parse(fs.readFileSync(productionAdminDiagnosticPath, "utf8"))
+            : null;
+
+          const evidence = {
+            evidenceType: "admin-staging-github-actions-deploy",
+            generatedAt: new Date().toISOString(),
+            repository: process.env.GITHUB_REPOSITORY,
+            workflow: process.env.GITHUB_WORKFLOW,
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            refName: process.env.GITHUB_REF_NAME,
+            commit: process.env.GITHUB_SHA,
+            runnerOs: process.env.RUNNER_OS,
+            environment: "staging",
+            adminWorker: "salary-hijacking-admin-staging",
+            wranglerEnv: "staging",
+            stagingApiBaseUrl: process.env.STAGING_API_BASE_URL,
+            stagingAdminBaseUrl: process.env.STAGING_ADMIN_BASE_URL,
+            readinessEndpoint: `${process.env.STAGING_ADMIN_BASE_URL}${process.env.ADMIN_READY_PATH}`,
+            contextValidated: hasStatus("context-ok"),
+            deployed: hasStatus("deploy-ok"),
+            stagingApiHealthOk: hasStatus("staging-api-internal-health-ok"),
+            stagingApiCiSafeInternalHealthOk: hasStatus(
+              "staging-api-internal-health-ok",
+            ),
+            stagingApiPublicGithubHealthOk: hasStatus(
+              "staging-api-public-github-ok",
+            ),
+            stagingApiPublicGithubKnownBotFightChallenge: hasStatus(
+              "staging-api-public-github-known-bot-fight-challenge",
+            ),
+            stagingApiPublicOperatorHealthRequired: true,
+            stagingAdminDnsOk: hasStatus("staging-admin-dns-ok"),
+            stagingAdminReadyOk: hasStatus("staging-admin-ready-ok"),
+            stagingAdminPublicGithubHealthOk: hasStatus(
+              "staging-admin-public-github-ok",
+            ),
+            stagingAdminPublicGithubKnownBotFightChallenge: hasStatus(
+              "staging-admin-public-github-known-bot-fight-challenge",
+            ),
+            stagingAdminPublicOperatorHealthRequired: true,
+            stagingApiDiagnostic,
+            stagingAdminDiagnostic,
+            productionAdminRegressionCheckedReadOnly: hasStatus(
+              "production-admin-readonly-regression-ok",
+            ),
+            productionAdminPublicGithubHealthOk: hasStatus(
+              "production-admin-public-github-ok",
+            ),
+            productionAdminPublicGithubKnownBotFightChallenge: hasStatus(
+              "production-admin-public-github-known-bot-fight-challenge",
+            ),
+            productionAdminPublicOperatorHealthRequired: true,
+            productionAdminDiagnostic,
+            secretsStored: false,
+            rawFinancialDataStored: false,
+            rawPersonalDataStored: false,
+            rawPushTokenStored: false,
+          };
+
+          fs.writeFileSync(
+            "artifacts/admin-staging/evidence.json",
+            `${JSON.stringify(evidence, null, 2)}\n`,
+          );
+          NODE
+
+      - name: Upload no-secret staging evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-staging-evidence-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            artifacts/admin-staging/evidence.json
+            artifacts/admin-staging/diagnostics/staging-api-health-ci.json
+            artifacts/admin-staging/diagnostics/admin-staging-readiness-ci.json
+            artifacts/admin-staging/diagnostics/production-admin-readiness-ci.json

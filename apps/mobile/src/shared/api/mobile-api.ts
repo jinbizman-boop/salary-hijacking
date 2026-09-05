@@ -22,6 +22,11 @@ import { createUploadsApi } from "../../features/uploads/api";
 import type { UploadsApiClient } from "../../features/uploads/types";
 import { readMobileApiBaseUrl } from "./api-base";
 import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "./url-validation";
+import {
   attachMobileBearerToken,
   type MobileBearerTokenStore,
 } from "../storage/auth-token";
@@ -174,15 +179,16 @@ export function createMobilePublicConfigApi(
 function normalizeMobileFactoryBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   try {
-    const url = new URL(normalized);
-    if (url.username || url.password) {
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
+    const baseUrlParts = parseMobileBaseUrlParts(normalized);
+    if (!baseUrlParts || baseUrlParts.containsCredentials) {
       throw new Error("MOBILE_API_INVALID_BASE_URL");
     }
-    const localHost =
-      url.hostname === "localhost" ||
-      url.hostname === "127.0.0.1" ||
-      url.hostname === "10.0.2.2";
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+    const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
+    if (
+      baseUrlParts.protocol !== "https:" &&
+      !(baseUrlParts.protocol === "http:" && localHost)
+    ) {
       throw new Error("MOBILE_API_INVALID_BASE_URL");
     }
     return normalized;
@@ -349,14 +355,14 @@ function publicLinkValue(
 ): string {
   const value = stringValue(input, key);
   try {
-    const url = new URL(value);
+    if (!isValidUrlString(value)) throw new Error("INVALID_URL");
+    const urlParts = parseMobileBaseUrlParts(value);
     if (
-      url.protocol === "https:" &&
-      PUBLIC_CONFIG_LINK_HOST_PATTERN.test(url.hostname) &&
-      !url.username &&
-      !url.password
+      urlParts?.protocol === "https:" &&
+      PUBLIC_CONFIG_LINK_HOST_PATTERN.test(urlParts.hostname) &&
+      !urlParts.containsCredentials
     ) {
-      return url.toString();
+      return value.trim();
     }
   } catch {
     // The public config surface must never silently accept malformed links.

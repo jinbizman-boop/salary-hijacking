@@ -5,7 +5,10 @@ import {
   createMobilePublicConfigApi,
   createMobileUploadsApi,
 } from "../mobile-api";
-import { MOBILE_ACCESS_TOKEN_KEY } from "../../storage/auth-token";
+import {
+  MOBILE_ACCESS_TOKEN_KEY,
+  MOBILE_REFRESH_TOKEN_KEY,
+} from "../../storage/auth-token";
 
 describe("mobile api factory", () => {
   it("loads public app links for partner benefits without bearer tokens or financial payloads", async () => {
@@ -407,13 +410,16 @@ describe("mobile api factory", () => {
   });
 
   it("lets the auth API factory use the provided token store for login and logout", async () => {
+    const calls: Request[] = [];
     const stored: Array<readonly [string, string]> = [];
     const deleted: string[] = [];
+    const secureStore = new Map<string, string>();
     const authApi = createMobileAuthApi({
       baseUrl: "https://api.salaryhijacking.com",
       fetcher: async (input, init) => {
         const request =
           input instanceof Request ? input : new Request(input, init);
+        calls.push(request);
         if (request.url.endsWith("/api/v1/auth/login")) {
           return new Response(
             JSON.stringify({
@@ -433,16 +439,21 @@ describe("mobile api factory", () => {
             { headers: { "content-type": "application/json" } },
           );
         }
+        expect(JSON.parse(await request.text())).toEqual({
+          refreshToken: "factory.refresh.cookie",
+        });
         return new Response(JSON.stringify({ data: { revoked: true } }), {
           headers: { "content-type": "application/json" },
         });
       },
       tokenStore: {
-        getItemAsync: async () => null,
+        getItemAsync: async (key) => secureStore.get(key) ?? null,
         setItemAsync: async (key, value) => {
+          secureStore.set(key, value);
           stored.push([key, value]);
         },
         deleteItemAsync: async (key) => {
+          secureStore.delete(key);
           deleted.push(key);
         },
       },
@@ -455,17 +466,25 @@ describe("mobile api factory", () => {
     await authApi.logout();
 
     expect(stored).toEqual([
-      ["salary-hijacking.mobile.access-token", "factory.access.jwt"],
+      [MOBILE_ACCESS_TOKEN_KEY, "factory.access.jwt"],
+      [MOBILE_REFRESH_TOKEN_KEY, "factory.refresh.cookie"],
     ]);
-    expect(stored.map(([, value]) => value).join(" ")).not.toContain(
+    expect(JSON.stringify(await calls[0]?.clone().json())).not.toContain(
       "factory.refresh.cookie",
     );
-    expect(deleted).toEqual(["salary-hijacking.mobile.access-token"]);
+    expect(calls[1]?.headers.has("authorization")).toBe(false);
+    expect(deleted).toEqual([
+      MOBILE_ACCESS_TOKEN_KEY,
+      MOBILE_REFRESH_TOKEN_KEY,
+    ]);
   });
 
   it("refreshes an expired access token once and retries the original feature request", async () => {
     const calls: Request[] = [];
-    let storedToken = "expired.access.jwt";
+    const stored = new Map<string, string>([
+      [MOBILE_ACCESS_TOKEN_KEY, "expired.access.jwt"],
+      [MOBILE_REFRESH_TOKEN_KEY, "persisted.refresh.cookie"],
+    ]);
     const budgetApi = createMobileBudgetApi({
       baseUrl: "https://api.salaryhijacking.com",
       createCorrelationId: () => "mobile-api-refresh-retry-test",
@@ -474,6 +493,9 @@ describe("mobile api factory", () => {
           input instanceof Request ? input : new Request(input, init);
         calls.push(request);
         if (request.url.endsWith("/api/v1/auth/refresh")) {
+          expect(JSON.parse(await request.clone().text())).toEqual({
+            refreshToken: "persisted.refresh.cookie",
+          });
           return new Response(
             JSON.stringify({
               data: {
@@ -530,11 +552,13 @@ describe("mobile api factory", () => {
         );
       },
       tokenStore: {
-        getItemAsync: async () => storedToken,
-        setItemAsync: async (_key, value) => {
-          storedToken = value;
+        getItemAsync: async (key) => stored.get(key) ?? null,
+        setItemAsync: async (key, value) => {
+          stored.set(key, value);
         },
-        deleteItemAsync: async () => undefined,
+        deleteItemAsync: async (key) => {
+          stored.delete(key);
+        },
       },
     });
 
@@ -551,7 +575,10 @@ describe("mobile api factory", () => {
       "/api/v1/auth/refresh",
       "/api/v1/daily-budgets/today",
     ]);
-    expect(storedToken).toBe("rotated.access.jwt");
+    expect(stored.get(MOBILE_ACCESS_TOKEN_KEY)).toBe("rotated.access.jwt");
+    expect(stored.get(MOBILE_REFRESH_TOKEN_KEY)).toBe(
+      "server.http-only.cookie",
+    );
     expect(calls[1]?.credentials).toBe("include");
     expect(calls[1]?.headers.has("authorization")).toBe(false);
   });
@@ -600,7 +627,7 @@ describe("mobile api factory", () => {
     expect(calls).toHaveLength(4);
   });
 
-  it("clears the stored access token when refresh fails after a protected request", async () => {
+  it("clears stored session credentials when refresh fails after a protected request", async () => {
     const calls: Request[] = [];
     const deleted: string[] = [];
     const budgetApi = createMobileBudgetApi({
@@ -634,7 +661,10 @@ describe("mobile api factory", () => {
       "/api/v1/daily-budgets/today",
       "/api/v1/auth/refresh",
     ]);
-    expect(deleted).toEqual([MOBILE_ACCESS_TOKEN_KEY]);
+    expect(deleted).toEqual([
+      MOBILE_ACCESS_TOKEN_KEY,
+      MOBILE_REFRESH_TOKEN_KEY,
+    ]);
   });
 
   it("creates an authenticated uploads API for community attachments", async () => {

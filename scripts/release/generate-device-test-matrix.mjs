@@ -10,8 +10,10 @@ const PHYSICAL_PHONE_HANDOFF_PATH =
 export function buildDeviceTestMatrix({
   rootDir = process.cwd(),
   rootScriptTestCount = 318,
-  updated = "2026-07-14 KST",
+  now = () => new Date(),
+  updated,
 } = {}) {
+  const updatedDate = updated ?? `${formatKstDate(now())} KST`;
   const preview = readJson(
     path.join(rootDir, "release/mobile-preview-evidence.json"),
   );
@@ -117,7 +119,7 @@ export function buildDeviceTestMatrix({
 
   return `# Device Test Matrix
 
-Updated: ${updated}
+Updated: ${updatedDate}
 
 ${rows
   .map(
@@ -137,6 +139,15 @@ export function writeDeviceTestMatrix(options = {}) {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, buildDeviceTestMatrix(options), "utf8");
   return outputPath;
+}
+
+function formatKstDate(date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+  }).format(date);
 }
 
 function readJson(filePath) {

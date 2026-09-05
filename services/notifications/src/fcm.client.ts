@@ -705,14 +705,12 @@ function assertSingleTarget(input: FcmSendInput): void {
 function buildData(input: FcmSendInput): Record<string, string> {
   const data: Record<string, string> = {
     notificationId: input.data.notificationId,
-    userId: input.data.userId,
     type: input.data.type,
     importance: input.data.importance,
     targetScreen: input.data.targetScreen,
     provider: "FCM",
     safePolicyVersion: FCM_CLIENT_VERSION,
     rawFinancialDataIncluded: "false",
-    adFinancialTargetingUsed: "false",
   };
 
   if (input.data.deeplink) data.deeplink = input.data.deeplink;

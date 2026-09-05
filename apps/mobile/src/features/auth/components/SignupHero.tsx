@@ -1,6 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { AuthBrandLogo, authVisualColors } from "./AuthVisualFrame";
+import {
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
+import { AuthBrandLogo } from "./AuthBrandLogo";
+import { authVisualColors } from "./AuthVisualFrame";
 
 export function SignupHero(): React.ReactElement {
   return (
@@ -16,12 +21,9 @@ export function SignupHero(): React.ReactElement {
 const styles = StyleSheet.create({
   title: {
     color: authVisualColors.ink,
-    fontSize: 18,
-    fontWeight: "900",
     includeFontPadding: false,
-    letterSpacing: 0,
-    lineHeight: 25,
-    marginTop: 18,
+    ...salaryHijackingDesignSystem.typography.titleM,
+    marginTop: componentSpacing.lg,
     textAlign: "center",
   },
   wrap: {

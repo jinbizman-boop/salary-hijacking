@@ -2,7 +2,7 @@ import { fireEvent, render } from "@testing-library/react-native";
 
 import {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
+  SalaryHomeScreen,
 } from "../components";
 
 describe("salary launch readiness interactions", () => {
@@ -11,11 +11,11 @@ describe("salary launch readiness interactions", () => {
   });
 
   it("renders Korean launch copy and keeps planned/completed reminder direction", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
-    expect(screen.getByText("내 급여 납치 현황")).toBeTruthy();
-    expect(screen.getByText("전체 누적 납치 금액")).toBeTruthy();
-    expect(screen.getByText("홍길동님이 설정한 일일 사용 예산")).toBeTruthy();
+    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("누적 납치금액")).toBeTruthy();
+    expect(screen.getByText("오늘 사용 가능 금액")).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
 
@@ -28,16 +28,15 @@ describe("salary launch readiness interactions", () => {
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("keeps the variable expense form above the saved table and persists rows across remounts", () => {
-    const first = render(<SalaryHomeReferenceScreen />);
+  it("keeps the variable expense form above mobile-native saved rows and persists rows across remounts", () => {
+    const first = render(<SalaryHomeScreen />);
 
     fireEvent.press(first.getByRole("button", { name: "변동 지출 추가하기" }));
     expect(
       first.getByText("금일 사용한 변동 지출을 바로 저장합니다"),
     ).toBeTruthy();
-    expect(first.getByText("항목")).toBeTruthy();
-    expect(first.getByText("세부 내용")).toBeTruthy();
-    expect(first.getAllByText("사용 금액").length).toBeGreaterThanOrEqual(1);
+    expect(first.getByText("사용 금액 합계")).toBeTruthy();
+    expect(first.queryByText("세부 내용")).toBeNull();
 
     fireEvent.changeText(
       first.getByLabelText("변동 지출 항목 입력"),
@@ -53,7 +52,7 @@ describe("salary launch readiness interactions", () => {
     expect(first.getByText("필드센스 파스콘 구입")).toBeTruthy();
     first.unmount();
 
-    const second = render(<SalaryHomeReferenceScreen />);
+    const second = render(<SalaryHomeScreen />);
     expect(second.getByText("필드센스 파스콘 구입")).toBeTruthy();
     expect(second.getByLabelText("변동 지출 합계 30,000원")).toBeTruthy();
   });

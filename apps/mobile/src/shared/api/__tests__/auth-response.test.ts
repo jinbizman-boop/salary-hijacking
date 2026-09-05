@@ -34,6 +34,7 @@ describe("mobile auth response adapter", () => {
         id: "usr_123",
         emailVerified: true,
         onboardingCompleted: true,
+        payrollReady: true,
         role: "USER",
       },
     });
@@ -68,6 +69,38 @@ describe("mobile auth response adapter", () => {
     });
   });
 
+  it("preserves server payroll readiness in the mobile login shape", () => {
+    const normalized = normalizeMobileAuthResponse(
+      {
+        data: {
+          user: {
+            userId: "usr_setup",
+            roles: "USER",
+            accountStatus: "ACTIVE",
+            emailVerified: true,
+            onboardingCompleted: true,
+            payrollReady: false,
+          },
+          tokens: {
+            accessToken: "setup.access.jwt",
+            refreshToken: "setup.refresh.token",
+            accessTokenExpiresIn: 900,
+          },
+        },
+      },
+      now,
+    );
+
+    expect(normalized.data).toMatchObject({
+      status: "AUTHENTICATED",
+      user: {
+        onboardingCompleted: true,
+        payrollReady: false,
+      },
+    });
+    expect(JSON.stringify(normalized)).not.toContain("setup.refresh.token");
+  });
+
   it("normalizes the current API register response into the mobile signup shape", () => {
     const normalized = normalizeMobileSignupResponse(
       {
@@ -98,6 +131,7 @@ describe("mobile auth response adapter", () => {
         id: "usr_new",
         emailVerified: false,
         onboardingCompleted: true,
+        payrollReady: true,
         role: "USER",
       },
     });
@@ -115,6 +149,7 @@ describe("mobile auth response adapter", () => {
           id: "usr_legacy",
           emailVerified: true,
           onboardingCompleted: true,
+          payrollReady: true,
           role: "USER",
         },
       },
@@ -128,6 +163,7 @@ describe("mobile auth response adapter", () => {
         id: "usr_legacy",
         emailVerified: true,
         onboardingCompleted: true,
+        payrollReady: true,
         role: "USER",
       },
     });
@@ -147,6 +183,7 @@ describe("mobile auth response adapter", () => {
           id: "usr_signup_legacy",
           emailVerified: true,
           onboardingCompleted: true,
+          payrollReady: true,
           role: "USER",
         },
       },
@@ -162,6 +199,7 @@ describe("mobile auth response adapter", () => {
         id: "usr_signup_legacy",
         emailVerified: true,
         onboardingCompleted: true,
+        payrollReady: true,
         role: "USER",
       },
     });

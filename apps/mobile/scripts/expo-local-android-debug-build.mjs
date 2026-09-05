@@ -31,13 +31,28 @@ export const expoModulesCoreCmakeDebugRoot = (mobileRootDir) =>
     "Debug",
   );
 
+const nativeCmakeBuildTypesForAndroidBuild = (normalizedBuildType) => ["Debug"];
+
 const isWindows = (platform) => platform === "win32";
 
 const substAliasEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS";
 const substAliasDisableEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_DISABLE";
 const substTargetEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_SUBST_TARGET";
+const gradleTimeoutEnvKey = "SALARY_HIJACKING_ANDROID_BUILD_GRADLE_TIMEOUT_MS";
+const skipAndroidTestEnvKey = "SALARY_HIJACKING_ANDROID_SKIP_ANDROID_TEST";
+const gradleTimeoutExitStatus = 124;
 const substRootLengthThreshold = 40;
 const substPreferredDriveLetters = ["Z", "Y", "X", "W", "V", "U", "T", "S"];
+
+const parsePositiveIntegerEnv = (value) => {
+  if (value === undefined || value === null || value === "") return 0;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const isSpawnTimeout = (result) =>
+  result?.error?.code === "ETIMEDOUT" ||
+  String(result?.error?.message ?? "").includes("ETIMEDOUT");
 
 const executableNames = (command, platform) =>
   isWindows(platform)
@@ -50,6 +65,51 @@ const splitPath = (pathValue) =>
   typeof pathValue === "string" && pathValue.length > 0
     ? pathValue.split(path.delimiter).filter(Boolean)
     : [];
+
+const writeGeneratedFileAtomic = (targetPath, contents, encoding = "utf8") => {
+  const targetDir = path.dirname(targetPath);
+  const tempPath = path.join(
+    targetDir,
+    `.${path.basename(targetPath)}.${process.pid}.${Date.now()}.${Math.random()
+      .toString(16)
+      .slice(2)}.tmp`,
+  );
+  let replaced = false;
+
+  fs.writeFileSync(tempPath, contents, encoding);
+  try {
+    try {
+      fs.renameSync(tempPath, targetPath);
+    } catch (error) {
+      if (
+        process.platform !== "win32" ||
+        !["EACCES", "EPERM"].includes(error?.code)
+      ) {
+        throw error;
+      }
+      try {
+        fs.copyFileSync(tempPath, targetPath);
+        fs.rmSync(tempPath, { force: true });
+      } catch (copyError) {
+        if (!["EACCES", "EPERM"].includes(copyError?.code)) {
+          throw copyError;
+        }
+        try {
+          fs.chmodSync(targetPath, 0o666);
+        } catch {
+          // The target may not exist or may already be writable.
+        }
+        fs.rmSync(targetPath, { force: true });
+        fs.renameSync(tempPath, targetPath);
+      }
+    }
+    replaced = true;
+  } finally {
+    if (!replaced) {
+      fs.rmSync(tempPath, { force: true });
+    }
+  }
+};
 
 const withBundledAndroidToolEnv = ({
   env,
@@ -100,6 +160,85 @@ const findExecutable = ({
     }
   }
   return "";
+};
+
+const quoteCmdArgument = (value) => `"${String(value).replaceAll('"', '""')}"`;
+
+const ensureWindowsNpmShim = ({
+  env,
+  mobileRootDir,
+  nodeExecutable,
+  pathValue,
+  platform = process.platform,
+}) => {
+  if (!isWindows(platform)) return "";
+  if (
+    findExecutable({
+      command: "npm",
+      directories: splitPath(pathValue),
+      platform,
+    })
+  ) {
+    return "";
+  }
+
+  const npmExecPath = env.npm_execpath || env.npm_config_execpath;
+  if (!nodeExecutable || !npmExecPath || !fs.existsSync(npmExecPath)) {
+    return "";
+  }
+
+  const shimDir = path.join(mobileRootDir, ".local-native-bin");
+  const shimScriptPath = path.join(shimDir, "npm-shim.cjs");
+  fs.mkdirSync(shimDir, { recursive: true });
+  fs.writeFileSync(
+    shimScriptPath,
+    [
+      "const { spawnSync } = require('node:child_process');",
+      `const fallbackPnpm = ${JSON.stringify(npmExecPath)};`,
+      "const args = process.argv.slice(2);",
+      "const encodePackageName = (name) => name.startsWith('@') ? name.replace('/', '%2f') : encodeURIComponent(name);",
+      "const parsePackageSpec = (spec) => {",
+      "  const atIndex = spec.startsWith('@') ? spec.indexOf('@', 1) : spec.indexOf('@');",
+      "  if (atIndex === -1) return { name: spec, versionOrTag: 'latest' };",
+      "  return { name: spec.slice(0, atIndex), versionOrTag: spec.slice(atIndex + 1) };",
+      "};",
+      "const maybeHandleView = async () => {",
+      "  if (!['view', 'info', 'show'].includes(args[0])) return false;",
+      "  const spec = args[1];",
+      "  const field = args.find((arg, index) => index > 1 && !arg.startsWith('-'));",
+      "  if (!spec || field !== 'dist') return false;",
+      "  const { name, versionOrTag } = parsePackageSpec(spec);",
+      "  const metadataResponse = await fetch(`https://registry.npmjs.org/${encodePackageName(name)}`, { headers: { 'user-agent': 'salary-hijacking-npm-shim' } });",
+      "  if (!metadataResponse.ok) throw new Error(`npm view metadata failed: ${metadataResponse.status}`);",
+      "  const metadata = await metadataResponse.json();",
+      "  const resolvedVersion = metadata.versions?.[versionOrTag] ? versionOrTag : metadata['dist-tags']?.[versionOrTag];",
+      "  const version = metadata.versions?.[resolvedVersion];",
+      "  if (!version?.dist) throw new Error(`npm view dist missing for ${spec}`);",
+      "  if (args.includes('--json')) console.log(JSON.stringify(version.dist));",
+      "  else console.log(version.dist.tarball || '');",
+      "  return true;",
+      "};",
+      "(async () => {",
+      "  if (args.includes('--version') || args.includes('-v')) { console.log('10.24.0'); return; }",
+      "  if (await maybeHandleView()) return;",
+      "  const result = spawnSync(process.execPath, [fallbackPnpm, ...args], { stdio: 'inherit', shell: false });",
+      "  process.exit(result.status ?? 1);",
+      "})().catch((error) => { console.error(error instanceof Error ? error.message : String(error)); process.exit(1); });",
+      "",
+    ].join("\n"),
+    "utf8",
+  );
+  fs.writeFileSync(
+    path.join(shimDir, "npm.cmd"),
+    [
+      "@echo off",
+      `${quoteCmdArgument(nodeExecutable)} ${quoteCmdArgument(shimScriptPath)} %*`,
+      "exit /b %ERRORLEVEL%",
+      "",
+    ].join("\r\n"),
+    "utf8",
+  );
+  return shimDir;
 };
 
 export const buildWindowsSubstAliasPlan = ({
@@ -160,7 +299,7 @@ export const parseWindowsSubstMappings = (stdout) => {
 const normalizeSubstTarget = (value) =>
   path
     .resolve(String(value ?? ""))
-    .replace(/[\\\/]+$/u, "")
+    .replace(/[\\/]+$/u, "")
     .toLowerCase();
 
 export const cleanupStaleWindowsSubstAliases = ({
@@ -266,18 +405,181 @@ const normalizeAndroidArchitectures = (architecture) => {
   return architectures.length > 0 ? [...new Set(architectures)] : ["x86_64"];
 };
 
-const buildEnv = ({ env, javaHome, pathValue, sdkRoot }) => {
+const normalizeAndroidEntry = (value) => {
+  const entry = String(value ?? "").trim();
+  if (entry === "router" || entry === "direct") return entry;
+  throw new Error(`Unsupported Android entry: ${entry || "(empty)"}`);
+};
+
+const normalizeAndroidBuildType = (value) => {
+  const buildType = String(value ?? "").trim() || "debug";
+  if (buildType === "debug" || buildType === "qaRelease") return buildType;
+  throw new Error(`Unsupported Android build type: ${buildType}`);
+};
+
+const androidVariantName = (buildType) =>
+  buildType.charAt(0).toUpperCase() + buildType.slice(1);
+
+export const repairGradleTransformTemporaryWorkspaces = ({
+  gradleUserHome,
+}) => {
+  const cachesRoot = path.join(gradleUserHome, "caches");
+  if (!fs.existsSync(cachesRoot)) return { moved: 0, removed: 0 };
+
+  let moved = 0;
+  let removed = 0;
+  const tempWorkspacePattern =
+    /^([0-9a-f]{32})-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+  const repairWorkspaceRoot = (workspaceRoot) => {
+    if (!fs.existsSync(workspaceRoot)) return;
+
+    for (const entry of fs.readdirSync(workspaceRoot, {
+      withFileTypes: true,
+    })) {
+      if (!entry.isDirectory()) continue;
+      const match = tempWorkspacePattern.exec(entry.name);
+      if (!match) continue;
+
+      const temporaryPath = path.join(workspaceRoot, entry.name);
+      const immutablePath = path.join(workspaceRoot, match[1]);
+      if (fs.existsSync(immutablePath)) {
+        try {
+          fs.rmSync(temporaryPath, { force: true, recursive: true });
+          removed += 1;
+        } catch {
+          // Windows may still hold nested Gradle cache files briefly; retrying
+          // Gradle is safe even if this duplicate temporary folder remains.
+        }
+        continue;
+      }
+
+      try {
+        fs.renameSync(temporaryPath, immutablePath);
+        moved += 1;
+      } catch {
+        // If Gradle or Windows Defender races this repair, leave the folder
+        // untouched and let the next Gradle invocation decide.
+      }
+    }
+  };
+
+  for (const cacheVersion of fs.readdirSync(cachesRoot, {
+    withFileTypes: true,
+  })) {
+    if (!cacheVersion.isDirectory()) continue;
+    const cacheVersionRoot = path.join(cachesRoot, cacheVersion.name);
+    repairWorkspaceRoot(path.join(cacheVersionRoot, "transforms"));
+    repairWorkspaceRoot(path.join(cacheVersionRoot, "kotlin-dsl", "accessors"));
+  }
+
+  return { moved, removed };
+};
+
+export const cleanGradleTransformCaches = ({ gradleUserHome }) => {
+  const cachesRoot = path.join(gradleUserHome, "caches");
+  if (!fs.existsSync(cachesRoot)) return { removed: 0 };
+
+  let removed = 0;
+  for (const cacheVersion of fs.readdirSync(cachesRoot, {
+    withFileTypes: true,
+  })) {
+    if (!cacheVersion.isDirectory()) continue;
+    const transformsRoot = path.join(
+      cachesRoot,
+      cacheVersion.name,
+      "transforms",
+    );
+    if (!fs.existsSync(transformsRoot)) continue;
+    try {
+      fs.rmSync(transformsRoot, { force: true, recursive: true });
+      removed += 1;
+    } catch {
+      repairGradleTransformTemporaryWorkspaces({ gradleUserHome });
+    }
+  }
+
+  return { removed };
+};
+
+const prepareWindowsGradleTransformCaches = ({ gradleUserHome, platform }) => {
+  if (!isWindows(platform)) return;
+  cleanGradleTransformCaches({ gradleUserHome });
+  repairGradleTransformTemporaryWorkspaces({ gradleUserHome });
+};
+
+const buildEnv = ({
+  e2eBuild = true,
+  env,
+  javaHome,
+  mobileRootDir,
+  pathValue,
+  platform = process.platform,
+  sdkRoot,
+}) => {
   const envPathKey = pathKey(env);
+  const gradleUserHome =
+    env.GRADLE_USER_HOME ??
+    (isWindows(platform)
+      ? path.join(mobileRootDir, ".gradle-local-debug")
+      : undefined);
+  const localAppData = isWindows(platform)
+    ? path.join(mobileRootDir, ".localappdata")
+    : env.LOCALAPPDATA;
+  const kotlinUserHome =
+    env.KOTLIN_USER_HOME ??
+    (gradleUserHome ? path.join(gradleUserHome, "kotlin") : undefined);
+  const androidKotlinClasspathDir =
+    env.SALARY_HIJACKING_ANDROID_KOTLIN_CLASSPATH_DIR ??
+    (gradleUserHome
+      ? path.join(gradleUserHome, "salary-hijacking-kotlin-classpath")
+      : undefined);
+  const androidSafeClasspathDir =
+    env.SALARY_HIJACKING_ANDROID_SAFE_CLASSPATH_DIR ??
+    (gradleUserHome
+      ? path.join(gradleUserHome, "salary-hijacking-safe-classpath")
+      : undefined);
+  const nodeExecutable =
+    env.SALARY_HIJACKING_NODE_EXECUTABLE ??
+    findExecutable({
+      command: "node",
+      directories: splitPath(pathValue),
+      platform,
+    });
+  const npmShimDir = ensureWindowsNpmShim({
+    env,
+    mobileRootDir,
+    nodeExecutable,
+    pathValue,
+    platform,
+  });
   return {
     ...env,
     ANDROID_HOME: sdkRoot,
     ANDROID_SDK_ROOT: sdkRoot,
-    EXPO_PUBLIC_E2E_BUILD: "true",
+    EXPO_PUBLIC_E2E_BUILD: e2eBuild ? "true" : "false",
+    ...(gradleUserHome ? { GRADLE_USER_HOME: gradleUserHome } : {}),
     JAVA_HOME: javaHome,
+    ...(kotlinUserHome ? { KOTLIN_USER_HOME: kotlinUserHome } : {}),
+    ...(androidKotlinClasspathDir
+      ? {
+          SALARY_HIJACKING_ANDROID_KOTLIN_CLASSPATH_DIR:
+            androidKotlinClasspathDir,
+        }
+      : {}),
+    ...(androidSafeClasspathDir
+      ? {
+          SALARY_HIJACKING_ANDROID_SAFE_CLASSPATH_DIR: androidSafeClasspathDir,
+        }
+      : {}),
+    ...(localAppData ? { LOCALAPPDATA: localAppData } : {}),
+    ...(nodeExecutable
+      ? { SALARY_HIJACKING_NODE_EXECUTABLE: nodeExecutable }
+      : {}),
     SALARY_HIJACKING_METRO_CANONICAL_ROOT:
-      env.SALARY_HIJACKING_METRO_CANONICAL_ROOT ?? "1",
-    NODE_ENV: env.NODE_ENV || "production",
-    [envPathKey]: [path.join(javaHome, "bin"), pathValue]
+      env.SALARY_HIJACKING_METRO_CANONICAL_ROOT ?? (e2eBuild ? "1" : "0"),
+    BABEL_ENV: "production",
+    NODE_ENV: "production",
+    [envPathKey]: [npmShimDir, path.join(javaHome, "bin"), pathValue]
       .filter(Boolean)
       .join(path.delimiter),
   };
@@ -296,18 +598,51 @@ const writeAndroidLocalProperties = ({ mobileRootDir, sdkRoot }) => {
   );
 };
 
-const ensureLocalMetroEntryFile = ({ mobileRootDir }) => {
+export const ensureLocalMetroEntryFile = ({
+  androidEntry = "router",
+  mobileRootDir,
+}) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
-  const source = 'import "expo-router/entry";\n';
+  const normalizedEntry = normalizeAndroidEntry(androidEntry);
+  const source =
+    normalizedEntry === "direct"
+      ? 'import "./src/android-direct-entry";\n'
+      : 'import "react-native-gesture-handler";\nimport "expo-router/entry";\n';
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;
   }
 
   const current = fs.readFileSync(entryFilePath, "utf8");
-  if (!current.includes("expo-router/entry")) {
+  if (current !== source) {
     fs.writeFileSync(entryFilePath, source, "utf8");
   }
+};
+
+export const installRouterAndroidEntryRestoreHooks = ({
+  mobileRootDir,
+  processObject = process,
+} = {}) => {
+  let restored = false;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    try {
+      ensureLocalMetroEntryFile({ androidEntry: "router", mobileRootDir });
+    } catch {
+      // Best effort only: signal/exit handlers must never mask the original exit.
+    }
+  };
+
+  processObject.once("exit", restore);
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    processObject.once(signal, () => {
+      restore();
+      processObject.exit(signal === "SIGINT" ? 130 : 143);
+    });
+  }
+
+  return restore;
 };
 
 const ensureGradleInputMetroEntryShim = ({ mobileRootDir }) => {
@@ -435,6 +770,17 @@ const buildCanonicalNodeResolveExpression = (resolveExpression) =>
   `(() => { const fs = require('node:fs'); return fs.realpathSync.native(${resolveExpression}); })()`;
 
 const escapeGradleString = (value) => value.replaceAll('"', '\\"');
+
+export const buildGradleNodeExecutableSource = ({
+  platform = process.platform,
+  source,
+}) => {
+  if (!isWindows(platform)) return source;
+  return source.replaceAll(
+    'commandLine("node",',
+    "commandLine(System.getenv('SALARY_HIJACKING_NODE_EXECUTABLE') ?: \"node\",",
+  );
+};
 
 const patchAndroidSettingsSameRootNodeResolution = ({ mobileRootDir }) => {
   const settingsGradlePath = path.join(
@@ -589,6 +935,7 @@ const patchAndroidSettingsSameRootNodeResolution = ({ mobileRootDir }) => {
       ].join("\n"),
     );
   }
+  nextSource = buildGradleNodeExecutableSource({ source: nextSource });
 
   if (nextSource !== source) {
     fs.writeFileSync(settingsGradlePath, nextSource, "utf8");
@@ -913,6 +1260,33 @@ const ensureSecureStoreBackupXmlResources = ({ mobileRootDir }) => {
   }
 };
 
+const ensureAndroidManifestBackupDisabled = ({ mobileRootDir }) => {
+  const manifestPath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "AndroidManifest.xml",
+  );
+  if (!fs.existsSync(manifestPath)) return;
+
+  const source = fs.readFileSync(manifestPath, "utf8");
+  let nextSource = source.replace(
+    /android:allowBackup="true"/gu,
+    'android:allowBackup="false"',
+  );
+  if (!/android:allowBackup=/u.test(nextSource)) {
+    nextSource = nextSource.replace(
+      /<application\s/u,
+      '<application android:allowBackup="false" ',
+    );
+  }
+  if (nextSource !== source) {
+    writeGeneratedFileAtomic(manifestPath, nextSource);
+  }
+};
+
 const buildReactNativePackageListPath = (mobileRootDir) =>
   path.join(
     mobileRootDir,
@@ -1015,6 +1389,204 @@ const cleanAndroidAppCompileCaches = ({ env = process.env, mobileRootDir }) => {
   }
 };
 
+const cleanNativeDependencyCompileCaches = ({ mobileRootDir }) => {
+  const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
+  const dependencyCacheDirs = [
+    path.join(
+      monorepoRootDir,
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      "build",
+      "intermediates",
+      "compile_r_class_jar",
+    ),
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      "build",
+      "intermediates",
+      "compile_r_class_jar",
+    ),
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      "build",
+      "intermediates",
+      "compile_r_class_jar",
+    ),
+  ];
+  for (const buildDir of [
+    ...new Set(dependencyCacheDirs.map((entry) => path.resolve(entry))),
+  ]) {
+    fs.rmSync(buildDir, { force: true, recursive: true });
+  }
+};
+
+const expoModulesCoreJavaKotlinClasspathMarker =
+  "salaryHijackingJavaCompileKotlinClasspathPatch";
+
+export const patchExpoModulesCoreJavaCompileKotlinClasspath = ({
+  mobileRootDir = defaultMobileRootDir(),
+} = {}) => {
+  const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
+  const buildGradlePaths = [
+    path.join(
+      monorepoRootDir,
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      "build.gradle",
+    ),
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      "build.gradle",
+    ),
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      "build.gradle",
+    ),
+  ];
+  const patchBlock = [
+    "",
+    `// ${expoModulesCoreJavaKotlinClasspathMarker}:start`,
+    "afterEvaluate {",
+    "  tasks.withType(JavaCompile).configureEach { javaTask ->",
+    "    def javaName = javaTask.name",
+    "    if (javaName.startsWith('compile') && javaName.endsWith('JavaWithJavac')) {",
+    "      def variantName = javaName.substring('compile'.length(), javaName.length() - 'JavaWithJavac'.length())",
+    "      def variantOutputName = variantName.substring(0, 1).toLowerCase() + variantName.substring(1)",
+    '      def kotlinTask = tasks.findByName("compile${variantName}Kotlin")',
+    "      if (kotlinTask != null) {",
+    "        javaTask.dependsOn(kotlinTask)",
+    "        def salaryHijackingKotlinOutput = null",
+    "        if (kotlinTask.hasProperty('destinationDirectory') && kotlinTask.destinationDirectory.isPresent()) {",
+    "          salaryHijackingKotlinOutput = kotlinTask.destinationDirectory.get().asFile",
+    "        } else if (kotlinTask.hasProperty('destinationDir')) {",
+    "          salaryHijackingKotlinOutput = kotlinTask.destinationDir",
+    "        }",
+    '        def salaryHijackingFallbackKotlinOutput = project.layout.buildDirectory.dir("tmp/kotlin-classes/${variantOutputName}").get().asFile',
+    "        if (salaryHijackingKotlinOutput != null) {",
+    "          javaTask.classpath += files(salaryHijackingKotlinOutput)",
+    "        }",
+    "        javaTask.classpath += files(salaryHijackingFallbackKotlinOutput)",
+    "        javaTask.doFirst {",
+    "          def salaryHijackingFilteredClasspath = javaTask.classpath.filter { classpathEntry ->",
+    "            !(classpathEntry.name == 'R.jar' && classpathEntry.path.contains('compile_r_class_jar'))",
+    "          }",
+    "          javaTask.classpath = salaryHijackingFilteredClasspath.plus(files(salaryHijackingKotlinOutput ?: salaryHijackingFallbackKotlinOutput))",
+    "        }",
+    "      }",
+    "    }",
+    "  }",
+    "}",
+    `// ${expoModulesCoreJavaKotlinClasspathMarker}:end`,
+    "",
+  ].join("\n");
+  let patchedCount = 0;
+  for (const buildGradlePath of [
+    ...new Set(buildGradlePaths.map((entry) => path.resolve(entry))),
+  ]) {
+    if (!fs.existsSync(buildGradlePath)) continue;
+    const source = fs.readFileSync(buildGradlePath, "utf8");
+    const markerIndex = source.indexOf(
+      `// ${expoModulesCoreJavaKotlinClasspathMarker}`,
+    );
+    const baseSource =
+      markerIndex >= 0 ? source.slice(0, markerIndex).trimEnd() : source;
+    const nextSource = `${baseSource.trimEnd()}\n${patchBlock}`;
+    if (nextSource === source) continue;
+    writeGeneratedFileAtomic(buildGradlePath, nextSource);
+    patchedCount += 1;
+  }
+  return patchedCount;
+};
+
+const androidRootJavaCompileSafeClasspathMarker =
+  "salaryHijackingJavaCompileSafeClasspathPatch";
+
+export const patchAndroidRootJavaCompileSafeClasspath = ({
+  mobileRootDir = defaultMobileRootDir(),
+} = {}) => {
+  const buildGradlePath = path.join(mobileRootDir, "android", "build.gradle");
+  if (!fs.existsSync(buildGradlePath)) return false;
+
+  const patchBlock = [
+    "",
+    `// ${androidRootJavaCompileSafeClasspathMarker}:start`,
+    "subprojects { subproject ->",
+    "  tasks.withType(JavaCompile).configureEach { javaTask ->",
+    "    javaTask.doFirst {",
+    "      def salaryHijackingSafeClasspathRootValue = System.getenv('SALARY_HIJACKING_ANDROID_SAFE_CLASSPATH_DIR')",
+    "      if (!salaryHijackingSafeClasspathRootValue) {",
+    "        return",
+    "      }",
+    "      def salaryHijackingSafeClasspathRoot = new File(salaryHijackingSafeClasspathRootValue)",
+    "      def salaryHijackingSafeClasspathFiles = []",
+    "      javaTask.classpath.files.each { classpathEntry ->",
+    "        def salaryHijackingEntryPath = classpathEntry.path",
+    "        def salaryHijackingShouldCopyClasspathJar = classpathEntry.name.endsWith('.jar') &&",
+    "          salaryHijackingEntryPath.contains('node_modules') &&",
+    '          salaryHijackingEntryPath.contains("${File.separator}android${File.separator}build${File.separator}intermediates${File.separator}") &&',
+    "          (salaryHijackingEntryPath.contains('compile_library_classes_jar') || salaryHijackingEntryPath.contains('runtime_library_classes_jar'))",
+    "        if (salaryHijackingShouldCopyClasspathJar && classpathEntry.exists()) {",
+    "          def salaryHijackingEntryHash = java.security.MessageDigest.getInstance('SHA-256').digest(salaryHijackingEntryPath.bytes).encodeHex().toString().substring(0, 16)",
+    "          def salaryHijackingSafeBaseName = classpathEntry.name.replaceAll(/[^A-Za-z0-9_.-]/, '_')",
+    '          def salaryHijackingSafeName = "${salaryHijackingSafeBaseName}-${salaryHijackingEntryHash}.jar"',
+    "          def salaryHijackingSafeFile = new File(salaryHijackingSafeClasspathRoot, salaryHijackingSafeName)",
+    "          salaryHijackingSafeFile.parentFile.mkdirs()",
+    "          java.nio.file.Files.copy(",
+    "            classpathEntry.toPath(),",
+    "            salaryHijackingSafeFile.toPath(),",
+    "            java.nio.file.StandardCopyOption.REPLACE_EXISTING",
+    "          )",
+    "          salaryHijackingSafeClasspathFiles << salaryHijackingSafeFile",
+    "        } else {",
+    "          salaryHijackingSafeClasspathFiles << classpathEntry",
+    "        }",
+    "    }",
+    "      javaTask.classpath = files(salaryHijackingSafeClasspathFiles)",
+    "    }",
+    "  }",
+    "}",
+    `// ${androidRootJavaCompileSafeClasspathMarker}:end`,
+    "",
+  ].join("\n");
+
+  const source = fs.readFileSync(buildGradlePath, "utf8");
+  const markerIndex = source.indexOf(
+    `// ${androidRootJavaCompileSafeClasspathMarker}`,
+  );
+  const baseSource =
+    markerIndex >= 0 ? source.slice(0, markerIndex).trimEnd() : source;
+  const nextSource = `${baseSource.trimEnd()}\n${patchBlock}`;
+  if (nextSource === source) return false;
+  writeGeneratedFileAtomic(buildGradlePath, nextSource);
+  return true;
+};
+
 const buildNdkAbiFiltersBlock = (architectures) =>
   [
     "        ndk {",
@@ -1060,6 +1632,160 @@ export const ensureAndroidDebugNdkAbiFilters = ({
   }
 };
 
+const insertIntoGradleBlock = (source, blockName, addition) => {
+  const match = new RegExp(`${blockName}\\s*\\{`, "u").exec(source);
+  if (!match) return source;
+
+  const openBraceIndex = source.indexOf("{", match.index);
+  let depth = 0;
+  for (let index = openBraceIndex; index < source.length; index += 1) {
+    const char = source[index];
+    if (char === "{") {
+      depth += 1;
+    } else if (char === "}") {
+      depth -= 1;
+      if (depth === 0) {
+        return `${source.slice(0, index).trimEnd()}\n${addition}\n${source.slice(index)}`;
+      }
+    }
+  }
+
+  return source;
+};
+
+const qaSigningConfigBlock = [
+  "        qa {",
+  "            if (salaryHijackingHasQaSigning) {",
+  "                storeFile file(salaryHijackingQaKeystoreFile)",
+  "                storePassword salaryHijackingQaKeystorePassword",
+  "                keyAlias salaryHijackingQaKeyAlias",
+  "                keyPassword salaryHijackingQaKeyPassword",
+  "            }",
+  "        }",
+].join("\n");
+
+const qaReleaseBuildTypeBlock = [
+  "        qaRelease {",
+  "            initWith release",
+  "            matchingFallbacks = ['release']",
+  "            debuggable false",
+  "            jniDebuggable false",
+  "            renderscriptDebuggable false",
+  "            if (salaryHijackingHasQaSigning) {",
+  "                signingConfig signingConfigs.qa",
+  "            }",
+  "        }",
+].join("\n");
+
+export const ensureAndroidDebugQaApplicationConfig = ({ mobileRootDir }) => {
+  const appBuildGradlePath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "build.gradle",
+  );
+  if (!fs.existsSync(appBuildGradlePath)) return;
+
+  const source = fs.readFileSync(appBuildGradlePath, "utf8");
+  let nextSource = source;
+
+  if (!nextSource.includes("salaryHijackingDebugApplicationIdSuffix")) {
+    nextSource = nextSource.replace(
+      /android\s*\{/u,
+      [
+        'def salaryHijackingDebugApplicationIdSuffix = (findProperty("salaryHijackingDebugApplicationIdSuffix") ?: "").toString()',
+        'def salaryHijackingDebugVersionCode = (findProperty("salaryHijackingDebugVersionCode") ?: "").toString()',
+        "",
+        "android {",
+      ].join("\n"),
+    );
+  }
+  if (!nextSource.includes("salaryHijackingQaKeystoreFile")) {
+    nextSource = nextSource.replace(
+      /android\s*\{/u,
+      [
+        'def salaryHijackingQaKeystoreFile = (findProperty("salaryHijackingQaKeystoreFile") ?: System.getenv("SALARY_HIJACKING_QA_KEYSTORE_FILE") ?: "").toString()',
+        'def salaryHijackingQaKeystorePassword = (findProperty("salaryHijackingQaKeystorePassword") ?: System.getenv("SALARY_HIJACKING_QA_KEYSTORE_PASSWORD") ?: "").toString()',
+        'def salaryHijackingQaKeyAlias = (findProperty("salaryHijackingQaKeyAlias") ?: System.getenv("SALARY_HIJACKING_QA_KEY_ALIAS") ?: "").toString()',
+        'def salaryHijackingQaKeyPassword = (findProperty("salaryHijackingQaKeyPassword") ?: System.getenv("SALARY_HIJACKING_QA_KEY_PASSWORD") ?: "").toString()',
+        "def salaryHijackingHasQaSigning = salaryHijackingQaKeystoreFile && salaryHijackingQaKeystorePassword && salaryHijackingQaKeyAlias && salaryHijackingQaKeyPassword",
+        "",
+        "android {",
+      ].join("\n"),
+    );
+  }
+
+  if (!nextSource.includes("salaryHijackingDebugVersionCode.toInteger()")) {
+    nextSource = nextSource.replace(
+      /versionCode\s+\d+/u,
+      "versionCode salaryHijackingDebugVersionCode ? salaryHijackingDebugVersionCode.toInteger() : 1",
+    );
+  }
+
+  if (
+    !/applicationIdSuffix\s+salaryHijackingDebugApplicationIdSuffix/u.test(
+      nextSource,
+    )
+  ) {
+    nextSource = nextSource.replace(
+      /(debug\s*\{\s*[\r\n]+\s*signingConfig\s+signingConfigs\.debug[^\r\n]*)(\s*[\r\n]+\s*\})/u,
+      [
+        "$1",
+        "            if (salaryHijackingDebugApplicationIdSuffix) {",
+        "                applicationIdSuffix salaryHijackingDebugApplicationIdSuffix",
+        '                versionNameSuffix salaryHijackingDebugApplicationIdSuffix.replace(".", "-")',
+        "            }",
+        "$2",
+      ].join("\n"),
+    );
+  }
+
+  if (!/signingConfigs\s*\{[\s\S]*?\bqa\s*\{/u.test(nextSource)) {
+    if (/signingConfigs\s*\{/u.test(nextSource)) {
+      nextSource = insertIntoGradleBlock(
+        nextSource,
+        "signingConfigs",
+        qaSigningConfigBlock,
+      );
+    } else {
+      nextSource = nextSource.replace(
+        /(\s*)buildTypes\s*\{/u,
+        `$1signingConfigs {\n${qaSigningConfigBlock}\n$1}\n$1buildTypes {`,
+      );
+    }
+  }
+
+  if (!/buildTypes\s*\{[\s\S]*?\bqaRelease\s*\{/u.test(nextSource)) {
+    nextSource = insertIntoGradleBlock(
+      nextSource,
+      "buildTypes",
+      qaReleaseBuildTypeBlock,
+    );
+  }
+
+  nextSource = nextSource.replace(
+    /(versionNameSuffix salaryHijackingDebugApplicationIdSuffix\.replace\("\.", "-"\)\s*[\r\n]+\s*\})\}(\s*[\r\n]+\s*release\s*\{)/u,
+    "$1$2",
+  );
+  nextSource = nextSource.replace(
+    /(versionNameSuffix salaryHijackingDebugApplicationIdSuffix\.replace\("\.", "-"\)\s*[\r\n]+\s*\})(\s*[\r\n]+\s*release\s*\{)/u,
+    "$1\n        }$2",
+  );
+
+  nextSource = nextSource.replace(
+    /^apply plugin:\s*['"]com\.google\.gms\.google-services['"]\s*$/mu,
+    [
+      "if (!salaryHijackingDebugApplicationIdSuffix) {",
+      "    apply plugin: 'com.google.gms.google-services'",
+      "}",
+    ].join("\n"),
+  );
+
+  if (nextSource !== source) {
+    fs.writeFileSync(appBuildGradlePath, nextSource, "utf8");
+  }
+};
+
 const patchAndroidExpoEntrypoints = ({ mobileRootDir }) => {
   const mainActivityPath = path.join(
     mobileRootDir,
@@ -1088,8 +1814,9 @@ const patchAndroidExpoEntrypoints = ({ mobileRootDir }) => {
         /^(\s*)\/\/\s*setTheme\(R\.style\.AppTheme\);\r?$/gmu,
         "$1setTheme(R.style.AppTheme);",
       );
-    if (nextSource !== source)
-      fs.writeFileSync(mainActivityPath, nextSource, "utf8");
+    if (nextSource !== source) {
+      writeGeneratedFileAtomic(mainActivityPath, nextSource);
+    }
   }
 };
 
@@ -1107,20 +1834,55 @@ const patchAndroidPostSplashWindowBackground = ({ mobileRootDir }) => {
   if (!fs.existsSync(stylesPath)) return;
 
   const source = fs.readFileSync(stylesPath, "utf8");
-  if (
+  const nextSource =
     /<item\s+name="android:windowBackground">@drawable\/ic_launcher_background<\/item>/u.test(
       source,
     )
-  ) {
-    return;
+      ? source
+      : source.replace(
+          /(<item\s+name="colorPrimary">[^<]+<\/item>\r?\n)/u,
+          '$1    <item name="android:windowBackground">@drawable/ic_launcher_background</item>\n',
+        );
+  if (nextSource !== source) {
+    writeGeneratedFileAtomic(stylesPath, nextSource);
   }
 
-  const nextSource = source.replace(
-    /(<item\s+name="colorPrimary">[^<]+<\/item>\r?\n)/u,
-    '$1    <item name="android:windowBackground">@drawable/ic_launcher_background</item>\n',
+  const mainActivityPath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "java",
+    "com",
+    "salaryhijacking",
+    "mobile",
+    "MainActivity.kt",
   );
-  if (nextSource !== source) {
-    fs.writeFileSync(stylesPath, nextSource, "utf8");
+  if (!fs.existsSync(mainActivityPath)) return;
+
+  const activitySource = fs.readFileSync(mainActivityPath, "utf8");
+  let nextActivitySource = activitySource;
+  if (!nextActivitySource.includes("import com.facebook.react.ReactRootView")) {
+    nextActivitySource = nextActivitySource.replace(
+      /(import com\.facebook\.react\.ReactActivityDelegate\r?\n)/u,
+      "$1import com.facebook.react.ReactRootView\n",
+    );
+  }
+  if (!nextActivitySource.includes("override fun createRootView()")) {
+    nextActivitySource = nextActivitySource.replace(
+      /(\s*object\s*:\s*DefaultReactActivityDelegate\([\s\S]*?\)\s*)\{\s*\}/u,
+      `$1{
+                  override fun createRootView(): ReactRootView {
+                    return ReactRootView(this@MainActivity).apply {
+                      setBackgroundResource(R.drawable.ic_launcher_background)
+                    }
+                  }
+              }`,
+    );
+  }
+  if (nextActivitySource !== activitySource) {
+    writeGeneratedFileAtomic(mainActivityPath, nextActivitySource);
   }
 };
 
@@ -1197,72 +1959,84 @@ export const repairReanimatedWindowsCmakeDirectories = ({
   platform,
 }) => {
   if (!isWindows(platform)) return;
-  const reanimatedCxxRoot = path.join(
-    mobileRootDir,
-    "node_modules",
-    "react-native-reanimated",
-    "android",
-    ".cxx",
-    "Debug",
+  const reanimatedCxxRoots = ["Debug", "RelWithDebInfo"].map((buildType) =>
+    path.join(
+      mobileRootDir,
+      "node_modules",
+      "react-native-reanimated",
+      "android",
+      ".cxx",
+      buildType,
+    ),
   );
   const sourceSegments = toWindowsCmakePathSegments(
     path.join(mobileRootDir, "node_modules"),
   );
-  const hashRoots = fs.existsSync(reanimatedCxxRoot)
-    ? fs
-        .readdirSync(reanimatedCxxRoot, { withFileTypes: true })
-        .filter((entry) => entry.isDirectory())
-        .flatMap((entry) => {
-          const hashRoot = path.join(reanimatedCxxRoot, entry.name);
-          const architectureRoots = fs
-            .readdirSync(hashRoot, { withFileTypes: true })
-            .filter((candidate) => candidate.isDirectory())
-            .map((candidate) => path.join(hashRoot, candidate.name));
-          return architectureRoots.length > 0
-            ? architectureRoots
-            : [path.join(hashRoot, "x86_64")];
-        })
-    : [];
-  for (const architectureRoot of hashRoots) {
-    for (const targetName of ["reanimated", "worklets"]) {
-      fs.mkdirSync(
-        path.join(
-          architectureRoot,
-          "src",
-          "main",
-          "cpp",
-          targetName,
-          "CMakeFiles",
-          `${targetName}.dir`,
-          ...sourceSegments,
+  for (const reanimatedCxxRoot of reanimatedCxxRoots) {
+    const hashRoots = fs.existsSync(reanimatedCxxRoot)
+      ? fs
+          .readdirSync(reanimatedCxxRoot, { withFileTypes: true })
+          .filter((entry) => entry.isDirectory())
+          .flatMap((entry) => {
+            const hashRoot = path.join(reanimatedCxxRoot, entry.name);
+            const architectureRoots = fs
+              .readdirSync(hashRoot, { withFileTypes: true })
+              .filter((candidate) => candidate.isDirectory())
+              .map((candidate) => path.join(hashRoot, candidate.name));
+            return architectureRoots.length > 0
+              ? architectureRoots
+              : [path.join(hashRoot, "x86_64")];
+          })
+      : [];
+    for (const architectureRoot of hashRoots) {
+      for (const targetName of ["reanimated", "worklets"]) {
+        fs.mkdirSync(
+          path.join(
+            architectureRoot,
+            "src",
+            "main",
+            "cpp",
+            targetName,
+            "CMakeFiles",
+            `${targetName}.dir`,
+            ...sourceSegments,
+          ),
+          { recursive: true },
+        );
+        mkdirSyncLongPath(
+          path.join(
+            architectureRoot,
+            "src",
+            "main",
+            "cpp",
+            targetName,
+            "CMakeFiles",
+            `${targetName}.dir`,
+            ...sourceSegments,
+          ),
+        );
+      }
+    }
+    const cmakeFileDirs = collectDirectories(reanimatedCxxRoot).filter(
+      (directory) =>
+        directory.endsWith(".dir") &&
+        directory.includes(
+          `${path.sep}src${path.sep}main${path.sep}cpp${path.sep}`,
         ),
-        { recursive: true },
-      );
-      mkdirSyncLongPath(
-        path.join(
-          architectureRoot,
-          "src",
-          "main",
-          "cpp",
-          targetName,
-          "CMakeFiles",
-          `${targetName}.dir`,
-          ...sourceSegments,
-        ),
-      );
+    );
+    for (const directory of cmakeFileDirs) {
+      mkdirSyncLongPath(path.join(directory, ...sourceSegments));
     }
   }
-  const cmakeFileDirs = collectDirectories(reanimatedCxxRoot).filter(
-    (directory) =>
-      directory.endsWith(".dir") &&
-      directory.includes(
-        `${path.sep}src${path.sep}main${path.sep}cpp${path.sep}`,
-      ),
-  );
-  for (const directory of cmakeFileDirs) {
-    mkdirSyncLongPath(path.join(directory, ...sourceSegments));
-  }
 };
+
+const reanimatedAndroidRoot = (mobileRootDir) =>
+  path.join(
+    mobileRootDir,
+    "node_modules",
+    "react-native-reanimated",
+    "android",
+  );
 
 const cmakeExecutableFromCache = ({ buildDir, env = process.env } = {}) => {
   const cachePath = path.join(buildDir, "CMakeCache.txt");
@@ -1342,7 +2116,7 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
   if (!isWindows(platform)) return;
   const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
   const nodeModulesRoot = path.join(monorepoRootDir, "node_modules");
-  const expoModulesRoots = [
+  const expoModulesRoots = ["Debug", "RelWithDebInfo"].flatMap((buildType) => [
     path.join(
       mobileRootDir,
       "node_modules",
@@ -1352,7 +2126,7 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
       "expo-modules-core",
       "android",
       ".cxx",
-      "Debug",
+      buildType,
     ),
     path.join(
       mobileRootDir,
@@ -1360,7 +2134,7 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
       "expo-modules-core",
       "android",
       ".cxx",
-      "Debug",
+      buildType,
     ),
     path.join(
       nodeModulesRoot,
@@ -1370,9 +2144,9 @@ const repairExpoModulesCoreWindowsCmakeDirectories = ({
       "expo-modules-core",
       "android",
       ".cxx",
-      "Debug",
+      buildType,
     ),
-  ];
+  ]);
   const sourceSegments = toWindowsCmakePathSegments(nodeModulesRoot);
 
   for (const debugRoot of expoModulesRoots) {
@@ -1446,6 +2220,215 @@ export const repairWindowsCmakeExistingInputPhonyEdges = ({
   return repairedCount;
 };
 
+const cmakePath = (value) => value.replace(/\\/gu, "/");
+
+const replaceAllKnownCmakePaths = (source, replacements) => {
+  let nextSource = source;
+  for (const [from, to] of replacements) {
+    if (!from || !to || from === to) continue;
+    nextSource = nextSource.replaceAll(from, to);
+  }
+  return nextSource;
+};
+
+export const patchWindowsCmakeGeneratedAbsolutePaths = ({
+  cmakeRootDir,
+  env,
+  mobileRootDir,
+  platform,
+}) => {
+  if (!isWindows(platform)) return 0;
+  if (!fs.existsSync(cmakeRootDir)) return 0;
+
+  const monorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
+  const gradleUserHome = env.GRADLE_USER_HOME;
+  const monorepoRootCmakePath = cmakePath(monorepoRootDir);
+  const mobileRootCmakePath = cmakePath(mobileRootDir);
+  const usesSubstAlias = Boolean(env[substAliasEnvKey]);
+  const gradleUserHomeCmakePath = gradleUserHome
+    ? cmakePath(gradleUserHome)
+    : "";
+  const defaultGradleHomes = [
+    path.join(mobileRootDir, ".gradle-local-debug"),
+    path.join(mobileRootDir, ".gradle-local-debug-direct"),
+  ];
+
+  const replacements = usesSubstAlias
+    ? []
+    : [
+        ["Z:/apps/mobile", mobileRootCmakePath],
+        ["Z:\\apps\\mobile", mobileRootDir],
+        ["Z:/", `${monorepoRootCmakePath}/`],
+        ["Z:\\", `${monorepoRootDir}\\`],
+        ["Z$", monorepoRootDir.replace(/\\/gu, "$/")],
+      ];
+
+  if (gradleUserHomeCmakePath) {
+    for (const defaultGradleHome of defaultGradleHomes) {
+      replacements.push([
+        cmakePath(defaultGradleHome),
+        gradleUserHomeCmakePath,
+      ]);
+      replacements.push([
+        `Z:/apps/mobile/${path.basename(defaultGradleHome)}`,
+        gradleUserHomeCmakePath,
+      ]);
+      replacements.push([
+        `Z:\\apps\\mobile\\${path.basename(defaultGradleHome)}`,
+        gradleUserHome,
+      ]);
+      replacements.push([
+        defaultGradleHome.replace(/\\/gu, "\\\\"),
+        gradleUserHome.replace(/\\/gu, "\\\\"),
+      ]);
+      replacements.push([
+        defaultGradleHome.replace(/\\/gu, "\\"),
+        gradleUserHome,
+      ]);
+    }
+  }
+
+  let patchedCount = 0;
+  const candidateFiles = collectDirectories(cmakeRootDir)
+    .flatMap((directory) => [
+      path.join(directory, "build.ninja"),
+      path.join(directory, "CMakeCache.txt"),
+      path.join(directory, "rules.ninja"),
+    ])
+    .filter((candidate, index, candidates) => {
+      if (!fs.existsSync(candidate)) return false;
+      return candidates.indexOf(candidate) === index;
+    });
+
+  for (const candidateFile of candidateFiles) {
+    const source = fs.readFileSync(candidateFile, "utf8");
+    let nextSource = replaceAllKnownCmakePaths(source, replacements);
+    if (gradleUserHomeCmakePath) {
+      nextSource = nextSource.replace(
+        /[A-Za-z]:\/[^ \r\n"]*\/apps\/mobile\/\.gradle-local-debug(?:-direct)?/gu,
+        gradleUserHomeCmakePath,
+      );
+    }
+    nextSource = nextSource.replaceAll(`${mobileRootCmakePath}/Z:`, "Z:");
+    if (nextSource !== source) {
+      fs.writeFileSync(candidateFile, nextSource, "utf8");
+      patchedCount += 1;
+    }
+  }
+
+  return patchedCount;
+};
+
+const patchExpoModulesCoreWindowsCmakeAbsolutePaths = ({
+  env,
+  mobileRootDir,
+  platform,
+}) => {
+  let patchedCount = 0;
+  for (const cmakeRootDir of [
+    expoModulesCoreCmakeDebugRoot(mobileRootDir),
+    path.join(
+      defaultMonorepoRootDir(mobileRootDir),
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "RelWithDebInfo",
+    ),
+  ]) {
+    patchedCount += patchWindowsCmakeGeneratedAbsolutePaths({
+      cmakeRootDir,
+      env,
+      mobileRootDir,
+      platform,
+    });
+  }
+  return patchedCount;
+};
+
+const reanimatedCmakeRoot = (mobileRootDir, buildType = "Debug") =>
+  path.join(
+    mobileRootDir,
+    "node_modules",
+    "react-native-reanimated",
+    "android",
+    ".cxx",
+    buildType,
+  );
+
+const reanimatedCmakeDebugRoot = (mobileRootDir) =>
+  reanimatedCmakeRoot(mobileRootDir, "Debug");
+
+const patchReanimatedWindowsCmakeAbsolutePaths = ({
+  env,
+  mobileRootDir,
+  platform,
+}) => {
+  let patchedCount = 0;
+  for (const cmakeRootDir of [
+    reanimatedCmakeRoot(mobileRootDir, "Debug"),
+    reanimatedCmakeRoot(mobileRootDir, "RelWithDebInfo"),
+  ]) {
+    patchedCount += patchWindowsCmakeGeneratedAbsolutePaths({
+      cmakeRootDir,
+      env,
+      mobileRootDir,
+      platform,
+    });
+  }
+  return patchedCount;
+};
+
+const removeWindowsNinjaState = ({ cmakeRootDir, platform }) => {
+  if (!isWindows(platform)) return 0;
+  if (!fs.existsSync(cmakeRootDir)) return 0;
+
+  let removedCount = 0;
+  for (const directory of collectDirectories(cmakeRootDir)) {
+    for (const stateFileName of [".ninja_deps", ".ninja_log"]) {
+      const stateFilePath = path.join(directory, stateFileName);
+      if (!fs.existsSync(stateFilePath)) continue;
+      fs.rmSync(stateFilePath, { force: true });
+      removedCount += 1;
+    }
+  }
+  return removedCount;
+};
+
+const removeExpoModulesCoreWindowsNinjaState = ({ mobileRootDir, platform }) =>
+  [
+    expoModulesCoreCmakeDebugRoot(mobileRootDir),
+    path.join(
+      defaultMonorepoRootDir(mobileRootDir),
+      "node_modules",
+      ".pnpm",
+      "expo-modules-core@2.5.0",
+      "node_modules",
+      "expo-modules-core",
+      "android",
+      ".cxx",
+      "RelWithDebInfo",
+    ),
+  ].reduce(
+    (removed, cmakeRootDir) =>
+      removed + removeWindowsNinjaState({ cmakeRootDir, platform }),
+    0,
+  );
+
+const removeReanimatedWindowsNinjaState = ({ mobileRootDir, platform }) =>
+  ["Debug", "RelWithDebInfo"].reduce(
+    (removed, buildType) =>
+      removed +
+      removeWindowsNinjaState({
+        cmakeRootDir: reanimatedCmakeRoot(mobileRootDir, buildType),
+        platform,
+      }),
+    0,
+  );
+
 const normalizeForPrefix = (value) =>
   path
     .resolve(value)
@@ -1486,6 +2469,11 @@ export const buildSameRootExpoCliGradleSource = ({
   source,
 }) => {
   if (!isWindows(platform)) return source;
+  let nextSource = buildGradleNodeExecutableSource({ platform, source });
+  nextSource = nextSource.replaceAll(
+    '/sdks/hermesc/%OS-BIN%/hermesc"',
+    '/sdks/hermesc/%OS-BIN%/hermesc.exe"',
+  );
   const aliasMonorepoRootDir = defaultMonorepoRootDir(mobileRootDir);
   const sameRootCliPath = canonicalMetroRoot
     ? resolvedExpoCliPath
@@ -1496,13 +2484,14 @@ export const buildSameRootExpoCliGradleSource = ({
         resolvedPath: resolvedExpoCliPath,
       });
   if (!canonicalMetroRoot && sameRootCliPath === resolvedExpoCliPath) {
-    return source;
+    return nextSource;
   }
   const gradleCliPath = toGradlePath(sameRootCliPath).replace(/"/gu, '\\"');
-  return source.replace(
+  nextSource = nextSource.replace(
     /^\s*cliFile\s*=\s*new File\(\["node",\s*"--print",\s*"require\.resolve\('@expo\/cli',\s*\{\s*paths:\s*\[require\.resolve\('expo\/package\.json'\)\]\s*\}\)"\]\.execute\(null,\s*rootDir\)\.text\.trim\(\)\)\s*$/mu,
     `    cliFile = new File("${gradleCliPath}")`,
   );
+  return nextSource;
 };
 
 const resolveExpoCliPath = ({ mobileRootDir }) => {
@@ -1555,15 +2544,77 @@ const patchAndroidExpoCliSameRoot = ({
   };
 };
 
+const buildDebugQaGradleProperties = ({
+  applicationIdSuffix = "",
+  versionCode = "",
+} = {}) => {
+  const properties = [];
+  if (applicationIdSuffix) {
+    properties.push(
+      `-PsalaryHijackingDebugApplicationIdSuffix=${applicationIdSuffix}`,
+    );
+  }
+  if (versionCode) {
+    properties.push(`-PsalaryHijackingDebugVersionCode=${versionCode}`);
+  }
+  return properties;
+};
+
+const androidGradleAssembleTask = (variantName) =>
+  variantName === "Debug" ? "assembleDebug" : `assemble${variantName}`;
+
+const qaSigningEnvKeys = [
+  "SALARY_HIJACKING_QA_KEYSTORE_FILE",
+  "SALARY_HIJACKING_QA_KEYSTORE_PASSWORD",
+  "SALARY_HIJACKING_QA_KEY_ALIAS",
+  "SALARY_HIJACKING_QA_KEY_PASSWORD",
+];
+
+const androidApkFileName = (normalizedBuildType) =>
+  normalizedBuildType === "debug"
+    ? "app-debug.apk"
+    : normalizedBuildType === "qaRelease"
+      ? "app-qaRelease.apk"
+      : `app-${normalizedBuildType}.apk`;
+
+const androidReleaseLintExcludes = (normalizedBuildType, variantName) =>
+  normalizedBuildType === "qaRelease"
+    ? [
+        "-x",
+        `lintVitalAnalyze${variantName}`,
+        "-x",
+        `lintVitalReport${variantName}`,
+        "-x",
+        `lintVital${variantName}`,
+        "-x",
+        `lintAnalyze${variantName}`,
+        "-x",
+        `lintReport${variantName}`,
+        "-x",
+        `lint${variantName}`,
+        "-x",
+        "generateReleaseLintModel",
+      ]
+    : [];
+
 export const buildExpoLocalAndroidDebugInvocations = ({
+  applicationIdSuffix = "",
   architecture = "x86_64",
+  buildType = "debug",
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
   output = "build/e2e/android/salary-hijacking-e2e.apk",
   platform = process.platform,
+  versionCode = "",
 } = {}) => {
   const architectures = normalizeAndroidArchitectures(architecture);
   const architectureList = architectures.join(",");
+  const normalizedBuildType = normalizeAndroidBuildType(buildType);
+  const variantName = androidVariantName(normalizedBuildType);
+  const debugQaGradleProperties = buildDebugQaGradleProperties({
+    applicationIdSuffix,
+    versionCode,
+  });
   const expoCommand = findLocalCli({
     command: "expo",
     existsSync,
@@ -1576,28 +2627,60 @@ export const buildExpoLocalAndroidDebugInvocations = ({
     gradleWrapperName(platform),
   );
   const stableLocalDebugGradleArgs = [
+    "--max-workers=1",
+    "--no-parallel",
     `-PreactNativeArchitectures=${architectureList}`,
+    `-PsalaryHijackingAndroidAbiFilters=${architectureList}`,
     "-PnewArchEnabled=false",
     "-Pkotlin.incremental=false",
     "-Pksp.incremental=false",
     "-Pksp.incremental.intermodule=false",
     "-Dkotlin.compiler.execution.strategy=in-process",
+    ...debugQaGradleProperties,
   ];
+  const localDebugJsEngineGradleArgs = [];
+  const releaseLikeGradleProperties =
+    normalizedBuildType === "qaRelease"
+      ? ["-PEX_DEV_CLIENT_NETWORK_INSPECTOR=false"]
+      : [];
+  const cmakeWarmupBuildTypes =
+    nativeCmakeBuildTypesForAndroidBuild(normalizedBuildType);
   const expoModulesCoreConfigureExcludes = architectures.flatMap(
-    (nextArchitecture) => [
-      "-x",
-      `:expo-modules-core:configureCMakeDebug[${nextArchitecture}]`,
-    ],
+    (nextArchitecture) =>
+      cmakeWarmupBuildTypes.flatMap((cmakeBuildType) => [
+        "-x",
+        `:expo-modules-core:configureCMake${cmakeBuildType}[${nextArchitecture}]`,
+      ]),
   );
+  const buildCmakeConfigureArgSets = (projectPath) =>
+    cmakeWarmupBuildTypes.flatMap((cmakeBuildType) =>
+      architectures.map((nextArchitecture) => [
+        `${projectPath}:configureCMake${cmakeBuildType}[${nextArchitecture}]`,
+        "--no-daemon",
+        `-PreactNativeArchitectures=${architectureList}`,
+        "-PnewArchEnabled=false",
+      ]),
+    );
+  const buildFirstCmakeConfigureArgs = (projectPath) => [
+    `${projectPath}:configureCMake${cmakeWarmupBuildTypes[0]}[${architectures[0]}]`,
+    "--no-daemon",
+    `-PreactNativeArchitectures=${architectureList}`,
+    "-PnewArchEnabled=false",
+  ];
   return {
-    androidTestArgs: [
-      ":app:assembleDebugAndroidTest",
-      "--no-daemon",
-      ...stableLocalDebugGradleArgs,
-      "-x",
-      ":app:generateAutolinkingPackageList",
-      ...expoModulesCoreConfigureExcludes,
-    ],
+    androidTestArgs:
+      normalizedBuildType === "debug"
+        ? [
+            ":app:assembleDebugAndroidTest",
+            "--no-daemon",
+            ...stableLocalDebugGradleArgs,
+            ...localDebugJsEngineGradleArgs,
+            "-x",
+            ":app:generateAutolinkingPackageList",
+            ...expoModulesCoreConfigureExcludes,
+          ]
+        : [],
+    buildType: normalizedBuildType,
     debugApkPath: path.join(
       mobileRootDir,
       "android",
@@ -1605,17 +2688,20 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "build",
       "outputs",
       "apk",
-      "debug",
-      "app-debug.apk",
+      normalizedBuildType,
+      androidApkFileName(normalizedBuildType),
     ),
     expoCommand,
     gradleArgs: [
-      "assembleDebug",
+      androidGradleAssembleTask(variantName),
       "--no-daemon",
       ...stableLocalDebugGradleArgs,
+      ...releaseLikeGradleProperties,
+      ...localDebugJsEngineGradleArgs,
       "-x",
       ":app:generateAutolinkingPackageList",
       ...expoModulesCoreConfigureExcludes,
+      ...androidReleaseLintExcludes(normalizedBuildType, variantName),
     ],
     gradleCommand,
     outputPath: path.resolve(mobileRootDir, output),
@@ -1624,31 +2710,17 @@ export const buildExpoLocalAndroidDebugInvocations = ({
       "--no-daemon",
       ...stableLocalDebugGradleArgs,
     ],
-    reanimatedConfigureArgSets: architectures.map((nextArchitecture) => [
-      `:react-native-reanimated:configureCMakeDebug[${nextArchitecture}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ]),
+    reanimatedConfigureArgSets: buildCmakeConfigureArgSets(
+      ":react-native-reanimated",
+    ),
     prebuildArgs: ["prebuild", "--platform", "android", "--no-install"],
-    reanimatedConfigureArgs: [
-      `:react-native-reanimated:configureCMakeDebug[${architectures[0]}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ],
-    expoModulesCoreConfigureArgSets: architectures.map((nextArchitecture) => [
-      `:expo-modules-core:configureCMakeDebug[${nextArchitecture}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ]),
-    expoModulesCoreConfigureArgs: [
-      `:expo-modules-core:configureCMakeDebug[${architectures[0]}]`,
-      "--no-daemon",
-      `-PreactNativeArchitectures=${architectureList}`,
-      "-PnewArchEnabled=false",
-    ],
+    reanimatedConfigureArgs: buildFirstCmakeConfigureArgs(
+      ":react-native-reanimated",
+    ),
+    expoModulesCoreConfigureArgSets:
+      buildCmakeConfigureArgSets(":expo-modules-core"),
+    expoModulesCoreConfigureArgs:
+      buildFirstCmakeConfigureArgs(":expo-modules-core"),
     testApkPath: path.join(
       mobileRootDir,
       "android",
@@ -1681,6 +2753,7 @@ const hasApkHeader = (filePath) => {
 
 export const checkExpoLocalAndroidDebugPrerequisites = ({
   androidToolHomeDir,
+  buildType = "debug",
   env = process.env,
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
@@ -1695,6 +2768,7 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
     platform,
   });
   const invocations = buildExpoLocalAndroidDebugInvocations({
+    buildType,
     existsSync,
     mobileRootDir,
     platform,
@@ -1707,6 +2781,16 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
   }
   if (!existsSync(path.join(mobileRootDir, "app.config.ts"))) {
     failures.push("Expo app.config.ts is missing.");
+  }
+  if (normalizeAndroidBuildType(buildType) === "qaRelease") {
+    const missingQaSigningKeys = qaSigningEnvKeys.filter(
+      (key) => !String(env[key] ?? "").trim(),
+    );
+    if (missingQaSigningKeys.length > 0) {
+      failures.push(
+        `QA signing material is required for qaRelease builds. Missing: ${missingQaSigningKeys.join(", ")}`,
+      );
+    }
   }
 
   const javaHome = resolveJavaHome({
@@ -1748,7 +2832,15 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
     ...invocations,
     env:
       javaHome && sdkRoot
-        ? buildEnv({ env: toolEnv, javaHome, pathValue, sdkRoot })
+        ? buildEnv({
+            e2eBuild: normalizeAndroidBuildType(buildType) === "debug",
+            env: toolEnv,
+            javaHome,
+            mobileRootDir,
+            pathValue,
+            platform,
+            sdkRoot,
+          })
         : { ...toolEnv },
     failures,
     javaHome,
@@ -1759,11 +2851,16 @@ export const checkExpoLocalAndroidDebugPrerequisites = ({
 
 const parseArgs = (argv) => {
   const options = {
+    androidEntry: process.env.SALARY_HIJACKING_ANDROID_ENTRY || "router",
+    applicationIdSuffix:
+      process.env.SALARY_HIJACKING_ANDROID_APPLICATION_ID_SUFFIX || "",
     architecture:
       process.env.SALARY_HIJACKING_ANDROID_ARCHITECTURES || "x86_64",
+    buildType: process.env.SALARY_HIJACKING_ANDROID_BUILD_TYPE || "debug",
     checkOnly: false,
     output: "build/e2e/android/salary-hijacking-e2e.apk",
     skipPrebuild: false,
+    versionCode: process.env.SALARY_HIJACKING_ANDROID_VERSION_CODE || "",
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -1774,8 +2871,25 @@ const parseArgs = (argv) => {
     } else if (arg === "--output") {
       options.output = argv[index + 1] ?? options.output;
       index += 1;
+    } else if (arg === "--android-entry") {
+      options.androidEntry = normalizeAndroidEntry(
+        argv[index + 1] ?? options.androidEntry,
+      );
+      index += 1;
     } else if (arg === "--architecture") {
       options.architecture = argv[index + 1] ?? options.architecture;
+      index += 1;
+    } else if (arg === "--build-type") {
+      options.buildType = normalizeAndroidBuildType(
+        argv[index + 1] ?? options.buildType,
+      );
+      index += 1;
+    } else if (arg === "--application-id-suffix") {
+      options.applicationIdSuffix =
+        argv[index + 1] ?? options.applicationIdSuffix;
+      index += 1;
+    } else if (arg === "--version-code") {
+      options.versionCode = argv[index + 1] ?? options.versionCode;
       index += 1;
     } else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -1804,9 +2918,18 @@ const copyVerifiedAndroidTestApk = ({ testApkPath, testOutputPath }) => {
   fs.copyFileSync(testApkPath, testOutputPath);
 };
 
+const isPhoneTargetDebugOutput = ({ mobileRootDir, outputPath }) =>
+  path
+    .relative(mobileRootDir, outputPath)
+    .replace(/\\/gu, "/")
+    .startsWith("build/phone/android/");
+
 export const runExpoLocalAndroidDebugBuild = ({
   androidToolHomeDir,
+  androidEntry = "router",
+  applicationIdSuffix = "",
   architecture = "x86_64",
+  buildType = "debug",
   env = process.env,
   existsSync = fs.existsSync,
   mobileRootDir = defaultMobileRootDir(),
@@ -1815,9 +2938,11 @@ export const runExpoLocalAndroidDebugBuild = ({
   platform = process.platform,
   skipPrebuild = false,
   spawn = spawnSync,
+  versionCode = "",
 } = {}) => {
   const preflight = checkExpoLocalAndroidDebugPrerequisites({
     androidToolHomeDir,
+    buildType,
     env,
     existsSync,
     mobileRootDir,
@@ -1825,11 +2950,14 @@ export const runExpoLocalAndroidDebugBuild = ({
     platform,
   });
   const invocations = buildExpoLocalAndroidDebugInvocations({
+    applicationIdSuffix,
     architecture,
+    buildType,
     existsSync,
     mobileRootDir,
     output,
     platform,
+    versionCode,
   });
   if (!preflight.ok) return { ...preflight, status: 2 };
 
@@ -1851,7 +2979,7 @@ export const runExpoLocalAndroidDebugBuild = ({
     mobileRootDir,
     sdkRoot: preflight.sdkRoot,
   });
-  ensureLocalMetroEntryFile({ mobileRootDir });
+  ensureLocalMetroEntryFile({ androidEntry, mobileRootDir });
   ensureGradleInputMetroEntryShim({ mobileRootDir });
   ensureAndroidSplashScreenDependency({ mobileRootDir });
   ensureExpoProjectDependency({ mobileRootDir });
@@ -1873,10 +3001,12 @@ export const runExpoLocalAndroidDebugBuild = ({
   ensureDetoxAndroidTestConfig({ mobileRootDir });
   ensureDetoxAndroidTestSource({ mobileRootDir });
   ensureSecureStoreBackupXmlResources({ mobileRootDir });
+  ensureAndroidManifestBackupDisabled({ mobileRootDir });
   patchAndroidExpoEntrypoints({ mobileRootDir });
   patchAndroidPostSplashWindowBackground({ mobileRootDir });
   patchAndroidDebugDeveloperSupport({ mobileRootDir });
   ensureAndroidDebugNdkAbiFilters({ architecture, mobileRootDir });
+  ensureAndroidDebugQaApplicationConfig({ mobileRootDir });
   const canonicalMetroRoot =
     preflight.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT === "1";
   const restoreExpoCliGradlePath = patchAndroidExpoCliSameRoot({
@@ -1884,19 +3014,95 @@ export const runExpoLocalAndroidDebugBuild = ({
     mobileRootDir,
     platform,
   });
+  const gradleTimeoutMs = parsePositiveIntegerEnv(
+    preflight.env[gradleTimeoutEnvKey],
+  );
+  const buildGradleSpawnOptions = () => {
+    const options = {
+      cwd: path.join(mobileRootDir, "android"),
+      env: preflight.env,
+      shell: isWindows(platform),
+      stdio: "inherit",
+      windowsHide: true,
+    };
+    if (gradleTimeoutMs > 0) {
+      options.timeout = gradleTimeoutMs;
+      options.killSignal = "SIGTERM";
+    }
+    return options;
+  };
+  const normalizeGradleResult = (args, result) => {
+    if (!isSpawnTimeout(result)) return result;
+    failures.push(
+      `Gradle step timed out after ${gradleTimeoutMs}ms: ${args.join(" ")}`,
+    );
+    return { ...result, status: gradleTimeoutExitStatus };
+  };
+  const gradleUserHomeForStep = (() => {
+    let stepIndex = 0;
+    return () => {
+      if (!isWindows(platform)) return preflight.env.GRADLE_USER_HOME;
+      stepIndex += 1;
+      return path.join(
+        preflight.env.GRADLE_USER_HOME,
+        "invocations",
+        String(stepIndex).padStart(3, "0"),
+      );
+    };
+  })();
+  const buildGradleInvocationSpawnOptions = ({
+    cleanTransforms = true,
+    gradleUserHome,
+  } = {}) => {
+    const options = buildGradleSpawnOptions();
+    const stepGradleUserHome = gradleUserHome ?? gradleUserHomeForStep();
+    options.env = { ...options.env, GRADLE_USER_HOME: stepGradleUserHome };
+    if (cleanTransforms) {
+      prepareWindowsGradleTransformCaches({
+        gradleUserHome: stepGradleUserHome,
+        platform,
+      });
+    } else if (isWindows(platform)) {
+      repairGradleTransformTemporaryWorkspaces({
+        gradleUserHome: stepGradleUserHome,
+      });
+    }
+    return options;
+  };
+  const runGradleInvocation = (args) => {
+    const maxAttempts = isWindows(platform) ? 8 : 1;
+    let result = { status: 1 };
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      const gradleUserHome = gradleUserHomeForStep();
+      const options = buildGradleInvocationSpawnOptions({
+        cleanTransforms: true,
+        gradleUserHome,
+      });
+      result = normalizeGradleResult(
+        args,
+        spawn(invocations.gradleCommand, args, options),
+      );
+      if (result.status === gradleTimeoutExitStatus) return result;
+      if ((result.status ?? 1) === 0 || !isWindows(platform)) return result;
+      cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
+      cleanNativeDependencyCompileCaches({ mobileRootDir });
+    }
+    return result;
+  };
 
   try {
-    const packageList = spawn(
-      invocations.gradleCommand,
-      invocations.packageListArgs,
-      {
-        cwd: path.join(mobileRootDir, "android"),
-        env: preflight.env,
-        shell: isWindows(platform),
-        stdio: "inherit",
-        windowsHide: true,
-      },
-    );
+    patchExpoModulesCoreJavaCompileKotlinClasspath({ mobileRootDir });
+    patchAndroidRootJavaCompileSafeClasspath({ mobileRootDir });
+    if (isWindows(platform)) {
+      cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
+      cleanNativeDependencyCompileCaches({ mobileRootDir });
+      prepareWindowsGradleTransformCaches({
+        gradleUserHome: preflight.env.GRADLE_USER_HOME,
+        platform,
+      });
+    }
+
+    const packageList = runGradleInvocation(invocations.packageListArgs);
     if ((packageList.status ?? 1) !== 0) {
       return { ...preflight, failures, status: packageList.status ?? 1 };
     }
@@ -1904,20 +3110,12 @@ export const runExpoLocalAndroidDebugBuild = ({
     cleanAndroidAppCompileCaches({ env: preflight.env, mobileRootDir });
 
     const shouldRunWindowsCmakeWarmup =
-      isWindows(platform) && preflight.env[substAliasDisableEnvKey] !== "1";
+      isWindows(platform) && invocations.buildType === "debug";
 
     if (shouldRunWindowsCmakeWarmup) {
       for (const reanimatedConfigureArgs of invocations.reanimatedConfigureArgSets) {
-        const reanimatedConfigure = spawn(
-          invocations.gradleCommand,
+        const reanimatedConfigure = runGradleInvocation(
           reanimatedConfigureArgs,
-          {
-            cwd: path.join(mobileRootDir, "android"),
-            env: preflight.env,
-            shell: isWindows(platform),
-            stdio: "inherit",
-            windowsHide: true,
-          },
         );
         if ((reanimatedConfigure.status ?? 1) !== 0) {
           return {
@@ -1935,38 +3133,53 @@ export const runExpoLocalAndroidDebugBuild = ({
         platform,
         spawn,
       });
+      patchReanimatedWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
+      removeReanimatedWindowsNinjaState({
+        mobileRootDir,
+        platform,
+      });
 
       for (const expoModulesCoreConfigureArgs of invocations.expoModulesCoreConfigureArgSets) {
-        let expoModulesCoreConfigure = spawn(
-          invocations.gradleCommand,
-          expoModulesCoreConfigureArgs,
-          {
-            cwd: path.join(mobileRootDir, "android"),
-            env: preflight.env,
-            shell: isWindows(platform),
-            stdio: "inherit",
-            windowsHide: true,
-          },
-        );
-        if (
-          (expoModulesCoreConfigure.status ?? 1) !== 0 &&
-          isWindows(platform)
-        ) {
+        const gradleUserHome = gradleUserHomeForStep();
+        const maxConfigureAttempts = isWindows(platform) ? 4 : 1;
+        let expoModulesCoreConfigure = { status: 1 };
+        for (let attempt = 0; attempt < maxConfigureAttempts; attempt += 1) {
+          expoModulesCoreConfigure = spawn(
+            invocations.gradleCommand,
+            expoModulesCoreConfigureArgs,
+            buildGradleInvocationSpawnOptions({
+              cleanTransforms: attempt === 0,
+              gradleUserHome,
+            }),
+          );
+          expoModulesCoreConfigure = normalizeGradleResult(
+            expoModulesCoreConfigureArgs,
+            expoModulesCoreConfigure,
+          );
+          if (
+            expoModulesCoreConfigure.status === gradleTimeoutExitStatus ||
+            (expoModulesCoreConfigure.status ?? 1) === 0 ||
+            !isWindows(platform)
+          ) {
+            break;
+          }
           repairExpoModulesCoreWindowsCmakeDirectories({
             mobileRootDir,
             platform,
           });
-          expoModulesCoreConfigure = spawn(
-            invocations.gradleCommand,
-            expoModulesCoreConfigureArgs,
-            {
-              cwd: path.join(mobileRootDir, "android"),
-              env: preflight.env,
-              shell: true,
-              stdio: "inherit",
-              windowsHide: true,
-            },
-          );
+          patchExpoModulesCoreWindowsCmakeAbsolutePaths({
+            env: preflight.env,
+            mobileRootDir,
+            platform,
+          });
+          removeExpoModulesCoreWindowsNinjaState({
+            mobileRootDir,
+            platform,
+          });
         }
         if ((expoModulesCoreConfigure.status ?? 1) !== 0) {
           return {
@@ -1978,41 +3191,59 @@ export const runExpoLocalAndroidDebugBuild = ({
       }
 
       repairExpoModulesCoreWindowsCmakeDirectories({ mobileRootDir, platform });
+      patchExpoModulesCoreWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
       repairWindowsCmakeExistingInputPhonyEdges({
         cmakeRootDir: expoModulesCoreCmakeDebugRoot(mobileRootDir),
         platform,
       });
+      patchExpoModulesCoreWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
+      removeExpoModulesCoreWindowsNinjaState({
+        mobileRootDir,
+        platform,
+      });
+      patchReanimatedWindowsCmakeAbsolutePaths({
+        env: preflight.env,
+        mobileRootDir,
+        platform,
+      });
+      removeReanimatedWindowsNinjaState({
+        mobileRootDir,
+        platform,
+      });
     }
 
-    const gradle = spawn(invocations.gradleCommand, invocations.gradleArgs, {
-      cwd: path.join(mobileRootDir, "android"),
-      env: preflight.env,
-      shell: isWindows(platform),
-      stdio: "inherit",
-      windowsHide: true,
-    });
+    const gradle = runGradleInvocation(invocations.gradleArgs);
     if ((gradle.status ?? 1) !== 0) {
       return { ...preflight, failures, status: gradle.status ?? 1 };
     }
 
-    const androidTest = spawn(
-      invocations.gradleCommand,
-      invocations.androidTestArgs,
-      {
-        cwd: path.join(mobileRootDir, "android"),
-        env: preflight.env,
-        shell: isWindows(platform),
-        stdio: "inherit",
-        windowsHide: true,
-      },
-    );
-    if ((androidTest.status ?? 1) !== 0) {
-      return { ...preflight, failures, status: androidTest.status ?? 1 };
+    const shouldSkipAndroidTest =
+      preflight.env[skipAndroidTestEnvKey] === "1" ||
+      invocations.buildType !== "debug" ||
+      isPhoneTargetDebugOutput({
+        mobileRootDir,
+        outputPath: invocations.outputPath,
+      });
+    if (!shouldSkipAndroidTest) {
+      const androidTest = runGradleInvocation(invocations.androidTestArgs);
+      if ((androidTest.status ?? 1) !== 0) {
+        return { ...preflight, failures, status: androidTest.status ?? 1 };
+      }
     }
 
     try {
       copyVerifiedApk(invocations);
-      copyVerifiedAndroidTestApk(invocations);
+      if (!shouldSkipAndroidTest) {
+        copyVerifiedAndroidTestApk(invocations);
+      }
     } catch (error) {
       failures.push(error instanceof Error ? error.message : String(error));
       return { ...preflight, failures, status: 1 };
@@ -2025,6 +3256,7 @@ export const runExpoLocalAndroidDebugBuild = ({
       status: 0,
     };
   } finally {
+    ensureLocalMetroEntryFile({ androidEntry: "router", mobileRootDir });
     restoreExpoCliGradlePath();
   }
 };
@@ -2069,7 +3301,11 @@ if (isCliEntrypoint()) {
     if (!preflight.ok) process.exit(2);
     if (options.checkOnly) process.exit(0);
 
+    const restoreRouterEntryOnExit = installRouterAndroidEntryRestoreHooks({
+      mobileRootDir: defaultMobileRootDir(),
+    });
     const result = runExpoLocalAndroidDebugBuild(options);
+    restoreRouterEntryOnExit();
     process.exit(result.status);
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));

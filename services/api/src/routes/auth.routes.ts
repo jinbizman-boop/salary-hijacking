@@ -19,6 +19,7 @@ const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 const ADMIN_MFA_TOKEN_TTL_SECONDS = 5 * 60;
 const PASSWORD_RESET_TTL_SECONDS = 15 * 60;
 const EMAIL_VERIFY_TTL_SECONDS = 24 * 60 * 60;
+const PBKDF2_SHA256_ITERATIONS = 100_000;
 const MAX_JSON_BODY_BYTES = 128 * 1024;
 const MAX_TEXT = 2_000;
 const DEFAULT_COOKIE_NAME = "sh_refresh";
@@ -28,9 +29,7 @@ export type AuthProvider =
   | "EMAIL"
   | "NAVER"
   | "KAKAO"
-  | "GOOGLE"
-  | "APPLE"
-  | "FACEBOOK";
+  | "GOOGLE";
 export type AuthRole = "USER" | "OPERATOR" | "ADMIN" | "SUPER_ADMIN" | "SYSTEM";
 export type AccountStatus =
   | "ACTIVE"
@@ -123,10 +122,17 @@ export interface AuthSession {
   readonly createdAt: string;
 }
 
+export interface AuthReadiness {
+  readonly emailVerified: boolean;
+  readonly onboardingCompleted: boolean;
+  readonly payrollReady: boolean;
+}
+
 export interface OAuthStateRecord {
   readonly state: string;
   readonly provider: AuthProvider;
   readonly codeVerifierHash: string;
+  readonly nonceHash?: string | null;
   readonly redirectUri: string;
   readonly createdAt: string;
   readonly expiresAt: string;
@@ -172,6 +178,11 @@ export interface AuthRepository<TEnv = unknown> {
     runtime: AuthRuntime<TEnv>,
   ): Promise<AuthUser>;
   updateLastLogin(userId: string, runtime: AuthRuntime<TEnv>): Promise<void>;
+  upgradePasswordHash?(
+    userId: string,
+    passwordHash: string,
+    runtime: AuthRuntime<TEnv>,
+  ): Promise<void>;
   createSession(
     input: Omit<AuthSession, "createdAt" | "revokedAt">,
     runtime: AuthRuntime<TEnv>,
@@ -224,6 +235,10 @@ export interface AuthRepository<TEnv = unknown> {
     code: string,
     runtime: AuthRuntime<TEnv>,
   ): Promise<boolean>;
+  getUserReadiness?(
+    userId: string,
+    runtime: AuthRuntime<TEnv>,
+  ): Promise<AuthReadiness>;
 }
 
 export interface ProviderProfile {
@@ -277,6 +292,7 @@ export interface AuthSecurityEvent {
     | "auth_login_failed"
     | "auth_social_login"
     | "auth_refresh"
+    | "auth_refresh_reuse_detected"
     | "auth_logout"
     | "auth_logout_all"
     | "auth_password_reset_requested"
@@ -459,6 +475,12 @@ function base64Url(bytes: Uint8Array): string {
     .replace(/=+$/g, "");
 }
 
+function hex(bytes: Uint8Array): string {
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
+}
+
 function randomBytes(size: number): Uint8Array {
   const bytes = new Uint8Array(size);
   globalThis.crypto.getRandomValues(bytes);
@@ -509,9 +531,7 @@ function assertStrongPassword(password: string): void {
 function normalizeProvider(value: unknown): AuthProvider {
   const provider = typeof value === "string" ? value.trim().toUpperCase() : "";
   if (
-    ["EMAIL", "NAVER", "KAKAO", "GOOGLE", "APPLE", "FACEBOOK"].includes(
-      provider,
-    )
+    ["EMAIL", "NAVER", "KAKAO", "GOOGLE"].includes(provider)
   )
     return provider as AuthProvider;
   throw new AuthRouteError(
@@ -528,7 +548,7 @@ function optionalOAuthCodeChallenge(value: string | null): string | null {
     throw new AuthRouteError(
       400,
       "AUTH_PKCE_CHALLENGE_INVALID",
-      "PKCE code challenge媛 ?щ컮瑜댁? ?딆뒿?덈떎.",
+      "PKCE code challenge가 올바르지 않습니다.",
     );
   return challenge;
 }
@@ -541,6 +561,21 @@ function envText<TEnv>(env: TEnv, key: string): string | null {
   return trimmed;
 }
 
+function authEnvironment<TEnv>(runtime: AuthRuntime<TEnv>): string {
+  return (
+    envText(runtime.env, "APP_ENV") ??
+    envText(runtime.env, "ENVIRONMENT") ??
+    envText(runtime.env, "NODE_ENV") ??
+    "production"
+  ).toLowerCase();
+}
+
+function exposeDeliveryTokens<TEnv>(runtime: AuthRuntime<TEnv>): boolean {
+  return ["development", "dev", "test", "local"].includes(
+    authEnvironment(runtime),
+  );
+}
+
 function oauthClientId<TEnv>(
   provider: AuthProvider,
   runtime: AuthRuntime<TEnv>,
@@ -548,7 +583,6 @@ function oauthClientId<TEnv>(
   if (provider === "KAKAO") return envText(runtime.env, "KAKAO_REST_API_KEY");
   if (provider === "NAVER") return envText(runtime.env, "NAVER_CLIENT_ID");
   if (provider === "GOOGLE") return envText(runtime.env, "GOOGLE_CLIENT_ID");
-  if (provider === "APPLE") return envText(runtime.env, "APPLE_CLIENT_ID");
   return null;
 }
 
@@ -557,7 +591,6 @@ function oauthAuthorizeEndpoint(provider: AuthProvider): string | null {
   if (provider === "NAVER") return "https://nid.naver.com/oauth2.0/authorize";
   if (provider === "GOOGLE")
     return "https://accounts.google.com/o/oauth2/v2/auth";
-  if (provider === "APPLE") return "https://appleid.apple.com/auth/authorize";
   return null;
 }
 
@@ -578,8 +611,7 @@ function oauthAuthorizationUrl<TEnv>(
   url.searchParams.set("state", state);
   url.searchParams.set("code_challenge", codeChallenge);
   url.searchParams.set("code_challenge_method", "S256");
-  if (provider === "GOOGLE" || provider === "APPLE")
-    url.searchParams.set("scope", "openid email profile");
+  if (provider === "GOOGLE") url.searchParams.set("scope", "openid email profile");
   return url.toString();
 }
 
@@ -619,22 +651,84 @@ function sanitize(
   );
 }
 
-async function defaultHashPassword(password: string): Promise<string> {
+export async function hashPasswordForAuth(password: string): Promise<string> {
   const salt = base64Url(randomBytes(16));
-  const digest = await sha256Hex(`${salt}:${password}`);
-  return `sha256$${salt}$${digest}`;
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    toArrayBuffer(utf8(password)),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const derived = await globalThis.crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: toArrayBuffer(utf8(salt)),
+      iterations: PBKDF2_SHA256_ITERATIONS,
+      hash: "SHA-256",
+    },
+    key,
+    256,
+  );
+  return `pbkdf2-sha256$${PBKDF2_SHA256_ITERATIONS}$${salt}$${hex(
+    new Uint8Array(derived),
+  )}`;
 }
 
-async function defaultVerifyPassword(
+export async function verifyPasswordForAuth(
   password: string,
   passwordHash: string,
 ): Promise<boolean> {
   const parts = passwordHash.split("$");
-  if (parts.length !== 3 || parts[0] !== "sha256") return false;
-  const salt = parts[1] ?? "";
-  const expected = parts[2] ?? "";
-  const actual = await sha256Hex(`${salt}:${password}`);
-  return constantTimeEqual(actual, expected);
+  if (parts.length === 4 && parts[0] === "pbkdf2-sha256") {
+    const iterations = Number.parseInt(parts[1] ?? "", 10);
+    const salt = parts[2] ?? "";
+    const expected = parts[3] ?? "";
+    if (
+      !Number.isInteger(iterations) ||
+      iterations < 100_000 ||
+      !salt ||
+      !/^[a-f0-9]{64}$/i.test(expected)
+    )
+      return false;
+    const key = await globalThis.crypto.subtle.importKey(
+      "raw",
+      toArrayBuffer(utf8(password)),
+      "PBKDF2",
+      false,
+      ["deriveBits"],
+    );
+    const derived = await globalThis.crypto.subtle.deriveBits(
+      {
+        name: "PBKDF2",
+        salt: toArrayBuffer(utf8(salt)),
+        iterations,
+        hash: "SHA-256",
+      },
+      key,
+      256,
+    );
+    return constantTimeEqual(hex(new Uint8Array(derived)), expected);
+  }
+  if (parts.length === 3 && parts[0] === "sha256") {
+    const salt = parts[1] ?? "";
+    const expected = parts[2] ?? "";
+    const actual = await sha256Hex(`${salt}:${password}`);
+    return constantTimeEqual(actual, expected);
+  }
+  return false;
+}
+
+function passwordHashNeedsUpgrade(passwordHash: string): boolean {
+  const parts = passwordHash.split("$");
+  if (parts.length === 3 && parts[0] === "sha256") return true;
+  if (parts.length === 4 && parts[0] === "pbkdf2-sha256") {
+    const iterations = Number.parseInt(parts[1] ?? "", 10);
+    return (
+      !Number.isInteger(iterations) || iterations < PBKDF2_SHA256_ITERATIONS
+    );
+  }
+  return false;
 }
 
 function constantTimeEqual(a: string, b: string): boolean {
@@ -697,11 +791,37 @@ function jsonResponse(
   );
 }
 
+function redactDiagnosticText(value: string): string {
+  return value
+    .replace(
+      /\b(password|token|secret|authorization|cookie|email|phone)\s*=\s*[^\s,;]+/giu,
+      "$1=[REDACTED]",
+    )
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/giu, "[REDACTED_EMAIL]");
+}
+
 function errorResponse(
   requestId: string,
   path: string,
   error: unknown,
 ): Response {
+  if (!(error instanceof AuthRouteError)) {
+    const diagnostic =
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: redactDiagnosticText(error.message).slice(0, 500),
+          }
+        : {
+            name: typeof error,
+            message: redactDiagnosticText(String(error)).slice(0, 500),
+          };
+    console.warn("auth_routes_unexpected_error", {
+      requestId,
+      path,
+      ...diagnostic,
+    });
+  }
   const normalized =
     error instanceof AuthRouteError
       ? error
@@ -838,6 +958,7 @@ async function issueTokens<TEnv>(
   runtime: AuthRuntime<TEnv>,
   deviceId: string | null,
   mfaVerified = false,
+  readiness: AuthReadiness = defaultAuthReadiness(user),
 ): Promise<AuthTokens> {
   const nowSeconds = Math.floor(runtime.now.getTime() / 1000);
   const sessionId = globalThis.crypto.randomUUID();
@@ -857,6 +978,9 @@ async function issueTokens<TEnv>(
       deviceId,
       provider: user.provider,
       accountStatus: user.accountStatus,
+      emailVerified: readiness.emailVerified,
+      onboardingCompleted: readiness.onboardingCompleted,
+      payrollReady: readiness.payrollReady,
       mfaVerified,
       iat: nowSeconds,
       nbf: nowSeconds,
@@ -924,7 +1048,28 @@ function readRefreshToken<TEnv>(
   return token;
 }
 
-function userPublicView(user: AuthUser): JsonRecord {
+function defaultAuthReadiness(user: AuthUser): AuthReadiness {
+  const accountReady = user.accountStatus === "ACTIVE";
+  return {
+    emailVerified: accountReady,
+    onboardingCompleted: accountReady,
+    payrollReady: accountReady,
+  };
+}
+
+async function authReadinessFor<TEnv>(
+  user: AuthUser,
+  runtime: AuthRuntime<TEnv>,
+): Promise<AuthReadiness> {
+  return runtime.repository.getUserReadiness
+    ? runtime.repository.getUserReadiness(user.userId, runtime)
+    : defaultAuthReadiness(user);
+}
+
+function userPublicView(
+  user: AuthUser,
+  readiness: AuthReadiness = defaultAuthReadiness(user),
+): JsonRecord {
   return {
     userId: user.userId,
     nickname: user.nickname,
@@ -932,6 +1077,9 @@ function userPublicView(user: AuthUser): JsonRecord {
     provider: user.provider,
     roles: [...user.roles].join(","),
     accountStatus: user.accountStatus,
+    emailVerified: readiness.emailVerified,
+    onboardingCompleted: readiness.onboardingCompleted,
+    payrollReady: readiness.payrollReady,
     level: user.level,
     mfaEnabled: user.mfaEnabled,
     createdAt: user.createdAt,
@@ -1034,7 +1182,7 @@ async function handleRegister<TEnv>(
     );
   const passwordHash = runtime.options.hashPassword
     ? await runtime.options.hashPassword(password, runtime)
-    : await defaultHashPassword(password);
+    : await hashPasswordForAuth(password);
   const user = await runtime.repository.createEmailUser(
     input,
     passwordHash,
@@ -1049,11 +1197,13 @@ async function handleRegister<TEnv>(
     ).toISOString(),
     runtime,
   );
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     input.deviceId ?? null,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_register",
@@ -1068,9 +1218,11 @@ async function handleRegister<TEnv>(
     201,
     {
       data: {
-        user: userPublicView(user),
+        user: userPublicView(user, readiness),
         tokens,
-        emailVerificationTokenForDelivery: verifyToken,
+        ...(exposeDeliveryTokens(runtime)
+          ? { emailVerificationTokenForDelivery: verifyToken }
+          : { emailVerificationDeliveryQueued: true }),
       },
     },
     { "set-cookie": refreshCookie(runtime, tokens.refreshToken) },
@@ -1088,7 +1240,7 @@ async function handleLogin<TEnv>(
   const valid = user?.passwordHash
     ? await (runtime.options.verifyPassword
         ? runtime.options.verifyPassword(password, user.passwordHash, runtime)
-        : defaultVerifyPassword(password, user.passwordHash))
+        : verifyPasswordForAuth(password, user.passwordHash))
     : false;
   if (!user || !valid) {
     await emit(runtime, {
@@ -1107,6 +1259,20 @@ async function handleLogin<TEnv>(
   }
   assertActiveUser(user);
   if (
+    user.passwordHash &&
+    passwordHashNeedsUpgrade(user.passwordHash) &&
+    typeof runtime.repository.upgradePasswordHash === "function"
+  ) {
+    const upgradedPasswordHash = runtime.options.hashPassword
+      ? await runtime.options.hashPassword(password, runtime)
+      : await hashPasswordForAuth(password);
+    await runtime.repository.upgradePasswordHash(
+      user.userId,
+      upgradedPasswordHash,
+      runtime,
+    );
+  }
+  if (
     adminMode &&
     !user.roles.some((role) =>
       ["OPERATOR", "ADMIN", "SUPER_ADMIN"].includes(role),
@@ -1118,11 +1284,13 @@ async function handleLogin<TEnv>(
       "관리자 권한이 필요합니다.",
     );
   await runtime.repository.updateLastLogin(user.userId, runtime);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     optionalStringField(body, "deviceId"),
     adminMode && !user.mfaEnabled,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_login_success",
@@ -1137,7 +1305,7 @@ async function handleLogin<TEnv>(
     200,
     {
       data: {
-        user: userPublicView(user),
+        user: userPublicView(user, readiness),
         tokens,
         mfaRequired: adminMode && user.mfaEnabled,
       },
@@ -1165,14 +1333,19 @@ async function handleSocialLogin<TEnv>(
     nickname: optionalStringField(body, "nickname"),
     deviceId: optionalStringField(body, "deviceId"),
   };
-  const profile = runtime.options.verifySocialToken
-    ? await runtime.options.verifySocialToken(input, runtime)
-    : {
-        provider,
-        subject: await sha256Hex(`${provider}:${input.providerToken}`),
-        email: input.email,
-        nickname: input.nickname,
-      };
+  if (!runtime.options.verifySocialToken)
+    throw new AuthRouteError(
+      501,
+      "AUTH_PROVIDER_VERIFICATION_REQUIRED",
+      "소셜 로그인 제공자 검증 구성이 필요합니다.",
+    );
+  const profile = await runtime.options.verifySocialToken(input, runtime);
+  if (profile.provider !== provider)
+    throw new AuthRouteError(
+      400,
+      "AUTH_PROVIDER_PROFILE_MISMATCH",
+      "소셜 로그인 제공자 검증 결과가 일치하지 않습니다.",
+    );
   const user = await runtime.repository.upsertSocialUser(
     input,
     profile.subject,
@@ -1180,11 +1353,13 @@ async function handleSocialLogin<TEnv>(
   );
   assertActiveUser(user);
   await runtime.repository.updateLastLogin(user.userId, runtime);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     input.deviceId ?? null,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_social_login",
@@ -1197,7 +1372,7 @@ async function handleSocialLogin<TEnv>(
   return jsonResponse(
     runtime,
     200,
-    { data: { user: userPublicView(user), tokens } },
+    { data: { user: userPublicView(user, readiness), tokens } },
     { "set-cookie": refreshCookie(runtime, tokens.refreshToken) },
   );
 }
@@ -1211,16 +1386,44 @@ async function handleRefresh<TEnv>(
     await sha256Hex(refreshToken),
     runtime,
   );
-  if (
-    !session ||
-    session.revokedAt ||
-    new Date(session.expiresAt).getTime() <= runtime.now.getTime()
-  )
+  if (!session)
     throw new AuthRouteError(
       401,
       "AUTH_REFRESH_TOKEN_INVALID",
       "Refresh Token이 유효하지 않습니다.",
     );
+  if (session.revokedAt) {
+    await runtime.repository.revokeAllUserSessions(
+      session.userId,
+      "REFRESH_TOKEN_REUSE",
+      runtime,
+    );
+    await emit(runtime, {
+      event: "auth_refresh_reuse_detected",
+      requestId: runtime.requestId,
+      userId: session.userId,
+      provider: null,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    throw new AuthRouteError(
+      401,
+      "AUTH_REFRESH_TOKEN_REUSED",
+      "Refresh Token이 이미 사용되었습니다. 다시 로그인해야 합니다.",
+    );
+  }
+  if (new Date(session.expiresAt).getTime() <= runtime.now.getTime()) {
+    await runtime.repository.revokeSession(
+      session.sessionId,
+      "EXPIRED",
+      runtime,
+    );
+    throw new AuthRouteError(
+      401,
+      "AUTH_REFRESH_TOKEN_INVALID",
+      "Refresh Token이 유효하지 않습니다.",
+    );
+  }
   const user = await runtime.repository.findUserById(session.userId, runtime);
   if (!user)
     throw new AuthRouteError(
@@ -1230,11 +1433,13 @@ async function handleRefresh<TEnv>(
     );
   assertActiveUser(user);
   await runtime.repository.revokeSession(session.sessionId, "ROTATED", runtime);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     optionalStringField(body, "deviceId") ?? session.deviceId,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_refresh",
@@ -1247,7 +1452,7 @@ async function handleRefresh<TEnv>(
   return jsonResponse(
     runtime,
     200,
-    { data: { user: userPublicView(user), tokens } },
+    { data: { user: userPublicView(user, readiness), tokens } },
     { "set-cookie": refreshCookie(runtime, tokens.refreshToken) },
   );
 }
@@ -1321,7 +1526,10 @@ async function handleMe<TEnv>(runtime: AuthRuntime<TEnv>): Promise<Response> {
       "AUTH_USER_NOT_FOUND",
       "사용자를 찾을 수 없습니다.",
     );
-  return jsonResponse(runtime, 200, { data: { user: userPublicView(user) } });
+  const readiness = await authReadinessFor(user, runtime);
+  return jsonResponse(runtime, 200, {
+    data: { user: userPublicView(user, readiness) },
+  });
 }
 
 async function handlePasswordResetRequest<TEnv>(
@@ -1351,7 +1559,14 @@ async function handlePasswordResetRequest<TEnv>(
     createdAt: runtime.now.toISOString(),
   });
   return jsonResponse(runtime, 200, {
-    data: { accepted: true, resetTokenForDelivery: resetToken },
+    data: {
+      accepted: true,
+      ...(exposeDeliveryTokens(runtime) && resetToken
+        ? { resetTokenForDelivery: resetToken }
+        : user
+          ? { resetDeliveryQueued: true }
+          : {}),
+    },
   });
 }
 
@@ -1387,7 +1602,11 @@ async function handleEmailVerificationResend<TEnv>(
   return jsonResponse(runtime, 200, {
     data: {
       accepted: true,
-      emailVerificationTokenForDelivery: verifyToken,
+      ...(exposeDeliveryTokens(runtime) && verifyToken
+        ? { emailVerificationTokenForDelivery: verifyToken }
+        : user
+          ? { emailVerificationDeliveryQueued: true }
+          : {}),
     },
   });
 }
@@ -1401,7 +1620,7 @@ async function handlePasswordResetConfirm<TEnv>(
   assertStrongPassword(password);
   const passwordHash = runtime.options.hashPassword
     ? await runtime.options.hashPassword(password, runtime)
-    : await defaultHashPassword(password);
+    : await hashPasswordForAuth(password);
   const user = await runtime.repository.resetPassword(
     await sha256Hex(token),
     passwordHash,
@@ -1457,8 +1676,9 @@ async function handleVerifyEmail<TEnv>(
     path: runtime.path,
     createdAt: runtime.now.toISOString(),
   });
+  const readiness = await authReadinessFor(user, runtime);
   return jsonResponse(runtime, 200, {
-    data: { verified: true, user: userPublicView(user) },
+    data: { verified: true, user: userPublicView(user, readiness) },
   });
 }
 
@@ -1499,6 +1719,7 @@ async function handleOAuthStart<TEnv>(
       codeVerifierHash: clientCodeChallenge
         ? `s256:${clientCodeChallenge}`
         : await sha256Hex(codeVerifier ?? ""),
+      nonceHash: null,
       redirectUri,
       createdAt: runtime.now.toISOString(),
       expiresAt: new Date(
@@ -1577,19 +1798,24 @@ async function handleOAuthCallback<TEnv>(
       "AUTH_PKCE_INVALID",
       "PKCE 검증에 실패했습니다.",
     );
-  const profile = runtime.options.exchangeOAuthCode
-    ? await runtime.options.exchangeOAuthCode(
-        stateRecord.provider,
-        code,
-        codeVerifier,
-        runtime,
-      )
-    : {
-        provider: stateRecord.provider,
-        subject: await sha256Hex(`${stateRecord.provider}:${code}`),
-        email: null,
-        nickname: null,
-      };
+  if (!runtime.options.exchangeOAuthCode)
+    throw new AuthRouteError(
+      501,
+      "AUTH_PROVIDER_VERIFICATION_REQUIRED",
+      "OAuth provider code 검증 구성이 필요합니다.",
+    );
+  const profile = await runtime.options.exchangeOAuthCode(
+    stateRecord.provider,
+    code,
+    codeVerifier,
+    runtime,
+  );
+  if (profile.provider !== stateRecord.provider)
+    throw new AuthRouteError(
+      400,
+      "AUTH_PROVIDER_PROFILE_MISMATCH",
+      "OAuth provider 검증 결과가 일치하지 않습니다.",
+    );
   const input: SocialLoginInput = {
     provider: profile.provider,
     providerToken: code,
@@ -1603,11 +1829,13 @@ async function handleOAuthCallback<TEnv>(
     runtime,
   );
   assertActiveUser(user);
+  const readiness = await authReadinessFor(user, runtime);
   const tokens = await issueTokens(
     user,
     runtime,
     input.deviceId ?? null,
     false,
+    readiness,
   );
   await emit(runtime, {
     event: "auth_social_login",
@@ -1622,7 +1850,7 @@ async function handleOAuthCallback<TEnv>(
     200,
     {
       data: {
-        user: userPublicView(user),
+        user: userPublicView(user, readiness),
         tokens,
         redirectUri: stateRecord.redirectUri,
       },
@@ -1789,6 +2017,10 @@ function createInMemoryAuthRepository<TEnv = unknown>(): AuthRepository<TEnv> {
       const user = users.get(userId);
       if (user)
         users.set(userId, { ...user, lastLoginAt: runtime.now.toISOString() });
+    },
+    async upgradePasswordHash(userId, passwordHash): Promise<void> {
+      const user = users.get(userId);
+      if (user) users.set(userId, { ...user, passwordHash });
     },
     async createSession(input, runtime): Promise<AuthSession> {
       const session: AuthSession = {
@@ -1988,7 +2220,7 @@ export const authRoutesManifest = Object.freeze({
     "POST /admin/auth/mfa/verify",
   ],
   supportsEmailLogin: true,
-  supportsSocialLogin: ["NAVER", "KAKAO", "GOOGLE", "APPLE", "FACEBOOK"],
+  supportsSocialLogin: ["NAVER", "KAKAO", "GOOGLE"],
   supportsOAuthPkce: true,
   supportsRefreshTokenRotation: true,
   supportsAdminMfa: true,
@@ -2008,7 +2240,7 @@ export function assertAuthRoutesCompleteness(): {
 } {
   const checks = [
     "email_register_login",
-    "naver_kakao_google_apple_facebook_social_login",
+    "naver_kakao_google_social_login",
     "oauth_pkce_start_callback",
     "jwt_hs256_access_token_issue",
     "refresh_token_rotation_hash_storage",

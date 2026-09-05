@@ -1,7 +1,15 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import { COMMUNITY_BOARD_LABELS } from "../community.constants";
 import type { CommunityBoardType } from "../community.types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type CommunityTabBarProps = Readonly<{
   tabs: readonly CommunityBoardType[];
@@ -53,43 +61,43 @@ export function CommunityTabBar({
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   tabs: {
     flexDirection: "row",
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   tab: {
     minHeight: 44,
     minWidth: 92,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 12,
+    paddingHorizontal: componentSpacing.sm,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 999,
-    backgroundColor: "#FFFFFF",
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.pill,
+    backgroundColor: componentColors.surface,
   },
   selectedTab: {
-    borderColor: "#176B5B",
-    backgroundColor: "#E8F4F1",
+    borderColor: componentColors.primaryGreen,
+    backgroundColor: componentColors.primaryGreen,
   },
   tabLabel: {
-    color: "#4B5563",
-    fontSize: 11,
-    fontWeight: "800",
+    color: componentColors.textSecondary,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   tabCount: {
-    color: "#6B7280",
-    fontSize: 10,
-    fontWeight: "700",
+    color: componentColors.textMuted,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   selectedLabel: {
-    color: "#155E52",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
   },
   guard: {
-    color: "#6B7280",
-    fontSize: 11,
-    fontWeight: "700",
+    color: componentColors.textMuted,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

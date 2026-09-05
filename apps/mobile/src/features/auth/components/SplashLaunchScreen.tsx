@@ -2,10 +2,15 @@ import { View, useWindowDimensions } from "react-native";
 
 import {
   AuthBrandLogo,
-  AuthVisualFrame,
   EurekaWorldMark,
+} from "./AuthBrandLogo";
+import {
+  AuthVisualFrame,
   clampValue,
 } from "./AuthVisualFrame";
+import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type SplashLaunchScreenProps = Readonly<{
   routeDelayMs: number;
@@ -21,7 +26,11 @@ export function SplashLaunchScreen({
       <View style={{ height: clampValue(height * 0.36, 218, 384) }} />
       <AuthBrandLogo />
       <View
-        style={{ flex: 1, minHeight: clampValue(height * 0.17, 88, 184) }}
+        style={{
+          flex: 1,
+          minHeight: clampValue(height * 0.17, 88, 184),
+          paddingTop: designSystem.spacing[0],
+        }}
       />
       <EurekaWorldMark />
       <View style={{ height: clampValue(height * 0.1, 56, 110) }} />

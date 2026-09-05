@@ -1,14 +1,19 @@
+import { useCallback, useMemo } from "react";
 import { useRouter } from "expo-router";
 
-import { AppHeader, AppShell } from "../../../src/shared/components";
 import {
-  ProfileHeader,
-  ProfileMenuCard,
-  ProfileStatGrid,
+  ProfileScreen,
   type ProfileMenuKey,
 } from "../../../src/features/profile/components";
+import { routeAfterLogout } from "../../../src/features/auth/navigation";
+import { revokeNativeNotificationDevice } from "../../../src/features/notifications/controller";
+import { createNativeNotificationRegistrationDependencies } from "../../../src/features/notifications/native-device-registration";
+import {
+  createMobileAuthApi,
+  createMobileNotificationsApi,
+} from "../../../src/shared/api/mobile-api";
 
-const SCREEN_VERSION = "4.2.0-prototype-profile";
+const SCREEN_VERSION = "4.3.0-profile-server-summary";
 const PROFILE_MY_PAGE_SUMMARY_ENDPOINT = "/api/v1/users/me/my-page-summary";
 const PROFILE_WITHDRAWAL_REQUEST_ENDPOINT =
   "/api/v1/users/me/withdrawal-request";
@@ -19,45 +24,35 @@ const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
   MY_LEVEL: "/profile/level",
   SUPPORT: "/profile/support",
   NOTICES: "/profile/notices",
-  ACCOUNT_SETTINGS: "/profile/settings",
+  ACCOUNT_SETTINGS: "/profile/account",
 };
 
 export default function ProfileIndexScreen(): React.ReactElement {
   const router = useRouter();
+  const authApi = useMemo(() => createMobileAuthApi(), []);
+  const notificationsApi = useMemo(() => createMobileNotificationsApi(), []);
+  const handleLogout = useCallback(async () => {
+    try {
+      try {
+        const dependencies =
+          await createNativeNotificationRegistrationDependencies();
+        await revokeNativeNotificationDevice(notificationsApi, dependencies);
+      } catch {
+        // Logout must still end the local session if device revoke is offline.
+      }
+      await authApi.logout();
+    } finally {
+      routeAfterLogout();
+    }
+  }, [authApi, notificationsApi]);
 
   return (
-    <AppShell
-      accessibilityLabel="Salary Hijacking profile tab"
-      header={
-        <AppHeader
-          brandLabel="SALARY HIJACKING"
-          subtitle="MY"
-          title="마이페이지"
-        />
-      }
-    >
-      <ProfileHeader
-        avatarEmoji="SH"
-        displayName="홍길동 기획자님"
-        levelTitle="급여지킴이 18Lv"
-        maskedEmail="오늘도 당신의 성장을 응원합니다!"
-        rawPersonalDataExposed={false}
-      />
-      <ProfileStatGrid
-        stats={{
-          totalHijackSaved: 5780000,
-          currentLevel: 18,
-          levelXp: 880,
-          nextLevelXp: 1000,
-          selfCareScore: 84,
-        }}
-      />
-      <ProfileMenuCard
-        onSelect={(key) => {
-          router.push(profileMenuRoutes[key]);
-        }}
-      />
-    </AppShell>
+    <ProfileScreen
+      onLogout={handleLogout}
+      onSelectMenu={(key) => {
+        router.push(profileMenuRoutes[key]);
+      }}
+    />
   );
 }
 
@@ -69,10 +64,8 @@ export function assertMobileProfileIndexCompleteness(): {
   const checks = [
     "Salary Hijacking Profile feature components",
     PROFILE_MY_PAGE_SUMMARY_ENDPOINT,
-    "ProfileHeader",
-    "ProfileStatGrid",
-    "ProfileMenuCard",
-    "홍길동 기획자님",
+    "ProfileScreen",
+    "server-authoritative profile snapshot",
     "누적 납치 금액",
     "레벨 업 현황",
     "자기 관리 성과",

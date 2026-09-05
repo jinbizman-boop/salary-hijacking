@@ -1,0 +1,13 @@
+caseId,scenario,status,actual,runtimeRef
+CASE-001,normal payroll,PASS,payroll-v2-cycle-kst server summary,scripts/e2e/financial-staging-runtime-closure.mjs
+CASE-002,no expense,PASS,zero variable total handled by DB/server formula,database/migrations/0017_payroll_cycle_recalculation.sql
+CASE-003,no savings,PASS,savings total optional and integer-safe,database/migrations/0017_payroll_cycle_recalculation.sql
+CASE-004,overspend,PASS,daily budget over amount preserved; invalid client override rejected,docs/financial/FINANCIAL_ERROR_TAXONOMY_RUNTIME.csv
+CASE-005,zero remaining,PASS,integer boundary covered by DB constraints and money validation,docs/financial/FINANCIAL_ERROR_TAXONOMY_RUNTIME.csv
+CASE-006,multiple fixed,PASS,fixed expense lifecycle and recalculation covered,scripts/e2e/financial-staging-core.mjs
+CASE-007,recurring savings,PASS,savings plan lifecycle and recalculation covered,scripts/e2e/financial-staging-core.mjs
+CASE-008,payday 31/feb,PASS,payday clamp DB/local contract verified,docs/financial/PAYROLL_CYCLE_POLICY.md
+CASE-009,timezone midnight,PASS,Asia/Seoul default plus non-default deterministic contract documented,docs/financial/TIMEZONE_BOUNDARY_REPORT.md
+CASE-010,concurrency,PASS,20 concurrent same-key duplicate record 0,docs/financial/FINANCIAL_IDEMPOTENCY_RUNTIME_MATRIX.csv
+CASE-011,idempotent retry,PASS,same key replay stable and different body 409,docs/financial/FINANCIAL_IDEMPOTENCY_RUNTIME_MATRIX.csv
+CASE-012,finalized cycle,PASS,close replay/conflict and closed-cycle mutation rejection,docs/financial/PAYROLL_FINALIZATION_RUNTIME_REPORT.md

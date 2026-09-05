@@ -10,13 +10,18 @@
 #   wrangler secret put OPERATION_WEBHOOK_TOKEN
 
 name = "salary-hijacking-api"
-main = "src/index.ts"
+main = "src/phase5-entrypoint.ts"
 compatibility_date = "2026-06-15"
 compatibility_flags = ["nodejs_compat"]
 workers_dev = true
 minify = true
 upload_source_maps = true
 keep_vars = true
+
+[assets]
+directory = "../../apps/web"
+html_handling = "drop-trailing-slash"
+not_found_handling = "none"
 
 [observability]
 enabled = true
@@ -72,6 +77,9 @@ name = "salary-hijacking-api-staging"
 workers_dev = true
 minify = true
 upload_source_maps = true
+routes = [
+  { pattern = "api-staging.salaryhijacking.com", custom_domain = true }
+]
 
 [env.staging.observability]
 enabled = true
@@ -83,7 +91,7 @@ mode = "smart"
 APP_ENV = "staging"
 ENVIRONMENT = "staging"
 NODE_ENV = "production"
-APP_PUBLIC_BASE_URL = "https://salary-hijacking-api-staging.workers.dev"
+APP_PUBLIC_BASE_URL = "https://api-staging.salaryhijacking.com"
 CORS_ALLOWED_ORIGINS = "https://staging.salaryhijacking.com,http://localhost:3000"
 ALLOWED_ORIGINS = "https://staging.salaryhijacking.com,http://localhost:3000"
 ENABLE_QUEUE_HANDLER = "true"
@@ -101,10 +109,7 @@ ADMIN_REASON_REQUIRED = "true"
 SERVER_AUTHORITY_CALCULATION = "true"
 
 [env.staging.triggers]
-crons = [
-  "*/15 * * * *",
-  "0 15 * * *"
-]
+crons = []
 
 [[env.staging.r2_buckets]]
 binding = "UPLOADS_BUCKET"

@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
 
 import { PrimaryButton } from "./PrimaryButton";
-import { componentColors } from "./tokens";
+import { componentColors, salaryHijackingDesignSystem } from "./tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type ErrorStateProps = Readonly<{
   title: string;
@@ -33,16 +35,15 @@ export function ErrorState({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 10,
-    padding: 18,
+    gap: designSystem.spacing[2],
+    padding: designSystem.spacing[5],
   },
   title: {
     color: componentColors.dangerRed,
-    fontSize: 17,
-    fontWeight: "900",
+    ...designSystem.typography.titleM,
   },
   message: {
     color: componentColors.textSecondary,
-    fontSize: 13,
+    ...designSystem.typography.bodyS,
   },
 });

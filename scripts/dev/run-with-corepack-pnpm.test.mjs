@@ -56,3 +56,35 @@ test("creates pnpm shims and prepends them to PATH", async () => {
     await rm(rootDir, { recursive: true, force: true });
   }
 });
+
+test("windows shims prefer COREPACK_HOME when it is provided", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-corepack-pnpm-"));
+  const previousCorepackHome = process.env.COREPACK_HOME;
+  const corepackHome = path.join(rootDir, "corepack-home");
+
+  try {
+    process.env.COREPACK_HOME = corepackHome;
+    const binDir = ensureCorepackPnpmShim({ rootDir, pnpmVersion: "10.24.0" });
+    const windowsShimSource = await readFile(
+      path.join(binDir, "pnpm.cmd"),
+      "utf8",
+    );
+    const windowsCorepackShimSource = await readFile(
+      path.join(binDir, "corepack.cmd"),
+      "utf8",
+    );
+
+    assert.match(windowsShimSource, /corepack-home\\v1\\pnpm\\10\.24\.0/);
+    assert.match(
+      windowsCorepackShimSource,
+      /corepack-home\\v1\\pnpm\\10\.24\.0/,
+    );
+  } finally {
+    if (previousCorepackHome === undefined) {
+      delete process.env.COREPACK_HOME;
+    } else {
+      process.env.COREPACK_HOME = previousCorepackHome;
+    }
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});

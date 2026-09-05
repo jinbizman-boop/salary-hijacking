@@ -1,0 +1,11 @@
+requirementId,requirement,status,evidence,blocker
+NOTI-001,notification list/read state,PASS,105 synthetic rows; traversed=107; duplicate=0; missing=0; malformed cursor rejected=true; owner archive/delete runtime PASS.,
+NOTI-002,preferences/quiet hours/channel,PASS,Staging preferences PATCH/GET and quiet-hours timezone persistence PASS for supported timezone set.,
+NOTI-003,device push token lifecycle,PASS,Staging device register/list/revoke PASS; evidence stores token hash/reference only.,
+NOTI-004,payday reminders,EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW,Internal scheduler contract/deployment evidence exists; natural Cloudflare scheduled execution was not observed in this work window.,EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW
+NOTI-005,fixed-expense reminders,EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW,Internal scheduler contract/deployment evidence exists; natural Cloudflare scheduled execution was not observed in this work window.,EXTERNAL_BLOCKER_NATURAL_CRON_WINDOW
+NOTI-006,budget threshold notifications,PASS,Financial mutation producer runtime PASS; warning/exceeded duplicate=0; client override=0.,
+NOTI-007,saving due/goal notifications,PASS,Saving due runtime=PASS duplicate=0; saving goal runtime=PASS duplicate=0.,
+NOTI-008,growth/community notification contract,PASS,"Phase 5-owned notification schema, deeplink, privacy, dedupe, and consumer behavior contract PASS. Growth/Community actual producers remain Phase 6-owned and are not counted as a Phase 5 internal blocker.",
+NOTI-009,deeplink contract,PASS,Canonical deeplink matrix PASS; physical Android runtime remains separate D-026/PH13 track.,
+NOTI-010,queue retry/backoff/invalid token cleanup,PASS,"Retry/backoff, poison terminal handling, invalid-token cleanup internal policy and queue lag measurement contract PASS; real FCM token runtime separate.",

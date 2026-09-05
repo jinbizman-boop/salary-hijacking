@@ -1,6 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type LoadingSkeletonProps = Readonly<{
   label: string;
@@ -24,25 +31,25 @@ export function LoadingSkeleton({
 
 const styles = StyleSheet.create({
   box: {
-    gap: 8,
-    padding: 16,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.md,
     borderRadius: componentRadius.card,
     backgroundColor: componentColors.surface,
   },
   lineWide: {
     width: "72%",
     height: 12,
-    borderRadius: 999,
-    backgroundColor: "#EDF1F3",
+    borderRadius: componentRadius.pill,
+    backgroundColor: componentColors.line,
   },
   line: {
     width: "48%",
     height: 12,
-    borderRadius: 999,
-    backgroundColor: "#EDF1F3",
+    borderRadius: componentRadius.pill,
+    backgroundColor: componentColors.line,
   },
   text: {
     color: componentColors.textSecondary,
-    fontSize: 12,
+    fontSize: typography.caption.fontSize,
   },
 });

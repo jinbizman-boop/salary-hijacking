@@ -1,0 +1,6 @@
+caseId,operation,expected,actual,status,evidenceRef
+CURSOR-001,traverse all synthetic rows,duplicate=0 missing=0,duplicate=0; missing=0,PASS,docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json
+CURSOR-002,malformed cursor,400 NOTIFICATION_CURSOR_INVALID,rejected,PASS,docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json
+CURSOR-003,limit over max,clamped to <=100,clamped,PASS,docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json
+CURSOR-004,stable opaque nextCursor,nextCursor present and no raw PII/financial data,repository unit + staging traversal,PASS,services/api/tests/notifications-db-repository.test.ts
+CURSOR-005,owner archive/delete after read,200 ARCHIVED / 200 DELETED,200 / 200,PASS,docs/notifications/STAGING_NOTIFICATION_RUNTIME_EVIDENCE.json

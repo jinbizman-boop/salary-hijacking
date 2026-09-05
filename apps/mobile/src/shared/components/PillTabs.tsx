@@ -1,6 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
 
 export type PillTabItem = Readonly<{
   key: string;
@@ -45,12 +50,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   pill: {
     minHeight: 44,
     justifyContent: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: componentSpacing.md,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.pill,
@@ -58,14 +63,13 @@ const styles = StyleSheet.create({
   },
   selectedPill: {
     borderColor: componentColors.primaryGreen,
-    backgroundColor: componentColors.primaryGreenSoft,
+    backgroundColor: componentColors.primaryGreen,
   },
   label: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelM,
   },
   selectedLabel: {
-    color: componentColors.primaryGreenDark,
+    color: salaryHijackingDesignSystem.colors.text.inverse,
   },
 });

@@ -1,8 +1,16 @@
 import { Tabs } from "expo-router";
-import { Image, View, type ImageSourcePropType } from "react-native";
+import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
+import {
+  Image,
+  Pressable,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { appIconAssets } from "../../src/shared/assets/icons";
+import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
+import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
+import { markReleaseInteractionPerf } from "../../src/shared/performance/release-perf";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
 type TabName =
@@ -13,47 +21,42 @@ type TabName =
   | "profile/index";
 
 type TabDefinition = Readonly<{
-  href: string;
   icon: ImageSourcePropType;
   name: TabName;
   privacyBoundary: string;
   title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.3-router-index-tabs-korean-labels";
+const LAYOUT_VERSION = "4.0.7-runtime-safe-measured-tabs";
+const designSystem = salaryHijackingDesignSystem;
 
 const tabs: readonly TabDefinition[] = [
   {
-    href: "/salary",
-    icon: appIconAssets.bottomTabs.salary,
+    icon: bottomTabIconAssets.salary,
     name: "salary/index",
     privacyBoundary: "payroll_home",
-    title: "급여",
+    title: "홈",
   },
   {
-    href: "/plan",
-    icon: appIconAssets.bottomTabs.plan,
+    icon: bottomTabIconAssets.plan,
     name: "plan/index",
     privacyBoundary: "payroll_plan",
     title: "계획",
   },
   {
-    href: "/level",
-    icon: appIconAssets.bottomTabs.level,
+    icon: bottomTabIconAssets.level,
     name: "level/index",
     privacyBoundary: "growth",
-    title: "LV",
+    title: "LV UP",
   },
   {
-    href: "/community",
-    icon: appIconAssets.bottomTabs.community,
+    icon: bottomTabIconAssets.community,
     name: "community/index",
     privacyBoundary: "anonymous_community",
     title: "커뮤니티",
   },
   {
-    href: "/profile",
-    icon: appIconAssets.bottomTabs.profile,
+    icon: bottomTabIconAssets.profile,
     name: "profile/index",
     privacyBoundary: "profile_privacy",
     title: "MY",
@@ -74,35 +77,32 @@ export default function TabsLayout(): React.ReactElement {
         lazy: true,
         sceneStyle: { backgroundColor: salaryHijackingTheme.color.surface.app },
         tabBarAccessibilityLabel: "급여납치 하단 탭 내비게이션",
-        tabBarActiveTintColor: "#209252",
+        tabBarActiveTintColor: designSystem.navigation.bottomTabs.activeColor,
         tabBarHideOnKeyboard: true,
-        tabBarInactiveTintColor: "#ADB3B8",
+        tabBarInactiveTintColor:
+          designSystem.navigation.bottomTabs.inactiveColor,
         tabBarItemStyle: {
-          borderRadius: salaryHijackingTheme.radius.md,
-          marginHorizontal: 0,
+          borderRadius: designSystem.radius.lg,
+          marginHorizontal: designSystem.spacing[0],
           minHeight: salaryHijackingTheme.layout.touchTarget,
           minWidth: 0,
-          paddingHorizontal: 0,
+          paddingHorizontal: designSystem.spacing[0],
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "800",
-          letterSpacing: 0,
+          fontSize: designSystem.typography.labelS.fontSize,
+          fontWeight: designSystem.typography.labelS.fontWeight,
+          letterSpacing: designSystem.typography.labelS.letterSpacing,
         },
         tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#EEF0F2",
+          backgroundColor: designSystem.navigation.bottomTabs.background,
+          borderTopColor: designSystem.navigation.bottomTabs.borderColor,
           borderTopWidth: 1,
-          elevation: 8,
+          ...designSystem.elevation.low,
           height: tabBarHeight,
           left: 0,
-          paddingBottom: Math.max(insets.bottom, 10),
-          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, designSystem.spacing[3]),
+          paddingTop: designSystem.spacing[2],
           right: 0,
-          shadowColor: "#0F2319",
-          shadowOffset: { width: 0, height: -8 },
-          shadowOpacity: 0.06,
-          shadowRadius: 18,
           width: "100%",
         },
       }}
@@ -112,14 +112,15 @@ export default function TabsLayout(): React.ReactElement {
           key={tab.name}
           name={tab.name}
           options={{
-            href: tab.href as never,
-            tabBarAccessibilityLabel: `${tab.title} 탭 ${tab.privacyBoundary}`,
+            tabBarAccessibilityLabel: `${tab.title} \uD0ED ${tab.privacyBoundary}`,
             tabBarIcon: ({ color, focused, size }) => (
               <View
                 style={{
                   alignItems: "center",
-                  backgroundColor: focused ? "#EAF6EF" : "transparent",
-                  borderRadius: salaryHijackingTheme.radius.full,
+                  backgroundColor: focused
+                    ? designSystem.colors.brand.primarySoft
+                    : "transparent",
+                  borderRadius: designSystem.radius.full,
                   height: 30,
                   justifyContent: "center",
                   width: 32,
@@ -132,18 +133,54 @@ export default function TabsLayout(): React.ReactElement {
                   style={{
                     height: Math.max(20, Math.min(26, size)),
                     opacity: focused ? 1 : 0.46,
-                    tintColor: focused ? color : "#ADB3B8",
+                    tintColor: focused
+                      ? color
+                      : designSystem.navigation.bottomTabs.inactiveColor,
                     width: Math.max(20, Math.min(26, size)),
                   }}
                 />
               </View>
             ),
             tabBarLabel: tab.title,
+            tabBarButton: renderMeasuredTabBarButton,
             title: tab.title,
           }}
         />
       ))}
     </Tabs>
+  );
+}
+
+function renderMeasuredTabBarButton({
+  accessibilityLabel,
+  accessibilityState,
+  children,
+  onLongPress,
+  onPress,
+  testID,
+}: BottomTabBarButtonProps): React.ReactElement {
+  return (
+    <Pressable
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      accessibilityState={accessibilityState}
+      onLongPress={onLongPress}
+      onPress={onPress}
+      onPressIn={(event) =>
+        markReleaseInteractionPerf("interaction.bottom_tab.press", event)
+      }
+      style={({ pressed }) => [
+        {
+          alignItems: "center",
+          flex: 1,
+          justifyContent: "center",
+          opacity: pressed ? 0.92 : 1,
+        },
+      ]}
+      testID={testID}
+    >
+      {children}
+    </Pressable>
   );
 }
 
@@ -162,11 +199,11 @@ export function assertMobileTabsLayoutCompleteness(): {
 } {
   const checks = [
     "clean_fintech_v1_theme",
-    "salary_tab",
-    "plan_tab",
-    "level_tab",
-    "community_tab",
-    "profile_tab",
+    "salary_index_tab",
+    "plan_index_tab",
+    "level_index_tab",
+    "community_index_tab",
+    "profile_index_tab",
     "white_bottom_tab",
     "active_green_209252",
     "inactive_gray_adb3b8",
@@ -176,7 +213,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "anonymous_community_boundary",
     "profile_privacy_boundary",
     "accessibility_labels",
-    "expo_router_index_tabs",
+    "expo_router_index_segment_tabs",
     "readable_korean_tab_copy",
     "typescript_strict_ready",
   ] as const;

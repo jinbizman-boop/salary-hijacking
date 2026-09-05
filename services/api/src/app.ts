@@ -118,6 +118,8 @@ import {
   createNeonNotificationsRepository,
   shouldUseNeonNotificationsRepository,
 } from "./repositories/notifications.repository";
+import { createPhase5FinancialNotificationProducer } from "./notifications/phase5-financial-producers";
+import { createPhase6GrowthCommunityNotificationProducer } from "./notifications/phase6-growth-community-producers";
 import {
   PAYROLL_API_PREFIX,
   assertPayrollRoutesCompleteness,
@@ -192,6 +194,12 @@ const BOOTSTRAP_ROLES = [
   "OPERATOR",
   "ADMIN",
   "SUPER_ADMIN",
+  "OPS_ADMIN",
+  "MODERATOR",
+  "CONTENT_ADMIN",
+  "SUPPORT",
+  "ADS_PARTNER_ADMIN",
+  "AUDITOR_READONLY",
   "SYSTEM",
 ] as const;
 const BOOTSTRAP_ACCOUNT_STATUSES = [
@@ -210,6 +218,10 @@ const DEFAULT_ALLOWED_HEADERS = [
   "x-idempotency-key",
   "idempotency-key",
   "x-admin-reason",
+  "x-admin-break-glass",
+  "x-admin-break-glass-reason",
+  "x-admin-break-glass-scope",
+  "x-admin-break-glass-expires-at",
   "x-service-token",
   "x-refresh-token",
   "x-upload-file-name",
@@ -224,12 +236,18 @@ const LEGAL_PAGE_PATHS = [
   "/support",
   "/terms",
   "/partners",
+  "/contact",
+  "/affiliate",
 ] as const;
 const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
 const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
 const LEGAL_LAST_UPDATED = "2026-07-01";
 const PUBLIC_HTML_CSP =
-  "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+  "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+
+interface PublicInquiryQueue {
+  readonly send: (message: unknown) => Promise<void>;
+}
 
 export interface WaitUntilCapable {
   readonly waitUntil?: (promise: Promise<unknown>) => void;
@@ -254,6 +272,8 @@ export interface AppEnv extends Record<string, unknown> {
   readonly CORS_ALLOWED_ORIGINS?: string;
   readonly ALLOWED_ORIGINS?: string;
   readonly APP_PUBLIC_BASE_URL?: string;
+  readonly ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS?: string;
+  readonly OPERATIONS_QUEUE?: PublicInquiryQueue;
 }
 
 export interface CorsOptions<TEnv = unknown> {
@@ -357,6 +377,31 @@ type CompletenessResult = {
 };
 type BootstrapRole = (typeof BOOTSTRAP_ROLES)[number];
 type BootstrapAccountStatus = (typeof BOOTSTRAP_ACCOUNT_STATUSES)[number];
+
+const DATABASE_URL_ENV_KEYS = [
+  "SALARY_HIJACKING_DATABASE_URL",
+  "DATABASE_URL",
+  "POSTGRES_URL",
+  "POSTGRES_PRISMA_URL",
+  "NEON_DATABASE_URL",
+  "NEON_POSTGRES_URL",
+  "DIRECT_DATABASE_URL",
+] as const;
+
+const PERSISTENT_DATABASE_ROUTE_IDS = new Set([
+  "auth",
+  "admin",
+  "users",
+  "payroll",
+  "daily-budgets",
+  "fixed-expenses",
+  "variable-expenses",
+  "savings",
+  "growth",
+  "notifications",
+  "community",
+  "uploads",
+]);
 
 const handleEnvAwareAuthRoutes: FetchHandler<unknown> = createAuthRoutes({
   repository: (env) =>
@@ -536,9 +581,11 @@ export const appManifest = Object.freeze({
     paths: LEGAL_PAGE_PATHS,
     landingUrl: "https://salaryhijacking.com",
     partnerBenefitsUrl: "https://salaryhijacking.com/partners",
+    affiliateUrl: "https://salaryhijacking.com/affiliate",
     privacyUrl: "https://salaryhijacking.com/privacy",
     supportUrl: "https://salaryhijacking.com/support",
     termsUrl: "https://salaryhijacking.com/terms",
+    contactUrl: "https://salaryhijacking.com/contact",
     rawFinancialDataExposed: false,
     adsFinancialTargetingUsed: false,
   }),
@@ -557,6 +604,22 @@ function environmentOf<TEnv>(env: TEnv, fallback = "production"): string {
     envString(env, "ENVIRONMENT") ??
     envString(env, "NODE_ENV") ??
     fallback
+  );
+}
+
+function hasRuntimeDatabaseUrl<TEnv>(env: TEnv): boolean {
+  return DATABASE_URL_ENV_KEYS.some((key) => Boolean(envString(env, key)));
+}
+
+function requiresPersistentDatabase<TEnv>(
+  env: TEnv,
+  route: RouteModule,
+): boolean {
+  const environment = environmentOf(env).toLowerCase();
+  return (
+    (environment === "staging" || environment === "production") &&
+    PERSISTENT_DATABASE_ROUTE_IDS.has(route.id) &&
+    !hasRuntimeDatabaseUrl(env)
   );
 }
 
@@ -620,6 +683,26 @@ function json(
   );
 }
 
+function databaseUrlRequired(
+  runtime: AppRuntime,
+  route: RouteModule,
+): Response {
+  return json(503, runtime, {
+    error: {
+      code: "APP_DATABASE_URL_REQUIRED",
+      message:
+        "A persistent database binding is required for staging and production API routes.",
+      status: 503,
+      requestId: runtime.requestId,
+    },
+    data: {
+      environment: environmentOf(runtime.env),
+      route: route.id,
+      persistentDatabaseRequired: true,
+    },
+  });
+}
+
 function escapeHtml(value: string): string {
   return value.replace(
     /[&<>"']/g,
@@ -644,6 +727,8 @@ function legalPageTitle(path: string): string | null {
   if (path === "/privacy") return "개인정보 처리방침";
   if (path === "/support") return "고객 지원";
   if (path === "/terms") return "이용약관";
+  if (path === "/contact") return "문의";
+  if (path === "/affiliate") return "제휴 혜택";
   return null;
 }
 
@@ -663,6 +748,13 @@ function legalPageBody(title: string): readonly string[] {
       "보안 또는 개인정보 이슈는 개인정보 보호 담당 메일로 별도 접수하며, 실제 금융 원문 데이터는 문의 본문에 포함하지 않는 것을 권장합니다.",
     ];
   }
+  if (title === "문의") {
+    return [
+      "급여납치 서비스, 제휴, 개인정보, 보안 문의는 목적에 맞는 공식 이메일로 접수합니다.",
+      "고객 지원은 support@salaryhijacking.com, 개인정보 문의는 privacy@salaryhijacking.com으로 접수합니다.",
+      "문의 본문에는 비밀번호, 인증 토큰, 계좌, 카드, 급여, 지출, 저축 원문을 포함하지 않는 것을 권장합니다.",
+    ];
+  }
   return [
     "급여납치는 월급 흐름을 계획하고 남길 돈을 먼저 분리하도록 돕는 개인 재무 자기관리 서비스입니다.",
     "급여, 예산, 지출, 저축, 납치금액의 최종 계산은 서버 권위 API와 검증된 데이터 기준을 따릅니다.",
@@ -671,46 +763,238 @@ function legalPageBody(title: string): readonly string[] {
   ];
 }
 
+function publicPageDescription(title: string): string {
+  if (title === "개인정보 처리방침")
+    return "급여납치 개인정보 처리방침은 급여, 지출, 저축, 알림, 광고 데이터를 분리하고 필요한 정보만 처리하는 원칙을 설명합니다.";
+  if (title === "고객 지원")
+    return "급여납치 고객 지원은 계정, 예산, 커뮤니티 신고, 개인정보 요청을 안전하게 접수하는 공식 안내입니다.";
+  if (title === "문의")
+    return "급여납치 서비스, 제휴, 개인정보, 보안 문의를 위한 공식 연락처 안내입니다.";
+  return "급여납치 이용약관은 서버 권위 계산, 사용자 책임, 커뮤니티와 광고 분리 원칙을 안내합니다.";
+}
+
+function publicHtmlHead({
+  canonicalUrl,
+  description,
+  title,
+}: Readonly<{
+  canonicalUrl: string;
+  description: string;
+  title: string;
+}>): string {
+  return `<meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="${escapeHtml(description)}" />
+  <meta property="og:title" content="${escapeHtml(title)}" />
+  <meta property="og:description" content="${escapeHtml(description)}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}" />
+  <title>${escapeHtml(title)}</title>
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />`;
+}
+
+const PUBLIC_WEB_STYLE = `
+    :root {
+      color-scheme: light;
+      font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+      --ink: #18211d;
+      --muted: #657068;
+      --line: #dce7df;
+      --green: #119055;
+      --green-dark: #0b5f39;
+      --mint: #eaf7f0;
+      --gold: #c78b16;
+      --blue: #245a86;
+      --rose: #a5455f;
+      --paper: #fbfcfa;
+      --surface: #ffffff;
+      --shadow: 0 22px 60px rgba(24, 33, 29, .10);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    a { color: var(--green-dark); font-weight: 800; }
+    .skip { position: absolute; left: -999px; top: 12px; background: #fff; color: #000; padding: 10px 14px; z-index: 5; }
+    .skip:focus { left: 12px; }
+    .topbar { position: sticky; top: 0; z-index: 3; backdrop-filter: blur(18px); background: rgba(251,252,250,.86); border-bottom: 1px solid rgba(220,231,223,.7); }
+    .shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    .nav { display: flex; align-items: center; justify-content: space-between; min-height: 68px; gap: 18px; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: var(--green); color: #fff; font-weight: 900; }
+    .brand strong { display: block; font-size: 16px; letter-spacing: 0; }
+    .brand span { display: block; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 18px; font-size: 13px; }
+    .nav-links a { color: #314239; text-decoration: none; white-space: nowrap; }
+    .button { display: inline-flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 8px; padding: 0 18px; border: 1px solid var(--line); text-decoration: none; font-size: 15px; font-weight: 900; cursor: pointer; }
+    .primary { background: var(--green); border-color: var(--green); color: #fff; }
+    .secondary { background: #fff; color: var(--green-dark); }
+    section { padding: 82px 0; }
+    .hero { min-height: 600px; display: grid; align-items: center; overflow: hidden; background:
+      radial-gradient(circle at 78% 18%, rgba(17,144,85,.18), transparent 28%),
+      linear-gradient(135deg, #f6fbf7 0%, #ffffff 48%, #edf5ff 100%);
+    }
+    .hero-grid { display: grid; grid-template-columns: 1.04fr .96fr; gap: 52px; align-items: center; }
+    .kicker { color: var(--green-dark); font-size: 13px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    h1, h2, h3, p { letter-spacing: 0; }
+    h1 { margin: 16px 0 18px; font-size: clamp(36px, 5vw, 60px); line-height: 1.08; }
+    h2 { margin: 12px 0 16px; font-size: clamp(26px, 3.4vw, 38px); line-height: 1.18; }
+    h3 { margin: 0 0 10px; font-size: 18px; line-height: 1.34; }
+    p { color: var(--muted); font-size: 16px; line-height: 1.76; }
+    .lead { font-size: 18px; color: #3a4840; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .device { position: relative; width: min(430px, 100%); margin: 0 auto; border: 1px solid rgba(24,33,29,.12); border-radius: 34px; padding: 16px; background: #111b15; box-shadow: var(--shadow); }
+    .screen { border-radius: 24px; background: #f8fbf8; overflow: hidden; padding: 18px; min-height: 500px; }
+    .status { display: flex; justify-content: space-between; color: #5b6860; font-size: 12px; font-weight: 800; margin-bottom: 22px; }
+    .money-panel { background: #fff; border: 1px solid #dfe9e2; border-radius: 8px; padding: 18px; box-shadow: 0 10px 30px rgba(17,144,85,.08); }
+    .money-panel small { color: var(--muted); font-weight: 800; }
+    .money-panel b { display: block; margin-top: 8px; color: var(--green-dark); font-size: 28px; line-height: 1.12; }
+    .mini-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+    .mini { background: var(--mint); border-radius: 8px; padding: 12px; min-height: 82px; }
+    .mini:nth-child(2) { background: #fff4dc; }
+    .mini:nth-child(3) { background: #eef4ff; }
+    .mini:nth-child(4) { background: #fff0f4; }
+    .mini span { display: block; color: var(--muted); font-size: 12px; font-weight: 800; }
+    .mini strong { display: block; margin-top: 8px; color: var(--ink); }
+    .section-head { max-width: 760px; margin-bottom: 28px; }
+    .feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; min-height: 150px; }
+    .card .icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 8px; background: var(--mint); color: var(--green-dark); font-weight: 900; margin-bottom: 18px; }
+    .split { display: grid; grid-template-columns: .9fr 1.1fr; gap: 28px; align-items: start; }
+    .steps { display: grid; gap: 12px; }
+    .step { display: flex; gap: 14px; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 18px; }
+    .num { flex: 0 0 auto; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 999px; background: var(--green); color: #fff; font-weight: 900; }
+    .band { background: #17211b; color: #fff; }
+    .band p, .band .lead { color: #d5ddd8; }
+    .band .card { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+    .band .card p { color: #dbe6df; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .pill { border: 1px solid rgba(17,144,85,.22); background: #fff; color: var(--green-dark); border-radius: 999px; padding: 9px 12px; font-weight: 900; }
+    .contact-wrap { display: grid; grid-template-columns: .78fr 1.22fr; gap: 28px; align-items: start; }
+    .form-card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 24px; box-shadow: 0 12px 30px rgba(24,33,29,.06); }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .field.full { grid-column: 1 / -1; }
+    label { display: block; color: #2f3d35; font-size: 14px; font-weight: 900; }
+    input, select, textarea { width: 100%; min-height: 48px; margin-top: 8px; border: 1px solid #cfddd4; border-radius: 8px; padding: 0 14px; font: inherit; color: var(--ink); background: #fff; }
+    textarea { min-height: 124px; padding-top: 12px; resize: vertical; }
+    input:focus, select:focus, textarea:focus, .button:focus-visible, a:focus-visible { outline: 3px solid rgba(17,144,85,.28); outline-offset: 2px; }
+    .privacy-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 16px; color: var(--muted); line-height: 1.6; }
+    .privacy-check input { width: 18px; min-height: 18px; margin-top: 4px; }
+    footer { background: #0f1712; color: #fff; padding: 42px 0; }
+    footer p, footer a { color: #d9e1dc; }
+    .footer-grid { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 14px; }
+    .company { color: #c3cdc7; line-height: 1.8; }
+    @media (max-width: 900px) {
+      .hero { min-height: auto; padding: 48px 0 40px; }
+      .hero-grid, .split, .contact-wrap, .footer-grid { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: repeat(2, 1fr); }
+      .nav-links { display: none; }
+      .device { max-width: 360px; }
+      .screen { min-height: 300px; }
+      .mini-grid { display: none; }
+    }
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 28px, 1120px); }
+      section { padding: 44px 0; }
+      .feature-grid, .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .hero { padding: 28px 0 24px; }
+      .hero-grid { gap: 24px; }
+      h1 { font-size: 31px; }
+      h2 { font-size: 24px; }
+      p { font-size: 15px; }
+      .lead { font-size: 15px; line-height: 1.65; }
+      .cta-row { margin-top: 18px; }
+      .device { border-radius: 22px; padding: 8px; max-width: 250px; }
+      .screen { border-radius: 16px; min-height: 220px; padding: 12px; }
+      .status { margin-bottom: 12px; }
+      .money-panel { padding: 12px; }
+      .money-panel b { font-size: 22px; }
+      .money-panel p { margin: 8px 0 0; font-size: 13px; }
+      .mini-grid { display: none; }
+    }`;
+
+function sectionFeature(title: string, text: string, icon: string): string {
+  return `<article class="card"><div class="icon" aria-hidden="true">${escapeHtml(
+    icon,
+  )}</div><h3>${escapeHtml(title)}</h3><p>${escapeHtml(text)}</p></article>`;
+}
+
+function publicContactFormHtml(origin: string): string {
+  return `<form class="form-card" method="post" action="${origin}/api/v1/public/partnership-inquiries">
+        <h3>제휴 문의 남기기</h3>
+        <p>문의는 급여납치 production backend로 접수됩니다. 비밀번호, 인증 토큰, 계좌, 카드, 급여·지출·저축 원문은 입력하지 마세요.</p>
+        <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px" />
+        <div class="form-grid">
+          <div class="field"><label for="company">회사/브랜드 *</label><input id="company" name="company" maxlength="80" required autocomplete="organization" /></div>
+          <div class="field"><label for="name">이름/담당자 *</label><input id="name" name="name" maxlength="40" required autocomplete="name" /></div>
+          <div class="field full"><label for="email">이메일 *</label><input id="email" name="email" type="email" maxlength="120" required autocomplete="email" /></div>
+          <div class="field full"><label for="phone">연락처 optional</label><input id="phone" name="phone" maxlength="40" autocomplete="tel" /></div>
+          <div class="field full"><label for="type">문의 유형 *</label><select id="type" name="type" required><option value="">선택해 주세요</option><option value="brand">브랜드/서비스 제휴</option><option value="benefit">생활 혜택/쿠폰</option><option value="content">콘텐츠/LV UP 제휴</option><option value="campaign">광고/캠페인</option><option value="support">고객/서비스 문의</option></select></div>
+          <div class="field full"><label for="message">문의 내용 *</label><textarea id="message" name="message" maxlength="2000" minlength="10" required placeholder="제휴 목적과 제안 내용을 간단히 적어 주세요."></textarea></div>
+        </div>
+        <label class="privacy-check"><input type="checkbox" name="privacyConsent" value="true" required /><span>문의 처리를 위해 입력한 연락처와 문의 내용을 급여납치 운영 채널로 전달하는 것에 동의합니다.</span></label>
+        <div class="cta-row"><button class="button primary" type="submit">문의 접수하기</button><a class="button secondary" href="${origin}/privacy">개인정보 처리방침</a></div>
+      </form>`;
+}
+
+function publicFooterHtml(origin: string): string {
+  return `<footer>
+  <div class="shell footer-grid">
+    <div>
+      <a class="brand" href="${origin}/"><span class="brand-mark">급</span><span><strong>급여납치</strong><span>Salary Hijacking</span></span></a>
+      <p class="company">회사명: 진비즈 매니지먼트<br />대표자: 김진원 · 사업자등록번호: 330-25-01693<br />고객지원: ${LEGAL_SUPPORT_EMAIL} · 개인정보 문의: ${LEGAL_PRIVACY_EMAIL}</p>
+      <p>급여납치는 급여·예산·지출·저축 관리와 자기계발을 돕는 서비스이며 금융투자 자문 또는 금융상품 판매 서비스가 아닙니다.</p>
+    </div>
+    <nav class="footer-links" aria-label="정책 및 고객지원">
+      <a href="${origin}/privacy">개인정보처리방침</a>
+      <a href="${origin}/terms">이용약관</a>
+      <a href="${origin}/support">고객지원</a>
+      <a href="${origin}/contact">제휴 문의</a>
+    </nav>
+  </div>
+</footer>`;
+}
+
 function partnerBenefitsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
   const origin = canonicalOrigin(runtime);
-  const canonicalUrl = `${origin}/partners`;
+  const canonicalUrl = `${origin}${runtime.path === "/affiliate" ? "/affiliate" : "/partners"}`;
   const body = `<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>제휴 혜택 | 급여납치</title>
-  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
-  <style>
-    :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
-    body { margin: 0; background: #f7f8fa; color: #202327; }
-    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 72px; }
-    .brand { color: #209252; font-weight: 800; letter-spacing: 0; }
-    h1 { margin: 12px 0 18px; font-size: 34px; line-height: 1.2; letter-spacing: 0; }
-    p, li { font-size: 16px; line-height: 1.75; }
-    section { background: #fff; border: 1px solid #e7ebef; border-radius: 20px; padding: 26px; }
-    a { color: #12663a; font-weight: 800; }
-    .label { color: #856600; font-size: 13px; font-weight: 900; }
-    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
-    .button { border: 1px solid #d9f0e3; border-radius: 999px; padding: 10px 14px; text-decoration: none; }
-  </style>
+  ${publicHtmlHead({
+    canonicalUrl,
+    description:
+      "급여납치 제휴 혜택은 금융 금액 기반 타겟팅 없이 생활 맥락에 맞춘 안내를 제공하는 정책을 설명합니다.",
+    title: "제휴 혜택 | 급여납치",
+  })}
+  <style>${PUBLIC_WEB_STYLE}</style>
 </head>
 <body>
+  <header class="topbar"><div class="shell nav"><a class="brand" href="${origin}/"><span class="brand-mark">급</span><span><strong>급여납치</strong><span>Salary Hijacking</span></span></a></div></header>
   <main>
-    <p class="brand">SALARY HIJACKING · 급여납치</p>
     <section>
-      <p class="label">제휴/광고</p>
-      <h1>생활비를 아끼는 제휴 혜택</h1>
-      <p>급여납치의 제휴 혜택은 사용자가 보고 있는 화면 맥락에 맞춘 문맥형 안내를 기본으로 합니다.</p>
-      <p>급여, 지출, 저축, 납치금액, 계좌, 카드, 대출, 이메일, 전화번호, 인증 토큰, 푸시 토큰 원문은 광고·제휴·분석 payload에 포함하지 않습니다.</p>
-      <p>금융 금액 기반 타겟팅을 사용하지 않습니다. 광고 또는 제휴 콘텐츠는 명확한 라벨과 함께 표시됩니다.</p>
-      <nav class="links" aria-label="급여납치 제휴 정책 링크">
-        <a class="button" href="${origin}/privacy">개인정보 처리방침</a>
-        <a class="button" href="${origin}/support">고객 지원</a>
-        <a class="button" href="${origin}/terms">이용약관</a>
-      </nav>
+      <div class="shell split">
+        <div>
+          <p class="kicker">Partnership</p>
+          <h1>사용자에게 실제로 도움이 되는 생활 혜택</h1>
+          <p class="lead">급여납치는 급여 흐름을 가리지 않는 위치에서 생활비 절감, 자기관리, 콘텐츠 혜택을 문맥형 안내와 명확한 제휴 표시로 연결합니다.</p>
+          <p>민감 금융정보를 광고 세그먼트에 사용하지 않습니다. 제휴사는 실제로 확정된 경우에만 공개하며, 현재 페이지는 제휴 원칙과 문의 경로를 안내합니다.</p>
+        </div>
+        <div class="steps">
+          <article class="step"><span class="num">1</span><div><h3>생활비 절감</h3><p>구독, 교육, 건강, 생활 서비스처럼 사용자의 지출 결정을 돕는 혜택을 우선합니다.</p></div></article>
+          <article class="step"><span class="num">2</span><div><h3>자기관리 연계</h3><p>독서, 뉴스, 외국어, 운동 루틴과 자연스럽게 이어지는 파트너십을 검토합니다.</p></div></article>
+          <article class="step"><span class="num">3</span><div><h3>명확한 표시</h3><p>광고와 제휴 콘텐츠는 Sponsored 또는 제휴 혜택으로 분명하게 표시합니다.</p></div></article>
+        </div>
+      </div>
+      <div class="shell cta-row">
+        <a class="button primary" href="${origin}/contact">제휴 문의하기</a>
+        <a class="button secondary" href="${origin}/privacy">개인정보 처리방침</a>
+        <a class="button secondary" href="${origin}/support">고객 지원</a>
+      </div>
     </section>
   </main>
+  ${publicFooterHtml(origin)}
 </body>
 </html>`;
 
@@ -730,44 +1014,163 @@ function partnerBenefitsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
 function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
   const origin = canonicalOrigin(runtime);
   const canonicalUrl = `${origin}/`;
+  const features = [
+    sectionFeature(
+      "급여 관리",
+      "월급 주기와 수령일을 기준으로 이번 달 돈의 출발점을 정리합니다.",
+      "₩",
+    ),
+    sectionFeature(
+      "계획",
+      "고정지출, 고정저축, 변동지출을 미리 나눠 월급 흐름을 한눈에 봅니다.",
+      "P",
+    ),
+    sectionFeature(
+      "오늘 사용 가능 금액",
+      "하루 단위로 쓸 수 있는 생활비를 확인해 충동 지출을 줄입니다.",
+      "D",
+    ),
+    sectionFeature(
+      "고정지출",
+      "월세, 통신비, 구독료처럼 반복되는 지출을 예정과 완료로 관리합니다.",
+      "F",
+    ),
+    sectionFeature(
+      "고정저축",
+      "먼저 남길 돈을 분리하고 완료 여부를 확인합니다.",
+      "S",
+    ),
+    sectionFeature(
+      "변동지출",
+      "갑자기 생기는 지출도 빠르게 기록하고 남은 예산에 반영합니다.",
+      "V",
+    ),
+    sectionFeature(
+      "지켜낸 돈",
+      "쓰지 않고 남긴 돈을 앱의 첫 화면에서 분명하게 보여줍니다.",
+      "K",
+    ),
+    sectionFeature(
+      "알림",
+      "예정된 지출과 관리 루틴을 놓치지 않도록 필요한 순간에 알려줍니다.",
+      "N",
+    ),
+  ].join("");
   const body = `<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>급여납치 | Salary Hijacking</title>
-  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
-  <style>
-    :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
-    body { margin: 0; background: #f7f8fa; color: #202327; }
-    main { max-width: 760px; margin: 0 auto; padding: 56px 20px 72px; }
-    .brand { color: #209252; font-weight: 800; letter-spacing: 0; }
-    h1 { margin: 12px 0 18px; font-size: 36px; line-height: 1.2; letter-spacing: 0; }
-    p { font-size: 16px; line-height: 1.75; }
-    .hero { background: #fff; border: 1px solid #e7ebef; border-radius: 20px; padding: 28px; }
-    .money { color: #12663a; font-size: 28px; font-weight: 800; line-height: 1.35; }
-    .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-    a { color: #12663a; font-weight: 800; }
-    .button { border: 1px solid #d9f0e3; border-radius: 999px; padding: 10px 14px; text-decoration: none; }
-    .meta { color: #6d737a; font-size: 14px; }
-  </style>
+  ${publicHtmlHead({
+    canonicalUrl,
+    description:
+      "급여납치는 월급이 사라지기 전에 예산, 지출, 저축, LV UP을 한 곳에서 관리하는 금융 생활 앱입니다.",
+    title: "급여납치 | Salary Hijacking",
+  })}
+  <style>${PUBLIC_WEB_STYLE}</style>
 </head>
 <body>
-  <main>
-    <p class="brand">SALARY HIJACKING · 급여납치</p>
-    <section class="hero">
-      <h1>월급이 사라지기 전에 먼저 붙잡아요</h1>
-      <p class="money">이번 달 내가 지켜낸 돈을 가장 먼저 보여주는 급여 자기관리 앱</p>
-      <p>급여납치는 급여, 고정지출, 저축, 생활비, 일일 예산을 분리하고 사용자가 남긴 돈을 서버 권위 기준으로 확인하도록 돕습니다.</p>
-      <p class="meta">개인정보와 광고 데이터는 분리하며, 금융 금액 기반 광고 타겟팅은 사용하지 않습니다.</p>
-      <nav class="links" aria-label="급여납치 공개 링크">
-        <a class="button" href="${origin}/partners">제휴 혜택</a>
-        <a class="button" href="${origin}/privacy">개인정보 처리방침</a>
-        <a class="button" href="${origin}/support">고객 지원</a>
-        <a class="button" href="${origin}/terms">이용약관</a>
+  <a class="skip" href="#main">본문으로 이동</a>
+  <header class="topbar">
+    <div class="shell nav">
+      <a class="brand" href="${origin}/"><span class="brand-mark">급</span><span><strong>급여납치</strong><span>Salary Hijacking</span></span></a>
+      <nav class="nav-links" aria-label="주요 섹션">
+        <a href="#need">필요한 이유</a>
+        <a href="#features">핵심 기능</a>
+        <a href="#level-up">LV UP</a>
+        <a href="#community">Community</a>
+        <a href="#contact">문의</a>
       </nav>
+    </div>
+  </header>
+  <main>
+    <section class="hero" id="hero">
+      <div class="shell hero-grid" id="main">
+        <div>
+          <p class="kicker">Salary Hijacking</p>
+          <h1>월급이 사라지기 전에, 내가 먼저 관리합니다.</h1>
+          <p class="lead">급여납치는 월급이 들어오는 순간부터 지출, 저축, 오늘의 생활비, 지켜낸 돈을 한 흐름으로 정리하는 금융 생활 앱입니다.</p>
+          <div class="cta-row">
+            <a class="button primary" href="#features">핵심 기능 보기</a>
+            <a class="button secondary" href="#contact">제휴 문의</a>
+          </div>
+        </div>
+        <div class="device" aria-label="급여납치 앱 화면 미리보기">
+          <div class="screen">
+            <div class="status"><span>급여납치</span><span>오늘</span></div>
+            <div class="money-panel"><small>이번 달 지켜낸 돈</small><b>482,000원</b><p>급여주기 18일 남음</p></div>
+            <div class="mini-grid">
+              <div class="mini"><span>오늘 사용 가능</span><strong>28,500원</strong></div>
+              <div class="mini"><span>예정 고정지출</span><strong>4건</strong></div>
+              <div class="mini"><span>고정저축</span><strong>완료 2건</strong></div>
+              <div class="mini"><span>LV UP</span><strong>Streak 7</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="need">
+      <div class="shell split">
+        <div class="section-head">
+          <p class="kicker">Why</p>
+          <h2>급여납치가 필요한 이유</h2>
+          <p class="lead">직접 돈의 흐름을 확인하고 관리해야 돈이 새지 않습니다.</p>
+        </div>
+        <div class="steps">
+          <article class="step"><span class="num">1</span><div><h3>급여를 기준으로 시작</h3><p>월급, 고정지출, 저축, 생활비를 따로 보지 않고 같은 주기 안에서 확인합니다.</p></div></article>
+          <article class="step"><span class="num">2</span><div><h3>예정과 완료를 구분</h3><p>사용 예정, 완료, 건너뛰기 상태를 나눠 실제 남길 수 있는 돈을 관리합니다.</p></div></article>
+          <article class="step"><span class="num">3</span><div><h3>오늘의 선택으로 연결</h3><p>이번 달 전체 계획이 오늘 얼마를 써도 되는지로 이어집니다.</p></div></article>
+        </div>
+      </div>
+    </section>
+    <section id="features">
+      <div class="shell">
+        <div class="section-head"><p class="kicker">Features</p><h2>급여납치 핵심 기능</h2><p class="lead">월급 생활에 필요한 결정을 빠르게 확인할 수 있도록 기능을 명확한 블록으로 구성했습니다.</p></div>
+        <div class="feature-grid">${features}</div>
+      </div>
+    </section>
+    <section class="band" id="level-up">
+      <div class="shell split">
+        <div>
+          <p class="kicker">LV UP</p>
+          <h2>돈을 관리하는 김에, 나도 직접 관리합니다.</h2>
+          <p class="lead">독서, 뉴스, 외국어, 운동을 기본 목표, 맞춤 추천, 직접 설정으로 시작하고 실제 활동, 기록, Streak, XP, Level로 이어갑니다.</p>
+          <div class="pill-row"><span class="pill">기본 목표</span><span class="pill">맞춤 추천</span><span class="pill">직접 설정</span><span class="pill">Streak</span><span class="pill">XP</span></div>
+        </div>
+        <div class="feature-grid">
+          ${sectionFeature("독서", "읽기 시작, 빠른 완료, 독서 카드와 한 줄 기록을 남깁니다.", "R")}
+          ${sectionFeature("뉴스", "기사 읽음과 한 줄 생각을 기록해 관점을 넓힙니다.", "N")}
+          ${sectionFeature("외국어", "Listening, Speaking, Reading, Writing 루틴을 이어갑니다.", "L")}
+          ${sectionFeature("운동", "루틴, 타이머, 실제 운동 시간과 노트를 기록합니다.", "H")}
+        </div>
+      </div>
+    </section>
+    <section id="community">
+      <div class="shell split">
+        <div class="section-head"><p class="kicker">Community</p><h2>혼자 관리하지 않아도 되도록</h2><p class="lead">자유 게시판, 레벨업 인증, 취미 게시판, 정보 공유로 사용자 경험과 성장 기록을 나눕니다.</p></div>
+        <div class="steps">
+          <article class="step"><span class="num">C</span><div><h3>성장 공유</h3><p>LV UP 인증과 일상 루틴을 공유합니다.</p></div></article>
+          <article class="step"><span class="num">I</span><div><h3>정보 공유</h3><p>생활비 절감, 자기관리, 취미 정보를 나눕니다.</p></div></article>
+        </div>
+      </div>
+    </section>
+    <section id="partnership">
+      <div class="shell split">
+        <div><p class="kicker">Partnership</p><h2>생활과 자기관리에 맞는 혜택을 연결합니다.</h2><p class="lead">확정되지 않은 제휴사를 실제 파트너처럼 표시하지 않습니다. 급여납치는 생활비 절감, 교육, 건강, 콘텐츠 파트너십을 신중하게 확장합니다.</p><a class="button secondary" href="${origin}/affiliate">제휴 원칙 보기</a></div>
+        <div class="feature-grid">
+          ${sectionFeature("생활 혜택", "핵심 재무 카드보다 앞서지 않는 위치에서 안내합니다.", "B")}
+          ${sectionFeature("자기관리 혜택", "LV UP 활동과 자연스럽게 이어지는 제안을 우선합니다.", "G")}
+          ${sectionFeature("명확한 표시", "광고와 제휴 콘텐츠는 사용자가 바로 알 수 있게 구분합니다.", "A")}
+          ${sectionFeature("프라이버시", "민감 금융정보를 광고 세그먼트에 사용하지 않습니다.", "P")}
+        </div>
+      </div>
+    </section>
+    <section id="contact">
+      <div class="shell contact-wrap">
+        <div><p class="kicker">Contact</p><h2>제휴와 서비스 문의를 남겨 주세요.</h2><p class="lead">문의 내용은 production backend로 접수되며 운영 채널에서 확인합니다. 고객지원: ${LEGAL_SUPPORT_EMAIL}</p></div>
+        ${publicContactFormHtml(origin)}
+      </div>
     </section>
   </main>
+  ${publicFooterHtml(origin)}
 </body>
 </html>`;
 
@@ -790,16 +1193,59 @@ function legalPageResponse<TEnv>(
 ): Response {
   const origin = canonicalOrigin(runtime);
   const canonicalUrl = `${origin}${runtime.path}`;
+  if (title === "문의") {
+    const body = `<!doctype html>
+<html lang="ko">
+<head>
+  ${publicHtmlHead({
+    canonicalUrl,
+    description: publicPageDescription(title),
+    title: `${title} | 급여납치`,
+  })}
+  <style>${PUBLIC_WEB_STYLE}</style>
+</head>
+<body>
+  <header class="topbar"><div class="shell nav"><a class="brand" href="${origin}/"><span class="brand-mark">급</span><span><strong>급여납치</strong><span>Salary Hijacking</span></span></a></div></header>
+  <main>
+    <section>
+      <div class="shell contact-wrap">
+        <div>
+          <p class="kicker">Contact</p>
+          <h1>문의</h1>
+          <p class="lead">서비스, 제휴, 개인정보, 보안 문의를 안전한 운영 경로로 접수합니다.</p>
+          <p>고객 지원: ${LEGAL_SUPPORT_EMAIL}<br />개인정보 문의: ${LEGAL_PRIVACY_EMAIL}</p>
+        </div>
+        ${publicContactFormHtml(origin)}
+      </div>
+    </section>
+  </main>
+  ${publicFooterHtml(origin)}
+</body>
+</html>`;
+
+    return new Response(runtime.method === "HEAD" ? null : body, {
+      status: 200,
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "content-language": "ko-KR",
+        "content-security-policy": PUBLIC_HTML_CSP,
+        "cache-control": "public, max-age=3600",
+        link: `<${canonicalUrl}>; rel="canonical"`,
+        [REQUEST_ID_HEADER]: runtime.requestId,
+      },
+    });
+  }
   const sections = legalPageBody(title)
     .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
     .join("");
   const body = `<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(title)} | 급여납치</title>
-  <link rel="canonical" href="${escapeHtml(canonicalUrl)}" />
+  ${publicHtmlHead({
+    canonicalUrl,
+    description: publicPageDescription(title),
+    title: `${title} | 급여납치`,
+  })}
   <style>
     :root { color-scheme: light; font-family: "Freesentation", "Pretendard", "Noto Sans KR", system-ui, sans-serif; }
     body { margin: 0; background: #f7f8fa; color: #202327; }
@@ -837,6 +1283,277 @@ function legalPageResponse<TEnv>(
       [REQUEST_ID_HEADER]: runtime.requestId,
     },
   });
+}
+
+function publicRobotsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  const origin = canonicalOrigin(runtime);
+  const body = `User-agent: *
+Allow: /
+Sitemap: ${origin}/sitemap.xml
+`;
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "public, max-age=3600",
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
+}
+
+function publicSitemapResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
+  const origin = canonicalOrigin(runtime);
+  const paths = [
+    "/",
+    "/privacy",
+    "/terms",
+    "/support",
+    "/partners",
+    "/affiliate",
+    "/contact",
+  ];
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${paths
+  .map((path) => `  <url><loc>${escapeHtml(`${origin}${path}`)}</loc></url>`)
+  .join("\n")}
+</urlset>
+`;
+  return new Response(runtime.method === "HEAD" ? null : body, {
+    status: 200,
+    headers: {
+      "content-type": "application/xml; charset=utf-8",
+      "cache-control": "public, max-age=3600",
+      [REQUEST_ID_HEADER]: runtime.requestId,
+    },
+  });
+}
+
+function publicAndroidAssetLinksResponse<TEnv>(
+  runtime: AppRuntime<TEnv>,
+): Response {
+  const fingerprints = parseAndroidCertFingerprints(
+    envString(runtime.env, "ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS"),
+  );
+  if (fingerprints.length === 0) {
+    return json(503, runtime, {
+      error: {
+        code: "ANDROID_APP_LINK_CERT_FINGERPRINT_REQUIRED",
+        message:
+          "Android App Links require explicit public SHA-256 signing certificate fingerprints.",
+        status: 503,
+        requestId: runtime.requestId,
+      },
+      data: {
+        packageName: "com.salaryhijacking.mobile",
+        configured: false,
+      },
+    });
+  }
+
+  return new Response(
+    runtime.method === "HEAD"
+      ? null
+      : JSON.stringify([
+          {
+            relation: ["delegate_permission/common.handle_all_urls"],
+            target: {
+              namespace: "android_app",
+              package_name: "com.salaryhijacking.mobile",
+              sha256_cert_fingerprints: fingerprints,
+            },
+          },
+        ]),
+    {
+      status: 200,
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "public, max-age=3600",
+        [REQUEST_ID_HEADER]: runtime.requestId,
+      },
+    },
+    );
+}
+
+type PublicPartnershipInquiry = {
+  readonly company: string;
+  readonly name: string;
+  readonly email: string;
+  readonly phone: string | null;
+  readonly type: string;
+  readonly message: string;
+  readonly privacyConsent: true;
+};
+
+const PUBLIC_INQUIRY_TYPES = new Set([
+  "brand",
+  "benefit",
+  "content",
+  "campaign",
+  "support",
+]);
+
+function publicInquiryQueue<TEnv>(env: TEnv): PublicInquiryQueue | null {
+  const value =
+    env && typeof env === "object"
+      ? (env as Record<string, unknown>).OPERATIONS_QUEUE
+      : null;
+  if (!value || typeof value !== "object") return null;
+  const send = (value as { readonly send?: unknown }).send;
+  return typeof send === "function" ? (value as PublicInquiryQueue) : null;
+}
+
+function cleanPublicInquiryText(value: unknown, maxLength: number): string {
+  return String(value ?? "")
+    .split("")
+    .map((character) => {
+      const code = character.charCodeAt(0);
+      return code < 32 || code === 127 ? " " : character;
+    })
+    .join("")
+    .replace(/\s+/gu, " ")
+    .trim()
+    .slice(0, maxLength);
+}
+
+function boolFromPublicInquiry(value: unknown): boolean {
+  return value === true || value === "true" || value === "on" || value === "1";
+}
+
+function validPublicEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value) && value.length <= 120;
+}
+
+async function readPublicInquiryPayload(
+  request: Request,
+): Promise<Record<string, unknown> | null> {
+  const contentType = request.headers.get("content-type")?.toLowerCase() ?? "";
+  if (contentType.includes("application/json")) {
+    const parsed = (await request.json().catch(() => null)) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  }
+  if (
+    contentType.includes("application/x-www-form-urlencoded") ||
+    contentType.includes("multipart/form-data")
+  ) {
+    const form = await request.formData().catch(() => null);
+    if (!form) return null;
+    const payload: Record<string, unknown> = {};
+    form.forEach((value, key) => {
+      payload[key] = value;
+    });
+    return payload;
+  }
+  return null;
+}
+
+function validatePublicInquiryPayload(
+  input: Record<string, unknown> | null,
+): PublicPartnershipInquiry | null {
+  if (!input) return null;
+  if (cleanPublicInquiryText(input.website, 120)) return null;
+
+  const company = cleanPublicInquiryText(input.company, 80);
+  const name = cleanPublicInquiryText(input.name, 40);
+  const email = cleanPublicInquiryText(input.email, 120).toLowerCase();
+  const phone = cleanPublicInquiryText(input.phone, 40);
+  const type = cleanPublicInquiryText(input.type, 40);
+  const message = cleanPublicInquiryText(input.message, 2_000);
+  const privacyConsent = boolFromPublicInquiry(input.privacyConsent);
+
+  if (company.length < 2) return null;
+  if (name.length < 2) return null;
+  if (!validPublicEmail(email)) return null;
+  if (!PUBLIC_INQUIRY_TYPES.has(type)) return null;
+  if (message.length < 10) return null;
+  if (!privacyConsent) return null;
+
+  return {
+    company,
+    name,
+    email,
+    phone: phone || null,
+    type,
+    message,
+    privacyConsent: true,
+  };
+}
+
+async function publicPartnershipInquiryResponse<TEnv>(
+  runtime: AppRuntime<TEnv>,
+): Promise<Response> {
+  const queue = publicInquiryQueue(runtime.env);
+  if (!queue) {
+    return json(503, runtime, {
+      error: {
+        code: "PUBLIC_CONTACT_QUEUE_UNAVAILABLE",
+        message: "현재 문의 접수 경로를 사용할 수 없습니다.",
+        status: 503,
+        requestId: runtime.requestId,
+      },
+      data: {
+        accepted: false,
+        queued: false,
+      },
+    });
+  }
+
+  const inquiry = validatePublicInquiryPayload(
+    await readPublicInquiryPayload(runtime.request),
+  );
+  if (!inquiry) {
+    return json(400, runtime, {
+      error: {
+        code: "PUBLIC_CONTACT_INVALID_INPUT",
+        message: "문의 내용과 개인정보 동의 항목을 확인해 주세요.",
+        status: 400,
+        requestId: runtime.requestId,
+      },
+      data: {
+        accepted: false,
+        queued: false,
+      },
+    });
+  }
+
+  const inquiryId = `inq_${globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36)}`;
+  await queue.send({
+    type: "partnership_inquiry",
+    source: "public_web",
+    requestId: runtime.requestId,
+    inquiryId,
+    environment: environmentOf(runtime.env),
+    submittedAt: runtime.now.toISOString(),
+    inquiry,
+    consent: { privacy: true },
+    piiEvidence: {
+      rawPersonalDataEchoedToResponse: false,
+      rawFinancialDataCollected: false,
+      secretCollected: false,
+    },
+  });
+
+  return json(202, runtime, {
+    data: {
+      accepted: true,
+      queued: true,
+      requestId: inquiryId,
+    },
+  });
+}
+
+function parseAndroidCertFingerprints(value: string | null): readonly string[] {
+  if (!value) return [];
+  const fingerprintPattern = /^[0-9A-F]{2}(?::[0-9A-F]{2}){31}$/u;
+  return value
+    .split(/[,\n]/u)
+    .map((entry) => entry.trim().toUpperCase())
+    .filter(
+      (entry, index, entries) =>
+        fingerprintPattern.test(entry) && entries.indexOf(entry) === index,
+    );
 }
 
 function notFound(runtime: AppRuntime): Response {
@@ -1001,6 +1718,10 @@ function applySecurityHeaders<TEnv>(
   headers.set("x-app-version", APP_VERSION);
   headers.set("x-content-type-options", "nosniff");
   headers.set("x-frame-options", "DENY");
+  headers.set(
+    "strict-transport-security",
+    "max-age=31536000; includeSubDomains; preload",
+  );
   headers.set("referrer-policy", "no-referrer");
   headers.set(
     "permissions-policy",
@@ -1073,9 +1794,11 @@ function publicAppConfig<TEnv>(
     links: {
       landingUrl: origin,
       partnerBenefitsUrl: `${origin}/partners`,
+      affiliateUrl: `${origin}/affiliate`,
       privacyUrl: `${origin}/privacy`,
       supportUrl: `${origin}/support`,
       termsUrl: `${origin}/terms`,
+      contactUrl: `${origin}/contact`,
     },
   };
 }
@@ -1125,6 +1848,18 @@ function headerBool(headers: Headers, name: string): boolean {
   return headerText(headers, name)?.toLowerCase() === "true";
 }
 
+function headerBoolOr(
+  headers: Headers,
+  name: string,
+  fallback: boolean,
+): boolean {
+  const value = headerText(headers, name);
+  if (!value) return fallback;
+  if (value.toLowerCase() === "true") return true;
+  if (value.toLowerCase() === "false") return false;
+  return fallback;
+}
+
 function enumFrom<TValue extends readonly string[]>(
   values: TValue,
   value: string | null,
@@ -1164,9 +1899,25 @@ function bootstrapAccountStatus(headers: Headers): BootstrapAccountStatus {
   );
 }
 
+function bootstrapSessionExpiresAt(headers: Headers): string | null {
+  const value = headerText(headers, "x-auth-session-expires-at");
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Date(timestamp).toISOString();
+}
+
 function mfaRequiredFor(role: BootstrapRole, mfaVerified: boolean): boolean {
   return (
-    (role === "OPERATOR" || role === "ADMIN" || role === "SUPER_ADMIN") &&
+    (role === "OPERATOR" ||
+      role === "ADMIN" ||
+      role === "SUPER_ADMIN" ||
+      role === "OPS_ADMIN" ||
+      role === "MODERATOR" ||
+      role === "CONTENT_ADMIN" ||
+      role === "SUPPORT" ||
+      role === "ADS_PARTNER_ADMIN" ||
+      role === "AUDITOR_READONLY") &&
     !mfaVerified
   );
 }
@@ -1217,6 +1968,15 @@ async function mobileBootstrap<TEnv>(
   const mfaVerified =
     authenticated && headerBool(headers, "x-auth-mfa-verified");
   const accountReady = accountStatus === "ACTIVE";
+  const emailVerified =
+    authenticated &&
+    headerBoolOr(headers, "x-auth-email-verified", accountReady);
+  const onboardingCompleted =
+    authenticated &&
+    headerBoolOr(headers, "x-auth-onboarding-completed", accountReady);
+  const payrollReady =
+    authenticated &&
+    headerBoolOr(headers, "x-auth-payroll-ready", accountReady);
 
   return json(200, runtime, {
     data: {
@@ -1224,11 +1984,14 @@ async function mobileBootstrap<TEnv>(
         authenticated,
         userIdHash: await hashForMobileSession(userId),
         role,
-        emailVerified: authenticated && accountReady,
-        onboardingCompleted: authenticated && accountReady,
+        emailVerified,
+        onboardingCompleted,
+        payrollReady,
         mfaRequired: authenticated && mfaRequiredFor(role, mfaVerified),
         accountStatus,
-        sessionExpiresAt: null,
+        sessionExpiresAt: authenticated
+          ? bootstrapSessionExpiresAt(headers)
+          : null,
         rawFinancialDataExposed: false,
         rawPersonalDataExposed: false,
         rawPushTokenExposed: false,
@@ -1258,7 +2021,7 @@ async function mobileBootstrap<TEnv>(
         adsFinancialTargetingAllowed: false,
       },
       digest: {
-        payrollReady: true,
+        payrollReady,
         budgetReady: true,
         fixedExpenseReady: true,
         savingsReady: true,
@@ -1302,6 +2065,32 @@ async function coreDispatch<TEnv>(
 
   if (path === "/partners" && (method === "GET" || method === "HEAD")) {
     return partnerBenefitsResponse(runtime);
+  }
+
+  if (path === "/affiliate" && (method === "GET" || method === "HEAD")) {
+    return partnerBenefitsResponse(runtime);
+  }
+
+  if (
+    path === `${API_PREFIX}/public/partnership-inquiries` &&
+    method === "POST"
+  ) {
+    return publicPartnershipInquiryResponse(runtime);
+  }
+
+  if (path === "/robots.txt" && (method === "GET" || method === "HEAD")) {
+    return publicRobotsResponse(runtime);
+  }
+
+  if (path === "/sitemap.xml" && (method === "GET" || method === "HEAD")) {
+    return publicSitemapResponse(runtime);
+  }
+
+  if (
+    path === "/.well-known/assetlinks.json" &&
+    (method === "GET" || method === "HEAD")
+  ) {
+    return publicAndroidAssetLinksResponse(runtime);
   }
 
   if (["/health", "/live", "/_health", `${API_PREFIX}/health`].includes(path)) {
@@ -1385,6 +2174,8 @@ async function coreDispatch<TEnv>(
 
   const route = selectRoute(path);
   if (!route) return notFound(runtime);
+  if (requiresPersistentDatabase(env, route))
+    return databaseUrlRequired(runtime, route);
   if (route.id === "admin") {
     const baseOptions: AdminRoutesOptions<TEnv> =
       options.adminRoutesOptions ??
@@ -1458,6 +2249,9 @@ async function coreDispatch<TEnv>(
     return createFixedExpensesRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "variable-expenses") {
+    const phase5Producer = createPhase5FinancialNotificationProducer<TEnv>(
+      options.now ? { now: options.now } : {},
+    );
     const baseOptions: VariableExpensesRoutesOptions<TEnv> =
       options.variableExpensesRoutesOptions ??
       ({
@@ -1466,16 +2260,32 @@ async function coreDispatch<TEnv>(
             ? createNeonVariableExpensesRepository<TEnv>()
             : undefined,
       } satisfies VariableExpensesRoutesOptions<TEnv>);
-    const routeOptions: VariableExpensesRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
+    const producerOptions: VariableExpensesRoutesOptions<TEnv> =
+      baseOptions.onVariableExpenseEvent
         ? baseOptions
         : {
             ...baseOptions,
+            onVariableExpenseEvent: async (event, routeEnv, routeContext) => {
+              await phase5Producer.handleVariableExpenseEvent(
+                event,
+                routeEnv,
+                routeContext,
+              );
+            },
+          };
+    const routeOptions: VariableExpensesRoutesOptions<TEnv> =
+      producerOptions.now || !options.now
+        ? producerOptions
+        : {
+            ...producerOptions,
             now: options.now,
           };
     return createVariableExpensesRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "savings") {
+    const phase5Producer = createPhase5FinancialNotificationProducer<TEnv>(
+      options.now ? { now: options.now } : {},
+    );
     const baseOptions: SavingsRoutesOptions<TEnv> =
       options.savingsRoutesOptions ??
       ({
@@ -1484,16 +2294,33 @@ async function coreDispatch<TEnv>(
             ? createNeonSavingsRepository<TEnv>()
             : undefined,
       } satisfies SavingsRoutesOptions<TEnv>);
-    const routeOptions: SavingsRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
+    const producerOptions: SavingsRoutesOptions<TEnv> =
+      baseOptions.onSavingsEvent
         ? baseOptions
         : {
             ...baseOptions,
+            onSavingsEvent: async (event, routeEnv, routeContext) => {
+              await phase5Producer.handleSavingsEvent(
+                event,
+                routeEnv,
+                routeContext,
+              );
+            },
+          };
+    const routeOptions: SavingsRoutesOptions<TEnv> =
+      producerOptions.now || !options.now
+        ? producerOptions
+        : {
+            ...producerOptions,
             now: options.now,
           };
     return createSavingsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "growth") {
+    const phase6Producer =
+      createPhase6GrowthCommunityNotificationProducer<TEnv>(
+        options.now ? { now: options.now } : {},
+      );
     const baseOptions: GrowthRoutesOptions<TEnv> =
       options.growthRoutesOptions ??
       ({
@@ -1502,11 +2329,23 @@ async function coreDispatch<TEnv>(
             ? createNeonGrowthRepository<TEnv>()
             : undefined,
       } satisfies GrowthRoutesOptions<TEnv>);
+    const producerOptions: GrowthRoutesOptions<TEnv> = baseOptions.onGrowthEvent
+      ? baseOptions
+      : {
+          ...baseOptions,
+          onGrowthEvent: async (event, routeEnv, routeContext) => {
+            await phase6Producer.handleGrowthEvent(
+              event,
+              routeEnv,
+              routeContext,
+            );
+          },
+        };
     const routeOptions: GrowthRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
-        ? baseOptions
+      producerOptions.now || !options.now
+        ? producerOptions
         : {
-            ...baseOptions,
+            ...producerOptions,
             now: options.now,
           };
     return createGrowthRoutes(routeOptions)(request, env, context);
@@ -1530,6 +2369,10 @@ async function coreDispatch<TEnv>(
     return createNotificationsRoutes(routeOptions)(request, env, context);
   }
   if (route.id === "community") {
+    const phase6Producer =
+      createPhase6GrowthCommunityNotificationProducer<TEnv>(
+        options.now ? { now: options.now } : {},
+      );
     const baseOptions: CommunityRoutesOptions<TEnv> =
       options.communityRoutesOptions ??
       ({
@@ -1538,11 +2381,24 @@ async function coreDispatch<TEnv>(
             ? createNeonCommunityRepository<TEnv>()
             : undefined,
       } satisfies CommunityRoutesOptions<TEnv>);
-    const routeOptions: CommunityRoutesOptions<TEnv> =
-      baseOptions.now || !options.now
+    const producerOptions: CommunityRoutesOptions<TEnv> =
+      baseOptions.onCommunityEvent
         ? baseOptions
         : {
             ...baseOptions,
+            onCommunityEvent: async (event, routeEnv, routeContext) => {
+              await phase6Producer.handleCommunityEvent(
+                event,
+                routeEnv,
+                routeContext,
+              );
+            },
+          };
+    const routeOptions: CommunityRoutesOptions<TEnv> =
+      producerOptions.now || !options.now
+        ? producerOptions
+        : {
+            ...producerOptions,
             now: options.now,
           };
     return createCommunityRoutes(routeOptions)(request, env, context);
@@ -1627,7 +2483,7 @@ function buildAuthOptions<TEnv>(
     {
       id: "root-manifest-public",
       pattern:
-        /^\/(manifest|health|ready|live|_health|privacy|support|terms|partners)(?:\/|$)/,
+        /^\/(manifest|health|ready|live|_health|privacy|support|terms|partners|contact|robots\.txt|sitemap\.xml|\.well-known\/assetlinks\.json)(?:\/|$)/,
       public: true,
     },
   ] as const;
@@ -1709,6 +2565,12 @@ function adminReasonPresent(request: Request): boolean {
   return Boolean(request.headers.get("x-admin-reason")?.trim());
 }
 
+function adminBreakGlassRequested(request: Request): boolean {
+  return (
+    request.headers.get("x-admin-break-glass")?.trim().toLowerCase() === "true"
+  );
+}
+
 function isAdminMutation(path: string, method: string): boolean {
   return (
     (path === ADMIN_API_PREFIX || path.startsWith(`${ADMIN_API_PREFIX}/`)) &&
@@ -1738,13 +2600,17 @@ function createAppAuditGate<TEnv>(
     const enforceReason = options.auditOptions?.enforceAdminReason ?? true;
 
     if (enforceReason && isAdminMutation(path, method) && !reasonPresent) {
+      const breakGlass = adminBreakGlassRequested(request);
       return new Response(
         JSON.stringify({
           success: false,
           error: {
-            code: "ADMIN_REASON_REQUIRED",
-            message:
-              "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
+            code: breakGlass
+              ? "ADMIN_BREAK_GLASS_REASON_REQUIRED"
+              : "ADMIN_REASON_REQUIRED",
+            message: breakGlass
+              ? "긴급 권한 사용에는 X-Admin-Reason 헤더가 필요합니다."
+              : "관리자 변경 API는 X-Admin-Reason 헤더 또는 body.reason이 필요합니다.",
             status: 400,
             requestId,
           },

@@ -1,3 +1,4 @@
+import * as nodeFs from "node:fs";
 import * as nodePath from "node:path";
 
 type Resolution = Readonly<{
@@ -16,6 +17,19 @@ type ResolverContext = Readonly<{
 
 type MetroConfig = Readonly<{
   watchFolders?: readonly string[];
+  transformer?: Readonly<{
+    getTransformOptions?: () =>
+      | Promise<{
+          transform?: Readonly<{
+            inlineRequires?: boolean;
+          }>;
+        }>
+      | {
+          transform?: Readonly<{
+            inlineRequires?: boolean;
+          }>;
+        };
+  }>;
   resolver: Readonly<{
     resolveRequest: (
       context: ResolverContext,
@@ -61,6 +75,7 @@ type MetroConfig = Readonly<{
       realWorkspaceRoot: string,
       platform: string,
     ) => boolean;
+    shouldUseCanonicalProjectRoot?: boolean;
   }>;
 }>;
 
@@ -74,6 +89,13 @@ const testMobileAppEntry = nodePath.resolve(
 );
 
 describe("mobile Metro dependency resolution", () => {
+  it("enables inline requires for Android release startup", async () => {
+    const transformOptions =
+      await metroConfig.transformer?.getTransformOptions?.();
+
+    expect(transformOptions?.transform?.inlineRequires).toBe(true);
+  });
+
   it("watches the workspace root so the Android root entry can be bundled", () => {
     const normalizedWatchFolders = new Set(
       (metroConfig.watchFolders ?? []).map((entry) =>
@@ -114,6 +136,44 @@ describe("mobile Metro dependency resolution", () => {
           : require.resolve(moduleName);
 
       expect(result.filePath).toBe(expectedEntry);
+      expect(fallbackResolver).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    "react-native/Libraries/Core/Devtools/getDevServer",
+    "expo-router/build/rsc/router/client",
+    "expo-router/build/rsc/router/client.js",
+  ])(
+    "aliases Android release dev fallback module %s away from localhost origins",
+    (moduleName) => {
+      const fallbackResolver = jest.fn(
+        (
+          _context: ResolverContext,
+          resolvedModuleName: string,
+          _platform: string | null,
+        ): Resolution => ({
+          type: "sourceFile",
+          filePath: resolvedModuleName,
+        }),
+      );
+      const context: ResolverContext = {
+        originModulePath: nodePath.join(testWorkspaceRoot, "index.android.js"),
+        resolveRequest: fallbackResolver,
+      };
+
+      const result = metroConfig.resolver.resolveRequest(
+        context,
+        moduleName,
+        "android",
+      );
+      const source = nodeFs.readFileSync(result.filePath, "utf8");
+
+      expect(result.filePath).toContain(
+        nodePath.join("src", "shared", "runtime"),
+      );
+      expect(source).not.toContain("localhost");
+      expect(source).not.toContain("8081");
       expect(fallbackResolver).not.toHaveBeenCalled();
     },
   );
@@ -817,6 +877,41 @@ describe("mobile Metro dependency resolution", () => {
     ).toBe(true);
   });
 
+  it("does not mix canonical project watch roots into active Windows subst builds", () => {
+    const originalEnv = {
+      alias: process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS,
+      canonical: process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT,
+    };
+
+    jest.resetModules();
+    process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS = "Y:\\";
+    delete process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT;
+
+    try {
+      const substLoadedMetroConfig = jest.requireActual<MetroConfig>(
+        "../../../metro.config.cjs",
+      );
+
+      expect(
+        substLoadedMetroConfig.__private?.shouldUseCanonicalProjectRoot,
+      ).toBe(false);
+    } finally {
+      if (originalEnv.alias === undefined) {
+        delete process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS;
+      } else {
+        process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS =
+          originalEnv.alias;
+      }
+      if (originalEnv.canonical === undefined) {
+        delete process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT;
+      } else {
+        process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT =
+          originalEnv.canonical;
+      }
+      jest.resetModules();
+    }
+  });
+
   it("maps Metro's prepended module system to the Windows subst workspace root", () => {
     const helper = metroConfig.__private?.patchMetroDefaultsModuleSystem;
     const moduleDefaults = {
@@ -892,6 +987,34 @@ describe("mobile Metro dependency resolution", () => {
       "Y:\\node_modules\\.pnpm\\expo@53.0.27_@babel+core@7._58972726df8949216eb9f197e4fc2390\\node_modules\\expo\\src\\winter\\index.ts",
     ]);
   });
+
+  it.each([
+    [
+      "S:\\",
+      "S:\\C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+      "S:\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+    ],
+    [
+      "D:\\shp",
+      "D:\\C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+      "D:\\shp\\node_modules\\.pnpm\\expo@53.0.27\\node_modules\\expo\\virtual\\streams.js",
+    ],
+  ])(
+    "normalizes Metro virtual files after Windows prepends alias root %s to a canonical path",
+    (aliasWorkspaceRoot, malformedFilePath, expectedFilePath) => {
+      const helper = metroConfig.__private?.mapToWorkspaceAliasRoot;
+
+      expect(helper).toBeDefined();
+      expect(
+        helper?.(
+          malformedFilePath,
+          aliasWorkspaceRoot,
+          "C:\\Users\\Telos_PC_17\\Desktop\\salary-hijacking-platform",
+          "win32",
+        ),
+      ).toBe(expectedFilePath);
+    },
+  );
 
   it("keeps Windows subst Android entry fallback working when loaded on a Linux CI runner", () => {
     const originalPlatform = process.platform;

@@ -183,10 +183,58 @@ const checkMetadata = (pkg, failures) => {
   }
 };
 
+const workspaceDirs = (root, pkg) => {
+  const workspaces = Array.isArray(pkg.workspaces) ? pkg.workspaces : [];
+  const dirs = [];
+
+  for (const pattern of workspaces) {
+    if (typeof pattern !== "string" || !pattern.endsWith("/*")) continue;
+    const base = path.join(root, pattern.slice(0, -2));
+    if (!fs.existsSync(base)) continue;
+    for (const entry of fs.readdirSync(base, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const packageJson = path.join(base, entry.name, "package.json");
+      if (fs.existsSync(packageJson)) dirs.push(path.dirname(packageJson));
+    }
+  }
+
+  return dirs;
+};
+
+const scanPackage = (packageDir, rootDir) => {
+  const currentPackagePath = path.join(packageDir, "package.json");
+  const pkg = readJson(currentPackagePath);
+  const failures = [];
+  checkMetadata(pkg, failures);
+
+  const scanRoots = ["src", "app", "tests"].map((entry) =>
+    path.join(packageDir, entry),
+  );
+  const files = scanRoots.flatMap(walk);
+  for (const filePath of files) {
+    const relativePath = path.relative(rootDir, filePath).replace(/\\/g, "/");
+    const packageRelativePath = path
+      .relative(packageDir, filePath)
+      .replace(/\\/g, "/");
+    const source = fs.readFileSync(filePath, "utf8");
+    const isTestFile =
+      /(^|\/)(tests?|__tests__)\//.test(packageRelativePath) ||
+      /\.test\.[tj]sx?$/.test(packageRelativePath);
+    for (const { name, pattern, skipTests } of sourcePatterns) {
+      if (skipTests === true && isTestFile) continue;
+      if (pattern.test(source)) {
+        failures.push(`${relativePath}: ${name}`);
+      }
+    }
+  }
+
+  return { pkg, failures, filesScanned: files.length };
+};
+
 const sourcePatterns = [
   {
     name: "dangerouslySetInnerHTML is forbidden on product surfaces",
-    pattern: /dangerouslySetInnerHTML/i,
+    pattern: /\bdangerouslySetInnerHTML\b\s*(?:=|:\s*(?!false\b))/i,
   },
   {
     name: "raw financial data must not be enabled for ads",
@@ -234,24 +282,13 @@ if (!fs.existsSync(packagePath)) {
 }
 
 const pkg = readJson(packagePath);
-const failures = [];
-checkMetadata(pkg, failures);
-
-const scanRoots = ["src", "app", "tests"].map((entry) => path.join(cwd, entry));
-const files = scanRoots.flatMap(walk);
-for (const filePath of files) {
-  const relativePath = path.relative(cwd, filePath).replace(/\\/g, "/");
-  const source = fs.readFileSync(filePath, "utf8");
-  const isTestFile =
-    /(^|\/)(tests?|__tests__)\//.test(relativePath) ||
-    /\.test\.[tj]sx?$/.test(relativePath);
-  for (const { name, pattern, skipTests } of sourcePatterns) {
-    if (skipTests === true && isTestFile) continue;
-    if (pattern.test(source)) {
-      failures.push(`${relativePath}: ${name}`);
-    }
-  }
-}
+const packageDirs = [cwd, ...workspaceDirs(cwd, pkg)];
+const results = packageDirs.map((packageDir) => scanPackage(packageDir, cwd));
+const failures = results.flatMap(({ failures }) => failures);
+const filesScanned = results.reduce(
+  (sum, result) => sum + result.filesScanned,
+  0,
+);
 
 if (failures.length > 0) {
   console.error(`[offline-security-scan] ${pkg.name} failed.`);
@@ -260,5 +297,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  `[offline-security-scan] ${pkg.name} passed (${files.length} files scanned).`,
+  `[offline-security-scan] ${pkg.name} passed (${filesScanned} files scanned across ${packageDirs.length} packages).`,
 );

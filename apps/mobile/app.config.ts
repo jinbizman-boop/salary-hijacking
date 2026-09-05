@@ -1,6 +1,6 @@
 /** apps/mobile/app.config.ts
  * 급여납치 모바일 Expo 설정 최종본.
- * 서버 권위, 개인정보 최소화, 광고 금융 타겟팅 금지, 알림/운영/OTA/빌드 설정을 한 파일에 고정한다.
+ * 서버 권위, 개인정보 최소화, 금융 원문 광고 타겟팅 금지, 알림/운영/OTA/빌드 설정을 한 파일에 고정한다.
  */
 
 declare const process: {
@@ -60,8 +60,17 @@ const DEFAULT_FAVICON = "./assets/favicon.png";
 const DEFAULT_NOTIFICATION_ICON = "./assets/notification-icon.png";
 const DEFAULT_ANDROID_GOOGLE_SERVICES_FILE =
   "./secrets/firebase/google-services.json";
+const ADMOB_TEST_ANDROID_APP_ID = "ca-app-pub-3940256099942544~3347511713";
+const ADMOB_TEST_IOS_APP_ID = "ca-app-pub-3940256099942544~1458002511";
 const DEFAULT_NOTIFICATION_COLOR = "#209252";
 const DEFAULT_CHANNEL_ID = "salary-hijacking-default";
+const FREESENTATION_FONT_ASSETS = [
+  "./assets/fonts/Freesentation-4Regular.ttf",
+  "./assets/fonts/Freesentation-7Bold.ttf",
+] as const;
+const LOCAL_API_BASE_URL = "http://127.0.0.1:8787";
+const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";
+const PRODUCTION_API_BASE_URL = "https://api.salaryhijacking.com";
 const LOCAL_EAS_PROJECT_ID_SENTINEL = "00000000-0000-4000-8000-000000000000";
 const FORBIDDEN_ENV_KEYWORDS = [
   "SECRET",
@@ -101,12 +110,15 @@ const FORBIDDEN_ENV_KEYWORDS = [
 ] as const;
 
 export default function appConfig(context: ConfigContext): ExpoConfig {
-  const environment = envName("APP_ENV", "development");
+  const environment = envName("APP_ENV", "staging");
   const apiBaseUrl = httpsUrlEnv(
     "EXPO_PUBLIC_API_BASE_URL",
     environment === "production"
-      ? "https://api.salaryhijacking.com"
-      : "http://localhost:8787",
+      ? PRODUCTION_API_BASE_URL
+      : environment === "local"
+        ? LOCAL_API_BASE_URL
+        : STAGING_API_BASE_URL,
+    environment === "local",
   );
   const updatesUrl = optionalHttpsUrlEnv("EXPO_UPDATES_URL");
   const owner = optionalPlainEnv("EXPO_OWNER");
@@ -135,18 +147,24 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
       resizeMode: "contain",
       backgroundColor: "#FFFFFF",
     },
-    assetBundlePatterns: ["assets/**/*", "app/**/*", "src/**/*"],
+    assetBundlePatterns: [
+      "assets/icon.png",
+      "assets/adaptive-icon.png",
+      "assets/splash.png",
+      "assets/notification-icon.png",
+      "assets/favicon.png",
+    ],
     ios: iosConfig(buildNumber),
     android: androidConfig(versionCode),
     web: webConfig(),
-    plugins: pluginConfig(),
+    plugins: pluginConfig(environment),
     experiments: {
       typedRoutes: true,
       tsconfigPaths: true,
       reactCompiler: false,
     },
     runtimeVersion: { policy: "appVersion" satisfies RuntimePolicy },
-    updates: updatesConfig(updatesUrl),
+    updates: updatesConfig(updatesUrl, environment),
     extra: {
       ...existingExtra,
       eas: { projectId: easProjectId },
@@ -192,7 +210,7 @@ function iosConfig(buildNumber: string): JsonRecord {
       CFBundleAllowMixedLocalizations: true,
       LSApplicationQueriesSchemes: [DEFAULT_SCHEME, "https"],
       NSFaceIDUsageDescription:
-        "급여납치 보안 잠금과 민감 데이터 보호를 위해 사용합니다.",
+        "급여납치 보안 인증과 민감 데이터 보호를 위해 사용합니다.",
       NSUserTrackingUsageDescription:
         "급여납치는 금융 금액 기반 광고 타겟팅과 외부 추적을 사용하지 않습니다.",
       UIBackgroundModes: ["remote-notification"],
@@ -224,6 +242,8 @@ function androidConfig(versionCode: number): JsonRecord {
       ),
       backgroundColor: "#FFFFFF",
     },
+    edgeToEdgeEnabled: false,
+    allowBackup: false,
     permissions: [
       "POST_NOTIFICATIONS",
       "VIBRATE",
@@ -277,15 +297,16 @@ function webConfig(): JsonRecord {
     shortName: SERVICE_NAME,
     lang: DEFAULT_LOCALE,
     themeColor: "#209252",
-    backgroundColor: "#F7F8FA",
+    backgroundColor: "#F7F9FA",
   };
 }
 
-function pluginConfig(): readonly PluginEntry[] {
+function pluginConfig(environment: EnvironmentName): readonly PluginEntry[] {
   return [
     "expo-router",
     "expo-secure-store",
     "expo-localization",
+    ["expo-font", { fonts: FREESENTATION_FONT_ASSETS }],
     [
       "expo-notifications",
       {
@@ -299,6 +320,21 @@ function pluginConfig(): readonly PluginEntry[] {
       },
     ],
     [
+      "react-native-google-mobile-ads",
+      {
+        androidAppId: admobAppIdEnv(
+          "ADMOB_ANDROID_APP_ID",
+          ADMOB_TEST_ANDROID_APP_ID,
+          environment,
+        ),
+        iosAppId: admobAppIdEnv(
+          "ADMOB_IOS_APP_ID",
+          ADMOB_TEST_IOS_APP_ID,
+          environment,
+        ),
+      },
+    ],
+    [
       "expo-build-properties",
       {
         ios: { useFrameworks: "static" },
@@ -308,16 +344,21 @@ function pluginConfig(): readonly PluginEntry[] {
           minSdkVersion: 24,
           enableProguardInReleaseBuilds: true,
           enableShrinkResourcesInReleaseBuilds: true,
+          networkInspector: false,
         },
       },
     ],
   ];
 }
 
-function updatesConfig(updatesUrl: string | null): JsonRecord {
+function updatesConfig(
+  updatesUrl: string | null,
+  environment: EnvironmentName,
+): JsonRecord {
   const base: Record<string, JsonValue> = {
     enabled: true,
-    checkAutomatically: "ON_LOAD",
+    checkAutomatically:
+      environment === "production" ? "ON_LOAD" : "ON_ERROR_RECOVERY",
     fallbackToCacheTimeout: 0,
   };
   if (updatesUrl) base.url = updatesUrl;
@@ -367,6 +408,7 @@ function privacyFlags(): JsonRecord {
 function adsFlags(): JsonRecord {
   return {
     enabled: boolEnv("EXPO_PUBLIC_ADS_ENABLED", true),
+    provider: "ADMOB",
     partnerEnabled: boolEnv("EXPO_PUBLIC_PARTNER_ENABLED", true),
     contextualOnly: true,
     nonPersonalizedDefault: true,
@@ -375,7 +417,8 @@ function adsFlags(): JsonRecord {
     expenseAmountTargetingAllowed: false,
     savingsAmountTargetingAllowed: false,
     userIdentifierSharedWithAdvertisers: false,
-    labelRequired: "광고·제휴",
+    sdkRequestNonPersonalizedAdsOnly: true,
+    labelRequired: "광고/제휴",
   };
 }
 
@@ -401,7 +444,7 @@ function operationsFlags(environment: EnvironmentName): JsonRecord {
     e2eBuild: boolEnv("EXPO_PUBLIC_E2E_BUILD", false),
     crashReportingEnabled: boolEnv(
       "EXPO_PUBLIC_CRASH_REPORTING_ENABLED",
-      environment === "production",
+      environment === "production" || environment === "staging",
     ),
     performanceBudgetMs: positiveIntEnv(
       "EXPO_PUBLIC_PERFORMANCE_BUDGET_MS",
@@ -578,6 +621,20 @@ function optionalPlainEnv(key: string): string | undefined {
   return raw ? scrubPublicValue(raw).slice(0, 140) : undefined;
 }
 
+function admobAppIdEnv(
+  key: string,
+  fallback: string,
+  environment: EnvironmentName,
+): string {
+  const raw = process.env?.[key]?.trim();
+  const value = raw && /^ca-app-pub-\d{16}~\d{10}$/u.test(raw) ? raw : "";
+  if (value) return value;
+  if (environment === "production") {
+    throw new Error(`${key} must be configured for production AdMob builds.`);
+  }
+  return fallback;
+}
+
 function assetPathEnv(key: string, fallback: string): string {
   const raw = plainEnv(key, fallback);
   return raw.startsWith("./") ||
@@ -600,9 +657,13 @@ function localFilePathEnv(key: string, fallback: string): string {
   return safe ? value.slice(0, 240) : fallback;
 }
 
-function httpsUrlEnv(key: string, fallback: string): string {
+function httpsUrlEnv(
+  key: string,
+  fallback: string,
+  allowLocalhost: boolean,
+): string {
   const raw = process.env?.[key]?.trim() ?? fallback;
-  return safeUrl(raw, fallback, true);
+  return safeUrl(raw, fallback, allowLocalhost);
 }
 
 function optionalHttpsUrlEnv(key: string): string | null {

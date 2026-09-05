@@ -1,6 +1,6 @@
 import { Text } from "react-native";
 
-import { componentColors } from "./tokens";
+import { componentColors, salaryHijackingDesignSystem } from "./tokens";
 
 export type MoneyTextProps = Readonly<{
   amount: number;
@@ -30,8 +30,7 @@ export function MoneyText({
         color: muted
           ? componentColors.textSecondary
           : componentColors.textPrimary,
-        fontSize: 26,
-        fontWeight: "900",
+        ...salaryHijackingDesignSystem.typography.amountL,
       }}
     >
       {label}

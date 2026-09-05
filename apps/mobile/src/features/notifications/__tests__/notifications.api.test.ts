@@ -67,9 +67,10 @@ describe("notifications api", () => {
         return jsonResponse({
           data: {
             items: [serverNotification],
-            page: 1,
-            pageSize: 20,
-            total: 1,
+            cursor: null,
+            hasMore: true,
+            limit: 20,
+            nextCursor: "cursor-next-1",
           },
         });
       },
@@ -92,13 +93,14 @@ describe("notifications api", () => {
           adTargetingSeparated: true,
         },
       ],
-      page: 1,
-      pageSize: 20,
-      total: 1,
+      cursor: null,
+      hasMore: true,
+      limit: 20,
+      nextCursor: "cursor-next-1",
     });
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe(
-      "https://api.salaryhijacking.com/api/v1/notifications?page=1&pageSize=20",
+      "https://api.salaryhijacking.com/api/v1/notifications?limit=20",
     );
     expect(calls[0]?.headers.get("x-correlation-id")).toBe(
       "notification-correlation-1",
@@ -111,6 +113,42 @@ describe("notifications api", () => {
       "false",
     );
     expect(JSON.stringify(result)).not.toContain("userId");
+  });
+
+  it("continues cursor pagination with opaque server cursors", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "notification-cursor-2",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            items: [],
+            cursor: "cursor-next-1",
+            hasMore: false,
+            limit: 10,
+            nextCursor: null,
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.list({ cursor: "cursor-next-1", limit: 10 }),
+    ).resolves.toMatchObject({
+      cursor: "cursor-next-1",
+      hasMore: false,
+      items: [],
+      limit: 10,
+      nextCursor: null,
+    });
+    expect(calls[0]?.url).toBe(
+      "https://api.salaryhijacking.com/api/v1/notifications?limit=10&cursor=cursor-next-1",
+    );
   });
 
   it("rejects unsafe notification list options before query construction", async () => {
@@ -143,7 +181,7 @@ describe("notifications api", () => {
       api.list({
         page: 0,
         pageSize: 20,
-      }),
+      } as never),
     ).rejects.toMatchObject({ code: "NOTIFICATION_INVALID_LIST_OPTIONS" });
 
     await expect(
@@ -171,9 +209,10 @@ describe("notifications api", () => {
                 type: "SECURITY",
               },
             ],
-            page: 1,
-            pageSize: 20,
-            total: 1,
+            cursor: null,
+            hasMore: false,
+            limit: 20,
+            nextCursor: null,
           },
         }),
       platform: "android",
@@ -443,7 +482,7 @@ describe("notifications api", () => {
                 deviceId: "device_android_1",
                 platform: "ANDROID",
                 pushTokenHashOnly: true,
-                pushTokenPreview: "ExponentPushToken[abc***",
+                pushTokenPreview: "hash***",
                 status: "ACTIVE",
                 registeredAt: "2026-07-02T09:40:00.000Z",
                 updatedAt: "2026-07-02T09:40:00.000Z",
@@ -457,7 +496,7 @@ describe("notifications api", () => {
               deviceId: "device_android_1",
               platform: "ANDROID",
               pushTokenHashOnly: true,
-              pushTokenPreview: "ExponentPushToken[abc***",
+              pushTokenPreview: "hash***",
               status: "REVOKED",
               registeredAt: "2026-07-02T09:40:00.000Z",
               revokedAt: "2026-07-02T09:45:00.000Z",
@@ -470,7 +509,7 @@ describe("notifications api", () => {
             deviceId: "device_android_1",
             platform: "ANDROID",
             pushTokenHashOnly: true,
-            pushTokenPreview: "ExponentPushToken[abc***",
+            pushTokenPreview: "hash***",
             status: "ACTIVE",
             registeredAt: "2026-07-02T09:40:00.000Z",
             updatedAt: "2026-07-02T09:40:00.000Z",
@@ -487,7 +526,7 @@ describe("notifications api", () => {
         deviceId: "device_android_1",
         locale: "ko-KR",
         platform: "ANDROID",
-        pushToken: "ExponentPushToken[abcdef123456]",
+        pushToken: "fcm_native_registration_token_abcdef123456",
       }),
     ).resolves.toMatchObject({
       deviceId: "device_android_1",
@@ -512,12 +551,99 @@ describe("notifications api", () => {
       deviceId: "device_android_1",
       locale: "ko-KR",
       platform: "ANDROID",
-      pushToken: "ExponentPushToken[abcdef123456]",
+      provider: "FCM",
+      pushToken: "fcm_native_registration_token_abcdef123456",
+      tokenSource: "NATIVE_DEVICE",
     });
     expect(JSON.stringify(await api.listDevices())).not.toContain(
-      "ExponentPushToken[abcdef123456]",
+      "fcm_native_registration_token_abcdef123456",
     );
     expect(calls[1]?.headers.get("x-raw-push-token-exposed")).toBe("false");
+  });
+
+  it("registers Android devices with native FCM token metadata for provider-backed delivery", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({
+          data: {
+            deviceId: "device_android_1",
+            platform: "ANDROID",
+            provider: "FCM",
+            tokenSource: "NATIVE_DEVICE",
+            pushTokenHashOnly: true,
+            pushTokenPreview: "hash***",
+            status: "ACTIVE",
+            registeredAt: "2026-07-02T09:40:00.000Z",
+            updatedAt: "2026-07-02T09:40:00.000Z",
+          },
+        });
+      },
+      platform: "android",
+    });
+
+    const registeredDevice = await api.registerDevice({
+        appVersion: "1.0.0",
+        deviceId: "device_android_1",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        provider: "FCM",
+        pushToken: "fcm_native_registration_token_abcdef123456",
+        tokenSource: "NATIVE_DEVICE",
+      });
+    expect(registeredDevice).toMatchObject({
+      deviceId: "device_android_1",
+      platform: "ANDROID",
+      provider: "FCM",
+      tokenSource: "NATIVE_DEVICE",
+      pushTokenHashOnly: true,
+      status: "ACTIVE",
+    });
+
+    await expect(calls[0]?.clone().json()).resolves.toEqual({
+      appVersion: "1.0.0",
+      deviceId: "device_android_1",
+      locale: "ko-KR",
+      platform: "ANDROID",
+      provider: "FCM",
+      pushToken: "fcm_native_registration_token_abcdef123456",
+      tokenSource: "NATIVE_DEVICE",
+    });
+    expect(JSON.stringify(registeredDevice)).not.toContain(
+      "fcm_native_registration_token_abcdef123456",
+    );
+  });
+
+  it("rejects Android FCM registration when given an Expo Push Service token", async () => {
+    const calls: Request[] = [];
+    const api = createNotificationsApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async (request) => {
+        calls.push(request instanceof Request ? request : new Request(request));
+        return jsonResponse({ data: {} });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.registerDevice({
+        appVersion: "1.0.0",
+        deviceId: "device_android_1",
+        locale: "ko-KR",
+        platform: "ANDROID",
+        provider: "FCM",
+        pushToken: "ExponentPushToken[abcdef123456]",
+        tokenSource: "NATIVE_DEVICE",
+      }),
+    ).rejects.toMatchObject({
+      code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
+    });
+
+    expect(calls).toHaveLength(0);
   });
 
   it("normalizes notification device platforms to the server enum before registration", async () => {
@@ -533,7 +659,7 @@ describe("notifications api", () => {
             deviceId: "device_android_1",
             platform: "ANDROID",
             pushTokenHashOnly: true,
-            pushTokenPreview: "ExponentPushToken[abc***",
+            pushTokenPreview: "hash***",
             status: "ACTIVE",
             registeredAt: "2026-07-02T09:40:00.000Z",
             updatedAt: "2026-07-02T09:40:00.000Z",
@@ -549,7 +675,7 @@ describe("notifications api", () => {
         deviceId: "device_android_1",
         locale: "ko-KR",
         platform: " android " as never,
-        pushToken: "ExponentPushToken[abcdef123456]",
+        pushToken: "fcm_native_registration_token_abcdef123456",
       }),
     ).resolves.toMatchObject({
       deviceId: "device_android_1",
@@ -566,7 +692,7 @@ describe("notifications api", () => {
         deviceId: "device_android_1",
         locale: "ko-KR",
         platform: "desktop" as never,
-        pushToken: "ExponentPushToken[abcdef123456]",
+        pushToken: "fcm_native_registration_token_abcdef123456",
       }),
     ).rejects.toMatchObject({
       code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
@@ -585,7 +711,7 @@ describe("notifications api", () => {
             deviceId: "device_android_1",
             platform: "ANDROID",
             pushTokenHashOnly: true,
-            pushTokenPreview: "ExponentPushToken[abc***",
+            pushTokenPreview: "hash***",
             status: "ACTIVE",
             registeredAt: "2026-07-02T09:40:00.000Z",
             updatedAt: "2026-07-02T09:40:00.000Z",
@@ -601,7 +727,7 @@ describe("notifications api", () => {
         deviceId: "device_android_1",
         locale: "ko-KR",
         platform: "ANDROID",
-        pushToken: "ExponentPushToken[abcdef123456]",
+        pushToken: "fcm_native_registration_token_abcdef123456",
         rawSalaryMemo: "salary 2,700,000",
       } as never),
     ).rejects.toMatchObject({
@@ -628,7 +754,7 @@ describe("notifications api", () => {
         deviceId: "device_android_1",
         locale: "ko-KR",
         platform: "ANDROID",
-        pushToken: "ExponentPushToken[abcdef123456]",
+        pushToken: "fcm_native_registration_token_abcdef123456",
       }),
     ).rejects.toMatchObject({
       code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
@@ -640,7 +766,7 @@ describe("notifications api", () => {
         deviceId: "device_android_1",
         locale: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.signature",
         platform: "ANDROID",
-        pushToken: "ExponentPushToken[abcdef123456]",
+        pushToken: "fcm_native_registration_token_abcdef123456",
       }),
     ).rejects.toMatchObject({
       code: "NOTIFICATION_INVALID_DEVICE_REGISTRATION",
@@ -728,7 +854,7 @@ describe("notifications api", () => {
               deviceId: "device_android_1\r\nAuthorization",
               platform: "ANDROID",
               pushTokenHashOnly: true,
-              pushTokenPreview: "ExponentPushToken[abc***",
+              pushTokenPreview: "hash***",
               status: "ACTIVE",
               registeredAt: "2026-07-02T09:40:00.000Z",
               updatedAt: "2026-07-02T09:40:00.000Z",

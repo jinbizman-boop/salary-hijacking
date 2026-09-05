@@ -286,7 +286,7 @@
       ]
     },
     "api:contract": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["build", "^build"],
       "inputs": [
         "$TURBO_DEFAULT$",
         "packages/api-contract/**",

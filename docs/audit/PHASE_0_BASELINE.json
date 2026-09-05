@@ -1,0 +1,90 @@
+{
+  "timestamp": "2026-08-13T00:00:00+09:00",
+  "canonical_repo": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
+  "CURRENT_REPOSITORY_HEAD": "34ff98d342acdacf125b2a6457ac4815947ee111",
+  "remote_HEAD": "34ff98d342acdacf125b2a6457ac4815947ee111",
+  "APPLICATION_RC_SOURCE_SHA": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "normative_requirement_count": 237,
+  "legacy_trace_row_count": 305,
+  "stitch_state_count": 304,
+  "defect_gate_count": 4,
+  "source_registry_count": 414,
+  "unresolved_source_count": 10,
+  "duplicate_req_count": 0,
+  "missing_req_count": 0,
+  "malformed_req_count": 0,
+  "blank_req_count": 0,
+  "current_status_counts": {
+    "PARTIAL": 182,
+    "UNVERIFIED": 43,
+    "FAIL": 12
+  },
+  "legacy_classification_counts": {
+    "LEGACY_REQUIREMENT": 176,
+    "TEST_GATE": 1,
+    "RELEASE_GATE": 128
+  },
+  "dirty_files": [
+    " M docs/audit/EXECUTION_STATE.md",
+    " M docs/audit/IMPLEMENTATION_MATRIX.csv",
+    " M services/api/wrangler.toml",
+    "?? docs/audit/CURRENT_API_DB_AUDIT_2026-08-12.csv",
+    "?? docs/audit/CURRENT_IMPLEMENTATION_AUDIT_2026-08-12.md",
+    "?? docs/audit/CURRENT_IMPLEMENTATION_GAPS_2026-08-12.csv",
+    "?? docs/audit/CURRENT_IMPLEMENTATION_MATRIX_2026-08-12.csv",
+    "?? docs/audit/CURRENT_RELEASE_READINESS_2026-08-12.md",
+    "?? docs/audit/CURRENT_ROUTE_SCREEN_AUDIT_2026-08-12.csv"
+  ],
+  "source_build_input_delta": [
+    "A\t.github/workflows/build-android-qa-release.yml"
+  ],
+  "workflow_only_delta": [
+    ".github/workflows/build-android-qa-release.yml"
+  ],
+  "output_files": [
+    {
+      "path": "docs/audit/CURRENT_REQUIREMENT_TRACE_MATRIX.csv",
+      "sha256": "C3573F96E87F3EE42371549882FE9A144A40DF5865F0F63CC7F1634C16AEEA35",
+      "bytes": 192974
+    },
+    {
+      "path": "docs/audit/PHASE_0_LEGACY_305_RECONCILIATION.csv",
+      "sha256": "7C4DD9C01994ED31D49BD447DFFD194BBD37A615E2FC95F916C4EFDF7C741237",
+      "bytes": 65264
+    },
+    {
+      "path": "docs/audit/PHASE_0_SOURCE_REGISTRY.csv",
+      "sha256": "8B3E5F68D15DCD3A0F1C36A585573D4917BA2F70BC03945BC6B5E4FB45B34AF0",
+      "bytes": 103164
+    },
+    {
+      "path": "docs/audit/PHASE_0_STITCH_STATE_REGISTRY.csv",
+      "sha256": "CF8BCBB26F3E3F424C8110653B4F977BD363DF7A05E213BF804561A056AFAABA",
+      "bytes": 67976
+    },
+    {
+      "path": "docs/audit/PHASE_0_GATE_REGISTRY.csv",
+      "sha256": "7BE73CF3C6DC165C6E590114988E49E34A0CAE4AB1E7787B932E92851DB06E71",
+      "bytes": 1898
+    },
+    {
+      "path": "docs/audit/DECISION_LOG.md",
+      "sha256": "B634A6DE2DCA81D58F71B97AFC15754DACE681637A08AC3DC25ECE67E2A7AB4F",
+      "bytes": 1301
+    },
+    {
+      "path": "docs/audit/PHASE_0_REPORT.md",
+      "sha256": "8513675DA8DC4CBF7505BCE2E152E8A305F3F6FD0B7C5A29C58EA5D795AC9CAF",
+      "bytes": 2168
+    },
+    {
+      "path": "docs/audit/PHASE_0_BASELINE.json",
+      "sha256": "SELF_REFERENTIAL_REPORTED_AFTER_WRITE",
+      "bytes": null
+    }
+  ],
+  "self_hash_note": "PHASE_0_BASELINE.json cannot contain its own final SHA-256 without changing that SHA; final self hash is reported by validation and final chat.",
+  "PHASE_0_STATUS": "PASS",
+  "secret_exposure": "0"
+}

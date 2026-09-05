@@ -43,8 +43,17 @@ const AUTH_CONTEXT_EXACT_HEADERS = [
   "x-permissions",
 ] as const;
 
+const CLIENT_ADMIN_OPERATION_HEADERS = new Set([
+  "x-admin-reason",
+  "x-admin-break-glass",
+  "x-admin-break-glass-reason",
+  "x-admin-break-glass-scope",
+  "x-admin-break-glass-expires-at",
+]);
+
 const AUTH_CONTEXT_SOURCE_HEADER = "x-auth-context-source";
 const AUTH_CONTEXT_VERSION_HEADER = "x-auth-context-version";
+const AUTH_SESSION_EXPIRES_AT_HEADER = "x-auth-session-expires-at";
 
 export type UserRole =
   | "GUEST"
@@ -52,6 +61,12 @@ export type UserRole =
   | "OPERATOR"
   | "ADMIN"
   | "SUPER_ADMIN"
+  | "OPS_ADMIN"
+  | "MODERATOR"
+  | "CONTENT_ADMIN"
+  | "SUPPORT"
+  | "ADS_PARTNER_ADMIN"
+  | "AUDITOR_READONLY"
   | "SYSTEM";
 export type AccountStatus =
   | "ACTIVE"
@@ -116,6 +131,9 @@ export interface SalaryHijackingJwtClaims extends Record<string, unknown> {
   readonly tokenType?: string;
   readonly mfaVerified?: boolean;
   readonly mfaLevel?: number;
+  readonly emailVerified?: boolean;
+  readonly onboardingCompleted?: boolean;
+  readonly payrollReady?: boolean;
   readonly provider?: string;
 }
 
@@ -137,6 +155,9 @@ export interface AuthenticatedPrincipal {
   readonly tokenKind: AuthTokenKind;
   readonly accountStatus: AccountStatus;
   readonly mfaVerified: boolean;
+  readonly emailVerified: boolean;
+  readonly onboardingCompleted: boolean;
+  readonly payrollReady: boolean;
   readonly provider: string | null;
   readonly issuedAtEpochSeconds: number | null;
   readonly expiresAtEpochSeconds: number | null;
@@ -266,6 +287,12 @@ const roleRank: Record<UserRole, number> = {
   OPERATOR: 20,
   ADMIN: 30,
   SUPER_ADMIN: 40,
+  OPS_ADMIN: 30,
+  MODERATOR: 30,
+  CONTENT_ADMIN: 30,
+  SUPPORT: 30,
+  ADS_PARTNER_ADMIN: 30,
+  AUDITOR_READONLY: 30,
   SYSTEM: 50,
 };
 
@@ -327,6 +354,65 @@ const permissionsByRole: Record<UserRole, readonly string[]> = {
     "audit:read:minimal",
   ],
   SUPER_ADMIN: ["*"],
+  OPS_ADMIN: [
+    "self:read",
+    "admin:read",
+    "admin:write",
+    "user:read",
+    "user:manage",
+    "community:read",
+    "community:moderate",
+    "report:read",
+    "report:manage",
+    "notice:read",
+    "notice:write",
+    "notification:send",
+    "incident:manage",
+    "metrics:read",
+  ],
+  MODERATOR: [
+    "self:read",
+    "admin:read",
+    "community:read",
+    "community:moderate",
+    "report:read",
+    "report:manage",
+    "metrics:read",
+  ],
+  CONTENT_ADMIN: [
+    "self:read",
+    "admin:read",
+    "growth:read",
+    "growth:manage",
+    "notice:read",
+    "notice:write",
+    "metrics:read",
+  ],
+  SUPPORT: [
+    "self:read",
+    "admin:read",
+    "user:read",
+    "community:read",
+    "report:read",
+    "support:read",
+    "support:manage",
+    "metrics:read",
+  ],
+  ADS_PARTNER_ADMIN: [
+    "self:read",
+    "admin:read",
+    "ad:read",
+    "ad:manage",
+    "partner:read",
+    "partner:manage",
+    "metrics:read",
+  ],
+  AUDITOR_READONLY: [
+    "self:read",
+    "admin:read",
+    "audit:read:minimal",
+    "metrics:read",
+  ],
   SYSTEM: [
     "system:job",
     "system:batch",
@@ -336,6 +422,30 @@ const permissionsByRole: Record<UserRole, readonly string[]> = {
     "stats:aggregate",
     "audit:write",
   ],
+};
+
+const canonicalAdminRoles = new Set<UserRole>([
+  "OPERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "OPS_ADMIN",
+  "MODERATOR",
+  "CONTENT_ADMIN",
+  "SUPPORT",
+  "ADS_PARTNER_ADMIN",
+  "AUDITOR_READONLY",
+]);
+
+const roleAliases: Record<string, UserRole> = {
+  OWNER: "SUPER_ADMIN",
+  PLATFORM_ADMIN: "OPS_ADMIN",
+  BACKEND_ADMIN: "OPS_ADMIN",
+  SECURITY_ADMIN: "OPS_ADMIN",
+  MODERATION_ADMIN: "MODERATOR",
+  MODERATOR_ADMIN: "MODERATOR",
+  PRODUCT_ADMIN: "CONTENT_ADMIN",
+  SUPPORT_ADMIN: "SUPPORT",
+  ADS_ADMIN: "ADS_PARTNER_ADMIN",
 };
 
 const defaultPublicPolicies: readonly AuthRoutePolicy[] = [
@@ -348,7 +458,7 @@ const defaultPublicPolicies: readonly AuthRoutePolicy[] = [
   {
     id: "auth-login",
     pattern:
-      /^\/api\/v1\/auth\/(login|register|social-login|oauth|oauth\/callback|password-reset|verify-email)(?:\/|$)/,
+      /^\/api\/v1\/auth\/(login|register|logout|social-login|oauth|oauth\/callback|password-reset|verify-email)(?:\/|$)/,
     public: true,
   },
   {
@@ -377,8 +487,8 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(roles|admin-roles|admin-role-members)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["SUPER_ADMIN"],
-    requiredPermissions: ["*"],
+    requiredRoles: ["SUPER_ADMIN", "OPS_ADMIN"],
+    requiredPermissions: ["role:manage", "incident:manage", "*"],
   },
   {
     id: "admin-audit",
@@ -386,7 +496,7 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(audit|audit-logs|security)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: ["ADMIN", "SUPER_ADMIN", "OPS_ADMIN", "AUDITOR_READONLY"],
     requiredPermissions: ["audit:read:minimal", "*"],
   },
   {
@@ -394,7 +504,7 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
     pattern: /^\/(?:api\/v1\/admin|admin\/api\/v1)\/users(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: ["ADMIN", "SUPER_ADMIN", "OPS_ADMIN", "SUPPORT"],
     requiredPermissions: ["user:manage", "*"],
   },
   {
@@ -403,7 +513,7 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(ads|banners|partners|partner-accounts)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: ["ADMIN", "SUPER_ADMIN", "OPS_ADMIN", "ADS_PARTNER_ADMIN"],
     requiredPermissions: ["ad:manage", "banner:write", "partner:manage", "*"],
   },
   {
@@ -412,7 +522,14 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
       /^\/(?:api\/v1\/admin|admin\/api\/v1)\/(reports|community|notices|notifications|incidents)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["OPERATOR", "ADMIN", "SUPER_ADMIN"],
+    requiredRoles: [
+      "OPERATOR",
+      "ADMIN",
+      "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+    ],
     requiredPermissions: [
       "community:moderate",
       "report:manage",
@@ -427,7 +544,16 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
     pattern: /^\/(?:api\/v1\/admin|admin\/api\/v1)(?:\/|$)/,
     requireAdmin: true,
     requireMfa: true,
-    requiredRoles: ["ADMIN", "SUPER_ADMIN"],
+    requiredRoles: [
+      "ADMIN",
+      "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+      "SUPPORT",
+      "ADS_PARTNER_ADMIN",
+      "AUDITOR_READONLY",
+    ],
     requiredPermissions: ["admin:read", "admin:write", "*"],
   },
   {
@@ -438,6 +564,14 @@ const defaultProtectedPolicies: readonly AuthRoutePolicy[] = [
   {
     id: "users-me",
     pattern: /^\/api\/v1\/users\/me(?:\/|$)/,
+    requireUser: true,
+    ownerBound: true,
+    blockMassAssignment: true,
+  },
+  {
+    id: "users-self-collections",
+    pattern:
+      /^\/api\/v1\/users\/(?:settings|consents|privacy|support-tickets|activity|profile|summary)(?:\/|$)/,
     requireUser: true,
     ownerBound: true,
     blockMassAssignment: true,
@@ -858,16 +992,25 @@ function normalizeRole(role: unknown): UserRole | null {
     .trim()
     .toUpperCase()
     .replace(/^ROLE_/, "");
-  return [
-    "GUEST",
-    "USER",
-    "OPERATOR",
-    "ADMIN",
-    "SUPER_ADMIN",
-    "SYSTEM",
-  ].includes(normalized)
-    ? (normalized as UserRole)
-    : null;
+  if (
+    [
+      "GUEST",
+      "USER",
+      "OPERATOR",
+      "ADMIN",
+      "SUPER_ADMIN",
+      "OPS_ADMIN",
+      "MODERATOR",
+      "CONTENT_ADMIN",
+      "SUPPORT",
+      "ADS_PARTNER_ADMIN",
+      "AUDITOR_READONLY",
+      "SYSTEM",
+    ].includes(normalized)
+  ) {
+    return normalized as UserRole;
+  }
+  return roleAliases[normalized] ?? null;
 }
 
 function normalizeRoles(claims: SalaryHijackingJwtClaims): readonly UserRole[] {
@@ -900,6 +1043,17 @@ function normalizeStatus(value: unknown): AccountStatus {
   ].includes(normalized)
     ? (normalized as AccountStatus)
     : "ACTIVE";
+}
+
+function headerBooleanOr(
+  headers: Headers,
+  name: string,
+  fallback: boolean,
+): boolean {
+  const value = getHeader(headers, name);
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
 }
 
 function normalizePermissions(
@@ -954,9 +1108,7 @@ function tokenKindFromClaims(
     return "SERVICE";
   }
 
-  if (
-    roles.some((role) => ["OPERATOR", "ADMIN", "SUPER_ADMIN"].includes(role))
-  ) {
+  if (roles.some((role) => canonicalAdminRoles.has(role))) {
     return "ADMIN";
   }
 
@@ -976,6 +1128,7 @@ function toPrincipal(
   const roles = normalizeRoles(claims);
   const permissions = normalizePermissions(claims, roles);
   const accountStatus = normalizeStatus(claims.accountStatus ?? claims.status);
+  const accountReady = accountStatus === "ACTIVE";
 
   return {
     userId: claims.sub,
@@ -994,6 +1147,18 @@ function toPrincipal(
     accountStatus,
     mfaVerified:
       claims.mfaVerified === true || Number(claims.mfaLevel ?? 0) >= 2,
+    emailVerified:
+      typeof claims.emailVerified === "boolean"
+        ? claims.emailVerified
+        : accountReady,
+    onboardingCompleted:
+      typeof claims.onboardingCompleted === "boolean"
+        ? claims.onboardingCompleted
+        : accountReady,
+    payrollReady:
+      typeof claims.payrollReady === "boolean"
+        ? claims.payrollReady
+        : accountReady,
     provider: typeof claims.provider === "string" ? claims.provider : null,
     issuedAtEpochSeconds: typeof claims.iat === "number" ? claims.iat : null,
     expiresAtEpochSeconds: typeof claims.exp === "number" ? claims.exp : null,
@@ -1200,6 +1365,9 @@ async function verifyRawServiceToken<TEnv>(
     tokenKind: "SERVICE",
     accountStatus: "ACTIVE",
     mfaVerified: true,
+    emailVerified: true,
+    onboardingCompleted: true,
+    payrollReady: true,
     provider: "SERVICE_TOKEN",
     issuedAtEpochSeconds: null,
     expiresAtEpochSeconds: null,
@@ -1233,8 +1401,8 @@ function hasAnyPermission(
 }
 
 function isPrivileged(principal: AuthenticatedPrincipal): boolean {
-  return principal.roles.some((role) =>
-    ["OPERATOR", "ADMIN", "SUPER_ADMIN", "SYSTEM"].includes(role),
+  return principal.roles.some(
+    (role) => role === "SYSTEM" || canonicalAdminRoles.has(role),
   );
 }
 
@@ -1304,11 +1472,24 @@ function explicitUserIdHints(runtime: AuthRouteRuntime): readonly string[] {
   const hints = new Set<string>();
   const pathParts = runtime.path.split("/").filter(Boolean);
   const usersIndex = pathParts.findIndex((part) => part === "users");
+  const selfCollectionSegments = new Set([
+    "activity",
+    "consents",
+    "privacy",
+    "profile",
+    "settings",
+    "summary",
+    "support-tickets",
+  ]);
 
   if (usersIndex >= 0) {
     const pathUserId = pathParts[usersIndex + 1];
 
-    if (pathUserId && pathUserId !== "me") {
+    if (
+      pathUserId &&
+      pathUserId !== "me" &&
+      !selfCollectionSegments.has(pathUserId)
+    ) {
       hints.add(pathUserId);
     }
   }
@@ -1439,11 +1620,7 @@ async function assertRouteAuthorization<TEnv>(
   }
 
   if (policy.requireAdmin || isAdminPath(runtime.path)) {
-    if (
-      !principal.roles.some((role) =>
-        ["OPERATOR", "ADMIN", "SUPER_ADMIN"].includes(role),
-      )
-    ) {
+    if (!principal.roles.some((role) => canonicalAdminRoles.has(role))) {
       throw new AuthFailure(
         "AUTH_PERMISSION_DENIED",
         "관리자 권한이 필요합니다.",
@@ -1506,6 +1683,7 @@ function stripInboundAuthContextHeaders(headers: Headers): void {
   const namesToDelete: string[] = [];
   headers.forEach((_value, key) => {
     const normalized = key.toLowerCase();
+    if (CLIENT_ADMIN_OPERATION_HEADERS.has(normalized)) return;
     const isInternalContextHeader =
       AUTH_CONTEXT_HEADER_PREFIXES.some((prefix) =>
         normalized.startsWith(prefix),
@@ -1542,10 +1720,31 @@ function appendAuthHeaders(
     headers.set("x-auth-primary-role", principal.primaryRole);
     headers.set("x-auth-token-kind", principal.tokenKind);
     headers.set("x-auth-account-status", principal.accountStatus);
+    headers.set(
+      "x-auth-email-verified",
+      principal.emailVerified ? "true" : "false",
+    );
+    headers.set(
+      "x-auth-onboarding-completed",
+      principal.onboardingCompleted ? "true" : "false",
+    );
+    headers.set(
+      "x-auth-payroll-ready",
+      principal.payrollReady ? "true" : "false",
+    );
 
     if (principal.sessionId) headers.set("x-session-id", principal.sessionId);
     if (principal.deviceId) headers.set("x-device-id", principal.deviceId);
     if (principal.tokenId) headers.set("x-auth-token-id", principal.tokenId);
+    if (
+      typeof principal.expiresAtEpochSeconds === "number" &&
+      Number.isFinite(principal.expiresAtEpochSeconds)
+    ) {
+      headers.set(
+        AUTH_SESSION_EXPIRES_AT_HEADER,
+        new Date(principal.expiresAtEpochSeconds * 1000).toISOString(),
+      );
+    }
 
     headers.set(
       "x-auth-mfa-verified",
@@ -1790,6 +1989,10 @@ export function getAuthContextFromRequest(
     normalizeRole(getHeader(request.headers, "x-auth-primary-role")) ??
     roles[0] ??
     "USER";
+  const accountStatus = normalizeStatus(
+    getHeader(request.headers, "x-auth-account-status"),
+  );
+  const accountReady = accountStatus === "ACTIVE";
 
   return {
     userId,
@@ -1806,10 +2009,23 @@ export function getAuthContextFromRequest(
         request.headers,
         "x-auth-token-kind",
       ) as AuthTokenKind | null) ?? "ACCESS",
-    accountStatus: normalizeStatus(
-      getHeader(request.headers, "x-auth-account-status"),
-    ),
+    accountStatus,
     mfaVerified: getHeader(request.headers, "x-auth-mfa-verified") === "true",
+    emailVerified: headerBooleanOr(
+      request.headers,
+      "x-auth-email-verified",
+      accountReady,
+    ),
+    onboardingCompleted: headerBooleanOr(
+      request.headers,
+      "x-auth-onboarding-completed",
+      accountReady,
+    ),
+    payrollReady: headerBooleanOr(
+      request.headers,
+      "x-auth-payroll-ready",
+      accountReady,
+    ),
     provider: null,
     issuedAtEpochSeconds: null,
     expiresAtEpochSeconds: null,
@@ -1920,10 +2136,30 @@ export const authMiddlewareContract = Object.freeze({
     "NAVER",
     "KAKAO",
     "GOOGLE",
-    "APPLE",
-    "FACEBOOK",
   ],
-  rbacRoles: ["GUEST", "USER", "OPERATOR", "ADMIN", "SUPER_ADMIN", "SYSTEM"],
+  rbacRoles: [
+    "GUEST",
+    "USER",
+    "OPERATOR",
+    "ADMIN",
+    "SUPER_ADMIN",
+    "OPS_ADMIN",
+    "MODERATOR",
+    "CONTENT_ADMIN",
+    "SUPPORT",
+    "ADS_PARTNER_ADMIN",
+    "AUDITOR_READONLY",
+    "SYSTEM",
+  ],
+  canonicalAdminRoles: [
+    "SUPER_ADMIN",
+    "OPS_ADMIN",
+    "MODERATOR",
+    "CONTENT_ADMIN",
+    "SUPPORT",
+    "ADS_PARTNER_ADMIN",
+    "AUDITOR_READONLY",
+  ],
   adminMfaRequired: true,
   serviceTokenSupported: true,
   protectsFinancialDataBoundary: true,

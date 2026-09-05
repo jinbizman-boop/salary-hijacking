@@ -1,0 +1,5 @@
+surface,staging,production,isolation,mutation,status
+api worker,salary-hijacking-api-staging,salary-hijacking-api-production,SEPARATE_WORKER_ENV_AND_BINDINGS,NO_PRODUCTION_DEPLOY,PASS_STATIC_CONFIG
+scheduler worker,salary-hijacking-scheduler-staging,salary-hijacking-scheduler-production,SEPARATE_CRON_AND_QUEUE_CONFIG,NO_PRODUCTION_DEPLOY,PASS_STATIC_CONFIG
+notifications worker,salary-hijacking-notifications-staging,salary-hijacking-notifications-production,SEPARATE_QUEUE_R2_CONFIG,NO_PRODUCTION_DEPLOY,PASS_STATIC_CONFIG
+admin web,admin-staging.salaryhijacking.com,production route not changed in Phase 7,NO_HOMEPAGE_PR_OR_WEB_TRAFFIC_CHANGE,NO_PRODUCTION_DNS_OR_ROUTE_CHANGE,PASS_STATIC_CONFIG

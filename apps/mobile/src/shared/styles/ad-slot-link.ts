@@ -2,6 +2,10 @@ import {
   createMobilePublicConfigApi,
   type MobilePublicConfigApiClient,
 } from "../api/mobile-api";
+import {
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../api/url-validation";
 
 export const SALARY_HIJACKING_PARTNER_BENEFITS_URL =
   "https://salaryhijacking.com/partners";
@@ -45,14 +49,14 @@ export const loadPartnerBenefitsUrl = createPartnerBenefitsUrlLoader();
 
 function isSafePartnerBenefitsUrl(value: string): boolean {
   try {
-    const url = new URL(value);
+    if (!isValidUrlString(value)) throw new Error("INVALID_URL");
+    const urlParts = parseMobileBaseUrlParts(value);
     return (
-      url.protocol === "https:" &&
-      url.hostname === "salaryhijacking.com" &&
-      !url.username &&
-      !url.password &&
+      urlParts?.protocol === "https:" &&
+      urlParts.hostname === "salaryhijacking.com" &&
+      !urlParts.containsCredentials &&
       !SENSITIVE_PARTNER_LINK_PAYLOAD_PATTERN.test(
-        `${url.pathname}\n${url.search}\n${url.hash}`,
+        `${urlParts.pathname}\n${urlParts.search}\n${urlParts.hash}`,
       )
     );
   } catch {

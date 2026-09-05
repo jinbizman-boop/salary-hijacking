@@ -69,7 +69,6 @@ export const AUTH_PROVIDERS = [
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ] as const;
 export type AuthProvider = (typeof AUTH_PROVIDERS)[number];
 
@@ -77,7 +76,6 @@ export const SOCIAL_AUTH_PROVIDERS = [
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ] as const;
 export type SocialAuthProvider = (typeof SOCIAL_AUTH_PROVIDERS)[number];
 
@@ -1688,13 +1686,13 @@ export const getUserTypesCompletenessReport =
 
     requireEvery(
       AUTH_PROVIDERS,
-      ["EMAIL", "PASSWORD", "NAVER", "KAKAO", "GOOGLE", "APPLE"] as const,
+      ["EMAIL", "PASSWORD", "NAVER", "KAKAO", "GOOGLE"] as const,
       "auth provider",
       missing,
     );
     requireEvery(
       SOCIAL_AUTH_PROVIDERS,
-      ["NAVER", "KAKAO", "GOOGLE", "APPLE"] as const,
+      ["NAVER", "KAKAO", "GOOGLE"] as const,
       "social provider",
       missing,
     );

@@ -3,6 +3,11 @@ import {
   COMMUNITY_PRIVACY_HEADERS,
 } from "./community.constants";
 import { redactCommunityError } from "./community.redaction";
+import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import type {
   CommunityApiResponse,
   CommunityApiTransport,
@@ -62,9 +67,8 @@ function communityIdempotencyKey(
 function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new CommunityApiError(
       0,
@@ -72,18 +76,19 @@ function normalizeBaseUrl(value: string): string {
       "커뮤니티 API 주소를 확인해 주세요.",
     );
   }
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new CommunityApiError(
       0,
       "COMMUNITY_INVALID_BASE_URL",
       "커뮤니티 API 주소를 확인해 주세요.",
     );
   }
-  const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new CommunityApiError(
       0,
       "COMMUNITY_INSECURE_BASE_URL",

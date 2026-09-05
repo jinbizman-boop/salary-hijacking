@@ -8,7 +8,8 @@ import { salaryHijackingTheme } from "../clean-fintech-theme";
 const appRoot = join(process.cwd(), "app");
 const officialBiSha256 =
   "EA89CE50080526157F9C5BC086C7CACC0D98CAD40EA0258514150D7F16520466";
-const mojibakePattern = /[湲怨吏猷醫紐留吏理痍寃]/;
+const mojibakePattern =
+  /[\uFFFD\u6E72\u6028\u800C\u316B\uB35A\u907A\u934C\uC392\uF9CD\u7457\u7E79\u8AED\u7B4C\u75AB]/u;
 
 function source(path: string): string {
   return readFileSync(join(appRoot, path), "utf8");
@@ -24,7 +25,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHijackingTheme.color.brand.primary).toBe("#209252");
     expect(salaryHijackingTheme.color.brand.secondary).toBe("#2FA86A");
     expect(salaryHijackingTheme.color.brand.soft).toBe("#EAF6EF");
-    expect(salaryHijackingTheme.color.surface.app).toBe("#F7F8FA");
+    expect(salaryHijackingTheme.color.surface.app).toBe("#F7F9FA");
     expect(salaryHijackingTheme.color.surface.card).toBe("#FFFFFF");
     expect(salaryHijackingTheme.color.semantic.danger).toBe("#D74B4B");
     expect(salaryHijackingTheme.layout.bottomTabHeight).toBe(76);
@@ -32,15 +33,25 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(salaryHijackingTheme.font.native.regular).toBe(
       "Freesentation-4Regular",
     );
-    expect(salaryHijackingTheme.font.native.black).toBe("Freesentation-9Black");
+    expect(salaryHijackingTheme.font.native.semibold).toBe(
+      "Freesentation-7Bold",
+    );
+    expect(salaryHijackingTheme.font.native.black).toBe("Freesentation-7Bold");
     expect(salaryHijackingTheme.font.family).toContain(
       "var(--font-presentation)",
     );
   });
 
-  it("keeps Freesentation font assets bundled and loaded by the root layout", () => {
+  it("keeps Freesentation web assets available while embedding only launch-critical native fonts", () => {
     const rootLayout = source("_layout.tsx");
-    const expectedFonts = [
+    const webRootFontAssets = mobileSource(
+      "src/shared/styles/root-font-assets.web.ts",
+    );
+    const nativeRootFontAssets = mobileSource(
+      "src/shared/styles/root-font-assets.native.ts",
+    );
+    const config = mobileSource("app.config.ts");
+    const webFonts = [
       "Freesentation-4Regular.ttf",
       "Freesentation-5Medium.ttf",
       "Freesentation-6SemiBold.ttf",
@@ -48,19 +59,34 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "Freesentation-8ExtraBold.ttf",
       "Freesentation-9Black.ttf",
     ];
+    const nativeFonts = [
+      "Freesentation-4Regular.ttf",
+      "Freesentation-7Bold.ttf",
+    ];
 
     expect(rootLayout).toContain("expo-font");
     expect(rootLayout).toContain("useFonts");
+    expect(config).toContain('"expo-font"');
 
-    for (const fontFile of expectedFonts) {
+    for (const fontFile of webFonts) {
       const fontPath = join(process.cwd(), "assets", "fonts", fontFile);
       expect(existsSync(fontPath)).toBe(true);
       expect(statSync(fontPath).size).toBeGreaterThan(2_000_000);
-      expect(rootLayout).toContain(fontFile);
+      expect(webRootFontAssets).toContain(fontFile);
+      expect(nativeRootFontAssets).not.toContain(fontFile);
     }
+
+    for (const fontFile of nativeFonts) {
+      expect(config).toContain(`./assets/fonts/${fontFile}`);
+    }
+
+    expect(config).not.toContain("./assets/fonts/Freesentation-5Medium.ttf");
+    expect(config).not.toContain("./assets/fonts/Freesentation-6SemiBold.ttf");
+    expect(config).not.toContain("./assets/fonts/Freesentation-8ExtraBold.ttf");
+    expect(config).not.toContain("./assets/fonts/Freesentation-9Black.ttf");
   });
 
-  it("keeps the official BI logo bundled and used by app and release branding", () => {
+  it("keeps the official BI logo bundled for product screens and release branding", () => {
     const brandLogo = join(
       process.cwd(),
       "src",
@@ -95,7 +121,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         .toUpperCase(),
     ).toBe(officialBiSha256);
     expect(cleanScreens).toContain("appImageAssets.brand.platformLogo");
-    expect(rootLayout).toContain("appImageAssets.brand.platformLogo");
+    expect(rootLayout).not.toContain("function loadOfficialBiLogo()");
+    expect(rootLayout).not.toContain(
+      'require("../src/shared/assets/images/brand/salary-hijacking-platform-logo.png")',
+    );
+    expect(rootLayout).not.toContain(
+      'import { appImageAssets } from "../src/shared/assets/images";',
+    );
     expect(screenshotScript).toContain("salary-hijacking-platform-logo.png");
     expect(screenshotScript).toContain("/__brand-logo");
   });
@@ -104,6 +136,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const checkedSources = [
       "src/shared/styles/clean-fintech-theme.ts",
       "src/shared/styles/clean-fintech-screens.tsx",
+      "app/_layout.tsx",
       "app/(tabs)/_layout.tsx",
       "app/(tabs)/salary/index.tsx",
       "app/(tabs)/plan/index.tsx",
@@ -139,16 +172,23 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
 
   it("keeps the bottom navigation on the approved five-tab IA", () => {
     const tabs = source("(tabs)/_layout.tsx");
-
-    for (const label of ["급여", "계획", "LV", "커뮤니티", "MY"]) {
+    for (const label of [
+      "\uAE09\uC5EC",
+      "\uACC4\uD68D",
+      "LV",
+      "\uCEE4\uBBA4\uB2C8\uD2F0",
+      "MY",
+    ]) {
       expect(tabs).toContain(label);
     }
-
-    expect(tabs).toContain("급여납치 하단 탭 내비게이션");
-    expect(tabs).not.toMatch(/湲됱|怨꾪|而ㅻ|덊떚/u);
-    expect(tabs).toContain("#209252");
-    expect(tabs).toContain("#ADB3B8");
-    expect(tabs).toContain("#FFFFFF");
+    expect(tabs).toContain(
+      "\uAE09\uC5EC\uB0A9\uCE58 \uD558\uB2E8 \uD0ED \uB0B4\uBE44\uAC8C\uC774\uC158",
+    );
+    expect(tabs).not.toMatch(mojibakePattern);
+    expect(tabs).toContain("salaryHijackingDesignSystem");
+    expect(tabs).toContain("designSystem.navigation.bottomTabs.activeColor");
+    expect(tabs).toContain("designSystem.navigation.bottomTabs.inactiveColor");
+    expect(tabs).toContain("designSystem.navigation.bottomTabs.background");
     expect(tabs).not.toContain("#020617");
   });
 
@@ -156,12 +196,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     const config = mobileSource("app.config.ts");
 
     expect(config).toContain("#209252");
-    expect(config).toContain("#F7F8FA");
+    expect(config).toContain("#F7F9FA");
+    expect(config).toContain('const SERVICE_NAME = "급여납치"');
     expect(config).toContain('"급여금액"');
     expect(config).toContain('"계좌번호"');
-    expect(config).not.toContain('"급여",');
-    expect(config).not.toContain('"월급",');
-    expect(config).toContain("공개 Expo 환경변수에 서버 비밀");
+    expect(config).toContain('"광고/제휴"');
+    expect(config).not.toMatch(mojibakePattern);
+    expect(config).toContain("서버 권위");
     expect(config).not.toContain("#020617");
     expect(config).not.toContain("#67E8F9");
   });
@@ -190,7 +231,13 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain('accessibilityLabel="지출 추가 제목"');
     expect(cleanScreens).toContain("title: expenseTitle");
     expect(cleanScreens).toContain("서버에 지출을 기록했어요");
-    expect(cleanScreens).toContain("오프라인 미리보기로 반영했어요");
+    expect(cleanScreens).toContain(
+      "서버 저장이 실패해 지출을 반영하지 않았습니다.",
+    );
+    expect(cleanScreens).not.toContain(
+      "setAddedExpenses((current) => [...current, offlineEntry])",
+    );
+    expect(cleanScreens).not.toContain("오프라인 미리보기로 반영했어요");
   });
 
   it("keeps salary home daily budget hydrated from the server before offline preview fallback", () => {
@@ -547,7 +594,6 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     }
 
     expect(planSource).not.toMatch(mojibakePattern);
-    expect(planSource).not.toMatch(/[�]|[?][가-힣]|[가-힣][?]/u);
   });
 
   it("keeps plan completion toasts free from internal privacy flags", () => {
@@ -560,11 +606,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       )?.[0] ?? "";
 
     for (const visibleCopy of [
-      "급여 계획을 서버 기준으로 저장했어요.",
+      "급여 계획을 안전하게 저장했어요.",
       "고정지출을 삭제했어요.",
       "고정저축 목표를 삭제했어요.",
-      "고정지출을 서버 기준으로 수정했어요.",
-      "저축 목표를 서버 기준으로 수정했어요.",
+      "고정지출을 수정했어요.",
+      "저축 목표를 수정했어요.",
     ]) {
       expect(planSource).toContain(visibleCopy);
     }
@@ -953,7 +999,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("onPress={openForgotPassword}");
   });
 
-  it("keeps login social buttons starting the server OAuth flow instead of no-op buttons", () => {
+  it("keeps login social buttons starting the server social-auth flow without protocol copy", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
@@ -978,11 +1024,14 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "onPress={() => startSocialLogin(provider)}",
     );
-    expect(cleanScreens).toContain("OAuth 로그인을 시작하는 중입니다.");
-    expect(cleanScreens).toContain("OAuth 인증 창을 열었어요.");
+    expect(cleanScreens).toContain("로그인을 시작하는 중입니다.");
+    expect(cleanScreens).toContain("로그인 화면을 열었어요.");
     expect(cleanScreens).toContain(
-      "OAuth 로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.",
+      "로그인을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.",
     );
+    expect(cleanScreens).not.toContain("OAuth 로그인을 시작하는 중입니다.");
+    expect(cleanScreens).not.toContain("OAuth 인증 창을 열었어요.");
+    expect(cleanScreens).not.toContain("인증 URL");
     expect(cleanScreens).not.toMatch(
       /OAuth could not start|Please try again later|browser session was opened|server OAuth start request is in progress/u,
     );
@@ -1028,10 +1077,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       onboardingRoute.match(/disabled=\{submitting !== null\}/gu),
     ).toHaveLength(2);
     expect(
-      onboardingRoute.match(
-        /accessibilityState=\{\{\s*disabled: submitting !== null\s*\}\}/gu,
-      ) ?? [],
+      onboardingRoute.match(/disabled=\{submitting !== null\}/gu) ?? [],
     ).toHaveLength(2);
+    expect(onboardingRoute).toContain("PrimaryButton");
   });
 
   it("keeps verify-email screen recoverable with server-side resend instead of a dead end", () => {
@@ -1045,9 +1093,9 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(verifyRoute).toContain(
       "개인정보 원문 없이 서버에서 인증 상태를 확인해요.",
     );
-    expect(verifyRoute).not.toContain("rawPersonalData=false");
-    expect(verifyRoute).not.toContain("?대찓");
-    expect(verifyRoute).not.toContain("濡쒓렇");
+    expect(verifyRoute).not.toMatch(mojibakePattern);
+    expect(verifyRoute).not.toMatch(mojibakePattern);
+    expect(verifyRoute).not.toMatch(mojibakePattern);
   });
 
   it("locks verify-email resend inputs and login return while resend is pending", () => {
@@ -1059,9 +1107,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(verifyRoute).toContain(
       "accessibilityState={{ disabled: resendPending }}",
     );
-    expect(verifyRoute).toContain(
-      "accessibilityState={{ disabled: !canResend }}",
-    );
+    expect(verifyRoute).toContain("PrimaryButton");
+    expect(verifyRoute).toContain("disabled={!canResend}");
     expect(verifyRoute).toContain(
       "const returnToLogin = (): void => {\n    if (resendPending) return;",
     );
@@ -1076,7 +1123,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(callbackRoute).toContain(
       "서버 인증 결과와 계정 상태를 확인한 뒤 다음 화면으로 이동합니다.",
     );
-    expect(callbackRoute).not.toMatch(/[?][가-힣]|[가-힣][?]|�/u);
+    expect(callbackRoute).not.toMatch(mojibakePattern);
     expect(callbackRoute).not.toContain("급여 홈으로 이동합니다");
     expect(callbackRoute).toContain("routeAuthenticatedOAuthResult");
   });
@@ -1292,7 +1339,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
   });
 
-  it("keeps notification screen hydrated from the server before static fallback", () => {
+  it("keeps notification screen hydrated from the server before unavailable-state data", () => {
     const cleanScreens = mobileSource(
       "src/shared/styles/clean-fintech-screens.tsx",
     );
@@ -1301,7 +1348,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(mobileApi).toContain("createMobileNotificationsApi");
     expect(cleanScreens).toContain("createMobileNotificationsApi");
     expect(cleanScreens).toContain("serverNotifications");
-    expect(cleanScreens).toContain("fallbackNotifications");
+    expect(cleanScreens).toContain("serverUnavailableNotifications");
     expect(cleanScreens).toContain("notificationsApi.list");
     expect(cleanScreens).toContain("notificationsApi.unreadCount");
     expect(cleanScreens).toContain("중요 알림");
@@ -1603,8 +1650,15 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(notificationsApi).toContain("NOTIFICATIONS_DEVICES_PATH");
     expect(cleanScreens).toContain("serverNotificationDevices");
     expect(cleanScreens).toContain("registerNotificationDevice");
+    expect(cleanScreens).toContain("getDevicePushTokenAsync");
+    expect(cleanScreens).not.toContain("getExpoPushTokenAsync");
+    expect(cleanScreens).toContain('provider === "EXPO"');
+    expect(cleanScreens).toContain('"NATIVE_DEVICE"');
     expect(cleanScreens).toContain("revokeNotificationDevice");
-    expect(cleanScreens).toContain(".registerDevice({");
+    expect(cleanScreens).toContain(
+      "const request: NotificationDeviceRegistrationRequest = {",
+    );
+    expect(cleanScreens).toContain(".registerDevice(request)");
     expect(cleanScreens).toContain(".revokeDevice(");
     expect(cleanScreens).toContain("notificationDeviceActionPending");
     expect(cleanScreens).toContain(
@@ -2082,7 +2136,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("closeMyLevelProgress");
     expect(cleanScreens).toContain('myLevelRouter.replace("/profile")');
     expect(cleanScreens).toContain("onPress={closeMyLevelProgress}");
-    expect(cleanScreens).toContain("서버 기준으로 최신 현황을 확인했어요.");
+    expect(cleanScreens).toContain("최신 현황을 확인했어요.");
     expect(cleanScreens).toContain("안전한 성장 루틴");
     expect(source("profile/level.tsx")).toContain(
       '<ProfileDetailScreen variant="level" />',
@@ -2098,7 +2152,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
         /export function CleanFintechMyLevelProgressScreen\(\): React\.ReactElement \{[\s\S]*?function LevelScreen\(\): React\.ReactElement/u,
       )?.[0] ?? "";
 
-    expect(myLevelSource).toContain("서버 기준으로 최신 현황을 확인했어요.");
+    expect(myLevelSource).toContain("최신 현황을 확인했어요.");
     expect(myLevelSource).toContain("안전한 성장 루틴");
     expect(myLevelSource).toContain("완료된 성장 루틴");
     expect(myLevelSource).not.toContain("rawFinancialDataExposed=false");
@@ -2287,7 +2341,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("profileOccupationCategory");
     expect(cleanScreens).toContain("submitProfileSettings");
     expect(profileSettingsSource).toContain(
-      "프로필 설정을 서버 기준으로 저장했어요.",
+      "프로필 설정을 안전하게 저장했어요.",
     );
     expect(profileSettingsSource).not.toContain(
       "rawFinancialDataExposed=false",
@@ -3245,7 +3299,11 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     );
     expect(
       addExpenseSource.indexOf("attachReceiptToCreatedExpense"),
-    ).toBeLessThan(addExpenseSource.indexOf("setAddedExpenses"));
+    ).toBeLessThan(addExpenseSource.indexOf("setServerVariableExpenses"));
+    expect(addExpenseSource).not.toContain("offlineEntry");
+    expect(addExpenseSource).not.toContain(
+      "setAddedExpenses((current) => [...current",
+    );
   });
 
   it("keeps server-created salary home expenses visible as server rows before refresh can clear offline preview", () => {

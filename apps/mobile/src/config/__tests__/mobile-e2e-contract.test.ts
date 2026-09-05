@@ -44,8 +44,13 @@ const fs = jest.requireActual<FileSystemLike>("node:fs");
 const path = jest.requireActual<PathLike>("node:path");
 const mobileRoot = path.resolve(__dirname, "../../..");
 const productionApiBaseUrl = "https://api.salaryhijacking.com";
+const stagingApiBaseUrl = "https://api-staging.salaryhijacking.com";
 const placeholderEasProjectId = "00000000-0000-4000-8000-000000000000";
 const validEasProjectId = "11111111-1111-4111-8111-111111111111";
+const validProductionAdMobEnv = {
+  ADMOB_ANDROID_APP_ID: "ca-app-pub-1234567890123456~1234567890",
+  ADMOB_IOS_APP_ID: "ca-app-pub-1234567890123456~0987654321",
+} as const;
 const originalEnv = process.env;
 
 afterEach(() => {
@@ -59,6 +64,13 @@ function readRequiredText(relativePath: string): string {
     throw new Error(`Missing required mobile E2E file: ${relativePath}`);
   }
   return fs.readFileSync(absolutePath, "utf8");
+}
+
+function readOptionalText(relativePath: string): string | null {
+  const absolutePath = path.join(mobileRoot, relativePath);
+  return fs.existsSync(absolutePath)
+    ? fs.readFileSync(absolutePath, "utf8")
+    : null;
 }
 
 describe("mobile Detox E2E contract", () => {
@@ -137,8 +149,7 @@ describe("mobile Detox E2E contract", () => {
     const rootLayout = readRequiredText("app/_layout.tsx");
 
     expect(rootLayout).toContain("salary-hijacking-mobile-root");
-    expect(rootLayout).toContain("IS_E2E_BUILD");
-    expect(rootLayout).toContain("readMobileE2eBuildEnabled");
+    expect(rootLayout).toContain("isMobileE2eBuildEnabled");
     expect(rootLayout).toContain("E2E shell ready");
   });
 
@@ -166,6 +177,73 @@ describe("mobile Detox E2E contract", () => {
     }
   });
 
+  it("keeps Android release-like builds away from debug signing and backup exposure", () => {
+    const buildGradle = readOptionalText("android/app/build.gradle");
+    const manifest = readOptionalText(
+      "android/app/src/main/AndroidManifest.xml",
+    );
+
+    if (buildGradle && manifest) {
+      const releaseBlock =
+        buildGradle.match(/release\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+      const qaReleaseBlock =
+        buildGradle.match(/qaRelease\s*\{[\s\S]*?\n\s*\}/u)?.[0] ?? "";
+
+      expect(manifest).toContain('android:allowBackup="false"');
+      expect(manifest).toContain(
+        'expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ERROR_RECOVERY_ONLY"',
+      );
+      expect(manifest).not.toContain(
+        'expo.modules.updates.EXPO_UPDATES_CHECK_ON_LAUNCH" android:value="ALWAYS"',
+      );
+      expect(buildGradle).toContain("qaRelease");
+      expect(releaseBlock).not.toContain("signingConfig signingConfigs.debug");
+      expect(releaseBlock).not.toContain("matchingFallbacks = ['debug']");
+      expect(qaReleaseBlock).not.toContain(
+        "signingConfig signingConfigs.debug",
+      );
+      expect(qaReleaseBlock).not.toContain("matchingFallbacks = ['debug']");
+      return;
+    }
+
+    const config = appConfig({ config: {} });
+    const productionBuildScript = readRequiredText(
+      "scripts/expo-local-android-production-build.mjs",
+    );
+
+    expect(config.android.allowBackup).toBe(false);
+    expect(productionBuildScript).toContain("prebuild");
+    expect(productionBuildScript).toContain("bundleRelease");
+    expect(productionBuildScript).not.toContain(
+      "signingConfig signingConfigs.debug",
+    );
+    expect(productionBuildScript).not.toContain(
+      "matchingFallbacks = ['debug']",
+    );
+  });
+
+  it("keeps Android release-like builds on the startup-budget architecture", () => {
+    const gradleProperties = readRequiredText("android/gradle.properties");
+    const config = appConfig({ config: {} });
+
+    expect(config.newArchEnabled).toBe(true);
+    expect(gradleProperties).toContain("newArchEnabled=true");
+  });
+
+  it("disables Expo dev-client network inspection in Android build properties", () => {
+    const config = appConfig({ config: {} });
+    const buildPropertiesPlugin = config.plugins?.find((plugin) =>
+      Array.isArray(plugin) && plugin[0] === "expo-build-properties",
+    );
+
+    expect(buildPropertiesPlugin).toEqual([
+      "expo-build-properties",
+      expect.objectContaining({
+        android: expect.objectContaining({ networkInspector: false }),
+      }),
+    ]);
+  });
+
   it("keeps Android custom scheme deep links on Expo Router paths instead of an /app prefix", () => {
     const config = appConfig({ config: {} });
     const intentFilters = config.android.intentFilters as ReadonlyArray<{
@@ -190,7 +268,7 @@ describe("mobile Detox E2E contract", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_JSON: "https://example.com/google-services.json",
+      GOOGLE_SERVICES_JSON: "https://example.invalid/google-services.json",
     };
     const defaultConfig = appConfig({ config: {} });
 
@@ -202,12 +280,13 @@ describe("mobile Detox E2E contract", () => {
     process.env = {
       ...originalEnv,
       APP_ENV: "development",
-      GOOGLE_SERVICES_JSON: "./secrets/firebase/google-services.staging.json",
+      GOOGLE_SERVICES_JSON:
+        "./fixtures/firebase/google-services.local-test.json",
     };
     const overriddenConfig = appConfig({ config: {} });
 
     expect(overriddenConfig.android.googleServicesFile).toBe(
-      "./secrets/firebase/google-services.staging.json",
+      "./fixtures/firebase/google-services.local-test.json",
     );
   });
 
@@ -242,6 +321,7 @@ describe("mobile Detox E2E contract", () => {
   it("fails production app config when the EAS project id is missing or still the placeholder", () => {
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: "",
       EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
@@ -250,6 +330,7 @@ describe("mobile Detox E2E contract", () => {
 
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: placeholderEasProjectId,
       EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
@@ -258,6 +339,7 @@ describe("mobile Detox E2E contract", () => {
 
     process.env = {
       ...originalEnv,
+      ...validProductionAdMobEnv,
       APP_ENV: "production",
       EAS_PROJECT_ID: validEasProjectId,
       EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
@@ -265,5 +347,47 @@ describe("mobile Detox E2E contract", () => {
     expect(appConfig({ config: {} }).extra.eas).toEqual({
       projectId: validEasProjectId,
     });
+  });
+
+  it("uses staging HTTPS as the release-like default API base when no explicit local URL is provided", () => {
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "development",
+      EXPO_PUBLIC_API_BASE_URL: "",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: stagingApiBaseUrl }),
+    );
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "local",
+      EXPO_PUBLIC_API_BASE_URL: "",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: "http://127.0.0.1:8787" }),
+    );
+  });
+
+  it("rejects localhost API overrides outside explicit local builds", () => {
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "staging",
+      EXPO_PUBLIC_API_BASE_URL: "http://localhost:8787",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: stagingApiBaseUrl }),
+    );
+
+    process.env = {
+      ...originalEnv,
+      ...validProductionAdMobEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: validEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: "http://localhost:8787",
+    };
+    expect(appConfig({ config: {} }).extra.api).toEqual(
+      expect.objectContaining({ baseUrl: productionApiBaseUrl }),
+    );
   });
 });

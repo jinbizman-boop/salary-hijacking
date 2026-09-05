@@ -11,4 +11,4 @@ export {
   PlanProgressCard,
   type PlanProgressCardProps,
 } from "./PlanProgressCard";
-export { PlanReferenceScreen } from "./PlanReferenceScreen";
+export { PlanScreen, type PlanScreenProps } from "./PlanScreen";

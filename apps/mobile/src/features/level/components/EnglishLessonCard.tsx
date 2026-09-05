@@ -1,7 +1,13 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { SurfaceCard, componentColors } from "../../../shared/components";
+import {
+  SurfaceCard,
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
+import { ActivityFlowChecklist } from "./ActivityFlowChecklist";
 import { ContentPolicyPills } from "./ContentPolicyPills";
 
 export type EnglishLessonCardProps = Readonly<{
@@ -18,6 +24,16 @@ export function EnglishLessonCard({
       <Text style={styles.mode}>듣기 · 말하기 · 읽기 · 쓰기</Text>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.summary}>{content.missionPrompt}</Text>
+      <ActivityFlowChecklist
+        steps={[
+          { label: "영어 기본 목표", value: "하루 5문장" },
+          { label: "Listening", value: "문장 소리로 먼저 확인" },
+          { label: "Speaking", value: "따라 말하고 발화 기록" },
+          { label: "Reading", value: "뜻과 맥락 확인" },
+          { label: "Writing", value: "한 문장 직접 작성" },
+          { label: "session complete", value: `${content.xpReward} XP 저장` },
+        ]}
+      />
       <ContentPolicyPills content={content} />
       <Pressable
         accessibilityLabel="기록하기"
@@ -33,29 +49,26 @@ export function EnglishLessonCard({
 
 const styles = StyleSheet.create({
   mode: {
-    color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    color: componentColors.primaryGreen,
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.titleM,
   },
   summary: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
+    ...salaryHijackingDesignSystem.typography.bodyS,
   },
   button: {
-    minHeight: 44,
+    minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 14,
-    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.primaryGreen,
   },
   buttonText: {
-    color: componentColors.primaryGreenDark,
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    ...salaryHijackingDesignSystem.typography.labelL,
   },
 });

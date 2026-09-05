@@ -1,9 +1,9 @@
 import { render } from "@testing-library/react-native";
 
-import { PlanReferenceScreen } from "../../plan/components";
+import { PlanScreen } from "../../plan/components";
 import {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
+  SalaryHomeScreen,
 } from "../../salary/components";
 
 function serializedTree(screen: ReturnType<typeof render>): string {
@@ -16,18 +16,18 @@ describe("reference mobile screens Korean copy guard", () => {
   });
 
   it("renders salary home with readable Korean labels and no mojibake markers", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
     const tree = serializedTree(screen);
 
-    expect(screen.getByText(/내 급여 납치/u)).toBeTruthy();
-    expect(screen.getByText("전체 누적 납치 금액")).toBeTruthy();
+    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("누적 납치금액")).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
     expect(tree).not.toMatch(/[�]|湲|援|移|鍮|諛|吏|꾩|뚯|/u);
   });
 
   it("renders plan screen with readable Korean labels and no mojibake markers", () => {
-    const screen = render(<PlanReferenceScreen />);
+    const screen = render(<PlanScreen />);
     const tree = serializedTree(screen);
 
     expect(screen.getByText(/급여 납치 목표 달성률/u)).toBeTruthy();

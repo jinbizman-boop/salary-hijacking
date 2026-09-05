@@ -6,10 +6,16 @@ export { AdBannerSlot, type AdBannerSlotProps } from "./AdBannerSlot";
 export { AppHeader, type AppHeaderProps } from "./AppHeader";
 export { AppShell, type AppShellProps } from "./AppShell";
 export {
+  BottomSheet,
+  type BottomSheetAction,
+  type BottomSheetProps,
+} from "./BottomSheet";
+export {
   BottomTabBar,
   type BottomTabBarProps,
   type BottomTabItem,
 } from "./BottomTabBar";
+export { ConfirmDialog, type ConfirmDialogProps } from "./ConfirmDialog";
 export { EmptyState, type EmptyStateProps } from "./EmptyState";
 export { ErrorState, type ErrorStateProps } from "./ErrorState";
 export { LoadingSkeleton, type LoadingSkeletonProps } from "./LoadingSkeleton";
@@ -25,4 +31,5 @@ export {
   componentRadius,
   componentSpacing,
   componentTypography,
+  salaryHijackingDesignSystem,
 } from "./tokens";

@@ -1,19 +1,20 @@
 /* eslint-disable require-atomic-updates */
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import {
-  ActivityIndicator,
-  Pressable,
-  SafeAreaView,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, Text, TextInput, View } from "react-native";
 
+import {
+  AppHeader,
+  AppShell,
+  PrimaryButton,
+  SurfaceCard,
+  salaryHijackingDesignSystem,
+} from "../../src/shared/components";
 import { createMobileAuthApi } from "../../src/shared/api/mobile-api";
 import { salaryHijackingTheme as theme } from "../../src/shared/styles/clean-fintech-theme";
 
-const SCREEN_VERSION = "4.0.0-clean-fintech";
+const SCREEN_VERSION = "4.0.1-readable-korean";
+const designSystem = salaryHijackingDesignSystem;
 const VERIFY_EMAIL_PATH = "/api/v1/auth/verify-email";
 const VERIFY_EMAIL_RESEND_PATH = "/api/v1/auth/verify-email/resend";
 
@@ -100,34 +101,20 @@ export default function VerifyEmailScreen(): React.ReactElement {
     status === "WAITING"
       ? "메일의 인증 링크를 열면 서버에서 계정을 확인합니다."
       : status === "RESENT"
-        ? "새 링크가 도착하면 다시 열어 주세요. 이메일 주소는 재전송 요청에만 사용합니다."
+        ? "새 링크가 도착하면 다시 열어 주세요. 이메일 주소는 사전 요청에만 사용합니다."
         : "인증 토큰은 화면에 표시하거나 저장하지 않고 서버 확인에만 사용합니다.";
 
   return (
-    <SafeAreaView
-      style={{
-        backgroundColor: theme.color.surface.app,
-        flex: 1,
-        justifyContent: "center",
-        padding: theme.spacing[20],
-      }}
+    <AppShell
+      accessibilityLabel="이메일 인증 화면"
+      header={<AppHeader subtitle="계정 인증" title="이메일 인증" />}
     >
-      <View
-        style={{
-          backgroundColor: theme.color.surface.card,
-          borderColor: theme.color.surface.lineSoft,
-          borderRadius: theme.radius.lg,
-          borderWidth: 1,
-          gap: theme.spacing[12],
-          padding: theme.spacing[24],
-        }}
-      >
+      <SurfaceCard accessibilityLabel="이메일 인증 상태">
         <Text
           style={{
             color: theme.color.brand.primary,
             fontFamily: theme.font.native.black,
-            fontSize: 12,
-            fontWeight: "900",
+            ...designSystem.typography.labelS,
           }}
         >
           개인정보 원문 없이 서버에서 인증 상태를 확인해요.
@@ -162,8 +149,7 @@ export default function VerifyEmailScreen(): React.ReactElement {
             style={{
               color: theme.color.text.primary,
               fontFamily: theme.font.native.bold,
-              fontSize: 13,
-              fontWeight: "800",
+              ...designSystem.typography.labelM,
             }}
           >
             메일 주소
@@ -185,73 +171,27 @@ export default function VerifyEmailScreen(): React.ReactElement {
               borderWidth: 1,
               color: theme.color.text.primary,
               fontFamily: theme.font.native.medium,
-              fontSize: 15,
+              ...designSystem.typography.bodyM,
               minHeight: 48,
               paddingHorizontal: theme.spacing[12],
             }}
             value={email}
           />
-          <Pressable
+          <PrimaryButton
             accessibilityLabel="인증 메일 다시 보내기"
-            accessibilityRole="button"
-            accessibilityState={{ disabled: !canResend }}
             disabled={!canResend}
+            label={resendPending ? "전송 중" : "인증 메일 다시 보내기"}
             onPress={resendEmailVerification}
-            style={{
-              alignItems: "center",
-              backgroundColor: canResend
-                ? theme.color.brand.primary
-                : theme.color.surface.line,
-              borderRadius: theme.radius.md,
-              justifyContent: "center",
-              minHeight: 48,
-            }}
-          >
-            <Text
-              style={{
-                color: canResend
-                  ? theme.color.text.inverse
-                  : theme.color.text.muted,
-                fontFamily: theme.font.native.bold,
-                fontSize: 15,
-                fontWeight: "900",
-              }}
-            >
-              {resendPending ? "전송 중" : "인증 메일 다시 보내기"}
-            </Text>
-          </Pressable>
+          />
         </View>
-        <Pressable
+        <PrimaryButton
           accessibilityLabel="로그인 화면으로 이동"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: resendPending }}
           disabled={resendPending}
+          label="로그인으로 돌아가기"
           onPress={returnToLogin}
-          style={{
-            alignItems: "center",
-            backgroundColor: resendPending
-              ? theme.color.surface.line
-              : theme.color.brand.primary,
-            borderRadius: theme.radius.md,
-            justifyContent: "center",
-            minHeight: 48,
-          }}
-        >
-          <Text
-            style={{
-              color: resendPending
-                ? theme.color.text.muted
-                : theme.color.text.inverse,
-              fontFamily: theme.font.native.bold,
-              fontSize: 15,
-              fontWeight: "900",
-            }}
-          >
-            로그인으로 돌아가기
-          </Text>
-        </Pressable>
-      </View>
-    </SafeAreaView>
+        />
+      </SurfaceCard>
+    </AppShell>
   );
 }
 

@@ -2,11 +2,16 @@ import type {
   JsonRecord,
   JsonValue,
   PaginationInput,
+  PayrollCloseInput,
   PayrollPlanCreateInput,
   PayrollRepository,
   PayrollRouteRuntime,
   PayrollSimulationInput,
 } from "../routes/payroll.routes";
+import {
+  createPayrollCycle,
+  type YearMonthString,
+} from "@salary-hijacking/utils";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];
@@ -15,6 +20,7 @@ type DbRow = Record<string, unknown>;
 export interface PayrollDbQueryOptions<TEnv = unknown> {
   readonly operationName: string;
   readonly env: TEnv;
+  readonly principalUserId?: string;
 }
 
 export interface PayrollDbQueryResult<TRow extends DbRow = DbRow> {
@@ -77,6 +83,16 @@ async function defaultQuery<TEnv>(
         readonly rows: readonly DbRow[];
         readonly rowCount: number | null;
       }>;
+      connect: () => Promise<{
+        query: (
+          text: string,
+          values?: readonly DbValue[],
+        ) => Promise<{
+          readonly rows: readonly DbRow[];
+          readonly rowCount: number | null;
+        }>;
+        release: () => void;
+      }>;
       end: () => Promise<void>;
     };
     readonly neonConfig?: { fetchConnectionCache?: boolean };
@@ -91,9 +107,28 @@ async function defaultQuery<TEnv>(
     connectionTimeoutMillis: 10_000,
     statement_timeout: 30_000,
   });
+  const client = await pool.connect();
   try {
-    return await pool.query(sqlText, [...params]);
+    await client.query("begin");
+    if (options.principalUserId) {
+      await client.query(
+        "select set_config('app.current_user_id', $1, false), set_config('app.is_admin', 'false', false)",
+        [options.principalUserId],
+      );
+    }
+    const result = await client.query(sqlText, [...params]);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback").catch(() => undefined);
+    throw error;
   } finally {
+    await client
+      .query(
+        "select set_config('app.current_user_id', '', false), set_config('app.is_admin', '', false)",
+      )
+      .catch(() => undefined);
+    client.release();
     await pool.end();
   }
 }
@@ -122,6 +157,10 @@ function toNumber(value: unknown): number {
   return 0;
 }
 
+function toText(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
 function toIso(value: unknown): string {
   if (value instanceof Date) return value.toISOString();
   if (typeof value === "string") return new Date(value).toISOString();
@@ -145,11 +184,27 @@ function lastDateOfMonth(yearMonth: string): string {
   return date.toISOString().slice(0, 10);
 }
 
-function dayForMonth(yearMonth: string, payday: number): string {
-  const lastDate = lastDateOfMonth(yearMonth);
-  const maxDay = Number.parseInt(lastDate.slice(8, 10), 10);
-  const day = Math.max(1, Math.min(maxDay, payday));
-  return `${yearMonth}-${String(day).padStart(2, "0")}`;
+function payrollCycleFor(yearMonth: string, payday: number): {
+  readonly firstPayrollDate: string;
+  readonly periodStartDate: string;
+  readonly periodEndDate: string;
+} {
+  const cycle = createPayrollCycle(yearMonth as YearMonthString, {
+    type: "DAY_OF_MONTH",
+    dayOfMonth: payday,
+    timezone: "Asia/Seoul",
+  });
+  return {
+    firstPayrollDate: cycle.payday,
+    periodStartDate: cycle.cycleStartDate,
+    periodEndDate: cycle.cycleEndDate,
+  };
+}
+
+function payrollMonthFromInput(
+  input: Pick<PayrollPlanCreateInput, "firstPayrollDate" | "periodEndDate">,
+): string {
+  return (input.firstPayrollDate || input.periodEndDate).slice(0, 7);
 }
 
 function daysInclusive(startDate: string, endDate: string): number {
@@ -251,8 +306,9 @@ function rowToPlan(
     extra.fixedExpenseTotalMinor ?? expectedExpenseAmount;
   const variableExpenseReserveMinor = extra.variableExpenseReserveMinor ?? 0;
   const emergencyBufferMinor = extra.emergencyBufferMinor ?? 0;
-  const periodStartDate = extra.periodStartDate ?? `${yearMonth}-01`;
-  const periodEndDate = extra.periodEndDate ?? lastDateOfMonth(yearMonth);
+  const cycle = payrollCycleFor(yearMonth, payday);
+  const periodStartDate = extra.periodStartDate ?? cycle.periodStartDate;
+  const periodEndDate = extra.periodEndDate ?? cycle.periodEndDate;
   const plan: JsonRecord = {
     planId: String(row.payroll_plan_id ?? ""),
     title: extra.title ?? `${yearMonth} 급여 계획`,
@@ -260,7 +316,7 @@ function rowToPlan(
     payrollCycle: extra.payrollCycle ?? "MONTHLY",
     payrollAmountMinor,
     payday,
-    firstPayrollDate: extra.firstPayrollDate ?? dayForMonth(yearMonth, payday),
+    firstPayrollDate: extra.firstPayrollDate ?? cycle.firstPayrollDate,
     periodStartDate,
     periodEndDate,
     fixedExpenseTotalMinor,
@@ -322,6 +378,7 @@ function queryText<TEnv>(
   return repositoryQuery(sqlText, params, {
     operationName,
     env: runtime.env,
+    principalUserId: assertUuid(runtime.principal.userId, "principal.userId"),
   });
 }
 
@@ -442,6 +499,11 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.create",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           insert into public.payroll_plans (
             user_id,
             year_month,
@@ -453,12 +515,13 @@ export function createNeonPayrollRepository<TEnv = unknown>(
             confirmed_hijack_amount,
             status
           )
-          values ($1::uuid, $2, $3::smallint, $4::bigint, $5::bigint, $6::bigint, $7::bigint, 0, 'DRAFT')
+          select $1::uuid, $2, $3::smallint, $4::bigint, $5::bigint, $6::bigint, $7::bigint, 0, 'DRAFT'
+          from _app_context
           returning *
         `,
         [
           assertUuid(runtime.principal.userId, "principal.userId"),
-          input.periodStartDate.slice(0, 7),
+          payrollMonthFromInput(input),
           input.payday ?? 1,
           assertKrw(input.payrollAmountMinor, "payrollAmountMinor"),
           expectedExpenseAmount,
@@ -535,7 +598,7 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         [
           assertUuid(planId, "planId"),
           assertUuid(runtime.principal.userId, "principal.userId"),
-          merged.periodStartDate.slice(0, 7),
+          payrollMonthFromInput(merged),
           merged.payday ?? 1,
           assertKrw(merged.payrollAmountMinor, "payrollAmountMinor"),
           expectedExpenseAmount,
@@ -554,11 +617,18 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.delete",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $2::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           update public.payroll_plans
           set status = 'ARCHIVED',
               archived_at = now()
+          from _app_context
           where payroll_plan_id = $1::uuid
             and user_id = $2::uuid
+          returning payroll_plan_id
         `,
         [
           assertUuid(planId, "planId"),
@@ -573,12 +643,19 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.activate.archiveExisting",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           update public.payroll_plans
           set status = 'ARCHIVED',
               archived_at = now()
-          where user_id = $1::uuid
-            and status = 'ACTIVE'
-            and payroll_plan_id <> $2::uuid
+          from _app_context
+          where public.payroll_plans.user_id = $1::uuid
+            and public.payroll_plans.status = 'ACTIVE'
+            and public.payroll_plans.payroll_plan_id <> $2::uuid
+          returning public.payroll_plans.payroll_plan_id
         `,
         [
           assertUuid(runtime.principal.userId, "principal.userId"),
@@ -590,13 +667,19 @@ export function createNeonPayrollRepository<TEnv = unknown>(
         runtime,
         "payroll.activate",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $2::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           update public.payroll_plans
           set status = 'ACTIVE',
               archived_at = null,
               closed_at = null
-          where payroll_plan_id = $1::uuid
-            and user_id = $2::uuid
-          returning *
+          from _app_context
+          where public.payroll_plans.payroll_plan_id = $1::uuid
+            and public.payroll_plans.user_id = $2::uuid
+          returning public.payroll_plans.*
         `,
         [
           assertUuid(planId, "planId"),
@@ -649,6 +732,131 @@ export function createNeonPayrollRepository<TEnv = unknown>(
       const row = result.rows[0];
       if (!row) throw new Error("Payroll plan archive failed.");
       return rowToPlan(row);
+    },
+    async closePlan(planId, input: PayrollCloseInput, runtime) {
+      if (input.idempotencyKey) {
+        const existing = await queryText(
+          repositoryQuery,
+          runtime,
+          "payroll.closeIdempotencyLookup",
+          `
+            select
+              payroll_plan_id,
+              close_request_hash,
+              md5($1::text || ':' || coalesce($3::text, '')) as requested_hash
+            from public.payroll_plans
+            where user_id = $2::uuid
+              and close_idempotency_key = $4::text
+            limit 1
+          `,
+          [
+            assertUuid(planId, "planId"),
+            assertUuid(runtime.principal.userId, "principal.userId"),
+            input.reason,
+            input.idempotencyKey,
+          ],
+        );
+        const row = existing.rows[0];
+        if (row) {
+          if (row.payroll_plan_id !== planId)
+            throw new Error("Payroll close idempotency conflict.");
+          if (
+            typeof row.close_request_hash === "string" &&
+            typeof row.requested_hash === "string" &&
+            row.close_request_hash !== row.requested_hash
+          )
+            throw new Error("Payroll close idempotency conflict.");
+        }
+      }
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "payroll.close",
+        `
+          with target as (
+            select *
+            from public.payroll_plans
+            where payroll_plan_id = $1::uuid
+              and user_id = $2::uuid
+              and status <> 'ARCHIVED'
+            for update
+          ),
+          recalc as (
+            select public.recalculate_payroll_plan($1::uuid, 'MONTH_CLOSED') as snapshot_id
+            where exists (select 1 from target where status <> 'CLOSED')
+          ),
+          closed_budgets as (
+            update public.daily_budgets db
+            set status = 'CLOSED',
+                closed_at = coalesce(db.closed_at, now()),
+                calculated_at = now()
+            from target
+            where db.user_id = target.user_id
+              and public.payroll_cycle_contains_date(
+                target.year_month,
+                target.payday,
+                db.budget_date
+              )
+              and db.status <> 'CLOSED'
+            returning db.daily_budget_id
+          ),
+          closed as (
+            update public.payroll_plans pp
+            set status = 'CLOSED',
+                closed_at = coalesce(pp.closed_at, now()),
+                close_idempotency_key = coalesce(pp.close_idempotency_key, $4::text),
+                close_request_hash = coalesce(
+                  pp.close_request_hash,
+                  md5($1::text || ':' || coalesce($3::text, ''))
+                ),
+                close_reason = coalesce(pp.close_reason, $3::text),
+                updated_at = now()
+            from target
+            where pp.payroll_plan_id = target.payroll_plan_id
+            returning pp.*, (select snapshot_id from recalc) as snapshot_id
+          ),
+          cumulative as (
+            select coalesce(sum(confirmed_hijack_amount), 0)::bigint as cumulative_hijack_amount
+            from public.payroll_plans
+            where user_id = $2::uuid
+              and status = 'CLOSED'
+          )
+          select
+            closed.*,
+            closed.snapshot_id,
+            cumulative.cumulative_hijack_amount,
+            (select count(*) from closed_budgets)::int as closed_budget_count,
+            $3::text as close_reason,
+            closed.close_idempotency_key as idempotency_key
+          from closed
+          cross join cumulative
+        `,
+        [
+          assertUuid(planId, "planId"),
+          assertUuid(runtime.principal.userId, "principal.userId"),
+          input.reason,
+          input.idempotencyKey,
+        ],
+      );
+      const row = result.rows[0];
+      if (!row) throw new Error("Payroll plan close failed.");
+      return {
+        ...rowToPlan(row),
+        status: "CLOSED",
+        closedAt: toIso(row.closed_at),
+        cumulativeHijackAmountMinor: toNumber(row.cumulative_hijack_amount),
+        finalization: {
+          snapshotId:
+            typeof row.snapshot_id === "string" && row.snapshot_id.trim()
+              ? row.snapshot_id
+              : null,
+          closedBudgetCount: toNumber(row.closed_budget_count),
+          reasonRecorded: Boolean(toText(row.close_reason)),
+          idempotencyKeyPresent: Boolean(toText(row.idempotency_key)),
+        },
+        serverAuthority: true,
+        financialRawDataExposed: false,
+      };
     },
     async home(runtime) {
       const currentPlan = await this.getCurrentPlan(runtime);

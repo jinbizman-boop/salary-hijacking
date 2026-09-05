@@ -4,11 +4,19 @@ import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
 const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
+  ".android-subproject-build",
+  ".android-subproject-build-current-c",
+  ".android-subproject-build-oldarch-c",
+  ".android-subproject-build-oldarch-probe",
   ".cache",
   ".cxx",
   ".expo",
   ".expo-shared",
   ".gradle",
+  ".gradle-local-debug",
+  ".gradle-local-debug-direct",
+  ".localappdata",
+  ".local-native-bin",
   ".metro-cache",
   ".next",
   ".open-next",
@@ -27,6 +35,8 @@ const REPOSITORY_JUNK_DIRECTORY_NAMES = new Set([
 ]);
 
 const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
+  "artifacts/tmp",
+  "apps/mobile/build",
   "apps/mobile/apps",
   "apps/mobile/.eas/build",
   "apps/mobile/.eas/cache",
@@ -34,11 +44,25 @@ const REPOSITORY_JUNK_RELATIVE_PATHS = new Set([
   "apps/mobile/android/app/build",
   "apps/mobile/ios/build",
   "apps/mobile/ios/Pods",
+  "build",
 ]);
 
 const PROTECTED_DIRECTORY_NAMES = new Set([".git", "node_modules"]);
 const PROTECTED_RELATIVE_PATHS = new Set(["scripts/build"]);
 const DEPENDENCY_NATIVE_JUNK_RELATIVE_PATHS = [".cxx", ".gradle", "build"];
+const ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES = new Set([
+  "salary-hijacking-qa-universal.apk",
+  "salary-hijacking-qa-universal.apk.sha256",
+]);
+const ANDROID_APK_ARTIFACT_FILE_PATTERN =
+  /^salary-hijacking.*\.apk(?:\.sha256|\.idsig|\.verify\.txt)?$|^probe-copy\.apk$/u;
+const ANDROID_ARTIFACT_METADATA_FILE_PATTERN =
+  /^(?:build-info-.+\.json|checksums-.+\.txt|final-qa-apk-manifest\.json)$/u;
+const GENERATED_ARTIFACT_JUNK_DIRECTORY_PATTERNS = [
+  /^artifacts\/qa\/apk-inspect-.+$/u,
+  /^artifacts\/qa\/gradle-(?:home|user-home)(?:-.+)?$/u,
+  /^artifacts\/tmp\/gradle-(?:home|temp)(?:-.+)?$/u,
+];
 
 const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^salary-hijacking/i,
@@ -56,7 +80,21 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^salary-secrets-(?:evidence|proof)-/i,
   /^salary-security-audit-evidence-/i,
   /^salary-staging-smoke-/i,
+  /^stitch_salary_hijacking_design_system(?:_classified)?(?: \(\d+\))?\.zip$/i,
+  /^apk-inspect-/i,
   /^chrome-clean-fintech/i,
+  /^DiagOutputDir$/i,
+  /^gradle-.+\.log$/i,
+  /^gradle-home(?:-.+)?$/i,
+  /^gradle-user-home(?:-.+)?$/i,
+  /^android-build-work$/i,
+  /^android-subproject(?:s|-build)?$/i,
+  /^apk-patch$/i,
+  /^kotlin-daemon$/i,
+  /^moved-caches$/i,
+  /^node-tests$/i,
+  /^qa-release-.+\.log$/i,
+  /^jest$/i,
   /^metro-cache$/i,
   /^metro-file-map-/i,
   /^haste-map-/i,
@@ -66,6 +104,7 @@ const TEMP_JUNK_DIRECTORY_PATTERNS = [
   /^v8-compile-cache$/i,
   /^hsperfdata_/i,
   /^paycheck-accounting/i,
+  /^pnpm-cache$/i,
   /^node-test-run-/i,
 ];
 const REMOVE_RETRY_OPTIONS = {
@@ -128,9 +167,18 @@ function isRepositoryJunkFile(relativePath) {
   const posixPath = toPosix(relativePath);
   const fileName = path.basename(relativePath);
 
+  if (
+    posixPath.startsWith("artifacts/qa/") ||
+    posixPath.startsWith("release/evidence/final-qa-command-logs/")
+  ) {
+    if (/^artifacts\/qa\/gradle-.+\.log$/u.test(posixPath)) return true;
+    return false;
+  }
+
   return (
     /^release\/[^/]+-(?:proof|observation)\.local\.jsonc?$/.test(posixPath) ||
     /^apps\/mobile\/build\/phone\/android\/salary-hijacking-phone-arm64-iteration\d+-debug\.apk$/.test(
+      posixPath,
       posixPath,
     ) ||
     /\.tsbuildinfo$/.test(fileName) ||
@@ -144,7 +192,10 @@ function isRepositoryJunkDirectory(entryName, relativePath) {
   const posixPath = toPosix(relativePath);
   return (
     REPOSITORY_JUNK_DIRECTORY_NAMES.has(entryName) ||
-    REPOSITORY_JUNK_RELATIVE_PATHS.has(posixPath)
+    REPOSITORY_JUNK_RELATIVE_PATHS.has(posixPath) ||
+    GENERATED_ARTIFACT_JUNK_DIRECTORY_PATTERNS.some((pattern) =>
+      pattern.test(posixPath),
+    )
   );
 }
 
@@ -324,7 +375,10 @@ export function defaultTempRoots() {
     process.env.TEMP,
     process.env.TMP,
     process.env.TMPDIR,
+    process.env.LOCALAPPDATA,
+    "C:\\salary-hijacking-artifacts\\repo-artifacts\\qa",
     ...windowsCodexTempRoots,
+    "D:\\salary-hijacking-artifacts",
     "D:\\codex-temp\\salary-hijacking",
   ];
 
@@ -336,6 +390,52 @@ export function defaultTempRoots() {
     .filter(Boolean)
     .map((candidate) => path.resolve(candidate))
     .filter((candidate, index, all) => all.indexOf(candidate) === index);
+}
+
+export function defaultAndroidArtifactRoots(rootDir = process.cwd()) {
+  const roots = [
+    path.join(path.resolve(rootDir), "artifacts", "android"),
+    "D:\\salary-hijacking-artifacts\\apk",
+    "D:\\salary-hijacking-artifacts\\android\\qa-release-like-current",
+    path.join(process.env.USERPROFILE ?? "C:\\Users\\PC", "Downloads"),
+  ];
+
+  return roots
+    .filter(Boolean)
+    .map((candidate) => path.resolve(candidate))
+    .filter((candidate, index, all) => all.indexOf(candidate) === index);
+}
+
+async function collectOldAndroidApkArtifactTargets(artifactRoots) {
+  const targets = [];
+
+  for (const artifactRoot of artifactRoots) {
+    if (!(await pathExists(artifactRoot))) continue;
+    const resolvedRoot = path.resolve(artifactRoot);
+    const entries = await fs.promises.readdir(resolvedRoot, {
+      withFileTypes: true,
+    });
+
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      if (
+        !ANDROID_APK_ARTIFACT_FILE_PATTERN.test(entry.name) &&
+        !ANDROID_ARTIFACT_METADATA_FILE_PATTERN.test(entry.name)
+      ) {
+        continue;
+      }
+      if (ANDROID_APK_ARTIFACT_KEEP_FILE_NAMES.has(entry.name)) continue;
+      targets.push({
+        kind: "artifact",
+        path: assertInsideRoot(
+          resolvedRoot,
+          path.join(resolvedRoot, entry.name),
+        ),
+      });
+    }
+  }
+
+  return targets;
 }
 
 async function collectTempJunkTargets(tempRoots) {
@@ -369,11 +469,18 @@ export async function cleanGeneratedJunk(options = {}) {
   const spawn = options.spawnSubst ?? spawnSubst;
   const tempRoots =
     options.tempRoots === undefined ? defaultTempRoots() : options.tempRoots;
+  const androidArtifactRoots =
+    options.androidArtifactRoots === undefined
+      ? defaultAndroidArtifactRoots(rootDir)
+      : options.androidArtifactRoots;
 
   const planned = [
     ...collectStaleSubstTargets({ platform, rootDir, spawn }),
     ...(await collectRepositoryJunkTargets(rootDir)),
     ...(await collectDependencyNativeJunkTargets(rootDir)),
+    ...(await collectOldAndroidApkArtifactTargets(
+      androidArtifactRoots.map((root) => path.resolve(root)),
+    )),
     ...(await collectTempJunkTargets(
       tempRoots.map((root) => path.resolve(root)),
     )),
@@ -398,7 +505,9 @@ export async function cleanGeneratedJunk(options = {}) {
   for (const target of deduped) {
     try {
       const bytes =
-        target.kind === "subst" ? 0 : await measurePathBytes(target.path);
+        dryRun || target.kind === "subst" || target.kind === "temp"
+          ? 0
+          : await measurePathBytes(target.path);
       if (!dryRun) {
         if (target.kind === "subst") {
           removeSubstTarget(target, spawn);

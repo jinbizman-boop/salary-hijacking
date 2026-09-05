@@ -35,7 +35,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:e2e
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
 `,
     ".github/workflows/deploy-api.yml": `
 name: Deploy API
@@ -48,8 +48,10 @@ jobs:
     env:
       CLOUDFLARE_ACCOUNT_ID: \${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: \${{ secrets.CLOUDFLARE_API_TOKEN }}
+      STAGING_DATABASE_URL: \${{ secrets.STAGING_DATABASE_URL }}
     steps:
       - run: pnpm exec wrangler deploy --dry-run
+      - run: printf '%s' "$STAGING_DATABASE_URL" | pnpm exec wrangler secret put DATABASE_URL --env staging
       - run: pnpm exec wrangler deploy --env staging
 `,
     ".github/workflows/deploy-admin.yml": `
@@ -163,7 +165,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -195,8 +197,12 @@ compatibility_date = "2026-06-01"
 
 [env.staging]
 name = "salary-hijacking-api-staging"
+routes = [
+  { pattern = "api-staging.salaryhijacking.com", custom_domain = true }
+]
 [env.staging.vars]
 APP_ENV = "staging"
+APP_PUBLIC_BASE_URL = "https://api-staging.salaryhijacking.com"
 [[env.staging.r2_buckets]]
 binding = "UPLOADS_BUCKET"
 bucket_name = "salary-hijacking-staging-uploads"
@@ -342,7 +348,18 @@ export default {
   "main": ".open-next/worker.js",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "directory": ".open-next/assets" },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  "env": {
+    "staging": {
+      "name": "salary-hijacking-admin-staging",
+      "routes": [
+        { "pattern": "admin-staging.salaryhijacking.com", "custom_domain": true }
+      ],
+      "vars": {
+        "APP_PUBLIC_BASE_URL": "https://admin-staging.salaryhijacking.com"
+      }
+    }
+  }
 }
 `,
     "infra/github/secrets.md": `
@@ -985,7 +1002,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -1085,7 +1102,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -1173,6 +1190,69 @@ crons = ["0 * * * *"]
     assert.match(
       result.failures.join("\n"),
       /services\/api\/wrangler\.toml: missing required token "APP_PUBLIC_BASE_URL = "https:\/\/salaryhijacking\.com""/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("fails when the API Worker staging environment omits the mobile staging custom domain", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    await writeFixture(rootDir, {
+      "services/api/wrangler.toml": `
+name = "salary-hijacking-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[env.staging]
+name = "salary-hijacking-api-staging"
+[env.staging.vars]
+APP_ENV = "staging"
+[[env.staging.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-staging-uploads"
+[[env.staging.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-staging-operations"
+[env.staging.triggers]
+crons = ["0 * * * *"]
+
+[env.production]
+name = "salary-hijacking-api"
+routes = [
+  { pattern = "salaryhijacking.com", custom_domain = true },
+  { pattern = "www.salaryhijacking.com", custom_domain = true },
+  { pattern = "api.salaryhijacking.com", custom_domain = true }
+]
+[env.production.vars]
+APP_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://salaryhijacking.com"
+[[env.production.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-production-uploads"
+[[env.production.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-production-operations"
+[env.production.triggers]
+crons = ["0 * * * *"]
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /services\/api\/wrangler\.toml: missing required token "\{ pattern = "api-staging\.salaryhijacking\.com", custom_domain = true \}"/,
+    );
+    assert.match(
+      result.failures.join("\n"),
+      /services\/api\/wrangler\.toml: missing required token "APP_PUBLIC_BASE_URL = "https:\/\/api-staging\.salaryhijacking\.com""/,
     );
   } finally {
     await rm(rootDir, { recursive: true, force: true });
@@ -1902,7 +1982,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -1999,7 +2079,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:e2e
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
 `,
     });
 
@@ -2039,7 +2119,7 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm test:e2e
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
 `,
     });
 
@@ -2173,7 +2253,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4
@@ -2278,7 +2358,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --prod --audit-level high
+      - run: pnpm audit --prod --audit-level high --ignore-registry-errors
       - run: gh release create v1.0.0 release-artifacts/*
     env:
       GH_TOKEN: \${{ github.token }}
@@ -2324,7 +2404,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: gh release create v1.0.0 release-artifacts/*
     env:
       GH_TOKEN: \${{ github.token }}
@@ -2373,7 +2453,7 @@ jobs:
         with:
           name: public-url-proof-\${{ github.run_attempt }}
           path: release/public-url-proof.local.json
-      - run: pnpm audit --audit-level high --prod=false
+      - run: pnpm audit --audit-level high --prod=false --ignore-registry-errors
       - run: |
           node -e "require('node:fs').writeFileSync('release/security-audit-proof.local.json', JSON.stringify({ schemaVersion: 1, secretsRedacted: true, containsSecretValues: false, audit: { registryAuditVerified: true, lockfileAudited: true, productionDependenciesAudited: true, devDependenciesAudited: true, criticalVulnerabilities: 0, highVulnerabilities: 0, noHighOrCriticalVulnerabilities: true } }))"
       - uses: actions/upload-artifact@v4

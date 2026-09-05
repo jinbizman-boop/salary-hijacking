@@ -1,6 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { XpToast, componentColors } from "../../../shared/components";
+import {
+  XpToast,
+  componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 
 export type XpRewardToastProps = Readonly<{
   earnedXp: number;
@@ -31,11 +36,10 @@ export function XpRewardToast({
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: 6,
+    gap: componentSpacing.sm,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

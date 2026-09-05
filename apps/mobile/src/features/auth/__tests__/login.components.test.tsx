@@ -27,38 +27,43 @@ describe("login feature components", () => {
     expect(eureka.queryByText("Eureka World")).toBeNull();
   });
 
-  it("submits id and password through the password field submit action", () => {
+  it("submits id and password through the final reference login form", () => {
     const onSubmit = jest.fn();
-    const screen = render(<LoginCredentialForm onSubmit={onSubmit} />);
+    const screen = render(
+      <LoginCredentialForm
+        onForgotPasswordPress={jest.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
 
     fireEvent.changeText(screen.getByLabelText("아이디"), "user@example.com");
     fireEvent.changeText(screen.getByLabelText("비밀번호"), "P@ssw0rd!");
-    fireEvent(screen.getByLabelText("비밀번호"), "submitEditing");
+    fireEvent.press(screen.getByRole("button", { name: "로그인" }));
 
     expect(onSubmit).toHaveBeenCalledWith({
       email: "user@example.com",
       password: "P@ssw0rd!",
       rememberMe: true,
     });
+    expect(screen.getByPlaceholderText("아이디를 입력하세요")).toBeTruthy();
+    expect(screen.getByPlaceholderText("비밀번호를 입력하세요")).toBeTruthy();
+    expect(screen.getByText("비밀번호 찾기")).toBeTruthy();
   });
 
-  it("routes supported social login icons and keeps Facebook as visual-only", () => {
+  it("routes final reference social login buttons without stale providers", () => {
     const onSelectProvider = jest.fn();
     const screen = render(
       <SocialLoginButtons onSelectProvider={onSelectProvider} />,
     );
 
-    fireEvent.press(screen.getByRole("button", { name: "카카오 로그인" }));
-    fireEvent.press(screen.getByRole("button", { name: "네이버 로그인" }));
-    fireEvent.press(screen.getByRole("button", { name: "구글 로그인" }));
-    fireEvent.press(
-      screen.getByRole("button", { name: "페이스북 로그인 준비 중" }),
-    );
+    fireEvent.press(screen.getByRole("button", { name: "카카오로 계속하기" }));
+    fireEvent.press(screen.getByRole("button", { name: "네이버로 계속하기" }));
+    fireEvent.press(screen.getByRole("button", { name: "Google로 계속하기" }));
 
     expect(onSelectProvider).toHaveBeenNthCalledWith(1, "KAKAO");
     expect(onSelectProvider).toHaveBeenNthCalledWith(2, "NAVER");
     expect(onSelectProvider).toHaveBeenNthCalledWith(3, "GOOGLE");
     expect(onSelectProvider).toHaveBeenCalledTimes(3);
-    expect(screen.getByRole("checkbox", { name: "자동 로그인" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /페이스북|Apple/u })).toBeNull();
   });
 });

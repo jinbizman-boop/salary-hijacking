@@ -48,7 +48,7 @@ const safePost: CommunityPost = {
 
 const safeComment: CommunityComment = {
   anonymousDisplayName: "?듬챸 4",
-  content: "?쒓뎅 ?쒓컙 湲곗??쇰줈 ?쒖떆?섎뒗 ?볤?湲곕줉?낅땲??",
+  content: "한국 시간 기준으로 표시되는 댓글 기록입니다.",
   createdAt: "2026-07-11T15:00:00.000Z",
   id: "comment_1",
   likeCount: 0,
@@ -112,7 +112,7 @@ describe("community components", () => {
       <CommunityAdDisclosure model={model} onPress={onPress} />,
     );
 
-    expect(screen.queryByLabelText("광고 unsafe ad ?닿린")).toBeNull();
+    expect(screen.queryByLabelText("광고 unsafe ad 열기")).toBeNull();
     expect(screen.UNSAFE_queryAllByType(Pressable)).toHaveLength(0);
     expect(screen.getByText("unsafe ad")).toBeTruthy();
     expect(onPress).not.toHaveBeenCalled();

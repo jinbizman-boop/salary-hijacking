@@ -1,25 +1,27 @@
 import { useRouter } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import {
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 
 import { createMobileProfileApi } from "../src/shared/api/mobile-api";
+import {
+  AppHeader,
+  AppShell,
+  PrimaryButton,
+  SurfaceCard,
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../src/shared/components";
 
-const VERSION = "1.0.2-onboarding-copy-restored";
+const VERSION = "1.0.3-onboarding-readable-korean";
+const designSystem = salaryHijackingDesignSystem;
 const STEPS = [
   "급여일과 예상 수령액을 먼저 확인해요.",
   "고정지출과 고정저축을 급여 직후 먼저 분리해요.",
-  "일일 예산과 생활비 기준을 서버 계산으로 확인해요.",
+  "일일 예산과 생활비 기준을 한눈에 확인해요.",
 ] as const;
 const ONBOARDING_SETUP_ENTRIES = [
   {
-    description: "KRW 정수만 입력하고 서버 계산으로 예상 납치금액을 확인해요.",
+    description: "KRW 정수만 입력하고 예상 납치금액을 확인해요.",
     title: "급여일과 월급",
   },
   {
@@ -44,7 +46,7 @@ export default function OnboardingScreen(): React.ReactElement {
   );
   const onboardingCompletionInFlightRef = useRef(false);
   const [message, setMessage] = useState(
-    "온보딩 완료를 서버 프로필 경계에 기록한 뒤 다음 화면으로 이동해요.",
+    "설정을 저장한 뒤 다음 화면으로 이동해요.",
   );
 
   const finishOnboarding = useCallback(
@@ -52,7 +54,7 @@ export default function OnboardingScreen(): React.ReactElement {
       if (submitting || onboardingCompletionInFlightRef.current) return;
       onboardingCompletionInFlightRef.current = true;
       setSubmitting(target);
-      setMessage("서버에 온보딩 완료를 기록하는 중입니다.");
+      setMessage("설정을 저장하는 중입니다.");
       void profileApi
         .completeOnboarding()
         .then(() => {
@@ -60,7 +62,7 @@ export default function OnboardingScreen(): React.ReactElement {
         })
         .catch(() => {
           setMessage(
-            "온보딩 완료를 서버에 기록하지 못했어요. 연결을 확인하고 다시 시도해 주세요.",
+            "설정을 저장하지 못했어요. 연결을 확인하고 다시 시도해 주세요.",
           );
         })
         .finally(() => {
@@ -72,26 +74,34 @@ export default function OnboardingScreen(): React.ReactElement {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.badge}>
+    <AppShell
+      accessibilityLabel="급여납치 온보딩 화면"
+      header={
+        <AppHeader
+          subtitle="급여 계획을 안전하게 저장해요"
+          title="월급이 사라지기 전에 먼저 붙잡아요"
+        />
+      }
+    >
+      <View style={styles.content}>
+        <SurfaceCard accessibilityLabel="온보딩 보안 안내" style={styles.badge}>
           <Text style={styles.badgeText}>
-            서버 기준으로 급여 계획을 저장해요.
+            급여 계획을 안전하게 저장해요.
           </Text>
           <Text style={styles.badgeText}>
             금융 원문은 광고나 분석에 쓰지 않아요.
           </Text>
-        </View>
+        </SurfaceCard>
 
         <Text style={styles.kicker}>SALARY HIJACKING</Text>
         <Text style={styles.title}>월급이 사라지기 전에 먼저 붙잡아요</Text>
         <Text style={styles.body}>
-          급여납치는 급여, 고정지출, 고정저축, 생활비를 먼저 분리하고 서버
-          기준으로 오늘 쓸 수 있는 돈과 지켜낸 돈을 보여줘요.
+          급여납치는 급여, 고정지출, 고정저축, 생활비를 먼저 분리하고 오늘
+          쓸 수 있는 돈과 지켜낸 돈을 보여줘요.
         </Text>
         <Text style={styles.notice}>{message}</Text>
 
-        <View style={styles.card}>
+        <SurfaceCard accessibilityLabel="온보딩 핵심 단계">
           {STEPS.map((step, index) => (
             <View key={step} style={styles.stepRow}>
               <View style={styles.stepNumber}>
@@ -100,9 +110,9 @@ export default function OnboardingScreen(): React.ReactElement {
               <Text style={styles.stepText}>{step}</Text>
             </View>
           ))}
-        </View>
+        </SurfaceCard>
 
-        <View style={styles.card}>
+        <SurfaceCard accessibilityLabel="초기 설정 체크리스트">
           <Text style={styles.cardTitle}>초기 설정 체크리스트</Text>
           {ONBOARDING_SETUP_ENTRIES.map((entry) => (
             <View key={entry.title} style={styles.setupRow}>
@@ -113,35 +123,24 @@ export default function OnboardingScreen(): React.ReactElement {
               </View>
             </View>
           ))}
-        </View>
+        </SurfaceCard>
 
-        <Pressable
+        <PrimaryButton
           accessibilityLabel="목표: 급여 계획부터 설정하기"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: submitting !== null }}
           disabled={submitting !== null}
+          label={submitting === "/plan" ? "저장 중" : "급여 계획부터 설정하기"}
           onPress={() => finishOnboarding("/plan")}
-          style={[styles.primaryButton, submitting ? styles.disabled : null]}
-        >
-          <Text style={styles.primaryButtonText}>
-            {submitting === "/plan" ? "서버 기록 중" : "급여 계획부터 설정하기"}
-          </Text>
-        </Pressable>
+        />
 
-        <Pressable
+        <PrimaryButton
           accessibilityLabel="목표: 이미 설정했어요"
-          accessibilityRole="button"
-          accessibilityState={{ disabled: submitting !== null }}
           disabled={submitting !== null}
+          label={submitting === "/salary" ? "저장 중" : "이미 설정했어요"}
           onPress={() => finishOnboarding("/salary")}
-          style={[styles.secondaryButton, submitting ? styles.disabled : null]}
-        >
-          <Text style={styles.secondaryButtonText}>
-            {submitting === "/salary" ? "서버 기록 중" : "이미 설정했어요"}
-          </Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+          variant="secondary"
+        />
+      </View>
+    </AppShell>
   );
 }
 
@@ -158,7 +157,6 @@ export function assertOnboardingScreenCompleteness(): {
     "createMobileProfileApi",
     "completeOnboarding",
     "finishOnboarding",
-    "server-authoritative onboarding completion",
     "financial raw data not used for ads or analytics",
     "KRW integer guidance",
     "payroll plan entry",
@@ -172,91 +170,82 @@ export function assertOnboardingScreenCompleteness(): {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: "#F7F8FA", flex: 1 },
-  content: { gap: 18, padding: 20 },
+  content: { gap: designSystem.spacing[5] },
   badge: {
     alignSelf: "flex-start",
-    backgroundColor: "#EAF6EF",
-    borderColor: "#D9F0E3",
-    borderRadius: 999,
-    borderWidth: 1,
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.brand.surface,
+    borderRadius: designSystem.radius.full,
+    gap: designSystem.spacing[1],
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[2],
   },
-  badgeText: { color: "#12663A", fontSize: 11, fontWeight: "800" },
+  badgeText: {
+    color: designSystem.colors.brand.dark,
+    ...designSystem.typography.labelS,
+  },
   kicker: {
-    color: "#209252",
-    fontSize: 12,
-    fontWeight: "900",
-    marginTop: 14,
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.labelS,
   },
   title: {
-    color: "#202327",
-    fontSize: 30,
-    fontWeight: "900",
-    lineHeight: 38,
+    color: componentColors.textPrimary,
+    ...designSystem.typography.display,
   },
-  body: { color: "#4B535B", fontSize: 15, lineHeight: 23 },
+  body: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyM,
+  },
   notice: {
-    backgroundColor: "#EAF6EF",
-    borderColor: "#D9F0E3",
-    borderRadius: 14,
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.brand.surface,
+    borderRadius: designSystem.radius.lg,
     borderWidth: 1,
-    color: "#12663A",
-    fontSize: 13,
-    fontWeight: "800",
-    lineHeight: 20,
-    padding: 12,
+    color: designSystem.colors.brand.dark,
+    ...designSystem.typography.labelM,
+    padding: designSystem.spacing[3],
   },
-  card: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "#EEF0F2",
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 14,
-    padding: 16,
+  cardTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
   },
-  cardTitle: { color: "#202327", fontSize: 17, fontWeight: "900" },
-  stepRow: { alignItems: "center", flexDirection: "row", gap: 12 },
+  stepRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
+  },
   stepNumber: {
     alignItems: "center",
-    backgroundColor: "#209252",
-    borderRadius: 999,
-    height: 28,
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.full,
+    height: designSystem.spacing[8],
     justifyContent: "center",
-    width: 28,
+    width: designSystem.spacing[8],
   },
-  stepNumberText: { color: "#FFFFFF", fontSize: 13, fontWeight: "900" },
-  stepText: { color: "#202327", flex: 1, fontSize: 15, lineHeight: 22 },
-  setupDescription: { color: "#6D737A", fontSize: 13, lineHeight: 19 },
+  stepNumberText: {
+    color: componentColors.surface,
+    ...designSystem.typography.labelM,
+  },
+  stepText: {
+    color: componentColors.textPrimary,
+    flex: 1,
+    ...designSystem.typography.bodyM,
+  },
+  setupDescription: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+  },
   setupDot: {
-    backgroundColor: "#209252",
-    borderRadius: 999,
-    height: 8,
-    marginTop: 6,
-    width: 8,
+    backgroundColor: componentColors.primaryGreen,
+    borderRadius: designSystem.radius.full,
+    height: designSystem.spacing[2],
+    marginTop: designSystem.spacing[1],
+    width: designSystem.spacing[2],
   },
-  setupRow: { flexDirection: "row", gap: 10 },
-  setupTextBox: { flex: 1, gap: 3 },
-  setupTitle: { color: "#202327", fontSize: 15, fontWeight: "900" },
-  primaryButton: {
-    alignItems: "center",
-    backgroundColor: "#209252",
-    borderRadius: 16,
-    justifyContent: "center",
-    minHeight: 52,
+  setupRow: { flexDirection: "row", gap: designSystem.spacing[3] },
+  setupTextBox: { flex: 1, gap: designSystem.spacing[1] },
+  setupTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelL,
   },
-  primaryButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "900" },
-  secondaryButton: {
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderColor: "#E7EBEF",
-    borderRadius: 16,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 52,
-  },
-  secondaryButtonText: { color: "#209252", fontSize: 15, fontWeight: "900" },
-  disabled: { opacity: 0.55 },
 });

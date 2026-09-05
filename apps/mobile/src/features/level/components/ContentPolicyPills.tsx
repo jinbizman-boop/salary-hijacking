@@ -1,6 +1,10 @@
 import { StyleSheet, Text, View } from "react-native";
 
-import { componentColors, componentRadius } from "../../../shared/components";
+import {
+  componentColors,
+  componentRadius,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
 
 export type ContentPolicyPillsProps = Readonly<{
@@ -26,16 +30,15 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: salaryHijackingDesignSystem.spacing[2],
   },
   pill: {
     overflow: "hidden",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: salaryHijackingDesignSystem.spacing[3],
+    paddingVertical: salaryHijackingDesignSystem.spacing[1],
     borderRadius: componentRadius.pill,
     backgroundColor: componentColors.primaryGreenSoft,
     color: componentColors.primaryGreenDark,
-    fontSize: 11,
-    fontWeight: "900",
+    ...salaryHijackingDesignSystem.typography.labelS,
   },
 });

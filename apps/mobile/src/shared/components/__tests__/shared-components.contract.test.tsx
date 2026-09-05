@@ -30,8 +30,25 @@ describe("shared mobile components", () => {
     expect(source).toContain('keyboardDismissMode="interactive"');
     expect(source).toContain('keyboardShouldPersistTaps="handled"');
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
-    expect(source).toContain("paddingBottom: 96 + insets.bottom");
+    expect(source).toContain("paddingBottom:");
+    expect(source).toContain("designSystem.navigation.bottomTabs.visualHeight");
+    expect(source).toContain("componentSpacing.lg");
+    expect(source).toContain("insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
+    expect(source).toContain("StatusBar");
+    expect(source).toContain('barStyle="dark-content"');
+    expect(source).toContain("backgroundColor={componentColors.background}");
+  });
+
+  it("renders modal overlays outside the scroll content so actions stay reachable", () => {
+    const source = readFileSync(join(__dirname, "..", "AppShell.tsx"), "utf8");
+
+    expect(source).toContain("overlay?: React.ReactNode");
+    expect(source).toContain("overlay,");
+    expect(source).toMatch(
+      /<\/ScrollView>\s*\{overlay \? <View style=\{styles\.overlay\}>\{overlay\}<\/View> : null\}/,
+    );
+    expect(source).toContain("...StyleSheet.absoluteFillObject");
   });
 
   it("keeps every launch-critical input shell on the keyboard-safe contract", () => {
@@ -54,7 +71,7 @@ describe("shared mobile components", () => {
         "features",
         "salary",
         "components",
-        "SalaryHomeReferenceScreen.tsx",
+        "SalaryHomeScreen.tsx",
       ),
       join(
         __dirname,
@@ -64,7 +81,7 @@ describe("shared mobile components", () => {
         "features",
         "plan",
         "components",
-        "PlanReferenceScreen.tsx",
+        "PlanScreen.tsx",
       ),
     ];
 
@@ -93,7 +110,7 @@ describe("shared mobile components", () => {
             onTabPress={onTabPress}
           />
         }
-        header={<AppHeader subtitle="서버 권위" title="급여납치" />}
+        header={<AppHeader subtitle="오늘의 흐름" title="급여납치" />}
       >
         <SurfaceCard accessibilityLabel="요약 카드">
           <MoneyText accessibilityLabel="이번 달 납치 금액" amount={5780000} />
@@ -102,13 +119,41 @@ describe("shared mobile components", () => {
       </AppShell>,
     );
 
-    expect(screen.getByLabelText("급여납치 서버 권위")).toBeTruthy();
+    expect(screen.getByLabelText("급여납치 오늘의 흐름")).toBeTruthy();
     expect(screen.getByLabelText("요약 카드")).toBeTruthy();
     expect(screen.getByText("5,780,000원")).toBeTruthy();
     expect(screen.getByLabelText("목표 진행률 72%")).toBeTruthy();
 
     fireEvent.press(screen.getByRole("button", { name: "LV UP 탭" }));
     expect(onTabPress).toHaveBeenCalledWith("level");
+  });
+
+  it("renders AppHeader semantic variants with canonical back and action controls", () => {
+    const onBack = jest.fn();
+    const onBrandPress = jest.fn();
+    const onAction = jest.fn();
+    const screen = render(
+      <AppHeader
+        actionLabel="알림 설정 열기"
+        actionText="설정"
+        onAction={onAction}
+        onBack={onBack}
+        onBrandPress={onBrandPress}
+        subtitle="서버 기준"
+        title="알림"
+        variant="TITLE_ACTION"
+      />,
+    );
+
+    fireEvent.press(
+      screen.getByRole("button", { name: "이전 화면으로 돌아가기" }),
+    );
+    fireEvent.press(screen.getByRole("button", { name: "급여 홈" }));
+    fireEvent.press(screen.getByRole("button", { name: "알림 설정 열기" }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
+    expect(onBrandPress).toHaveBeenCalledTimes(1);
+    expect(onAction).toHaveBeenCalledTimes(1);
   });
 
   it("keeps buttons, pill tabs, records, XP, and state components accessible", () => {
@@ -168,6 +213,27 @@ describe("shared mobile components", () => {
     expect(screen.getByRole("button", { name: "재시도" })).toBeTruthy();
   });
 
+  it("emits optional release perf markers from canonical buttons", () => {
+    const info = jest.spyOn(globalThis.console, "info").mockImplementation();
+
+    const screen = render(
+      <PrimaryButton
+        accessibilityLabel="지출 추가"
+        label="지출 추가"
+        onPress={jest.fn()}
+        perfMarker="interaction.quick_expense.press"
+      />,
+    );
+
+    fireEvent(screen.getByRole("button", { name: "지출 추가" }), "pressIn");
+
+    expect(info).toHaveBeenCalledWith(
+      expect.stringContaining("marker=interaction.quick_expense.press"),
+    );
+
+    info.mockRestore();
+  });
+
   it("labels contextual ads and announces money without exposing raw targeting data", () => {
     const screen = render(
       <>
@@ -184,6 +250,9 @@ describe("shared mobile components", () => {
     expect(
       screen.getByText("민감 금융 데이터로 맞춤 타겟팅하지 않아요."),
     ).toBeTruthy();
+    expect(screen.queryByText("RESERVED")).toBeNull();
+    expect(screen.queryByText("NO_FILL")).toBeNull();
+    expect(screen.queryByText("ERROR")).toBeNull();
     expect(screen.getByLabelText("오늘 남은 예산 7,000원")).toBeTruthy();
   });
 });

@@ -53,6 +53,7 @@ describe("Neon payroll repository", () => {
       readonly operationName: string;
       readonly sqlText: string;
       readonly params: readonly unknown[];
+      readonly principalUserId: string | undefined;
     }> = [];
     const repository = createNeonPayrollRepository({
       query: async (sqlText, params, options) => {
@@ -60,6 +61,7 @@ describe("Neon payroll repository", () => {
           operationName: options.operationName,
           sqlText,
           params,
+          principalUserId: options.principalUserId,
         });
         if (options.operationName.endsWith(".create")) {
           return {
@@ -105,5 +107,212 @@ describe("Neon payroll repository", () => {
     expect(calls[0]?.sqlText).toContain("insert into public.payroll_plans");
     expect(calls[0]?.params).toContain(userId);
     expect(JSON.stringify(created)).not.toContain(userId);
+  });
+
+  it("stores payday-cycle plans under the payroll month, not the cycle start month", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+      readonly principalUserId: string | undefined;
+    }> = [];
+    const repository = createNeonPayrollRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+          principalUserId: options.principalUserId,
+        });
+        if (options.operationName.endsWith(".create")) {
+          return {
+            rows: [
+              {
+                payroll_plan_id: planId,
+                year_month: "2026-09",
+                payday: 25,
+                expected_salary_amount: "2700000",
+                expected_expense_amount: "1370000",
+                target_hijack_amount: "1870000",
+                expected_hijack_amount: "1330000",
+                confirmed_hijack_amount: "0",
+                status: "DRAFT",
+                created_at: "2026-08-26T00:00:00.000Z",
+                updated_at: "2026-08-26T00:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    await repository.createPlan(
+      {
+        ...createInput,
+        firstPayrollDate: "2026-09-25",
+        periodStartDate: "2026-08-26",
+        periodEndDate: "2026-09-25",
+      },
+      createRuntime(),
+    );
+
+    expect(calls[0]?.params[1]).toBe("2026-09");
+  });
+
+  it("activates a DB-backed payroll plan with statement-scoped RLS context", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+      readonly principalUserId: string | undefined;
+    }> = [];
+    const repository = createNeonPayrollRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+          principalUserId: options.principalUserId,
+        });
+        if (options.operationName.endsWith(".activate.archiveExisting")) {
+          return {
+            rows: [],
+            rowCount: 0,
+          };
+        }
+        if (options.operationName.endsWith(".activate")) {
+          return {
+            rows: [
+              {
+                payroll_plan_id: planId,
+                year_month: "2026-07",
+                payday: 25,
+                expected_salary_amount: "2700000",
+                expected_expense_amount: "1370000",
+                target_hijack_amount: "1870000",
+                expected_hijack_amount: "1330000",
+                confirmed_hijack_amount: "0",
+                status: "ACTIVE",
+                archived_at: null,
+                closed_at: null,
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const activated = await repository.activatePlan(
+      planId,
+      "launch persistence synthetic activate",
+      createRuntime(),
+    );
+
+    expect(activated).toMatchObject({
+      planId,
+      status: "ACTIVE",
+      serverAuthority: true,
+      financialRawDataExposed: false,
+    });
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "payroll.activate.archiveExisting",
+      "payroll.activate",
+    ]);
+    expect(calls[0]?.principalUserId).toBe(userId);
+    expect(calls[0]?.sqlText).toContain(
+      "returning public.payroll_plans.payroll_plan_id",
+    );
+    expect(calls[1]?.sqlText).toContain("set status = 'ACTIVE'");
+    expect(JSON.stringify(activated)).not.toContain(userId);
+  });
+
+  it("closes payroll plans by recalculating once, locking daily budgets, and returning cumulative hijack", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonPayrollRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName.endsWith(".closeIdempotencyLookup")) {
+          return {
+            rows: [],
+            rowCount: 0,
+          };
+        }
+        if (options.operationName.endsWith(".close")) {
+          return {
+            rows: [
+              {
+                payroll_plan_id: planId,
+                year_month: "2026-09",
+                payday: 25,
+                expected_salary_amount: "2700000",
+                expected_expense_amount: "1200000",
+                target_hijack_amount: "1000000",
+                expected_hijack_amount: "1500000",
+                confirmed_hijack_amount: "1300000",
+                status: "CLOSED",
+                closed_at: "2026-09-25T15:00:00.000Z",
+                created_at: "2026-08-26T00:00:00.000Z",
+                updated_at: "2026-09-25T15:00:00.000Z",
+                snapshot_id: "44444444-4444-4444-8444-444444444444",
+                cumulative_hijack_amount: "2500000",
+                closed_budget_count: "31",
+                close_reason: "phase4 finalization runtime",
+                idempotency_key: "phase4-finalize-key",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const closed = await repository.closePlan(
+      planId,
+      {
+        reason: "phase4 finalization runtime",
+        idempotencyKey: "phase4-finalize-key",
+      },
+      createRuntime(),
+    );
+
+    expect(closed).toMatchObject({
+      planId,
+      status: "CLOSED",
+      confirmedHijackAmountMinor: 1_300_000,
+      cumulativeHijackAmountMinor: 2_500_000,
+      finalization: {
+        snapshotId: "44444444-4444-4444-8444-444444444444",
+        closedBudgetCount: 31,
+        idempotencyKeyPresent: true,
+      },
+      serverAuthority: true,
+      financialRawDataExposed: false,
+    });
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "payroll.closeIdempotencyLookup",
+      "payroll.close",
+    ]);
+    expect(calls[1]?.sqlText).toContain("public.recalculate_payroll_plan");
+    expect(calls[1]?.sqlText).toContain("'MONTH_CLOSED'");
+    expect(calls[1]?.sqlText).toContain("status = 'CLOSED'");
+    expect(calls[1]?.sqlText).toContain("public.payroll_cycle_contains_date");
+    expect(calls[1]?.sqlText).toContain("close_request_hash");
+    expect(calls[1]?.params).toContain("phase4-finalize-key");
+    expect(JSON.stringify(closed)).not.toContain(userId);
   });
 });

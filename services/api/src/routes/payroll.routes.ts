@@ -24,6 +24,7 @@ export type PayrollCycle = "MONTHLY" | "BIWEEKLY" | "WEEKLY" | "CUSTOM";
 export type PayrollPlanStatus =
   | "DRAFT"
   | "ACTIVE"
+  | "CLOSED"
   | "PAUSED"
   | "ARCHIVED"
   | "DELETED";
@@ -125,6 +126,11 @@ export interface PayrollRecalculateInput {
   readonly reason: string | null;
 }
 
+export interface PayrollCloseInput {
+  readonly reason: string;
+  readonly idempotencyKey: string | null;
+}
+
 export interface PayrollSimulationInput {
   readonly payrollAmountMinor: number;
   readonly fixedExpenseTotalMinor: number;
@@ -192,6 +198,11 @@ export interface PayrollRepository<TEnv = unknown> {
     reason: string,
     runtime: PayrollRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
+  closePlan(
+    planId: string,
+    input: PayrollCloseInput,
+    runtime: PayrollRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
   home(runtime: PayrollRouteRuntime<TEnv>): Promise<JsonRecord>;
   summary(
     input: JsonRecord,
@@ -233,6 +244,7 @@ export interface PayrollEvent {
     | "payroll_plan_activated"
     | "payroll_plan_paused"
     | "payroll_plan_archived"
+    | "payroll_plan_closed"
     | "payroll_plan_recalculated"
     | "payroll_plan_simulated";
   readonly requestId: string;
@@ -442,6 +454,43 @@ function errorResponse(
   path: string,
   error: unknown,
 ): Response {
+  if (error instanceof Error && !(error instanceof PayrollHttpError)) {
+    const message = error.message.toLowerCase();
+    if (message.includes("idempotency conflict"))
+      return errorResponse(
+        requestId,
+        path,
+        new PayrollHttpError(
+          409,
+          "IDEMPOTENCY_CONFLICT",
+          "동일한 멱등성 키로 다른 요청을 처리할 수 없습니다.",
+        ),
+      );
+    if (message.includes("closed"))
+      return errorResponse(
+        requestId,
+        path,
+        new PayrollHttpError(
+          409,
+          "PAYROLL_CYCLE_CLOSED",
+          "마감된 급여주기는 변경할 수 없습니다.",
+        ),
+      );
+    if (
+      message.includes("not found") ||
+      message.includes("failed") ||
+      message.includes("required")
+    )
+      return errorResponse(
+        requestId,
+        path,
+        new PayrollHttpError(
+          404,
+          "PAYROLL_PLAN_NOT_FOUND",
+          "급여계획을 찾을 수 없습니다.",
+        ),
+      );
+  }
   const normalized =
     error instanceof PayrollHttpError
       ? error
@@ -678,7 +727,11 @@ function normalizeReservePolicy(value: unknown): PayrollReservePolicy {
 function normalizeStatus(value: unknown): PayrollPlanStatus {
   const status =
     typeof value === "string" ? value.trim().toUpperCase() : "DRAFT";
-  if (["DRAFT", "ACTIVE", "PAUSED", "ARCHIVED", "DELETED"].includes(status))
+  if (
+    ["DRAFT", "ACTIVE", "CLOSED", "PAUSED", "ARCHIVED", "DELETED"].includes(
+      status,
+    )
+  )
     return status as PayrollPlanStatus;
   throw new PayrollHttpError(
     400,
@@ -1026,6 +1079,13 @@ function recalculateInput(
   };
 }
 
+function closeInput(body: Record<string, unknown>): PayrollCloseInput {
+  return {
+    reason: stringField(body, "reason", { maxLength: 500 }),
+    idempotencyKey: optionalStringField(body, "idempotencyKey", 256),
+  };
+}
+
 async function emit<TEnv>(
   runtime: PayrollRouteRuntime<TEnv>,
   event: PayrollEvent,
@@ -1290,6 +1350,79 @@ function createInMemoryPayrollRepository<
       };
       plans.set(planId, updated);
       return withBreakdown(updated);
+    },
+    async closePlan(planId, input, runtime): Promise<JsonRecord> {
+      const found = findForRuntime(planId, runtime);
+      if (!found)
+        throw new PayrollHttpError(
+          404,
+          "PAYROLL_PLAN_NOT_FOUND",
+          "급여계획을 찾을 수 없습니다.",
+        );
+      const closedAt = String(found.closedAt ?? runtime.now.toISOString());
+      const calculation = serverAuthorityBreakdown({
+        periodStartDate: String(found.periodStartDate),
+        periodEndDate: String(found.periodEndDate),
+        payrollAmountMinor:
+          typeof found.payrollAmountMinor === "number"
+            ? found.payrollAmountMinor
+            : 0,
+        fixedExpenseTotalMinor:
+          typeof found.fixedExpenseTotalMinor === "number"
+            ? found.fixedExpenseTotalMinor
+            : 0,
+        fixedSavingsTotalMinor:
+          typeof found.fixedSavingsTotalMinor === "number"
+            ? found.fixedSavingsTotalMinor
+            : 0,
+        variableExpenseReserveMinor:
+          typeof found.variableExpenseReserveMinor === "number"
+            ? found.variableExpenseReserveMinor
+            : 0,
+        emergencyBufferMinor:
+          typeof found.emergencyBufferMinor === "number"
+            ? found.emergencyBufferMinor
+            : 0,
+        carryOverAmountMinor:
+          typeof found.carryOverAmountMinor === "number"
+            ? found.carryOverAmountMinor
+            : 0,
+      });
+      const confirmedHijackAmountMinor =
+        typeof calculation.availableForDailyBudgetMinor === "number"
+          ? calculation.availableForDailyBudgetMinor
+          : 0;
+      const updated = {
+        ...found,
+        status: "CLOSED",
+        closedAt,
+        closeReason: input.reason,
+        confirmedHijackAmountMinor,
+        updatedAt: runtime.now.toISOString(),
+      };
+      plans.set(planId, updated);
+      const cumulativeHijackAmountMinor = visibleForUser(
+        runtime.principal.userId,
+      )
+        .filter((plan) => plan.status === "CLOSED")
+        .reduce(
+          (sum, plan) =>
+            sum +
+            (typeof plan.confirmedHijackAmountMinor === "number"
+              ? plan.confirmedHijackAmountMinor
+              : 0),
+          0,
+        );
+      return {
+        ...withBreakdown(updated),
+        cumulativeHijackAmountMinor,
+        finalization: {
+          snapshotId: null,
+          closedBudgetCount: 0,
+          reasonRecorded: Boolean(input.reason),
+          idempotencyKeyPresent: Boolean(input.idempotencyKey),
+        },
+      };
     },
     async home(runtime): Promise<JsonRecord> {
       const currentPlan = current(runtime);
@@ -1663,6 +1796,25 @@ async function dispatchPayrollRoute<TEnv>(
     return jsonResponse(runtime, 200, { data });
   }
 
+  match = matchRoute(relativePath, /^\/([^/]+)\/close$/);
+  if (method === "POST" && match) {
+    const planId = idFromMatch(match, 1);
+    const data = await repository.closePlan(
+      planId,
+      closeInput(await parseJsonBody(runtime.request)),
+      runtime,
+    );
+    await emit(runtime, {
+      event: "payroll_plan_closed",
+      requestId: runtime.requestId,
+      userId: runtime.principal.userId,
+      planId,
+      path: runtime.path,
+      createdAt: runtime.now.toISOString(),
+    });
+    return jsonResponse(runtime, 200, { data });
+  }
+
   throw new PayrollHttpError(
     404,
     "PAYROLL_ROUTE_NOT_FOUND",
@@ -1749,6 +1901,7 @@ export const payrollRoutesManifest = Object.freeze({
     "POST /{planId}/activate",
     "POST /{planId}/pause",
     "POST /{planId}/archive",
+    "POST /{planId}/close",
   ],
   authMiddlewareCompatible: true,
   errorMiddlewareCompatible: true,
@@ -1774,6 +1927,7 @@ export function assertPayrollRoutesCompleteness(): {
     "list_create_detail_update_delete",
     "home_current_summary_calendar",
     "activate_pause_archive_lifecycle",
+    "close_lifecycle",
     "server_authority_payroll_breakdown",
     "simulate_without_persistence",
     "recalculate_with_optional_plan_overwrite",

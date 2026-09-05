@@ -14,12 +14,13 @@ const commentId = "33333333-3333-4333-8333-333333333333";
 
 function createRuntime(
   path = "/api/v1/community/posts",
+  env: Record<string, unknown> = { APP_ENV: "test" },
 ): CommunityRouteRuntime<unknown> {
   return {
     request: new Request(`https://api.test${path}`, {
       headers: { "x-idempotency-key": "community-test-idempotency-key" },
     }),
-    env: { APP_ENV: "test" },
+    env,
     execution: { waitUntil: (_promise: Promise<unknown>) => undefined },
     url: new URL(`https://api.test${path}`),
     path,
@@ -54,6 +55,88 @@ describe("Neon community repository", () => {
       }),
     ).toBe(true);
     expect(shouldUseNeonCommunityRepository({ APP_ENV: "test" })).toBe(false);
+  });
+
+  it("uses stable keyset cursor pagination for community posts", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.listPosts") {
+          return {
+            rows: [
+              {
+                post_id: postId,
+                board_type: "level_up_proof",
+                title: "cursor page row",
+                body: "커서 페이지 row",
+                author_display_name_snapshot: "익명 사용자",
+                is_anonymous: true,
+                status: "published",
+                like_count: "0",
+                comment_count: "0",
+                bookmark_count: "0",
+                report_count: "0",
+                view_count: "0",
+                published_at: "2026-07-02T03:00:00.000Z",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+              {
+                post_id: "44444444-4444-4444-8444-444444444444",
+                board_type: "level_up_proof",
+                title: "cursor lookahead row",
+                body: "커서 lookahead row",
+                author_display_name_snapshot: "익명 사용자",
+                is_anonymous: true,
+                status: "published",
+                like_count: "0",
+                comment_count: "0",
+                bookmark_count: "0",
+                report_count: "0",
+                view_count: "0",
+                published_at: "2026-07-02T02:00:00.000Z",
+                created_at: "2026-07-02T02:00:00.000Z",
+                updated_at: "2026-07-02T02:00:00.000Z",
+              },
+            ],
+            rowCount: 2,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const result = await repository.listPosts(
+      {},
+      {
+        mode: "cursor",
+        cursor: null,
+        page: 1,
+        pageSize: 1,
+        offset: 0,
+        limit: 1,
+      },
+      createRuntime("/api/v1/community/posts?limit=1"),
+    );
+
+    expect(result.items).toHaveLength(1);
+    expect(result.hasMore).toBe(true);
+    expect(result.nextCursor).toEqual(expect.any(String));
+    expect(calls[0]?.sqlText.toLowerCase()).toContain(
+      "order by p.pinned_at desc nulls last, p.published_at desc, p.post_id desc",
+    );
+    expect(calls[0]?.sqlText.toLowerCase()).toContain("limit $");
+    expect(calls[0]?.sqlText.toLowerCase()).not.toContain(" offset ");
+    expect(calls[0]?.params).toEqual([2]);
   });
 
   it("creates a DB-backed community post without returning owner identifiers", async () => {
@@ -128,6 +211,159 @@ describe("Neon community repository", () => {
     expect(calls[0]?.sqlText).toContain("insert into public.community_posts");
     expect(calls[0]?.sqlText).toContain("public.community_boards");
     expect(calls[0]?.params).toContain(userId);
+  });
+
+  it("supports the live 41-table community schema without community_boards", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.physicalSchema") {
+          return {
+            rows: [{ canonical_boards: false, canonical_post_author: false }],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "community.createPost.legacy") {
+          return {
+            rows: [
+              {
+                post_id: postId,
+                user_id: userId,
+                board_type: "LEVEL_UP_PROOF",
+                title: createPostInput.title,
+                body: createPostInput.content,
+                is_anonymous: true,
+                status: "PUBLISHED",
+                like_count: "0",
+                comment_count: "0",
+                share_count: "0",
+                report_count: "0",
+                view_count: "0",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const boards = await repository.listBoards(
+      createRuntime("/api/v1/community/boards", {
+        APP_ENV: "staging",
+        DATABASE_URL: "postgres://example.invalid/db",
+      }),
+    );
+    const created = await repository.createPost(
+      createPostInput,
+      createRuntime("/api/v1/community/posts", {
+        APP_ENV: "staging",
+        DATABASE_URL: "postgres://example.invalid/db",
+      }),
+    );
+
+    expect(boards.some((board) => board.boardType === "LEVEL_CERTIFICATION"))
+      .toBe(true);
+    expect(created).toMatchObject({
+      postId,
+      boardType: "LEVEL_CERTIFICATION",
+      title: createPostInput.title,
+      content: createPostInput.content,
+      status: "VISIBLE",
+      financialRawDataExposed: false,
+      rawPersonalDataExposed: false,
+    });
+    expect(JSON.stringify(created)).not.toContain(userId);
+    expect(calls.map((call) => call.operationName)).toEqual([
+      "community.physicalSchema",
+      "community.createPost.legacy",
+    ]);
+    expect(calls[1]?.sqlText).toContain("user_id");
+    expect(calls[1]?.sqlText).toContain("board_type");
+    expect(calls[1]?.sqlText).not.toContain("community_boards");
+    expect(calls[1]?.sqlText).toContain("$6");
+    expect(calls[1]?.params.at(-1)).toBe("PUBLISHED");
+  });
+
+  it("persists trust-and-safety status in the live 41-table community schema", async () => {
+    const calls: Array<{
+      readonly operationName: string;
+      readonly sqlText: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const repository = createNeonCommunityRepository({
+      query: async (sqlText, params, options) => {
+        calls.push({
+          operationName: options.operationName,
+          sqlText,
+          params,
+        });
+        if (options.operationName === "community.physicalSchema") {
+          return {
+            rows: [{ canonical_boards: false, canonical_post_author: false }],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "community.createPost.legacy") {
+          return {
+            rows: [
+              {
+                post_id: postId,
+                user_id: userId,
+                board_type: "FREE_TALK",
+                title: "TNS held post",
+                body: "사기 리딩방 수익 보장 synthetic moderation trigger",
+                is_anonymous: false,
+                status: "HIDDEN",
+                like_count: "0",
+                comment_count: "0",
+                share_count: "0",
+                report_count: "0",
+                view_count: "0",
+                created_at: "2026-07-02T03:00:00.000Z",
+                updated_at: "2026-07-02T03:00:00.000Z",
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected operation: ${options.operationName}`);
+      },
+    });
+
+    const created = await repository.createPost(
+      {
+        ...createPostInput,
+        boardType: "FREE",
+        title: "TNS held post",
+        content: "사기 리딩방 수익 보장 synthetic moderation trigger",
+        tags: ["phase6"],
+        anonymous: false,
+        moderationStatus: "PENDING_REVIEW",
+      },
+      createRuntime("/api/v1/community/posts", {
+        APP_ENV: "staging",
+        DATABASE_URL: "postgres://example.invalid/db",
+      }),
+    );
+
+    expect(created.status).toBe("HIDDEN");
+    const createCall = calls.find(
+      (call) => call.operationName === "community.createPost.legacy",
+    );
+    expect(createCall?.sqlText).toContain("$6");
+    expect(createCall?.params.at(-1)).toBe("HIDDEN");
   });
 
   it("creates a DB-backed community comment and leaves the count update on the server", async () => {

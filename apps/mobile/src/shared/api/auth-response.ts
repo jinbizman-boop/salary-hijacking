@@ -11,6 +11,7 @@ export type MobileAuthSuccessPayload = Readonly<{
     id: string;
     emailVerified: boolean;
     onboardingCompleted: boolean;
+    payrollReady: boolean;
     role: MobileUserRole;
   }>;
 }>;
@@ -47,6 +48,7 @@ export type MobileSignupSuccessPayload = Readonly<{
     id: string;
     emailVerified: boolean;
     onboardingCompleted: boolean;
+    payrollReady: boolean;
     role: MobileUserRole;
   }>;
 }>;
@@ -276,6 +278,7 @@ function mobileUser(
     emailVerified: bool(user, "emailVerified") ?? !emailVerificationRequired,
     onboardingCompleted:
       bool(user, "onboardingCompleted") ?? !onboardingRequired,
+    payrollReady: bool(user, "payrollReady") ?? !onboardingRequired,
     role: roleFromUser(user),
   };
 }

@@ -104,6 +104,39 @@ describe("native Android local API base contract", () => {
   );
 
   it.each(featureApiFactories)(
+    "%s API does not read unsupported React Native URL credential accessors",
+    (_, build) => {
+      const NativeUrl = global.URL;
+      class ReactNativeLikeUrl extends NativeUrl {
+        override get username(): string {
+          throw new Error("URL.username is not implemented");
+        }
+
+        override get password(): string {
+          throw new Error("URL.password is not implemented");
+        }
+
+        override get protocol(): string {
+          throw new Error("URL.protocol is not implemented");
+        }
+
+        override get hostname(): string {
+          throw new Error("URL.hostname is not implemented");
+        }
+      }
+
+      global.URL = ReactNativeLikeUrl as typeof URL;
+      try {
+        expect(() => build(baseUrl)).not.toThrow(
+          "URL.username is not implemented",
+        );
+      } finally {
+        global.URL = NativeUrl;
+      }
+    },
+  );
+
+  it.each(featureApiFactories)(
     "%s API rejects base URLs with embedded credentials",
     (_, build) => {
       expect(() => build(credentialedBaseUrl)).toThrow();

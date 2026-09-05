@@ -1,4 +1,4 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-require-imports */
 import {
   Image,
   Pressable,
@@ -8,55 +8,77 @@ import {
   type ImageSourcePropType,
 } from "react-native";
 
-import { appIconAssets } from "../../../shared/assets/icons";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components/tokens";
 import type { AuthSocialProvider } from "../types";
-import { TextLink, authVisualColors } from "./AuthVisualFrame";
+import { authVisualColors } from "./AuthVisualFrame";
+
+const typography = salaryHijackingDesignSystem.typography;
+const designSystem = salaryHijackingDesignSystem;
+const kakaoIcon =
+  require("../../../shared/assets/icons/social/kakao.png") as ImageSourcePropType;
+const naverIcon =
+  require("../../../shared/assets/icons/social/naver.png") as ImageSourcePropType;
+const googleIcon =
+  require("../../../shared/assets/icons/social/google.png") as ImageSourcePropType;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
+  readonly foregroundColor: string;
   readonly icon: ImageSourcePropType;
   readonly label: string;
-  readonly provider?: AuthSocialProvider;
+  readonly provider: AuthSocialProvider;
 }[] = [
   {
-    backgroundColor: "#03C75A",
-    icon: appIconAssets.social.naver,
-    label: "네이버 로그인",
-    provider: "NAVER",
-  },
-  {
-    backgroundColor: "#FEE500",
-    icon: appIconAssets.social.kakao,
-    label: "카카오 로그인",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.kakao,
+    foregroundColor: componentColors.textPrimary,
+    icon: kakaoIcon,
+    label: "카카오로 계속하기",
     provider: "KAKAO",
   },
   {
-    backgroundColor: "#1877F2",
-    icon: appIconAssets.social.facebook,
-    label: "페이스북 로그인 준비 중",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.naver,
+    foregroundColor: designSystem.colors.text.inverse,
+    icon: naverIcon,
+    label: "네이버로 계속하기",
+    provider: "NAVER",
   },
   {
-    backgroundColor: "#FFFFFF",
-    icon: appIconAssets.social.google,
-    label: "구글 로그인",
+    backgroundColor: salaryHijackingDesignSystem.providerBrand.google,
+    foregroundColor: authVisualColors.ink,
+    icon: googleIcon,
+    label: "Google로 계속하기",
     provider: "GOOGLE",
   },
 ];
 
 export type SocialLoginButtonsProps = Readonly<{
+  compact?: boolean;
   onSelectProvider: (provider: AuthSocialProvider) => void;
   onSignupPress?: () => void;
 }>;
 
 export function SocialLoginButtons({
+  compact = false,
   onSelectProvider,
-  onSignupPress,
 }: SocialLoginButtonsProps): React.ReactElement {
-  const [rememberMe, setRememberMe] = useState(false);
-
   return (
     <View accessibilityLabel="소셜 로그인" style={styles.wrap}>
-      <View style={styles.iconRow}>
+      <View
+        accessibilityElementsHidden
+        style={[styles.dividerRow, compact ? styles.dividerRowCompact : null]}
+      >
+        <View style={styles.line} />
+        <Text allowFontScaling={false} style={styles.orText}>
+          또는
+        </Text>
+        <View style={styles.line} />
+      </View>
+      <View style={[styles.buttonStack, compact ? styles.buttonStackCompact : null]}>
         {SOCIAL_PROVIDERS.map((provider) => (
           <Pressable
             accessibilityLabel={provider.label}
@@ -64,109 +86,108 @@ export function SocialLoginButtons({
             hitSlop={8}
             key={provider.provider ?? provider.label}
             onPress={() => {
-              if (provider.provider) onSelectProvider(provider.provider);
+              onSelectProvider(provider.provider);
             }}
             style={[
               styles.socialButton,
               { backgroundColor: provider.backgroundColor },
+              provider.provider === "GOOGLE" ? styles.googleButton : null,
             ]}
           >
-            <Image
-              accessibilityIgnoresInvertColors
-              resizeMode="contain"
-              source={provider.icon}
-              style={styles.socialIcon}
-            />
+            <View
+              accessibilityElementsHidden
+              style={[
+                styles.iconSlot,
+                provider.provider === "KAKAO" ? styles.kakaoIconSlot : null,
+              ]}
+            >
+              <Image
+                accessibilityIgnoresInvertColors
+                resizeMode="contain"
+                source={provider.icon}
+                style={styles.socialIcon}
+              />
+            </View>
+            <Text
+              allowFontScaling={false}
+              style={[styles.socialLabel, { color: provider.foregroundColor }]}
+            >
+              {provider.label}
+            </Text>
           </Pressable>
         ))}
-      </View>
-      <View style={styles.memberRow}>
-        <TextLink label="회원가입" onPress={onSignupPress} />
-        <Text allowFontScaling={false} style={styles.divider}>
-          |
-        </Text>
-        <Pressable
-          accessibilityLabel="자동 로그인"
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: rememberMe }}
-          hitSlop={10}
-          onPress={() => setRememberMe((value) => !value)}
-          style={styles.autoLogin}
-        >
-          <View style={styles.checkbox}>
-            {rememberMe ? <View style={styles.checkboxFill} /> : null}
-          </View>
-          <Text allowFontScaling={false} style={styles.autoLoginText}>
-            자동 로그인
-          </Text>
-        </Pressable>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  autoLogin: {
+  buttonStack: {
+    gap: componentSpacing.sm,
+  },
+  buttonStackCompact: {
+    gap: designSystem.spacing[2],
+  },
+  dividerRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 4,
+    gap: componentSpacing.md,
+    marginBottom: componentSpacing.lg,
+    marginTop: componentSpacing.xxl,
   },
-  autoLoginText: {
-    color: authVisualColors.ink,
-    fontSize: 14,
-    fontWeight: "800",
-    includeFontPadding: false,
-    letterSpacing: 0,
-    lineHeight: 20,
+  dividerRowCompact: {
+    marginBottom: designSystem.spacing[3],
+    marginTop: designSystem.spacing[6],
   },
-  checkbox: {
+  line: {
+    backgroundColor: designSystem.colors.border.default,
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
+  iconSlot: {
     alignItems: "center",
-    borderColor: "#303030",
-    borderWidth: 1,
-    height: 14,
+    height: 28,
     justifyContent: "center",
-    width: 14,
+    width: 52,
   },
-  checkboxFill: {
-    backgroundColor: authVisualColors.brandGreen,
-    height: 8,
-    width: 8,
+  googleButton: {
+    borderColor: designSystem.colors.border.strong,
   },
-  divider: {
-    color: authVisualColors.ink,
-    fontSize: 14,
-    fontWeight: "800",
-    includeFontPadding: false,
-    lineHeight: 20,
+  kakaoIconSlot: {
+    borderRadius: designSystem.radius.full,
+    overflow: "hidden",
   },
-  iconRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 9,
-    justifyContent: "center",
-  },
-  memberRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 4,
-    justifyContent: "center",
-    marginTop: 10,
+  orText: {
+    color: authVisualColors.muted,
+    ...typography.caption,
+    minWidth: 34,
+    textAlign: "center",
   },
   socialButton: {
     alignItems: "center",
-    borderColor: "#E5E7EB",
-    borderRadius: 6,
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.button,
     borderWidth: StyleSheet.hairlineWidth,
-    height: 42,
-    justifyContent: "center",
+    flexDirection: "row",
+    gap: componentSpacing.md,
+    minHeight: 56,
+    justifyContent: "flex-start",
     overflow: "hidden",
-    width: 42,
+    paddingHorizontal: componentSpacing.lg,
+    width: "100%",
   },
   socialIcon: {
-    height: 30,
-    width: 30,
+    height: 28,
+    width: 28,
+  },
+  socialLabel: {
+    ...typography.labelL,
+    flex: 1,
+    textAlign: "center",
   },
   wrap: {
-    alignItems: "center",
+    alignSelf: "center",
+    maxWidth: 365,
+    width: "100%",
   },
 });

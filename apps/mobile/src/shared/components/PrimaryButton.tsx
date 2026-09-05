@@ -1,12 +1,24 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 
-import { componentColors, componentRadius, componentSpacing } from "./tokens";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "./tokens";
+import {
+  markReleaseInteractionPerf,
+  type ReleasePerfMarkerName,
+} from "../performance/release-perf";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type PrimaryButtonProps = Readonly<{
   label: string;
   onPress: () => void;
   accessibilityLabel?: string;
   disabled?: boolean;
+  perfMarker?: ReleasePerfMarkerName;
   variant?: "primary" | "secondary" | "danger";
 }>;
 
@@ -15,6 +27,7 @@ export function PrimaryButton({
   onPress,
   accessibilityLabel = label,
   disabled = false,
+  perfMarker,
   variant = "primary",
 }: PrimaryButtonProps): React.ReactElement {
   return (
@@ -23,7 +36,12 @@ export function PrimaryButton({
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
+      onPressIn={(event) => {
+        if (perfMarker && !disabled)
+          markReleaseInteractionPerf(perfMarker, event);
+      }}
       onPress={onPress}
+      unstable_pressDelay={0}
       style={({ pressed }) => [
         styles.button,
         styles[variant],
@@ -42,7 +60,7 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
+    minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: componentSpacing.lg,
@@ -54,7 +72,7 @@ const styles = StyleSheet.create({
   secondary: {
     borderWidth: 1,
     borderColor: componentColors.line,
-    backgroundColor: componentColors.surface,
+    backgroundColor: componentColors.surfaceSoft,
   },
   danger: {
     backgroundColor: componentColors.dangerRed,
@@ -66,11 +84,10 @@ const styles = StyleSheet.create({
     opacity: 0.82,
   },
   text: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "800",
+    color: componentColors.surface,
+    ...designSystem.typography.labelL,
   },
   secondaryText: {
-    color: componentColors.textPrimary,
+    color: componentColors.primaryGreenDark,
   },
 });

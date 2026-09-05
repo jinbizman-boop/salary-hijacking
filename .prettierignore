@@ -1,10 +1,13 @@
 node_modules
+pnpm-lock.yaml
 .turbo
 .cache
+.tmp
 .tools
 coverage
 dist
 build
+artifacts
 
 # Framework and deployment outputs
 .next
@@ -17,6 +20,16 @@ web-build
 # Native/mobile generated workspaces
 android
 ios
+apps/mobile/.local-native-bin
+apps/mobile/.tmp
+apps/mobile/.gradle-local-debug
+apps/mobile/.gradle-local-debug-direct
+apps/mobile/.localappdata
+.gradle-qa-*
+.android-subproject-build
+
+# Design reference originals copied from Stitch. Keep unchanged for traceability.
+docs/design/stitch/**/html/*.html
 
 # Local environment files
 .env

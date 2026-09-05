@@ -14,10 +14,16 @@ import type {
   NotificationsRouteRuntime,
   PaginationInput,
 } from "../routes/notifications.routes";
+import {
+  createSecurityKeyRingFromEnv,
+  decryptString,
+  encryptString,
+} from "@salary-hijacking/security/encryption";
 
 type DbScalar = string | number | boolean | null;
 type DbValue = DbScalar | readonly DbScalar[];
 type DbRow = Record<string, unknown>;
+type EnvRecord = Readonly<Record<string, string | undefined>>;
 
 export interface NotificationsDbQueryOptions<TEnv = unknown> {
   readonly operationName: string;
@@ -34,6 +40,41 @@ export type NotificationsDbQuery<TEnv = unknown> = (
   params: readonly DbValue[],
   options: NotificationsDbQueryOptions<TEnv>,
 ) => Promise<NotificationsDbQueryResult>;
+
+type NeonNotificationsSqlLike = (
+  text: string,
+  values?: readonly DbValue[],
+) => Promise<{
+  readonly rows: readonly DbRow[];
+  readonly rowCount: number | null;
+}>;
+
+interface NeonNotificationsModule {
+  readonly neon: (
+    connectionString: string,
+    options?: Record<string, unknown>,
+  ) => NeonNotificationsSqlLike;
+  readonly neonConfig?: { fetchConnectionCache?: boolean };
+}
+
+export class NotificationRepositoryError extends Error {
+  readonly status: number;
+  readonly code: string;
+  readonly details: JsonValue | null;
+
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    details: JsonValue | null = null,
+  ) {
+    super(message);
+    this.name = "NotificationRepositoryError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
 
 export interface NeonNotificationsRepositoryOptions<TEnv = unknown> {
   readonly query?: NotificationsDbQuery<TEnv>;
@@ -55,7 +96,7 @@ const uuidPattern =
 const dbTypesByApiType = Object.freeze({
   PAYDAY: ["PAYDAY"],
   PAYMENT_DUE: ["FIXED_PAYMENT_DUE"],
-  BUDGET_WARNING: ["BUDGET_REMAINING_LOW", "BUDGET_REMAINING"],
+  BUDGET_WARNING: ["BUDGET_REMAINING", "BUDGET_REMAINING_LOW"],
   BUDGET_EXCEEDED: ["BUDGET_OVER"],
   SAVINGS_GOAL: ["SAVINGS_DUE", "SAVINGS_TRANSFER_DUE", "HIJACK_GOAL"],
   LEVEL_UP: ["GROWTH_LEVEL_UP"],
@@ -105,10 +146,138 @@ const apiTypeByDbType = Object.freeze({
 const sensitiveKeyPattern =
   /salary|payroll|income|expense|saving|savings|hijack|amount|loan|debt|token|secret|password|phone|email|card|account|resident|deviceid|device_id/iu;
 
+let neonNotificationsModulePromise:
+  | Promise<NeonNotificationsModule>
+  | undefined;
+const neonNotificationsPoolByUrl = new Map<
+  string,
+  Promise<NeonNotificationsSqlLike>
+>();
+
 function envText<TEnv>(env: TEnv, key: string): string | null {
   if (!env || typeof env !== "object") return null;
   const value = (env as Record<string, unknown>)[key];
   return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function securityEnv<TEnv>(env: TEnv): EnvRecord | null {
+  if (!env || typeof env !== "object") return null;
+  const source = env as Record<string, unknown>;
+  const primaryKid =
+    typeof source.SALARY_HIJACKING_SECURITY_PRIMARY_KID === "string"
+      ? source.SALARY_HIJACKING_SECURITY_PRIMARY_KID
+      : typeof source.SECURITY_PRIMARY_KID === "string"
+        ? source.SECURITY_PRIMARY_KID
+        : undefined;
+  const keys =
+    typeof source.SALARY_HIJACKING_SECURITY_KEYS === "string"
+      ? source.SALARY_HIJACKING_SECURITY_KEYS
+      : typeof source.SECURITY_KEYS === "string"
+        ? source.SECURITY_KEYS
+        : undefined;
+  return primaryKid && keys
+    ? {
+        SALARY_HIJACKING_SECURITY_PRIMARY_KID: primaryKid,
+        SALARY_HIJACKING_SECURITY_KEYS: keys,
+      }
+    : null;
+}
+
+async function encryptPushTokenForDelivery<TEnv>(
+  pushToken: string,
+  tokenSecretRef: string,
+  runtime: NotificationsRouteRuntime<TEnv>,
+): Promise<string | null> {
+  const env = securityEnv(runtime.env);
+  if (!env) return null;
+  return encryptString(pushToken, {
+    keyRing: createSecurityKeyRingFromEnv(env),
+    context: {
+      purpose: "notification.push-token",
+      dataClass: "device",
+      userId: userIdFromRuntime(runtime),
+      subjectId: tokenSecretRef,
+      fieldName: "pushToken",
+      runtime: "edge",
+    },
+    nowIso: runtime.now.toISOString(),
+  });
+}
+
+async function decryptPushTokenForDelivery<TEnv>(
+  ciphertext: string,
+  tokenSecretRef: string,
+  runtime: NotificationsRouteRuntime<TEnv>,
+): Promise<string> {
+  const env = securityEnv(runtime.env);
+  if (!env) {
+    throw new NotificationRepositoryError(
+      500,
+      "NOTIFICATION_PUSH_TOKEN_KEYRING_REQUIRED",
+      "푸시 토큰 복호화 키가 설정되어 있지 않습니다.",
+    );
+  }
+  return decryptString(ciphertext, {
+    keyRing: createSecurityKeyRingFromEnv(env),
+    context: {
+      purpose: "notification.push-token",
+      dataClass: "device",
+      userId: userIdFromRuntime(runtime),
+      subjectId: tokenSecretRef,
+      fieldName: "pushToken",
+      runtime: "edge",
+    },
+  });
+}
+
+function notificationsWorkerUrl<TEnv>(env: TEnv): string | null {
+  return (
+    envText(env, "NOTIFICATIONS_WORKER_URL") ??
+    envText(env, "NOTIFICATIONS_SERVICE_URL") ??
+    envText(env, "NOTIFICATIONS_STAGING_WORKER_URL")
+  );
+}
+
+function notificationsServiceToken<TEnv>(env: TEnv): string | null {
+  return (
+    envText(env, "NOTIFICATIONS_SERVICE_TOKEN") ??
+    envText(env, "API_NOTIFICATIONS_SERVICE_TOKEN") ??
+    envText(env, "NOTIFICATIONS_OPERATION_WEBHOOK_TOKEN")
+  );
+}
+
+function notificationWorkerType(type: NotificationType): string {
+  if (type === "PAYMENT_DUE") return "FIXED_PAYMENT_DUE";
+  if (type === "BUDGET_WARNING") return "BUDGET_REMAINING";
+  if (type === "BUDGET_EXCEEDED") return "BUDGET_OVER";
+  if (type === "SAVINGS_GOAL") return "SAVINGS_DUE";
+  if (type === "LEVEL_UP") return "GROWTH_LEVEL_UP";
+  if (type === "GROWTH_REMINDER") return "GROWTH_TASK";
+  if (type === "COMMUNITY") return "COMMUNITY_COMMENT";
+  if (type === "CONTENT_RECOMMENDATION") return "NOTICE";
+  if (type === "AD_PARTNER") return "NOTICE";
+  return type;
+}
+
+function notificationImportance(priority: NotificationPriority): string {
+  if (priority === "URGENT") return "SYSTEM_REQUIRED";
+  if (priority === "HIGH") return "TRANSACTIONAL";
+  if (priority === "LOW") return "BEHAVIORAL";
+  return "SYSTEM_REQUIRED";
+}
+
+function notificationTargetScreen(input: NotificationCreateInput): string {
+  const direct =
+    typeof input.metadata.targetScreen === "string"
+      ? input.metadata.targetScreen.trim().toUpperCase()
+      : "";
+  if (direct) return direct.slice(0, 160);
+  if (input.deeplink?.includes("notifications")) return "NOTIFICATIONS";
+  if (input.type === "BUDGET_EXCEEDED" || input.type === "BUDGET_WARNING")
+    return "DAILY_BUDGET";
+  if (input.type === "SAVINGS_GOAL") return "SAVINGS";
+  if (input.type === "COMMUNITY") return "COMMUNITY";
+  return "NOTIFICATIONS";
 }
 
 export function shouldUseNeonNotificationsRepository<TEnv>(env: TEnv): boolean {
@@ -123,39 +292,44 @@ function databaseUrl<TEnv>(env: TEnv): string {
   throw new Error("Missing database URL for notifications repository.");
 }
 
+async function neonNotificationsModule(): Promise<NeonNotificationsModule> {
+  neonNotificationsModulePromise ??= import("@neondatabase/serverless").then(
+    (moduleValue) => moduleValue as unknown as NeonNotificationsModule,
+  );
+  const moduleValue = await neonNotificationsModulePromise;
+  if (moduleValue.neonConfig)
+    moduleValue.neonConfig.fetchConnectionCache = true;
+  return moduleValue;
+}
+
+async function notificationSql<TEnv>(
+  env: TEnv,
+): Promise<NeonNotificationsSqlLike> {
+  const url = databaseUrl(env);
+  let sqlPromise = neonNotificationsPoolByUrl.get(url);
+  if (!sqlPromise) {
+    sqlPromise = neonNotificationsModule().then((moduleValue) =>
+      moduleValue.neon(url, {
+        arrayMode: false,
+        fullResults: true,
+      }),
+    );
+    neonNotificationsPoolByUrl.set(url, sqlPromise);
+  }
+  return sqlPromise;
+}
+
 async function defaultQuery<TEnv>(
   sqlText: string,
   params: readonly DbValue[],
   options: NotificationsDbQueryOptions<TEnv>,
 ): Promise<NotificationsDbQueryResult> {
-  const moduleValue = (await import("@neondatabase/serverless")) as unknown as {
-    readonly Pool: new (config: Record<string, unknown>) => {
-      query: (
-        text: string,
-        values?: readonly DbValue[],
-      ) => Promise<{
-        readonly rows: readonly DbRow[];
-        readonly rowCount: number | null;
-      }>;
-      end: () => Promise<void>;
-    };
-    readonly neonConfig?: { fetchConnectionCache?: boolean };
+  const sql = await notificationSql(options.env);
+  const result = await sql(sqlText, [...params]);
+  return {
+    rows: result.rows,
+    rowCount: result.rowCount,
   };
-
-  if (moduleValue.neonConfig)
-    moduleValue.neonConfig.fetchConnectionCache = true;
-  const pool = new moduleValue.Pool({
-    connectionString: databaseUrl(options.env),
-    max: 1,
-    idleTimeoutMillis: 5_000,
-    connectionTimeoutMillis: 10_000,
-    statement_timeout: 30_000,
-  });
-  try {
-    return await pool.query(sqlText, [...params]);
-  } finally {
-    await pool.end();
-  }
 }
 
 function assertUuid(value: string, field: string): string {
@@ -228,6 +402,16 @@ function sanitizeJson(value: unknown, depth = 0): JsonValue {
   return out;
 }
 
+function boolFromDb(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+function hhmm(value: unknown, fallback: string): string {
+  const text = toText(value);
+  if (text && /^\d{2}:\d{2}/.test(text)) return text.slice(0, 5);
+  return fallback;
+}
+
 function sanitizeRecord(value: unknown): JsonRecord {
   const sanitized = sanitizeJson(value);
   return sanitized && typeof sanitized === "object" && !Array.isArray(sanitized)
@@ -252,16 +436,17 @@ function apiTypeFromDb(value: unknown): NotificationType {
 }
 
 function apiStatusFromDb(row: DbRow): NotificationStatus {
+  const status = String(row.status ?? "SENT").toUpperCase();
+  if (["CANCELLED", "EXPIRED", "FAILED", "SUPPRESSED"].includes(status)) {
+    return "ARCHIVED";
+  }
+  if (status === "DELETED") return "DELETED";
+
   const readStatus = String(row.read_status ?? "").toUpperCase();
   if (readStatus === "READ") return "READ";
   if (readStatus === "DELETED") return "DELETED";
 
-  const status = String(row.status ?? "SENT").toUpperCase();
   if (status === "READ" || row.read_at) return "READ";
-  if (status === "DELETED") return "DELETED";
-  if (["CANCELLED", "EXPIRED", "FAILED", "SUPPRESSED"].includes(status)) {
-    return "ARCHIVED";
-  }
   return "UNREAD";
 }
 
@@ -314,6 +499,87 @@ function privacyFlags(): JsonRecord {
   };
 }
 
+function preferencesFromRow(
+  row: DbRow | null,
+  userId: string,
+  now: Date,
+): JsonRecord {
+  const defaults = defaultPreferences(userId, now);
+  const paymentDueEnabled = boolFromDb(
+    row?.fixed_payment_alert_enabled,
+    defaults.paymentDueEnabled === true,
+  );
+  const budgetEnabled = boolFromDb(
+    row?.budget_alert_enabled,
+    defaults.budgetWarningEnabled === true,
+  );
+  return {
+    userId,
+    inAppEnabled: boolFromDb(
+      row?.notification_in_app_enabled,
+      defaults.inAppEnabled === true,
+    ),
+    pushEnabled: boolFromDb(row?.push_enabled, defaults.pushEnabled === true),
+    emailEnabled: boolFromDb(
+      row?.notification_email_enabled,
+      defaults.emailEnabled === true,
+    ),
+    paydayEnabled: defaults.paydayEnabled === true,
+    paymentDueEnabled,
+    budgetWarningEnabled: budgetEnabled,
+    budgetExceededEnabled: budgetEnabled,
+    savingsGoalEnabled: defaults.savingsGoalEnabled === true,
+    levelUpEnabled: boolFromDb(
+      row?.growth_alert_enabled,
+      defaults.levelUpEnabled === true,
+    ),
+    communityEnabled: boolFromDb(
+      row?.community_alert_enabled,
+      defaults.communityEnabled === true,
+    ),
+    securityEnabled: defaults.securityEnabled === true,
+    contentRecommendationEnabled: false,
+    adPartnerEnabled: boolFromDb(
+      row?.marketing_opt_in,
+      defaults.adPartnerEnabled === true,
+    ),
+    quietHoursEnabled: boolFromDb(
+      row?.notification_quiet_hours_enabled,
+      true,
+    ),
+    quietHoursStart: hhmm(row?.notification_quiet_hours_start, "22:00"),
+    quietHoursEnd: hhmm(row?.notification_quiet_hours_end, "08:00"),
+    timezone: toText(row?.timezone) ?? "Asia/Seoul",
+    sensitiveFinancialTargetingConsent: false,
+    updatedAt: toIso(row?.updated_at ?? now),
+  };
+}
+
+function dedupeKeyFromInput(input: NotificationCreateInput): string | null {
+  const direct = input.metadata.idempotencyKey;
+  return typeof direct === "string" && direct.trim()
+    ? direct.trim().slice(0, 220)
+    : null;
+}
+
+async function requestHashForCreate(
+  input: NotificationCreateInput,
+): Promise<string> {
+  return hashHex(
+    JSON.stringify({
+      type: input.type,
+      title: input.title,
+      message: input.message,
+      priority: input.priority,
+      channels: [...input.channels].sort(),
+      deeplink: input.deeplink,
+      scheduledAt: input.scheduledAt,
+      expiresAt: input.expiresAt,
+      metadata: sanitizeRecord(input.metadata),
+    }),
+  );
+}
+
 function rowToNotification(row: DbRow): JsonRecord {
   const payload = toJsonRecord(row.payload);
   const type = apiTypeFromDb(row.type);
@@ -337,16 +603,77 @@ function rowToNotification(row: DbRow): JsonRecord {
   };
 }
 
+interface NotificationCursor {
+  readonly createdAt: string;
+  readonly notificationId: string;
+}
+
+function encodeCursor(cursor: NotificationCursor): string {
+  const encoded = btoa(JSON.stringify(cursor))
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replace(/=+$/u, "");
+  return encoded;
+}
+
+function decodeCursor(value: string): NotificationCursor {
+  try {
+    const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
+    const padded = normalized.padEnd(
+      normalized.length + ((4 - (normalized.length % 4)) % 4),
+      "=",
+    );
+    const parsed = JSON.parse(atob(padded)) as Partial<NotificationCursor>;
+    if (
+      typeof parsed.createdAt !== "string" ||
+      Number.isNaN(Date.parse(parsed.createdAt)) ||
+      typeof parsed.notificationId !== "string" ||
+      !uuidPattern.test(parsed.notificationId)
+    ) {
+      throw new Error("invalid cursor payload");
+    }
+    return {
+      createdAt: new Date(parsed.createdAt).toISOString(),
+      notificationId: parsed.notificationId,
+    };
+  } catch {
+    throw new NotificationRepositoryError(
+      400,
+      "NOTIFICATION_CURSOR_INVALID",
+      "알림 목록 cursor가 올바르지 않습니다.",
+    );
+  }
+}
+
 function listResult<TItem extends JsonRecord>(
   rows: readonly DbRow[],
   page: PaginationInput,
   mapper: (row: DbRow) => TItem,
 ): NotificationListResult<TItem> {
+  const limitedRows = rows.slice(0, page.limit);
+  const mapped = limitedRows.map(mapper);
+  const last = mapped.at(-1);
+  const nextCursor =
+    rows.length > page.limit &&
+    typeof last?.createdAt === "string" &&
+    typeof last.notificationId === "string"
+      ? encodeCursor({
+          createdAt: last.createdAt,
+          notificationId: last.notificationId,
+        })
+      : null;
   return {
-    items: rows.map(mapper),
+    items: mapped,
     page: page.page,
     pageSize: page.pageSize,
-    total: rows.length ? toNumber(rows[0]?.total_count) : 0,
+    total:
+      rows.length && rows[0]?.total_count !== undefined
+        ? toNumber(rows[0]?.total_count)
+        : mapped.length,
+    cursor: page.cursor ?? null,
+    nextCursor,
+    hasMore: nextCursor !== null,
+    limit: page.limit,
   };
 }
 
@@ -363,11 +690,192 @@ function queryText<TEnv>(
   });
 }
 
+async function dispatchPushToRegisteredDevices<TEnv>(
+  repositoryQuery: NotificationsDbQuery<TEnv>,
+  runtime: NotificationsRouteRuntime<TEnv>,
+  input: NotificationCreateInput,
+  notification: JsonRecord,
+): Promise<JsonRecord> {
+  if (!input.channels.includes("PUSH")) {
+    return {
+      attempted: false,
+      reason: "PUSH_CHANNEL_NOT_REQUESTED",
+      sentCount: 0,
+      failureCount: 0,
+      rawPushTokenExposed: false,
+    };
+  }
+
+  const workerUrl = notificationsWorkerUrl(runtime.env);
+  const serviceToken = notificationsServiceToken(runtime.env);
+  if (!workerUrl || !serviceToken) {
+    return {
+      attempted: false,
+      reason: "NOTIFICATIONS_WORKER_AUTH_NOT_CONFIGURED",
+      sentCount: 0,
+      failureCount: 0,
+      rawPushTokenExposed: false,
+    };
+  }
+
+  const tokenRows = await queryText(
+    repositoryQuery,
+    runtime,
+    "notifications.listActivePushTokenSecrets",
+    `
+      select
+        push_token_id,
+        device_id,
+        provider,
+        token_hash,
+        token_secret_ref,
+        token_ciphertext
+      from public.notification_push_tokens
+      where user_id = $1::uuid
+        and status = 'ACTIVE'
+        and provider = 'FCM'
+        and token_ciphertext is not null
+      order by last_seen_at desc nulls last, created_at desc
+      limit 10
+    `,
+    [userIdFromRuntime(runtime)],
+  );
+
+  let sentCount = 0;
+  let failureCount = 0;
+  const outcomes: JsonRecord[] = [];
+  for (const row of tokenRows.rows) {
+    const tokenSecretRef = toText(row.token_secret_ref);
+    const tokenCiphertext = toText(row.token_ciphertext);
+    if (!tokenSecretRef || !tokenCiphertext) continue;
+    let token: string;
+    try {
+      token = await decryptPushTokenForDelivery(
+        tokenCiphertext,
+        tokenSecretRef,
+        runtime,
+      );
+    } catch {
+      const pushTokenId = toText(row.push_token_id);
+      if (pushTokenId && uuidPattern.test(pushTokenId)) {
+        await queryText(
+          repositoryQuery,
+          runtime,
+          "notifications.revokeUnreadablePushTokenSecret",
+          `
+            update public.notification_push_tokens
+            set status = 'REVOKED',
+                revoked_at = coalesce(revoked_at, $3::timestamptz),
+                updated_at = now()
+            where push_token_id = $1::uuid
+              and user_id = $2::uuid
+              and status = 'ACTIVE'
+          `,
+          [
+            pushTokenId,
+            userIdFromRuntime(runtime),
+            runtime.now.toISOString(),
+          ],
+        );
+      }
+      failureCount += 1;
+      outcomes.push({
+        status: "TOKEN_REQUIRES_REREGISTRATION",
+        tokenHashPresent: typeof row.token_hash === "string",
+        provider: row.provider === "FCM" ? "FCM" : "UNKNOWN",
+      });
+      continue;
+    }
+    const response = await globalThis.fetch(
+      new URL("/notifications/v1/send", workerUrl).toString(),
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "x-request-id": runtime.requestId,
+          "x-service-token": serviceToken,
+        },
+        body: JSON.stringify({
+          token,
+          notification: {
+            title: input.title,
+            body: input.message,
+          },
+          data: {
+            notificationId:
+              typeof notification.notificationId === "string"
+                ? notification.notificationId
+                : `ntf_${runtime.requestId}`,
+            userId: userIdFromRuntime(runtime),
+            type: notificationWorkerType(input.type),
+            importance: notificationImportance(input.priority),
+            targetScreen: notificationTargetScreen(input),
+            ...(input.deeplink ? { deeplink: input.deeplink } : {}),
+            idempotencyKey:
+              typeof notification.notificationId === "string"
+                ? `notification:${notification.notificationId}:fcm`
+                : `notification:${runtime.requestId}:fcm`,
+          },
+          android: {
+            priority: "HIGH",
+            channelId: "salary-hijacking-default",
+            clickAction: "OPEN_NOTIFICATION",
+          },
+        }),
+      },
+    );
+    const responseBody = (await response.json().catch(() => ({}))) as unknown;
+    const safeBody = sanitizeRecord(responseBody);
+    const status =
+      response.ok && JSON.stringify(safeBody).includes('"SENT"')
+        ? "SENT"
+        : response.ok
+          ? "ACCEPTED"
+          : "FAILED";
+    if (status === "SENT" || status === "ACCEPTED") sentCount += 1;
+    else failureCount += 1;
+    outcomes.push({
+      status,
+      httpStatus: response.status,
+      tokenHashPresent: typeof row.token_hash === "string",
+      provider: row.provider === "FCM" ? "FCM" : "UNKNOWN",
+    });
+  }
+
+  return {
+    attempted: true,
+    targetCount: tokenRows.rows.length,
+    sentCount,
+    failureCount,
+    rawPushTokenExposed: false,
+    outcomes,
+  };
+}
+
 function userIdFromRuntime<TEnv>(
   runtime: NotificationsRouteRuntime<TEnv>,
 ): string {
   return assertUuid(runtime.principal.userId, "principal.userId");
 }
+
+const notificationListProjection = `
+  n.notification_id,
+  n.type,
+  n.title,
+  n.body,
+  n.payload,
+  n.status,
+  n.priority,
+  n.scheduled_at,
+  n.expires_at,
+  n.created_at,
+  n.read_at,
+  n.cancelled_at,
+  n.deleted_at,
+  n.read_status,
+  false as push_required,
+  null::text as deep_link
+`;
 
 function listWhere(
   input: JsonRecord,
@@ -496,13 +1004,32 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
     name: "neon-notifications-repository",
     async list(input, page, runtime) {
       const where = listWhere(input, runtime);
-      const params = [...where.params, page.limit, page.offset];
+      const cursor = page.cursor ? decodeCursor(page.cursor) : null;
+      const useKeyset = page.mode === "cursor" || cursor !== null;
+      const cursorSql = cursor
+        ? ` and (n.created_at, n.notification_id) < ($${where.params.length + 1}::timestamptz, $${where.params.length + 2}::uuid)`
+        : "";
+      const params = useKeyset
+        ? [
+            ...where.params,
+            ...(cursor ? [cursor.createdAt, cursor.notificationId] : []),
+            page.limit + 1,
+          ]
+        : [...where.params, page.limit + 1, page.offset];
       const result = await queryText(
         repositoryQuery,
         runtime,
         "notifications.list",
+        useKeyset
+          ? `
+          select ${notificationListProjection}
+          from public.notifications n
+          where ${where.sql}${cursorSql}
+          order by n.created_at desc, n.notification_id desc
+          limit $${params.length}::int
         `
-          select n.*, count(*) over() as total_count
+          : `
+          select ${notificationListProjection}, count(*) over() as total_count
           from public.notifications n
           where ${where.sql}
           order by n.created_at desc, n.notification_id desc
@@ -523,6 +1050,38 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
       ) {
         return suppressed(input, runtime.now);
       }
+      const userId = userIdFromRuntime(runtime);
+      const dedupeKey = dedupeKeyFromInput(input);
+      const dedupeRequestHash = dedupeKey
+        ? await requestHashForCreate(input)
+        : null;
+      if (dedupeKey && dedupeRequestHash) {
+        const existing = await queryText(
+          repositoryQuery,
+          runtime,
+          "notifications.create.dedupeLookup",
+          `
+            select *
+            from public.notifications
+            where user_id = $1::uuid
+              and dedupe_key = $2
+              and status <> 'CANCELLED'
+            limit 1
+          `,
+          [userId, dedupeKey],
+        );
+        const row = existing.rows[0];
+        if (row) {
+          if (toText(row.dedupe_request_hash) !== dedupeRequestHash) {
+            throw new NotificationRepositoryError(
+              409,
+              "NOTIFICATION_IDEMPOTENCY_CONFLICT",
+              "동일 idempotency key에 다른 알림 요청 본문을 사용할 수 없습니다.",
+            );
+          }
+          return rowToNotification(row);
+        }
+      }
       const scheduledAt = input.scheduledAt;
       const sentAt = scheduledAt ? null : runtime.now.toISOString();
       const result = await queryText(
@@ -542,7 +1101,9 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
             priority,
             scheduled_at,
             sent_at,
-            expires_at
+            expires_at,
+            dedupe_key,
+            dedupe_request_hash
           )
           values (
             $1::uuid,
@@ -556,12 +1117,19 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
             $8::smallint,
             $9::timestamptz,
             $10::timestamptz,
-            $11::timestamptz
+            $11::timestamptz,
+            $12,
+            $13
           )
+          on conflict (user_id, dedupe_key)
+            where dedupe_key is not null and status <> 'CANCELLED'
+          do update
+            set updated_at = public.notifications.updated_at
+            where public.notifications.dedupe_request_hash = excluded.dedupe_request_hash
           returning *
         `,
         [
-          userIdFromRuntime(runtime),
+          userId,
           dbTypeFromApi(input.type),
           input.title,
           input.message,
@@ -572,10 +1140,17 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           scheduledAt,
           sentAt,
           input.expiresAt,
+          dedupeKey,
+          dedupeRequestHash,
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Failed to create notification.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          409,
+          "NOTIFICATION_IDEMPOTENCY_CONFLICT",
+          "동일 idempotency key에 다른 알림 요청 본문을 사용할 수 없습니다.",
+        );
       return rowToNotification(row);
     },
     async markRead(notificationId, runtime) {
@@ -599,7 +1174,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Notification not found.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_NOT_FOUND",
+          "알림을 찾을 수 없습니다.",
+        );
       return rowToNotification(row);
     },
     async markAllRead(runtime) {
@@ -633,6 +1213,11 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           update public.notifications
           set status = 'CANCELLED',
               cancelled_at = coalesce(cancelled_at, $3::timestamptz),
+              read_status = case
+                when read_status = 'DELETED' then read_status
+                when read_at is not null then 'READ'
+                else read_status
+              end,
               updated_at = now()
           where notification_id = $1::uuid
             and user_id = $2::uuid
@@ -645,7 +1230,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Notification not found.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_NOT_FOUND",
+          "알림을 찾을 수 없습니다.",
+        );
       return rowToNotification(row);
     },
     async delete(notificationId, runtime) {
@@ -655,8 +1245,9 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         "notifications.delete",
         `
           update public.notifications
-          set status = 'CANCELLED',
-              cancelled_at = coalesce(cancelled_at, $3::timestamptz),
+          set status = 'DELETED',
+              read_status = 'DELETED',
+              deleted_at = coalesce(deleted_at, $3::timestamptz),
               updated_at = now()
           where notification_id = $1::uuid
             and user_id = $2::uuid
@@ -668,7 +1259,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           runtime.now.toISOString(),
         ],
       );
-      if (!result.rows[0]) throw new Error("Notification not found.");
+      if (!result.rows[0])
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_NOT_FOUND",
+          "알림을 찾을 수 없습니다.",
+        );
       return { notificationId, status: "DELETED", ...privacyFlags() };
     },
     async unreadCount(runtime) {
@@ -740,30 +1336,185 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
       };
     },
     async getPreferences(runtime) {
-      const { userId: _userId, ...safePreferences } = defaultPreferences(
-        userIdFromRuntime(runtime),
+      const userId = userIdFromRuntime(runtime);
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "notifications.getPreferences",
+        `
+          select *
+          from public.user_settings
+          where user_id = $1::uuid
+          limit 1
+        `,
+        [userId],
+      );
+      const { userId: _userId, ...safePreferences } = preferencesFromRow(
+        result.rows[0] ?? null,
+        userId,
         runtime.now,
       );
       return safePreferences;
     },
     async updatePreferences(input: NotificationPreferenceInput, runtime) {
-      const { userId: _userId, ...safePreferences } = defaultPreferences(
-        userIdFromRuntime(runtime),
+      const userId = userIdFromRuntime(runtime);
+      const current = preferencesFromRow(
+        (
+          await queryText(
+            repositoryQuery,
+            runtime,
+            "notifications.getPreferences",
+            `
+              select *
+              from public.user_settings
+              where user_id = $1::uuid
+              limit 1
+            `,
+            [userId],
+          )
+        ).rows[0] ?? null,
+        userId,
         runtime.now,
       );
-      return {
-        ...safePreferences,
-        ...sanitizeRecord(input),
+      const merged = {
+        pushEnabled:
+          input.pushEnabled === undefined
+            ? current.pushEnabled === true
+            : input.pushEnabled,
+        emailEnabled:
+          input.emailEnabled === undefined
+            ? current.emailEnabled === true
+            : input.emailEnabled,
+        inAppEnabled:
+          input.inAppEnabled === undefined
+            ? current.inAppEnabled === true
+            : input.inAppEnabled,
+        paymentDueEnabled:
+          input.paymentDueEnabled === undefined
+            ? current.paymentDueEnabled === true
+            : input.paymentDueEnabled,
+        budgetWarningEnabled:
+          input.budgetWarningEnabled === undefined
+            ? current.budgetWarningEnabled === true
+            : input.budgetWarningEnabled,
+        budgetExceededEnabled:
+          input.budgetExceededEnabled === undefined
+            ? current.budgetExceededEnabled === true
+            : input.budgetExceededEnabled,
+        levelUpEnabled:
+          input.levelUpEnabled === undefined
+            ? current.levelUpEnabled === true
+            : input.levelUpEnabled,
+        communityEnabled:
+          input.communityEnabled === undefined
+            ? current.communityEnabled === true
+            : input.communityEnabled,
         adPartnerEnabled: input.adPartnerEnabled === true,
         contentRecommendationEnabled:
           input.contentRecommendationEnabled === true,
+        quietHoursEnabled:
+          input.quietHoursStart !== undefined ||
+          input.quietHoursEnd !== undefined
+            ? true
+            : current.quietHoursEnabled === true,
+        quietHoursStart:
+          input.quietHoursStart ?? String(current.quietHoursStart ?? "22:00"),
+        quietHoursEnd:
+          input.quietHoursEnd ?? String(current.quietHoursEnd ?? "08:00"),
+        timezone: input.timezone ?? String(current.timezone ?? "Asia/Seoul"),
         sensitiveFinancialTargetingConsent: false,
-        updatedAt: runtime.now.toISOString(),
       };
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "notifications.updatePreferences",
+        `
+          insert into public.user_settings (
+            user_id,
+            notification_in_app_enabled,
+            push_enabled,
+            notification_email_enabled,
+            fixed_payment_alert_enabled,
+            budget_alert_enabled,
+            growth_alert_enabled,
+            community_alert_enabled,
+            marketing_opt_in,
+            notification_quiet_hours_enabled,
+            notification_quiet_hours_start,
+            notification_quiet_hours_end,
+            timezone
+          )
+          values (
+            $1::uuid,
+            $2::boolean,
+            $3::boolean,
+            $4::boolean,
+            $5::boolean,
+            $6::boolean,
+            $7::boolean,
+            $8::boolean,
+            $9::boolean,
+            $10::boolean,
+            $11::time,
+            $12::time,
+            $13
+          )
+          on conflict (user_id) do update
+            set notification_in_app_enabled = excluded.notification_in_app_enabled,
+                push_enabled = excluded.push_enabled,
+                notification_email_enabled = excluded.notification_email_enabled,
+                fixed_payment_alert_enabled = excluded.fixed_payment_alert_enabled,
+                budget_alert_enabled = excluded.budget_alert_enabled,
+                growth_alert_enabled = excluded.growth_alert_enabled,
+                community_alert_enabled = excluded.community_alert_enabled,
+                marketing_opt_in = excluded.marketing_opt_in,
+                notification_quiet_hours_enabled = excluded.notification_quiet_hours_enabled,
+                notification_quiet_hours_start = excluded.notification_quiet_hours_start,
+                notification_quiet_hours_end = excluded.notification_quiet_hours_end,
+                timezone = excluded.timezone,
+                updated_at = now()
+          returning *
+        `,
+        [
+          userId,
+          merged.inAppEnabled === true,
+          merged.pushEnabled === true,
+          merged.emailEnabled === true,
+          merged.paymentDueEnabled === true,
+          merged.budgetWarningEnabled === true || merged.budgetExceededEnabled === true,
+          merged.levelUpEnabled === true,
+          merged.communityEnabled === true,
+          merged.adPartnerEnabled === true,
+          merged.quietHoursEnabled === true,
+          String(merged.quietHoursStart ?? "22:00"),
+          String(merged.quietHoursEnd ?? "08:00"),
+          String(merged.timezone ?? "Asia/Seoul"),
+        ],
+      );
+      const { userId: _safeUserId, ...safePreferences } = preferencesFromRow(
+        result.rows[0] ?? null,
+        userId,
+        runtime.now,
+      );
+      return safePreferences;
     },
     async registerDevice(input: NotificationDeviceInput, runtime) {
       const pushTokenHash = await hashHex(input.pushToken);
       const fingerprintHash = await hashHex(input.deviceId);
+      const provider = String(input.provider ?? "FCM").toUpperCase();
+      const tokenSource = String(input.tokenSource ?? "NATIVE_DEVICE").toUpperCase();
+      const userId = userIdFromRuntime(runtime);
+      const pushTokenSecretRef = [
+        "notifications",
+        "push-token",
+        provider.toLowerCase(),
+        pushTokenHash.slice(0, 32),
+      ].join(":");
+      const encryptedPushToken = await encryptPushTokenForDelivery(
+        input.pushToken,
+        pushTokenSecretRef,
+        runtime,
+      );
       const result = await queryText(
         repositoryQuery,
         runtime,
@@ -772,7 +1523,10 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
           insert into public.user_devices (
             user_id,
             platform,
+            push_token_provider,
+            push_token_source,
             push_token_hash,
+            push_token_secret_ref,
             device_fingerprint_hash,
             app_version,
             status,
@@ -784,33 +1538,124 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
             $3,
             $4,
             $5,
+            $6,
+            $7,
+            $8,
             'ACTIVE',
-            $6::timestamptz
+            $9::timestamptz
           )
           on conflict (user_id, device_fingerprint_hash)
             where device_fingerprint_hash is not null and status = 'ACTIVE'
           do update
             set platform = excluded.platform,
+                push_token_provider = excluded.push_token_provider,
+                push_token_source = excluded.push_token_source,
                 push_token_hash = excluded.push_token_hash,
+                push_token_secret_ref = excluded.push_token_secret_ref,
                 app_version = excluded.app_version,
                 last_seen_at = excluded.last_seen_at,
                 updated_at = now()
-          returning device_id, platform, app_version, status, last_seen_at, created_at, updated_at
+          returning
+            device_id,
+            platform,
+            push_token_provider,
+            push_token_source,
+            push_token_secret_ref,
+            app_version,
+            status,
+            last_seen_at,
+            created_at,
+            updated_at
         `,
         [
-          userIdFromRuntime(runtime),
+          userId,
           devicePlatform(input.platform),
+          provider,
+          tokenSource,
           pushTokenHash,
+          pushTokenSecretRef,
           fingerprintHash,
           input.appVersion,
           runtime.now.toISOString(),
         ],
       );
       const row = result.rows[0] ?? {};
+      if (encryptedPushToken) {
+        await queryText(
+          repositoryQuery,
+          runtime,
+          "notifications.registerPushTokenSecret",
+          `
+            insert into public.notification_push_tokens (
+              user_id,
+              device_id,
+              platform,
+              provider,
+              token_hash,
+              token_secret_ref,
+              token_ciphertext,
+              push_permission_status,
+              status,
+              app_version,
+              last_seen_at,
+              raw_push_token_included,
+              raw_financial_source_data_included,
+              raw_token_included,
+              raw_pii_included,
+              raw_secret_included
+            )
+            values (
+              $1::uuid,
+              $2::uuid,
+              $3,
+              $4,
+              $5,
+              $6,
+              $7,
+              'AUTHORIZED',
+              'ACTIVE',
+              $8,
+              $9::timestamptz,
+              false,
+              false,
+              false,
+              false,
+              false
+            )
+            on conflict (token_hash)
+              where status = 'ACTIVE'
+            do update
+              set user_id = excluded.user_id,
+                  device_id = excluded.device_id,
+                  platform = excluded.platform,
+                  provider = excluded.provider,
+                  token_secret_ref = excluded.token_secret_ref,
+                  token_ciphertext = excluded.token_ciphertext,
+                  push_permission_status = excluded.push_permission_status,
+                  app_version = excluded.app_version,
+                  last_seen_at = excluded.last_seen_at,
+                  updated_at = now()
+          `,
+          [
+            userId,
+            String(row.device_id ?? input.deviceId),
+            devicePlatform(input.platform),
+            provider,
+            pushTokenHash,
+            pushTokenSecretRef,
+            encryptedPushToken,
+            input.appVersion,
+            runtime.now.toISOString(),
+          ],
+        );
+      }
       return {
         deviceId: String(row.device_id ?? input.deviceId),
         platform: String(row.platform ?? input.platform),
+        provider: String(row.push_token_provider ?? provider),
+        tokenSource: String(row.push_token_source ?? tokenSource),
         pushTokenHashOnly: true,
+        pushTokenSecretRef: toText(row.push_token_secret_ref),
         rawPushTokenExposed: false,
         appVersion: toText(row.app_version) ?? input.appVersion,
         locale: input.locale,
@@ -843,7 +1688,12 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Notification device not found.");
+      if (!row)
+        throw new NotificationRepositoryError(
+          404,
+          "NOTIFICATION_DEVICE_NOT_FOUND",
+          "디바이스를 찾을 수 없습니다.",
+        );
       return {
         deviceId: String(row.device_id ?? deviceId),
         status: String(row.status ?? "REVOKED"),
@@ -857,7 +1707,16 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         runtime,
         "notifications.listDevices",
         `
-          select device_id, platform, app_version, status, last_seen_at, created_at, updated_at
+          select
+            device_id,
+            platform,
+            push_token_provider,
+            push_token_source,
+            app_version,
+            status,
+            last_seen_at,
+            created_at,
+            updated_at
           from public.user_devices
           where user_id = $1::uuid
             and status = 'ACTIVE'
@@ -868,6 +1727,9 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
       return result.rows.map((row) => ({
         deviceId: String(row.device_id ?? ""),
         platform: String(row.platform ?? "UNKNOWN"),
+        provider: String(row.push_token_provider ?? "UNKNOWN"),
+        tokenSource: String(row.push_token_source ?? "UNKNOWN"),
+        pushTokenHashOnly: true,
         appVersion: toText(row.app_version),
         status: String(row.status ?? "ACTIVE"),
         lastSeenAt: toIsoOrNull(row.last_seen_at),
@@ -881,9 +1743,16 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         { ...input, title: `[TEST] ${input.title}` },
         runtime,
       );
+      const pushDelivery = await dispatchPushToRegisteredDevices(
+        repositoryQuery,
+        runtime,
+        input,
+        notification,
+      );
       return {
         delivered: notification.notificationId !== null,
         notification,
+        pushDelivery,
         dryRun: false,
         ...privacyFlags(),
       };

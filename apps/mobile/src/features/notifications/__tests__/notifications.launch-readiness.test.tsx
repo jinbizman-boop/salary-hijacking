@@ -1,6 +1,6 @@
 import { fireEvent, render } from "@testing-library/react-native";
 
-import { NotificationReferenceScreen } from "../components";
+import { NotificationScreen } from "../components";
 
 describe("notification launch readiness screen", () => {
   it("renders as an independent Korean notification stack and opens deep links", () => {
@@ -8,7 +8,7 @@ describe("notification launch readiness screen", () => {
     const onOpenHref = jest.fn();
     const onSettings = jest.fn();
     const screen = render(
-      <NotificationReferenceScreen
+      <NotificationScreen
         onBack={onBack}
         onOpenHref={onOpenHref}
         onSettings={onSettings}

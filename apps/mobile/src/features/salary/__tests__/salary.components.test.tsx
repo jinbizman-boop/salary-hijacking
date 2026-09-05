@@ -7,13 +7,14 @@ import type {
   VariableExpenseUpdateRequest,
 } from "../../budget/types";
 import {
-  getPreviewState,
-  updatePreviewState,
+  getPayrollReminderState,
+  updatePayrollReminderState,
   type PlanItem,
-} from "../../preview/interactive-state";
+} from "../../payroll-reminders/interactive-state";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
 import {
   resetSalaryHomePreviewCacheForTests,
-  SalaryHomeReferenceScreen,
+  SalaryHomeScreen,
 } from "../components";
 
 describe("salary reference screen interactions", () => {
@@ -25,8 +26,20 @@ describe("salary reference screen interactions", () => {
     jest.useRealTimers();
   });
 
+  it("renders user-owned salary sections from the provided display name", () => {
+    const displayName = "\uAE40\uD14C\uC2A4\uD2B8";
+    const screen = render(<SalaryHomeScreen displayName={displayName} />);
+
+    expect(screen.getByText(`${displayName}님, 오늘도 지켜냈어요`)).toBeTruthy();
+    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("오늘 사용 가능 금액")).toBeTruthy();
+    expect(screen.getByText("예정 고정지출")).toBeTruthy();
+    expect(screen.getByText("변동지출")).toBeTruthy();
+    expect(screen.queryByText(/^\uD64D\uAE38\uB3D9/u)).toBeNull();
+  });
+
   it("uses KST date copy and keeps reminder labels in the requested direction", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
     expect(screen.getByText(/20\d{2}년 \d{1,2}월 \d{1,2}일/u)).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
@@ -42,12 +55,42 @@ describe("salary reference screen interactions", () => {
     );
   });
 
+  it("renders Stitch salary home state variants without losing native sections", () => {
+    const noPlan = render(<SalaryHomeScreen previewVariant="no-plan" />);
+    expect(noPlan.getByText("아직 급여 계획이 없어요")).toBeTruthy();
+    expect(
+      noPlan.getByText("계획 탭에서 급여일과 고정지출을 설정해 주세요."),
+    ).toBeTruthy();
+    expect(noPlan.getByText("지켜낸 돈")).toBeTruthy();
+    noPlan.unmount();
+
+    const offline = render(<SalaryHomeScreen previewVariant="offline" />);
+    expect(offline.getByText("오프라인 미리보기")).toBeTruthy();
+    expect(
+      offline.getByText("저장된 급여 데이터를 안전하게 보여드리고 있어요."),
+    ).toBeTruthy();
+    expect(offline.getByText("지켜낸 돈")).toBeTruthy();
+    offline.unmount();
+
+    const compact = render(<SalaryHomeScreen previewVariant="compact" />);
+    expect(compact.getByText("간단 보기")).toBeTruthy();
+    expect(compact.getByText("핵심 금액만 빠르게 확인합니다.")).toBeTruthy();
+    compact.unmount();
+
+    const detailed = render(<SalaryHomeScreen previewVariant="detailed" />);
+    expect(detailed.getByText("상세 보기")).toBeTruthy();
+    expect(
+      detailed.getByText("고정 지출, 일일 예산, 변동 지출을 함께 확인합니다."),
+    ).toBeTruthy();
+    detailed.unmount();
+  });
+
   it("derives payday cards from the current KST salary cycle instead of static design dates", () => {
     jest.useFakeTimers({
       now: new Date("2026-07-13T00:30:00.000Z"),
     });
 
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
     expect(screen.getByText(/^6.+25.+$/u)).toBeTruthy();
     expect(screen.getByText(/^7.+24.+$/u)).toBeTruthy();
@@ -60,14 +103,17 @@ describe("salary reference screen interactions", () => {
       now: new Date("2026-07-13T00:30:00.000Z"),
     });
 
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
     const overdueReminder = screen.getByRole("button", {
       name: "기한 지남: ChatGPT 사용 완료 처리",
     });
     expect(overdueReminder.props.style).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ backgroundColor: "#E9872F" }),
+        expect.objectContaining({
+          backgroundColor:
+            salaryHijackingDesignSystem.colors.semantic.warningStrong,
+        }),
       ]),
     );
   });
@@ -91,7 +137,7 @@ describe("salary reference screen interactions", () => {
       title: "빽다방 아이스 아메리카노",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
+      <SalaryHomeScreen
         variableExpenseApi={{ createVariableExpense } as never}
       />,
     );
@@ -131,7 +177,7 @@ describe("salary reference screen interactions", () => {
       status: "DELETED",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
+      <SalaryHomeScreen
         variableExpenseApi={{ deleteVariableExpense } as never}
       />,
     );
@@ -157,12 +203,12 @@ describe("salary reference screen interactions", () => {
 
   it("resets yesterday's completed daily budget rows to scheduled on the next KST day", () => {
     jest.useFakeTimers({ now: new Date("2026-07-14T03:00:00.000Z") });
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const category = seeded.dailyItems[0]?.category;
     if (!category) {
       throw new Error("Seeded daily category is required");
     }
-    updatePreviewState((previous) => ({
+    updatePayrollReminderState((previous) => ({
       ...previous,
       dailyItems: [
         {
@@ -176,7 +222,7 @@ describe("salary reference screen interactions", () => {
       ],
     }));
 
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
     const resetRowButton = screen.getByRole("button", {
       name: /DailyResetCoffee/u,
     });
@@ -189,7 +235,7 @@ describe("salary reference screen interactions", () => {
   });
 
   it("lets users edit and add daily budget detail items from the setting panel", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
     fireEvent.press(
       screen.getByRole("button", { name: "일일 사용 예산 설정하기" }),
@@ -254,9 +300,7 @@ describe("salary reference screen interactions", () => {
       });
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
-        variableExpenseApi={{ saveDailyBudget } as never}
-      />,
+      <SalaryHomeScreen variableExpenseApi={{ saveDailyBudget } as never} />,
     );
 
     fireEvent.press(
@@ -297,7 +341,7 @@ describe("salary reference screen interactions", () => {
       },
     );
     const screen = render(
-      <SalaryHomeReferenceScreen
+      <SalaryHomeScreen
         variableExpenseApi={{ updateVariableExpense } as never}
       />,
     );
@@ -354,9 +398,7 @@ describe("salary reference screen interactions", () => {
   it("lets users delete planned daily budget detail items without creating an expense", () => {
     const createVariableExpense = jest.fn();
     const screen = render(
-      <SalaryHomeReferenceScreen
-        variableExpenseApi={{ createVariableExpense }}
-      />,
+      <SalaryHomeScreen variableExpenseApi={{ createVariableExpense }} />,
     );
 
     fireEvent.press(
@@ -373,9 +415,7 @@ describe("salary reference screen interactions", () => {
   it("deletes completed daily budget detail items through the server-authoritative API before removing them", async () => {
     const deleteVariableExpense = jest.fn().mockResolvedValue(undefined);
     const screen = render(
-      <SalaryHomeReferenceScreen
-        variableExpenseApi={{ deleteVariableExpense }}
-      />,
+      <SalaryHomeScreen variableExpenseApi={{ deleteVariableExpense }} />,
     );
 
     fireEvent.press(
@@ -396,7 +436,7 @@ describe("salary reference screen interactions", () => {
   });
 
   it("keeps the variable expense form above the table and preserves saved rows across remounts", () => {
-    const first = render(<SalaryHomeReferenceScreen />);
+    const first = render(<SalaryHomeScreen />);
 
     fireEvent.press(first.getByRole("button", { name: "변동 지출 추가하기" }));
     fireEvent.changeText(first.getByLabelText("변동 지출 항목 입력"), "게임");
@@ -410,7 +450,7 @@ describe("salary reference screen interactions", () => {
     expect(first.getByText("퍼스콘 구입")).toBeTruthy();
     first.unmount();
 
-    const second = render(<SalaryHomeReferenceScreen />);
+    const second = render(<SalaryHomeScreen />);
     expect(second.getByText("퍼스콘 구입")).toBeTruthy();
     expect(second.getByLabelText("변동 지출 합계 30,000원")).toBeTruthy();
   });
@@ -434,9 +474,7 @@ describe("salary reference screen interactions", () => {
       title: "김밥 점심",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
-        variableExpenseApi={{ createVariableExpense }}
-      />,
+      <SalaryHomeScreen variableExpenseApi={{ createVariableExpense }} />,
     );
 
     fireEvent.press(screen.getByRole("button", { name: "변동 지출 추가하기" }));
@@ -474,9 +512,7 @@ describe("salary reference screen interactions", () => {
         }),
     );
     const screen = render(
-      <SalaryHomeReferenceScreen
-        variableExpenseApi={{ createVariableExpense }}
-      />,
+      <SalaryHomeScreen variableExpenseApi={{ createVariableExpense }} />,
     );
 
     fireEvent.press(screen.getByRole("button", { name: "변동 지출 추가하기" }));
@@ -529,9 +565,7 @@ describe("salary reference screen interactions", () => {
       .fn()
       .mockRejectedValue(new Error("offline"));
     const screen = render(
-      <SalaryHomeReferenceScreen
-        variableExpenseApi={{ createVariableExpense }}
-      />,
+      <SalaryHomeScreen variableExpenseApi={{ createVariableExpense }} />,
     );
 
     fireEvent.press(screen.getByRole("button", { name: "변동 지출 추가하기" }));
@@ -577,7 +611,7 @@ describe("salary reference screen interactions", () => {
       title: "게임 패스 변경",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
+      <SalaryHomeScreen
         variableExpenseApi={{ updateVariableExpense } as never}
       />,
     );
@@ -623,7 +657,7 @@ describe("salary reference screen interactions", () => {
       status: "DELETED",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
+      <SalaryHomeScreen
         variableExpenseApi={{ deleteVariableExpense } as never}
       />,
     );
@@ -643,12 +677,15 @@ describe("salary reference screen interactions", () => {
   });
 
   it("removes a fixed plan reminder from the current month after the user marks it completed", () => {
-    const screen = render(<SalaryHomeReferenceScreen />);
+    jest.useFakeTimers({ now: new Date("2026-07-13T00:30:00.000Z") });
+    const screen = render(<SalaryHomeScreen />);
 
     expect(screen.getByText("ChatGPT")).toBeTruthy();
 
     fireEvent.press(
-      screen.getByRole("button", { name: /ChatGPT 사용 완료 처리$/u }),
+      screen.getByRole("button", {
+        name: /ChatGPT 사용 완료 처리$/u,
+      }),
     );
 
     expect(screen.queryByText("ChatGPT")).toBeNull();
@@ -656,7 +693,7 @@ describe("salary reference screen interactions", () => {
 
   it("does not show future-dated fixed or savings reminders before their scheduled KST day", () => {
     jest.useFakeTimers({ now: new Date("2026-07-14T03:00:00.000Z") });
-    const seeded = getPreviewState();
+    const seeded = getPayrollReminderState();
     const fixedCategory = seeded.planItems.find(
       (item) => item.section === "fixed",
     )?.category;
@@ -684,12 +721,12 @@ describe("salary reference screen interactions", () => {
         section: "saving",
       },
     ];
-    updatePreviewState((previous) => ({
+    updatePayrollReminderState((previous) => ({
       ...previous,
       planItems: rows,
     }));
 
-    const screen = render(<SalaryHomeReferenceScreen />);
+    const screen = render(<SalaryHomeScreen />);
 
     expect(screen.getByText("TodayDue")).toBeTruthy();
     expect(screen.queryByText("FutureSaving")).toBeNull();
@@ -697,6 +734,7 @@ describe("salary reference screen interactions", () => {
   });
 
   it("records fixed plan reminder completion through the server-authoritative plan API before hiding it", async () => {
+    jest.useFakeTimers({ now: new Date("2026-07-13T00:30:00.000Z") });
     const recordFixedExpensePayment = jest.fn().mockResolvedValue({
       amountMinor: 32000,
       category: "구독",
@@ -711,15 +749,15 @@ describe("salary reference screen interactions", () => {
       title: "ChatGPT",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
-        planCommitmentsApi={{ recordFixedExpensePayment }}
-      />,
+      <SalaryHomeScreen planCommitmentsApi={{ recordFixedExpensePayment }} />,
     );
 
     expect(screen.getByText("ChatGPT")).toBeTruthy();
 
     fireEvent.press(
-      screen.getByRole("button", { name: /ChatGPT 사용 완료 처리$/u }),
+      screen.getByRole("button", {
+        name: /ChatGPT 사용 완료 처리$/u,
+      }),
     );
 
     await waitFor(() =>
@@ -752,7 +790,7 @@ describe("salary reference screen interactions", () => {
       title: "여행, 방학",
     });
     const screen = render(
-      <SalaryHomeReferenceScreen
+      <SalaryHomeScreen
         planCommitmentsApi={{ recordSavingsDeposit } as never}
       />,
     );

@@ -9,6 +9,11 @@ import {
   PROFILE_SUPPORT_TICKETS_PATH,
   PROFILE_WITHDRAWAL_REQUEST_PATH,
 } from "./constants";
+import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import type {
   ProfileAccountSettings,
   ProfileAccountSettingsRequest,
@@ -174,9 +179,8 @@ function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
 
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new ProfileApiError(
       0,
@@ -184,7 +188,8 @@ function normalizeBaseUrl(value: string): string {
       PROFILE_SAFE_ERROR_MESSAGE,
     );
   }
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new ProfileApiError(
       0,
       "PROFILE_INVALID_BASE_URL",
@@ -192,11 +197,11 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new ProfileApiError(
       0,
       "PROFILE_INSECURE_BASE_URL",
@@ -263,21 +268,20 @@ function normalizeNullableTimestamp(value: unknown): string | null {
 function normalizeSafeExportDownloadUrl(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== "string" || !value.trim()) return invalidResponse();
-  let url: URL;
   try {
-    url = new URL(value.trim());
+    if (!isValidUrlString(value.trim())) throw new Error("INVALID_URL");
   } catch {
     return invalidResponse();
   }
+  const urlParts = parseMobileBaseUrlParts(value);
   if (
-    url.protocol !== "https:" ||
-    url.username ||
-    url.password ||
-    !SAFE_EXPORT_DOWNLOAD_HOSTS.has(url.hostname)
+    urlParts?.protocol !== "https:" ||
+    urlParts.containsCredentials ||
+    !SAFE_EXPORT_DOWNLOAD_HOSTS.has(urlParts.hostname)
   ) {
     return invalidResponse();
   }
-  return url.toString();
+  return value.trim();
 }
 
 function normalizeUser(value: unknown): ProfileUser {

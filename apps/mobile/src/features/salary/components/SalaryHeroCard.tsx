@@ -1,7 +1,24 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+/* eslint-disable @typescript-eslint/no-require-imports */
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  type ImageSourcePropType,
+} from "react-native";
 
-import { appIconAssets } from "../../../shared/assets/icons";
-import { componentColors } from "../../../shared/components";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  componentTypography,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
+const elevation = salaryHijackingDesignSystem.elevation;
+const salaryHeroCoinsIcon =
+  require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType;
 
 export type SalaryHeroCardProps = Readonly<{
   title: string;
@@ -16,7 +33,7 @@ export function SalaryHeroCard({
 }: SalaryHeroCardProps): React.ReactElement {
   return (
     <View
-      accessibilityLabel={`${title} ${subtitle} 서버 기준 계산`}
+      accessibilityLabel={`${title} ${subtitle} 최신 계산`}
       style={styles.card}
     >
       <View style={styles.copy}>
@@ -26,13 +43,13 @@ export function SalaryHeroCard({
         <Text style={styles.amount}>
           {savedAmount.toLocaleString("ko-KR")}원
         </Text>
-        <Text style={styles.guard}>서버 기준 계산</Text>
+        <Text style={styles.guard}>최신 계산</Text>
       </View>
       <Image
         accessibilityIgnoresInvertColors
         accessibilityLabel="납치 금액 코인 아이콘"
         resizeMode="contain"
-        source={appIconAssets.money.coins}
+        source={salaryHeroCoinsIcon}
         style={styles.icon}
       />
     </View>
@@ -41,47 +58,49 @@ export function SalaryHeroCard({
 
 const styles = StyleSheet.create({
   amount: {
-    color: "#FFF65A",
-    fontSize: 32,
-    fontWeight: "900",
-    lineHeight: 38,
+    color: salaryHijackingDesignSystem.colors.semantic.warning,
+    fontSize: componentTypography.heroAmount,
+    fontWeight: typography.amountXL.fontWeight,
+    lineHeight: typography.amountXL.lineHeight,
   },
   card: {
-    minHeight: 188,
+    minHeight: 226,
     flexDirection: "row",
     alignItems: "flex-end",
     justifyContent: "space-between",
-    gap: 12,
-    padding: 16,
-    borderRadius: 8,
+    gap: componentSpacing.md,
+    padding: componentSpacing.lg,
+    borderRadius: componentRadius.card,
     backgroundColor: componentColors.primaryGreen,
+    ...elevation.medium,
   },
   copy: {
     flex: 1,
-    gap: 5,
+    gap: componentSpacing.xs,
   },
   date: {
-    color: "#DDF4E7",
-    fontSize: 13,
-    fontWeight: "800",
+    color: componentColors.primaryGreenSoft,
+    fontSize: typography.bodyS.fontSize,
+    fontWeight: typography.bodyS.fontWeight,
   },
   guard: {
-    color: "rgba(255, 255, 255, 0.72)",
-    fontSize: 11,
-    fontWeight: "700",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
+    opacity: 0.72,
   },
   icon: {
-    width: 74,
-    height: 74,
+    width: 82,
+    height: 82,
   },
   subtitle: {
-    color: "#FFFFFF",
-    fontSize: 15,
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   title: {
-    color: "#FFFFFF",
-    fontSize: 21,
-    fontWeight: "900",
+    color: salaryHijackingDesignSystem.colors.text.inverse,
+    fontSize: typography.titleXL.fontSize,
+    fontWeight: typography.titleXL.fontWeight,
   },
 });

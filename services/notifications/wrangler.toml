@@ -13,7 +13,7 @@
 #   wrangler secret put FCM_PRIVATE_KEY
 
 name = "salary-hijacking-notifications"
-main = "src/index.ts"
+main = "src/phase5-entrypoint.ts"
 compatibility_date = "2026-06-15"
 workers_dev = true
 minify = true
@@ -72,22 +72,18 @@ crons = [
 binding = "NOTIFICATIONS_RETRY_QUEUE"
 queue = "salary-hijacking-dev-notifications-retry"
 
+# Invalid-token cleanup events are consumed by the API Phase 5 operations
+# consumer, which owns the DB function boundary. Keep the notifications worker
+# producer binding but route it to the canonical API operations queue.
 [[queues.producers]]
 binding = "NOTIFICATIONS_OPERATION_QUEUE"
-queue = "salary-hijacking-dev-notifications-operations"
+queue = "salary-hijacking-dev-operations"
 
 [[queues.consumers]]
 queue = "salary-hijacking-dev-notifications-retry"
 max_batch_size = 10
 max_batch_timeout = 30
 max_retries = 5
-dead_letter_queue = "salary-hijacking-dev-notifications-dlq"
-
-[[queues.consumers]]
-queue = "salary-hijacking-dev-notifications-operations"
-max_batch_size = 10
-max_batch_timeout = 30
-max_retries = 3
 dead_letter_queue = "salary-hijacking-dev-notifications-dlq"
 
 [env.staging]
@@ -139,10 +135,7 @@ TOKEN_HASH_ONLY = "true"
 SERVER_AUTHORITY_NOTIFICATION_DISPATCH = "true"
 
 [env.staging.triggers]
-crons = [
-  "*/10 * * * *",
-  "0 18 * * *"
-]
+crons = []
 
 [[env.staging.queues.producers]]
 binding = "NOTIFICATIONS_RETRY_QUEUE"
@@ -150,20 +143,13 @@ queue = "salary-hijacking-staging-notifications-retry"
 
 [[env.staging.queues.producers]]
 binding = "NOTIFICATIONS_OPERATION_QUEUE"
-queue = "salary-hijacking-staging-notifications-operations"
+queue = "salary-hijacking-staging-operations"
 
 [[env.staging.queues.consumers]]
 queue = "salary-hijacking-staging-notifications-retry"
 max_batch_size = 10
 max_batch_timeout = 30
 max_retries = 5
-dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
-
-[[env.staging.queues.consumers]]
-queue = "salary-hijacking-staging-notifications-operations"
-max_batch_size = 10
-max_batch_timeout = 30
-max_retries = 3
 dead_letter_queue = "salary-hijacking-staging-notifications-dlq"
 
 [env.production]
@@ -229,18 +215,11 @@ queue = "salary-hijacking-production-notifications-retry"
 
 [[env.production.queues.producers]]
 binding = "NOTIFICATIONS_OPERATION_QUEUE"
-queue = "salary-hijacking-production-notifications-operations"
+queue = "salary-hijacking-production-operations"
 
 [[env.production.queues.consumers]]
 queue = "salary-hijacking-production-notifications-retry"
 max_batch_size = 10
 max_batch_timeout = 30
 max_retries = 5
-dead_letter_queue = "salary-hijacking-production-notifications-dlq"
-
-[[env.production.queues.consumers]]
-queue = "salary-hijacking-production-notifications-operations"
-max_batch_size = 10
-max_batch_timeout = 30
-max_retries = 3
 dead_letter_queue = "salary-hijacking-production-notifications-dlq"

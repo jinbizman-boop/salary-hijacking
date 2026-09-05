@@ -170,14 +170,12 @@ export const AuthProviderSchema = z.enum([
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ]);
 
 export const SocialAuthProviderSchema = z.enum([
   "NAVER",
   "KAKAO",
   "GOOGLE",
-  "APPLE",
 ]);
 
 export const UserStatusSchema = z.enum([
@@ -259,6 +257,7 @@ export const AuthErrorCodeSchema = z.enum([
   "AUTH_PROVIDER_NOT_SUPPORTED",
   "AUTH_PROVIDER_STATE_MISMATCH",
   "AUTH_PROVIDER_CODE_INVALID",
+  "AUTH_OAUTH_NONCE_INVALID",
   "AUTH_TOKEN_MISSING",
   "AUTH_TOKEN_INVALID",
   "AUTH_TOKEN_EXPIRED",
@@ -651,6 +650,13 @@ export const OAuthCodeChallengeSchema = z
   .max(128)
   .regex(/^[A-Za-z0-9._~-]+$/);
 
+export const OAuthNonceSchema = z
+  .string()
+  .trim()
+  .min(32)
+  .max(128)
+  .regex(/^[A-Za-z0-9._~-]+$/);
+
 export const SocialLoginStartRequestSchema = z
   .object({
     provider: SocialAuthProviderSchema,
@@ -667,6 +673,7 @@ export const SocialLoginStartResultSchema = z
     provider: SocialAuthProviderSchema,
     authorizationUrl: UrlSchema,
     state: OAuthStateSchema,
+    nonce: OAuthNonceSchema.optional(),
     expiresAt: IsoDateTimeSchema,
   })
   .strict();
@@ -678,6 +685,7 @@ export const SocialLoginCallbackRequestSchema = z
     state: OAuthStateSchema,
     redirectUri: SafeRedirectUriSchema,
     codeVerifier: OAuthCodeVerifierSchema.optional(),
+    nonce: OAuthNonceSchema.optional(),
     device: DeviceRegistrationSchema.optional(),
     context: AuthRequestContextSchema.optional(),
   })

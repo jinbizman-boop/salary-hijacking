@@ -1,0 +1,15 @@
+{
+  "apiReady": true,
+  "dbReady": true,
+  "authReady": true,
+  "notificationReady": true,
+  "r2BindingPresent": true,
+  "r2RuntimeAccessible": true,
+  "adminModerationReady": "AUTH_REQUIRED_CONFIRMED",
+  "timestamp": "2026-08-26T15:24:35.527Z",
+  "sourceCommit": null,
+  "baseUrl": "https://api-staging.salaryhijacking.com",
+  "secretValuesStored": false,
+  "productionMutation": false,
+  "blockers": []
+}

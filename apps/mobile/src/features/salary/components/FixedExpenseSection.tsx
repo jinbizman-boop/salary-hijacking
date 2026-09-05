@@ -4,7 +4,11 @@ import {
   MoneyText,
   SurfaceCard,
   componentColors,
+  componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type FixedExpenseItem = Readonly<{
   id: string;
@@ -40,32 +44,36 @@ export function FixedExpenseSection({
 const styles = StyleSheet.create({
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
   row: {
-    minHeight: 52,
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: componentSpacing.sm,
+    paddingVertical: componentSpacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: componentColors.line,
   },
   copy: {
     flex: 1,
-    gap: 3,
+    gap: componentSpacing.xs,
   },
   name: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   status: {
-    color: componentColors.textSecondary,
-    fontSize: 12,
+    color: componentColors.primaryGreenDark,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
 });

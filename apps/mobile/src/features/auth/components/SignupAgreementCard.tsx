@@ -1,6 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
+import {
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import { authVisualColors } from "./AuthVisualFrame";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type SignupAgreementCardProps = Readonly<{
   termsAccepted: boolean;
@@ -34,21 +40,21 @@ export function SignupAgreementCard({
 const styles = StyleSheet.create({
   divider: {
     color: authVisualColors.ink,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
     includeFontPadding: false,
   },
   optional: {
     color: authVisualColors.muted,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
     includeFontPadding: false,
-    marginLeft: 2,
+    marginLeft: componentSpacing.xs / 2,
   },
   text: {
     color: authVisualColors.ink,
-    fontSize: 12,
-    fontWeight: "800",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
     includeFontPadding: false,
   },
   wrap: {
@@ -56,7 +62,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 4,
+    gap: componentSpacing.xs,
     justifyContent: "center",
     maxWidth: 365,
   },

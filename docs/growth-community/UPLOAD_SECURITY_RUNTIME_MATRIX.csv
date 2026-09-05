@@ -1,0 +1,4 @@
+operation,purpose,contentType,httpStatus,errorCode,expected,actual,status,evidenceRef
+direct_upload_private,COMMUNITY_ATTACHMENT,image/png,201,,201,201,PASS,docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json
+cross_user_private_read,COMMUNITY_ATTACHMENT,text/plain,404,UPLOAD_ATTACHMENT_NOT_FOUND,403/404,404,PASS,docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json
+forbidden_extension,COMMUNITY_ATTACHMENT,application/x-msdownload,415,UPLOAD_CONTENT_TYPE_FORBIDDEN,4xx,415,PASS,docs/growth-community/PHASE_6_STAGING_RUNTIME_EVIDENCE.json

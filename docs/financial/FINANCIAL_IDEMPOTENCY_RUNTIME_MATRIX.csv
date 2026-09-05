@@ -1,0 +1,5 @@
+operation,scenario,attempts,successOrReplay,uniqueLogicalRecords,conflictStatus,status
+variable_expense_create,20_concurrent_same_key_same_body,20,3,1,,PASS
+variable_expense_create,same_key_different_body,1,0,,409,PASS
+payroll_finalization,same_key_replay,2,2,1_transition,,PASS
+payroll_finalization,same_key_different_body,1,0,,409,PASS

@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 
 import {
   AppHeader,
   AppShell,
+  EmptyState,
+  ErrorState,
+  LoadingSkeleton,
   PrimaryButton,
 } from "../../../src/shared/components";
 import { CommunityTabBar } from "../../../src/features/community/components/CommunityTabBar";
@@ -15,44 +18,21 @@ import type {
   CommunityPostDraft,
   CommunityValidationResult,
 } from "../../../src/features/community/community.types";
+import { useCommunityFeed } from "../../../src/features/community/hooks/useCommunityFeed";
+import { createMobileCommunityService } from "../../../src/shared/api/mobile-api";
+import { SortFilterBottomSheet } from "../../../src/shared/ui/sheets/SortFilterBottomSheet";
 
-const SCREEN_VERSION = "4.2.1-prototype-community";
+const SCREEN_VERSION = "4.3.0-server-backed-community";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
-
-const popularPosts: readonly CommunityPost[] = [
-  {
-    adsFinancialTargetingUsed: false,
-    anonymousDisplayName: "익명 12",
-    boardType: "LEVEL_CERTIFICATION",
-    bodyPreview: "월급을 받은 뒤 납치금액을 지켜낸 1주차 체험 후기입니다.",
-    bookmarkCount: 4,
-    commentCount: 8,
-    createdAt: "2026-07-10T00:00:00.000Z",
-    id: "post_level_1",
-    likeCount: 21,
-    moderationStatus: "SAFE",
-    rawFinancialDataExposed: false,
-    rawPersonalDataExposed: false,
-    title: "레벨업 인증 루틴",
-    updatedAt: "2026-07-10T00:00:00.000Z",
-  },
-  {
-    adsFinancialTargetingUsed: false,
-    anonymousDisplayName: "익명 31",
-    boardType: "FREE",
-    bodyPreview: "연말정산 실전 팁 5가지를 공유합니다.",
-    bookmarkCount: 2,
-    commentCount: 5,
-    createdAt: "2026-07-10T01:00:00.000Z",
-    id: "post_free_1",
-    likeCount: 13,
-    moderationStatus: "SAFE",
-    rawFinancialDataExposed: false,
-    rawPersonalDataExposed: false,
-    title: "회계팀 홍길동입니다. 연말정산 실전 팁 5가지 공유!",
-    updatedAt: "2026-07-10T01:00:00.000Z",
-  },
+const COMMUNITY_TABS: readonly CommunityBoardType[] = [
+  "FREE",
+  "LEVEL_CERTIFICATION",
+  "HEALTH_ROUTINE",
 ];
+
+export const communityStitchOverlayComponents = {
+  SortFilterBottomSheet,
+} as const;
 
 const closedDraft: CommunityPostDraft = {
   anonymous: true,
@@ -68,10 +48,29 @@ const safeValidation: CommunityValidationResult = {
   valid: true,
 };
 
+function countPostsByBoard(
+  posts: readonly CommunityPost[],
+): Partial<Record<CommunityBoardType, number>> {
+  return posts.reduce<Partial<Record<CommunityBoardType, number>>>(
+    (counts, post) => ({
+      ...counts,
+      [post.boardType]: (counts[post.boardType] ?? 0) + 1,
+    }),
+    {},
+  );
+}
+
 export default function CommunityIndexScreen(): React.ReactElement {
   const router = useRouter();
   const [selectedBoard, setSelectedBoard] =
     useState<CommunityBoardType>("FREE");
+  const communityService = useMemo(() => createMobileCommunityService(), []);
+  const feed = useCommunityFeed(communityService, {
+    boardType: selectedBoard,
+    pageSize: 20,
+    sort: "POPULAR",
+  });
+  const counts = useMemo(() => countPostsByBoard(feed.items), [feed.items]);
 
   return (
     <AppShell
@@ -85,17 +84,39 @@ export default function CommunityIndexScreen(): React.ReactElement {
       }
     >
       <CommunityTabBar
-        counts={{ FREE: 12, LEVEL_CERTIFICATION: 3, HEALTH_ROUTINE: 2 }}
+        counts={counts}
         selected={selectedBoard}
-        tabs={["FREE", "LEVEL_CERTIFICATION", "HEALTH_ROUTINE"]}
+        tabs={COMMUNITY_TABS}
         onSelect={setSelectedBoard}
       />
       <PrimaryButton
-        accessibilityLabel="글쓰기 열기"
+        accessibilityLabel="글쓰기 화면으로 이동"
         label="글쓰기"
         onPress={() => router.push("/community/write" as never)}
       />
-      <PopularPostSection posts={popularPosts} onPressPost={() => undefined} />
+      {feed.status === "loading" ? (
+        <LoadingSkeleton label="커뮤니티 게시글을 불러오는 중" />
+      ) : null}
+      {feed.status === "error" ? (
+        <ErrorState
+          message={feed.error ?? "잠시 후 다시 시도해 주세요."}
+          title="게시글을 불러오지 못했습니다"
+          onRetry={feed.refresh}
+        />
+      ) : null}
+      {feed.status !== "loading" &&
+      feed.status !== "error" &&
+      feed.items.length === 0 ? (
+        <EmptyState
+          description="서버에 저장된 게시글이 아직 없습니다. 첫 글을 작성해 주세요."
+          title="게시글이 없습니다"
+        />
+      ) : (
+        <PopularPostSection
+          posts={feed.items}
+          onPressPost={(post) => router.push(`/community/${post.id}` as never)}
+        />
+      )}
       <ComposeBottomSheet
         draft={closedDraft}
         open={false}
@@ -103,7 +124,7 @@ export default function CommunityIndexScreen(): React.ReactElement {
         validation={safeValidation}
         onChange={() => undefined}
         onClose={() => undefined}
-        onSubmit={() => undefined}
+        onSubmit={() => router.push("/community/write" as never)}
       />
     </AppShell>
   );
@@ -121,10 +142,10 @@ export function assertMobileCommunityIndexCompleteness(): Readonly<{
     "CommunityTabBar",
     "PopularPostSection",
     "ComposeBottomSheet",
-    "전체 게시판",
-    "자유 게시판",
-    "레벨업 인증",
-    "취미 게시판",
+    "createMobileCommunityService",
+    "useCommunityFeed",
+    "server_backed_community_feed",
+    "detail_route_on_post_press",
     "anonymous_community_boundary",
     "personal_raw_data_hidden",
     "financial_raw_data_hidden",

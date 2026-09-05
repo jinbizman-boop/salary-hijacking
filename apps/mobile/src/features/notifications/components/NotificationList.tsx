@@ -3,9 +3,13 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import {
   SurfaceCard,
   componentColors,
+  componentRadius,
   componentSpacing,
+  salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { NotificationItem } from "../types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type NotificationListProps = Readonly<{
   items: readonly NotificationItem[];
@@ -29,7 +33,7 @@ export function NotificationList({
       <View style={styles.filters}>
         <Text style={styles.filter}>급여/납치금액</Text>
         <Text style={styles.filter}>오늘의 레벨업</Text>
-        <Text style={styles.filter}>이벤트/포인트</Text>
+        <Text style={styles.filter}>이벤트 포인트</Text>
       </View>
       <View style={styles.list}>
         {items.map((item) => (
@@ -61,8 +65,8 @@ export function NotificationList({
           </Pressable>
         ))}
       </View>
-      <Text style={styles.guard}>민감 금액 원문은 알림에 담지 않아요</Text>
-      <Text style={styles.guard}>광고 타겟팅과 분리했어요</Text>
+      <Text style={styles.guard}>민감 금액 원문은 알림에 담지 않습니다.</Text>
+      <Text style={styles.guard}>광고 타겟팅 데이터와 분리합니다.</Text>
     </SurfaceCard>
   );
 }
@@ -70,78 +74,78 @@ export function NotificationList({
 const styles = StyleSheet.create({
   body: {
     flex: 1,
-    gap: 4,
+    gap: componentSpacing.xs,
   },
   dot: {
-    width: 10,
-    height: 10,
-    marginTop: 6,
-    borderRadius: 999,
     backgroundColor: componentColors.primaryGreen,
+    borderRadius: componentRadius.pill,
+    height: 10,
+    marginTop: componentSpacing.xs,
+    width: 10,
   },
   dotRead: {
     backgroundColor: componentColors.disabledGray,
   },
   filter: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
     backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: componentRadius.pill,
     color: componentColors.primaryGreenDark,
-    fontSize: 11,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.xs,
   },
   filters: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 6,
+    gap: componentSpacing.xs,
   },
   guard: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   list: {
     gap: componentSpacing.sm,
   },
   message: {
     color: componentColors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
   metaRow: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: "row",
     gap: componentSpacing.sm,
+    justifyContent: "space-between",
   },
   priority: {
     color: componentColors.primaryGreenDark,
-    fontSize: 12,
-    fontWeight: "900",
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   route: {
     color: componentColors.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: typography.caption.fontSize,
+    fontWeight: typography.caption.fontWeight,
   },
   row: {
-    flexDirection: "row",
     alignItems: "flex-start",
+    borderBottomColor: componentColors.line,
+    borderBottomWidth: 1,
+    flexDirection: "row",
     gap: componentSpacing.sm,
     minHeight: 76,
     paddingVertical: componentSpacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: componentColors.line,
   },
   rowTitle: {
     color: componentColors.textPrimary,
-    fontSize: 15,
-    fontWeight: "900",
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: typography.titleM.fontSize,
+    fontWeight: typography.titleM.fontWeight,
   },
 });

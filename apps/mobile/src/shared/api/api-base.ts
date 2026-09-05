@@ -1,5 +1,12 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import {
+  isMobileLocalApiInputHost,
+  isValidUrlString,
+  localApiBaseUrlForPlatform,
+  parseMobileBaseUrlParts,
+  rewriteLocalApiBaseUrlForAndroid,
+} from "./url-validation";
 
 declare const process: {
   readonly env: {
@@ -22,9 +29,13 @@ type ExpoExtra = Readonly<{
 }>;
 
 const PRODUCTION_API_BASE_URL = "https://api.salaryhijacking.com";
+const STAGING_API_BASE_URL = "https://api-staging.salaryhijacking.com";
 
 export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   const candidates = [options.explicitUrl, options.configuredUrl];
+  const hadCandidate = candidates.some((candidate) =>
+    Boolean(candidate?.trim()),
+  );
 
   for (const candidate of candidates) {
     const normalized = normalizeApiBase(
@@ -36,9 +47,11 @@ export function resolveMobileApiBaseUrl(options: MobileApiBaseOptions): string {
   }
 
   if (options.environment === "production") return PRODUCTION_API_BASE_URL;
-  return options.platform === "android"
-    ? "http://10.0.2.2:8787"
-    : "http://localhost:8787";
+  if (hadCandidate) return STAGING_API_BASE_URL;
+  if (options.environment === "local") {
+    return localApiBaseUrlForPlatform(options.platform);
+  }
+  return STAGING_API_BASE_URL;
 }
 
 export function readMobileApiBaseUrl(): string {
@@ -66,23 +79,34 @@ function normalizeApiBase(
   if (!value?.trim()) return "";
 
   try {
-    const url = new URL(value.trim());
-    const localHost =
-      url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    const stripped = value
+      .trim()
+      .replace(/[?#].*$/u, "")
+      .replace(/\/+$/u, "");
+    if (!isValidUrlString(stripped)) throw new Error("INVALID_URL");
+    const baseUrlParts = parseMobileBaseUrlParts(stripped);
+    if (!baseUrlParts || baseUrlParts.containsCredentials) return "";
+    const localHost = isMobileLocalApiInputHost(baseUrlParts.hostname);
 
-    if (url.username || url.password) return "";
-    if (environment === "production" && url.protocol !== "https:") return "";
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+    if (environment === "production" && baseUrlParts.protocol !== "https:") {
+      return "";
+    }
+    if (
+      baseUrlParts.protocol !== "https:" &&
+      !(
+        environment === "local" &&
+        baseUrlParts.protocol === "http:" &&
+        localHost
+      )
+    ) {
       return "";
     }
 
     if (platform === "android" && localHost) {
-      url.hostname = "10.0.2.2";
+      return rewriteLocalApiBaseUrlForAndroid(stripped);
     }
 
-    url.hash = "";
-    url.search = "";
-    return url.toString().replace(/\/$/, "");
+    return stripped;
   } catch {
     return "";
   }
@@ -94,5 +118,5 @@ function normalizeEnvironment(value: unknown): EnvironmentName {
     value === "staging" ||
     value === "production"
     ? value
-    : "development";
+    : "staging";
 }

@@ -2,7 +2,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { getDefaultConfig } = require("expo/metro-config");
 
-const substAliasRoot = process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS;
+const substAliasRoot =
+  process.env.SALARY_HIJACKING_METRO_SUBST_ALIAS ??
+  process.env.SALARY_HIJACKING_ANDROID_BUILD_SUBST_ALIAS;
 const useCanonicalMetroRoot =
   process.env.SALARY_HIJACKING_METRO_CANONICAL_ROOT === "1";
 const substProjectRootCandidate = substAliasRoot
@@ -15,6 +17,7 @@ const substProjectRoot =
 const projectRoot = useCanonicalMetroRoot
   ? fs.realpathSync.native(__dirname)
   : (substProjectRoot ?? __dirname);
+const canonicalProjectRoot = fs.realpathSync.native(__dirname);
 const workspaceRoot = path.resolve(projectRoot, "../..");
 const realWorkspaceRoot = fs.realpathSync.native(workspaceRoot);
 const config = getDefaultConfig(projectRoot);
@@ -46,14 +49,29 @@ function shouldAppendCanonicalNodeModules(
 
 const workspaceNodeModules = path.join(workspaceRoot, "node_modules");
 const realWorkspaceNodeModules = path.join(realWorkspaceRoot, "node_modules");
+const shouldUseCanonicalWorkspaceRoot =
+  !substAliasRoot ||
+  shouldAppendCanonicalNodeModules(
+    workspaceRoot,
+    realWorkspaceRoot,
+    process.platform,
+  );
+const shouldUseCanonicalProjectRoot =
+  (useCanonicalMetroRoot || !substAliasRoot) && shouldUseCanonicalWorkspaceRoot;
 config.watchFolders = appendUniquePath(
   config.watchFolders ?? [],
   workspaceRoot,
 );
-config.watchFolders = appendUniquePath(
-  config.watchFolders ?? [],
-  realWorkspaceRoot,
-);
+if (shouldUseCanonicalProjectRoot) {
+  config.watchFolders = appendUniquePath(
+    config.watchFolders ?? [],
+    canonicalProjectRoot,
+  );
+  config.watchFolders = appendUniquePath(
+    config.watchFolders ?? [],
+    realWorkspaceRoot,
+  );
+}
 config.watchFolders = appendUniquePath(
   config.watchFolders ?? [],
   workspaceNodeModules,
@@ -62,13 +80,7 @@ config.resolver.nodeModulesPaths = appendUniquePath(
   config.resolver.nodeModulesPaths ?? [],
   workspaceNodeModules,
 );
-if (
-  shouldAppendCanonicalNodeModules(
-    workspaceRoot,
-    realWorkspaceRoot,
-    process.platform,
-  )
-) {
+if (shouldUseCanonicalWorkspaceRoot) {
   config.watchFolders = appendUniquePath(
     config.watchFolders ?? [],
     realWorkspaceNodeModules,
@@ -263,31 +275,47 @@ function normalizeForPrefix(value, platform = process.platform) {
     .toLowerCase();
 }
 
+function stripAliasPrefixedWindowsDrivePath(
+  filePath,
+  platform = process.platform,
+) {
+  if (platform !== "win32") return filePath;
+  const normalizedFilePath = filePath.replace(/\//gu, "\\");
+  const prefixedDrivePath = /^[A-Za-z]:\\([A-Za-z]:\\.*)$/u.exec(
+    normalizedFilePath,
+  );
+  return prefixedDrivePath ? prefixedDrivePath[1] : filePath;
+}
+
 function mapToWorkspaceAliasRoot(
   filePath,
   aliasWorkspaceRoot,
   canonicalWorkspaceRoot,
   platform = process.platform,
 ) {
+  const canonicalFilePath = stripAliasPrefixedWindowsDrivePath(
+    filePath,
+    platform,
+  );
   const pathApi = pathForPlatform(platform);
-  if (!pathApi.isAbsolute(filePath)) return filePath;
+  if (!pathApi.isAbsolute(canonicalFilePath)) return canonicalFilePath;
   if (platform !== "win32") return filePath;
-  const normalizedFilePath = normalizeForPrefix(filePath, platform);
+  const normalizedFilePath = normalizeForPrefix(canonicalFilePath, platform);
   const normalizedAliasRoot = normalizeForPrefix(aliasWorkspaceRoot, platform);
   const normalizedCanonicalRoot = normalizeForPrefix(
     canonicalWorkspaceRoot,
     platform,
   );
-  if (normalizedAliasRoot === normalizedCanonicalRoot) return filePath;
+  if (normalizedAliasRoot === normalizedCanonicalRoot) return canonicalFilePath;
   if (
     normalizedFilePath !== normalizedCanonicalRoot &&
     !normalizedFilePath.startsWith(`${normalizedCanonicalRoot}${pathApi.sep}`)
   ) {
-    return filePath;
+    return canonicalFilePath;
   }
   return pathApi.join(
     aliasWorkspaceRoot,
-    pathApi.relative(canonicalWorkspaceRoot, filePath),
+    pathApi.relative(canonicalWorkspaceRoot, canonicalFilePath),
   );
 }
 
@@ -420,6 +448,27 @@ patchMetroSerializerPreModules({
   platform: process.platform,
   serializer: config.serializer,
 });
+
+function enableAndroidReleaseInlineRequires(transformer) {
+  const previousGetTransformOptions = transformer.getTransformOptions;
+  transformer.getTransformOptions = async (...args) => {
+    const previousOptions =
+      typeof previousGetTransformOptions === "function"
+        ? await previousGetTransformOptions(...args)
+        : {};
+    return {
+      ...previousOptions,
+      transform: {
+        ...(previousOptions.transform ?? {}),
+        inlineRequires: true,
+      },
+    };
+  };
+  return transformer.getTransformOptions;
+}
+
+config.transformer ??= {};
+enableAndroidReleaseInlineRequires(config.transformer);
 
 function isBareModuleRequest(moduleName) {
   return !moduleName.startsWith(".") && !path.isAbsolute(moduleName);
@@ -595,6 +644,33 @@ function tryResolveWorkspaceModule(moduleName, platform = null) {
   }
 }
 
+const androidReleaseRuntimeStubs = new Map([
+  [
+    "react-native/Libraries/Core/Devtools/getDevServer",
+    "src/shared/runtime/release-dev-server-stub.ts",
+  ],
+  [
+    "react-native/Libraries/Core/Devtools/getDevServer.js",
+    "src/shared/runtime/release-dev-server-stub.ts",
+  ],
+  [
+    "expo-router/build/rsc/router/client",
+    "src/shared/runtime/release-rsc-router-client-stub.tsx",
+  ],
+  [
+    "expo-router/build/rsc/router/client.js",
+    "src/shared/runtime/release-rsc-router-client-stub.tsx",
+  ],
+]);
+
+function tryResolveAndroidReleaseRuntimeStub(moduleName, platform) {
+  if (platform !== "android") return null;
+  const stubPath = androidReleaseRuntimeStubs.get(moduleName);
+  if (!stubPath) return null;
+  const resolved = path.join(projectRoot, stubPath);
+  return fs.existsSync(resolved) ? resolved : null;
+}
+
 function isWorkspaceAbsoluteModuleRequest(moduleName) {
   if (!path.isAbsolute(moduleName)) return false;
   const normalizedModuleName = normalizeForPrefix(moduleName);
@@ -608,6 +684,14 @@ function isWorkspaceAbsoluteModuleRequest(moduleName) {
 }
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const androidReleaseRuntimeStub = tryResolveAndroidReleaseRuntimeStub(
+    moduleName,
+    platform,
+  );
+  if (androidReleaseRuntimeStub !== null) {
+    return toWorkspaceSourceFile(androidReleaseRuntimeStub);
+  }
+
   if (isWorkspaceAbsoluteModuleRequest(moduleName)) {
     return toWorkspaceSourceFile(moduleName);
   }
@@ -701,7 +785,10 @@ Object.defineProperty(config, "__private", {
     patchMetroSerializerPreModules,
     patchMetroSerializerPolyfills,
     tryResolveWindowsDriveRootEntry,
+    tryResolveAndroidReleaseRuntimeStub,
     shouldAppendCanonicalNodeModules,
+    enableAndroidReleaseInlineRequires,
+    shouldUseCanonicalProjectRoot,
     shouldDelegateReactNativeWebResolution,
   },
 });

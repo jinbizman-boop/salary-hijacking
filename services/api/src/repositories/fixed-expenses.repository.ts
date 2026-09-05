@@ -16,6 +16,7 @@ type DbRow = Record<string, unknown>;
 export interface FixedExpensesDbQueryOptions<TEnv = unknown> {
   readonly operationName: string;
   readonly env: TEnv;
+  readonly principalUserId?: string;
 }
 
 export interface FixedExpensesDbQueryResult<TRow extends DbRow = DbRow> {
@@ -114,6 +115,16 @@ async function defaultQuery<TEnv>(
         readonly rows: readonly DbRow[];
         readonly rowCount: number | null;
       }>;
+      connect: () => Promise<{
+        query: (
+          text: string,
+          values?: readonly DbValue[],
+        ) => Promise<{
+          readonly rows: readonly DbRow[];
+          readonly rowCount: number | null;
+        }>;
+        release: () => void;
+      }>;
       end: () => Promise<void>;
     };
     readonly neonConfig?: { fetchConnectionCache?: boolean };
@@ -128,9 +139,28 @@ async function defaultQuery<TEnv>(
     connectionTimeoutMillis: 10_000,
     statement_timeout: 30_000,
   });
+  const client = await pool.connect();
   try {
-    return await pool.query(sqlText, [...params]);
+    await client.query("begin");
+    if (options.principalUserId) {
+      await client.query(
+        "select set_config('app.current_user_id', $1, false), set_config('app.is_admin', 'false', false)",
+        [options.principalUserId],
+      );
+    }
+    const result = await client.query(sqlText, [...params]);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback").catch(() => undefined);
+    throw error;
   } finally {
+    await client
+      .query(
+        "select set_config('app.current_user_id', '', false), set_config('app.is_admin', '', false)",
+      )
+      .catch(() => undefined);
+    client.release();
     await pool.end();
   }
 }
@@ -434,6 +464,7 @@ function queryText<TEnv>(
   return repositoryQuery(sqlText, params, {
     operationName,
     env: runtime.env,
+    principalUserId: assertUuid(runtime.principal.userId, "principal.userId"),
   });
 }
 
@@ -590,9 +621,14 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
         runtime,
         "fixedExpenses.create",
         `
-          with selected_plan as (
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          ),
+          selected_plan as (
             select payroll_plan_id
-            from public.payroll_plans
+            from public.payroll_plans, _app_context
             where user_id = $1::uuid
               and status = 'ACTIVE'
             order by year_month desc, updated_at desc, payroll_plan_id desc
@@ -684,6 +720,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -738,6 +781,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning fixed_expense_id
         `,
         [assertUuid(expenseId, "expenseId"), userIdFromRuntime(runtime)],
@@ -757,6 +807,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(expenseId, "expenseId"), userIdFromRuntime(runtime)],
@@ -778,6 +835,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [assertUuid(expenseId, "expenseId"), userIdFromRuntime(runtime)],
@@ -804,6 +868,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [
@@ -842,6 +913,13 @@ export function createNeonFixedExpensesRepository<TEnv = unknown>(
               updated_at = now()
           where fixed_expense_id = $1::uuid
             and user_id = $2::uuid
+            and exists (
+              select 1
+              from public.payroll_plans pp
+              where pp.payroll_plan_id = public.fixed_expenses.payroll_plan_id
+                and pp.user_id = $2::uuid
+                and pp.status <> 'CLOSED'
+            )
           returning *
         `,
         [

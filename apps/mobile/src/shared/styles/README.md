@@ -21,7 +21,7 @@ brand.primary           #209252
 brand.secondary         #2FA86A
 brand.soft              #EAF6EF
 brand.dark              #12663A
-surface.app             #F7F8FA
+surface.app             #F7F9FA
 surface.card            #FFFFFF
 surface.line            #E7EBEF
 surface.lineSoft        #EEF0F2

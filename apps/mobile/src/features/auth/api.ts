@@ -2,8 +2,16 @@ import {
   normalizeMobileAuthResponse,
   normalizeMobileSignupResponse,
 } from "../../shared/api/auth-response";
+import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import * as Crypto from "expo-crypto";
-import { MOBILE_ACCESS_TOKEN_KEY } from "../../shared/storage/auth-token";
+import {
+  MOBILE_ACCESS_TOKEN_KEY,
+  MOBILE_REFRESH_TOKEN_KEY,
+} from "../../shared/storage/auth-token";
 import {
   AUTH_LOGOUT_PATH,
   AUTH_LOGIN_PATH,
@@ -95,7 +103,6 @@ const SOCIAL_PROVIDERS = new Set<AuthSocialProvider>([
   "KAKAO",
   "NAVER",
   "GOOGLE",
-  "APPLE",
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -152,22 +159,22 @@ function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
 
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
   }
 
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new AuthApiError(0, "AUTH_INVALID_BASE_URL", AUTH_SAFE_ERROR_MESSAGE);
   }
 
-  const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new AuthApiError(
       0,
       "AUTH_INSECURE_BASE_URL",
@@ -352,9 +359,8 @@ function assertSocialProvider(value: AuthSocialProvider): AuthSocialProvider {
 
 function assertOAuthRedirectUri(value: string): string {
   const redirectUri = assertPresent(value, "AUTH_OAUTH_REDIRECT_URI_REQUIRED");
-  let url: URL;
   try {
-    url = new URL(redirectUri);
+    if (!isValidUrlString(redirectUri)) throw new Error("INVALID_URL");
   } catch {
     throw new AuthApiError(
       0,
@@ -362,19 +368,20 @@ function assertOAuthRedirectUri(value: string): string {
       AUTH_SAFE_ERROR_MESSAGE,
     );
   }
+  const urlParts = parseMobileBaseUrlParts(redirectUri);
   const isAppCallback =
-    url.protocol === "salaryhijacking:" &&
-    url.hostname === "auth" &&
-    url.pathname === "/oauth/callback";
+    urlParts?.protocol === "salaryhijacking:" &&
+    urlParts.hostname === "auth" &&
+    urlParts.pathname === "/oauth/callback";
   const isWebCallback =
-    url.protocol === "https:" &&
-    (url.hostname === "salaryhijacking.com" ||
-      url.hostname.endsWith(".salaryhijacking.com")) &&
-    url.pathname === "/auth/oauth/callback";
+    urlParts?.protocol === "https:" &&
+    (urlParts.hostname === "salaryhijacking.com" ||
+      urlParts.hostname.endsWith(".salaryhijacking.com")) &&
+    urlParts.pathname === "/auth/oauth/callback";
   if (
     (!isAppCallback && !isWebCallback) ||
-    url.search.length > 0 ||
-    url.hash.length > 0
+    (urlParts?.search.length ?? 0) > 0 ||
+    (urlParts?.hash.length ?? 0) > 0
   ) {
     throw new AuthApiError(
       0,
@@ -393,8 +400,11 @@ function optionalAuthorizationUrl(value: unknown): string | null {
   const normalized = optionalNonEmptyString(value);
   if (!normalized) return null;
   try {
-    const url = new URL(normalized);
-    return url.protocol === "https:" ? normalized : null;
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
+    const urlParts = parseMobileBaseUrlParts(normalized);
+    return urlParts?.protocol === "https:" && !urlParts.containsCredentials
+      ? normalized
+      : null;
   } catch {
     return null;
   }
@@ -476,13 +486,68 @@ async function persistAccessToken(
   }
 }
 
-async function clearAccessToken(
+function refreshTokenFromAuthResponse(value: unknown): string | null {
+  if (!isRecord(value)) return null;
+  const data = isRecord(value.data) ? value.data : null;
+  const tokens = isRecord(data?.tokens) ? data.tokens : null;
+  const raw =
+    (typeof data?.refreshToken === "string" ? data.refreshToken : null) ??
+    (typeof tokens?.refreshToken === "string" ? tokens.refreshToken : null);
+  const token = raw?.trim();
+  if (!token) return null;
+  if (token.length > 8_192 || /\s/u.test(token)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_INVALID_RESPONSE",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return token;
+}
+
+async function readRefreshToken(
+  tokenStore: AuthTokenStore | undefined,
+): Promise<string | null> {
+  if (!tokenStore?.getItemAsync) return null;
+  try {
+    const token = (await tokenStore.getItemAsync(MOBILE_REFRESH_TOKEN_KEY))
+      ?.trim()
+      .slice(0, 8_193);
+    if (!token || token.length > 8_192 || /\s/u.test(token)) return null;
+    return token;
+  } catch {
+    return null;
+  }
+}
+
+async function persistSessionCredentials(
+  tokenStore: AuthTokenStore | undefined,
+  accessToken: string | null | undefined,
+  refreshToken: string | null,
+): Promise<void> {
+  try {
+    await persistAccessToken(tokenStore, accessToken);
+    if (refreshToken && tokenStore) {
+      await tokenStore.setItemAsync(MOBILE_REFRESH_TOKEN_KEY, refreshToken);
+    }
+  } catch {
+    await clearSessionCredentials(tokenStore);
+    throw new AuthApiError(
+      0,
+      "AUTH_TOKEN_STORE_FAILED",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+}
+
+async function clearSessionCredentials(
   tokenStore: AuthTokenStore | undefined,
 ): Promise<void> {
   if (!tokenStore?.deleteItemAsync) return;
 
   try {
     await tokenStore.deleteItemAsync(MOBILE_ACCESS_TOKEN_KEY);
+    await tokenStore.deleteItemAsync(MOBILE_REFRESH_TOKEN_KEY);
   } catch {
     throw new AuthApiError(
       0,
@@ -728,9 +793,10 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         );
       }
       if (normalized.data.status === "AUTHENTICATED") {
-        await persistAccessToken(
+        await persistSessionCredentials(
           options.tokenStore,
           normalized.data.accessToken,
+          refreshTokenFromAuthResponse(parsed),
         );
       }
       return normalized;
@@ -778,9 +844,10 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         );
       }
       if (normalized.data.status === "AUTHENTICATED") {
-        await persistAccessToken(
+        await persistSessionCredentials(
           options.tokenStore,
           normalized.data.accessToken,
+          refreshTokenFromAuthResponse(parsed),
         );
       }
       return normalized;
@@ -860,7 +927,11 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
           AUTH_SAFE_ERROR_MESSAGE,
         );
       }
-      await persistAccessToken(options.tokenStore, normalized.data.accessToken);
+      await persistSessionCredentials(
+        options.tokenStore,
+        normalized.data.accessToken,
+        refreshTokenFromAuthResponse(parsed),
+      );
       return normalized;
     },
 
@@ -904,12 +975,17 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
       assertOnlyRequestKeys(request as Record<string, unknown>, ["deviceId"]);
       const body: Record<string, unknown> = {};
       appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
+      appendOptional(
+        body,
+        "refreshToken",
+        await readRefreshToken(options.tokenStore),
+      );
 
       let parsed: unknown;
       try {
         parsed = await post(AUTH_REFRESH_PATH, body);
       } catch (error) {
-        await clearAccessToken(options.tokenStore);
+        await clearSessionCredentials(options.tokenStore);
         throw error;
       }
       let normalized;
@@ -919,7 +995,7 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
           now(),
         );
       } catch {
-        await clearAccessToken(options.tokenStore);
+        await clearSessionCredentials(options.tokenStore);
         throw new AuthApiError(
           0,
           "AUTH_INVALID_RESPONSE",
@@ -927,23 +1003,31 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         );
       }
       if (!normalized.data || normalized.data.status !== "AUTHENTICATED") {
-        await clearAccessToken(options.tokenStore);
+        await clearSessionCredentials(options.tokenStore);
         throw new AuthApiError(
           0,
           "AUTH_INVALID_RESPONSE",
           AUTH_SAFE_ERROR_MESSAGE,
         );
       }
-      await persistAccessToken(options.tokenStore, normalized.data.accessToken);
+      await persistSessionCredentials(
+        options.tokenStore,
+        normalized.data.accessToken,
+        refreshTokenFromAuthResponse(parsed),
+      );
       return normalized;
     },
 
     async logout() {
       let parsed: unknown;
       try {
-        parsed = await post(AUTH_LOGOUT_PATH, {});
+        const refreshToken = await readRefreshToken(options.tokenStore);
+        parsed = await post(
+          AUTH_LOGOUT_PATH,
+          refreshToken ? { refreshToken } : {},
+        );
       } finally {
-        await clearAccessToken(options.tokenStore);
+        await clearSessionCredentials(options.tokenStore);
       }
       return logoutResult(parsed);
     },

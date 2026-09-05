@@ -1,0 +1,65 @@
+{
+  "timestamp": "2026-08-13T15:46:34.210Z",
+  "neonProject": "salary-hijacking",
+  "neonProjectId": "still-feather-22153967",
+  "neonPlan": "Free",
+  "restoreWindow": "6h",
+  "sourceBranch": "staging",
+  "sourceBranchId": "br-fragrant-sky-aj5kk2c3",
+  "pitrTestOffset": "10 minutes before branch creation target",
+  "pitrTestPointInTime": "2026-08-14 00:24 KST",
+  "pitrTestMode": "point-in-time temporary branch",
+  "pitrBranchName": "pitr-rehearsal-20260814",
+  "pitrBranchId": "br-odd-base-ajl0hbn9",
+  "pitrBranchParent": "staging",
+  "pitrBranchReadyAt": "2026-08-14 00:36 KST",
+  "temporaryBranchAutoDelete": "After 1 Day",
+  "userNeonEvidence": {
+    "pitrBranchExists": true,
+    "publicTableCount": 41,
+    "migrationLedgerRows": 14,
+    "migrationLedgerVerifiedApplied": 14,
+    "cleanup": "AUTO_DELETE_AFTER_1_DAY_OR_MANUAL_ALLOWED_AFTER_EVIDENCE"
+  },
+  "codexReadOnlyVerification": {
+    "checkedAt": "2026-08-13T15:46:34.210Z",
+    "projectId": "still-feather-22153967",
+    "branchId": "br-odd-base-ajl0hbn9",
+    "database": "neondb",
+    "publicPhysicalTables": 41,
+    "migrationLedgerRows": 14,
+    "migrationLedgerVerifiedApplied": 14,
+    "computeId": "ep-silent-truth-ajhrxmc4",
+    "computeState": "active",
+    "region": "aws-us-east-2"
+  },
+  "rpoEvaluation": {
+    "target": "15m",
+    "selectedRecoveryPointAge": "10m",
+    "status": "PASS",
+    "reason": "A point-in-time recovery point inside the 15-minute loss budget was selected and materialized into a usable Neon temporary branch."
+  },
+  "rtoEvaluation": {
+    "target": "2h",
+    "branchMaterializationBound": "<2 minutes",
+    "conservativeApplicationValidationAllowance": "well below 2h for reconnect plus schema/ledger validation based on this rehearsal",
+    "status": "PASS",
+    "note": "Exact Create-button seconds were not separately recorded; this is a conservative upper-bound rehearsal result, not a sub-minute precision claim."
+  },
+  "finalStatus": {
+    "db009": "PASS",
+    "db010": "PASS",
+    "phase2": "PASS",
+    "d017": "PASS",
+    "phase3EntryReadiness": "READY",
+    "projectCompletion100": false,
+    "commercialLaunchReady": false
+  },
+  "safety": {
+    "productionMutation": false,
+    "mainBranchMutation": false,
+    "planUpgrade": false,
+    "temporaryBranchDeletedByCodex": false,
+    "secretsExposed": false
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Salary Hijacking Privacy-Safe Analytics Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "eventId",
+    "eventName",
+    "eventVersion",
+    "occurredAt",
+    "source",
+    "identifierPolicy",
+    "consentClass",
+    "parameters"
+  ],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "minLength": 12,
+      "maxLength": 80
+    },
+    "eventName": {
+      "enum": [
+        "screen_view",
+        "signup_completed",
+        "login_completed",
+        "payroll_setup_completed",
+        "plan_saved",
+        "daily_budget_viewed",
+        "expense_created",
+        "saving_created",
+        "mission_completed",
+        "community_post_created",
+        "ad_impression",
+        "ad_click",
+        "partner_inquiry_started",
+        "partner_inquiry_submitted",
+        "experiment_exposed"
+      ]
+    },
+    "eventVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 99
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "enum": [
+        "web",
+        "mobile",
+        "admin",
+        "api",
+        "scheduler",
+        "notifications"
+      ]
+    },
+    "identifierPolicy": {
+      "enum": [
+        "anonymous_or_pseudonymous",
+        "authenticated_pseudonymous",
+        "aggregate_only"
+      ]
+    },
+    "consentClass": {
+      "enum": [
+        "essential_operational",
+        "product_analytics",
+        "advertising_or_personalized"
+      ]
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    }
+  }
+}

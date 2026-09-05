@@ -132,6 +132,75 @@ test("marks sensitive proof false when public response headers expose raw identi
   assert.equal(proof.content.noSensitiveRawDataExposed, false);
 });
 
+test("accepts privacy proof headers that explicitly declare no raw exposure", async () => {
+  const proof = await collectPublicUrlProof({
+    baseUrl: "https://salaryhijacking.com",
+    fetchImpl: makeFetch({
+      "/": {
+        headers: {
+          "x-raw-push-token-exposed": "false",
+          "x-financial-raw-data-exposed": "false",
+          "x-ad-financial-targeting": "separated",
+        },
+      },
+      "/privacy": {
+        headers: {
+          "x-raw-push-token-exposed": "false",
+        },
+      },
+      "/support": {
+        headers: {
+          "x-raw-push-token-exposed": "false",
+        },
+      },
+      "/terms": {
+        headers: {
+          "x-raw-push-token-exposed": "false",
+        },
+      },
+    }),
+    writeFile: false,
+  });
+
+  assert.equal(proof.content.noSensitiveRawDataExposed, true);
+});
+
+test("accepts safe infrastructure headers that contain sensitive words as names only", async () => {
+  const proof = await collectPublicUrlProof({
+    baseUrl: "https://salaryhijacking.com",
+    fetchImpl: makeFetch({
+      "/": {
+        headers: {
+          "access-control-allow-headers":
+            "authorization, content-type, cookie, x-request-id",
+          link: '<https://salaryhijacking.com/>; rel="canonical"',
+          "permissions-policy": "camera=(), microphone=(), geolocation=()",
+          "x-server-authority": "true",
+          "x-service-name": "salary-hijacking-api",
+        },
+      },
+      "/privacy": {
+        headers: {
+          "x-service-name": "salary-hijacking-api",
+        },
+      },
+      "/support": {
+        headers: {
+          "x-server-authority": "true",
+        },
+      },
+      "/terms": {
+        headers: {
+          link: '<https://salaryhijacking.com/terms>; rel="canonical"',
+        },
+      },
+    }),
+    writeFile: false,
+  });
+
+  assert.equal(proof.content.noSensitiveRawDataExposed, true);
+});
+
 test("marks header proof false when CSP or privacy headers are missing", async () => {
   const proof = await collectPublicUrlProof({
     baseUrl: "https://salaryhijacking.com",

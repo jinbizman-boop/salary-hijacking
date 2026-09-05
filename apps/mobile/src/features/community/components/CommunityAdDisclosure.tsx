@@ -1,6 +1,18 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
+import {
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../../shared/api/url-validation";
+import {
+  componentColors,
+  componentRadius,
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components";
 import type { CommunityAdDisclosureModel } from "../community.types";
+
+const typography = salaryHijackingDesignSystem.typography;
 
 export type CommunityAdDisclosureProps = Readonly<{
   model: CommunityAdDisclosureModel;
@@ -9,10 +21,9 @@ export type CommunityAdDisclosureProps = Readonly<{
 
 function isSafeAdDestinationUrl(value: string): boolean {
   try {
-    const url = new URL(value);
-    return (
-      url.protocol === "https:" && url.username === "" && url.password === ""
-    );
+    if (!isValidUrlString(value)) throw new Error("INVALID_URL");
+    const urlParts = parseMobileBaseUrlParts(value);
+    return urlParts?.protocol === "https:" && !urlParts.containsCredentials;
   } catch {
     return false;
   }
@@ -70,12 +81,12 @@ export function CommunityAdDisclosure({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 6,
-    padding: 14,
+    gap: componentSpacing.xs,
+    padding: componentSpacing.sm,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    backgroundColor: "#F8FAFC",
+    borderColor: componentColors.line,
+    borderRadius: componentRadius.card,
+    backgroundColor: componentColors.surfaceSoft,
   },
   pressed: {
     opacity: 0.78,
@@ -84,26 +95,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     alignItems: "center",
-    gap: 8,
+    gap: componentSpacing.sm,
   },
   label: {
-    color: "#713F12",
-    fontSize: 12,
-    fontWeight: "800",
+    color: componentColors.warningOrange,
+    fontSize: typography.labelS.fontSize,
+    fontWeight: typography.labelS.fontWeight,
   },
   context: {
     flexShrink: 1,
-    color: "#6B7280",
-    fontSize: 11,
+    color: componentColors.textSecondary,
+    fontSize: typography.caption.fontSize,
   },
   title: {
-    color: "#111827",
-    fontSize: 15,
-    fontWeight: "700",
+    color: componentColors.textPrimary,
+    fontSize: typography.labelL.fontSize,
+    fontWeight: typography.labelL.fontWeight,
   },
   description: {
-    color: "#4B5563",
-    fontSize: 13,
-    lineHeight: 19,
+    color: componentColors.textSecondary,
+    fontSize: typography.bodyS.fontSize,
+    lineHeight: typography.bodyS.lineHeight,
   },
 });

@@ -1,0 +1,131 @@
+{
+  "timestamp": "2026-08-27T11:51:26.018Z",
+  "currentRepositoryHeadBefore": "f4ce0c591ff3f1194164f98d9c511178dc1416fb",
+  "currentRepositoryHeadObserved": "f4ce0c591ff3f1194164f98d9c511178dc1416fb",
+  "applicationRcSourceShaBefore": "80cc5cdfb0758478791b19196e2812e7fa6d671f",
+  "applicationRcSourceShaAfter": "PENDING_POST_COMMIT_HEAD",
+  "rcSourceFingerprintAfter": "B8CEC31B8248EFE1BAB1AF84CCB602610151DA48F714345620FAC0FF2E23367A",
+  "mobileSourceChanged": "YES",
+  "phase8WebStatusNormalization": "WEB_INTERNAL_REQUIREMENTS_PASS=8; WEB_STRICT_REQUIREMENTS_EXTERNAL=8 when public/staging hosted runtime is required; implementation unchanged.",
+  "phase7Ops010StatusNormalization": "CORRECTED_TO_PARTIAL_FEATURE_FLAG_KILL_SWITCH_TRACK; provider build-log access is not treated as OPS-010.",
+  "phase9Status": "EXTERNAL_BLOCKER",
+  "phase9InternalStatus": "PASS",
+  "phase9ExternalStatus": "BLOCKED_CURRENT_SOURCE_ANDROID_RUNTIME_AND_SAME_RC_APK",
+  "status": {
+    "mobileRouteCount": 27,
+    "mobileProductionRoutesPass": 27,
+    "mobileProductionRoutesPartial": 0,
+    "mobileProductionRoutesFail": 0,
+    "routerBootContract": "PASS",
+    "productionMockSuccessPaths": 0,
+    "productionNoopSuccessPaths": 0,
+    "productionSampleSuccessPaths": 0,
+    "authMobile": "PASS_SOURCE_INTERNAL",
+    "sessionRestoreInternal": "PASS_SOURCE_INTERNAL",
+    "sessionRestoreDeviceRuntime": "PENDING_RELEASE_TRACK",
+    "secureStorage": "PASS_SOURCE_INTERNAL",
+    "mobilePlaintextCredentialStorage": 0,
+    "salaryHome": "PASS_SOURCE_INTERNAL",
+    "payroll": "PASS_SOURCE_INTERNAL",
+    "planBudget": "PASS_SOURCE_INTERNAL",
+    "expenses": "PASS_SOURCE_INTERNAL",
+    "savings": "PASS_SOURCE_INTERNAL",
+    "clientFinanceAuthority": 0,
+    "financeServerAuthorityRegression": 0,
+    "notifications": "PASS_CURSOR_CLIENT_SOURCE",
+    "deviceTokenClient": "PASS_SOURCE_INTERNAL_PROVIDER_RUNTIME_EXTERNAL",
+    "deeplink": "PASS",
+    "invalidProductionDeeplinkTargets": 0,
+    "growthMobile": "PASS_SOURCE_INTERNAL_STATIC_SUCCESS_REMOVED",
+    "communityMobile": "PASS_SOURCE_INTERNAL",
+    "writeMobile": "PASS_SOURCE_INTERNAL",
+    "profileMobile": "PASS_SOURCE_INTERNAL",
+    "loadingStates": "PASS",
+    "emptyStates": "PASS",
+    "errorStates": "PASS",
+    "offlineStates": "PASS_SOURCE_INTERNAL",
+    "permissionStates": "PASS_SOURCE_INTERNAL",
+    "validationStates": "PASS",
+    "offlineWriteQueue": "PASS_SOURCE_INTERNAL_IDEMPOTENCY_KEY_PRESERVED",
+    "offlineRetryDuplicates": 0,
+    "keyboard": "PASS_SOURCE_INTERNAL",
+    "safeArea": "PASS_SOURCE_INTERNAL",
+    "a11yBaseline": "PASS_SOURCE_INTERNAL",
+    "mobileCrossAccountCacheLeak": 0,
+    "mobileAnalyticsRawFinancial": 0,
+    "mobileAnalyticsRawPii": 0,
+    "mobileAnalyticsToken": 0,
+    "mobileAnalyticsFreeText": 0,
+    "routeSmoke": "PASS_SOURCE_ROUTE_INVENTORY",
+    "routeCrashes": 0,
+    "runtimeClass": "SOURCE_TEST",
+    "androidCurrentSourceRuntime": "EXTERNAL_BLOCKER_NOT_EXECUTED",
+    "previousApkCurrent": "NO_SOURCE_CHANGED_REQUIRES_NEW_SAME_RC_RUNTIME",
+    "perf010Prep": "PREPARED_UNMEASURED",
+    "perf011Prep": "PREPARED_UNMEASURED",
+    "perf012Prep": "PREPARED_UNMEASURED",
+    "perf013Prep": "PREPARED_UNMEASURED",
+    "perf014Prep": "PREPARED_UNMEASURED",
+    "rel004Phase9Precondition": "PASS_SOURCE_INTERNAL_RELEASE_ARTIFACT_PENDING",
+    "d013": "FAIL",
+    "d016": "PARTIAL",
+    "d017": "PASS",
+    "d026": "FAIL",
+    "projectCompletion100": false,
+    "commercialLaunchReady": false,
+    "phase10FunctionalReadiness": "READY",
+    "phase10SameRcApkReadiness": "PENDING"
+  },
+  "blockers": {
+    "internal": [],
+    "external": [
+      "current-source Android emulator/physical runtime evidence",
+      "same-RC APK for Phase 10 visual acceptance",
+      "Phase 3 OAuth/email/Admin MFA external tracks",
+      "Phase 5 FCM/natural cron/physical push external tracks",
+      "Phase 8 public web route migration approval"
+    ]
+  },
+  "outputFiles": [
+    {
+      "path": "docs/mobile/PHASE_9_MOBILE_FUNCTIONAL_COMPLETION.json",
+      "sha256": "F93AA3CE1CFA08B3910D1D69214D93946A502D4EC1F08C1E04000D7B1D8E4C02"
+    },
+    {
+      "path": "docs/mobile/PHASE_9_CLOSURE_REPORT.md",
+      "sha256": "1D7DBE03CA172DE783E792E596C4EEE53315B2E509A97FA6400D225A7934BFB5"
+    },
+    {
+      "path": "docs/mobile/MOBILE_ROUTE_FUNCTION_MATRIX.csv",
+      "sha256": "0F7D0D61CF8186E8117565DF4843BFF68FD712FA31E2EAA2482F648885EBC12F"
+    },
+    {
+      "path": "docs/mobile/MOBILE_STATE_MATRIX.csv",
+      "sha256": "6514EE108E0DE16078DEF3D24D407DCC8D6EB05FF8E27D75961FBBCF891F6688"
+    },
+    {
+      "path": "docs/mobile/MOCK_FALLBACK_AUDIT.md",
+      "sha256": "BC182CED62C6A0E526E0400DE48562FF07A0C1A7F5AE68FC825429A1DE8F4DCB"
+    },
+    {
+      "path": "docs/mobile/MOBILE_API_SERVER_READBACK_MATRIX.csv",
+      "sha256": "50114D5897206E607F50CADF63F110F1699BD9885F8237E36EFA7C4EA398826F"
+    },
+    {
+      "path": "docs/mobile/PHASE_9_MOBILE_SECURITY_AUDIT.md",
+      "sha256": "1C31A6D3BA269772E84608C55381E340AF69113CAEC4C6FC79CFD053AE3B9B80"
+    },
+    {
+      "path": "docs/mobile/PHASE_9_OFFLINE_RECONNECT_REPORT.md",
+      "sha256": "4426D49F597DC6D8049AED92F91D919F96BFAC71A5A27158B315949A85C5592B"
+    },
+    {
+      "path": "docs/mobile/PHASE_9_SESSION_RESTORE_REPORT.md",
+      "sha256": "29CE3826A955C5849E605148F542C9A0A03B5556AD3375F0BF6B432A7D7ADDF2"
+    },
+    {
+      "path": "docs/mobile/RC_SOURCE_FINGERPRINT_AFTER.json",
+      "sha256": "A5B9BCD48B618A01802BF45BA150ADCA5B22875E96B82AF8C64627D92B70E6F5"
+    }
+  ]
+}

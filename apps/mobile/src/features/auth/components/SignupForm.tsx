@@ -1,15 +1,21 @@
 import { useState } from "react";
-import { StyleSheet, TextInput, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 import type { AuthRegisterRequest } from "../types";
 import { authVisualColors } from "./AuthVisualFrame";
+import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
+
+const designSystem = salaryHijackingDesignSystem;
 
 export type SignupFormProps = Readonly<{
   onSubmit: (request: AuthRegisterRequest) => void;
   loading?: boolean;
 }>;
 
-export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
+export function SignupForm({
+  loading = false,
+  onSubmit,
+}: SignupFormProps): React.ReactElement {
   const [email, setEmail] = useState("");
   const [nickname, setNickname] = useState("");
   const [password, setPassword] = useState("");
@@ -35,7 +41,7 @@ export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
         inputMode="email"
         onChangeText={setEmail}
         placeholder="아이디"
-        placeholderTextColor="#D6D9DC"
+        placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="next"
         style={styles.input}
         textContentType="username"
@@ -47,7 +53,7 @@ export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
         autoCapitalize="none"
         onChangeText={setNickname}
         placeholder="닉네임"
-        placeholderTextColor="#D6D9DC"
+        placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="next"
         style={styles.input}
         textContentType="nickname"
@@ -61,13 +67,30 @@ export function SignupForm({ onSubmit }: SignupFormProps): React.ReactElement {
         onChangeText={setPassword}
         onSubmitEditing={submit}
         placeholder="비밀번호"
-        placeholderTextColor="#D6D9DC"
+        placeholderTextColor={authVisualColors.placeholder}
         returnKeyType="done"
         secureTextEntry
         style={styles.input}
         textContentType="newPassword"
         value={password}
       />
+      <Pressable
+        accessibilityLabel="회원가입 완료"
+        accessibilityRole="button"
+        accessibilityState={{ disabled: loading }}
+        disabled={loading}
+        onPress={submit}
+        unstable_pressDelay={0}
+        style={({ pressed }) => [
+          styles.submitButton,
+          pressed && !loading ? styles.submitPressed : null,
+          loading ? styles.submitDisabled : null,
+        ]}
+      >
+        <Text allowFontScaling={false} style={styles.submitText}>
+          {loading ? "가입 중" : "회원가입 완료"}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -79,16 +102,35 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   input: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: designSystem.colors.surface.default,
     borderColor: authVisualColors.fieldLine,
-    borderRadius: 0,
+    borderRadius: designSystem.radius.md,
     borderWidth: 1,
     color: authVisualColors.ink,
-    fontSize: 17,
-    fontWeight: "700",
-    height: 55,
+    fontSize: designSystem.typography.bodyL.fontSize,
+    fontWeight: designSystem.typography.bodyL.fontWeight,
+    minHeight: designSystem.layout.touchTarget + designSystem.spacing[3],
     includeFontPadding: false,
-    letterSpacing: 0,
-    paddingHorizontal: 17,
+    letterSpacing: designSystem.typography.bodyL.letterSpacing,
+    paddingHorizontal: designSystem.spacing[4],
+  },
+  submitButton: {
+    alignItems: "center",
+    backgroundColor: designSystem.colors.brand.primary,
+    borderRadius: designSystem.radius.md,
+    justifyContent: "center",
+    marginTop: designSystem.spacing[4],
+    minHeight: 56,
+    ...designSystem.elevation.low,
+  },
+  submitDisabled: {
+    backgroundColor: designSystem.colors.text.disabled,
+  },
+  submitPressed: {
+    backgroundColor: designSystem.colors.brand.primaryPressed,
+  },
+  submitText: {
+    color: designSystem.colors.text.inverse,
+    ...designSystem.typography.labelL,
   },
 });

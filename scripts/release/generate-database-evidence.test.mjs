@@ -59,6 +59,25 @@ const makeWorkspace = () => {
   return rootDir;
 };
 
+const writePassingStaticRlsAudit = (rootDir) => {
+  write(
+    rootDir,
+    "artifacts/qa/d017-db-rls-rollback-static-current.json",
+    JSON.stringify(
+      {
+        ok: true,
+        migrationFileCount: 2,
+        userOwnedTableCount: 3,
+        destructiveStatementCount: 0,
+        failedChecks: 0,
+        failures: [],
+      },
+      null,
+      2,
+    ),
+  );
+};
+
 test("builds blocked database evidence from checked-in migrations without secrets", () => {
   const rootDir = makeWorkspace();
 
@@ -75,11 +94,31 @@ test("builds blocked database evidence from checked-in migrations without secret
   assert.equal(evidence.neon.projectMatched, false);
   assert.equal(evidence.migrations.migrationFilesVerified, true);
   assert.equal(evidence.migrations.migrationFileCount, 2);
+  assert.equal(evidence.migrations.staticRlsRollbackAuditVerified, false);
   assert.equal(evidence.migrations.migrationValidationVerified, false);
   assert.equal(evidence.seeds.stagingSeedExecuted, false);
+  assert.equal(evidence.smoke.persistenceE2eSmokeVerified, false);
   assert.equal(evidence.smoke.noRawFinancialDataInSmokePayloads, false);
   assert.equal(evidence.rollback.rollbackRehearsalVerified, false);
   assert.doesNotMatch(JSON.stringify(evidence), /postgres(?:ql)?:\/\//i);
+});
+
+test("records static RLS rollback audit without treating it as staging runtime proof", () => {
+  const rootDir = makeWorkspace();
+  writePassingStaticRlsAudit(rootDir);
+
+  const evidence = buildDatabaseEvidence({
+    rootDir,
+    now: () => new Date("2026-07-01T05:05:00.000Z"),
+  });
+
+  assert.equal(evidence.migrations.staticRlsRollbackAuditVerified, true);
+  assert.equal(evidence.migrations.stagingMigrationExecuted, false);
+  assert.equal(evidence.rollback.rollbackRehearsalVerified, false);
+  assert.match(
+    evidence.nextEvidenceRequired.join("\n"),
+    /Authenticated payroll\/plan\/budget persistence/i,
+  );
 });
 
 test("cleans generated database evidence fixture workspaces", () => {
@@ -93,6 +132,7 @@ test("cleans generated database evidence fixture workspaces", () => {
 
 test("uses a local proof file to mark verified database release gates", () => {
   const rootDir = makeWorkspace();
+  writePassingStaticRlsAudit(rootDir);
   const proofPath = path.join(rootDir, "release", "database-proof.local.json");
   write(
     rootDir,
@@ -121,6 +161,7 @@ test("uses a local proof file to mark verified database release gates", () => {
           adminSmokeVerified: true,
           serverAuthoritySmokeVerified: true,
           privacySmokeVerified: true,
+          persistenceE2eSmokeVerified: true,
           noRawFinancialDataInSmokePayloads: true,
         },
         rollback: {
@@ -152,6 +193,7 @@ test("uses a local proof file to mark verified database release gates", () => {
   assert.equal(evidence.smoke.adminSmokeVerified, true);
   assert.equal(evidence.smoke.serverAuthoritySmokeVerified, true);
   assert.equal(evidence.smoke.privacySmokeVerified, true);
+  assert.equal(evidence.smoke.persistenceE2eSmokeVerified, true);
   assert.equal(evidence.smoke.noRawFinancialDataInSmokePayloads, true);
   assert.equal(evidence.rollback.rollbackRehearsalVerified, true);
   assert.deepEqual(evidence.nextEvidenceRequired, []);
@@ -207,6 +249,11 @@ test("uses staging smoke command proof by default when database proof file is ab
             exitCode: 0,
             noRawPayloadStored: true,
           },
+          persistenceE2eSmoke: {
+            verified: true,
+            exitCode: 0,
+            noRawPayloadStored: true,
+          },
         },
         seeds: {
           productionSeedExecuted: false,
@@ -231,6 +278,7 @@ test("uses staging smoke command proof by default when database proof file is ab
   assert.equal(evidence.smoke.adminSmokeVerified, true);
   assert.equal(evidence.smoke.serverAuthoritySmokeVerified, true);
   assert.equal(evidence.smoke.privacySmokeVerified, true);
+  assert.equal(evidence.smoke.persistenceE2eSmokeVerified, true);
   assert.equal(evidence.smoke.noRawFinancialDataInSmokePayloads, true);
   assert.equal(evidence.rollback.rollbackRehearsalVerified, true);
 });

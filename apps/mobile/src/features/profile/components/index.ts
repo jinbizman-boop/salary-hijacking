@@ -15,3 +15,4 @@ export {
   type ProfileDetailScreenProps,
   type ProfileDetailVariant,
 } from "./ProfileDetailScreen";
+export { ProfileScreen, type ProfileScreenProps } from "./ProfileScreen";

@@ -6,12 +6,19 @@ import {
   NOTIFICATIONS_SAFE_ERROR_MESSAGE,
   NOTIFICATIONS_UNREAD_COUNT_PATH,
 } from "./constants";
+import {
+  isMobileLocalApiHost,
+  isValidUrlString,
+  parseMobileBaseUrlParts,
+} from "../../shared/api/url-validation";
 import type {
   NotificationChannel,
   NotificationDevice,
   NotificationDevicePlatform,
+  NotificationDeviceProvider,
   NotificationDeviceRegistrationRequest,
   NotificationDeviceStatus,
+  NotificationDeviceTokenSource,
   NotificationItem,
   NotificationListResult,
   NotificationPriority,
@@ -103,6 +110,18 @@ const NOTIFICATION_DEVICE_STATUSES = new Set<NotificationDeviceStatus>([
   "REVOKED",
 ]);
 
+const NOTIFICATION_DEVICE_PROVIDERS = new Set<NotificationDeviceProvider>([
+  "FCM",
+  "APNS",
+  "EXPO",
+]);
+
+const NOTIFICATION_DEVICE_TOKEN_SOURCES =
+  new Set<NotificationDeviceTokenSource>([
+    "NATIVE_DEVICE",
+    "EXPO_PUSH_SERVICE",
+  ]);
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -178,9 +197,8 @@ function normalizeBaseUrl(value: string): string {
   const normalized = value.trim().replace(/\/+$/u, "");
   if (!normalized) return "";
 
-  let url: URL;
   try {
-    url = new URL(normalized);
+    if (!isValidUrlString(normalized)) throw new Error("INVALID_URL");
   } catch {
     throw new NotificationsApiError(
       0,
@@ -189,7 +207,8 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  if (url.username || url.password) {
+  const baseUrlParts = parseMobileBaseUrlParts(normalized);
+  if (!baseUrlParts || baseUrlParts.containsCredentials) {
     throw new NotificationsApiError(
       0,
       "NOTIFICATION_INVALID_BASE_URL",
@@ -197,11 +216,11 @@ function normalizeBaseUrl(value: string): string {
     );
   }
 
-  const localHost =
-    url.hostname === "localhost" ||
-    url.hostname === "127.0.0.1" ||
-    url.hostname === "10.0.2.2";
-  if (url.protocol !== "https:" && !(url.protocol === "http:" && localHost)) {
+  const localHost = isMobileLocalApiHost(baseUrlParts.hostname);
+  if (
+    baseUrlParts.protocol !== "https:" &&
+    !(baseUrlParts.protocol === "http:" && localHost)
+  ) {
     throw new NotificationsApiError(
       0,
       "NOTIFICATION_INSECURE_BASE_URL",
@@ -357,9 +376,10 @@ function normalizeListResult(value: unknown): NotificationListResult {
   const data = value.data;
   if (
     !Array.isArray(data.items) ||
-    !isNonNegativeInteger(data.page) ||
-    !isNonNegativeInteger(data.pageSize) ||
-    !isNonNegativeInteger(data.total)
+    !isNotificationCursor(data.cursor, true) ||
+    !isNotificationCursor(data.nextCursor, true) ||
+    typeof data.hasMore !== "boolean" ||
+    !isPositiveBoundedLimit(data.limit)
   ) {
     throw new NotificationsApiError(
       0,
@@ -368,10 +388,11 @@ function normalizeListResult(value: unknown): NotificationListResult {
     );
   }
   return {
+    cursor: data.cursor === null ? null : data.cursor.trim(),
+    hasMore: data.hasMore,
     items: data.items.map(normalizeNotificationItem),
-    page: data.page,
-    pageSize: data.pageSize,
-    total: data.total,
+    limit: data.limit,
+    nextCursor: data.nextCursor === null ? null : data.nextCursor.trim(),
   };
 }
 
@@ -556,6 +577,30 @@ function normalizeDeviceStatus(value: unknown): NotificationDeviceStatus {
   return invalidNotificationsResponse();
 }
 
+function normalizeDeviceProvider(
+  value: unknown,
+): NotificationDeviceProvider {
+  if (
+    typeof value === "string" &&
+    NOTIFICATION_DEVICE_PROVIDERS.has(value as NotificationDeviceProvider)
+  ) {
+    return value as NotificationDeviceProvider;
+  }
+  return invalidNotificationsResponse();
+}
+
+function normalizeDeviceTokenSource(
+  value: unknown,
+): NotificationDeviceTokenSource {
+  if (
+    typeof value === "string" &&
+    NOTIFICATION_DEVICE_TOKEN_SOURCES.has(value as NotificationDeviceTokenSource)
+  ) {
+    return value as NotificationDeviceTokenSource;
+  }
+  return invalidNotificationsResponse();
+}
+
 function normalizePushTokenPreview(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (
@@ -586,9 +631,13 @@ function normalizeNotificationDevice(value: unknown): NotificationDevice {
   return {
     deviceId: value.deviceId.trim(),
     platform: normalizeDevicePlatform(value.platform),
+    provider: normalizeDeviceProvider(value.provider ?? "FCM"),
     pushTokenHashOnly: true,
     pushTokenPreview: normalizePushTokenPreview(value.pushTokenPreview),
     status: normalizeDeviceStatus(value.status),
+    tokenSource: normalizeDeviceTokenSource(
+      value.tokenSource ?? "NATIVE_DEVICE",
+    ),
     registeredAt: value.registeredAt,
     updatedAt: value.updatedAt,
     revokedAt: normalizeNullableTimestamp(value.revokedAt),
@@ -664,17 +713,58 @@ function validRegistrationRequest(
       "deviceId",
       "locale",
       "platform",
+      "provider",
       "pushToken",
+      "tokenSource",
     ]) &&
     typeof request.deviceId === "string" &&
     /^[A-Za-z0-9_.:-]+$/u.test(request.deviceId) &&
     NOTIFICATION_DEVICE_PLATFORMS.has(request.platform) &&
+    NOTIFICATION_DEVICE_PROVIDERS.has(
+      request.provider ?? providerForPlatform(request.platform),
+    ) &&
+    NOTIFICATION_DEVICE_TOKEN_SOURCES.has(
+      request.tokenSource ?? tokenSourceForProvider(request.provider),
+    ) &&
     typeof request.pushToken === "string" &&
     request.pushToken.trim().length > 0 &&
-    request.pushToken.length <= 500 &&
+    request.pushToken.length <= 4096 &&
+    validTokenForProvider(request) &&
     optionalSafeText(request.appVersion, 80) &&
     optionalSafeText(request.locale, 40)
   );
+}
+
+function providerForPlatform(
+  platform: NotificationDevicePlatform,
+): NotificationDeviceProvider {
+  if (platform === "IOS") return "APNS";
+  if (platform === "ANDROID") return "FCM";
+  return "EXPO";
+}
+
+function tokenSourceForProvider(
+  provider: NotificationDeviceProvider | undefined,
+): NotificationDeviceTokenSource {
+  return provider === "EXPO" ? "EXPO_PUSH_SERVICE" : "NATIVE_DEVICE";
+}
+
+function isExpoPushServiceToken(value: string): boolean {
+  return /\b(?:Expo|Exponent)PushToken\[[A-Za-z0-9_-]{8,}\]/u.test(value);
+}
+
+function validTokenForProvider(
+  request: NotificationDeviceRegistrationRequest,
+): boolean {
+  const provider = request.provider ?? providerForPlatform(request.platform);
+  const tokenSource = request.tokenSource ?? tokenSourceForProvider(provider);
+  if (provider === "FCM") {
+    return tokenSource === "NATIVE_DEVICE" && !isExpoPushServiceToken(request.pushToken);
+  }
+  if (provider === "APNS") {
+    return tokenSource === "NATIVE_DEVICE" && !isExpoPushServiceToken(request.pushToken);
+  }
+  return tokenSource === "EXPO_PUSH_SERVICE" && isExpoPushServiceToken(request.pushToken);
 }
 
 function normalizeRegistrationDevicePlatform(
@@ -700,13 +790,33 @@ function normalizeRegistrationRequest(
       "deviceId",
       "locale",
       "platform",
+      "provider",
       "pushToken",
+      "tokenSource",
     ])
   ) {
     return null;
   }
   const platform = normalizeRegistrationDevicePlatform(request.platform);
   if (!platform) return null;
+  const provider =
+    typeof request.provider === "string" &&
+    NOTIFICATION_DEVICE_PROVIDERS.has(
+      request.provider.trim().toUpperCase() as NotificationDeviceProvider,
+    )
+      ? (request.provider.trim().toUpperCase() as NotificationDeviceProvider)
+      : providerForPlatform(platform);
+  const tokenSource =
+    typeof request.tokenSource === "string" &&
+    NOTIFICATION_DEVICE_TOKEN_SOURCES.has(
+      request.tokenSource
+        .trim()
+        .toUpperCase() as NotificationDeviceTokenSource,
+    )
+      ? (request.tokenSource
+          .trim()
+          .toUpperCase() as NotificationDeviceTokenSource)
+      : tokenSourceForProvider(provider);
   const normalizedRequest = {
     ...(request.appVersion !== undefined
       ? { appVersion: request.appVersion }
@@ -714,7 +824,9 @@ function normalizeRegistrationRequest(
     deviceId: request.deviceId,
     ...(request.locale !== undefined ? { locale: request.locale } : {}),
     platform,
+    provider,
     pushToken: request.pushToken,
+    tokenSource,
   } as NotificationDeviceRegistrationRequest;
   return validRegistrationRequest(normalizedRequest) ? normalizedRequest : null;
 }
@@ -758,19 +870,41 @@ function notificationDevicePath(deviceId: string): string {
   return `${NOTIFICATIONS_DEVICES_PATH}/${encodeURIComponent(normalized)}`;
 }
 
+function isNotificationCursor(
+  value: unknown,
+  nullable = false,
+): value is string | null {
+  if (value === null && nullable) return true;
+  return (
+    typeof value === "string" &&
+    value.trim().length >= 1 &&
+    value.trim().length <= 512 &&
+    /^[A-Za-z0-9_-]+$/u.test(value.trim())
+  );
+}
+
+function isPositiveBoundedLimit(value: unknown): value is number {
+  return (
+    typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= 1 &&
+    value <= 100
+  );
+}
+
 function normalizeListOptions(options: {
-  readonly page?: number;
-  readonly pageSize?: number;
+  readonly cursor?: string | null;
+  readonly limit?: number;
   readonly status?: NotificationStatus;
 }): {
-  readonly page: number;
-  readonly pageSize: number;
+  readonly cursor?: string;
+  readonly limit: number;
   readonly status?: NotificationStatus;
 } {
   if (
     !hasOnlyKeys(options as Record<string, unknown>, [
-      "page",
-      "pageSize",
+      "cursor",
+      "limit",
       "status",
     ])
   ) {
@@ -780,15 +914,11 @@ function normalizeListOptions(options: {
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  const page = options.page ?? 1;
-  const pageSize = options.pageSize ?? 20;
+  const limit = options.limit ?? 20;
+  const cursor = options.cursor?.trim() || undefined;
   if (
-    !Number.isSafeInteger(page) ||
-    page < 1 ||
-    page > 10_000 ||
-    !Number.isSafeInteger(pageSize) ||
-    pageSize < 1 ||
-    pageSize > 100 ||
+    !isPositiveBoundedLimit(limit) ||
+    (cursor !== undefined && !isNotificationCursor(cursor)) ||
     (options.status !== undefined && !NOTIFICATION_STATUSES.has(options.status))
   ) {
     throw new NotificationsApiError(
@@ -797,9 +927,11 @@ function normalizeListOptions(options: {
       NOTIFICATIONS_SAFE_ERROR_MESSAGE,
     );
   }
-  return options.status === undefined
-    ? { page, pageSize }
-    : { page, pageSize, status: options.status };
+  return {
+    ...(cursor !== undefined ? { cursor } : {}),
+    limit,
+    ...(options.status !== undefined ? { status: options.status } : {}),
+  };
 }
 
 export function createNotificationsApi(
@@ -861,11 +993,11 @@ export function createNotificationsApi(
 
   return {
     async list(options = {}): Promise<NotificationListResult> {
-      const { page, pageSize, status } = normalizeListOptions(options);
+      const { cursor, limit, status } = normalizeListOptions(options);
       const params = new URLSearchParams({
-        page: String(page),
-        pageSize: String(pageSize),
+        limit: String(limit),
       });
+      if (cursor) params.set("cursor", cursor);
       if (status) params.set("status", status);
       return normalizeListResult(
         await request(`${NOTIFICATIONS_PATH}?${params}`),

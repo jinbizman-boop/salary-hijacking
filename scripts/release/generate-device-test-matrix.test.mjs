@@ -117,3 +117,31 @@ test("writes the device matrix without copying raw temporary artifact URLs", () 
     fs.rmSync(rootDir, { force: true, recursive: true });
   }
 });
+
+test("defaults the updated date to the current KST day", () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "salary-device-"));
+  try {
+    writeJson(rootDir, "release/mobile-preview-evidence.json", {
+      schemaVersion: 1,
+      secretsRedacted: true,
+      containsSecretValues: false,
+      android: {},
+    });
+    writeJson(rootDir, "release/mobile-native-evidence.json", {
+      schemaVersion: 1,
+      secretsRedacted: true,
+      containsSecretValues: false,
+      android: {},
+    });
+
+    const matrix = buildDeviceTestMatrix({
+      now: () => new Date("2026-07-15T01:30:00.000Z"),
+      rootDir,
+    });
+
+    assert.match(matrix, /Updated: 2026-07-15 KST/u);
+    assert.doesNotMatch(matrix, /Updated: 2026-07-14 KST/u);
+  } finally {
+    fs.rmSync(rootDir, { force: true, recursive: true });
+  }
+});

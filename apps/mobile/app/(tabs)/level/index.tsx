@@ -1,39 +1,154 @@
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 
-import { AppHeader, AppShell } from "../../../src/shared/components";
+import {
+  AdBannerSlot,
+  AppHeader,
+  AppShell,
+  ErrorState,
+  LoadingSkeleton,
+  SurfaceCard,
+  componentColors,
+  salaryHijackingDesignSystem,
+} from "../../../src/shared/components";
 import {
   LevelActionGrid,
+  LevelGoalCard,
   LevelHeroCard,
 } from "../../../src/features/level/components";
 import {
   normalizeGrowthDashboardForLevel,
   type LevelDashboardNormalizationInput,
 } from "../../../src/features/level/dashboard-normalization";
+import {
+  loadGrowthContentForType,
+  loadGrowthDashboardSnapshot,
+} from "../../../src/features/level/controller";
+import {
+  LVUP_DEFAULT_GOALS,
+  buildGrowthGoalCards,
+  buildGrowthGoalSourceDecision,
+  buildInitialGrowthGoalChoice,
+  createColdStartRecommendation,
+  createCustomGrowthGoal,
+  materializeDailyMissionSnapshot,
+  type GrowthGoalDomain,
+  type GrowthGoalDefinition,
+  type GrowthGoalSourceDecisionResult,
+} from "../../../src/features/level/goal-architecture";
 import type { GrowthDashboard } from "../../../src/features/level/types";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
+import { XpToast } from "../../../src/shared/components/XpToast";
 
-const SCREEN_VERSION = "4.2.0-prototype-lv-main";
+const designSystem = salaryHijackingDesignSystem;
+const SCREEN_VERSION = "4.3.0-v3-goal-source-lv-main";
 const GROWTH_DASHBOARD_ENDPOINT = "/api/v1/growth/dashboard";
 const LEVEL_VISIBLE_COPY_CONTRACT = ["오늘의 성장", "균형 읽기"] as const;
+const LVUP_AD_HEADER_SLOT = "AD-APP-LVUP-01";
+const LVUP_AD_SUMMARY_SLOT = "AD-APP-LVUP-02";
 
-const dashboard: GrowthDashboard = {
-  profile: { level: 18, totalExp: 880 },
-  activeTaskCount: 4,
-  completedTaskCount: 12,
-  joinedChallengeCount: 2,
-  completedContentCount: 8,
-  todaySuggestion: "오늘의 레벨 업, 당신의 성장을 응원합니다!",
-  financialRawDataExposed: false,
-};
+export const levelStitchOverlayComponents = {
+  XpToast,
+} as const;
 
 const levelRoutes: Readonly<Record<string, string>> = {
-  reading: "/level/reading",
-  news: "/level/news",
+  HEALTH: "/level/health",
+  LANGUAGE: "/level/english",
+  NEWS: "/level/news",
+  READING: "/level/reading",
   english: "/level/english",
   health: "/level/health",
+  news: "/level/news",
+  reading: "/level/reading",
 };
 
 export default function LevelIndexScreen(): React.ReactElement {
   const router = useRouter();
+  const growthApi = useMemo(() => createMobileGrowthApi(), []);
+  const growthGoalCards = useMemo(() => buildGrowthGoalCards(), []);
+  const initialGoalChoice = useMemo(() => buildInitialGrowthGoalChoice(), []);
+  const readingDefaultGoal = useMemo(() => defaultGoalFor("READING"), []);
+  const readingRecommendation = useMemo(
+    () => createColdStartRecommendation("READING"),
+    [],
+  );
+  const customReadingGoal = useMemo(
+    () =>
+      createCustomGrowthGoal({
+        activeDays: ["MON", "WED", "FRI"],
+        domain: "READING",
+        frequency: "WEEKDAYS",
+        targetUnit: "page",
+        targetValue: 5,
+        title: "출근 전 독서",
+      }),
+    [],
+  );
+  const todayMissionSnapshot = useMemo(
+    () =>
+      materializeDailyMissionSnapshot({
+        goal: readingDefaultGoal,
+        plannedDate: "2026-09-05",
+      }),
+    [readingDefaultGoal],
+  );
+  const [serverDashboard, setServerDashboard] =
+    useState<GrowthDashboard | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [goalChoiceStatus, setGoalChoiceStatus] = useState<string | null>(null);
+  const [goalDecision, setGoalDecision] =
+    useState<GrowthGoalSourceDecisionResult | null>(null);
+  const [historicalMissionMutationCount, setHistoricalMissionMutationCount] =
+    useState(0);
+
+  function openGrowthDomain(domain: GrowthGoalDomain): void {
+    const route = levelRoutes[domain];
+    if (route) router.push(route as never);
+  }
+
+  function applyGoalDecision(
+    decision: "ACCEPTED" | "DECLINED" | "EDITED",
+  ): void {
+    const result =
+      decision === "EDITED"
+        ? buildGrowthGoalSourceDecision({
+            currentGoal: readingDefaultGoal,
+            decision,
+            editedGoal: customReadingGoal,
+            effectiveDate: "2026-09-06",
+            recommendation: readingRecommendation,
+          })
+        : buildGrowthGoalSourceDecision({
+            currentGoal: readingDefaultGoal,
+            decision,
+            effectiveDate: "2026-09-05",
+            recommendation: readingRecommendation,
+          });
+    setGoalDecision(result);
+    setHistoricalMissionMutationCount(0);
+  }
+
+  useEffect(() => {
+    let mounted = true;
+    setLoadError(null);
+    void loadGrowthDashboardSnapshot(growthApi)
+      .then((nextDashboard) => {
+        if (mounted) setServerDashboard(nextDashboard);
+      })
+      .catch(() => {
+        if (mounted) setLoadError("LV UP 데이터를 불러오지 못했습니다.");
+      });
+    void Promise.all([
+      loadGrowthContentForType(growthApi, "READING"),
+      loadGrowthContentForType(growthApi, "NEWS"),
+      loadGrowthContentForType(growthApi, "ENGLISH"),
+      loadGrowthContentForType(growthApi, "HEALTH"),
+    ]).catch(() => undefined);
+    return () => {
+      mounted = false;
+    };
+  }, [growthApi]);
 
   return (
     <AppShell
@@ -46,7 +161,120 @@ export default function LevelIndexScreen(): React.ReactElement {
         />
       }
     >
-      <LevelHeroCard dashboard={dashboard} />
+      <AdBannerSlot
+        description="성장 루틴 문맥과 분리된 제휴 영역입니다."
+        label="광고"
+        placement={LVUP_AD_HEADER_SLOT}
+        title="성장에 방해되지 않는 추천"
+      />
+      <SurfaceCard accessibilityLabel="LV UP 첫 목표 선택">
+        <Text style={styles.choiceTitle}>{initialGoalChoice.title}</Text>
+        <Text style={styles.choiceDescription}>
+          독서, 뉴스, 외국어, 운동을 기본 목표로 바로 시작하거나 나중에 직접
+          조정할 수 있어요. 추천은 자동 적용하지 않습니다.
+        </Text>
+        <View style={styles.choiceActions}>
+          {initialGoalChoice.options.map((option) => (
+            <Pressable
+              accessibilityLabel={option}
+              accessibilityRole="button"
+              key={option}
+              onPress={() => {
+                setGoalChoiceStatus(goalChoiceStatusForOption(option));
+              }}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>{option}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {goalChoiceStatus ? (
+          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
+            {goalChoiceStatus}
+          </Text>
+        ) : null}
+        <View
+          accessibilityLabel="LV UP 추천 목표 결정"
+          style={styles.recommendationPanel}
+        >
+          <Text style={styles.recommendationTitle}>추천 목표</Text>
+          <Text style={styles.choiceDescription}>
+            {readingRecommendation.basisSummary} 추천은 수락하기 전에는 오늘
+            목표에 자동 반영되지 않아요.
+          </Text>
+          <View style={styles.choiceActions}>
+            <Pressable
+              accessibilityLabel="추천 수락"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("ACCEPTED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>추천 수락</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="추천 수정 적용"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("EDITED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>추천 수정 적용</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="추천 거절"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("DECLINED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>추천 거절</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="직접 목표 저장"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("EDITED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>직접 목표 저장</Text>
+            </Pressable>
+          </View>
+          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
+            {goalDecision
+              ? goalDecisionStatus(goalDecision)
+              : "추천 대기 · 자동 적용 없음"}
+          </Text>
+          <Text style={styles.choiceDescription}>
+            오늘 미션 snapshot: {todayMissionSnapshot.targetValue}
+            {unitLabel(todayMissionSnapshot.targetUnit)} · 과거 미션 변경{" "}
+            {historicalMissionMutationCount}건
+          </Text>
+        </View>
+      </SurfaceCard>
+      <View accessibilityLabel="오늘 LV UP 목표" style={styles.goalGrid}>
+        {growthGoalCards.map((goal) => (
+          <View key={goal.domain} style={styles.goalItem}>
+            <LevelGoalCard
+              goal={goal}
+              onDetail={openGrowthDomain}
+              onEdit={openGrowthDomain}
+              onQuickComplete={openGrowthDomain}
+            />
+          </View>
+        ))}
+      </View>
       <LevelActionGrid
         actions={[
           {
@@ -72,11 +300,35 @@ export default function LevelIndexScreen(): React.ReactElement {
         ]}
         onSelect={(key) => {
           const route = levelRoutes[key];
-          if (route) router.push(route);
+          if (route) router.push(route as never);
         }}
       />
+      <AdBannerSlot
+        description="오늘 성장 활동 이후에만 표시되는 광고 슬롯입니다."
+        label="광고"
+        placement={LVUP_AD_SUMMARY_SLOT}
+        title="오늘의 추천"
+      />
+      {serverDashboard ? <LevelHeroCard dashboard={serverDashboard} /> : null}
+      {!serverDashboard && !loadError ? (
+        <LoadingSkeleton label="LV UP 서버 데이터를 불러오는 중" />
+      ) : null}
+      {!serverDashboard && loadError ? (
+        <ErrorState
+          message={loadError}
+          title="성장 정보를 확인할 수 없습니다"
+        />
+      ) : null}
     </AppShell>
   );
+}
+
+function defaultGoalFor(domain: GrowthGoalDomain): GrowthGoalDefinition {
+  const goal = LVUP_DEFAULT_GOALS.find(
+    (candidate) => candidate.domain === domain,
+  );
+  if (!goal) throw new Error("LVUP_DEFAULT_GOAL_MISSING");
+  return goal;
 }
 
 export function normalizeGrowthDashboardForTest(
@@ -95,7 +347,11 @@ export function assertMobileLevelIndexCompleteness(): {
     GROWTH_DASHBOARD_ENDPOINT,
     "AppShell",
     "LevelHeroCard",
+    "LevelGoalCard",
     "LevelActionGrid",
+    "가볍게 기본 목표로 시작할까요?",
+    LVUP_AD_HEADER_SLOT,
+    LVUP_AD_SUMMARY_SLOT,
     ...LEVEL_VISIBLE_COPY_CONTRACT,
     "오늘의 독서, 역량 레벨 업",
     "오늘의 소식, 정보 레벨업",
@@ -110,3 +366,84 @@ export function assertMobileLevelIndexCompleteness(): {
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
 }
+
+function goalChoiceStatusForOption(option: string): string {
+  if (option === "기본으로 시작") {
+    return "기본 목표로 오늘 활동을 바로 시작할 수 있어요.";
+  }
+  if (option === "나에게 맞게 추천받기") {
+    return "추천은 이유를 확인한 뒤 수락할 때만 적용돼요.";
+  }
+  return "직접 설정은 목표 수정에서 값과 요일을 선택해요.";
+}
+
+function goalDecisionStatus(
+  decision: GrowthGoalSourceDecisionResult,
+): string {
+  const autoApply = decision.recommendationAutoApplied ? "자동 적용" : "직접 적용";
+  return `${decision.selectedGoal.title} · ${decision.decision} · ${autoApply} · 적용일 ${decision.effectiveDate}`;
+}
+
+function unitLabel(unit: "article" | "minute" | "page" | "sentence"): string {
+  if (unit === "page") return "페이지";
+  if (unit === "article") return "개";
+  if (unit === "sentence") return "문장";
+  return "분";
+}
+
+const styles = StyleSheet.create({
+  choiceActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: designSystem.spacing[2],
+  },
+  choiceButton: {
+    alignItems: "center",
+    backgroundColor: componentColors.surfaceSoft,
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[3],
+    justifyContent: "center",
+  },
+  choiceButtonText: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
+  },
+  choiceDescription: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+  },
+  choiceStatus: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelS,
+  },
+  choiceTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
+  },
+  goalGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: designSystem.spacing[3],
+  },
+  goalItem: {
+    flexBasis: "47%",
+    flexGrow: 1,
+    minWidth: "47%",
+  },
+  pressed: {
+    opacity: 0.82,
+  },
+  recommendationPanel: {
+    borderColor: componentColors.line,
+    borderTopWidth: 1,
+    gap: designSystem.spacing[2],
+    paddingTop: designSystem.spacing[3],
+  },
+  recommendationTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelL,
+  },
+});

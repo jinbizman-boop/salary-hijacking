@@ -14,6 +14,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./analytics": {
+      "types": "./dist/analytics/analytics.schema.d.ts",
+      "import": "./dist/analytics/analytics.schema.js"
+    },
     "./auth": {
       "types": "./dist/auth/auth.schema.d.ts",
       "import": "./dist/auth/auth.schema.js"
@@ -44,6 +48,9 @@
       "auth": [
         "dist/auth/auth.schema.d.ts"
       ],
+      "analytics": [
+        "dist/analytics/analytics.schema.d.ts"
+      ],
       "common/error-code": [
         "dist/common/error-code.schema.d.ts"
       ],
@@ -72,7 +79,7 @@
     "clean": "node -e \"const fs=require('node:fs'); for (const p of ['dist','coverage','test-results','tsconfig.tsbuildinfo']) fs.rmSync(p,{recursive:true,force:true});\"",
     "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "build": "corepack pnpm run clean && tsc -p tsconfig.json && node ../../scripts/build/fix-esm-imports.mjs && corepack pnpm run validate:dist",
-    "validate:dist": "node -e \"const fs=require('node:fs'); const required=['dist/index.js','dist/index.d.ts','dist/auth/auth.schema.js','dist/auth/auth.schema.d.ts','dist/common/error-code.schema.js','dist/common/error-code.schema.d.ts','dist/common/response.schema.js','dist/common/response.schema.d.ts','dist/community/community.schema.js','dist/community/community.schema.d.ts','dist/payroll/payroll.schema.js','dist/payroll/payroll.schema.d.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[api-contract] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[api-contract] dist export map validation passed.');\"",
+    "validate:dist": "node -e \"const fs=require('node:fs'); const required=['dist/index.js','dist/index.d.ts','dist/analytics/analytics.schema.js','dist/analytics/analytics.schema.d.ts','dist/auth/auth.schema.js','dist/auth/auth.schema.d.ts','dist/common/error-code.schema.js','dist/common/error-code.schema.d.ts','dist/common/response.schema.js','dist/common/response.schema.d.ts','dist/community/community.schema.js','dist/community/community.schema.d.ts','dist/payroll/payroll.schema.js','dist/payroll/payroll.schema.d.ts']; const missing=required.filter((p)=>!fs.existsSync(p)); if(missing.length){console.error('[api-contract] missing dist files:', missing.join(', ')); process.exit(1);} console.log('[api-contract] dist export map validation passed.');\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "corepack pnpm run typecheck",
     "contract:assert": "node -e \"import('./dist/index.js').then((m)=>{const result=m.validateApiContractRegistry(new Date().toISOString()); if(!result.ok){console.error('[api-contract] registry validation failed'); console.error(JSON.stringify(result.issues,null,2)); process.exit(1);} console.log('[api-contract] registry validation passed with '+result.endpointCount+' endpoints.');}).catch((error)=>{console.error(error); process.exit(1);});\"",
@@ -139,6 +146,7 @@
       "auth",
       "common-error-code",
       "common-response",
+      "analytics",
       "community",
       "payroll",
       "budget",
@@ -150,6 +158,7 @@
       "idempotency",
       "audit",
       "privacy",
+      "web-analytics",
       "rbac",
       "rls",
       "ads-partner-data-separation",
@@ -203,6 +212,7 @@
     "publicExports": [
       ".",
       "./auth",
+      "./analytics",
       "./common/error-code",
       "./common/response",
       "./community",

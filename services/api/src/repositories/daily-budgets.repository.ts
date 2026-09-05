@@ -20,6 +20,7 @@ type DbRow = Record<string, unknown>;
 export interface DailyBudgetsDbQueryOptions<TEnv = unknown> {
   readonly operationName: string;
   readonly env: TEnv;
+  readonly principalUserId?: string;
 }
 
 export interface DailyBudgetsDbQueryResult<TRow extends DbRow = DbRow> {
@@ -92,6 +93,16 @@ async function defaultQuery<TEnv>(
         readonly rows: readonly DbRow[];
         readonly rowCount: number | null;
       }>;
+      connect: () => Promise<{
+        query: (
+          text: string,
+          values?: readonly DbValue[],
+        ) => Promise<{
+          readonly rows: readonly DbRow[];
+          readonly rowCount: number | null;
+        }>;
+        release: () => void;
+      }>;
       end: () => Promise<void>;
     };
     readonly neonConfig?: { fetchConnectionCache?: boolean };
@@ -106,9 +117,28 @@ async function defaultQuery<TEnv>(
     connectionTimeoutMillis: 10_000,
     statement_timeout: 30_000,
   });
+  const client = await pool.connect();
   try {
-    return await pool.query(sqlText, [...params]);
+    await client.query("begin");
+    if (options.principalUserId) {
+      await client.query(
+        "select set_config('app.current_user_id', $1, false), set_config('app.is_admin', 'false', false)",
+        [options.principalUserId],
+      );
+    }
+    const result = await client.query(sqlText, [...params]);
+    await client.query("commit");
+    return result;
+  } catch (error) {
+    await client.query("rollback").catch(() => undefined);
+    throw error;
   } finally {
+    await client
+      .query(
+        "select set_config('app.current_user_id', '', false), set_config('app.is_admin', '', false)",
+      )
+      .catch(() => undefined);
+    client.release();
     await pool.end();
   }
 }
@@ -311,6 +341,7 @@ function queryText<TEnv>(
   return repositoryQuery(sqlText, params, {
     operationName,
     env: runtime.env,
+    principalUserId: assertUuid(runtime.principal.userId, "principal.userId"),
   });
 }
 
@@ -492,6 +523,11 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
         runtime,
         "dailyBudgets.create",
         `
+          with _app_context as (
+            select
+              set_config('app.current_user_id', $1::text, true),
+              set_config('app.is_admin', 'false', true)
+          )
           insert into public.daily_budgets (
             user_id,
             budget_date,
@@ -502,7 +538,8 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
             status,
             calculated_at
           )
-          values ($1::uuid, $2::date, $3::bigint, 0, $3::bigint, 0, 'OPEN', now())
+          select $1::uuid, $2::date, $3::bigint, 0, $3::bigint, 0, 'OPEN', now()
+          from _app_context
           on conflict (user_id, budget_date)
           do update set
             daily_limit_amount = excluded.daily_limit_amount,
@@ -518,6 +555,7 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
               when public.daily_budgets.status = 'CLOSED' then public.daily_budgets.closed_at
               else null
             end
+          where public.daily_budgets.status <> 'CLOSED'
           returning *
         `,
         [
@@ -527,7 +565,7 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
         ],
       );
       const row = result.rows[0];
-      if (!row) throw new Error("Failed to create daily budget.");
+      if (!row) throw new Error("Failed to create daily budget; budget date is closed.");
       return rowToBudget(row, runtime.now, {
         source: input.source,
         memo: input.memo,
@@ -568,6 +606,7 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
             end
           where daily_budget_id = $1::uuid
             and user_id = $2::uuid
+            and (status <> 'CLOSED' or $4::text = 'CLOSED')
           returning *
         `,
         [
@@ -641,6 +680,13 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
         runtime,
         "dailyBudgets.recordSpend",
         `
+          with selected_budget as (
+            select daily_budget_id
+            from public.daily_budgets
+            where daily_budget_id = $2::uuid
+              and user_id = $1::uuid
+              and status <> 'CLOSED'
+          )
           insert into public.variable_expenses (
             user_id,
             daily_budget_id,
@@ -652,7 +698,8 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
             status,
             idempotency_key
           )
-          values ($1::uuid, $2::uuid, $3::timestamptz, $4, null, $5, $6::bigint, 'ACTIVE', $7)
+          select $1::uuid, selected_budget.daily_budget_id, $3::timestamptz, $4, null, $5, $6::bigint, 'ACTIVE', $7
+          from selected_budget
           on conflict (user_id, idempotency_key)
           where idempotency_key is not null
           do update set idempotency_key = excluded.idempotency_key
@@ -669,7 +716,7 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
         ],
       );
       const spendRow = result.rows[0];
-      if (!spendRow) throw new Error("Failed to record daily budget spend.");
+      if (!spendRow) throw new Error("Failed to record daily budget spend; budget is closed.");
       return {
         spend: rowToSpend(spendRow),
         budget: await queryBudgetById(repositoryQuery, budgetId, runtime),
@@ -706,6 +753,7 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
             calculated_at = now()
           where daily_budget_id = $1::uuid
             and user_id = $2::uuid
+            and status <> 'CLOSED'
           returning *
         `,
         [
@@ -805,6 +853,7 @@ export function createNeonDailyBudgetsRepository<TEnv = unknown>(
                 else 'OPEN'
               end,
               calculated_at = now()
+            where public.daily_budgets.status <> 'CLOSED'
             returning *
           )
           select *, count(*) over() as total_count

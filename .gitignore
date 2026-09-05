@@ -113,6 +113,31 @@ next-env.d.ts
 .expo/web/cache/
 apps/mobile/apps/
 android/
+!apps/mobile/android/
+apps/mobile/android/*
+!apps/mobile/android/app/
+apps/mobile/android/app/*
+!apps/mobile/android/app/src/
+apps/mobile/android/app/src/*
+!apps/mobile/android/app/src/main/
+apps/mobile/android/app/src/main/*
+!apps/mobile/android/app/src/main/java/
+apps/mobile/android/app/src/main/java/*
+!apps/mobile/android/app/src/main/java/com/
+apps/mobile/android/app/src/main/java/com/*
+!apps/mobile/android/app/src/main/java/com/salaryhijacking/
+apps/mobile/android/app/src/main/java/com/salaryhijacking/*
+!apps/mobile/android/app/src/main/java/com/salaryhijacking/mobile/
+apps/mobile/android/app/src/main/java/com/salaryhijacking/mobile/*
+!apps/mobile/android/app/src/main/java/com/salaryhijacking/mobile/MainActivity.kt
+!apps/mobile/android/app/src/main/res/
+apps/mobile/android/app/src/main/res/*
+!apps/mobile/android/app/src/main/res/drawable/
+apps/mobile/android/app/src/main/res/drawable/*
+!apps/mobile/android/app/src/main/res/drawable/ic_launcher_background.xml
+!apps/mobile/android/app/src/main/res/values/
+apps/mobile/android/app/src/main/res/values/*
+!apps/mobile/android/app/src/main/res/values/styles.xml
 ios/
 
 # React Native / Metro
@@ -120,6 +145,11 @@ ios/
 **/.metro-cache/
 .bundle/
 **/.bundle/
+apps/mobile/.gradle-local-debug/
+apps/mobile/.gradle-local-debug-direct/
+apps/mobile/.localappdata/
+.gradle-qa-*/
+.android-subproject-build/
 
 # Cloudflare / Wrangler
 .wrangler/
@@ -259,6 +289,8 @@ temp/
 .AppleDouble
 .LSOverride
 Icon?
+!apps/mobile/src/shared/assets/icons/
+!apps/mobile/src/shared/assets/icons/**
 ._*
 .Spotlight-V100
 .Trashes
@@ -327,6 +359,7 @@ docs/qa/
 release/evidence/
 !release/evidence/final-100/
 !release/evidence/final-100/**
+artifacts/
 
 # Never commit production exports, real user data, or raw financial datasets.
 production-export/

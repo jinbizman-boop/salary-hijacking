@@ -1,0 +1,8 @@
+CANONICAL_ROLE,CURRENT_ROLE,CLASSIFICATION,SERVER_PERMISSION_BOUNDARY,PHASE_3_STATUS,NOTES
+SUPER_ADMIN,SUPER_ADMIN,MATCH,all privileged operations,PASS_INTERNAL_RUNTIME,Route and middleware tests verify all-permission admin boundary.
+OPS_ADMIN,OPS_ADMIN; legacy OPERATOR/PLATFORM_ADMIN/BACKEND_ADMIN/SECURITY_ADMIN aliases,MATCH_WITH_LEGACY_ALIASES,"operations, incident management, break-glass activation",PASS_INTERNAL_RUNTIME,Auth middleware and admin route tests verify incident-scoped break-glass role mutation.
+MODERATOR,MODERATOR; legacy MODERATION_ADMIN/MODERATOR_ADMIN aliases,MATCH_WITH_LEGACY_ALIASES,community moderation and report handling,PASS_INTERNAL_RUNTIME,Canonical MODERATOR can moderate; auditor mutation denial remains enforced.
+CONTENT_ADMIN,CONTENT_ADMIN; legacy PRODUCT_ADMIN alias,MATCH_WITH_LEGACY_ALIAS,"content, notices, growth content",PASS_INTERNAL_RUNTIME,Canonical role permissions are first-class in middleware and route permissions.
+SUPPORT,SUPPORT; legacy SUPPORT_ADMIN alias,MATCH_WITH_LEGACY_ALIAS,support/customer limited access,PASS_INTERNAL_RUNTIME,Support permission family is explicit; unrestricted finance/session/role mutation is not granted.
+ADS_PARTNER_ADMIN,ADS_PARTNER_ADMIN; legacy ADS_ADMIN alias,MATCH_WITH_LEGACY_ALIAS,ads and partner operations,PASS_INTERNAL_RUNTIME,Ads/partner permissions are separate from user finance and role mutation.
+AUDITOR_READONLY,AUDITOR_READONLY,MATCH,audit read only,PASS_INTERNAL_RUNTIME,Mutation denial is covered by route tests.
