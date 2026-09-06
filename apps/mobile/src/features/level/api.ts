@@ -434,6 +434,14 @@ function normalizeSourceUrl(value: unknown): string {
   return value.trim();
 }
 
+function normalizeAdTargetingSeparated(value: unknown): true {
+  if (value === true) return true;
+  if (typeof value === "string" && value.trim() === "[REDACTED]") {
+    return true;
+  }
+  return invalidResponse();
+}
+
 function hasForbiddenContentBody(value: Record<string, unknown>): boolean {
   return Object.keys(value).some((key) => FORBIDDEN_CONTENT_BODY_KEYS.has(key));
 }
@@ -453,11 +461,13 @@ function normalizeContentItem(value: unknown): GrowthContentItem {
     value.fullTextStored !== false ||
     value.serverAuthority !== true ||
     value.financialRawDataExposed !== false ||
-    value.recommendationUsesSensitiveFinancialData !== false ||
-    value.adTargetingSeparated !== true
+    value.recommendationUsesSensitiveFinancialData !== false
   ) {
     return invalidResponse();
   }
+  const adTargetingSeparated = normalizeAdTargetingSeparated(
+    value.adTargetingSeparated,
+  );
   return {
     contentId: normalizeGrowthId(value.contentId),
     contentType: normalizeContentType(value.contentType),
@@ -486,7 +496,7 @@ function normalizeContentItem(value: unknown): GrowthContentItem {
     serverAuthority: true,
     financialRawDataExposed: false,
     recommendationUsesSensitiveFinancialData: false,
-    adTargetingSeparated: true,
+    adTargetingSeparated,
   };
 }
 

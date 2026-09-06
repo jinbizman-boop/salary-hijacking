@@ -36,6 +36,9 @@ const fallbackStats: ProfileStats = {
   totalHijackSaved: 0,
 };
 
+const USER_VISIBLE_INTERNAL_TITLE_PATTERN =
+  /\b(?:Salary Guardian|launchFcm)\b|(?:debug|fixture|mock|QA|policy)/iu;
+
 export function ProfileScreen({
   onLogout,
   onSelectMenu,
@@ -123,7 +126,7 @@ export function ProfileScreen({
       <ProfileHeader
         avatarEmoji={user?.avatarEmoji ?? "SH"}
         displayName={user?.nickname ?? "급여납치 사용자"}
-        levelTitle={user?.title ?? `급여지킴이 ${stats.currentLevel}Lv`}
+        levelTitle={profileLevelTitle(user?.title, stats.currentLevel)}
         maskedEmail="개인정보와 금융 원문은 숨김 처리됩니다."
         rawPersonalDataExposed={false}
       />
@@ -157,6 +160,18 @@ export function ProfileScreen({
       ) : null}
     </AppShell>
   );
+}
+
+function profileLevelTitle(
+  serverTitle: string | null | undefined,
+  currentLevel: number,
+): string {
+  const fallbackTitle = `급여지킴이 ${currentLevel}Lv`;
+  const title = serverTitle?.trim();
+  if (!title || USER_VISIBLE_INTERNAL_TITLE_PATTERN.test(title)) {
+    return fallbackTitle;
+  }
+  return title;
 }
 
 function profileStatsFromSnapshot(

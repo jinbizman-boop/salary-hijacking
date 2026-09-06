@@ -362,6 +362,64 @@ describe("growth api", () => {
     );
   });
 
+  it("accepts a server-redacted ad targeting separation sentinel without exposing targeting data", async () => {
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...content,
+                adTargetingSeparated: "[REDACTED]",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "android",
+    });
+
+    await expect(
+      api.listContents({ contentType: "READING" }),
+    ).resolves.toMatchObject({
+      items: [
+        {
+          adTargetingSeparated: true,
+          financialRawDataExposed: false,
+          recommendationUsesSensitiveFinancialData: false,
+        },
+      ],
+    });
+  });
+
+  it("rejects arbitrary ad targeting separation strings from LV UP content", async () => {
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      fetcher: async () =>
+        jsonResponse({
+          data: {
+            items: [
+              {
+                ...content,
+                adTargetingSeparated: "true",
+              },
+            ],
+            page: 1,
+            pageSize: 20,
+            total: 1,
+          },
+        }),
+      platform: "android",
+    });
+
+    await expect(api.listContents()).rejects.toMatchObject({
+      code: "GROWTH_INVALID_RESPONSE",
+    });
+  });
+
   it("lists health LV UP content through the HEALTH content contract", async () => {
     const calls: Request[] = [];
     const api = createGrowthApi({

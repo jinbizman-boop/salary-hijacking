@@ -134,6 +134,24 @@ describe("profile feature components", () => {
     expect(getProfile).toHaveBeenCalledTimes(1);
   }, 15000);
 
+  it("keeps internal profile titles out of the user-visible MY screen", async () => {
+    const getProfile = jest.fn().mockResolvedValue({
+      ...serverProfileSnapshot,
+      user: {
+        ...serverProfileSnapshot.user,
+        title: "Salary Guardian",
+      },
+    });
+    const screen = render(
+      <ProfileScreen onSelectMenu={jest.fn()} profileApi={{ getProfile }} />,
+    );
+
+    expect(await screen.findByText("서버 닉네임")).toBeTruthy();
+    expect(screen.getByText("급여지킴이 7Lv")).toBeTruthy();
+    expect(screen.queryByText("Salary Guardian")).toBeNull();
+    expect(screen.queryByText("launchFcm")).toBeNull();
+  }, 15000);
+
   it("exposes logout through a confirmation dialog before ending the session", async () => {
     const onLogout = jest.fn().mockResolvedValue(undefined);
     const screen = render(
