@@ -99,17 +99,18 @@ export default function CommunityWriteScreen(): React.ReactElement {
         />
       }
     >
-      <View style={styles.toolbar}>
-        <Text style={styles.iconText}>첨부 · 카메라 · 이미지 · 파일</Text>
-        <Text style={styles.optionText}>질문 | 익명 | 게시판 유형</Text>
-      </View>
       <View style={styles.notice}>
-        <Text style={styles.noticeTitle}>제목을 입력해주세요</Text>
+        <View style={styles.toolbar}>
+          <Text style={styles.iconText}>첨부 · 카메라 · 이미지 · 파일</Text>
+          <Text style={styles.optionText}>질문 · 익명 · 게시판</Text>
+        </View>
+        <Text style={styles.noticeTitle}>
+          커뮤니티에 남길 이야기를 정리해요
+        </Text>
         <Text style={styles.noticeText}>
           자유로운 주제로 소통하세요. 금융 원문, 계좌, 카드, 연락처, 토큰과 같은
           민감정보는 작성 전에 차단됩니다.
         </Text>
-        <Text style={styles.noticeText}>본문 · 첨부 · 질문 · 익명 · 완료</Text>
       </View>
 
       <CommunityWriteForm
@@ -167,25 +168,29 @@ const styles = StyleSheet.create({
   error: {
     ...designSystem.typography.labelM,
     color: designSystem.colors.semantic.danger,
+    backgroundColor: designSystem.colors.semantic.dangerSoft,
+    borderRadius: designSystem.radius.md,
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[2],
   },
   iconText: {
     ...designSystem.typography.labelS,
     color: designSystem.colors.text.primary,
   },
   notice: {
-    gap: designSystem.spacing[2],
-    padding: designSystem.spacing[3],
+    gap: designSystem.spacing[3],
+    padding: designSystem.spacing[4],
     borderWidth: 1,
     borderColor: designSystem.colors.border.strong,
-    borderRadius: designSystem.radius.sm,
+    borderRadius: designSystem.radius.xl,
     backgroundColor: designSystem.colors.brand.primarySoft,
   },
   noticeText: {
-    ...designSystem.typography.bodyS,
+    ...designSystem.typography.bodyM,
     color: designSystem.colors.text.secondary,
   },
   noticeTitle: {
-    ...designSystem.typography.titleM,
+    ...designSystem.typography.titleL,
     color: designSystem.colors.semantic.info,
   },
   optionText: {
@@ -195,6 +200,10 @@ const styles = StyleSheet.create({
   success: {
     ...designSystem.typography.labelM,
     color: designSystem.colors.semantic.success,
+    backgroundColor: designSystem.colors.brand.primarySoft,
+    borderRadius: designSystem.radius.md,
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[2],
   },
   toolbar: {
     flexDirection: "row",

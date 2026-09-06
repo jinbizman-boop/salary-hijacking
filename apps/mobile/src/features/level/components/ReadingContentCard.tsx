@@ -25,7 +25,10 @@ export function ReadingContentCard({
   onRecord,
 }: ReadingContentCardProps): React.ReactElement {
   return (
-    <SurfaceCard accessibilityLabel={`${content.title} 독서 콘텐츠`}>
+    <SurfaceCard
+      accessibilityLabel={`${content.title} 독서 콘텐츠`}
+      style={styles.card}
+    >
       <Text style={styles.category}>{content.category}</Text>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.summary}>{content.summary}</Text>
@@ -78,14 +81,25 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: componentSpacing.sm,
+    paddingTop: componentSpacing.xs,
+  },
+  card: {
+    borderRadius: salaryHijackingDesignSystem.radius.xl,
+    padding: componentSpacing.lg,
   },
   category: {
+    alignSelf: "flex-start",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: componentRadius.pill,
     color: componentColors.primaryGreen,
     fontSize: typography.labelS.fontSize,
     fontWeight: typography.labelS.fontWeight,
+    overflow: "hidden",
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.xs,
   },
   primaryAction: {
-    minHeight: 44,
+    minHeight: 48,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -103,8 +117,10 @@ const styles = StyleSheet.create({
   },
   recordPreview: {
     gap: componentSpacing.xs,
-    padding: componentSpacing.sm,
+    padding: componentSpacing.md,
     borderRadius: componentRadius.card,
+    borderColor: componentColors.line,
+    borderWidth: 1,
     backgroundColor: componentColors.surfaceSoft,
   },
   recordQuestion: {
@@ -112,7 +128,7 @@ const styles = StyleSheet.create({
     fontSize: typography.bodyS.fontSize,
   },
   secondaryAction: {
-    minHeight: 44,
+    minHeight: 48,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -131,12 +147,13 @@ const styles = StyleSheet.create({
   },
   summary: {
     color: componentColors.textSecondary,
-    fontSize: typography.bodyS.fontSize,
-    lineHeight: typography.bodyS.lineHeight,
+    fontSize: typography.bodyM.fontSize,
+    lineHeight: typography.bodyM.lineHeight,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: typography.titleL.fontSize,
-    fontWeight: typography.titleL.fontWeight,
+    fontSize: typography.titleXL.fontSize,
+    fontWeight: typography.titleXL.fontWeight,
+    lineHeight: typography.titleXL.lineHeight,
   },
 });

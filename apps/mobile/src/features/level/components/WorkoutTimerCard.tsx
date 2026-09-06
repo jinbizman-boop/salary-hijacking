@@ -23,7 +23,10 @@ export function WorkoutTimerCard({
   onRecord,
 }: WorkoutTimerCardProps): React.ReactElement {
   return (
-    <SurfaceCard accessibilityLabel={`${content.title} 건강 루틴`}>
+    <SurfaceCard
+      accessibilityLabel={`${content.title} 건강 루틴`}
+      style={styles.card}
+    >
       <View style={styles.row}>
         <Text style={styles.timer}>{content.estimatedMinutes}:00</Text>
         <Text style={styles.safe}>{content.safetyLevel}</Text>
@@ -38,7 +41,10 @@ export function WorkoutTimerCard({
           { label: "10분 루틴", value: content.missionPrompt },
           { label: "safety", value: content.safetyLevel },
           { label: "start", value: "준비 후 시작" },
-          { label: "timer / progress", value: `${content.estimatedMinutes}:00` },
+          {
+            label: "timer / progress",
+            value: `${content.estimatedMinutes}:00`,
+          },
           { label: "complete", value: "운동 완료 기록" },
           { label: "actual duration", value: "실제 수행 시간 저장" },
           { label: "note", value: content.recordQuestion },
@@ -58,10 +64,19 @@ export function WorkoutTimerCard({
 }
 
 const styles = StyleSheet.create({
+  card: {
+    borderRadius: salaryHijackingDesignSystem.radius.xl,
+    padding: componentSpacing.lg,
+  },
   row: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: componentRadius.card,
     flexDirection: "row",
     justifyContent: "space-between",
     gap: componentSpacing.sm,
+    paddingHorizontal: componentSpacing.md,
+    paddingVertical: componentSpacing.sm,
   },
   timer: {
     color: componentColors.primaryGreen,
@@ -69,14 +84,20 @@ const styles = StyleSheet.create({
     fontWeight: typography.amountL.fontWeight,
   },
   safe: {
+    backgroundColor: salaryHijackingDesignSystem.colors.surface.default,
+    borderRadius: componentRadius.pill,
     color: componentColors.primaryGreen,
     fontSize: typography.labelS.fontSize,
     fontWeight: typography.labelS.fontWeight,
+    overflow: "hidden",
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.xs,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: typography.titleM.fontSize,
-    fontWeight: typography.titleM.fontWeight,
+    fontSize: typography.titleL.fontSize,
+    fontWeight: typography.titleL.fontWeight,
+    lineHeight: typography.titleL.lineHeight,
   },
   notice: {
     color: componentColors.textSecondary,
@@ -84,7 +105,7 @@ const styles = StyleSheet.create({
     lineHeight: typography.caption.lineHeight,
   },
   button: {
-    minHeight: 50,
+    minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: componentRadius.button,

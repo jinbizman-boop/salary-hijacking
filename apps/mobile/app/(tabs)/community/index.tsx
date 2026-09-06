@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "expo-router";
+import { StyleSheet, TextInput, View } from "react-native";
 
 import {
   AppHeader,
@@ -8,6 +9,7 @@ import {
   ErrorState,
   LoadingSkeleton,
   PrimaryButton,
+  salaryHijackingDesignSystem,
 } from "../../../src/shared/components";
 import { CommunityTabBar } from "../../../src/features/community/components/CommunityTabBar";
 import { ComposeBottomSheet } from "../../../src/features/community/components/ComposeBottomSheet";
@@ -24,6 +26,7 @@ import { SortFilterBottomSheet } from "../../../src/shared/ui/sheets/SortFilterB
 
 const SCREEN_VERSION = "4.3.0-server-backed-community";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
+const designSystem = salaryHijackingDesignSystem;
 const COMMUNITY_TABS: readonly CommunityBoardType[] = [
   "FREE",
   "LEVEL_CERTIFICATION",
@@ -64,6 +67,7 @@ export default function CommunityIndexScreen(): React.ReactElement {
   const router = useRouter();
   const [selectedBoard, setSelectedBoard] =
     useState<CommunityBoardType>("FREE");
+  const [searchQuery, setSearchQuery] = useState("");
   const communityService = useMemo(() => createMobileCommunityService(), []);
   const feed = useCommunityFeed(communityService, {
     boardType: selectedBoard,
@@ -71,6 +75,21 @@ export default function CommunityIndexScreen(): React.ReactElement {
     sort: "POPULAR",
   });
   const counts = useMemo(() => countPostsByBoard(feed.items), [feed.items]);
+  const visibleFeedItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return feed.items;
+    return feed.items.filter((post) =>
+      [
+        post.title,
+        post.bodyPreview,
+        post.anonymousDisplayName,
+        post.boardType,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query),
+    );
+  }, [feed.items, searchQuery]);
 
   return (
     <AppShell
@@ -83,6 +102,18 @@ export default function CommunityIndexScreen(): React.ReactElement {
         />
       }
     >
+      <View style={styles.searchPanel}>
+        <TextInput
+          accessibilityLabel="커뮤니티 검색"
+          clearButtonMode="while-editing"
+          onChangeText={setSearchQuery}
+          placeholder="게시글, 주제, 태그 검색"
+          placeholderTextColor={designSystem.colors.text.disabled}
+          returnKeyType="search"
+          style={styles.searchInput}
+          value={searchQuery}
+        />
+      </View>
       <CommunityTabBar
         counts={counts}
         selected={selectedBoard}
@@ -106,14 +137,20 @@ export default function CommunityIndexScreen(): React.ReactElement {
       ) : null}
       {feed.status !== "loading" &&
       feed.status !== "error" &&
-      feed.items.length === 0 ? (
+      visibleFeedItems.length === 0 ? (
         <EmptyState
-          description="서버에 저장된 게시글이 아직 없습니다. 첫 글을 작성해 주세요."
-          title="게시글이 없습니다"
+          description={
+            searchQuery.trim()
+              ? "다른 검색어로 다시 확인해 주세요."
+              : "서버에 저장된 게시글이 아직 없습니다. 첫 글을 작성해 주세요."
+          }
+          title={
+            searchQuery.trim() ? "검색 결과가 없습니다" : "게시글이 없습니다"
+          }
         />
       ) : (
         <PopularPostSection
-          posts={feed.items}
+          posts={visibleFeedItems}
           onPressPost={(post) => router.push(`/community/${post.id}` as never)}
         />
       )}
@@ -156,3 +193,23 @@ export function assertMobileCommunityIndexCompleteness(): Readonly<{
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
 }
+
+const styles = StyleSheet.create({
+  searchInput: {
+    backgroundColor: designSystem.colors.surface.default,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.lg,
+    borderWidth: 1,
+    color: designSystem.colors.text.primary,
+    minHeight: 48,
+    paddingHorizontal: designSystem.spacing[4],
+    ...designSystem.typography.bodyM,
+  },
+  searchPanel: {
+    backgroundColor: designSystem.colors.surface.soft,
+    borderColor: designSystem.colors.border.soft,
+    borderRadius: designSystem.radius.xl,
+    borderWidth: 1,
+    padding: designSystem.spacing[2],
+  },
+});

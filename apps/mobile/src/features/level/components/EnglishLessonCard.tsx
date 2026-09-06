@@ -4,6 +4,7 @@ import {
   SurfaceCard,
   componentColors,
   componentRadius,
+  componentSpacing,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
 import type { GrowthContentItem } from "../types";
@@ -20,7 +21,10 @@ export function EnglishLessonCard({
   onRecord,
 }: EnglishLessonCardProps): React.ReactElement {
   return (
-    <SurfaceCard accessibilityLabel={`${content.title} 영어 루틴`}>
+    <SurfaceCard
+      accessibilityLabel={`${content.title} 영어 루틴`}
+      style={styles.card}
+    >
       <Text style={styles.mode}>듣기 · 말하기 · 읽기 · 쓰기</Text>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.summary}>{content.missionPrompt}</Text>
@@ -48,20 +52,30 @@ export function EnglishLessonCard({
 }
 
 const styles = StyleSheet.create({
+  card: {
+    borderRadius: salaryHijackingDesignSystem.radius.xl,
+    padding: componentSpacing.lg,
+  },
   mode: {
+    alignSelf: "flex-start",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: componentRadius.pill,
     color: componentColors.primaryGreen,
+    overflow: "hidden",
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: componentSpacing.xs,
     ...salaryHijackingDesignSystem.typography.labelS,
   },
   title: {
     color: componentColors.textPrimary,
-    ...salaryHijackingDesignSystem.typography.titleM,
+    ...salaryHijackingDesignSystem.typography.titleL,
   },
   summary: {
     color: componentColors.textSecondary,
-    ...salaryHijackingDesignSystem.typography.bodyS,
+    ...salaryHijackingDesignSystem.typography.bodyM,
   },
   button: {
-    minHeight: 50,
+    minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: componentRadius.card,

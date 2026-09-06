@@ -23,6 +23,19 @@ function priorityLabel(priority: NotificationItem["priority"]): string {
   return "일반";
 }
 
+function notificationCategoryLabel(item: NotificationItem): string {
+  if (item.type === "PAYDAY") return "급여";
+  if (item.type === "PAYMENT_DUE") return "고정지출";
+  if (item.type === "BUDGET_WARNING" || item.type === "BUDGET_EXCEEDED") {
+    return "예산";
+  }
+  if (item.type === "SAVINGS_GOAL") return "저축";
+  if (item.type === "CONTENT_RECOMMENDATION") return "LV UP";
+  if (item.type === "COMMUNITY") return "커뮤니티";
+  if (item.type === "NOTICE") return "공지";
+  return "성과";
+}
+
 export function NotificationList({
   items,
   onOpenNotification,
@@ -31,9 +44,20 @@ export function NotificationList({
     <SurfaceCard accessibilityLabel="알림 목록">
       <Text style={styles.title}>전체 알림</Text>
       <View style={styles.filters}>
-        <Text style={styles.filter}>급여/납치금액</Text>
-        <Text style={styles.filter}>오늘의 레벨업</Text>
-        <Text style={styles.filter}>이벤트 포인트</Text>
+        {[
+          "급여",
+          "고정지출",
+          "예산",
+          "저축",
+          "성과",
+          "LV UP",
+          "커뮤니티",
+          "공지",
+        ].map((label) => (
+          <Text key={label} style={styles.filter}>
+            {label}
+          </Text>
+        ))}
       </View>
       <View style={styles.list}>
         {items.map((item) => (
@@ -56,7 +80,7 @@ export function NotificationList({
                   {priorityLabel(item.priority)}
                 </Text>
                 <Text style={styles.route}>
-                  {item.deeplink ?? "/notifications"}
+                  {notificationCategoryLabel(item)}
                 </Text>
               </View>
               <Text style={styles.rowTitle}>{item.title}</Text>

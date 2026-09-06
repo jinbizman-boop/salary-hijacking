@@ -78,6 +78,7 @@ const salaryScreenColors = {
   surface: designSystem.colors.surface.default,
   text: designSystem.colors.text.primary,
   warning: designSystem.colors.semantic.warningStrong,
+  warningSoft: designSystem.colors.semantic.warningSoft,
   danger: designSystem.colors.semantic.dangerStrong,
 } as const;
 const salaryScreenSpacing = designSystem.spacing;
@@ -252,6 +253,14 @@ export function SalaryHomeScreen({
   const visiblePlanReminderItems = useMemo(
     () => getVisiblePlanReminderItems(state.planItems, kst.monthKey, kst.day),
     [kst.day, kst.monthKey, state.planItems],
+  );
+  const scheduledReminderTotal = visiblePlanReminderItems.reduce(
+    (total, item) => total + item.amount,
+    0,
+  );
+  const expectedBalanceAfterScheduled = Math.max(
+    0,
+    currentHijacked - scheduledReminderTotal,
   );
 
   function sync(next: ReturnType<typeof getPayrollReminderState>): void {
@@ -677,7 +686,7 @@ export function SalaryHomeScreen({
         contentContainerStyle={[
           styles.content,
           {
-            paddingBottom: insets.bottom + 340,
+            paddingBottom: insets.bottom + 132,
             paddingTop: insets.top,
             width: contentWidth,
           },
@@ -750,6 +759,10 @@ export function SalaryHomeScreen({
               label="저축 금액"
               value={formatKrw(currentHijacked)}
             />
+            <HeroMetric
+              label="예정 소비 후"
+              value={formatKrw(expectedBalanceAfterScheduled)}
+            />
           </View>
         </ProtectedMoneyHeroCard>
 
@@ -778,6 +791,10 @@ export function SalaryHomeScreen({
             <BudgetSummary
               label="남은 금액"
               value={formatKrw(dailyRemaining)}
+            />
+            <BudgetSummary
+              label="예정 사용 후"
+              value={formatKrw(expectedBalanceAfterScheduled)}
             />
           </View>
           {dailySettingsOpen ? (
@@ -1802,13 +1819,14 @@ const styles = StyleSheet.create({
   },
   budgetSummary: {
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: salaryScreenSpacing[1],
     marginBottom: salaryScreenSpacing[2],
   },
   budgetSummaryItem: {
-    flex: 1,
     flexDirection: "row",
-    minWidth: 0,
+    minWidth: "48%",
+    flex: 1,
   },
   budgetSummaryLabel: {
     backgroundColor: salaryScreenColors.brand,
@@ -1846,6 +1864,8 @@ const styles = StyleSheet.create({
   brandHeader: {
     alignItems: "center",
     backgroundColor: salaryScreenColors.surface,
+    borderBottomColor: salaryScreenColors.line,
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     justifyContent: "space-between",
     minHeight: designSystem.header.height,
@@ -1878,24 +1898,25 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: salaryScreenColors.surface,
     borderColor: salaryScreenColors.line,
-    borderRadius: salaryScreenRadius.md,
+    borderRadius: salaryScreenRadius.lg,
     borderWidth: 1,
     ...salaryScreenElevation.low,
     marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[3],
-    paddingHorizontal: salaryScreenSpacing[3],
+    marginTop: salaryScreenSpacing[4],
+    paddingHorizontal: salaryScreenSpacing[4],
     paddingVertical: salaryScreenSpacing[4],
   },
   cardTitle: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: salaryScreenTypography.titleM.fontSize,
-    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    fontSize: salaryScreenTypography.titleL.fontSize,
+    fontWeight: salaryScreenTypography.titleL.fontWeight,
+    lineHeight: salaryScreenTypography.titleL.lineHeight,
     marginBottom: salaryScreenSpacing[3],
   },
   content: {
     alignSelf: "center",
-    backgroundColor: salaryScreenColors.surface,
+    backgroundColor: salaryScreenColors.screen,
   },
   editRow: {
     alignItems: "center",
@@ -2010,15 +2031,16 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     color: salaryScreenColors.money,
-    fontSize: salaryScreenTypography.amountL.fontSize,
-    fontWeight: salaryScreenTypography.amountL.fontWeight,
+    fontSize: 30,
+    fontWeight: salaryScreenTypography.amountXL.fontWeight,
+    lineHeight: 38,
     marginTop: salaryScreenSpacing[1],
   },
   heroCoin: {
-    height: 68,
+    height: 56,
     marginBottom: salaryScreenSpacing[1],
-    marginTop: salaryScreenSpacing[3],
-    width: 68,
+    marginTop: salaryScreenSpacing[2],
+    width: 56,
   },
   heroDate: {
     color: salaryScreenColors.brandSoft,
@@ -2034,19 +2056,24 @@ const styles = StyleSheet.create({
     opacity: 0.86,
   },
   heroLeft: {
-    flex: 1.2,
-    justifyContent: "space-between",
+    flex: 1.05,
+    justifyContent: "center",
     minWidth: 0,
-    paddingLeft: salaryScreenSpacing[5],
-    paddingVertical: salaryScreenSpacing[4],
+    paddingLeft: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[2],
   },
   heroPanel: {
-    backgroundColor: salaryScreenColors.hero,
+    backgroundColor: salaryScreenColors.brand,
+    borderColor: "rgba(255, 255, 255, 0.18)",
+    borderRadius: salaryScreenRadius.xl,
+    borderWidth: 1,
     flexDirection: "row",
-    minHeight: 270,
-    paddingBottom: salaryScreenSpacing[2],
-    paddingRight: salaryScreenSpacing[2],
-    width: "100%",
+    gap: salaryScreenSpacing[3],
+    marginHorizontal: salaryScreenSpacing[2],
+    marginTop: salaryScreenSpacing[2],
+    minHeight: 236,
+    overflow: "hidden",
+    padding: salaryScreenSpacing[3],
   },
   heroRight: {
     flex: 1,
@@ -2056,15 +2083,16 @@ const styles = StyleSheet.create({
   },
   heroSub: {
     color: salaryScreenColors.inverse,
-    fontSize: salaryScreenTypography.bodyL.fontSize,
-    fontWeight: salaryScreenTypography.bodyL.fontWeight,
+    fontSize: salaryScreenTypography.bodyS.fontSize,
+    fontWeight: salaryScreenTypography.bodyS.fontWeight,
     marginTop: salaryScreenSpacing[1],
+    opacity: 0.82,
   },
   heroTitle: {
     color: salaryScreenColors.inverse,
-    fontSize: salaryScreenTypography.titleL.fontSize,
-    fontWeight: salaryScreenTypography.titleL.fontWeight,
-    lineHeight: salaryScreenTypography.titleL.lineHeight,
+    fontSize: salaryScreenTypography.titleXL.fontSize,
+    fontWeight: salaryScreenTypography.titleXL.fontWeight,
+    lineHeight: salaryScreenTypography.titleXL.lineHeight,
     marginTop: salaryScreenSpacing[1],
   },
   inlineForm: {
@@ -2130,17 +2158,20 @@ const styles = StyleSheet.create({
   },
   metricBox: {
     alignItems: "center",
-    backgroundColor: salaryScreenColors.surface,
-    borderRadius: salaryScreenRadius.sm,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.38)",
+    borderRadius: salaryScreenRadius.md,
+    borderWidth: 1,
     flexDirection: "row",
     gap: salaryScreenSpacing[1],
     justifyContent: "space-between",
-    minHeight: 45,
-    paddingHorizontal: salaryScreenSpacing[2],
+    minHeight: 42,
+    paddingHorizontal: salaryScreenSpacing[3],
   },
   metricEmphasis: {
     borderColor: salaryScreenColors.money,
-    borderWidth: 2,
+    backgroundColor: salaryScreenColors.warningSoft,
+    borderWidth: 1,
   },
   metricLabel: {
     color: salaryScreenColors.muted,
@@ -2158,11 +2189,11 @@ const styles = StyleSheet.create({
   },
   paydayCard: {
     alignItems: "center",
-    backgroundColor: salaryScreenColors.surface,
-    borderRadius: salaryScreenRadius.sm,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderRadius: salaryScreenRadius.md,
     flex: 1,
     justifyContent: "center",
-    minHeight: 66,
+    minHeight: 58,
     paddingHorizontal: salaryScreenSpacing[1],
   },
   paydayDanger: {
