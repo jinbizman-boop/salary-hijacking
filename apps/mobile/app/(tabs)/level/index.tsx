@@ -8,15 +8,12 @@ import {
   AppShell,
   ErrorState,
   LoadingSkeleton,
+  ProgressBar,
   SurfaceCard,
   componentColors,
   salaryHijackingDesignSystem,
 } from "../../../src/shared/components";
-import {
-  LevelActionGrid,
-  LevelGoalCard,
-  LevelHeroCard,
-} from "../../../src/features/level/components";
+import { LevelHeroCard } from "../../../src/features/level/components";
 import {
   normalizeGrowthDashboardForLevel,
   type LevelDashboardNormalizationInput,
@@ -47,6 +44,32 @@ const GROWTH_DASHBOARD_ENDPOINT = "/api/v1/growth/dashboard";
 const LEVEL_VISIBLE_COPY_CONTRACT = ["오늘의 성장", "균형 읽기"] as const;
 const LVUP_AD_HEADER_SLOT = "AD-APP-LVUP-01";
 const LVUP_AD_SUMMARY_SLOT = "AD-APP-LVUP-02";
+const growthSummarySections = [
+  {
+    caption: "오늘의 성장",
+    description: "완료한 활동은 Streak와 XP에 바로 반영됩니다.",
+    metric: "0 / 4",
+    title: "오늘 실제로 한 일을 쌓아요",
+  },
+  {
+    caption: "이번 주 성장",
+    description: "독서, 뉴스, 외국어, 운동 균형을 주간 흐름으로 확인해요.",
+    metric: "균형 대기",
+    title: "이번 주 루틴 균형",
+  },
+  {
+    caption: "이번 달 성장",
+    description: "월간 누적 XP와 레벨 흐름을 한 화면에서 이어 봅니다.",
+    metric: "LV 준비",
+    title: "이번 달 레벨 흐름",
+  },
+  {
+    caption: "최근 성장 기록",
+    description: "최근 완료한 미션과 기록을 다음 목표 수정에만 참고해요.",
+    metric: "기록",
+    title: "완료 기록",
+  },
+] as const;
 
 export const levelStitchOverlayComponents = {
   XpToast,
@@ -263,46 +286,65 @@ export default function LevelIndexScreen(): React.ReactElement {
           </Text>
         </View>
       </SurfaceCard>
-      <View accessibilityLabel="오늘 LV UP 목표" style={styles.goalGrid}>
-        {growthGoalCards.map((goal) => (
-          <View key={goal.domain} style={styles.goalItem}>
-            <LevelGoalCard
-              goal={goal}
-              onDetail={openGrowthDomain}
-              onEdit={openGrowthDomain}
-              onQuickComplete={openGrowthDomain}
-            />
+      <SurfaceCard accessibilityLabel="오늘 나 관리">
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleGroup}>
+            <Text style={styles.sectionKicker}>오늘 나 관리</Text>
+            <Text style={styles.sectionTitle}>
+              돈을 관리하듯, 오늘의 나도 직접 관리해요
+            </Text>
           </View>
+          <Text style={styles.sectionMeta}>DEFAULT · RECOMMENDED · CUSTOM</Text>
+        </View>
+        {growthGoalCards.map((goal) => (
+          <Pressable
+            accessibilityLabel={`${goal.title} ${goal.sourceLabel} ${goal.progressLabel}`}
+            accessibilityRole="button"
+            key={goal.domain}
+            onPress={() => openGrowthDomain(goal.domain)}
+            style={({ pressed }) => [styles.goalRow, pressed && styles.pressed]}
+          >
+            <View style={styles.goalText}>
+              <View style={styles.goalTitleRow}>
+                <Text style={styles.goalSource}>{goal.sourceLabel}</Text>
+                <Text style={styles.goalStreak}>{goal.streakLabel}</Text>
+              </View>
+              <Text style={styles.goalTitle}>{goal.title}</Text>
+              <Text style={styles.goalSubtitle}>{goal.subtitle}</Text>
+              <ProgressBar
+                accessibilityLabel={`${goal.title} 목표 진행률`}
+                value={0}
+              />
+              <Text style={styles.goalProgress}>{goal.progressLabel}</Text>
+            </View>
+            <View style={styles.goalActions}>
+              <Text style={styles.goalCta}>{goal.detailCta}</Text>
+              <Text style={styles.goalSecondaryCta}>
+                {goal.quickCompleteCta} · {goal.editCta}
+              </Text>
+            </View>
+          </Pressable>
+        ))}
+      </SurfaceCard>
+      <View accessibilityLabel="LV UP 성장 흐름" style={styles.growthSections}>
+        {growthSummarySections.map((section) => (
+          <SurfaceCard
+            accessibilityLabel={section.caption}
+            key={section.caption}
+          >
+            <View style={styles.summaryRow}>
+              <View style={styles.summaryCopy}>
+                <Text style={styles.summaryCaption}>{section.caption}</Text>
+                <Text style={styles.summaryTitle}>{section.title}</Text>
+                <Text style={styles.summaryDescription}>
+                  {section.description}
+                </Text>
+              </View>
+              <Text style={styles.summaryMetric}>{section.metric}</Text>
+            </View>
+          </SurfaceCard>
         ))}
       </View>
-      <LevelActionGrid
-        actions={[
-          {
-            key: "reading",
-            label: "오늘의 독서, 역량 레벨 업",
-            description: "5분 읽기 · 한줄 요약 기록",
-          },
-          {
-            key: "news",
-            label: "오늘의 소식, 정보 레벨업",
-            description: "이슈 비교 · 핵심 쟁점 기록",
-          },
-          {
-            key: "english",
-            label: "오늘의 영어, 회화 레벨업",
-            description: "문장 학습 · 말하기 연습",
-          },
-          {
-            key: "health",
-            label: "오늘의 홈트, 건강 레벨업",
-            description: "요일별 안전 운동",
-          },
-        ]}
-        onSelect={(key) => {
-          const route = levelRoutes[key];
-          if (route) router.push(route as never);
-        }}
-      />
       <AdBannerSlot
         description="오늘 성장 활동 이후에만 표시되는 광고 슬롯입니다."
         label="광고"
@@ -347,16 +389,21 @@ export function assertMobileLevelIndexCompleteness(): {
     GROWTH_DASHBOARD_ENDPOINT,
     "AppShell",
     "LevelHeroCard",
-    "LevelGoalCard",
-    "LevelActionGrid",
+    "오늘 나 관리",
+    "오늘의 성장",
+    "이번 주 성장",
+    "이번 달 성장",
+    "최근 성장 기록",
+    "DEFAULT · RECOMMENDED · CUSTOM",
     "가볍게 기본 목표로 시작할까요?",
     LVUP_AD_HEADER_SLOT,
     LVUP_AD_SUMMARY_SLOT,
     ...LEVEL_VISIBLE_COPY_CONTRACT,
-    "오늘의 독서, 역량 레벨 업",
-    "오늘의 소식, 정보 레벨업",
-    "오늘의 영어, 회화 레벨업",
-    "오늘의 홈트, 건강 레벨업",
+    "돈을 관리하듯, 오늘의 나도 직접 관리해요",
+    "독서",
+    "뉴스",
+    "외국어",
+    "운동",
     "server_authority_component_guard",
     "idempotency_required_component_guard",
     "financial_raw_data_component_guard",
@@ -377,10 +424,10 @@ function goalChoiceStatusForOption(option: string): string {
   return "직접 설정은 목표 수정에서 값과 요일을 선택해요.";
 }
 
-function goalDecisionStatus(
-  decision: GrowthGoalSourceDecisionResult,
-): string {
-  const autoApply = decision.recommendationAutoApplied ? "자동 적용" : "직접 적용";
+function goalDecisionStatus(decision: GrowthGoalSourceDecisionResult): string {
+  const autoApply = decision.recommendationAutoApplied
+    ? "자동 적용"
+    : "직접 적용";
   return `${decision.selectedGoal.title} · ${decision.decision} · ${autoApply} · 적용일 ${decision.effectiveDate}`;
 }
 
@@ -423,15 +470,70 @@ const styles = StyleSheet.create({
     color: componentColors.textPrimary,
     ...designSystem.typography.titleM,
   },
-  goalGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: designSystem.spacing[3],
+  goalActions: {
+    alignItems: "flex-end",
+    gap: designSystem.spacing[1],
+    justifyContent: "center",
+    minWidth: 104,
   },
-  goalItem: {
-    flexBasis: "47%",
-    flexGrow: 1,
-    minWidth: "47%",
+  goalCta: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
+  },
+  goalProgress: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.caption,
+  },
+  goalRow: {
+    alignItems: "center",
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.lg,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
+    justifyContent: "space-between",
+    minHeight: 132,
+    padding: designSystem.spacing[3],
+  },
+  goalSecondaryCta: {
+    color: componentColors.textSecondary,
+    textAlign: "right",
+    ...designSystem.typography.caption,
+  },
+  goalSource: {
+    alignSelf: "flex-start",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: designSystem.radius.full,
+    color: componentColors.primaryGreenDark,
+    overflow: "hidden",
+    paddingHorizontal: designSystem.spacing[2],
+    paddingVertical: designSystem.spacing[1],
+    ...designSystem.typography.labelS,
+  },
+  goalStreak: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.labelS,
+  },
+  goalSubtitle: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+  },
+  goalText: {
+    flex: 1,
+    gap: designSystem.spacing[2],
+  },
+  goalTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
+  },
+  goalTitleRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[2],
+    justifyContent: "space-between",
+  },
+  growthSections: {
+    gap: designSystem.spacing[3],
   },
   pressed: {
     opacity: 0.82,
@@ -445,5 +547,55 @@ const styles = StyleSheet.create({
   recommendationTitle: {
     color: componentColors.textPrimary,
     ...designSystem.typography.labelL,
+  },
+  sectionHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
+    justifyContent: "space-between",
+  },
+  sectionKicker: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelS,
+  },
+  sectionMeta: {
+    color: componentColors.textSecondary,
+    maxWidth: 120,
+    textAlign: "right",
+    ...designSystem.typography.caption,
+  },
+  sectionTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleL,
+  },
+  sectionTitleGroup: {
+    flex: 1,
+    gap: designSystem.spacing[1],
+  },
+  summaryCaption: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelS,
+  },
+  summaryCopy: {
+    flex: 1,
+    gap: designSystem.spacing[1],
+  },
+  summaryDescription: {
+    color: componentColors.textSecondary,
+    ...designSystem.typography.bodyS,
+  },
+  summaryMetric: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelL,
+  },
+  summaryRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: designSystem.spacing[3],
+    justifyContent: "space-between",
+  },
+  summaryTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.titleM,
   },
 });

@@ -23,8 +23,14 @@ describe("level tab screen wiring", () => {
     expect(source).not.toContain("normalizeGrowthDashboardForCleanFintech");
     expect(source).toContain("AppShell");
     expect(source).toContain("LevelHeroCard");
-    expect(source).toContain("LevelGoalCard");
-    expect(source).toContain("LevelActionGrid");
+    expect(source).not.toContain("LevelActionGrid");
+    expect(source).not.toContain("goalGrid");
+    expect(source).toContain("오늘 나 관리");
+    expect(source).toContain("오늘의 성장");
+    expect(source).toContain("이번 주 성장");
+    expect(source).toContain("이번 달 성장");
+    expect(source).toContain("최근 성장 기록");
+    expect(source).toContain("DEFAULT · RECOMMENDED · CUSTOM");
     expect(source).toContain("buildGrowthGoalCards");
     expect(source).toContain("가볍게 기본 목표로 시작할까요?");
     expect(source).toContain("AD-APP-LVUP-01");
