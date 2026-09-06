@@ -1,11 +1,6 @@
 import { Tabs } from "expo-router";
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
-import {
-  Image,
-  Pressable,
-  View,
-  type ImageSourcePropType,
-} from "react-native";
+import { Image, Pressable, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
@@ -70,6 +65,7 @@ export default function TabsLayout(): React.ReactElement {
 
   return (
     <Tabs
+      backBehavior="history"
       initialRouteName="salary/index"
       screenOptions={{
         freezeOnBlur: true,
@@ -214,6 +210,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "profile_privacy_boundary",
     "accessibility_labels",
     "expo_router_index_segment_tabs",
+    "android_system_back_history_tabs",
     "readable_korean_tab_copy",
     "typescript_strict_ready",
   ] as const;

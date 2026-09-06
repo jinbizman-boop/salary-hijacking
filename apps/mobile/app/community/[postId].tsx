@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 import { AppHeader, AppShell } from "../../src/shared/components";
@@ -43,6 +43,7 @@ const contextualAd: CommunityAdDisclosureModel = {
 
 export default function CommunityPostDetailScreen(): React.ReactElement {
   const params = useLocalSearchParams();
+  const router = useRouter();
   const communityPostService = useMemo(
     () => createMobileCommunityService(),
     [],
@@ -61,7 +62,13 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
   return (
     <AppShell
       accessibilityLabel="Salary Hijacking community post detail"
-      header={<AppHeader subtitle="Community" title="Post Detail" />}
+      header={
+        <AppHeader
+          onBack={() => router.back()}
+          subtitle="커뮤니티"
+          title="게시글"
+        />
+      }
     >
       {detail ? (
         <>
@@ -128,6 +135,7 @@ export function assertMobileCommunityPostCompleteness(): {
     COMMUNITY_POSTS_ENDPOINT,
     "AppShell",
     "AppHeader",
+    "onBack={() => router.back()}",
     "CommunityPostCard",
     "CommunityCommentItem",
     "CommunityAttachmentList",

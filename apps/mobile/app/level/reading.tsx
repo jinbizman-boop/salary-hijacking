@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 
 import {
   AppHeader,
@@ -27,6 +28,7 @@ export const readingStitchStateComponents = {
 } as const;
 
 export default function ReadingLevelScreen(): React.ReactElement {
+  const router = useRouter();
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
   const [serverContent, setServerContent] = useState<GrowthContentItem | null>(
     null,
@@ -72,7 +74,9 @@ export default function ReadingLevelScreen(): React.ReactElement {
   return (
     <AppShell
       accessibilityLabel="Salary Hijacking reading level detail"
-      header={<AppHeader subtitle="LV UP" title="독서" />}
+      header={
+        <AppHeader onBack={() => router.back()} subtitle="LV UP" title="독서" />
+      }
     >
       {serverContent ? (
         <ReadingContentCard
@@ -107,6 +111,7 @@ export function assertMobileReadingLevelCompleteness(): {
     GROWTH_CONTENTS_PATH,
     "AppShell",
     "AppHeader",
+    "onBack={() => router.back()}",
     "ReadingContentCard",
     "XpRewardToast",
     "독서",

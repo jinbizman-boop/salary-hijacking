@@ -815,6 +815,14 @@ describe("mobile app screen API and route contracts", () => {
     expect(tabsLayout).not.toMatch(/href:\s*[^,\n]+/u);
   });
 
+  it("keeps Android system back on tab history instead of forcing salary home", () => {
+    const tabsLayout = readFileSync(TABS_LAYOUT_SCREEN, "utf8");
+
+    expect(tabsLayout).toContain('backBehavior="history"');
+    expect(tabsLayout).not.toContain('backBehavior="firstRoute"');
+    expect(tabsLayout).toContain("android_system_back_history_tabs");
+  });
+
   it("preserves screenshot capture routes before Expo Router rewrites them", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
     const indexScreen = readFileSync(INDEX_SCREEN, "utf8");

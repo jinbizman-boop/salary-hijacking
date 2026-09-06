@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 
 import {
   AppHeader,
@@ -22,9 +23,11 @@ import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
 const SCREEN_VERSION = "4.1.1-level-detail-server-content";
 
 export default function HealthLevelScreen(): React.ReactElement {
+  const router = useRouter();
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
-  const [serverContent, setServerContent] =
-    useState<GrowthContentItem | null>(null);
+  const [serverContent, setServerContent] = useState<GrowthContentItem | null>(
+    null,
+  );
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
@@ -66,7 +69,9 @@ export default function HealthLevelScreen(): React.ReactElement {
   return (
     <AppShell
       accessibilityLabel="Salary Hijacking health level detail"
-      header={<AppHeader subtitle="LV UP" title="건강" />}
+      header={
+        <AppHeader onBack={() => router.back()} subtitle="LV UP" title="건강" />
+      }
     >
       {serverContent ? (
         <WorkoutTimerCard content={serverContent} onRecord={handleRecord} />
@@ -97,6 +102,7 @@ export function assertMobileHealthLevelCompleteness(): {
     GROWTH_CONTENTS_PATH,
     "AppShell",
     "AppHeader",
+    "onBack={() => router.back()}",
     "WorkoutTimerCard",
     "XpRewardToast",
     "건강",

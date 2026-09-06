@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 
 import {
   AppHeader,
@@ -22,9 +23,11 @@ import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
 const SCREEN_VERSION = "4.1.1-level-detail-server-content";
 
 export default function EnglishLevelScreen(): React.ReactElement {
+  const router = useRouter();
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
-  const [serverContent, setServerContent] =
-    useState<GrowthContentItem | null>(null);
+  const [serverContent, setServerContent] = useState<GrowthContentItem | null>(
+    null,
+  );
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
@@ -40,7 +43,7 @@ export default function EnglishLevelScreen(): React.ReactElement {
         }
       })
       .catch(() => {
-        if (mounted) setLoadError("영어 콘텐츠를 불러오지 못했습니다.");
+        if (mounted) setLoadError("외국어 콘텐츠를 불러오지 못했습니다.");
       });
     return () => {
       mounted = false;
@@ -66,13 +69,19 @@ export default function EnglishLevelScreen(): React.ReactElement {
   return (
     <AppShell
       accessibilityLabel="Salary Hijacking english level detail"
-      header={<AppHeader subtitle="LV UP" title="영어" />}
+      header={
+        <AppHeader
+          onBack={() => router.back()}
+          subtitle="LV UP"
+          title="외국어"
+        />
+      }
     >
       {serverContent ? (
         <EnglishLessonCard content={serverContent} onRecord={handleRecord} />
       ) : null}
       {!serverContent && !loaded && !loadError ? (
-        <LoadingSkeleton label="영어 콘텐츠를 불러오는 중" />
+        <LoadingSkeleton label="외국어 콘텐츠를 불러오는 중" />
       ) : null}
       {!serverContent && loadError ? (
         <ErrorState message={loadError} title="콘텐츠를 확인할 수 없습니다" />
@@ -97,9 +106,11 @@ export function assertMobileEnglishLevelCompleteness(): {
     GROWTH_CONTENTS_PATH,
     "AppShell",
     "AppHeader",
+    "onBack={() => router.back()}",
     "EnglishLessonCard",
     "XpRewardToast",
-    "영어",
+    "외국어",
+    "영어 기본 목표",
     "Listening",
     "Speaking",
     "Reading",

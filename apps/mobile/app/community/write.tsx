@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useRouter } from "expo-router";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
@@ -57,6 +58,7 @@ function parseCommunityDraft(value: string | null): CommunityPostDraft | null {
 }
 
 export default function CommunityWriteScreen(): React.ReactElement {
+  const router = useRouter();
   const [publishedTitle, setPublishedTitle] = useState<string | null>(null);
   const communityWriteService = useMemo(
     () => createMobileCommunityService(),
@@ -91,6 +93,7 @@ export default function CommunityWriteScreen(): React.ReactElement {
       header={
         <AppHeader
           brandLabel="SALARY HIJACKING"
+          onBack={() => router.back()}
           subtitle="커뮤니티"
           title="글쓰기"
         />
