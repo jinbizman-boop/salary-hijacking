@@ -400,8 +400,8 @@ export default function MobileRootLayout(): unknown {
         currentRouteKey !== "(auth)/verify-email") ||
       (state.status === "ONBOARDING" && currentRouteKey !== "onboarding"));
 
-  const setAuthRequiredBeforePersistence = ReactRuntimeRef.useCallback(
-    (): void => {
+  const setAuthRequiredBeforePersistence =
+    ReactRuntimeRef.useCallback((): void => {
       setState((prev: RootState) => ({
         ...prev,
         payload: { ...prev.payload, session: fallbackSession },
@@ -410,19 +410,15 @@ export default function MobileRootLayout(): unknown {
         navigationEpoch: prev.navigationEpoch + 1,
         toast: { kind: "info", message: statusMessage("AUTH_REQUIRED") },
       }));
-    },
-    [],
-  );
+    }, []);
 
-  const persistUnauthenticatedLaunchState = ReactRuntimeRef.useCallback(
-    (): void => {
+  const persistUnauthenticatedLaunchState =
+    ReactRuntimeRef.useCallback((): void => {
       void persistPublicSessionHint(fallbackSession).catch(() => undefined);
       void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
         () => undefined,
       );
-    },
-    [],
-  );
+    }, []);
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
     setState((prev: RootState) => ({ ...prev, retrying: true }));
@@ -439,12 +435,10 @@ export default function MobileRootLayout(): unknown {
     }
     try {
       const publicSessionHint = await readPublicSessionHint();
-      if (!publicSessionHint || publicSessionHint.authenticated === false) {
-        setAuthRequiredBeforePersistence();
-        persistUnauthenticatedLaunchState();
-        return;
-      }
+      const publicSessionHintAuthenticated =
+        publicSessionHint?.authenticated === true;
       if (
+        publicSessionHintAuthenticated &&
         canUseCachedAuthenticatedLaunch(
           publicSessionHint,
           currentRouteKey,
@@ -462,14 +456,13 @@ export default function MobileRootLayout(): unknown {
       }
       const hasAccessToken = await hasStoredAccessToken();
       const hasRefreshToken = await hasStoredRefreshToken();
-      const cachedSession = hasAccessToken || hasRefreshToken
-        ? await readCachedSessionStatus()
-        : fallbackSession;
+      const cachedSession =
+        hasAccessToken || hasRefreshToken
+          ? await readCachedSessionStatus()
+          : fallbackSession;
       if (!hasAccessToken && !hasRefreshToken) {
         setAuthRequiredBeforePersistence();
-        void persistSessionStatus(fallbackSession, "AUTH_REQUIRED").catch(
-          () => undefined,
-        );
+        persistUnauthenticatedLaunchState();
         return;
       }
       if (
@@ -936,11 +929,13 @@ function renderToast(
   );
 }
 
-async function applyAuthSessionChange(event: Readonly<{
-  reason: "authenticated" | "logged_out";
-  targetRoute: string;
-  session?: Partial<SessionSnapshot> | null;
-}>): Promise<void> {
+async function applyAuthSessionChange(
+  event: Readonly<{
+    reason: "authenticated" | "logged_out";
+    targetRoute: string;
+    session?: Partial<SessionSnapshot> | null;
+  }>,
+): Promise<void> {
   if (event.reason === "logged_out") {
     await removePublicSessionHint();
     await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");

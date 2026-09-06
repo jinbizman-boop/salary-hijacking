@@ -394,12 +394,14 @@ describe("mobile app screen API and route contracts", () => {
 
   it("renders the unauthenticated login destination before background cache persistence", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
-    const unauthStart = source.indexOf(
-      "const setAuthRequiredBeforePersistence = ReactRuntimeRef.useCallback",
+    const unauthMatch = source.match(
+      /const setAuthRequiredBeforePersistence\s*=\s*ReactRuntimeRef\.useCallback/u,
     );
-    const persistStart = source.indexOf(
-      "const persistUnauthenticatedLaunchState = ReactRuntimeRef.useCallback",
+    const persistMatch = source.match(
+      /const persistUnauthenticatedLaunchState\s*=\s*ReactRuntimeRef\.useCallback/u,
     );
+    const unauthStart = unauthMatch?.index ?? -1;
+    const persistStart = persistMatch?.index ?? -1;
 
     expect(unauthStart).toBeGreaterThanOrEqual(0);
     expect(persistStart).toBeGreaterThan(unauthStart);
@@ -409,7 +411,7 @@ describe("mobile app screen API and route contracts", () => {
       'await persistSessionStatus(fallbackSession, "AUTH_REQUIRED");\n        setState((prev: RootState) => ({',
     );
     expect(source).not.toContain(
-      'await persistPublicSessionHint(fallbackSession);\n        setState((prev: RootState) => ({',
+      "await persistPublicSessionHint(fallbackSession);\n        setState((prev: RootState) => ({",
     );
   });
 
@@ -437,7 +439,7 @@ describe("mobile app screen API and route contracts", () => {
       /canUseCachedAuthenticatedLaunch\(\s*publicSessionHint,\s*currentRouteKey,\s*"public-hint",?\s*\)/u,
     );
     expect(source).toMatch(
-      /const cachedSession = hasAccessToken\s*\|\|\s*hasRefreshToken\s*\?\s*await readCachedSessionStatus\(\)\s*:\s*fallbackSession/u,
+      /const cachedSession\s*=\s*hasAccessToken\s*\|\|\s*hasRefreshToken\s*\?\s*await readCachedSessionStatus\(\)\s*:\s*fallbackSession/u,
     );
     expect(source).toMatch(
       /canUseCachedAuthenticatedLaunch\(\s*cachedSession,\s*currentRouteKey,\s*"secure-session",?\s*\)/u,
@@ -461,21 +463,42 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("sessionExpiresAt: session.sessionExpiresAt");
   });
 
-  it("uses a non-sensitive launch session hint before touching SecureStore on root startup", () => {
+  it("does not let a missing public session hint preempt secure credential restore", () => {
     const source = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
+    const publicHintIndex = source.indexOf(
+      "const publicSessionHint = await readPublicSessionHint()",
+    );
+    const accessCheckIndex = source.indexOf(
+      "const hasAccessToken = await hasStoredAccessToken()",
+    );
+    const refreshCheckIndex = source.indexOf(
+      "const hasRefreshToken = await hasStoredRefreshToken()",
+    );
+    const noTokenIndex = source.indexOf(
+      "if (!hasAccessToken && !hasRefreshToken)",
+    );
 
     expect(source).toContain("ROOT_PUBLIC_SESSION_HINT_KEY");
     expect(source).toContain("readPublicSessionHint");
     expect(source).toContain("persistPublicSessionHint");
     expect(source).toContain("removePublicSessionHint");
     expect(source).toContain("loadAsyncStorageRuntime");
-    expect(source).toContain('case "@react-native-async-storage/async-storage"');
-    expect(
-      source.indexOf("const publicSessionHint = await readPublicSessionHint()"),
-    ).toBeLessThan(
-      source.indexOf("const hasAccessToken = await hasStoredAccessToken()"),
+    expect(source).toContain(
+      'case "@react-native-async-storage/async-storage"',
     );
-    expect(source).toContain("publicSessionHint.authenticated === false");
+    expect(publicHintIndex).toBeGreaterThanOrEqual(0);
+    expect(accessCheckIndex).toBeGreaterThan(publicHintIndex);
+    expect(refreshCheckIndex).toBeGreaterThan(accessCheckIndex);
+    expect(noTokenIndex).toBeGreaterThan(refreshCheckIndex);
+    expect(source).toMatch(
+      /const publicSessionHintAuthenticated\s*=\s*publicSessionHint\?\.authenticated === true/u,
+    );
+    expect(source).toMatch(
+      /publicSessionHintAuthenticated\s*&&\s*canUseCachedAuthenticatedLaunch\(\s*publicSessionHint,\s*currentRouteKey,\s*"public-hint",?\s*\)/u,
+    );
+    expect(source).not.toMatch(
+      /if\s*\(\s*!publicSessionHint\s*\|\|\s*publicSessionHint\.authenticated\s*===\s*false\s*\)\s*\{[\s\S]*?setAuthRequiredBeforePersistence\(\);[\s\S]*?return;\s*\}/u,
+    );
     expect(source).toContain('status: "AUTH_REQUIRED"');
     expect(source).not.toContain("userIdHash: publicSessionHint.userIdHash");
   });
@@ -494,12 +517,16 @@ describe("mobile app screen API and route contracts", () => {
     expect(rootLayout).toContain("applyAuthSessionChange");
     expect(rootLayout).toContain("event.session");
     expect(rootLayout).toContain("persistPublicSessionHint(session)");
-    expect(rootLayout).not.toContain("router.replace(event.targetRoute as never)");
+    expect(rootLayout).not.toContain(
+      "router.replace(event.targetRoute as never)",
+    );
   });
 
   it("applies authenticated login readiness immediately before background bootstrap verification", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
-    const listenerIndex = rootLayout.indexOf("subscribeAuthSessionChange((event) => {");
+    const listenerIndex = rootLayout.indexOf(
+      "subscribeAuthSessionChange((event) => {",
+    );
     const immediateStateIndex = rootLayout.indexOf(
       "applyAuthenticatedSessionChange(event)",
       listenerIndex,
@@ -513,12 +540,16 @@ describe("mobile app screen API and route contracts", () => {
     expect(immediateStateIndex).toBeGreaterThan(listenerIndex);
     expect(bootstrapIndex).toBeGreaterThan(immediateStateIndex);
     expect(rootLayout).toContain("resolveStatusForSession(session)");
-    expect(rootLayout).toContain("payload: cachedAuthenticatedPayload(session)");
+    expect(rootLayout).toContain(
+      "payload: cachedAuthenticatedPayload(session)",
+    );
   });
 
   it("waits for auth-session persistence before re-running bootstrap verification", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
-    const listenerIndex = rootLayout.indexOf("subscribeAuthSessionChange((event) => {");
+    const listenerIndex = rootLayout.indexOf(
+      "subscribeAuthSessionChange((event) => {",
+    );
     const persistThenBootstrapIndex = rootLayout.indexOf(
       "void applyAuthSessionChange(event).finally(() => bootstrap())",
       listenerIndex,
@@ -547,7 +578,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(launchFunctionStart).toBeGreaterThanOrEqual(0);
     expect(launchFunctionEnd).toBeGreaterThan(launchFunctionStart);
     expect(launchFunction).toContain("isFreshCompleteSession(session)");
-    expect(launchFunction).toContain('source: "public-hint" | "secure-session"');
+    expect(launchFunction).toContain(
+      'source: "public-hint" | "secure-session"',
+    );
     expect(launchFunction).toContain(
       'if (source === "public-hint") return isAuthenticatedAuthRoute(routeKey)',
     );
