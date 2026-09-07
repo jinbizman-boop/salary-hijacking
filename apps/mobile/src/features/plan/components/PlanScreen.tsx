@@ -2,7 +2,6 @@ import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -39,7 +38,6 @@ import {
   createMobilePayrollApi,
   createMobilePlanCommitmentsApi,
 } from "../../../shared/api/mobile-api";
-import { appIconAssets } from "../../../shared/assets/icons";
 import {
   AppHeader,
   salaryHijackingDesignSystem,
@@ -682,9 +680,9 @@ export function PlanScreen({
               value: formatKrw(parseKrwInput(payrollDraft.hijackAmount)),
             },
           ]}
-          settingLabel="내 급여 납치 계획/설정 설정"
+          settingLabel="급여 계획 관리"
           settingTestID="payroll-section-settings-button"
-          title="내 급여 납치 계획/설정"
+          title="급여 계획"
           onToggle={() =>
             setOpenSection(openSection === "payroll" ? null : "payroll")
           }
@@ -761,8 +759,8 @@ export function PlanScreen({
           items={fixedItems}
           open={openSection === "fixed"}
           section="fixed"
-          settingLabel="월별 고정 지출 계획/설정 설정"
-          title="월별 고정 지출 계획/설정"
+          settingLabel="고정지출 관리"
+          title="고정지출"
           onOpenEditor={openEditor}
           onDelete={deleteEditingItem}
           onSave={() => savePlanItem("fixed")}
@@ -776,8 +774,8 @@ export function PlanScreen({
           items={savingItems}
           open={openSection === "saving"}
           section="saving"
-          settingLabel="월별 고정 적금 계획/설정 설정"
-          title="월별 고정 적금 계획/설정"
+          settingLabel="고정저축 관리"
+          title="고정저축"
           onOpenEditor={openEditor}
           onDelete={deleteEditingItem}
           onSave={() => savePlanItem("saving")}
@@ -803,9 +801,9 @@ export function PlanScreen({
               value: formatKrw(livingTotal),
             },
           ]}
-          settingLabel="일일 생활비 계획/설정 설정"
+          settingLabel="생활비 관리"
           settingTestID="living-section-settings-button"
-          title="일일 생활비 계획/설정"
+          title="생활비"
           onToggle={() => {
             setOpenSection(openSection === "living" ? null : "living");
             clearDraft();
@@ -1166,10 +1164,6 @@ function MobilePlanSection({
           onPress={onToggle}
           style={styles.smallIconButton}
         >
-          <Image
-            source={appIconAssets.common.settings}
-            style={styles.sectionSettingsIcon}
-          />
           <Text allowFontScaling={false} style={styles.sectionActionText}>
             관리
           </Text>
@@ -1464,7 +1458,7 @@ const styles = StyleSheet.create({
     color: planScreenColors.brand,
     fontSize: planScreenTypography.labelM.fontSize,
     fontWeight: planScreenTypography.labelM.fontWeight,
-    marginTop: planScreenSpacing[3],
+    marginTop: planScreenSpacing[2],
     overflow: "hidden",
     paddingHorizontal: planScreenSpacing[3],
     paddingVertical: planScreenSpacing[2],
@@ -1475,14 +1469,16 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     alignItems: "center",
-    backgroundColor: planScreenColors.danger,
+    backgroundColor: planScreenColors.dangerSurface,
+    borderColor: planScreenColors.dangerBorder,
+    borderWidth: 1,
     borderRadius: planScreenRadius.sm,
     justifyContent: "center",
     minHeight: 42,
     paddingHorizontal: planScreenSpacing[3],
   },
   deleteButtonText: {
-    color: planScreenColors.inverse,
+    color: planScreenColors.danger,
     fontSize: planScreenTypography.labelM.fontSize,
     fontWeight: planScreenTypography.labelM.fontWeight,
   },
@@ -1518,24 +1514,24 @@ const styles = StyleSheet.create({
     paddingVertical: planScreenSpacing[2],
   },
   goalCard: {
-    alignItems: "center",
-    backgroundColor: planScreenColors.brandDark,
-    borderColor: planScreenColors.brand,
-    borderRadius: planScreenRadius.xl,
+    alignItems: "flex-start",
+    backgroundColor: planScreenColors.surface,
+    borderColor: planScreenColors.line,
+    borderRadius: planScreenRadius.lg,
     borderWidth: 1,
-    ...planScreenElevation.medium,
+    ...planScreenElevation.low,
     flexDirection: "row",
     gap: planScreenSpacing[3],
     justifyContent: "space-between",
     marginHorizontal: planScreenSpacing[2],
-    marginTop: planScreenSpacing[4],
-    minHeight: 136,
-    paddingHorizontal: planScreenSpacing[4],
-    paddingVertical: planScreenSpacing[4],
+    marginTop: planScreenSpacing[2],
+    minHeight: 112,
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[3],
   },
   goalCopy: {
     flex: 1,
-    gap: planScreenSpacing[3],
+    gap: planScreenSpacing[2],
     minWidth: 0,
   },
   goalMeta: {
@@ -1544,29 +1540,32 @@ const styles = StyleSheet.create({
   },
   goalMetaRow: {
     flexDirection: "row",
-    gap: planScreenSpacing[3],
+    gap: planScreenSpacing[2],
   },
   goalPercent: {
-    color: planScreenColors.warning,
-    fontSize: planScreenTypography.display.fontSize,
-    fontWeight: planScreenTypography.display.fontWeight,
-    minWidth: 92,
+    color: planScreenColors.brand,
+    fontSize: 30,
+    fontWeight: planScreenTypography.amountL.fontWeight,
+    lineHeight: 36,
+    minWidth: 66,
     textAlign: "right",
   },
   goalTitle: {
-    color: planScreenColors.inverse,
-    fontSize: planScreenTypography.titleL.fontSize,
-    fontWeight: planScreenTypography.titleL.fontWeight,
-    lineHeight: planScreenTypography.titleL.lineHeight,
+    color: planScreenColors.text,
+    fontSize: planScreenTypography.titleM.fontSize,
+    fontWeight: planScreenTypography.titleM.fontWeight,
+    lineHeight: planScreenTypography.titleM.lineHeight,
   },
   goalTrack: {
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    backgroundColor: planScreenColors.soft,
+    borderColor: planScreenColors.line,
+    borderWidth: 1,
     borderRadius: planScreenRadius.full,
-    height: 8,
+    height: 9,
     overflow: "hidden",
   },
   goalTrackFill: {
-    backgroundColor: planScreenColors.warning,
+    backgroundColor: planScreenColors.brand,
     borderRadius: planScreenRadius.full,
     height: "100%",
   },
@@ -1591,20 +1590,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: planScreenSpacing[3],
   },
   metaGreen: {
-    color: planScreenColors.warning,
-    fontSize: planScreenTypography.titleM.fontSize,
-    fontWeight: planScreenTypography.titleM.fontWeight,
+    color: planScreenColors.brand,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
     marginTop: planScreenSpacing[1] / 2,
   },
   metaLabel: {
-    color: planScreenColors.brandSoft,
+    color: planScreenColors.muted,
     fontSize: planScreenTypography.caption.fontSize,
     fontWeight: planScreenTypography.caption.fontWeight,
   },
   metaRed: {
-    color: planScreenColors.inverse,
-    fontSize: planScreenTypography.titleM.fontSize,
-    fontWeight: planScreenTypography.titleM.fontWeight,
+    color: planScreenColors.text,
+    fontSize: planScreenTypography.labelM.fontSize,
+    fontWeight: planScreenTypography.labelM.fontWeight,
     marginTop: planScreenSpacing[1] / 2,
   },
   saveButton: {
@@ -1634,26 +1633,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     ...planScreenElevation.low,
     marginHorizontal: planScreenSpacing[2],
-    marginTop: planScreenSpacing[4],
-    paddingHorizontal: planScreenSpacing[4],
-    paddingVertical: planScreenSpacing[4],
+    marginTop: planScreenSpacing[2],
+    paddingHorizontal: planScreenSpacing[3],
+    paddingVertical: planScreenSpacing[3],
   },
   sectionActionText: {
     color: planScreenColors.brand,
     fontSize: planScreenTypography.labelS.fontSize,
     fontWeight: planScreenTypography.labelS.fontWeight,
   },
-  sectionSettingsIcon: {
-    height: 17,
-    tintColor: planScreenColors.brand,
-    width: 17,
-  },
   sectionTitle: {
     color: planScreenColors.text,
     flex: 1,
-    fontSize: planScreenTypography.titleL.fontSize,
-    fontWeight: planScreenTypography.titleL.fontWeight,
-    lineHeight: planScreenTypography.titleL.lineHeight,
+    fontSize: planScreenTypography.titleM.fontSize,
+    fontWeight: planScreenTypography.titleM.fontWeight,
+    lineHeight: planScreenTypography.titleM.lineHeight,
     minWidth: 0,
   },
   sectionTitleRow: {
@@ -1667,10 +1661,9 @@ const styles = StyleSheet.create({
     backgroundColor: planScreenColors.brandSoft,
     borderRadius: planScreenRadius.full,
     flexDirection: "row",
-    gap: planScreenSpacing[1],
     justifyContent: "center",
-    minHeight: 36,
-    minWidth: 62,
+    minHeight: 34,
+    minWidth: 54,
     paddingHorizontal: planScreenSpacing[3],
   },
   emptyPlanBody: {
@@ -1721,7 +1714,7 @@ const styles = StyleSheet.create({
     borderRadius: planScreenRadius.md,
     borderWidth: 1,
     flexDirection: "row",
-    minHeight: 64,
+    minHeight: 56,
     paddingHorizontal: planScreenSpacing[3],
     paddingVertical: planScreenSpacing[3],
   },
@@ -1750,7 +1743,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flex: 1,
     justifyContent: "center",
-    minHeight: 78,
+    minHeight: 62,
     minWidth: "47%",
     paddingHorizontal: planScreenSpacing[3],
     paddingVertical: planScreenSpacing[2],

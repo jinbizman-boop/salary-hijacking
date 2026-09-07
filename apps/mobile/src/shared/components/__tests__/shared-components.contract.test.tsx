@@ -32,7 +32,7 @@ describe("shared mobile components", () => {
     expect(source).toContain("keyboardVerticalOffset={insets.top}");
     expect(source).toContain("paddingBottom:");
     expect(source).toContain("designSystem.navigation.bottomTabs.visualHeight");
-    expect(source).toContain("componentSpacing.lg");
+    expect(source).toContain("componentSpacing.md");
     expect(source).toContain("insets.bottom");
     expect(source).toContain("paddingTop: insets.top");
     expect(source).toContain("StatusBar");
@@ -247,9 +247,7 @@ describe("shared mobile components", () => {
     );
 
     expect(screen.getByLabelText("제휴/광고 생활비 혜택")).toBeTruthy();
-    expect(
-      screen.getByText("민감 금융 데이터로 맞춤 타겟팅하지 않아요."),
-    ).toBeTruthy();
+    expect(screen.getByText("문맥형 광고로만 보여드려요.")).toBeTruthy();
     expect(screen.queryByText("RESERVED")).toBeNull();
     expect(screen.queryByText("NO_FILL")).toBeNull();
     expect(screen.queryByText("ERROR")).toBeNull();

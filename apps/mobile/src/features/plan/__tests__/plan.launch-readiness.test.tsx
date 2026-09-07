@@ -14,13 +14,13 @@ describe("plan launch readiness interactions", () => {
   it("treats living cost as daily amount times days and syncs new rows to salary home", () => {
     const plan = render(<PlanScreen />);
 
-    expect(plan.getByText("일일 생활비 계획/설정")).toBeTruthy();
+    expect(plan.getByText("생활비")).toBeTruthy();
     expect(plan.getByText("일일 생활비 총액")).toBeTruthy();
     expect(plan.getByText("월별 생활비 총액")).toBeTruthy();
     expect(plan.getByText("600,000원")).toBeTruthy();
 
     fireEvent.press(
-      plan.getByRole("button", { name: "일일 생활비 계획/설정 설정" }),
+      plan.getByRole("button", { name: "생활비 관리" }),
     );
     fireEvent.press(plan.getByRole("button", { name: "일일 생활비 추가하기" }));
     fireEvent.changeText(plan.getByLabelText("계획 항목 카테고리"), "외식");

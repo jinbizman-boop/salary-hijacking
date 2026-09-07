@@ -13,9 +13,9 @@ describe("salary launch readiness interactions", () => {
   it("renders Korean launch copy and keeps planned/completed reminder direction", () => {
     const screen = render(<SalaryHomeScreen />);
 
-    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
-    expect(screen.getByText("누적 납치금액")).toBeTruthy();
-    expect(screen.getByText("오늘 사용 가능 금액")).toBeTruthy();
+    expect(screen.getByText("이번 급여에서 지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText(/누적 /u)).toBeTruthy();
+    expect(screen.getByText("오늘 내가 쓸 수 있는 돈")).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
 
@@ -35,7 +35,7 @@ describe("salary launch readiness interactions", () => {
     expect(
       first.getByText("금일 사용한 변동 지출을 바로 저장합니다"),
     ).toBeTruthy();
-    expect(first.getByText("사용 금액 합계")).toBeTruthy();
+    expect(first.getByText("오늘 합계")).toBeTruthy();
     expect(first.queryByText("세부 내용")).toBeNull();
 
     fireEvent.changeText(

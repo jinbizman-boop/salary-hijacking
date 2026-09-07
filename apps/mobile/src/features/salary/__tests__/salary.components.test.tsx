@@ -31,9 +31,9 @@ describe("salary reference screen interactions", () => {
     const screen = render(<SalaryHomeScreen displayName={displayName} />);
 
     expect(screen.getByText(`${displayName}님, 오늘도 지켜냈어요`)).toBeTruthy();
-    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
-    expect(screen.getByText("오늘 사용 가능 금액")).toBeTruthy();
-    expect(screen.getByText("예정 고정지출")).toBeTruthy();
+    expect(screen.getByText("이번 급여에서 지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText("오늘 내가 쓸 수 있는 돈")).toBeTruthy();
+    expect(screen.getByText("오늘 예정 지출/저축")).toBeTruthy();
     expect(screen.getByText("변동지출")).toBeTruthy();
     expect(screen.queryByText(/^\uD64D\uAE38\uB3D9/u)).toBeNull();
   });
@@ -61,7 +61,7 @@ describe("salary reference screen interactions", () => {
     expect(
       noPlan.getByText("계획 탭에서 급여일과 고정지출을 설정해 주세요."),
     ).toBeTruthy();
-    expect(noPlan.getByText("지켜낸 돈")).toBeTruthy();
+    expect(noPlan.getByText("이번 급여에서 지켜낸 돈")).toBeTruthy();
     noPlan.unmount();
 
     const offline = render(<SalaryHomeScreen previewVariant="offline" />);
@@ -69,7 +69,7 @@ describe("salary reference screen interactions", () => {
     expect(
       offline.getByText("저장된 급여 데이터를 안전하게 보여드리고 있어요."),
     ).toBeTruthy();
-    expect(offline.getByText("지켜낸 돈")).toBeTruthy();
+    expect(offline.getByText("이번 급여에서 지켜낸 돈")).toBeTruthy();
     offline.unmount();
 
     const compact = render(<SalaryHomeScreen previewVariant="compact" />);

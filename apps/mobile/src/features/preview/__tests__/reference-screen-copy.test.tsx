@@ -19,8 +19,8 @@ describe("reference mobile screens Korean copy guard", () => {
     const screen = render(<SalaryHomeScreen />);
     const tree = serializedTree(screen);
 
-    expect(screen.getByText("지켜낸 돈")).toBeTruthy();
-    expect(screen.getByText("누적 납치금액")).toBeTruthy();
+    expect(screen.getByText("이번 급여에서 지켜낸 돈")).toBeTruthy();
+    expect(screen.getByText(/누적 /u)).toBeTruthy();
     expect(screen.getAllByText("사용 예정").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("사용 완료").length).toBeGreaterThanOrEqual(1);
     expect(tree).not.toMatch(/[�]|湲|援|移|鍮|諛|吏|꾩|뚯|/u);
@@ -31,9 +31,9 @@ describe("reference mobile screens Korean copy guard", () => {
     const tree = serializedTree(screen);
 
     expect(screen.getByText(/급여 납치 목표 달성률/u)).toBeTruthy();
-    expect(screen.getByText("월별 고정 지출 계획/설정")).toBeTruthy();
-    expect(screen.getByText("월별 고정 적금 계획/설정")).toBeTruthy();
-    expect(screen.getByText("일일 생활비 계획/설정")).toBeTruthy();
+    expect(screen.getByText("고정지출")).toBeTruthy();
+    expect(screen.getByText("고정저축")).toBeTruthy();
+    expect(screen.getByText("생활비")).toBeTruthy();
     expect(tree).not.toMatch(/[�]|湲|援|移|鍮|諛|吏|꾩|뚯|/u);
   });
 });

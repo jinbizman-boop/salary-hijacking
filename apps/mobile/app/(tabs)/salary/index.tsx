@@ -12,10 +12,9 @@ const SPONSORED_SLOT_LABEL = "Sponsored 광고 영역";
 const SALARY_VISIBLE_COPY_CONTRACT = [
   "Salary Hijacking",
   "SALARY HIJACKING",
-  "지켜낸 돈",
-  "누적 납치금액",
-  "오늘 사용 가능 금액",
-  "예정 고정지출",
+  "이번 급여에서 지켜낸 돈",
+  "오늘 내가 쓸 수 있는 돈",
+  "오늘 예정 지출/저축",
   "변동지출",
 ] as const;
 

@@ -30,7 +30,7 @@ describe("level tab screen wiring", () => {
     expect(source).toContain("이번 주 성장");
     expect(source).toContain("이번 달 성장");
     expect(source).toContain("최근 성장 기록");
-    expect(source).toContain("DEFAULT · RECOMMENDED · CUSTOM");
+    expect(source).toContain("기본 목표 · 맞춤 추천 · 내가 설정");
     expect(source).toContain("buildGrowthGoalCards");
     expect(source).toContain("가볍게 기본 목표로 시작할까요?");
     expect(source).toContain("AD-APP-LVUP-01");
@@ -67,8 +67,8 @@ describe("level tab screen wiring", () => {
     expect(source).toContain("추천 수정 적용");
     expect(source).toContain("추천 거절");
     expect(source).toContain("직접 목표 저장");
-    expect(source).toContain("오늘 미션 snapshot");
+    expect(source).toContain("오늘 기준 목표");
     expect(source).toContain("recommendationAutoApplied");
-    expect(source).toContain("historicalMissionMutationCount");
+    expect(source).not.toContain("오늘 미션 snapshot");
   });
 });

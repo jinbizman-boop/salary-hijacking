@@ -33,8 +33,8 @@ export function SurfaceCard({
 
 const styles = StyleSheet.create({
   card: {
-    gap: componentSpacing.md,
-    padding: componentSpacing.lg,
+    gap: componentSpacing.sm,
+    padding: componentSpacing.md,
     borderWidth: 1,
     borderColor: componentColors.line,
     borderRadius: componentRadius.card,

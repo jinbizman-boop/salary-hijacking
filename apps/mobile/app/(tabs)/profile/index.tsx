@@ -20,11 +20,13 @@ const PROFILE_WITHDRAWAL_REQUEST_ENDPOINT =
 const AUTH_LOGOUT_ENDPOINT = "/api/v1/auth/logout";
 
 const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
+  PROFILE: "/profile/account",
+  ACCOUNT_SECURITY: "/profile/settings",
   MY_POSTS: "/profile/community",
   MY_LEVEL: "/profile/level",
+  NOTIFICATION_SETTINGS: "/notifications/settings",
   SUPPORT: "/profile/support",
   NOTICES: "/profile/notices",
-  ACCOUNT_SETTINGS: "/profile/account",
 };
 
 export default function ProfileIndexScreen(): React.ReactElement {
@@ -66,14 +68,16 @@ export function assertMobileProfileIndexCompleteness(): {
     PROFILE_MY_PAGE_SUMMARY_ENDPOINT,
     "ProfileScreen",
     "server-authoritative profile snapshot",
-    "누적 납치 금액",
-    "레벨 업 현황",
-    "자기 관리 성과",
+    "지켜낸 돈",
+    "내 LV UP",
+    "성장",
+    "프로필",
+    "계정/보안",
     "내 게시글 관리",
     "내 레벨업 관리",
-    "1:1 문의",
+    "알림 설정",
+    "고객지원",
     "공지사항",
-    "account settings",
     PROFILE_WITHDRAWAL_REQUEST_ENDPOINT,
     AUTH_LOGOUT_ENDPOINT,
     "personal_raw_data_hidden",

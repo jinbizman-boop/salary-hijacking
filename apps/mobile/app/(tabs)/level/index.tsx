@@ -122,9 +122,6 @@ export default function LevelIndexScreen(): React.ReactElement {
   const [goalChoiceStatus, setGoalChoiceStatus] = useState<string | null>(null);
   const [goalDecision, setGoalDecision] =
     useState<GrowthGoalSourceDecisionResult | null>(null);
-  const [historicalMissionMutationCount, setHistoricalMissionMutationCount] =
-    useState(0);
-
   function openGrowthDomain(domain: GrowthGoalDomain): void {
     const route = levelRoutes[domain];
     if (route) router.push(route as never);
@@ -149,7 +146,6 @@ export default function LevelIndexScreen(): React.ReactElement {
             recommendation: readingRecommendation,
           });
     setGoalDecision(result);
-    setHistoricalMissionMutationCount(0);
   }
 
   useEffect(() => {
@@ -180,112 +176,10 @@ export default function LevelIndexScreen(): React.ReactElement {
         <AppHeader
           brandLabel="SALARY HIJACKING"
           subtitle="LV UP"
-          title="오늘의 레벨 업, 당신의 성장을 응원합니다!"
+          title="오늘 나 관리"
         />
       }
     >
-      <AdBannerSlot
-        description="성장 루틴 문맥과 분리된 제휴 영역입니다."
-        label="광고"
-        placement={LVUP_AD_HEADER_SLOT}
-        title="성장에 방해되지 않는 추천"
-      />
-      <SurfaceCard accessibilityLabel="LV UP 첫 목표 선택">
-        <Text style={styles.choiceTitle}>{initialGoalChoice.title}</Text>
-        <Text style={styles.choiceDescription}>
-          독서, 뉴스, 외국어, 운동을 기본 목표로 바로 시작하거나 나중에 직접
-          조정할 수 있어요. 추천은 자동 적용하지 않습니다.
-        </Text>
-        <View style={styles.choiceActions}>
-          {initialGoalChoice.options.map((option) => (
-            <Pressable
-              accessibilityLabel={option}
-              accessibilityRole="button"
-              key={option}
-              onPress={() => {
-                setGoalChoiceStatus(goalChoiceStatusForOption(option));
-              }}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>{option}</Text>
-            </Pressable>
-          ))}
-        </View>
-        {goalChoiceStatus ? (
-          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
-            {goalChoiceStatus}
-          </Text>
-        ) : null}
-        <View
-          accessibilityLabel="LV UP 추천 목표 결정"
-          style={styles.recommendationPanel}
-        >
-          <Text style={styles.recommendationTitle}>추천 목표</Text>
-          <Text style={styles.choiceDescription}>
-            {readingRecommendation.basisSummary} 추천은 수락하기 전에는 오늘
-            목표에 자동 반영되지 않아요.
-          </Text>
-          <View style={styles.choiceActions}>
-            <Pressable
-              accessibilityLabel="추천 수락"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("ACCEPTED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>추천 수락</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="추천 수정 적용"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("EDITED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>추천 수정 적용</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="추천 거절"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("DECLINED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>추천 거절</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="직접 목표 저장"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("EDITED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>직접 목표 저장</Text>
-            </Pressable>
-          </View>
-          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
-            {goalDecision
-              ? goalDecisionStatus(goalDecision)
-              : "추천 대기 · 자동 적용 없음"}
-          </Text>
-          <Text style={styles.choiceDescription}>
-            오늘 미션 snapshot: {todayMissionSnapshot.targetValue}
-            {unitLabel(todayMissionSnapshot.targetUnit)} · 과거 미션 변경{" "}
-            {historicalMissionMutationCount}건
-          </Text>
-        </View>
-      </SurfaceCard>
       <SurfaceCard accessibilityLabel="오늘 나 관리">
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleGroup}>
@@ -294,7 +188,7 @@ export default function LevelIndexScreen(): React.ReactElement {
               돈을 관리하듯, 오늘의 나도 직접 관리해요
             </Text>
           </View>
-          <Text style={styles.sectionMeta}>DEFAULT · RECOMMENDED · CUSTOM</Text>
+          <Text style={styles.sectionMeta}>기본 목표 · 맞춤 추천 · 내가 설정</Text>
         </View>
         {growthGoalCards.map((goal) => (
           <Pressable
@@ -326,6 +220,12 @@ export default function LevelIndexScreen(): React.ReactElement {
           </Pressable>
         ))}
       </SurfaceCard>
+      <AdBannerSlot
+        description="성장 루틴 사이에 가볍게 표시되는 제휴 영역입니다."
+        label="광고"
+        placement={LVUP_AD_HEADER_SLOT}
+        title="오늘의 루틴 추천"
+      />
       <View accessibilityLabel="LV UP 성장 흐름" style={styles.growthSections}>
         {growthSummarySections.map((section) => (
           <SurfaceCard
@@ -345,6 +245,97 @@ export default function LevelIndexScreen(): React.ReactElement {
           </SurfaceCard>
         ))}
       </View>
+      <SurfaceCard accessibilityLabel="LV UP 목표 방식">
+        <Text style={styles.choiceTitle}>{initialGoalChoice.title}</Text>
+        <Text style={styles.choiceDescription}>
+          기본 목표로 바로 시작하고, 필요할 때 맞춤 추천이나 직접 설정으로
+          조정해요. 추천은 자동 적용하지 않습니다.
+        </Text>
+        <View style={styles.choiceActions}>
+          {initialGoalChoice.options.map((option) => (
+            <Pressable
+              accessibilityLabel={option}
+              accessibilityRole="button"
+              key={option}
+              onPress={() => {
+                setGoalChoiceStatus(goalChoiceStatusForOption(option));
+              }}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>{option}</Text>
+            </Pressable>
+          ))}
+        </View>
+        {goalChoiceStatus ? (
+          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
+            {goalChoiceStatus}
+          </Text>
+        ) : null}
+        <View
+          accessibilityLabel="LV UP 추천 목표 결정"
+          style={styles.recommendationPanel}
+        >
+          <Text style={styles.recommendationTitle}>맞춤 추천</Text>
+          <Text style={styles.choiceDescription}>
+            {readingRecommendation.basisSummary} 추천은 이유를 확인하고 선택할
+            때만 오늘 목표에 반영돼요.
+          </Text>
+          <View style={styles.choiceActions}>
+            <Pressable
+              accessibilityLabel="추천 수락"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("ACCEPTED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>수락</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="추천 수정 적용"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("EDITED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>수정</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="추천 거절"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("DECLINED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>거절</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="직접 목표 저장"
+              accessibilityRole="button"
+              onPress={() => applyGoalDecision("EDITED")}
+              style={({ pressed }) => [
+                styles.choiceButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text style={styles.choiceButtonText}>직접 설정</Text>
+            </Pressable>
+          </View>
+          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
+            {goalDecision
+              ? goalDecisionStatus(goalDecision)
+              : `오늘 기준 목표 ${todayMissionSnapshot.targetValue}${unitLabel(todayMissionSnapshot.targetUnit)} · 자동 적용 없음`}
+          </Text>
+        </View>
+      </SurfaceCard>
       <AdBannerSlot
         description="오늘 성장 활동 이후에만 표시되는 광고 슬롯입니다."
         label="광고"
@@ -394,7 +385,7 @@ export function assertMobileLevelIndexCompleteness(): {
     "이번 주 성장",
     "이번 달 성장",
     "최근 성장 기록",
-    "DEFAULT · RECOMMENDED · CUSTOM",
+    "기본 목표 · 맞춤 추천 · 내가 설정",
     "가볍게 기본 목표로 시작할까요?",
     LVUP_AD_HEADER_SLOT,
     LVUP_AD_SUMMARY_SLOT,
@@ -428,7 +419,13 @@ function goalDecisionStatus(decision: GrowthGoalSourceDecisionResult): string {
   const autoApply = decision.recommendationAutoApplied
     ? "자동 적용"
     : "직접 적용";
-  return `${decision.selectedGoal.title} · ${decision.decision} · ${autoApply} · 적용일 ${decision.effectiveDate}`;
+  const decisionLabel =
+    decision.decision === "ACCEPTED"
+      ? "수락"
+      : decision.decision === "EDITED"
+        ? "수정"
+        : "거절";
+  return `${decision.selectedGoal.title} · ${decisionLabel} · ${autoApply} · 적용일 ${decision.effectiveDate}`;
 }
 
 function unitLabel(unit: "article" | "minute" | "page" | "sentence"): string {
@@ -448,11 +445,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: componentColors.surfaceSoft,
     borderColor: componentColors.line,
-    borderRadius: designSystem.radius.md,
+    borderRadius: designSystem.radius.full,
     borderWidth: 1,
-    minHeight: designSystem.layout.touchTarget,
-    paddingHorizontal: designSystem.spacing[3],
     justifyContent: "center",
+    minHeight: 38,
+    paddingHorizontal: designSystem.spacing[3],
   },
   choiceButtonText: {
     color: componentColors.primaryGreenDark,
@@ -468,13 +465,13 @@ const styles = StyleSheet.create({
   },
   choiceTitle: {
     color: componentColors.textPrimary,
-    ...designSystem.typography.titleM,
+    ...designSystem.typography.labelL,
   },
   goalActions: {
     alignItems: "flex-end",
     gap: designSystem.spacing[1],
     justifyContent: "center",
-    minWidth: 104,
+    minWidth: 82,
   },
   goalCta: {
     color: componentColors.primaryGreenDark,
@@ -490,10 +487,11 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.radius.lg,
     borderWidth: 1,
     flexDirection: "row",
-    gap: designSystem.spacing[3],
+    gap: designSystem.spacing[2],
     justifyContent: "space-between",
-    minHeight: 132,
-    padding: designSystem.spacing[3],
+    minHeight: 104,
+    paddingHorizontal: designSystem.spacing[3],
+    paddingVertical: designSystem.spacing[2],
   },
   goalSecondaryCta: {
     color: componentColors.textSecondary,
@@ -520,11 +518,11 @@ const styles = StyleSheet.create({
   },
   goalText: {
     flex: 1,
-    gap: designSystem.spacing[2],
+    gap: designSystem.spacing[1],
   },
   goalTitle: {
     color: componentColors.textPrimary,
-    ...designSystem.typography.titleM,
+    ...designSystem.typography.labelL,
   },
   goalTitleRow: {
     alignItems: "center",
@@ -533,7 +531,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   growthSections: {
-    gap: designSystem.spacing[3],
+    gap: designSystem.spacing[2],
   },
   pressed: {
     opacity: 0.82,
@@ -551,7 +549,7 @@ const styles = StyleSheet.create({
   sectionHeader: {
     alignItems: "flex-start",
     flexDirection: "row",
-    gap: designSystem.spacing[3],
+    gap: designSystem.spacing[2],
     justifyContent: "space-between",
   },
   sectionKicker: {
@@ -560,13 +558,13 @@ const styles = StyleSheet.create({
   },
   sectionMeta: {
     color: componentColors.textSecondary,
-    maxWidth: 120,
+    maxWidth: 132,
     textAlign: "right",
     ...designSystem.typography.caption,
   },
   sectionTitle: {
     color: componentColors.textPrimary,
-    ...designSystem.typography.titleL,
+    ...designSystem.typography.titleM,
   },
   sectionTitleGroup: {
     flex: 1,

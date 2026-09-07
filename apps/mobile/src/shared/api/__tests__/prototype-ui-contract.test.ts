@@ -55,20 +55,19 @@ describe("mobile prototype UI contract", () => {
     }
 
     expect(salary).toContain("Salary Hijacking");
-    expect(salary).toContain("지켜낸 돈");
-    expect(salary).toContain("누적 납치금액");
-    expect(salary).toContain("오늘 사용 가능 금액");
-    expect(salary).toContain("예정 고정지출");
+    expect(salary).toContain("이번 급여에서 지켜낸 돈");
+    expect(salary).toContain("오늘 내가 쓸 수 있는 돈");
+    expect(salary).toContain("오늘 예정 지출/저축");
     expect(salary).toContain("변동지출");
     expect(salary).toContain("Sponsored 광고 영역");
     expect(salary).toContain("사용 예정");
     expect(salary).toContain("사용 완료");
 
     expect(plan).toContain("님의 급여 납치 목표 달성률");
-    expect(plan).toContain("내 급여 납치 계획/설정");
-    expect(plan).toContain("월별 고정 지출 계획/설정");
-    expect(plan).toContain("월별 고정 적금 계획/설정");
-    expect(plan).toContain("일일 생활비 계획/설정");
+    expect(plan).toContain("급여 계획");
+    expect(plan).toContain("생활비");
+    expect(plan).toContain("고정지출");
+    expect(plan).toContain("고정저축");
     expect(plan).toContain("수정하기");
 
     expect(notifications).toContain("새로운 알림이 있어요");

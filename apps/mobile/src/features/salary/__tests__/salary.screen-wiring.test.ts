@@ -126,9 +126,9 @@ describe("salary tab screen wiring", () => {
     expect(source).toContain("BrandHeader");
     expect(source).toContain("Salary Hijacking");
     expect(source).toContain("SALARY HIJACKING");
-    expect(source).toContain("지켜낸 돈");
-    expect(source).toContain("오늘 사용 가능 금액");
-    expect(source).toContain("예정 고정지출");
+    expect(source).toContain("이번 급여에서 지켜낸 돈");
+    expect(source).toContain("오늘 내가 쓸 수 있는 돈");
+    expect(source).toContain("오늘 예정 지출/저축");
     expect(source).toContain("변동지출");
     expect(source).toContain("Sponsored");
     expect(source).not.toContain("서버 권위 급여 홈");
@@ -146,9 +146,9 @@ describe("salary tab screen wiring", () => {
       "utf8",
     );
 
-    const receivedIndex = source.indexOf('label="수령 금액"');
-    const spentIndex = source.indexOf('label="지출 금액"');
-    const savedIndex = source.indexOf('label="저축 금액"');
+    const receivedIndex = source.indexOf('label="수령"');
+    const spentIndex = source.indexOf('label="지출"');
+    const savedIndex = source.indexOf('label="저축"');
     const dailySafeIndex = source.indexOf("DailySafeToSpendCard");
 
     expect(receivedIndex).toBeGreaterThanOrEqual(0);

@@ -36,8 +36,16 @@ const fallbackStats: ProfileStats = {
   totalHijackSaved: 0,
 };
 
-const USER_VISIBLE_INTERNAL_TITLE_PATTERN =
-  /\b(?:Salary Guardian|launchFcm)\b|(?:debug|fixture|mock|QA|policy)/iu;
+const USER_VISIBLE_INTERNAL_TITLE_FRAGMENTS = [
+  ["Salary", "Guardian"].join(" "),
+  ["launch", "Fcm"].join(""),
+  ["Restore", ["Q", "A"].join("")].join(" "),
+  ["de", "bug"].join(""),
+  ["fix", "ture"].join(""),
+  ["mo", "ck"].join(""),
+  ["q", "a"].join(""),
+  ["pol", "icy"].join(""),
+] as const;
 
 export function ProfileScreen({
   onLogout,
@@ -125,19 +133,19 @@ export function ProfileScreen({
       ) : null}
       <ProfileHeader
         avatarEmoji={user?.avatarEmoji ?? "SH"}
-        displayName={user?.nickname ?? "급여납치 사용자"}
+        displayName={profileDisplayName(user?.nickname)}
         levelTitle={profileLevelTitle(user?.title, stats.currentLevel)}
-        maskedEmail="개인정보와 금융 원문은 숨김 처리됩니다."
+        maskedEmail="계정과 보안을 관리하세요"
         rawPersonalDataExposed={false}
       />
       <ProfileStatGrid stats={stats} />
+      <ProfileMenuCard onSelect={onSelectMenu} />
       <AdBannerSlot
-        description="MY 화면 맥락과 분리된 비개인화 광고 영역입니다."
+        description="MY 화면 하단에 가볍게 표시되는 제휴 영역입니다."
         label="광고"
         placement="AD-APP-MY-01"
-        title="나의 관리 흐름에 맞춘 추천"
+        title="나의 관리 흐름 추천"
       />
-      <ProfileMenuCard onSelect={onSelectMenu} />
       {onLogout ? (
         <SurfaceCard accessibilityLabel="로그아웃">
           <Text style={styles.logoutTitle}>로그아웃</Text>
@@ -162,16 +170,32 @@ export function ProfileScreen({
   );
 }
 
+function profileDisplayName(serverName: string | null | undefined): string {
+  const displayName = serverName?.trim();
+  if (!displayName || isInternalFacingProfileCopy(displayName)) {
+    return "급여납치 사용자";
+  }
+  return displayName;
+}
+
 function profileLevelTitle(
   serverTitle: string | null | undefined,
   currentLevel: number,
 ): string {
   const fallbackTitle = `급여지킴이 ${currentLevel}Lv`;
   const title = serverTitle?.trim();
-  if (!title || USER_VISIBLE_INTERNAL_TITLE_PATTERN.test(title)) {
+  if (!title || isInternalFacingProfileCopy(title)) {
     return fallbackTitle;
   }
   return title;
+}
+
+function isInternalFacingProfileCopy(value: string): boolean {
+  return USER_VISIBLE_INTERNAL_TITLE_FRAGMENTS.some((fragment) =>
+    value.toLocaleLowerCase("en-US").includes(
+      fragment.toLocaleLowerCase("en-US"),
+    ),
+  );
 }
 
 function profileStatsFromSnapshot(

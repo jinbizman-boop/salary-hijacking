@@ -176,12 +176,11 @@ describe("mobile app screen API and route contracts", () => {
     );
     const combinedRuntimeSurface = salaryHomeSource;
 
-    expect(combinedRuntimeSurface).toContain("\uC9C0\uCF1C\uB0B8 \uB3C8");
     expect(combinedRuntimeSurface).toContain(
-      "\uB204\uC801 \uB0A9\uCE58\uAE08\uC561",
+      "\uC774\uBC88 \uAE09\uC5EC\uC5D0\uC11C \uC9C0\uCF1C\uB0B8 \uB3C8",
     );
     expect(combinedRuntimeSurface).toContain(
-      "\uC624\uB298 \uC0AC\uC6A9 \uAC00\uB2A5 \uAE08\uC561",
+      "\uC624\uB298 \uB0B4\uAC00 \uC4F8 \uC218 \uC788\uB294 \uB3C8",
     );
     expect(combinedRuntimeSurface).toContain("\uC0AC\uC6A9 \uC608\uC815");
     expect(combinedRuntimeSurface).toContain("\uC0AC\uC6A9 \uC644\uB8CC");
@@ -250,9 +249,10 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(profileSource).toContain("ProfileScreen");
     expect(profileSource).toContain("/api/v1/users/me/my-page-summary");
-    expect(profileSource).toContain('ACCOUNT_SETTINGS: "/profile/account"');
-    expect(profileSource).not.toContain(
-      'ACCOUNT_SETTINGS: "/profile/settings"',
+    expect(profileSource).toContain('PROFILE: "/profile/account"');
+    expect(profileSource).toContain('ACCOUNT_SECURITY: "/profile/settings"');
+    expect(profileSource).toContain(
+      'NOTIFICATION_SETTINGS: "/notifications/settings"',
     );
     expect(profileSource).not.toContain("LV 7 Budget Builder");
   });

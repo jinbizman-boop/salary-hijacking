@@ -686,7 +686,7 @@ export function SalaryHomeScreen({
         contentContainerStyle={[
           styles.content,
           {
-            paddingBottom: insets.bottom + 132,
+            paddingBottom: insets.bottom + 96,
             paddingTop: insets.top,
             width: contentWidth,
           },
@@ -714,62 +714,49 @@ export function SalaryHomeScreen({
         <SalaryHomeVariantBanner variant={previewVariant} />
 
         <ProtectedMoneyHeroCard>
-          <View style={styles.heroLeft}>
-            <Text allowFontScaling={false} style={styles.heroDate}>
-              {kst.text}
-            </Text>
-            <Text allowFontScaling={false} style={styles.heroGreeting}>
-              {displayName}님, 오늘도 지켜냈어요
-            </Text>
-            <Text allowFontScaling={false} style={styles.heroTitle}>
-              지켜낸 돈
-            </Text>
+          <View style={styles.heroTop}>
+            <View style={styles.heroCopy}>
+              <Text allowFontScaling={false} style={styles.heroDate}>
+                {kst.text}
+              </Text>
+              <Text allowFontScaling={false} style={styles.heroGreeting}>
+                {displayName}님, 오늘도 지켜냈어요
+              </Text>
+              <Text allowFontScaling={false} style={styles.heroTitle}>
+                이번 급여에서 지켜낸 돈
+              </Text>
+              <Text allowFontScaling={false} style={styles.heroAmount}>
+                {formatKrw(currentHijacked)}
+              </Text>
+              <Text allowFontScaling={false} style={styles.heroSub}>
+                누적 {formatKrw(state.financialSummary.cumulativeHijacked)}
+              </Text>
+            </View>
             <Image
               accessibilityIgnoresInvertColors
               resizeMode="contain"
               source={salaryCoinsIcon}
               style={styles.heroCoin}
             />
-            <Text allowFontScaling={false} style={styles.heroSub}>
-              누적 납치금액
-            </Text>
-            <Text allowFontScaling={false} style={styles.heroAmount}>
-              {formatKrw(state.financialSummary.cumulativeHijacked)}
-            </Text>
           </View>
-          <View style={styles.heroRight}>
-            <View style={styles.paydayRow}>
-              <PaydayCard
-                label="이번 달 급여일"
-                value={salaryCycle.currentLabel}
-              />
-              <PaydayCard
-                danger
-                label="다음 달 급여일"
-                value={salaryCycle.nextLabel}
-              />
-            </View>
+          <View style={styles.paydayRow}>
+            <PaydayCard label="급여주기 시작" value={salaryCycle.currentLabel} />
+            <PaydayCard danger label="이번 주기 종료" value={salaryCycle.nextLabel} />
+          </View>
+          <View style={styles.heroMetricGrid}>
             <HeroMetric
-              label="수령 금액"
+              label="수령"
               value={formatKrw(state.financialSummary.receivedAmount)}
             />
-            <HeroMetric label="지출 금액" value={formatKrw(currentSpent)} />
-            <HeroMetric
-              emphasized
-              label="저축 금액"
-              value={formatKrw(currentHijacked)}
-            />
-            <HeroMetric
-              label="예정 소비 후"
-              value={formatKrw(expectedBalanceAfterScheduled)}
-            />
+            <HeroMetric label="지출" value={formatKrw(currentSpent)} />
+            <HeroMetric emphasized label="저축" value={formatKrw(currentHijacked)} />
           </View>
         </ProtectedMoneyHeroCard>
 
         <DailySafeToSpendCard>
           <View style={styles.titleRow}>
             <Text allowFontScaling={false} style={styles.cardTitle}>
-              오늘 사용 가능 금액
+              오늘 내가 쓸 수 있는 돈
             </Text>
             <Pressable
               accessibilityLabel="일일 사용 예산 설정하기"
@@ -784,16 +771,16 @@ export function SalaryHomeScreen({
           </View>
           <View style={styles.budgetSummary}>
             <BudgetSummary
-              label="설정 금액"
+              label="오늘 예산"
               value={formatKrw(state.dailyLimit)}
             />
-            <BudgetSummary label="사용 금액" value={formatKrw(dailySpent)} />
+            <BudgetSummary label="사용완료" value={formatKrw(dailySpent)} />
             <BudgetSummary
-              label="남은 금액"
+              label="현재 남음"
               value={formatKrw(dailyRemaining)}
             />
             <BudgetSummary
-              label="예정 사용 후"
+              label="예정 소비 후"
               value={formatKrw(expectedBalanceAfterScheduled)}
             />
           </View>
@@ -882,7 +869,7 @@ export function SalaryHomeScreen({
 
         <UpcomingFixedExpenseSection>
           <Text allowFontScaling={false} style={styles.cardTitle}>
-            예정 고정지출
+            오늘 예정 지출/저축
           </Text>
           {visiblePlanReminderItems.length === 0 ? (
             <SalaryEmptyState
@@ -910,7 +897,7 @@ export function SalaryHomeScreen({
               style={styles.variableTotal}
             >
               <Text allowFontScaling={false} style={styles.variableTotalLabel}>
-                사용 금액 합계
+                오늘 합계
               </Text>
               <Text allowFontScaling={false} style={styles.variableTotalValue}>
                 {formatKrw(variableTotal)}
@@ -1459,10 +1446,10 @@ function HeroMetric({
 function SponsoredSlot(): React.ReactElement {
   return (
     <AdBannerSlot
-      description="생활비 문맥과 분리된 비개인화 광고 영역입니다."
+      description="필요한 혜택이 있을 때만 가볍게 표시됩니다."
       label="광고"
       placement="AD-APP-SALARY-01"
-      title="생활 흐름에 맞춘 추천"
+      title="오늘의 생활 혜택"
     />
   );
 }
@@ -1754,10 +1741,16 @@ const styles = StyleSheet.create({
     fontWeight: salaryScreenTypography.labelM.fontWeight,
   },
   addText: {
-    color: salaryScreenColors.text,
+    alignSelf: "flex-start",
+    backgroundColor: salaryScreenColors.brandSoft,
+    borderRadius: salaryScreenRadius.full,
+    color: salaryScreenColors.brand,
     fontSize: salaryScreenTypography.labelM.fontSize,
     fontWeight: salaryScreenTypography.labelM.fontWeight,
     marginTop: salaryScreenSpacing[2],
+    overflow: "hidden",
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[2],
   },
   adDish: {
     alignItems: "flex-end",
@@ -1778,7 +1771,7 @@ const styles = StyleSheet.create({
   adLeft: {
     flex: 0.62,
     justifyContent: "center",
-    paddingHorizontal: salaryScreenSpacing[5],
+    paddingHorizontal: salaryScreenSpacing[3],
   },
   adSmall: {
     color: salaryScreenColors.inverse,
@@ -1815,36 +1808,35 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: salaryScreenSpacing[2],
-    minHeight: 52,
+    minHeight: 46,
   },
   budgetSummary: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: salaryScreenSpacing[1],
+    gap: salaryScreenSpacing[2],
     marginBottom: salaryScreenSpacing[2],
   },
   budgetSummaryItem: {
-    flexDirection: "row",
-    minWidth: "48%",
+    backgroundColor: salaryScreenColors.soft,
+    borderColor: salaryScreenColors.line,
+    borderRadius: salaryScreenRadius.md,
+    borderWidth: 1,
     flex: 1,
+    minHeight: 58,
+    minWidth: "47%",
+    paddingHorizontal: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[2],
   },
   budgetSummaryLabel: {
-    backgroundColor: salaryScreenColors.brand,
-    color: salaryScreenColors.inverse,
-    flex: 1,
+    color: salaryScreenColors.muted,
     fontSize: salaryScreenTypography.caption.fontSize,
     fontWeight: salaryScreenTypography.caption.fontWeight,
-    paddingVertical: salaryScreenSpacing[2],
-    textAlign: "center",
   },
   budgetSummaryValue: {
-    backgroundColor: salaryScreenColors.soft,
     color: salaryScreenColors.text,
-    flex: 1,
-    fontSize: salaryScreenTypography.caption.fontSize,
-    fontWeight: salaryScreenTypography.caption.fontWeight,
-    paddingVertical: salaryScreenSpacing[2],
-    textAlign: "center",
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+    marginTop: salaryScreenSpacing[1],
   },
   budgetText: {
     color: salaryScreenColors.text,
@@ -1869,8 +1861,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     minHeight: designSystem.header.height,
-    paddingHorizontal: salaryScreenSpacing[5],
-    paddingVertical: salaryScreenSpacing[3],
+    paddingHorizontal: salaryScreenSpacing[4],
+    paddingVertical: salaryScreenSpacing[2],
   },
   brandIdentity: {
     alignItems: "center",
@@ -1902,17 +1894,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     ...salaryScreenElevation.low,
     marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[4],
-    paddingHorizontal: salaryScreenSpacing[4],
-    paddingVertical: salaryScreenSpacing[4],
+    marginTop: salaryScreenSpacing[2],
+    paddingHorizontal: salaryScreenSpacing[3],
+    paddingVertical: salaryScreenSpacing[3],
   },
   cardTitle: {
     color: salaryScreenColors.text,
     flex: 1,
-    fontSize: salaryScreenTypography.titleL.fontSize,
-    fontWeight: salaryScreenTypography.titleL.fontWeight,
-    lineHeight: salaryScreenTypography.titleL.lineHeight,
-    marginBottom: salaryScreenSpacing[3],
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    lineHeight: salaryScreenTypography.titleM.lineHeight,
+    marginBottom: salaryScreenSpacing[2],
   },
   content: {
     alignSelf: "center",
@@ -2014,7 +2006,7 @@ const styles = StyleSheet.create({
   googleAd: {
     backgroundColor: salaryScreenColors.info,
     flexDirection: "row",
-    height: 74,
+    height: 56,
     overflow: "hidden",
     width: "100%",
   },
@@ -2030,70 +2022,69 @@ const styles = StyleSheet.create({
     width: designSystem.navigation.bottomTabs.iconSize,
   },
   heroAmount: {
-    color: salaryScreenColors.money,
-    fontSize: 30,
+    color: salaryScreenColors.brand,
+    fontSize: 31,
     fontWeight: salaryScreenTypography.amountXL.fontWeight,
-    lineHeight: 38,
+    lineHeight: 37,
     marginTop: salaryScreenSpacing[1],
   },
   heroCoin: {
-    height: 56,
-    marginBottom: salaryScreenSpacing[1],
-    marginTop: salaryScreenSpacing[2],
-    width: 56,
+    height: 52,
+    width: 52,
+  },
+  heroCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  heroMetricGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: salaryScreenSpacing[2],
   },
   heroDate: {
-    color: salaryScreenColors.brandSoft,
-    fontSize: salaryScreenTypography.bodyM.fontSize,
-    fontWeight: salaryScreenTypography.bodyM.fontWeight,
+    color: salaryScreenColors.brand,
+    fontSize: salaryScreenTypography.labelS.fontSize,
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
   },
   heroGreeting: {
-    color: salaryScreenColors.inverse,
+    color: salaryScreenColors.muted,
     fontSize: salaryScreenTypography.bodyS.fontSize,
     fontWeight: salaryScreenTypography.bodyS.fontWeight,
     lineHeight: salaryScreenTypography.bodyS.lineHeight,
     marginTop: salaryScreenSpacing[1],
     opacity: 0.86,
   },
-  heroLeft: {
-    flex: 1.05,
-    justifyContent: "center",
-    minWidth: 0,
-    paddingLeft: salaryScreenSpacing[2],
-    paddingVertical: salaryScreenSpacing[2],
-  },
   heroPanel: {
-    backgroundColor: salaryScreenColors.brand,
-    borderColor: "rgba(255, 255, 255, 0.18)",
-    borderRadius: salaryScreenRadius.xl,
+    backgroundColor: salaryScreenColors.surface,
+    borderColor: salaryScreenColors.line,
+    borderRadius: salaryScreenRadius.lg,
     borderWidth: 1,
-    flexDirection: "row",
     gap: salaryScreenSpacing[3],
     marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[2],
-    minHeight: 236,
+    marginTop: salaryScreenSpacing[1],
+    ...salaryScreenElevation.low,
     overflow: "hidden",
     padding: salaryScreenSpacing[3],
   },
-  heroRight: {
-    flex: 1,
-    gap: salaryScreenSpacing[2],
-    justifyContent: "center",
-    minWidth: 0,
-  },
   heroSub: {
-    color: salaryScreenColors.inverse,
+    color: salaryScreenColors.muted,
     fontSize: salaryScreenTypography.bodyS.fontSize,
     fontWeight: salaryScreenTypography.bodyS.fontWeight,
     marginTop: salaryScreenSpacing[1],
     opacity: 0.82,
   },
   heroTitle: {
-    color: salaryScreenColors.inverse,
-    fontSize: salaryScreenTypography.titleXL.fontSize,
-    fontWeight: salaryScreenTypography.titleXL.fontWeight,
-    lineHeight: salaryScreenTypography.titleXL.lineHeight,
+    color: salaryScreenColors.text,
+    fontSize: salaryScreenTypography.titleM.fontSize,
+    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    lineHeight: salaryScreenTypography.titleM.lineHeight,
     marginTop: salaryScreenSpacing[1],
+  },
+  heroTop: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    gap: salaryScreenSpacing[3],
+    justifyContent: "space-between",
   },
   inlineForm: {
     backgroundColor: salaryScreenColors.soft,
@@ -2107,14 +2098,14 @@ const styles = StyleSheet.create({
   insightCard: {
     backgroundColor: salaryScreenColors.surface,
     borderColor: salaryScreenColors.line,
-    borderRadius: salaryScreenRadius.md,
+    borderRadius: salaryScreenRadius.lg,
     borderWidth: 1,
     ...salaryScreenElevation.low,
-    gap: salaryScreenSpacing[3],
+    gap: salaryScreenSpacing[2],
     marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[3],
+    marginTop: salaryScreenSpacing[2],
     paddingHorizontal: salaryScreenSpacing[3],
-    paddingVertical: salaryScreenSpacing[4],
+    paddingVertical: salaryScreenSpacing[3],
   },
   insightLabel: {
     color: salaryScreenColors.brand,
@@ -2122,22 +2113,21 @@ const styles = StyleSheet.create({
     fontWeight: salaryScreenTypography.labelM.fontWeight,
   },
   insightPill: {
-    backgroundColor: salaryScreenColors.brandSoft,
-    borderColor: salaryScreenColors.brandSurface,
+    backgroundColor: salaryScreenColors.soft,
+    borderColor: salaryScreenColors.line,
     borderRadius: salaryScreenRadius.md,
     borderWidth: 1,
-    flex: 1,
+    flexDirection: "row",
     gap: salaryScreenSpacing[1],
-    minWidth: 0,
-    paddingHorizontal: salaryScreenSpacing[3],
-    paddingVertical: salaryScreenSpacing[3],
+    paddingHorizontal: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[2],
   },
   insightRow: {
-    flexDirection: "row",
     gap: salaryScreenSpacing[2],
   },
   insightText: {
     color: salaryScreenColors.text,
+    flex: 1,
     fontSize: salaryScreenTypography.bodyS.fontSize,
     fontWeight: salaryScreenTypography.bodyS.fontWeight,
     lineHeight: salaryScreenTypography.bodyS.lineHeight,
@@ -2157,20 +2147,19 @@ const styles = StyleSheet.create({
     gap: salaryScreenSpacing[2],
   },
   metricBox: {
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
-    borderColor: "rgba(255, 255, 255, 0.38)",
+    backgroundColor: salaryScreenColors.soft,
+    borderColor: salaryScreenColors.line,
     borderRadius: salaryScreenRadius.md,
     borderWidth: 1,
-    flexDirection: "row",
-    gap: salaryScreenSpacing[1],
-    justifyContent: "space-between",
-    minHeight: 42,
-    paddingHorizontal: salaryScreenSpacing[3],
+    flexBasis: "31%",
+    flexGrow: 1,
+    minHeight: 50,
+    paddingHorizontal: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[2],
   },
   metricEmphasis: {
-    borderColor: salaryScreenColors.money,
-    backgroundColor: salaryScreenColors.warningSoft,
+    borderColor: salaryScreenColors.brandSurface,
+    backgroundColor: salaryScreenColors.brandSoft,
     borderWidth: 1,
   },
   metricLabel: {
@@ -2181,20 +2170,20 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     color: salaryScreenColors.text,
-    flex: 1,
-    fontSize: salaryScreenTypography.titleM.fontSize,
-    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
     minWidth: 0,
-    textAlign: "right",
   },
   paydayCard: {
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    backgroundColor: salaryScreenColors.soft,
+    borderColor: salaryScreenColors.line,
     borderRadius: salaryScreenRadius.md,
+    borderWidth: 1,
     flex: 1,
     justifyContent: "center",
-    minHeight: 58,
-    paddingHorizontal: salaryScreenSpacing[1],
+    minHeight: 48,
+    paddingHorizontal: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[2],
   },
   paydayDanger: {
     color: salaryScreenColors.danger,
@@ -2209,9 +2198,9 @@ const styles = StyleSheet.create({
     gap: salaryScreenSpacing[2],
   },
   paydayValue: {
-    color: salaryScreenColors.brand,
-    fontSize: salaryScreenTypography.titleM.fontSize,
-    fontWeight: salaryScreenTypography.titleM.fontWeight,
+    color: salaryScreenColors.text,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
     marginTop: salaryScreenSpacing[1],
   },
   saveButton: {
@@ -2312,12 +2301,22 @@ const styles = StyleSheet.create({
     padding: salaryScreenSpacing[3],
   },
   variableHeader: {
-    marginBottom: salaryScreenSpacing[1],
+    alignItems: "center",
+    flexDirection: "row",
+    gap: salaryScreenSpacing[2],
+    justifyContent: "space-between",
+    marginBottom: salaryScreenSpacing[2],
   },
   variableTotal: {
     alignSelf: "flex-end",
+    backgroundColor: salaryScreenColors.soft,
+    borderColor: salaryScreenColors.line,
+    borderRadius: salaryScreenRadius.full,
+    borderWidth: 1,
     flexDirection: "row",
-    marginTop: -salaryScreenSpacing[1],
+    gap: salaryScreenSpacing[1],
+    paddingHorizontal: salaryScreenSpacing[2],
+    paddingVertical: salaryScreenSpacing[1],
   },
   variableList: {
     gap: salaryScreenSpacing[2],
@@ -2337,7 +2336,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: salaryScreenSpacing[3],
     justifyContent: "space-between",
-    minHeight: 72,
+    minHeight: 60,
     paddingHorizontal: salaryScreenSpacing[3],
     paddingVertical: salaryScreenSpacing[2],
   },
@@ -2352,21 +2351,14 @@ const styles = StyleSheet.create({
     minWidth: 110,
   },
   variableTotalLabel: {
-    backgroundColor: salaryScreenColors.brand,
-    color: salaryScreenColors.inverse,
+    color: salaryScreenColors.muted,
     fontSize: salaryScreenTypography.caption.fontSize,
     fontWeight: salaryScreenTypography.caption.fontWeight,
-    paddingHorizontal: salaryScreenSpacing[5],
-    paddingVertical: salaryScreenSpacing[2],
   },
   variableTotalValue: {
-    backgroundColor: salaryScreenColors.soft,
-    color: salaryScreenColors.text,
+    color: salaryScreenColors.brand,
     fontSize: salaryScreenTypography.caption.fontSize,
-    fontWeight: salaryScreenTypography.caption.fontWeight,
-    minWidth: 82,
-    paddingVertical: salaryScreenSpacing[2],
-    textAlign: "center",
+    fontWeight: salaryScreenTypography.labelS.fontWeight,
   },
   variantBanner: {
     backgroundColor: salaryScreenColors.brandSoft,

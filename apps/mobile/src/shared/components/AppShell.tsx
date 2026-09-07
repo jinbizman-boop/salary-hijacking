@@ -82,11 +82,11 @@ const styles = StyleSheet.create({
     backgroundColor: componentColors.background,
   },
   content: {
-    gap: componentSpacing.lg,
-    padding: componentSpacing.lg,
+    gap: componentSpacing.md,
+    padding: componentSpacing.md,
   },
   stack: {
-    gap: componentSpacing.lg,
+    gap: componentSpacing.md,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,

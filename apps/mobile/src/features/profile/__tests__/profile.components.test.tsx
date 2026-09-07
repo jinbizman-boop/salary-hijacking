@@ -68,7 +68,7 @@ describe("profile feature components", () => {
     expect(screen.getByText("사용자 기획자님")).toBeTruthy();
     expect(screen.getByText("18Lv")).toBeTruthy();
     expect(screen.getByText("sa***@example.com")).toBeTruthy();
-    expect(screen.getByText("개인정보는 마스킹되어 표시돼요")).toBeTruthy();
+    expect(screen.queryByText("개인정보는 마스킹되어 표시돼요")).toBeNull();
     expect(screen.queryByText("salary_saver@example.com")).toBeNull();
     expect(
       screen.getByLabelText("profile header for 사용자 기획자님"),
@@ -92,27 +92,29 @@ describe("profile feature components", () => {
     expect(screen.getByText("18Lv")).toBeTruthy();
     expect(screen.getByLabelText("레벨 업 진행률 88%")).toBeTruthy();
     expect(screen.getByText("4.1점")).toBeTruthy();
-    expect(screen.getByText("성과 점수")).toBeTruthy();
+    expect(screen.getByText("성장")).toBeTruthy();
   });
 
   it("renders expected my page menu actions as accessible buttons", () => {
     const onSelect = jest.fn();
     const screen = render(<ProfileMenuCard onSelect={onSelect} />);
 
+    fireEvent.press(screen.getByRole("button", { name: "프로필 관리" }));
+    fireEvent.press(screen.getByRole("button", { name: "계정 보안 관리" }));
     fireEvent.press(screen.getByRole("button", { name: "내 게시글 관리" }));
     fireEvent.press(screen.getByRole("button", { name: "내 레벨업 관리" }));
+    fireEvent.press(screen.getByRole("button", { name: "알림 설정" }));
     fireEvent.press(screen.getByRole("button", { name: "1:1 문의" }));
     fireEvent.press(screen.getByRole("button", { name: "공지사항" }));
-    fireEvent.press(screen.getByRole("button", { name: "계정 설정" }));
 
-    expect(onSelect).toHaveBeenNthCalledWith(1, "MY_POSTS");
-    expect(onSelect).toHaveBeenNthCalledWith(2, "MY_LEVEL");
-    expect(onSelect).toHaveBeenNthCalledWith(3, "SUPPORT");
-    expect(onSelect).toHaveBeenNthCalledWith(4, "NOTICES");
-    expect(onSelect).toHaveBeenNthCalledWith(5, "ACCOUNT_SETTINGS");
-    expect(
-      screen.getByText("금융 원문은 MY 메뉴에 표시하지 않아요"),
-    ).toBeTruthy();
+    expect(onSelect).toHaveBeenNthCalledWith(1, "PROFILE");
+    expect(onSelect).toHaveBeenNthCalledWith(2, "ACCOUNT_SECURITY");
+    expect(onSelect).toHaveBeenNthCalledWith(3, "MY_POSTS");
+    expect(onSelect).toHaveBeenNthCalledWith(4, "MY_LEVEL");
+    expect(onSelect).toHaveBeenNthCalledWith(5, "NOTIFICATION_SETTINGS");
+    expect(onSelect).toHaveBeenNthCalledWith(6, "SUPPORT");
+    expect(onSelect).toHaveBeenNthCalledWith(7, "NOTICES");
+    expect(screen.queryByText("금융 원문은 MY 메뉴에 표시하지 않아요")).toBeNull();
   });
 
   it("renders the MY tab from the server-authoritative profile snapshot", async () => {
@@ -150,6 +152,22 @@ describe("profile feature components", () => {
     expect(screen.getByText("급여지킴이 7Lv")).toBeTruthy();
     expect(screen.queryByText("Salary Guardian")).toBeNull();
     expect(screen.queryByText("launchFcm")).toBeNull();
+  }, 15000);
+
+  it("keeps QA fixture display names out of the user-visible MY screen", async () => {
+    const getProfile = jest.fn().mockResolvedValue({
+      ...serverProfileSnapshot,
+      user: {
+        ...serverProfileSnapshot.user,
+        nickname: "Restore QA",
+      },
+    });
+    const screen = render(
+      <ProfileScreen onSelectMenu={jest.fn()} profileApi={{ getProfile }} />,
+    );
+
+    expect(await screen.findByText("급여납치 사용자")).toBeTruthy();
+    expect(screen.queryByText("Restore QA")).toBeNull();
   }, 15000);
 
   it("exposes logout through a confirmation dialog before ending the session", async () => {

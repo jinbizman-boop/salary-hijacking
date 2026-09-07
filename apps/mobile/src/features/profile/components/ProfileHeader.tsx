@@ -35,7 +35,6 @@ export function ProfileHeader({
           {maskedEmail ? <Text style={styles.meta}>{maskedEmail}</Text> : null}
         </View>
       </View>
-      <Text style={styles.guard}>개인정보는 마스킹되어 표시돼요</Text>
     </SurfaceCard>
   );
 }
@@ -47,8 +46,8 @@ const styles = StyleSheet.create({
     gap: designSystem.spacing[3],
   },
   avatar: {
-    width: designSystem.spacing[8] + designSystem.spacing[8],
-    height: designSystem.spacing[8] + designSystem.spacing[8],
+    width: 54,
+    height: 54,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: designSystem.radius.full,
@@ -64,7 +63,7 @@ const styles = StyleSheet.create({
   },
   name: {
     color: componentColors.textPrimary,
-    ...designSystem.typography.titleXL,
+    ...designSystem.typography.titleM,
   },
   title: {
     color: componentColors.primaryGreen,
@@ -73,9 +72,5 @@ const styles = StyleSheet.create({
   meta: {
     color: componentColors.textSecondary,
     ...designSystem.typography.caption,
-  },
-  guard: {
-    color: componentColors.textSecondary,
-    ...designSystem.typography.labelS,
   },
 });

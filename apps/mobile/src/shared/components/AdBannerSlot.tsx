@@ -169,17 +169,18 @@ export function AdBannerSlot({
 
   return (
     <View accessibilityLabel={`${label} ${title}`} style={styles.container}>
-      <Text style={styles.label}>{label}</Text>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+      <View style={styles.copyRow}>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.copy}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.description}>{description}</Text>
+        </View>
+      </View>
       {adBanner ? (
         <View accessibilityLabel={`${title} 광고 배너`} style={styles.banner}>
           {adBanner}
         </View>
       ) : null}
-      <Text style={styles.guard}>
-        민감 금융 데이터로 맞춤 타겟팅하지 않아요.
-      </Text>
     </View>
   );
 }
@@ -191,30 +192,41 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   container: {
-    gap: componentSpacing.xs,
-    padding: componentSpacing.md,
+    gap: componentSpacing.sm,
+    paddingHorizontal: componentSpacing.md,
+    paddingVertical: componentSpacing.sm,
     borderWidth: 1,
-    borderColor: salaryHijackingDesignSystem.colors.semantic.warning,
+    borderColor: componentColors.line,
     borderRadius: componentRadius.card,
-    backgroundColor: salaryHijackingDesignSystem.colors.semantic.warningSoft,
+    backgroundColor: componentColors.surfaceSoft,
+  },
+  copy: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  copyRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: componentSpacing.sm,
   },
   label: {
+    backgroundColor: salaryHijackingDesignSystem.colors.semantic.warningSoft,
+    borderRadius: componentRadius.pill,
     color: componentColors.warningOrange,
     fontSize: typography.labelS.fontSize,
     fontWeight: typography.labelS.fontWeight,
+    overflow: "hidden",
+    paddingHorizontal: componentSpacing.sm,
+    paddingVertical: 3,
   },
   title: {
     color: componentColors.textPrimary,
-    fontSize: typography.labelL.fontSize,
+    fontSize: typography.labelM.fontSize,
     fontWeight: typography.labelL.fontWeight,
   },
   description: {
     color: componentColors.textSecondary,
     fontSize: typography.caption.fontSize,
-  },
-  guard: {
-    color: componentColors.textPrimary,
-    fontSize: typography.caption.fontSize,
-    fontWeight: typography.caption.fontWeight,
   },
 });
