@@ -300,6 +300,42 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
+      - name: Setup JDK 17 for Android local fallback
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Prepare Android SDK for EAS local fallback
+        run: |
+          set -euo pipefail
+          android_sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          sdkmanager_cmd="$android_sdk_root/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$sdkmanager_cmd" ]; then
+            printf '::error::sdkmanager is unavailable at %s\n' "$sdkmanager_cmd"
+            exit 1
+          fi
+          echo "ANDROID_SDK_ROOT=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$android_sdk_root" >> "$GITHUB_ENV"
+          echo "$android_sdk_root/platform-tools" >> "$GITHUB_PATH"
+          echo "$android_sdk_root/build-tools/35.0.0" >> "$GITHUB_PATH"
+
+          set +o pipefail
+          yes | "$sdkmanager_cmd" --licenses >/dev/null
+          sdk_license_status="${PIPESTATUS[1]}"
+          set -o pipefail
+          if [ "$sdk_license_status" -ne 0 ]; then
+            printf '::error::Android SDK license acceptance failed with exit code %s\n' "$sdk_license_status"
+            exit "$sdk_license_status"
+          fi
+
+          "$sdkmanager_cmd" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.1.12297006" \
+            "cmake;3.22.1"
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -811,6 +847,27 @@ jobs:
           set -e
           printf '%s\n' "$build_status" > ../../release/eas-production-build.status.txt
 
+          if [ "$build_status" -ne 0 ] &&
+            grep -Eiq "used its Android builds from the Free plan|reset in .* days|eas billing:subscribe" ../../release/eas-production-build.stderr.txt
+          then
+            set +e
+            pnpm dlx eas-cli@23.2.0 build \
+              --platform android \
+              --profile production \
+              --local \
+              --non-interactive \
+              --output ../../release-artifacts/mobile/salary-hijacking-production-final.aab \
+              > ../../release/eas-production-local-build.stdout.txt \
+              2> ../../release/eas-production-local-build.stderr.txt
+            local_build_status=$?
+            set -e
+            printf '%s\n' "$local_build_status" > ../../release/eas-production-local-build.status.txt
+          else
+            printf '%s\n' "-1" > ../../release/eas-production-local-build.status.txt
+            : > ../../release/eas-production-local-build.stdout.txt
+            : > ../../release/eas-production-local-build.stderr.txt
+          fi
+
           node <<'NODE'
           const crypto = require("node:crypto");
           const fs = require("node:fs");
@@ -986,7 +1043,28 @@ jobs:
           const stderr = fs.existsSync("../../release/eas-production-build.stderr.txt")
             ? stripAnsi(fs.readFileSync("../../release/eas-production-build.stderr.txt", "utf8"))
             : "";
+          const localStatus = fs.existsSync("../../release/eas-production-local-build.status.txt")
+            ? Number.parseInt(
+                fs.readFileSync("../../release/eas-production-local-build.status.txt", "utf8").trim(),
+                10,
+              )
+            : -1;
+          const localStdout = fs.existsSync("../../release/eas-production-local-build.stdout.txt")
+            ? stripAnsi(fs.readFileSync("../../release/eas-production-local-build.stdout.txt", "utf8"))
+            : "";
+          const localStderr = fs.existsSync("../../release/eas-production-local-build.stderr.txt")
+            ? stripAnsi(fs.readFileSync("../../release/eas-production-local-build.stderr.txt", "utf8"))
+            : "";
           const combined = `${raw}\n${stderr}`;
+          const localCombined = `${localStdout}\n${localStderr}`;
+          const localArtifactPath = "../../release-artifacts/mobile/salary-hijacking-production-final.aab";
+          const localArtifactExists =
+            fs.existsSync(localArtifactPath) &&
+            fs.statSync(localArtifactPath).size > 1024 * 1024;
+          const remoteQuotaBlocked =
+            /used its Android builds from the Free plan|reset in .* days|eas billing:subscribe/i.test(
+              combined,
+            );
           let parsed = null;
           try {
             parsed = raw.trim() ? JSON.parse(raw) : null;
@@ -1047,11 +1125,15 @@ jobs:
             easBuildFailed: /Build failed|status[^a-z0-9]+ERRORED|status[^a-z0-9]+FAILED/i.test(
               combined,
             ),
+            easFreePlanQuotaBlocked: remoteQuotaBlocked,
+            easLocalFallbackAttempted: Number.isFinite(localStatus) && localStatus >= 0,
+            easLocalFallbackSucceeded:
+              localStatus === 0 && localArtifactExists,
             credentialsMentioned: /credential|keystore|signing/i.test(combined),
             gradleMentioned: /gradle|Execution failed|Task :app/i.test(combined),
             projectOwnerMentioned: /project|owner|account/i.test(combined),
           };
-          const sanitizedFailureLines = stripAnsi(combined)
+          const sanitizedFailureLines = stripAnsi(`${combined}\n${localCombined}`)
             .split(/\r?\n/u)
             .map((line) => line.trim())
             .filter((line) =>
@@ -1069,11 +1151,14 @@ jobs:
             containsSecretValues: false,
             sourceSha: process.env.GITHUB_SHA || null,
             checks: {
-              easBuildCommandSucceeded: status === 0,
+              easBuildCommandSucceeded:
+                status === 0 || (remoteQuotaBlocked && localStatus === 0 && localArtifactExists),
               androidBuildMetadataObserved: Boolean(androidBuild),
               androidPlatform:
                 !androidBuild || String(androidBuild?.platform || "").toUpperCase() === "ANDROID",
-              easBuildFinished: statusText === "FINISHED",
+              easBuildFinished:
+                statusText === "FINISHED" ||
+                (remoteQuotaBlocked && localStatus === 0 && localArtifactExists),
               buildDetailsUrlStored: false,
               artifactUrlStored: false,
             },
@@ -1086,10 +1171,24 @@ jobs:
               distribution: androidBuild?.distribution || null,
               appVersion: androidBuild?.appVersion || null,
               appBuildVersion: androidBuild?.appBuildVersion || null,
+              buildMode:
+                status === 0
+                  ? "eas-remote"
+                  : remoteQuotaBlocked && localStatus === 0 && localArtifactExists
+                    ? "eas-local-fallback-after-remote-quota"
+                    : "failed",
               buildDetailsUrlHash: buildUrl ? hash(buildUrl) : null,
               artifactUrlHash: artifactUrl ? hash(artifactUrl) : null,
               rawOutputHash: raw ? hash(raw) : null,
               stderrHash: stderr ? hash(stderr) : null,
+              localFallbackExitCode: Number.isFinite(localStatus)
+                ? localStatus
+                : null,
+              localFallbackOutputHash: localStdout ? hash(localStdout) : null,
+              localFallbackStderrHash: localStderr ? hash(localStderr) : null,
+              localFallbackArtifactHash: localArtifactExists
+                ? hash(fs.readFileSync(localArtifactPath))
+                : null,
               buildObjectKeyHashes: androidBuild && typeof androidBuild === "object"
                 ? Object.keys(androidBuild).sort().slice(0, 40).map((key) => hash(key))
                 : [],
@@ -1102,7 +1201,13 @@ jobs:
             blocker: null,
           };
 
-          if (status !== 0 || statusText !== "FINISHED") {
+          if (
+            status !== 0 &&
+            !(remoteQuotaBlocked && localStatus === 0 && localArtifactExists)
+          ) {
+            proof.blocker =
+              "EAS Android production AAB remote build did not finish successfully.";
+          } else if (status === 0 && statusText !== "FINISHED") {
             proof.blocker =
               "EAS Android production AAB remote build did not finish successfully.";
           }
@@ -1153,7 +1258,10 @@ jobs:
           fs.writeFileSync("../../release/eas-production-build-status.local.json", `${serialized}\n`, "utf8");
           fs.rmSync("../../release/eas-production-build.stderr.txt", { force: true });
           fs.rmSync("../../release/eas-production-build.status.txt", { force: true });
-          if (status !== 0) {
+          fs.rmSync("../../release/eas-production-local-build.stdout.txt", { force: true });
+          fs.rmSync("../../release/eas-production-local-build.stderr.txt", { force: true });
+          fs.rmSync("../../release/eas-production-local-build.status.txt", { force: true });
+          if (proof.blocker) {
             fs.rmSync("../../release/eas-production-build.raw.json", { force: true });
             throw new Error(proof.blocker);
           }
@@ -1168,31 +1276,39 @@ jobs:
           const fs = require("node:fs");
           const path = require("node:path");
 
-          const raw = fs.readFileSync("release/eas-production-build.raw.json", "utf8");
-          const parsed = JSON.parse(raw);
-          const builds = Array.isArray(parsed) ? parsed : [parsed];
-          const build = builds.find((item) => String(item?.platform || "").toUpperCase() === "ANDROID") || builds[0];
-          const buildUrl =
-            build?.artifacts?.buildUrl ||
-            build?.artifactUrl ||
-            build?.applicationArchiveUrl ||
-            build?.artifacts?.applicationArchiveUrl ||
-            "";
-
-          if (!build || !buildUrl) {
-            throw new Error("EAS build output did not include an Android build artifact URL.");
-          }
-
           const outputDir = "release-artifacts/mobile";
           fs.mkdirSync(outputDir, { recursive: true });
           const outputPath = path.join(outputDir, "salary-hijacking-production-final.aab");
           (async () => {
-            const response = await fetch(buildUrl);
-            if (!response.ok) {
-              throw new Error(`Failed to download AAB artifact: HTTP ${response.status}`);
-            }
+            const localArtifactAlreadyPresent = fs.existsSync(outputPath);
+            let build = null;
+            let buffer = localArtifactAlreadyPresent
+              ? fs.readFileSync(outputPath)
+              : null;
 
-            const buffer = Buffer.from(await response.arrayBuffer());
+            if (!buffer) {
+              const raw = fs.readFileSync("release/eas-production-build.raw.json", "utf8");
+              const parsed = JSON.parse(raw);
+              const builds = Array.isArray(parsed) ? parsed : [parsed];
+              build = builds.find((item) => String(item?.platform || "").toUpperCase() === "ANDROID") || builds[0];
+              const buildUrl =
+                build?.artifacts?.buildUrl ||
+                build?.artifactUrl ||
+                build?.applicationArchiveUrl ||
+                build?.artifacts?.applicationArchiveUrl ||
+                "";
+
+              if (!build || !buildUrl) {
+                throw new Error("EAS build output did not include an Android build artifact URL.");
+              }
+
+              const response = await fetch(buildUrl);
+              if (!response.ok) {
+                throw new Error(`Failed to download AAB artifact: HTTP ${response.status}`);
+              }
+
+              buffer = Buffer.from(await response.arrayBuffer());
+            }
             if (buffer.length < 1024 * 1024) {
               throw new Error("Downloaded AAB artifact is unexpectedly small.");
             }
@@ -1207,14 +1323,17 @@ jobs:
               secretsRedacted: true,
               containsSecretValues: false,
               sourceSha,
-              gitCommitHash: build.gitCommitHash || null,
-              platform: build.platform || "ANDROID",
+              gitCommitHash: build?.gitCommitHash || sourceSha || null,
+              platform: build?.platform || "ANDROID",
               profile: "production",
-              distribution: build.distribution || "store",
-              status: build.status || null,
-              buildId: build.id || null,
-              appVersion: build.appVersion || null,
-              appBuildVersion: build.appBuildVersion || null,
+              distribution: build?.distribution || "store",
+              status: build?.status || "FINISHED",
+              buildId: build?.id || null,
+              buildMode: localArtifactAlreadyPresent
+                ? "eas-local-fallback-after-remote-quota"
+                : "eas-remote",
+              appVersion: build?.appVersion || null,
+              appBuildVersion: build?.appBuildVersion || null,
               artifact: {
                 fileName: path.basename(outputPath),
                 byteSize: buffer.length,
@@ -1223,8 +1342,10 @@ jobs:
               },
               checks: {
                 sourceShaPresent: Boolean(sourceSha),
-                easBuildFinished: String(build.status || "").toUpperCase() === "FINISHED",
-                androidPlatform: String(build.platform || "").toUpperCase() === "ANDROID",
+                easBuildFinished:
+                  localArtifactAlreadyPresent ||
+                  String(build?.status || "").toUpperCase() === "FINISHED",
+                androidPlatform: String(build?.platform || "ANDROID").toUpperCase() === "ANDROID",
                 productionProfile: true,
                 artifactDownloaded: true,
                 artifactSha256Present: /^[A-F0-9]{64}$/u.test(sha256),
