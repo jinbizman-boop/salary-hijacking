@@ -677,10 +677,10 @@ jobs:
             "./assets/bottom-tabs/level-tab.png",
             "./assets/bottom-tabs/community-tab.png",
             "./assets/bottom-tabs/profile-tab.png",
-            "./assets/runtime/icons/social/kakao.png",
-            "./assets/runtime/icons/social/naver.png",
-            "./assets/runtime/icons/social/google.png",
-            "./assets/runtime/images/brand/salary-hijacking-platform-logo.png",
+            "./assets/runtime-icons/social/kakao.png",
+            "./assets/runtime-icons/social/naver.png",
+            "./assets/runtime-icons/social/google.png",
+            "./assets/runtime-images/brand/salary-hijacking-platform-logo.png",
           ];
           const localFilePresent = fs.existsSync(googleServicesPath);
           const easIgnorePresent = fs.existsSync(easIgnorePath);
@@ -724,7 +724,8 @@ jobs:
                   /^(?:\*\*\/)?google-services\.json$/u.test(line),
               );
             easArchiveAllowsRuntimeAssets =
-              easIgnoreLines.includes("!assets/runtime/**");
+              easIgnoreLines.includes("!assets/runtime-icons/**") &&
+              easIgnoreLines.includes("!assets/runtime-images/**");
           }
 
           if (gitIgnorePresent) {

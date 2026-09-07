@@ -144,7 +144,12 @@ describe("mobile asset registry policy", () => {
       .sort();
 
     expect(rootFiles).toEqual([...expoAssetFiles].sort());
-    expect(rootFolders).toEqual(["bottom-tabs", "fonts", "runtime"]);
+    expect(rootFolders).toEqual([
+      "bottom-tabs",
+      "fonts",
+      "runtime-icons",
+      "runtime-images",
+    ]);
     for (const file of requiredIconFiles.filter((file) =>
       file.startsWith("bottom-tabs/"),
     )) {
@@ -152,7 +157,7 @@ describe("mobile asset registry policy", () => {
     }
     for (const file of requiredIconFiles) {
       expect(
-        fs.existsSync(path.join(assetsRoot, "runtime", "icons", file)),
+        fs.existsSync(path.join(assetsRoot, "runtime-icons", file)),
       ).toBe(true);
     }
     for (const file of [
@@ -161,12 +166,17 @@ describe("mobile asset registry policy", () => {
       "brand/eureka-world-logo.jpg",
     ]) {
       expect(
-        fs.existsSync(path.join(assetsRoot, "runtime", "images", file)),
+        fs.existsSync(path.join(assetsRoot, "runtime-images", file)),
       ).toBe(true);
     }
-    for (const file of collectFiles(path.join(assetsRoot, "runtime"))) {
-      expect(relativePosix(path.join(assetsRoot, "runtime"), file)).toMatch(
-        /^(?:icons\/(?:bottom-tabs|common|money|level|community|profile|social|brands)\/[a-z0-9]+(?:-[a-z0-9]+)*\.png|images\/(?:brand|ad-banners|book-covers|news-thumbnails|workout|community-thumbnails|placeholders)\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp))$/u,
+    for (const file of collectFiles(path.join(assetsRoot, "runtime-icons"))) {
+      expect(relativePosix(path.join(assetsRoot, "runtime-icons"), file)).toMatch(
+        /^(?:bottom-tabs|common|money|level|community|profile|social|brands)\/[a-z0-9]+(?:-[a-z0-9]+)*\.png$/u,
+      );
+    }
+    for (const file of collectFiles(path.join(assetsRoot, "runtime-images"))) {
+      expect(relativePosix(path.join(assetsRoot, "runtime-images"), file)).toMatch(
+        /^(?:brand|ad-banners|book-covers|news-thumbnails|workout|community-thumbnails|placeholders)\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp)$/u,
       );
     }
     expect(fs.existsSync(path.join(assetsRoot, "icons"))).toBe(false);

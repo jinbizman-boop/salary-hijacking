@@ -1119,16 +1119,16 @@ describe("mobile Metro dependency resolution", () => {
 
     const result = metroConfig.resolver.resolveRequest(
       context,
-      "../../../../assets/runtime/icons/social/kakao.png",
+      "../../../../assets/runtime-icons/social/kakao.png",
       "android",
     );
 
     expect(result.filePath).toBe(
-      "../../../../assets/runtime/icons/social/kakao.png",
+      "../../../../assets/runtime-icons/social/kakao.png",
     );
     expect(fallbackResolver).toHaveBeenCalledWith(
       context,
-      "../../../../assets/runtime/icons/social/kakao.png",
+      "../../../../assets/runtime-icons/social/kakao.png",
       "android",
     );
   });

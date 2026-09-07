@@ -105,7 +105,7 @@ const HOME_HORIZONTAL_GUTTER = componentSpacing.md;
 const HOME_MAJOR_SECTION_GAP = componentSpacing.md;
 const HOME_RELATED_CONTENT_GAP = componentSpacing.sm;
 const salaryCoinsIcon =
-  require("../../../../assets/runtime/icons/money/coins.png") as ImageSourcePropType;
+  require("../../../../assets/runtime-icons/money/coins.png") as ImageSourcePropType;
 const SALARY_SAVE_ERROR =
   "서버 저장이 실패해 지출을 반영하지 않았습니다.";
 let salaryHomeShellMarkerEmitted = false;

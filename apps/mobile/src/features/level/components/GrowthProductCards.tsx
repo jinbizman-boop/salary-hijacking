@@ -31,38 +31,38 @@ const designSystem = salaryHijackingDesignSystem;
 
 const domainIcons = {
   HEALTH:
-    require("../../../../assets/runtime/icons/common/heart.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/common/heart.png") as ImageSourcePropType,
   LANGUAGE:
-    require("../../../../assets/runtime/icons/level/ai.png") as ImageSourcePropType,
-  NEWS: require("../../../../assets/runtime/icons/level/news.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/ai.png") as ImageSourcePropType,
+  NEWS: require("../../../../assets/runtime-icons/level/news.png") as ImageSourcePropType,
   READING:
-    require("../../../../assets/runtime/icons/level/book.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/book.png") as ImageSourcePropType,
 } as const satisfies Record<GrowthDomainKey, ImageSourcePropType>;
 
 const systemIconImages = {
   activity:
-    require("../../../../assets/runtime/icons/level/technology.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/technology.png") as ImageSourcePropType,
   "book-open":
-    require("../../../../assets/runtime/icons/level/book.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/book.png") as ImageSourcePropType,
   briefcase:
-    require("../../../../assets/runtime/icons/community/application.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/community/application.png") as ImageSourcePropType,
   check:
-    require("../../../../assets/runtime/icons/common/edit.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/common/edit.png") as ImageSourcePropType,
   dumbbell:
-    require("../../../../assets/runtime/icons/common/heart.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/common/heart.png") as ImageSourcePropType,
   heart:
-    require("../../../../assets/runtime/icons/common/heart.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/common/heart.png") as ImageSourcePropType,
   languages:
-    require("../../../../assets/runtime/icons/level/ai.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/ai.png") as ImageSourcePropType,
   newspaper:
-    require("../../../../assets/runtime/icons/level/news.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/news.png") as ImageSourcePropType,
   "piggy-bank":
-    require("../../../../assets/runtime/icons/money/coins.png") as ImageSourcePropType,
-  star: require("../../../../assets/runtime/icons/level/box.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/money/coins.png") as ImageSourcePropType,
+  star: require("../../../../assets/runtime-icons/level/box.png") as ImageSourcePropType,
   target:
-    require("../../../../assets/runtime/icons/level/folders.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/level/folders.png") as ImageSourcePropType,
   writing:
-    require("../../../../assets/runtime/icons/common/edit.png") as ImageSourcePropType,
+    require("../../../../assets/runtime-icons/common/edit.png") as ImageSourcePropType,
 } as const satisfies Record<GrowthSystemIconKey, ImageSourcePropType>;
 
 export type GrowthMissionRowProps = Readonly<{

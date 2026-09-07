@@ -333,7 +333,8 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).not.toContain("sync_env_var ADMOB_IOS_APP_ID");
     expect(easIgnore).toContain("!google-services.json");
     expect(easIgnore).toContain("!src/shared/assets/**");
-    expect(easIgnore).toContain("!assets/runtime/**");
+    expect(easIgnore).toContain("!assets/runtime-icons/**");
+    expect(easIgnore).toContain("!assets/runtime-images/**");
     expect(easIgnore).not.toMatch(
       /^\s*(?:\*\*\/)?google-services\.json\s*$/mu,
     );

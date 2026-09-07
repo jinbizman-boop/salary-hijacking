@@ -12,9 +12,9 @@ import { componentColors, salaryHijackingDesignSystem } from "./tokens";
 
 const designSystem = salaryHijackingDesignSystem;
 const headerBackIcon =
-  require("../../../assets/runtime/icons/common/left.png") as ImageSourcePropType;
+  require("../../../assets/runtime-icons/common/left.png") as ImageSourcePropType;
 const headerBrandLogo =
-  require("../../../assets/runtime/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
+  require("../../../assets/runtime-images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 
 export type AppHeaderProps = Readonly<{
   title: string;

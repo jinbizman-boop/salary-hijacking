@@ -109,10 +109,10 @@ describe("login screen wiring", () => {
     );
     expect(login).toContain("socialLoginButtonsPromise");
     expect(social).toContain(
-      'require("../../../../assets/runtime/icons/social/kakao.png")',
+      'require("../../../../assets/runtime-icons/social/kakao.png")',
     );
     expect(social).toContain(
-      'require("../../../../assets/runtime/icons/social/naver.png")',
+      'require("../../../../assets/runtime-icons/social/naver.png")',
     );
     expect(social).toContain("ImageSourcePropType");
     expect(social).toContain("<Image");

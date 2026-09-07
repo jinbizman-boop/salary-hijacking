@@ -30,6 +30,5 @@ GoogleService-Info.plist
 !src/shared/
 !src/shared/assets/
 !src/shared/assets/**
-!assets/
-!assets/runtime/
-!assets/runtime/**
+!assets/runtime-icons/**
+!assets/runtime-images/**
