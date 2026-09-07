@@ -12,6 +12,7 @@ import {
   createMobileAuthApi,
   createMobileNotificationsApi,
 } from "../../../src/shared/api/mobile-api";
+import { RootTabHeader } from "../../../src/shared/components";
 
 const SCREEN_VERSION = "4.3.0-profile-server-summary";
 const PROFILE_MY_PAGE_SUMMARY_ENDPOINT = "/api/v1/users/me/my-page-summary";
@@ -50,6 +51,7 @@ export default function ProfileIndexScreen(): React.ReactElement {
 
   return (
     <ProfileScreen
+      rootHeader={<RootTabHeader tab="profile" />}
       onLogout={handleLogout}
       onSelectMenu={(key) => {
         router.push(profileMenuRoutes[key]);

@@ -2,11 +2,25 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("community write and detail route wiring", () => {
+  const appRoot = join(__dirname, "..", "..", "..", "..", "app");
+  const communityTabRoot = join(appRoot, "(tabs)", "community");
   const route = (...segments: readonly string[]): string =>
-    readFileSync(
-      join(__dirname, "..", "..", "..", "..", "app", "community", ...segments),
+    readFileSync(join(communityTabRoot, ...segments), "utf8");
+
+  it("keeps Community detail and write routes inside the community tab stack", () => {
+    const layoutSource = route("_layout.tsx");
+    const tabsSource = readFileSync(
+      join(appRoot, "(tabs)", "_layout.tsx"),
       "utf8",
     );
+
+    expect(layoutSource).toContain('import { Stack } from "expo-router"');
+    expect(layoutSource).toContain('anchor: "index"');
+    expect(layoutSource).toContain('name="write"');
+    expect(layoutSource).toContain('name="[postId]"');
+    expect(tabsSource).toContain('name: "community"');
+    expect(tabsSource).not.toContain('name: "community/index"');
+  });
 
   it("uses the community write feature form instead of the clean fintech write fallback", () => {
     const source = route("write.tsx");

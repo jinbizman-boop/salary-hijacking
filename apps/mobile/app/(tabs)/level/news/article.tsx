@@ -9,8 +9,8 @@ import {
   componentColors,
   componentSpacing,
   salaryHijackingDesignSystem,
-} from "../../../src/shared/components";
-import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
+} from "../../../../src/shared/components";
+import { useLogicalBack } from "../../../../src/shared/navigation/useLogicalBack";
 
 const designSystem = salaryHijackingDesignSystem;
 
@@ -32,7 +32,9 @@ export default function NewsArticleScreen(): React.ReactElement {
         </Text>
         <View style={styles.thoughtBox}>
           <Text style={styles.thoughtLabel}>한 줄 생각</Text>
-          <Text style={styles.thoughtText}>이번 주 고정지출을 먼저 확인해야겠다.</Text>
+          <Text style={styles.thoughtText}>
+            이번 주 고정지출을 먼저 확인해야겠다.
+          </Text>
         </View>
         <PrimaryButton label="읽음 기록" onPress={goBack} />
       </SurfaceCard>

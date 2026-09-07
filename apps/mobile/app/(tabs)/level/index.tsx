@@ -4,10 +4,10 @@ import { useRouter } from "expo-router";
 
 import {
   AdBannerSlot,
-  AppHeader,
   AppShell,
   ErrorState,
   LoadingSkeleton,
+  RootTabHeader,
   SurfaceCard,
   componentColors,
   salaryHijackingDesignSystem,
@@ -20,9 +20,7 @@ import {
   MetricGrid,
   XpRewardToast,
 } from "../../../src/features/level/components";
-import {
-  buildGrowthGoalCards,
-} from "../../../src/features/level/goal-architecture";
+import { buildGrowthGoalCards } from "../../../src/features/level/goal-architecture";
 import { levelDetailContent } from "../../../src/features/level/detail-content";
 import {
   buildGrowthProductSnapshot,
@@ -34,9 +32,7 @@ import {
   loadGrowthDashboardSnapshot,
   loadGrowthSummarySnapshot,
 } from "../../../src/features/level/controller";
-export {
-  normalizeGrowthDashboardForLevel as normalizeGrowthDashboardForTest,
-} from "../../../src/features/level/dashboard-normalization";
+export { normalizeGrowthDashboardForLevel as normalizeGrowthDashboardForTest } from "../../../src/features/level/dashboard-normalization";
 import type {
   GrowthContentItem,
   GrowthContentType,
@@ -133,12 +129,12 @@ type ContentMap = Partial<Record<GrowthContentType, GrowthContentItem | null>>;
 export default function LevelIndexScreen(): React.ReactElement {
   const router = useRouter();
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
-  const [dashboard, setDashboard] = useState<GrowthDashboard>(fallbackDashboard);
+  const [dashboard, setDashboard] =
+    useState<GrowthDashboard>(fallbackDashboard);
   const [weekSummary, setWeekSummary] =
     useState<GrowthSummary>(fallbackWeekSummary);
-  const [monthSummary, setMonthSummary] = useState<GrowthSummary>(
-    fallbackMonthSummary,
-  );
+  const [monthSummary, setMonthSummary] =
+    useState<GrowthSummary>(fallbackMonthSummary);
   const [contents, setContents] = useState<ContentMap>(levelDetailContent);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [quickCompleteDomain, setQuickCompleteDomain] = useState<string | null>(
@@ -226,12 +222,9 @@ export default function LevelIndexScreen(): React.ReactElement {
     <AppShell
       accessibilityLabel="LV UP"
       header={
-        <AppHeader
-          actionLabel="목표 관리"
-          actionText="목표 관리"
-          onAction={() => router.push("/level/goals" as never)}
-          subtitle="오늘 할 일부터 기록까지"
-          title="LV UP"
+        <RootTabHeader
+          onOpenGoalManagement={() => router.push("/level/goals" as never)}
+          tab="level"
         />
       }
     >
@@ -324,7 +317,8 @@ export default function LevelIndexScreen(): React.ReactElement {
           기본 목표, 맞춤 추천, 내가 설정한 목표를 영역별로 관리해요.
         </Text>
         <Text style={styles.body}>
-          추천은 설명을 확인한 뒤 수락, 수정, 거절할 수 있고 자동 적용되지 않아요.
+          추천은 설명을 확인한 뒤 수락, 수정, 거절할 수 있고 자동 적용되지
+          않아요.
         </Text>
       </SurfaceCard>
 
@@ -340,7 +334,10 @@ export default function LevelIndexScreen(): React.ReactElement {
       ) : null}
 
       {quickCompleteDomain ? (
-        <XpRewardToast earnedXp={12} rewardSource={`${quickCompleteDomain} 완료`} />
+        <XpRewardToast
+          earnedXp={12}
+          rewardSource={`${quickCompleteDomain} 완료`}
+        />
       ) : null}
     </AppShell>
   );

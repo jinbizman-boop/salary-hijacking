@@ -73,25 +73,29 @@ const screenSurfaces = {
     routeFile: "apps/mobile/app/notifications/index.tsx",
   },
   "SCR-008": {
-    implementationFile: "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+    implementationFile:
+      "apps/mobile/src/features/plan/components/PlanScreen.tsx",
     nativeComponent: "PlanScreen",
     productionRoute: "/plan",
     routeFile: "apps/mobile/app/(tabs)/plan/index.tsx",
   },
   "SCR-009": {
-    implementationFile: "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+    implementationFile:
+      "apps/mobile/src/features/plan/components/PlanScreen.tsx",
     nativeComponent: "PlanScreen",
     productionRoute: "/plan",
     routeFile: "apps/mobile/app/(tabs)/plan/index.tsx",
   },
   "SCR-010": {
-    implementationFile: "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+    implementationFile:
+      "apps/mobile/src/features/plan/components/PlanScreen.tsx",
     nativeComponent: "PlanScreen",
     productionRoute: "/plan",
     routeFile: "apps/mobile/app/(tabs)/plan/index.tsx",
   },
   "SCR-011": {
-    implementationFile: "apps/mobile/src/features/plan/components/PlanScreen.tsx",
+    implementationFile:
+      "apps/mobile/src/features/plan/components/PlanScreen.tsx",
     nativeComponent: "PlanScreen",
     productionRoute: "/plan",
     routeFile: "apps/mobile/app/(tabs)/plan/index.tsx",
@@ -103,28 +107,28 @@ const screenSurfaces = {
     routeFile: "apps/mobile/app/(tabs)/level/index.tsx",
   },
   "SCR-013": {
-    implementationFile: "apps/mobile/app/level/reading.tsx",
+    implementationFile: "apps/mobile/app/(tabs)/level/reading.tsx",
     nativeComponent: "ReadingLevelScreen/ReadingContentCard",
     productionRoute: "/level/reading",
-    routeFile: "apps/mobile/app/level/reading.tsx",
+    routeFile: "apps/mobile/app/(tabs)/level/reading.tsx",
   },
   "SCR-014": {
-    implementationFile: "apps/mobile/app/level/news.tsx",
+    implementationFile: "apps/mobile/app/(tabs)/level/news.tsx",
     nativeComponent: "NewsLevelScreen/NewsBalanceCard",
     productionRoute: "/level/news",
-    routeFile: "apps/mobile/app/level/news.tsx",
+    routeFile: "apps/mobile/app/(tabs)/level/news.tsx",
   },
   "SCR-015": {
-    implementationFile: "apps/mobile/app/level/english.tsx",
+    implementationFile: "apps/mobile/app/(tabs)/level/english.tsx",
     nativeComponent: "EnglishLevelScreen/EnglishLessonCard",
     productionRoute: "/level/english",
-    routeFile: "apps/mobile/app/level/english.tsx",
+    routeFile: "apps/mobile/app/(tabs)/level/english.tsx",
   },
   "SCR-016": {
-    implementationFile: "apps/mobile/app/level/health.tsx",
+    implementationFile: "apps/mobile/app/(tabs)/level/health.tsx",
     nativeComponent: "HealthLevelScreen/WorkoutTimerCard",
     productionRoute: "/level/health",
-    routeFile: "apps/mobile/app/level/health.tsx",
+    routeFile: "apps/mobile/app/(tabs)/level/health.tsx",
   },
   "SCR-017": {
     implementationFile:
@@ -134,24 +138,24 @@ const screenSurfaces = {
     routeFile: "apps/mobile/app/(tabs)/community/index.tsx",
   },
   "SCR-018": {
-    implementationFile: "apps/mobile/app/community/[postId].tsx",
+    implementationFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
     nativeComponent: "CommunityPostDetailScreen",
     productionRoute: "/community/[postId]",
-    routeFile: "apps/mobile/app/community/[postId].tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
   },
   "SCR-019": {
     implementationFile:
       "apps/mobile/src/features/community/components/CommunityWriteForm.tsx",
     nativeComponent: "CommunityWriteForm",
     productionRoute: "/community/write",
-    routeFile: "apps/mobile/app/community/write.tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/write.tsx",
   },
   "SCR-020": {
     implementationFile:
       "apps/mobile/src/features/community/components/CommunityCommentItem.tsx",
     nativeComponent: "CommunityCommentItem",
     productionRoute: "/community/[postId]",
-    routeFile: "apps/mobile/app/community/[postId].tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
   },
   "SCR-021": {
     implementationFile:
@@ -209,7 +213,8 @@ const screenSurfaces = {
     routeFile: "apps/mobile/app/(auth)/signup.tsx",
   },
   "SCR-030": {
-    implementationFile: "apps/mobile/src/shared/ui/states/CommonStateScreen.tsx",
+    implementationFile:
+      "apps/mobile/src/shared/ui/states/CommonStateScreen.tsx",
     nativeComponent: "CommonStateScreen/ErrorBoundary",
     productionRoute: "/",
     routeFile: "apps/mobile/app/_layout.tsx",
@@ -243,27 +248,27 @@ const overlaySurfaces = {
       "apps/mobile/src/shared/ui/sheets/AttachmentBottomSheet.tsx",
     nativeComponent: "AttachmentBottomSheet",
     productionRoute: "/community/write",
-    routeFile: "apps/mobile/app/community/write.tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/write.tsx",
   },
   "BS-005": {
     implementationFile: "apps/mobile/src/shared/ui/sheets/ShareBottomSheet.tsx",
     nativeComponent: "ShareBottomSheet",
     productionRoute: "/level/reading",
-    routeFile: "apps/mobile/app/level/reading.tsx",
+    routeFile: "apps/mobile/app/(tabs)/level/reading.tsx",
   },
   "BS-006": {
     implementationFile:
       "apps/mobile/src/shared/ui/sheets/SelectionBottomSheet.tsx",
     nativeComponent: "SelectionBottomSheet",
     productionRoute: "/community/[postId]",
-    routeFile: "apps/mobile/app/community/[postId].tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
   },
   "BS-007": {
     implementationFile:
       "apps/mobile/src/shared/ui/sheets/SortFilterBottomSheet.tsx",
     nativeComponent: "SortFilterBottomSheet",
     productionRoute: "/community/[postId]",
-    routeFile: "apps/mobile/app/community/[postId].tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
   },
   "BS-008": {
     implementationFile:
@@ -277,13 +282,13 @@ const overlaySurfaces = {
       "apps/mobile/src/shared/ui/sheets/VisibilityBottomSheet.tsx",
     nativeComponent: "VisibilityBottomSheet",
     productionRoute: "/community/write",
-    routeFile: "apps/mobile/app/community/write.tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/write.tsx",
   },
   "BS-011": {
     implementationFile: "apps/mobile/src/shared/components/ConfirmDialog.tsx",
     nativeComponent: "ConfirmDialog",
     productionRoute: "/community/write",
-    routeFile: "apps/mobile/app/community/write.tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/write.tsx",
   },
   "BS-012": {
     implementationFile:
@@ -333,13 +338,13 @@ const overlaySurfaces = {
     implementationFile: "apps/mobile/src/shared/components/XpToast.tsx",
     nativeComponent: "XpToast",
     productionRoute: "/community/write",
-    routeFile: "apps/mobile/app/community/write.tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/write.tsx",
   },
   "MOD-008": {
     implementationFile: "apps/mobile/src/shared/components/ConfirmDialog.tsx",
     nativeComponent: "ConfirmDialog",
     productionRoute: "/community/[postId]",
-    routeFile: "apps/mobile/app/community/[postId].tsx",
+    routeFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
   },
   "MOD-009": {
     implementationFile:
@@ -390,10 +395,14 @@ function resolveSurfaceFromRoute(
   if (routeOrOverlay === "/terms" || variantSlug.startsWith("terms-")) {
     return screenSurfaces["SCR-028"];
   }
-  if (routeOrOverlay.startsWith("/lv-up/reading")) return screenSurfaces["SCR-013"];
-  if (routeOrOverlay.startsWith("/lv-up/news")) return screenSurfaces["SCR-014"];
-  if (routeOrOverlay.startsWith("/lv-up/english")) return screenSurfaces["SCR-015"];
-  if (routeOrOverlay.startsWith("/lv-up/health")) return screenSurfaces["SCR-016"];
+  if (routeOrOverlay.startsWith("/lv-up/reading"))
+    return screenSurfaces["SCR-013"];
+  if (routeOrOverlay.startsWith("/lv-up/news"))
+    return screenSurfaces["SCR-014"];
+  if (routeOrOverlay.startsWith("/lv-up/english"))
+    return screenSurfaces["SCR-015"];
+  if (routeOrOverlay.startsWith("/lv-up/health"))
+    return screenSurfaces["SCR-016"];
   if (routeOrOverlay.startsWith("/community/posts")) {
     return screenSurfaces["SCR-018"];
   }

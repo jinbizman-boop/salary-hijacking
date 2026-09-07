@@ -9,8 +9,8 @@ import {
   componentColors,
   componentSpacing,
   salaryHijackingDesignSystem,
-} from "../../../src/shared/components";
-import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
+} from "../../../../src/shared/components";
+import { useLogicalBack } from "../../../../src/shared/navigation/useLogicalBack";
 
 const designSystem = salaryHijackingDesignSystem;
 
@@ -27,8 +27,8 @@ export default function ReadingSessionScreen(): React.ReactElement {
         <Text style={styles.kicker}>현재 읽는 책</Text>
         <Text style={styles.title}>퇴근 후 10분 경제 독서</Text>
         <Text style={styles.body}>
-          시작 페이지와 끝 페이지를 기록하면 오늘 읽은 페이지 수가 자동으로
-          성장 기록에 반영됩니다.
+          시작 페이지와 끝 페이지를 기록하면 오늘 읽은 페이지 수가 자동으로 성장
+          기록에 반영됩니다.
         </Text>
         <View style={styles.grid}>
           <Metric label="시작" value="42p" />

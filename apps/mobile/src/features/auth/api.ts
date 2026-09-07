@@ -254,6 +254,59 @@ function assertNickname(value: string): string {
   return nickname;
 }
 
+function normalizeProfileName(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const name = assertPresent(value, "AUTH_NAME_REQUIRED");
+  if (name.length < 2 || name.length > 60) {
+    throw new AuthApiError(0, "AUTH_NAME_INVALID", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  return name;
+}
+
+function normalizeBirthDate(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const birthDate = assertPresent(value, "AUTH_BIRTHDATE_REQUIRED");
+  if (!/^\d{4}\.\d{2}\.\d{2}$/u.test(birthDate)) {
+    throw new AuthApiError(
+      0,
+      "AUTH_BIRTHDATE_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  const [yearText, monthText, dayText] = birthDate.split(".");
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const currentYear = new Date().getUTCFullYear();
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day ||
+    year < 1900 ||
+    year > currentYear
+  ) {
+    throw new AuthApiError(
+      0,
+      "AUTH_BIRTHDATE_INVALID",
+      AUTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return birthDate;
+}
+
+function normalizePhoneNumber(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const phone = assertPresent(value, "AUTH_PHONE_REQUIRED").replace(
+    /[^\d+]/g,
+    "",
+  );
+  if (!/^(?:\+82|0)\d{8,10}$/u.test(phone)) {
+    throw new AuthApiError(0, "AUTH_PHONE_INVALID", AUTH_SAFE_ERROR_MESSAGE);
+  }
+  return phone;
+}
+
 function assertResetToken(value: string): string {
   const token = assertPresent(value, "AUTH_PASSWORD_RESET_TOKEN_REQUIRED");
   if (token.length < 8) {
@@ -496,11 +549,7 @@ function refreshTokenFromAuthResponse(value: unknown): string | null {
   const token = raw?.trim();
   if (!token) return null;
   if (token.length > 8_192 || /\s/u.test(token)) {
-    throw new AuthApiError(
-      0,
-      "AUTH_INVALID_RESPONSE",
-      AUTH_SAFE_ERROR_MESSAGE,
-    );
+    throw new AuthApiError(0, "AUTH_INVALID_RESPONSE", AUTH_SAFE_ERROR_MESSAGE);
   }
   return token;
 }
@@ -806,10 +855,14 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
       assertOnlyRequestKeys(request as Record<string, unknown>, [
         "deviceId",
         "email",
+        "birthDate",
         "marketingAccepted",
+        "name",
         "nickname",
         "password",
+        "phoneNumber",
         "privacyAccepted",
+        "serviceAccepted",
         "termsAccepted",
       ]);
       const body: Record<string, unknown> = {
@@ -819,6 +872,20 @@ export function createAuthApi(options: AuthApiOptions): AuthApiClient {
         privacyAccepted: assertRequiredConsent(request.privacyAccepted),
         termsAccepted: assertRequiredConsent(request.termsAccepted),
       };
+      appendOptional(body, "name", normalizeProfileName(request.name));
+      appendOptional(body, "birthDate", normalizeBirthDate(request.birthDate));
+      appendOptional(
+        body,
+        "phoneNumber",
+        normalizePhoneNumber(request.phoneNumber),
+      );
+      appendOptional(
+        body,
+        "serviceAccepted",
+        request.serviceAccepted === undefined
+          ? undefined
+          : assertRequiredConsent(request.serviceAccepted),
+      );
       appendOptional(body, "marketingAccepted", request.marketingAccepted);
       appendOptional(body, "deviceId", normalizeDeviceId(request.deviceId));
 

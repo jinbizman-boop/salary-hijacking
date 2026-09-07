@@ -286,7 +286,9 @@ export function buildGrowthGoalEditDraft(
     activeDays: overrides.activeDays ?? goal.activeDays,
     domain: overrides.domain ?? goal.domain,
     domainOption:
-      overrides.domainOption ?? goal.domainOption ?? defaultDomainOption(goal.domain),
+      overrides.domainOption ??
+      goal.domainOption ??
+      defaultDomainOption(goal.domain),
     effectiveDateMode: overrides.effectiveDateMode ?? "TODAY",
     frequency: overrides.frequency ?? goal.frequency,
     icon: normalizeGrowthGoalIcon(

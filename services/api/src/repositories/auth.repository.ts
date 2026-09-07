@@ -164,6 +164,26 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
+function normalizePhoneNumber(phoneNumber: string | null | undefined): string | null {
+  if (!phoneNumber) return null;
+  const normalized = phoneNumber.trim().replace(/[^\d+]/g, "");
+  return normalized || null;
+}
+
+function birthYearFromBirthDate(
+  birthDate: string | null | undefined,
+): number | null {
+  if (!birthDate) return null;
+  const match = /^(\d{4})[.-]\d{2}[.-]\d{2}$/u.exec(birthDate.trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  return Number.isInteger(year) && year >= 1900 && year <= 2100 ? year : null;
+}
+
+function displayNameFromRegisterInput(input: RegisterInput): string {
+  return input.name?.trim() || input.nickname.trim();
+}
+
 function maskEmail(email: string | null): string | null {
   if (!email) return null;
   const [localRaw, domainRaw] = email.split("@");
@@ -472,6 +492,12 @@ export function createNeonAuthRepository<TEnv = unknown>(
     ): Promise<AuthUser> {
       const email = normalizeEmail(input.email);
       const providerKeyHash = await sha256Hex(`EMAIL:${email}`);
+      const phoneNumber = normalizePhoneNumber(input.phoneNumber);
+      const phoneNumberHash = phoneNumber
+        ? await sha256Hex(`PHONE:${phoneNumber}`)
+        : null;
+      const displayName = displayNameFromRegisterInput(input);
+      const birthYear = birthYearFromBirthDate(input.birthDate);
       const result = await run(
         runtime,
         "auth.createEmailUser",
@@ -479,12 +505,14 @@ export function createNeonAuthRepository<TEnv = unknown>(
         with new_user as (
           insert into public.users (
             email,
+            phone_number,
+            phone_number_hash,
             nickname,
             status,
             created_at,
             updated_at
           )
-          values ($1, $2, 'ACTIVE', $6::timestamptz, $6::timestamptz)
+          values ($1, $7, $8, $2, 'ACTIVE', $6::timestamptz, $6::timestamptz)
           returning user_id, email, nickname, status, created_at, last_login_at
         ),
         new_identity as (
@@ -559,6 +587,27 @@ export function createNeonAuthRepository<TEnv = unknown>(
               ('MARKETING'::text, $5::boolean)
           ) as consent(consent_type, granted)
           returning user_id
+        ),
+        new_profile as (
+          insert into public.user_profiles (
+            user_id,
+            display_name,
+            birth_year,
+            created_at,
+            updated_at
+          )
+          select
+            new_user.user_id,
+            $9,
+            $10,
+            $6::timestamptz,
+            $6::timestamptz
+          from new_user
+          on conflict (user_id) do update set
+            display_name = excluded.display_name,
+            birth_year = excluded.birth_year,
+            updated_at = excluded.updated_at
+          returning user_id
         )
         select
           new_user.user_id,
@@ -573,7 +622,8 @@ export function createNeonAuthRepository<TEnv = unknown>(
           array['USER']::text[] as roles
         from new_user
         join new_identity on new_identity.user_id = new_user.user_id
-        join new_credential on new_credential.user_id = new_user.user_id`,
+        join new_credential on new_credential.user_id = new_user.user_id
+        join new_profile on new_profile.user_id = new_user.user_id`,
         [
           email,
           input.nickname.trim(),
@@ -581,6 +631,10 @@ export function createNeonAuthRepository<TEnv = unknown>(
           passwordHash,
           input.marketingAccepted === true,
           runtime.now.toISOString(),
+          phoneNumber,
+          phoneNumberHash,
+          displayName,
+          birthYear,
         ],
       );
       const user = mapUser(result.rows[0]);

@@ -8,11 +8,31 @@ describe("community golden screen design system integration", () => {
     "utf8",
   );
   const communityWriteRouteSource = readFileSync(
-    join(__dirname, "..", "..", "..", "..", "app", "community", "write.tsx"),
+    join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "..",
+      "app",
+      "(tabs)",
+      "community",
+      "write.tsx",
+    ),
     "utf8",
   );
   const communityDetailRouteSource = readFileSync(
-    join(__dirname, "..", "..", "..", "..", "app", "community", "[postId].tsx"),
+    join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "..",
+      "app",
+      "(tabs)",
+      "community",
+      "[postId].tsx",
+    ),
     "utf8",
   );
   const communityIndexRouteSource = readFileSync(

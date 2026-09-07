@@ -91,9 +91,13 @@ export interface LoginInput {
 export interface RegisterInput {
   readonly email: string;
   readonly password: string;
+  readonly name?: string | null;
   readonly nickname: string;
+  readonly birthDate?: string | null;
+  readonly phoneNumber?: string | null;
   readonly termsAccepted: boolean;
   readonly privacyAccepted: boolean;
+  readonly serviceAccepted?: boolean | undefined;
   readonly marketingAccepted?: boolean;
   readonly deviceId?: string | null;
 }
@@ -1162,13 +1166,24 @@ async function handleRegister<TEnv>(
   const input: RegisterInput = {
     email,
     password,
+    name: optionalStringField(body, "name"),
     nickname: stringField(body, "nickname"),
+    birthDate: optionalStringField(body, "birthDate"),
+    phoneNumber: optionalStringField(body, "phoneNumber"),
     termsAccepted: booleanField(body, "termsAccepted"),
     privacyAccepted: booleanField(body, "privacyAccepted"),
+    serviceAccepted:
+      body.serviceAccepted === undefined
+        ? undefined
+        : booleanField(body, "serviceAccepted"),
     marketingAccepted: booleanField(body, "marketingAccepted"),
     deviceId: optionalStringField(body, "deviceId"),
   };
-  if (!input.termsAccepted || !input.privacyAccepted)
+  if (
+    !input.termsAccepted ||
+    !input.privacyAccepted ||
+    input.serviceAccepted === false
+  )
     throw new AuthRouteError(
       400,
       "AUTH_TERMS_REQUIRED",

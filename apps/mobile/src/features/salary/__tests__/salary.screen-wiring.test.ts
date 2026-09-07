@@ -70,11 +70,11 @@ describe("salary tab screen wiring", () => {
       "utf8",
     );
 
-    expect(route).not.toContain("../../../src/features/salary/components\";");
+    expect(route).not.toContain('../../../src/features/salary/components";');
     expect(route).toContain(
       "../../../src/features/salary/components/SalaryHomeScreen",
     );
-    expect(screen).not.toContain("../../../shared/components\";");
+    expect(screen).not.toContain('../../../shared/components";');
     expect(screen).toContain("../../../shared/components/tokens");
   });
 
@@ -84,7 +84,9 @@ describe("salary tab screen wiring", () => {
       "utf8",
     );
 
-    expect(screen).not.toContain('import * as SecureStore from "expo-secure-store"');
+    expect(screen).not.toContain(
+      'import * as SecureStore from "expo-secure-store"',
+    );
     expect(screen).not.toContain("const payrollReminderSecureStore =");
     expect(screen).toContain("getPayrollReminderSecureStore");
     expect(screen).toContain('require("expo-secure-store")');
@@ -118,14 +120,12 @@ describe("salary tab screen wiring", () => {
       "utf8",
     );
     const heroIndex = source.indexOf("<ProtectedMoneyHeroCard");
+    const adIndex = source.indexOf("<SponsoredSlot");
     const dailyIndex = source.indexOf("DailySafeToSpendCard");
     const fixedIndex = source.indexOf("UpcomingFixedExpenseSection");
     const variableIndex = source.indexOf("VariableExpenseSection");
-    const adIndex = source.indexOf("<SponsoredSlot");
 
-    expect(source).toContain("BrandHeader");
-    expect(source).toContain("Salary Hijacking");
-    expect(source).toContain("SALARY HIJACKING");
+    expect(source).toContain("RootTabHeader");
     expect(source).toContain("이번 급여에서 지켜낸 돈");
     expect(source).toContain("오늘 내가 쓸 수 있는 돈");
     expect(source).toContain("오늘 예정 지출/저축");
@@ -134,10 +134,10 @@ describe("salary tab screen wiring", () => {
     expect(source).not.toContain("서버 권위 급여 홈");
     expect(source).not.toContain("server authority");
     expect(heroIndex).toBeGreaterThanOrEqual(0);
-    expect(dailyIndex).toBeGreaterThan(heroIndex);
+    expect(adIndex).toBeGreaterThan(heroIndex);
+    expect(adIndex).toBeLessThan(dailyIndex);
     expect(fixedIndex).toBeGreaterThan(dailyIndex);
     expect(variableIndex).toBeGreaterThan(fixedIndex);
-    expect(adIndex).toBeGreaterThan(variableIndex);
   });
 
   it("renders the HOME-002 hero summary as received, spent, and saved amounts", () => {
@@ -158,18 +158,33 @@ describe("salary tab screen wiring", () => {
     expect(source).not.toContain('label="목표 달성률"');
   });
 
-  it("places the HOME-006 finance insight before the sponsored slot", () => {
+  it("places the salary AdMob slot between the green hero and today money", () => {
     const source = readFileSync(
       join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
       "utf8",
     );
 
-    const variableIndex = source.indexOf("VariableExpenseSection");
+    const heroIndex = source.indexOf("<ProtectedMoneyHeroCard");
+    const dailyIndex = source.indexOf("DailySafeToSpendCard");
     const insightIndex = source.indexOf("<FinanceInsightSection");
     const adIndex = source.indexOf("<SponsoredSlot");
 
     expect(source).toContain("성과/위험 인사이트");
-    expect(insightIndex).toBeGreaterThan(variableIndex);
-    expect(insightIndex).toBeLessThan(adIndex);
+    expect(adIndex).toBeGreaterThan(heroIndex);
+    expect(adIndex).toBeLessThan(dailyIndex);
+    expect(insightIndex).toBeGreaterThan(dailyIndex);
+  });
+
+  it("keeps the approved structure while rendering only the salary hero as the green surface", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(source).toContain("backgroundColor: salaryScreenColors.brand");
+    expect(source).toContain("heroPanel");
+    expect(source).toContain("color: salaryScreenColors.inverse");
+    expect(source).toContain("color: salaryScreenColors.heroMuted");
+    expect(source).not.toContain("backgroundColor: salaryScreenColors.hero");
   });
 });

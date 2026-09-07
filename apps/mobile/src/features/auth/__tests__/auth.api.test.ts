@@ -458,6 +458,58 @@ describe("auth api", () => {
     expect(stored.get(MOBILE_REFRESH_TOKEN_KEY)).toBe("new.refresh.cookie");
   });
 
+  it("registers commercial profile fields without sending provider secrets or fake verification", async () => {
+    const api = createAuthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "auth-register-profile-test",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        expect(JSON.parse(await normalized.text())).toEqual({
+          birthDate: "1992.03.14",
+          email: "new@example.com",
+          marketingAccepted: false,
+          name: "홍길동",
+          nickname: "월급수비대",
+          password: "new-password-1",
+          phoneNumber: "01012345678",
+          privacyAccepted: true,
+          serviceAccepted: true,
+          termsAccepted: true,
+        });
+        return jsonResponse({
+          data: {
+            user: {
+              userId: "usr_new",
+              roles: "USER",
+              accountStatus: "ACTIVE",
+            },
+            tokens: {
+              accessToken: "new.access.jwt",
+              refreshToken: "new.refresh.cookie",
+              accessTokenExpiresIn: 900,
+            },
+          },
+        });
+      },
+      now: () => now,
+      platform: "android",
+    });
+
+    await api.register({
+      birthDate: "1992.03.14",
+      email: "new@example.com",
+      marketingAccepted: false,
+      name: "홍길동",
+      nickname: "월급수비대",
+      password: "new-password-1",
+      phoneNumber: "010.1234.5678",
+      privacyAccepted: true,
+      serviceAccepted: true,
+      termsAccepted: true,
+    });
+  });
+
   it("rejects signup without required legal consents before fetch", async () => {
     const calls: Request[] = [];
     const api = createAuthApi({

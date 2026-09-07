@@ -4,7 +4,6 @@ import { StyleSheet, Text } from "react-native";
 
 import { createMobileProfileApi } from "../../../shared/api/mobile-api";
 import {
-  AppHeader,
   AppShell,
   AdBannerSlot,
   PrimaryButton,
@@ -14,6 +13,7 @@ import {
   componentSpacing,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { RootTabHeader } from "../../../shared/components/RootTabHeader";
 import { LogoutConfirmDialog } from "../../auth/components/LogoutConfirmDialog";
 import type { ProfileApiClient, ProfileSnapshot } from "../types";
 import { ProfileHeader } from "./ProfileHeader";
@@ -26,6 +26,7 @@ export type ProfileScreenProps = Readonly<{
   onSelectMenu: (key: ProfileMenuKey) => void;
   onLogout?: () => Promise<void> | void;
   profileApi?: Partial<Pick<ProfileApiClient, "getProfile">> | null;
+  rootHeader?: React.ReactNode;
 }>;
 
 const fallbackStats: ProfileStats = {
@@ -51,6 +52,7 @@ export function ProfileScreen({
   onLogout,
   onSelectMenu,
   profileApi,
+  rootHeader,
 }: ProfileScreenProps): React.ReactElement {
   const [snapshot, setSnapshot] = useState<ProfileSnapshot | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -108,13 +110,7 @@ export function ProfileScreen({
   return (
     <AppShell
       accessibilityLabel="Salary Hijacking profile tab"
-      header={
-        <AppHeader
-          brandLabel="SALARY HIJACKING"
-          subtitle="MY"
-          title="마이페이지"
-        />
-      }
+      header={rootHeader ?? <RootTabHeader tab="profile" />}
       overlay={
         logoutConfirmVisible ? (
           <LogoutConfirmDialog
@@ -192,9 +188,9 @@ function profileLevelTitle(
 
 function isInternalFacingProfileCopy(value: string): boolean {
   return USER_VISIBLE_INTERNAL_TITLE_FRAGMENTS.some((fragment) =>
-    value.toLocaleLowerCase("en-US").includes(
-      fragment.toLocaleLowerCase("en-US"),
-    ),
+    value
+      .toLocaleLowerCase("en-US")
+      .includes(fragment.toLocaleLowerCase("en-US")),
   );
 }
 

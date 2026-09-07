@@ -7,23 +7,33 @@ import {
   EmptyState,
   ErrorState,
   LoadingSkeleton,
-} from "../../src/shared/components";
-import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
+} from "../../../src/shared/components";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 import {
   ProductDetail,
   XpRewardToast,
-} from "../../src/features/level/components";
-import { levelDetailContent } from "../../src/features/level/detail-content";
+} from "../../../src/features/level/components";
+import { levelDetailContent } from "../../../src/features/level/detail-content";
 import {
   completeGrowthContentWithServerAuthority,
   loadGrowthContentForType,
-} from "../../src/features/level/controller";
-import type { GrowthContentItem } from "../../src/features/level/types";
-import { useLogicalBack } from "../../src/shared/navigation/useLogicalBack";
+} from "../../../src/features/level/controller";
+import type { GrowthContentItem } from "../../../src/features/level/types";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const newsHistory = [
-  { id: "news-1", label: "오늘 · 뉴스", title: "경제 기사 1개 읽음", xp: "+10 XP" },
-  { id: "news-2", label: "어제 · 뉴스", title: "한 줄 생각 기록", xp: "+12 XP" },
+  {
+    id: "news-1",
+    label: "오늘 · 뉴스",
+    title: "경제 기사 1개 읽음",
+    xp: "+10 XP",
+  },
+  {
+    id: "news-2",
+    label: "어제 · 뉴스",
+    title: "한 줄 생각 기록",
+    xp: "+12 XP",
+  },
   { id: "news-3", label: "이번 주", title: "총 6개 기사", xp: "+48 XP" },
 ] as const;
 
@@ -76,7 +86,9 @@ export default function NewsScreen(): React.ReactElement {
       header={<AppHeader onBack={goBack} subtitle="LV UP" title="뉴스" />}
     >
       {loading ? <LoadingSkeleton label="뉴스 피드를 불러오는 중" /> : null}
-      {error ? <ErrorState message={error} title="뉴스 피드를 확인 중입니다" /> : null}
+      {error ? (
+        <ErrorState message={error} title="뉴스 피드를 확인 중입니다" />
+      ) : null}
       {content ? (
         <ProductDetail
           actions={[
@@ -89,8 +101,16 @@ export default function NewsScreen(): React.ReactElement {
           domain="NEWS"
           history={newsHistory}
           metaRows={[
-            { detail: "목표 출처 · 기본 목표", label: "오늘 목표", value: "기사 1개" },
-            { detail: "경제 · 산업 · 사회 · 기술", label: "카테고리", value: "경제" },
+            {
+              detail: "목표 출처 · 기본 목표",
+              label: "오늘 목표",
+              value: "기사 1개",
+            },
+            {
+              detail: "경제 · 산업 · 사회 · 기술",
+              label: "카테고리",
+              value: "경제",
+            },
             { detail: "출처와 시간 표시", label: "피드", value: "최신순" },
             { detail: "이번 주 누적", label: "기록", value: "6개" },
           ]}

@@ -9,8 +9,8 @@ import {
   componentColors,
   componentSpacing,
   salaryHijackingDesignSystem,
-} from "../../../src/shared/components";
-import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
+} from "../../../../src/shared/components";
+import { useLogicalBack } from "../../../../src/shared/navigation/useLogicalBack";
 
 const designSystem = salaryHijackingDesignSystem;
 
@@ -33,8 +33,8 @@ export default function LanguageSessionScreen(): React.ReactElement {
           <Chip label="Writing" />
         </View>
         <Text style={styles.body}>
-          듣고, 따라 말하고, 의미를 확인한 뒤 한 문장을 직접 써 보면 오늘
-          외국어 목표가 완료됩니다.
+          듣고, 따라 말하고, 의미를 확인한 뒤 한 문장을 직접 써 보면 오늘 외국어
+          목표가 완료됩니다.
         </Text>
         <PrimaryButton label="문장 기록 완료" onPress={goBack} />
       </SurfaceCard>

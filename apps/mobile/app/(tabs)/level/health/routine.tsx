@@ -9,8 +9,8 @@ import {
   componentColors,
   componentSpacing,
   salaryHijackingDesignSystem,
-} from "../../../src/shared/components";
-import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
+} from "../../../../src/shared/components";
+import { useLogicalBack } from "../../../../src/shared/navigation/useLogicalBack";
 
 const designSystem = salaryHijackingDesignSystem;
 

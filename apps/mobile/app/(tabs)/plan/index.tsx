@@ -1,4 +1,5 @@
 import { PlanScreen } from "../../../src/features/plan/components";
+import { RootTabHeader } from "../../../src/shared/components";
 import { XpToast } from "../../../src/shared/components/XpToast";
 import { DateSelectionBottomSheet } from "../../../src/shared/ui/sheets/DateSelectionBottomSheet";
 import { RecurrenceBottomSheet } from "../../../src/shared/ui/sheets/RecurrenceBottomSheet";
@@ -14,7 +15,7 @@ export const planStitchOverlayComponents = {
 } as const;
 
 export default function PlanIndexScreen(): React.ReactElement {
-  return <PlanScreen />;
+  return <PlanScreen rootHeader={<RootTabHeader tab="plan" />} />;
 }
 
 export function assertMobilePlanIndexCompleteness(): {

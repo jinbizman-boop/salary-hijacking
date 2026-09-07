@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+import { useMemo, useState } from "react";
 import {
   Image,
   Pressable,
@@ -24,96 +25,45 @@ import type {
   GrowthMissionViewModel,
 } from "../product-model";
 import type { GrowthGoalIcon, GrowthSystemIconKey } from "../goal-architecture";
+import { searchUserSymbols } from "../user-symbols";
 
 const designSystem = salaryHijackingDesignSystem;
 
 const domainIcons = {
-  HEALTH: require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
-  LANGUAGE: require("../../../shared/assets/icons/level/ai.png") as ImageSourcePropType,
+  HEALTH:
+    require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
+  LANGUAGE:
+    require("../../../shared/assets/icons/level/ai.png") as ImageSourcePropType,
   NEWS: require("../../../shared/assets/icons/level/news.png") as ImageSourcePropType,
-  READING: require("../../../shared/assets/icons/level/book.png") as ImageSourcePropType,
+  READING:
+    require("../../../shared/assets/icons/level/book.png") as ImageSourcePropType,
 } as const satisfies Record<GrowthDomainKey, ImageSourcePropType>;
 
 const systemIconImages = {
-  activity: require("../../../shared/assets/icons/level/technology.png") as ImageSourcePropType,
-  "book-open": require("../../../shared/assets/icons/level/book.png") as ImageSourcePropType,
-  briefcase: require("../../../shared/assets/icons/community/application.png") as ImageSourcePropType,
-  check: require("../../../shared/assets/icons/common/edit.png") as ImageSourcePropType,
-  dumbbell: require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
-  heart: require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
-  languages: require("../../../shared/assets/icons/level/ai.png") as ImageSourcePropType,
-  newspaper: require("../../../shared/assets/icons/level/news.png") as ImageSourcePropType,
-  "piggy-bank": require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType,
+  activity:
+    require("../../../shared/assets/icons/level/technology.png") as ImageSourcePropType,
+  "book-open":
+    require("../../../shared/assets/icons/level/book.png") as ImageSourcePropType,
+  briefcase:
+    require("../../../shared/assets/icons/community/application.png") as ImageSourcePropType,
+  check:
+    require("../../../shared/assets/icons/common/edit.png") as ImageSourcePropType,
+  dumbbell:
+    require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
+  heart:
+    require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
+  languages:
+    require("../../../shared/assets/icons/level/ai.png") as ImageSourcePropType,
+  newspaper:
+    require("../../../shared/assets/icons/level/news.png") as ImageSourcePropType,
+  "piggy-bank":
+    require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType,
   star: require("../../../shared/assets/icons/level/box.png") as ImageSourcePropType,
-  target: require("../../../shared/assets/icons/level/folders.png") as ImageSourcePropType,
-  writing: require("../../../shared/assets/icons/common/edit.png") as ImageSourcePropType,
+  target:
+    require("../../../shared/assets/icons/level/folders.png") as ImageSourcePropType,
+  writing:
+    require("../../../shared/assets/icons/common/edit.png") as ImageSourcePropType,
 } as const satisfies Record<GrowthSystemIconKey, ImageSourcePropType>;
-
-const pickerCategories: ReadonlyArray<
-  Readonly<{
-    title: string;
-    items: readonly GrowthGoalIcon[];
-  }>
-> = [
-  {
-    title: "성장",
-    items: [
-      { iconKey: "target", iconType: "SYSTEM_ICON" },
-      { iconKey: "star", iconType: "SYSTEM_ICON" },
-      { iconKey: "check", iconType: "SYSTEM_ICON" },
-    ],
-  },
-  {
-    title: "독서/공부",
-    items: [
-      { iconKey: "book-open", iconType: "SYSTEM_ICON" },
-      { emoji: "📚", iconType: "EMOJI" },
-      { emoji: "🧠", iconType: "EMOJI" },
-    ],
-  },
-  {
-    title: "뉴스/정보",
-    items: [
-      { iconKey: "newspaper", iconType: "SYSTEM_ICON" },
-      { emoji: "📰", iconType: "EMOJI" },
-      { emoji: "💻", iconType: "EMOJI" },
-    ],
-  },
-  {
-    title: "언어",
-    items: [
-      { iconKey: "languages", iconType: "SYSTEM_ICON" },
-      { emoji: "🇺🇸", iconType: "EMOJI" },
-      { emoji: "🇯🇵", iconType: "EMOJI" },
-      { emoji: "🌎", iconType: "EMOJI" },
-    ],
-  },
-  {
-    title: "운동",
-    items: [
-      { iconKey: "dumbbell", iconType: "SYSTEM_ICON" },
-      { emoji: "🏃", iconType: "EMOJI" },
-      { emoji: "🏋️", iconType: "EMOJI" },
-      { emoji: "🧘", iconType: "EMOJI" },
-    ],
-  },
-  {
-    title: "😀 표정/감정",
-    items: [
-      { emoji: "😀", iconType: "EMOJI" },
-      { emoji: "🔥", iconType: "EMOJI" },
-      { emoji: "⭐", iconType: "EMOJI" },
-    ],
-  },
-  {
-    title: "🌱 성장",
-    items: [
-      { emoji: "🌱", iconType: "EMOJI" },
-      { emoji: "🏆", iconType: "EMOJI" },
-      { emoji: "🎯", iconType: "EMOJI" },
-    ],
-  },
-];
 
 export type GrowthMissionRowProps = Readonly<{
   mission: GrowthMissionViewModel;
@@ -160,37 +110,44 @@ export function GrowthMissionRow({
           label={mission.primaryCta}
           onPress={() => onDetail(mission)}
         />
-        <Pressable
-          accessibilityLabel={`${mission.title} ${mission.quickCompleteCta}`}
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => onQuickComplete(mission)}
-          style={styles.inlineAction}
-        >
-          <Text style={styles.inlineActionText}>{mission.quickCompleteCta}</Text>
-        </Pressable>
-        <Pressable
-          accessibilityLabel={`${mission.title} ${mission.editCta}`}
-          accessibilityRole="button"
-          hitSlop={8}
-          onPress={() => onEdit(mission)}
-          style={({ pressed }) => [
-            styles.inlineAction,
-            styles.inlineActionEmphasis,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Text style={styles.inlineActionText}>{mission.editCta}</Text>
-        </Pressable>
+        <View style={styles.secondaryActionRow}>
+          <Pressable
+            accessibilityLabel={`${mission.title} ${mission.quickCompleteCta}`}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onQuickComplete(mission)}
+            style={({ pressed }) => [
+              styles.inlineAction,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.inlineActionText}>
+              {mission.quickCompleteCta}
+            </Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel={`${mission.title} ${mission.editCta}`}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => onEdit(mission)}
+            style={({ pressed }) => [
+              styles.inlineAction,
+              styles.inlineActionEmphasis,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={styles.inlineActionText}>{mission.editCta}</Text>
+          </Pressable>
+        </View>
       </View>
     </SurfaceCard>
   );
 }
 
 export type IconEmojiPickerProps = Readonly<{
-  favorites: readonly GrowthSystemIconKey[];
+  favorites: readonly (GrowthGoalIcon | GrowthSystemIconKey)[];
   onSelect: (icon: GrowthGoalIcon) => void;
-  recent: readonly GrowthSystemIconKey[];
+  recent: readonly (GrowthGoalIcon | GrowthSystemIconKey)[];
   selected: GrowthGoalIcon;
 }>;
 
@@ -200,21 +157,22 @@ export function IconEmojiPicker({
   recent,
   selected,
 }: IconEmojiPickerProps): React.ReactElement {
-  const quickCategories = [
-    {
-      title: "최근 사용",
-      items: recent.map(
-        (iconKey): GrowthGoalIcon => ({ iconKey, iconType: "SYSTEM_ICON" }),
-      ),
-    },
-    {
-      title: "즐겨찾기",
-      items: favorites.map(
-        (iconKey): GrowthGoalIcon => ({ iconKey, iconType: "SYSTEM_ICON" }),
-      ),
-    },
-    ...pickerCategories,
-  ].filter((category) => category.items.length > 0);
+  const [query, setQuery] = useState("");
+  const quickCategories = useMemo(
+    () =>
+      [
+        {
+          title: "최근 사용",
+          items: normalizePickerIcons(recent),
+        },
+        {
+          title: "즐겨찾기",
+          items: normalizePickerIcons(favorites),
+        },
+        ...searchUserSymbols(query),
+      ].filter((category) => category.items.length > 0),
+    [favorites, query, recent],
+  );
 
   return (
     <SurfaceCard accessibilityLabel="아이콘 선택">
@@ -223,6 +181,8 @@ export function IconEmojiPicker({
         accessibilityLabel="아이콘 검색"
         placeholder="책, 운동, 뉴스, 별처럼 검색"
         placeholderTextColor={componentColors.textMuted}
+        value={query}
+        onChangeText={setQuery}
         style={styles.searchInput}
       />
       <View style={styles.pickerStack}>
@@ -231,11 +191,13 @@ export function IconEmojiPicker({
             <Text style={styles.pickerTitle}>{category.title}</Text>
             <View style={styles.pickerItems}>
               {category.items.map((icon) => {
-                const key = icon.iconType === "EMOJI" ? icon.emoji : icon.iconKey;
+                const key =
+                  icon.iconType === "EMOJI" ? icon.emoji : icon.iconKey;
                 const selectedIcon =
                   icon.iconType === selected.iconType &&
                   (icon.iconType === "EMOJI"
-                    ? selected.iconType === "EMOJI" && selected.emoji === icon.emoji
+                    ? selected.iconType === "EMOJI" &&
+                      selected.emoji === icon.emoji
                     : selected.iconType === "SYSTEM_ICON" &&
                       selected.iconKey === icon.iconKey);
                 const label =
@@ -404,7 +366,10 @@ export function ProductDetail({
 }: ProductDetailProps): React.ReactElement {
   return (
     <>
-      <SurfaceCard accessibilityLabel={`${title} 오늘 목표`} style={styles.detailHero}>
+      <SurfaceCard
+        accessibilityLabel={`${title} 오늘 목표`}
+        style={styles.detailHero}
+      >
         <View style={styles.missionTop}>
           <DomainIcon domain={domain} />
           <View style={styles.missionCopy}>
@@ -479,6 +444,16 @@ function ResultMetric({
       <Text style={styles.metricLabel}>{label}</Text>
       <Text style={styles.metricValue}>{value}</Text>
     </View>
+  );
+}
+
+function normalizePickerIcons(
+  icons: readonly (GrowthGoalIcon | GrowthSystemIconKey)[],
+): readonly GrowthGoalIcon[] {
+  return icons.map((icon) =>
+    typeof icon === "string"
+      ? { iconKey: icon, iconType: "SYSTEM_ICON" }
+      : icon,
   );
 }
 
@@ -586,13 +561,17 @@ const styles = StyleSheet.create({
   },
   inlineAction: {
     minHeight: designSystem.layout.touchTarget,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: designSystem.radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: componentColors.line,
+    backgroundColor: componentColors.surfaceSoft,
     paddingHorizontal: designSystem.spacing[2],
   },
   inlineActionEmphasis: {
-    minWidth: 92,
-    borderRadius: designSystem.radius.md,
+    borderColor: componentColors.primaryGreenSoft,
     backgroundColor: componentColors.primaryGreenSoft,
   },
   inlineActionText: {
@@ -625,9 +604,6 @@ const styles = StyleSheet.create({
     ...designSystem.typography.labelL,
   },
   missionActions: {
-    alignItems: "center",
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: designSystem.spacing[1],
   },
   missionCard: {
@@ -712,6 +688,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: designSystem.spacing[2],
     justifyContent: "space-between",
+  },
+  secondaryActionRow: {
+    flexDirection: "row",
+    gap: designSystem.spacing[2],
   },
   sectionTitle: {
     color: componentColors.textPrimary,

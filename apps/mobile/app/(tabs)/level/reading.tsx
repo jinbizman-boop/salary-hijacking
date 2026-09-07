@@ -7,23 +7,33 @@ import {
   EmptyState,
   ErrorState,
   LoadingSkeleton,
-} from "../../src/shared/components";
-import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
+} from "../../../src/shared/components";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 import {
   ProductDetail,
   XpRewardToast,
-} from "../../src/features/level/components";
-import { levelDetailContent } from "../../src/features/level/detail-content";
+} from "../../../src/features/level/components";
+import { levelDetailContent } from "../../../src/features/level/detail-content";
 import {
   completeGrowthContentWithServerAuthority,
   loadGrowthContentForType,
-} from "../../src/features/level/controller";
-import type { GrowthContentItem } from "../../src/features/level/types";
-import { useLogicalBack } from "../../src/shared/navigation/useLogicalBack";
+} from "../../../src/features/level/controller";
+import type { GrowthContentItem } from "../../../src/features/level/types";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const readingHistory = [
-  { id: "reading-1", label: "오늘 · 독서", title: "8페이지 읽음", xp: "+12 XP" },
-  { id: "reading-2", label: "어제 · 독서", title: "경제·경영 14페이지", xp: "+18 XP" },
+  {
+    id: "reading-1",
+    label: "오늘 · 독서",
+    title: "8페이지 읽음",
+    xp: "+12 XP",
+  },
+  {
+    id: "reading-2",
+    label: "어제 · 독서",
+    title: "경제·경영 14페이지",
+    xp: "+18 XP",
+  },
   { id: "reading-3", label: "이번 주", title: "총 42페이지", xp: "+56 XP" },
 ] as const;
 
@@ -76,7 +86,9 @@ export default function ReadingScreen(): React.ReactElement {
       header={<AppHeader onBack={goBack} subtitle="LV UP" title="독서" />}
     >
       {loading ? <LoadingSkeleton label="독서 데이터를 불러오는 중" /> : null}
-      {error ? <ErrorState message={error} title="독서 데이터를 확인 중입니다" /> : null}
+      {error ? (
+        <ErrorState message={error} title="독서 데이터를 확인 중입니다" />
+      ) : null}
       {content ? (
         <ProductDetail
           actions={[
@@ -89,8 +101,16 @@ export default function ReadingScreen(): React.ReactElement {
           domain="READING"
           history={readingHistory}
           metaRows={[
-            { detail: "목표 출처 · 맞춤 추천", label: "오늘 목표", value: "5페이지" },
-            { detail: "읽던 지점 저장", label: "현재 책", value: content.title },
+            {
+              detail: "목표 출처 · 맞춤 추천",
+              label: "오늘 목표",
+              value: "5페이지",
+            },
+            {
+              detail: "읽던 지점 저장",
+              label: "현재 책",
+              value: content.title,
+            },
             { detail: "이번 주 누적", label: "진행", value: "42페이지" },
             { detail: "최근 3일", label: "Streak", value: "3일" },
           ]}

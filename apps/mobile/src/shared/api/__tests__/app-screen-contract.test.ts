@@ -216,10 +216,11 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('initialRouteName="salary/index"');
     expect(source).toContain('name: "salary/index"');
     expect(source).toContain('name: "plan/index"');
-    expect(source).toContain('name: "level/index"');
-    expect(source).toContain('name: "community/index"');
+    expect(source).toContain('name: "level"');
+    expect(source).toContain('name: "community"');
     expect(source).toContain('name: "profile"');
     expect(source).not.toContain('name: "profile/index"');
+    expect(source).not.toContain('name: "level/index"');
     expect(source).not.toContain('initialRouteName="salary"');
   });
 

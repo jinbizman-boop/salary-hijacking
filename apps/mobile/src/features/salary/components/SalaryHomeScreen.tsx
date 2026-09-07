@@ -31,6 +31,7 @@ import type {
 } from "../../../features/plan/types";
 import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
 import { AdBannerSlot } from "../../../shared/components/AdBannerSlot";
+import { RootTabHeader } from "../../../shared/components/RootTabHeader";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
@@ -66,7 +67,7 @@ const salaryScreenColors = {
   brandSurface: designSystem.colors.brand.surface,
   dangerBorder: designSystem.colors.semantic.dangerSoft,
   dangerSurface: designSystem.colors.semantic.dangerSoft,
-  hero: designSystem.colors.brand.secondary,
+  heroMuted: designSystem.colors.brand.primarySoft,
   info: designSystem.colors.semantic.info,
   inverse: designSystem.colors.text.inverse,
   line: designSystem.colors.border.default,
@@ -99,14 +100,8 @@ const salaryScreenTypography = designSystem.typography;
 const salaryScreenElevation = designSystem.elevation;
 const salaryCoinsIcon =
   require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType;
-const salaryAlarmIcon =
-  require("../../../shared/assets/icons/common/alarm.png") as ImageSourcePropType;
-const salarySettingsIcon =
-  require("../../../shared/assets/icons/common/settings.png") as ImageSourcePropType;
-const salaryBrandLogo =
-  require("../../../shared/assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 const SALARY_SAVE_ERROR =
-  "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uC9C0\uCD9C\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
+  "서버 저장이 실패해 지출을 반영하지 않았습니다.";
 let salaryHomeShellMarkerEmitted = false;
 let cachedPayrollReminderSecureStore: ReturnType<
   typeof createSecureStoreRuntime
@@ -128,7 +123,6 @@ export type SalaryHomePreviewVariant =
 export type SalaryHomeScreenProps = Readonly<{
   displayName?: string | undefined;
   onOpenNotifications?: (() => void) | undefined;
-  onOpenSettings?: (() => void) | undefined;
   planCommitmentsApi?:
     | Partial<
         Pick<
@@ -151,6 +145,7 @@ export type SalaryHomeScreenProps = Readonly<{
     | null
     | undefined;
   previewVariant?: SalaryHomePreviewVariant | undefined;
+  rootHeader?: React.ReactNode;
 }>;
 
 export function resetSalaryHomePreviewCacheForTests(): void {
@@ -158,11 +153,11 @@ export function resetSalaryHomePreviewCacheForTests(): void {
 }
 
 export function SalaryHomeScreen({
-  displayName = "\uC0AC\uC6A9\uC790",
+  displayName = "사용자",
   onOpenNotifications,
-  onOpenSettings,
   planCommitmentsApi,
   previewVariant = "default",
+  rootHeader,
   variableExpenseApi,
 }: SalaryHomeScreenProps): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
@@ -708,10 +703,9 @@ export function SalaryHomeScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <BrandHeader
-          onOpenNotifications={onOpenNotifications}
-          onOpenSettings={onOpenSettings}
-        />
+        {rootHeader ?? (
+          <RootTabHeader onOpenNotifications={onOpenNotifications} tab="home" />
+        )}
 
         {salaryError ? (
           <Text
@@ -783,6 +777,8 @@ export function SalaryHomeScreen({
             />
           </View>
         </ProtectedMoneyHeroCard>
+
+        <SponsoredSlot />
 
         <DailySafeToSpendCard>
           <View style={styles.titleRow}>
@@ -1036,8 +1032,6 @@ export function SalaryHomeScreen({
           protectedAmount={currentHijacked}
           variableTotal={variableTotal}
         />
-
-        <SponsoredSlot />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -1158,66 +1152,6 @@ function SalaryEmptyState({
       <Text allowFontScaling={false} style={styles.emptyBody}>
         {body}
       </Text>
-    </View>
-  );
-}
-
-function BrandHeader({
-  onOpenNotifications,
-  onOpenSettings,
-}: Readonly<{
-  onOpenNotifications?: (() => void) | undefined;
-  onOpenSettings?: (() => void) | undefined;
-}>): React.ReactElement {
-  return (
-    <View accessibilityLabel="급여납치 홈 헤더" style={styles.brandHeader}>
-      <View style={styles.brandIdentity}>
-        <Image
-          accessibilityIgnoresInvertColors
-          accessibilityLabel="급여납치 로고"
-          resizeMode="contain"
-          source={salaryBrandLogo}
-          style={styles.brandLogo}
-        />
-        <View style={styles.brandCopy}>
-          <Text allowFontScaling={false} style={styles.brandName}>
-            Salary Hijacking
-          </Text>
-          <Text allowFontScaling={false} style={styles.brandKorean}>
-            SALARY HIJACKING
-          </Text>
-        </View>
-      </View>
-      <View style={styles.brandActions}>
-        <Pressable
-          accessibilityLabel="알림 화면 열기"
-          accessibilityRole="button"
-          hitSlop={designSystem.spacing[3]}
-          onPress={onOpenNotifications}
-          style={styles.headerActionButton}
-        >
-          <Image
-            accessibilityIgnoresInvertColors
-            resizeMode="contain"
-            source={salaryAlarmIcon}
-            style={styles.headerActionIcon}
-          />
-        </Pressable>
-        <Pressable
-          accessibilityLabel="설정 화면 열기"
-          accessibilityRole="button"
-          hitSlop={designSystem.spacing[3]}
-          onPress={onOpenSettings}
-          style={styles.headerActionButton}
-        >
-          <Image
-            accessibilityIgnoresInvertColors
-            resizeMode="contain"
-            source={salarySettingsIcon}
-            style={styles.headerActionIcon}
-          />
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -2119,7 +2053,7 @@ const styles = StyleSheet.create({
     width: designSystem.navigation.bottomTabs.iconSize,
   },
   heroAmount: {
-    color: salaryScreenColors.brand,
+    color: salaryScreenColors.inverse,
     fontSize: 31,
     fontWeight: salaryScreenTypography.amountXL.fontWeight,
     lineHeight: 37,
@@ -2139,12 +2073,12 @@ const styles = StyleSheet.create({
     gap: salaryScreenSpacing[2],
   },
   heroDate: {
-    color: salaryScreenColors.brand,
+    color: salaryScreenColors.heroMuted,
     fontSize: salaryScreenTypography.labelS.fontSize,
     fontWeight: salaryScreenTypography.labelS.fontWeight,
   },
   heroGreeting: {
-    color: salaryScreenColors.muted,
+    color: salaryScreenColors.heroMuted,
     fontSize: salaryScreenTypography.bodyS.fontSize,
     fontWeight: salaryScreenTypography.bodyS.fontWeight,
     lineHeight: salaryScreenTypography.bodyS.lineHeight,
@@ -2152,8 +2086,8 @@ const styles = StyleSheet.create({
     opacity: 0.86,
   },
   heroPanel: {
-    backgroundColor: salaryScreenColors.surface,
-    borderColor: salaryScreenColors.line,
+    backgroundColor: salaryScreenColors.brand,
+    borderColor: salaryScreenColors.brand,
     borderRadius: salaryScreenRadius.lg,
     borderWidth: 1,
     gap: salaryScreenSpacing[3],
@@ -2164,14 +2098,14 @@ const styles = StyleSheet.create({
     padding: salaryScreenSpacing[3],
   },
   heroSub: {
-    color: salaryScreenColors.muted,
+    color: salaryScreenColors.heroMuted,
     fontSize: salaryScreenTypography.bodyS.fontSize,
     fontWeight: salaryScreenTypography.bodyS.fontWeight,
     marginTop: salaryScreenSpacing[1],
     opacity: 0.82,
   },
   heroTitle: {
-    color: salaryScreenColors.text,
+    color: salaryScreenColors.inverse,
     fontSize: salaryScreenTypography.titleM.fontSize,
     fontWeight: salaryScreenTypography.titleM.fontWeight,
     lineHeight: salaryScreenTypography.titleM.lineHeight,

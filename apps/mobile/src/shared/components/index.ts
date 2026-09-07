@@ -6,6 +6,13 @@ export { AdBannerSlot, type AdBannerSlotProps } from "./AdBannerSlot";
 export { AppHeader, type AppHeaderProps } from "./AppHeader";
 export { AppShell, type AppShellProps } from "./AppShell";
 export {
+  RootTabHeader,
+  ROOT_HEADER_BRAND_TEXT,
+  ROOT_TAB_HEADER_CONTRACT,
+  type RootTabHeaderProps,
+  type RootTabHeaderTab,
+} from "./RootTabHeader";
+export {
   BottomSheet,
   type BottomSheetAction,
   type BottomSheetProps,

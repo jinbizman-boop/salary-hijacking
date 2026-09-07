@@ -38,10 +38,8 @@ import {
   createMobilePayrollApi,
   createMobilePlanCommitmentsApi,
 } from "../../../shared/api/mobile-api";
-import {
-  AppHeader,
-  salaryHijackingDesignSystem,
-} from "../../../shared/components";
+import { salaryHijackingDesignSystem } from "../../../shared/components";
+import { RootTabHeader } from "../../../shared/components/RootTabHeader";
 import { markReleaseInteractionPerf } from "../../../shared/performance/release-perf";
 import { createSecureStoreRuntime } from "../../../shared/storage/secure-store";
 import {
@@ -82,7 +80,7 @@ const planScreenRadius = designSystem.radius;
 const planScreenTypography = designSystem.typography;
 const planScreenElevation = designSystem.elevation;
 const PLAN_SAVE_ERROR =
-  "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uACC4\uD68D\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.";
+  "서버 저장이 실패해 계획을 반영하지 않았습니다.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
   Platform.OS,
   SecureStore,
@@ -135,13 +133,15 @@ export type PlanScreenProps = Readonly<{
     | null
     | undefined;
   displayName?: string | undefined;
+  rootHeader?: React.ReactNode;
 }>;
 
 export function PlanScreen({
   budgetApi,
-  displayName = "\uC0AC\uC6A9\uC790",
+  displayName = "사용자",
   planCommitmentsApi,
   payrollApi,
+  rootHeader,
 }: PlanScreenProps = {}): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
   const { width } = useWindowDimensions();
@@ -591,7 +591,7 @@ export function PlanScreen({
         barStyle="dark-content"
       />
       <ScrollView
-        accessibilityLabel="\uAE09\uC5EC\uB0A9\uCE58 \uACC4\uD68D \uD654\uBA74"
+        accessibilityLabel="급여납치 계획 화면"
         automaticallyAdjustKeyboardInsets
         bounces={false}
         contentContainerStyle={[
@@ -607,7 +607,7 @@ export function PlanScreen({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <AppHeader subtitle="월급을 지키는 계획" title="계획" variant="ROOT" />
+        {rootHeader ?? <RootTabHeader tab="plan" />}
 
         {planError ? (
           <Text
@@ -663,19 +663,19 @@ export function PlanScreen({
           open={openSection === "payroll"}
           summary={[
             {
-              label: "\uAE09\uC5EC \uBC1B\uB294\uB0A0",
-              value: `\uB9E4\uC6D4 ${clamp(parseKrwInput(payrollDraft.payday) || 25, 1, 31)}\uC77C`,
+              label: "급여 받는날",
+              value: `매월 ${clamp(parseKrwInput(payrollDraft.payday) || 25, 1, 31)}일`,
             },
             {
-              label: "\uC218\uB839 \uC608\uC0C1 \uAE09\uC5EC",
+              label: "수령 예상 급여",
               value: formatKrw(parseKrwInput(payrollDraft.payrollAmount)),
             },
             {
-              label: "\uC9C0\uCD9C \uC608\uC0C1 \uAE08\uC561",
+              label: "지출 예상 금액",
               value: formatKrw(parseKrwInput(payrollDraft.expenseAmount)),
             },
             {
-              label: "\uC608\uC0C1 \uB0A9\uCE58 \uAE08\uC561",
+              label: "예상 납치 금액",
               tone: "brand",
               value: formatKrw(parseKrwInput(payrollDraft.hijackAmount)),
             },
@@ -695,7 +695,7 @@ export function PlanScreen({
               onChangeText={(payday) =>
                 setPayrollDraft({ ...payrollDraft, payday })
               }
-              placeholder="\uAE09\uC5EC\uC77C"
+              placeholder="급여일"
               style={styles.input}
               value={payrollDraft.payday}
             />
@@ -706,7 +706,7 @@ export function PlanScreen({
               onChangeText={(payrollAmount) =>
                 setPayrollDraft({ ...payrollDraft, payrollAmount })
               }
-              placeholder="\uC218\uB839 \uC608\uC0C1 \uAE09\uC5EC"
+              placeholder="수령 예상 급여"
               style={styles.input}
               value={payrollDraft.payrollAmount}
             />
@@ -717,7 +717,7 @@ export function PlanScreen({
               onChangeText={(expenseAmount) =>
                 setPayrollDraft({ ...payrollDraft, expenseAmount })
               }
-              placeholder="\uC9C0\uCD9C \uC608\uC0C1 \uAE08\uC561"
+              placeholder="지출 예상 금액"
               style={styles.input}
               value={payrollDraft.expenseAmount}
             />
@@ -729,7 +729,7 @@ export function PlanScreen({
                 const parsed = parseKrwInput(value);
                 if (parsed > 0) setMonthlyTarget(parsed);
               }}
-              placeholder="\uC774\uBC88\uB2EC \uBAA9\uD45C \uB0A9\uCE58 \uAE08\uC561"
+              placeholder="이번달 목표 납치 금액"
               style={styles.input}
               value={String(monthlyTarget)}
             />
@@ -748,7 +748,7 @@ export function PlanScreen({
               style={styles.saveButton}
             >
               <Text allowFontScaling={false} style={styles.saveButtonText}>
-                {"\uC800\uC7A5"}
+                저장
               </Text>
             </Pressable>
           </View>

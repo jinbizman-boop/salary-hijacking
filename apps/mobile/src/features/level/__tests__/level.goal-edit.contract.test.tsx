@@ -13,6 +13,12 @@ import {
   validateGrowthGoalIcon,
 } from "../goal-architecture";
 import type { GrowthMissionViewModel } from "../product-model";
+import {
+  USER_SYMBOL_EMOJI_CATEGORIES,
+  USER_SYMBOL_RESOLUTION_PRIORITY,
+  searchUserSymbols,
+  suggestGoalIcon,
+} from "../user-symbols";
 
 const mission: GrowthMissionViewModel = {
   domain: "READING",
@@ -34,6 +40,10 @@ const mission: GrowthMissionViewModel = {
 describe("LV UP goal edit contract", () => {
   it("keeps every mission goal edit as a 48dp touch target with domain context", () => {
     const onEdit = jest.fn();
+    const source = readFileSync(
+      join(__dirname, "..", "components", "GrowthProductCards.tsx"),
+      "utf8",
+    );
     const screen = render(
       <GrowthMissionRow
         mission={mission}
@@ -47,6 +57,9 @@ describe("LV UP goal edit contract", () => {
 
     expect(onEdit).toHaveBeenCalledWith(mission);
     expect(screen.getByLabelText("독서 목표 수정")).toBeTruthy();
+    expect(source).toContain("secondaryActionRow");
+    expect(source).toContain("minHeight: designSystem.layout.touchTarget");
+    expect(source).toContain("flex: 1");
   });
 
   it("routes main mission edits to the domain-specific goal editor", () => {
@@ -73,7 +86,17 @@ describe("LV UP goal edit contract", () => {
 
   it("keeps goal management wired to server save instead of a dead edit button", () => {
     const source = readFileSync(
-      join(__dirname, "..", "..", "..", "..", "app", "level", "goals.tsx"),
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "(tabs)",
+        "level",
+        "goals.tsx",
+      ),
       "utf8",
     );
 
@@ -122,7 +145,7 @@ describe("LV UP goal edit contract", () => {
     const onSelect = jest.fn();
     const screen = render(
       <IconEmojiPicker
-        favorites={["star"]}
+        favorites={["star", { emoji: "🔥", iconType: "EMOJI" }]}
         onSelect={onSelect}
         recent={["book-open"]}
         selected={{ iconKey: "book-open", iconType: "SYSTEM_ICON" }}
@@ -131,11 +154,47 @@ describe("LV UP goal edit contract", () => {
 
     expect(screen.getByText("최근 사용")).toBeTruthy();
     expect(screen.getByText("즐겨찾기")).toBeTruthy();
-    expect(screen.getByText("독서/공부")).toBeTruthy();
-    expect(screen.getByText("운동")).toBeTruthy();
+    expect(screen.getByText("공부")).toBeTruthy();
+    expect(screen.getByText("🏃 운동")).toBeTruthy();
     expect(screen.getByText("😀 표정/감정")).toBeTruthy();
     expect(screen.getByText("🌱 성장")).toBeTruthy();
-    fireEvent.press(screen.getByRole("button", { name: "이모지 📚 선택" }));
+    fireEvent.press(
+      screen.getAllByRole("button", { name: "이모지 📚 선택" })[0]!,
+    );
     expect(onSelect).toHaveBeenCalledWith({ emoji: "📚", iconType: "EMOJI" });
+    fireEvent.changeText(screen.getByLabelText("아이콘 검색"), "카페");
+    expect(screen.getByText("🥗 식생활")).toBeTruthy();
+  });
+
+  it("keeps the user symbol registry broad, searchable, and deterministic", () => {
+    expect(USER_SYMBOL_RESOLUTION_PRIORITY).toEqual([
+      "USER_SELECTED",
+      "CATEGORY_DEFAULT",
+      "KEYWORD_AUTO_SUGGESTION",
+      "GENERIC_FALLBACK",
+    ]);
+    expect(USER_SYMBOL_EMOJI_CATEGORIES.length).toBeGreaterThanOrEqual(25);
+    expect(
+      USER_SYMBOL_EMOJI_CATEGORIES.flatMap((category) => category.items).length,
+    ).toBeGreaterThanOrEqual(180);
+    expect(
+      searchUserSymbols("헬스").some(
+        (category) => category.title === "🏋️ 헬스",
+      ),
+    ).toBe(true);
+    expect(
+      searchUserSymbols("외국어").some(
+        (category) => category.title === "🌎 외국어/세계",
+      ),
+    ).toBe(true);
+    expect(
+      suggestGoalIcon({ title: "영어 문장 5개", domain: "LANGUAGE" }),
+    ).toEqual({ iconKey: "languages", iconType: "SYSTEM_ICON" });
+    expect(
+      suggestGoalIcon({
+        title: "러닝 30분",
+        userSelected: { emoji: "🏃‍♂️", iconType: "EMOJI" },
+      }),
+    ).toEqual({ emoji: "🏃‍♂️", iconType: "EMOJI" });
   });
 });

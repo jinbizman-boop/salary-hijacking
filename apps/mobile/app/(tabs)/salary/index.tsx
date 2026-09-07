@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 
 import { SalaryHomeScreen } from "../../../src/features/salary/components/SalaryHomeScreen";
+import { RootTabHeader } from "../../../src/shared/components";
 import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
 import { ErrorState } from "../../../src/shared/components/ErrorState";
 import { AmountInputErrorDialog } from "../../../src/shared/ui/dialogs/AmountInputErrorDialog";
@@ -28,8 +29,13 @@ export const salaryStitchOverlayComponents = {
 export default function SalaryIndexScreen(): React.ReactElement {
   return (
     <SalaryHomeScreen
+      rootHeader={
+        <RootTabHeader
+          onOpenNotifications={() => router.push("/notifications" as never)}
+          tab="home"
+        />
+      }
       onOpenNotifications={() => router.push("/notifications")}
-      onOpenSettings={() => router.push("/profile/settings")}
     />
   );
 }

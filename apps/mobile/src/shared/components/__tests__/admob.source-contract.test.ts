@@ -37,10 +37,10 @@ describe("AdMob production source contract", () => {
     expect(salarySource).toContain("AD-APP-SALARY-01");
 
     for (const focusRoute of [
-      "app/level/reading.tsx",
-      "app/level/news.tsx",
-      "app/level/english.tsx",
-      "app/level/health.tsx",
+      "app/(tabs)/level/reading.tsx",
+      "app/(tabs)/level/news.tsx",
+      "app/(tabs)/level/english.tsx",
+      "app/(tabs)/level/health.tsx",
     ]) {
       expect(mobileSource(focusRoute)).not.toContain("AdBannerSlot");
     }

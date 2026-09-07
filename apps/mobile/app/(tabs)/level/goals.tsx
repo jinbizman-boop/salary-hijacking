@@ -10,9 +10,9 @@ import {
   SurfaceCard,
   componentColors,
   salaryHijackingDesignSystem,
-} from "../../src/shared/components";
-import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
-import { IconEmojiPicker } from "../../src/features/level/components";
+} from "../../../src/shared/components";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
+import { IconEmojiPicker } from "../../../src/features/level/components";
 import {
   GROWTH_GOAL_SOURCE_LABELS,
   LVUP_DEFAULT_GOALS,
@@ -24,9 +24,9 @@ import {
   type GrowthGoalEffectiveDateMode,
   type GrowthGoalFrequency,
   type GrowthGoalIcon,
-} from "../../src/features/level/goal-architecture";
-import { updateGrowthGoalWithServerAuthority } from "../../src/features/level/controller";
-import { useLogicalBack } from "../../src/shared/navigation/useLogicalBack";
+} from "../../../src/features/level/goal-architecture";
+import { updateGrowthGoalWithServerAuthority } from "../../../src/features/level/controller";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const designSystem = salaryHijackingDesignSystem;
 const domains = ["READING", "NEWS", "LANGUAGE", "HEALTH"] as const;
@@ -94,7 +94,9 @@ export default function LevelGoalsScreen(): React.ReactElement {
       }));
       setMessage("목표가 저장됐어요.");
     } catch {
-      setMessage("목표를 저장하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");
+      setMessage(
+        "목표를 저장하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.",
+      );
     } finally {
       setSaving(false);
     }
@@ -108,7 +110,8 @@ export default function LevelGoalsScreen(): React.ReactElement {
       <SurfaceCard accessibilityLabel="목표 수정">
         <Text style={styles.title}>목표 수정</Text>
         <Text style={styles.body}>
-          기본 목표, 맞춤 추천, 내가 설정 중 하나를 고르고 오늘부터 또는 내일부터 적용해요.
+          기본 목표, 맞춤 추천, 내가 설정 중 하나를 고르고 오늘부터 또는
+          내일부터 적용해요.
         </Text>
         <View style={styles.chipRow}>
           {domains.map((domain) => (
@@ -122,7 +125,9 @@ export default function LevelGoalsScreen(): React.ReactElement {
         </View>
       </SurfaceCard>
 
-      <SurfaceCard accessibilityLabel={`${domainTitle(selectedDomain)} 목표 편집`}>
+      <SurfaceCard
+        accessibilityLabel={`${domainTitle(selectedDomain)} 목표 편집`}
+      >
         <View style={styles.row}>
           <View style={styles.copy}>
             <Text style={styles.kicker}>{domainTitle(selectedDomain)}</Text>
@@ -170,7 +175,9 @@ export default function LevelGoalsScreen(): React.ReactElement {
           </View>
           <View style={styles.column}>
             <FieldLabel label="단위" />
-            <Text style={styles.readonlyInput}>{unitLabel(draft.targetUnit)}</Text>
+            <Text style={styles.readonlyInput}>
+              {unitLabel(draft.targetUnit)}
+            </Text>
           </View>
         </View>
 
@@ -268,7 +275,9 @@ export default function LevelGoalsScreen(): React.ReactElement {
   );
 }
 
-function FieldLabel({ label }: Readonly<{ label: string }>): React.ReactElement {
+function FieldLabel({
+  label,
+}: Readonly<{ label: string }>): React.ReactElement {
   return <Text style={styles.fieldLabel}>{label}</Text>;
 }
 

@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+const appRoot = join(__dirname, "..", "..", "..", "..", "app");
+const levelTabRoot = join(appRoot, "(tabs)", "level");
+
 const detailRoutes = [
   {
     file: "reading.tsx",
@@ -33,13 +36,32 @@ const detailRoutes = [
 ] as const;
 
 describe("level detail screen wiring", () => {
+  it("keeps LV UP detail routes inside the level tab stack, not the root stack", () => {
+    const layoutSource = readFileSync(
+      join(levelTabRoot, "_layout.tsx"),
+      "utf8",
+    );
+    const tabsSource = readFileSync(
+      join(appRoot, "(tabs)", "_layout.tsx"),
+      "utf8",
+    );
+
+    expect(layoutSource).toContain('import { Stack } from "expo-router"');
+    expect(layoutSource).toContain('anchor: "index"');
+    expect(layoutSource).toContain('name="goals"');
+    expect(layoutSource).toContain('name="reading"');
+    expect(layoutSource).toContain('name="reading/session"');
+    expect(layoutSource).toContain('name="news/article"');
+    expect(layoutSource).toContain('name="english/session"');
+    expect(layoutSource).toContain('name="health/routine"');
+    expect(tabsSource).toContain('name: "level"');
+    expect(tabsSource).not.toContain('name: "level/index"');
+  });
+
   it.each(detailRoutes)(
     "uses feature components for $file instead of the clean fintech detail fallback",
     ({ file, childRoute, childFile, childFallback, productCopy }) => {
-      const source = readFileSync(
-        join(__dirname, "..", "..", "..", "..", "app", "level", file),
-        "utf8",
-      );
+      const source = readFileSync(join(levelTabRoot, file), "utf8");
 
       expect(source).not.toContain("CleanFintechLevelDetailScreen");
       expect(source).toContain("AppShell");
@@ -60,13 +82,10 @@ describe("level detail screen wiring", () => {
       expect(source).not.toContain("QA");
       expect(source).not.toContain("Staging");
 
-      const childSource = readFileSync(
-        join(__dirname, "..", "..", "..", "..", "app", "level", childFile),
-        "utf8",
-      );
+      const childSource = readFileSync(join(levelTabRoot, childFile), "utf8");
       expect(childSource).toContain("useLogicalBack");
       expect(childSource).toContain(`fallbackHref: "${childFallback}"`);
-      expect(childSource).not.toContain("router.replace(\"/salary\"");
+      expect(childSource).not.toContain('router.replace("/salary"');
       expect(childSource).not.toContain("onBack={() => router.back()}");
     },
   );

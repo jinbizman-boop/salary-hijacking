@@ -13,9 +13,13 @@ export type AuthLoginRequest = Readonly<{
 export type AuthRegisterRequest = Readonly<{
   email: string;
   password: string;
+  name?: string;
   nickname: string;
+  birthDate?: string;
+  phoneNumber?: string;
   termsAccepted: boolean;
   privacyAccepted: boolean;
+  serviceAccepted?: boolean;
   marketingAccepted?: boolean;
   deviceId?: string;
 }>;

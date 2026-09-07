@@ -12,9 +12,7 @@ const mojibakePattern =
   /[\uFFFD\u6E72\u6028\u800C\u316B\uB35A\u907A\u934C\uC392\uF9CD\u7457\u7E79\u8AED\u7B4C\u75AB]/u;
 
 function source(path: string): string {
-  const routePath = path.startsWith("profile/")
-    ? join("(tabs)", path)
-    : path;
+  const routePath = path.startsWith("profile/") ? join("(tabs)", path) : path;
   return readFileSync(join(appRoot, routePath), "utf8");
 }
 
@@ -150,12 +148,12 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "app/(auth)/signup.tsx",
       "app/(auth)/verify-email.tsx",
       "app/notifications/index.tsx",
-      "app/community/write.tsx",
-      "app/community/[postId].tsx",
-      "app/level/reading.tsx",
-      "app/level/news.tsx",
-      "app/level/english.tsx",
-      "app/level/health.tsx",
+      "app/(tabs)/community/write.tsx",
+      "app/(tabs)/community/[postId].tsx",
+      "app/(tabs)/level/reading.tsx",
+      "app/(tabs)/level/news.tsx",
+      "app/(tabs)/level/english.tsx",
+      "app/(tabs)/level/health.tsx",
     ];
 
     for (const relativePath of checkedSources) {
@@ -3327,7 +3325,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "src/shared/styles/clean-fintech-screens.tsx",
     );
     const mobileApi = mobileSource("src/shared/api/mobile-api.ts");
-    const postRoute = mobileSource("app/community/[postId].tsx");
+    const postRoute = mobileSource("app/(tabs)/community/[postId].tsx");
 
     expect(mobileApi).toContain("createMobileCommunityService");
     expect(postRoute).toContain("useLocalSearchParams");

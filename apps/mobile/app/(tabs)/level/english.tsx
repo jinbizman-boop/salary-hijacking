@@ -7,23 +7,33 @@ import {
   EmptyState,
   ErrorState,
   LoadingSkeleton,
-} from "../../src/shared/components";
-import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
+} from "../../../src/shared/components";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 import {
   ProductDetail,
   XpRewardToast,
-} from "../../src/features/level/components";
-import { levelDetailContent } from "../../src/features/level/detail-content";
+} from "../../../src/features/level/components";
+import { levelDetailContent } from "../../../src/features/level/detail-content";
 import {
   completeGrowthContentWithServerAuthority,
   loadGrowthContentForType,
-} from "../../src/features/level/controller";
-import type { GrowthContentItem } from "../../src/features/level/types";
-import { useLogicalBack } from "../../src/shared/navigation/useLogicalBack";
+} from "../../../src/features/level/controller";
+import type { GrowthContentItem } from "../../../src/features/level/types";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const languageHistory = [
-  { id: "language-1", label: "오늘 · 외국어", title: "영어 5문장 학습", xp: "+10 XP" },
-  { id: "language-2", label: "어제 · Speaking", title: "따라 말하기 3회", xp: "+8 XP" },
+  {
+    id: "language-1",
+    label: "오늘 · 외국어",
+    title: "영어 5문장 학습",
+    xp: "+10 XP",
+  },
+  {
+    id: "language-2",
+    label: "어제 · Speaking",
+    title: "따라 말하기 3회",
+    xp: "+8 XP",
+  },
   { id: "language-3", label: "이번 주", title: "총 28문장", xp: "+42 XP" },
 ] as const;
 
@@ -76,7 +86,9 @@ export default function LanguageScreen(): React.ReactElement {
       header={<AppHeader onBack={goBack} subtitle="LV UP" title="외국어" />}
     >
       {loading ? <LoadingSkeleton label="외국어 학습을 불러오는 중" /> : null}
-      {error ? <ErrorState message={error} title="학습 콘텐츠를 확인 중입니다" /> : null}
+      {error ? (
+        <ErrorState message={error} title="학습 콘텐츠를 확인 중입니다" />
+      ) : null}
       {content ? (
         <ProductDetail
           actions={[

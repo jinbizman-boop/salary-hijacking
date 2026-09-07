@@ -3,17 +3,17 @@ import { useRouter } from "expo-router";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
-import { AppHeader, AppShell } from "../../src/shared/components";
-import { CommunityWriteForm } from "../../src/features/community/components/CommunityWriteForm";
-import { useCommunityWrite } from "../../src/features/community/hooks/useCommunityWrite";
-import type { CommunityPostDraft } from "../../src/features/community/community.types";
-import { createMobileCommunityService } from "../../src/shared/api/mobile-api";
-import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
-import { createSecureStoreRuntime } from "../../src/shared/storage/secure-store";
-import { ConfirmDialog } from "../../src/shared/components/ConfirmDialog";
-import { XpToast } from "../../src/shared/components/XpToast";
-import { AttachmentBottomSheet } from "../../src/shared/ui/sheets/AttachmentBottomSheet";
-import { VisibilityBottomSheet } from "../../src/shared/ui/sheets/VisibilityBottomSheet";
+import { AppHeader, AppShell } from "../../../src/shared/components";
+import { CommunityWriteForm } from "../../../src/features/community/components/CommunityWriteForm";
+import { useCommunityWrite } from "../../../src/features/community/hooks/useCommunityWrite";
+import type { CommunityPostDraft } from "../../../src/features/community/community.types";
+import { createMobileCommunityService } from "../../../src/shared/api/mobile-api";
+import { salaryHijackingDesignSystem } from "../../../src/shared/components/tokens";
+import { createSecureStoreRuntime } from "../../../src/shared/storage/secure-store";
+import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
+import { XpToast } from "../../../src/shared/components/XpToast";
+import { AttachmentBottomSheet } from "../../../src/shared/ui/sheets/AttachmentBottomSheet";
+import { VisibilityBottomSheet } from "../../../src/shared/ui/sheets/VisibilityBottomSheet";
 
 const SCREEN_VERSION = "4.2.1-server-backed-community-write";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";

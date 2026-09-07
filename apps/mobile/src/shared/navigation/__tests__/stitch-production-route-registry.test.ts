@@ -54,7 +54,9 @@ function parseCsv(text: string): readonly Record<string, string>[] {
     .slice(1)
     .filter((values) => values.some(Boolean))
     .map((values) =>
-      Object.fromEntries(header.map((name, index) => [name, values[index] ?? ""])),
+      Object.fromEntries(
+        header.map((name, index) => [name, values[index] ?? ""]),
+      ),
     );
 }
 
@@ -140,7 +142,7 @@ describe("Stitch production route registry", () => {
         stateCode: "DEFAULT",
         variantSlug: "post-detail-with-comments",
       })?.routeFile,
-    ).toBe("apps/mobile/app/community/[postId].tsx");
+    ).toBe("apps/mobile/app/(tabs)/community/[postId].tsx");
     expect(
       resolveProductionStitchState({
         artifactType: "screen",
@@ -153,12 +155,32 @@ describe("Stitch production route registry", () => {
   });
   it("maps profile detail Stitch screens to the shared production RN implementation", () => {
     const expected = [
-      ["SCR-022", "/profile/settings", "apps/mobile/app/(tabs)/profile/settings.tsx"],
-      ["SCR-023", "/profile/account", "apps/mobile/app/(tabs)/profile/account.tsx"],
-      ["SCR-024", "/profile/community", "apps/mobile/app/(tabs)/profile/community.tsx"],
+      [
+        "SCR-022",
+        "/profile/settings",
+        "apps/mobile/app/(tabs)/profile/settings.tsx",
+      ],
+      [
+        "SCR-023",
+        "/profile/account",
+        "apps/mobile/app/(tabs)/profile/account.tsx",
+      ],
+      [
+        "SCR-024",
+        "/profile/community",
+        "apps/mobile/app/(tabs)/profile/community.tsx",
+      ],
       ["SCR-025", "/profile/level", "apps/mobile/app/(tabs)/profile/level.tsx"],
-      ["SCR-026", "/profile/support", "apps/mobile/app/(tabs)/profile/support.tsx"],
-      ["SCR-027", "/profile/notices", "apps/mobile/app/(tabs)/profile/notices.tsx"],
+      [
+        "SCR-026",
+        "/profile/support",
+        "apps/mobile/app/(tabs)/profile/support.tsx",
+      ],
+      [
+        "SCR-027",
+        "/profile/notices",
+        "apps/mobile/app/(tabs)/profile/notices.tsx",
+      ],
     ] as const;
 
     for (const [primaryCode, productionRoute, routeFile] of expected) {
@@ -205,25 +227,25 @@ describe("Stitch production route registry", () => {
       [
         "SCR-013",
         "/level/reading",
-        "apps/mobile/app/level/reading.tsx",
+        "apps/mobile/app/(tabs)/level/reading.tsx",
         "ReadingLevelScreen/ReadingContentCard",
       ],
       [
         "SCR-014",
         "/level/news",
-        "apps/mobile/app/level/news.tsx",
+        "apps/mobile/app/(tabs)/level/news.tsx",
         "NewsLevelScreen/NewsBalanceCard",
       ],
       [
         "SCR-015",
         "/level/english",
-        "apps/mobile/app/level/english.tsx",
+        "apps/mobile/app/(tabs)/level/english.tsx",
         "EnglishLevelScreen/EnglishLessonCard",
       ],
       [
         "SCR-016",
         "/level/health",
-        "apps/mobile/app/level/health.tsx",
+        "apps/mobile/app/(tabs)/level/health.tsx",
         "HealthLevelScreen/WorkoutTimerCard",
       ],
     ] as const;
@@ -252,11 +274,7 @@ describe("Stitch production route registry", () => {
   });
 
   it("maps plan detail Stitch states to the current PlanScreen implementation", () => {
-    const expected = [
-      "SCR-009",
-      "SCR-010",
-      "SCR-011",
-    ] as const;
+    const expected = ["SCR-009", "SCR-010", "SCR-011"] as const;
 
     for (const primaryCode of expected) {
       const result = resolveProductionStitchState({

@@ -11,8 +11,8 @@ import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-them
 type TabName =
   | "salary/index"
   | "plan/index"
-  | "level/index"
-  | "community/index"
+  | "level"
+  | "community"
   | "profile";
 
 type TabDefinition = Readonly<{
@@ -40,13 +40,13 @@ const tabs: readonly TabDefinition[] = [
   },
   {
     icon: bottomTabIconAssets.level,
-    name: "level/index",
+    name: "level",
     privacyBoundary: "growth",
     title: "LV UP",
   },
   {
     icon: bottomTabIconAssets.community,
-    name: "community/index",
+    name: "community",
     privacyBoundary: "anonymous_community",
     title: "커뮤니티",
   },
@@ -197,7 +197,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "clean_fintech_v1_theme",
     "salary_index_tab",
     "plan_index_tab",
-    "level_index_tab",
+    "level_nested_stack_tab",
     "community_index_tab",
     "profile_nested_stack_tab",
     "white_bottom_tab",

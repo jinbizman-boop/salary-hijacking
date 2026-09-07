@@ -3,12 +3,12 @@ import { useRouter } from "expo-router";
 import { StyleSheet, TextInput, View } from "react-native";
 
 import {
-  AppHeader,
   AppShell,
   EmptyState,
   ErrorState,
   LoadingSkeleton,
   PrimaryButton,
+  RootTabHeader,
   salaryHijackingDesignSystem,
 } from "../../../src/shared/components";
 import { CommunityTabBar } from "../../../src/features/community/components/CommunityTabBar";
@@ -79,12 +79,7 @@ export default function CommunityIndexScreen(): React.ReactElement {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return feed.items;
     return feed.items.filter((post) =>
-      [
-        post.title,
-        post.bodyPreview,
-        post.anonymousDisplayName,
-        post.boardType,
-      ]
+      [post.title, post.bodyPreview, post.anonymousDisplayName, post.boardType]
         .join(" ")
         .toLowerCase()
         .includes(query),
@@ -95,10 +90,11 @@ export default function CommunityIndexScreen(): React.ReactElement {
     <AppShell
       accessibilityLabel="급여납치 커뮤니티 탭"
       header={
-        <AppHeader
-          brandLabel="SALARY HIJACKING"
-          subtitle="관심 있는 이야기를 나눠보세요"
-          title="커뮤니티"
+        <RootTabHeader
+          onOpenMyPostsManagement={() =>
+            router.push("/profile/community" as never)
+          }
+          tab="community"
         />
       }
     >

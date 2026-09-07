@@ -7,17 +7,37 @@ import {
   SurfaceCard,
   componentColors,
   salaryHijackingDesignSystem,
-} from "../../src/shared/components";
-import { GrowthHistoryList } from "../../src/features/level/components";
-import { useLogicalBack } from "../../src/shared/navigation/useLogicalBack";
+} from "../../../src/shared/components";
+import { GrowthHistoryList } from "../../../src/features/level/components";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const designSystem = salaryHijackingDesignSystem;
 
 const historyRows = [
-  { id: "history-reading", label: "오늘 · 독서", title: "8페이지 읽음", xp: "+12 XP" },
-  { id: "history-news", label: "오늘 · 뉴스", title: "경제 기사 1개", xp: "+10 XP" },
-  { id: "history-language", label: "어제 · 외국어", title: "5문장 학습", xp: "+10 XP" },
-  { id: "history-health", label: "어제 · 운동", title: "홈트 15분", xp: "+15 XP" },
+  {
+    id: "history-reading",
+    label: "오늘 · 독서",
+    title: "8페이지 읽음",
+    xp: "+12 XP",
+  },
+  {
+    id: "history-news",
+    label: "오늘 · 뉴스",
+    title: "경제 기사 1개",
+    xp: "+10 XP",
+  },
+  {
+    id: "history-language",
+    label: "어제 · 외국어",
+    title: "5문장 학습",
+    xp: "+10 XP",
+  },
+  {
+    id: "history-health",
+    label: "어제 · 운동",
+    title: "홈트 15분",
+    xp: "+15 XP",
+  },
 ] as const;
 
 export default function LevelHistoryScreen(): React.ReactElement {

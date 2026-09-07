@@ -7,23 +7,33 @@ import {
   EmptyState,
   ErrorState,
   LoadingSkeleton,
-} from "../../src/shared/components";
-import { createMobileGrowthApi } from "../../src/shared/api/mobile-api";
+} from "../../../src/shared/components";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 import {
   ProductDetail,
   XpRewardToast,
-} from "../../src/features/level/components";
-import { levelDetailContent } from "../../src/features/level/detail-content";
+} from "../../../src/features/level/components";
+import { levelDetailContent } from "../../../src/features/level/detail-content";
 import {
   completeGrowthContentWithServerAuthority,
   loadGrowthContentForType,
-} from "../../src/features/level/controller";
-import type { GrowthContentItem } from "../../src/features/level/types";
-import { useLogicalBack } from "../../src/shared/navigation/useLogicalBack";
+} from "../../../src/features/level/controller";
+import type { GrowthContentItem } from "../../../src/features/level/types";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const workoutHistory = [
-  { id: "health-1", label: "오늘 · 운동", title: "홈트 15분 완료", xp: "+15 XP" },
-  { id: "health-2", label: "어제 · 간단 운동", title: "스트레칭 8분", xp: "+8 XP" },
+  {
+    id: "health-1",
+    label: "오늘 · 운동",
+    title: "홈트 15분 완료",
+    xp: "+15 XP",
+  },
+  {
+    id: "health-2",
+    label: "어제 · 간단 운동",
+    title: "스트레칭 8분",
+    xp: "+8 XP",
+  },
   { id: "health-3", label: "이번 주", title: "총 85분", xp: "+70 XP" },
 ] as const;
 
@@ -76,7 +86,9 @@ export default function HealthScreen(): React.ReactElement {
       header={<AppHeader onBack={goBack} subtitle="LV UP" title="운동" />}
     >
       {loading ? <LoadingSkeleton label="운동 루틴을 불러오는 중" /> : null}
-      {error ? <ErrorState message={error} title="운동 루틴을 확인 중입니다" /> : null}
+      {error ? (
+        <ErrorState message={error} title="운동 루틴을 확인 중입니다" />
+      ) : null}
       {content ? (
         <ProductDetail
           actions={[
@@ -89,7 +101,11 @@ export default function HealthScreen(): React.ReactElement {
           domain="HEALTH"
           history={workoutHistory}
           metaRows={[
-            { detail: "목표 출처 · 맞춤 추천", label: "오늘 목표", value: "10분" },
+            {
+              detail: "목표 출처 · 맞춤 추천",
+              label: "오늘 목표",
+              value: "10분",
+            },
             { detail: "기구 없음", label: "루틴", value: "홈트" },
             { detail: "무리하지 않기", label: "난이도", value: "초급" },
             { detail: "이번 주 누적", label: "기록", value: "85분" },

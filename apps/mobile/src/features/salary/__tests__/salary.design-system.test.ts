@@ -31,11 +31,11 @@ describe("salary home design system integration", () => {
       "ProtectedMoneyHeroCard",
       "PaydayCard",
       "HeroMetric",
+      "SponsoredSlot",
       "DailySafeToSpendCard",
       "UpcomingFixedExpenseSection",
       "VariableExpenseSection",
       "FinanceInsightSection",
-      "SponsoredSlot",
     ];
 
     let previousIndex = -1;
