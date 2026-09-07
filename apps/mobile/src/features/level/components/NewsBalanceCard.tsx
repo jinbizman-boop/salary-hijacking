@@ -30,9 +30,7 @@ export function NewsBalanceCard({
       <Text style={styles.label}>팩트 먼저 보기</Text>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.summary}>{content.summary}</Text>
-      <Text style={styles.viewpoint}>
-        관점 태그 {content.viewpointTag ?? "FACT_BRIEF"}
-      </Text>
+      <Text style={styles.viewpoint}>{viewpointLabel(content.viewpointTag)}</Text>
       <ActivityFlowChecklist
         steps={[
           { label: "기사 선택", value: content.sourceTitle },
@@ -40,7 +38,7 @@ export function NewsBalanceCard({
           { label: "한 줄 생각", value: content.recordQuestion },
           {
             label: "관점 비교 선택",
-            value: content.viewpointTag ?? "FACT_BRIEF",
+            value: viewpointLabel(content.viewpointTag),
           },
           { label: "완료", value: `${content.xpReward} XP 기록` },
         ]}
@@ -108,3 +106,10 @@ const styles = StyleSheet.create({
     fontWeight: typography.labelM.fontWeight,
   },
 });
+
+function viewpointLabel(value: string | null): string {
+  if (!value) return "균형 보기";
+  if (value === "FACT_BRIEF") return "요약";
+  if (value === "POLICY_CENTER") return "관점 비교";
+  return value.replace(/_/gu, " ").toLowerCase();
+}

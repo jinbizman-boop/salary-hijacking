@@ -4,6 +4,7 @@ import type {
   GrowthContentItem,
   GrowthContentType,
   GrowthDashboard,
+  GrowthSummary,
 } from "./types";
 
 export type GrowthCompletionUiResult = Readonly<{
@@ -18,6 +19,13 @@ export async function loadGrowthDashboardSnapshot(
   api: GrowthApiClient,
 ): Promise<GrowthDashboard> {
   return api.getDashboard();
+}
+
+export async function loadGrowthSummarySnapshot(
+  api: GrowthApiClient,
+  options?: Parameters<GrowthApiClient["getSummary"]>[0],
+): Promise<GrowthSummary> {
+  return api.getSummary(options);
 }
 
 export async function loadGrowthContentForType(

@@ -4,30 +4,38 @@ import { join } from "node:path";
 const detailRoutes = [
   {
     file: "reading.tsx",
-    component: "ReadingContentCard",
-    guard: "reading_content_policy_guard",
+    childRoute: "/level/reading/session",
+    childFile: join("reading", "session.tsx"),
+    childFallback: "/level/reading",
+    productCopy: "도서 탐색",
   },
   {
     file: "news.tsx",
-    component: "NewsBalanceCard",
-    guard: "news_balance_policy_guard",
+    childRoute: "/level/news/article",
+    childFile: join("news", "article.tsx"),
+    childFallback: "/level/news",
+    productCopy: "뉴스 피드",
   },
   {
     file: "english.tsx",
-    component: "EnglishLessonCard",
-    guard: "english_lesson_policy_guard",
+    childRoute: "/level/english/session",
+    childFile: join("english", "session.tsx"),
+    childFallback: "/level/english",
+    productCopy: "4개 Skill",
   },
   {
     file: "health.tsx",
-    component: "WorkoutTimerCard",
-    guard: "workout_safety_policy_guard",
+    childRoute: "/level/health/routine",
+    childFile: join("health", "routine.tsx"),
+    childFallback: "/level/health",
+    productCopy: "오늘 추천 루틴",
   },
 ] as const;
 
 describe("level detail screen wiring", () => {
   it.each(detailRoutes)(
     "uses feature components for $file instead of the clean fintech detail fallback",
-    ({ component, file, guard }) => {
+    ({ file, childRoute, childFile, childFallback, productCopy }) => {
       const source = readFileSync(
         join(__dirname, "..", "..", "..", "..", "app", "level", file),
         "utf8",
@@ -36,14 +44,30 @@ describe("level detail screen wiring", () => {
       expect(source).not.toContain("CleanFintechLevelDetailScreen");
       expect(source).toContain("AppShell");
       expect(source).toContain("AppHeader");
-      expect(source).toContain(component);
+      expect(source).toContain("ProductDetail");
       expect(source).toContain("XpRewardToast");
-      expect(source).toContain("GROWTH_CONTENTS_PATH");
       expect(source).toContain("createMobileGrowthApi");
       expect(source).toContain("loadGrowthContentForType");
       expect(source).toContain("completeGrowthContentWithServerAuthority");
+      expect(source).not.toContain("onPrimary={() => undefined}");
       expect(source).not.toContain("onRecord={() => undefined}");
-      expect(source).toContain(guard);
+      expect(source).toContain(`router.push("${childRoute}"`);
+      expect(source).toContain("useLogicalBack");
+      expect(source).toContain('fallbackHref: "/level"');
+      expect(source).not.toContain("onBack={() => router.back()}");
+      expect(source).toContain(productCopy);
+      expect(source).not.toContain("Synthetic");
+      expect(source).not.toContain("QA");
+      expect(source).not.toContain("Staging");
+
+      const childSource = readFileSync(
+        join(__dirname, "..", "..", "..", "..", "app", "level", childFile),
+        "utf8",
+      );
+      expect(childSource).toContain("useLogicalBack");
+      expect(childSource).toContain(`fallbackHref: "${childFallback}"`);
+      expect(childSource).not.toContain("router.replace(\"/salary\"");
+      expect(childSource).not.toContain("onBack={() => router.back()}");
     },
   );
 });

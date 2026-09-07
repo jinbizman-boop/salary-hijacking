@@ -35,7 +35,7 @@ export function EnglishLessonCard({
           { label: "Speaking", value: "따라 말하고 발화 기록" },
           { label: "Reading", value: "뜻과 맥락 확인" },
           { label: "Writing", value: "한 문장 직접 작성" },
-          { label: "session complete", value: `${content.xpReward} XP 저장` },
+          { label: "완료 기록", value: `${content.xpReward} XP 저장` },
         ]}
       />
       <ContentPolicyPills content={content} />

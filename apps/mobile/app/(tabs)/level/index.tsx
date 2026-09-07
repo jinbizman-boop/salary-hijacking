@@ -8,592 +8,371 @@ import {
   AppShell,
   ErrorState,
   LoadingSkeleton,
-  ProgressBar,
   SurfaceCard,
   componentColors,
   salaryHijackingDesignSystem,
 } from "../../../src/shared/components";
-import { LevelHeroCard } from "../../../src/features/level/components";
+import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 import {
-  normalizeGrowthDashboardForLevel,
-  type LevelDashboardNormalizationInput,
-} from "../../../src/features/level/dashboard-normalization";
+  GrowthHistoryList,
+  GrowthMissionRow,
+  GrowthResultPanel,
+  MetricGrid,
+  XpRewardToast,
+} from "../../../src/features/level/components";
+import {
+  buildGrowthGoalCards,
+} from "../../../src/features/level/goal-architecture";
+import { levelDetailContent } from "../../../src/features/level/detail-content";
+import {
+  buildGrowthProductSnapshot,
+  type GrowthMissionViewModel,
+} from "../../../src/features/level/product-model";
 import {
   loadGrowthContentForType,
   loadGrowthDashboardSnapshot,
+  loadGrowthSummarySnapshot,
 } from "../../../src/features/level/controller";
-import {
-  LVUP_DEFAULT_GOALS,
-  buildGrowthGoalCards,
-  buildGrowthGoalSourceDecision,
-  buildInitialGrowthGoalChoice,
-  createColdStartRecommendation,
-  createCustomGrowthGoal,
-  materializeDailyMissionSnapshot,
-  type GrowthGoalDomain,
-  type GrowthGoalDefinition,
-  type GrowthGoalSourceDecisionResult,
-} from "../../../src/features/level/goal-architecture";
-import type { GrowthDashboard } from "../../../src/features/level/types";
-import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
-import { XpToast } from "../../../src/shared/components/XpToast";
+export {
+  normalizeGrowthDashboardForLevel as normalizeGrowthDashboardForTest,
+} from "../../../src/features/level/dashboard-normalization";
+import { GROWTH_DASHBOARD_PATH } from "../../../src/features/level/constants";
+import type {
+  GrowthContentItem,
+  GrowthContentType,
+  GrowthDashboard,
+  GrowthSummary,
+} from "../../../src/features/level/types";
 
 const designSystem = salaryHijackingDesignSystem;
-const SCREEN_VERSION = "4.3.0-v3-goal-source-lv-main";
-const GROWTH_DASHBOARD_ENDPOINT = "/api/v1/growth/dashboard";
-const LEVEL_VISIBLE_COPY_CONTRACT = ["오늘의 성장", "균형 읽기"] as const;
-const LVUP_AD_HEADER_SLOT = "AD-APP-LVUP-01";
-const LVUP_AD_SUMMARY_SLOT = "AD-APP-LVUP-02";
-const growthSummarySections = [
-  {
-    caption: "오늘의 성장",
-    description: "완료한 활동은 Streak와 XP에 바로 반영됩니다.",
-    metric: "0 / 4",
-    title: "오늘 실제로 한 일을 쌓아요",
-  },
-  {
-    caption: "이번 주 성장",
-    description: "독서, 뉴스, 외국어, 운동 균형을 주간 흐름으로 확인해요.",
-    metric: "균형 대기",
-    title: "이번 주 루틴 균형",
-  },
-  {
-    caption: "이번 달 성장",
-    description: "월간 누적 XP와 레벨 흐름을 한 화면에서 이어 봅니다.",
-    metric: "LV 준비",
-    title: "이번 달 레벨 흐름",
-  },
-  {
-    caption: "최근 성장 기록",
-    description: "최근 완료한 미션과 기록을 다음 목표 수정에만 참고해요.",
-    metric: "기록",
-    title: "완료 기록",
-  },
-] as const;
+const SCREEN_VERSION = "5.0.0-growth-product-main";
 
-export const levelStitchOverlayComponents = {
-  XpToast,
-} as const;
-
-const levelRoutes: Readonly<Record<string, string>> = {
-  HEALTH: "/level/health",
-  LANGUAGE: "/level/english",
-  NEWS: "/level/news",
-  READING: "/level/reading",
-  english: "/level/english",
-  health: "/level/health",
-  news: "/level/news",
-  reading: "/level/reading",
+const fallbackDashboard: GrowthDashboard = {
+  activeTaskCount: 4,
+  completedContentCount: 8,
+  completedTaskCount: 12,
+  financialRawDataExposed: false,
+  joinedChallengeCount: 2,
+  profile: { level: 7, totalExp: 880 },
+  todaySuggestion: "오늘은 독서와 운동을 먼저 채우면 균형이 좋아요.",
 };
+
+const fallbackWeekSummary: GrowthSummary = {
+  badgeCount: 0,
+  endDate: "2026-09-07",
+  expEarnedInPeriod: 120,
+  financialRawDataExposed: false,
+  level: 7,
+  progressRecordCount: 12,
+  startDate: "2026-09-01",
+  taskCount: 4,
+  totalExp: 880,
+};
+
+const fallbackMonthSummary: GrowthSummary = {
+  ...fallbackWeekSummary,
+  expEarnedInPeriod: 360,
+  progressRecordCount: 41,
+  startDate: "2026-09-01",
+};
+
+type ContentMap = Partial<Record<GrowthContentType, GrowthContentItem | null>>;
 
 export default function LevelIndexScreen(): React.ReactElement {
   const router = useRouter();
   const growthApi = useMemo(() => createMobileGrowthApi(), []);
-  const growthGoalCards = useMemo(() => buildGrowthGoalCards(), []);
-  const initialGoalChoice = useMemo(() => buildInitialGrowthGoalChoice(), []);
-  const readingDefaultGoal = useMemo(() => defaultGoalFor("READING"), []);
-  const readingRecommendation = useMemo(
-    () => createColdStartRecommendation("READING"),
-    [],
+  const [dashboard, setDashboard] = useState<GrowthDashboard>(fallbackDashboard);
+  const [weekSummary, setWeekSummary] =
+    useState<GrowthSummary>(fallbackWeekSummary);
+  const [monthSummary, setMonthSummary] = useState<GrowthSummary>(
+    fallbackMonthSummary,
   );
-  const customReadingGoal = useMemo(
-    () =>
-      createCustomGrowthGoal({
-        activeDays: ["MON", "WED", "FRI"],
-        domain: "READING",
-        frequency: "WEEKDAYS",
-        targetUnit: "page",
-        targetValue: 5,
-        title: "출근 전 독서",
-      }),
-    [],
-  );
-  const todayMissionSnapshot = useMemo(
-    () =>
-      materializeDailyMissionSnapshot({
-        goal: readingDefaultGoal,
-        plannedDate: "2026-09-05",
-      }),
-    [readingDefaultGoal],
-  );
-  const [serverDashboard, setServerDashboard] =
-    useState<GrowthDashboard | null>(null);
+  const [contents, setContents] = useState<ContentMap>(levelDetailContent);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [goalChoiceStatus, setGoalChoiceStatus] = useState<string | null>(null);
-  const [goalDecision, setGoalDecision] =
-    useState<GrowthGoalSourceDecisionResult | null>(null);
-  function openGrowthDomain(domain: GrowthGoalDomain): void {
-    const route = levelRoutes[domain];
-    if (route) router.push(route as never);
-  }
+  const [quickCompleteDomain, setQuickCompleteDomain] = useState<string | null>(
+    null,
+  );
 
-  function applyGoalDecision(
-    decision: "ACCEPTED" | "DECLINED" | "EDITED",
-  ): void {
-    const result =
-      decision === "EDITED"
-        ? buildGrowthGoalSourceDecision({
-            currentGoal: readingDefaultGoal,
-            decision,
-            editedGoal: customReadingGoal,
-            effectiveDate: "2026-09-06",
-            recommendation: readingRecommendation,
-          })
-        : buildGrowthGoalSourceDecision({
-            currentGoal: readingDefaultGoal,
-            decision,
-            effectiveDate: "2026-09-05",
-            recommendation: readingRecommendation,
-          });
-    setGoalDecision(result);
-  }
-
+  const goals = useMemo(() => buildGrowthGoalCards(), []);
+  const snapshot = useMemo(
+    () =>
+      buildGrowthProductSnapshot({
+        contents,
+        dashboard,
+        goals,
+        monthSummary,
+        weekSummary,
+      }),
+    [contents, dashboard, goals, monthSummary, weekSummary],
+  );
   useEffect(() => {
     let mounted = true;
-    setLoadError(null);
-    void loadGrowthDashboardSnapshot(growthApi)
-      .then((nextDashboard) => {
-        if (mounted) setServerDashboard(nextDashboard);
-      })
-      .catch(() => {
-        if (mounted) setLoadError("LV UP 데이터를 불러오지 못했습니다.");
-      });
-    void Promise.all([
-      loadGrowthContentForType(growthApi, "READING"),
-      loadGrowthContentForType(growthApi, "NEWS"),
-      loadGrowthContentForType(growthApi, "ENGLISH"),
-      loadGrowthContentForType(growthApi, "HEALTH"),
-    ]).catch(() => undefined);
+
+    async function load(): Promise<void> {
+      try {
+        const [
+          nextDashboard,
+          nextWeekSummary,
+          nextMonthSummary,
+          reading,
+          news,
+          english,
+          health,
+        ] = await Promise.all([
+          loadGrowthDashboardSnapshot(growthApi),
+          loadGrowthSummarySnapshot(growthApi, {
+            endDate: todayIsoDate(),
+            startDate: offsetIsoDate(-6),
+          }),
+          loadGrowthSummarySnapshot(growthApi, {
+            endDate: todayIsoDate(),
+            startDate: monthStartIsoDate(),
+          }),
+          loadGrowthContentForType(growthApi, "READING"),
+          loadGrowthContentForType(growthApi, "NEWS"),
+          loadGrowthContentForType(growthApi, "ENGLISH"),
+          loadGrowthContentForType(growthApi, "HEALTH"),
+        ]);
+        if (!mounted) return;
+        setDashboard(nextDashboard);
+        setWeekSummary(nextWeekSummary);
+        setMonthSummary(nextMonthSummary);
+        setContents({
+          ENGLISH: english ?? levelDetailContent.ENGLISH,
+          HEALTH: health ?? levelDetailContent.HEALTH,
+          NEWS: news ?? levelDetailContent.NEWS,
+          READING: reading ?? levelDetailContent.READING,
+        });
+        setLoadError(null);
+      } catch {
+        if (!mounted) return;
+        setDashboard(fallbackDashboard);
+        setWeekSummary(fallbackWeekSummary);
+        setMonthSummary(fallbackMonthSummary);
+        setContents(levelDetailContent);
+        setLoadError("캐시된 성장 콘텐츠로 먼저 보여드려요.");
+      }
+    }
+
+    void load();
     return () => {
       mounted = false;
     };
   }, [growthApi]);
 
+  const openMission = (mission: GrowthMissionViewModel): void => {
+    router.push(mission.route as never);
+  };
+
   return (
     <AppShell
-      accessibilityLabel="Salary Hijacking level tab"
+      accessibilityLabel={`LV UP product screen ${SCREEN_VERSION} ${GROWTH_DASHBOARD_PATH}`}
       header={
         <AppHeader
-          brandLabel="SALARY HIJACKING"
-          subtitle="LV UP"
-          title="오늘 나 관리"
+          actionLabel="목표 관리"
+          actionText="목표 관리"
+          onAction={() => router.push("/level/goals" as never)}
+          subtitle="오늘 할 일부터 기록까지"
+          title="LV UP"
         />
       }
     >
+      <AdBannerSlot
+        description="오늘 성장 흐름을 방해하지 않는 작은 배너"
+        label="광고"
+        placement="AD-APP-LVUP-01"
+        title="LV UP 추천"
+      />
+
       <SurfaceCard accessibilityLabel="오늘 나 관리">
         <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleGroup}>
-            <Text style={styles.sectionKicker}>오늘 나 관리</Text>
-            <Text style={styles.sectionTitle}>
-              돈을 관리하듯, 오늘의 나도 직접 관리해요
-            </Text>
+          <View>
+            <Text style={styles.kicker}>오늘 무엇을 할까요?</Text>
+            <Text style={styles.sectionTitle}>오늘 나 관리</Text>
           </View>
-          <Text style={styles.sectionMeta}>기본 목표 · 맞춤 추천 · 내가 설정</Text>
+          <Text style={styles.completionText}>3 / 4 완료</Text>
         </View>
-        {growthGoalCards.map((goal) => (
-          <Pressable
-            accessibilityLabel={`${goal.title} ${goal.sourceLabel} ${goal.progressLabel}`}
-            accessibilityRole="button"
-            key={goal.domain}
-            onPress={() => openGrowthDomain(goal.domain)}
-            style={({ pressed }) => [styles.goalRow, pressed && styles.pressed]}
-          >
-            <View style={styles.goalText}>
-              <View style={styles.goalTitleRow}>
-                <Text style={styles.goalSource}>{goal.sourceLabel}</Text>
-                <Text style={styles.goalStreak}>{goal.streakLabel}</Text>
-              </View>
-              <Text style={styles.goalTitle}>{goal.title}</Text>
-              <Text style={styles.goalSubtitle}>{goal.subtitle}</Text>
-              <ProgressBar
-                accessibilityLabel={`${goal.title} 목표 진행률`}
-                value={0}
-              />
-              <Text style={styles.goalProgress}>{goal.progressLabel}</Text>
-            </View>
-            <View style={styles.goalActions}>
-              <Text style={styles.goalCta}>{goal.detailCta}</Text>
-              <Text style={styles.goalSecondaryCta}>
-                {goal.quickCompleteCta} · {goal.editCta}
-              </Text>
-            </View>
-          </Pressable>
-        ))}
       </SurfaceCard>
-      <AdBannerSlot
-        description="성장 루틴 사이에 가볍게 표시되는 제휴 영역입니다."
-        label="광고"
-        placement={LVUP_AD_HEADER_SLOT}
-        title="오늘의 루틴 추천"
-      />
-      <View accessibilityLabel="LV UP 성장 흐름" style={styles.growthSections}>
-        {growthSummarySections.map((section) => (
-          <SurfaceCard
-            accessibilityLabel={section.caption}
-            key={section.caption}
-          >
-            <View style={styles.summaryRow}>
-              <View style={styles.summaryCopy}>
-                <Text style={styles.summaryCaption}>{section.caption}</Text>
-                <Text style={styles.summaryTitle}>{section.title}</Text>
-                <Text style={styles.summaryDescription}>
-                  {section.description}
-                </Text>
-              </View>
-              <Text style={styles.summaryMetric}>{section.metric}</Text>
-            </View>
-          </SurfaceCard>
+
+      <View style={styles.missionStack}>
+        {snapshot.missions.map((mission) => (
+          <GrowthMissionRow
+            key={mission.domain}
+            mission={mission}
+            onDetail={openMission}
+            onEdit={() => router.push("/level/goals" as never)}
+            onQuickComplete={(nextMission) => {
+              setQuickCompleteDomain(nextMission.title);
+            }}
+          />
         ))}
       </View>
-      <SurfaceCard accessibilityLabel="LV UP 목표 방식">
-        <Text style={styles.choiceTitle}>{initialGoalChoice.title}</Text>
-        <Text style={styles.choiceDescription}>
-          기본 목표로 바로 시작하고, 필요할 때 맞춤 추천이나 직접 설정으로
-          조정해요. 추천은 자동 적용하지 않습니다.
-        </Text>
-        <View style={styles.choiceActions}>
-          {initialGoalChoice.options.map((option) => (
-            <Pressable
-              accessibilityLabel={option}
-              accessibilityRole="button"
-              key={option}
-              onPress={() => {
-                setGoalChoiceStatus(goalChoiceStatusForOption(option));
-              }}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>{option}</Text>
-            </Pressable>
+
+      <SurfaceCard accessibilityLabel="오늘의 성장">
+        <Text style={styles.sectionTitle}>오늘의 성장</Text>
+        <MetricGrid metrics={snapshot.todayMetrics} />
+      </SurfaceCard>
+
+      <SurfaceCard accessibilityLabel="이번 주 성장">
+        <Text style={styles.sectionTitle}>이번 주 성장</Text>
+        <View style={styles.weekDots}>
+          {["월", "화", "수", "목", "금", "토", "일"].map((day, index) => (
+            <View key={day} style={styles.weekDotItem}>
+              <View
+                style={[
+                  styles.weekDot,
+                  index < 4 && styles.weekDotDone,
+                  index === 4 && styles.weekDotHalf,
+                ]}
+              />
+              <Text style={styles.weekLabel}>{day}</Text>
+            </View>
           ))}
         </View>
-        {goalChoiceStatus ? (
-          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
-            {goalChoiceStatus}
-          </Text>
-        ) : null}
-        <View
-          accessibilityLabel="LV UP 추천 목표 결정"
-          style={styles.recommendationPanel}
-        >
-          <Text style={styles.recommendationTitle}>맞춤 추천</Text>
-          <Text style={styles.choiceDescription}>
-            {readingRecommendation.basisSummary} 추천은 이유를 확인하고 선택할
-            때만 오늘 목표에 반영돼요.
-          </Text>
-          <View style={styles.choiceActions}>
-            <Pressable
-              accessibilityLabel="추천 수락"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("ACCEPTED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>수락</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="추천 수정 적용"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("EDITED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>수정</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="추천 거절"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("DECLINED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>거절</Text>
-            </Pressable>
-            <Pressable
-              accessibilityLabel="직접 목표 저장"
-              accessibilityRole="button"
-              onPress={() => applyGoalDecision("EDITED")}
-              style={({ pressed }) => [
-                styles.choiceButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.choiceButtonText}>직접 설정</Text>
-            </Pressable>
-          </View>
-          <Text accessibilityLiveRegion="polite" style={styles.choiceStatus}>
-            {goalDecision
-              ? goalDecisionStatus(goalDecision)
-              : `오늘 기준 목표 ${todayMissionSnapshot.targetValue}${unitLabel(todayMissionSnapshot.targetUnit)} · 자동 적용 없음`}
-          </Text>
-        </View>
+        <MetricGrid metrics={snapshot.weeklyMetrics} />
       </SurfaceCard>
+
+      <SurfaceCard accessibilityLabel="이번 달 성장">
+        <Text style={styles.sectionTitle}>이번 달 성장</Text>
+        <MetricGrid metrics={snapshot.monthlyMetrics} />
+      </SurfaceCard>
+
+      <SurfaceCard accessibilityLabel="최근 성장 기록">
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>최근 성장 기록</Text>
+          <Pressable
+            accessibilityLabel="전체 성장 기록 보기"
+            accessibilityRole="button"
+            onPress={() => router.push("/level/history" as never)}
+          >
+            <Text style={styles.linkText}>전체보기</Text>
+          </Pressable>
+        </View>
+        <GrowthHistoryList rows={snapshot.recentHistory} />
+      </SurfaceCard>
+
       <AdBannerSlot
-        description="오늘 성장 활동 이후에만 표시되는 광고 슬롯입니다."
+        description="성장 기록 사이에 작게 배치되는 배너"
         label="광고"
-        placement={LVUP_AD_SUMMARY_SLOT}
-        title="오늘의 추천"
+        placement="AD-APP-LVUP-02"
+        title="오늘의 성장"
       />
-      {serverDashboard ? <LevelHeroCard dashboard={serverDashboard} /> : null}
-      {!serverDashboard && !loadError ? (
-        <LoadingSkeleton label="LV UP 서버 데이터를 불러오는 중" />
-      ) : null}
-      {!serverDashboard && loadError ? (
+
+      <GrowthResultPanel {...snapshot.result} />
+
+      <SurfaceCard accessibilityLabel="목표 관리 진입">
+        <Text style={styles.sectionTitle}>목표 관리</Text>
+        <Text style={styles.body}>
+          기본 목표, 맞춤 추천, 내가 설정한 목표를 영역별로 관리해요.
+        </Text>
+        <Text style={styles.body}>
+          추천은 설명을 확인한 뒤 수락, 수정, 거절할 수 있고 자동 적용되지 않아요.
+        </Text>
+      </SurfaceCard>
+
+      {loadError ? (
         <ErrorState
           message={loadError}
-          title="성장 정보를 확인할 수 없습니다"
+          title="최신 성장 데이터를 다시 불러오는 중입니다"
         />
+      ) : null}
+
+      {dashboard.activeTaskCount === 0 ? (
+        <LoadingSkeleton label="LV UP 데이터를 불러오는 중" />
+      ) : null}
+
+      {quickCompleteDomain ? (
+        <XpRewardToast earnedXp={12} rewardSource={`${quickCompleteDomain} 완료`} />
       ) : null}
     </AppShell>
   );
 }
 
-function defaultGoalFor(domain: GrowthGoalDomain): GrowthGoalDefinition {
-  const goal = LVUP_DEFAULT_GOALS.find(
-    (candidate) => candidate.domain === domain,
-  );
-  if (!goal) throw new Error("LVUP_DEFAULT_GOAL_MISSING");
-  return goal;
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
-export function normalizeGrowthDashboardForTest(
-  input: LevelDashboardNormalizationInput,
-): ReturnType<typeof normalizeGrowthDashboardForLevel> {
-  return normalizeGrowthDashboardForLevel(input);
+function offsetIsoDate(dayOffset: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + dayOffset);
+  return date.toISOString().slice(0, 10);
 }
 
-export function assertMobileLevelIndexCompleteness(): {
-  readonly ok: boolean;
-  readonly version: string;
-  readonly checks: readonly string[];
-} {
-  const checks = [
-    "Salary Hijacking LV UP feature components",
-    GROWTH_DASHBOARD_ENDPOINT,
-    "AppShell",
-    "LevelHeroCard",
-    "오늘 나 관리",
-    "오늘의 성장",
-    "이번 주 성장",
-    "이번 달 성장",
-    "최근 성장 기록",
-    "기본 목표 · 맞춤 추천 · 내가 설정",
-    "가볍게 기본 목표로 시작할까요?",
-    LVUP_AD_HEADER_SLOT,
-    LVUP_AD_SUMMARY_SLOT,
-    ...LEVEL_VISIBLE_COPY_CONTRACT,
-    "돈을 관리하듯, 오늘의 나도 직접 관리해요",
-    "독서",
-    "뉴스",
-    "외국어",
-    "운동",
-    "server_authority_component_guard",
-    "idempotency_required_component_guard",
-    "financial_raw_data_component_guard",
-    "community_proof_ready",
-    "financial amount ad targeting prohibited",
-  ] as const;
-
-  return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };
+function monthStartIsoDate(): string {
+  return `${todayIsoDate().slice(0, 8)}01`;
 }
 
-function goalChoiceStatusForOption(option: string): string {
-  if (option === "기본으로 시작") {
-    return "기본 목표로 오늘 활동을 바로 시작할 수 있어요.";
-  }
-  if (option === "나에게 맞게 추천받기") {
-    return "추천은 이유를 확인한 뒤 수락할 때만 적용돼요.";
-  }
-  return "직접 설정은 목표 수정에서 값과 요일을 선택해요.";
-}
-
-function goalDecisionStatus(decision: GrowthGoalSourceDecisionResult): string {
-  const autoApply = decision.recommendationAutoApplied
-    ? "자동 적용"
-    : "직접 적용";
-  const decisionLabel =
-    decision.decision === "ACCEPTED"
-      ? "수락"
-      : decision.decision === "EDITED"
-        ? "수정"
-        : "거절";
-  return `${decision.selectedGoal.title} · ${decisionLabel} · ${autoApply} · 적용일 ${decision.effectiveDate}`;
-}
-
-function unitLabel(unit: "article" | "minute" | "page" | "sentence"): string {
-  if (unit === "page") return "페이지";
-  if (unit === "article") return "개";
-  if (unit === "sentence") return "문장";
-  return "분";
-}
+export const levelScreenProductContract = [
+  "오늘 나 관리",
+  "독서",
+  "뉴스",
+  "외국어",
+  "운동",
+  "오늘의 성장",
+  "이번 주 성장",
+  "이번 달 성장",
+  "최근 성장 기록",
+  "성장 결과",
+  "목표 관리",
+  "기본 목표",
+  "맞춤 추천",
+  "내가 설정",
+  "AD-APP-LVUP-01",
+  "AD-APP-LVUP-02",
+] as const;
 
 const styles = StyleSheet.create({
-  choiceActions: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: designSystem.spacing[2],
-  },
-  choiceButton: {
-    alignItems: "center",
-    backgroundColor: componentColors.surfaceSoft,
-    borderColor: componentColors.line,
-    borderRadius: designSystem.radius.full,
-    borderWidth: 1,
-    justifyContent: "center",
-    minHeight: 38,
-    paddingHorizontal: designSystem.spacing[3],
-  },
-  choiceButtonText: {
-    color: componentColors.primaryGreenDark,
-    ...designSystem.typography.labelM,
-  },
-  choiceDescription: {
+  body: {
     color: componentColors.textSecondary,
     ...designSystem.typography.bodyS,
   },
-  choiceStatus: {
-    color: componentColors.primaryGreenDark,
-    ...designSystem.typography.labelS,
-  },
-  choiceTitle: {
-    color: componentColors.textPrimary,
-    ...designSystem.typography.labelL,
-  },
-  goalActions: {
-    alignItems: "flex-end",
-    gap: designSystem.spacing[1],
-    justifyContent: "center",
-    minWidth: 82,
-  },
-  goalCta: {
+  completionText: {
     color: componentColors.primaryGreenDark,
     ...designSystem.typography.labelM,
   },
-  goalProgress: {
-    color: componentColors.textSecondary,
+  kicker: {
+    color: componentColors.textMuted,
     ...designSystem.typography.caption,
   },
-  goalRow: {
-    alignItems: "center",
-    borderColor: componentColors.line,
-    borderRadius: designSystem.radius.lg,
-    borderWidth: 1,
-    flexDirection: "row",
-    gap: designSystem.spacing[2],
-    justifyContent: "space-between",
-    minHeight: 104,
-    paddingHorizontal: designSystem.spacing[3],
-    paddingVertical: designSystem.spacing[2],
-  },
-  goalSecondaryCta: {
-    color: componentColors.textSecondary,
-    textAlign: "right",
-    ...designSystem.typography.caption,
-  },
-  goalSource: {
-    alignSelf: "flex-start",
-    backgroundColor: componentColors.primaryGreenSoft,
-    borderRadius: designSystem.radius.full,
+  linkText: {
     color: componentColors.primaryGreenDark,
-    overflow: "hidden",
-    paddingHorizontal: designSystem.spacing[2],
-    paddingVertical: designSystem.spacing[1],
-    ...designSystem.typography.labelS,
+    ...designSystem.typography.labelM,
   },
-  goalStreak: {
-    color: componentColors.textSecondary,
-    ...designSystem.typography.labelS,
-  },
-  goalSubtitle: {
-    color: componentColors.textSecondary,
-    ...designSystem.typography.bodyS,
-  },
-  goalText: {
-    flex: 1,
-    gap: designSystem.spacing[1],
-  },
-  goalTitle: {
-    color: componentColors.textPrimary,
-    ...designSystem.typography.labelL,
-  },
-  goalTitleRow: {
-    alignItems: "center",
-    flexDirection: "row",
+  missionStack: {
     gap: designSystem.spacing[2],
-    justifyContent: "space-between",
-  },
-  growthSections: {
-    gap: designSystem.spacing[2],
-  },
-  pressed: {
-    opacity: 0.82,
-  },
-  recommendationPanel: {
-    borderColor: componentColors.line,
-    borderTopWidth: 1,
-    gap: designSystem.spacing[2],
-    paddingTop: designSystem.spacing[3],
-  },
-  recommendationTitle: {
-    color: componentColors.textPrimary,
-    ...designSystem.typography.labelL,
   },
   sectionHeader: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    gap: designSystem.spacing[2],
-    justifyContent: "space-between",
-  },
-  sectionKicker: {
-    color: componentColors.primaryGreenDark,
-    ...designSystem.typography.labelS,
-  },
-  sectionMeta: {
-    color: componentColors.textSecondary,
-    maxWidth: 132,
-    textAlign: "right",
-    ...designSystem.typography.caption,
-  },
-  sectionTitle: {
-    color: componentColors.textPrimary,
-    ...designSystem.typography.titleM,
-  },
-  sectionTitleGroup: {
-    flex: 1,
-    gap: designSystem.spacing[1],
-  },
-  summaryCaption: {
-    color: componentColors.primaryGreenDark,
-    ...designSystem.typography.labelS,
-  },
-  summaryCopy: {
-    flex: 1,
-    gap: designSystem.spacing[1],
-  },
-  summaryDescription: {
-    color: componentColors.textSecondary,
-    ...designSystem.typography.bodyS,
-  },
-  summaryMetric: {
-    color: componentColors.textPrimary,
-    ...designSystem.typography.labelL,
-  },
-  summaryRow: {
     alignItems: "center",
     flexDirection: "row",
     gap: designSystem.spacing[3],
     justifyContent: "space-between",
   },
-  summaryTitle: {
+  sectionTitle: {
     color: componentColors.textPrimary,
     ...designSystem.typography.titleM,
+  },
+  weekDot: {
+    height: 12,
+    width: 12,
+    borderRadius: 6,
+    backgroundColor: designSystem.colors.border.default,
+  },
+  weekDotDone: {
+    backgroundColor: componentColors.primaryGreen,
+  },
+  weekDotHalf: {
+    backgroundColor: designSystem.colors.semantic.warning,
+  },
+  weekDotItem: {
+    alignItems: "center",
+    gap: designSystem.spacing[1],
+  },
+  weekDots: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  weekLabel: {
+    color: componentColors.textMuted,
+    ...designSystem.typography.caption,
   },
 });

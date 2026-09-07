@@ -41,6 +41,18 @@ export type GrowthDashboard = Readonly<{
   financialRawDataExposed: false;
 }>;
 
+export type GrowthSummary = Readonly<{
+  startDate: string;
+  endDate: string;
+  progressRecordCount: number;
+  expEarnedInPeriod: number;
+  totalExp: number;
+  level: number;
+  taskCount: number;
+  badgeCount: number;
+  financialRawDataExposed: false;
+}>;
+
 export type GrowthTask = Readonly<{
   taskId: string;
   title: string;
@@ -152,6 +164,10 @@ export type GrowthContentCompleteResult = Readonly<{
 
 export type GrowthApiClient = Readonly<{
   getDashboard: () => Promise<GrowthDashboard>;
+  getSummary: (options?: {
+    readonly startDate?: string;
+    readonly endDate?: string;
+  }) => Promise<GrowthSummary>;
   listTasks: (options?: {
     readonly page?: number;
     readonly pageSize?: number;

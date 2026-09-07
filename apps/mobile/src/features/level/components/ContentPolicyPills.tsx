@@ -20,7 +20,7 @@ export function ContentPolicyPills({
   return (
     <View style={styles.row}>
       <Text style={styles.pill}>{fullTextLabel}</Text>
-      <Text style={styles.pill}>{content.licenseType}</Text>
+      <Text style={styles.pill}>{licenseLabel(content.licenseType)}</Text>
       <Text style={styles.pill}>{content.xpReward} XP</Text>
     </View>
   );
@@ -42,3 +42,9 @@ const styles = StyleSheet.create({
     ...salaryHijackingDesignSystem.typography.labelS,
   },
 });
+
+function licenseLabel(value: string): string {
+  if (value === "CURATED_LINK") return "요약 링크";
+  if (value === "INTERNAL_CATALOG") return "내부 카탈로그";
+  return value.replace(/_/gu, " ").toLowerCase();
+}

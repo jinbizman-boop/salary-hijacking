@@ -1,5 +1,5 @@
 import { createGrowthApi } from "../api";
-import { GROWTH_SAFE_ERROR_MESSAGE } from "../constants";
+import { GROWTH_SAFE_ERROR_MESSAGE, GROWTH_SUMMARY_PATH } from "../constants";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -41,6 +41,18 @@ const task = {
   updatedAt: "2026-07-02T09:00:00.000Z",
   serverAuthority: true,
   financialRawDataExposed: false,
+};
+
+const summary = {
+  badgeCount: 2,
+  endDate: "2026-09-07",
+  expEarnedInPeriod: 96,
+  financialRawDataExposed: false,
+  level: 8,
+  progressRecordCount: 7,
+  startDate: "2026-09-01",
+  taskCount: 4,
+  totalExp: 940,
 };
 
 const content = {
@@ -169,6 +181,40 @@ describe("growth api", () => {
     expect(JSON.stringify(await api.getDashboard())).not.toContain(
       "usr_private",
     );
+  });
+
+  it("loads server-authoritative growth summary without idempotency headers", async () => {
+    const calls: Request[] = [];
+    const api = createGrowthApi({
+      baseUrl: "https://api.salaryhijacking.com",
+      createCorrelationId: () => "growth-summary-1",
+      fetcher: async (request) => {
+        const normalized =
+          request instanceof Request ? request : new Request(request);
+        calls.push(normalized);
+        return jsonResponse({ data: summary });
+      },
+      platform: "android",
+    });
+
+    await expect(
+      api.getSummary({ endDate: "2026-09-07", startDate: "2026-09-01" }),
+    ).resolves.toMatchObject({
+      expEarnedInPeriod: 96,
+      financialRawDataExposed: false,
+      level: 8,
+      progressRecordCount: 7,
+    });
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe(
+      `https://api.salaryhijacking.com${GROWTH_SUMMARY_PATH}?startDate=2026-09-01&endDate=2026-09-07`,
+    );
+    expect(calls[0]?.headers.get("x-raw-financial-data-exposed")).toBe("false");
+    expect(calls[0]?.headers.get("x-ad-financial-targeting-used")).toBe(
+      "false",
+    );
+    expect(calls[0]?.headers.get("x-idempotency-key")).toBeNull();
   });
 
   it("records task progress with idempotency and rejects invalid counts before network access", async () => {

@@ -29,7 +29,7 @@ export function WorkoutTimerCard({
     >
       <View style={styles.row}>
         <Text style={styles.timer}>{content.estimatedMinutes}:00</Text>
-        <Text style={styles.safe}>{content.safetyLevel}</Text>
+        <Text style={styles.safe}>{safetyLabel(content.safetyLevel)}</Text>
       </View>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.notice}>통증이 있으면 즉시 중단하세요.</Text>
@@ -39,15 +39,15 @@ export function WorkoutTimerCard({
       <ActivityFlowChecklist
         steps={[
           { label: "10분 루틴", value: content.missionPrompt },
-          { label: "safety", value: content.safetyLevel },
-          { label: "start", value: "준비 후 시작" },
+          { label: "안전", value: safetyLabel(content.safetyLevel) },
+          { label: "시작", value: "준비 후 시작" },
           {
-            label: "timer / progress",
+            label: "진행",
             value: `${content.estimatedMinutes}:00`,
           },
-          { label: "complete", value: "운동 완료 기록" },
-          { label: "actual duration", value: "실제 수행 시간 저장" },
-          { label: "note", value: content.recordQuestion },
+          { label: "완료", value: "운동 완료 기록" },
+          { label: "실제 시간", value: "수행 시간 저장" },
+          { label: "메모", value: content.recordQuestion },
         ]}
       />
       <ContentPolicyPills content={content} />
@@ -116,3 +116,9 @@ const styles = StyleSheet.create({
     fontWeight: typography.labelM.fontWeight,
   },
 });
+
+function safetyLabel(value: string): string {
+  if (value === "BEGINNER_SAFE") return "초급";
+  if (value === "GENERAL") return "일반";
+  return value.replace(/_/gu, " ").toLowerCase();
+}

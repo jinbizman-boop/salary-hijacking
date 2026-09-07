@@ -119,10 +119,16 @@ describe("level feature components", () => {
     );
 
     expect(screen.getAllByText("원문 전체 저장 없음")).toHaveLength(4);
+    expect(screen.getAllByText("요약 링크")).toHaveLength(4);
     expect(screen.getByText("비공개 LV UP 기록")).toBeTruthy();
-    expect(screen.getByText("관점 태그 POLICY_CENTER")).toBeTruthy();
+    expect(screen.getAllByText("관점 비교").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("듣기 · 말하기 · 읽기 · 쓰기")).toBeTruthy();
     expect(screen.getByText("통증이 있으면 즉시 중단하세요.")).toBeTruthy();
+    expect(screen.queryByText("POLICY_CENTER")).toBeNull();
+    expect(screen.queryByText("FACT_BRIEF")).toBeNull();
+    expect(screen.queryByText("BEGINNER_SAFE")).toBeNull();
+    expect(screen.queryByText("CURATED_LINK")).toBeNull();
+    expect(screen.queryByText("ECONOMY_BUSINESS")).toBeNull();
 
     fireEvent.press(screen.getByRole("button", { name: "독서 시작" }));
     const [recordButton] = screen.getAllByRole("button", { name: "기록하기" });
@@ -176,14 +182,14 @@ describe("level feature components", () => {
     expect(screen.getByText("실제 페이지")).toBeTruthy();
     expect(screen.getByText("독서 카드 작성")).toBeTruthy();
     expect(screen.getByText("한 줄 기록")).toBeTruthy();
-    expect(screen.getByText("streak / XP")).toBeTruthy();
+    expect(screen.getByText("연속 기록")).toBeTruthy();
     expect(screen.getByText("기사 선택")).toBeTruthy();
     expect(screen.getByText("관점 비교 선택")).toBeTruthy();
     expect(screen.getByText("영어 기본 목표")).toBeTruthy();
-    expect(screen.getByText("session complete")).toBeTruthy();
+    expect(screen.getByText("완료 기록")).toBeTruthy();
     expect(screen.getByText("10분 루틴")).toBeTruthy();
-    expect(screen.getByText("timer / progress")).toBeTruthy();
-    expect(screen.getByText("actual duration")).toBeTruthy();
+    expect(screen.getByText("진행")).toBeTruthy();
+    expect(screen.getByText("실제 시간")).toBeTruthy();
   });
 
   it("renders XP reward toast with user-facing server authority copy", () => {

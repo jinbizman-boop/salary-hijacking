@@ -29,7 +29,7 @@ export function ReadingContentCard({
       accessibilityLabel={`${content.title} 독서 콘텐츠`}
       style={styles.card}
     >
-      <Text style={styles.category}>{content.category}</Text>
+      <Text style={styles.category}>{categoryLabel(content.category)}</Text>
       <Text style={styles.title}>{content.title}</Text>
       <Text style={styles.summary}>{content.summary}</Text>
       <ActivityFlowChecklist
@@ -38,7 +38,7 @@ export function ReadingContentCard({
           { label: "실제 페이지", value: "읽은 페이지를 직접 기록" },
           { label: "독서 카드 작성", value: content.recordQuestion },
           { label: "한 줄 기록", value: "비공개 기록 후 완료" },
-          { label: "streak / XP", value: `${content.xpReward} XP 반영` },
+          { label: "연속 기록", value: `${content.xpReward} XP 반영` },
         ]}
       />
       <ContentPolicyPills content={content} />
@@ -64,6 +64,11 @@ export function ReadingContentCard({
       <RecordPreview question={content.recordQuestion} />
     </SurfaceCard>
   );
+}
+
+function categoryLabel(value: string): string {
+  if (value === "ECONOMY_BUSINESS") return "경제·경영";
+  return value.replace(/_/gu, " ").toLowerCase();
 }
 
 function RecordPreview({

@@ -2,6 +2,7 @@ import {
   GROWTH_CONTENTS_PATH,
   GROWTH_DASHBOARD_PATH,
   GROWTH_SAFE_ERROR_MESSAGE,
+  GROWTH_SUMMARY_PATH,
   GROWTH_TASKS_PATH,
 } from "./constants";
 import {
@@ -17,6 +18,7 @@ import type {
   GrowthContentListResult,
   GrowthContentType,
   GrowthDashboard,
+  GrowthSummary,
   GrowthTask,
   GrowthTaskDifficulty,
   GrowthTaskListResult,
@@ -361,6 +363,37 @@ function normalizeDashboard(value: unknown): GrowthDashboard {
     completedContentCount: data.completedContentCount,
     todaySuggestion: data.todaySuggestion,
     financialRawDataExposed: false,
+  };
+}
+
+function normalizeSummary(value: unknown): GrowthSummary {
+  if (!isRecord(value) || !isRecord(value.data)) {
+    return invalidResponse();
+  }
+  const data = value.data;
+  if (
+    !isDateOnly(data.startDate) ||
+    !isDateOnly(data.endDate) ||
+    !isNonNegativeInteger(data.progressRecordCount) ||
+    !isNonNegativeInteger(data.expEarnedInPeriod) ||
+    !isNonNegativeInteger(data.totalExp) ||
+    !isPositiveInteger(data.level) ||
+    !isNonNegativeInteger(data.taskCount) ||
+    !isNonNegativeInteger(data.badgeCount) ||
+    data.financialRawDataExposed !== false
+  ) {
+    return invalidResponse();
+  }
+  return {
+    badgeCount: data.badgeCount,
+    endDate: data.endDate,
+    expEarnedInPeriod: data.expEarnedInPeriod,
+    financialRawDataExposed: false,
+    level: data.level,
+    progressRecordCount: data.progressRecordCount,
+    startDate: data.startDate,
+    taskCount: data.taskCount,
+    totalExp: data.totalExp,
   };
 }
 
@@ -774,6 +807,15 @@ export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
   return {
     async getDashboard(): Promise<GrowthDashboard> {
       return normalizeDashboard(await request(GROWTH_DASHBOARD_PATH));
+    },
+
+    async getSummary(options = {}): Promise<GrowthSummary> {
+      const params = new URLSearchParams();
+      if (options.startDate) params.set("startDate", options.startDate);
+      if (options.endDate) params.set("endDate", options.endDate);
+      const query = params.toString();
+      const suffix = query ? `?${query}` : "";
+      return normalizeSummary(await request(`${GROWTH_SUMMARY_PATH}${suffix}`));
     },
 
     async listTasks(options = {}): Promise<GrowthTaskListResult> {

@@ -2,6 +2,7 @@ import {
   completeGrowthContentWithServerAuthority,
   loadGrowthContentForType,
   loadGrowthDashboardSnapshot,
+  loadGrowthSummarySnapshot,
 } from "../controller";
 import type {
   GrowthApiClient,
@@ -69,6 +70,17 @@ function createApi(overrides: Partial<GrowthApiClient> = {}) {
       profile: { level: 18, totalExp: 880 },
       todaySuggestion: "오늘의 레벨업",
     })),
+    getSummary: jest.fn(async () => ({
+      badgeCount: 1,
+      endDate: "2026-07-25",
+      expEarnedInPeriod: 60,
+      financialRawDataExposed: false as const,
+      level: 18,
+      progressRecordCount: 2,
+      startDate: "2026-07-19",
+      taskCount: 1,
+      totalExp: 880,
+    })),
     listContents: jest.fn(async () => ({
       items: [content],
       page: 1,
@@ -95,8 +107,22 @@ describe("level growth controller", () => {
       contentId: "reading_daily",
       serverAuthority: true,
     });
+    await expect(
+      loadGrowthSummarySnapshot(api, {
+        endDate: "2026-07-25",
+        startDate: "2026-07-19",
+      }),
+    ).resolves.toMatchObject({
+      expEarnedInPeriod: 60,
+      financialRawDataExposed: false,
+      progressRecordCount: 2,
+    });
 
     expect(api.getDashboard).toHaveBeenCalledTimes(1);
+    expect(api.getSummary).toHaveBeenCalledWith({
+      endDate: "2026-07-25",
+      startDate: "2026-07-19",
+    });
     expect(api.listContents).toHaveBeenCalledWith({
       contentType: "READING",
       page: 1,
