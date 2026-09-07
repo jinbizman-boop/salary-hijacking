@@ -23,15 +23,7 @@ const MAX_TEXT = 2_000;
 const AUTH_CONTEXT_SOURCE_HEADER = "x-auth-context-source";
 const AUTH_CONTEXT_SOURCE_VALUE = "auth.middleware";
 
-export type CommunityBoardType =
-  | "SALARY_TALK"
-  | "BUDGET_TIP"
-  | "EXPENSE_CUT"
-  | "SAVINGS_GOAL"
-  | "LEVEL_CERTIFICATION"
-  | "SIDE_HUSTLE"
-  | "HEALTH_ROUTINE"
-  | "FREE";
+export type CommunityBoardType = "FREE" | "LEVELUP" | "HOBBY";
 
 export type CommunityPostStatus =
   | "VISIBLE"
@@ -289,60 +281,25 @@ export class CommunityHttpError extends Error {
 
 const boardDefinitions: readonly JsonRecord[] = [
   {
-    boardType: "SALARY_TALK",
-    title: "월급 이야기",
-    description: "월급날, 급여 계획, 지출 루틴을 공유합니다.",
+    boardType: "FREE",
+    title: "자유 게시판",
+    description: "급여납치 사용자들의 자유 대화 공간입니다.",
     writeRequiresAuth: true,
-    warning: "급여 원문·계좌·대출 상세는 입력하지 마세요.",
+    warning: "욕설·혐오·개인정보 노출은 신고 대상입니다.",
   },
   {
-    boardType: "BUDGET_TIP",
-    title: "예산 팁",
-    description: "일일 예산과 고정지출 절감 방법을 공유합니다.",
-    writeRequiresAuth: true,
-    warning: "개인 재무정보를 식별 가능하게 공개하지 마세요.",
-  },
-  {
-    boardType: "EXPENSE_CUT",
-    title: "지출 줄이기",
-    description: "변동지출 절감 챌린지와 후기를 공유합니다.",
-    writeRequiresAuth: true,
-    warning: "광고성 링크와 허위 절약 정보는 제한됩니다.",
-  },
-  {
-    boardType: "SAVINGS_GOAL",
-    title: "저축 목표",
-    description: "고정저축·목표 달성 과정을 공유합니다.",
-    writeRequiresAuth: true,
-    warning: "저축액은 범위나 비율로만 공유하세요.",
-  },
-  {
-    boardType: "LEVEL_CERTIFICATION",
-    title: "LV UP 인증",
+    boardType: "LEVELUP",
+    title: "레벨업 인증",
     description: "자기계발·운동·독서 인증을 공유합니다.",
     writeRequiresAuth: true,
     warning: "타인의 사진·개인정보를 올리지 마세요.",
   },
   {
-    boardType: "SIDE_HUSTLE",
-    title: "부업",
-    description: "부업 경험과 수익 구조를 공유합니다.",
-    writeRequiresAuth: true,
-    warning: "투자권유·불법 리딩·수익 보장 표현은 금지됩니다.",
-  },
-  {
-    boardType: "HEALTH_ROUTINE",
-    title: "건강 루틴",
-    description: "운동·수면·식단 루틴을 공유합니다.",
+    boardType: "HOBBY",
+    title: "취미 게시판",
+    description: "퇴근 후 취미와 자기계발 경험을 공유합니다.",
     writeRequiresAuth: true,
     warning: "의학적 진단처럼 보이는 주장은 제한됩니다.",
-  },
-  {
-    boardType: "FREE",
-    title: "자유게시판",
-    description: "급여납치 사용자들의 자유 대화 공간입니다.",
-    writeRequiresAuth: true,
-    warning: "욕설·혐오·개인정보 노출은 신고 대상입니다.",
   },
 ];
 
@@ -873,7 +830,8 @@ function updatePostInput(
     );
   if (input.title !== undefined || input.content !== undefined) {
     const title =
-      input.title ?? (typeof body.currentTitle === "string" ? body.currentTitle : "");
+      input.title ??
+      (typeof body.currentTitle === "string" ? body.currentTitle : "");
     const content =
       input.content ??
       (typeof body.currentContent === "string" ? body.currentContent : "");
@@ -983,7 +941,7 @@ function createInMemoryCommunityRepository<
   const now = new Date().toISOString();
   const seedPost: JsonRecord = {
     postId: "post_1001",
-    boardType: "LEVEL_CERTIFICATION",
+    boardType: "LEVELUP",
     title: "[LV.5] 일주일 지출 절감 인증",
     content: "고정지출을 점검하고 변동지출 기록을 매일 남겼습니다.",
     tags: ["절약", "LVUP"].join(","),
@@ -1754,7 +1712,7 @@ export function assertCommunityRoutesCompleteness(): {
 } {
   const checks = [
     "community_api_prefix_api_v1",
-    "board_catalog_salary_budget_expense_savings_levelup_sidehustle_health_free",
+    "board_catalog_free_levelup_hobby",
     "post_list_detail_create_update_delete",
     "comment_list_create_update_delete",
     "post_like_unlike_reaction",

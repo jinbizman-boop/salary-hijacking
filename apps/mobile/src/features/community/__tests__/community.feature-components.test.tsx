@@ -12,7 +12,7 @@ import type {
 const safePost: CommunityPost = {
   adsFinancialTargetingUsed: false,
   anonymousDisplayName: "익명 12",
-  boardType: "LEVEL_CERTIFICATION",
+  boardType: "LEVELUP",
   bodyPreview: "민감한 급여 원문 없이 레벨업 인증을 공유했습니다.",
   bookmarkCount: 4,
   commentCount: 8,
@@ -45,10 +45,10 @@ describe("community feature components", () => {
     const onSelect = jest.fn();
     const screen = render(
       <CommunityTabBar
-        counts={{ FREE: 12, LEVEL_CERTIFICATION: 3 }}
+        counts={{ FREE: 12, LEVELUP: 3 }}
         onSelect={onSelect}
-        selected="LEVEL_CERTIFICATION"
-        tabs={["FREE", "LEVEL_CERTIFICATION", "HEALTH_ROUTINE"]}
+        selected="LEVELUP"
+        tabs={["FREE", "LEVELUP", "HOBBY"]}
       />,
     );
 
@@ -60,17 +60,17 @@ describe("community feature components", () => {
     fireEvent.press(
       screen.getByRole("tab", { name: "취미 게시판 게시판 0개 글" }),
     );
-    expect(onSelect).toHaveBeenCalledWith("HEALTH_ROUTINE");
+    expect(onSelect).toHaveBeenCalledWith("HOBBY");
     expect(screen.getByText("익명 경계를 유지해요")).toBeTruthy();
   });
 
   it("fits exactly three canonical categories without an all-category chip", () => {
     const screen = render(
       <CommunityTabBar
-        counts={{ FREE: 20, HEALTH_ROUTINE: 0, LEVEL_CERTIFICATION: 0 }}
+        counts={{ FREE: 20, HOBBY: 0, LEVELUP: 0 }}
         onSelect={jest.fn()}
         selected="FREE"
-        tabs={["FREE", "LEVEL_CERTIFICATION", "HEALTH_ROUTINE"]}
+        tabs={["FREE", "LEVELUP", "HOBBY"]}
       />,
     );
 
@@ -88,7 +88,7 @@ describe("community feature components", () => {
           counts={{ FREE: 1 }}
           onSelect={jest.fn()}
           selected="FREE"
-          tabs={["FREE", "LEVEL_CERTIFICATION"]}
+          tabs={["FREE", "LEVELUP"]}
         />,
       ),
     ).toThrow("CommunityTabBar requires exactly 3 canonical categories.");

@@ -1,4 +1,5 @@
 import type { CommunityBoardType, ModerationStatus } from "./community.types";
+import { isCommunityBoardType } from "./community.constants";
 
 export type CommunityAnalyticsEvent =
   | "community_feed_view"
@@ -45,17 +46,6 @@ const ALLOWED_EVENTS = new Set<CommunityAnalyticsEvent>([
   "community_ad_click",
 ]);
 
-const BOARD_TYPES = new Set<CommunityBoardType>([
-  "SALARY_TALK",
-  "BUDGET_TIP",
-  "EXPENSE_CUT",
-  "SAVINGS_GOAL",
-  "LEVEL_CERTIFICATION",
-  "SIDE_HUSTLE",
-  "HEALTH_ROUTINE",
-  "FREE",
-]);
-
 const MODERATION_STATUSES = new Set<ModerationStatus>([
   "SAFE",
   "REVIEW",
@@ -86,7 +76,7 @@ export function createCommunityAnalytics(
         throw new TypeError("허용되지 않은 커뮤니티 분석 이벤트입니다.");
       }
 
-      const boardType = BOARD_TYPES.has(input.boardType as CommunityBoardType)
+      const boardType = isCommunityBoardType(input.boardType)
         ? (input.boardType as CommunityBoardType)
         : undefined;
       const moderationStatus = MODERATION_STATUSES.has(

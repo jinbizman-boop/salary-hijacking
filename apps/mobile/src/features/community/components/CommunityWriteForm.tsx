@@ -5,9 +5,11 @@ import {
   componentColors,
   salaryHijackingDesignSystem,
 } from "../../../shared/components/tokens";
-import { COMMUNITY_BOARD_TYPES } from "../community.constants";
+import {
+  COMMUNITY_BOARD_LABELS,
+  COMMUNITY_BOARD_TYPES,
+} from "../community.constants";
 import type {
-  CommunityBoardType,
   CommunityPostDraft,
   CommunityValidationResult,
 } from "../community.types";
@@ -23,17 +25,6 @@ export type CommunityWriteFormProps = Readonly<{
   onPreview?: () => void;
   onSubmit: () => void;
 }>;
-
-const boardLabels: Readonly<Record<CommunityBoardType, string>> = {
-  BUDGET_TIP: "예산 팁",
-  EXPENSE_CUT: "지출 줄이기",
-  FREE: "자유 게시판",
-  HEALTH_ROUTINE: "취미 게시판",
-  LEVEL_CERTIFICATION: "레벨업 인증",
-  SALARY_TALK: "급여 이야기",
-  SAVINGS_GOAL: "저축 목표",
-  SIDE_HUSTLE: "부업",
-};
 
 export function CommunityWriteForm({
   draft,
@@ -56,7 +47,7 @@ export function CommunityWriteForm({
           const selected = draft.boardType === boardType;
           return (
             <Pressable
-              accessibilityLabel={`${boardLabels[boardType]} 게시판`}
+              accessibilityLabel={`${COMMUNITY_BOARD_LABELS[boardType]} 선택`}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               key={boardType}
@@ -72,7 +63,7 @@ export function CommunityWriteForm({
                   selected && styles.boardLabelSelected,
                 ]}
               >
-                {boardLabels[boardType]}
+                {COMMUNITY_BOARD_LABELS[boardType]}
               </Text>
             </Pressable>
           );
@@ -179,10 +170,10 @@ const styles = StyleSheet.create({
   },
   boardOptions: {
     flexDirection: "row",
-    flexWrap: "wrap",
     gap: designSystem.spacing[2],
   },
   boardOption: {
+    flex: 1,
     minHeight: designSystem.layout.touchTarget,
     justifyContent: "center",
     paddingHorizontal: designSystem.spacing[3],

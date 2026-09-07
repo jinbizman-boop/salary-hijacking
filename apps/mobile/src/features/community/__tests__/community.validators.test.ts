@@ -4,6 +4,40 @@ import {
 } from "../community.validators";
 
 describe("community validators", () => {
+  it("accepts only the final three canonical community categories for new writes", () => {
+    for (const boardType of ["FREE", "LEVELUP", "HOBBY"] as const) {
+      expect(
+        validatePostDraft({
+          boardType,
+          title: "안전한 커뮤니티 글",
+          content: "민감정보 없이 루틴을 공유합니다.",
+          tags: [],
+          anonymous: true,
+        }).valid,
+      ).toBe(true);
+    }
+
+    for (const boardType of [
+      "SALARY_TALK",
+      "BUDGET_TIP",
+      "EXPENSE_CUT",
+      "SAVINGS_GOAL",
+      "LEVEL_CERTIFICATION",
+      "SIDE_HUSTLE",
+      "HEALTH_ROUTINE",
+    ] as const) {
+      expect(
+        validatePostDraft({
+          boardType: boardType as never,
+          title: "legacy category",
+          content: "legacy category should not submit",
+          tags: [],
+          anonymous: true,
+        }).valid,
+      ).toBe(false);
+    }
+  });
+
   it("accepts a privacy-safe post draft", () => {
     const result = validatePostDraft({
       boardType: "FREE",

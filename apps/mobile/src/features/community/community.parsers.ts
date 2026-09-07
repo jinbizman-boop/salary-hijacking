@@ -8,18 +8,8 @@ import type {
   CommunityPostDetail,
   ModerationStatus,
 } from "./community.types";
+import { normalizeCommunityBoardType } from "./community.constants";
 import { containsSensitiveCommunityContent } from "./community.redaction";
-
-const BOARD_TYPES = new Set<CommunityBoardType>([
-  "SALARY_TALK",
-  "BUDGET_TIP",
-  "EXPENSE_CUT",
-  "SAVINGS_GOAL",
-  "LEVEL_CERTIFICATION",
-  "SIDE_HUSTLE",
-  "HEALTH_ROUTINE",
-  "FREE",
-]);
 
 const SCAN_STATUSES = new Set<AttachmentScanStatus>([
   "PENDING",
@@ -98,9 +88,8 @@ function moderationStatus(value: unknown): ModerationStatus {
 }
 
 function boardType(value: unknown): CommunityBoardType {
-  if (BOARD_TYPES.has(value as CommunityBoardType)) {
-    return value as CommunityBoardType;
-  }
+  const normalized = normalizeCommunityBoardType(value);
+  if (normalized) return normalized;
   throw new TypeError("안전하지 않은 커뮤니티 응답: board type");
 }
 

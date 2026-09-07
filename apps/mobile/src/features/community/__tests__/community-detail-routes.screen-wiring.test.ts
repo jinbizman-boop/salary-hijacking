@@ -55,10 +55,11 @@ describe("community write and detail route wiring", () => {
     expect(source).toContain("AppHeader");
     expect(source).toContain("CommunityPostCard");
     expect(source).toContain("CommunityCommentItem");
-    expect(source).toContain("CommunityAdDisclosure");
+    expect(source).not.toContain("<CommunityAdDisclosure");
+    expect(source).toContain("community_detail_ads_disabled");
     expect(source).toContain("/api/v1/community/posts");
     expect(source).toContain("community_report_policy_guard");
-    expect(source).toContain("contextual_ads_only_guard");
+    expect(source).not.toContain("contextual_ads_only_guard");
   });
 
   it("loads community post details through the authenticated mobile API instead of a local success mock", () => {

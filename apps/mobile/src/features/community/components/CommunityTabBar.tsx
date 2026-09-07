@@ -6,16 +6,14 @@ import {
   componentSpacing,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
-import { COMMUNITY_BOARD_LABELS } from "../community.constants";
+import {
+  COMMUNITY_BOARD_LABELS,
+  COMMUNITY_BOARD_TYPES,
+} from "../community.constants";
 import type { CommunityBoardType } from "../community.types";
 
 const typography = salaryHijackingDesignSystem.typography;
-const COMMUNITY_CATEGORY_COUNT = 3;
-const CANONICAL_COMMUNITY_CATEGORIES: readonly CommunityBoardType[] = [
-  "FREE",
-  "LEVEL_CERTIFICATION",
-  "HEALTH_ROUTINE",
-];
+const COMMUNITY_CATEGORY_COUNT = COMMUNITY_BOARD_TYPES.length;
 
 export type CommunityTabBarProps = Readonly<{
   tabs: readonly CommunityBoardType[];
@@ -32,7 +30,7 @@ export function CommunityTabBar({
 }: CommunityTabBarProps): React.ReactElement {
   if (
     tabs.length !== COMMUNITY_CATEGORY_COUNT ||
-    CANONICAL_COMMUNITY_CATEGORIES.some((category) => !tabs.includes(category))
+    COMMUNITY_BOARD_TYPES.some((category) => !tabs.includes(category))
   ) {
     throw new Error("CommunityTabBar requires exactly 3 canonical categories.");
   }
@@ -81,7 +79,7 @@ const styles = StyleSheet.create({
     gap: componentSpacing.sm,
   },
   tab: {
-    minHeight: 44,
+    minHeight: salaryHijackingDesignSystem.layout.touchTarget,
     alignItems: "center",
     justifyContent: "center",
     flex: 1,

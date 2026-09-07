@@ -73,6 +73,7 @@ describe("community parsers", () => {
     });
 
     expect(detail.tags).toEqual(["예산", "루틴"]);
+    expect(detail.post.boardType).toBe("FREE");
     expect(detail.post).not.toHaveProperty("ownerUserId");
     expect(comment).not.toHaveProperty("ownerUserId");
     expect(comment.likeCount).toBe(3);

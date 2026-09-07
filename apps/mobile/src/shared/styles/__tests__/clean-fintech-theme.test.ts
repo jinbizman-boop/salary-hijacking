@@ -3835,7 +3835,6 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "홈트하기",
       "중요 알림",
       "루틴 알림",
-      "전체 게시판",
       "자유 게시판",
       "레벨업 인증",
       "취미 게시판",
@@ -3850,6 +3849,7 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     ]) {
       expect(cleanScreens).toContain(marker);
     }
+    expect(cleanScreens).not.toContain("전체 게시판");
   });
 
   it("keeps splash, signup, LV detail, and community detail launch copy visible", () => {

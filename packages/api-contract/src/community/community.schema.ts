@@ -38,28 +38,15 @@ export const COMMUNITY_DEFAULT_LOCALE = "ko-KR" as const;
  * 2. Enum schemas
  * -------------------------------------------------------------------------- */
 
-export const CommunityBoardSchema = z.enum([
-  "ALL",
-  "FREE",
-  "LEVEL_UP_CERTIFICATION",
-  "CONSUMPTION_CONTROL",
-  "SAVING_TIP",
-  "SALARY_TALK",
-  "HOBBY",
-  "NOTICE",
-  "EVENT",
-]);
+export const CommunityBoardSchema = z.enum(["FREE", "LEVELUP", "HOBBY"]);
 
 export const CommunityWritableBoardSchema = z.enum([
   "FREE",
-  "LEVEL_UP_CERTIFICATION",
-  "CONSUMPTION_CONTROL",
-  "SAVING_TIP",
-  "SALARY_TALK",
+  "LEVELUP",
   "HOBBY",
 ]);
 
-export const CommunityAdminBoardSchema = z.enum(["NOTICE", "EVENT"]);
+export const CommunityAdminBoardSchema = CommunityBoardSchema;
 
 export const CommunityPostStatusSchema = z.enum([
   "DRAFT",
@@ -501,7 +488,7 @@ export const CommunityMetricsSchema = z
  * -------------------------------------------------------------------------- */
 
 export const ListCommunityPostsRequestSchema = ListQuerySchema.extend({
-  board: CommunityBoardSchema.default("ALL"),
+  board: CommunityBoardSchema.optional(),
   status: CommunityPostStatusSchema.default("PUBLISHED"),
   sortBy: CommunitySortBySchema.default("latest"),
   tags: z.array(CommunityTagSchema).max(10).default([]),

@@ -29,17 +29,7 @@ export const COMMUNITY_POST_CARD_POLICY_GUARD = Object.freeze({
   accessibleActionLabelsRequired: true,
 });
 
-export type CommunityPostCardBoard =
-  | "ALL"
-  | "FREE"
-  | "LEVEL_UP_CERTIFICATION"
-  | "CONSUMPTION_CONTROL"
-  | "SAVING_TIP"
-  | "SALARY_TALK"
-  | "HOBBY"
-  | "NOTICE"
-  | "EVENT"
-  | "FAQ";
+export type CommunityPostCardBoard = "FREE" | "LEVELUP" | "HOBBY";
 
 export type CommunityPostCardStatus =
   | "DRAFT"
@@ -358,65 +348,23 @@ export interface CommunityPostCardViewModel {
 const BOARD_DESCRIPTORS: Readonly<
   Record<CommunityPostCardBoard, CommunityBoardDescriptorForCard>
 > = Object.freeze({
-  ALL: {
-    board: "ALL",
-    label: "전체 게시판",
-    shortLabel: "전체",
-    description: "급여납치 커뮤니티 전체 글",
-  },
   FREE: {
     board: "FREE",
     label: "자유 게시판",
-    shortLabel: "자유",
+    shortLabel: "자유 게시판",
     description: "직장인 일상과 루틴 공유",
   },
-  LEVEL_UP_CERTIFICATION: {
-    board: "LEVEL_UP_CERTIFICATION",
+  LEVELUP: {
+    board: "LEVELUP",
     label: "레벨업 인증",
-    shortLabel: "LV UP",
+    shortLabel: "레벨업 인증",
     description: "독서·뉴스·영어·건강 미션 인증",
-  },
-  CONSUMPTION_CONTROL: {
-    board: "CONSUMPTION_CONTROL",
-    label: "소비통제",
-    shortLabel: "소비통제",
-    description: "일일예산과 무지출 챌린지 공유",
-  },
-  SAVING_TIP: {
-    board: "SAVING_TIP",
-    label: "저축 팁",
-    shortLabel: "저축",
-    description: "고정저축과 목표 달성 팁",
-  },
-  SALARY_TALK: {
-    board: "SALARY_TALK",
-    label: "월급 이야기",
-    shortLabel: "월급",
-    description: "급여일 루틴과 계획 공유",
   },
   HOBBY: {
     board: "HOBBY",
     label: "취미 게시판",
-    shortLabel: "취미",
+    shortLabel: "취미 게시판",
     description: "저비용 취미와 자기관리 공유",
-  },
-  NOTICE: {
-    board: "NOTICE",
-    label: "공지사항",
-    shortLabel: "공지",
-    description: "운영 공지",
-  },
-  EVENT: {
-    board: "EVENT",
-    label: "이벤트",
-    shortLabel: "이벤트",
-    description: "포인트와 제휴 이벤트",
-  },
-  FAQ: {
-    board: "FAQ",
-    label: "FAQ",
-    shortLabel: "FAQ",
-    description: "자주 묻는 질문",
   },
 });
 
@@ -803,7 +751,7 @@ export const createCommunityPostCardViewModel = (
   const viewerState = normalizeViewerState(post.viewerState);
   const primaryReactionType =
     options.preferredReactionType ??
-    (post.board === "LEVEL_UP_CERTIFICATION" ? "LEVEL_UP" : "LIKE");
+    (post.board === "LEVELUP" ? "LEVEL_UP" : "LIKE");
   const unsafePolicy = hasUnsafePolicy(post.policy);
 
   const base = {
@@ -1142,7 +1090,7 @@ export const createCommunityPostCardRenderTree = (
         key: "board",
         text: model.board.shortLabel,
         style: badgeStyle(
-          props.post.board === "LEVEL_UP_CERTIFICATION" ? "elevated" : "subtle",
+          props.post.board === "LEVELUP" ? "elevated" : "subtle",
         ),
         action: board,
       }),

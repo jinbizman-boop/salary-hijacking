@@ -13,27 +13,58 @@ export const COMMUNITY_MAX_TAGS = 10;
 export const COMMUNITY_MAX_TAG_LENGTH = 24;
 
 export const COMMUNITY_BOARD_TYPES: readonly CommunityBoardType[] =
-  Object.freeze([
-    "SALARY_TALK",
-    "BUDGET_TIP",
-    "EXPENSE_CUT",
-    "SAVINGS_GOAL",
-    "LEVEL_CERTIFICATION",
-    "SIDE_HUSTLE",
-    "HEALTH_ROUTINE",
-    "FREE",
-  ]);
+  Object.freeze(["FREE", "LEVELUP", "HOBBY"]);
 
 export const COMMUNITY_BOARD_LABELS = Object.freeze({
-  SALARY_TALK: "급여 이야기",
-  BUDGET_TIP: "예산 팁",
-  EXPENSE_CUT: "지출 줄이기",
-  SAVINGS_GOAL: "저축 목표",
-  LEVEL_CERTIFICATION: "레벨업 인증",
-  SIDE_HUSTLE: "부업",
-  HEALTH_ROUTINE: "취미 게시판",
   FREE: "자유 게시판",
+  LEVELUP: "레벨업 인증",
+  HOBBY: "취미 게시판",
 } satisfies Readonly<Record<CommunityBoardType, string>>);
+
+export const COMMUNITY_LEGACY_CATEGORY_MAPPING: Readonly<
+  Record<string, CommunityBoardType>
+> = Object.freeze({
+  "급여 이야기": "FREE",
+  "예산 팁": "FREE",
+  "지출 줄이기": "FREE",
+  저축: "FREE",
+  "저축 목표": "FREE",
+  부업: "FREE",
+  자유: "FREE",
+  "자유 게시판": "FREE",
+  레벨업: "LEVELUP",
+  "레벨업 인증": "LEVELUP",
+  취미: "HOBBY",
+  "취미 게시판": "HOBBY",
+  SALARY_TALK: "FREE",
+  BUDGET_TIP: "FREE",
+  EXPENSE_CUT: "FREE",
+  SAVINGS_GOAL: "FREE",
+  SIDE_HUSTLE: "FREE",
+  LEVEL_CERTIFICATION: "LEVELUP",
+  HEALTH_ROUTINE: "HOBBY",
+});
+
+export function isCommunityBoardType(
+  value: unknown,
+): value is CommunityBoardType {
+  return COMMUNITY_BOARD_TYPES.includes(value as CommunityBoardType);
+}
+
+export function normalizeCommunityBoardType(
+  value: unknown,
+): CommunityBoardType | null {
+  if (isCommunityBoardType(value)) return value;
+  if (typeof value !== "string") return null;
+  return COMMUNITY_LEGACY_CATEGORY_MAPPING[value.trim()] ?? null;
+}
+
+export function communityBoardLabel(value: unknown): string {
+  const boardType = normalizeCommunityBoardType(value);
+  return boardType
+    ? COMMUNITY_BOARD_LABELS[boardType]
+    : COMMUNITY_BOARD_LABELS.FREE;
+}
 
 export const COMMUNITY_SORTS: readonly CommunitySort[] = Object.freeze([
   "LATEST",

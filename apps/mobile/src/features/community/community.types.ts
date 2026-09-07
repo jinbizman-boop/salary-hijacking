@@ -1,12 +1,4 @@
-export type CommunityBoardType =
-  | "SALARY_TALK"
-  | "BUDGET_TIP"
-  | "EXPENSE_CUT"
-  | "SAVINGS_GOAL"
-  | "LEVEL_CERTIFICATION"
-  | "SIDE_HUSTLE"
-  | "HEALTH_ROUTINE"
-  | "FREE";
+export type CommunityBoardType = "FREE" | "LEVELUP" | "HOBBY";
 
 export type CommunitySort = "LATEST" | "POPULAR" | "COMMENTS" | "BOOKMARKED";
 export type CommunityShareChannel =

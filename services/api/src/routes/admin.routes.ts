@@ -111,14 +111,12 @@ export interface AdminPrincipal {
   readonly permissions: readonly string[];
   readonly mfaVerified: boolean;
   readonly policyId: string | null;
-  readonly breakGlass:
-    | {
-        readonly active: true;
-        readonly scope: string;
-        readonly expiresAt: string;
-        readonly reason: string;
-      }
-    | null;
+  readonly breakGlass: {
+    readonly active: true;
+    readonly scope: string;
+    readonly expiresAt: string;
+    readonly reason: string;
+  } | null;
 }
 
 export interface PaginationInput {
@@ -555,7 +553,7 @@ const sampleUsers: readonly JsonRecord[] = [
 const samplePosts: readonly JsonRecord[] = [
   {
     postId: "post_1001",
-    boardType: "LEVEL_CERTIFICATION",
+    boardType: "LEVELUP",
     title: "[LV.5] 주 6일 운동 인증",
     authorUserId: "usr_1001",
     authorMasked: "홍***",
@@ -673,10 +671,7 @@ function breakGlassContextFromRequest(
     );
   }
 
-  if (
-    !permissions.includes("*") &&
-    !permissions.includes("incident:manage")
-  ) {
+  if (!permissions.includes("*") && !permissions.includes("incident:manage")) {
     throw new AdminHttpError(
       403,
       "ADMIN_BREAK_GLASS_FORBIDDEN",

@@ -35,7 +35,7 @@ function createMobileCommunityRepository(): CommunityRepository<unknown> {
       items: [
         {
           postId: "22222222-2222-4222-8222-222222222222",
-          boardType: "LEVEL_CERTIFICATION",
+          boardType: "LEVELUP",
           title: "DB-backed community repository is wired",
           content: "모바일 커뮤니티 피드는 API 저장소 주입을 사용합니다.",
           authorMasked: "익명 사용자",
@@ -583,5 +583,68 @@ describe("mobile community API contract", () => {
       authHeaders["x-authenticated-user-id"],
     );
     expect(responsePayload).not.toMatch(/salaryAmount|accountNumber|token/i);
+  });
+
+  it("exposes only the final three community boards and rejects legacy board writes", async () => {
+    const createPost = vi.fn();
+    const repository = {
+      ...createMobileCommunityRepository(),
+      listBoards: async () => [
+        { boardType: "FREE", title: "자유 게시판" },
+        { boardType: "LEVELUP", title: "레벨업 인증" },
+        { boardType: "HOBBY", title: "취미 게시판" },
+      ],
+      createPost,
+    } as unknown as CommunityRepository<unknown>;
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      communityRoutesOptions: {
+        repository,
+      },
+    });
+
+    const boardsResponse = await app.fetch(
+      new Request("https://api.test/api/v1/community/boards", {
+        headers: authHeaders,
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const legacyWriteResponse = await app.fetch(
+      new Request("https://api.test/api/v1/community/posts", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          anonymous: true,
+          boardType: "BUDGET_TIP",
+          content: "legacy category should not be accepted for new writes.",
+          title: "legacy category",
+        }),
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const boardsBody = (await boardsResponse.json()) as {
+      readonly data?: readonly {
+        readonly boardType?: string;
+        readonly title?: string;
+      }[];
+    };
+
+    expect(boardsResponse.status).toBe(200);
+    expect(boardsBody.data?.map((board) => board.boardType)).toEqual([
+      "FREE",
+      "LEVELUP",
+      "HOBBY",
+    ]);
+    expect(boardsBody.data?.map((board) => board.title)).toEqual([
+      "자유 게시판",
+      "레벨업 인증",
+      "취미 게시판",
+    ]);
+    expect(legacyWriteResponse.status).toBe(400);
+    expect(createPost).not.toHaveBeenCalled();
   });
 });

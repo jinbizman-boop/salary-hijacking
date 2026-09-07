@@ -16,7 +16,8 @@ export type AdBannerPlacement =
   | "AD-APP-SALARY-01"
   | "AD-APP-LVUP-01"
   | "AD-APP-LVUP-02"
-  | "AD-APP-MY-01";
+  | "AD-APP-MY-01"
+  | "AD-APP-COMMUNITY-FEED-01";
 
 export type AdBannerSlotProps = Readonly<{
   label: "광고" | "제휴" | "제휴/광고";
@@ -58,7 +59,7 @@ export const ADMOB_BANNER_PLACEMENTS: Readonly<
     AdBannerPlacement,
     Readonly<{
       productionEnvKey: string;
-      screen: "LV_UP" | "MY" | "SALARY";
+      screen: "COMMUNITY" | "LV_UP" | "MY" | "SALARY";
     }>
   >
 > = {
@@ -77,6 +78,10 @@ export const ADMOB_BANNER_PLACEMENTS: Readonly<
   "AD-APP-MY-01": {
     productionEnvKey: "EXPO_PUBLIC_ADMOB_MY_BANNER_UNIT_ID",
     screen: "MY",
+  },
+  "AD-APP-COMMUNITY-FEED-01": {
+    productionEnvKey: "EXPO_PUBLIC_ADMOB_COMMUNITY_FEED_BANNER_UNIT_ID",
+    screen: "COMMUNITY",
   },
 } as const;
 

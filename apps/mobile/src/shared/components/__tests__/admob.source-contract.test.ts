@@ -23,9 +23,10 @@ describe("AdMob production source contract", () => {
     expect(adSource).toContain("TestIds.BANNER");
   });
 
-  it("pins the four launch ad placements and keeps focus activity screens ad-free", () => {
+  it("pins the five launch ad placements and keeps focus activity screens ad-free", () => {
     const adSource = mobileSource("src/shared/components/AdBannerSlot.tsx");
     const levelSource = mobileSource("app/(tabs)/level/index.tsx");
+    const communitySource = mobileSource("app/(tabs)/community/index.tsx");
     const salarySource = mobileSource(
       "src/features/salary/components/SalaryHomeScreen.tsx",
     );
@@ -34,6 +35,9 @@ describe("AdMob production source contract", () => {
     expect(levelSource).toContain("AD-APP-LVUP-01");
     expect(levelSource).toContain("AD-APP-LVUP-02");
     expect(adSource).toContain("AD-APP-MY-01");
+    expect(adSource).toContain("AD-APP-COMMUNITY-FEED-01");
+    expect(communitySource).toContain("AD-APP-COMMUNITY-FEED-01");
+    expect(communitySource).toContain("composeCommunityFeedItems");
     expect(salarySource).toContain("AD-APP-SALARY-01");
 
     for (const focusRoute of [

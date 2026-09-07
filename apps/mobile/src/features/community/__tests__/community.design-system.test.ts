@@ -133,9 +133,9 @@ describe("community golden screen design system integration", () => {
 
   it("keeps community to three real categories and does not present all as a category", () => {
     expect(communityIndexRouteSource).toContain("COMMUNITY_TABS");
-    expect(communityIndexRouteSource).toContain('"FREE"');
-    expect(communityIndexRouteSource).toContain('"LEVEL_CERTIFICATION"');
-    expect(communityIndexRouteSource).toContain('"HEALTH_ROUTINE"');
+    expect(communityIndexRouteSource).toContain("COMMUNITY_BOARD_TYPES");
+    expect(communityIndexRouteSource).toContain("composeCommunityFeedItems");
+    expect(communityIndexRouteSource).toContain("AD-APP-COMMUNITY-FEED-01");
     expect(communityIndexRouteSource).not.toContain(
       'subtitle="전체 / 자유 / 레벨업 인증 / 취미"',
     );

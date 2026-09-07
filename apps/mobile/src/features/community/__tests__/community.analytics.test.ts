@@ -6,7 +6,7 @@ describe("community analytics", () => {
     const analytics = createCommunityAnalytics(sink);
 
     analytics.track("community_post_publish_attempt", {
-      boardType: "LEVEL_CERTIFICATION",
+      boardType: "LEVELUP",
       moderationStatus: "SAFE",
       correlationId: "correlation-1",
       content: "원문 본문",
@@ -16,7 +16,7 @@ describe("community analytics", () => {
 
     expect(sink).toHaveBeenCalledWith({
       event: "community_post_publish_attempt",
-      boardType: "LEVEL_CERTIFICATION",
+      boardType: "LEVELUP",
       moderationStatus: "SAFE",
       correlationId: "correlation-1",
       rawFinancialDataExposed: false,

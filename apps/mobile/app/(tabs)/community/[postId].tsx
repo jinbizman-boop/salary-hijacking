@@ -4,7 +4,6 @@ import { StyleSheet, Text, View } from "react-native";
 
 import { AppHeader, AppShell } from "../../../src/shared/components";
 import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
-import { CommunityAdDisclosure } from "../../../src/features/community/components/CommunityAdDisclosure";
 import { CommunityAttachmentList } from "../../../src/features/community/components/CommunityAttachmentList";
 import { CommunityCommentItem } from "../../../src/features/community/components/CommunityCommentItem";
 import { CommunityPostCard } from "../../../src/features/community/components/CommunityPostCard";
@@ -13,12 +12,10 @@ import { createMobileCommunityService } from "../../../src/shared/api/mobile-api
 import { salaryHijackingDesignSystem } from "../../../src/shared/components/tokens";
 import { SelectionBottomSheet } from "../../../src/shared/ui/sheets/SelectionBottomSheet";
 import { SortFilterBottomSheet } from "../../../src/shared/ui/sheets/SortFilterBottomSheet";
-import type { CommunityAdDisclosureModel } from "../../../src/features/community/community.types";
 
 const SCREEN_VERSION = "4.1.0-community-post-components";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
 const COMMUNITY_REPORT_POLICY_GUARD = "community_report_policy_guard";
-const CONTEXTUAL_ADS_ONLY_GUARD = "contextual_ads_only_guard";
 const DEFAULT_POST_ID = "post_level_1";
 const designSystem = salaryHijackingDesignSystem;
 
@@ -27,19 +24,6 @@ export const communityDetailStitchStateComponents = {
   SelectionBottomSheet,
   SortFilterBottomSheet,
 } as const;
-
-const contextualAd: CommunityAdDisclosureModel = {
-  adsFinancialTargetingUsed: false,
-  contextualOnly: true,
-  description:
-    "커뮤니티 게시글의 원문 금융정보, 개인 식별자, 활동 금액을 사용하지 않는 문맥형 제휴 고지입니다.",
-  destinationUrl: "https://salaryhijacking.com/partners/community-safety",
-  id: "community_contextual_safety",
-  label: "광고",
-  rawFinancialDataExposed: false,
-  rawPersonalDataExposed: false,
-  title: "커뮤니티 안전 작성 가이드",
-};
 
 export default function CommunityPostDetailScreen(): React.ReactElement {
   const params = useLocalSearchParams();
@@ -113,8 +97,6 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
         </View>
       )}
 
-      <CommunityAdDisclosure model={contextualAd} />
-
       {state.loading ? <Text style={styles.meta}>서버 확인 중</Text> : null}
       {state.error ? (
         <Text accessibilityRole="alert" style={styles.error}>
@@ -139,13 +121,11 @@ export function assertMobileCommunityPostCompleteness(): {
     "CommunityPostCard",
     "CommunityCommentItem",
     "CommunityAttachmentList",
-    "CommunityAdDisclosure",
     COMMUNITY_REPORT_POLICY_GUARD,
-    CONTEXTUAL_ADS_ONLY_GUARD,
     "server_authoritative_detail_boundary",
     "financial_raw_data_hidden",
     "personal_raw_data_hidden",
-    "contextual_ads_only",
+    "community_detail_ads_disabled",
   ] as const;
 
   return { ok: checks.length >= 12, version: SCREEN_VERSION, checks };

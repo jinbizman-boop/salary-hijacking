@@ -11,9 +11,16 @@ import {
   RootTabHeader,
   salaryHijackingDesignSystem,
 } from "../../../src/shared/components";
+import { AdBannerSlot } from "../../../src/shared/components/AdBannerSlot";
 import { CommunityTabBar } from "../../../src/features/community/components/CommunityTabBar";
+import { CommunityPostCard } from "../../../src/features/community/components/CommunityPostCard";
 import { ComposeBottomSheet } from "../../../src/features/community/components/ComposeBottomSheet";
 import { PopularPostSection } from "../../../src/features/community/components/PopularPostSection";
+import {
+  COMMUNITY_BOARD_TYPES,
+  communityBoardLabel,
+} from "../../../src/features/community/community.constants";
+import { composeCommunityFeedItems } from "../../../src/features/community/community.feed-items";
 import type {
   CommunityBoardType,
   CommunityPost,
@@ -27,11 +34,7 @@ import { SortFilterBottomSheet } from "../../../src/shared/ui/sheets/SortFilterB
 const SCREEN_VERSION = "4.3.0-server-backed-community";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
 const designSystem = salaryHijackingDesignSystem;
-const COMMUNITY_TABS: readonly CommunityBoardType[] = [
-  "FREE",
-  "LEVEL_CERTIFICATION",
-  "HEALTH_ROUTINE",
-];
+const COMMUNITY_TABS: readonly CommunityBoardType[] = COMMUNITY_BOARD_TYPES;
 
 export const communityStitchOverlayComponents = {
   SortFilterBottomSheet,
@@ -85,6 +88,10 @@ export default function CommunityIndexScreen(): React.ReactElement {
         .includes(query),
     );
   }, [feed.items, searchQuery]);
+  const composedFeedItems = useMemo(() => {
+    if (searchQuery.trim()) return [];
+    return composeCommunityFeedItems(visibleFeedItems, selectedBoard);
+  }, [searchQuery, selectedBoard, visibleFeedItems]);
 
   return (
     <AppShell
@@ -145,10 +152,40 @@ export default function CommunityIndexScreen(): React.ReactElement {
           }
         />
       ) : (
-        <PopularPostSection
-          posts={visibleFeedItems}
-          onPressPost={(post) => router.push(`/community/${post.id}` as never)}
-        />
+        <>
+          {searchQuery.trim() ? (
+            <PopularPostSection
+              posts={visibleFeedItems}
+              onPressPost={(post) =>
+                router.push(`/community/${post.id}` as never)
+              }
+            />
+          ) : (
+            <View style={styles.feed}>
+              {composedFeedItems.map((item) =>
+                item.type === "post" ? (
+                  <CommunityPostCard
+                    key={item.key}
+                    post={item.post}
+                    onPress={(post) =>
+                      router.push(`/community/${post.id}` as never)
+                    }
+                  />
+                ) : (
+                  <AdBannerSlot
+                    description={`${communityBoardLabel(
+                      selectedBoard,
+                    )} 피드의 게시글 흐름을 방해하지 않는 문맥형 광고입니다.`}
+                    key={item.key}
+                    label="광고"
+                    placement={item.placementId}
+                    title="커뮤니티 추천"
+                  />
+                ),
+              )}
+            </View>
+          )}
+        </>
       )}
       <ComposeBottomSheet
         draft={closedDraft}
@@ -184,6 +221,8 @@ export function assertMobileCommunityIndexCompleteness(): Readonly<{
     "financial_raw_data_hidden",
     "contextual_ads_only",
     "community_contextual_ad_boundary",
+    "AD-APP-COMMUNITY-FEED-01",
+    "first_ad_after_five_organic_posts",
     "financial amount ad targeting prohibited",
   ] as const;
 
@@ -207,5 +246,8 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.radius.xl,
     borderWidth: 1,
     padding: designSystem.spacing[2],
+  },
+  feed: {
+    gap: designSystem.spacing[3],
   },
 });

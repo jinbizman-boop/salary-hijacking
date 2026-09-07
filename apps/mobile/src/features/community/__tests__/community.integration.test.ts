@@ -96,7 +96,7 @@ describe("community integration", () => {
     });
     const service = createCommunityService(api);
     const draft = {
-      boardType: "LEVEL_CERTIFICATION",
+      boardType: "LEVELUP",
       title: "영어 루틴 7일 인증",
       content: "금액 비공개로 루틴만 공유합니다.",
       tags: ["영어", "루틴"],

@@ -8,25 +8,14 @@
  * - 외부 ORM/DB/Zod 정적 import 없이 typecheck·bootstrap 안정성 확보
  * - SQL DDL metadata, RLS/RBAC policy, seed, 자체 completeness 검증 제공
  * - 급여·예산·지출·저축 원천 데이터, token, secret, 원문 PII가 커뮤니티 payload/log/첨부 metadata에 섞이지 않도록 DB-level guard 설계
- * - 익명 글쓰기, 질문글, 레벨업 인증, 자유/취미/월급토크/소비통제/저축팁/공지/이벤트/FAQ, 관리자 모더레이션, 신고 처리, 소프트 삭제, 감사 추적 반영
+ * - 익명 글쓰기, 레벨업 인증, 자유/취미 게시판, 관리자 모더레이션, 신고 처리, 소프트 삭제, 감사 추적 반영
  */
 
 export const COMMUNITY_SCHEMA_CONTRACT_VERSION = "2.0.0";
 export const COMMUNITY_SCHEMA_TIMEZONE = "Asia/Seoul";
 export const COMMUNITY_SCHEMA_CURRENCY = "KRW";
 
-export const communityBoardTypes = [
-  "general",
-  "free",
-  "level_up_proof",
-  "consumption_control",
-  "saving_tip",
-  "salary_talk",
-  "hobby",
-  "notice",
-  "event",
-  "faq",
-] as const;
+export const communityBoardTypes = ["free", "level_up_proof", "hobby"] as const;
 
 export const communityPostStatuses = [
   "draft",
@@ -494,7 +483,7 @@ export const communitySchemaTables = [
   secureTable({
     name: "community_boards",
     description:
-      "커뮤니티 게시판 정의. 전체/자유/레벨업 인증/소비통제/저축팁/월급토크/취미/공지/이벤트/FAQ를 관리한다.",
+      "커뮤니티 게시판 정의. 자유 게시판/레벨업 인증/취미 게시판 3개 taxonomy를 관리한다.",
     columns: [
       uuidPrimaryKey("board_id"),
       textColumn("slug", 64, true),
@@ -530,7 +519,7 @@ export const communitySchemaTables = [
   secureTable({
     name: "community_posts",
     description:
-      "커뮤니티 게시글. 익명 글쓰기, 질문글, 레벨업 인증, 운영자 공지, 이벤트, FAQ, 소프트 삭제를 지원한다.",
+      "커뮤니티 게시글. 자유 게시판, 레벨업 인증, 취미 게시판의 익명 글쓰기, 질문글, 소프트 삭제를 지원한다.",
     idempotencyRequired: true,
     columns: [
       uuidPrimaryKey("post_id"),
@@ -1451,14 +1440,6 @@ export const communitySchemaPolicies = [
 
 export const communityBoardSeeds = [
   {
-    slug: "general",
-    type: "general",
-    nameKo: "전체 게시판",
-    descriptionKo: "급여납치 커뮤니티 전체 게시글을 확인하는 기본 게시판",
-    sortOrder: 10,
-    isSystem: true,
-  },
-  {
     slug: "free",
     type: "free",
     nameKo: "자유 게시판",
@@ -1475,59 +1456,11 @@ export const communityBoardSeeds = [
     isSystem: true,
   },
   {
-    slug: "consumption-control",
-    type: "consumption_control",
-    nameKo: "소비통제",
-    descriptionKo: "일일 예산, 변동지출, 무지출 챌린지를 공유하는 게시판",
-    sortOrder: 35,
-    isSystem: true,
-  },
-  {
-    slug: "saving-tip",
-    type: "saving_tip",
-    nameKo: "저축 팁",
-    descriptionKo: "고정저축, 적금, 목표저축 루틴을 공유하는 게시판",
-    sortOrder: 40,
-    isSystem: true,
-  },
-  {
-    slug: "salary-talk",
-    type: "salary_talk",
-    nameKo: "월급 토크",
-    descriptionKo: "급여일, 고정지출, 생활비 계획을 안전하게 논의하는 게시판",
-    sortOrder: 45,
-    isSystem: true,
-  },
-  {
     slug: "hobby",
     type: "hobby",
     nameKo: "취미 게시판",
     descriptionKo: "퇴근 후 취미와 자기계발 경험을 공유하는 게시판",
     sortOrder: 50,
-    isSystem: true,
-  },
-  {
-    slug: "notice",
-    type: "notice",
-    nameKo: "공지사항",
-    descriptionKo: "서비스 운영 공지와 정책 변경 안내 게시판",
-    sortOrder: 90,
-    isSystem: true,
-  },
-  {
-    slug: "event",
-    type: "event",
-    nameKo: "이벤트",
-    descriptionKo: "포인트, 제휴, 챌린지 이벤트 안내 게시판",
-    sortOrder: 95,
-    isSystem: true,
-  },
-  {
-    slug: "faq",
-    type: "faq",
-    nameKo: "FAQ",
-    descriptionKo: "급여납치 사용법과 자주 묻는 질문 게시판",
-    sortOrder: 100,
     isSystem: true,
   },
 ] as const satisfies readonly CommunityBoardSeed[];

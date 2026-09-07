@@ -40,7 +40,7 @@ function createRuntime(
 }
 
 const createPostInput: CommunityPostInput = {
-  boardType: "LEVEL_CERTIFICATION",
+  boardType: "LEVELUP",
   title: "퇴근 후 홈트 인증",
   content: "민감 정보 없이 레벨업 인증합니다.",
   tags: ["레벨업", "홈트"],
@@ -188,7 +188,7 @@ describe("Neon community repository", () => {
 
     expect(created).toMatchObject({
       postId,
-      boardType: "LEVEL_CERTIFICATION",
+      boardType: "LEVELUP",
       title: createPostInput.title,
       content: createPostInput.content,
       tags: "레벨업,홈트",
@@ -273,11 +273,10 @@ describe("Neon community repository", () => {
       }),
     );
 
-    expect(boards.some((board) => board.boardType === "LEVEL_CERTIFICATION"))
-      .toBe(true);
+    expect(boards.some((board) => board.boardType === "LEVELUP")).toBe(true);
     expect(created).toMatchObject({
       postId,
-      boardType: "LEVEL_CERTIFICATION",
+      boardType: "LEVELUP",
       title: createPostInput.title,
       content: createPostInput.content,
       status: "VISIBLE",
@@ -321,7 +320,7 @@ describe("Neon community repository", () => {
               {
                 post_id: postId,
                 user_id: userId,
-                board_type: "FREE_TALK",
+                board_type: "FREE",
                 title: "TNS held post",
                 body: "사기 리딩방 수익 보장 synthetic moderation trigger",
                 is_anonymous: false,

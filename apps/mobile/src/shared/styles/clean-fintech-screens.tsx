@@ -148,11 +148,7 @@ type Mission = Readonly<{
   status: "ACTIVE" | "COMPLETED";
   targetCount: number;
 }>;
-type CommunityBoard =
-  | "전체 게시판"
-  | "자유 게시판"
-  | "레벨업 인증"
-  | "취미 게시판";
+type CommunityBoard = "자유 게시판" | "레벨업 인증" | "취미 게시판";
 type CommunityScreenPost = Readonly<{
   board: CommunityBoard;
   id: string;
@@ -576,36 +572,25 @@ const fallbackCommunityPosts = [
 ] as const satisfies readonly CommunityScreenPost[];
 
 const communityBoardApiMap: Readonly<
-  Record<CommunityBoard, CommunityBoardType | null>
+  Record<CommunityBoard, CommunityBoardType>
 > = {
-  "전체 게시판": null,
   "자유 게시판": "FREE",
-  "레벨업 인증": "LEVEL_CERTIFICATION",
-  "취미 게시판": "HEALTH_ROUTINE",
+  "레벨업 인증": "LEVELUP",
+  "취미 게시판": "HOBBY",
 };
 
 const communityBoardLabelMap: Readonly<
   Record<CommunityBoardType, CommunityBoard>
 > = {
-  SALARY_TALK: "자유 게시판",
-  BUDGET_TIP: "자유 게시판",
-  EXPENSE_CUT: "자유 게시판",
-  SAVINGS_GOAL: "자유 게시판",
-  LEVEL_CERTIFICATION: "레벨업 인증",
-  SIDE_HUSTLE: "취미 게시판",
-  HEALTH_ROUTINE: "취미 게시판",
   FREE: "자유 게시판",
+  LEVELUP: "레벨업 인증",
+  HOBBY: "취미 게시판",
 };
 
 const communityBoardThumbMap: Readonly<Record<CommunityBoardType, string>> = {
-  SALARY_TALK: appIcons.salary,
-  BUDGET_TIP: appIcons.budget,
-  EXPENSE_CUT: appIcons.expense,
-  SAVINGS_GOAL: appIcons.saving,
-  LEVEL_CERTIFICATION: appIcons.level,
-  SIDE_HUSTLE: "🧰",
-  HEALTH_ROUTINE: appIcons.health,
   FREE: appIcons.community,
+  LEVELUP: appIcons.level,
+  HOBBY: "🎨",
 };
 
 const settingsScreenConfig: Readonly<
@@ -852,7 +837,7 @@ const fallbackPostDetail: CommunityPostDetail = {
   post: {
     adsFinancialTargetingUsed: false,
     anonymousDisplayName: "익명 사용자",
-    boardType: "LEVEL_CERTIFICATION",
+    boardType: "LEVELUP",
     bodyPreview: fallbackCommunityPosts[0].summary,
     bookmarkCount: 0,
     commentCount: postComments.length,
@@ -6178,14 +6163,13 @@ function NotificationsScreen(): React.ReactElement {
 function CommunityScreen(): React.ReactElement {
   const communityService = useMemo(() => createMobileCommunityService(), []);
   const communityRouter = useRouter();
-  const [board, setBoard] = useState<CommunityBoard>("전체 게시판");
+  const [board, setBoard] = useState<CommunityBoard>("자유 게시판");
   const [serverCommunityFeed, setServerCommunityFeed] =
     useState<CommunityFeedPage | null>(null);
   const [communitySyncLabel, setCommunitySyncLabel] = useState(
     "서버 커뮤니티 피드를 확인하는 중이에요.",
   );
   const boards: readonly CommunityBoard[] = [
-    "전체 게시판",
     "자유 게시판",
     "레벨업 인증",
     "취미 게시판",
@@ -6198,7 +6182,7 @@ function CommunityScreen(): React.ReactElement {
       try {
         const boardType = communityBoardApiMap[board];
         const response = await communityService.listPosts({
-          ...(boardType ? { boardType } : {}),
+          boardType,
           page: 1,
           pageSize: 20,
           sort: "LATEST",
@@ -6226,10 +6210,9 @@ function CommunityScreen(): React.ReactElement {
   }, [board, communityService]);
 
   const serverCommunityPosts = toCommunityScreenPosts(serverCommunityFeed);
-  const fallbackFiltered =
-    board === "전체 게시판"
-      ? fallbackCommunityPosts
-      : fallbackCommunityPosts.filter((post) => post.board === board);
+  const fallbackFiltered = fallbackCommunityPosts.filter(
+    (post) => post.board === board,
+  );
   const visibleCommunityPosts = serverCommunityPosts.length
     ? serverCommunityPosts
     : fallbackFiltered;

@@ -6,6 +6,7 @@ import {
   componentSpacing,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { communityBoardLabel } from "../community.constants";
 import type { CommunityPost } from "../community.types";
 import { CommunityModerationBanner } from "./CommunityModerationBanner";
 
@@ -29,7 +30,7 @@ export function CommunityPostCard({
     <View style={styles.body}>
       <View style={styles.meta}>
         <Text style={styles.author}>{post.anonymousDisplayName}</Text>
-        <Text style={styles.board}>{post.boardType}</Text>
+        <Text style={styles.board}>{communityBoardLabel(post.boardType)}</Text>
       </View>
       <Text numberOfLines={2} style={styles.title}>
         {post.title}

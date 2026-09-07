@@ -47,22 +47,17 @@ const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const dbBoardByApiBoard = Object.freeze({
-  SALARY_TALK: "salary_talk",
-  BUDGET_TIP: "saving_tip",
-  EXPENSE_CUT: "consumption_control",
-  SAVINGS_GOAL: "saving_tip",
-  LEVEL_CERTIFICATION: "level_up_proof",
-  SIDE_HUSTLE: "free",
-  HEALTH_ROUTINE: "hobby",
   FREE: "free",
+  LEVELUP: "level_up_proof",
+  HOBBY: "hobby",
 });
 
 const apiBoardByDbBoard = Object.freeze({
-  salary_talk: "SALARY_TALK",
-  saving_tip: "SAVINGS_GOAL",
-  consumption_control: "EXPENSE_CUT",
-  level_up_proof: "LEVEL_CERTIFICATION",
-  hobby: "HEALTH_ROUTINE",
+  salary_talk: "FREE",
+  saving_tip: "FREE",
+  consumption_control: "FREE",
+  level_up_proof: "LEVELUP",
+  hobby: "HOBBY",
   free: "FREE",
   general: "FREE",
   notice: "FREE",
@@ -81,77 +76,32 @@ const dbReportReasonByApiReason = Object.freeze({
 });
 
 const legacyBoardByApiBoard = Object.freeze({
-  SALARY_TALK: "ALL",
-  BUDGET_TIP: "MONEY_TIP",
-  EXPENSE_CUT: "MONEY_TIP",
-  SAVINGS_GOAL: "MONEY_TIP",
-  LEVEL_CERTIFICATION: "LEVEL_UP_PROOF",
-  SIDE_HUSTLE: "FREE",
-  HEALTH_ROUTINE: "HOBBY",
   FREE: "FREE",
+  LEVELUP: "LEVEL_UP_PROOF",
+  HOBBY: "HOBBY",
 } satisfies Record<CommunityBoardType, string>);
 
 const legacyBoardDefinitions: readonly JsonRecord[] = Object.freeze([
   {
-    boardType: "SALARY_TALK",
-    title: "월급 이야기",
-    description: "월급날, 급여 계획, 지출 루틴을 공유합니다.",
+    boardType: "FREE",
+    title: "자유 게시판",
+    description: "급여납치 사용자들의 자유 대화 공간입니다.",
     writeRequiresAuth: true,
     serverAuthority: true,
     financialRawDataExposed: false,
   },
   {
-    boardType: "BUDGET_TIP",
-    title: "예산 팁",
-    description: "일일 예산과 고정지출 절감 방법을 공유합니다.",
-    writeRequiresAuth: true,
-    serverAuthority: true,
-    financialRawDataExposed: false,
-  },
-  {
-    boardType: "EXPENSE_CUT",
-    title: "지출 줄이기",
-    description: "변동지출 절감 챌린지와 후기를 공유합니다.",
-    writeRequiresAuth: true,
-    serverAuthority: true,
-    financialRawDataExposed: false,
-  },
-  {
-    boardType: "SAVINGS_GOAL",
-    title: "저축 목표",
-    description: "고정저축·목표 달성 과정을 공유합니다.",
-    writeRequiresAuth: true,
-    serverAuthority: true,
-    financialRawDataExposed: false,
-  },
-  {
-    boardType: "LEVEL_CERTIFICATION",
-    title: "LV UP 인증",
+    boardType: "LEVELUP",
+    title: "레벨업 인증",
     description: "자기계발·운동·독서 인증을 공유합니다.",
     writeRequiresAuth: true,
     serverAuthority: true,
     financialRawDataExposed: false,
   },
   {
-    boardType: "SIDE_HUSTLE",
-    title: "부업",
-    description: "부업 경험과 수익 구조를 공유합니다.",
-    writeRequiresAuth: true,
-    serverAuthority: true,
-    financialRawDataExposed: false,
-  },
-  {
-    boardType: "HEALTH_ROUTINE",
-    title: "건강 루틴",
-    description: "운동·수면·식단 루틴을 공유합니다.",
-    writeRequiresAuth: true,
-    serverAuthority: true,
-    financialRawDataExposed: false,
-  },
-  {
-    boardType: "FREE",
-    title: "자유게시판",
-    description: "급여납치 사용자들의 자유 대화 공간입니다.",
+    boardType: "HOBBY",
+    title: "취미 게시판",
+    description: "퇴근 후 취미와 자기계발 경험을 공유합니다.",
     writeRequiresAuth: true,
     serverAuthority: true,
     financialRawDataExposed: false,
@@ -308,11 +258,11 @@ function optionalLegacyDbBoardFromApi(value: unknown): string | null {
 
 function apiBoardFromDb(value: unknown): CommunityBoardType {
   const normalized = String(value ?? "free").toLowerCase();
-  if (normalized === "level_up_proof") return "LEVEL_CERTIFICATION";
-  if (normalized === "money_tip") return "BUDGET_TIP";
+  if (normalized === "level_up_proof") return "LEVELUP";
+  if (normalized === "money_tip") return "FREE";
   if (normalized === "question") return "FREE";
-  if (normalized === "notice_discussion") return "SALARY_TALK";
-  if (normalized === "all") return "SALARY_TALK";
+  if (normalized === "notice_discussion") return "FREE";
+  if (normalized === "all") return "FREE";
   return (
     apiBoardByDbBoard[normalized as keyof typeof apiBoardByDbBoard] ?? "FREE"
   );

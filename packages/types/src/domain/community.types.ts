@@ -66,64 +66,36 @@ export interface CommunityTraceableMutation {
  * 2. Enum constants and literal unions
  * -------------------------------------------------------------------------- */
 
-export const COMMUNITY_BOARDS = [
-  "ALL",
-  "FREE",
-  "LEVEL_UP_CERTIFICATION",
-  "CONSUMPTION_CONTROL",
-  "SAVING_TIP",
-  "SALARY_TALK",
-  "HOBBY",
-  "NOTICE",
-  "EVENT",
-  "FAQ",
-] as const;
+export const COMMUNITY_BOARDS = ["FREE", "LEVELUP", "HOBBY"] as const;
 export type CommunityBoard = (typeof COMMUNITY_BOARDS)[number];
 
 export const COMMUNITY_WRITABLE_BOARDS = [
   "FREE",
-  "LEVEL_UP_CERTIFICATION",
-  "CONSUMPTION_CONTROL",
-  "SAVING_TIP",
-  "SALARY_TALK",
+  "LEVELUP",
   "HOBBY",
 ] as const satisfies readonly CommunityBoard[];
 export type CommunityWritableBoard = (typeof COMMUNITY_WRITABLE_BOARDS)[number];
 
 export const COMMUNITY_ADMIN_BOARDS = [
-  "NOTICE",
-  "EVENT",
-  "FAQ",
+  "FREE",
+  "LEVELUP",
+  "HOBBY",
 ] as const satisfies readonly CommunityBoard[];
 export type CommunityAdminBoard = (typeof COMMUNITY_ADMIN_BOARDS)[number];
 
 export const COMMUNITY_BOARD_DB_KEYS = [
-  "general",
   "free",
   "level_up_proof",
-  "consumption_control",
-  "saving_tip",
-  "salary_talk",
   "hobby",
-  "notice",
-  "event",
-  "faq",
 ] as const;
 export type CommunityBoardDbKey = (typeof COMMUNITY_BOARD_DB_KEYS)[number];
 
 export const COMMUNITY_BOARD_DB_MAP: Readonly<
   Record<CommunityBoard, CommunityBoardDbKey>
 > = Object.freeze({
-  ALL: "general",
   FREE: "free",
-  LEVEL_UP_CERTIFICATION: "level_up_proof",
-  CONSUMPTION_CONTROL: "consumption_control",
-  SAVING_TIP: "saving_tip",
-  SALARY_TALK: "salary_talk",
+  LEVELUP: "level_up_proof",
   HOBBY: "hobby",
-  NOTICE: "notice",
-  EVENT: "event",
-  FAQ: "faq",
 });
 
 export const COMMUNITY_POST_STATUSES = [
@@ -483,21 +455,6 @@ export interface CommunityBoardDescriptor {
 export const COMMUNITY_BOARD_DESCRIPTORS: readonly CommunityBoardDescriptor[] =
   Object.freeze([
     {
-      board: "ALL",
-      dbKey: "general",
-      slug: "all",
-      nameKo: "전체 게시판",
-      descriptionKo: "급여납치 커뮤니티 전체 글을 모아보는 기본 게시판",
-      sortOrder: 10,
-      writableByUser: false,
-      writableByAdmin: false,
-      allowAnonymous: true,
-      allowQuestions: true,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
       board: "FREE",
       dbKey: "free",
       slug: "free",
@@ -514,7 +471,7 @@ export const COMMUNITY_BOARD_DESCRIPTORS: readonly CommunityBoardDescriptor[] =
       active: true,
     },
     {
-      board: "LEVEL_UP_CERTIFICATION",
+      board: "LEVELUP",
       dbKey: "level_up_proof",
       slug: "level-up-proof",
       nameKo: "레벨업 인증",
@@ -524,51 +481,6 @@ export const COMMUNITY_BOARD_DESCRIPTORS: readonly CommunityBoardDescriptor[] =
       writableByAdmin: true,
       allowAnonymous: true,
       allowQuestions: false,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
-      board: "CONSUMPTION_CONTROL",
-      dbKey: "consumption_control",
-      slug: "consumption-control",
-      nameKo: "소비통제",
-      descriptionKo: "일일 예산, 변동지출, 무지출 챌린지를 공유하는 게시판",
-      sortOrder: 35,
-      writableByUser: true,
-      writableByAdmin: true,
-      allowAnonymous: true,
-      allowQuestions: true,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
-      board: "SAVING_TIP",
-      dbKey: "saving_tip",
-      slug: "saving-tip",
-      nameKo: "저축 팁",
-      descriptionKo: "고정저축, 적금, 목표저축 루틴을 공유하는 게시판",
-      sortOrder: 40,
-      writableByUser: true,
-      writableByAdmin: true,
-      allowAnonymous: true,
-      allowQuestions: true,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
-      board: "SALARY_TALK",
-      dbKey: "salary_talk",
-      slug: "salary-talk",
-      nameKo: "월급 토크",
-      descriptionKo: "급여일, 고정지출, 생활비 계획을 안전하게 논의하는 게시판",
-      sortOrder: 45,
-      writableByUser: true,
-      writableByAdmin: true,
-      allowAnonymous: true,
-      allowQuestions: true,
       allowAttachments: true,
       moderationPreRequired: false,
       active: true,
@@ -584,51 +496,6 @@ export const COMMUNITY_BOARD_DESCRIPTORS: readonly CommunityBoardDescriptor[] =
       writableByAdmin: true,
       allowAnonymous: true,
       allowQuestions: true,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
-      board: "NOTICE",
-      dbKey: "notice",
-      slug: "notice",
-      nameKo: "공지사항",
-      descriptionKo: "서비스 운영 공지와 정책 변경 안내 게시판",
-      sortOrder: 90,
-      writableByUser: false,
-      writableByAdmin: true,
-      allowAnonymous: false,
-      allowQuestions: false,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
-      board: "EVENT",
-      dbKey: "event",
-      slug: "event",
-      nameKo: "이벤트",
-      descriptionKo: "포인트, 제휴, 챌린지 이벤트 안내 게시판",
-      sortOrder: 95,
-      writableByUser: false,
-      writableByAdmin: true,
-      allowAnonymous: false,
-      allowQuestions: false,
-      allowAttachments: true,
-      moderationPreRequired: false,
-      active: true,
-    },
-    {
-      board: "FAQ",
-      dbKey: "faq",
-      slug: "faq",
-      nameKo: "FAQ",
-      descriptionKo: "급여납치 사용법과 자주 묻는 질문 게시판",
-      sortOrder: 100,
-      writableByUser: false,
-      writableByAdmin: true,
-      allowAnonymous: false,
-      allowQuestions: false,
       allowAttachments: true,
       moderationPreRequired: false,
       active: true,
@@ -1570,20 +1437,13 @@ export const getCommunityTypesCompletenessReport =
 
     requireEvery(
       COMMUNITY_BOARDS,
-      [
-        "ALL",
-        "FREE",
-        "LEVEL_UP_CERTIFICATION",
-        "HOBBY",
-        "NOTICE",
-        "EVENT",
-      ] as const,
+      ["FREE", "LEVELUP", "HOBBY"] as const,
       "board",
       missing,
     );
     requireEvery(
       COMMUNITY_WRITABLE_BOARDS,
-      ["FREE", "LEVEL_UP_CERTIFICATION", "HOBBY"] as const,
+      ["FREE", "LEVELUP", "HOBBY"] as const,
       "writable board",
       missing,
     );

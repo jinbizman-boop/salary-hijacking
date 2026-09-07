@@ -788,9 +788,7 @@ export function CapturePreviewScreen({
   }
 
   if (kind === "profile-community") {
-    return (
-      <ProfileDetailScreen onBack={() => undefined} variant="community" />
-    );
+    return <ProfileDetailScreen onBack={() => undefined} variant="community" />;
   }
 
   if (
@@ -1656,7 +1654,7 @@ const communityDetailPost: CommunityPost = {
   adsFinancialTargetingUsed: false,
   anonymous: true,
   anonymousDisplayName: "익명 기획자",
-  boardType: "LEVEL_CERTIFICATION",
+  boardType: "LEVELUP",
   bodyPreview:
     "오늘 독서 미션을 완료하고 월 고정지출을 다시 점검했습니다. 민감한 급여 원문 없이 성장 기록만 공유합니다.",
   bookmarkCount: 8,
@@ -1704,7 +1702,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-ko-1",
-        "LEVEL_CERTIFICATION",
+        "LEVELUP",
         "[LV.5] 오늘 운동, 1년 차 야근 체력 탈출 후기",
         "레벨업 인증과 소비 습관 개선 기록을 민감 금액 없이 공유했어요.",
         26,
@@ -1721,7 +1719,7 @@ const communityBoardStateContent: Record<
     ],
     statusLabel: "실시간 검수 정상",
     subtitle: "한국어 탭 보드",
-    summaryRows: ["전체 게시판", "자유 게시판", "레벨업 인증", "취미 게시판"],
+    summaryRows: ["자유 게시판", "레벨업 인증", "취미 게시판"],
     title: "커뮤니티",
   },
   "community-state-board-en-tabs": {
@@ -1729,7 +1727,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-en-1",
-        "BUDGET_TIP",
+        "FREE",
         "Budget routine without exposing salary details",
         "English tab labels remain a visual variant while moderation still runs on native state.",
         12,
@@ -1737,7 +1735,7 @@ const communityBoardStateContent: Record<
       ),
       makeCommunityBoardPost(
         "board-en-2",
-        "SAVINGS_GOAL",
+        "FREE",
         "Savings goal recap after payday",
         "Raw salary and account data are never exposed to the feed or ad slots.",
         15,
@@ -1754,7 +1752,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-offline-1",
-        "LEVEL_CERTIFICATION",
+        "LEVELUP",
         "오프라인 임시저장 글은 읽기 전용으로 표시돼요",
         "네트워크 복구 전까지 좋아요와 댓글은 대기 상태로 유지됩니다.",
         9,
@@ -1782,7 +1780,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-state-1",
-        "SIDE_HUSTLE",
+        "FREE",
         "커리어/부업 보드는 범위 검토 후 일반 자유글로 정규화",
         "범위 이탈 후보는 공식 게시판 구조 안에서 안전하게 표시합니다.",
         11,
@@ -1790,7 +1788,7 @@ const communityBoardStateContent: Record<
       ),
       makeCommunityBoardPost(
         "board-state-2",
-        "EXPENSE_CUT",
+        "FREE",
         "고정지출 줄인 후기",
         "개별 급여 원문 없이 절약 루틴만 공유합니다.",
         24,
@@ -1807,7 +1805,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-hobby-1",
-        "HEALTH_ROUTINE",
+        "HOBBY",
         "퇴근 후 1시간 독서와 산책 루틴",
         "취미 게시판은 자기관리 기록과 소비 기록을 분리합니다.",
         31,
@@ -1832,7 +1830,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-level-1",
-        "LEVEL_CERTIFICATION",
+        "LEVELUP",
         "[독서 LV.UP] 기획의 정석 2장 완료",
         "서버 권위 XP 지급 후 공유된 인증 글입니다.",
         42,
@@ -1840,7 +1838,7 @@ const communityBoardStateContent: Record<
       ),
       makeCommunityBoardPost(
         "board-level-2",
-        "LEVEL_CERTIFICATION",
+        "LEVELUP",
         "[홈트 LV.UP] 10분 루틴 완료",
         "건강 조언은 보장 문구 없이 안전 문구와 함께 표시합니다.",
         29,
@@ -1857,7 +1855,7 @@ const communityBoardStateContent: Record<
     posts: [
       makeCommunityBoardPost(
         "board-search-1",
-        "BUDGET_TIP",
+        "FREE",
         "검색어: 자동결제",
         "구독료 자동결제 관리 팁을 민감 계정정보 없이 보여줍니다.",
         20,
@@ -1865,7 +1863,7 @@ const communityBoardStateContent: Record<
       ),
       makeCommunityBoardPost(
         "board-search-2",
-        "EXPENSE_CUT",
+        "FREE",
         "넷플릭스와 유튜브 구독료 점검 루틴",
         "제휴나 광고 데이터와 개인 지출 원문은 분리됩니다.",
         17,
@@ -2993,7 +2991,7 @@ function createCommunityWriteDraft(
   if (variant === "community-write-from-levelup") {
     return {
       anonymous: true,
-      boardType: "LEVEL_CERTIFICATION",
+      boardType: "LEVELUP",
       content:
         "오늘 독서 미션을 완료했습니다. 개인 급여 원문 없이 루틴과 배운 점만 공유합니다.",
       tags: ["레벨업인증", "독서"],
@@ -3017,7 +3015,7 @@ function createCommunityWriteDraft(
     boardType: "FREE",
     content:
       "오늘은 변동지출을 기록하고 다음 급여일까지 지킬 루틴을 정리했습니다.",
-    tags: ["자유게시판", "루틴"],
+    tags: ["자유 게시판", "루틴"],
     title: "이번 주 예산 루틴 공유",
   };
 }
