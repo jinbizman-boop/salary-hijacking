@@ -31,11 +31,13 @@ export default function SalaryIndexScreen(): React.ReactElement {
     <SalaryHomeScreen
       rootHeader={
         <RootTabHeader
-          onOpenNotifications={() => router.push("/notifications" as never)}
+          onOpenNotifications={() =>
+            router.push("/salary/notifications" as never)
+          }
           tab="home"
         />
       }
-      onOpenNotifications={() => router.push("/notifications")}
+      onOpenNotifications={() => router.push("/salary/notifications")}
     />
   );
 }

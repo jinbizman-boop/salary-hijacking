@@ -1,72 +1,82 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter, type Href } from "expo-router";
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { Image, Pressable, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
+import {
+  getRootTabHref,
+  ROOT_TAB_NAVIGATION_PRIORITY,
+  ROOT_TAB_ROUTES,
+  type RootTabName,
+} from "../../src/shared/navigation/root-tabs";
 import { markReleaseInteractionPerf } from "../../src/shared/performance/release-perf";
 import { salaryHijackingTheme } from "../../src/shared/styles/clean-fintech-theme";
 
-type TabName =
-  | "salary/index"
-  | "plan/index"
-  | "level"
-  | "community"
-  | "profile";
-
 type TabDefinition = Readonly<{
   icon: ImageSourcePropType;
-  name: TabName;
+  name: RootTabName;
   privacyBoundary: string;
+  rootHref: Href;
   title: string;
 }>;
 
-const LAYOUT_VERSION = "4.0.7-runtime-safe-measured-tabs";
+const LAYOUT_VERSION = "4.1.0-explicit-root-tab-navigation";
 const designSystem = salaryHijackingDesignSystem;
 
 const tabs: readonly TabDefinition[] = [
   {
     icon: bottomTabIconAssets.salary,
-    name: "salary/index",
+    name: "salary",
     privacyBoundary: "payroll_home",
+    rootHref: ROOT_TAB_ROUTES.salary,
     title: "홈",
   },
   {
     icon: bottomTabIconAssets.plan,
-    name: "plan/index",
+    name: "plan",
     privacyBoundary: "payroll_plan",
+    rootHref: ROOT_TAB_ROUTES.plan,
     title: "계획",
   },
   {
     icon: bottomTabIconAssets.level,
     name: "level",
     privacyBoundary: "growth",
+    rootHref: ROOT_TAB_ROUTES.level,
     title: "LV UP",
   },
   {
     icon: bottomTabIconAssets.community,
     name: "community",
     privacyBoundary: "anonymous_community",
+    rootHref: ROOT_TAB_ROUTES.community,
     title: "커뮤니티",
   },
   {
     icon: bottomTabIconAssets.profile,
     name: "profile",
     privacyBoundary: "profile_privacy",
+    rootHref: ROOT_TAB_ROUTES.profile,
     title: "MY",
   },
 ] as const;
 
 export default function TabsLayout(): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
+  const router = useRouter();
   const tabBarHeight =
     salaryHijackingTheme.layout.bottomTabHeight + Math.max(insets.bottom, 0);
+
+  const navigateToRootTab = (tab: TabDefinition): void => {
+    router.navigate(tab.rootHref as never);
+  };
 
   return (
     <Tabs
       backBehavior="history"
-      initialRouteName="salary/index"
+      initialRouteName="salary"
       screenOptions={{
         freezeOnBlur: true,
         headerShown: false,
@@ -107,8 +117,14 @@ export default function TabsLayout(): React.ReactElement {
         <Tabs.Screen
           key={tab.name}
           name={tab.name}
+          listeners={{
+            tabPress: (event) => {
+              event.preventDefault();
+              navigateToRootTab(tab);
+            },
+          }}
           options={{
-            tabBarAccessibilityLabel: `${tab.title} \uD0ED ${tab.privacyBoundary}`,
+            tabBarAccessibilityLabel: `${tab.title} 탭`,
             tabBarIcon: ({ color, focused, size }) => (
               <View
                 style={{
@@ -195,8 +211,8 @@ export function assertMobileTabsLayoutCompleteness(): {
 } {
   const checks = [
     "clean_fintech_v1_theme",
-    "salary_index_tab",
-    "plan_index_tab",
+    "salary_nested_stack_tab",
+    "plan_nested_stack_tab",
     "level_nested_stack_tab",
     "community_index_tab",
     "profile_nested_stack_tab",
@@ -205,11 +221,16 @@ export function assertMobileTabsLayoutCompleteness(): {
     "inactive_gray_adb3b8",
     "safe_area_ready_height_76",
     "touch_target_44",
+    ROOT_TAB_NAVIGATION_PRIORITY.bottomTabTap,
+    ROOT_TAB_NAVIGATION_PRIORITY.androidBack,
+    `root_tab_route:${String(getRootTabHref("salary"))}`,
+    "explicit_bottom_tab_root_navigation",
+    "same_tab_reselect_root_reset",
     "server_authority_boundary_labels",
     "anonymous_community_boundary",
     "profile_privacy_boundary",
     "accessibility_labels",
-    "expo_router_index_segment_tabs",
+    "expo_router_nested_stack_tabs",
     "android_system_back_history_tabs",
     "readable_korean_tab_copy",
     "typescript_strict_ready",

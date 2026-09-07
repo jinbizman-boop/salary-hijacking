@@ -218,6 +218,8 @@ const ROOT_DEEP_LINK_ROUTES = new Set([
   "/level/news",
   "/level/english",
   "/level/health",
+  "/salary/notifications",
+  "/salary/notifications/settings",
   "/notifications",
   "/notifications/settings",
   "/community",

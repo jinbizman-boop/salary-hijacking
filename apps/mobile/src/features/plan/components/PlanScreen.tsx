@@ -79,8 +79,7 @@ const planScreenSpacing = designSystem.spacing;
 const planScreenRadius = designSystem.radius;
 const planScreenTypography = designSystem.typography;
 const planScreenElevation = designSystem.elevation;
-const PLAN_SAVE_ERROR =
-  "서버 저장이 실패해 계획을 반영하지 않았습니다.";
+const PLAN_SAVE_ERROR = "서버 저장이 실패해 계획을 반영하지 않았습니다.";
 const payrollReminderSecureStore = createSecureStoreRuntime(
   Platform.OS,
   SecureStore,
@@ -587,7 +586,7 @@ export function PlanScreen({
       style={styles.screen}
     >
       <StatusBar
-        backgroundColor={planScreenColors.surface}
+        backgroundColor={planScreenColors.screen}
         barStyle="dark-content"
       />
       <ScrollView
@@ -1521,7 +1520,7 @@ const styles = StyleSheet.create({
   },
   content: {
     alignSelf: "center",
-    backgroundColor: planScreenColors.surface,
+    backgroundColor: planScreenColors.screen,
   },
   deleteButton: {
     alignItems: "center",

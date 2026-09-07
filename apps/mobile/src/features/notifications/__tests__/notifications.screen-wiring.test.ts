@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("notifications screen wiring", () => {
-  it("uses the Stitch notification layout with tappable deep links and no bottom navigation", () => {
+  it("uses the Stitch notification layout inside the Salary tab stack with tappable deep links", () => {
     const routeSource = readFileSync(
       join(
         __dirname,
@@ -11,6 +11,8 @@ describe("notifications screen wiring", () => {
         "..",
         "..",
         "app",
+        "(tabs)",
+        "salary",
         "notifications",
         "index.tsx",
       ),
@@ -31,6 +33,8 @@ describe("notifications screen wiring", () => {
     expect(source).not.toContain("CleanFintechScreen");
     expect(source).not.toContain("bottomTabs");
     expect(source).toContain("useRouter");
+    expect(source).toContain("useLogicalBack");
+    expect(source).toContain('fallbackHref: "/salary"');
     expect(source).toContain("새로운 알림이 있어요");
     expect(source).toContain("내 급여 납치 현황 목표 달성");
     expect(source).not.toMatch(/5,780,000|5,500,000/u);
@@ -39,7 +43,9 @@ describe("notifications screen wiring", () => {
     );
     expect(source).toContain("Today, Business Conversation");
     expect(source).toContain("router.push(href as never)");
-    expect(source).toContain('router.push("/notifications/settings" as never)');
+    expect(source).toContain(
+      'router.push("/salary/notifications/settings" as never)',
+    );
     expect(source).toContain("/level/reading");
     expect(source).toContain("/level/news");
     expect(source).toContain("/level/english");
@@ -49,7 +55,43 @@ describe("notifications screen wiring", () => {
     expect(source).toContain("sensitive_financial_data_component_guard");
   });
 
-  it("adds a dedicated notification settings route without tab chrome", () => {
+  it("keeps root notification routes as deep-link aliases to the Salary stack", () => {
+    const rootIndexSource = readFileSync(
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "notifications",
+        "index.tsx",
+      ),
+      "utf8",
+    );
+    const rootSettingsSource = readFileSync(
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "notifications",
+        "settings.tsx",
+      ),
+      "utf8",
+    );
+
+    expect(rootIndexSource).toContain("<Redirect");
+    expect(rootIndexSource).toContain('href="/salary/notifications"');
+    expect(rootSettingsSource).toContain("<Redirect");
+    expect(rootSettingsSource).toContain(
+      'href="/salary/notifications/settings"',
+    );
+  });
+
+  it("adds a dedicated notification settings route inside the Salary tab stack", () => {
     const routePath = join(
       __dirname,
       "..",
@@ -57,6 +99,8 @@ describe("notifications screen wiring", () => {
       "..",
       "..",
       "app",
+      "(tabs)",
+      "salary",
       "notifications",
       "settings.tsx",
     );
@@ -72,6 +116,8 @@ describe("notifications screen wiring", () => {
     const routeSource = readFileSync(routePath, "utf8");
     const componentSource = readFileSync(componentPath, "utf8");
     expect(routeSource).toContain("NotificationSettingsScreen");
+    expect(routeSource).toContain("useLogicalBack");
+    expect(routeSource).toContain('fallbackHref: "/salary/notifications"');
     expect(routeSource).toContain("createMobileNotificationsApi");
     expect(routeSource).toContain("loadNotificationPreferences");
     expect(routeSource).toContain("registerNativeNotificationDevice");

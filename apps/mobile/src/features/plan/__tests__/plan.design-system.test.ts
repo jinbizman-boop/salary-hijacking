@@ -21,12 +21,25 @@ describe("plan screen design system integration", () => {
     expect(source).toContain("width - horizontalGutter * 2");
     expect(source).toContain("StatusBar");
     expect(source).toContain('barStyle="dark-content"');
-    expect(source).toContain("backgroundColor={planScreenColors.surface}");
+    expect(source).toContain("backgroundColor={planScreenColors.screen}");
+  });
+
+  it("keeps Plan section cards white while the page uses the global app background", () => {
+    expect(source).toContain("screen: designSystem.colors.surface.subtle");
+    expect(source).toContain("surface: designSystem.colors.surface.default");
+    expect(source).toContain(
+      'content: {\n    alignSelf: "center",\n    backgroundColor: planScreenColors.screen',
+    );
+    expect(source).toContain(
+      "sectionCard: {\n    backgroundColor: planScreenColors.surface",
+    );
   });
 
   it("uses mobile-native plan cards instead of spreadsheet-style tables", () => {
     expect(source).not.toContain("function PlanTable");
-    expect(source).not.toContain('headers={["지출일", "구분명", "소비명", "단가", "수량", "금액"]}');
+    expect(source).not.toContain(
+      'headers={["지출일", "구분명", "소비명", "단가", "수량", "금액"]}',
+    );
     expect(source).not.toContain("tableHeaderCell");
     expect(source).not.toContain("tableRow");
     expect(source).toContain("function PlanSummaryRows");

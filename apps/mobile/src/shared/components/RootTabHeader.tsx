@@ -29,6 +29,15 @@ export type RootTabHeaderTab =
 type RootHeaderAction = "notification" | "goal-management" | "my-posts";
 
 export const ROOT_HEADER_BRAND_TEXT = "Salary HiJacking" as const;
+export const ROOT_TAB_HEADER_GEOMETRY = {
+  actionHitTarget: 48,
+  actionIconSize: designSystem.navigation.bottomTabs.iconSize,
+  brandSubtitleGap: designSystem.spacing[1],
+  headerGap: designSystem.spacing[3],
+  headerMinHeight: designSystem.header.height,
+  logoSize: 40,
+  logoTextGap: designSystem.spacing[3],
+} as const;
 
 export const ROOT_TAB_HEADER_CONTRACT: Readonly<
   Record<
@@ -196,25 +205,25 @@ const styles = StyleSheet.create({
     borderRadius: designSystem.radius.full,
     borderWidth: 1,
     justifyContent: "center",
-    minHeight: 48,
-    minWidth: 48,
+    minHeight: ROOT_TAB_HEADER_GEOMETRY.actionHitTarget,
+    minWidth: ROOT_TAB_HEADER_GEOMETRY.actionHitTarget,
   },
   actionIcon: {
-    height: designSystem.navigation.bottomTabs.iconSize,
+    height: ROOT_TAB_HEADER_GEOMETRY.actionIconSize,
     tintColor: componentColors.textPrimary,
-    width: designSystem.navigation.bottomTabs.iconSize,
+    width: ROOT_TAB_HEADER_GEOMETRY.actionIconSize,
   },
   actionSlot: {
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 48,
-    minWidth: 48,
+    minHeight: ROOT_TAB_HEADER_GEOMETRY.actionHitTarget,
+    minWidth: ROOT_TAB_HEADER_GEOMETRY.actionHitTarget,
   },
   brandBlock: {
     alignItems: "center",
     flex: 1,
     flexDirection: "row",
-    gap: designSystem.spacing[3],
+    gap: ROOT_TAB_HEADER_GEOMETRY.logoTextGap,
     minWidth: 0,
   },
   brandText: {
@@ -223,7 +232,7 @@ const styles = StyleSheet.create({
   },
   copy: {
     flex: 1,
-    gap: designSystem.spacing[1],
+    gap: ROOT_TAB_HEADER_GEOMETRY.brandSubtitleGap,
     minWidth: 0,
   },
   disabled: {
@@ -232,14 +241,14 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     flexDirection: "row",
-    gap: designSystem.spacing[3],
+    gap: ROOT_TAB_HEADER_GEOMETRY.headerGap,
     justifyContent: "space-between",
-    minHeight: designSystem.header.height,
+    minHeight: ROOT_TAB_HEADER_GEOMETRY.headerMinHeight,
   },
   logo: {
     borderRadius: designSystem.radius.md,
-    height: 40,
-    width: 40,
+    height: ROOT_TAB_HEADER_GEOMETRY.logoSize,
+    width: ROOT_TAB_HEADER_GEOMETRY.logoSize,
   },
   pressed: {
     backgroundColor: componentColors.primaryGreenSoft,

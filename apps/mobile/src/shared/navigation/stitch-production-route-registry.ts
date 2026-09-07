@@ -69,8 +69,8 @@ const screenSurfaces = {
     implementationFile:
       "apps/mobile/src/features/notifications/components/NotificationScreen.tsx",
     nativeComponent: "NotificationScreen",
-    productionRoute: "/notifications",
-    routeFile: "apps/mobile/app/notifications/index.tsx",
+    productionRoute: "/salary/notifications",
+    routeFile: "apps/mobile/app/(tabs)/salary/notifications/index.tsx",
   },
   "SCR-008": {
     implementationFile:
@@ -294,8 +294,8 @@ const overlaySurfaces = {
     implementationFile:
       "apps/mobile/src/shared/ui/sheets/DevicePermissionBottomSheet.tsx",
     nativeComponent: "DevicePermissionBottomSheet",
-    productionRoute: "/notifications/settings",
-    routeFile: "apps/mobile/app/notifications/settings.tsx",
+    productionRoute: "/salary/notifications/settings",
+    routeFile: "apps/mobile/app/(tabs)/salary/notifications/settings.tsx",
   },
   "MOD-001": {
     implementationFile:

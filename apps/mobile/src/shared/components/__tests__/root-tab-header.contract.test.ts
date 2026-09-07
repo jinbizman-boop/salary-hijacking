@@ -34,6 +34,23 @@ describe("root tab header contract", () => {
     expect(componentSource).toContain("MY_HEADER_ACTIONS");
   });
 
+  it("publishes the LV UP golden geometry as a shared root header contract", () => {
+    expect(componentSource).toContain("ROOT_TAB_HEADER_GEOMETRY");
+    expect(componentSource).toContain("headerMinHeight");
+    expect(componentSource).toContain("designSystem.header.height");
+    expect(componentSource).toContain("logoSize: 40");
+    expect(componentSource).toContain("actionHitTarget: 48");
+    expect(componentSource).toContain(
+      "designSystem.navigation.bottomTabs.iconSize",
+    );
+    expect(componentSource).toContain(
+      "minHeight: ROOT_TAB_HEADER_GEOMETRY.headerMinHeight",
+    );
+    expect(componentSource).toContain(
+      "width: ROOT_TAB_HEADER_GEOMETRY.logoSize",
+    );
+  });
+
   it("is the only header used by the five root tab screens", () => {
     const rootScreens = [
       join(APP_ROOT, "(tabs)", "salary", "index.tsx"),
@@ -73,5 +90,6 @@ describe("root tab header contract", () => {
 
     expect(barrel).toContain("RootTabHeader");
     expect(barrel).toContain("RootTabHeaderTab");
+    expect(barrel).toContain("ROOT_TAB_HEADER_GEOMETRY");
   });
 });

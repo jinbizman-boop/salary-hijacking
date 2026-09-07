@@ -88,8 +88,8 @@ export const requiredExtensionStateRegistry = [
   {
     id: "notification-permission-denied",
     kind: "PERMISSION",
-    productionRoute: "/notifications/settings",
-    routeFile: "apps/mobile/app/notifications/settings.tsx",
+    productionRoute: "/salary/notifications/settings",
+    routeFile: "apps/mobile/app/(tabs)/salary/notifications/settings.tsx",
     nativeComponent: "NotificationSettingsScreen",
     designSystemComponent: "PermissionState",
     trigger: "Android notification permission denied",

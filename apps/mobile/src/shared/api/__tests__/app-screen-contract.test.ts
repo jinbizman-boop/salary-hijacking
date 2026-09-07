@@ -12,6 +12,18 @@ const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
 const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const TABS_LAYOUT_SCREEN = join(APP_ROOT, "(tabs)", "_layout.tsx");
+const SALARY_STACK_LAYOUT_SCREEN = join(
+  APP_ROOT,
+  "(tabs)",
+  "salary",
+  "_layout.tsx",
+);
+const PLAN_STACK_LAYOUT_SCREEN = join(
+  APP_ROOT,
+  "(tabs)",
+  "plan",
+  "_layout.tsx",
+);
 const PROFILE_STACK_LAYOUT_SCREEN = join(
   APP_ROOT,
   "(tabs)",
@@ -213,15 +225,62 @@ describe("mobile app screen API and route contracts", () => {
       "utf8",
     );
 
-    expect(source).toContain('initialRouteName="salary/index"');
-    expect(source).toContain('name: "salary/index"');
-    expect(source).toContain('name: "plan/index"');
+    expect(source).toContain('initialRouteName="salary"');
+    expect(source).toContain('name: "salary"');
+    expect(source).toContain('name: "plan"');
     expect(source).toContain('name: "level"');
     expect(source).toContain('name: "community"');
     expect(source).toContain('name: "profile"');
+    expect(source).not.toContain('name: "salary/index"');
+    expect(source).not.toContain('name: "plan/index"');
     expect(source).not.toContain('name: "profile/index"');
     expect(source).not.toContain('name: "level/index"');
-    expect(source).not.toContain('initialRouteName="salary"');
+  });
+
+  it("routes explicit bottom tab taps to canonical tab roots instead of back history", () => {
+    const source = readFileSync(TABS_LAYOUT_SCREEN, "utf8");
+
+    expect(source).toContain("ROOT_TAB_ROUTES");
+    expect(source).toContain("navigateToRootTab");
+    expect(source).toContain("tabPress");
+    expect(source).toContain("event.preventDefault()");
+    expect(source).toContain("router.navigate(tab.rootHref as never)");
+    expect(source).not.toContain("router.back()");
+    expect(source).not.toContain("useLogicalBack");
+  });
+
+  it("keeps Home notifications inside the Salary tab stack when launched in-app", () => {
+    const salaryStackSource = readFileSync(SALARY_STACK_LAYOUT_SCREEN, "utf8");
+    const salaryIndexSource = readFileSync(TAB_SCREEN_SOURCES.salary, "utf8");
+    const rootNotificationsSource = readFileSync(
+      join(APP_ROOT, "notifications", "index.tsx"),
+      "utf8",
+    );
+    const rootNotificationSettingsSource = readFileSync(
+      join(APP_ROOT, "notifications", "settings.tsx"),
+      "utf8",
+    );
+
+    expect(salaryStackSource).toContain("<Stack");
+    expect(salaryStackSource).toContain('name="index"');
+    expect(salaryStackSource).toContain('name="notifications/index"');
+    expect(salaryStackSource).toContain('name="notifications/settings"');
+    expect(salaryIndexSource).toContain('router.push("/salary/notifications"');
+    expect(rootNotificationsSource).toContain("<Redirect");
+    expect(rootNotificationsSource).toContain('href="/salary/notifications"');
+    expect(rootNotificationSettingsSource).toContain("<Redirect");
+    expect(rootNotificationSettingsSource).toContain(
+      'href="/salary/notifications/settings"',
+    );
+  });
+
+  it("keeps Salary and Plan as explicit tab-owned stacks", () => {
+    expect(readFileSync(SALARY_STACK_LAYOUT_SCREEN, "utf8")).toContain(
+      "assertMobileSalaryStackCompleteness",
+    );
+    expect(readFileSync(PLAN_STACK_LAYOUT_SCREEN, "utf8")).toContain(
+      "assertMobilePlanStackCompleteness",
+    );
   });
 
   it("keeps primary tab visible copy in Korean instead of temporary English labels", () => {
@@ -241,7 +300,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(tabLayoutSource).toContain(
       '"\uAE09\uC5EC\uB0A9\uCE58 \uD558\uB2E8 \uD0ED \uB0B4\uBE44\uAC8C\uC774\uC158"',
     );
-    expect(tabLayoutSource).toContain("expo_router_index_segment_tabs");
+    expect(tabLayoutSource).toContain("expo_router_nested_stack_tabs");
     expect(tabLayoutSource).not.toContain("Salary Home");
     expect(tabLayoutSource).not.toContain("Proof Board");
 
