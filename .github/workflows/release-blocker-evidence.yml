@@ -677,9 +677,10 @@ jobs:
             "./assets/bottom-tabs/level-tab.png",
             "./assets/bottom-tabs/community-tab.png",
             "./assets/bottom-tabs/profile-tab.png",
-            "./src/shared/assets/icons/social/kakao.png",
-            "./src/shared/assets/icons/social/naver.png",
-            "./src/shared/assets/icons/social/google.png",
+            "./assets/runtime/icons/social/kakao.png",
+            "./assets/runtime/icons/social/naver.png",
+            "./assets/runtime/icons/social/google.png",
+            "./assets/runtime/images/brand/salary-hijacking-platform-logo.png",
           ];
           const localFilePresent = fs.existsSync(googleServicesPath);
           const easIgnorePresent = fs.existsSync(easIgnorePath);
@@ -723,7 +724,7 @@ jobs:
                   /^(?:\*\*\/)?google-services\.json$/u.test(line),
               );
             easArchiveAllowsRuntimeAssets =
-              easIgnoreLines.includes("!src/shared/assets/**");
+              easIgnoreLines.includes("!assets/runtime/**");
           }
 
           if (gitIgnorePresent) {

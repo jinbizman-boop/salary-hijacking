@@ -13,11 +13,11 @@ import { componentColors, salaryHijackingDesignSystem } from "./tokens";
 
 const designSystem = salaryHijackingDesignSystem;
 const rootHeaderLogo =
-  require("../assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
+  require("../../../assets/runtime/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 const notificationIcon =
-  require("../assets/icons/common/alarm.png") as ImageSourcePropType;
+  require("../../../assets/runtime/icons/common/alarm.png") as ImageSourcePropType;
 const settingsIcon =
-  require("../assets/icons/common/settings.png") as ImageSourcePropType;
+  require("../../../assets/runtime/icons/common/settings.png") as ImageSourcePropType;
 
 export type RootTabHeaderTab =
   | "home"

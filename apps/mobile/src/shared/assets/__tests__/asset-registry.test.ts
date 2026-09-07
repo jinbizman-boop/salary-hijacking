@@ -130,7 +130,7 @@ describe("mobile asset registry policy", () => {
     expect(bottomTabsRegistry).not.toContain("`${");
   });
 
-  it("keeps only Expo launch images at apps/mobile/assets root", () => {
+  it("keeps Expo launch images and EAS-uploaded runtime mirrors at apps/mobile/assets root", () => {
     const assetsRoot = path.join(mobileRoot, "assets");
     const rootFiles = fs
       .readdirSync(assetsRoot, { withFileTypes: true })
@@ -144,11 +144,30 @@ describe("mobile asset registry policy", () => {
       .sort();
 
     expect(rootFiles).toEqual([...expoAssetFiles].sort());
-    expect(rootFolders).toEqual(["bottom-tabs", "fonts"]);
+    expect(rootFolders).toEqual(["bottom-tabs", "fonts", "runtime"]);
     for (const file of requiredIconFiles.filter((file) =>
       file.startsWith("bottom-tabs/"),
     )) {
       expect(fs.existsSync(path.join(assetsRoot, file))).toBe(true);
+    }
+    for (const file of requiredIconFiles) {
+      expect(
+        fs.existsSync(path.join(assetsRoot, "runtime", "icons", file)),
+      ).toBe(true);
+    }
+    for (const file of [
+      "brand/salary-hijacking-platform-logo.png",
+      "brand/logotype-white.png",
+      "brand/eureka-world-logo.jpg",
+    ]) {
+      expect(
+        fs.existsSync(path.join(assetsRoot, "runtime", "images", file)),
+      ).toBe(true);
+    }
+    for (const file of collectFiles(path.join(assetsRoot, "runtime"))) {
+      expect(relativePosix(path.join(assetsRoot, "runtime"), file)).toMatch(
+        /^(?:icons\/(?:bottom-tabs|common|money|level|community|profile|social|brands)\/[a-z0-9]+(?:-[a-z0-9]+)*\.png|images\/(?:brand|ad-banners|book-covers|news-thumbnails|workout|community-thumbnails|placeholders)\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp))$/u,
+      );
     }
     expect(fs.existsSync(path.join(assetsRoot, "icons"))).toBe(false);
     expect(fs.existsSync(path.join(assetsRoot, "brand"))).toBe(false);

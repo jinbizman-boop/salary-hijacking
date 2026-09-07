@@ -291,6 +291,8 @@ temp/
 Icon?
 !apps/mobile/src/shared/assets/icons/
 !apps/mobile/src/shared/assets/icons/**
+!apps/mobile/assets/runtime/icons/
+!apps/mobile/assets/runtime/icons/**
 ._*
 .Spotlight-V100
 .Trashes

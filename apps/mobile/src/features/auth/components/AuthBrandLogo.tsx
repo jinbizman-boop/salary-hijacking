@@ -17,9 +17,9 @@ import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
 const EUREKA_WORLD_LOGO_ASPECT_RATIO = 177 / 1280;
 const designSystem = salaryHijackingDesignSystem;
 const platformLogo =
-  require("../../../shared/assets/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
+  require("../../../../assets/runtime/images/brand/salary-hijacking-platform-logo.png") as ImageSourcePropType;
 const eurekaWorldLogo =
-  require("../../../shared/assets/images/brand/eureka-world-logo.jpg") as ImageSourcePropType;
+  require("../../../../assets/runtime/images/brand/eureka-world-logo.jpg") as ImageSourcePropType;
 
 export type AuthBrandLogoProps = Readonly<{
   compact?: boolean;

@@ -18,7 +18,7 @@ import {
 const typography = salaryHijackingDesignSystem.typography;
 const elevation = salaryHijackingDesignSystem.elevation;
 const salaryHeroCoinsIcon =
-  require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType;
+  require("../../../../assets/runtime/icons/money/coins.png") as ImageSourcePropType;
 
 export type SalaryHeroCardProps = Readonly<{
   title: string;

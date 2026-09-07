@@ -20,11 +20,11 @@ import { authVisualColors } from "./AuthVisualFrame";
 const typography = salaryHijackingDesignSystem.typography;
 const designSystem = salaryHijackingDesignSystem;
 const kakaoIcon =
-  require("../../../shared/assets/icons/social/kakao.png") as ImageSourcePropType;
+  require("../../../../assets/runtime/icons/social/kakao.png") as ImageSourcePropType;
 const naverIcon =
-  require("../../../shared/assets/icons/social/naver.png") as ImageSourcePropType;
+  require("../../../../assets/runtime/icons/social/naver.png") as ImageSourcePropType;
 const googleIcon =
-  require("../../../shared/assets/icons/social/google.png") as ImageSourcePropType;
+  require("../../../../assets/runtime/icons/social/google.png") as ImageSourcePropType;
 
 const SOCIAL_PROVIDERS: readonly {
   readonly backgroundColor: string;
