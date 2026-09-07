@@ -308,6 +308,9 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).toContain(
       "EAS production Google Services archive path proof",
     );
+    expect(workflow).toContain(
+      "release/eas-production-remote-log-summary.local.json",
+    );
     expect(easIgnore).toContain("!google-services.json");
     expect(easIgnore).not.toMatch(
       /^\s*(?:\*\*\/)?google-services\.json\s*$/mu,

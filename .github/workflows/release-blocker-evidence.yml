@@ -678,6 +678,163 @@ jobs:
             String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
           const hash = (value) =>
             crypto.createHash("sha256").update(String(value)).digest("hex");
+          const sanitizeLine = (value) =>
+            stripAnsi(value)
+              .replace(/https?:\/\/\S+/gi, "[url-redacted]")
+              .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, "[uuid-redacted]")
+              .replace(/ca-app-pub-\d{16}~\d{10}/g, "[admob-app-id-redacted]")
+              .replace(/eas_[A-Za-z0-9_-]{20,}/g, "[eas-token-redacted]")
+              .replace(/AIza[0-9A-Za-z_-]{20,}/g, "[firebase-api-key-redacted]")
+              .replace(/([A-Z0-9_]*(?:TOKEN|SECRET|PASSWORD|PRIVATE_KEY|CLIENT_EMAIL|DATABASE_URL)[A-Z0-9_]*=)\S+/gi, "$1[redacted]")
+              .replace(/BEGIN [A-Z ]+PRIVATE KEY[\s\S]*?END [A-Z ]+PRIVATE KEY/g, "[private-key-redacted]")
+              .replace(/\s+/g, " ")
+              .trim();
+          const collectLogUrls = (value, path = "") => {
+            if (!value || typeof value !== "object") return [];
+            const output = [];
+            for (const [key, entry] of Object.entries(value)) {
+              const nextPath = path ? `${path}.${key}` : key;
+              if (
+                typeof entry === "string" &&
+                /^https?:\/\//u.test(entry) &&
+                /log/i.test(nextPath)
+              ) {
+                output.push({ key: nextPath, url: entry });
+              } else if (entry && typeof entry === "object") {
+                output.push(...collectLogUrls(entry, nextPath));
+              }
+            }
+            return output.slice(0, 12);
+          };
+          const extractSignalLines = (body) => {
+            const lines = stripAnsi(body).split(/\r?\n/u);
+            const matches = [];
+            for (const line of lines) {
+              if (
+                /error|fail|exception|google-services|googleServicesFile|install dependencies|pnpm|node|gradle|credential|keystore|signing|unknown error/i.test(
+                  line,
+                )
+              ) {
+                const sanitized = sanitizeLine(line).slice(0, 500);
+                if (sanitized) matches.push(sanitized);
+              }
+              if (matches.length >= 80) break;
+            }
+            return matches;
+          };
+          const raw = fs.existsSync("../../release/eas-production-build.raw.json")
+            ? stripAnsi(fs.readFileSync("../../release/eas-production-build.raw.json", "utf8"))
+            : "";
+          let parsed = null;
+          try {
+            parsed = raw.trim() ? JSON.parse(raw) : null;
+          } catch {
+            parsed = null;
+          }
+          const builds = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
+          const build = builds.find((item) => String(item?.platform || "").toUpperCase() === "ANDROID") || builds[0] || null;
+          const logTargets = collectLogUrls(build);
+
+          (async () => {
+            const fetched = [];
+            for (const target of logTargets.slice(0, 6)) {
+              try {
+                const response = await fetch(target.url);
+                const text = response.ok ? await response.text() : "";
+                fetched.push({
+                  key: target.key,
+                  status: response.status,
+                  ok: response.ok,
+                  bodyHash: text ? hash(text) : null,
+                  signalLines: response.ok ? extractSignalLines(text) : [],
+                });
+              } catch (error) {
+                fetched.push({
+                  key: target.key,
+                  status: null,
+                  ok: false,
+                  errorClass:
+                    error && typeof error === "object" && "name" in error
+                      ? String(error.name)
+                      : "Error",
+                  signalLines: [],
+                });
+              }
+            }
+
+            const combinedLines = fetched.flatMap((entry) => entry.signalLines);
+            const proof = {
+              schemaVersion: 1,
+              observedAt: new Date().toISOString(),
+              source:
+                "EAS Android production remote build log classification proof; raw log URLs and secrets are not stored.",
+              secretsRedacted: true,
+              containsSecretValues: false,
+              checks: {
+                androidBuildMetadataObserved: Boolean(build),
+                remoteLogUrlCount: logTargets.length,
+                remoteLogFetchAttempted: logTargets.length > 0,
+                remoteLogFetchedCount: fetched.filter((entry) => entry.ok).length,
+              },
+              failureSignals: {
+                googleServicesFileNotUploaded: /googleServicesFile|google-services\.json.+(?:missing|not checked in|uploaded)/i.test(
+                  combinedLines.join("\n"),
+                ),
+                installDependenciesPhase: /install dependencies/i.test(
+                  combinedLines.join("\n"),
+                ),
+                pnpmFailure: /\bpnpm\b/i.test(combinedLines.join("\n")),
+                gradleFailure: /gradle|Task :app/i.test(combinedLines.join("\n")),
+                credentialsFailure: /credential|keystore|signing/i.test(
+                  combinedLines.join("\n"),
+                ),
+              },
+              logs: fetched.map((entry) => ({
+                key: entry.key,
+                status: entry.status,
+                ok: entry.ok,
+                bodyHash: entry.bodyHash || null,
+                errorClass: entry.errorClass || null,
+                signalLines: entry.signalLines.slice(0, 20),
+              })),
+            };
+
+            const serialized = JSON.stringify(proof, null, 2);
+            if (/expo\.dev\/artifacts|\.aab\?|eas_[A-Za-z0-9_-]{20,}|ca-app-pub-\d{16}~\d{10}|AIza[0-9A-Za-z_-]{20,}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(serialized)) {
+              throw new Error("EAS remote log classification proof contains a forbidden secret or artifact URL marker.");
+            }
+            fs.writeFileSync("../../release/eas-production-remote-log-summary.local.json", `${serialized}\n`, "utf8");
+          })().catch((error) => {
+            const fallback = {
+              schemaVersion: 1,
+              observedAt: new Date().toISOString(),
+              source:
+                "EAS Android production remote build log classification fallback proof.",
+              secretsRedacted: true,
+              containsSecretValues: false,
+              checks: {
+                androidBuildMetadataObserved: Boolean(build),
+                remoteLogUrlCount: logTargets.length,
+                remoteLogFetchAttempted: false,
+                remoteLogFetchedCount: 0,
+              },
+              errorClass:
+                error && typeof error === "object" && "name" in error
+                  ? String(error.name)
+                  : "Error",
+            };
+            fs.writeFileSync("../../release/eas-production-remote-log-summary.local.json", `${JSON.stringify(fallback, null, 2)}\n`, "utf8");
+          });
+          NODE
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const stripAnsi = (value) =>
+            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
           const status = Number.parseInt(
             fs.readFileSync("../../release/eas-production-build.status.txt", "utf8").trim(),
             10,
@@ -918,6 +1075,7 @@ jobs:
             release/android-production-aab-preflight.local.json
             release/eas-production-project-proof.local.json
             release/eas-google-services-archive-proof.local.json
+            release/eas-production-remote-log-summary.local.json
             release/eas-production-build-status.local.json
             release/android-production-aab-proof.local.json
 
