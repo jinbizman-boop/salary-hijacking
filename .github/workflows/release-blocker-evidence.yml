@@ -544,17 +544,246 @@ jobs:
           }
           NODE
 
+      - name: Sync EAS production Google Services file variable
+        working-directory: ${{ env.MOBILE_APP_DIR }}
+        run: |
+          set -euo pipefail
+
+          set +e
+          pnpm dlx eas-cli@20.4.0 env:set production \
+            --scope project \
+            --name GOOGLE_SERVICES_JSON \
+            --type file \
+            --value ./secrets/firebase/google-services.json \
+            --visibility secret \
+            --non-interactive \
+            --json > ../../release/eas-google-services-env.raw.json 2> ../../release/eas-google-services-env.stderr.txt
+          sync_status=$?
+          set -e
+          printf '%s\n' "$sync_status" > ../../release/eas-google-services-env.status.txt
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const stripAnsi = (value) =>
+            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
+          const status = Number.parseInt(
+            fs.readFileSync("../../release/eas-google-services-env.status.txt", "utf8").trim(),
+            10,
+          );
+          const raw = fs.existsSync("../../release/eas-google-services-env.raw.json")
+            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.raw.json", "utf8"))
+            : "";
+          const stderr = fs.existsSync("../../release/eas-google-services-env.stderr.txt")
+            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.stderr.txt", "utf8"))
+            : "";
+          const googleServicesPath = "./secrets/firebase/google-services.json";
+          const localFilePresent = fs.existsSync(googleServicesPath);
+          let localFileValidJson = false;
+          let androidPackageMatched = false;
+
+          if (localFilePresent) {
+            try {
+              const parsed = JSON.parse(fs.readFileSync(googleServicesPath, "utf8"));
+              localFileValidJson = true;
+              const androidPackageNames = (Array.isArray(parsed.client) ? parsed.client : [])
+                .map((client) => client?.client_info?.android_client_info?.package_name)
+                .filter((value) => typeof value === "string");
+              androidPackageMatched = androidPackageNames.includes(
+                process.env.ANDROID_PACKAGE || "com.salaryhijacking.mobile",
+              );
+            } catch {
+              localFileValidJson = false;
+            }
+          }
+
+          let parsed = null;
+          try {
+            parsed = raw.trim() ? JSON.parse(raw) : null;
+          } catch {
+            parsed = null;
+          }
+
+          const combined = `${raw}\n${stderr}`;
+          const proof = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source:
+              "EAS production Google Services file environment sync proof; stores only booleans, hashes, and metadata labels.",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            checks: {
+              localGoogleServicesFilePresent: localFilePresent,
+              localGoogleServicesFileValidJson: localFileValidJson,
+              googleServicesAndroidPackageMatched: androidPackageMatched,
+              easEnvSetCommandSucceeded: status === 0,
+              googleServicesJsonNameObserved: /\bGOOGLE_SERVICES_JSON\b/u.test(combined),
+              productionEnvironmentObserved: /\bproduction\b/u.test(combined),
+              fileTypeObserved: /\bfile\b/u.test(combined),
+              secretVisibilityObserved: /\bsecret\b/u.test(combined),
+            },
+            proof: {
+              exitCode: Number.isFinite(status) ? status : null,
+              rawOutputHash: raw ? hash(raw) : null,
+              stderrHash: stderr ? hash(stderr) : null,
+              parsedShape: parsed && typeof parsed === "object"
+                ? Array.isArray(parsed)
+                  ? "array"
+                  : "object"
+                : null,
+            },
+            blocker: null,
+          };
+
+          const pass =
+            proof.checks.localGoogleServicesFilePresent &&
+            proof.checks.localGoogleServicesFileValidJson &&
+            proof.checks.googleServicesAndroidPackageMatched &&
+            proof.checks.easEnvSetCommandSucceeded;
+
+          if (!pass) {
+            proof.blocker =
+              "EAS production GOOGLE_SERVICES_JSON file environment variable was not verified.";
+          }
+
+          const serialized = JSON.stringify(proof, null, 2);
+          if (/ca-app-pub-\d{16}~\d{10}|eas_[A-Za-z0-9_-]{20,}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(serialized)) {
+            throw new Error("EAS Google Services env proof contains a forbidden secret-shaped value.");
+          }
+          fs.writeFileSync("../../release/eas-google-services-env-proof.local.json", `${serialized}\n`, "utf8");
+          fs.rmSync("../../release/eas-google-services-env.raw.json", { force: true });
+          fs.rmSync("../../release/eas-google-services-env.stderr.txt", { force: true });
+          fs.rmSync("../../release/eas-google-services-env.status.txt", { force: true });
+
+          if (!pass) {
+            throw new Error(proof.blocker);
+          }
+          NODE
+
       - name: Build Android production AAB with EAS
         working-directory: ${{ env.MOBILE_APP_DIR }}
         run: |
           set -euo pipefail
 
+          set +e
           pnpm dlx eas-cli@20.4.0 build \
             --platform android \
             --profile production \
             --non-interactive \
             --wait \
-            --json > ../../release/eas-production-build.raw.json
+            --json > ../../release/eas-production-build.raw.json 2> ../../release/eas-production-build.stderr.txt
+          build_status=$?
+          set -e
+          printf '%s\n' "$build_status" > ../../release/eas-production-build.status.txt
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const stripAnsi = (value) =>
+            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
+          const status = Number.parseInt(
+            fs.readFileSync("../../release/eas-production-build.status.txt", "utf8").trim(),
+            10,
+          );
+          const raw = fs.existsSync("../../release/eas-production-build.raw.json")
+            ? stripAnsi(fs.readFileSync("../../release/eas-production-build.raw.json", "utf8"))
+            : "";
+          const stderr = fs.existsSync("../../release/eas-production-build.stderr.txt")
+            ? stripAnsi(fs.readFileSync("../../release/eas-production-build.stderr.txt", "utf8"))
+            : "";
+          const combined = `${raw}\n${stderr}`;
+          let parsed = null;
+          try {
+            parsed = raw.trim() ? JSON.parse(raw) : null;
+          } catch {
+            parsed = null;
+          }
+          const builds = Array.isArray(parsed) ? parsed : parsed ? [parsed] : [];
+          const androidBuild =
+            builds.find((item) => String(item?.platform || "").toUpperCase() === "ANDROID") ||
+            builds[0] ||
+            null;
+          const buildUrl =
+            androidBuild?.buildDetailsPageUrl ||
+            androidBuild?.buildUrl ||
+            androidBuild?.url ||
+            "";
+          const artifactUrl =
+            androidBuild?.artifacts?.buildUrl ||
+            androidBuild?.artifactUrl ||
+            androidBuild?.applicationArchiveUrl ||
+            androidBuild?.artifacts?.applicationArchiveUrl ||
+            "";
+          const statusText = androidBuild?.status ? String(androidBuild.status).toUpperCase() : null;
+          const failureSignals = {
+            googleServicesFileNotUploaded: /googleServicesFile[\s\S]*not checked in|won't be uploaded|google-services\.json.+missing/i.test(
+              combined,
+            ),
+            easBuildFailed: /Build failed|status[^a-z0-9]+ERRORED|status[^a-z0-9]+FAILED/i.test(
+              combined,
+            ),
+            credentialsMentioned: /credential|keystore|signing/i.test(combined),
+            gradleMentioned: /gradle|Execution failed|Task :app/i.test(combined),
+            projectOwnerMentioned: /project|owner|account/i.test(combined),
+          };
+          const proof = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source:
+              "EAS Android production AAB build command status proof; raw build URLs and secrets are not stored.",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            sourceSha: process.env.GITHUB_SHA || null,
+            checks: {
+              easBuildCommandSucceeded: status === 0,
+              androidBuildMetadataObserved: Boolean(androidBuild),
+              androidPlatform:
+                !androidBuild || String(androidBuild?.platform || "").toUpperCase() === "ANDROID",
+              easBuildFinished: statusText === "FINISHED",
+              buildDetailsUrlStored: false,
+              artifactUrlStored: false,
+            },
+            proof: {
+              exitCode: Number.isFinite(status) ? status : null,
+              parsedBuildCount: builds.length,
+              buildIdHash: androidBuild?.id ? hash(androidBuild.id) : null,
+              gitCommitHash: androidBuild?.gitCommitHash || null,
+              status: statusText,
+              distribution: androidBuild?.distribution || null,
+              appVersion: androidBuild?.appVersion || null,
+              appBuildVersion: androidBuild?.appBuildVersion || null,
+              buildDetailsUrlHash: buildUrl ? hash(buildUrl) : null,
+              artifactUrlHash: artifactUrl ? hash(artifactUrl) : null,
+              rawOutputHash: raw ? hash(raw) : null,
+              stderrHash: stderr ? hash(stderr) : null,
+              failureSignals,
+            },
+            blocker: null,
+          };
+
+          if (status !== 0 || statusText !== "FINISHED") {
+            proof.blocker =
+              "EAS Android production AAB remote build did not finish successfully.";
+          }
+
+          const serialized = JSON.stringify(proof, null, 2);
+          if (/expo\.dev\/artifacts|\.aab\?|eas_[A-Za-z0-9_-]{20,}|ca-app-pub-\d{16}~\d{10}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(serialized)) {
+            throw new Error("EAS build status proof contains a forbidden secret or artifact URL marker.");
+          }
+          fs.writeFileSync("../../release/eas-production-build-status.local.json", `${serialized}\n`, "utf8");
+          fs.rmSync("../../release/eas-production-build.stderr.txt", { force: true });
+          fs.rmSync("../../release/eas-production-build.status.txt", { force: true });
+          if (status !== 0) {
+            fs.rmSync("../../release/eas-production-build.raw.json", { force: true });
+            throw new Error(proof.blocker);
+          }
+          NODE
 
       - name: Download and hash Android production AAB
         run: |
@@ -664,6 +893,8 @@ jobs:
           path: |
             release/android-production-aab-preflight.local.json
             release/eas-production-project-proof.local.json
+            release/eas-google-services-env-proof.local.json
+            release/eas-production-build-status.local.json
             release/android-production-aab-proof.local.json
 
       - name: Upload Android production AAB

@@ -117,6 +117,7 @@
       "extends": "base",
       "distribution": "store",
       "channel": "production",
+      "environment": "production",
       "autoIncrement": true,
       "env": {
         "APP_ENV": "production",

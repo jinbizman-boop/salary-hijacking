@@ -385,6 +385,20 @@ describe("mobile Detox E2E contract", () => {
     expect(() => appConfig({ config: {} })).toThrow(/ADMOB_ANDROID_APP_ID/u);
   });
 
+  it("binds production EAS builds to the production environment for server-side file variables", () => {
+    const eas = JSON.parse(readRequiredText("eas.json")) as {
+      readonly build?: {
+        readonly production?: {
+          readonly environment?: string;
+          readonly android?: { readonly buildType?: string };
+        };
+      };
+    };
+
+    expect(eas.build?.production?.environment).toBe("production");
+    expect(eas.build?.production?.android?.buildType).toBe("app-bundle");
+  });
+
   it("uses staging HTTPS as the release-like default API base when no explicit local URL is provided", () => {
     process.env = {
       ...originalEnv,
