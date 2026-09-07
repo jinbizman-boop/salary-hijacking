@@ -437,11 +437,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          pnpm dlx eas-cli@20.4.0 whoami --non-interactive > ../../release/eas-whoami.redacted.txt
           set +e
+          pnpm dlx eas-cli@20.4.0 whoami --non-interactive > ../../release/eas-whoami.redacted.txt 2> ../../release/eas-whoami.stderr.txt
+          whoami_status=$?
           pnpm dlx eas-cli@20.4.0 project:info --non-interactive > ../../release/eas-project-info.raw.txt 2> ../../release/eas-project-info.stderr.txt
           project_info_status=$?
           set -e
+          printf '%s\n' "$whoami_status" > ../../release/eas-whoami.status.txt
           printf '%s\n' "$project_info_status" > ../../release/eas-project-info.status.txt
 
           node <<'NODE'
@@ -472,7 +474,16 @@ jobs:
             crypto.createHash("sha256").update(String(value)).digest("hex");
 
           const configuredProjectId = process.env.EAS_PROJECT_ID || "";
-          const whoami = fs.readFileSync("../../release/eas-whoami.redacted.txt", "utf8").trim();
+          const whoami = fs.existsSync("../../release/eas-whoami.redacted.txt")
+            ? fs.readFileSync("../../release/eas-whoami.redacted.txt", "utf8").trim()
+            : "";
+          const whoamiExitCode = Number.parseInt(
+            fs.readFileSync("../../release/eas-whoami.status.txt", "utf8").trim(),
+            10,
+          );
+          const whoamiError = fs.existsSync("../../release/eas-whoami.stderr.txt")
+            ? stripAnsi(fs.readFileSync("../../release/eas-whoami.stderr.txt", "utf8")).trim()
+            : "";
           const projectInfoExitCode = Number.parseInt(
             fs.readFileSync("../../release/eas-project-info.status.txt", "utf8").trim(),
             10,
@@ -497,7 +508,8 @@ jobs:
             secretsRedacted: true,
             containsSecretValues: false,
             checks: {
-              easAuthenticated: Boolean(whoami),
+              easWhoamiCommandSucceeded: whoamiExitCode === 0,
+              easAuthenticated: Boolean(whoami) && whoamiExitCode === 0,
               easProjectInfoCommandSucceeded: projectInfoExitCode === 0,
               easProjectMetadataPresent: Boolean(remoteProjectId),
               easProjectIdRemoteMatch:
@@ -507,6 +519,8 @@ jobs:
             },
             proof: {
               accountNameHash: hash(whoami),
+              whoamiExitCode: Number.isFinite(whoamiExitCode) ? whoamiExitCode : null,
+              whoamiErrorHash: whoamiError ? hash(whoamiError) : null,
               projectIdConfiguredHash: hash(configuredProjectId),
               projectIdRemoteHash: hash(remoteProjectId),
               projectInfoExitCode: Number.isFinite(projectInfoExitCode)
@@ -520,6 +534,8 @@ jobs:
             throw new Error("EAS identity proof contains a forbidden secret-shaped value.");
           }
           fs.writeFileSync("../../release/eas-production-project-proof.local.json", `${serialized}\n`, "utf8");
+          fs.rmSync("../../release/eas-whoami.stderr.txt", { force: true });
+          fs.rmSync("../../release/eas-whoami.status.txt", { force: true });
           fs.rmSync("../../release/eas-project-info.raw.txt", { force: true });
           fs.rmSync("../../release/eas-project-info.stderr.txt", { force: true });
           fs.rmSync("../../release/eas-project-info.status.txt", { force: true });
