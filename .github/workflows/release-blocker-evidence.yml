@@ -858,9 +858,8 @@ jobs:
                 const sanitized = sanitizeLine(line).slice(0, 500);
                 if (sanitized) matches.push(sanitized);
               }
-              if (matches.length >= 240) break;
             }
-            return matches;
+            return matches.slice(-240);
           };
           const raw = fs.existsSync("../../release/eas-production-build.raw.json")
             ? stripAnsi(fs.readFileSync("../../release/eas-production-build.raw.json", "utf8"))
@@ -1104,7 +1103,7 @@ jobs:
             const patterns = [
               ["expoArtifactHost", /expo\.dev\/artifacts/i],
               ["aabQueryUrl", /\.aab\?/i],
-              ["easToken", /eas_[A-Za-z0-9_-]{20,}/i],
+              ["easToken", /eas_[A-Za-z0-9_-]{20,}/],
               ["adMobAppId", /ca-app-pub-\d{16}~\d{10}/i],
               ["privateKeyBlock", /BEGIN [A-Z ]+PRIVATE KEY/i],
               ["privateKeyField", /private_key/i],
