@@ -1097,18 +1097,47 @@ jobs:
               "EAS Android production AAB remote build did not finish successfully.";
           }
 
-          const serialized = JSON.stringify(proof, null, 2);
-          const containsForbiddenEvidenceValue = (value) => {
+          const collectForbiddenEvidenceValueMatches = (
+            value,
+            path = "$",
+          ) => {
+            const patterns = [
+              ["expoArtifactHost", /expo\.dev\/artifacts/i],
+              ["aabQueryUrl", /\.aab\?/i],
+              ["easToken", /eas_[A-Za-z0-9_-]{20,}/i],
+              ["adMobAppId", /ca-app-pub-\d{16}~\d{10}/i],
+              ["privateKeyBlock", /BEGIN [A-Z ]+PRIVATE KEY/i],
+              ["privateKeyField", /private_key/i],
+              ["clientEmailField", /client_email/i],
+              ["postgresUrl", /postgres(?:ql)?:\/\//i],
+            ];
             if (typeof value === "string") {
-              return /expo\.dev\/artifacts|\.aab\?|eas_[A-Za-z0-9_-]{20,}|ca-app-pub-\d{16}~\d{10}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(value);
+              return patterns
+                .filter(([, pattern]) => pattern.test(value))
+                .map(([name]) => ({ pathHash: hash(path), pattern: name }));
             }
-            if (Array.isArray(value)) return value.some(containsForbiddenEvidenceValue);
+            if (Array.isArray(value)) {
+              return value.flatMap((entry, index) =>
+                collectForbiddenEvidenceValueMatches(entry, `${path}.${index}`),
+              );
+            }
             if (value && typeof value === "object") {
-              return Object.values(value).some(containsForbiddenEvidenceValue);
+              return Object.entries(value).flatMap(([key, entry]) =>
+                collectForbiddenEvidenceValueMatches(entry, `${path}.${key}`),
+              );
             }
-            return false;
+            return [];
           };
-          if (containsForbiddenEvidenceValue(proof)) {
+          const forbiddenEvidenceValueMatches =
+            collectForbiddenEvidenceValueMatches(proof).slice(0, 12);
+          proof.checks.forbiddenEvidenceValueAbsent =
+            forbiddenEvidenceValueMatches.length === 0;
+          proof.proof.forbiddenEvidenceValueMatches =
+            forbiddenEvidenceValueMatches;
+
+          const serialized = JSON.stringify(proof, null, 2);
+          if (forbiddenEvidenceValueMatches.length > 0) {
+            fs.writeFileSync("../../release/eas-production-build-status.local.json", `${serialized}\n`, "utf8");
             throw new Error("EAS build status proof contains a forbidden secret or artifact URL marker.");
           }
           fs.writeFileSync("../../release/eas-production-build-status.local.json", `${serialized}\n`, "utf8");
