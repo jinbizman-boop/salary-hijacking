@@ -550,14 +550,14 @@ jobs:
           set -euo pipefail
 
           set +e
-          pnpm dlx eas-cli@20.4.0 env:set production \
+          pnpm dlx eas-cli@20.4.0 env:create production \
             --scope project \
             --name GOOGLE_SERVICES_JSON \
             --type file \
             --value ./secrets/firebase/google-services.json \
             --visibility secret \
-            --non-interactive \
-            --json > ../../release/eas-google-services-env.raw.json 2> ../../release/eas-google-services-env.stderr.txt
+            --force \
+            --non-interactive > ../../release/eas-google-services-env.raw.txt 2> ../../release/eas-google-services-env.stderr.txt
           sync_status=$?
           set -e
           printf '%s\n' "$sync_status" > ../../release/eas-google-services-env.status.txt
@@ -574,8 +574,8 @@ jobs:
             fs.readFileSync("../../release/eas-google-services-env.status.txt", "utf8").trim(),
             10,
           );
-          const raw = fs.existsSync("../../release/eas-google-services-env.raw.json")
-            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.raw.json", "utf8"))
+          const raw = fs.existsSync("../../release/eas-google-services-env.raw.txt")
+            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.raw.txt", "utf8"))
             : "";
           const stderr = fs.existsSync("../../release/eas-google-services-env.stderr.txt")
             ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.stderr.txt", "utf8"))
@@ -654,7 +654,7 @@ jobs:
             throw new Error("EAS Google Services env proof contains a forbidden secret-shaped value.");
           }
           fs.writeFileSync("../../release/eas-google-services-env-proof.local.json", `${serialized}\n`, "utf8");
-          fs.rmSync("../../release/eas-google-services-env.raw.json", { force: true });
+          fs.rmSync("../../release/eas-google-services-env.raw.txt", { force: true });
           fs.rmSync("../../release/eas-google-services-env.stderr.txt", { force: true });
           fs.rmSync("../../release/eas-google-services-env.status.txt", { force: true });
 
