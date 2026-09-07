@@ -280,7 +280,6 @@ jobs:
       EXPO_PUBLIC_E2E_BUILD: "false"
       EXPO_PUBLIC_ADS_ENABLED: "true"
       EXPO_PUBLIC_PARTNER_ENABLED: "true"
-      GOOGLE_SERVICES_JSON: ./secrets/firebase/google-services.json
 
     steps:
       - name: Checkout repository
@@ -555,7 +554,7 @@ jobs:
             --name GOOGLE_SERVICES_JSON \
             --type file \
             --value ./secrets/firebase/google-services.json \
-            --visibility secret \
+            --visibility sensitive \
             --force \
             --non-interactive > ../../release/eas-google-services-env.raw.txt 2> ../../release/eas-google-services-env.stderr.txt
           sync_status=$?
@@ -623,7 +622,7 @@ jobs:
               googleServicesJsonNameObserved: /\bGOOGLE_SERVICES_JSON\b/u.test(combined),
               productionEnvironmentObserved: /\bproduction\b/u.test(combined),
               fileTypeObserved: /\bfile\b/u.test(combined),
-              secretVisibilityObserved: /\bsecret\b/u.test(combined),
+              sensitiveVisibilityObserved: /\bsensitive\b/u.test(combined),
             },
             proof: {
               exitCode: Number.isFinite(status) ? status : null,
