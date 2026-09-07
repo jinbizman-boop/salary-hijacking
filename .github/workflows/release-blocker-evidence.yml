@@ -543,6 +543,122 @@ jobs:
           }
           NODE
 
+      - name: Sync EAS production config-time variables
+        working-directory: ${{ env.MOBILE_APP_DIR }}
+        run: |
+          set -euo pipefail
+
+          sync_env_var() {
+            local name="$1"
+            local visibility="$2"
+            local value="${!name:-}"
+            set +e
+            pnpm dlx eas-cli@23.2.0 env:set production \
+              --scope project \
+              --name "$name" \
+              --type string \
+              --value "$value" \
+              --visibility "$visibility" \
+              --non-interactive \
+              --json > "../../release/eas-config-env-${name}.raw.json" 2> "../../release/eas-config-env-${name}.stderr.txt"
+            local status=$?
+            set -e
+            printf '%s\n' "$status" > "../../release/eas-config-env-${name}.status.txt"
+          }
+
+          sync_env_var EAS_PROJECT_ID plaintext
+          sync_env_var ADMOB_ANDROID_APP_ID sensitive
+          sync_env_var GOOGLE_SERVICES_JSON plaintext
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const names = [
+            "EAS_PROJECT_ID",
+            "ADMOB_ANDROID_APP_ID",
+            "GOOGLE_SERVICES_JSON",
+          ];
+          const stripAnsi = (value) =>
+            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
+          const records = names.map((name) => {
+            const statusPath = `../../release/eas-config-env-${name}.status.txt`;
+            const rawPath = `../../release/eas-config-env-${name}.raw.json`;
+            const stderrPath = `../../release/eas-config-env-${name}.stderr.txt`;
+            const status = fs.existsSync(statusPath)
+              ? Number.parseInt(fs.readFileSync(statusPath, "utf8").trim(), 10)
+              : null;
+            const raw = fs.existsSync(rawPath)
+              ? stripAnsi(fs.readFileSync(rawPath, "utf8"))
+              : "";
+            const stderr = fs.existsSync(stderrPath)
+              ? stripAnsi(fs.readFileSync(stderrPath, "utf8"))
+              : "";
+            const combined = `${raw}\n${stderr}`;
+            fs.rmSync(statusPath, { force: true });
+            fs.rmSync(rawPath, { force: true });
+            fs.rmSync(stderrPath, { force: true });
+
+            return {
+              name,
+              exitCode: Number.isFinite(status) ? status : null,
+              synced: status === 0,
+              rawOutputHash: raw ? hash(raw) : null,
+              stderrHash: stderr ? hash(stderr) : null,
+              failureSignals: {
+                authenticationFailure: /not logged in|unauthorized|authentication|invalid token/i.test(
+                  combined,
+                ),
+                permissionFailure: /forbidden|permission|not authorized/i.test(combined),
+                invalidVisibility:
+                  /visibility|sensitive|secret|plaintext/i.test(combined) &&
+                  status !== 0,
+                invalidValue: /invalid|validation|format/i.test(combined) && status !== 0,
+              },
+            };
+          });
+
+          const proof = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source:
+              "EAS production config-time environment sync proof; stores only variable names, statuses, and hashes.",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            checks: {
+              easProjectIdSynced:
+                records.find((item) => item.name === "EAS_PROJECT_ID")?.synced === true,
+              admobAndroidAppIdSynced:
+                records.find((item) => item.name === "ADMOB_ANDROID_APP_ID")?.synced === true,
+              googleServicesJsonPathSynced:
+                records.find((item) => item.name === "GOOGLE_SERVICES_JSON")?.synced === true,
+              admobIosAppIdRequired: false,
+            },
+            records,
+            blocker: null,
+          };
+          const pass =
+            proof.checks.easProjectIdSynced &&
+            proof.checks.admobAndroidAppIdSynced &&
+            proof.checks.googleServicesJsonPathSynced &&
+            proof.checks.admobIosAppIdRequired === false;
+          if (!pass) {
+            proof.blocker =
+              "EAS production config-time environment variables were not verified.";
+          }
+
+          const serialized = JSON.stringify(proof, null, 2);
+          if (/ca-app-pub-\d{16}~\d{10}|eas_[A-Za-z0-9_-]{20,}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(serialized)) {
+            throw new Error("EAS config-time env proof contains a forbidden secret-shaped value.");
+          }
+          fs.writeFileSync("../../release/eas-production-config-env-proof.local.json", `${serialized}\n`, "utf8");
+          if (!pass) {
+            throw new Error(proof.blocker);
+          }
+          NODE
+
       - name: Verify EAS archive Google Services file path
         working-directory: ${{ env.MOBILE_APP_DIR }}
         run: |
@@ -1074,6 +1190,7 @@ jobs:
           path: |
             release/android-production-aab-preflight.local.json
             release/eas-production-project-proof.local.json
+            release/eas-production-config-env-proof.local.json
             release/eas-google-services-archive-proof.local.json
             release/eas-production-remote-log-summary.local.json
             release/eas-production-build-status.local.json
