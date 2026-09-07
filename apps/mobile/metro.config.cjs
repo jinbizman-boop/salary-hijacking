@@ -556,8 +556,11 @@ function tryResolveRelativeWorkspaceSource(moduleName, originModulePath) {
   if (!isInsideWorkspace) return null;
 
   const sourceExts = config.resolver.sourceExts ?? [];
+  const sourceExtSet = new Set(sourceExts.map((extension) => `.${extension}`));
   const candidates = [];
-  if (path.extname(candidateBase)) {
+  const explicitExtension = path.extname(candidateBase);
+  if (explicitExtension) {
+    if (!sourceExtSet.has(explicitExtension)) return null;
     candidates.push(candidateBase);
   } else {
     for (const extension of sourceExts) {

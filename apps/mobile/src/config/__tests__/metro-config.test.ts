@@ -1096,4 +1096,40 @@ describe("mobile Metro dependency resolution", () => {
     );
     expect(fallbackResolver).not.toHaveBeenCalled();
   });
+
+  it("delegates relative image asset requests to Metro's native asset resolver", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: resolvedModuleName,
+      }),
+    );
+    const socialLoginPath = nodePath.resolve(
+      __dirname,
+      "../../features/auth/components/SocialLoginButtons.tsx",
+    );
+    const context: ResolverContext = {
+      originModulePath: socialLoginPath,
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(
+      context,
+      "../../../../assets/runtime/icons/social/kakao.png",
+      "android",
+    );
+
+    expect(result.filePath).toBe(
+      "../../../../assets/runtime/icons/social/kakao.png",
+    );
+    expect(fallbackResolver).toHaveBeenCalledWith(
+      context,
+      "../../../../assets/runtime/icons/social/kakao.png",
+      "android",
+    );
+  });
 });
