@@ -115,6 +115,8 @@
     },
     "production": {
       "extends": "base",
+      "corepack": true,
+      "pnpm": "10.24.0",
       "distribution": "store",
       "channel": "production",
       "environment": "production",

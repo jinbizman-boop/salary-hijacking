@@ -413,12 +413,16 @@ describe("mobile Detox E2E contract", () => {
     const eas = JSON.parse(readRequiredText("eas.json")) as {
       readonly build?: {
         readonly production?: {
+          readonly corepack?: boolean;
+          readonly pnpm?: string;
           readonly environment?: string;
           readonly android?: { readonly buildType?: string };
         };
       };
     };
 
+    expect(eas.build?.production?.corepack).toBe(true);
+    expect(eas.build?.production?.pnpm).toBe("10.24.0");
     expect(eas.build?.production?.environment).toBe("production");
     expect(eas.build?.production?.android?.buildType).toBe("app-bundle");
   });
