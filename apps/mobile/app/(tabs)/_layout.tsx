@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- React Native tab icons must stay as static require() calls for EAS Android bundling. */
 import { Tabs, useRouter, type Href } from "expo-router";
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { Image, Pressable, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { bottomTabIconAssets } from "../../src/shared/assets/icons/index";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import {
   getRootTabHref,
@@ -24,6 +24,17 @@ type TabDefinition = Readonly<{
 
 const LAYOUT_VERSION = "4.1.0-explicit-root-tab-navigation";
 const designSystem = salaryHijackingDesignSystem;
+const bottomTabIconAssets = {
+  salary:
+    require("../../src/shared/assets/icons/bottom-tabs/salary-tab.png") as ImageSourcePropType,
+  plan: require("../../src/shared/assets/icons/bottom-tabs/plan-tab.png") as ImageSourcePropType,
+  level:
+    require("../../src/shared/assets/icons/bottom-tabs/level-tab.png") as ImageSourcePropType,
+  community:
+    require("../../src/shared/assets/icons/bottom-tabs/community-tab.png") as ImageSourcePropType,
+  profile:
+    require("../../src/shared/assets/icons/bottom-tabs/profile-tab.png") as ImageSourcePropType,
+} as const;
 
 const tabs: readonly TabDefinition[] = [
   {
