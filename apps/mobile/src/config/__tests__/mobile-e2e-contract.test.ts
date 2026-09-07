@@ -294,6 +294,27 @@ describe("mobile Detox E2E contract", () => {
     );
   });
 
+  it("keeps production EAS archive able to upload CI-generated google-services file", () => {
+    const workflow = readRequiredText(
+      "../../.github/workflows/release-blocker-evidence.yml",
+    );
+    const easIgnore = readRequiredText(".easignore");
+    const gitIgnore = readRequiredText(".gitignore");
+
+    expect(workflow).toContain("GOOGLE_SERVICES_JSON: ./google-services.json");
+    expect(workflow).toContain(
+      'const googleServicesPath = "apps/mobile/google-services.json";',
+    );
+    expect(workflow).toContain(
+      "EAS production Google Services archive path proof",
+    );
+    expect(easIgnore).toContain("!google-services.json");
+    expect(easIgnore).not.toMatch(
+      /^\s*(?:\*\*\/)?google-services\.json\s*$/mu,
+    );
+    expect(gitIgnore).toMatch(/^\s*(?:\*\*\/)?google-services\.json\s*$/mu);
+  });
+
   it("keeps Android post-splash window background on the brand splash layer", () => {
     const styles = readRequiredText(
       "android/app/src/main/res/values/styles.xml",

@@ -270,6 +270,7 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
       ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
+      GOOGLE_SERVICES_JSON: ./google-services.json
       GOOGLE_SERVICES_JSON_CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON_CONTENT }}
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
       ANDROID_PACKAGE: com.salaryhijacking.mobile
@@ -307,7 +308,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          mkdir -p release release-artifacts/mobile "$MOBILE_APP_DIR/secrets/firebase"
+          mkdir -p release release-artifacts/mobile "$MOBILE_APP_DIR"
 
           node <<'NODE'
           const fs = require("node:fs");
@@ -339,8 +340,7 @@ jobs:
             missing.push("ADMOB_ANDROID_APP_ID_VALID_FORMAT");
           }
 
-          const googleServicesPath =
-            "apps/mobile/secrets/firebase/google-services.json";
+          const googleServicesPath = "apps/mobile/google-services.json";
           const googleServicesStatus = {
             source: "none",
             prepared: false,
@@ -543,46 +543,27 @@ jobs:
           }
           NODE
 
-      - name: Sync EAS production Google Services file variable
+      - name: Verify EAS archive Google Services file path
         working-directory: ${{ env.MOBILE_APP_DIR }}
         run: |
           set -euo pipefail
-
-          set +e
-          pnpm dlx eas-cli@23.2.0 env:set production \
-            --scope project \
-            --name GOOGLE_SERVICES_JSON \
-            --type file \
-            --value ./secrets/firebase/google-services.json \
-            --visibility sensitive \
-            --non-interactive \
-            --json > ../../release/eas-google-services-env.raw.json 2> ../../release/eas-google-services-env.stderr.txt
-          sync_status=$?
-          set -e
-          printf '%s\n' "$sync_status" > ../../release/eas-google-services-env.status.txt
 
           node <<'NODE'
           const crypto = require("node:crypto");
           const fs = require("node:fs");
 
-          const stripAnsi = (value) =>
-            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
           const hash = (value) =>
             crypto.createHash("sha256").update(String(value)).digest("hex");
-          const status = Number.parseInt(
-            fs.readFileSync("../../release/eas-google-services-env.status.txt", "utf8").trim(),
-            10,
-          );
-          const raw = fs.existsSync("../../release/eas-google-services-env.raw.json")
-            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.raw.json", "utf8"))
-            : "";
-          const stderr = fs.existsSync("../../release/eas-google-services-env.stderr.txt")
-            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.stderr.txt", "utf8"))
-            : "";
-          const googleServicesPath = "./secrets/firebase/google-services.json";
+          const googleServicesPath = "./google-services.json";
+          const easIgnorePath = "./.easignore";
+          const gitIgnorePath = "./.gitignore";
           const localFilePresent = fs.existsSync(googleServicesPath);
+          const easIgnorePresent = fs.existsSync(easIgnorePath);
+          const gitIgnorePresent = fs.existsSync(gitIgnorePath);
           let localFileValidJson = false;
           let androidPackageMatched = false;
+          let easArchiveAllowsRootGoogleServicesFile = false;
+          let gitKeepsRootGoogleServicesIgnored = false;
 
           if (localFilePresent) {
             try {
@@ -599,49 +580,51 @@ jobs:
             }
           }
 
-          let parsed = null;
-          try {
-            parsed = raw.trim() ? JSON.parse(raw) : null;
-          } catch {
-            parsed = null;
+          if (easIgnorePresent) {
+            const easIgnore = fs.readFileSync(easIgnorePath, "utf8");
+            const easIgnoreLines = easIgnore
+              .split(/\r?\n/u)
+              .map((line) => line.trim())
+              .filter((line) => line && !line.startsWith("#"));
+            easArchiveAllowsRootGoogleServicesFile =
+              easIgnoreLines.includes("!google-services.json") &&
+              !easIgnoreLines.some(
+                (line) =>
+                  line !== "!google-services.json" &&
+                  /^(?:\*\*\/)?google-services\.json$/u.test(line),
+              );
           }
 
-          const combined = `${raw}\n${stderr}`;
+          if (gitIgnorePresent) {
+            const gitIgnore = fs.readFileSync(gitIgnorePath, "utf8");
+            gitKeepsRootGoogleServicesIgnored =
+              /^google-services\.json$/mu.test(gitIgnore) ||
+              /^\*\*\/google-services\.json$/mu.test(gitIgnore);
+          }
+
           const proof = {
             schemaVersion: 1,
             observedAt: new Date().toISOString(),
             source:
-              "EAS production Google Services file environment sync proof; stores only booleans, hashes, and metadata labels.",
+              "EAS production Google Services archive path proof; stores only booleans, hashes, and metadata labels.",
             secretsRedacted: true,
             containsSecretValues: false,
             checks: {
               localGoogleServicesFilePresent: localFilePresent,
               localGoogleServicesFileValidJson: localFileValidJson,
               googleServicesAndroidPackageMatched: androidPackageMatched,
-              easEnvSetCommandSucceeded: status === 0,
-              googleServicesJsonNameObserved: /\bGOOGLE_SERVICES_JSON\b/u.test(combined),
-              productionEnvironmentObserved: /\bproduction\b/u.test(combined),
-              fileTypeObserved: /\bfile\b/u.test(combined),
-              sensitiveVisibilityObserved: /\bsensitive\b/u.test(combined),
+              googleServicesJsonEnvMatchesArchivePath:
+                process.env.GOOGLE_SERVICES_JSON === googleServicesPath,
+              easIgnorePresent,
+              easArchiveAllowsRootGoogleServicesFile,
+              gitIgnorePresent,
+              gitKeepsRootGoogleServicesIgnored,
             },
             proof: {
-              exitCode: Number.isFinite(status) ? status : null,
-              rawOutputHash: raw ? hash(raw) : null,
-              stderrHash: stderr ? hash(stderr) : null,
-              failureSignals: {
-                commandNotFound: /command .*env:set.*not found|command env:set not found/i.test(combined),
-                authenticationFailure: /not logged in|unauthorized|authentication|invalid token/i.test(
-                  combined,
-                ),
-                permissionFailure: /forbidden|permission|not authorized/i.test(combined),
-                invalidVisibility: /visibility|sensitive|secret|plaintext/i.test(combined) && status !== 0,
-                invalidFileType: /\bfile\b|type/i.test(combined) && status !== 0,
-              },
-              parsedShape: parsed && typeof parsed === "object"
-                ? Array.isArray(parsed)
-                  ? "array"
-                  : "object"
+              localFileHash: localFilePresent
+                ? hash(fs.readFileSync(googleServicesPath, "utf8"))
                 : null,
+              googleServicesPath,
             },
             blocker: null,
           };
@@ -650,21 +633,21 @@ jobs:
             proof.checks.localGoogleServicesFilePresent &&
             proof.checks.localGoogleServicesFileValidJson &&
             proof.checks.googleServicesAndroidPackageMatched &&
-            proof.checks.easEnvSetCommandSucceeded;
+            proof.checks.googleServicesJsonEnvMatchesArchivePath &&
+            proof.checks.easIgnorePresent &&
+            proof.checks.easArchiveAllowsRootGoogleServicesFile &&
+            proof.checks.gitKeepsRootGoogleServicesIgnored;
 
           if (!pass) {
             proof.blocker =
-              "EAS production GOOGLE_SERVICES_JSON file environment variable was not verified.";
+              "EAS production google-services.json archive path was not verified.";
           }
 
           const serialized = JSON.stringify(proof, null, 2);
           if (/ca-app-pub-\d{16}~\d{10}|eas_[A-Za-z0-9_-]{20,}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(serialized)) {
-            throw new Error("EAS Google Services env proof contains a forbidden secret-shaped value.");
+            throw new Error("EAS Google Services archive proof contains a forbidden secret-shaped value.");
           }
-          fs.writeFileSync("../../release/eas-google-services-env-proof.local.json", `${serialized}\n`, "utf8");
-          fs.rmSync("../../release/eas-google-services-env.raw.json", { force: true });
-          fs.rmSync("../../release/eas-google-services-env.stderr.txt", { force: true });
-          fs.rmSync("../../release/eas-google-services-env.status.txt", { force: true });
+          fs.writeFileSync("../../release/eas-google-services-archive-proof.local.json", `${serialized}\n`, "utf8");
 
           if (!pass) {
             throw new Error(proof.blocker);
@@ -934,7 +917,7 @@ jobs:
           path: |
             release/android-production-aab-preflight.local.json
             release/eas-production-project-proof.local.json
-            release/eas-google-services-env-proof.local.json
+            release/eas-google-services-archive-proof.local.json
             release/eas-production-build-status.local.json
             release/android-production-aab-proof.local.json
 

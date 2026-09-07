@@ -1,0 +1,25 @@
+# EAS archive rules for Salary Hijacking mobile builds.
+# This intentionally differs from .gitignore so the CI-generated Android
+# Firebase config can be uploaded to EAS without being committed.
+
+node_modules/
+.expo/
+dist/
+build/
+coverage/
+android/
+ios/
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Keep local credential directories out of archives.
+secrets/
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+
+# The production workflow writes this root file from a GitHub environment
+# secret immediately before invoking EAS. It remains gitignored.
+!google-services.json
