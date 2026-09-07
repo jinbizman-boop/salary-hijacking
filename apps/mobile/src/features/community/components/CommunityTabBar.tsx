@@ -10,6 +10,12 @@ import { COMMUNITY_BOARD_LABELS } from "../community.constants";
 import type { CommunityBoardType } from "../community.types";
 
 const typography = salaryHijackingDesignSystem.typography;
+const COMMUNITY_CATEGORY_COUNT = 3;
+const CANONICAL_COMMUNITY_CATEGORIES: readonly CommunityBoardType[] = [
+  "FREE",
+  "LEVEL_CERTIFICATION",
+  "HEALTH_ROUTINE",
+];
 
 export type CommunityTabBarProps = Readonly<{
   tabs: readonly CommunityBoardType[];
@@ -24,6 +30,13 @@ export function CommunityTabBar({
   counts = {},
   onSelect,
 }: CommunityTabBarProps): React.ReactElement {
+  if (
+    tabs.length !== COMMUNITY_CATEGORY_COUNT ||
+    CANONICAL_COMMUNITY_CATEGORIES.some((category) => !tabs.includes(category))
+  ) {
+    throw new Error("CommunityTabBar requires exactly 3 canonical categories.");
+  }
+
   return (
     <View style={styles.wrapper}>
       <View accessibilityRole="tablist" style={styles.tabs}>
@@ -69,9 +82,9 @@ const styles = StyleSheet.create({
   },
   tab: {
     minHeight: 44,
-    minWidth: 92,
     alignItems: "center",
     justifyContent: "center",
+    flex: 1,
     paddingHorizontal: componentSpacing.sm,
     borderWidth: 1,
     borderColor: componentColors.line,

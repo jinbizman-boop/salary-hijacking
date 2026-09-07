@@ -29,8 +29,31 @@ describe("plan screen design system integration", () => {
     expect(source).not.toContain('headers={["지출일", "구분명", "소비명", "단가", "수량", "금액"]}');
     expect(source).not.toContain("tableHeaderCell");
     expect(source).not.toContain("tableRow");
-    expect(source).toContain("function PlanSummaryGrid");
+    expect(source).toContain("function PlanSummaryRows");
     expect(source).toContain("function PlanCommitmentList");
     expect(source).toContain("function MobilePlanSection");
+  });
+
+  it("preserves plan sections while refining them into compact scan rows", () => {
+    const orderedSections = [
+      'title="급여 계획"',
+      'title="고정지출"',
+      'title="고정저축"',
+      'title="생활비"',
+    ];
+
+    let previousIndex = -1;
+    for (const marker of orderedSections) {
+      const nextIndex = source.indexOf(marker);
+      expect(nextIndex).toBeGreaterThan(previousIndex);
+      previousIndex = nextIndex;
+    }
+
+    expect(source).toContain("function PlanSummaryRows");
+    expect(source).toContain("styles.sectionIconAnchor");
+    expect(source).toContain("styles.compactManageButton");
+    expect(source).toContain("관리 >");
+    expect(source).not.toContain("function PlanSummaryGrid");
+    expect(source).not.toContain("styles.summaryTile");
   });
 });

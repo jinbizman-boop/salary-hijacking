@@ -25,4 +25,32 @@ describe("salary home design system integration", () => {
     expect(source).not.toContain("styles.tableMoney");
     expect(source).not.toContain("tableHeaderText");
   });
+
+  it("preserves the current salary home structure while adding semantic color accents only", () => {
+    const orderedStructure = [
+      "ProtectedMoneyHeroCard",
+      "PaydayCard",
+      "HeroMetric",
+      "DailySafeToSpendCard",
+      "UpcomingFixedExpenseSection",
+      "VariableExpenseSection",
+      "FinanceInsightSection",
+      "SponsoredSlot",
+    ];
+
+    let previousIndex = -1;
+    for (const marker of orderedStructure) {
+      const nextIndex = source.indexOf(marker);
+      expect(nextIndex).toBeGreaterThan(previousIndex);
+      previousIndex = nextIndex;
+    }
+
+    expect(source).toContain("salarySemanticColors");
+    expect(source).toContain("incomeSoft");
+    expect(source).toContain("expenseSoft");
+    expect(source).toContain("savingSoft");
+    expect(source).toContain("upcomingSoft");
+    expect(source).not.toContain("massiveGreenHome");
+    expect(source).not.toContain("fullScreenGreen");
+  });
 });

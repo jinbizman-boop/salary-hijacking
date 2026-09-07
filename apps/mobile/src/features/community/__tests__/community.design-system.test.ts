@@ -15,6 +15,24 @@ describe("community golden screen design system integration", () => {
     join(__dirname, "..", "..", "..", "..", "app", "community", "[postId].tsx"),
     "utf8",
   );
+  const communityIndexRouteSource = readFileSync(
+    join(
+      __dirname,
+      "..",
+      "..",
+      "..",
+      "..",
+      "app",
+      "(tabs)",
+      "community",
+      "index.tsx",
+    ),
+    "utf8",
+  );
+  const tabBarSource = readFileSync(
+    join(__dirname, "..", "components", "CommunityTabBar.tsx"),
+    "utf8",
+  );
 
   it("uses the canonical Salary Hijacking design system for popular post cards", () => {
     expect(popularPostSource).toContain("salaryHijackingDesignSystem");
@@ -91,5 +109,18 @@ describe("community golden screen design system integration", () => {
         rawTypographyViolations: expect.any(Number),
       }),
     );
+  });
+
+  it("keeps community to three real categories and does not present all as a category", () => {
+    expect(communityIndexRouteSource).toContain("COMMUNITY_TABS");
+    expect(communityIndexRouteSource).toContain('"FREE"');
+    expect(communityIndexRouteSource).toContain('"LEVEL_CERTIFICATION"');
+    expect(communityIndexRouteSource).toContain('"HEALTH_ROUTINE"');
+    expect(communityIndexRouteSource).not.toContain(
+      'subtitle="전체 / 자유 / 레벨업 인증 / 취미"',
+    );
+    expect(tabBarSource).toContain("COMMUNITY_CATEGORY_COUNT");
+    expect(tabBarSource).toContain("flex: 1");
+    expect(tabBarSource).not.toContain("minWidth: 92");
   });
 });

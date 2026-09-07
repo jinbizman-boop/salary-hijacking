@@ -81,6 +81,18 @@ const salaryScreenColors = {
   warningSoft: designSystem.colors.semantic.warningSoft,
   danger: designSystem.colors.semantic.dangerStrong,
 } as const;
+const salarySemanticColors = {
+  completedSoft: designSystem.colors.brand.primarySoft,
+  expense: designSystem.colors.semantic.dangerStrong,
+  expenseSoft: designSystem.colors.semantic.dangerSoft,
+  incomeSoft: designSystem.colors.surface.raised,
+  plannedSoft: designSystem.colors.surface.soft,
+  protected: designSystem.colors.brand.primary,
+  savingSoft: designSystem.colors.brand.primarySoft,
+  upcoming: designSystem.colors.semantic.info,
+  upcomingSoft: designSystem.colors.surface.soft,
+  warningSoft: designSystem.colors.semantic.warningSoft,
+} as const;
 const salaryScreenSpacing = designSystem.spacing;
 const salaryScreenRadius = designSystem.radius;
 const salaryScreenTypography = designSystem.typography;
@@ -740,16 +752,35 @@ export function SalaryHomeScreen({
             />
           </View>
           <View style={styles.paydayRow}>
-            <PaydayCard label="급여주기 시작" value={salaryCycle.currentLabel} />
-            <PaydayCard danger label="이번 주기 종료" value={salaryCycle.nextLabel} />
+            <PaydayCard
+              label="급여주기 시작"
+              tone="income"
+              value={salaryCycle.currentLabel}
+            />
+            <PaydayCard
+              danger
+              label="이번 주기 종료"
+              tone="warning"
+              value={salaryCycle.nextLabel}
+            />
           </View>
           <View style={styles.heroMetricGrid}>
             <HeroMetric
               label="수령"
+              tone="income"
               value={formatKrw(state.financialSummary.receivedAmount)}
             />
-            <HeroMetric label="지출" value={formatKrw(currentSpent)} />
-            <HeroMetric emphasized label="저축" value={formatKrw(currentHijacked)} />
+            <HeroMetric
+              label="지출"
+              tone="expense"
+              value={formatKrw(currentSpent)}
+            />
+            <HeroMetric
+              emphasized
+              label="저축"
+              tone="saving"
+              value={formatKrw(currentHijacked)}
+            />
           </View>
         </ProtectedMoneyHeroCard>
 
@@ -772,15 +803,22 @@ export function SalaryHomeScreen({
           <View style={styles.budgetSummary}>
             <BudgetSummary
               label="오늘 예산"
+              tone="income"
               value={formatKrw(state.dailyLimit)}
             />
-            <BudgetSummary label="사용완료" value={formatKrw(dailySpent)} />
+            <BudgetSummary
+              label="사용완료"
+              tone="completed"
+              value={formatKrw(dailySpent)}
+            />
             <BudgetSummary
               label="현재 남음"
+              tone="saving"
               value={formatKrw(dailyRemaining)}
             />
             <BudgetSummary
               label="예정 소비 후"
+              tone="upcoming"
               value={formatKrw(expectedBalanceAfterScheduled)}
             />
           </View>
@@ -1400,10 +1438,22 @@ function useOptionalSafeAreaInsets(): ReturnType<typeof useSafeAreaInsets> {
 function PaydayCard({
   danger = false,
   label,
+  tone = "default",
   value,
-}: Readonly<{ danger?: boolean; label: string; value: string }>) {
+}: Readonly<{
+  danger?: boolean;
+  label: string;
+  tone?: "default" | "income" | "warning";
+  value: string;
+}>) {
   return (
-    <View style={styles.paydayCard}>
+    <View
+      style={[
+        styles.paydayCard,
+        tone === "income" ? styles.paydayIncome : null,
+        tone === "warning" ? styles.paydayWarning : null,
+      ]}
+    >
       <Text allowFontScaling={false} style={styles.paydayLabel}>
         {label}
       </Text>
@@ -1420,10 +1470,24 @@ function PaydayCard({
 function HeroMetric({
   emphasized = false,
   label,
+  tone = "default",
   value,
-}: Readonly<{ emphasized?: boolean; label: string; value: string }>) {
+}: Readonly<{
+  emphasized?: boolean;
+  label: string;
+  tone?: "default" | "income" | "expense" | "saving";
+  value: string;
+}>) {
   return (
-    <View style={[styles.metricBox, emphasized ? styles.metricEmphasis : null]}>
+    <View
+      style={[
+        styles.metricBox,
+        tone === "income" ? styles.metricIncome : null,
+        tone === "expense" ? styles.metricExpense : null,
+        tone === "saving" ? styles.metricSaving : null,
+        emphasized ? styles.metricEmphasis : null,
+      ]}
+    >
       <Text
         allowFontScaling={false}
         numberOfLines={1}
@@ -1501,10 +1565,24 @@ function FinanceInsightSection({
 
 function BudgetSummary({
   label,
+  tone = "default",
   value,
-}: Readonly<{ label: string; value: string }>) {
+}: Readonly<{
+  label: string;
+  tone?: "default" | "income" | "expense" | "saving" | "upcoming" | "completed";
+  value: string;
+}>) {
   return (
-    <View style={styles.budgetSummaryItem}>
+    <View
+      style={[
+        styles.budgetSummaryItem,
+        tone === "income" ? styles.budgetIncome : null,
+        tone === "expense" ? styles.budgetExpense : null,
+        tone === "saving" ? styles.budgetSaving : null,
+        tone === "upcoming" ? styles.budgetUpcoming : null,
+        tone === "completed" ? styles.budgetCompleted : null,
+      ]}
+    >
       <Text allowFontScaling={false} style={styles.budgetSummaryLabel}>
         {label}
       </Text>
@@ -1827,6 +1905,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: salaryScreenSpacing[2],
     paddingVertical: salaryScreenSpacing[2],
   },
+  budgetCompleted: {
+    backgroundColor: salarySemanticColors.completedSoft,
+    borderColor: salaryScreenColors.brandSurface,
+  },
+  budgetExpense: {
+    backgroundColor: salarySemanticColors.expenseSoft,
+    borderColor: salaryScreenColors.dangerBorder,
+  },
+  budgetIncome: {
+    backgroundColor: salarySemanticColors.incomeSoft,
+  },
+  budgetSaving: {
+    backgroundColor: salarySemanticColors.savingSoft,
+    borderColor: salaryScreenColors.brandSurface,
+  },
+  budgetUpcoming: {
+    backgroundColor: salarySemanticColors.upcomingSoft,
+    borderColor: salaryScreenColors.line,
+  },
   budgetSummaryLabel: {
     color: salaryScreenColors.muted,
     fontSize: salaryScreenTypography.caption.fontSize,
@@ -2113,7 +2210,7 @@ const styles = StyleSheet.create({
     fontWeight: salaryScreenTypography.labelM.fontWeight,
   },
   insightPill: {
-    backgroundColor: salaryScreenColors.soft,
+    backgroundColor: salarySemanticColors.plannedSoft,
     borderColor: salaryScreenColors.line,
     borderRadius: salaryScreenRadius.md,
     borderWidth: 1,
@@ -2162,6 +2259,17 @@ const styles = StyleSheet.create({
     backgroundColor: salaryScreenColors.brandSoft,
     borderWidth: 1,
   },
+  metricExpense: {
+    backgroundColor: salarySemanticColors.expenseSoft,
+    borderColor: salaryScreenColors.dangerBorder,
+  },
+  metricIncome: {
+    backgroundColor: salarySemanticColors.incomeSoft,
+  },
+  metricSaving: {
+    backgroundColor: salarySemanticColors.savingSoft,
+    borderColor: salaryScreenColors.brandSurface,
+  },
   metricLabel: {
     color: salaryScreenColors.muted,
     flexShrink: 0,
@@ -2184,6 +2292,13 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: salaryScreenSpacing[2],
     paddingVertical: salaryScreenSpacing[2],
+  },
+  paydayIncome: {
+    backgroundColor: salarySemanticColors.incomeSoft,
+  },
+  paydayWarning: {
+    backgroundColor: salarySemanticColors.warningSoft,
+    borderColor: salaryScreenColors.warningSoft,
   },
   paydayDanger: {
     color: salaryScreenColors.danger,

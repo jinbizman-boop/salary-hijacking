@@ -97,7 +97,7 @@ export default function CommunityIndexScreen(): React.ReactElement {
       header={
         <AppHeader
           brandLabel="SALARY HIJACKING"
-          subtitle="전체 / 자유 / 레벨업 인증 / 취미"
+          subtitle="관심 있는 이야기를 나눠보세요"
           title="커뮤니티"
         />
       }

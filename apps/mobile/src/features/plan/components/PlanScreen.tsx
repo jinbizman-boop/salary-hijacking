@@ -1151,25 +1151,43 @@ function MobilePlanSection({
   summary: readonly PlanSummaryItem[];
   title: string;
 }>) {
+  const accent = getPlanSectionAccent(title);
   return (
     <View style={styles.sectionCard}>
       <View style={styles.sectionTitleRow}>
-        <Text allowFontScaling={false} style={styles.sectionTitle}>
-          {title}
-        </Text>
+        <View style={styles.sectionTitleCluster}>
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            style={[
+              styles.sectionIconAnchor,
+              { backgroundColor: accent.surface, borderColor: accent.border },
+            ]}
+          >
+            <Text
+              allowFontScaling={false}
+              style={[styles.sectionIconText, { color: accent.text }]}
+            >
+              {accent.label}
+            </Text>
+          </View>
+          <Text allowFontScaling={false} style={styles.sectionTitle}>
+            {title}
+          </Text>
+        </View>
         <Pressable
           accessibilityLabel={settingLabel}
           accessibilityRole="button"
           testID={settingTestID}
           onPress={onToggle}
-          style={styles.smallIconButton}
+          style={styles.compactManageButton}
         >
           <Text allowFontScaling={false} style={styles.sectionActionText}>
-            관리
+            {"관리 >"}
           </Text>
         </Pressable>
       </View>
-      <PlanSummaryGrid summary={summary} />
+      <PlanSummaryRows summary={summary} />
       {open ? children : null}
     </View>
   );
@@ -1264,21 +1282,21 @@ function EditablePlanSection({
   );
 }
 
-function PlanSummaryGrid({
+function PlanSummaryRows({
   summary,
 }: Readonly<{
   summary: readonly PlanSummaryItem[];
 }>) {
   return (
-    <View accessibilityLabel="계획 요약" style={styles.summaryGrid}>
+    <View accessibilityLabel="계획 요약" style={styles.summaryRows}>
       {summary.map((item) => (
-        <View key={`${item.label}-${item.value}`} style={styles.summaryTile}>
+        <View key={`${item.label}-${item.value}`} style={styles.summaryRow}>
           <Text allowFontScaling={false} style={styles.summaryLabel}>
             {item.label}
           </Text>
           <Text
             allowFontScaling={false}
-            numberOfLines={2}
+            numberOfLines={1}
             style={[
               styles.summaryValue,
               item.tone === "brand" ? styles.summaryValueBrand : null,
@@ -1291,6 +1309,44 @@ function PlanSummaryGrid({
       ))}
     </View>
   );
+}
+
+function getPlanSectionAccent(title: string): Readonly<{
+  border: string;
+  label: string;
+  surface: string;
+  text: string;
+}> {
+  if (title.includes("지출")) {
+    return {
+      border: planScreenColors.dangerBorder,
+      label: "지",
+      surface: planScreenColors.dangerSurface,
+      text: planScreenColors.danger,
+    };
+  }
+  if (title.includes("저축")) {
+    return {
+      border: planScreenColors.brandSoft,
+      label: "저",
+      surface: planScreenColors.brandSoft,
+      text: planScreenColors.brandDark,
+    };
+  }
+  if (title.includes("생활비")) {
+    return {
+      border: planScreenColors.line,
+      label: "생",
+      surface: planScreenColors.soft,
+      text: planScreenColors.text,
+    };
+  }
+  return {
+    border: planScreenColors.line,
+    label: "급",
+    surface: planScreenColors.brandSoft,
+    text: planScreenColors.brandDark,
+  };
 }
 
 function PlanCommitmentList({
@@ -1638,9 +1694,21 @@ const styles = StyleSheet.create({
     paddingVertical: planScreenSpacing[3],
   },
   sectionActionText: {
-    color: planScreenColors.brand,
+    color: planScreenColors.brandDark,
     fontSize: planScreenTypography.labelS.fontSize,
     fontWeight: planScreenTypography.labelS.fontWeight,
+  },
+  sectionIconAnchor: {
+    alignItems: "center",
+    borderRadius: planScreenRadius.sm,
+    borderWidth: 1,
+    height: 28,
+    justifyContent: "center",
+    width: 28,
+  },
+  sectionIconText: {
+    fontSize: planScreenTypography.labelS.fontSize,
+    fontWeight: planScreenTypography.labelL.fontWeight,
   },
   sectionTitle: {
     color: planScreenColors.text,
@@ -1653,18 +1721,23 @@ const styles = StyleSheet.create({
   sectionTitleRow: {
     alignItems: "center",
     flexDirection: "row",
+    gap: planScreenSpacing[2],
     justifyContent: "space-between",
     marginBottom: planScreenSpacing[2],
   },
-  smallIconButton: {
+  sectionTitleCluster: {
     alignItems: "center",
-    backgroundColor: planScreenColors.brandSoft,
-    borderRadius: planScreenRadius.full,
     flexDirection: "row",
+    flex: 1,
+    gap: planScreenSpacing[2],
+    minWidth: 0,
+  },
+  compactManageButton: {
+    alignItems: "center",
+    borderRadius: planScreenRadius.full,
     justifyContent: "center",
-    minHeight: 34,
-    minWidth: 54,
-    paddingHorizontal: planScreenSpacing[3],
+    minHeight: 36,
+    paddingHorizontal: planScreenSpacing[2],
   },
   emptyPlanBody: {
     color: planScreenColors.muted,
@@ -1726,34 +1799,33 @@ const styles = StyleSheet.create({
     fontSize: planScreenTypography.bodyM.fontSize,
     fontWeight: planScreenTypography.labelL.fontWeight,
   },
-  summaryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: planScreenSpacing[2],
+  summaryRows: {
+    borderTopColor: planScreenColors.line,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   summaryLabel: {
     color: planScreenColors.muted,
     fontSize: planScreenTypography.caption.fontSize,
     fontWeight: planScreenTypography.caption.fontWeight,
   },
-  summaryTile: {
-    backgroundColor: planScreenColors.soft,
-    borderColor: planScreenColors.line,
-    borderRadius: planScreenRadius.lg,
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 62,
-    minWidth: "47%",
-    paddingHorizontal: planScreenSpacing[3],
-    paddingVertical: planScreenSpacing[2],
+  summaryRow: {
+    alignItems: "center",
+    borderBottomColor: planScreenColors.line,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    gap: planScreenSpacing[2],
+    justifyContent: "space-between",
+    minHeight: 34,
+    paddingVertical: planScreenSpacing[1],
   },
   summaryValue: {
     color: planScreenColors.text,
     fontSize: planScreenTypography.labelL.fontSize,
     fontWeight: planScreenTypography.labelL.fontWeight,
     lineHeight: planScreenTypography.labelL.lineHeight,
-    marginTop: planScreenSpacing[1] / 2,
+    flexShrink: 1,
+    maxWidth: "58%",
+    textAlign: "right",
   },
   summaryValueBrand: {
     color: planScreenColors.brand,

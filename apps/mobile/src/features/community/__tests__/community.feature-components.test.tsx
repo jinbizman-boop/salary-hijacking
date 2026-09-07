@@ -64,6 +64,36 @@ describe("community feature components", () => {
     expect(screen.getByText("익명 경계를 유지해요")).toBeTruthy();
   });
 
+  it("fits exactly three canonical categories without an all-category chip", () => {
+    const screen = render(
+      <CommunityTabBar
+        counts={{ FREE: 20, HEALTH_ROUTINE: 0, LEVEL_CERTIFICATION: 0 }}
+        onSelect={jest.fn()}
+        selected="FREE"
+        tabs={["FREE", "LEVEL_CERTIFICATION", "HEALTH_ROUTINE"]}
+      />,
+    );
+
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
+    expect(screen.getByText("자유 게시판")).toBeTruthy();
+    expect(screen.getByText("레벨업 인증")).toBeTruthy();
+    expect(screen.getByText("취미 게시판")).toBeTruthy();
+    expect(screen.queryByText("전체")).toBeNull();
+  });
+
+  it("rejects false community category counts at the tab contract", () => {
+    expect(() =>
+      render(
+        <CommunityTabBar
+          counts={{ FREE: 1 }}
+          onSelect={jest.fn()}
+          selected="FREE"
+          tabs={["FREE", "LEVEL_CERTIFICATION"]}
+        />,
+      ),
+    ).toThrow("CommunityTabBar requires exactly 3 canonical categories.");
+  });
+
   it("renders popular posts without raw financial ad targeting", () => {
     const onPressPost = jest.fn();
     const screen = render(

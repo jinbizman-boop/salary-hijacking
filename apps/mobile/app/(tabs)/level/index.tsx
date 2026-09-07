@@ -28,6 +28,7 @@ import {
   buildGrowthProductSnapshot,
   type GrowthMissionViewModel,
 } from "../../../src/features/level/product-model";
+import { GROWTH_DASHBOARD_PATH } from "../../../src/features/level/constants";
 import {
   loadGrowthContentForType,
   loadGrowthDashboardSnapshot,
@@ -376,6 +377,7 @@ export const levelScreenProductContract = [
   "내가 설정",
   "AD-APP-LVUP-01",
   "AD-APP-LVUP-02",
+  GROWTH_DASHBOARD_PATH,
 ] as const;
 
 const styles = StyleSheet.create({
