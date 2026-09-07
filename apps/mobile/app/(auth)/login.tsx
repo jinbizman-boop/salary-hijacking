@@ -2,14 +2,12 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Image,
   Keyboard,
   Pressable,
   StyleSheet,
   Text,
   useWindowDimensions,
   View,
-  type ImageSourcePropType,
 } from "react-native";
 
 import {
@@ -28,6 +26,8 @@ import type {
 import { salaryHijackingDesignSystem as designSystem } from "../../src/shared/components/tokens";
 
 const SCREEN_VERSION = "5.0.0-auth-login-reference-layout";
+const LOGIN_DEFAULT_VIEWPORT_SCROLL_REQUIRED_GATE =
+  "LOGIN_DEFAULT_VIEWPORT_SCROLL_REQUIRED=false";
 const OAUTH_REDIRECT_URI = "salaryhijacking://auth/oauth/callback";
 const SOCIAL_LOGIN_STATUS_COPY = {
   GOOGLE: {
@@ -49,8 +49,6 @@ const SOCIAL_LOGIN_STATUS_COPY = {
     failed: "네이버 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해 주세요.",
   },
 } as const;
-const loginBackIcon =
-  require("../../src/shared/assets/icons/common/left.png") as ImageSourcePropType;
 let mobileAuthApiPromise: Promise<AuthApiClient> | null = null;
 let socialLoginButtonsPromise: Promise<SocialLoginButtonsComponent> | null =
   null;
@@ -172,30 +170,11 @@ export default function LoginScreen(): React.ReactElement {
     if (!submitting) loginRouter.push("/(auth)/forgot-password");
   }, [loginRouter, submitting]);
 
-  const goBack = useCallback((): void => {
-    if (!submitting && typeof loginRouter.back === "function")
-      loginRouter.back();
-  }, [loginRouter, submitting]);
-
   return (
     <AuthVisualFrame accessibilityLabel="급여납치 로그인 화면">
       <View
         style={compactHeight ? styles.topSpacerCompact : styles.topSpacer}
       />
-      <Pressable
-        accessibilityLabel="이전 화면으로 돌아가기"
-        accessibilityRole="button"
-        hitSlop={designSystem.spacing[3]}
-        onPress={goBack}
-        style={styles.backButton}
-      >
-        <Image
-          accessibilityIgnoresInvertColors
-          resizeMode="contain"
-          source={loginBackIcon}
-          style={styles.backIcon}
-        />
-      </Pressable>
       <View
         style={
           keyboardVisible
@@ -272,17 +251,6 @@ export default function LoginScreen(): React.ReactElement {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: designSystem.layout.touchTarget,
-    minWidth: designSystem.layout.touchTarget,
-  },
-  backIcon: {
-    height: designSystem.spacing[6],
-    tintColor: designSystem.colors.text.primary,
-    width: designSystem.spacing[6],
-  },
   brandBlock: {
     marginTop: designSystem.spacing[4],
   },
@@ -327,7 +295,7 @@ const styles = StyleSheet.create({
   },
   signupLink: {
     alignSelf: "center",
-    marginTop: designSystem.spacing[5],
+    marginTop: designSystem.spacing[3],
     minHeight: designSystem.layout.touchTarget,
   },
   socialSlot: {
@@ -372,6 +340,7 @@ export function assertMobileLoginScreenCompleteness(): {
     "createMobileAuthApi",
     "authApi.login",
     "authApi.startOAuth",
+    LOGIN_DEFAULT_VIEWPORT_SCROLL_REQUIRED_GATE,
     "oauth_token_component_guard",
     "raw_credential_component_guard",
     "password_render_component_guard",

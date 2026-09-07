@@ -30,4 +30,24 @@ describe("signup screen wiring", () => {
     expect(source).toContain("styles.signupFooterSpacer");
     expect(source).toContain("compactHeight");
   });
+
+  it("keeps the dynamic signup brand lockup from clipping Korean glyphs", () => {
+    const brandLogo = readFileSync(
+      join(__dirname, "..", "components", "AuthBrandLogo.tsx"),
+      "utf8",
+    );
+
+    expect(brandLogo).toContain(
+      "const titleLineHeight = Math.ceil(titleSize * 1.18)",
+    );
+    expect(brandLogo).toContain(
+      "const subtitleLineHeight = Math.ceil(subtitleSize * 1.22)",
+    );
+    expect(brandLogo).toContain("lineHeight: titleLineHeight");
+    expect(brandLogo).toContain("lineHeight: subtitleLineHeight");
+    expect(brandLogo).toContain("paddingVertical: designSystem.spacing[1]");
+    expect(brandLogo).not.toContain(
+      "lineHeight: designSystem.typography.display.lineHeight",
+    );
+  });
 });

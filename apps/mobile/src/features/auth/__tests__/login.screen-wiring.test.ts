@@ -52,6 +52,19 @@ describe("login screen wiring", () => {
     expect(source).not.toContain("EurekaWorldMark");
   });
 
+  it("does not render a root back affordance on the unauthenticated login root", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),
+      "utf8",
+    );
+
+    expect(source).not.toContain("loginBackIcon");
+    expect(source).not.toContain("이전 화면으로 돌아가기");
+    expect(source).not.toContain("styles.backButton");
+    expect(source).not.toContain("loginRouter.back");
+    expect(source).toContain("LOGIN_DEFAULT_VIEWPORT_SCROLL_REQUIRED=false");
+  });
+
   it("keeps first-run auth and tab routes from importing the shared component barrel for tokens", () => {
     const login = readFileSync(
       join(__dirname, "..", "..", "..", "..", "app", "(auth)", "login.tsx"),

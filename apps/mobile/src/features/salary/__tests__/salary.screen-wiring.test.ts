@@ -175,6 +175,55 @@ describe("salary tab screen wiring", () => {
     expect(insightIndex).toBeGreaterThan(dailyIndex);
   });
 
+  it("uses the shared golden root header with the same home gutter and action contract", () => {
+    const route = readFileSync(
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "(tabs)",
+        "salary",
+        "index.tsx",
+      ),
+      "utf8",
+    );
+    const screen = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+
+    expect(route).toContain("<RootTabHeader");
+    expect(route).toContain('tab="home"');
+    expect(route).toContain("/salary/notifications");
+    expect(screen).toContain("HOME_HORIZONTAL_GUTTER = componentSpacing.md");
+    expect(screen).toContain("paddingHorizontal: HOME_HORIZONTAL_GUTTER");
+    expect(screen).toContain("HOME_MAJOR_SECTION_GAP = componentSpacing.md");
+    expect(screen).toContain("gap: HOME_MAJOR_SECTION_GAP");
+    expect(screen).not.toContain("brandHeader:");
+    expect(screen).not.toContain("brandLogo:");
+  });
+
+  it("keeps the approved home structure while normalizing commercial section rhythm", () => {
+    const source = readFileSync(
+      join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),
+      "utf8",
+    );
+    const headerIndex = source.indexOf("RootTabHeader");
+    const heroIndex = source.indexOf("<ProtectedMoneyHeroCard");
+    const adIndex = source.indexOf("<SponsoredSlot");
+    const dailyIndex = source.indexOf("DailySafeToSpendCard");
+
+    expect(source).toContain("HOME_RELATED_CONTENT_GAP = componentSpacing.sm");
+    expect(source).toContain("marginTop: 0");
+    expect(headerIndex).toBeGreaterThanOrEqual(0);
+    expect(heroIndex).toBeGreaterThan(headerIndex);
+    expect(adIndex).toBeGreaterThan(heroIndex);
+    expect(dailyIndex).toBeGreaterThan(adIndex);
+  });
+
   it("keeps the approved structure while rendering only the salary hero as the green surface", () => {
     const source = readFileSync(
       join(__dirname, "..", "components", "SalaryHomeScreen.tsx"),

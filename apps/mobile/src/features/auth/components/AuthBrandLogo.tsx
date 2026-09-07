@@ -38,6 +38,8 @@ export function AuthBrandLogo({
   const subtitleSize = compact
     ? clampValue(width * 0.057, 18, 25)
     : clampValue(width * 0.061, 20, 27);
+  const titleLineHeight = Math.ceil(titleSize * 1.18);
+  const subtitleLineHeight = Math.ceil(subtitleSize * 1.22);
 
   return (
     <View accessibilityLabel="급여납치 브랜드 로고" style={styles.brandBlock}>
@@ -50,14 +52,20 @@ export function AuthBrandLogo({
       <Text
         allowFontScaling={false}
         selectable
-        style={[styles.brandTitle, { fontSize: titleSize }]}
+        style={[
+          styles.brandTitle,
+          { fontSize: titleSize, lineHeight: titleLineHeight },
+        ]}
       >
         급여납치
       </Text>
       <Text
         allowFontScaling={false}
         selectable
-        style={[styles.brandSubtitle, { fontSize: subtitleSize }]}
+        style={[
+          styles.brandSubtitle,
+          { fontSize: subtitleSize, lineHeight: subtitleLineHeight },
+        ]}
       >
         SALARY HIJACKING
       </Text>
@@ -86,6 +94,7 @@ export function EurekaWorldMark(): React.ReactElement {
 const styles = StyleSheet.create({
   brandBlock: {
     alignItems: "center",
+    paddingVertical: designSystem.spacing[1],
     width: "100%",
   },
   brandSubtitle: {
@@ -94,7 +103,6 @@ const styles = StyleSheet.create({
     fontWeight: designSystem.typography.titleL.fontWeight,
     includeFontPadding: false,
     letterSpacing: designSystem.typography.titleL.letterSpacing,
-    lineHeight: designSystem.typography.titleL.lineHeight,
     marginTop: designSystem.spacing[2],
     textAlign: "center",
   },
@@ -104,7 +112,6 @@ const styles = StyleSheet.create({
     fontWeight: designSystem.typography.display.fontWeight,
     includeFontPadding: false,
     letterSpacing: designSystem.typography.display.letterSpacing,
-    lineHeight: designSystem.typography.display.lineHeight,
     marginTop: designSystem.spacing[5],
     textAlign: "center",
   },

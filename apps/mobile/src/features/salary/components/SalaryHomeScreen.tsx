@@ -29,7 +29,10 @@ import type {
   PlanFixedExpensePaymentRequest,
   PlanSavingsDepositRequest,
 } from "../../../features/plan/types";
-import { salaryHijackingDesignSystem } from "../../../shared/components/tokens";
+import {
+  componentSpacing,
+  salaryHijackingDesignSystem,
+} from "../../../shared/components/tokens";
 import { AdBannerSlot } from "../../../shared/components/AdBannerSlot";
 import { RootTabHeader } from "../../../shared/components/RootTabHeader";
 import {
@@ -98,6 +101,9 @@ const salaryScreenSpacing = designSystem.spacing;
 const salaryScreenRadius = designSystem.radius;
 const salaryScreenTypography = designSystem.typography;
 const salaryScreenElevation = designSystem.elevation;
+const HOME_HORIZONTAL_GUTTER = componentSpacing.md;
+const HOME_MAJOR_SECTION_GAP = componentSpacing.md;
+const HOME_RELATED_CONTENT_GAP = componentSpacing.sm;
 const salaryCoinsIcon =
   require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType;
 const SALARY_SAVE_ERROR =
@@ -1876,56 +1882,12 @@ const styles = StyleSheet.create({
     fontWeight: salaryScreenTypography.labelS.fontWeight,
     minWidth: 0,
   },
-  brandActions: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: salaryScreenSpacing[2],
-  },
-  brandCopy: {
-    gap: salaryScreenSpacing[1],
-  },
-  brandHeader: {
-    alignItems: "center",
-    backgroundColor: salaryScreenColors.surface,
-    borderBottomColor: salaryScreenColors.line,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    minHeight: designSystem.header.height,
-    paddingHorizontal: salaryScreenSpacing[4],
-    paddingVertical: salaryScreenSpacing[2],
-  },
-  brandIdentity: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: salaryScreenSpacing[3],
-    minWidth: 0,
-  },
-  brandKorean: {
-    color: salaryScreenColors.muted,
-    fontSize: salaryScreenTypography.caption.fontSize,
-    fontWeight: salaryScreenTypography.caption.fontWeight,
-    letterSpacing: salaryScreenTypography.caption.letterSpacing,
-  },
-  brandLogo: {
-    borderRadius: salaryScreenRadius.md,
-    height: 44,
-    width: 44,
-  },
-  brandName: {
-    color: salaryScreenColors.brand,
-    fontSize: salaryScreenTypography.titleM.fontSize,
-    fontWeight: salaryScreenTypography.titleM.fontWeight,
-    lineHeight: salaryScreenTypography.titleM.lineHeight,
-  },
   card: {
     backgroundColor: salaryScreenColors.surface,
     borderColor: salaryScreenColors.line,
     borderRadius: salaryScreenRadius.lg,
     borderWidth: 1,
     ...salaryScreenElevation.low,
-    marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[2],
     paddingHorizontal: salaryScreenSpacing[3],
     paddingVertical: salaryScreenSpacing[3],
   },
@@ -1940,6 +1902,8 @@ const styles = StyleSheet.create({
   content: {
     alignSelf: "center",
     backgroundColor: salaryScreenColors.screen,
+    gap: HOME_MAJOR_SECTION_GAP,
+    paddingHorizontal: HOME_HORIZONTAL_GUTTER,
   },
   editRow: {
     alignItems: "center",
@@ -2000,8 +1964,6 @@ const styles = StyleSheet.create({
     color: salaryScreenColors.danger,
     fontSize: salaryScreenTypography.labelM.fontSize,
     fontWeight: salaryScreenTypography.labelM.fontWeight,
-    marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[2],
     paddingHorizontal: salaryScreenSpacing[3],
     paddingVertical: salaryScreenSpacing[2],
   },
@@ -2041,17 +2003,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     width: "100%",
   },
-  headerActionButton: {
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: designSystem.header.actionSize,
-    minWidth: designSystem.header.actionSize,
-  },
-  headerActionIcon: {
-    height: designSystem.navigation.bottomTabs.iconSize,
-    tintColor: salaryScreenColors.text,
-    width: designSystem.navigation.bottomTabs.iconSize,
-  },
   heroAmount: {
     color: salaryScreenColors.inverse,
     fontSize: 31,
@@ -2090,9 +2041,8 @@ const styles = StyleSheet.create({
     borderColor: salaryScreenColors.brand,
     borderRadius: salaryScreenRadius.lg,
     borderWidth: 1,
-    gap: salaryScreenSpacing[3],
-    marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[1],
+    gap: HOME_RELATED_CONTENT_GAP + salaryScreenSpacing[1],
+    marginTop: 0,
     ...salaryScreenElevation.low,
     overflow: "hidden",
     padding: salaryScreenSpacing[3],
@@ -2133,8 +2083,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     ...salaryScreenElevation.low,
     gap: salaryScreenSpacing[2],
-    marginHorizontal: salaryScreenSpacing[2],
-    marginTop: salaryScreenSpacing[2],
     paddingHorizontal: salaryScreenSpacing[3],
     paddingVertical: salaryScreenSpacing[3],
   },
