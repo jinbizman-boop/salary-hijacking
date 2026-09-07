@@ -1,5 +1,7 @@
 import type {
   GrowthListResult,
+  GrowthGoalDomain,
+  GrowthGoalUpdateInput,
   GrowthRepository,
   GrowthRouteRuntime,
   GrowthTaskDifficulty,
@@ -211,6 +213,129 @@ function dbTaskTypesFromApi(value: string): readonly string[] {
 
 function dbTaskTypeFromApi(value: GrowthTaskType): string {
   return dbTaskTypesFromApi(value)[0] ?? "ROUTINE";
+}
+
+const growthGoalDomains = ["READING", "NEWS", "LANGUAGE", "HEALTH"] as const;
+const growthGoalDescriptionPrefix = "LVUP_GOAL";
+
+function dbTypeFromGoalDomain(domain: GrowthGoalDomain): string {
+  if (domain === "READING") return dbTaskTypeFromApi("READING");
+  if (domain === "NEWS") return dbTaskTypeFromApi("CONTENT");
+  if (domain === "LANGUAGE") return dbTaskTypeFromApi("STUDY");
+  return dbTaskTypeFromApi("EXERCISE");
+}
+
+function apiGoalDomainFromDb(value: unknown): GrowthGoalDomain | null {
+  const normalized = String(value ?? "").toUpperCase();
+  if (normalized === "READING") return "READING";
+  if (normalized === "NEWS") return "NEWS";
+  if (normalized === "ENGLISH") return "LANGUAGE";
+  if (normalized === "HEALTH") return "HEALTH";
+  return null;
+}
+
+function defaultGoalForDomain(
+  domain: GrowthGoalDomain,
+  effectiveDate: string,
+): JsonRecord {
+  if (domain === "READING") {
+    return {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain,
+      domainOption: "경제·경영",
+      effectiveDate,
+      frequency: "DAILY",
+      icon: { iconKey: "book-open", iconType: "SYSTEM_ICON" },
+      preferredTime: "08:00",
+      source: "DEFAULT",
+      targetUnit: "page",
+      targetValue: 1,
+      title: "독서",
+    };
+  }
+  if (domain === "NEWS") {
+    return {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain,
+      domainOption: "경제",
+      effectiveDate,
+      frequency: "DAILY",
+      icon: { iconKey: "newspaper", iconType: "SYSTEM_ICON" },
+      preferredTime: "08:00",
+      source: "DEFAULT",
+      targetUnit: "article",
+      targetValue: 1,
+      title: "뉴스",
+    };
+  }
+  if (domain === "LANGUAGE") {
+    return {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain,
+      domainOption: "영어",
+      effectiveDate,
+      frequency: "DAILY",
+      icon: { iconKey: "languages", iconType: "SYSTEM_ICON" },
+      preferredTime: "19:00",
+      source: "DEFAULT",
+      targetUnit: "sentence",
+      targetValue: 3,
+      title: "외국어",
+    };
+  }
+  return {
+    activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+    domain,
+    domainOption: "홈트",
+    effectiveDate,
+    frequency: "DAILY",
+    icon: { iconKey: "dumbbell", iconType: "SYSTEM_ICON" },
+    preferredTime: "20:00",
+    source: "DEFAULT",
+    targetUnit: "minute",
+    targetValue: 10,
+    title: "운동",
+  };
+}
+
+function encodeGoalDescription(
+  userId: string,
+  input: GrowthGoalUpdateInput,
+): string {
+  return `${growthGoalDescriptionPrefix}::${userId}::${JSON.stringify(input)}`;
+}
+
+function decodeGoalDescription(
+  value: unknown,
+): (JsonRecord & { readonly domain?: JsonRecord["domain"] }) | null {
+  const text = toText(value);
+  if (!text?.startsWith(`${growthGoalDescriptionPrefix}::`)) return null;
+  const jsonStart = text.indexOf("::{");
+  if (jsonStart < 0) return null;
+  try {
+    const parsed = JSON.parse(text.slice(jsonStart + 2)) as unknown;
+    return parsed && typeof parsed === "object"
+      ? (parsed as JsonRecord & { readonly domain?: JsonRecord["domain"] })
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function publicGoalFromRow(row: DbRow, effectiveDate: string): JsonRecord | null {
+  const domain = apiGoalDomainFromDb(row.category);
+  if (!domain) return null;
+  const decoded = decodeGoalDescription(row.description);
+  return {
+    ...defaultGoalForDomain(domain, effectiveDate),
+    ...(decoded ?? {}),
+    domain,
+    effectiveDate:
+      typeof decoded?.effectiveDate === "string"
+        ? decoded.effectiveDate
+        : (toDateOnly(row.active_from) ?? effectiveDate),
+    title: toText(decoded?.title) ?? toText(row.title) ?? domain,
+  };
 }
 
 function apiStatus(row: DbRow): GrowthTaskStatus {
@@ -503,6 +628,96 @@ export function createNeonGrowthRepository<TEnv = unknown>(
     name: "neon-growth-repository",
     async profile(runtime) {
       return queryProfile(repositoryQuery, runtime);
+    },
+    async listGoals(runtime) {
+      const userId = userIdFromRuntime(runtime);
+      const effectiveDate = todayInSeoul(runtime.now);
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "growth.listGoals",
+        `
+          select distinct on (category)
+            category,
+            title,
+            description,
+            active_from,
+            updated_at
+          from public.growth_tasks
+          where status = 'ACTIVE'
+            and category = any($1::text[])
+            and description like $2
+          order by category,
+                   updated_at desc nulls last,
+                   active_from desc nulls last
+        `,
+        [
+          growthGoalDomains.map(dbTypeFromGoalDomain),
+          `${growthGoalDescriptionPrefix}::${userId}::%`,
+        ],
+      );
+      const byDomain = new Map(
+        result.rows
+          .map((row) => publicGoalFromRow(row, effectiveDate))
+          .filter((goal): goal is JsonRecord => Boolean(goal))
+          .map((goal) => [goal.domain as GrowthGoalDomain, goal]),
+      );
+      const items = growthGoalDomains.map(
+        (domain) => byDomain.get(domain) ?? defaultGoalForDomain(domain, effectiveDate),
+      );
+      return {
+        items,
+        page: 1,
+        pageSize: items.length,
+        total: items.length,
+      };
+    },
+    async updateGoal(domain, input, runtime) {
+      const userId = userIdFromRuntime(runtime);
+      const activeGoal: JsonRecord = {
+        ...input,
+        activeDays: [...input.activeDays],
+        icon: { ...input.icon },
+        updatedAt: runtime.now.toISOString(),
+      };
+      await queryText(
+        repositoryQuery,
+        runtime,
+        "growth.updateGoal",
+        `
+          insert into public.growth_tasks (
+            type,
+            category,
+            title,
+            description,
+            exp_reward,
+            active_from,
+            active_to,
+            status
+          )
+          values (
+            $1,
+            $1,
+            $2,
+            $3,
+            0,
+            $4::timestamptz,
+            null,
+            'ACTIVE'
+          )
+        `,
+        [
+          dbTypeFromGoalDomain(domain),
+          input.title,
+          encodeGoalDescription(userId, input),
+          `${input.effectiveDate}T00:00:00.000Z`,
+        ],
+      );
+      return {
+        activeGoal,
+        historicalMissionMutationCount: 0,
+        serverAuthority: true,
+      };
     },
     async dashboard(runtime) {
       const result = await queryText(
@@ -932,8 +1147,47 @@ export function createNeonGrowthRepository<TEnv = unknown>(
       return {
         startDate,
         endDate,
+        domainTotals: [
+          {
+            detail: "읽은 페이지",
+            domain: "READING",
+            label: "독서",
+            quantity: 0,
+            unit: "PAGE",
+            value: "0페이지",
+          },
+          {
+            detail: "읽은 기사",
+            domain: "NEWS",
+            label: "뉴스",
+            quantity: 0,
+            unit: "ARTICLE",
+            value: "0개",
+          },
+          {
+            detail: "학습 문장",
+            domain: "LANGUAGE",
+            label: "외국어",
+            quantity: 0,
+            unit: "SENTENCE",
+            value: "0문장",
+          },
+          {
+            detail: "운동 시간",
+            domain: "HEALTH",
+            label: "운동",
+            quantity: 0,
+            unit: "MINUTE",
+            value: "0분",
+          },
+        ],
         progressRecordCount: 0,
+        recentActivities: [],
         expEarnedInPeriod: 0,
+        missionCompletionCount: 0,
+        missionTargetCount: 4,
+        strongestDomain: null,
+        streakDays: 0,
         totalExp: profile.totalExp ?? 0,
         level: profile.level ?? 1,
         taskCount: 0,

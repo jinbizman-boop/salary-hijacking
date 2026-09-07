@@ -1,3 +1,9 @@
+import type {
+  GrowthGoalDomain,
+  GrowthGoalSaveRequest,
+  GrowthGoalSaveResult,
+} from "./goal-architecture";
+
 export type GrowthTaskType =
   | "READING"
   | "EXERCISE"
@@ -44,14 +50,35 @@ export type GrowthDashboard = Readonly<{
 export type GrowthSummary = Readonly<{
   startDate: string;
   endDate: string;
+  domainTotals: readonly Readonly<{
+    domain: GrowthGoalDomain;
+    detail: string;
+    label: string;
+    quantity: number;
+    unit: GrowthSummaryUnit;
+    value: string;
+  }>[];
   progressRecordCount: number;
+  recentActivities: readonly Readonly<{
+    domain: GrowthGoalDomain;
+    id: string;
+    label: string;
+    title: string;
+    xp: string;
+  }>[];
   expEarnedInPeriod: number;
+  missionCompletionCount: number;
+  missionTargetCount: number;
+  strongestDomain: GrowthGoalDomain | null;
+  streakDays: number;
   totalExp: number;
   level: number;
   taskCount: number;
   badgeCount: number;
   financialRawDataExposed: false;
 }>;
+
+export type GrowthSummaryUnit = "ARTICLE" | "MINUTE" | "PAGE" | "SENTENCE";
 
 export type GrowthTask = Readonly<{
   taskId: string;
@@ -185,4 +212,8 @@ export type GrowthApiClient = Readonly<{
   completeContent: (
     request: GrowthContentCompleteRequest,
   ) => Promise<GrowthContentCompleteResult>;
+  updateGoal: (
+    domain: GrowthGoalDomain,
+    request: GrowthGoalSaveRequest,
+  ) => Promise<GrowthGoalSaveResult>;
 }>;

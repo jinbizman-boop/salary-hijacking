@@ -6,6 +6,11 @@ import type {
   GrowthDashboard,
   GrowthSummary,
 } from "./types";
+import type {
+  GrowthGoalDomain,
+  GrowthGoalSaveRequest,
+  GrowthGoalSaveResult,
+} from "./goal-architecture";
 
 export type GrowthCompletionUiResult = Readonly<{
   completedAt: string;
@@ -52,6 +57,14 @@ export async function completeGrowthContentWithServerAuthority(
       note,
     }),
   );
+}
+
+export async function updateGrowthGoalWithServerAuthority(
+  api: GrowthApiClient,
+  domain: GrowthGoalDomain,
+  request: GrowthGoalSaveRequest,
+): Promise<GrowthGoalSaveResult> {
+  return api.updateGoal(domain, request);
 }
 
 function completionResultFromApi(

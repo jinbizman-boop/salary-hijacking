@@ -72,12 +72,18 @@ function createApi(overrides: Partial<GrowthApiClient> = {}) {
     })),
     getSummary: jest.fn(async () => ({
       badgeCount: 1,
+      domainTotals: [],
       endDate: "2026-07-25",
       expEarnedInPeriod: 60,
       financialRawDataExposed: false as const,
       level: 18,
+      missionCompletionCount: 2,
+      missionTargetCount: 4,
       progressRecordCount: 2,
+      recentActivities: [],
       startDate: "2026-07-19",
+      strongestDomain: null,
+      streakDays: 0,
       taskCount: 1,
       totalExp: 880,
     })),
@@ -89,6 +95,7 @@ function createApi(overrides: Partial<GrowthApiClient> = {}) {
     })),
     listTasks: jest.fn(),
     recordTaskProgress: jest.fn(),
+    updateGoal: jest.fn(),
     ...overrides,
   } satisfies GrowthApiClient;
 }

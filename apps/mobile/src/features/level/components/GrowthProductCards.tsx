@@ -4,6 +4,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   View,
   type ImageSourcePropType,
 } from "react-native";
@@ -22,6 +23,7 @@ import type {
   GrowthMetricViewModel,
   GrowthMissionViewModel,
 } from "../product-model";
+import type { GrowthGoalIcon, GrowthSystemIconKey } from "../goal-architecture";
 
 const designSystem = salaryHijackingDesignSystem;
 
@@ -31,6 +33,87 @@ const domainIcons = {
   NEWS: require("../../../shared/assets/icons/level/news.png") as ImageSourcePropType,
   READING: require("../../../shared/assets/icons/level/book.png") as ImageSourcePropType,
 } as const satisfies Record<GrowthDomainKey, ImageSourcePropType>;
+
+const systemIconImages = {
+  activity: require("../../../shared/assets/icons/level/technology.png") as ImageSourcePropType,
+  "book-open": require("../../../shared/assets/icons/level/book.png") as ImageSourcePropType,
+  briefcase: require("../../../shared/assets/icons/community/application.png") as ImageSourcePropType,
+  check: require("../../../shared/assets/icons/common/edit.png") as ImageSourcePropType,
+  dumbbell: require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
+  heart: require("../../../shared/assets/icons/common/heart.png") as ImageSourcePropType,
+  languages: require("../../../shared/assets/icons/level/ai.png") as ImageSourcePropType,
+  newspaper: require("../../../shared/assets/icons/level/news.png") as ImageSourcePropType,
+  "piggy-bank": require("../../../shared/assets/icons/money/coins.png") as ImageSourcePropType,
+  star: require("../../../shared/assets/icons/level/box.png") as ImageSourcePropType,
+  target: require("../../../shared/assets/icons/level/folders.png") as ImageSourcePropType,
+  writing: require("../../../shared/assets/icons/common/edit.png") as ImageSourcePropType,
+} as const satisfies Record<GrowthSystemIconKey, ImageSourcePropType>;
+
+const pickerCategories: ReadonlyArray<
+  Readonly<{
+    title: string;
+    items: readonly GrowthGoalIcon[];
+  }>
+> = [
+  {
+    title: "성장",
+    items: [
+      { iconKey: "target", iconType: "SYSTEM_ICON" },
+      { iconKey: "star", iconType: "SYSTEM_ICON" },
+      { iconKey: "check", iconType: "SYSTEM_ICON" },
+    ],
+  },
+  {
+    title: "독서/공부",
+    items: [
+      { iconKey: "book-open", iconType: "SYSTEM_ICON" },
+      { emoji: "📚", iconType: "EMOJI" },
+      { emoji: "🧠", iconType: "EMOJI" },
+    ],
+  },
+  {
+    title: "뉴스/정보",
+    items: [
+      { iconKey: "newspaper", iconType: "SYSTEM_ICON" },
+      { emoji: "📰", iconType: "EMOJI" },
+      { emoji: "💻", iconType: "EMOJI" },
+    ],
+  },
+  {
+    title: "언어",
+    items: [
+      { iconKey: "languages", iconType: "SYSTEM_ICON" },
+      { emoji: "🇺🇸", iconType: "EMOJI" },
+      { emoji: "🇯🇵", iconType: "EMOJI" },
+      { emoji: "🌎", iconType: "EMOJI" },
+    ],
+  },
+  {
+    title: "운동",
+    items: [
+      { iconKey: "dumbbell", iconType: "SYSTEM_ICON" },
+      { emoji: "🏃", iconType: "EMOJI" },
+      { emoji: "🏋️", iconType: "EMOJI" },
+      { emoji: "🧘", iconType: "EMOJI" },
+    ],
+  },
+  {
+    title: "😀 표정/감정",
+    items: [
+      { emoji: "😀", iconType: "EMOJI" },
+      { emoji: "🔥", iconType: "EMOJI" },
+      { emoji: "⭐", iconType: "EMOJI" },
+    ],
+  },
+  {
+    title: "🌱 성장",
+    items: [
+      { emoji: "🌱", iconType: "EMOJI" },
+      { emoji: "🏆", iconType: "EMOJI" },
+      { emoji: "🎯", iconType: "EMOJI" },
+    ],
+  },
+];
 
 export type GrowthMissionRowProps = Readonly<{
   mission: GrowthMissionViewModel;
@@ -51,7 +134,11 @@ export function GrowthMissionRow({
       style={styles.missionCard}
     >
       <View style={styles.missionTop}>
-        <DomainIcon domain={mission.domain} />
+        <UserGoalIcon
+          accessibilityLabel={`${mission.title} 목표 아이콘`}
+          fallbackDomain={mission.domain}
+          icon={mission.userIcon}
+        />
         <View style={styles.missionCopy}>
           <View style={styles.rowBetween}>
             <Text style={styles.missionTitle}>{mission.title}</Text>
@@ -76,6 +163,7 @@ export function GrowthMissionRow({
         <Pressable
           accessibilityLabel={`${mission.title} ${mission.quickCompleteCta}`}
           accessibilityRole="button"
+          hitSlop={8}
           onPress={() => onQuickComplete(mission)}
           style={styles.inlineAction}
         >
@@ -84,13 +172,137 @@ export function GrowthMissionRow({
         <Pressable
           accessibilityLabel={`${mission.title} ${mission.editCta}`}
           accessibilityRole="button"
+          hitSlop={8}
           onPress={() => onEdit(mission)}
-          style={styles.inlineAction}
+          style={({ pressed }) => [
+            styles.inlineAction,
+            styles.inlineActionEmphasis,
+            pressed && styles.pressed,
+          ]}
         >
           <Text style={styles.inlineActionText}>{mission.editCta}</Text>
         </Pressable>
       </View>
     </SurfaceCard>
+  );
+}
+
+export type IconEmojiPickerProps = Readonly<{
+  favorites: readonly GrowthSystemIconKey[];
+  onSelect: (icon: GrowthGoalIcon) => void;
+  recent: readonly GrowthSystemIconKey[];
+  selected: GrowthGoalIcon;
+}>;
+
+export function IconEmojiPicker({
+  favorites,
+  onSelect,
+  recent,
+  selected,
+}: IconEmojiPickerProps): React.ReactElement {
+  const quickCategories = [
+    {
+      title: "최근 사용",
+      items: recent.map(
+        (iconKey): GrowthGoalIcon => ({ iconKey, iconType: "SYSTEM_ICON" }),
+      ),
+    },
+    {
+      title: "즐겨찾기",
+      items: favorites.map(
+        (iconKey): GrowthGoalIcon => ({ iconKey, iconType: "SYSTEM_ICON" }),
+      ),
+    },
+    ...pickerCategories,
+  ].filter((category) => category.items.length > 0);
+
+  return (
+    <SurfaceCard accessibilityLabel="아이콘 선택">
+      <Text style={styles.sectionTitle}>아이콘 선택</Text>
+      <TextInput
+        accessibilityLabel="아이콘 검색"
+        placeholder="책, 운동, 뉴스, 별처럼 검색"
+        placeholderTextColor={componentColors.textMuted}
+        style={styles.searchInput}
+      />
+      <View style={styles.pickerStack}>
+        {quickCategories.map((category) => (
+          <View key={category.title} style={styles.pickerCategory}>
+            <Text style={styles.pickerTitle}>{category.title}</Text>
+            <View style={styles.pickerItems}>
+              {category.items.map((icon) => {
+                const key = icon.iconType === "EMOJI" ? icon.emoji : icon.iconKey;
+                const selectedIcon =
+                  icon.iconType === selected.iconType &&
+                  (icon.iconType === "EMOJI"
+                    ? selected.iconType === "EMOJI" && selected.emoji === icon.emoji
+                    : selected.iconType === "SYSTEM_ICON" &&
+                      selected.iconKey === icon.iconKey);
+                const label =
+                  icon.iconType === "EMOJI"
+                    ? `이모지 ${icon.emoji} 선택`
+                    : `아이콘 ${icon.iconKey} 선택`;
+                return (
+                  <Pressable
+                    accessibilityLabel={label}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectedIcon }}
+                    hitSlop={8}
+                    key={`${category.title}-${key}`}
+                    onPress={() => onSelect(icon)}
+                    style={({ pressed }) => [
+                      styles.pickerButton,
+                      selectedIcon && styles.pickerButtonSelected,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <UserGoalIcon icon={icon} compact />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ))}
+      </View>
+    </SurfaceCard>
+  );
+}
+
+export function UserGoalIcon({
+  accessibilityLabel,
+  compact = false,
+  fallbackDomain = "READING",
+  icon,
+}: Readonly<{
+  accessibilityLabel?: string;
+  compact?: boolean;
+  fallbackDomain?: GrowthDomainKey;
+  icon: GrowthGoalIcon;
+}>): React.ReactElement {
+  if (icon.iconType === "EMOJI") {
+    return (
+      <View
+        accessibilityLabel={accessibilityLabel ?? `사용자 이모지 ${icon.emoji}`}
+        style={[styles.iconWrap, compact && styles.iconWrapCompact]}
+      >
+        <Text style={[styles.emojiIcon, compact && styles.emojiIconCompact]}>
+          {icon.emoji}
+        </Text>
+      </View>
+    );
+  }
+  return (
+    <View
+      accessibilityLabel={accessibilityLabel ?? `사용자 아이콘 ${icon.iconKey}`}
+      style={[styles.iconWrap, compact && styles.iconWrapCompact]}
+    >
+      <Image
+        accessibilityIgnoresInvertColors
+        resizeMode="contain"
+        source={systemIconImages[icon.iconKey] ?? domainIcons[fallbackDomain]}
+        style={[styles.icon, compact && styles.iconCompact]}
+      />
+    </View>
   );
 }
 
@@ -364,11 +576,24 @@ const styles = StyleSheet.create({
     width: 26,
     borderRadius: designSystem.radius.md,
   },
+  emojiIcon: {
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  emojiIconCompact: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
   inlineAction: {
     minHeight: designSystem.layout.touchTarget,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: designSystem.spacing[2],
+  },
+  inlineActionEmphasis: {
+    minWidth: 92,
+    borderRadius: designSystem.radius.md,
+    backgroundColor: componentColors.primaryGreenSoft,
   },
   inlineActionText: {
     color: componentColors.primaryGreenDark,
@@ -425,9 +650,51 @@ const styles = StyleSheet.create({
     color: componentColors.textSecondary,
     ...designSystem.typography.caption,
   },
+  pickerButton: {
+    minHeight: designSystem.layout.touchTarget,
+    minWidth: designSystem.layout.touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: designSystem.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: componentColors.line,
+    backgroundColor: componentColors.surface,
+  },
+  pickerButtonSelected: {
+    borderColor: componentColors.primaryGreenDark,
+    backgroundColor: componentColors.primaryGreenSoft,
+  },
+  pickerCategory: {
+    gap: designSystem.spacing[2],
+  },
+  pickerItems: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: designSystem.spacing[2],
+  },
+  pickerStack: {
+    gap: designSystem.spacing[4],
+  },
+  pickerTitle: {
+    color: componentColors.textPrimary,
+    ...designSystem.typography.labelM,
+  },
+  pressed: {
+    opacity: 0.82,
+  },
   resultMetric: {
     flex: 1,
     gap: designSystem.spacing[1],
+  },
+  searchInput: {
+    minHeight: designSystem.layout.touchTarget,
+    borderRadius: designSystem.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: componentColors.line,
+    paddingHorizontal: designSystem.spacing[3],
+    color: componentColors.textPrimary,
+    backgroundColor: componentColors.surfaceSoft,
+    ...designSystem.typography.bodyS,
   },
   resultNext: {
     color: componentColors.textSecondary,

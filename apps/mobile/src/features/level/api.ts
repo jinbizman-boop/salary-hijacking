@@ -1,10 +1,21 @@
 import {
   GROWTH_CONTENTS_PATH,
   GROWTH_DASHBOARD_PATH,
+  GROWTH_GOALS_PATH,
   GROWTH_SAFE_ERROR_MESSAGE,
   GROWTH_SUMMARY_PATH,
   GROWTH_TASKS_PATH,
 } from "./constants";
+import type {
+  GrowthGoalDomain,
+  GrowthGoalFrequency,
+  GrowthGoalIcon,
+  GrowthGoalSaveRequest,
+  GrowthGoalSaveResult,
+  GrowthGoalSource,
+  GrowthSystemIconKey,
+  GrowthGoalUnit,
+} from "./goal-architecture";
 import {
   isMobileLocalApiHost,
   isValidUrlString,
@@ -19,6 +30,7 @@ import type {
   GrowthContentType,
   GrowthDashboard,
   GrowthSummary,
+  GrowthSummaryUnit,
   GrowthTask,
   GrowthTaskDifficulty,
   GrowthTaskListResult,
@@ -90,6 +102,42 @@ const CONTENT_TYPES = new Set<GrowthContentType>([
   "CHECKLIST",
   "ROUTINE",
   "COURSE",
+]);
+const GOAL_DOMAINS = new Set<GrowthGoalDomain>([
+  "HEALTH",
+  "LANGUAGE",
+  "NEWS",
+  "READING",
+]);
+const GOAL_SOURCES = new Set<GrowthGoalSource>([
+  "CUSTOM",
+  "DEFAULT",
+  "RECOMMENDED",
+]);
+const GOAL_UNITS = new Set<GrowthGoalUnit>([
+  "article",
+  "minute",
+  "page",
+  "sentence",
+]);
+const GOAL_FREQUENCIES = new Set<GrowthGoalFrequency>([
+  "DAILY",
+  "WEEKDAYS",
+  "WEEKLY",
+]);
+const SYSTEM_ICON_KEYS = new Set([
+  "activity",
+  "book-open",
+  "briefcase",
+  "check",
+  "dumbbell",
+  "heart",
+  "languages",
+  "newspaper",
+  "piggy-bank",
+  "star",
+  "target",
+  "writing",
 ]);
 
 const FORBIDDEN_CONTENT_BODY_KEYS = new Set([
@@ -386,15 +434,91 @@ function normalizeSummary(value: unknown): GrowthSummary {
   }
   return {
     badgeCount: data.badgeCount,
+    domainTotals: normalizeDomainTotals(data.domainTotals),
     endDate: data.endDate,
     expEarnedInPeriod: data.expEarnedInPeriod,
     financialRawDataExposed: false,
     level: data.level,
+    missionCompletionCount: isNonNegativeInteger(data.missionCompletionCount)
+      ? data.missionCompletionCount
+      : data.progressRecordCount,
+    missionTargetCount: isNonNegativeInteger(data.missionTargetCount)
+      ? data.missionTargetCount
+      : Math.max(data.taskCount, data.progressRecordCount),
     progressRecordCount: data.progressRecordCount,
+    recentActivities: normalizeRecentActivities(data.recentActivities),
     startDate: data.startDate,
+    strongestDomain:
+      typeof data.strongestDomain === "string" &&
+      GOAL_DOMAINS.has(data.strongestDomain as GrowthGoalDomain)
+        ? (data.strongestDomain as GrowthGoalDomain)
+        : null,
+    streakDays: isNonNegativeInteger(data.streakDays) ? data.streakDays : 0,
     taskCount: data.taskCount,
     totalExp: data.totalExp,
   };
+}
+
+function normalizeDomainTotals(value: unknown): GrowthSummary["domainTotals"] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord).map((item) => {
+    const domain = normalizeGoalDomain(item.domain);
+    const unit = normalizeSummaryUnit(item.unit);
+    const quantity = isNonNegativeInteger(item.quantity) ? item.quantity : 0;
+    return {
+      detail: normalizeDisplayText(item.detail ?? "", 80),
+      domain,
+      label: normalizeDisplayText(item.label ?? domainLabel(domain), 20),
+      quantity,
+      unit,
+      value: normalizeDisplayText(
+        item.value ?? `${quantity}${summaryUnitLabel(unit)}`,
+        32,
+      ),
+    };
+  });
+}
+
+function normalizeRecentActivities(
+  value: unknown,
+): GrowthSummary["recentActivities"] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord).map((item, index) => {
+    const domain = normalizeGoalDomain(item.domain);
+    return {
+      domain,
+      id: normalizeDisplayText(item.id ?? `activity-${index}`, 80),
+      label: normalizeDisplayText(item.label ?? domainLabel(domain), 40),
+      title: normalizeDisplayText(item.title ?? "활동 기록", 80),
+      xp: normalizeDisplayText(item.xp ?? "+0 XP", 16),
+    };
+  });
+}
+
+function normalizeSummaryUnit(value: unknown): GrowthSummaryUnit {
+  if (
+    value === "ARTICLE" ||
+    value === "MINUTE" ||
+    value === "PAGE" ||
+    value === "SENTENCE"
+  ) {
+    return value;
+  }
+  return invalidResponse();
+}
+
+function summaryUnitLabel(unit: GrowthSummaryUnit): string {
+  if (unit === "ARTICLE") return "개";
+  if (unit === "MINUTE") return "분";
+  if (unit === "PAGE") return "페이지";
+  return "문장";
+}
+
+function domainLabel(domain: GrowthGoalDomain): string {
+  if (domain === "HEALTH") return "운동";
+  if (domain === "LANGUAGE") return "외국어";
+  if (domain === "NEWS") return "뉴스";
+  return "독서";
 }
 
 function normalizeTask(value: unknown): GrowthTask {
@@ -716,6 +840,142 @@ function normalizeContentCompletion(
   };
 }
 
+function normalizeGoalDomain(value: unknown): GrowthGoalDomain {
+  if (typeof value === "string" && GOAL_DOMAINS.has(value as GrowthGoalDomain)) {
+    return value as GrowthGoalDomain;
+  }
+  return invalidResponse();
+}
+
+function normalizeGoalSource(value: unknown): GrowthGoalSource {
+  if (typeof value === "string" && GOAL_SOURCES.has(value as GrowthGoalSource)) {
+    return value as GrowthGoalSource;
+  }
+  return invalidResponse();
+}
+
+function normalizeGoalUnit(value: unknown): GrowthGoalUnit {
+  if (typeof value === "string" && GOAL_UNITS.has(value as GrowthGoalUnit)) {
+    return value as GrowthGoalUnit;
+  }
+  return invalidResponse();
+}
+
+function normalizeGoalFrequency(value: unknown): GrowthGoalFrequency {
+  if (
+    typeof value === "string" &&
+    GOAL_FREQUENCIES.has(value as GrowthGoalFrequency)
+  ) {
+    return value as GrowthGoalFrequency;
+  }
+  return invalidResponse();
+}
+
+function normalizeGoalIcon(value: unknown): GrowthGoalIcon {
+  if (!isRecord(value) || typeof value.iconType !== "string") {
+    return invalidResponse();
+  }
+  if (value.iconType === "SYSTEM_ICON") {
+    if (typeof value.iconKey === "string" && SYSTEM_ICON_KEYS.has(value.iconKey)) {
+      return {
+        iconKey: value.iconKey as GrowthSystemIconKey,
+        iconType: "SYSTEM_ICON",
+      };
+    }
+    return invalidResponse();
+  }
+  if (value.iconType === "EMOJI" && typeof value.emoji === "string") {
+    const emoji = value.emoji.trim();
+    if (emoji && !emoji.includes("<") && !emoji.includes("http")) {
+      return { emoji, iconType: "EMOJI" };
+    }
+  }
+  return invalidResponse();
+}
+
+function normalizeGoalSaveResult(value: unknown): GrowthGoalSaveResult {
+  if (!isRecord(value) || !isRecord(value.data)) return invalidResponse();
+  const data = value.data;
+  if (!isRecord(data.activeGoal) || data.serverAuthority !== true) {
+    return invalidResponse();
+  }
+  const activeGoal = data.activeGoal;
+  if (
+    !Array.isArray(activeGoal.activeDays) ||
+    !isPositiveInteger(activeGoal.targetValue) ||
+    !isDateOnly(activeGoal.effectiveDate) ||
+    data.historicalMissionMutationCount !== 0
+  ) {
+    return invalidResponse();
+  }
+  return {
+    activeGoal: {
+      activeDays: activeGoal.activeDays.map((day) =>
+        normalizeDisplayText(day, 10),
+      ),
+      domain: normalizeGoalDomain(activeGoal.domain),
+      domainOption: normalizeDisplayText(activeGoal.domainOption ?? "기본", 40),
+      effectiveDate: activeGoal.effectiveDate,
+      frequency: normalizeGoalFrequency(activeGoal.frequency),
+      icon: normalizeGoalIcon(activeGoal.icon),
+      preferredTime: normalizeDisplayText(activeGoal.preferredTime ?? "08:00", 8),
+      source: normalizeGoalSource(activeGoal.source),
+      targetUnit: normalizeGoalUnit(activeGoal.targetUnit),
+      targetValue: activeGoal.targetValue,
+      title: normalizeDisplayText(activeGoal.title, 80),
+    },
+    historicalMissionMutationCount: 0,
+    serverAuthority: true,
+  };
+}
+
+function validGoalSaveRequest(value: GrowthGoalSaveRequest): boolean {
+  const record = value as Record<string, unknown>;
+  let iconValid = false;
+  try {
+    normalizeGoalIcon(value.icon);
+    iconValid = true;
+  } catch {
+    iconValid = false;
+  }
+  return (
+    hasOnlyKeys(record, [
+      "activeDays",
+      "domain",
+      "domainOption",
+      "effectiveDate",
+      "frequency",
+      "historicalMissionMutationCount",
+      "icon",
+      "preferredTime",
+      "source",
+      "targetUnit",
+      "targetValue",
+      "title",
+    ]) &&
+    GOAL_DOMAINS.has(value.domain) &&
+    GOAL_SOURCES.has(value.source) &&
+    GOAL_UNITS.has(value.targetUnit) &&
+    GOAL_FREQUENCIES.has(value.frequency) &&
+    isPositiveInteger(value.targetValue) &&
+    value.targetValue <= 10_000 &&
+    Array.isArray(value.activeDays) &&
+    value.activeDays.length > 0 &&
+    value.activeDays.length <= 7 &&
+    value.activeDays.every((day) => typeof day === "string" && day.length <= 10) &&
+    isDateOnly(value.effectiveDate) &&
+    value.historicalMissionMutationCount === 0 &&
+    typeof value.title === "string" &&
+    value.title.trim().length > 0 &&
+    !containsRawSensitiveText(value.title) &&
+    typeof value.domainOption === "string" &&
+    !containsRawSensitiveText(value.domainOption) &&
+    typeof value.preferredTime === "string" &&
+    /^\d{2}:\d{2}$/u.test(value.preferredTime) &&
+    iconValid
+  );
+}
+
 function taskProgressPath(taskId: string): string {
   const normalized = taskId.trim();
   if (
@@ -746,6 +1006,17 @@ function contentCompletePath(contentId: string): string {
     );
   }
   return `${GROWTH_CONTENTS_PATH}/${encodeURIComponent(normalized)}/complete`;
+}
+
+function goalPath(domain: GrowthGoalDomain): string {
+  if (!GOAL_DOMAINS.has(domain)) {
+    throw new GrowthApiError(
+      0,
+      "GROWTH_INVALID_GOAL_DOMAIN",
+      GROWTH_SAFE_ERROR_MESSAGE,
+    );
+  }
+  return `${GROWTH_GOALS_PATH}/${domain}`;
 }
 
 export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
@@ -877,6 +1148,25 @@ export function createGrowthApi(options: GrowthApiOptions): GrowthApiClient {
             idempotencyKey: completeRequest.idempotencyKey,
             note: completeRequest.note,
           }),
+        }),
+      );
+    },
+
+    async updateGoal(
+      domain: GrowthGoalDomain,
+      goalRequest: GrowthGoalSaveRequest,
+    ): Promise<GrowthGoalSaveResult> {
+      if (!validGoalSaveRequest(goalRequest) || domain !== goalRequest.domain) {
+        throw new GrowthApiError(
+          0,
+          "GROWTH_INVALID_GOAL_REQUEST",
+          GROWTH_SAFE_ERROR_MESSAGE,
+        );
+      }
+      return normalizeGoalSaveResult(
+        await request(goalPath(domain), {
+          method: "PATCH",
+          body: JSON.stringify(goalRequest),
         }),
       );
     },

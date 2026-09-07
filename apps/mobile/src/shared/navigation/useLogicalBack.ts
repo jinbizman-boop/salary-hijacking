@@ -12,6 +12,10 @@ export function useLogicalBack({
   router,
 }: LogicalBackOptions): () => void {
   const goBack = useCallback((): void => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
     router.replace(fallbackHref as never);
   }, [fallbackHref, router]);
 

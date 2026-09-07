@@ -61,8 +61,33 @@ function createMobileGrowthRepository(): GrowthRepository<unknown> {
     completeContent: record,
     listBadges: async () => [],
     leaderboard: listEmpty,
+    listGoals: async () => ({
+      items: [
+        {
+          activeDays: ["MON", "TUE", "WED", "THU", "FRI"],
+          domain: "READING",
+          domainOption: "경제·경영",
+          effectiveDate: "2026-09-07",
+          frequency: "DAILY",
+          icon: { iconKey: "book-open", iconType: "SYSTEM_ICON" },
+          preferredTime: "08:00",
+          source: "DEFAULT",
+          targetUnit: "page",
+          targetValue: 5,
+          title: "독서",
+        },
+      ],
+      page: 1,
+      pageSize: 1,
+      total: 1,
+    }),
     recommendations: record,
     summary: record,
+    updateGoal: async (_domain, input) => ({
+      activeGoal: input,
+      historicalMissionMutationCount: 0,
+      serverAuthority: true,
+    }),
   };
 }
 
@@ -148,5 +173,61 @@ describe("mobile growth API contract", () => {
     expect(JSON.stringify(body)).not.toContain(
       "11111111-1111-4111-8111-111111111111",
     );
+  });
+
+  it("persists mobile LV UP goal edits through the Growth API contract", async () => {
+    const app = createApp({
+      enableAuth: false,
+      enableAuditGate: false,
+      enableRateLimit: false,
+      growthRoutesOptions: {
+        repository: createMobileGrowthRepository(),
+      },
+    });
+
+    const response = await app.fetch(
+      new Request("https://api.test/api/v1/growth/goals/READING", {
+        body: JSON.stringify({
+          activeDays: ["MON", "TUE", "WED", "THU", "FRI"],
+          domain: "READING",
+          domainOption: "경제·경영",
+          effectiveDate: "2026-09-07",
+          frequency: "DAILY",
+          historicalMissionMutationCount: 0,
+          icon: { emoji: "📚", iconType: "EMOJI" },
+          preferredTime: "08:00",
+          source: "CUSTOM",
+          targetUnit: "page",
+          targetValue: 10,
+          title: "독서 10페이지",
+        }),
+        headers: authHeaders,
+        method: "PATCH",
+      }),
+      { APP_ENV: "development" },
+      context,
+    );
+    const body = (await response.json()) as {
+      readonly data?: {
+        readonly activeGoal?: Record<string, unknown>;
+        readonly historicalMissionMutationCount?: number;
+        readonly serverAuthority?: boolean;
+      };
+      readonly error?: { readonly code?: string };
+    };
+
+    expect(response.status).toBe(200);
+    expect(body.error?.code).toBeUndefined();
+    expect(body.data).toMatchObject({
+      activeGoal: {
+        domain: "READING",
+        icon: { emoji: "📚", iconType: "EMOJI" },
+        targetValue: 10,
+      },
+      historicalMissionMutationCount: 0,
+      serverAuthority: true,
+    });
+    expect(JSON.stringify(body)).not.toContain("SYNTHETIC");
+    expect(JSON.stringify(body)).not.toContain("QA");
   });
 });

@@ -38,6 +38,10 @@ export type GrowthContentType =
   | "CHECKLIST"
   | "ROUTINE"
   | "COURSE";
+export type GrowthGoalDomain = "HEALTH" | "LANGUAGE" | "NEWS" | "READING";
+export type GrowthGoalSource = "CUSTOM" | "DEFAULT" | "RECOMMENDED";
+export type GrowthGoalUnit = "article" | "minute" | "page" | "sentence";
+export type GrowthGoalFrequency = "DAILY" | "WEEKDAYS" | "WEEKLY";
 export type GrowthRole =
   | "USER"
   | "OPERATOR"
@@ -120,6 +124,21 @@ export interface GrowthContentCompleteInput {
   readonly contentId: string;
   readonly note: string | null;
   readonly idempotencyKey: string | null;
+}
+
+export interface GrowthGoalUpdateInput {
+  readonly activeDays: readonly string[];
+  readonly domain: GrowthGoalDomain;
+  readonly domainOption: string;
+  readonly effectiveDate: string;
+  readonly frequency: GrowthGoalFrequency;
+  readonly historicalMissionMutationCount: 0;
+  readonly icon: JsonRecord;
+  readonly preferredTime: string;
+  readonly source: GrowthGoalSource;
+  readonly targetUnit: GrowthGoalUnit;
+  readonly targetValue: number;
+  readonly title: string;
 }
 
 export interface GrowthRouteRuntime<TEnv = unknown> {
@@ -206,6 +225,12 @@ export interface GrowthRepository<TEnv = unknown> {
   ): Promise<JsonRecord>;
   summary(
     input: JsonRecord,
+    runtime: GrowthRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
+  listGoals(runtime: GrowthRouteRuntime<TEnv>): Promise<GrowthListResult>;
+  updateGoal(
+    domain: GrowthGoalDomain,
+    input: GrowthGoalUpdateInput,
     runtime: GrowthRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
 }
@@ -699,6 +724,51 @@ function normalizeTaskStatus(value: unknown): GrowthTaskStatus {
   );
 }
 
+function normalizeGoalDomain(value: unknown): GrowthGoalDomain {
+  const domain = typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (["HEALTH", "LANGUAGE", "NEWS", "READING"].includes(domain))
+    return domain as GrowthGoalDomain;
+  throw new GrowthHttpError(
+    400,
+    "GROWTH_GOAL_DOMAIN_INVALID",
+    "목표 영역이 올바르지 않습니다.",
+  );
+}
+
+function normalizeGoalSource(value: unknown): GrowthGoalSource {
+  const source = typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (["CUSTOM", "DEFAULT", "RECOMMENDED"].includes(source))
+    return source as GrowthGoalSource;
+  throw new GrowthHttpError(
+    400,
+    "GROWTH_GOAL_SOURCE_INVALID",
+    "목표 출처가 올바르지 않습니다.",
+  );
+}
+
+function normalizeGoalUnit(value: unknown): GrowthGoalUnit {
+  const unit = typeof value === "string" ? value.trim().toLowerCase() : "";
+  if (["article", "minute", "page", "sentence"].includes(unit))
+    return unit as GrowthGoalUnit;
+  throw new GrowthHttpError(
+    400,
+    "GROWTH_GOAL_UNIT_INVALID",
+    "목표 단위가 올바르지 않습니다.",
+  );
+}
+
+function normalizeGoalFrequency(value: unknown): GrowthGoalFrequency {
+  const frequency =
+    typeof value === "string" ? value.trim().toUpperCase() : "";
+  if (["DAILY", "WEEKDAYS", "WEEKLY"].includes(frequency))
+    return frequency as GrowthGoalFrequency;
+  throw new GrowthHttpError(
+    400,
+    "GROWTH_GOAL_FREQUENCY_INVALID",
+    "목표 빈도가 올바르지 않습니다.",
+  );
+}
+
 function pagination(url: URL): PaginationInput {
   const page = Math.max(
     1,
@@ -882,6 +952,93 @@ function contentCompleteInput(
   };
 }
 
+function goalIconInput(value: unknown): JsonRecord {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new GrowthHttpError(
+      400,
+      "GROWTH_GOAL_ICON_INVALID",
+      "목표 아이콘이 올바르지 않습니다.",
+    );
+  }
+  const icon = value as Record<string, unknown>;
+  if (icon.iconType === "SYSTEM_ICON") {
+    const iconKey = stringField(icon, "iconKey", { maxLength: 40 });
+    if (/https?:|<|>|script/i.test(iconKey)) {
+      throw new GrowthHttpError(
+        400,
+        "GROWTH_GOAL_ICON_REMOTE_UNSUPPORTED",
+        "원격 아이콘은 지원하지 않습니다.",
+      );
+    }
+    return { iconKey, iconType: "SYSTEM_ICON" };
+  }
+  if (icon.iconType === "EMOJI") {
+    const emoji = stringField(icon, "emoji", { maxLength: 16 });
+    if (/https?:|<|>|script/i.test(emoji)) {
+      throw new GrowthHttpError(
+        400,
+        "GROWTH_GOAL_EMOJI_INVALID",
+        "이모지 값이 올바르지 않습니다.",
+      );
+    }
+    return { emoji, iconType: "EMOJI" };
+  }
+  throw new GrowthHttpError(
+    400,
+    "GROWTH_GOAL_ICON_TYPE_INVALID",
+    "목표 아이콘 유형이 올바르지 않습니다.",
+  );
+}
+
+function goalUpdateInput(
+  body: Record<string, unknown>,
+  domainFromRoute: GrowthGoalDomain,
+): GrowthGoalUpdateInput {
+  const domain = normalizeGoalDomain(body.domain ?? domainFromRoute);
+  if (domain !== domainFromRoute) {
+    throw new GrowthHttpError(
+      400,
+      "GROWTH_GOAL_DOMAIN_MISMATCH",
+      "목표 영역이 경로와 일치하지 않습니다.",
+    );
+  }
+  const activeDays = Array.isArray(body.activeDays)
+    ? body.activeDays
+        .filter(
+          (day): day is string =>
+            typeof day === "string" && day.trim().length > 0,
+        )
+        .map((day) => day.trim().slice(0, 10))
+        .slice(0, 7)
+    : [];
+  if (activeDays.length === 0) {
+    throw new GrowthHttpError(
+      400,
+      "GROWTH_GOAL_ACTIVE_DAYS_REQUIRED",
+      "활성 요일이 필요합니다.",
+    );
+  }
+  const historicalMissionMutationCount = integerField(
+    body,
+    "historicalMissionMutationCount",
+    { min: 0, max: 0 },
+  );
+  return {
+    activeDays,
+    domain,
+    domainOption: stringField(body, "domainOption", { maxLength: 80 }),
+    effectiveDate: dateFromUnknown(body.effectiveDate, ""),
+    frequency: normalizeGoalFrequency(body.frequency),
+    historicalMissionMutationCount: historicalMissionMutationCount as 0,
+    icon: goalIconInput(body.icon),
+    preferredTime: stringField(body, "preferredTime", { maxLength: 8 }),
+    source: normalizeGoalSource(body.source),
+    targetUnit: normalizeGoalUnit(body.targetUnit),
+    targetValue: integerField(body, "targetValue", { min: 1, max: 10_000 }),
+    title: stringField(body, "title", { maxLength: 80 }),
+  };
+}
+
 function reasonFromBody(body: Record<string, unknown>): string {
   return stringField(body, "reason", { maxLength: 500 });
 }
@@ -914,6 +1071,7 @@ function createInMemoryGrowthRepository<
   const progress = new Map<string, JsonRecord>();
   const challengeJoins = new Map<string, JsonRecord>();
   const completedContents = new Map<string, JsonRecord>();
+  const goalOverrides = new Map<string, JsonRecord>();
   const badges = new Map<string, JsonRecord>();
   const seedChallenges: readonly JsonRecord[] = [
     {
@@ -1017,6 +1175,60 @@ function createInMemoryGrowthRepository<
       recommendationUsesSensitiveFinancialData: false,
     },
   ];
+  const seedGoals: readonly JsonRecord[] = [
+    {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain: "READING",
+      domainOption: "경제·경영",
+      effectiveDate: "2026-09-07",
+      frequency: "DAILY",
+      icon: { iconKey: "book-open", iconType: "SYSTEM_ICON" },
+      preferredTime: "08:00",
+      source: "DEFAULT",
+      targetUnit: "page",
+      targetValue: 1,
+      title: "독서",
+    },
+    {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain: "NEWS",
+      domainOption: "경제",
+      effectiveDate: "2026-09-07",
+      frequency: "DAILY",
+      icon: { iconKey: "newspaper", iconType: "SYSTEM_ICON" },
+      preferredTime: "08:00",
+      source: "DEFAULT",
+      targetUnit: "article",
+      targetValue: 1,
+      title: "뉴스",
+    },
+    {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain: "LANGUAGE",
+      domainOption: "영어",
+      effectiveDate: "2026-09-07",
+      frequency: "DAILY",
+      icon: { iconKey: "languages", iconType: "SYSTEM_ICON" },
+      preferredTime: "19:00",
+      source: "DEFAULT",
+      targetUnit: "sentence",
+      targetValue: 3,
+      title: "외국어",
+    },
+    {
+      activeDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
+      domain: "HEALTH",
+      domainOption: "홈트",
+      effectiveDate: "2026-09-07",
+      frequency: "DAILY",
+      icon: { iconKey: "dumbbell", iconType: "SYSTEM_ICON" },
+      preferredTime: "20:00",
+      source: "DEFAULT",
+      targetUnit: "minute",
+      targetValue: 10,
+      title: "운동",
+    },
+  ];
 
   function userTasks(userId: string): JsonRecord[] {
     return [...tasks.values()].filter(
@@ -1093,6 +1305,15 @@ function createInMemoryGrowthRepository<
     return publicRecord;
   }
 
+  function publicGoalForDomain(
+    userId: string,
+    domain: GrowthGoalDomain,
+  ): JsonRecord {
+    const override = goalOverrides.get(`${userId}:${domain}`);
+    const fallback = seedGoals.find((goal) => goal.domain === domain);
+    return { ...(fallback ?? seedGoals[0]), ...(override ?? {}) };
+  }
+
   return {
     name: "in-memory-growth-repository",
     async profile(runtime): Promise<JsonRecord> {
@@ -1108,6 +1329,31 @@ function createInMemoryGrowthRepository<
           (item) => item.userId === runtime.principal.userId,
         ).length,
         financialRawDataExposed: false,
+      };
+    },
+    async listGoals(runtime): Promise<GrowthListResult> {
+      const items = (["READING", "NEWS", "LANGUAGE", "HEALTH"] as const).map(
+        (domain) => publicGoalForDomain(runtime.principal.userId, domain),
+      );
+      return {
+        items,
+        page: 1,
+        pageSize: items.length,
+        total: items.length,
+      };
+    },
+    async updateGoal(domain, input, runtime): Promise<JsonRecord> {
+      const activeGoal: JsonRecord = {
+        ...input,
+        activeDays: [...input.activeDays],
+        icon: { ...input.icon },
+        updatedAt: runtime.now.toISOString(),
+      };
+      goalOverrides.set(`${runtime.principal.userId}:${domain}`, activeGoal);
+      return {
+        activeGoal,
+        historicalMissionMutationCount: 0,
+        serverAuthority: true,
       };
     },
     async dashboard(runtime): Promise<JsonRecord> {
@@ -1277,6 +1523,7 @@ function createInMemoryGrowthRepository<
         occurredAt: input.occurredAt,
         idempotencyKey: input.idempotencyKey,
         expDelta,
+        taskType: String(task.taskType ?? "CUSTOM"),
         createdAt: runtime.now.toISOString(),
       };
       progress.set(progressId, record);
@@ -1495,15 +1742,68 @@ function createInMemoryGrowthRepository<
           String(item.occurredAt).slice(0, 10) <= endDate,
       );
       const exp = totalExp(runtime.principal.userId);
+      const domainTotals = [
+        {
+          detail: "읽은 페이지",
+          domain: "READING",
+          label: "독서",
+          quantity: progressItems.filter((item) => item.taskType === "READING")
+            .length,
+          unit: "PAGE",
+          value: `${progressItems.filter((item) => item.taskType === "READING").length}페이지`,
+        },
+        {
+          detail: "읽은 기사",
+          domain: "NEWS",
+          label: "뉴스",
+          quantity: progressItems.filter((item) => item.taskType === "CONTENT")
+            .length,
+          unit: "ARTICLE",
+          value: `${progressItems.filter((item) => item.taskType === "CONTENT").length}개`,
+        },
+        {
+          detail: "학습 문장",
+          domain: "LANGUAGE",
+          label: "외국어",
+          quantity: progressItems.filter((item) => item.taskType === "STUDY")
+            .length,
+          unit: "SENTENCE",
+          value: `${progressItems.filter((item) => item.taskType === "STUDY").length}문장`,
+        },
+        {
+          detail: "운동 시간",
+          domain: "HEALTH",
+          label: "운동",
+          quantity: progressItems.filter((item) => item.taskType === "EXERCISE")
+            .length,
+          unit: "MINUTE",
+          value: `${progressItems.filter((item) => item.taskType === "EXERCISE").length}분`,
+        },
+      ];
       return {
         startDate,
         endDate,
+        domainTotals,
         progressRecordCount: progressItems.length,
+        recentActivities: progressItems.slice(0, 3).map((item, index) => ({
+          domain: taskDomain(String(item.taskType ?? "CUSTOM")),
+          id: String(item.progressId ?? `progress-${index}`),
+          label: String(item.occurredAt ?? endDate).slice(0, 10),
+          title: String(item.note ?? "성장 활동 기록"),
+          xp: `+${typeof item.expDelta === "number" ? item.expDelta : 0} XP`,
+        })),
         expEarnedInPeriod: progressItems.reduce(
           (sum, item) =>
             sum + (typeof item.expDelta === "number" ? item.expDelta : 0),
           0,
         ),
+        missionCompletionCount: progressItems.length,
+        missionTargetCount: Math.max(4, userTasks(runtime.principal.userId).length),
+        strongestDomain:
+          domainTotals.reduce((best, item) =>
+            item.quantity > best.quantity ? item : best,
+          ).domain ?? null,
+        streakDays: Math.min(7, progressItems.length),
         totalExp: exp,
         level: levelFromExp(exp),
         taskCount: userTasks(runtime.principal.userId).length,
@@ -1514,6 +1814,14 @@ function createInMemoryGrowthRepository<
       };
     },
   };
+}
+
+function taskDomain(taskType: string): GrowthGoalDomain {
+  if (taskType === "READING") return "READING";
+  if (taskType === "CONTENT") return "NEWS";
+  if (taskType === "STUDY") return "LANGUAGE";
+  if (taskType === "EXERCISE") return "HEALTH";
+  return "READING";
 }
 
 function resolveRepository<TEnv>(
@@ -1549,6 +1857,21 @@ async function dispatchGrowthRoute<TEnv>(
     return jsonResponse(runtime, 200, {
       data: await repository.recommendations(queryRecord(runtime.url), runtime),
     });
+  if (method === "GET" && relativePath === "/goals")
+    return jsonResponse(runtime, 200, {
+      data: await repository.listGoals(runtime),
+    });
+  let match = matchRoute(relativePath, /^\/goals\/([^/]+)$/);
+  if (method === "PATCH" && match) {
+    const domain = normalizeGoalDomain(idFromMatch(match, 1));
+    return jsonResponse(runtime, 200, {
+      data: await repository.updateGoal(
+        domain,
+        goalUpdateInput(await parseJsonBody(runtime.request), domain),
+        runtime,
+      ),
+    });
+  }
   if (method === "GET" && relativePath === "/badges")
     return jsonResponse(runtime, 200, {
       data: await repository.listBadges(runtime),
@@ -1584,7 +1907,7 @@ async function dispatchGrowthRoute<TEnv>(
     return jsonResponse(runtime, 201, { data });
   }
 
-  let match = matchRoute(relativePath, /^\/tasks\/([^/]+)$/);
+  match = matchRoute(relativePath, /^\/tasks\/([^/]+)$/);
   if (method === "GET" && match) {
     const task = await repository.getTask(idFromMatch(match, 1), runtime);
     if (!task)
@@ -1871,6 +2194,8 @@ export const growthRoutesManifest = Object.freeze({
     "GET /dashboard",
     "GET /summary",
     "GET /recommendations",
+    "GET /goals",
+    "PATCH /goals/{domain}",
     "GET /badges",
     "GET /leaderboard",
     "GET /tasks",

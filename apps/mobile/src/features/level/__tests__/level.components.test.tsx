@@ -219,6 +219,7 @@ describe("level feature components", () => {
           streakLabel: "0일 연속",
           subtitle: "하루 1페이지",
           title: "독서",
+          userIcon: { iconKey: "book-open", iconType: "SYSTEM_ICON" },
         }}
         onDetail={onDetail}
         onEdit={onEdit}

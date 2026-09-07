@@ -7,6 +7,7 @@ import {
   componentColors,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { UserGoalIcon } from "./GrowthProductCards";
 import type {
   GrowthGoalCardViewModel,
   GrowthGoalDomain,
@@ -30,6 +31,11 @@ export function LevelGoalCard({
   return (
     <SurfaceCard accessibilityLabel={`${goal.title} ${goal.sourceLabel}`}>
       <View style={styles.header}>
+        <UserGoalIcon
+          accessibilityLabel={`${goal.title} 목표 아이콘`}
+          compact
+          icon={goal.userIcon}
+        />
         <View style={styles.titleGroup}>
           <Text allowFontScaling={false} style={styles.source}>
             {goal.sourceLabel}

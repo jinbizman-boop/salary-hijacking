@@ -15,12 +15,27 @@ const dashboard: GrowthDashboard = {
 
 const weekSummary: GrowthSummary = {
   badgeCount: 2,
+  domainTotals: [
+    {
+      detail: "읽은 페이지",
+      domain: "READING",
+      label: "독서",
+      quantity: 42,
+      unit: "PAGE",
+      value: "42페이지",
+    },
+  ],
   endDate: "2026-09-07",
   expEarnedInPeriod: 96,
   financialRawDataExposed: false,
   level: 8,
+  missionCompletionCount: 7,
+  missionTargetCount: 16,
   progressRecordCount: 7,
+  recentActivities: [],
   startDate: "2026-09-01",
+  strongestDomain: "READING",
+  streakDays: 5,
   taskCount: 4,
   totalExp: 940,
 };

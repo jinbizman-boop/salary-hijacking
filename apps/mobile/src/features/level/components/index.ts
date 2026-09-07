@@ -4,11 +4,14 @@ export {
 } from "./EnglishLessonCard";
 export {
   GrowthHistoryList,
+  IconEmojiPicker,
   GrowthMissionRow,
   GrowthResultPanel,
   MetricGrid,
   ProductDetail,
+  UserGoalIcon,
   type GrowthHistoryListProps,
+  type IconEmojiPickerProps,
   type GrowthMissionRowProps,
   type GrowthResultPanelProps,
   type MetricGridProps,

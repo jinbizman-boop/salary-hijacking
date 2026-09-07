@@ -9,6 +9,7 @@ import type {
 import type {
   GrowthGoalCardViewModel,
   GrowthGoalDomain,
+  GrowthGoalIcon,
 } from "./goal-architecture";
 
 export type GrowthDomainKey = Extract<
@@ -39,6 +40,7 @@ export type GrowthMissionViewModel = Readonly<{
   primaryCta: string;
   quickCompleteCta: "빠른 완료";
   editCta: "목표 수정";
+  userIcon: GrowthGoalIcon;
   route: Href;
 }>;
 
@@ -53,6 +55,7 @@ export type GrowthHistoryViewModel = Readonly<{
   id: string;
   label: string;
   title: string;
+  userIcon?: GrowthGoalIcon;
   xp: string;
 }>;
 
@@ -152,6 +155,8 @@ export function buildGrowthProductSnapshot({
     goals.map((goal) => [goal.domain, goal]),
   );
   const completedCount = dashboard.completedContentCount;
+  const weekTotals = totalsByDomain(weekSummary);
+  const monthTotals = totalsByDomain(monthSummary);
 
   return {
     missions: domainOrder.map((domain, index) => {
@@ -177,50 +182,149 @@ export function buildGrowthProductSnapshot({
           goal?.streakLabel.replace("0일", `${3 + index}일`) ??
           fallback.streakText,
         title: content?.contentType === "ENGLISH" ? "외국어" : fallback.title,
+        userIcon: goal?.userIcon ?? {
+          iconKey: "target",
+          iconType: "SYSTEM_ICON",
+        },
       };
     }),
-    monthlyMetrics: [
-      { domain: "READING", detail: "완료 세션 9회", label: "독서", value: "126페이지" },
-      { domain: "NEWS", detail: "생각 기록 12개", label: "뉴스", value: "18개" },
-      { domain: "LANGUAGE", detail: "말하기 8회 포함", label: "외국어", value: "74문장" },
-      { domain: "HEALTH", detail: "가장 꾸준한 영역", label: "운동", value: "210분" },
-    ],
+    monthlyMetrics: domainOrder.map((domain) =>
+      metricFromTotal(monthTotals.get(domain), monthlyFallback(domain)),
+    ),
     providerBoundary: {
       bookProvider: "Internal catalog cache + server BookCatalogProvider",
       languageProvider: "Internal learning content catalog",
       newsProvider: "Server NewsFeedProvider RSS/cache",
       workoutProvider: "Native workout catalog",
     },
-    recentHistory: [
-      { id: "today-reading", label: "오늘 · 독서", title: "8페이지 읽음", xp: "+12 XP" },
-      { id: "today-health", label: "오늘 · 운동", title: "홈트 15분 완료", xp: "+15 XP" },
-      { id: "yesterday-language", label: "어제 · 외국어", title: "5문장 학습", xp: "+10 XP" },
-    ],
+    recentHistory:
+      weekSummary?.recentActivities.length ||
+      monthSummary?.recentActivities.length
+        ? [
+            ...(weekSummary?.recentActivities ?? []),
+            ...(monthSummary?.recentActivities ?? []),
+          ]
+            .slice(0, 3)
+            .map((item) =>
+              withHistoryIcon(item, goalByDomain.get(item.domain)?.userIcon),
+            )
+        : domainOrder
+            .slice(0, 3)
+            .map((domain) =>
+              withHistoryIcon(
+                {
+                  id: `recent-${domain.toLowerCase()}`,
+                  label: `최근 · ${domainFallbacks[domain].title}`,
+                  title: fallbackActivityTitle(domain),
+                  xp: "+0 XP",
+                },
+                goalByDomain.get(domain)?.userIcon,
+              ),
+            ),
     result: {
       level: `LV ${monthSummary?.level ?? dashboard.profile.level}`,
-      nextLevel: "다음 레벨까지 180 XP",
-      streak: "5일 연속",
+      nextLevel: "다음 레벨까지 서버 기준 계산",
+      streak: `${weekSummary?.streakDays ?? 0}일 연속`,
       totalXp: `+${Math.max(
         weekSummary?.expEarnedInPeriod ?? 0,
         dashboard.completedContentCount * 12,
       )} XP`,
     },
-    todayMetrics: [
-      { domain: "READING", detail: "목표 5페이지", label: "독서", value: "5페이지" },
-      { domain: "NEWS", detail: "읽음 처리 완료", label: "뉴스", value: "1개" },
-      { domain: "LANGUAGE", detail: "영어 기본", label: "외국어", value: "3문장" },
-      { domain: "HEALTH", detail: "짧은 루틴", label: "운동", value: "12분" },
-    ],
+    todayMetrics: domainOrder.map((domain) =>
+      metricFromTotal(weekTotals.get(domain), todayFallback(domain)),
+    ),
     weeklyMetrics: [
-      { detail: "월 화 수 목 금", label: "연속 기록", value: "5일" },
       {
-        detail: `서버 기록 ${weekSummary?.progressRecordCount ?? 12}개`,
-        label: "미션 완료",
-        value: `${weekSummary?.progressRecordCount ?? 12}개`,
+        detail: `${weekSummary?.missionCompletionCount ?? 0} / ${
+          weekSummary?.missionTargetCount ?? 0
+        } 미션`,
+        label: "연속 기록",
+        value: `${weekSummary?.streakDays ?? 0}일`,
       },
-      { detail: "독서 42p · 운동 85분", label: "활동량", value: "균형 유지" },
+      {
+        detail: `서버 기록 ${weekSummary?.progressRecordCount ?? 0}개`,
+        label: "미션 완료",
+        value: `${weekSummary?.missionCompletionCount ?? 0}개`,
+      },
+      weeklyVolumeMetric(weekTotals),
     ],
   };
+}
+
+function totalsByDomain(
+  summary: GrowthSummary | null | undefined,
+): Map<GrowthDomainKey, GrowthMetricViewModel> {
+  return new Map(
+    (summary?.domainTotals ?? []).map((metric) => [
+      metric.domain,
+      {
+        detail: metric.detail,
+        domain: metric.domain,
+        label: metric.label,
+        value: metric.value,
+      },
+    ]),
+  );
+}
+
+function metricFromTotal(
+  metric: GrowthMetricViewModel | undefined,
+  fallback: GrowthMetricViewModel,
+): GrowthMetricViewModel {
+  return metric ?? fallback;
+}
+
+function todayFallback(domain: GrowthDomainKey): GrowthMetricViewModel {
+  const fallback = domainFallbacks[domain];
+  return {
+    detail: fallback.goalText,
+    domain,
+    label: fallback.title,
+    value: defaultTodayValue(domain),
+  };
+}
+
+function monthlyFallback(domain: GrowthDomainKey): GrowthMetricViewModel {
+  const fallback = domainFallbacks[domain];
+  return {
+    detail: "서버 기록 0개",
+    domain,
+    label: fallback.title,
+    value: "0",
+  };
+}
+
+function weeklyVolumeMetric(
+  weekTotals: Map<GrowthDomainKey, GrowthMetricViewModel>,
+): GrowthMetricViewModel {
+  const reading = weekTotals.get("READING")?.value ?? "0페이지";
+  const health = weekTotals.get("HEALTH")?.value ?? "0분";
+  return {
+    detail: `독서 ${reading} · 운동 ${health}`,
+    label: "활동량",
+    value: `${weekTotals.size}개 영역`,
+  };
+}
+
+function fallbackActivityTitle(domain: GrowthDomainKey): string {
+  if (domain === "READING") return "독서 페이지를 기록해요";
+  if (domain === "NEWS") return "읽은 기사를 기록해요";
+  if (domain === "LANGUAGE") return "학습 문장을 기록해요";
+  return "운동 시간을 기록해요";
+}
+
+function withHistoryIcon(
+  item: Omit<GrowthHistoryViewModel, "userIcon">,
+  userIcon: GrowthGoalIcon | undefined,
+): GrowthHistoryViewModel {
+  return userIcon ? { ...item, userIcon } : item;
+}
+
+function defaultTodayValue(domain: GrowthDomainKey): string {
+  if (domain === "READING") return "5페이지";
+  if (domain === "NEWS") return "1개";
+  if (domain === "LANGUAGE") return "3문장";
+  return "12분";
 }
 
 function contentTypeForDomain(domain: GrowthDomainKey): GrowthContentType {

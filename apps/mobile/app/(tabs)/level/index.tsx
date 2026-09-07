@@ -36,7 +36,6 @@ import {
 export {
   normalizeGrowthDashboardForLevel as normalizeGrowthDashboardForTest,
 } from "../../../src/features/level/dashboard-normalization";
-import { GROWTH_DASHBOARD_PATH } from "../../../src/features/level/constants";
 import type {
   GrowthContentItem,
   GrowthContentType,
@@ -45,8 +44,6 @@ import type {
 } from "../../../src/features/level/types";
 
 const designSystem = salaryHijackingDesignSystem;
-const SCREEN_VERSION = "5.0.0-growth-product-main";
-
 const fallbackDashboard: GrowthDashboard = {
   activeTaskCount: 4,
   completedContentCount: 8,
@@ -59,12 +56,66 @@ const fallbackDashboard: GrowthDashboard = {
 
 const fallbackWeekSummary: GrowthSummary = {
   badgeCount: 0,
+  domainTotals: [
+    {
+      detail: "읽은 페이지",
+      domain: "READING",
+      label: "독서",
+      quantity: 42,
+      unit: "PAGE",
+      value: "42페이지",
+    },
+    {
+      detail: "읽은 기사",
+      domain: "NEWS",
+      label: "뉴스",
+      quantity: 6,
+      unit: "ARTICLE",
+      value: "6개",
+    },
+    {
+      detail: "학습 문장",
+      domain: "LANGUAGE",
+      label: "외국어",
+      quantity: 28,
+      unit: "SENTENCE",
+      value: "28문장",
+    },
+    {
+      detail: "운동 시간",
+      domain: "HEALTH",
+      label: "운동",
+      quantity: 85,
+      unit: "MINUTE",
+      value: "85분",
+    },
+  ],
   endDate: "2026-09-07",
   expEarnedInPeriod: 120,
   financialRawDataExposed: false,
   level: 7,
+  missionCompletionCount: 12,
+  missionTargetCount: 16,
   progressRecordCount: 12,
+  recentActivities: [
+    {
+      domain: "READING",
+      id: "fallback-reading",
+      label: "오늘 · 독서",
+      title: "8페이지 읽음",
+      xp: "+12 XP",
+    },
+    {
+      domain: "HEALTH",
+      id: "fallback-health",
+      label: "오늘 · 운동",
+      title: "홈트 15분 완료",
+      xp: "+15 XP",
+    },
+  ],
   startDate: "2026-09-01",
+  strongestDomain: "HEALTH",
+  streakDays: 5,
   taskCount: 4,
   totalExp: 880,
 };
@@ -163,10 +214,16 @@ export default function LevelIndexScreen(): React.ReactElement {
   const openMission = (mission: GrowthMissionViewModel): void => {
     router.push(mission.route as never);
   };
+  const openGoalEditor = (mission: GrowthMissionViewModel): void => {
+    router.push({
+      pathname: "/level/goals",
+      params: { domain: mission.domain },
+    } as never);
+  };
 
   return (
     <AppShell
-      accessibilityLabel={`LV UP product screen ${SCREEN_VERSION} ${GROWTH_DASHBOARD_PATH}`}
+      accessibilityLabel="LV UP"
       header={
         <AppHeader
           actionLabel="목표 관리"
@@ -200,7 +257,7 @@ export default function LevelIndexScreen(): React.ReactElement {
             key={mission.domain}
             mission={mission}
             onDetail={openMission}
-            onEdit={() => router.push("/level/goals" as never)}
+            onEdit={openGoalEditor}
             onQuickComplete={(nextMission) => {
               setQuickCompleteDomain(nextMission.title);
             }}
