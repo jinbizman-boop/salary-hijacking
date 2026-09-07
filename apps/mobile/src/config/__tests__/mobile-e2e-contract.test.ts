@@ -325,11 +325,14 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).toContain(
       "release/eas-production-remote-log-summary.local.json",
     );
+    expect(workflow).toContain("easArchiveAllowsRuntimeAssets");
+    expect(workflow).toContain("runtimeAssetsPresent");
     expect(workflow).toContain("sync_env_var EAS_PROJECT_ID plaintext");
     expect(workflow).toContain("sync_env_var ADMOB_ANDROID_APP_ID sensitive");
     expect(workflow).not.toContain("sync_env_var GOOGLE_SERVICES_JSON");
     expect(workflow).not.toContain("sync_env_var ADMOB_IOS_APP_ID");
     expect(easIgnore).toContain("!google-services.json");
+    expect(easIgnore).toContain("!src/shared/assets/**");
     expect(easIgnore).not.toMatch(
       /^\s*(?:\*\*\/)?google-services\.json\s*$/mu,
     );

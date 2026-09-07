@@ -671,12 +671,27 @@ jobs:
           const googleServicesPath = "./google-services.json";
           const easIgnorePath = "./.easignore";
           const gitIgnorePath = "./.gitignore";
+          const requiredRuntimeAssets = [
+            "./assets/bottom-tabs/salary-tab.png",
+            "./assets/bottom-tabs/plan-tab.png",
+            "./assets/bottom-tabs/level-tab.png",
+            "./assets/bottom-tabs/community-tab.png",
+            "./assets/bottom-tabs/profile-tab.png",
+            "./src/shared/assets/icons/social/kakao.png",
+            "./src/shared/assets/icons/social/naver.png",
+            "./src/shared/assets/icons/social/google.png",
+          ];
           const localFilePresent = fs.existsSync(googleServicesPath);
           const easIgnorePresent = fs.existsSync(easIgnorePath);
           const gitIgnorePresent = fs.existsSync(gitIgnorePath);
+          const runtimeAssetRecords = requiredRuntimeAssets.map((assetPath) => ({
+            assetPath,
+            exists: fs.existsSync(assetPath),
+          }));
           let localFileValidJson = false;
           let androidPackageMatched = false;
           let easArchiveAllowsRootGoogleServicesFile = false;
+          let easArchiveAllowsRuntimeAssets = false;
           let gitKeepsRootGoogleServicesIgnored = false;
 
           if (localFilePresent) {
@@ -707,6 +722,8 @@ jobs:
                   line !== "!google-services.json" &&
                   /^(?:\*\*\/)?google-services\.json$/u.test(line),
               );
+            easArchiveAllowsRuntimeAssets =
+              easIgnoreLines.includes("!src/shared/assets/**");
           }
 
           if (gitIgnorePresent) {
@@ -731,6 +748,10 @@ jobs:
                 process.env.GOOGLE_SERVICES_JSON === googleServicesPath,
               easIgnorePresent,
               easArchiveAllowsRootGoogleServicesFile,
+              easArchiveAllowsRuntimeAssets,
+              runtimeAssetsPresent: runtimeAssetRecords.every(
+                (record) => record.exists,
+              ),
               gitIgnorePresent,
               gitKeepsRootGoogleServicesIgnored,
             },
@@ -739,6 +760,7 @@ jobs:
                 ? hash(fs.readFileSync(googleServicesPath, "utf8"))
                 : null,
               googleServicesPath,
+              runtimeAssetRecords,
             },
             blocker: null,
           };
@@ -750,6 +772,8 @@ jobs:
             proof.checks.googleServicesJsonEnvMatchesArchivePath &&
             proof.checks.easIgnorePresent &&
             proof.checks.easArchiveAllowsRootGoogleServicesFile &&
+            proof.checks.easArchiveAllowsRuntimeAssets &&
+            proof.checks.runtimeAssetsPresent &&
             proof.checks.gitKeepsRootGoogleServicesIgnored;
 
           if (!pass) {

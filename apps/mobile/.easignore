@@ -23,3 +23,10 @@ GoogleService-Info.plist
 # The production workflow writes this root file from a GitHub environment
 # secret immediately before invoking EAS. It remains gitignored.
 !google-services.json
+
+# Runtime image assets are required by the Android JS bundle. Keep them explicit
+# because EAS uses archive ignore rules before the remote Metro bundle phase.
+!src/
+!src/shared/
+!src/shared/assets/
+!src/shared/assets/**
