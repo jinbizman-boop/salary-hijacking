@@ -1017,6 +1017,9 @@ jobs:
               .replace(/ca-app-pub-\d{16}~\d{10}/g, "[admob-app-id-redacted]")
               .replace(/eas_[A-Za-z0-9_-]{20,}/g, "[eas-token-redacted]")
               .replace(/BEGIN [A-Z ]+PRIVATE KEY[\s\S]*?END [A-Z ]+PRIVATE KEY/g, "[private-key-redacted]")
+              .replace(/\b(?:private_key|client_email)\b/gi, "[sensitive-field-redacted]")
+              .replace(/expo\.dev\/artifacts/gi, "[artifact-host-redacted]")
+              .replace(/\.aab\?/gi, "[aab-query-redacted]")
               .replace(/\s+/g, " ")
               .trim()
               .slice(0, 300);

@@ -335,6 +335,7 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).toContain("buildObjectKeyHashes");
     expect(workflow).toContain("keyHash: hash(nextPath)");
     expect(workflow).toContain("containsForbiddenEvidenceValue(proof)");
+    expect(workflow).toContain("[sensitive-field-redacted]");
     expect(easIgnore).toContain("!google-services.json");
     expect(easIgnore).toContain("!src/shared/assets/**");
     expect(easIgnore).toContain("!assets/runtime-icons/**");
