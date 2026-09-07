@@ -825,14 +825,14 @@ jobs:
             const matches = [];
             for (const line of lines) {
               if (
-                /error|fail|exception|google-services|googleServicesFile|install dependencies|pnpm|node|gradle|credential|keystore|signing|unknown error/i.test(
+                /error|fail|exception|google-services|googleServicesFile|install dependencies|read app config|bundle javascript|metro|expo export|syntax|typeerror|referenceerror|pnpm|unsupported engine|gradle|credential|keystore|signing|unknown error/i.test(
                   line,
                 )
               ) {
                 const sanitized = sanitizeLine(line).slice(0, 500);
                 if (sanitized) matches.push(sanitized);
               }
-              if (matches.length >= 80) break;
+              if (matches.length >= 240) break;
             }
             return matches;
           };
@@ -909,7 +909,8 @@ jobs:
                 ok: entry.ok,
                 bodyHash: entry.bodyHash || null,
                 errorClass: entry.errorClass || null,
-                signalLines: entry.signalLines.slice(0, 20),
+                signalLineCount: entry.signalLines.length,
+                signalLines: entry.signalLines.slice(-80),
               })),
             };
 
