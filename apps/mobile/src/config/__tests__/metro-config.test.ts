@@ -75,6 +75,10 @@ type MetroConfig = Readonly<{
       realWorkspaceRoot: string,
       platform: string,
     ) => boolean;
+    tryResolveRelativeWorkspaceSource?: (
+      moduleName: string,
+      originModulePath: string | undefined,
+    ) => string | null;
     shouldUseCanonicalProjectRoot?: boolean;
   }>;
 }>;
@@ -1059,5 +1063,37 @@ describe("mobile Metro dependency resolution", () => {
       });
       jest.resetModules();
     }
+  });
+
+  it("pins tab layout workspace relative source imports before EAS remote Metro fallback", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: resolvedModuleName,
+      }),
+    );
+    const tabLayoutPath = nodePath.resolve(
+      __dirname,
+      "../../../app/(tabs)/_layout.tsx",
+    );
+    const context: ResolverContext = {
+      originModulePath: tabLayoutPath,
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(
+      context,
+      "../../src/shared/assets/icons/index",
+      "android",
+    );
+
+    expect(result.filePath).toBe(
+      nodePath.resolve(__dirname, "../../shared/assets/icons/index.ts"),
+    );
+    expect(fallbackResolver).not.toHaveBeenCalled();
   });
 });

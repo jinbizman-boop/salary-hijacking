@@ -538,6 +538,39 @@ function tryResolveFromOriginModule(moduleName, originModulePath) {
   }
 }
 
+function tryResolveRelativeWorkspaceSource(moduleName, originModulePath) {
+  if (!originModulePath || !moduleName.startsWith(".")) return null;
+
+  const originDirectory = path.dirname(originModulePath);
+  const candidateBase = path.resolve(originDirectory, moduleName);
+  const normalizedCandidateBase = normalizeForPrefix(candidateBase);
+  const workspaceRoots = [workspaceRoot, realWorkspaceRoot].map((root) =>
+    normalizeForPrefix(root),
+  );
+  const isInsideWorkspace = workspaceRoots.some(
+    (root) =>
+      normalizedCandidateBase === root ||
+      normalizedCandidateBase.startsWith(`${root}${path.sep}`),
+  );
+
+  if (!isInsideWorkspace) return null;
+
+  const sourceExts = config.resolver.sourceExts ?? [];
+  const candidates = [];
+  if (path.extname(candidateBase)) {
+    candidates.push(candidateBase);
+  } else {
+    for (const extension of sourceExts) {
+      candidates.push(`${candidateBase}.${extension}`);
+    }
+    for (const extension of sourceExts) {
+      candidates.push(path.join(candidateBase, `index.${extension}`));
+    }
+  }
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
+}
+
 function toWorkspaceSourceFile(filePath) {
   return {
     type: "sourceFile",
@@ -696,6 +729,14 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     return toWorkspaceSourceFile(moduleName);
   }
 
+  const relativeWorkspaceSource = tryResolveRelativeWorkspaceSource(
+    moduleName,
+    context.originModulePath,
+  );
+  if (relativeWorkspaceSource !== null) {
+    return toWorkspaceSourceFile(relativeWorkspaceSource);
+  }
+
   const windowsDriveRootEntry = tryResolveWindowsDriveRootEntry(
     moduleName,
     context.originModulePath,
@@ -790,6 +831,7 @@ Object.defineProperty(config, "__private", {
     enableAndroidReleaseInlineRequires,
     shouldUseCanonicalProjectRoot,
     shouldDelegateReactNativeWebResolution,
+    tryResolveRelativeWorkspaceSource,
   },
 });
 
