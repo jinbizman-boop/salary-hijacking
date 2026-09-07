@@ -16,19 +16,19 @@ describe("mobile prototype UI contract", () => {
     const source = readApp("(tabs)", "_layout.tsx");
 
     expect(source).toContain(
-      "../../src/shared/assets/icons/bottom-tabs/salary-tab.png",
+      "../../assets/bottom-tabs/salary-tab.png",
     );
     expect(source).toContain(
-      "../../src/shared/assets/icons/bottom-tabs/plan-tab.png",
+      "../../assets/bottom-tabs/plan-tab.png",
     );
     expect(source).toContain(
-      "../../src/shared/assets/icons/bottom-tabs/level-tab.png",
+      "../../assets/bottom-tabs/level-tab.png",
     );
     expect(source).toContain(
-      "../../src/shared/assets/icons/bottom-tabs/community-tab.png",
+      "../../assets/bottom-tabs/community-tab.png",
     );
     expect(source).toContain(
-      "../../src/shared/assets/icons/bottom-tabs/profile-tab.png",
+      "../../assets/bottom-tabs/profile-tab.png",
     );
     expect(source).toContain("bottomTabIconAssets.salary");
     expect(source).toContain("bottomTabIconAssets.plan");

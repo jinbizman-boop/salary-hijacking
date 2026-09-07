@@ -26,14 +26,14 @@ const LAYOUT_VERSION = "4.1.0-explicit-root-tab-navigation";
 const designSystem = salaryHijackingDesignSystem;
 const bottomTabIconAssets = {
   salary:
-    require("../../src/shared/assets/icons/bottom-tabs/salary-tab.png") as ImageSourcePropType,
-  plan: require("../../src/shared/assets/icons/bottom-tabs/plan-tab.png") as ImageSourcePropType,
+    require("../../assets/bottom-tabs/salary-tab.png") as ImageSourcePropType,
+  plan: require("../../assets/bottom-tabs/plan-tab.png") as ImageSourcePropType,
   level:
-    require("../../src/shared/assets/icons/bottom-tabs/level-tab.png") as ImageSourcePropType,
+    require("../../assets/bottom-tabs/level-tab.png") as ImageSourcePropType,
   community:
-    require("../../src/shared/assets/icons/bottom-tabs/community-tab.png") as ImageSourcePropType,
+    require("../../assets/bottom-tabs/community-tab.png") as ImageSourcePropType,
   profile:
-    require("../../src/shared/assets/icons/bottom-tabs/profile-tab.png") as ImageSourcePropType,
+    require("../../assets/bottom-tabs/profile-tab.png") as ImageSourcePropType,
 } as const;
 
 const tabs: readonly TabDefinition[] = [

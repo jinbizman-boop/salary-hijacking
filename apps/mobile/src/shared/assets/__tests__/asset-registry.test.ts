@@ -137,8 +137,19 @@ describe("mobile asset registry policy", () => {
       .filter((entry) => entry.isFile())
       .map((entry) => entry.name)
       .sort();
+    const rootFolders = fs
+      .readdirSync(assetsRoot, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort();
 
     expect(rootFiles).toEqual([...expoAssetFiles].sort());
+    expect(rootFolders).toEqual(["bottom-tabs", "fonts"]);
+    for (const file of requiredIconFiles.filter((file) =>
+      file.startsWith("bottom-tabs/"),
+    )) {
+      expect(fs.existsSync(path.join(assetsRoot, file))).toBe(true);
+    }
     expect(fs.existsSync(path.join(assetsRoot, "icons"))).toBe(false);
     expect(fs.existsSync(path.join(assetsRoot, "brand"))).toBe(false);
   });
