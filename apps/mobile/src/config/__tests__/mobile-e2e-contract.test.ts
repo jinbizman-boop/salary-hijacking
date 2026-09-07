@@ -160,11 +160,27 @@ describe("mobile Detox E2E contract", () => {
     const debugBuildScript = readRequiredText(
       "scripts/expo-local-android-debug-build.mjs",
     );
+    const appConfigSource = readRequiredText("app.config.ts");
+    const packageListPatchPlugin = readRequiredText(
+      "plugins/withSalaryHijackingAndroidPackageListPatch.cjs",
+    );
 
     expect(debugBuildScript).toContain("patchReactNativePackageList");
     expect(debugBuildScript).toContain("expo\\.core\\.ExpoModulesPackage");
     expect(debugBuildScript).toContain("expo.modules.ExpoModulesPackage");
     expect(debugBuildScript).toContain(":app:generateAutolinkingPackageList");
+    expect(appConfigSource).toContain(
+      "./plugins/withSalaryHijackingAndroidPackageListPatch.cjs",
+    );
+    expect(packageListPatchPlugin).toContain(
+      "salaryHijackingPatchGeneratedPackageList",
+    );
+    expect(packageListPatchPlugin).toContain(
+      ":app:generateAutolinkingPackageList",
+    );
+    expect(packageListPatchPlugin).toContain("expo.core.ExpoModulesPackage");
+    expect(packageListPatchPlugin).toContain("expo.modules.ExpoModulesPackage");
+    expect(packageListPatchPlugin).toContain("JavaCompile");
   });
 
   it("blocks Android storage and overlay permissions that are not required for a finance app", () => {
@@ -343,9 +359,7 @@ describe("mobile Detox E2E contract", () => {
     expect(easIgnore).toContain("!src/shared/assets/**");
     expect(easIgnore).toContain("!assets/runtime-icons/**");
     expect(easIgnore).toContain("!assets/runtime-images/**");
-    expect(easIgnore).not.toMatch(
-      /^\s*(?:\*\*\/)?google-services\.json\s*$/mu,
-    );
+    expect(easIgnore).not.toMatch(/^\s*(?:\*\*\/)?google-services\.json\s*$/mu);
     expect(gitIgnore).toMatch(/^\s*(?:\*\*\/)?google-services\.json\s*$/mu);
   });
 

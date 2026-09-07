@@ -353,6 +353,7 @@ function pluginConfig(environment: EnvironmentName): readonly PluginEntry[] {
         },
       },
     ],
+    "./plugins/withSalaryHijackingAndroidPackageListPatch.cjs",
   ];
 }
 
