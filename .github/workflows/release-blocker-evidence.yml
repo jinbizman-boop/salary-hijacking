@@ -600,7 +600,16 @@ jobs:
             fs.writeFileSync("release/android-production-aab-proof.local.json", `${serialized}\n`, "utf8");
             fs.rmSync("release/eas-production-build.raw.json", { force: true });
 
-            if (!Object.values(evidence.checks).every(Boolean)) {
+            const requiredChecks = [
+              evidence.checks.sourceShaPresent,
+              evidence.checks.easBuildFinished,
+              evidence.checks.androidPlatform,
+              evidence.checks.productionProfile,
+              evidence.checks.artifactDownloaded,
+              evidence.checks.artifactSha256Present,
+              evidence.checks.artifactUrlStored === false,
+            ];
+            if (!requiredChecks.every(Boolean)) {
               throw new Error("Production AAB evidence checks did not all pass.");
             }
           })().catch((error) => {
