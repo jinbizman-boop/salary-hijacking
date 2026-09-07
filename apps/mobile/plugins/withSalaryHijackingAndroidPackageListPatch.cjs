@@ -40,6 +40,12 @@ tasks.withType(JavaCompile).configureEach { javaTask ->
         javaTask.dependsOn("salaryHijackingPatchGeneratedPackageList")
     }
 }
+
+tasks.matching { task ->
+    task.name.startsWith("compile") && task.name.endsWith("Kotlin")
+}.configureEach { kotlinTask ->
+    kotlinTask.dependsOn("salaryHijackingPatchGeneratedPackageList")
+}
 ${patchEnd}`;
 
 const removeExistingPatchBlock = (contents) =>

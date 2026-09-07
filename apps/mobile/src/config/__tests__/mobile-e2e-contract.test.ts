@@ -181,6 +181,7 @@ describe("mobile Detox E2E contract", () => {
     expect(packageListPatchPlugin).toContain("expo.core.ExpoModulesPackage");
     expect(packageListPatchPlugin).toContain("expo.modules.ExpoModulesPackage");
     expect(packageListPatchPlugin).toContain("JavaCompile");
+    expect(packageListPatchPlugin).toContain('endsWith("Kotlin")');
   });
 
   it("blocks Android storage and overlay permissions that are not required for a finance app", () => {
