@@ -232,7 +232,7 @@ jobs:
         run: pnpm --dir "$MOBILE_APP_DIR" typecheck
 
       - name: Test mobile app
-        run: pnpm --dir "$MOBILE_APP_DIR" test
+        run: pnpm --dir "$MOBILE_APP_DIR" exec jest --runInBand --forceExit
 
       - name: Run Expo doctor when configured
         run: |
