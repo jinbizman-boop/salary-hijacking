@@ -1,0 +1,594 @@
+name: release-blocker-evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_production_aab:
+        description: "Build and download the final Android production AAB proof."
+        required: true
+        default: true
+        type: boolean
+      run_d016_alerts:
+        description: "Collect no-secret D016 alert policy and routing proof."
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CI: "true"
+  FORCE_COLOR: "0"
+  NO_COLOR: "1"
+  TERM: dumb
+  TZ: Asia/Seoul
+  MOBILE_APP_DIR: apps/mobile
+
+jobs:
+  d016-alerts-proof:
+    name: D016 alerts no-secret proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event.inputs.run_d016_alerts != 'false'
+
+    environment:
+      name: production
+
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Collect alert policy and synthetic routing evidence
+        id: collect
+        run: |
+          set -euo pipefail
+
+          mkdir -p release
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const outPath = "release/d016-alerts-proof.local.json";
+          const accountId = process.env.CLOUDFLARE_ACCOUNT_ID || "";
+          const token = process.env.CLOUDFLARE_API_TOKEN || "";
+          const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL || "";
+          const missing = [];
+
+          if (!accountId) missing.push("CLOUDFLARE_ACCOUNT_ID");
+          if (!token) missing.push("CLOUDFLARE_API_TOKEN");
+          if (!slackWebhookUrl) missing.push("SLACK_WEBHOOK_URL");
+
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
+
+          const mechanismSummary = (policies) => {
+            const totals = new Map();
+            for (const policy of policies) {
+              const mechanisms = policy?.mechanisms || {};
+              for (const [type, value] of Object.entries(mechanisms)) {
+                const count = Array.isArray(value)
+                  ? value.length
+                  : value && typeof value === "object"
+                    ? Object.keys(value).length
+                    : value
+                      ? 1
+                      : 0;
+                totals.set(type, (totals.get(type) || 0) + count);
+              }
+            }
+            return [...totals.entries()]
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([type, count]) => ({ type, count }));
+          };
+
+          const evidence = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source:
+              "GitHub Actions release-blocker-evidence D016 alerts proof; stores only booleans, counts, hashes, HTTP status classes, and secret names.",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            checks: {
+              requiredSecretsPresent: missing.length === 0,
+              cloudflareTokenVerified: false,
+              cloudflareAlertPoliciesReadable: false,
+              cloudflareAlertPolicyExists: false,
+              cloudflareEnabledAlertPolicyExists: false,
+              cloudflareRoutingDestinationConfigured: false,
+              syntheticRoutingTriggered: false,
+              syntheticRoutingDelivered: false,
+            },
+            cloudflare: {
+              accountIdHash: accountId ? hash(accountId) : null,
+              policyCount: null,
+              enabledPolicyCount: null,
+              routingMechanismSummary: [],
+            },
+            synthetic: {
+              destinationType: "slack-webhook",
+              destinationHash: slackWebhookUrl ? hash(slackWebhookUrl) : null,
+              httpStatusClass: null,
+            },
+            missingSecretNames: missing,
+            blocker: null,
+          };
+
+          const write = () => {
+            const serialized = JSON.stringify(evidence, null, 2);
+            if (
+              /https?:\/\/hooks\.slack\.com\/services\/|cf[_-]?[a-z0-9]{16,}|cloudflare[_-]?api[_-]?token\s*[:=]|BEGIN [A-Z ]+PRIVATE KEY|postgres(?:ql)?:\/\//i.test(
+                serialized,
+              )
+            ) {
+              throw new Error("D016 alerts proof contains a forbidden secret-shaped value.");
+            }
+            fs.writeFileSync(outPath, `${serialized}\n`, "utf8");
+          };
+
+          if (missing.length > 0) {
+            evidence.blocker = `Missing required secret names: ${missing.join(", ")}`;
+            write();
+            console.log("D016_ALERTS_GATE=BLOCKED");
+            process.exit(0);
+          }
+
+          (async () => {
+            const cfHeaders = {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            };
+
+            const cfFetch = async (path) => {
+              const response = await fetch(`https://api.cloudflare.com/client/v4${path}`, {
+                headers: cfHeaders,
+              });
+              const body = await response.json().catch(() => ({}));
+              return { response, body };
+            };
+
+            try {
+              const tokenProof = await cfFetch("/user/tokens/verify");
+              evidence.checks.cloudflareTokenVerified =
+                tokenProof.response.ok && tokenProof.body?.success === true;
+
+              const policiesProof = await cfFetch(
+                `/accounts/${encodeURIComponent(accountId)}/alerting/v3/policies`,
+              );
+
+              if (policiesProof.response.ok && policiesProof.body?.success === true) {
+                const policies = Array.isArray(policiesProof.body.result)
+                  ? policiesProof.body.result
+                  : [];
+                const enabledPolicies = policies.filter((policy) => policy?.enabled !== false);
+                const routingSummary = mechanismSummary(policies);
+
+                evidence.checks.cloudflareAlertPoliciesReadable = true;
+                evidence.checks.cloudflareAlertPolicyExists = policies.length > 0;
+                evidence.checks.cloudflareEnabledAlertPolicyExists =
+                  enabledPolicies.length > 0;
+                evidence.checks.cloudflareRoutingDestinationConfigured =
+                  routingSummary.some((entry) => entry.count > 0);
+                evidence.cloudflare.policyCount = policies.length;
+                evidence.cloudflare.enabledPolicyCount = enabledPolicies.length;
+                evidence.cloudflare.routingMechanismSummary = routingSummary;
+              } else {
+                evidence.blocker = `Cloudflare alert policies API unavailable or unauthorized: HTTP ${policiesProof.response.status}`;
+              }
+
+              const syntheticPayload = {
+                text: `[Salary Hijacking D016] synthetic alert routing check ${process.env.GITHUB_RUN_ID}`,
+              };
+              const slackResponse = await fetch(slackWebhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(syntheticPayload),
+              });
+              evidence.checks.syntheticRoutingTriggered = true;
+              evidence.checks.syntheticRoutingDelivered = slackResponse.ok;
+              evidence.synthetic.httpStatusClass = `${Math.floor(slackResponse.status / 100)}xx`;
+
+              const pass =
+                evidence.checks.requiredSecretsPresent &&
+                evidence.checks.cloudflareTokenVerified &&
+                evidence.checks.cloudflareAlertPoliciesReadable &&
+                evidence.checks.cloudflareAlertPolicyExists &&
+                evidence.checks.cloudflareEnabledAlertPolicyExists &&
+                evidence.checks.cloudflareRoutingDestinationConfigured &&
+                evidence.checks.syntheticRoutingTriggered &&
+                evidence.checks.syntheticRoutingDelivered;
+
+              if (!pass && !evidence.blocker) {
+                evidence.blocker =
+                  "D016 alerts proof did not satisfy policy/read/routing/synthetic delivery checks.";
+              }
+            } catch (error) {
+              evidence.blocker = error instanceof Error ? error.message : String(error);
+            }
+
+            write();
+            console.log(evidence.blocker ? "D016_ALERTS_GATE=BLOCKED" : "D016_ALERTS_GATE=PASS");
+          })().catch((error) => {
+            console.error(error instanceof Error ? error.message : String(error));
+            process.exit(1);
+          });
+          NODE
+
+          if node -e "const e=require('./release/d016-alerts-proof.local.json'); process.exit(e.blocker ? 1 : 0)"; then
+            echo "gate=PASS" >> "$GITHUB_OUTPUT"
+          else
+            echo "gate=BLOCKED" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload D016 alerts proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: d016-alerts-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: release/d016-alerts-proof.local.json
+
+      - name: Enforce D016 alerts proof gate
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.collect.outputs.gate }}" != "PASS" ]; then
+            echo "::error::D016 alerts proof is blocked. Download d016-alerts-proof artifact for the sanitized blocker."
+            exit 1
+          fi
+
+  android-production-aab:
+    name: Android production AAB proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    if: github.event.inputs.run_production_aab != 'false'
+
+    environment:
+      name: mobile-production
+
+    env:
+      APP_ENV: production
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
+      ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
+      ADMOB_IOS_APP_ID: ${{ secrets.ADMOB_IOS_APP_ID }}
+      GOOGLE_SERVICES_JSON_CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON_CONTENT }}
+      GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+      ANDROID_PACKAGE: com.salaryhijacking.mobile
+      EXPO_PUBLIC_API_BASE_URL: https://api.salaryhijacking.com
+      EXPO_PUBLIC_DEEPLINK_HOST: salaryhijacking.com
+      EXPO_PUBLIC_RELEASE_CHANNEL: production
+      EXPO_PUBLIC_CRASH_REPORTING_ENABLED: "true"
+      EXPO_PUBLIC_E2E_BUILD: "false"
+      EXPO_PUBLIC_ADS_ENABLED: "true"
+      EXPO_PUBLIC_PARTNER_ENABLED: "true"
+      GOOGLE_SERVICES_JSON: ./secrets/firebase/google-services.json
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare production build secrets without logging values
+        id: prepare
+        run: |
+          set -euo pipefail
+
+          mkdir -p release release-artifacts/mobile "$MOBILE_APP_DIR/secrets/firebase"
+
+          node <<'NODE'
+          const fs = require("node:fs");
+
+          const missing = [];
+          const required = [
+            "EXPO_TOKEN",
+            "EAS_PROJECT_ID",
+            "ADMOB_ANDROID_APP_ID",
+            "ADMOB_IOS_APP_ID",
+          ];
+
+          for (const name of required) {
+            if (!process.env[name]) missing.push(name);
+          }
+
+          if (
+            process.env.EAS_PROJECT_ID &&
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+              process.env.EAS_PROJECT_ID,
+            )
+          ) {
+            missing.push("EAS_PROJECT_ID_VALID_UUID");
+          }
+
+          for (const name of ["ADMOB_ANDROID_APP_ID", "ADMOB_IOS_APP_ID"]) {
+            if (
+              process.env[name] &&
+              !/^ca-app-pub-\d{16}~\d{10}$/u.test(process.env[name])
+            ) {
+              missing.push(`${name}_VALID_FORMAT`);
+            }
+          }
+
+          const googleServicesPath =
+            "apps/mobile/secrets/firebase/google-services.json";
+          if (!fs.existsSync(googleServicesPath)) {
+            const raw = process.env.GOOGLE_SERVICES_JSON_CONTENT || "";
+            const base64 = process.env.GOOGLE_SERVICES_JSON_BASE64 || "";
+            const content = raw || (base64 ? Buffer.from(base64, "base64").toString("utf8") : "");
+            if (content) {
+              fs.writeFileSync(googleServicesPath, content, "utf8");
+            }
+          }
+
+          if (!fs.existsSync(googleServicesPath)) {
+            missing.push("GOOGLE_SERVICES_JSON_CONTENT_OR_BASE64");
+          } else {
+            JSON.parse(fs.readFileSync(googleServicesPath, "utf8"));
+          }
+
+          const proof = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source:
+              "GitHub Actions Android production AAB proof preflight; stores only required secret names and booleans.",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            checks: {
+              requiredProductionBuildSecretsPresent: missing.length === 0,
+              expoTokenPresent: Boolean(process.env.EXPO_TOKEN),
+              easProjectIdPresent: Boolean(process.env.EAS_PROJECT_ID),
+              easProjectIdValidUuid:
+                Boolean(process.env.EAS_PROJECT_ID) &&
+                /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                  process.env.EAS_PROJECT_ID,
+                ),
+              admobAndroidAppIdPresent: Boolean(process.env.ADMOB_ANDROID_APP_ID),
+              admobIosAppIdPresent: Boolean(process.env.ADMOB_IOS_APP_ID),
+              googleServicesJsonPrepared: fs.existsSync(googleServicesPath),
+            },
+            missingSecretNames: missing,
+          };
+
+          const serialized = JSON.stringify(proof, null, 2);
+          if (/ca-app-pub-\d{16}~\d{10}|eas_[A-Za-z0-9_-]{20,}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email/i.test(serialized)) {
+            throw new Error("Production AAB secret preflight proof contains a forbidden value.");
+          }
+          fs.writeFileSync("release/android-production-aab-preflight.local.json", `${serialized}\n`, "utf8");
+
+          if (missing.length > 0) {
+            console.error(`::error::Missing or invalid production build secret names: ${missing.join(", ")}`);
+            process.exit(1);
+          }
+          NODE
+
+      - name: Verify EAS project identity
+        working-directory: ${{ env.MOBILE_APP_DIR }}
+        run: |
+          set -euo pipefail
+
+          pnpm dlx eas-cli@20.4.0 whoami --non-interactive > ../../release/eas-whoami.redacted.txt
+          pnpm dlx eas-cli@20.4.0 project:info --non-interactive > ../../release/eas-project-info.raw.txt
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+
+          const stripAnsi = (value) =>
+            String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
+          const normalizeKey = (value) =>
+            String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+          const readProjectInfo = (file) => {
+            const raw = stripAnsi(fs.readFileSync(file, "utf8"));
+            try {
+              return JSON.parse(raw);
+            } catch {
+              const entries = {};
+              for (const line of raw.split(/\r?\n/u)) {
+                const match = line.match(/^\s*([A-Za-z][A-Za-z0-9_:/ -]*?)\s{2,}(.+?)\s*$/u);
+                if (match) {
+                  entries[match[1].trim()] = match[2].trim();
+                  entries[normalizeKey(match[1])] = match[2].trim();
+                }
+              }
+              return entries;
+            }
+          };
+          const hash = (value) =>
+            crypto.createHash("sha256").update(String(value)).digest("hex");
+
+          const configuredProjectId = process.env.EAS_PROJECT_ID || "";
+          const whoami = fs.readFileSync("../../release/eas-whoami.redacted.txt", "utf8").trim();
+          const projectInfo = readProjectInfo("../../release/eas-project-info.raw.txt");
+          const remoteProjectId =
+            projectInfo?.id ||
+            projectInfo?.projectId ||
+            projectInfo?.projectID ||
+            projectInfo?.projectid ||
+            projectInfo?.["Project ID"] ||
+            projectInfo?.project?.id ||
+            projectInfo?.project?.projectId ||
+            "";
+          const proof = {
+            schemaVersion: 1,
+            observedAt: new Date().toISOString(),
+            source: "EAS project identity preflight for Android production AAB; hashes only.",
+            secretsRedacted: true,
+            containsSecretValues: false,
+            checks: {
+              easAuthenticated: Boolean(whoami),
+              easProjectMetadataPresent: Boolean(remoteProjectId),
+              easProjectIdRemoteMatch:
+                Boolean(remoteProjectId) && remoteProjectId === configuredProjectId,
+            },
+            proof: {
+              accountNameHash: hash(whoami),
+              projectIdConfiguredHash: hash(configuredProjectId),
+              projectIdRemoteHash: hash(remoteProjectId),
+            },
+          };
+          const serialized = JSON.stringify(proof, null, 2);
+          if (/eas_[A-Za-z0-9_-]{20,}|BEGIN [A-Z ]+PRIVATE KEY|postgres(?:ql)?:\/\//i.test(serialized)) {
+            throw new Error("EAS identity proof contains a forbidden secret-shaped value.");
+          }
+          fs.writeFileSync("../../release/eas-production-project-proof.local.json", `${serialized}\n`, "utf8");
+          fs.rmSync("../../release/eas-project-info.raw.txt", { force: true });
+          if (!proof.checks.easAuthenticated || !proof.checks.easProjectIdRemoteMatch) {
+            throw new Error("EAS project identity did not match configured EAS_PROJECT_ID.");
+          }
+          NODE
+
+      - name: Build Android production AAB with EAS
+        working-directory: ${{ env.MOBILE_APP_DIR }}
+        run: |
+          set -euo pipefail
+
+          pnpm dlx eas-cli@20.4.0 build \
+            --platform android \
+            --profile production \
+            --non-interactive \
+            --wait \
+            --json > ../../release/eas-production-build.raw.json
+
+      - name: Download and hash Android production AAB
+        run: |
+          set -euo pipefail
+
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+          const path = require("node:path");
+
+          const raw = fs.readFileSync("release/eas-production-build.raw.json", "utf8");
+          const parsed = JSON.parse(raw);
+          const builds = Array.isArray(parsed) ? parsed : [parsed];
+          const build = builds.find((item) => String(item?.platform || "").toUpperCase() === "ANDROID") || builds[0];
+          const buildUrl =
+            build?.artifacts?.buildUrl ||
+            build?.artifactUrl ||
+            build?.applicationArchiveUrl ||
+            build?.artifacts?.applicationArchiveUrl ||
+            "";
+
+          if (!build || !buildUrl) {
+            throw new Error("EAS build output did not include an Android build artifact URL.");
+          }
+
+          const outputDir = "release-artifacts/mobile";
+          fs.mkdirSync(outputDir, { recursive: true });
+          const outputPath = path.join(outputDir, "salary-hijacking-production-final.aab");
+          (async () => {
+            const response = await fetch(buildUrl);
+            if (!response.ok) {
+              throw new Error(`Failed to download AAB artifact: HTTP ${response.status}`);
+            }
+
+            const buffer = Buffer.from(await response.arrayBuffer());
+            if (buffer.length < 1024 * 1024) {
+              throw new Error("Downloaded AAB artifact is unexpectedly small.");
+            }
+            fs.writeFileSync(outputPath, buffer);
+
+            const sha256 = crypto.createHash("sha256").update(buffer).digest("hex").toUpperCase();
+            const sourceSha = process.env.GITHUB_SHA || "";
+            const evidence = {
+              schemaVersion: 1,
+              observedAt: new Date().toISOString(),
+              source: "EAS Android production AAB build and download proof; artifact URL and secrets are not stored.",
+              secretsRedacted: true,
+              containsSecretValues: false,
+              sourceSha,
+              gitCommitHash: build.gitCommitHash || null,
+              platform: build.platform || "ANDROID",
+              profile: "production",
+              distribution: build.distribution || "store",
+              status: build.status || null,
+              buildId: build.id || null,
+              appVersion: build.appVersion || null,
+              appBuildVersion: build.appBuildVersion || null,
+              artifact: {
+                fileName: path.basename(outputPath),
+                byteSize: buffer.length,
+                sha256,
+                extension: ".aab",
+              },
+              checks: {
+                sourceShaPresent: Boolean(sourceSha),
+                easBuildFinished: String(build.status || "").toUpperCase() === "FINISHED",
+                androidPlatform: String(build.platform || "").toUpperCase() === "ANDROID",
+                productionProfile: true,
+                artifactDownloaded: true,
+                artifactSha256Present: /^[A-F0-9]{64}$/u.test(sha256),
+                artifactUrlStored: false,
+              },
+            };
+
+            const serialized = JSON.stringify(evidence, null, 2);
+            if (/expo\.dev\/artifacts|\.aab\?|eas_[A-Za-z0-9_-]{20,}|ca-app-pub-\d{16}~\d{10}|BEGIN [A-Z ]+PRIVATE KEY|private_key|postgres(?:ql)?:\/\//i.test(serialized)) {
+              throw new Error("Production AAB proof contains a forbidden secret or artifact URL marker.");
+            }
+            fs.writeFileSync("release/android-production-aab-proof.local.json", `${serialized}\n`, "utf8");
+            fs.rmSync("release/eas-production-build.raw.json", { force: true });
+
+            if (!Object.values(evidence.checks).every(Boolean)) {
+              throw new Error("Production AAB evidence checks did not all pass.");
+            }
+          })().catch((error) => {
+            console.error(error instanceof Error ? error.message : String(error));
+            process.exit(1);
+          });
+          NODE
+
+      - name: Upload Android production AAB proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-production-aab-proof-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            release/android-production-aab-preflight.local.json
+            release/eas-production-project-proof.local.json
+            release/android-production-aab-proof.local.json
+
+      - name: Upload Android production AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-production-aab-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 30
+          path: release-artifacts/mobile/salary-hijacking-production-final.aab
