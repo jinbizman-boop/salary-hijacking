@@ -140,11 +140,13 @@ describe("plan reference screen interactions", () => {
 
     await waitFor(() => expect(createFixedExpense).toHaveBeenCalledTimes(1));
     expect(screen.queryByText("Rejected ChatGPT")).toBeNull();
-    expect(
-      screen.getByText(
-        "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uACC4\uD68D\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.",
-      ),
-    ).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          "\uC11C\uBC84 \uC800\uC7A5\uC774 \uC2E4\uD328\uD574 \uACC4\uD68D\uC744 \uBC18\uC601\uD558\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.",
+        ),
+      ).toBeTruthy(),
+    );
   });
 
   it("updates and deletes fixed expense rows through the server-authoritative plan API", async () => {

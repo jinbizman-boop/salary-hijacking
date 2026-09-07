@@ -9,10 +9,15 @@ const FORBIDDEN_API_HELPERS = [
 ] as const;
 const INTERNAL_TABS_ROUTE = /(["'`])\/\(tabs\)(?:\/[^"'`]*)?\1/g;
 const PROFILE_SCREEN = join(APP_ROOT, "(tabs)", "profile", "index.tsx");
-const PROFILE_HUB_SCREEN = join(APP_ROOT, "profile", "index.tsx");
 const INDEX_SCREEN = join(APP_ROOT, "index.tsx");
 const ROOT_LAYOUT_SCREEN = join(APP_ROOT, "_layout.tsx");
 const TABS_LAYOUT_SCREEN = join(APP_ROOT, "(tabs)", "_layout.tsx");
+const PROFILE_STACK_LAYOUT_SCREEN = join(
+  APP_ROOT,
+  "(tabs)",
+  "profile",
+  "_layout.tsx",
+);
 const ANDROID_ENTRY = join(process.cwd(), "index.android.js");
 const SPLASH_LAUNCH_SCREEN = join(
   process.cwd(),
@@ -213,7 +218,8 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain('name: "plan/index"');
     expect(source).toContain('name: "level/index"');
     expect(source).toContain('name: "community/index"');
-    expect(source).toContain('name: "profile/index"');
+    expect(source).toContain('name: "profile"');
+    expect(source).not.toContain('name: "profile/index"');
     expect(source).not.toContain('initialRouteName="salary"');
   });
 
@@ -252,7 +258,7 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileSource).toContain('PROFILE: "/profile/account"');
     expect(profileSource).toContain('ACCOUNT_SECURITY: "/profile/settings"');
     expect(profileSource).toContain(
-      'NOTIFICATION_SETTINGS: "/notifications/settings"',
+      'NOTIFICATION_SETTINGS: "/profile/notifications"',
     );
     expect(profileSource).not.toContain("LV 7 Budget Builder");
   });
@@ -264,27 +270,19 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).not.toContain('route: "/api/v1/users/me/withdraw"');
   });
 
-  it("keeps the root profile route implemented for header navigation", () => {
+  it("keeps MY detail routes inside the profile tab stack for Android Back", () => {
     const rootLayout = readFileSync(ROOT_LAYOUT_SCREEN, "utf8");
-    const profileHub = readFileSync(PROFILE_HUB_SCREEN, "utf8");
+    const profileStack = readFileSync(PROFILE_STACK_LAYOUT_SCREEN, "utf8");
+    const profileIndex = readFileSync(PROFILE_SCREEN, "utf8");
 
     expect(rootLayout).toContain('const PROFILE_ROUTE = "/profile"');
-    expect(profileHub).toContain("ProfileHubScreen");
-    expect(profileHub).toContain("/profile/settings");
-    expect(profileHub).toContain("/profile/account");
-    expect(profileHub).toContain("/profile/community");
-    expect(profileHub).toContain("/profile/level");
-    expect(profileHub).toContain("/profile/support");
-    expect(profileHub).toContain("/profile/notices");
-    expect(profileHub).toContain("/salary");
-    expect(profileHub).toContain("router.push(item.route as never)");
-    expect(profileHub).toContain('router.replace("/salary" as never)');
-    expect(profileHub).toContain("최신 MY 기록을 안전하게 확인해요.");
-    expect(profileHub).toContain(
-      "\uAE08\uC735 \uC6D0\uBB38\uC740 \uAD11\uACE0\uB098 \uBD84\uC11D\uC5D0 \uC4F0\uC9C0 \uC54A\uC544\uC694.",
-    );
-    expect(profileHub).not.toContain("serverAuthority=true");
-    expect(profileHub).not.toContain("rawFinancialData=false");
+    expect(profileStack).toContain("ProfileStackLayout");
+    expect(profileStack).toContain('anchor: "index"');
+    expect(profileStack).toContain('name="settings"');
+    expect(profileStack).toContain('name="account"');
+    expect(profileStack).toContain('name="notifications"');
+    expect(profileIndex).toContain("router.push(profileMenuRoutes[key]");
+    expect(profileIndex).not.toContain('router.replace("/salary" as never)');
   });
 
   it("refreshes the root bootstrap access token before falling back from a 401", () => {

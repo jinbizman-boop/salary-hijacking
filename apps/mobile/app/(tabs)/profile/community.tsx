@@ -1,11 +1,17 @@
-import { ProfileDetailScreen } from "../../src/features/profile/components";
+import { useRouter } from "expo-router";
+
+import { ProfileDetailScreen } from "../../../src/features/profile/components";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const SCREEN_VERSION = "4.1.0-profile-community-components";
 const MY_COMMUNITY_ENDPOINT = "/api/v1/community/users/me/posts";
 const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function ProfileCommunityScreen(): React.ReactElement {
-  return <ProfileDetailScreen variant="community" />;
+  const router = useRouter();
+  const goBack = useLogicalBack({ fallbackHref: "/profile", router });
+
+  return <ProfileDetailScreen onBack={goBack} variant="community" />;
 }
 
 export function assertMobileProfileCommunityCompleteness(): Readonly<{

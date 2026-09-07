@@ -13,7 +13,7 @@ type TabName =
   | "plan/index"
   | "level/index"
   | "community/index"
-  | "profile/index";
+  | "profile";
 
 type TabDefinition = Readonly<{
   icon: ImageSourcePropType;
@@ -52,7 +52,7 @@ const tabs: readonly TabDefinition[] = [
   },
   {
     icon: bottomTabIconAssets.profile,
-    name: "profile/index",
+    name: "profile",
     privacyBoundary: "profile_privacy",
     title: "MY",
   },
@@ -199,7 +199,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     "plan_index_tab",
     "level_index_tab",
     "community_index_tab",
-    "profile_index_tab",
+    "profile_nested_stack_tab",
     "white_bottom_tab",
     "active_green_209252",
     "inactive_gray_adb3b8",

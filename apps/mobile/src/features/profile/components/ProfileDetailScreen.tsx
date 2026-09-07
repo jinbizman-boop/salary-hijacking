@@ -115,10 +115,12 @@ const contentByVariant: Record<ProfileDetailVariant, ProfileDetailContent> = {
 };
 
 export type ProfileDetailScreenProps = Readonly<{
+  onBack: () => void;
   variant: ProfileDetailVariant;
 }>;
 
 export function ProfileDetailScreen({
+  onBack,
   variant,
 }: ProfileDetailScreenProps): React.ReactElement {
   const content = contentByVariant[variant];
@@ -133,7 +135,13 @@ export function ProfileDetailScreen({
   return (
     <AppShell
       accessibilityLabel={`급여납치 프로필 ${variant}`}
-      header={<AppHeader subtitle={content.subtitle} title={content.title} />}
+      header={
+        <AppHeader
+          onBack={onBack}
+          subtitle={content.subtitle}
+          title={content.title}
+        />
+      }
     >
       <ProfileHeader
         avatarEmoji="SH"

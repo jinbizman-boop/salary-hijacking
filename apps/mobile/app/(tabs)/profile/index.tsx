@@ -24,7 +24,7 @@ const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
   ACCOUNT_SECURITY: "/profile/settings",
   MY_POSTS: "/profile/community",
   MY_LEVEL: "/profile/level",
-  NOTIFICATION_SETTINGS: "/notifications/settings",
+  NOTIFICATION_SETTINGS: "/profile/notifications",
   SUPPORT: "/profile/support",
   NOTICES: "/profile/notices",
 };

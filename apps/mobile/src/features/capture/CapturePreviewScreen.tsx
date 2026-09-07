@@ -738,11 +738,11 @@ export function CapturePreviewScreen({
   }
 
   if (kind === "profile-settings") {
-    return <ProfileDetailScreen variant="settings" />;
+    return <ProfileDetailScreen onBack={() => undefined} variant="settings" />;
   }
 
   if (kind === "profile-account") {
-    return <ProfileDetailScreen variant="account" />;
+    return <ProfileDetailScreen onBack={() => undefined} variant="account" />;
   }
 
   if (
@@ -788,7 +788,9 @@ export function CapturePreviewScreen({
   }
 
   if (kind === "profile-community") {
-    return <ProfileDetailScreen variant="community" />;
+    return (
+      <ProfileDetailScreen onBack={() => undefined} variant="community" />
+    );
   }
 
   if (
@@ -830,11 +832,11 @@ export function CapturePreviewScreen({
   }
 
   if (kind === "profile-support") {
-    return <ProfileDetailScreen variant="support" />;
+    return <ProfileDetailScreen onBack={() => undefined} variant="support" />;
   }
 
   if (kind === "profile-notices") {
-    return <ProfileDetailScreen variant="notices" />;
+    return <ProfileDetailScreen onBack={() => undefined} variant="notices" />;
   }
 
   if (

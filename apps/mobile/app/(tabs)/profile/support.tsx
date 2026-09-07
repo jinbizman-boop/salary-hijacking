@@ -1,11 +1,17 @@
-import { ProfileDetailScreen } from "../../src/features/profile/components";
+import { useRouter } from "expo-router";
+
+import { ProfileDetailScreen } from "../../../src/features/profile/components";
+import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
 
 const SCREEN_VERSION = "4.1.0-profile-support-components";
 const SUPPORT_TICKETS_ENDPOINT = "/api/v1/support/tickets";
 const RAW_PERSONAL_DATA_GUARD = "raw_personal_data_not_exposed_guard";
 
 export default function ProfileSupportScreen(): React.ReactElement {
-  return <ProfileDetailScreen variant="support" />;
+  const router = useRouter();
+  const goBack = useLogicalBack({ fallbackHref: "/profile", router });
+
+  return <ProfileDetailScreen onBack={goBack} variant="support" />;
 }
 
 export function assertMobileProfileSupportCompleteness(): Readonly<{

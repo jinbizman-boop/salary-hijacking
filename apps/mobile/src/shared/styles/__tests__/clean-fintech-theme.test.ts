@@ -12,7 +12,10 @@ const mojibakePattern =
   /[\uFFFD\u6E72\u6028\u800C\u316B\uB35A\u907A\u934C\uC392\uF9CD\u7457\u7E79\u8AED\u7B4C\u75AB]/u;
 
 function source(path: string): string {
-  return readFileSync(join(appRoot, path), "utf8");
+  const routePath = path.startsWith("profile/")
+    ? join("(tabs)", path)
+    : path;
+  return readFileSync(join(appRoot, routePath), "utf8");
 }
 
 function mobileSource(path: string): string {
@@ -2138,9 +2141,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("onPress={closeMyLevelProgress}");
     expect(cleanScreens).toContain("최신 현황을 확인했어요.");
     expect(cleanScreens).toContain("안전한 성장 루틴");
-    expect(source("profile/level.tsx")).toContain(
-      '<ProfileDetailScreen variant="level" />',
-    );
+    expect(source("profile/level.tsx")).toContain('variant="level"');
+    expect(source("profile/level.tsx")).toContain("onBack={goBack}");
   });
 
   it("keeps MY level progress visible copy free from internal privacy flags", () => {
@@ -2259,9 +2261,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain(
       "onPress={() => openProfileActivity(activity)}",
     );
-    expect(source("profile/notices.tsx")).toContain(
-      '<ProfileDetailScreen variant="notices" />',
-    );
+    expect(source("profile/notices.tsx")).toContain('variant="notices"');
+    expect(source("profile/notices.tsx")).toContain("onBack={goBack}");
   });
 
   it("keeps MY notices visible activity rows free from internal privacy flags", () => {
@@ -2316,12 +2317,10 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("settingsRouter");
     expect(cleanScreens).toContain("closeSettingsScreen");
     expect(cleanScreens).toContain('settingsRouter.replace("/profile")');
-    expect(source("profile/settings.tsx")).toContain(
-      '<ProfileDetailScreen variant="settings" />',
-    );
-    expect(source("profile/account.tsx")).toContain(
-      '<ProfileDetailScreen variant="account" />',
-    );
+    expect(source("profile/settings.tsx")).toContain('variant="settings"');
+    expect(source("profile/settings.tsx")).toContain("onBack={goBack}");
+    expect(source("profile/account.tsx")).toContain('variant="account"');
+    expect(source("profile/account.tsx")).toContain("onBack={goBack}");
   });
 
   it("keeps profile settings saved through the server profile API", () => {
@@ -2347,9 +2346,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "rawFinancialDataExposed=false",
     );
     expect(profileSettingsSource).not.toContain("adsFinancialTargetingUsed=");
-    expect(source("profile/settings.tsx")).toContain(
-      '<ProfileDetailScreen variant="settings" />',
-    );
+    expect(source("profile/settings.tsx")).toContain('variant="settings"');
+    expect(source("profile/settings.tsx")).toContain("onBack={goBack}");
   });
 
   it("prevents duplicate profile settings saves before the profile API acknowledges it", () => {
@@ -2455,9 +2453,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
       "sensitiveFinancialTargetingAccepted=false",
     );
     expect(cleanScreens).not.toContain("adPartnerFinancialRawDataUsed=");
-    expect(source("profile/account.tsx")).toContain(
-      '<ProfileDetailScreen variant="account" />',
-    );
+    expect(source("profile/account.tsx")).toContain('variant="account"');
+    expect(source("profile/account.tsx")).toContain("onBack={goBack}");
   });
 
   it("prevents duplicate account settings saves before the consent API acknowledges it", () => {
@@ -2579,9 +2576,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("closeSupportInquiry");
     expect(cleanScreens).toContain('supportRouter.replace("/profile")');
     expect(cleanScreens).toContain('accessibilityLabel="MY로 돌아가기"');
-    expect(source("profile/support.tsx")).toContain(
-      '<ProfileDetailScreen variant="support" />',
-    );
+    expect(source("profile/support.tsx")).toContain('variant="support"');
+    expect(source("profile/support.tsx")).toContain("onBack={goBack}");
   });
 
   it("locks MY support inquiry inputs and close while the server ticket submit is pending", () => {
@@ -2688,9 +2684,8 @@ describe("Salary Hijacking Clean Fintech v1 mobile design contract", () => {
     expect(cleanScreens).toContain("내 게시글 관리");
     expect(cleanScreens).toContain("rawFinancialDataExposed");
     expect(cleanScreens).toContain("adsFinancialTargetingUsed");
-    expect(source("profile/community.tsx")).toContain(
-      '<ProfileDetailScreen variant="community" />',
-    );
+    expect(source("profile/community.tsx")).toContain('variant="community"');
+    expect(source("profile/community.tsx")).toContain("onBack={goBack}");
   });
 
   it("keeps MY community management deletions persisted through the server API", () => {

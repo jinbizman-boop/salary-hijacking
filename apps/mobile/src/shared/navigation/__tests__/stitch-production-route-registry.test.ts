@@ -153,12 +153,12 @@ describe("Stitch production route registry", () => {
   });
   it("maps profile detail Stitch screens to the shared production RN implementation", () => {
     const expected = [
-      ["SCR-022", "/profile/settings", "apps/mobile/app/profile/settings.tsx"],
-      ["SCR-023", "/profile/account", "apps/mobile/app/profile/account.tsx"],
-      ["SCR-024", "/profile/community", "apps/mobile/app/profile/community.tsx"],
-      ["SCR-025", "/profile/level", "apps/mobile/app/profile/level.tsx"],
-      ["SCR-026", "/profile/support", "apps/mobile/app/profile/support.tsx"],
-      ["SCR-027", "/profile/notices", "apps/mobile/app/profile/notices.tsx"],
+      ["SCR-022", "/profile/settings", "apps/mobile/app/(tabs)/profile/settings.tsx"],
+      ["SCR-023", "/profile/account", "apps/mobile/app/(tabs)/profile/account.tsx"],
+      ["SCR-024", "/profile/community", "apps/mobile/app/(tabs)/profile/community.tsx"],
+      ["SCR-025", "/profile/level", "apps/mobile/app/(tabs)/profile/level.tsx"],
+      ["SCR-026", "/profile/support", "apps/mobile/app/(tabs)/profile/support.tsx"],
+      ["SCR-027", "/profile/notices", "apps/mobile/app/(tabs)/profile/notices.tsx"],
     ] as const;
 
     for (const [primaryCode, productionRoute, routeFile] of expected) {

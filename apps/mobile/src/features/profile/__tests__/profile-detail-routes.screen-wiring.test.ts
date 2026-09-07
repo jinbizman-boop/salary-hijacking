@@ -4,7 +4,17 @@ import { join } from "node:path";
 describe("profile detail route wiring", () => {
   const route = (fileName: string): string =>
     readFileSync(
-      join(__dirname, "..", "..", "..", "..", "app", "profile", fileName),
+      join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "app",
+        "(tabs)",
+        "profile",
+        fileName,
+      ),
       "utf8",
     );
 
@@ -60,6 +70,9 @@ describe("profile detail route wiring", () => {
       expect(source).not.toContain(forbidden);
       expect(source).toContain("ProfileDetailScreen");
       expect(source).toContain(variant);
+      expect(source).toContain("useLogicalBack");
+      expect(source).toContain('fallbackHref: "/profile"');
+      expect(source).toContain("onBack={goBack}");
       expect(source).toContain(endpoint);
       expect(source).toContain("raw_personal_data_not_exposed_guard");
     },
@@ -73,6 +86,7 @@ describe("profile detail route wiring", () => {
 
     expect(source).toContain("AppShell");
     expect(source).toContain("AppHeader");
+    expect(source).toContain("onBack={onBack}");
     expect(source).toContain("SurfaceCard");
     expect(source).toContain("프로필 변경은 안전하게 저장돼요");
     expect(source).toContain("금융 원문은 광고 추천에 사용하지 않아요");
