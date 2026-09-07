@@ -538,7 +538,47 @@ function tryResolveFromOriginModule(moduleName, originModulePath) {
   }
 }
 
-function tryResolveRelativeWorkspaceSource(moduleName, originModulePath) {
+function platformSourceCandidates(candidateBase, sourceExts, platform = null) {
+  const platformSuffixes = [
+    typeof platform === "string" && platform ? platform : null,
+    "native",
+  ].filter(Boolean);
+  const explicitExtension = path.extname(candidateBase);
+  const candidates = [];
+
+  if (explicitExtension) {
+    const baseWithoutExtension = candidateBase.slice(
+      0,
+      -explicitExtension.length,
+    );
+    for (const suffix of platformSuffixes) {
+      candidates.push(`${baseWithoutExtension}.${suffix}${explicitExtension}`);
+    }
+    candidates.push(candidateBase);
+    return candidates;
+  }
+
+  for (const extension of sourceExts) {
+    for (const suffix of platformSuffixes) {
+      candidates.push(`${candidateBase}.${suffix}.${extension}`);
+    }
+    candidates.push(`${candidateBase}.${extension}`);
+  }
+  for (const extension of sourceExts) {
+    for (const suffix of platformSuffixes) {
+      candidates.push(path.join(candidateBase, `index.${suffix}.${extension}`));
+    }
+    candidates.push(path.join(candidateBase, `index.${extension}`));
+  }
+
+  return candidates;
+}
+
+function tryResolveRelativeWorkspaceSource(
+  moduleName,
+  originModulePath,
+  platform = null,
+) {
   if (!originModulePath || !moduleName.startsWith(".")) return null;
 
   const originDirectory = path.dirname(originModulePath);
@@ -557,20 +597,16 @@ function tryResolveRelativeWorkspaceSource(moduleName, originModulePath) {
 
   const sourceExts = config.resolver.sourceExts ?? [];
   const sourceExtSet = new Set(sourceExts.map((extension) => `.${extension}`));
-  const candidates = [];
   const explicitExtension = path.extname(candidateBase);
   if (explicitExtension) {
     if (!sourceExtSet.has(explicitExtension)) return null;
-    candidates.push(candidateBase);
-  } else {
-    for (const extension of sourceExts) {
-      candidates.push(`${candidateBase}.${extension}`);
-    }
-    for (const extension of sourceExts) {
-      candidates.push(path.join(candidateBase, `index.${extension}`));
-    }
   }
 
+  const candidates = platformSourceCandidates(
+    candidateBase,
+    sourceExts,
+    platform,
+  );
   return candidates.find((candidate) => fs.existsSync(candidate)) ?? null;
 }
 
@@ -735,6 +771,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   const relativeWorkspaceSource = tryResolveRelativeWorkspaceSource(
     moduleName,
     context.originModulePath,
+    platform,
   );
   if (relativeWorkspaceSource !== null) {
     return toWorkspaceSourceFile(relativeWorkspaceSource);
@@ -828,6 +865,7 @@ Object.defineProperty(config, "__private", {
     patchMetroDefaultsModuleSystem,
     patchMetroSerializerPreModules,
     patchMetroSerializerPolyfills,
+    platformSourceCandidates,
     tryResolveWindowsDriveRootEntry,
     tryResolveAndroidReleaseRuntimeStub,
     shouldAppendCanonicalNodeModules,

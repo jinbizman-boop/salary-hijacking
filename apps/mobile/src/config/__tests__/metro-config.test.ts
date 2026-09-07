@@ -75,9 +75,15 @@ type MetroConfig = Readonly<{
       realWorkspaceRoot: string,
       platform: string,
     ) => boolean;
+    platformSourceCandidates?: (
+      candidateBase: string,
+      sourceExts: readonly string[],
+      platform: string | null,
+    ) => string[];
     tryResolveRelativeWorkspaceSource?: (
       moduleName: string,
       originModulePath: string | undefined,
+      platform?: string | null,
     ) => string | null;
     shouldUseCanonicalProjectRoot?: boolean;
   }>;
@@ -418,6 +424,53 @@ describe("mobile Metro dependency resolution", () => {
 
     expect(result.filePath).toBe(expectedEntry);
     expect(fallbackResolver).not.toHaveBeenCalled();
+  });
+
+  it("keeps Expo Router native relative modules ahead of generic modules in Android bundles", () => {
+    const fallbackResolver = jest.fn(
+      (
+        _context: ResolverContext,
+        resolvedModuleName: string,
+        _platform: string | null,
+      ): Resolution => ({
+        type: "sourceFile",
+        filePath: resolvedModuleName,
+      }),
+    );
+    const context: ResolverContext = {
+      originModulePath: require.resolve("expo-router/build/link/linking.js"),
+      resolveRequest: fallbackResolver,
+    };
+
+    const result = metroConfig.resolver.resolveRequest(
+      context,
+      "../fork/useLinking",
+      "android",
+    );
+
+    expect(result.filePath).toBe(
+      require.resolve("expo-router/build/fork/useLinking.native.js"),
+    );
+    expect(result.filePath).not.toBe(
+      require.resolve("expo-router/build/fork/useLinking.js"),
+    );
+    expect(fallbackResolver).not.toHaveBeenCalled();
+  });
+
+  it("orders platform and native source candidates before generic files", () => {
+    const helper = metroConfig.__private?.platformSourceCandidates;
+
+    expect(helper).toBeDefined();
+    expect(
+      helper?.("src/example", ["ts", "js"], "android").slice(0, 6),
+    ).toEqual([
+      "src/example.android.ts",
+      "src/example.native.ts",
+      "src/example.ts",
+      "src/example.android.js",
+      "src/example.native.js",
+      "src/example.js",
+    ]);
   });
 
   it("pins Expo Router runtime dependencies to concrete module paths", () => {
