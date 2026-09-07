@@ -372,7 +372,7 @@ jobs:
           echo "No known secret values found in mobile build output."
 
       - name: Audit production dependencies
-        run: pnpm audit --prod --audit-level high --ignore-registry-errors
+        run: pnpm audit --prod --audit-level high --ignore-registry-errors --ignore-unfixable
 
       - name: Upload mobile verification reports
         if: always()

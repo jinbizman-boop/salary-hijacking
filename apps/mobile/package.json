@@ -134,7 +134,7 @@
     "memoize-one": "6.0.0",
     "metro-runtime": "0.82.5",
     "metro-source-map": "0.82.5",
-    "nanoid": "3.3.12",
+    "nanoid": "3.3.18",
     "nullthrows": "1.1.1",
     "object-is": "1.1.6",
     "object.assign": "4.1.7",
