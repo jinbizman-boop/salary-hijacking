@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-17T10:38:55.2980311Z",
+  "timestamp": "2026-09-07T21:35:31.838Z",
   "database": {
     "project": "salary-hijacking",
     "projectId": "still-feather-22153967",
@@ -18,8 +18,7 @@
     "uniqueConstraintCount": 6,
     "uniqueIndexCount": 21,
     "checkConstraintCount": 252,
-    "indexCount": 156,
-    "migrationLedgerCount": 24
+    "indexCount": 156
   },
   "tableNames": [
     "ad_campaigns",

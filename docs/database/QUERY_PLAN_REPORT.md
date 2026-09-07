@@ -1,6 +1,6 @@
 # Query Plan Report
 
-Generated: 2026-08-13T11:30:02.461Z
+Generated: 2026-09-07T21:35:31.838Z
 
 Representative read paths were checked with EXPLAIN against Neon staging. Staging row counts are small, so this is a pathological-plan screen, not a production-volume benchmark.
 

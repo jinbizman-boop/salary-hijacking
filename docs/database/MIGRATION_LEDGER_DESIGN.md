@@ -1,6 +1,6 @@
 # Migration Ledger Design
 
-Generated: 2026-08-13T11:30:02.461Z
+Generated: 2026-09-07T21:35:31.838Z
 
 ## Location
 
@@ -27,10 +27,10 @@ This preserves the canonical public table denominator at 41.
 
 ## Current State
 
-- MIGRATION_COUNT=14
-- VERIFIED_APPLIED=14
+- MIGRATION_COUNT=28
+- VERIFIED_APPLIED=28
 - AMBIGUOUS=0
-- CHECKSUM_MATCH=14
+- CHECKSUM_MATCH=28
 
 Existing migrations 0001-0013 were backfilled as a verified baseline using live schema evidence and migration-specific object presence. Migration 0014 introduces the ledger itself and is recorded as the baseline import marker.
 

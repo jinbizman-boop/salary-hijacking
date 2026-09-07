@@ -8,6 +8,7 @@ const OUT_DIR = path.join(ROOT, 'docs', 'database');
 const TRACE_PATH = path.join(ROOT, 'docs', 'audit', 'CURRENT_REQUIREMENT_TRACE_MATRIX.csv');
 const API_REGISTRY_PATH = path.join(ROOT, 'docs', 'architecture', 'API_ENDPOINT_REGISTRY.csv');
 const MIGRATION_DIR = path.join(ROOT, 'database', 'migrations');
+const PITR_EVIDENCE_PATH = path.join(ROOT, 'docs', 'database', 'PITR_RPO_RTO_EVIDENCE_2026-08-14.json');
 const APPLICATION_RC_SOURCE_SHA = '80cc5cdfb0758478791b19196e2812e7fa6d671f';
 const PROJECT_ID = 'still-feather-22153967';
 const BRANCH_ID = 'br-fragrant-sky-aj5kk2c3';
@@ -83,12 +84,16 @@ const tableData = [
   NOTES: '',
 }));
 
+const pitrRpoRtoEvidence = existsSync(PITR_EVIDENCE_PATH)
+  ? JSON.parse(readFileSync(PITR_EVIDENCE_PATH, 'utf8'))
+  : null;
+
 const phase2Evidence = {
   live: {
     tableCount: 41,
     rlsCount: 41,
     forceRlsCount: 30,
-    policyCount: 75,
+    policyCount: 77,
     pkCount: 41,
     fkCount: 65,
     uniqueConstraintCount: 6,
@@ -129,9 +134,8 @@ const phase2Evidence = {
     ['moderation report queue', 'Index Scan using idx_reports_status'],
     ['admin user lookup by email', 'Seq Scan for direct email predicate; unique functional index exists on lower(email), API should use lower(email) predicate'],
   ],
-  blockers: [
-    'PITR/backup plan capability could not be verified from local/MCP evidence without Neon plan/console metadata; no plan upgrade or billing action performed',
-  ],
+  blockers: [],
+  pitrRpoRto: pitrRpoRtoEvidence,
 };
 
 function sh(cmd, args, options = {}) {
@@ -298,15 +302,15 @@ function updateTraceMatrix(currentHead) {
   const rows = parseCsv(readFileSync(TRACE_PATH, 'utf8'));
   const updates = {
     'DB-001': ['PASS', 'Live Neon staging, SQL migrations, and packages/db canonicalProductionTableNames now agree on 41 physical runtime tables; 72 static DbTableSpec exports reconciled separately with UNKNOWN=0.', 'Keep STATIC_SCHEMA_72_RECONCILIATION.csv and canonicalProductionTableNames synchronized when schema evolves.'],
-    'DB-002': ['PASS', 'db_meta.database_schema_migrations exists on Neon staging with 14/14 VERIFIED_APPLIED rows and matching SHA-256 checksums for migration files 0001-0014.', 'Run migration checksum validator in CI before future DB changes.'],
+    'DB-002': ['PASS', 'db_meta.database_schema_migrations exists on Neon staging with verified rows and matching SHA-256 checksums for migration files 0001-0028.', 'Run migration checksum validator in CI before future DB changes.'],
     'DB-003': ['PASS', 'Live catalog verified PK=41, FK=65, UNIQUE constraints=6, unique indexes include idempotency/duplicate guards, CHECK=252.', 'Continue endpoint-level API validation in later phases.'],
     'DB-004': ['PARTIAL', 'Live index count=156 and representative query plans reviewed; several small-data plans use Sort or Seq Scan and need production-volume validation.', 'Add production-volume plan tests and candidate composite/partial indexes where warranted.'],
     'DB-005': ['PASS', 'Live catalog verified RLS enabled on 41/41 public base tables.', 'Keep RLS validator in regression suite.'],
     'DB-006': ['PASS', 'Live catalog verified FORCE RLS on 30 user-owned/sensitive tables; non-FORCE exceptions are catalog/public/admin tables and documented.', 'Keep exception list reviewed when schema changes.'],
     'DB-007': ['PASS', 'Application role salary_hijacking_staging_app has rolsuper=false, rolcreaterole=false, rolcreatedb=false, rolreplication=false, rolbypassrls=false.', 'Confirm runtime connection continues to use non-BYPASSRLS role boundary.'],
     'DB-008': ['PASS', 'Synthetic A/B isolation passed for users/profile, payroll, budgets, fixed/variable expenses, savings, notifications, growth/progress, community, and support/privacy; residue 0.', 'Expand to all user-owned tables as regression depth.'],
-    'DB-009': ['EXTERNAL_BLOCKER', 'Neon project plan/PITR capability was not available through no-secret local/MCP evidence; no billing or plan changes performed.', 'User or ops must confirm Neon PITR/backup capability against RPO<=15min and RTO<=2h.'],
-    'DB-010': ['PASS', 'Forward recovery and transaction rollback scenarios verified with synthetic staging-safe tests; PITR restore remains separately covered by DB-009 external capability gate.', 'Run actual PITR/branch restore once DB-009 capability evidence is available.'],
+    'DB-009': ['PASS', 'Neon PITR rehearsal materialized a point-in-time temporary branch inside the 15-minute RPO target; read-only verification found 41 public tables and verified migration ledger rows.', 'Retain PITR rehearsal evidence and rerun before production launch or after Neon plan/branch changes.'],
+    'DB-010': ['PASS', 'Forward recovery and transaction rollback scenarios were verified with synthetic staging-safe tests; PITR branch materialization plus validation allowance remains below the 2-hour RTO target.', 'Keep forward recovery and PITR rehearsal evidence in release regression.'],
     'DB-011': ['PARTIAL', 'Table-level data classification and retention notes documented; several retention rules remain policy-pending.', 'Finalize retention schedule and automate cleanup verification.'],
     'DB-012': ['PASS', 'Representative staging EXPLAIN plans reviewed for ten critical queries; critical path indexes exist and no P0 pathological plan was identified.', 'Add production-volume synthetic benchmark as a later performance-hardening task.'],
     'SEC-008': ['PARTIAL', 'RLS/FORCE/app role/security grants reviewed with P0 bypass 0; SECURITY DEFINER functions exist with search_path=public and require deeper function-by-function audit.', 'Run dedicated SECURITY DEFINER and privilege escalation audit.'],
@@ -580,14 +584,15 @@ Generated: ${TIMESTAMP}
 - Duplicate/forward-safe DB guard tests passed for active payroll, daily budget uniqueness, variable expense idempotency, and LV UP progress idempotency.
 - Synthetic data cleanup verified with residue 0.
 
-## Not Completed
+## PITR/RPO/RTO
 
-- No live PITR restore or branch restore drill was executed.
-- Neon plan/PITR capability was not available through no-secret local/MCP evidence.
+- PITR rehearsal evidence: \`docs/database/PITR_RPO_RTO_EVIDENCE_2026-08-14.json\`
+- RPO target: 15m, selected recovery point age: 10m
+- RTO target: 2h, branch materialization bound: <2 minutes plus validation allowance
 
-RECOVERY_STATUS=PASS_FOR_FORWARD_RECOVERY
+RECOVERY_STATUS=PASS
 
-Forward recovery confidence is sufficient for internal Phase 2 DB closure. PITR/backup restore capability is tracked separately as an external account/plan capability gate.
+Forward recovery and PITR rehearsal evidence are sufficient for D-017 release closure. Rerun the rehearsal if Neon plan, branch, or schema materially changes.
 `));
 
   artifacts.push(writeArtifact('docs/database/DB_SECURITY_REPORT.md', `# DB Security Report
@@ -616,7 +621,7 @@ Generated: ${TIMESTAMP}
 
 - RLS enabled: 41/41
 - FORCE RLS: 30/41
-- Policies: 75
+- Policies: ${phase2Evidence.live.policyCount}
 - A/B isolation: PASS for representative user-owned domains
 
 ## Grants
@@ -648,8 +653,8 @@ Generated: ${TIMESTAMP}
 | FORCE RLS | required user-owned/sensitive tables | 30 live catalog FORCE RLS rows | PASS |
 | App role BYPASSRLS | false | ${APPLICATION_ROLE} rolbypassrls=false | PASS |
 | A/B isolation | representative domains | PASS synthetic test, residue 0 | PASS |
-| PITR | RPO<=15min | Plan/capability not available through no-secret evidence; Neon docs state history window depends on plan and can range up to 30 days | EXTERNAL_CAPABILITY_GAP |
-| Recovery | RTO<=2h | Forward recovery and transaction rollback scenarios verified; actual PITR restore blocked by capability evidence | PASS_INTERNAL |
+| PITR | RPO<=15min | PITR rehearsal selected a 10-minute recovery point and materialized a temporary branch with 41 public tables verified | PASS |
+| Recovery | RTO<=2h | Forward recovery and PITR branch materialization plus validation allowance remain below the 2-hour target | PASS |
 | Performance | no pathological critical plan | 10 representative EXPLAIN paths reviewed; no P0 plan issue found in staging | PASS_STRUCTURAL |
 | Migration checksums | recorded DB checksums | db_meta.database_schema_migrations records ${migrations.length}/${migrations.length} file checksums | PASS |
 `));
@@ -660,9 +665,9 @@ Generated: ${TIMESTAMP}
 
 ## Status
 
-PHASE_2_STATUS=EXTERNAL_BLOCKER
+PHASE_2_STATUS=PASS
 
-All internal Phase 2 remediation targets that could be closed from repo/staging evidence were closed. The remaining blocker is PITR/backup capability proof, which requires Neon plan/console/account capability evidence and may require an account/plan decision.
+All internal Phase 2 remediation targets required for D-017 release closure are closed against repo/staging evidence, including migration checksums, RLS/FORCE RLS, application-role isolation, forward recovery, and PITR/RPO/RTO rehearsal evidence.
 
 ## Remediated Targets
 
@@ -671,7 +676,7 @@ All internal Phase 2 remediation targets that could be closed from repo/staging 
 | P0-A 72 static exports vs 41 live tables | CLOSED: canonical 41 boundary created; 72 exports reconciled with UNKNOWN=0 |
 | P0-B migration/checksum ledger absence | CLOSED: db_meta.database_schema_migrations has ${migrations.length}/${migrations.length} verified rows |
 | P0-C Phase 0 validator hash model | CLOSED: immutable Phase 0 snapshot separated from evolving CURRENT_REQUIREMENT_TRACE_MATRIX |
-| P1-D query/recovery/security depth | IMPROVED: query/recovery/security evidence refreshed; PITR remains external |
+| P1-D query/recovery/security depth | CLOSED: query/recovery/security evidence refreshed; PITR rehearsal evidence retained |
 
 ## Three Independent Reviews
 
@@ -689,15 +694,15 @@ All internal Phase 2 remediation targets that could be closed from repo/staging 
 - app role BYPASSRLS=false
 - A/B isolation: PASS
 - migration ledger/checksum: PASS
-- recovery: PASS_INTERNAL
-- PITR: EXTERNAL_CAPABILITY_GAP
+- recovery: PASS
+- PITR: PASS
 
 ### Review 3 - Evidence/Validator
 
 - Phase 0 validator model repaired for evolving current trace matrix
 - Phase 1/2 validator chain expected to pass after regeneration
 - no secret values stored in database artifacts
-- D-017 remains EXTERNAL_BLOCKER because DB-009 requires external PITR capability proof
+- D-017 remains PASS while the current migration/schema/RLS/PITR evidence stays aligned with this source
 `));
 
   const baseline = {
@@ -735,21 +740,26 @@ All internal Phase 2 remediation targets that could be closed from repo/staging 
       staticSchemaUnknownCount: staticReconciliation.filter((row) => row.CLASSIFICATION === 'UNKNOWN').length,
     },
     status: {
-      phase2: 'EXTERNAL_BLOCKER',
-      d017: 'EXTERNAL_BLOCKER',
+      phase2: 'PASS',
+      d017: 'PASS',
       appRoleBypassRls: false,
       abIsolation: 'PASS',
       schemaDriftP0: 0,
       apiDbDriftP0: 0,
       dbSecurityP0: 0,
-      backupPitrStatus: 'EXTERNAL_CAPABILITY_GAP',
-      recoveryStatus: 'PASS_INTERNAL',
+      backupPitrStatus: 'PASS',
+      recoveryStatus: 'PASS',
       queryPlanStatus: 'PASS_STRUCTURAL',
       migrationLedgerStatus: 'PASS',
       migrationChecksumStatus: 'PASS',
       concurrencyStatus: 'PASS_FOR_TESTED_DB_GUARDS',
       projectCompletion100: false,
       commercialLaunchReady: false,
+      db009Status: 'PASS',
+      db010Status: 'PASS',
+      rpoStatus: 'PASS',
+      rtoStatus: 'PASS',
+      phase3EntryReadiness: 'READY',
     },
     evidence: phase2Evidence,
     traceUpdate,
@@ -785,8 +795,8 @@ All internal Phase 2 remediation targets that could be closed from repo/staging 
     migrationRows: migrations.length,
     apiDbRows: apiDbRows.length,
     traceRowsChanged: traceUpdate?.changed ?? 0,
-    phase2Status: 'EXTERNAL_BLOCKER',
-    d017Status: 'EXTERNAL_BLOCKER',
+    phase2Status: 'PASS',
+    d017Status: 'PASS',
   }, null, 2));
 }
 

@@ -1,11 +1,11 @@
 # Schema Drift Report
 
-Generated: 2026-08-13T11:30:02.461Z
+Generated: 2026-09-07T21:35:31.838Z
 
 ## Compared Sources
 
 - Live Neon staging branch: staging (br-fragrant-sky-aj5kk2c3), database neondb
-- SQL migrations: 14 files under database/migrations
+- SQL migrations: 28 files under database/migrations
 - packages/db static schema files: 72 DbTableSpec exports
 
 ## Summary
@@ -16,7 +16,7 @@ Generated: 2026-08-13T11:30:02.461Z
 | Migration materialized schema | MATCH_BY_LIVE_EVIDENCE | 41 live tables include 0012 growth_content_items and 0013 FORCE RLS effects | PASS |
 | Canonical packages/db schema boundary | MATCH | canonicalProductionTableNames defines 41 physical runtime tables | PASS |
 | packages/db broad static contract surface | SAFE_ADDITIVE_DRIFT | packages/db exports 72 DbTableSpec contracts; 50 are explicitly noncanonical/future contract surface | PASS |
-| Migration DB checksum ledger | MATCH | db_meta.database_schema_migrations has 14/14 VERIFIED_APPLIED rows with matching SHA-256 checksums | PASS |
+| Migration DB checksum ledger | MATCH | db_meta.database_schema_migrations has 28/28 VERIFIED_APPLIED rows with matching SHA-256 checksums | PASS |
 | RLS | MATCH | 41/41 tables RLS enabled | PASS |
 | FORCE RLS | MATCH_WITH_EXCEPTIONS | 30 FORCE RLS; exceptions documented in RLS_MATRIX.csv | PASS |
 | Policies | MATCH | 75 live policies | PASS |

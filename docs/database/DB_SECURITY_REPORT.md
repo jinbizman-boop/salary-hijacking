@@ -1,6 +1,6 @@
 # DB Security Report
 
-Generated: 2026-08-13T11:30:02.461Z
+Generated: 2026-09-07T21:35:31.838Z
 
 ## Application Role
 
@@ -24,7 +24,7 @@ Generated: 2026-08-13T11:30:02.461Z
 
 - RLS enabled: 41/41
 - FORCE RLS: 30/41
-- Policies: 75
+- Policies: 77
 - A/B isolation: PASS for representative user-owned domains
 
 ## Grants
