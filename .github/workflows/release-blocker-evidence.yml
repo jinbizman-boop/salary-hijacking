@@ -568,7 +568,6 @@ jobs:
 
           sync_env_var EAS_PROJECT_ID plaintext
           sync_env_var ADMOB_ANDROID_APP_ID sensitive
-          sync_env_var GOOGLE_SERVICES_JSON plaintext
 
           node <<'NODE'
           const crypto = require("node:crypto");
@@ -577,7 +576,6 @@ jobs:
           const names = [
             "EAS_PROJECT_ID",
             "ADMOB_ANDROID_APP_ID",
-            "GOOGLE_SERVICES_JSON",
           ];
           const stripAnsi = (value) =>
             String(value).replace(/\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g, "");
@@ -632,8 +630,8 @@ jobs:
                 records.find((item) => item.name === "EAS_PROJECT_ID")?.synced === true,
               admobAndroidAppIdSynced:
                 records.find((item) => item.name === "ADMOB_ANDROID_APP_ID")?.synced === true,
-              googleServicesJsonPathSynced:
-                records.find((item) => item.name === "GOOGLE_SERVICES_JSON")?.synced === true,
+              googleServicesJsonPathUsesProductionDefault:
+                process.env.GOOGLE_SERVICES_JSON === "./google-services.json",
               admobIosAppIdRequired: false,
             },
             records,
@@ -642,7 +640,7 @@ jobs:
           const pass =
             proof.checks.easProjectIdSynced &&
             proof.checks.admobAndroidAppIdSynced &&
-            proof.checks.googleServicesJsonPathSynced &&
+            proof.checks.googleServicesJsonPathUsesProductionDefault &&
             proof.checks.admobIosAppIdRequired === false;
           if (!pass) {
             proof.blocker =

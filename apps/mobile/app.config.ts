@@ -155,7 +155,7 @@ export default function appConfig(context: ConfigContext): ExpoConfig {
       "assets/favicon.png",
     ],
     ios: iosConfig(buildNumber),
-    android: androidConfig(versionCode),
+    android: androidConfig(versionCode, environment),
     web: webConfig(),
     plugins: pluginConfig(environment),
     experiments: {
@@ -227,13 +227,18 @@ function iosConfig(buildNumber: string): JsonRecord {
   };
 }
 
-function androidConfig(versionCode: number): JsonRecord {
+function androidConfig(
+  versionCode: number,
+  environment: EnvironmentName,
+): JsonRecord {
   return {
     package: plainEnv("ANDROID_PACKAGE", DEFAULT_ANDROID_PACKAGE),
     versionCode,
     googleServicesFile: localFilePathEnv(
       "GOOGLE_SERVICES_JSON",
-      DEFAULT_ANDROID_GOOGLE_SERVICES_FILE,
+      environment === "production"
+        ? "./google-services.json"
+        : DEFAULT_ANDROID_GOOGLE_SERVICES_FILE,
     ),
     adaptiveIcon: {
       foregroundImage: assetPathEnv(

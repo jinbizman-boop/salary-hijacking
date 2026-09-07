@@ -292,6 +292,20 @@ describe("mobile Detox E2E contract", () => {
     expect(overriddenConfig.android.googleServicesFile).toBe(
       "./fixtures/firebase/google-services.local-test.json",
     );
+
+    process.env = {
+      ...originalEnv,
+      ...validProductionAndroidAdMobEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: validEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
+      GOOGLE_SERVICES_JSON: "",
+    };
+    const productionConfig = appConfig({ config: {} });
+
+    expect(productionConfig.android.googleServicesFile).toBe(
+      "./google-services.json",
+    );
   });
 
   it("keeps production EAS archive able to upload CI-generated google-services file", () => {
@@ -313,7 +327,7 @@ describe("mobile Detox E2E contract", () => {
     );
     expect(workflow).toContain("sync_env_var EAS_PROJECT_ID plaintext");
     expect(workflow).toContain("sync_env_var ADMOB_ANDROID_APP_ID sensitive");
-    expect(workflow).toContain("sync_env_var GOOGLE_SERVICES_JSON plaintext");
+    expect(workflow).not.toContain("sync_env_var GOOGLE_SERVICES_JSON");
     expect(workflow).not.toContain("sync_env_var ADMOB_IOS_APP_ID");
     expect(easIgnore).toContain("!google-services.json");
     expect(easIgnore).not.toMatch(
