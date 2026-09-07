@@ -437,9 +437,9 @@ jobs:
           set -euo pipefail
 
           set +e
-          pnpm dlx eas-cli@20.4.0 whoami --non-interactive > ../../release/eas-whoami.redacted.txt 2> ../../release/eas-whoami.stderr.txt
+          pnpm dlx eas-cli@23.2.0 whoami --non-interactive > ../../release/eas-whoami.redacted.txt 2> ../../release/eas-whoami.stderr.txt
           whoami_status=$?
-          pnpm dlx eas-cli@20.4.0 project:info --non-interactive > ../../release/eas-project-info.raw.txt 2> ../../release/eas-project-info.stderr.txt
+          pnpm dlx eas-cli@23.2.0 project:info --non-interactive > ../../release/eas-project-info.raw.txt 2> ../../release/eas-project-info.stderr.txt
           project_info_status=$?
           set -e
           printf '%s\n' "$whoami_status" > ../../release/eas-whoami.status.txt
@@ -549,14 +549,14 @@ jobs:
           set -euo pipefail
 
           set +e
-          pnpm dlx eas-cli@20.4.0 env:create production \
+          pnpm dlx eas-cli@23.2.0 env:set production \
             --scope project \
             --name GOOGLE_SERVICES_JSON \
             --type file \
             --value ./secrets/firebase/google-services.json \
             --visibility sensitive \
-            --force \
-            --non-interactive > ../../release/eas-google-services-env.raw.txt 2> ../../release/eas-google-services-env.stderr.txt
+            --non-interactive \
+            --json > ../../release/eas-google-services-env.raw.json 2> ../../release/eas-google-services-env.stderr.txt
           sync_status=$?
           set -e
           printf '%s\n' "$sync_status" > ../../release/eas-google-services-env.status.txt
@@ -573,8 +573,8 @@ jobs:
             fs.readFileSync("../../release/eas-google-services-env.status.txt", "utf8").trim(),
             10,
           );
-          const raw = fs.existsSync("../../release/eas-google-services-env.raw.txt")
-            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.raw.txt", "utf8"))
+          const raw = fs.existsSync("../../release/eas-google-services-env.raw.json")
+            ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.raw.json", "utf8"))
             : "";
           const stderr = fs.existsSync("../../release/eas-google-services-env.stderr.txt")
             ? stripAnsi(fs.readFileSync("../../release/eas-google-services-env.stderr.txt", "utf8"))
@@ -628,6 +628,15 @@ jobs:
               exitCode: Number.isFinite(status) ? status : null,
               rawOutputHash: raw ? hash(raw) : null,
               stderrHash: stderr ? hash(stderr) : null,
+              failureSignals: {
+                commandNotFound: /command .*env:set.*not found|command env:set not found/i.test(combined),
+                authenticationFailure: /not logged in|unauthorized|authentication|invalid token/i.test(
+                  combined,
+                ),
+                permissionFailure: /forbidden|permission|not authorized/i.test(combined),
+                invalidVisibility: /visibility|sensitive|secret|plaintext/i.test(combined) && status !== 0,
+                invalidFileType: /\bfile\b|type/i.test(combined) && status !== 0,
+              },
               parsedShape: parsed && typeof parsed === "object"
                 ? Array.isArray(parsed)
                   ? "array"
@@ -653,7 +662,7 @@ jobs:
             throw new Error("EAS Google Services env proof contains a forbidden secret-shaped value.");
           }
           fs.writeFileSync("../../release/eas-google-services-env-proof.local.json", `${serialized}\n`, "utf8");
-          fs.rmSync("../../release/eas-google-services-env.raw.txt", { force: true });
+          fs.rmSync("../../release/eas-google-services-env.raw.json", { force: true });
           fs.rmSync("../../release/eas-google-services-env.stderr.txt", { force: true });
           fs.rmSync("../../release/eas-google-services-env.status.txt", { force: true });
 
@@ -668,7 +677,7 @@ jobs:
           set -euo pipefail
 
           set +e
-          pnpm dlx eas-cli@20.4.0 build \
+          pnpm dlx eas-cli@23.2.0 build \
             --platform android \
             --profile production \
             --non-interactive \
@@ -720,6 +729,33 @@ jobs:
             androidBuild?.artifacts?.applicationArchiveUrl ||
             "";
           const statusText = androidBuild?.status ? String(androidBuild.status).toUpperCase() : null;
+          const sanitizeText = (value) =>
+            String(value)
+              .replace(/https?:\/\/\S+/gi, "[url-redacted]")
+              .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}/gi, "[uuid-redacted]")
+              .replace(/ca-app-pub-\d{16}~\d{10}/g, "[admob-app-id-redacted]")
+              .replace(/eas_[A-Za-z0-9_-]{20,}/g, "[eas-token-redacted]")
+              .replace(/BEGIN [A-Z ]+PRIVATE KEY[\s\S]*?END [A-Z ]+PRIVATE KEY/g, "[private-key-redacted]")
+              .replace(/\s+/g, " ")
+              .trim()
+              .slice(0, 300);
+          const collectRemoteErrors = (value, path = "") => {
+            if (!value || typeof value !== "object") return [];
+            const output = [];
+            for (const [key, entry] of Object.entries(value)) {
+              const nextPath = path ? `${path}.${key}` : key;
+              if (
+                /error|fail|reason|message|phase|status|code/i.test(key) &&
+                ["string", "number", "boolean"].includes(typeof entry)
+              ) {
+                const sanitized = sanitizeText(entry);
+                if (sanitized) output.push({ key: nextPath, value: sanitized });
+              } else if (entry && typeof entry === "object") {
+                output.push(...collectRemoteErrors(entry, nextPath));
+              }
+            }
+            return output.slice(0, 12);
+          };
           const failureSignals = {
             googleServicesFileNotUploaded: /googleServicesFile[\s\S]*not checked in|won't be uploaded|google-services\.json.+missing/i.test(
               combined,
@@ -761,6 +797,12 @@ jobs:
               artifactUrlHash: artifactUrl ? hash(artifactUrl) : null,
               rawOutputHash: raw ? hash(raw) : null,
               stderrHash: stderr ? hash(stderr) : null,
+              buildObjectKeys: androidBuild && typeof androidBuild === "object"
+                ? Object.keys(androidBuild).sort().slice(0, 40)
+                : [],
+              remoteErrorSamples: androidBuild
+                ? collectRemoteErrors(androidBuild)
+                : [],
               failureSignals,
             },
             blocker: null,
