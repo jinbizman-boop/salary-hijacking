@@ -342,19 +342,55 @@ jobs:
 
           const googleServicesPath =
             "apps/mobile/secrets/firebase/google-services.json";
+          const googleServicesStatus = {
+            source: "none",
+            prepared: false,
+            validJson: false,
+            androidPackageMatched: false,
+          };
+
           if (!fs.existsSync(googleServicesPath)) {
             const raw = process.env.GOOGLE_SERVICES_JSON_CONTENT || "";
             const base64 = process.env.GOOGLE_SERVICES_JSON_BASE64 || "";
-            const content = raw || (base64 ? Buffer.from(base64, "base64").toString("utf8") : "");
+            let content = raw;
+
+            if (!content && base64) {
+              try {
+                content = Buffer.from(base64, "base64").toString("utf8");
+                googleServicesStatus.source = "GOOGLE_SERVICES_JSON_BASE64";
+              } catch {
+                missing.push("GOOGLE_SERVICES_JSON_BASE64_VALID_JSON");
+              }
+            } else if (content) {
+              googleServicesStatus.source = "GOOGLE_SERVICES_JSON_CONTENT";
+            }
+
             if (content) {
               fs.writeFileSync(googleServicesPath, content, "utf8");
             }
+          } else {
+            googleServicesStatus.source = "checked-in-or-workspace-file";
           }
 
           if (!fs.existsSync(googleServicesPath)) {
             missing.push("GOOGLE_SERVICES_JSON_CONTENT_OR_BASE64");
           } else {
-            JSON.parse(fs.readFileSync(googleServicesPath, "utf8"));
+            try {
+              const parsed = JSON.parse(fs.readFileSync(googleServicesPath, "utf8"));
+              googleServicesStatus.prepared = true;
+              googleServicesStatus.validJson = true;
+              const androidPackageNames = (Array.isArray(parsed.client) ? parsed.client : [])
+                .map((client) => client?.client_info?.android_client_info?.package_name)
+                .filter((value) => typeof value === "string");
+              googleServicesStatus.androidPackageMatched = androidPackageNames.includes(
+                process.env.ANDROID_PACKAGE || "com.salaryhijacking.mobile",
+              );
+              if (!googleServicesStatus.androidPackageMatched) {
+                missing.push("GOOGLE_SERVICES_JSON_PACKAGE_MATCH");
+              }
+            } catch {
+              missing.push(`${googleServicesStatus.source || "GOOGLE_SERVICES_JSON"}_VALID_JSON`);
+            }
           }
 
           const proof = {
@@ -375,8 +411,12 @@ jobs:
                 ),
               admobAndroidAppIdPresent: Boolean(process.env.ADMOB_ANDROID_APP_ID),
               admobIosAppIdRequired: false,
-              googleServicesJsonPrepared: fs.existsSync(googleServicesPath),
+              googleServicesJsonPrepared: googleServicesStatus.prepared,
+              googleServicesJsonValid: googleServicesStatus.validJson,
+              googleServicesAndroidPackageMatched:
+                googleServicesStatus.androidPackageMatched,
             },
+            googleServices: googleServicesStatus,
             missingSecretNames: missing,
           };
 
