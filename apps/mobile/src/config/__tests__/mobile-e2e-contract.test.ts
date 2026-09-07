@@ -321,7 +321,7 @@ describe("mobile Detox E2E contract", () => {
     const productionConfig = appConfig({ config: {} });
 
     expect(productionConfig.android.googleServicesFile).toBe(
-      "./google-services.json",
+      "./firebase-production-google-services.json",
     );
   });
 
@@ -332,9 +332,11 @@ describe("mobile Detox E2E contract", () => {
     const easIgnore = readRequiredText(".easignore");
     const gitIgnore = readRequiredText(".gitignore");
 
-    expect(workflow).toContain("GOOGLE_SERVICES_JSON: ./google-services.json");
     expect(workflow).toContain(
-      'const googleServicesPath = "apps/mobile/google-services.json";',
+      "GOOGLE_SERVICES_JSON: ./firebase-production-google-services.json",
+    );
+    expect(workflow).toContain(
+      'const googleServicesPath = "apps/mobile/firebase-production-google-services.json";',
     );
     expect(workflow).toContain(
       "EAS production Google Services archive path proof",
@@ -356,11 +358,13 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).toContain("return matches.slice(-240)");
     expect(workflow).toContain('["easToken", /eas_[A-Za-z0-9_-]{20,}/]');
     expect(workflow).toContain("[sensitive-field-redacted]");
-    expect(easIgnore).toContain("!google-services.json");
+    expect(easIgnore).toContain("!firebase-production-google-services.json");
     expect(easIgnore).toContain("!src/shared/assets/**");
     expect(easIgnore).toContain("!assets/runtime-icons/**");
     expect(easIgnore).toContain("!assets/runtime-images/**");
-    expect(easIgnore).not.toMatch(/^\s*(?:\*\*\/)?google-services\.json\s*$/mu);
+    expect(easIgnore).not.toMatch(
+      /^\s*firebase-production-google-services\.json\s*$/mu,
+    );
     expect(gitIgnore).toMatch(/^\s*(?:\*\*\/)?google-services\.json\s*$/mu);
   });
 

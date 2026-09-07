@@ -20,9 +20,10 @@ secrets/
 GoogleService-Info.plist
 **/GoogleService-Info.plist
 
-# The production workflow writes this root file from a GitHub environment
-# secret immediately before invoking EAS. It remains gitignored.
-!google-services.json
+# The production workflow writes this CI-only Firebase file from a GitHub
+# environment secret immediately before invoking EAS. It intentionally uses a
+# production-specific path that is not hidden by the app's local .gitignore.
+!firebase-production-google-services.json
 
 # Runtime image assets are required by the Android JS bundle. Keep them explicit
 # because EAS uses archive ignore rules before the remote Metro bundle phase.

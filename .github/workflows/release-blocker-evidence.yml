@@ -270,7 +270,7 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
       ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
-      GOOGLE_SERVICES_JSON: ./google-services.json
+      GOOGLE_SERVICES_JSON: ./firebase-production-google-services.json
       GOOGLE_SERVICES_JSON_CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON_CONTENT }}
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
       ANDROID_PACKAGE: com.salaryhijacking.mobile
@@ -340,7 +340,7 @@ jobs:
             missing.push("ADMOB_ANDROID_APP_ID_VALID_FORMAT");
           }
 
-          const googleServicesPath = "apps/mobile/google-services.json";
+          const googleServicesPath = "apps/mobile/firebase-production-google-services.json";
           const googleServicesStatus = {
             source: "none",
             prepared: false,
@@ -631,7 +631,8 @@ jobs:
               admobAndroidAppIdSynced:
                 records.find((item) => item.name === "ADMOB_ANDROID_APP_ID")?.synced === true,
               googleServicesJsonPathUsesProductionDefault:
-                process.env.GOOGLE_SERVICES_JSON === "./google-services.json",
+                process.env.GOOGLE_SERVICES_JSON ===
+                "./firebase-production-google-services.json",
               admobIosAppIdRequired: false,
             },
             records,
@@ -668,7 +669,7 @@ jobs:
 
           const hash = (value) =>
             crypto.createHash("sha256").update(String(value)).digest("hex");
-          const googleServicesPath = "./google-services.json";
+          const googleServicesPath = "./firebase-production-google-services.json";
           const easIgnorePath = "./.easignore";
           const gitIgnorePath = "./.gitignore";
           const requiredRuntimeAssets = [
@@ -691,7 +692,7 @@ jobs:
           }));
           let localFileValidJson = false;
           let androidPackageMatched = false;
-          let easArchiveAllowsRootGoogleServicesFile = false;
+          let easArchiveAllowsProductionGoogleServicesFile = false;
           let easArchiveAllowsRuntimeAssets = false;
           let gitKeepsRootGoogleServicesIgnored = false;
 
@@ -716,12 +717,12 @@ jobs:
               .split(/\r?\n/u)
               .map((line) => line.trim())
               .filter((line) => line && !line.startsWith("#"));
-            easArchiveAllowsRootGoogleServicesFile =
-              easIgnoreLines.includes("!google-services.json") &&
+            easArchiveAllowsProductionGoogleServicesFile =
+              easIgnoreLines.includes("!firebase-production-google-services.json") &&
               !easIgnoreLines.some(
                 (line) =>
-                  line !== "!google-services.json" &&
-                  /^(?:\*\*\/)?google-services\.json$/u.test(line),
+                  line !== "!firebase-production-google-services.json" &&
+                  /^firebase-production-google-services\.json$/u.test(line),
               );
             easArchiveAllowsRuntimeAssets =
               easIgnoreLines.includes("!assets/runtime-icons/**") &&
@@ -749,7 +750,7 @@ jobs:
               googleServicesJsonEnvMatchesArchivePath:
                 process.env.GOOGLE_SERVICES_JSON === googleServicesPath,
               easIgnorePresent,
-              easArchiveAllowsRootGoogleServicesFile,
+              easArchiveAllowsProductionGoogleServicesFile,
               easArchiveAllowsRuntimeAssets,
               runtimeAssetsPresent: runtimeAssetRecords.every(
                 (record) => record.exists,
@@ -773,14 +774,14 @@ jobs:
             proof.checks.googleServicesAndroidPackageMatched &&
             proof.checks.googleServicesJsonEnvMatchesArchivePath &&
             proof.checks.easIgnorePresent &&
-            proof.checks.easArchiveAllowsRootGoogleServicesFile &&
+            proof.checks.easArchiveAllowsProductionGoogleServicesFile &&
             proof.checks.easArchiveAllowsRuntimeAssets &&
             proof.checks.runtimeAssetsPresent &&
             proof.checks.gitKeepsRootGoogleServicesIgnored;
 
           if (!pass) {
             proof.blocker =
-              "EAS production google-services.json archive path was not verified.";
+              "EAS production Firebase archive path was not verified.";
           }
 
           const serialized = JSON.stringify(proof, null, 2);
@@ -1050,6 +1051,15 @@ jobs:
             gradleMentioned: /gradle|Execution failed|Task :app/i.test(combined),
             projectOwnerMentioned: /project|owner|account/i.test(combined),
           };
+          const sanitizedFailureLines = stripAnsi(combined)
+            .split(/\r?\n/u)
+            .map((line) => line.trim())
+            .filter((line) =>
+              /error|fail|exception|google-services|googleServicesFile|firebase-production-google-services|not checked in|won't be uploaded|uploaded|credential|keystore|signing|project|owner|account|graphql|unauthorized|forbidden|invalid/i.test(line),
+            )
+            .map(sanitizeText)
+            .filter(Boolean)
+            .slice(-40);
           const proof = {
             schemaVersion: 1,
             observedAt: new Date().toISOString(),
@@ -1086,6 +1096,7 @@ jobs:
               remoteErrorSamples: androidBuild
                 ? collectRemoteErrors(androidBuild)
                 : [],
+              sanitizedFailureLines,
               failureSignals,
             },
             blocker: null,

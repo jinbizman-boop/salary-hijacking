@@ -237,7 +237,7 @@ function androidConfig(
     googleServicesFile: localFilePathEnv(
       "GOOGLE_SERVICES_JSON",
       environment === "production"
-        ? "./google-services.json"
+        ? "./firebase-production-google-services.json"
         : DEFAULT_ANDROID_GOOGLE_SERVICES_FILE,
     ),
     adaptiveIcon: {
