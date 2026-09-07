@@ -3,7 +3,7 @@ import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { Image, Pressable, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { bottomTabIconAssets } from "../../src/shared/assets/icons/bottom-tabs";
+import { bottomTabIconAssets } from "../../src/shared/assets/icons";
 import { salaryHijackingDesignSystem } from "../../src/shared/components/tokens";
 import {
   getRootTabHref,

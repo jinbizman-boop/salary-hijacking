@@ -15,10 +15,8 @@ describe("mobile prototype UI contract", () => {
   it("uses provided PNG icons and readable Korean labels for the five bottom tabs", () => {
     const source = readApp("(tabs)", "_layout.tsx");
 
-    expect(source).not.toMatch(
-      /from\s+["']\.\.\/\.\.\/src\/shared\/assets\/icons["']/u,
-    );
-    expect(source).toContain("../../src/shared/assets/icons/bottom-tabs");
+    expect(source).toContain("../../src/shared/assets/icons");
+    expect(source).not.toContain("../../src/shared/assets/icons/bottom-tabs");
     expect(source).toContain("bottomTabIconAssets.salary");
     expect(source).toContain("bottomTabIconAssets.plan");
     expect(source).toContain("bottomTabIconAssets.level");

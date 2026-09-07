@@ -62,3 +62,5 @@ export const appIconAssets = {
     netflix: require("./brands/netflix.png") as ImageSourcePropType,
   },
 } as const;
+
+export const bottomTabIconAssets = appIconAssets.bottomTabs;
