@@ -1,6 +1,6 @@
 import type { ImageSourcePropType } from "react-native";
 
-import { appIconAssets } from "../../shared/assets/icons";
+import { appIconAssets } from "../../shared/assets/app-icon-assets";
 import type { SecureStoreOptions } from "../../shared/storage/secure-store";
 
 export type ReminderCategory =

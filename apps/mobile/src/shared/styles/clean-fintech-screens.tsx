@@ -95,7 +95,7 @@ import {
   createMobileUploadsApi,
 } from "../api/mobile-api";
 import { createSecureStoreRuntime } from "../storage/secure-store";
-import { appImageAssets } from "../assets/images";
+import { appImageAssets } from "../assets/app-image-assets";
 import {
   SALARY_HIJACKING_PARTNER_BENEFITS_URL,
   loadPartnerBenefitsUrl,

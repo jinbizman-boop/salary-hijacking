@@ -7,7 +7,7 @@ import {
   type ImageSourcePropType,
 } from "react-native";
 
-import { appIconAssets } from "../../../shared/assets/icons";
+import { appIconAssets } from "../../../shared/assets/app-icon-assets";
 import {
   AppHeader,
   AppShell,

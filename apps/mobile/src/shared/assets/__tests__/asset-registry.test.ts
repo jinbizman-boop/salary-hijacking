@@ -170,12 +170,16 @@ describe("mobile asset registry policy", () => {
       ).toBe(true);
     }
     for (const file of collectFiles(path.join(assetsRoot, "runtime-icons"))) {
-      expect(relativePosix(path.join(assetsRoot, "runtime-icons"), file)).toMatch(
+      expect(
+        relativePosix(path.join(assetsRoot, "runtime-icons"), file),
+      ).toMatch(
         /^(?:bottom-tabs|common|money|level|community|profile|social|brands)\/[a-z0-9]+(?:-[a-z0-9]+)*\.png$/u,
       );
     }
     for (const file of collectFiles(path.join(assetsRoot, "runtime-images"))) {
-      expect(relativePosix(path.join(assetsRoot, "runtime-images"), file)).toMatch(
+      expect(
+        relativePosix(path.join(assetsRoot, "runtime-images"), file),
+      ).toMatch(
         /^(?:brand|ad-banners|book-covers|news-thumbnails|workout|community-thumbnails|placeholders)\/[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp)$/u,
       );
     }
@@ -218,6 +222,39 @@ describe("mobile asset registry policy", () => {
     const registry = fs.readFileSync(path.join(imagesRoot, "index.ts"), "utf8");
     expect(registry).toContain("appImageAssets");
     expect(registry).not.toContain("`${");
+  });
+
+  it("keeps bundled app code off directory-based asset registry imports", () => {
+    const bundledSourceRoots = [
+      path.join(mobileRoot, "app"),
+      path.join(mobileRoot, "src", "features"),
+      path.join(mobileRoot, "src", "shared", "components"),
+      path.join(mobileRoot, "src", "shared", "styles"),
+    ];
+    const sourceFiles = bundledSourceRoots.flatMap((root) =>
+      fs.existsSync(root)
+        ? collectFiles(root).filter(
+            (file) =>
+              /\.(?:ts|tsx)$/u.test(file) &&
+              !relativePosix(mobileRoot, file).includes("/__tests__/"),
+          )
+        : [],
+    );
+    const violations = sourceFiles
+      .map((file) => ({
+        file: relativePosix(mobileRoot, file),
+        source: fs.readFileSync(file, "utf8"),
+      }))
+      .filter(
+        ({ source }) =>
+          /from\s+["'][^"']*shared\/assets\/(?:icons|images)["']/u.test(
+            source,
+          ) ||
+          /from\s+["'][^"']*\.\.\/assets\/(?:icons|images)["']/u.test(source),
+      )
+      .map(({ file }) => file);
+
+    expect(violations).toEqual([]);
   });
 
   it("does not duplicate runtime icon assets into forbidden app artifact folders", () => {
