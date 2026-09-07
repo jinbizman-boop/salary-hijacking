@@ -1027,15 +1027,15 @@ jobs:
               const nextPath = path ? `${path}.${key}` : key;
               if (
                 /error|fail|reason|message|phase|status|code/i.test(key) &&
-                ["string", "number", "boolean"].includes(typeof entry)
-              ) {
-                const sanitized = sanitizeText(entry);
-                if (sanitized) output.push({ key: nextPath, value: sanitized });
-              } else if (entry && typeof entry === "object") {
-                output.push(...collectRemoteErrors(entry, nextPath));
-              }
+              ["string", "number", "boolean"].includes(typeof entry)
+            ) {
+              const sanitized = sanitizeText(entry);
+              if (sanitized) output.push({ keyHash: hash(nextPath), value: sanitized });
+            } else if (entry && typeof entry === "object") {
+              output.push(...collectRemoteErrors(entry, nextPath));
             }
-            return output.slice(0, 12);
+          }
+          return output.slice(0, 12);
           };
           const failureSignals = {
             googleServicesFileNotUploaded: /googleServicesFile[\s\S]*not checked in|won't be uploaded|google-services\.json.+missing/i.test(
@@ -1078,8 +1078,8 @@ jobs:
               artifactUrlHash: artifactUrl ? hash(artifactUrl) : null,
               rawOutputHash: raw ? hash(raw) : null,
               stderrHash: stderr ? hash(stderr) : null,
-              buildObjectKeys: androidBuild && typeof androidBuild === "object"
-                ? Object.keys(androidBuild).sort().slice(0, 40)
+              buildObjectKeyHashes: androidBuild && typeof androidBuild === "object"
+                ? Object.keys(androidBuild).sort().slice(0, 40).map((key) => hash(key))
                 : [],
               remoteErrorSamples: androidBuild
                 ? collectRemoteErrors(androidBuild)
@@ -1095,7 +1095,17 @@ jobs:
           }
 
           const serialized = JSON.stringify(proof, null, 2);
-          if (/expo\.dev\/artifacts|\.aab\?|eas_[A-Za-z0-9_-]{20,}|ca-app-pub-\d{16}~\d{10}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(serialized)) {
+          const containsForbiddenEvidenceValue = (value) => {
+            if (typeof value === "string") {
+              return /expo\.dev\/artifacts|\.aab\?|eas_[A-Za-z0-9_-]{20,}|ca-app-pub-\d{16}~\d{10}|BEGIN [A-Z ]+PRIVATE KEY|private_key|client_email|postgres(?:ql)?:\/\//i.test(value);
+            }
+            if (Array.isArray(value)) return value.some(containsForbiddenEvidenceValue);
+            if (value && typeof value === "object") {
+              return Object.values(value).some(containsForbiddenEvidenceValue);
+            }
+            return false;
+          };
+          if (containsForbiddenEvidenceValue(proof)) {
             throw new Error("EAS build status proof contains a forbidden secret or artifact URL marker.");
           }
           fs.writeFileSync("../../release/eas-production-build-status.local.json", `${serialized}\n`, "utf8");

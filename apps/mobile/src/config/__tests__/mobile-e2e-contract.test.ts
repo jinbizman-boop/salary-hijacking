@@ -331,6 +331,10 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).toContain("sync_env_var ADMOB_ANDROID_APP_ID sensitive");
     expect(workflow).not.toContain("sync_env_var GOOGLE_SERVICES_JSON");
     expect(workflow).not.toContain("sync_env_var ADMOB_IOS_APP_ID");
+    expect(workflow).toContain("admobIosAppIdRequired: false");
+    expect(workflow).toContain("buildObjectKeyHashes");
+    expect(workflow).toContain("keyHash: hash(nextPath)");
+    expect(workflow).toContain("containsForbiddenEvidenceValue(proof)");
     expect(easIgnore).toContain("!google-services.json");
     expect(easIgnore).toContain("!src/shared/assets/**");
     expect(easIgnore).toContain("!assets/runtime-icons/**");
