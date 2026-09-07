@@ -270,7 +270,6 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       EAS_PROJECT_ID: ${{ secrets.EAS_PROJECT_ID }}
       ADMOB_ANDROID_APP_ID: ${{ secrets.ADMOB_ANDROID_APP_ID }}
-      ADMOB_IOS_APP_ID: ${{ secrets.ADMOB_IOS_APP_ID }}
       GOOGLE_SERVICES_JSON_CONTENT: ${{ secrets.GOOGLE_SERVICES_JSON_CONTENT }}
       GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
       ANDROID_PACKAGE: com.salaryhijacking.mobile
@@ -319,7 +318,6 @@ jobs:
             "EXPO_TOKEN",
             "EAS_PROJECT_ID",
             "ADMOB_ANDROID_APP_ID",
-            "ADMOB_IOS_APP_ID",
           ];
 
           for (const name of required) {
@@ -335,13 +333,11 @@ jobs:
             missing.push("EAS_PROJECT_ID_VALID_UUID");
           }
 
-          for (const name of ["ADMOB_ANDROID_APP_ID", "ADMOB_IOS_APP_ID"]) {
-            if (
-              process.env[name] &&
-              !/^ca-app-pub-\d{16}~\d{10}$/u.test(process.env[name])
-            ) {
-              missing.push(`${name}_VALID_FORMAT`);
-            }
+          if (
+            process.env.ADMOB_ANDROID_APP_ID &&
+            !/^ca-app-pub-\d{16}~\d{10}$/u.test(process.env.ADMOB_ANDROID_APP_ID)
+          ) {
+            missing.push("ADMOB_ANDROID_APP_ID_VALID_FORMAT");
           }
 
           const googleServicesPath =
@@ -378,7 +374,7 @@ jobs:
                   process.env.EAS_PROJECT_ID,
                 ),
               admobAndroidAppIdPresent: Boolean(process.env.ADMOB_ANDROID_APP_ID),
-              admobIosAppIdPresent: Boolean(process.env.ADMOB_IOS_APP_ID),
+              admobIosAppIdRequired: false,
               googleServicesJsonPrepared: fs.existsSync(googleServicesPath),
             },
             missingSecretNames: missing,

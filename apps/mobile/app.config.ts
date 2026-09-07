@@ -327,7 +327,7 @@ function pluginConfig(environment: EnvironmentName): readonly PluginEntry[] {
           ADMOB_TEST_ANDROID_APP_ID,
           environment,
         ),
-        iosAppId: admobAppIdEnv(
+        ...iosAdmobAppIdConfig(
           "ADMOB_IOS_APP_ID",
           ADMOB_TEST_IOS_APP_ID,
           environment,
@@ -633,6 +633,18 @@ function admobAppIdEnv(
     throw new Error(`${key} must be configured for production AdMob builds.`);
   }
   return fallback;
+}
+
+function iosAdmobAppIdConfig(
+  key: string,
+  fallback: string,
+  environment: EnvironmentName,
+): JsonRecord {
+  const raw = process.env?.[key]?.trim();
+  const value = raw && /^ca-app-pub-\d{16}~\d{10}$/u.test(raw) ? raw : "";
+  if (value) return { iosAppId: value };
+  if (environment === "production") return {};
+  return { iosAppId: fallback };
 }
 
 function assetPathEnv(key: string, fallback: string): string {

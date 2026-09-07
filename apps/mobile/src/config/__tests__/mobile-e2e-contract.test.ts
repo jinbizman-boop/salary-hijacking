@@ -47,8 +47,11 @@ const productionApiBaseUrl = "https://api.salaryhijacking.com";
 const stagingApiBaseUrl = "https://api-staging.salaryhijacking.com";
 const placeholderEasProjectId = "00000000-0000-4000-8000-000000000000";
 const validEasProjectId = "11111111-1111-4111-8111-111111111111";
-const validProductionAdMobEnv = {
+const validProductionAndroidAdMobEnv = {
   ADMOB_ANDROID_APP_ID: "ca-app-pub-1234567890123456~1234567890",
+} as const;
+const validProductionAdMobEnv = {
+  ...validProductionAndroidAdMobEnv,
   ADMOB_IOS_APP_ID: "ca-app-pub-1234567890123456~0987654321",
 } as const;
 const originalEnv = process.env;
@@ -232,8 +235,9 @@ describe("mobile Detox E2E contract", () => {
 
   it("disables Expo dev-client network inspection in Android build properties", () => {
     const config = appConfig({ config: {} });
-    const buildPropertiesPlugin = config.plugins?.find((plugin) =>
-      Array.isArray(plugin) && plugin[0] === "expo-build-properties",
+    const buildPropertiesPlugin = config.plugins?.find(
+      (plugin) =>
+        Array.isArray(plugin) && plugin[0] === "expo-build-properties",
     );
 
     expect(buildPropertiesPlugin).toEqual([
@@ -347,6 +351,38 @@ describe("mobile Detox E2E contract", () => {
     expect(appConfig({ config: {} }).extra.eas).toEqual({
       projectId: validEasProjectId,
     });
+  });
+
+  it("treats iOS AdMob app id as not applicable for Android-only production builds", () => {
+    process.env = {
+      ...originalEnv,
+      ...validProductionAndroidAdMobEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: validEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
+      ADMOB_IOS_APP_ID: "",
+    };
+
+    const config = appConfig({ config: {} });
+    const adMobPlugin = config.plugins.find(
+      (plugin) =>
+        Array.isArray(plugin) && plugin[0] === "react-native-google-mobile-ads",
+    );
+
+    expect(adMobPlugin).toEqual([
+      "react-native-google-mobile-ads",
+      { androidAppId: validProductionAndroidAdMobEnv.ADMOB_ANDROID_APP_ID },
+    ]);
+
+    process.env = {
+      ...originalEnv,
+      APP_ENV: "production",
+      EAS_PROJECT_ID: validEasProjectId,
+      EXPO_PUBLIC_API_BASE_URL: productionApiBaseUrl,
+      ADMOB_IOS_APP_ID: validProductionAdMobEnv.ADMOB_IOS_APP_ID,
+    };
+
+    expect(() => appConfig({ config: {} })).toThrow(/ADMOB_ANDROID_APP_ID/u);
   });
 
   it("uses staging HTTPS as the release-like default API base when no explicit local URL is provided", () => {
