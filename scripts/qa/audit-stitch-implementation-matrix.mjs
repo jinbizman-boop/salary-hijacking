@@ -221,29 +221,50 @@ const implementationPathAliases = [
     "lv-up/screens/LvUpHomeScreen.tsx",
     "apps/mobile/app/(tabs)/level/index.tsx",
   ],
-  ["lv-up/screens/ReadingLvUpScreen.tsx", "apps/mobile/app/level/reading.tsx"],
-  ["lv-up/screens/ReadingLevelScreen.tsx", "apps/mobile/app/level/reading.tsx"],
-  ["lv-up/screens/NewsLvUpScreen.tsx", "apps/mobile/app/level/news.tsx"],
-  ["lv-up/screens/NewsLevelScreen.tsx", "apps/mobile/app/level/news.tsx"],
-  ["lv-up/screens/EnglishLvUpScreen.tsx", "apps/mobile/app/level/english.tsx"],
-  ["lv-up/screens/EnglishLevelScreen.tsx", "apps/mobile/app/level/english.tsx"],
-  ["lv-up/screens/HealthLvUpScreen.tsx", "apps/mobile/app/level/health.tsx"],
-  ["lv-up/screens/HealthLevelScreen.tsx", "apps/mobile/app/level/health.tsx"],
+  [
+    "lv-up/screens/ReadingLvUpScreen.tsx",
+    "apps/mobile/app/(tabs)/level/reading.tsx",
+  ],
+  [
+    "lv-up/screens/ReadingLevelScreen.tsx",
+    "apps/mobile/app/(tabs)/level/reading.tsx",
+  ],
+  ["lv-up/screens/NewsLvUpScreen.tsx", "apps/mobile/app/(tabs)/level/news.tsx"],
+  [
+    "lv-up/screens/NewsLevelScreen.tsx",
+    "apps/mobile/app/(tabs)/level/news.tsx",
+  ],
+  [
+    "lv-up/screens/EnglishLvUpScreen.tsx",
+    "apps/mobile/app/(tabs)/level/english.tsx",
+  ],
+  [
+    "lv-up/screens/EnglishLevelScreen.tsx",
+    "apps/mobile/app/(tabs)/level/english.tsx",
+  ],
+  [
+    "lv-up/screens/HealthLvUpScreen.tsx",
+    "apps/mobile/app/(tabs)/level/health.tsx",
+  ],
+  [
+    "lv-up/screens/HealthLevelScreen.tsx",
+    "apps/mobile/app/(tabs)/level/health.tsx",
+  ],
   [
     "community/screens/CommunityScreen.tsx",
     "apps/mobile/app/(tabs)/community/index.tsx",
   ],
   [
     "community/screens/CommentThreadScreen.tsx",
-    "apps/mobile/app/community/[postId].tsx",
+    "apps/mobile/app/(tabs)/community/[postId].tsx",
   ],
   [
     "community/screens/PostDetailScreen.tsx",
-    "apps/mobile/app/community/[postId].tsx",
+    "apps/mobile/app/(tabs)/community/[postId].tsx",
   ],
   [
     "community/screens/PostComposeScreen.tsx",
-    "apps/mobile/app/community/write.tsx",
+    "apps/mobile/app/(tabs)/community/write.tsx",
   ],
   [
     "my/screens/MyPageScreen.tsx",
@@ -255,12 +276,21 @@ const implementationPathAliases = [
   ],
   [
     "my/screens/AccountSettingsScreen.tsx",
-    "apps/mobile/app/profile/account.tsx",
+    "apps/mobile/app/(tabs)/profile/account.tsx",
   ],
-  ["my/screens/MyPostsScreen.tsx", "apps/mobile/app/profile/community.tsx"],
-  ["my/screens/MyLvUpScreen.tsx", "apps/mobile/app/profile/level.tsx"],
-  ["support/screens/InquiryScreen.tsx", "apps/mobile/app/profile/support.tsx"],
-  ["support/screens/NoticeScreen.tsx", "apps/mobile/app/profile/notices.tsx"],
+  [
+    "my/screens/MyPostsScreen.tsx",
+    "apps/mobile/app/(tabs)/profile/community.tsx",
+  ],
+  ["my/screens/MyLvUpScreen.tsx", "apps/mobile/app/(tabs)/profile/level.tsx"],
+  [
+    "support/screens/InquiryScreen.tsx",
+    "apps/mobile/app/(tabs)/profile/support.tsx",
+  ],
+  [
+    "support/screens/NoticeScreen.tsx",
+    "apps/mobile/app/(tabs)/profile/notices.tsx",
+  ],
   ["policy/screens/TermsConsentScreen.tsx", "apps/mobile/app/onboarding.tsx"],
   [
     "common/screens/CommonStateScreen.tsx",
