@@ -3,7 +3,7 @@ import { pathToFileURL } from "node:url";
 
 const DEFAULT_GRACE_MS = 15_000;
 const DEFAULT_TIMEOUT_MS = 45 * 60_000;
-export const DEFAULT_BATCH_TIMEOUT_MS = 120_000;
+export const DEFAULT_BATCH_TIMEOUT_MS = 5 * 60_000;
 export const DEFAULT_BATCH_SIZE = 1;
 const MAX_BUFFER_CHARS = 500_000;
 

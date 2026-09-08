@@ -65,7 +65,7 @@ test("buildJestRunArgs runs a specific batch in a fresh Jest process", () => {
 
 test("default CI batches isolate lingering Jest handles to one test file", () => {
   assert.equal(DEFAULT_BATCH_SIZE, 1);
-  assert.equal(DEFAULT_BATCH_TIMEOUT_MS, 120_000);
+  assert.equal(DEFAULT_BATCH_TIMEOUT_MS, 5 * 60_000);
 });
 
 test("verified pass summary grace path exits explicitly", () => {
