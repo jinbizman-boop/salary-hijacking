@@ -37,6 +37,7 @@ describe("public legal pages", () => {
     expect(body).toContain('property="og:title"');
     expect(body).toContain('property="og:description"');
     expect(body).toContain("급여납치");
+    expect(body).toContain("이번 달 내가 지켜낸 돈");
     expect(body).toContain('id="hero"');
     expect(body).toContain('id="need"');
     expect(body).toContain('id="features"');

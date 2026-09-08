@@ -1096,7 +1096,7 @@ function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
         <div class="device" aria-label="급여납치 앱 화면 미리보기">
           <div class="screen">
             <div class="status"><span>급여납치</span><span>오늘</span></div>
-            <div class="money-panel"><small>이번 달 지켜낸 돈</small><b>482,000원</b><p>급여주기 18일 남음</p></div>
+            <div class="money-panel"><small>이번 달 내가 지켜낸 돈</small><b>482,000원</b><p>급여주기 18일 남음</p></div>
             <div class="mini-grid">
               <div class="mini"><span>오늘 사용 가능</span><strong>28,500원</strong></div>
               <div class="mini"><span>예정 고정지출</span><strong>4건</strong></div>
