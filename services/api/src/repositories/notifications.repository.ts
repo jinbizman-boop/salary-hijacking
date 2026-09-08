@@ -826,6 +826,14 @@ async function dispatchPushToRegisteredDevices<TEnv>(
     );
     const responseBody = (await response.json().catch(() => ({}))) as unknown;
     const safeBody = sanitizeRecord(responseBody);
+    const responseError =
+      safeBody && typeof safeBody.error === "object" && safeBody.error
+        ? (safeBody.error as JsonRecord)
+        : null;
+    const errorCode =
+      typeof responseError?.code === "string"
+        ? responseError.code
+        : response.headers.get("x-error-code");
     const status =
       response.ok && JSON.stringify(safeBody).includes('"SENT"')
         ? "SENT"
@@ -837,6 +845,7 @@ async function dispatchPushToRegisteredDevices<TEnv>(
     outcomes.push({
       status,
       httpStatus: response.status,
+      errorCode,
       tokenHashPresent: typeof row.token_hash === "string",
       provider: row.provider === "FCM" ? "FCM" : "UNKNOWN",
     });

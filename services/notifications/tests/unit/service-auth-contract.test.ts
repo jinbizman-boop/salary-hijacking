@@ -61,4 +61,41 @@ describe("notifications Worker service auth contract", () => {
       data: { authMode: "HASH" },
     });
   });
+
+  it("treats the FCM target token as opaque while keeping it out of the response body", async () => {
+    const response = await worker.fetch(
+      new Request("https://notifications.test/notifications/v1/validate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "x-service-token": "raw-service-token",
+        },
+        body: JSON.stringify({
+          token: "opaque-native-fcm-token-containing-salary-fragment",
+          notification: { title: "QA", body: "Opaque token contract" },
+          data: {
+            notificationId: "ntf_opaque_token_contract",
+            userId: "usr_opaque_token_contract",
+            type: "NOTICE",
+            importance: "SYSTEM_REQUIRED",
+            targetScreen: "notifications",
+          },
+          android: {
+            priority: "HIGH",
+            channelId: "salary-hijacking-default",
+            clickAction: "OPEN_NOTIFICATION",
+          },
+        }),
+      }),
+      {
+        APP_ENV: "staging",
+        NOTIFICATIONS_SERVICE_TOKEN_SHA256: sha256Hex("raw-service-token"),
+      },
+      context,
+    );
+
+    expect(response.status).toBe(200);
+    const body = JSON.stringify(await response.json());
+    expect(body).not.toContain("opaque-native-fcm-token");
+  });
 });

@@ -424,6 +424,15 @@ function errorResponse(
   const normalized =
     error instanceof NotificationsHttpError
       ? error
+      : error &&
+          typeof error === "object" &&
+          typeof (error as { readonly code?: unknown }).code === "string" &&
+          typeof (error as { readonly status?: unknown }).status === "number"
+        ? new NotificationsHttpError(
+            (error as { readonly status: number }).status,
+            (error as { readonly code: string }).code,
+            "알림 서비스 처리 중 오류가 발생했습니다.",
+          )
       : new NotificationsHttpError(
           500,
           "NOTIFICATIONS_INTERNAL_ERROR",
@@ -461,6 +470,18 @@ function errorResponse(
       },
     },
   );
+}
+
+function safeErrorCode(error: unknown): string {
+  if (error instanceof NotificationsHttpError) return error.code;
+  if (
+    error &&
+    typeof error === "object" &&
+    typeof (error as { readonly code?: unknown }).code === "string"
+  ) {
+    return (error as { readonly code: string }).code;
+  }
+  return "NOTIFICATIONS_INTERNAL_ERROR";
 }
 
 async function parseJsonBody(
@@ -711,6 +732,16 @@ function optionalString(
   return undefined;
 }
 
+function optionalOpaqueTechnicalString(
+  input: Record<string, unknown>,
+  key: string,
+  maxLength: number,
+): string | undefined {
+  const value = input[key];
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  return value.trim().slice(0, maxLength);
+}
+
 function optionalNumber(
   input: Record<string, unknown>,
   key: string,
@@ -900,9 +931,9 @@ function androidFromBody(
   const priority = optionalString(source, "priority", 20)?.toUpperCase();
   if (priority === "NORMAL" || priority === "HIGH") config.priority = priority;
   const ttlSeconds = optionalNumber(source, "ttlSeconds", 0, 2_419_200);
-  const collapseKey = optionalString(source, "collapseKey", 160);
-  const channelId = optionalString(source, "channelId", 160);
-  const clickAction = optionalString(source, "clickAction", 160);
+  const collapseKey = optionalOpaqueTechnicalString(source, "collapseKey", 160);
+  const channelId = optionalOpaqueTechnicalString(source, "channelId", 160);
+  const clickAction = optionalOpaqueTechnicalString(source, "clickAction", 160);
   const imageUrl = optionalString(source, "imageUrl", 500);
   if (ttlSeconds !== undefined) config.ttlSeconds = ttlSeconds;
   if (collapseKey) config.collapseKey = collapseKey;
@@ -1002,7 +1033,7 @@ function sendInputFromBody(
     notification: notificationFromBody(body),
     data: domainDataFromBody(body, fallbackNotificationId),
   };
-  const token = optionalString(body, "token", 4096);
+  const token = optionalOpaqueTechnicalString(body, "token", 4096);
   const topic = optionalString(body, "topic", 900);
   const condition = optionalString(body, "condition", 1024);
   if (token) target.token = token;
@@ -1167,6 +1198,7 @@ async function audit(
   authMode: ServiceAuthMode | null,
   input: FcmSendInput | FcmMulticastInput | null,
   result: FcmSendResult | FcmMulticastResult | null,
+  extraDetails: JsonRecord = {},
 ): Promise<void> {
   const event: OperationEvent = {
     event: "notification.http",
@@ -1188,7 +1220,7 @@ async function audit(
     tokenHash: tokenHashOf(result),
     durationMs: Date.now() - runtime.startedAtEpochMs,
     createdAt: new Date().toISOString(),
-    details: eventDetails(authMode),
+    details: eventDetails(authMode, extraDetails),
   };
   runtime.context.waitUntil?.(emitOperation(runtime.env, event));
 }
@@ -1376,7 +1408,10 @@ export async function fetch(
     return applyHeaders(response, request, env, requestId);
   } catch (error) {
     const response = errorResponse(requestId, runtime.path, error);
-    await audit(runtime, response, operation, authMode, null, null);
+    await audit(runtime, response, operation, authMode, null, null, {
+      errorCode: safeErrorCode(error),
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
     return applyHeaders(response, request, env, requestId);
   }
 }
