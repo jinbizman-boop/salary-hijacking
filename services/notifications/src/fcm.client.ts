@@ -120,7 +120,7 @@ export interface FcmNotificationPayload {
 
 export interface FcmDomainData {
   readonly notificationId: string;
-  readonly userId: string;
+  readonly userId?: string | undefined;
   readonly type: FcmNotificationType;
   readonly importance: FcmImportance;
   readonly targetScreen: string;
@@ -842,7 +842,7 @@ function validateMessage(input: FcmSendInput): void {
       400,
       false,
     );
-  if (!input.data.userId.trim())
+  if (input.data.userId !== undefined && !input.data.userId.trim())
     throw new FcmClientError(
       "FCM_USER_ID_REQUIRED",
       "userId가 필요합니다.",

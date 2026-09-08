@@ -863,7 +863,7 @@ function domainDataFromBody(
   );
   const domain: {
     notificationId: string;
-    userId: string;
+    userId?: string;
     type: FcmDomainData["type"];
     importance: FcmDomainData["importance"];
     targetScreen: string;
@@ -878,12 +878,12 @@ function domainDataFromBody(
   } = {
     notificationId:
       optionalString(data, "notificationId", 160) ?? fallbackNotificationId,
-    userId: stringField(data, "userId", true, 160),
     type,
     importance,
     targetScreen: stringField(data, "targetScreen", true, 160),
   };
 
+  const userId = optionalString(data, "userId", 160);
   const deeplink = optionalString(data, "deeplink", 500);
   const routeParams = primitiveRecord(data.routeParams, "data.routeParams") as
     | Readonly<Record<string, string | number | boolean | null>>
@@ -901,6 +901,7 @@ function domainDataFromBody(
     "adsPartnerConsentVerified",
   );
 
+  if (userId) domain.userId = userId;
   if (deeplink) domain.deeplink = deeplink;
   if (routeParams) domain.routeParams = routeParams;
   if (campaignId) domain.campaignId = campaignId;

@@ -62,6 +62,39 @@ describe("notifications Worker service auth contract", () => {
     });
   });
 
+  it("does not require raw user id in the FCM provider payload", async () => {
+    const response = await worker.fetch(
+      new Request("https://notifications.test/notifications/v1/validate", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "x-service-token": "raw-service-token",
+        },
+        body: JSON.stringify({
+          token: "native-fcm-registration-token-without-user-id",
+          notification: { title: "QA", body: "No raw user id" },
+          data: {
+            notificationId: "ntf_without_user_id",
+            type: "NOTICE",
+            importance: "SYSTEM_REQUIRED",
+            targetScreen: "notifications",
+          },
+        }),
+      }),
+      {
+        APP_ENV: "staging",
+        NOTIFICATIONS_SERVICE_TOKEN_SHA256: sha256Hex("raw-service-token"),
+      },
+      context,
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      success: true,
+      data: { valid: true, authMode: "HASH" },
+    });
+  });
+
   it("treats the FCM target token as opaque while keeping it out of the response body", async () => {
     const response = await worker.fetch(
       new Request("https://notifications.test/notifications/v1/validate", {
