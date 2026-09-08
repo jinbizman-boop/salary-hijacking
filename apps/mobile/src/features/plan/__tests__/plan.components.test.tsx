@@ -527,11 +527,13 @@ describe("plan reference screen interactions", () => {
       fireEvent.press(plan.getByTestId("payroll-section-settings-button"));
       fireEvent.changeText(plan.getByLabelText("payroll-amount-input"), "1");
       fireEvent.changeText(plan.getByLabelText("payroll-payday-input"), "31");
-      fireEvent.press(
-        plan.getByRole("button", { name: "payroll-plan-save-button" }),
-      );
+      await act(async () => {
+        fireEvent.press(
+          plan.getByRole("button", { name: "payroll-plan-save-button" }),
+        );
+      });
 
-      await waitFor(() => expect(savePlan).toHaveBeenCalledTimes(1));
+      expect(savePlan).toHaveBeenCalledTimes(1);
       expect(savePlan).toHaveBeenCalledWith(
         expect.objectContaining({
           firstPayrollDate: "2026-02-28",
