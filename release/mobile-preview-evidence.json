@@ -42,13 +42,9 @@
     "phoneTargetDebugApkSha256": "C068529C73A711CEB132D3F5272ED37D83555FF0474C4EC11034A10AF98EC3CE",
     "phoneTargetDebugApkLocalPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
     "phoneTargetDebugApkDownloadVerified": true,
-    "phoneTargetDebugApkAbis": [
-      "arm64-v8a"
-    ],
+    "phoneTargetDebugApkAbis": ["arm64-v8a"],
     "phoneTargetDebugApkAbiFilterVerified": true,
-    "phoneTargetDebugApkExpoCoreLibs": [
-      "lib/arm64-v8a/libexpo-modules-core.so"
-    ]
+    "phoneTargetDebugApkExpoCoreLibs": ["lib/arm64-v8a/libexpo-modules-core.so"]
   },
   "latestStaticApkInspection": "artifacts/github/current-head-d7d7375f/arm64/evidence/apk-static-inspection.local.json",
   "latestStaticApkInspectionPass": true,
@@ -87,12 +83,8 @@
     "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
     "bundleBytes": 3021968,
     "hasBundle": true,
-    "expectedAbis": [
-      "arm64-v8a"
-    ],
-    "nativeAbis": [
-      "arm64-v8a"
-    ],
+    "expectedAbis": ["arm64-v8a"],
+    "nativeAbis": ["arm64-v8a"],
     "arm64LibCount": 15,
     "x86_64LibCount": 0,
     "requiredLibsByAbi": {
@@ -366,12 +358,8 @@
         "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
         "bundleBytes": 3021968,
         "hasBundle": true,
-        "expectedAbis": [
-          "arm64-v8a"
-        ],
-        "nativeAbis": [
-          "arm64-v8a"
-        ],
+        "expectedAbis": ["arm64-v8a"],
+        "nativeAbis": ["arm64-v8a"],
         "arm64LibCount": 15,
         "x86_64LibCount": 0,
         "requiredLibsByAbi": {
@@ -626,12 +614,8 @@
         "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
         "bundleBytes": 3021968,
         "hasBundle": true,
-        "expectedAbis": [
-          "x86_64"
-        ],
-        "nativeAbis": [
-          "x86_64"
-        ],
+        "expectedAbis": ["x86_64"],
+        "nativeAbis": ["x86_64"],
         "arm64LibCount": 0,
         "x86_64LibCount": 15,
         "requiredLibsByAbi": {
