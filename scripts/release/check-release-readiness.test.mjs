@@ -1061,7 +1061,11 @@ test("passes when release files, scripts, env names, and tools are present", () 
     rootDir,
     env: completeEnv,
     commandExists: () => true,
-    gitStatus: () => ({ ok: true, output: "" }),
+    gitStatus: () => ({
+      ok: true,
+      output:
+        "?? apps/mobile/dist-export-final-rc-startup-fix/\n?? apps/mobile/dist-export-release-proof-smoke/\n",
+    }),
     gitRemote: matchingGitRemote,
   });
 
@@ -3212,6 +3216,149 @@ test("accepts static inspection evidence when forbidden safe-entry markers are a
   );
 });
 
+test("accepts split same-RC QA APK evidence when Galaxy is the Android final runtime authority", () => {
+  const rootDir = makeWorkspace();
+  const builtHead = "1111111111111111111111111111111111111111";
+  const currentHead = "2222222222222222222222222222222222222222";
+  const bundleSha = "a".repeat(64);
+  const signerSha = "b".repeat(64);
+  const arm64Sha =
+    "8650B386094300F434E3A1B974028464ECCAB7E75879228E49B19CC187F14D7E";
+  const x86Sha =
+    "7EC40F776BFC83F86B24DE96D366B3158224DF8D11E694C6D3C56320C63AAABE";
+  const commonMarkers = {
+    requiredBundleMarkers: [
+      { marker: "salary-hijacking-mobile-root", present: true },
+    ],
+    forbiddenBundleMarkers: [
+      { marker: "android-safe-entry", present: false },
+      { marker: "android-direct-entry", present: false },
+    ],
+    rawDeviceIdentifiersStored: false,
+    rawLogcatStored: false,
+    secretValuesStored: false,
+  };
+
+  writeReleaseTargets(rootDir, {
+    mobile: {
+      expectedAppSlug: "salary-hijacking",
+      expectedAndroidPackage: "com.salaryhijacking.mobile",
+      expectedIosBundleIdentifier: "com.salaryhijacking.mobile",
+      primaryReleasePlatform: "android",
+      postLaunchPlatforms: ["ios"],
+      localEmulatorRequired: false,
+      finalRuntimeAuthority: "GALAXY_SM_S921N",
+    },
+  });
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: builtHead,
+    },
+  });
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      debugApkBuilt: false,
+      debugApkSigned: false,
+      debugApkSha256: "",
+      latestSourcePackagedHead: builtHead,
+      latestSourcePackagedApkSha256: arm64Sha,
+      downloadVerified: false,
+      emulatorInstallVerified: false,
+      coldStartRuns: 0,
+      coldStartFatalCount: 0,
+      navigationSmokeVerified: false,
+      backgroundForegroundVerified: false,
+      notificationNoBottomTabVerified: false,
+      phoneTargetDebugApkBuilt: true,
+      phoneTargetDebugApkSigned: true,
+      phoneTargetDebugApkSha256: arm64Sha,
+      phoneTargetDebugApkDownloadVerified: true,
+      phoneTargetDebugApkAbis: ["arm64-v8a"],
+      phoneTargetDebugApkAbiFilterVerified: true,
+      phoneTargetDebugApkExpoCoreLibs: [
+        "lib/arm64-v8a/libexpo-modules-core.so",
+      ],
+    },
+    latestStaticApkInspectionPass: false,
+    latestStaticApkInspection: "",
+    finalStableQaApk: undefined,
+    sameRcQaApks: {
+      splitBuildVerified: true,
+      splitSigned: true,
+      downloadVerified: true,
+      staticInspectionPass: true,
+      sourceGitCommit: builtHead,
+      bundleSha256: bundleSha,
+      signerSha256: signerSha,
+      physicalRuntimeStatus: "PENDING_DEVICE_RETURN",
+      emulatorRuntimeStatus: "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY",
+      arm64: {
+        apkSha256: arm64Sha,
+        staticInspectionSummary: {
+          apkSha256: arm64Sha,
+          bundleSha256: bundleSha,
+          nativeAbis: ["arm64-v8a"],
+          arm64LibCount: 15,
+          x86_64LibCount: 0,
+          requiredArm64Libs: [
+            { name: "lib/arm64-v8a/libexpo-modules-core.so", present: true },
+          ],
+          hasBundle: true,
+          pass: true,
+          ...commonMarkers,
+        },
+      },
+      x86_64: {
+        apkSha256: x86Sha,
+        staticInspectionSummary: {
+          apkSha256: x86Sha,
+          bundleSha256: bundleSha,
+          nativeAbis: ["x86_64"],
+          arm64LibCount: 0,
+          x86_64LibCount: 15,
+          requiredX86_64Libs: [
+            { name: "lib/x86_64/libexpo-modules-core.so", present: true },
+          ],
+          hasBundle: true,
+          pass: true,
+          ...commonMarkers,
+        },
+      },
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: (command) => command !== "emulator",
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: () => ({
+      ok: true,
+      output: `${currentHead}\n`,
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: `${currentHead}\trefs/heads/main`,
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output:
+        "release/mobile-native-evidence.json\nrelease/mobile-preview-evidence.json\nscripts/release/check-release-readiness.mjs\n",
+    }),
+  });
+
+  const report = formatReleaseReadinessReport(result);
+  assert.equal(result.ok, true);
+  assert.match(report, /same-RC split QA APK build/);
+  assert.match(report, /split static APK inspection verifies same bundle/);
+  assert.match(
+    report,
+    /final runtime authority is deferred to Galaxy SM-S921N/,
+  );
+  assert.match(report, /emulator runtime is not required/);
+});
+
 test("blocks when mobile preview APK does not package the latest source changes", () => {
   const rootDir = makeWorkspace();
   writeMobilePreviewEvidence(rootDir, {
@@ -3704,6 +3851,44 @@ test("blocks mobile native production AAB evidence built from a stale HEAD", () 
   assert.match(
     report,
     /built from HEAD cccccccccccc but local HEAD is 735eb533fb46/,
+  );
+});
+
+test("passes mobile native production AAB evidence when only control-plane files changed after build", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\trefs/heads/main",
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output:
+        "release/mobile-native-evidence.json\nscripts/release/generate-mobile-native-evidence.mjs\n",
+    }),
+  });
+
+  const report = formatReleaseReadinessReport(result);
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:native:android-build/);
+  assert.match(
+    report,
+    /unchanged mobile build input tree after control-plane\/evidence-only commits/,
   );
 });
 

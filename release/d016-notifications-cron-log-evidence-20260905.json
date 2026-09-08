@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-05T07:10:07.333Z",
+  "source": "Cloudflare Wrangler tail JSON for salary-hijacking-notifications production Worker; no raw tokens, payloads, secrets, PII, or financial amounts recorded.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "environment": "production",
+  "service": "salary-hijacking-notifications",
+  "worker": "salary-hijacking-notifications",
+  "scriptTags": [
+    "cf:service=salary-hijacking-notifications",
+    "cf:environment=production"
+  ],
+  "scriptVersionObserved": true,
+  "scheduled": {
+    "cron": "*/5 * * * *",
+    "scheduledTimestamp": "2026-09-05T07:10:07.000Z",
+    "actualEventTimestamp": "2026-09-05T07:10:07.333Z",
+    "outcome": "ok",
+    "exceptionCount": 0,
+    "duplicateCountObserved": 0,
+    "logsArrayPresent": true,
+    "logsArrayEntryCount": 0,
+    "diagnosticsChannelEventCount": 0
+  },
+  "d016Evidence": {
+    "cronNaturalInvocation": "PASS_PRODUCTION_NOTIFICATIONS_NATURAL_SCHEDULED_EVENT",
+    "structuredRuntimeEnvelope": "PASS_CLOUDFLARE_TAIL_JSON_ENVELOPE",
+    "secretScrub": "PASS_NO_SECRET_VALUE_FIELDS_RECORDED",
+    "piiScrub": "PASS_NO_PAYLOAD_OR_SUBJECT_DATA_RECORDED"
+  }
+}

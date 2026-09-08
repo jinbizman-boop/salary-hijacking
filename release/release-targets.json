@@ -49,7 +49,9 @@
     "expectedAndroidPackage": "com.salaryhijacking.mobile",
     "expectedIosBundleIdentifier": "com.salaryhijacking.mobile",
     "primaryReleasePlatform": "android",
-    "postLaunchPlatforms": ["ios"]
+    "postLaunchPlatforms": ["ios"],
+    "localEmulatorRequired": false,
+    "finalRuntimeAuthority": "GALAXY_SM_S921N"
   },
   "publicUrls": {
     "landingUrl": "https://salaryhijacking.com/",

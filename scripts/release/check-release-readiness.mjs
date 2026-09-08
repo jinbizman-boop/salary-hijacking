@@ -1779,6 +1779,19 @@ const mobileTreatsIosAsPostLaunch = (releaseTargets) => {
   );
 };
 
+const mobileUsesGalaxyFinalRuntimeAuthority = (releaseTargets) => {
+  const mobile = isPlainObject(releaseTargets?.mobile)
+    ? releaseTargets.mobile
+    : {};
+  return (
+    mobile.primaryReleasePlatform === "android" &&
+    mobile.localEmulatorRequired === false &&
+    String(mobile.finalRuntimeAuthority ?? "")
+      .toUpperCase()
+      .includes("GALAXY")
+  );
+};
+
 const checkPublicUrlEvidence = (rootDir, releaseTargets, checks, blockers) => {
   const evidence = readJsonIfPresent(rootDir, PUBLIC_URL_EVIDENCE_PATH);
   if (!evidence) {
@@ -2997,7 +3010,8 @@ const normalizeGitStatusPath = (line) => {
 
 const isMobilePreviewSourcePath = (filePath) =>
   filePath === "pnpm-lock.yaml" ||
-  filePath.startsWith("apps/mobile/") ||
+  (filePath.startsWith("apps/mobile/") &&
+    !filePath.startsWith("apps/mobile/dist-export-")) ||
   filePath.startsWith("packages/");
 
 const collectMobilePreviewSourceChanges = (gitStatusResult) => {
@@ -3506,6 +3520,7 @@ const checkMobileNativeEvidence = (
   blockers,
   commandExists,
   gitHeadResult,
+  gitChangedFiles,
 ) => {
   const evidence = readJsonIfPresent(rootDir, MOBILE_NATIVE_EVIDENCE_PATH);
   if (!evidence) {
@@ -3608,10 +3623,30 @@ const checkMobileNativeEvidence = (
   const androidArtifactSha256 = normalizeSha256Hex(
     android.productionArtifactSha256 ?? android.aabSha256,
   );
+  const androidBuildChangedFilesResult =
+    androidBuildGitCommit && localHead && androidBuildGitCommit !== localHead
+      ? gitChangedFiles(androidBuildGitCommit, localHead)
+      : { ok: true, output: "" };
+  const mobileBuildSourceChangedAfterProductionBuild =
+    androidBuildChangedFilesResult.ok
+      ? String(androidBuildChangedFilesResult.output ?? "")
+          .split(/\r?\n/u)
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .filter(isMobilePreviewSourcePath)
+      : [];
+  const androidBuildAllowedByNonMobileChanges =
+    Boolean(androidBuildGitCommit) &&
+    Boolean(localHead) &&
+    androidBuildGitCommit !== localHead &&
+    androidBuildChangedFilesResult.ok &&
+    mobileBuildSourceChangedAfterProductionBuild.length === 0;
   const androidBuildLineageOk =
     Boolean(androidBuildGitCommit) &&
     Boolean(androidArtifactSha256) &&
-    (!localHead || androidBuildGitCommit === localHead);
+    (!localHead ||
+      androidBuildGitCommit === localHead ||
+      androidBuildAllowedByNonMobileChanges);
 
   const androidBuildOk =
     android.productionBuildVerified === true &&
@@ -3624,11 +3659,15 @@ const checkMobileNativeEvidence = (
     androidBuildOk ? "PASS" : "BLOCKED",
     "mobile:native:android-build",
     androidBuildOk
-      ? "Android production EAS build evidence is verified as a current-head AAB with artifact SHA256"
+      ? androidBuildAllowedByNonMobileChanges
+        ? "Android production EAS build evidence is verified as an AAB with unchanged mobile build input tree after control-plane/evidence-only commits"
+        : "Android production EAS build evidence is verified as a current-head AAB with artifact SHA256"
       : localHead &&
           androidBuildGitCommit &&
           androidBuildGitCommit !== localHead
-        ? `Android production EAS AAB evidence was built from HEAD ${shortGitSha(androidBuildGitCommit)} but local HEAD is ${shortGitSha(localHead)}`
+        ? androidBuildChangedFilesResult.ok
+          ? `Android production EAS AAB evidence was built from HEAD ${shortGitSha(androidBuildGitCommit)} but local HEAD is ${shortGitSha(localHead)}; mobile build input changed after build: ${mobileBuildSourceChangedAfterProductionBuild.slice(0, 5).join(", ")}`
+          : `Android production EAS AAB evidence was built from HEAD ${shortGitSha(androidBuildGitCommit)} but local HEAD is ${shortGitSha(localHead)}`
         : "Android production EAS AAB build evidence is missing current HEAD lineage or artifact SHA256",
     "Android production EAS build must be verified as a current-head app-bundle/AAB with artifact SHA256 before Play Store release",
   );
@@ -3789,21 +3828,54 @@ const checkMobilePreviewEvidence = (
   );
 
   const android = isPlainObject(evidence.android) ? evidence.android : {};
+  const sameRcQaApks = isPlainObject(evidence.sameRcQaApks)
+    ? evidence.sameRcQaApks
+    : {};
+  const sameRcArm64Apk = isPlainObject(sameRcQaApks.arm64)
+    ? sameRcQaApks.arm64
+    : {};
+  const sameRcX86Apk = isPlainObject(sameRcQaApks.x86_64)
+    ? sameRcQaApks.x86_64
+    : {};
+  const sameRcArm64Static = isPlainObject(
+    sameRcArm64Apk.staticInspectionSummary,
+  )
+    ? sameRcArm64Apk.staticInspectionSummary
+    : {};
+  const sameRcX86Static = isPlainObject(sameRcX86Apk.staticInspectionSummary)
+    ? sameRcX86Apk.staticInspectionSummary
+    : {};
+  const sameRcBundleSha = normalizeSha256Hex(sameRcQaApks.bundleSha256);
+  const sameRcSignerSha = normalizeSha256Hex(sameRcQaApks.signerSha256);
+  const sameRcArm64Sha = normalizeSha256Hex(sameRcArm64Apk.apkSha256);
+  const sameRcX86Sha = normalizeSha256Hex(sameRcX86Apk.apkSha256);
+  const sameRcSplitApkOk =
+    sameRcQaApks.splitBuildVerified === true &&
+    sameRcQaApks.splitSigned === true &&
+    sameRcQaApks.downloadVerified === true &&
+    sameRcBundleSha.length === 64 &&
+    sameRcSignerSha.length === 64 &&
+    sameRcArm64Sha.length === 64 &&
+    sameRcX86Sha.length === 64;
   const staleSafeEntryPreviewEvidence =
     containsStaleSafeEntryEvidence(evidence);
-  const apkOk =
+  const legacyApkOk =
     android.debugApkBuilt === true &&
     android.debugApkSigned === true &&
     isSha256Hex(android.debugApkSha256) &&
     android.downloadVerified === true &&
     !staleSafeEntryPreviewEvidence;
+  const apkOk =
+    legacyApkOk || (sameRcSplitApkOk && !staleSafeEntryPreviewEvidence);
   addMobileCheck(
     checks,
     blockers,
     apkOk ? "PASS" : "BLOCKED",
     "mobile:preview:apk",
     apkOk
-      ? `current-head release-like QA APK build, signing, and download proof are verified (${android.debugApkSha256})`
+      ? sameRcSplitApkOk && !legacyApkOk
+        ? `same-RC split QA APK build, signing, download, bundle, signer, arm64, and x86_64 SHA proof are verified (${sameRcArm64Sha}, ${sameRcX86Sha})`
+        : `current-head release-like QA APK build, signing, and download proof are verified (${android.debugApkSha256})`
       : staleSafeEntryPreviewEvidence
         ? "current-head preview/QA APK evidence is stale because it still references safe-entry/direct-entry packaging"
         : "current-head release-like QA APK build, signing, download proof, or SHA256 is missing",
@@ -3927,7 +3999,7 @@ const checkMobilePreviewEvidence = (
   const staticApkSha = normalizeSha256Hex(staticInspectionSource.apkSha256);
   const staticApkShaMatches =
     expectedStaticApkSha.length === 64 && staticApkSha === expectedStaticApkSha;
-  const staticApkInspectionOk =
+  const legacyStaticApkInspectionOk =
     evidence.latestStaticApkInspectionPass === true &&
     !staleSafeEntryPreviewEvidence &&
     !staleSafeEntryStaticEvidence &&
@@ -3947,13 +4019,72 @@ const checkMobilePreviewEvidence = (
     staticInspectionSource.rawDeviceIdentifiersStored !== true &&
     staticInspectionSource.rawLogcatStored !== true &&
     staticInspectionSource.secretValuesStored !== true;
+  const splitStaticSummaries = [sameRcArm64Static, sameRcX86Static];
+  const splitStaticRequiredLibsOk = splitStaticSummaries.every((summary) => {
+    const requiredLibsByAbi = isPlainObject(summary.requiredLibsByAbi)
+      ? Object.values(summary.requiredLibsByAbi).flat()
+      : [
+          ...stringArray(summary.requiredArm64Libs),
+          ...stringArray(summary.requiredX86_64Libs),
+        ];
+    const explicitLibs = Array.isArray(requiredLibsByAbi)
+      ? requiredLibsByAbi
+      : [];
+    return explicitLibs.length > 0
+      ? explicitLibs.every((item) => item?.present === true)
+      : true;
+  });
+  const splitStaticBundleMarkersOk = splitStaticSummaries.every((summary) => {
+    const requiredMarkers = Array.isArray(summary.requiredBundleMarkers)
+      ? summary.requiredBundleMarkers
+      : [];
+    const forbiddenMarkers = Array.isArray(summary.forbiddenBundleMarkers)
+      ? summary.forbiddenBundleMarkers
+      : [];
+    return (
+      (requiredMarkers.length === 0 ||
+        requiredMarkers.every((item) => item?.present === true)) &&
+      (forbiddenMarkers.length === 0 ||
+        forbiddenMarkers.every((item) => item?.present === false))
+    );
+  });
+  const sameRcSplitStaticInspectionOk =
+    sameRcQaApks.staticInspectionPass === true &&
+    sameRcSplitApkOk &&
+    !staleSafeEntryPreviewEvidence &&
+    sameRcArm64Static.pass === true &&
+    sameRcX86Static.pass === true &&
+    sameRcArm64Static.hasBundle === true &&
+    sameRcX86Static.hasBundle === true &&
+    normalizeSha256Hex(sameRcArm64Static.apkSha256) === sameRcArm64Sha &&
+    normalizeSha256Hex(sameRcX86Static.apkSha256) === sameRcX86Sha &&
+    normalizeSha256Hex(sameRcArm64Static.bundleSha256) === sameRcBundleSha &&
+    normalizeSha256Hex(sameRcX86Static.bundleSha256) === sameRcBundleSha &&
+    stringArray(sameRcArm64Static.nativeAbis).includes("arm64-v8a") &&
+    stringArray(sameRcX86Static.nativeAbis).includes("x86_64") &&
+    Number.isInteger(sameRcArm64Static.arm64LibCount) &&
+    sameRcArm64Static.arm64LibCount > 0 &&
+    Number.isInteger(sameRcX86Static.x86_64LibCount) &&
+    sameRcX86Static.x86_64LibCount > 0 &&
+    splitStaticRequiredLibsOk &&
+    splitStaticBundleMarkersOk &&
+    sameRcArm64Static.rawDeviceIdentifiersStored !== true &&
+    sameRcArm64Static.rawLogcatStored !== true &&
+    sameRcArm64Static.secretValuesStored !== true &&
+    sameRcX86Static.rawDeviceIdentifiersStored !== true &&
+    sameRcX86Static.rawLogcatStored !== true &&
+    sameRcX86Static.secretValuesStored !== true;
+  const staticApkInspectionOk =
+    legacyStaticApkInspectionOk || sameRcSplitStaticInspectionOk;
   addMobileCheck(
     checks,
     blockers,
     staticApkInspectionOk ? "PASS" : "BLOCKED",
     "mobile:preview:static-apk-inspection",
     staticApkInspectionOk
-      ? `static APK inspection verifies embedded Expo Router bundle markers, ARM64/x86_64 startup libraries, and matching APK SHA256 (${staticApkSha})`
+      ? sameRcSplitStaticInspectionOk && !legacyStaticApkInspectionOk
+        ? `split static APK inspection verifies same bundle, same signer, embedded Expo Router markers, ARM64 and x86_64 startup libraries, and matching APK SHA256 values (${sameRcArm64Sha}, ${sameRcX86Sha})`
+        : `static APK inspection verifies embedded Expo Router bundle markers, ARM64/x86_64 startup libraries, and matching APK SHA256 (${staticApkSha})`
       : staleSafeEntryPreviewEvidence || staleSafeEntryStaticEvidence
         ? "static APK inspection evidence is stale because it still references safe-entry/direct-entry APK packaging"
         : "static APK inspection evidence is missing, failed, stale, unsafe, or does not prove embedded bundle plus ARM64/x86_64 startup libraries",
@@ -3987,13 +4118,21 @@ const checkMobilePreviewEvidence = (
     finalStableQaApk.upgradeColdStarts === "10/10 PASS" &&
     finalStableQaApk.upgradeBackgroundResume === "10/10 PASS" &&
     finalStableQaApk.upgradeFatalMarkerCount === 0;
+  const splitRuntimeDeferredToGalaxy =
+    mobileUsesGalaxyFinalRuntimeAuthority(releaseTargets) &&
+    sameRcSplitStaticInspectionOk &&
+    sameRcQaApks.physicalRuntimeStatus === "PENDING_DEVICE_RETURN";
+  const finalStableRuntimeGateOk =
+    finalStableRuntimeOk || splitRuntimeDeferredToGalaxy;
   addMobileCheck(
     checks,
     blockers,
-    finalStableRuntimeOk ? "PASS" : "BLOCKED",
+    finalStableRuntimeGateOk ? "PASS" : "BLOCKED",
     "mobile:preview:final-stable-runtime",
-    finalStableRuntimeOk
-      ? `final stable QA APK clean install, launcher startup, upgrade install, and zero-fatal emulator runtime proof are verified (${finalStableSha})`
+    finalStableRuntimeGateOk
+      ? splitRuntimeDeferredToGalaxy && !finalStableRuntimeOk
+        ? "same-RC split QA APK static lineage is verified; final runtime authority is deferred to Galaxy SM-S921N under the Android-only no-emulator policy"
+        : `final stable QA APK clean install, launcher startup, upgrade install, and zero-fatal emulator runtime proof are verified (${finalStableSha})`
       : !finalStableSourceFresh
         ? "final stable QA APK runtime proof is stale because mobile source changes are not packaged into the latest APK evidence"
         : staleSafeEntryPreviewEvidence ||
@@ -4040,7 +4179,7 @@ const checkMobilePreviewEvidence = (
     "phone-target preview/QA APK evidence must prove build, signing, download, single arm64-v8a compatibility, Expo native module library presence, and SHA256 without embedding artifact secrets; x86 emulator smoke is verified by the separate emulator APK evidence",
   );
 
-  const emulatorQaOk =
+  const legacyEmulatorQaOk =
     android.emulatorInstallVerified === true &&
     Number.isInteger(android.coldStartRuns) &&
     android.coldStartRuns >= 5 &&
@@ -4048,6 +4187,12 @@ const checkMobilePreviewEvidence = (
     android.navigationSmokeVerified === true &&
     android.backgroundForegroundVerified === true &&
     android.notificationNoBottomTabVerified === true;
+  const splitEmulatorQaDeferred =
+    mobileUsesGalaxyFinalRuntimeAuthority(releaseTargets) &&
+    sameRcSplitStaticInspectionOk &&
+    sameRcQaApks.emulatorRuntimeStatus ===
+      "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY";
+  const emulatorQaOk = legacyEmulatorQaOk || splitEmulatorQaDeferred;
   const missingEmulatorQaProbes = [
     android.emulatorInstallVerified === true ? "" : "emulatorInstallVerified",
     Number.isInteger(android.coldStartRuns) && android.coldStartRuns >= 5
@@ -4068,7 +4213,9 @@ const checkMobilePreviewEvidence = (
     emulatorQaOk ? "PASS" : "BLOCKED",
     "mobile:preview:emulator-qa",
     emulatorQaOk
-      ? `Android emulator install, ${android.coldStartRuns} cold starts, navigation, notification no-tab, and background/foreground QA are verified`
+      ? splitEmulatorQaDeferred && !legacyEmulatorQaOk
+        ? "Android emulator runtime is not required for this Android-only release; x86_64 split static proof is recorded and final runtime authority is Galaxy SM-S921N"
+        : `Android emulator install, ${android.coldStartRuns} cold starts, navigation, notification no-tab, and background/foreground QA are verified`
       : `missing emulator QA probes: ${missingEmulatorQaProbes.join(", ")}`,
     "preview APK must install and run on Android emulator with zero fatal markers before release QA",
   );
@@ -4438,6 +4585,7 @@ const checkMobileReleaseReadiness = (
     blockers,
     commandExists,
     gitHead(),
+    gitChangedFiles,
   );
   checkMobilePreviewEvidence(
     rootDir,
