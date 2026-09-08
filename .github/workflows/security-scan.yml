@@ -857,7 +857,9 @@ jobs:
         run: pnpm typecheck
 
       - name: Run baseline tests
-        run: node scripts/dev/run-with-corepack-pnpm.mjs pnpm -r --if-present --workspace-concurrency=1 run test
+        run: |
+          node scripts/dev/run-with-corepack-pnpm.mjs pnpm --filter @salary-hijacking/mobile exec jest --runInBand --forceExit
+          node scripts/dev/run-with-corepack-pnpm.mjs pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
 
       - name: Run security tests when configured
         run: |
