@@ -565,6 +565,26 @@ jobs:
 
             if (
               type === "ad-finance-data-mixing-risk" &&
+              (
+                (
+                  fullPath.endsWith(path.join("apps", "mobile", "src", "shared", "components", "AdBannerSlot.tsx")) &&
+                  (
+                    /AD-APP-(SALARY|LVUP|MY|COMMUNITY-FEED)-0[12]/.test(line) ||
+                    /EXPO_PUBLIC_ADMOB_(SALARY|LVUP|MY|COMMUNITY)_/.test(line) ||
+                    /screen:\s*"SALARY"/.test(line)
+                  )
+                ) ||
+                (
+                  fullPath.endsWith(path.join("apps", "mobile", "src", "features", "salary", "components", "SalaryHomeScreen.tsx")) &&
+                  /placement="AD-APP-SALARY-01"/.test(line)
+                )
+              )
+            ) {
+              return true;
+            }
+
+            if (
+              type === "ad-finance-data-mixing-risk" &&
               fullPath.endsWith("clean-fintech-screens.tsx") &&
               /AD_PARTNER:\s*"\/salary"/.test(line)
             ) {
