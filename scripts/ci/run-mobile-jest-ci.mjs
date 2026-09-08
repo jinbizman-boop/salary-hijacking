@@ -137,7 +137,7 @@ function run() {
       child.kill("SIGTERM");
       setTimeout(() => child.kill("SIGKILL"), 3_000).unref();
       clearTimeout(hardTimer);
-      process.exitCode = 0;
+      process.exit(0);
     }, graceMs);
   }
 
