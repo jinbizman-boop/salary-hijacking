@@ -606,6 +606,7 @@ function assertTextSafe(field: string, value: string): void {
 }
 
 function assertDataSafe(key: string, value: string): void {
+  const normalizedKey = key.toLowerCase().replace(/[\s._-]/g, "");
   if (keySensitive(key))
     throw new FcmClientError(
       "FCM_SENSITIVE_DATA_KEY_FORBIDDEN",
@@ -620,6 +621,7 @@ function assertDataSafe(key: string, value: string): void {
       400,
       false,
     );
+  if (normalizedKey === "deeplink") return;
   if (valueSensitive(value))
     throw new FcmClientError(
       "FCM_SENSITIVE_DATA_VALUE_FORBIDDEN",

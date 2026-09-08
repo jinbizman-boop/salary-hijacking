@@ -884,7 +884,7 @@ function domainDataFromBody(
   };
 
   const userId = optionalString(data, "userId", 160);
-  const deeplink = optionalString(data, "deeplink", 500);
+  const deeplink = optionalOpaqueTechnicalString(data, "deeplink", 500);
   const routeParams = primitiveRecord(data.routeParams, "data.routeParams") as
     | Readonly<Record<string, string | number | boolean | null>>
     | undefined;

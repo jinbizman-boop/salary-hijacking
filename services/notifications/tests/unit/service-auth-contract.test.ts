@@ -78,6 +78,7 @@ describe("notifications Worker service auth contract", () => {
             type: "NOTICE",
             importance: "SYSTEM_REQUIRED",
             targetScreen: "notifications",
+            deeplink: "salaryhijacking://notifications",
           },
         }),
       }),
