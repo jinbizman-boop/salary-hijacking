@@ -160,10 +160,11 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Unit and integration tests
-        run: |
-          node scripts/dev/run-with-corepack-pnpm.mjs pnpm --filter @salary-hijacking/mobile exec jest --runInBand --forceExit
-          node scripts/dev/run-with-corepack-pnpm.mjs pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
+      - name: Mobile unit and integration tests
+        run: corepack pnpm --dir apps/mobile exec jest --runInBand --forceExit
+
+      - name: Workspace unit and integration tests
+        run: corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
 
       - name: Build apps, services, and packages
         run: pnpm build
