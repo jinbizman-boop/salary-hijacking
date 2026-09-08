@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-require-imports -- React Native tab icons must stay as static require() calls for EAS Android bundling. */
-import { Tabs, useRouter, type Href } from "expo-router";
+import { Tabs, usePathname, useRouter, type Href } from "expo-router";
 import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { Image, Pressable, View, type ImageSourcePropType } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -76,11 +76,17 @@ const tabs: readonly TabDefinition[] = [
 
 export default function TabsLayout(): React.ReactElement {
   const insets = useOptionalSafeAreaInsets();
+  const pathname = usePathname();
   const router = useRouter();
   const tabBarHeight =
     salaryHijackingTheme.layout.bottomTabHeight + Math.max(insets.bottom, 0);
 
   const navigateToRootTab = (tab: TabDefinition): void => {
+    if (isCurrentRootTabPath(pathname, tab.rootHref)) {
+      router.dismissTo(tab.rootHref as never);
+      return;
+    }
+
     router.navigate(tab.rootHref as never);
   };
 
@@ -174,6 +180,11 @@ export default function TabsLayout(): React.ReactElement {
   );
 }
 
+function isCurrentRootTabPath(pathname: string, rootHref: Href): boolean {
+  const rootPath = String(rootHref);
+  return pathname === rootPath || pathname.startsWith(`${rootPath}/`);
+}
+
 function renderMeasuredTabBarButton({
   accessibilityLabel,
   accessibilityState,
@@ -236,7 +247,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     ROOT_TAB_NAVIGATION_PRIORITY.androidBack,
     `root_tab_route:${String(getRootTabHref("salary"))}`,
     "explicit_bottom_tab_root_navigation",
-    "same_tab_reselect_root_reset",
+    "same_tab_reselect_root_reset_dismissTo",
     "server_authority_boundary_labels",
     "anonymous_community_boundary",
     "profile_privacy_boundary",
