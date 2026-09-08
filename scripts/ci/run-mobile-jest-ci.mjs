@@ -3,6 +3,8 @@ import { pathToFileURL } from "node:url";
 
 const DEFAULT_GRACE_MS = 15_000;
 const DEFAULT_TIMEOUT_MS = 20 * 60_000;
+const DEFAULT_BATCH_TIMEOUT_MS = 5 * 60_000;
+const DEFAULT_BATCH_SIZE = 16;
 const MAX_BUFFER_CHARS = 500_000;
 
 export function stripAnsi(value) {
@@ -67,139 +69,248 @@ function appendBounded(buffer, chunk) {
   return next.slice(next.length - MAX_BUFFER_CHARS);
 }
 
-function isMainModule() {
-  const invoked = process.argv[1];
-  return Boolean(invoked) && import.meta.url === pathToFileURL(invoked).href;
+export function chunkTestPaths(testPaths, batchSize) {
+  const size =
+    Number.isFinite(batchSize) && batchSize > 0
+      ? Math.floor(batchSize)
+      : DEFAULT_BATCH_SIZE;
+  const batches = [];
+
+  for (let index = 0; index < testPaths.length; index += size) {
+    batches.push(testPaths.slice(index, index + size));
+  }
+
+  return batches;
 }
 
-function run() {
-  const graceMs = parsePositiveIntegerEnv("MOBILE_JEST_CI_GRACE_MS", DEFAULT_GRACE_MS);
-  const timeoutMs = parsePositiveIntegerEnv("MOBILE_JEST_CI_TIMEOUT_MS", DEFAULT_TIMEOUT_MS);
-  const args = [
+function baseJestArgs() {
+  return [
     "pnpm",
     "--filter",
     "@salary-hijacking/mobile",
     "exec",
     "jest",
     "--runInBand",
-    "--forceExit",
   ];
-  const child = spawn("corepack", args, {
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      CI: "true",
-      NODE_ENV: "test",
-      FORCE_COLOR: process.env.FORCE_COLOR ?? "1",
-    },
-    shell: process.platform === "win32",
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+}
 
-  let output = "";
-  let passSummarySeen = false;
-  let exiting = false;
-  let graceTimer;
+function buildJestListArgs() {
+  return [...baseJestArgs(), "--listTests"];
+}
 
-  const hardTimer = setTimeout(() => {
-    if (exiting) {
-      return;
-    }
+export function buildJestRunArgs(testPaths) {
+  return [...baseJestArgs(), "--forceExit", "--runTestsByPath", ...testPaths];
+}
 
-    exiting = true;
-    console.error(
-      `[mobile-jest-ci] timed out before a complete Jest pass summary after ${timeoutMs}ms.`,
-    );
-    child.kill("SIGTERM");
-    setTimeout(() => child.kill("SIGKILL"), 3_000).unref();
-    process.exitCode = 1;
-  }, timeoutMs);
+function isMainModule() {
+  const invoked = process.argv[1];
+  return Boolean(invoked) && import.meta.url === pathToFileURL(invoked).href;
+}
 
-  function inspectOutput() {
-    const summary = parseJestPassSummary(output);
-    if (!summary.pass || passSummarySeen) {
-      return;
-    }
+function runCorepack(args, options = {}) {
+  const graceMs = parsePositiveIntegerEnv(
+    "MOBILE_JEST_CI_GRACE_MS",
+    DEFAULT_GRACE_MS,
+  );
+  const timeoutMs =
+    options.timeoutMs ??
+    parsePositiveIntegerEnv("MOBILE_JEST_CI_TIMEOUT_MS", DEFAULT_TIMEOUT_MS);
+  const label = options.label ?? "jest";
+  const requirePassSummary = options.requirePassSummary ?? false;
 
-    passSummarySeen = true;
-    console.log(
-      `[mobile-jest-ci] verified Jest pass summary: ${summary.suites.passed}/${summary.suites.total} suites, ${summary.tests.passed}/${summary.tests.total} tests.`,
-    );
-    graceTimer = setTimeout(() => {
+  return new Promise((resolve) => {
+    const child = spawn("corepack", args, {
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        CI: "true",
+        NODE_ENV: "test",
+        FORCE_COLOR: process.env.FORCE_COLOR ?? "1",
+      },
+      shell: process.platform === "win32",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let output = "";
+    let passSummarySeen = false;
+    let exiting = false;
+    let graceTimer;
+
+    const finish = (result) => {
       if (exiting) {
         return;
       }
 
       exiting = true;
-      console.log(
-        `[mobile-jest-ci] Jest pass summary was verified; terminating lingering test process after ${graceMs}ms grace period.`,
+      clearTimeout(hardTimer);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+      }
+      resolve({
+        output,
+        summary: parseJestPassSummary(output),
+        ...result,
+      });
+    };
+
+    const hardTimer = setTimeout(() => {
+      console.error(
+        `[mobile-jest-ci] ${label} timed out before completion after ${timeoutMs}ms.`,
       );
       child.kill("SIGTERM");
       setTimeout(() => child.kill("SIGKILL"), 3_000).unref();
-      clearTimeout(hardTimer);
-      process.exit(0);
-    }, graceMs);
-  }
+      finish({ code: 1, signal: "TIMEOUT", timedOut: true });
+    }, timeoutMs);
 
-  child.stdout.on("data", (chunk) => {
-    const text = chunk.toString();
-    process.stdout.write(text);
-    output = appendBounded(output, text);
-    inspectOutput();
-  });
+    function inspectOutput() {
+      if (!requirePassSummary || passSummarySeen) {
+        return;
+      }
 
-  child.stderr.on("data", (chunk) => {
-    const text = chunk.toString();
-    process.stderr.write(text);
-    output = appendBounded(output, text);
-    inspectOutput();
-  });
+      const summary = parseJestPassSummary(output);
+      if (!summary.pass) {
+        return;
+      }
 
-  child.on("error", (error) => {
-    if (exiting) {
-      return;
+      passSummarySeen = true;
+      console.log(
+        `[mobile-jest-ci] verified Jest pass summary for ${label}: ${summary.suites.passed}/${summary.suites.total} suites, ${summary.tests.passed}/${summary.tests.total} tests.`,
+      );
+      graceTimer = setTimeout(() => {
+        console.log(
+          `[mobile-jest-ci] Jest pass summary was verified; terminating lingering test process after ${graceMs}ms grace period.`,
+        );
+        child.kill("SIGTERM");
+        setTimeout(() => child.kill("SIGKILL"), 3_000).unref();
+        finish({ code: 0, signal: null, timedOut: false });
+      }, graceMs);
     }
 
-    exiting = true;
-    clearTimeout(hardTimer);
-    if (graceTimer) {
-      clearTimeout(graceTimer);
-    }
-    console.error(error);
-    process.exit(1);
-  });
+    child.stdout.on("data", (chunk) => {
+      const text = chunk.toString();
+      process.stdout.write(text);
+      output = appendBounded(output, text);
+      inspectOutput();
+    });
 
-  child.on("exit", (code, signal) => {
-    if (exiting) {
-      return;
-    }
+    child.stderr.on("data", (chunk) => {
+      const text = chunk.toString();
+      process.stderr.write(text);
+      output = appendBounded(output, text);
+      inspectOutput();
+    });
 
-    exiting = true;
-    clearTimeout(hardTimer);
-    if (graceTimer) {
-      clearTimeout(graceTimer);
-    }
+    child.on("error", (error) => {
+      console.error(error);
+      finish({ code: 1, signal: null, timedOut: false });
+    });
 
-    const summary = parseJestPassSummary(output);
-    if (code === 0 && summary.pass) {
-      console.log("[mobile-jest-ci] Jest exited cleanly with a verified pass summary.");
-      process.exit(0);
-    }
-
-    if (signal) {
-      console.error(`[mobile-jest-ci] Jest terminated by ${signal}.`);
-    } else {
-      console.error(`[mobile-jest-ci] Jest exited with code ${code ?? 1}.`);
-    }
-
-    if (!summary.pass) {
-      console.error("[mobile-jest-ci] A complete all-pass Jest summary was not observed.");
-    }
-
-    process.exit(code ?? 1);
+    child.on("exit", (code, signal) => {
+      finish({ code: code ?? 1, signal, timedOut: false });
+    });
   });
 }
 
+function parseListedTests(output) {
+  return stripAnsi(output)
+    .split(/\r?\n/u)
+    .map((line) => line.trim())
+    .filter((line) => /\.(?:test|spec)\.tsx?$/u.test(line));
+}
+
+async function run() {
+  const totalTimeoutMs = parsePositiveIntegerEnv(
+    "MOBILE_JEST_CI_TIMEOUT_MS",
+    DEFAULT_TIMEOUT_MS,
+  );
+  const batchTimeoutMs = parsePositiveIntegerEnv(
+    "MOBILE_JEST_CI_BATCH_TIMEOUT_MS",
+    DEFAULT_BATCH_TIMEOUT_MS,
+  );
+  const batchSize = parsePositiveIntegerEnv(
+    "MOBILE_JEST_CI_BATCH_SIZE",
+    DEFAULT_BATCH_SIZE,
+  );
+  const startedAt = Date.now();
+
+  const listResult = await runCorepack(buildJestListArgs(), {
+    label: "list-tests",
+    timeoutMs: Math.min(60_000, totalTimeoutMs),
+    requirePassSummary: false,
+  });
+
+  if (listResult.code !== 0) {
+    console.error(`[mobile-jest-ci] failed to list mobile Jest tests.`);
+    process.exit(listResult.code);
+  }
+
+  const testPaths = parseListedTests(listResult.output);
+
+  if (testPaths.length === 0) {
+    console.error(
+      "[mobile-jest-ci] no mobile Jest test files were discovered.",
+    );
+    process.exit(1);
+  }
+
+  const batches = chunkTestPaths(testPaths, batchSize);
+  let totalSuites = 0;
+  let totalTests = 0;
+
+  console.log(
+    `[mobile-jest-ci] discovered ${testPaths.length} mobile Jest files; running ${batches.length} fresh batches of up to ${batchSize}.`,
+  );
+
+  for (const [index, batch] of batches.entries()) {
+    const elapsedMs = Date.now() - startedAt;
+    if (elapsedMs >= totalTimeoutMs) {
+      console.error(
+        `[mobile-jest-ci] total timeout reached before batch ${index + 1}/${batches.length}.`,
+      );
+      process.exit(1);
+    }
+
+    const remainingMs = Math.max(1, totalTimeoutMs - elapsedMs);
+    const timeoutMs = Math.min(batchTimeoutMs, remainingMs);
+    const label = `batch ${index + 1}/${batches.length}`;
+    console.log(
+      `[mobile-jest-ci] running ${label} with ${batch.length} test files.`,
+    );
+
+    const result = await runCorepack(buildJestRunArgs(batch), {
+      label,
+      timeoutMs,
+      requirePassSummary: true,
+    });
+
+    if (result.code !== 0 || !result.summary.pass) {
+      console.error(`[mobile-jest-ci] ${label} failed.`);
+      if (result.timedOut) {
+        console.error(
+          `[mobile-jest-ci] timed out batch test files: ${batch.join(", ")}`,
+        );
+      }
+      if (!result.summary.pass) {
+        console.error(
+          "[mobile-jest-ci] A complete all-pass Jest summary was not observed.",
+        );
+      }
+      process.exit(result.code || 1);
+    }
+
+    totalSuites += result.summary.suites.total;
+    totalTests += result.summary.tests.total;
+  }
+
+  console.log(
+    `[mobile-jest-ci] all batches passed: ${testPaths.length} files, ${totalSuites} suites, ${totalTests} tests.`,
+  );
+  process.exit(0);
+}
+
 if (isMainModule()) {
-  run();
+  run().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
 }
