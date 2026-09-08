@@ -806,7 +806,6 @@ async function dispatchPushToRegisteredDevices<TEnv>(
               typeof notification.notificationId === "string"
                 ? notification.notificationId
                 : `ntf_${runtime.requestId}`,
-            userId: userIdFromRuntime(runtime),
             type: notificationWorkerType(input.type),
             importance: notificationImportance(input.priority),
             targetScreen: notificationTargetScreen(input),

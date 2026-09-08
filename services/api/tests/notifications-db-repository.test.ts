@@ -743,6 +743,15 @@ describe("Neon notifications repository", () => {
       expect(init.headers).toMatchObject({
         "x-service-token": "test-service-token",
       });
+      const workerBody = JSON.parse(String(init.body)) as {
+        readonly data?: Record<string, unknown>;
+      };
+      expect(workerBody.data).not.toHaveProperty("userId");
+      expect(workerBody.data).toMatchObject({
+        type: "NOTICE",
+        importance: "TRANSACTIONAL",
+        targetScreen: "NOTIFICATIONS",
+      });
       expect(JSON.stringify(result)).not.toContain(
         "fcm_native_registration_token_abcdef123456",
       );
