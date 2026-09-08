@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-09-08T11:05:58.562Z",
-  "source": "Current 51df747c same-RC split QA APK evidence. arm64-v8a and x86_64 builds share source, bundle, signer, version, package, and static Expo Router startup proof. Galaxy base runtime proof is linked to final-rc-galaxy-phone-proof-51df747c.local.json.",
+  "observedAt": "2026-09-08T16:46:43.885Z",
+  "source": "Current 9b4a0197 same-RC split QA APK evidence. arm64-v8a and x86_64 builds share source, bundle, signer, version, package, and static Expo Router startup proof. Galaxy final runtime is PENDING_USER_RETURN.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -17,29 +17,29 @@
     "debugApkDownloadsPath": "",
     "debugApkArtifactMirrorPath": "",
     "debugApkBuildType": "qaRelease-split-same-rc",
-    "debugApkBuildLog": "artifacts/github/current-head-51df747c/android-qa-release-arm64-51df747c.zip",
+    "debugApkBuildLog": "artifacts/github/current-head-9b4a0197",
     "downloadVerified": false,
     "downloadVerificationEvidence": "release/evidence/checksums.txt",
-    "latestSourcePackagedHead": "51df747ce9857be0f98abae604b2c7af0e37e69b",
-    "latestSourcePackagedApkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+    "latestSourcePackagedHead": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+    "latestSourcePackagedApkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
     "latestSourceChangesPackaged": true,
     "latestSourceGitStatusSha256": "",
     "emulatorInstallVerified": false,
     "emulatorInstallEvidence": "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY",
-    "coldStartRuns": 20,
+    "coldStartRuns": 0,
     "coldStartFatalCount": 0,
-    "coldStartEvidence": "release/final-rc-galaxy-phone-proof-51df747c.local.json",
-    "backgroundForegroundVerified": true,
-    "backgroundForegroundEvidence": "release/final-rc-galaxy-phone-proof-51df747c.local.json",
-    "navigationSmokeVerified": true,
-    "navigationEvidence": "release/final-rc-galaxy-phone-proof-51df747c.local.json",
+    "coldStartEvidence": "PENDING_USER_RETURN",
+    "backgroundForegroundVerified": false,
+    "backgroundForegroundEvidence": "PENDING_USER_RETURN",
+    "navigationSmokeVerified": false,
+    "navigationEvidence": "PENDING_USER_RETURN",
     "notificationNoBottomTabVerified": false,
-    "notificationEvidence": "PENDING_DEVICE_RETURN",
-    "physicalPhoneVerified": true,
-    "physicalPhoneBlocker": null,
+    "notificationEvidence": "PENDING_USER_RETURN",
+    "physicalPhoneVerified": false,
+    "physicalPhoneBlocker": "PENDING_USER_RETURN",
     "phoneTargetDebugApkBuilt": true,
     "phoneTargetDebugApkSigned": true,
-    "phoneTargetDebugApkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+    "phoneTargetDebugApkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
     "phoneTargetDebugApkLocalPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
     "phoneTargetDebugApkDownloadVerified": true,
     "phoneTargetDebugApkAbis": [
@@ -50,10 +50,10 @@
       "lib/arm64-v8a/libexpo-modules-core.so"
     ]
   },
-  "latestStaticApkInspection": "artifacts/github/current-head-51df747c/static-inspection-arm64-v8a-51df747c.json",
+  "latestStaticApkInspection": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
   "latestStaticApkInspectionPass": true,
-  "latestStaticApkInspectionRunLog": "artifacts/github/current-head-51df747c/static-inspection-arm64-v8a-51df747c.json",
-  "latestStaticApkSignerVerifyLog": "artifacts/github/current-head-51df747c/arm64/evidence/build-info.json",
+  "latestStaticApkInspectionRunLog": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
+  "latestStaticApkSignerVerifyLog": "artifacts/github/current-head-9b4a0197/arm64/evidence/build-info.json",
   "privacy": {
     "previewSecretsRedacted": true,
     "embeddedCredentialsPresent": false,
@@ -69,6 +69,7 @@
     "containsSecretValues": false
   },
   "nextEvidenceRequired": [
+    "Install exact 9b4a0197 arm64 Final RC on Galaxy SM-S921N when the user returns.",
     "Session Restore 5/5 on Galaxy Final RC.",
     "Navigation/Back matrix on Galaxy Final RC.",
     "Google/Kakao/Naver Android runtime on Galaxy Final RC.",
@@ -79,11 +80,12 @@
   ],
   "latestStaticApkInspectionSummary": {
     "schemaVersion": 1,
-    "generatedAt": "2026-09-08T11:04:38.825Z",
+    "generatedAt": "2026-09-08T16:39:42.196Z",
     "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
-    "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
-    "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
-    "bundleBytes": 3021256,
+    "apkPath": "LOCAL_ARTIFACT_PATH_REDACTED_SHA256_VERIFIED",
+    "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+    "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+    "bundleBytes": 3021968,
     "hasBundle": true,
     "expectedAbis": [
       "arm64-v8a"
@@ -270,32 +272,57 @@
       }
     ],
     "pass": true,
+    "embeddedExpoConfig": {
+      "present": true,
+      "checks": [
+        {
+          "name": "apiBaseUrlIsStagingHttps",
+          "pass": true
+        },
+        {
+          "name": "appEnvironmentIsStaging",
+          "pass": true
+        },
+        {
+          "name": "operationsEnvironmentIsStaging",
+          "pass": true
+        },
+        {
+          "name": "releaseChannelIsStaging",
+          "pass": true
+        },
+        {
+          "name": "e2eBuildDisabled",
+          "pass": true
+        },
+        {
+          "name": "crashReportingEnabled",
+          "pass": true
+        }
+      ],
+      "pass": true
+    },
     "manifestSecurity": {
       "checks": [
         {
           "name": "manifestPresent",
-          "pass": true,
-          "value": true
+          "pass": true
         },
         {
           "name": "allowBackupDisabled",
-          "pass": true,
-          "value": true
+          "pass": true
         },
         {
           "name": "debuggableDisabled",
-          "pass": true,
-          "value": true
+          "pass": true
         },
         {
           "name": "cleartextTrafficDisabled",
-          "pass": true,
-          "value": true
+          "pass": true
         },
         {
           "name": "systemAlertWindowAbsent",
-          "pass": true,
-          "value": true
+          "pass": true
         }
       ],
       "pass": true,
@@ -307,12 +334,12 @@
   },
   "sameRcQaApks": {
     "schemaVersion": 1,
-    "sourceGitCommit": "51df747ce9857be0f98abae604b2c7af0e37e69b",
-    "sourceFingerprint": "F5FA4CD2700C78742F4EE5DB35764FF6337BC84ADB3EA2B9AC4DD6C95D6ED092",
-    "x86RunId": "34216071607",
-    "x86ArtifactId": "10052250510",
-    "arm64RunId": "34216075271",
-    "arm64ArtifactId": "10052167753",
+    "sourceGitCommit": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+    "sourceFingerprint": "D789EBF05A693E1E24B0AB823E95ED40D249336AEA00D2ADEBA00075EC55318D",
+    "x86RunId": "34249713766",
+    "x86ArtifactId": "10066451747",
+    "arm64RunId": "34249716335",
+    "arm64ArtifactId": "10065972040",
     "splitBuildVerified": true,
     "splitSigned": true,
     "downloadVerified": true,
@@ -321,22 +348,23 @@
     "sameRcBundle": true,
     "sameRcSigner": true,
     "sameRcVersion": true,
-    "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
+    "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
     "signerSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
     "physicalRuntimeStatus": "PENDING_DEVICE_RETURN",
     "emulatorRuntimeStatus": "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY",
     "arm64": {
       "abi": "arm64-v8a",
       "apkPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
-      "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
-      "staticInspectionPath": "artifacts/github/current-head-51df747c/static-inspection-arm64-v8a-51df747c.json",
+      "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+      "staticInspectionPath": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
       "staticInspectionSummary": {
         "schemaVersion": 1,
-        "generatedAt": "2026-09-08T11:04:38.825Z",
+        "generatedAt": "2026-09-08T16:39:42.196Z",
         "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
-        "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
-        "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
-        "bundleBytes": 3021256,
+        "apkPath": "LOCAL_ARTIFACT_PATH_REDACTED_SHA256_VERIFIED",
+        "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+        "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+        "bundleBytes": 3021968,
         "hasBundle": true,
         "expectedAbis": [
           "arm64-v8a"
@@ -523,32 +551,57 @@
           }
         ],
         "pass": true,
+        "embeddedExpoConfig": {
+          "present": true,
+          "checks": [
+            {
+              "name": "apiBaseUrlIsStagingHttps",
+              "pass": true
+            },
+            {
+              "name": "appEnvironmentIsStaging",
+              "pass": true
+            },
+            {
+              "name": "operationsEnvironmentIsStaging",
+              "pass": true
+            },
+            {
+              "name": "releaseChannelIsStaging",
+              "pass": true
+            },
+            {
+              "name": "e2eBuildDisabled",
+              "pass": true
+            },
+            {
+              "name": "crashReportingEnabled",
+              "pass": true
+            }
+          ],
+          "pass": true
+        },
         "manifestSecurity": {
           "checks": [
             {
               "name": "manifestPresent",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "allowBackupDisabled",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "debuggableDisabled",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "cleartextTrafficDisabled",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "systemAlertWindowAbsent",
-              "pass": true,
-              "value": true
+              "pass": true
             }
           ],
           "pass": true,
@@ -562,15 +615,16 @@
     "x86_64": {
       "abi": "x86_64",
       "apkPath": "LOCAL_X86_64_APK_PATH_REDACTED_SHA256_VERIFIED",
-      "apkSha256": "9E12EFF27A48F6E7A19CF05B541481B7732146A54B508D9224FB0A78CFABB9F2",
-      "staticInspectionPath": "artifacts/github/current-head-51df747c/static-inspection-x86_64-51df747c.json",
+      "apkSha256": "C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76",
+      "staticInspectionPath": "artifacts/github/current-head-9b4a0197/x86_64/android-qa-release-x86_64-9b4a019748abf3b8b8702f1e8577e706b88ee63a-20260909-013850/evidence/apk-static-inspection.local.json",
       "staticInspectionSummary": {
         "schemaVersion": 1,
-        "generatedAt": "2026-09-08T11:04:40.091Z",
+        "generatedAt": "2026-09-08T16:39:43.304Z",
         "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
-        "apkSha256": "9E12EFF27A48F6E7A19CF05B541481B7732146A54B508D9224FB0A78CFABB9F2",
-        "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
-        "bundleBytes": 3021256,
+        "apkPath": "LOCAL_ARTIFACT_PATH_REDACTED_SHA256_VERIFIED",
+        "apkSha256": "C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76",
+        "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+        "bundleBytes": 3021968,
         "hasBundle": true,
         "expectedAbis": [
           "x86_64"
@@ -757,32 +811,57 @@
           }
         ],
         "pass": true,
+        "embeddedExpoConfig": {
+          "present": true,
+          "checks": [
+            {
+              "name": "apiBaseUrlIsStagingHttps",
+              "pass": true
+            },
+            {
+              "name": "appEnvironmentIsStaging",
+              "pass": true
+            },
+            {
+              "name": "operationsEnvironmentIsStaging",
+              "pass": true
+            },
+            {
+              "name": "releaseChannelIsStaging",
+              "pass": true
+            },
+            {
+              "name": "e2eBuildDisabled",
+              "pass": true
+            },
+            {
+              "name": "crashReportingEnabled",
+              "pass": true
+            }
+          ],
+          "pass": true
+        },
         "manifestSecurity": {
           "checks": [
             {
               "name": "manifestPresent",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "allowBackupDisabled",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "debuggableDisabled",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "cleartextTrafficDisabled",
-              "pass": true,
-              "value": true
+              "pass": true
             },
             {
               "name": "systemAlertWindowAbsent",
-              "pass": true,
-              "value": true
+              "pass": true
             }
           ],
           "pass": true,
