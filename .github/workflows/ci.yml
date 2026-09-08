@@ -161,7 +161,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit and integration tests
-        run: pnpm test
+        run: node scripts/dev/run-with-corepack-pnpm.mjs pnpm exec turbo run test --concurrency=1
 
       - name: Build apps, services, and packages
         run: pnpm build

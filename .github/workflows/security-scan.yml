@@ -857,7 +857,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Run baseline tests
-        run: pnpm test
+        run: node scripts/dev/run-with-corepack-pnpm.mjs pnpm exec turbo run test --concurrency=1
 
       - name: Run security tests when configured
         run: |
