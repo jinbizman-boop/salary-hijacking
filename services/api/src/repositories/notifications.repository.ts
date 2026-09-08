@@ -829,14 +829,26 @@ async function dispatchPushToRegisteredDevices<TEnv>(
       safeBody && typeof safeBody.error === "object" && safeBody.error
         ? (safeBody.error as JsonRecord)
         : null;
+    const responseData =
+      safeBody && typeof safeBody.data === "object" && safeBody.data
+        ? (safeBody.data as JsonRecord)
+        : null;
+    const workerStatus =
+      typeof responseData?.status === "string"
+        ? responseData.status.toUpperCase()
+        : null;
     const errorCode =
       typeof responseError?.code === "string"
         ? responseError.code
+        : typeof responseData?.errorCode === "string"
+          ? responseData.errorCode
         : response.headers.get("x-error-code");
     const status =
-      response.ok && JSON.stringify(safeBody).includes('"SENT"')
+      response.ok && workerStatus === "SENT"
         ? "SENT"
-        : response.ok
+        : response.ok &&
+            workerStatus &&
+            !["FAILED", "RETRY_EXHAUSTED", "SKIPPED"].includes(workerStatus)
           ? "ACCEPTED"
           : "FAILED";
     if (status === "SENT" || status === "ACCEPTED") sentCount += 1;

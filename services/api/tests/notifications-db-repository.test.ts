@@ -878,6 +878,102 @@ describe("Neon notifications repository", () => {
     }
   });
 
+  it("treats Worker 202 failure envelopes as push delivery failures", async () => {
+    const sendRuntime = createRuntime("/api/v1/notifications/test", {
+      ...securityEnv,
+      NOTIFICATIONS_WORKER_URL: "https://notifications.test",
+      NOTIFICATIONS_SERVICE_TOKEN: "test-service-token",
+    }, "fcm-worker-failed-envelope");
+    const tokenSecretRef = "notifications:push-token:fcm:failed-envelope";
+    const encryptedToken = await encryptString(
+      "fcm_native_registration_token_failedabcdef",
+      {
+        keyRing: createSecurityKeyRingFromEnv(securityEnv),
+        context: {
+          purpose: "notification.push-token",
+          dataClass: "device",
+          userId,
+          subjectId: tokenSecretRef,
+          fieldName: "pushToken",
+          runtime: "edge",
+        },
+      },
+    );
+    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            status: "FAILED",
+            errorCode: "INVALID_ARGUMENT",
+            provider: "FCM",
+          },
+        }),
+        { status: 202, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const repository = createNeonNotificationsRepository({
+      query: async (_sqlText, _params, options) => {
+        if (options.operationName === "notifications.create.dedupeLookup") {
+          return { rows: [], rowCount: 0 };
+        }
+        if (options.operationName === "notifications.listActivePushTokenSecrets") {
+          return {
+            rows: [
+              {
+                device_id: "33333333-3333-4333-8333-333333333333",
+                provider: "FCM",
+                push_token_id: "55555555-5555-4555-8555-555555555555",
+                token_ciphertext: encryptedToken,
+                token_hash: "hash-only",
+                token_secret_ref: tokenSecretRef,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        return {
+          rows: [notificationRow({ notification_id: notificationId })],
+          rowCount: 1,
+        };
+      },
+    });
+
+    try {
+      const result = await repository.test(
+        {
+          type: "NOTICE",
+          title: "QA notification",
+          message: "FCM failed envelope test",
+          priority: "HIGH",
+          channels: ["IN_APP", "PUSH"],
+          deeplink: "salaryhijacking://notifications",
+          scheduledAt: null,
+          expiresAt: null,
+          metadata: { idempotencyKey: "FCM_FAILED_ENVELOPE:111" },
+        },
+        sendRuntime,
+      );
+
+      expect(result.pushDelivery).toMatchObject({
+        attempted: true,
+        sentCount: 0,
+        failureCount: 1,
+        rawPushTokenExposed: false,
+      });
+      expect(result.pushDelivery.outcomes).toContainEqual(
+        expect.objectContaining({
+          status: "FAILED",
+          httpStatus: 202,
+          errorCode: "INVALID_ARGUMENT",
+          provider: "FCM",
+        }),
+      );
+    } finally {
+      fetcher.mockRestore();
+    }
+  });
+
   it("maps budget warnings to the migration-backed notification type", async () => {
     const calls: Array<{
       readonly operationName: string;
