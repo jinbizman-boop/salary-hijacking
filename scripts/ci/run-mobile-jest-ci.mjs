@@ -83,6 +83,10 @@ export function chunkTestPaths(testPaths, batchSize) {
   return batches;
 }
 
+export function sortTestPathsForCi(testPaths) {
+  return [...testPaths].sort((left, right) => left.localeCompare(right, "en"));
+}
+
 function baseJestArgs() {
   return [
     "pnpm",
@@ -244,7 +248,7 @@ async function run() {
     process.exit(listResult.code);
   }
 
-  const testPaths = parseListedTests(listResult.output);
+  const testPaths = sortTestPathsForCi(parseListedTests(listResult.output));
 
   if (testPaths.length === 0) {
     console.error(

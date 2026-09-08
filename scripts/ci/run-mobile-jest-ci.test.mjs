@@ -7,6 +7,7 @@ import {
   buildJestRunArgs,
   chunkTestPaths,
   parseJestPassSummary,
+  sortTestPathsForCi,
   stripAnsi,
 } from "./run-mobile-jest-ci.mjs";
 
@@ -60,6 +61,20 @@ test("buildJestRunArgs runs a specific batch in a fresh Jest process", () => {
     "--runTestsByPath",
     "a.test.ts",
     "b.test.ts",
+  ]);
+});
+
+test("sortTestPathsForCi makes GitHub runner batches deterministic", () => {
+  const sorted = sortTestPathsForCi([
+    "/workspace/apps/mobile/src/features/uploads/__tests__/uploads.api.test.ts",
+    "/workspace/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
+    "/workspace/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+  ]);
+
+  assert.deepEqual(sorted, [
+    "/workspace/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
+    "/workspace/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+    "/workspace/apps/mobile/src/features/uploads/__tests__/uploads.api.test.ts",
   ]);
 });
 
