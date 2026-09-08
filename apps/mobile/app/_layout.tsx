@@ -223,6 +223,7 @@ const ROOT_DEEP_LINK_ROUTES = new Set([
   "/notifications",
   "/notifications/settings",
   "/community",
+  "/community/my-posts",
   "/community/write",
   "/profile",
   "/profile/settings",

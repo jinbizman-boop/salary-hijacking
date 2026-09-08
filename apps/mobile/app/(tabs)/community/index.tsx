@@ -99,7 +99,7 @@ export default function CommunityIndexScreen(): React.ReactElement {
       header={
         <RootTabHeader
           onOpenMyPostsManagement={() =>
-            router.push("/profile/community" as never)
+            router.push("/community/my-posts" as never)
           }
           tab="community"
         />

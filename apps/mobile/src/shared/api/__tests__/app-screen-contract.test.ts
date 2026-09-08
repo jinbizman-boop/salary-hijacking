@@ -24,6 +24,12 @@ const PLAN_STACK_LAYOUT_SCREEN = join(
   "plan",
   "_layout.tsx",
 );
+const COMMUNITY_STACK_LAYOUT_SCREEN = join(
+  APP_ROOT,
+  "(tabs)",
+  "community",
+  "_layout.tsx",
+);
 const PROFILE_STACK_LAYOUT_SCREEN = join(
   APP_ROOT,
   "(tabs)",
@@ -345,6 +351,15 @@ describe("mobile app screen API and route contracts", () => {
     expect(profileStack).toContain('name="notifications"');
     expect(profileIndex).toContain("router.push(profileMenuRoutes[key]");
     expect(profileIndex).not.toContain('router.replace("/salary" as never)');
+  });
+
+  it("keeps Community header my-posts management inside the Community tab stack for Android Back", () => {
+    const communityStack = readFileSync(COMMUNITY_STACK_LAYOUT_SCREEN, "utf8");
+    const communityIndex = readFileSync(TAB_SCREEN_SOURCES.community, "utf8");
+
+    expect(communityStack).toContain('name="my-posts"');
+    expect(communityIndex).toContain('router.push("/community/my-posts" as never)');
+    expect(communityIndex).not.toContain('router.push("/profile/community" as never)');
   });
 
   it("refreshes the root bootstrap access token before falling back from a 401", () => {

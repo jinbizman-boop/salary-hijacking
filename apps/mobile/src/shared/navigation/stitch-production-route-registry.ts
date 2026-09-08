@@ -157,6 +157,13 @@ const screenSurfaces = {
     productionRoute: "/community/[postId]",
     routeFile: "apps/mobile/app/(tabs)/community/[postId].tsx",
   },
+  "SCR-020A": {
+    implementationFile:
+      "apps/mobile/src/features/profile/components/ProfileDetailScreen.tsx",
+    nativeComponent: "ProfileDetailScreen",
+    productionRoute: "/community/my-posts",
+    routeFile: "apps/mobile/app/(tabs)/community/my-posts.tsx",
+  },
   "SCR-021": {
     implementationFile:
       "apps/mobile/src/features/profile/components/ProfileScreen.tsx",
