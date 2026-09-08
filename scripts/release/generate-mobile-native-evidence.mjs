@@ -100,6 +100,14 @@ const stringFrom = (source, key, fallback = "") =>
     ? source[key].trim()
     : fallback;
 
+const stringArrayFrom = (source, key) =>
+  Array.isArray(source?.[key])
+    ? source[key]
+        .filter((value) => typeof value === "string")
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean)
+    : [];
+
 const readExpectedMobileTarget = (rootDir) => {
   const targets = readJsonIfPresent(rootDir, RELEASE_TARGETS_PATH);
   const mobile = isPlainObject(targets?.mobile) ? targets.mobile : {};
@@ -119,6 +127,12 @@ const readExpectedMobileTarget = (rootDir) => {
       "expectedIosBundleIdentifier",
       DEFAULT_MOBILE_TARGET.expectedIosBundleIdentifier,
     ),
+    primaryReleasePlatform: stringFrom(
+      mobile,
+      "primaryReleasePlatform",
+      "android",
+    ).toLowerCase(),
+    postLaunchPlatforms: stringArrayFrom(mobile, "postLaunchPlatforms"),
   };
 };
 
@@ -252,8 +266,11 @@ const noteFrom = (source, key, fallback) =>
     ? source[key].trim()
     : fallback;
 
-const buildNextEvidenceRequired = ({ android, ios }) => {
+const buildNextEvidenceRequired = ({ android, ios, expectedMobileTarget }) => {
   const next = [];
+  const iosIsPostLaunch =
+    expectedMobileTarget.primaryReleasePlatform === "android" &&
+    expectedMobileTarget.postLaunchPlatforms.includes("ios");
 
   if (android.productionBuildVerified !== true) {
     next.push("EAS Android production AAB build result for profile production");
@@ -266,10 +283,10 @@ const buildNextEvidenceRequired = ({ android, ios }) => {
   if (android.storeSubmitDryRunVerified !== true) {
     next.push("Google Play submit dry-run or console-ready submission proof");
   }
-  if (ios.productionBuildVerified !== true) {
+  if (!iosIsPostLaunch && ios.productionBuildVerified !== true) {
     next.push("EAS iOS production build result for profile production");
   }
-  if (ios.storeSubmitDryRunVerified !== true) {
+  if (!iosIsPostLaunch && ios.storeSubmitDryRunVerified !== true) {
     next.push("App Store submit dry-run or console-ready submission proof");
   }
 
@@ -326,6 +343,14 @@ export const buildMobileNativeEvidence = ({
       "productionArtifactType",
       "aab",
     ),
+    productionBuildGitCommit: stringFrom(
+      proofAndroid,
+      "productionBuildGitCommit",
+    ),
+    productionArtifactSha256: stringFrom(
+      proofAndroid,
+      "productionArtifactSha256",
+    ).toUpperCase(),
     storeSubmitDryRunVerified: boolFrom(
       proofAndroid,
       "storeSubmitDryRunVerified",
@@ -378,7 +403,11 @@ export const buildMobileNativeEvidence = ({
       containsBinaryDownloadUrl: false,
       containsReviewerPassword: false,
     },
-    nextEvidenceRequired: buildNextEvidenceRequired({ android, ios }),
+    nextEvidenceRequired: buildNextEvidenceRequired({
+      android,
+      ios,
+      expectedMobileTarget,
+    }),
   };
 };
 

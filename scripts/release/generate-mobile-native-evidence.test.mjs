@@ -98,6 +98,9 @@ test("uses a local proof file to mark mobile native gates verified", () => {
           productionBuildVerified: true,
           productionBuildProfile: "production",
           productionArtifactType: "aab",
+          productionBuildGitCommit: "1111111111111111111111111111111111111111",
+          productionArtifactSha256:
+            "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd",
           storeSubmitDryRunVerified: true,
           storeSubmitEvidenceType: "google-play-console-ready",
           nativeE2eVerified: true,
@@ -128,6 +131,14 @@ test("uses a local proof file to mark mobile native gates verified", () => {
   });
 
   assert.equal(evidence.android.productionBuildVerified, true);
+  assert.equal(
+    evidence.android.productionBuildGitCommit,
+    "1111111111111111111111111111111111111111",
+  );
+  assert.equal(
+    evidence.android.productionArtifactSha256,
+    "ABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD",
+  );
   assert.equal(evidence.android.storeSubmitDryRunVerified, true);
   assert.equal(
     evidence.android.storeSubmitEvidenceType,
@@ -141,6 +152,94 @@ test("uses a local proof file to mark mobile native gates verified", () => {
     androidPackage: "com.salaryhijacking.mobile",
     iosBundleIdentifier: "com.salaryhijacking.mobile",
   });
+  assert.deepEqual(evidence.nextEvidenceRequired, []);
+});
+
+test("does not require iOS evidence for Android-first post-launch iOS targets", () => {
+  const rootDir = makeWorkspace();
+  const proofPath = path.join(
+    rootDir,
+    "release",
+    "mobile-native-proof.local.json",
+  );
+
+  write(
+    rootDir,
+    "release/release-targets.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        mobile: {
+          expectedAppSlug: "salary-hijacking",
+          expectedAndroidPackage: "com.salaryhijacking.mobile",
+          expectedIosBundleIdentifier: "com.salaryhijacking.mobile",
+          primaryReleasePlatform: "android",
+          postLaunchPlatforms: ["ios"],
+        },
+      },
+      null,
+      2,
+    ),
+  );
+  write(
+    rootDir,
+    "release/mobile-native-proof.local.json",
+    JSON.stringify(
+      {
+        schemaVersion: 1,
+        secretsRedacted: true,
+        containsSecretValues: false,
+        appIdentity: {
+          appSlug: "salary-hijacking",
+          androidPackage: "com.salaryhijacking.mobile",
+          iosBundleIdentifier: "com.salaryhijacking.mobile",
+        },
+        android: {
+          productionBuildVerified: true,
+          productionBuildProfile: "production",
+          productionArtifactType: "aab",
+          productionBuildGitCommit: "2222222222222222222222222222222222222222",
+          productionArtifactSha256:
+            "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+          storeSubmitDryRunVerified: true,
+          storeSubmitEvidenceType: "google-play-console-ready",
+          nativeE2eVerified: true,
+          nativeE2eConfiguration: "android.emu.debug",
+        },
+        ios: {
+          productionBuildVerified: false,
+          productionBuildProfile: "production",
+          storeSubmitDryRunVerified: false,
+        },
+        privacy: {
+          containsEasToken: false,
+          containsStoreCredential: false,
+          containsBinaryDownloadUrl: false,
+          containsReviewerPassword: false,
+        },
+      },
+      null,
+      2,
+    ),
+  );
+
+  const evidence = buildMobileNativeEvidence({
+    rootDir,
+    proofPath,
+    commandExists: () => false,
+    now: () => new Date("2026-07-01T11:45:00.000Z"),
+  });
+
+  assert.equal(evidence.android.productionBuildVerified, true);
+  assert.equal(
+    evidence.android.productionBuildGitCommit,
+    "2222222222222222222222222222222222222222",
+  );
+  assert.equal(
+    evidence.android.productionArtifactSha256,
+    "1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF",
+  );
+  assert.equal(evidence.ios.productionBuildVerified, false);
   assert.deepEqual(evidence.nextEvidenceRequired, []);
 });
 
