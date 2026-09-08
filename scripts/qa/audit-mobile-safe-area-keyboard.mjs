@@ -70,7 +70,7 @@ const defaultContracts = [
       "useSafeAreaInsets",
       "keyboardVerticalOffset",
       "automaticallyAdjustKeyboardInsets",
-      "paddingBottom: insets.bottom + 340",
+      "paddingBottom: insets.bottom + 96",
       'keyboardDismissMode="interactive"',
       'keyboardShouldPersistTaps="handled"',
       "useOptionalSafeAreaInsets",
