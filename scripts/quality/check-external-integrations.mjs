@@ -1076,6 +1076,30 @@ function checkPublicUrlProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkApiPublicAssetsRunWorkerFirst(rootDir, failures) {
+  const relativePath = "services/api/wrangler.toml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+  const usesPublicAssets =
+    source.includes("[assets]") && source.includes('directory = "../../apps/web"');
+
+  if (!usesPublicAssets) return;
+
+  const routesPublicLegalPathsToWorker =
+    source.includes("run_worker_first = true") ||
+    (source.includes("run_worker_first = [") &&
+      ['"/"', '"/privacy"', '"/support"', '"/terms"', '"/api/*"'].every(
+        (requiredRoute) => source.includes(requiredRoute),
+      ));
+
+  if (routesPublicLegalPathsToWorker) return;
+
+  failures.push(
+    `${relativePath}: public assets must route public legal and API paths through run_worker_first so public URL routes use Worker privacy headers before static assets`,
+  );
+}
+
 function checkCloudflareRuntimeProofWorkflow(rootDir, failures) {
   const relativePath = ".github/workflows/release.yml";
   if (!fileExists(rootDir, relativePath)) return;
@@ -1503,6 +1527,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkCloudflareRuntimeProofWorkflow(rootDir, failures);
   checkDatabaseCommandProofWorkflow(rootDir, failures);
   checkPublicUrlProofWorkflow(rootDir, failures);
+  checkApiPublicAssetsRunWorkerFirst(rootDir, failures);
   checkRuntimeSecretProofWorkflow(rootDir, failures);
   checkReleaseDependencyAuditWorkflow(rootDir, failures);
   checkReleaseReadinessWorkflowGate(rootDir, failures);
