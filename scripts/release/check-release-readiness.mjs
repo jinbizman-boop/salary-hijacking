@@ -3008,11 +3008,28 @@ const normalizeGitStatusPath = (line) => {
   return rawPath.split(" -> ").pop().trim();
 };
 
-const isMobilePreviewSourcePath = (filePath) =>
-  filePath === "pnpm-lock.yaml" ||
-  (filePath.startsWith("apps/mobile/") &&
-    !filePath.startsWith("apps/mobile/dist-export-")) ||
-  filePath.startsWith("packages/");
+const isNonPackagedMobileSourcePath = (filePath) => {
+  const normalized = String(filePath ?? "").replaceAll("\\", "/");
+  const lower = normalized.toLowerCase();
+  return (
+    lower.includes("/__tests__/") ||
+    lower.includes("/tests/") ||
+    lower.includes("/test/") ||
+    lower.includes(".test.") ||
+    lower.includes(".spec.")
+  );
+};
+
+const isMobilePreviewSourcePath = (filePath) => {
+  const normalized = String(filePath ?? "").replaceAll("\\", "/");
+  if (isNonPackagedMobileSourcePath(normalized)) return false;
+  return (
+    normalized === "pnpm-lock.yaml" ||
+    (normalized.startsWith("apps/mobile/") &&
+      !normalized.startsWith("apps/mobile/dist-export-")) ||
+    normalized.startsWith("packages/")
+  );
+};
 
 const collectMobilePreviewSourceChanges = (gitStatusResult) => {
   if (!gitStatusResult?.ok) return [];
@@ -3660,7 +3677,7 @@ const checkMobileNativeEvidence = (
     "mobile:native:android-build",
     androidBuildOk
       ? androidBuildAllowedByNonMobileChanges
-        ? "Android production EAS build evidence is verified as an AAB with unchanged mobile build input tree after control-plane/evidence-only commits"
+        ? "Android production EAS build evidence is verified as an AAB with unchanged mobile build input tree after non-packaged test, control-plane, or evidence-only commits"
         : "Android production EAS build evidence is verified as a current-head AAB with artifact SHA256"
       : localHead &&
           androidBuildGitCommit &&
@@ -3932,7 +3949,7 @@ const checkMobilePreviewEvidence = (
       ? dirtySourceMatchesEvidence
         ? "dirty mobile source snapshot matches preview APK evidence"
         : packagedHeadAllowedByNonMobileChanges
-          ? "only non-mobile evidence or documentation changed after APK packaging"
+          ? "only non-packaged tests, evidence, or documentation changed after APK packaging"
           : "latest source changes are not marked as excluded from the preview APK"
       : !latestSourceChangesPackaged
         ? "latest source changes are test-verified but not packaged into a fresh Android preview APK"
