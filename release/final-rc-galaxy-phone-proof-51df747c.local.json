@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-08T10:49:23.529Z",
+  "source": "Local physical Android phone preview QA proof. Raw logcat, device serials, tokens, credentials, signing keys, and reviewer passwords are not stored.",
+  "secretsRedacted": true,
+  "containsSecretValues": false,
+  "appIdentity": {
+    "appSlug": "salary-hijacking",
+    "androidPackage": "com.salaryhijacking.mobile",
+    "iosBundleIdentifier": "com.salaryhijacking.mobile"
+  },
+  "android": {
+    "adbPath": "D:\\salary-hijacking-artifacts\\android-sdk\\platform-tools\\adb.exe",
+    "apkPath": "C:\\Users\\PC\\Desktop\\salary-hijacking-platform\\artifacts\\github\\current-head-51df747c\\arm64\\salary-hijacking-qaRelease-arm64-v8a.apk",
+    "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+    "physicalPhoneVerified": true,
+    "physicalPhoneBlocker": null,
+    "installVerified": true,
+    "installedPackageVerified": true,
+    "installedPackagePathHash": "87C036299CC1539D6800DD5B92623E56255CA0F521BF610FE6FB89BE84B6BA4F",
+    "packageInfoProbe": {
+      "rawPackageInfoStored": false
+    },
+    "attachedDeviceCount": 1,
+    "physicalDeviceCount": 1,
+    "emulatorDeviceCount": 0,
+    "physicalSerialHashes": [
+      "955FFA9A1D863AEB"
+    ],
+    "navigationSmokeVerified": true,
+    "backgroundForegroundVerified": true,
+    "backgroundForegroundRuns": 20,
+    "persistenceVerified": true,
+    "keyboardSafeAreaVerified": true,
+    "persistenceProbe": "force-stop plus relaunch completed with zero fatal startup markers; raw UI state is not stored",
+    "keyboardSafeAreaProbe": "physical-device window and input-method probes completed without storing raw dumps",
+    "coldStartRuns": 20,
+    "coldStartFatalCount": 0,
+    "logcatSummary": {
+      "fatalExceptionCount": 0,
+      "androidRuntimeErrorCount": 0,
+      "reactNativeFatalCount": 0,
+      "expoErrorCount": 0,
+      "systemErrCount": 0,
+      "rawLogcatStored": false
+    }
+  },
+  "privacy": {
+    "containsEasToken": false,
+    "containsStoreCredential": false,
+    "containsSigningKey": false,
+    "containsReviewerPassword": false,
+    "containsRawLogcat": false,
+    "containsSecretValues": false,
+    "containsRawDeviceIdentifier": false
+  },
+  "nextEvidenceRequired": []
+}

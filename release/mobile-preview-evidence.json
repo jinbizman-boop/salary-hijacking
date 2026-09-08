@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-09-08T00:42:56.175Z",
-  "source": "Current 1459e139 same-RC split QA APK evidence. arm64-v8a and x86_64 builds share source, bundle, signer, version, package, and static Expo Router startup proof. Galaxy runtime remains pending while the user is away.",
+  "observedAt": "2026-09-08T11:05:58.562Z",
+  "source": "Current 51df747c same-RC split QA APK evidence. arm64-v8a and x86_64 builds share source, bundle, signer, version, package, and static Expo Router startup proof. Galaxy base runtime proof is linked to final-rc-galaxy-phone-proof-51df747c.local.json.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -17,39 +17,43 @@
     "debugApkDownloadsPath": "",
     "debugApkArtifactMirrorPath": "",
     "debugApkBuildType": "qaRelease-split-same-rc",
-    "debugApkBuildLog": "artifacts/github/current-head-1459e139/run-34171793927-job-101893356667-aab-current.log",
+    "debugApkBuildLog": "artifacts/github/current-head-51df747c/android-qa-release-arm64-51df747c.zip",
     "downloadVerified": false,
     "downloadVerificationEvidence": "release/evidence/checksums.txt",
-    "latestSourcePackagedHead": "1459e1398465f62ca09795cd427d573710da3681",
-    "latestSourcePackagedApkSha256": "8650B386094300F434E3A1B974028464ECCAB7E75879228E49B19CC187F14D7E",
+    "latestSourcePackagedHead": "51df747ce9857be0f98abae604b2c7af0e37e69b",
+    "latestSourcePackagedApkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
     "latestSourceChangesPackaged": true,
     "latestSourceGitStatusSha256": "",
     "emulatorInstallVerified": false,
     "emulatorInstallEvidence": "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY",
-    "coldStartRuns": 0,
+    "coldStartRuns": 20,
     "coldStartFatalCount": 0,
-    "coldStartEvidence": "PENDING_DEVICE_RETURN",
-    "backgroundForegroundVerified": false,
-    "backgroundForegroundEvidence": "PENDING_DEVICE_RETURN",
-    "navigationSmokeVerified": false,
-    "navigationEvidence": "PENDING_DEVICE_RETURN",
+    "coldStartEvidence": "release/final-rc-galaxy-phone-proof-51df747c.local.json",
+    "backgroundForegroundVerified": true,
+    "backgroundForegroundEvidence": "release/final-rc-galaxy-phone-proof-51df747c.local.json",
+    "navigationSmokeVerified": true,
+    "navigationEvidence": "release/final-rc-galaxy-phone-proof-51df747c.local.json",
     "notificationNoBottomTabVerified": false,
     "notificationEvidence": "PENDING_DEVICE_RETURN",
-    "physicalPhoneVerified": false,
-    "physicalPhoneBlocker": "PENDING_DEVICE_RETURN",
+    "physicalPhoneVerified": true,
+    "physicalPhoneBlocker": null,
     "phoneTargetDebugApkBuilt": true,
     "phoneTargetDebugApkSigned": true,
-    "phoneTargetDebugApkSha256": "8650B386094300F434E3A1B974028464ECCAB7E75879228E49B19CC187F14D7E",
-    "phoneTargetDebugApkLocalPath": "artifacts/github/current-head-1459e139/unzipped-10036127846-20260908-091209/salary-hijacking-qaRelease-arm64-v8a.apk",
+    "phoneTargetDebugApkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+    "phoneTargetDebugApkLocalPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
     "phoneTargetDebugApkDownloadVerified": true,
-    "phoneTargetDebugApkAbis": ["arm64-v8a"],
+    "phoneTargetDebugApkAbis": [
+      "arm64-v8a"
+    ],
     "phoneTargetDebugApkAbiFilterVerified": true,
-    "phoneTargetDebugApkExpoCoreLibs": ["lib/arm64-v8a/libexpo-modules-core.so"]
+    "phoneTargetDebugApkExpoCoreLibs": [
+      "lib/arm64-v8a/libexpo-modules-core.so"
+    ]
   },
-  "latestStaticApkInspection": "",
-  "latestStaticApkInspectionPass": false,
-  "latestStaticApkInspectionRunLog": "",
-  "latestStaticApkSignerVerifyLog": "",
+  "latestStaticApkInspection": "artifacts/github/current-head-51df747c/static-inspection-arm64-v8a-51df747c.json",
+  "latestStaticApkInspectionPass": true,
+  "latestStaticApkInspectionRunLog": "artifacts/github/current-head-51df747c/static-inspection-arm64-v8a-51df747c.json",
+  "latestStaticApkSignerVerifyLog": "artifacts/github/current-head-51df747c/arm64/evidence/build-info.json",
   "privacy": {
     "previewSecretsRedacted": true,
     "embeddedCredentialsPresent": false,
@@ -65,7 +69,6 @@
     "containsSecretValues": false
   },
   "nextEvidenceRequired": [
-    "Galaxy SM-S921N exact Final RC install and runtime proof after device returns.",
     "Session Restore 5/5 on Galaxy Final RC.",
     "Navigation/Back matrix on Galaxy Final RC.",
     "Google/Kakao/Naver Android runtime on Galaxy Final RC.",
@@ -74,15 +77,242 @@
     "PERF-010~014 on Galaxy Final RC.",
     "D013 physical evidence and D026 final same-RC chain."
   ],
-  "latestStaticApkInspectionSummary": {},
+  "latestStaticApkInspectionSummary": {
+    "schemaVersion": 1,
+    "generatedAt": "2026-09-08T11:04:38.825Z",
+    "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
+    "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+    "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
+    "bundleBytes": 3021256,
+    "hasBundle": true,
+    "expectedAbis": [
+      "arm64-v8a"
+    ],
+    "nativeAbis": [
+      "arm64-v8a"
+    ],
+    "arm64LibCount": 15,
+    "x86_64LibCount": 0,
+    "requiredLibsByAbi": {
+      "arm64-v8a": [
+        {
+          "name": "lib/arm64-v8a/libexpo-modules-core.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libhermes.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libreactnative.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libreanimated.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/librnscreens.so",
+          "present": true
+        },
+        {
+          "name": "lib/arm64-v8a/libworklets.so",
+          "present": true
+        }
+      ]
+    },
+    "requiredArm64Libs": [
+      {
+        "name": "lib/arm64-v8a/libexpo-modules-core.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libhermes.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libreactnative.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libreanimated.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/librnscreens.so",
+        "present": true
+      },
+      {
+        "name": "lib/arm64-v8a/libworklets.so",
+        "present": true
+      }
+    ],
+    "requiredX86_64Libs": [
+      {
+        "name": "lib/x86_64/libexpo-modules-core.so",
+        "present": false
+      },
+      {
+        "name": "lib/x86_64/libhermes.so",
+        "present": false
+      },
+      {
+        "name": "lib/x86_64/libreactnative.so",
+        "present": false
+      },
+      {
+        "name": "lib/x86_64/libreanimated.so",
+        "present": false
+      },
+      {
+        "name": "lib/x86_64/librnscreens.so",
+        "present": false
+      },
+      {
+        "name": "lib/x86_64/libworklets.so",
+        "present": false
+      }
+    ],
+    "requiredBundleMarkers": [
+      {
+        "marker": "salary-hijacking-mobile-root",
+        "present": true
+      },
+      {
+        "marker": "SALARY HIJACKING",
+        "present": true
+      }
+    ],
+    "forbiddenBundleMarkers": [
+      {
+        "marker": "1.0.1-android-safe-entry",
+        "present": false
+      },
+      {
+        "marker": "android-safe-entry",
+        "present": false
+      },
+      {
+        "marker": "android-direct-entry",
+        "present": false
+      },
+      {
+        "marker": "salary-hijacking-android-rc-root",
+        "present": false
+      },
+      {
+        "marker": "CleanFintechScreen",
+        "present": false
+      },
+      {
+        "marker": "stable-home",
+        "present": false
+      },
+      {
+        "marker": "mock-only",
+        "present": false
+      },
+      {
+        "marker": "fallbackPlanFixedExpenseRows",
+        "present": false
+      },
+      {
+        "marker": "fallbackNotifications",
+        "present": false
+      },
+      {
+        "marker": "127.0.0.1:8787",
+        "present": false
+      },
+      {
+        "marker": "10.0.2.2:8787",
+        "present": false
+      },
+      {
+        "marker": "localhost:",
+        "present": false
+      },
+      {
+        "marker": "5,780,000",
+        "present": false
+      },
+      {
+        "marker": "5,500,000",
+        "present": false
+      },
+      {
+        "marker": "2,700,000",
+        "present": false
+      },
+      {
+        "marker": "1,927,000",
+        "present": false
+      },
+      {
+        "marker": "773,000",
+        "present": false
+      },
+      {
+        "marker": "2700000",
+        "present": false
+      },
+      {
+        "marker": "1927000",
+        "present": false
+      },
+      {
+        "marker": "5780000",
+        "present": false
+      },
+      {
+        "marker": "localhost:8787",
+        "present": false
+      }
+    ],
+    "pass": true,
+    "manifestSecurity": {
+      "checks": [
+        {
+          "name": "manifestPresent",
+          "pass": true,
+          "value": true
+        },
+        {
+          "name": "allowBackupDisabled",
+          "pass": true,
+          "value": true
+        },
+        {
+          "name": "debuggableDisabled",
+          "pass": true,
+          "value": true
+        },
+        {
+          "name": "cleartextTrafficDisabled",
+          "pass": true,
+          "value": true
+        },
+        {
+          "name": "systemAlertWindowAbsent",
+          "pass": true,
+          "value": true
+        }
+      ],
+      "pass": true,
+      "present": true
+    },
+    "rawDeviceIdentifiersStored": false,
+    "rawLogcatStored": false,
+    "secretValuesStored": false
+  },
   "sameRcQaApks": {
     "schemaVersion": 1,
-    "sourceGitCommit": "1459e1398465f62ca09795cd427d573710da3681",
-    "sourceFingerprint": "D93337DE1EBDFD0FB7D98B375A6BC20314A33765C801A8E2FF28414E16ED8998",
-    "x86RunId": "34171795393",
-    "x86ArtifactId": "10036131814",
-    "arm64RunId": "34171796479",
-    "arm64ArtifactId": "10036127846",
+    "sourceGitCommit": "51df747ce9857be0f98abae604b2c7af0e37e69b",
+    "sourceFingerprint": "F5FA4CD2700C78742F4EE5DB35764FF6337BC84ADB3EA2B9AC4DD6C95D6ED092",
+    "x86RunId": "34216071607",
+    "x86ArtifactId": "10052250510",
+    "arm64RunId": "34216075271",
+    "arm64ArtifactId": "10052167753",
     "splitBuildVerified": true,
     "splitSigned": true,
     "downloadVerified": true,
@@ -91,25 +321,29 @@
     "sameRcBundle": true,
     "sameRcSigner": true,
     "sameRcVersion": true,
-    "bundleSha256": "18FEE4D2DB5F1A650334D81550033C74EE91F84DA3FA915889BA9DAD4C9FFDD4",
+    "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
     "signerSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
     "physicalRuntimeStatus": "PENDING_DEVICE_RETURN",
     "emulatorRuntimeStatus": "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY",
     "arm64": {
       "abi": "arm64-v8a",
-      "apkPath": "artifacts/github/current-head-1459e139/unzipped-10036127846-20260908-091209/salary-hijacking-qaRelease-arm64-v8a.apk",
-      "apkSha256": "8650B386094300F434E3A1B974028464ECCAB7E75879228E49B19CC187F14D7E",
-      "staticInspectionPath": "artifacts/github/current-head-1459e139/static-inspection-arm64-v8a-1459e139.json",
+      "apkPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
+      "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+      "staticInspectionPath": "artifacts/github/current-head-51df747c/static-inspection-arm64-v8a-51df747c.json",
       "staticInspectionSummary": {
         "schemaVersion": 1,
-        "generatedAt": "2026-09-08T00:13:41.060Z",
+        "generatedAt": "2026-09-08T11:04:38.825Z",
         "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
-        "apkSha256": "8650B386094300F434E3A1B974028464ECCAB7E75879228E49B19CC187F14D7E",
-        "bundleSha256": "18FEE4D2DB5F1A650334D81550033C74EE91F84DA3FA915889BA9DAD4C9FFDD4",
-        "bundleBytes": 3021068,
+        "apkSha256": "B5A1EA25950B0CDAD8F2010A8F95EF7B1FEAABAAF8D35A3F43C54FDE66AFD773",
+        "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
+        "bundleBytes": 3021256,
         "hasBundle": true,
-        "expectedAbis": ["arm64-v8a"],
-        "nativeAbis": ["arm64-v8a"],
+        "expectedAbis": [
+          "arm64-v8a"
+        ],
+        "nativeAbis": [
+          "arm64-v8a"
+        ],
         "arm64LibCount": 15,
         "x86_64LibCount": 0,
         "requiredLibsByAbi": {
@@ -289,6 +523,37 @@
           }
         ],
         "pass": true,
+        "manifestSecurity": {
+          "checks": [
+            {
+              "name": "manifestPresent",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "allowBackupDisabled",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "debuggableDisabled",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "cleartextTrafficDisabled",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "systemAlertWindowAbsent",
+              "pass": true,
+              "value": true
+            }
+          ],
+          "pass": true,
+          "present": true
+        },
         "rawDeviceIdentifiersStored": false,
         "rawLogcatStored": false,
         "secretValuesStored": false
@@ -296,19 +561,23 @@
     },
     "x86_64": {
       "abi": "x86_64",
-      "apkPath": "artifacts/github/current-head-1459e139/unzipped-10036131814-20260908-091209/salary-hijacking-qaRelease-x86_64.apk",
-      "apkSha256": "7EC40F776BFC83F86B24DE96D366B3158224DF8D11E694C6D3C56320C63AAABE",
-      "staticInspectionPath": "artifacts/github/current-head-1459e139/static-inspection-x86_64-1459e139.json",
+      "apkPath": "LOCAL_X86_64_APK_PATH_REDACTED_SHA256_VERIFIED",
+      "apkSha256": "9E12EFF27A48F6E7A19CF05B541481B7732146A54B508D9224FB0A78CFABB9F2",
+      "staticInspectionPath": "artifacts/github/current-head-51df747c/static-inspection-x86_64-51df747c.json",
       "staticInspectionSummary": {
         "schemaVersion": 1,
-        "generatedAt": "2026-09-08T00:13:39.780Z",
+        "generatedAt": "2026-09-08T11:04:40.091Z",
         "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
-        "apkSha256": "7EC40F776BFC83F86B24DE96D366B3158224DF8D11E694C6D3C56320C63AAABE",
-        "bundleSha256": "18FEE4D2DB5F1A650334D81550033C74EE91F84DA3FA915889BA9DAD4C9FFDD4",
-        "bundleBytes": 3021068,
+        "apkSha256": "9E12EFF27A48F6E7A19CF05B541481B7732146A54B508D9224FB0A78CFABB9F2",
+        "bundleSha256": "C5EC2BDDF4C809BF8DBB25D056BDC5E26E64EAF5BD9411159856040C25A6B1F3",
+        "bundleBytes": 3021256,
         "hasBundle": true,
-        "expectedAbis": ["x86_64"],
-        "nativeAbis": ["x86_64"],
+        "expectedAbis": [
+          "x86_64"
+        ],
+        "nativeAbis": [
+          "x86_64"
+        ],
         "arm64LibCount": 0,
         "x86_64LibCount": 15,
         "requiredLibsByAbi": {
@@ -488,6 +757,37 @@
           }
         ],
         "pass": true,
+        "manifestSecurity": {
+          "checks": [
+            {
+              "name": "manifestPresent",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "allowBackupDisabled",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "debuggableDisabled",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "cleartextTrafficDisabled",
+              "pass": true,
+              "value": true
+            },
+            {
+              "name": "systemAlertWindowAbsent",
+              "pass": true,
+              "value": true
+            }
+          ],
+          "pass": true,
+          "present": true
+        },
         "rawDeviceIdentifiersStored": false,
         "rawLogcatStored": false,
         "secretValuesStored": false
