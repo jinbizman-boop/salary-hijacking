@@ -83,7 +83,7 @@ export default function TabsLayout(): React.ReactElement {
 
   const navigateToRootTab = (tab: TabDefinition): void => {
     if (isCurrentRootTabPath(pathname, tab.rootHref)) {
-      router.dismissTo(tab.rootHref as never);
+      router.replace(tab.rootHref as never);
       return;
     }
 
@@ -247,7 +247,7 @@ export function assertMobileTabsLayoutCompleteness(): {
     ROOT_TAB_NAVIGATION_PRIORITY.androidBack,
     `root_tab_route:${String(getRootTabHref("salary"))}`,
     "explicit_bottom_tab_root_navigation",
-    "same_tab_reselect_root_reset_dismissTo",
+    "same_tab_reselect_root_reset_replace",
     "server_authority_boundary_labels",
     "anonymous_community_boundary",
     "profile_privacy_boundary",

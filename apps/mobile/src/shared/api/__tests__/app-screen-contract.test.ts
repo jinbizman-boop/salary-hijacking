@@ -244,7 +244,9 @@ describe("mobile app screen API and route contracts", () => {
     expect(source).toContain("navigateToRootTab");
     expect(source).toContain("tabPress");
     expect(source).toContain("event.preventDefault()");
+    expect(source).toContain("router.replace(tab.rootHref as never)");
     expect(source).toContain("router.navigate(tab.rootHref as never)");
+    expect(source).not.toContain("router.dismissTo(tab.rootHref as never)");
     expect(source).not.toContain("router.back()");
     expect(source).not.toContain("useLogicalBack");
   });

@@ -24,6 +24,24 @@ async function createPrivateKeyPem(): Promise<string> {
 }
 
 describe("createFcmClient", () => {
+  it("treats FCM notification ids and idempotency keys as opaque routing metadata", () => {
+    const client = createFcmClient({});
+
+    expect(() =>
+      client.validateMessage({
+        token: "native-fcm-registration-token-for-contract-test",
+        notification: { title: "QA", body: "Opaque metadata contract" },
+        data: {
+          notificationId: "notification-1234567890123",
+          type: "NOTICE",
+          importance: "SYSTEM_REQUIRED",
+          targetScreen: "notifications",
+          idempotencyKey: "notification:1234567890123:fcm",
+        },
+      }),
+    ).not.toThrow();
+  });
+
   it("shares one OAuth token refresh across concurrent callers", async () => {
     const privateKey = await createPrivateKeyPem();
     let fetchCount = 0;

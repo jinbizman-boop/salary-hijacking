@@ -355,6 +355,12 @@ const sensitiveValuePatterns = [
   /(?:salary|payroll|income|loan|account|card|payslip|bankbook|statement)/i,
 ];
 
+const opaqueTechnicalDataKeys = new Set([
+  "deeplink",
+  "notificationid",
+  "idempotencykey",
+]);
+
 class FcmClientError extends Error {
   readonly code: string;
   readonly status: number;
@@ -621,7 +627,7 @@ function assertDataSafe(key: string, value: string): void {
       400,
       false,
     );
-  if (normalizedKey === "deeplink") return;
+  if (opaqueTechnicalDataKeys.has(normalizedKey)) return;
   if (valueSensitive(value))
     throw new FcmClientError(
       "FCM_SENSITIVE_DATA_VALUE_FORBIDDEN",
