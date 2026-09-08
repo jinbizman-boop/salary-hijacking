@@ -1,4 +1,4 @@
-import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import { fireEvent, render, waitFor } from "@testing-library/react-native";
 
 import {
   NotificationList,
@@ -212,13 +212,14 @@ describe("notifications feature components", () => {
   });
 
   it("renders notification settings without bottom navigation and saves preferences", async () => {
-    jest.useFakeTimers();
     const onBack = jest.fn();
     const onOpenSystemSettings = jest.fn();
+    const onSavePreferences = jest.fn().mockResolvedValue(undefined);
     const screen = render(
       <NotificationSettingsScreen
         onBack={onBack}
         onOpenSystemSettings={onOpenSystemSettings}
+        onSavePreferences={onSavePreferences}
       />,
     );
 
@@ -235,20 +236,17 @@ describe("notifications feature components", () => {
     expect(screen.queryByLabelText("급여납치 하단 탭 내비게이션")).toBeNull();
 
     fireEvent.press(screen.getByRole("button", { name: "알림 설정 저장" }));
-    act(() => {
-      jest.runOnlyPendingTimers();
-    });
 
     await waitFor(() => {
       expect(screen.getByText("알림 설정을 저장했습니다.")).toBeTruthy();
     });
+    expect(onSavePreferences).toHaveBeenCalledTimes(1);
 
     fireEvent.press(
       screen.getByRole("button", { name: "Android 시스템 알림 설정 열기" }),
     );
     expect(onOpenSystemSettings).toHaveBeenCalledTimes(1);
     expectNoMojibake(jsonText(screen));
-    jest.useRealTimers();
   });
 
   it("renders registered native device status without exposing raw push tokens", () => {
