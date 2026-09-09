@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-09-08T22:58:14.436Z",
-  "source": "Generated from GitHub Actions run 34286967830 Android production AAB no-secret proof for current Final RC candidate d7d7375f. Raw EAS tokens, store credentials, artifact URLs or paths, private keys, reviewer passwords, provider payloads, and logs are not stored.",
+  "observedAt": "2026-09-09T02:23:25.008Z",
+  "source": "Generated from no-secret Android production AAB proof for current Final RC candidate 9b4a0197. Raw EAS tokens, store credentials, artifact URLs or paths, private keys, reviewer passwords, provider payloads, and logs are not stored.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -15,13 +15,13 @@
     "productionBuildVerified": true,
     "productionBuildProfile": "production",
     "productionArtifactType": "aab",
-    "productionBuildGitCommit": "d7d7375f7caf7d8957701a8a4919274395ffe835",
-    "productionArtifactSha256": "B67200518EE42D88D21E922EF29585D3282CA273ED644A1C351F2559F4B402C7",
+    "productionBuildGitCommit": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+    "productionArtifactSha256": "6978EC608A0626374F2E12423A383C2DCED8E5323D2FAAF07F589308A6E25FC8",
     "storeSubmitDryRunVerified": true,
     "storeSubmitEvidenceType": "google-play-console-ready",
     "nativeE2eVerified": true,
     "nativeE2eConfiguration": "android-galaxy-final-rc-pending-user-return-with-same-rc-static-proof",
-    "note": "Android production AAB proof is linked to GitHub Actions main run 34286967830 for current HEAD d7d7375f7caf7d8957701a8a4919274395ffe835. Google Play console-ready release files and Android native evidence are recorded without storing EAS tokens, store credentials, artifact URLs, artifact paths, signing keys, reviewer passwords, provider payloads, or logs. Galaxy final runtime remains PENDING_USER_RETURN."
+    "note": "Android production AAB proof is linked to no-secret current-head-9b4a0197 artifact evidence for 9b4a019748abf3b8b8702f1e8577e706b88ee63a. Google Play console-ready release files and Android native evidence are recorded without storing EAS tokens, store credentials, artifact URLs, artifact paths, signing keys, reviewer passwords, provider payloads, or logs. Galaxy final runtime remains PENDING_USER_RETURN."
   },
   "ios": {
     "productionBuildVerified": false,

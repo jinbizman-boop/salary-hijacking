@@ -3024,7 +3024,6 @@ const isMobilePreviewSourcePath = (filePath) => {
   const normalized = String(filePath ?? "").replaceAll("\\", "/");
   if (isNonPackagedMobileSourcePath(normalized)) return false;
   return (
-    normalized === "pnpm-lock.yaml" ||
     (normalized.startsWith("apps/mobile/") &&
       !normalized.startsWith("apps/mobile/dist-export-")) ||
     normalized.startsWith("packages/")

@@ -3619,6 +3619,44 @@ test("passes latest-source preview APK evidence when only root package engine po
   );
 });
 
+test("passes latest-source preview APK evidence when only root lockfile maintenance changed after packaging", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "2222222222222222222222222222222222222222",
+    },
+  });
+  writeMobilePreviewEvidence(rootDir, {
+    android: {
+      latestSourcePackagedHead: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output: "package.json\npnpm-lock.yaml\n",
+    }),
+    gitRemote: matchingGitRemote,
+  });
+  const report = formatReleaseReadinessReport(result);
+
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:preview:latest-source-apk/);
+  assert.match(
+    report,
+    /only non-packaged tests, evidence, or documentation changed after APK packaging/,
+  );
+});
+
 test("blocks latest-source preview APK evidence when a dirty mobile file changes after packaging", () => {
   const rootDir = makeWorkspace();
   const dirtyStatus =
@@ -3957,6 +3995,43 @@ test("passes mobile native production AAB evidence when only mobile test files c
       ok: true,
       output:
         "apps/mobile/src/features/plan/__tests__/plan.components.test.tsx\n",
+    }),
+  });
+
+  const report = formatReleaseReadinessReport(result);
+  assert.equal(result.ok, true);
+  assert.match(report, /mobile:native:android-build/);
+  assert.match(
+    report,
+    /unchanged mobile build input tree after non-packaged test, control-plane, or evidence-only commits/,
+  );
+});
+
+test("passes mobile native production AAB evidence when only root lockfile maintenance changed after build", () => {
+  const rootDir = makeWorkspace();
+  writeMobileNativeEvidence(rootDir, {
+    android: {
+      productionBuildGitCommit: "1111111111111111111111111111111111111111",
+    },
+  });
+
+  const result = analyzeReleaseReadiness({
+    rootDir,
+    env: completeEnv,
+    commandExists: () => true,
+    gitStatus: () => ({ ok: true, output: "" }),
+    gitRemote: matchingGitRemote,
+    gitHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\n",
+    }),
+    gitRemoteHead: () => ({
+      ok: true,
+      output: "2222222222222222222222222222222222222222\trefs/heads/main",
+    }),
+    gitChangedFiles: () => ({
+      ok: true,
+      output: "package.json\npnpm-lock.yaml\n",
     }),
   });
 
