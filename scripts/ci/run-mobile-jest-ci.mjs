@@ -97,6 +97,29 @@ export function sortTestPathsForCi(testPaths) {
   return [...testPaths].sort((left, right) => left.localeCompare(right, "en"));
 }
 
+function isPlanTestPath(testPath) {
+  return testPath
+    .replace(/\\/gu, "/")
+    .includes("src/features/plan/__tests__/");
+}
+
+export function buildTestBatchesForCi(testPaths, batchSize) {
+  const standardTests = [];
+  const directJestTests = [];
+
+  for (const testPath of testPaths) {
+    if (isPlanTestPath(testPath)) {
+      directJestTests.push(testPath);
+    } else {
+      standardTests.push(testPath);
+    }
+  }
+
+  return [...chunkTestPaths(standardTests, batchSize), directJestTests].filter(
+    (batch) => batch.length > 0,
+  );
+}
+
 function baseJestArgs() {
   return ["--runInBand"];
 }
@@ -113,7 +136,7 @@ function shouldUseDirectMobileJest(jestArgs) {
   }
 
   return testPaths.every((testPath) =>
-    testPath.replace(/\\/gu, "/").includes("src/features/plan/__tests__/"),
+    isPlanTestPath(testPath),
   );
 }
 
@@ -339,7 +362,7 @@ async function run() {
     process.exit(1);
   }
 
-  const batches = chunkTestPaths(testPaths, batchSize);
+  const batches = buildTestBatchesForCi(testPaths, batchSize);
   let totalSuites = 0;
   let totalTests = 0;
 

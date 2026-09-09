@@ -5,6 +5,7 @@ import { test } from "node:test";
 import {
   DEFAULT_BATCH_SIZE,
   DEFAULT_BATCH_TIMEOUT_MS,
+  buildTestBatchesForCi,
   buildJestRunArgs,
   chunkTestPaths,
   parseJestPassSummary,
@@ -48,6 +49,30 @@ test("chunkTestPaths splits mobile suites into bounded CI batches", () => {
     ["a.test.ts", "b.test.ts"],
     ["c.test.ts"],
   ]);
+});
+
+test("buildTestBatchesForCi isolates Plan suites into the direct Jest batch", () => {
+  assert.deepEqual(
+    buildTestBatchesForCi(
+      [
+        "/workspace/apps/mobile/src/config/__tests__/metro-config.test.ts",
+        "/workspace/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
+        "/workspace/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+        "/workspace/apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts",
+      ],
+      2,
+    ),
+    [
+      [
+        "/workspace/apps/mobile/src/config/__tests__/metro-config.test.ts",
+        "/workspace/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
+      ],
+      [
+        "/workspace/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
+        "/workspace/apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts",
+      ],
+    ],
+  );
 });
 
 test("buildJestRunArgs runs a specific batch in a fresh Jest process", () => {
