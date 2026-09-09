@@ -275,6 +275,7 @@ export interface AuthRoutesOptions<TEnv = unknown> {
     provider: AuthProvider,
     code: string,
     codeVerifier: string,
+    redirectUri: string,
     runtime: AuthRuntime<TEnv>,
   ) => ProviderProfile | Promise<ProviderProfile>;
   readonly verifySocialToken?: (
@@ -312,7 +313,7 @@ export interface AuthSecurityEvent {
   readonly createdAt: string;
 }
 
-class AuthRouteError extends Error {
+export class AuthRouteError extends Error {
   readonly status: number;
   readonly code: string;
   readonly details: JsonValue | null;
@@ -1823,6 +1824,7 @@ async function handleOAuthCallback<TEnv>(
     stateRecord.provider,
     code,
     codeVerifier,
+    stateRecord.redirectUri,
     runtime,
   );
   if (profile.provider !== stateRecord.provider)

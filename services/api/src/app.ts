@@ -45,6 +45,7 @@ import {
   assertAuthRoutesCompleteness,
   createAuthRoutes,
 } from "./routes/auth.routes";
+import { exchangeOAuthCodeWithProvider } from "./auth/oauth-provider-exchange";
 import {
   createNeonAuthRepository,
   createNeonAuthSessionResolver,
@@ -416,6 +417,7 @@ const handleEnvAwareAuthRoutes: FetchHandler<unknown> = createAuthRoutes({
     ),
     ...mobileDeepLinkSchemes(env),
   ],
+  exchangeOAuthCode: exchangeOAuthCodeWithProvider,
 });
 
 const routeModules: readonly RouteModule[] = Object.freeze([
