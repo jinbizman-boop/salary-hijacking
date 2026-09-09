@@ -652,7 +652,7 @@ jobs:
 
       - name: Unit and integration tests
         run: |
-          pnpm --dir apps/mobile exec jest --runInBand --forceExit
+          node scripts/ci/run-mobile-jest-ci.mjs
           corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
 
       - name: E2E and QA tests
@@ -923,7 +923,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ needs.release-quality-gate.outputs.release_tag }}
-      RELEASE_MODE: ${{ needs.release-quality-gate.outputs.release_mode }}
+      RELEASE_MODE: ${{ needs.release_quality_gate.outputs.release_mode }}
 
     steps:
       - name: Checkout repository
