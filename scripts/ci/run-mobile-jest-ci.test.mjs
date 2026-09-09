@@ -51,7 +51,7 @@ test("chunkTestPaths splits mobile suites into bounded CI batches", () => {
   ]);
 });
 
-test("buildTestBatchesForCi isolates Plan suites into the direct Jest batch", () => {
+test("buildTestBatchesForCi isolates Plan suites into bounded direct Jest batches", () => {
   assert.deepEqual(
     buildTestBatchesForCi(
       [
@@ -60,17 +60,15 @@ test("buildTestBatchesForCi isolates Plan suites into the direct Jest batch", ()
         "/workspace/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
         "/workspace/apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts",
       ],
-      2,
+      1,
     ),
     [
+      ["/workspace/apps/mobile/src/config/__tests__/metro-config.test.ts"],
       [
-        "/workspace/apps/mobile/src/config/__tests__/metro-config.test.ts",
         "/workspace/apps/mobile/src/features/salary/__tests__/salary.components.test.tsx",
       ],
-      [
-        "/workspace/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx",
-        "/workspace/apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts",
-      ],
+      ["/workspace/apps/mobile/src/features/plan/__tests__/plan.components.test.tsx"],
+      ["/workspace/apps/mobile/src/features/plan/__tests__/plan.screen-wiring.test.ts"],
     ],
   );
 });
