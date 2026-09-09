@@ -62,6 +62,24 @@ export function parseJestPassSummary(output) {
   };
 }
 
+export function acceptsJestPassSummary(summary, options = {}) {
+  const allowSkippedTestsWithPass = options.allowSkippedTestsWithPass ?? false;
+  const suitesPass =
+    Boolean(summary.suites) &&
+    summary.suites.failed === 0 &&
+    summary.suites.total > 0 &&
+    summary.suites.passed === summary.suites.total;
+  const testsPass =
+    Boolean(summary.tests) &&
+    summary.tests.failed === 0 &&
+    summary.tests.total > 0 &&
+    (allowSkippedTestsWithPass
+      ? summary.tests.passed > 0
+      : summary.tests.passed === summary.tests.total);
+
+  return suitesPass && testsPass;
+}
+
 function parsePositiveIntegerEnv(name, fallback) {
   const raw = process.env[name];
   if (!raw) {
@@ -148,7 +166,8 @@ function buildPlanComponentsTestRuns(testPath) {
   }
 
   return titles.map((title) => ({
-    testNamePattern: `^${escapeRegExp(title)}$`,
+    allowSkippedTestsWithPass: true,
+    testNamePattern: escapeRegExp(title),
     testPaths: [testPath],
   }));
 }
@@ -194,7 +213,9 @@ function shouldUseDirectMobileJest(jestArgs) {
     return false;
   }
 
-  return testPaths.every((testPath) => isPlanTestPath(testPath));
+  return testPaths.every((testPath) =>
+    isPlanTestPath(testPath),
+  );
 }
 
 function resolveJestRunner(jestArgs) {
@@ -212,7 +233,12 @@ function resolveJestRunner(jestArgs) {
 
     return {
       command: process.execPath,
-      args: [mobileJestBin, "--config", "package.json", ...directArgs],
+      args: [
+        mobileJestBin,
+        "--config",
+        "package.json",
+        ...directArgs,
+      ],
       cwd: path.resolve(process.cwd(), MOBILE_APP_DIR),
     };
   }
@@ -281,6 +307,8 @@ function runCorepack(args, options = {}) {
     parsePositiveIntegerEnv("MOBILE_JEST_CI_TIMEOUT_MS", DEFAULT_TIMEOUT_MS);
   const label = options.label ?? "jest";
   const requirePassSummary = options.requirePassSummary ?? false;
+  const allowSkippedTestsWithPass =
+    options.allowSkippedTestsWithPass ?? false;
 
   return new Promise((resolve) => {
     const runner = resolveJestRunner(args);
@@ -333,7 +361,7 @@ function runCorepack(args, options = {}) {
       }
 
       const summary = parseJestPassSummary(output);
-      if (!summary.pass) {
+      if (!acceptsJestPassSummary(summary, { allowSkippedTestsWithPass })) {
         return;
       }
 
@@ -466,12 +494,17 @@ async function run() {
           ? `${label} test ${runIndex + 1}/${batchRuns.length}`
           : label;
       const result = await runCorepack(buildJestRunArgsForBatchRun(batchRun), {
+        allowSkippedTestsWithPass: batchRun.allowSkippedTestsWithPass ?? false,
         label: runLabel,
         timeoutMs,
         requirePassSummary: true,
       });
+      const passSummaryAccepted = acceptsJestPassSummary(result.summary, {
+        allowSkippedTestsWithPass:
+          batchRun.allowSkippedTestsWithPass ?? false,
+      });
 
-      if (result.code !== 0 || !result.summary.pass) {
+      if (result.code !== 0 || !passSummaryAccepted) {
         console.error(`[mobile-jest-ci] ${runLabel} failed.`);
         if (result.timedOut) {
           console.error(
@@ -483,7 +516,7 @@ async function run() {
             );
           }
         }
-        if (!result.summary.pass) {
+        if (!passSummaryAccepted) {
           console.error(
             "[mobile-jest-ci] A complete all-pass Jest summary was not observed.",
           );
