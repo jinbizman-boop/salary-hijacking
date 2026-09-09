@@ -1,98 +1,83 @@
 # Salary Hijacking Execution State Checkpoint
 
-## 2026-08-29 20:32 KST
+## 2026-09-09 14:30 KST
 
-STATUS: NEW_APPLICATION_RC_FROZEN_PRE_RUNTIME
-CONTINUING: false
+STATUS: FINAL_RC_9B4A0197_STATIC_RELEASE_READY_PHYSICAL_PENDING
+CONTINUING: true
 FALSE_COMPLETION_FORBIDDEN: true
-PHASE_14_STARTED: false
+UI_FREEZE: ACTIVE
+ANDROID_RELEASE_ENABLED: true
+IOS_RELEASE_ENABLED: false
+COMMERCIAL_LAUNCH_READY: false
+PROJECT_COMPLETION_100: false
 
 ## Canonical Repository
 
 - Canonical root: `C:/Users/PC/Desktop/salary-hijacking-platform`
 - Branch: `codex/payroll-reminder-launch-ready-100-20260714`
-- Current HEAD: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
-- RC_SOURCE_SHA: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
-- APPLICATION_RC_SOURCE_SHA: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
-- RC_SOURCE_FINGERPRINT: `DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553`
-- Workflow control-plane for x86 qaRelease candidate: `main@6c689525cc8be6b21c3cd08b6a58bdc0efec9a03`
-- Application build source: `cdee45a0a23142d9c63c79967c734cbdc65cdae3`
+- Control-plane HEAD: `4d39bfc9daea1b366dadb12318acc5da2ed351a7`
+- origin/main: `4d39bfc9daea1b366dadb12318acc5da2ed351a7`
+- RC_SOURCE_SHA: `9b4a019748abf3b8b8702f1e8577e706b88ee63a`
+- APPLICATION_RC_SOURCE_SHA: `9b4a019748abf3b8b8702f1e8577e706b88ee63a`
+- RC_SOURCE_FINGERPRINT: `D789EBF05A693E1E24B0AB823E95ED40D249336AEA00D2ADEBA00075EC55318D`
+- Application runtime tree changed after RC packaging: `NO`
 - Truth source: `docs/audit/IMPLEMENTATION_MATRIX.csv`
-- Historical baseline RC: `08005cff94e4f0661d2ae809d7d508379ab3092a`
 
-## Source Pre-RC Gate
+## Final RC Static Artifacts
 
-- SOURCE_PRE_RC_GATE: PASS
-- GitHub Actions workflow: `Build Android QA Release`
-- GitHub Actions run: `33247658350`
-- GitHub Actions job: `99087834742`
-- Artifact ID: `9713471510`
-- Artifact name: `android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3`
-- Artifact digest: `sha256:199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e`
-- ZIP SHA-256: `199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e`
-- APK SHA-256: `6f8a89b9f3a43c30ca5af165f77585aa5512e3142340170ca2f6afca0186f798`
-- Embedded bundle SHA-256: `ef6ed45e69895b409c465f2c2b1e6e073337fdc724e280e4643fef55609931b0`
-- Signer certificate SHA-256: `d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3`
-- ABI: `x86_64`
+- Production Android AAB: `artifacts/github/current-head-9b4a0197/release-blocker-evidence-main/android-production-aab-1-20260909-013555/salary-hijacking-production-final.aab`
+- Production AAB SHA-256: `6978EC608A0626374F2E12423A383C2DCED8E5323D2FAAF07F589308A6E25FC8`
+- ARM64 QA APK: `artifacts/github/current-head-9b4a0197/arm64/salary-hijacking-qaRelease-arm64-v8a.apk`
+- ARM64 APK SHA-256: `E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D`
+- x86_64 QA APK: `artifacts/github/current-head-9b4a0197/x86_64/android-qa-release-x86_64-9b4a019748abf3b8b8702f1e8577e706b88ee63a-20260909-013850/salary-hijacking-qaRelease-x86_64.apk`
+- x86_64 APK SHA-256: `C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76`
+- Embedded bundle SHA-256: `76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4`
+- Signer certificate SHA-256: `D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3`
 - Application ID: `com.salaryhijacking.mobile`
 - Version: `1.0.0` / `1`
-- Environment: `staging`
+- QA APK environment: `staging`
+- Production AAB environment: `production`
 
-## Source Verification
+## Source And Static Verification
 
-- Stitch native implementation: PASS, 304/304.
-- Stitch design-system coverage: PASS, 304/304.
-- Product required extension states: PASS, 20/20.
-- Production routes migrated: PASS, 28/28.
-- Header duplicated components: 0.
-- Bottom navigation variants in production: 1.
-- Modal states: PASS, 30/30.
-- Bottom sheet states: PASS, 16/16.
-- Legacy UI count: 0.
-- Placeholder UI count: 0.
-- Prototype UI count: 0.
-- WebView UI count: 0.
-- Capture-only production count: 0.
-- Production raw style violations: color 0, typography 0, spacing 0, radius 0, elevation 0, icon size 0.
-- FCM source contract: PASS.
-- FCM native token: PASS.
-- FCM service-auth source: PASS.
-- FCM service-auth staging binding: PASS_SECRET_PRESENCE_CONFIRMED.
-- NEW_RC_CANDIDATE_D017: PASS.
-
-## Static/Build Verification
-
+- Main lineage: PASS.
+- Android-only configuration: PASS.
+- Production AAB: PASS.
+- Same-RC x86_64 / arm64-v8a static lineage: PASS.
+- Mobile runtime/UI source changes after RC packaging: NONE.
 - Mobile lint: PASS.
 - Mobile typecheck: PASS.
-- Mobile tests: PASS, 110 suites / 879 tests.
-- API contract: PASS.
-- API focused tests: PASS, 42 files / 195 tests.
-- Notification tests: PASS, 8 files / 38 tests.
-- Migration checksum: PASS.
-- RLS regression: PASS.
-- A/B isolation: PASS.
+- Mobile tests: PASS, 122 suites / 1024 tests locally.
+- API tests: PASS, 44 files / 218 tests locally.
+- Notification tests: PASS, 8 files / 41 tests locally.
 - Privacy scan: PASS.
 - Security scan: PASS.
-- Secret scan: PASS via repository security/privacy/no-secret gates and APK embedded-secret inspection.
-- Git diff check: PASS.
 - Expo Router Android export: PASS.
-- Metro Android production bundle: PASS.
-- QA bundle preflight: PASS.
-- x86 qaRelease static inspection: PASS.
+- D016: PASS.
+- D017: PASS.
+- FCM provider preflight: PASS_PROVIDER_RUNTIME.
 
 ## Current Defect State
 
-- D-013: FAIL_PENDING_NEW_RC_RUNTIME.
-- D-016: PARTIAL.
-- D-017: PASS.
-- D-026: FAIL_PENDING_NEW_RC_RUNTIME.
-- PROJECT_COMPLETION_100: false.
-- COMMERCIAL_LAUNCH_READY: false.
+- D013_NON_PHYSICAL: PASS_SOURCE_AUDITS.
+- D013_PHYSICAL: PENDING_USER_RETURN.
+- D016: PASS.
+- D017: PASS.
+- D026_NON_PHYSICAL: PASS_SAME_RC_STATIC.
+- D026_PHYSICAL: PENDING_USER_RETURN.
+- Galaxy final runtime: PENDING_USER_RETURN.
+- Session restore final RC: PENDING_USER_RETURN for 9b4a0197.
+- FCM final physical: PENDING_USER_RETURN.
+- Social auth runtime: PENDING_USER_RETURN.
+- AdMob Android runtime: PENDING_USER_RETURN.
+- PERF final: PENDING_USER_RETURN.
+- Play Internal: HOLD_UNTIL_PHYSICAL_GATES.
+- Play Production: BLOCKED_PENDING_PHYSICAL_AND_PLAY_INTERNAL.
 
 ## Runtime Boundary
 
-New RC runtime evidence has not started. The previous `08005cff94e4f0661d2ae809d7d508379ab3092a` x86, ARM64, Galaxy, lifecycle, and authenticated E2E evidence remains historical known-good baseline evidence only and is not reused as PASS evidence for `cdee45a0a23142d9c63c79967c734cbdc65cdae3`.
+The 9b4a0197 static build, signing, bundle, AAB, and split APK evidence is current. Historical 51df/1459/8f46/cdee/08005 runtime or artifact evidence must not be promoted to PASS for this RC unless it explicitly names `9b4a019748abf3b8b8702f1e8577e706b88ee63a`.
 
 ## Next Exact Track
 
-Do not start PHASE 14. Next PHASE 13 work is new-RC runtime validation: x86 authenticated E2E, session restore, cold/resume 20/20, ARM64 same-RC build/static, Galaxy SM-S921N runtime, native FCM registration/provider foreground/background/tap/deeplink, and Stitch 304 plus 20 required-extension visual/a11y/keyboard/safe-area evidence.
+Do not rebuild or change UI source while the user is away. When Galaxy SM-S921N returns, install the exact 9b4a0197 ARM64 APK and collect FCM, navigation/back, social auth, AdMob, PERF-010~014, D013 physical, D026 final chain, Play Internal smoke, and then the final production gate audit.

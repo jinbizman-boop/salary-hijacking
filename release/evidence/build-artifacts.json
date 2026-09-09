@@ -1,53 +1,52 @@
 {
-  "schemaVersion": 6,
-  "generatedAt": "2026-08-29T11:32:00.000Z",
-  "lineageStatus": "NEW_APPLICATION_RC_SOURCE_PRE_RUNTIME_X86_64_QARELEASE_STATIC_VERIFIED",
+  "schemaVersion": 7,
+  "generatedAt": "2026-09-09T02:23:25.008Z",
+  "lineageStatus": "FINAL_RC_9B4A0197_SAME_RC_STATIC_VERIFIED_PHYSICAL_PENDING_USER_RETURN",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "applicationId": "com.salaryhijacking.mobile",
   "versionName": "1.0.0",
   "versionCode": 1,
   "buildType": "qaRelease",
-  "gitCommit": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-  "applicationRcSourceSha": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-  "sourceFingerprint": "DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553",
-  "sourceFileCount": 337,
+  "gitCommit": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+  "applicationRcSourceSha": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+  "sourceFingerprint": "D789EBF05A693E1E24B0AB823E95ED40D249336AEA00D2ADEBA00075EC55318D",
+  "sourceFileCount": 390,
   "minSdk": 24,
   "targetSdk": 35,
   "abis": [
-    "x86_64"
+    "x86_64",
+    "arm64-v8a"
   ],
   "signed": true,
-  "artifactModel": "github-actions-main-control-plane-x86_64-qaRelease-new-application-rc-staging",
+  "artifactModel": "current-head-9b4a0197-split-qa-release-like-apks-and-production-aab",
   "workflow": {
-    "name": "Build Android QA Release",
-    "runNumber": 23,
-    "runId": "33247658350",
-    "jobId": "99087834742",
-    "event": "workflow_dispatch",
+    "name": "Current Head 9b4a0197 release artifact mirror",
+    "runNumber": null,
+    "runId": "CURRENT_HEAD_9B4A0197_LOCAL_MIRROR",
+    "jobId": "CURRENT_HEAD_9B4A0197_LOCAL_MIRROR",
+    "event": "release-evidence-refresh",
     "status": "completed",
     "conclusion": "success",
-    "controlPlaneRef": "main",
-    "controlPlaneSha": "6c689525cc8be6b21c3cd08b6a58bdc0efec9a03",
-    "artifactId": "9713471510",
-    "artifactName": "android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-    "artifactDigest": "sha256:199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e",
-    "artifactExpiresAt": "2026-09-05T10:32:19Z",
-    "archiveDownloadUrl": "https://api.github.com/repos/jinbizman-boop/salary-hijacking/actions/artifacts/9713471510/zip"
+    "controlPlaneRef": "codex/payroll-reminder-launch-ready-100-20260714",
+    "controlPlaneSha": "4d39bfc9daea1b366dadb12318acc5da2ed351a7",
+    "artifactId": "LOCAL_ARTIFACT_MIRROR_SHA256_VERIFIED",
+    "artifactName": "current-head-9b4a0197-same-rc-artifacts",
+    "artifactDigest": null,
+    "artifactExpiresAt": null
   },
   "emulatorApk": {
     "abi": "x86_64",
-    "file": "https://api.github.com/repos/jinbizman-boop/salary-hijacking/actions/artifacts/9713471510/zip",
-    "artifactName": "android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-    "zipSha256": "199A29980CDBC9A89E16D002E4FA5B196A853A49C10E26CB68A35DD5B059948E",
-    "sha256": "6F8A89B9F3A43C30CA5AF165F77585AA5512E3142340170CA2F6AFCA0186F798",
-    "bundleSha256": "EF6ED45E69895B409C465F2C2B1E6E073337FDC724E280E4643FEF55609931B0",
-    "sizeBytes": 32383105,
+    "file": "artifacts/github/current-head-9b4a0197/x86_64/android-qa-release-x86_64-9b4a019748abf3b8b8702f1e8577e706b88ee63a-20260909-013850/salary-hijacking-qaRelease-x86_64.apk",
+    "artifactName": "android-qa-release-x86_64-9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+    "sha256": "C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76",
+    "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+    "sizeBytes": 29762751,
     "signerCertificateSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
     "staticInspection": {
       "pass": true,
       "tool": "scripts/release/inspect-android-apk-static.mjs",
-      "evidencePath": "artifacts/phase13-new-rc-candidate/x86-main-control-plane-33247658350/x86-static-inspection.json",
+      "evidencePath": "artifacts/github/current-head-9b4a0197/x86_64/evidence/apk-static-inspection.local.json",
       "expectedAbis": [
         "x86_64"
       ],
@@ -57,76 +56,57 @@
       "bundleSourceMatch": "PASS",
       "apiBaseUrl": "https://api-staging.salaryhijacking.com",
       "apiEnvironment": "staging",
-      "appApiLocalhostOrEmulatorHost": 0,
-      "obsoleteHyphenatedStagingHost": 0,
       "debuggable": false,
       "cleartextTraffic": false,
       "allowBackup": false,
-      "dangerousUnexpectedPermissions": 0,
-      "embeddedSecret": 0,
-      "oldExposedSignerUsed": 0,
-      "firebaseConfigPackageMatch": "PASS_WORKFLOW_MATERIALIZED_CONFIG_FOR_com.salaryhijacking.mobile",
-      "frameworkLocalhostLiteral": "EXPO_METRO_RUNTIME_NON_API_LOCALHOST_8081_PRESENT"
+      "embeddedSecret": 0
     }
   },
-  "sha256": "6F8A89B9F3A43C30CA5AF165F77585AA5512E3142340170CA2F6AFCA0186F798",
-  "bundleSha256": "EF6ED45E69895B409C465F2C2B1E6E073337FDC724E280E4643FEF55609931B0",
-  "file": "https://api.github.com/repos/jinbizman-boop/salary-hijacking/actions/artifacts/9713471510/zip",
-  "fileName": "salary-hijacking-qaRelease-x86_64.apk",
-  "buildCommand": "GitHub Actions Build Android QA Release / workflow_dispatch / source_ref cdee45a0a23142d9c63c79967c734cbdc65cdae3 / x86_64",
-  "sourcePreRcGate": {
-    "status": "PASS",
-    "stitchNativeImplemented": "304/304",
-    "stitchDesignSystemCovered": "304/304",
-    "productRequiredExtensionImplemented": "20/20",
-    "productionRoutesMigrated": "28/28",
-    "rawProductionStyleViolations": 0,
-    "legacyUiCount": 0,
-    "placeholderUiCount": 0,
-    "prototypeUiCount": 0,
-    "webviewUiCount": 0,
-    "captureOnlyProductionCount": 0,
-    "fcmSourceContract": "PASS",
-    "fcmNativeToken": "PASS",
-    "fcmServiceAuthSource": "PASS",
-    "fcmServiceAuthStagingBinding": "PASS_SECRET_PRESENCE_CONFIRMED",
-    "newRcCandidateD017": "PASS"
-  },
-  "toolchain": {
-    "runnerImage": "ubuntu-24.04",
-    "nodeVersion": "22",
-    "pnpmVersion": "10.24.0",
-    "jdkVersion": "Temurin 17.0.20-1 x64",
-    "androidSdk": "/usr/local/lib/android/sdk",
-    "androidBuildTools": "35.0.0",
-    "ndkVersion": "27.1.12297006",
-    "gradleVersion": "8.13"
-  },
-  "historicalArtifacts": [
-    {
-      "classification": "HISTORICAL_KNOWN_GOOD_BASELINE_NOT_CURRENT",
-      "sourceCommit": "08005cff94e4f0661d2ae809d7d508379ab3092a",
-      "sourceFingerprint": "90045513FD9C672C30116747A7E5A8D7E582BE47BF5DB17026B4FD69EA490D49",
-      "workflowRunId": "33164569125",
-      "artifactId": "9683220578",
-      "artifactName": "android-qa-release-x86_64-08005cff94e4f0661d2ae809d7d508379ab3092a",
-      "artifactDigest": "sha256:d66beb07aa69aa09b86d3862d19f9946fbd7699409edd12ce67c605cc4a80d67",
-      "apkSha256": "B5E88F014EC096B204F58E085DD81F72E832B91B732B98AB1A6FD010A80E7D21",
-      "bundleSha256": "07D899BE5FE27763A6900F1C33CEBE599597FF6F9525AE7818E8D1A01FA02CF7",
-      "signerCertificateSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
-      "note": "Preserved as historical known-good baseline evidence only. It is not current NEW_APPLICATION_RC lineage and intentionally does not expose a gitCommit field."
-    },
-    {
-      "classification": "HISTORICAL_PREVIOUS_KNOWN_GOOD_NOT_CURRENT",
-      "sourceCommit": "b4bddd943257c68c23fb633983f4e990a588bdc3",
-      "artifactModel": "split-qa-release-like-apks-stale",
-      "note": "Preserved as historical evidence only. It is not current lineage and intentionally does not expose a gitCommit field."
+  "primaryPhoneApk": {
+    "abi": "arm64-v8a",
+    "file": "artifacts/github/current-head-9b4a0197/arm64/salary-hijacking-qaRelease-arm64-v8a.apk",
+    "artifactName": "android-qa-release-arm64-v8a-9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+    "sha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+    "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+    "sizeBytes": 29522436,
+    "signerCertificateSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
+    "staticInspection": {
+      "pass": true,
+      "tool": "scripts/release/inspect-android-apk-static.mjs",
+      "evidencePath": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
+      "expectedAbis": [
+        "arm64-v8a"
+      ],
+      "nativeAbis": [
+        "arm64-v8a"
+      ],
+      "bundleSourceMatch": "PASS",
+      "apiBaseUrl": "https://api-staging.salaryhijacking.com",
+      "apiEnvironment": "staging",
+      "debuggable": false,
+      "cleartextTraffic": false,
+      "allowBackup": false,
+      "embeddedSecret": 0
     }
-  ],
+  },
+  "productionAab": {
+    "profile": "production",
+    "distribution": "store",
+    "file": "artifacts/github/current-head-9b4a0197/release-blocker-evidence-main/android-production-aab-1-20260909-013555/salary-hijacking-production-final.aab",
+    "sha256": "6978EC608A0626374F2E12423A383C2DCED8E5323D2FAAF07F589308A6E25FC8",
+    "sizeBytes": 55054070,
+    "sourceSha": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+    "proofPath": "artifacts/github/current-head-9b4a0197/release-blocker-evidence-main/android-production-aab-proof-1-20260909-013555/android-production-aab-proof.local.json"
+  },
+  "sha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+  "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+  "file": "artifacts/github/current-head-9b4a0197/arm64/salary-hijacking-qaRelease-arm64-v8a.apk",
+  "fileName": "salary-hijacking-qaRelease-arm64-v8a.apk",
+  "buildCommand": "Current 9b4a0197 same-RC arm64-v8a and x86_64 qaRelease artifact verification; production Android AAB proof linked separately",
+  "status": "FINAL_RC_STATIC_GATE_PASS_PHYSICAL_PENDING_USER_RETURN",
   "runtimeEvidence": {
-    "status": "NOT_STARTED_FOR_NEW_RC",
-    "note": "This freezes the new application RC source and validates the x86_64 qaRelease artifact/static gate. It does not close new-RC runtime, Stitch 304 visual acceptance, FCM provider runtime, Galaxy runtime, Play publish, or commercial launch readiness."
+    "status": "PENDING_USER_RETURN",
+    "note": "Static same-RC artifacts and production AAB are verified for 9b4a019748abf3b8b8702f1e8577e706b88ee63a. Galaxy SM-S921N FCM, navigation/back, social auth, AdMob, PERF, D013 physical, D026 final chain, Play Internal, and Production remain pending."
   },
-  "status": "SOURCE_PRE_RC_GATE_PASS_NEW_APPLICATION_RC_FROZEN_PRE_RUNTIME",
-  "truthfulScope": "Source/static/CI-backed x86 qaRelease pre-RC gate is closed for cdee45a0a23142d9c63c79967c734cbdc65cdae3. D-013 and D-026 remain pending new-RC runtime evidence."
+  "truthfulScope": "Source/static/build artifact lineage is closed for 9b4a019748abf3b8b8702f1e8577e706b88ee63a. Physical runtime and Play Internal are not marked PASS until user-return Galaxy evidence is collected."
 }

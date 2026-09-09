@@ -1,66 +1,54 @@
 {
-  "schemaVersion": 2,
-  "generatedAt": "2026-08-29T11:32:00.000Z",
-  "task": "NEW_RC_PRE_RUNTIME_SOURCE_FREEZE_X86_QARELEASE",
+  "schemaVersion": 3,
+  "generatedAt": "2026-09-09T02:23:25.008Z",
+  "task": "FINAL_RC_9B4A0197_STATIC_ARTIFACT_INDEX",
   "secretsRedacted": true,
   "containsSecretValues": false,
-  "sourceCommit": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-  "applicationRcSourceSha": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-  "sourceFingerprint": "DC8E38BC4D9DD9C2321841805B4ACE385D5BCF943FD11CCC0B28DF295E3B2553",
-  "sourceFileCount": 337,
-  "checkedOutSha": "cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-  "workflowSha": "6c689525cc8be6b21c3cd08b6a58bdc0efec9a03",
-  "workflowControlPlaneRef": "main",
-  "branch": "main",
-  "workflow": {
-    "name": "Build Android QA Release",
-    "runNumber": 23,
-    "runId": "33247658350",
-    "jobId": "99087834742",
-    "event": "workflow_dispatch",
-    "status": "completed",
-    "conclusion": "success",
-    "artifactId": "9713471510",
-    "artifactName": "android-qa-release-x86_64-cdee45a0a23142d9c63c79967c734cbdc65cdae3",
-    "artifactDigest": "sha256:199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e",
-    "artifactExpiresAt": "2026-09-05T10:32:19Z"
-  },
+  "sourceCommit": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+  "applicationRcSourceSha": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+  "sourceFingerprint": "D789EBF05A693E1E24B0AB823E95ED40D249336AEA00D2ADEBA00075EC55318D",
+  "sourceFileCount": 390,
+  "checkedOutSha": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
+  "workflowSha": "4d39bfc9daea1b366dadb12318acc5da2ed351a7",
+  "workflowControlPlaneRef": "codex/payroll-reminder-launch-ready-100-20260714",
+  "branch": "codex/payroll-reminder-launch-ready-100-20260714",
   "buildType": "qaRelease",
-  "abi": "x86_64",
   "applicationId": "com.salaryhijacking.mobile",
   "versionName": "1.0.0",
   "versionCode": 1,
   "apiEnvironment": "staging",
   "apiBaseUrl": "https://api-staging.salaryhijacking.com",
-  "apkGenerated": true,
-  "zipSha256": "199a29980cdbc9a89e16d002e4fa5b196a853a49c10e26cb68a35dd5b059948e",
-  "apkSha256": "6f8a89b9f3a43c30ca5af165f77585aa5512e3142340170ca2f6afca0186f798",
-  "bundleSha256": "ef6ed45e69895b409c465f2c2b1e6e073337fdc724e280e4643fef55609931b0",
-  "bundleSourceMatch": "PASS",
-  "signerFingerprint": "d76c56791836b692d704d911f8b1802589b2c420340abd31249b3d87a87c63d3",
+  "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+  "signerFingerprint": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
   "secretPresence": "PRESENT_VERIFIED_WITHOUT_VALUES",
-  "staticInspection": {
-    "pass": true,
-    "apkPath": "artifacts/phase13-new-rc-candidate/x86-main-control-plane-33247658350/download-20260829202016/unzipped/salary-hijacking-qaRelease-x86_64.apk",
-    "evidencePath": "artifacts/phase13-new-rc-candidate/x86-main-control-plane-33247658350/x86-static-inspection.json",
-    "expectedAbis": [
-      "x86_64"
-    ],
-    "nativeAbis": [
-      "x86_64"
-    ],
-    "debuggable": false,
-    "cleartextTraffic": false,
-    "allowBackup": false,
-    "appApiLocalhostOrEmulatorHost": 0,
-    "obsoleteHyphenatedStagingHost": 0,
-    "embeddedSecret": 0
+  "artifacts": {
+    "arm64": {
+      "abi": "arm64-v8a",
+      "apkGenerated": true,
+      "apkPath": "artifacts/github/current-head-9b4a0197/arm64/salary-hijacking-qaRelease-arm64-v8a.apk",
+      "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+      "buildInfoPath": "artifacts/github/current-head-9b4a0197/arm64/evidence/build-info.json",
+      "staticInspectionPath": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json"
+    },
+    "x86_64": {
+      "abi": "x86_64",
+      "apkGenerated": true,
+      "apkPath": "artifacts/github/current-head-9b4a0197/x86_64/android-qa-release-x86_64-9b4a019748abf3b8b8702f1e8577e706b88ee63a-20260909-013850/salary-hijacking-qaRelease-x86_64.apk",
+      "apkSha256": "C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76",
+      "buildInfoPath": "artifacts/github/current-head-9b4a0197/x86_64/android-qa-release-x86_64-9b4a019748abf3b8b8702f1e8577e706b88ee63a-20260909-013850/evidence/build-info.json",
+      "staticInspectionPath": "artifacts/github/current-head-9b4a0197/x86_64/evidence/apk-static-inspection.local.json"
+    },
+    "productionAab": {
+      "profile": "production",
+      "distribution": "store",
+      "aabGenerated": true,
+      "aabPath": "artifacts/github/current-head-9b4a0197/release-blocker-evidence-main/android-production-aab-1-20260909-013555/salary-hijacking-production-final.aab",
+      "aabSha256": "6978EC608A0626374F2E12423A383C2DCED8E5323D2FAAF07F589308A6E25FC8",
+      "proofPath": "artifacts/github/current-head-9b4a0197/release-blocker-evidence-main/android-production-aab-proof-1-20260909-013555/android-production-aab-proof.local.json"
+    }
   },
   "sourcePreRcGate": "PASS",
-  "newRcRuntimeStarted": false,
-  "oldRc": {
-    "sourceSha": "08005cff94e4f0661d2ae809d7d508379ab3092a",
-    "current": false,
-    "classification": "HISTORICAL_KNOWN_GOOD_BASELINE_NOT_CURRENT"
-  }
+  "sameRcStaticGate": "PASS",
+  "productionAabGate": "PASS",
+  "galaxyPhysicalRuntime": "PENDING_USER_RETURN"
 }
