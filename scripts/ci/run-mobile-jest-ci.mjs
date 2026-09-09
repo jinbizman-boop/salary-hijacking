@@ -103,6 +103,18 @@ function isPlanTestPath(testPath) {
     .includes("src/features/plan/__tests__/");
 }
 
+function toMobileJestPath(testPath) {
+  const normalized = testPath.replace(/\\/gu, "/");
+  const mobilePrefix = `${MOBILE_APP_DIR}/`;
+  const mobileIndex = normalized.indexOf(mobilePrefix);
+
+  if (mobileIndex >= 0) {
+    return normalized.slice(mobileIndex + mobilePrefix.length);
+  }
+
+  return testPath;
+}
+
 export function buildTestBatchesForCi(testPaths, batchSize) {
   const standardTests = [];
   const directJestTests = [];
@@ -145,15 +157,24 @@ function resolveJestRunner(jestArgs) {
   const mobileJestBin = path.resolve(process.cwd(), MOBILE_JEST_BIN);
 
   if (shouldUseDirectMobileJest(jestArgs) && fs.existsSync(mobileJestBin)) {
+    const runTestsIndex = jestArgs.indexOf("--runTestsByPath");
+    const directArgs =
+      runTestsIndex >= 0
+        ? [
+            ...jestArgs.slice(0, runTestsIndex + 1),
+            ...jestArgs.slice(runTestsIndex + 1).map(toMobileJestPath),
+          ]
+        : jestArgs;
+
     return {
       command: process.execPath,
       args: [
         mobileJestBin,
         "--config",
-        path.join(MOBILE_APP_DIR, "package.json"),
-        ...jestArgs,
+        "package.json",
+        ...directArgs,
       ],
-      cwd: process.cwd(),
+      cwd: path.resolve(process.cwd(), MOBILE_APP_DIR),
     };
   }
 
