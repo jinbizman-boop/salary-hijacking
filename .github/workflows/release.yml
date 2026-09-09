@@ -923,7 +923,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       RELEASE_TAG: ${{ needs.release-quality-gate.outputs.release_tag }}
-      RELEASE_MODE: ${{ needs.release_quality_gate.outputs.release_mode }}
+      RELEASE_MODE: ${{ needs.release-quality-gate.outputs.release_mode }}
 
     steps:
       - name: Checkout repository
