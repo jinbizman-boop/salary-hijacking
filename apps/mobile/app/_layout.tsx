@@ -300,11 +300,20 @@ let cachedSecureStoreRuntime: SecureStoreRuntime | null = null;
 let cachedAsyncStorageRuntime: AsyncStorageRuntime | null = null;
 let cachedSplashScreenRuntime: SplashScreenRuntime | null = null;
 const emittedRootPerfMarkers = new Set<string>();
+markReleasePerf("startup.p4.root_module_evaluated", { route: "bootstrap" });
 
-function hideNativeSplashSafely(): void {
+function hideNativeSplashSafely(routeForInteractive?: string): void {
   if (NativeRuntimeRef.Platform.OS === "web") return;
+  markRootPerfOnce("startup.p12.splash_hide_requested", "bootstrap");
   void getSplashScreenRuntime()
     .hideAsync()
+    .then(() => {
+      markRootPerfOnce("startup.p13.splash_hide_completed", "bootstrap");
+      if (routeForInteractive) {
+        markRootPerfOnce("startup.p14.route_interactive", routeForInteractive);
+      }
+      return true;
+    })
     .catch(() => false);
 }
 
@@ -424,8 +433,13 @@ export default function MobileRootLayout(): unknown {
     }, []);
 
   const bootstrap = ReactRuntimeRef.useCallback(async (): Promise<void> => {
+    markRootPerfOnce("startup.p5.auth_bootstrap_start", "bootstrap");
     setState((prev: RootState) => ({ ...prev, retrying: true }));
     if (isMobileE2eBuildEnabled()) {
+      markRootPerfOnce("startup.p6.secure_storage_read_complete", "e2e");
+      markRootPerfOnce("startup.p7.session_validation_complete", "e2e");
+      markRootPerfOnce("startup.p8.readiness_decision_complete", "e2e");
+      markRootPerfOnce("startup.p9.destination_resolved", "e2e");
       setState((prev: RootState) => ({
         ...prev,
         payload: fallbackPayload,
@@ -463,7 +477,11 @@ export default function MobileRootLayout(): unknown {
         hasAccessToken || hasRefreshToken
           ? await readCachedSessionStatus()
           : fallbackSession;
+      markRootPerfOnce("startup.p6.secure_storage_read_complete", "bootstrap");
       if (!hasAccessToken && !hasRefreshToken) {
+        markRootPerfOnce("startup.p7.session_validation_complete", "public");
+        markRootPerfOnce("startup.p8.readiness_decision_complete", "public");
+        markRootPerfOnce("startup.p9.destination_resolved", "public");
         setAuthRequiredBeforePersistence();
         persistUnauthenticatedLaunchState();
         return;
@@ -488,9 +506,12 @@ export default function MobileRootLayout(): unknown {
         "/api/v1/mobile/bootstrap",
       );
       const payload = normalizePayload(response.data ?? {});
+      markRootPerfOnce("startup.p7.session_validation_complete", "bootstrap");
       const nextStatus = resolveStatus(payload, isPublic);
+      markRootPerfOnce("startup.p8.readiness_decision_complete", nextStatus);
       await persistSessionStatus(payload.session, nextStatus);
       await persistPublicSessionHint(payload.session);
+      markRootPerfOnce("startup.p9.destination_resolved", nextStatus);
       setState((prev: RootState) => ({
         ...prev,
         payload,
@@ -607,14 +628,22 @@ export default function MobileRootLayout(): unknown {
     if (
       (next === "READY" || next === "OFFLINE") &&
       shouldRouteAuthenticatedStateToHome(currentRouteKey, initialDeepLinkRoute)
-    )
+    ) {
+      markRootPerfOnce("startup.p9.destination_resolved", "salary");
       router.replace(SALARY_HOME_ROUTE as never);
-    if (next === "AUTH_REQUIRED" && !isPublic)
+    }
+    if (next === "AUTH_REQUIRED" && !isPublic) {
+      markRootPerfOnce("startup.p9.destination_resolved", "login");
       router.replace(AUTH_LOGIN_ROUTE as never);
-    if (next === "VERIFY_EMAIL" && currentRouteKey !== "(auth)/verify-email")
+    }
+    if (next === "VERIFY_EMAIL" && currentRouteKey !== "(auth)/verify-email") {
+      markRootPerfOnce("startup.p9.destination_resolved", "verify-email");
       router.replace(AUTH_VERIFY_ROUTE as never);
-    if (next === "ONBOARDING" && currentRouteKey !== "onboarding")
+    }
+    if (next === "ONBOARDING" && currentRouteKey !== "onboarding") {
+      markRootPerfOnce("startup.p9.destination_resolved", "onboarding");
       router.replace(ONBOARDING_ROUTE as never);
+    }
   }, [
     captureScreenKind,
     currentRouteKey,
@@ -635,12 +664,22 @@ export default function MobileRootLayout(): unknown {
     state.status !== "BOOTSTRAPPING" &&
     !shouldRenderSlot &&
     !isRouteTransitionPending;
+  if (shouldRenderSlot || shouldRenderLightweightTransition) {
+    markRootPerfOnce(
+      "startup.p10.route_component_mount_start",
+      currentRouteKey || "bootstrap",
+    );
+  }
   const handleRootLayout = ReactRuntimeRef.useCallback((): void => {
-    hideNativeSplashSafely();
+    markRootPerfOnce(
+      "startup.p11.route_first_commit",
+      currentRouteKey || "bootstrap",
+    );
+    hideNativeSplashSafely(currentRouteKey || "bootstrap");
     if (shouldRenderLightweightTransition) {
       markRootPerfOnce("bootstrap.transition.visible", "bootstrap");
     }
-  }, [shouldRenderLightweightTransition]);
+  }, [currentRouteKey, shouldRenderLightweightTransition]);
 
   ReactRuntimeRef.useEffect((): void => {
     if (shouldRenderLightweightTransition) {
