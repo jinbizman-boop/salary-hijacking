@@ -16,6 +16,8 @@ const MOBILE_JEST_BIN = path.join(
   "bin",
   "jest.js",
 );
+const PLAN_COMPONENTS_TEST_PATH =
+  "src/features/plan/__tests__/plan.components.test.tsx";
 
 export function stripAnsi(value) {
   return String(value).replace(/\u001b\[[0-9;]*m/g, "");
@@ -103,6 +105,10 @@ function isPlanTestPath(testPath) {
     .includes("src/features/plan/__tests__/");
 }
 
+function isPlanComponentsTestPath(testPath) {
+  return testPath.replace(/\\/gu, "/").endsWith(PLAN_COMPONENTS_TEST_PATH);
+}
+
 function toMobileJestPath(testPath) {
   const normalized = testPath.replace(/\\/gu, "/");
   const mobilePrefix = `${MOBILE_APP_DIR}/`;
@@ -113,6 +119,46 @@ function toMobileJestPath(testPath) {
   }
 
   return testPath;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function parseJestTestTitlesFromSource(source) {
+  return [...source.matchAll(/\bit\(\s*"((?:\\.|[^"\\])+)"/gu)].map(
+    (match) => JSON.parse(`"${match[1]}"`),
+  );
+}
+
+function buildPlanComponentsTestRuns(testPath) {
+  const mobilePath = toMobileJestPath(testPath);
+  const sourcePath = path.resolve(process.cwd(), MOBILE_APP_DIR, mobilePath);
+
+  if (!fs.existsSync(sourcePath)) {
+    return [{ testPaths: [testPath] }];
+  }
+
+  const titles = parseJestTestTitlesFromSource(
+    fs.readFileSync(sourcePath, "utf8"),
+  );
+
+  if (titles.length === 0) {
+    return [{ testPaths: [testPath] }];
+  }
+
+  return titles.map((title) => ({
+    testNamePattern: `^${escapeRegExp(title)}$`,
+    testPaths: [testPath],
+  }));
+}
+
+function buildJestRunsForBatch(batch) {
+  if (batch.length === 1 && isPlanComponentsTestPath(batch[0])) {
+    return buildPlanComponentsTestRuns(batch[0]);
+  }
+
+  return [{ testPaths: batch }];
 }
 
 export function buildTestBatchesForCi(testPaths, batchSize) {
@@ -148,9 +194,7 @@ function shouldUseDirectMobileJest(jestArgs) {
     return false;
   }
 
-  return testPaths.every((testPath) =>
-    isPlanTestPath(testPath),
-  );
+  return testPaths.every((testPath) => isPlanTestPath(testPath));
 }
 
 function resolveJestRunner(jestArgs) {
@@ -168,12 +212,7 @@ function resolveJestRunner(jestArgs) {
 
     return {
       command: process.execPath,
-      args: [
-        mobileJestBin,
-        "--config",
-        "package.json",
-        ...directArgs,
-      ],
+      args: [mobileJestBin, "--config", "package.json", ...directArgs],
       cwd: path.resolve(process.cwd(), MOBILE_APP_DIR),
     };
   }
@@ -215,6 +254,16 @@ function buildJestListArgs() {
 
 export function buildJestRunArgs(testPaths) {
   return [...baseJestArgs(), "--forceExit", "--runTestsByPath", ...testPaths];
+}
+
+function buildJestRunArgsForBatchRun(batchRun) {
+  const args = buildJestRunArgs(batchRun.testPaths);
+
+  if (batchRun.testNamePattern) {
+    return [...args, "--testNamePattern", batchRun.testNamePattern];
+  }
+
+  return args;
 }
 
 function isMainModule() {
@@ -409,29 +458,48 @@ async function run() {
       `[mobile-jest-ci] running ${label} with ${batch.length} test files.`,
     );
 
-    const result = await runCorepack(buildJestRunArgs(batch), {
-      label,
-      timeoutMs,
-      requirePassSummary: true,
-    });
+    const batchRuns = buildJestRunsForBatch(batch);
 
-    if (result.code !== 0 || !result.summary.pass) {
-      console.error(`[mobile-jest-ci] ${label} failed.`);
-      if (result.timedOut) {
-        console.error(
-          `[mobile-jest-ci] timed out batch test files: ${batch.join(", ")}`,
-        );
+    for (const [runIndex, batchRun] of batchRuns.entries()) {
+      const runLabel =
+        batchRuns.length > 1
+          ? `${label} test ${runIndex + 1}/${batchRuns.length}`
+          : label;
+      const result = await runCorepack(buildJestRunArgsForBatchRun(batchRun), {
+        label: runLabel,
+        timeoutMs,
+        requirePassSummary: true,
+      });
+
+      if (result.code !== 0 || !result.summary.pass) {
+        console.error(`[mobile-jest-ci] ${runLabel} failed.`);
+        if (result.timedOut) {
+          console.error(
+            `[mobile-jest-ci] timed out batch test files: ${batchRun.testPaths.join(", ")}`,
+          );
+          if (batchRun.testNamePattern) {
+            console.error(
+              `[mobile-jest-ci] timed out test name pattern: ${batchRun.testNamePattern}`,
+            );
+          }
+        }
+        if (!result.summary.pass) {
+          console.error(
+            "[mobile-jest-ci] A complete all-pass Jest summary was not observed.",
+          );
+        }
+        process.exit(result.code || 1);
       }
-      if (!result.summary.pass) {
-        console.error(
-          "[mobile-jest-ci] A complete all-pass Jest summary was not observed.",
-        );
-      }
-      process.exit(result.code || 1);
+
+      totalSuites += result.summary.suites.total;
+      totalTests += result.summary.tests.total;
     }
 
-    totalSuites += result.summary.suites.total;
-    totalTests += result.summary.tests.total;
+    if (batchRuns.length > 1) {
+      console.log(
+        `[mobile-jest-ci] ${label} completed as ${batchRuns.length} isolated test-name runs.`,
+      );
+    }
   }
 
   console.log(
