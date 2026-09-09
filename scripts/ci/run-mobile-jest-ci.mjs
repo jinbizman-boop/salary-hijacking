@@ -115,9 +115,10 @@ export function buildTestBatchesForCi(testPaths, batchSize) {
     }
   }
 
-  return [...chunkTestPaths(standardTests, batchSize), directJestTests].filter(
-    (batch) => batch.length > 0,
-  );
+  return [
+    ...chunkTestPaths(standardTests, batchSize),
+    ...chunkTestPaths(directJestTests, batchSize),
+  ].filter((batch) => batch.length > 0);
 }
 
 function baseJestArgs() {
