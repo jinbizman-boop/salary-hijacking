@@ -651,12 +651,8 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit and integration tests
-        env:
-          MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "1800000"
-          MOBILE_JEST_CI_BATCH_SIZE: "4"
-          MOBILE_JEST_CI_PACKAGE_RUNNER: direct-pnpm
         run: |
-          node scripts/ci/run-mobile-jest-ci.mjs
+          corepack pnpm --filter @salary-hijacking/mobile exec jest --runInBand --forceExit
           corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
 
       - name: E2E and QA tests
