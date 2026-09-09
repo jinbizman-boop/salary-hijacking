@@ -149,6 +149,12 @@ test("CI runner uses the installed mobile Jest binary for Plan batches before pa
   assert.match(source, /src\/features\/plan\/__tests__\//u);
   assert.match(source, /fs\.existsSync\(mobileJestBin\)/u);
   assert.match(source, /command: process\.execPath/u);
+  assert.match(source, /toMobileJestPath/u);
+  assert.match(source, /"package\.json"/u);
+  assert.match(
+    source,
+    /cwd: path\.resolve\(process\.cwd\(\), MOBILE_APP_DIR\)/u,
+  );
   assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER/u);
   assert.match(source, /direct-pnpm/u);
   assert.match(source, /command: "corepack"/u);
