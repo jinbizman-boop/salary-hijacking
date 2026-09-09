@@ -123,7 +123,7 @@ test("CI runner uses the installed mobile Jest binary for Plan batches before pa
 
   assert.match(source, /MOBILE_JEST_BIN/u);
   assert.match(source, /shouldUseDirectMobileJest/u);
-  assert.match(source, /\/src\/features\/plan\/__tests__\//u);
+  assert.match(source, /src\/features\/plan\/__tests__\//u);
   assert.match(source, /fs\.existsSync\(mobileJestBin\)/u);
   assert.match(source, /command: process\.execPath/u);
   assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER/u);

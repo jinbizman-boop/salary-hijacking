@@ -113,9 +113,7 @@ function shouldUseDirectMobileJest(jestArgs) {
   }
 
   return testPaths.every((testPath) =>
-    testPath
-      .replace(/\\/gu, "/")
-      .includes("/src/features/plan/__tests__/"),
+    testPath.replace(/\\/gu, "/").includes("src/features/plan/__tests__/"),
   );
 }
 
