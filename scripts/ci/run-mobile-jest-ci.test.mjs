@@ -107,3 +107,15 @@ test("verified pass summary grace path exits explicitly", () => {
     "pass-summary grace timeout must resolve success so CI cannot hang on lingering Jest handles",
   );
 });
+
+test("CI runner can bypass repeated corepack spawns when pnpm is already installed", () => {
+  const source = fs.readFileSync(
+    new URL("./run-mobile-jest-ci.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER/u);
+  assert.match(source, /direct-pnpm/u);
+  assert.match(source, /command: "pnpm"/u);
+  assert.match(source, /command: "corepack"/u);
+});

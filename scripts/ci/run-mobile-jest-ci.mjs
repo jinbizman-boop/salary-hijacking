@@ -98,6 +98,16 @@ function baseJestArgs() {
   ];
 }
 
+function resolvePackageRunner(args) {
+  const useDirectPnpm =
+    process.env.MOBILE_JEST_CI_PACKAGE_RUNNER === "direct-pnpm";
+  if (useDirectPnpm && args[0] === "pnpm") {
+    return { command: "pnpm", args: args.slice(1) };
+  }
+
+  return { command: "corepack", args };
+}
+
 function buildJestListArgs() {
   return [...baseJestArgs(), "--listTests"];
 }
@@ -123,7 +133,8 @@ function runCorepack(args, options = {}) {
   const requirePassSummary = options.requirePassSummary ?? false;
 
   return new Promise((resolve) => {
-    const child = spawn("corepack", args, {
+    const runner = resolvePackageRunner(args);
+    const child = spawn(runner.command, runner.args, {
       cwd: process.cwd(),
       env: {
         ...process.env,

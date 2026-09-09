@@ -653,6 +653,7 @@ jobs:
       - name: Unit and integration tests
         env:
           MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "900000"
+          MOBILE_JEST_CI_PACKAGE_RUNNER: direct-pnpm
         run: |
           node scripts/ci/run-mobile-jest-ci.mjs
           corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
