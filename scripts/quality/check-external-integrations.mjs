@@ -117,7 +117,7 @@ const REQUIRED_TOKENS_BY_FILE = {
     "eas-cli@latest build",
     "--platform",
     "--profile",
-    'pnpm --dir "$MOBILE_APP_DIR" run export',
+    'pnpm --dir "$MOBILE_APP_DIR" exec expo export --platform android',
     "Native mobile E2E skipped because no local E2E APK was found",
     "github.event_name == 'workflow_dispatch'",
   ],
@@ -1006,6 +1006,29 @@ function checkMobileNativeProofWorkflow(rootDir, failures) {
   }
 }
 
+function checkMobileBuildUsesAndroidOnlyExpoExport(rootDir, failures) {
+  const relativePath = ".github/workflows/mobile-build.yml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const source = readText(rootDir, relativePath);
+
+  if (source.includes('pnpm --dir "$MOBILE_APP_DIR" run export')) {
+    failures.push(
+      `${relativePath}: mobile release quality gate must use Android-only Expo export, not the all-platform export script`,
+    );
+  }
+
+  if (
+    !source.includes(
+      'pnpm --dir "$MOBILE_APP_DIR" exec expo export --platform android',
+    )
+  ) {
+    failures.push(
+      `${relativePath}: missing Android-only Expo export command for release quality gate`,
+    );
+  }
+}
+
 function checkMobileOutputSecretScan(rootDir, failures) {
   const relativePath = ".github/workflows/mobile-build.yml";
   if (!fileExists(rootDir, relativePath)) return;
@@ -1082,7 +1105,8 @@ function checkApiPublicAssetsRunWorkerFirst(rootDir, failures) {
 
   const source = readText(rootDir, relativePath);
   const usesPublicAssets =
-    source.includes("[assets]") && source.includes('directory = "../../apps/web"');
+    source.includes("[assets]") &&
+    source.includes('directory = "../../apps/web"');
 
   if (!usesPublicAssets) return;
 
@@ -1523,6 +1547,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);
   checkMobileNativeProofWorkflow(rootDir, failures);
+  checkMobileBuildUsesAndroidOnlyExpoExport(rootDir, failures);
   checkMobileOutputSecretScan(rootDir, failures);
   checkCloudflareRuntimeProofWorkflow(rootDir, failures);
   checkDatabaseCommandProofWorkflow(rootDir, failures);

@@ -337,11 +337,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if node -e "const p=require('./${MOBILE_APP_DIR}/package.json'); process.exit(p.scripts && p.scripts.export ? 0 : 1)"; then
-            pnpm --dir "$MOBILE_APP_DIR" run export
-          else
-            echo "Mobile export script is not configured. Skipping."
-          fi
+          pnpm --dir "$MOBILE_APP_DIR" exec expo export --platform android
 
       - name: Scan mobile outputs for unsafe secret exposure
         run: |
