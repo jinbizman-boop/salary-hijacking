@@ -9,6 +9,7 @@ import {
   buildJestRunArgs,
   chunkTestPaths,
   parseJestPassSummary,
+  parseJestTestTitlesFromSource,
   sortTestPathsForCi,
   stripAnsi,
 } from "./run-mobile-jest-ci.mjs";
@@ -83,6 +84,16 @@ test("buildJestRunArgs runs a specific batch in a fresh Jest process", () => {
   ]);
 });
 
+test("parseJestTestTitlesFromSource extracts static Jest test titles", () => {
+  assert.deepEqual(
+    parseJestTestTitlesFromSource(`
+      it("renders the first state", () => {});
+      it("keeps \\"quoted\\" text safe", () => {});
+    `),
+    ["renders the first state", 'keeps "quoted" text safe'],
+  );
+});
+
 test("CI runner filters non-mobile copied tests from listed output", () => {
   const source = fs.readFileSync(
     new URL("./run-mobile-jest-ci.mjs", import.meta.url),
@@ -155,6 +166,10 @@ test("CI runner uses the installed mobile Jest binary for Plan batches before pa
     source,
     /cwd: path\.resolve\(process\.cwd\(\), MOBILE_APP_DIR\)/u,
   );
+  assert.match(source, /PLAN_COMPONENTS_TEST_PATH/u);
+  assert.match(source, /parseJestTestTitlesFromSource/u);
+  assert.match(source, /--testNamePattern/u);
+  assert.match(source, /completed as \$\{batchRuns\.length\} isolated test-name runs/u);
   assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER/u);
   assert.match(source, /direct-pnpm/u);
   assert.match(source, /command: "corepack"/u);
