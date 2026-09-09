@@ -2,6 +2,8 @@ package com.salaryhijacking.mobile
 
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.util.Log
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -13,6 +15,7 @@ import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    markStartupPerf("startup.n2.activity_on_create_entry")
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.
@@ -20,6 +23,7 @@ class MainActivity : ReactActivity() {
     // @generated begin expo-splashscreen - expo prebuild (DO NOT MODIFY) sync-f3ff59a738c56c9a6119210cb55f0b613eb8b6af
     // @generated end expo-splashscreen
     super.onCreate(null)
+    markStartupPerf("startup.n3.activity_super_on_create_complete")
   }
 
   /**
@@ -42,8 +46,10 @@ class MainActivity : ReactActivity() {
               fabricEnabled
           ){
             override fun createRootView(): ReactRootView {
+              markStartupPerf("startup.n4.react_root_view_create_start")
               return ReactRootView(this@MainActivity).apply {
                 setBackgroundResource(R.drawable.ic_launcher_background)
+                markStartupPerf("startup.n5.native_first_frame_ready")
               }
             }
           })
@@ -66,5 +72,12 @@ class MainActivity : ReactActivity() {
       // Use the default back button implementation on Android S
       // because it's doing more than [Activity.moveTaskToBack] in fact.
       super.invokeDefaultOnBackPressed()
+  }
+
+  private fun markStartupPerf(marker: String) {
+    Log.i(
+      "SH_RELEASE_PERF",
+      "[SH_RELEASE_PERF] marker=$marker t=${System.currentTimeMillis()} elapsed_ms=${SystemClock.elapsedRealtime()} route=bootstrap",
+    )
   }
 }
