@@ -857,7 +857,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Run mobile baseline tests
-        run: pnpm --dir apps/mobile exec jest --runInBand --forceExit
+        run: node scripts/ci/run-mobile-jest-ci.mjs
 
       - name: Run workspace baseline tests
         run: corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
