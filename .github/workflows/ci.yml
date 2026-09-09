@@ -161,7 +161,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Mobile unit and integration tests
-        run: corepack pnpm --filter @salary-hijacking/mobile exec jest --runInBand --forceExit
+        run: pnpm --dir apps/mobile exec jest --runInBand --forceExit
 
       - name: Workspace unit and integration tests
         run: corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test

@@ -166,7 +166,7 @@ test("GitHub mobile test workflows run mobile Jest in one force-exit pass", () =
 
     assert.match(
       source,
-      /corepack pnpm --filter @salary-hijacking\/mobile exec jest --runInBand --forceExit/u,
+      /pnpm --dir apps\/mobile exec jest --runInBand --forceExit/u,
     );
     assert.doesNotMatch(source, /node scripts\/ci\/run-mobile-jest-ci\.mjs/u);
   }

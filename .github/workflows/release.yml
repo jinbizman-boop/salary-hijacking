@@ -652,7 +652,7 @@ jobs:
 
       - name: Unit and integration tests
         run: |
-          corepack pnpm --filter @salary-hijacking/mobile exec jest --runInBand --forceExit
+          pnpm --dir apps/mobile exec jest --runInBand --forceExit
           corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
 
       - name: E2E and QA tests
