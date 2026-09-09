@@ -161,7 +161,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Mobile unit and integration tests
-        run: pnpm --dir apps/mobile exec jest --runInBand --forceExit
+        run: node scripts/ci/run-mobile-jest-ci.mjs
 
       - name: Workspace unit and integration tests
         run: corepack pnpm -r --if-present --workspace-concurrency=1 --filter '!@salary-hijacking/mobile' run test
