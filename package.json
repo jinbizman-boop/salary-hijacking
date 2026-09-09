@@ -123,55 +123,5 @@
     "typescript": "^5.8.3",
     "vitest": "^3.2.2",
     "wrangler": "^4.107.0"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@cloudflare/workerd",
-      "esbuild",
-      "sharp",
-      "workerd"
-    ],
-    "overrides": {
-      "@xmldom/xmldom@<0.8.15": "0.8.15",
-      "@xmldom/xmldom@>=0.9.0 <0.9.12": "0.9.12",
-      "adm-zip@<0.6.0": "0.6.0",
-      "ajv@>=8.0.0 <8.18.0": "8.18.0",
-      "brace-expansion@<1.1.18": "1.1.18",
-      "brace-expansion@>=2.0.0 <2.1.4": "2.1.4",
-      "brace-expansion@>=4.0.0 <5.0.8": "5.0.8",
-      "diff@>=6.0.0 <8.0.3": "8.0.3",
-      "esbuild@>=0.27.3 <0.28.1": "0.28.1",
-      "browserslist@<=4.28.6": "4.28.7",
-      "fast-uri@>=3.0.0 <3.1.6": "3.1.6",
-      "form-data@>=4.0.0 <4.0.6": "4.0.6",
-      "fast-xml-parser@<5.7.0": "5.7.0",
-      "js-yaml@<3.15.0": "4.3.2",
-      "js-yaml@>=4.0.0 <4.3.2": "4.3.2",
-      "joi@<17.13.4": "17.13.4",
-      "minimatch@>=5.0.0 <5.1.8": "5.1.8",
-      "next@>=15.0.0 <15.5.24": "15.5.24",
-      "node-forge@<1.4.0": "1.4.0",
-      "postcss@<8.5.18": "8.5.18",
-      "@react-native-community/cli@>=18.0.0 <18.0.1": "18.0.1",
-      "@react-native-community/cli-server-api@>=18.0.0 <18.0.1": "18.0.1",
-      "sharp@<0.35.4": "0.35.4",
-      "shell-quote@<=1.8.4": "1.9.0",
-      "nanoid@<3.3.18": "3.3.18",
-      "tar@>=7.0.0 <=7.5.20": "7.5.21",
-      "undici@>=7.0.0 <7.29.0": "7.29.0",
-      "ts-deepmerge@<8.0.0": "8.0.0",
-      "uuid@<11.1.1": "11.1.1",
-      "ws@>=8.0.0 <8.21.0": "8.21.0",
-      "yaml@>=2.0.0 <2.8.3": "2.8.3"
-    },
-    "peerDependencyRules": {
-      "ignoreMissing": []
-    },
-    "auditConfig": {
-      "ignoreCves": [
-        "CVE-2025-71330",
-        "CVE-2025-71329"
-      ]
-    }
   }
 }
