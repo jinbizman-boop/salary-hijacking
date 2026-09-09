@@ -98,16 +98,55 @@ export function sortTestPathsForCi(testPaths) {
 }
 
 function baseJestArgs() {
-  return ["--config", path.join(MOBILE_APP_DIR, "package.json"), "--runInBand"];
+  return ["--runInBand"];
+}
+
+function shouldUseDirectMobileJest(jestArgs) {
+  const runTestsIndex = jestArgs.indexOf("--runTestsByPath");
+  if (runTestsIndex < 0) {
+    return false;
+  }
+
+  const testPaths = jestArgs.slice(runTestsIndex + 1);
+  if (testPaths.length === 0) {
+    return false;
+  }
+
+  return testPaths.every((testPath) =>
+    testPath
+      .replace(/\\/gu, "/")
+      .includes("/src/features/plan/__tests__/"),
+  );
 }
 
 function resolveJestRunner(jestArgs) {
   const mobileJestBin = path.resolve(process.cwd(), MOBILE_JEST_BIN);
 
-  if (fs.existsSync(mobileJestBin)) {
+  if (shouldUseDirectMobileJest(jestArgs) && fs.existsSync(mobileJestBin)) {
     return {
       command: process.execPath,
-      args: [mobileJestBin, ...jestArgs],
+      args: [
+        mobileJestBin,
+        "--config",
+        path.join(MOBILE_APP_DIR, "package.json"),
+        ...jestArgs,
+      ],
+      cwd: process.cwd(),
+    };
+  }
+
+  const useDirectPnpm =
+    process.env.MOBILE_JEST_CI_PACKAGE_RUNNER === "direct-pnpm";
+  if (useDirectPnpm) {
+    return {
+      command: "pnpm",
+      args: [
+        "--filter",
+        "@salary-hijacking/mobile",
+        "exec",
+        "jest",
+        ...jestArgs,
+      ],
       cwd: process.cwd(),
     };
   }

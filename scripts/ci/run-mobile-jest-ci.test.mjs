@@ -52,8 +52,6 @@ test("chunkTestPaths splits mobile suites into bounded CI batches", () => {
 
 test("buildJestRunArgs runs a specific batch in a fresh Jest process", () => {
   assert.deepEqual(buildJestRunArgs(["a.test.ts", "b.test.ts"]), [
-    "--config",
-    path.join("apps", "mobile", "package.json"),
     "--runInBand",
     "--forceExit",
     "--runTestsByPath",
@@ -117,19 +115,23 @@ test("verified pass summary grace path exits explicitly", () => {
   );
 });
 
-test("CI runner uses the installed mobile Jest binary before package-manager fallback", () => {
+test("CI runner uses the installed mobile Jest binary for Plan batches before package-manager fallback", () => {
   const source = fs.readFileSync(
     new URL("./run-mobile-jest-ci.mjs", import.meta.url),
     "utf8",
   );
 
   assert.match(source, /MOBILE_JEST_BIN/u);
+  assert.match(source, /shouldUseDirectMobileJest/u);
+  assert.match(source, /\/src\/features\/plan\/__tests__\//u);
   assert.match(source, /fs\.existsSync\(mobileJestBin\)/u);
   assert.match(source, /command: process\.execPath/u);
+  assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER/u);
+  assert.match(source, /direct-pnpm/u);
   assert.match(source, /command: "corepack"/u);
 });
 
-test("GitHub mobile test workflows bound direct mobile Jest batches", () => {
+test("GitHub mobile test workflows bound pnpm batches while direct-routing Plan batches", () => {
   for (const workflow of [
     "../../.github/workflows/ci.yml",
     "../../.github/workflows/release.yml",
@@ -137,8 +139,8 @@ test("GitHub mobile test workflows bound direct mobile Jest batches", () => {
   ]) {
     const source = fs.readFileSync(new URL(workflow, import.meta.url), "utf8");
 
+    assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER:\s+direct-pnpm/u);
     assert.match(source, /MOBILE_JEST_CI_BATCH_TIMEOUT_MS:\s+"900000"/u);
     assert.match(source, /MOBILE_JEST_CI_BATCH_SIZE:\s+"4"/u);
-    assert.doesNotMatch(source, /MOBILE_JEST_CI_PACKAGE_RUNNER:\s+direct-pnpm/u);
   }
 });
