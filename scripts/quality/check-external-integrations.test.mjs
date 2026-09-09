@@ -1431,6 +1431,75 @@ crons = ["0 * * * *"]
   }
 });
 
+test("fails when the production API Worker exceeds the free deploy variable budget", async () => {
+  const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
+
+  try {
+    const extraVars = Array.from(
+      { length: 53 },
+      (_, index) => `EXTRA_PRODUCTION_VAR_${index + 1} = "value"`,
+    ).join("\n");
+
+    await writeFixture(rootDir, {
+      "services/api/wrangler.toml": `
+name = "salary-hijacking-api"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[env.staging]
+name = "salary-hijacking-api-staging"
+routes = [
+  { pattern = "api-staging.salaryhijacking.com", custom_domain = true }
+]
+[env.staging.vars]
+APP_ENV = "staging"
+APP_PUBLIC_BASE_URL = "https://api-staging.salaryhijacking.com"
+[[env.staging.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-staging-uploads"
+[[env.staging.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-staging-operations"
+[env.staging.triggers]
+crons = ["0 * * * *"]
+
+[env.production]
+name = "salary-hijacking-api"
+routes = [
+  { pattern = "salaryhijacking.com", custom_domain = true },
+  { pattern = "www.salaryhijacking.com", custom_domain = true },
+  { pattern = "api.salaryhijacking.com", custom_domain = true }
+]
+[env.production.vars]
+APP_ENV = "production"
+APP_PUBLIC_BASE_URL = "https://salaryhijacking.com"
+${extraVars}
+[[env.production.r2_buckets]]
+binding = "UPLOADS_BUCKET"
+bucket_name = "salary-hijacking-production-uploads"
+[[env.production.queues.producers]]
+binding = "OPERATIONS_QUEUE"
+queue = "salary-hijacking-production-operations"
+[env.production.triggers]
+crons = ["0 * * * *"]
+`,
+    });
+
+    const result = runExternalIntegrationPreflight({
+      rootDir,
+      checkCommands: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.match(
+      result.failures.join("\n"),
+      /production API Worker text variable count/,
+    );
+  } finally {
+    await rm(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("fails when API/Admin deploy workflows contain mojibake", async () => {
   const rootDir = await mkdtemp(path.join(tmpdir(), "salary-preflight-"));
 

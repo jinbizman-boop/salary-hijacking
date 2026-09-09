@@ -350,6 +350,11 @@ const RELEASE_METADATA_FILES = [
   "release/database-evidence.json",
 ];
 
+const CLOUDFLARE_FREE_WORKER_TOTAL_VARIABLE_LIMIT = 64;
+const PRODUCTION_API_SECRET_BUDGET = 12;
+const PRODUCTION_API_TEXT_VARIABLE_LIMIT =
+  CLOUDFLARE_FREE_WORKER_TOTAL_VARIABLE_LIMIT - PRODUCTION_API_SECRET_BUDGET;
+
 const DEPLOY_WORKFLOW_FILES = [
   ".github/workflows/deploy-api.yml",
   ".github/workflows/deploy-admin.yml",
@@ -714,6 +719,12 @@ function readTomlSection(source, sectionName) {
   return nextSection === -1 ? afterHeader : afterHeader.slice(0, nextSection);
 }
 
+function countTomlScalarAssignments(source) {
+  return source
+    .split(/\r?\n/)
+    .filter((line) => /^[A-Za-z_][A-Za-z0-9_]*\s*=/.test(line.trim())).length;
+}
+
 function checkCloudflareProductionWorkerNames(rootDir, failures) {
   for (const relativePath of CLOUDFLARE_WORKER_CONFIG_FILES) {
     if (!fileExists(rootDir, relativePath)) continue;
@@ -733,6 +744,23 @@ function checkCloudflareProductionWorkerNames(rootDir, failures) {
       `${relativePath}: production Worker name must match release target ${rootWorkerName}, got ${productionWorkerName}`,
     );
   }
+}
+
+function checkProductionApiWorkerVariableBudget(rootDir, failures) {
+  const relativePath = "services/api/wrangler.toml";
+  if (!fileExists(rootDir, relativePath)) return;
+
+  const productionVars = readTomlSection(
+    readText(rootDir, relativePath),
+    "env.production.vars",
+  );
+  const textVariableCount = countTomlScalarAssignments(productionVars);
+
+  if (textVariableCount <= PRODUCTION_API_TEXT_VARIABLE_LIMIT) return;
+
+  failures.push(
+    `${relativePath}: production API Worker text variable count ${textVariableCount} exceeds ${PRODUCTION_API_TEXT_VARIABLE_LIMIT}; current release keeps ${PRODUCTION_API_SECRET_BUDGET} production secrets and Cloudflare Free Workers allow ${CLOUDFLARE_FREE_WORKER_TOTAL_VARIABLE_LIMIT} total variables`,
+  );
 }
 
 function checkCodexStatusDocs(rootDir, failures) {
@@ -1543,6 +1571,7 @@ export function runExternalIntegrationPreflight(options = {}) {
   checkWorkflowsAvoidPnpmStoreStatus(rootDir, failures);
   checkAdminOpenNextArtifactUpload(rootDir, failures);
   checkCloudflareProductionWorkerNames(rootDir, failures);
+  checkProductionApiWorkerVariableBudget(rootDir, failures);
   checkCodexStatusDocs(rootDir, failures);
   checkMobileReleaseDomains(rootDir, failures);
   checkMobileLocalE2eBuildScript(rootDir, failures);
