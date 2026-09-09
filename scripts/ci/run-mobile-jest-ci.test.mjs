@@ -119,3 +119,17 @@ test("CI runner can bypass repeated corepack spawns when pnpm is already install
   assert.match(source, /command: "pnpm"/u);
   assert.match(source, /command: "corepack"/u);
 });
+
+test("GitHub mobile test workflows bound repeated pnpm exec batches", () => {
+  for (const workflow of [
+    "../../.github/workflows/ci.yml",
+    "../../.github/workflows/release.yml",
+    "../../.github/workflows/security-scan.yml",
+  ]) {
+    const source = fs.readFileSync(new URL(workflow, import.meta.url), "utf8");
+
+    assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER:\s+direct-pnpm/u);
+    assert.match(source, /MOBILE_JEST_CI_BATCH_TIMEOUT_MS:\s+"900000"/u);
+    assert.match(source, /MOBILE_JEST_CI_BATCH_SIZE:\s+"4"/u);
+  }
+});
