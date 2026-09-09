@@ -5,6 +5,7 @@ import { test } from "node:test";
 import {
   DEFAULT_BATCH_SIZE,
   DEFAULT_BATCH_TIMEOUT_MS,
+  acceptsJestPassSummary,
   buildTestBatchesForCi,
   buildJestRunArgs,
   chunkTestPaths,
@@ -37,6 +38,34 @@ Tests:       2 failed, 1022 passed, 1024 total
 `);
 
   assert.equal(summary.pass, false);
+});
+
+test("acceptsJestPassSummary allows targeted pass summaries with skipped tests only when requested", () => {
+  const summary = parseJestPassSummary(`
+Test Suites: 1 passed, 1 total
+Tests:       13 skipped, 1 passed, 14 total
+Snapshots:   0 total
+`);
+
+  assert.equal(summary.pass, false);
+  assert.equal(acceptsJestPassSummary(summary), false);
+  assert.equal(
+    acceptsJestPassSummary(summary, { allowSkippedTestsWithPass: true }),
+    true,
+  );
+});
+
+test("acceptsJestPassSummary rejects targeted summaries with no executed tests", () => {
+  const summary = parseJestPassSummary(`
+Test Suites: 1 skipped, 0 of 1 total
+Tests:       14 skipped, 14 total
+Snapshots:   0 total
+`);
+
+  assert.equal(
+    acceptsJestPassSummary(summary, { allowSkippedTestsWithPass: true }),
+    false,
+  );
 });
 
 test("parseJestPassSummary rejects missing totals", () => {
@@ -168,7 +197,9 @@ test("CI runner uses the installed mobile Jest binary for Plan batches before pa
   );
   assert.match(source, /PLAN_COMPONENTS_TEST_PATH/u);
   assert.match(source, /parseJestTestTitlesFromSource/u);
+  assert.match(source, /allowSkippedTestsWithPass/u);
   assert.match(source, /--testNamePattern/u);
+  assert.doesNotMatch(source, /testNamePattern: `\^\$\{escapeRegExp\(title\)\}\$`/u);
   assert.match(source, /completed as \$\{batchRuns\.length\} isolated test-name runs/u);
   assert.match(source, /MOBILE_JEST_CI_PACKAGE_RUNNER/u);
   assert.match(source, /direct-pnpm/u);
