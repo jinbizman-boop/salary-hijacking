@@ -1,6 +1,6 @@
 # Device Test Matrix
 
-Updated: 2026-07-15 KST
+Updated: 2026-09-09 KST
 
 ## Jest React Native and release tooling runtime
 
@@ -18,25 +18,25 @@ Updated: 2026-07-15 KST
 
 - Status: PASS
 - Evidence: Local adb/toolchain availability is recorded in `release/mobile-native-evidence.json`.
-- Notes: Android emulator tooling is available locally.
+- Notes: Emulator availability is not proven by current evidence.
 
 ## Latest-source ARM64 phone debug APK
 
 - Status: PASS
-- Evidence: Artifact: `D:/salary-hijacking-artifacts/20260715/iteration-138-root-capture-web-guard-apk/salary-hijacking-phone-arm64-iteration138-debug.apk`; Downloads copy: `C:/Users/PC/Downloads/salary-hijacking-phone-arm64-iteration138-debug.apk`; SHA256 `79E68CC7B6C0532B9672CCE4F2654BB9ADEF2814AC3A68B4652160DE9E33E879`; ABI arm64-v8a
+- Evidence: Artifact: `LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED`; SHA256 `E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D`; ABI arm64-v8a
 - Notes: APK build, signing, download verification, ABI filter, and Expo native library proof are recorded without copying temporary artifact URLs.
 
 ## Android emulator cold start / route smoke
 
-- Status: PASS
-- Evidence: Install evidence: `docs/qa/100-completion/iteration-004-20260713/x86-clean-build/full-emulator-qa-abi-filter/full-emulator-qa-x86_64-abi-filter-summary.json`; 5 cold starts; 0 fatal markers
+- Status: BLOCKED
+- Evidence: Install evidence: `NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY`; 0 cold starts; 0 fatal markers
 - Notes: Emulator install, route smoke, notification no-tab, and background/foreground proof are recorded separately from physical phone QA.
 
 ## Android physical device cold start / logcat
 
 - Status: BLOCKED
 - Evidence: `release/mobile-preview-evidence.json`; handoff: `docs/qa/100-completion/physical-phone-qa-handoff.md`
-- Notes: No physical Android phone is attached to this Codex Windows environment at observation time; adb devices returned no attached device.
+- Notes: PENDING_USER_RETURN
 
 ## Android physical keyboard/safe-area matrix
 
