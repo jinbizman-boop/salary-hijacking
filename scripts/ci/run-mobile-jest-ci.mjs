@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const DEFAULT_GRACE_MS = 15_000;
@@ -6,6 +8,14 @@ const DEFAULT_TIMEOUT_MS = 45 * 60_000;
 export const DEFAULT_BATCH_TIMEOUT_MS = 5 * 60_000;
 export const DEFAULT_BATCH_SIZE = 1;
 const MAX_BUFFER_CHARS = 500_000;
+const MOBILE_APP_DIR = path.join("apps", "mobile");
+const MOBILE_JEST_BIN = path.join(
+  MOBILE_APP_DIR,
+  "node_modules",
+  "jest",
+  "bin",
+  "jest.js",
+);
 
 export function stripAnsi(value) {
   return String(value).replace(/\u001b\[[0-9;]*m/g, "");
@@ -88,24 +98,32 @@ export function sortTestPathsForCi(testPaths) {
 }
 
 function baseJestArgs() {
-  return [
-    "pnpm",
-    "--filter",
-    "@salary-hijacking/mobile",
-    "exec",
-    "jest",
-    "--runInBand",
-  ];
+  return ["--config", path.join(MOBILE_APP_DIR, "package.json"), "--runInBand"];
 }
 
-function resolvePackageRunner(args) {
-  const useDirectPnpm =
-    process.env.MOBILE_JEST_CI_PACKAGE_RUNNER === "direct-pnpm";
-  if (useDirectPnpm && args[0] === "pnpm") {
-    return { command: "pnpm", args: args.slice(1) };
+function resolveJestRunner(jestArgs) {
+  const mobileJestBin = path.resolve(process.cwd(), MOBILE_JEST_BIN);
+
+  if (fs.existsSync(mobileJestBin)) {
+    return {
+      command: process.execPath,
+      args: [mobileJestBin, ...jestArgs],
+      cwd: process.cwd(),
+    };
   }
 
-  return { command: "corepack", args };
+  return {
+    command: "corepack",
+    args: [
+      "pnpm",
+      "--filter",
+      "@salary-hijacking/mobile",
+      "exec",
+      "jest",
+      ...jestArgs,
+    ],
+    cwd: process.cwd(),
+  };
 }
 
 function buildJestListArgs() {
@@ -133,9 +151,9 @@ function runCorepack(args, options = {}) {
   const requirePassSummary = options.requirePassSummary ?? false;
 
   return new Promise((resolve) => {
-    const runner = resolvePackageRunner(args);
+    const runner = resolveJestRunner(args);
     const child = spawn(runner.command, runner.args, {
-      cwd: process.cwd(),
+      cwd: runner.cwd,
       env: {
         ...process.env,
         CI: "true",
@@ -230,7 +248,23 @@ function parseListedTests(output) {
   return stripAnsi(output)
     .split(/\r?\n/u)
     .map((line) => line.trim())
-    .filter((line) => /\.(?:test|spec)\.tsx?$/u.test(line));
+    .filter((line) => {
+      if (!/\.(?:test|spec)\.tsx?$/u.test(line)) {
+        return false;
+      }
+
+      const normalized = line.replace(/\\/gu, "/");
+
+      if (normalized.includes("/.tmp/")) {
+        return false;
+      }
+
+      if (path.isAbsolute(line)) {
+        return normalized.includes("/apps/mobile/");
+      }
+
+      return normalized.startsWith("app/") || normalized.startsWith("src/");
+    });
 }
 
 async function run() {

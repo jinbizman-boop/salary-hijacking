@@ -860,7 +860,6 @@ jobs:
         env:
           MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "900000"
           MOBILE_JEST_CI_BATCH_SIZE: "4"
-          MOBILE_JEST_CI_PACKAGE_RUNNER: direct-pnpm
         run: node scripts/ci/run-mobile-jest-ci.mjs
 
       - name: Run workspace baseline tests
