@@ -510,9 +510,7 @@ describe("plan reference screen interactions", () => {
   });
 
   it("clamps payroll save dates to the KST month end when payday exceeds the month length", async () => {
-    jest.useFakeTimers({
-      now: new Date("2026-02-10T00:00:00.000Z"),
-    });
+    const restoreDate = mockCurrentDate("2026-02-10T00:00:00.000Z");
     try {
       const savePlan = jest.fn().mockResolvedValue(
         payrollPlanSnapshot({
@@ -543,7 +541,7 @@ describe("plan reference screen interactions", () => {
         }),
       );
     } finally {
-      jest.useRealTimers();
+      restoreDate();
     }
   });
 });
@@ -714,5 +712,24 @@ function payrollPlanSnapshot({
     status: "ACTIVE",
     title: "Mobile payroll plan",
     variableExpenseReserveMinor: 0,
+  };
+}
+
+function mockCurrentDate(isoDate: string): () => void {
+  const RealDate = Date;
+  class MockDate extends RealDate {
+    constructor(value?: string | number) {
+      super(arguments.length > 0 ? (value ?? Number.NaN) : isoDate);
+    }
+
+    static override now(): number {
+      return new RealDate(isoDate).getTime();
+    }
+  }
+  Object.setPrototypeOf(MockDate, RealDate);
+  globalThis.Date = MockDate as DateConstructor;
+
+  return () => {
+    globalThis.Date = RealDate;
   };
 }
