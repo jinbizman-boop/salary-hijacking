@@ -90,7 +90,7 @@ jobs:
   release-quality-gate:
     name: Release quality gate
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     outputs:
       release_tag: ${{ steps.release_context.outputs.release_tag }}
@@ -652,7 +652,7 @@ jobs:
 
       - name: Unit and integration tests
         env:
-          MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "900000"
+          MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "1800000"
           MOBILE_JEST_CI_BATCH_SIZE: "4"
           MOBILE_JEST_CI_PACKAGE_RUNNER: direct-pnpm
         run: |

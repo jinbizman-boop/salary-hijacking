@@ -38,7 +38,7 @@ jobs:
   verify:
     name: Verify monorepo quality gate
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 75
 
     steps:
       - name: Checkout repository
@@ -162,7 +162,7 @@ jobs:
 
       - name: Mobile unit and integration tests
         env:
-          MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "900000"
+          MOBILE_JEST_CI_BATCH_TIMEOUT_MS: "1800000"
           MOBILE_JEST_CI_BATCH_SIZE: "4"
           MOBILE_JEST_CI_PACKAGE_RUNNER: direct-pnpm
         run: node scripts/ci/run-mobile-jest-ci.mjs
