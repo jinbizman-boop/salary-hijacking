@@ -160,8 +160,9 @@ function resolveJestRunner(jestArgs) {
     process.env.MOBILE_JEST_CI_PACKAGE_RUNNER === "direct-pnpm";
   if (useDirectPnpm) {
     return {
-      command: "pnpm",
+      command: "corepack",
       args: [
+        "pnpm",
         "--filter",
         "@salary-hijacking/mobile",
         "exec",
