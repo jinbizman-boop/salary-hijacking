@@ -156,7 +156,7 @@ test("CI runner uses the installed mobile Jest binary for Plan batches before pa
   assert.match(source, /command: "corepack"/u);
 });
 
-test("GitHub mobile test workflows run mobile Jest in one force-exit pass", () => {
+test("GitHub mobile test workflows run mobile Jest through the bounded CI runner", () => {
   for (const workflow of [
     "../../.github/workflows/ci.yml",
     "../../.github/workflows/release.yml",
@@ -164,10 +164,10 @@ test("GitHub mobile test workflows run mobile Jest in one force-exit pass", () =
   ]) {
     const source = fs.readFileSync(new URL(workflow, import.meta.url), "utf8");
 
-    assert.match(
+    assert.match(source, /node scripts\/ci\/run-mobile-jest-ci\.mjs/u);
+    assert.doesNotMatch(
       source,
       /pnpm --dir apps\/mobile exec jest --runInBand --forceExit/u,
     );
-    assert.doesNotMatch(source, /node scripts\/ci\/run-mobile-jest-ci\.mjs/u);
   }
 });
