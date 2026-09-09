@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-09-09T02:23:25.008Z",
-  "source": "Current 9b4a0197 same-RC split QA APK evidence. arm64-v8a and x86_64 builds share source, bundle, signer, version, package, and static Expo Router startup proof. Galaxy final runtime is PENDING_USER_RETURN.",
+  "observedAt": "2026-09-09T17:04:50.342Z",
+  "source": "Current 6aa24e6e same-RC split QA APK evidence. arm64-v8a and x86_64 builds share source, bundle, signer, version, package, and static Expo Router startup proof. Galaxy final runtime is PENDING_USER_RETURN.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -17,11 +17,11 @@
     "debugApkDownloadsPath": "",
     "debugApkArtifactMirrorPath": "",
     "debugApkBuildType": "qaRelease-split-same-rc",
-    "debugApkBuildLog": "artifacts/github/current-head-9b4a0197",
+    "debugApkBuildLog": "artifacts/github/final-rc-6aa24e6e",
     "downloadVerified": false,
     "downloadVerificationEvidence": "release/evidence/checksums.txt",
-    "latestSourcePackagedHead": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
-    "latestSourcePackagedApkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+    "latestSourcePackagedHead": "6aa24e6ececa9faea8cef6828de2bcb9eb51a6ae",
+    "latestSourcePackagedApkSha256": "965CEFCD3F7BFC8AE61FB88282EC9559FD2335EDF85E7D02EA042CA07AFD0F20",
     "latestSourceChangesPackaged": true,
     "latestSourceGitStatusSha256": "",
     "emulatorInstallVerified": false,
@@ -39,7 +39,7 @@
     "physicalPhoneBlocker": "PENDING_USER_RETURN",
     "phoneTargetDebugApkBuilt": true,
     "phoneTargetDebugApkSigned": true,
-    "phoneTargetDebugApkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
+    "phoneTargetDebugApkSha256": "965CEFCD3F7BFC8AE61FB88282EC9559FD2335EDF85E7D02EA042CA07AFD0F20",
     "phoneTargetDebugApkLocalPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
     "phoneTargetDebugApkDownloadVerified": true,
     "phoneTargetDebugApkAbis": [
@@ -50,10 +50,10 @@
       "lib/arm64-v8a/libexpo-modules-core.so"
     ]
   },
-  "latestStaticApkInspection": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
+  "latestStaticApkInspection": "artifacts/github/final-rc-6aa24e6e/arm64/evidence/apk-static-inspection.local.json",
   "latestStaticApkInspectionPass": true,
-  "latestStaticApkInspectionRunLog": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
-  "latestStaticApkSignerVerifyLog": "artifacts/github/current-head-9b4a0197/arm64/evidence/build-info.json",
+  "latestStaticApkInspectionRunLog": "artifacts/github/final-rc-6aa24e6e/arm64/evidence/apk-static-inspection.local.json",
+  "latestStaticApkSignerVerifyLog": "artifacts/github/final-rc-6aa24e6e/arm64/evidence/build-info.json",
   "privacy": {
     "previewSecretsRedacted": true,
     "embeddedCredentialsPresent": false,
@@ -69,23 +69,20 @@
     "containsSecretValues": false
   },
   "nextEvidenceRequired": [
-    "Install exact 9b4a0197 arm64 Final RC on Galaxy SM-S921N when the user returns.",
-    "Session Restore 5/5 on Galaxy Final RC.",
-    "Navigation/Back matrix on Galaxy Final RC.",
+    "Install exact 6aa24e6e arm64 Final RC on Galaxy SM-S921N when device-less blockers are closed.",
+    "FCM foreground/background/tap/deeplink on Galaxy Final RC.",
     "Google/Kakao/Naver Android runtime on Galaxy Final RC.",
-    "AdMob 5 placements runtime on Galaxy Final RC.",
-    "FCM full chain on Galaxy Final RC.",
     "PERF-010~014 on Galaxy Final RC.",
-    "D013 physical evidence and D026 final same-RC chain."
+    "D013 remaining physical evidence and D026 final same-RC chain."
   ],
   "latestStaticApkInspectionSummary": {
     "schemaVersion": 1,
-    "generatedAt": "2026-09-08T16:39:42.196Z",
+    "generatedAt": "2026-09-09T17:03:43.424Z",
     "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
     "apkPath": "LOCAL_ARTIFACT_PATH_REDACTED_SHA256_VERIFIED",
-    "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
-    "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
-    "bundleBytes": 3021968,
+    "apkSha256": "965CEFCD3F7BFC8AE61FB88282EC9559FD2335EDF85E7D02EA042CA07AFD0F20",
+    "bundleSha256": "19CF9D9D02683F53C7E793739CB03C6EFC2790A271BBE2F134D288D912901DD2",
+    "bundleBytes": 3022764,
     "hasBundle": true,
     "expectedAbis": [
       "arm64-v8a"
@@ -334,12 +331,12 @@
   },
   "sameRcQaApks": {
     "schemaVersion": 1,
-    "sourceGitCommit": "9b4a019748abf3b8b8702f1e8577e706b88ee63a",
-    "sourceFingerprint": "D789EBF05A693E1E24B0AB823E95ED40D249336AEA00D2ADEBA00075EC55318D",
-    "x86RunId": "CURRENT_HEAD_9B4A0197_X86_64_QA_ARTIFACT",
-    "x86ArtifactId": "LOCAL_ARTIFACT_MIRROR_SHA256_VERIFIED",
-    "arm64RunId": "CURRENT_HEAD_9B4A0197_ARM64_QA_ARTIFACT",
-    "arm64ArtifactId": "LOCAL_ARTIFACT_MIRROR_SHA256_VERIFIED",
+    "sourceGitCommit": "6aa24e6ececa9faea8cef6828de2bcb9eb51a6ae",
+    "sourceFingerprint": "6717C89D72D98F967E28E1D406F647EFD29DFDEAC9578315E8622C196DCAD326",
+    "x86RunId": "34375086211",
+    "x86ArtifactId": "10114047684",
+    "arm64RunId": "34375089691",
+    "arm64ArtifactId": "10114024721",
     "splitBuildVerified": true,
     "splitSigned": true,
     "downloadVerified": true,
@@ -348,23 +345,23 @@
     "sameRcBundle": true,
     "sameRcSigner": true,
     "sameRcVersion": true,
-    "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
+    "bundleSha256": "19CF9D9D02683F53C7E793739CB03C6EFC2790A271BBE2F134D288D912901DD2",
     "signerSha256": "D76C56791836B692D704D911F8B1802589B2C420340ABD31249B3D87A87C63D3",
     "physicalRuntimeStatus": "PENDING_DEVICE_RETURN",
     "emulatorRuntimeStatus": "NOT_REQUIRED_ANDROID_ONLY_GALAXY_FINAL_AUTHORITY",
     "arm64": {
       "abi": "arm64-v8a",
       "apkPath": "LOCAL_ARM64_APK_PATH_REDACTED_SHA256_VERIFIED",
-      "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
-      "staticInspectionPath": "artifacts/github/current-head-9b4a0197/arm64/evidence/apk-static-inspection.local.json",
+      "apkSha256": "965CEFCD3F7BFC8AE61FB88282EC9559FD2335EDF85E7D02EA042CA07AFD0F20",
+      "staticInspectionPath": "artifacts/github/final-rc-6aa24e6e/arm64/evidence/apk-static-inspection.local.json",
       "staticInspectionSummary": {
         "schemaVersion": 1,
-        "generatedAt": "2026-09-08T16:39:42.196Z",
+        "generatedAt": "2026-09-09T17:03:43.424Z",
         "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
         "apkPath": "LOCAL_ARTIFACT_PATH_REDACTED_SHA256_VERIFIED",
-        "apkSha256": "E36B412A768220E6C5AB77152638DF3A691AD83126D12470549981DE2F26670D",
-        "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
-        "bundleBytes": 3021968,
+        "apkSha256": "965CEFCD3F7BFC8AE61FB88282EC9559FD2335EDF85E7D02EA042CA07AFD0F20",
+        "bundleSha256": "19CF9D9D02683F53C7E793739CB03C6EFC2790A271BBE2F134D288D912901DD2",
+        "bundleBytes": 3022764,
         "hasBundle": true,
         "expectedAbis": [
           "arm64-v8a"
@@ -615,16 +612,16 @@
     "x86_64": {
       "abi": "x86_64",
       "apkPath": "LOCAL_X86_64_APK_PATH_REDACTED_SHA256_VERIFIED",
-      "apkSha256": "C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76",
-      "staticInspectionPath": "artifacts/github/current-head-9b4a0197/x86_64/evidence/apk-static-inspection.local.json",
+      "apkSha256": "DEA8A722D7C44468F0343FCA4740F9D07C108B936C5B3FD9A9915DFC8841E134",
+      "staticInspectionPath": "artifacts/github/final-rc-6aa24e6e/x86_64/evidence/apk-static-inspection.local.json",
       "staticInspectionSummary": {
         "schemaVersion": 1,
-        "generatedAt": "2026-09-08T16:39:43.304Z",
+        "generatedAt": "2026-09-09T17:03:44.811Z",
         "purpose": "Static inspection for release-like Expo Router startup proof when no physical phone is attached. This does not replace physical logcat QA.",
         "apkPath": "LOCAL_ARTIFACT_PATH_REDACTED_SHA256_VERIFIED",
-        "apkSha256": "C3242E8C35E52EB98EF08CC084DFC3311C3FFA274796B8BDC4C89E1240816B76",
-        "bundleSha256": "76AF0BB4139CBC8B091C7A3F9864D151486D5DD13AC1FB7514F98F68679FA9F4",
-        "bundleBytes": 3021968,
+        "apkSha256": "DEA8A722D7C44468F0343FCA4740F9D07C108B936C5B3FD9A9915DFC8841E134",
+        "bundleSha256": "19CF9D9D02683F53C7E793739CB03C6EFC2790A271BBE2F134D288D912901DD2",
+        "bundleBytes": 3022764,
         "hasBundle": true,
         "expectedAbis": [
           "x86_64"
