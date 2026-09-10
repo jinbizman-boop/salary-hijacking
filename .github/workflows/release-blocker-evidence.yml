@@ -851,11 +851,7 @@ jobs:
             grep -Eiq "used its Android builds from the Free plan|reset in .* days|eas billing:subscribe" ../../release/eas-production-build.stderr.txt
           then
             set +e
-            pnpm dlx eas-cli@23.2.0 build \
-              --platform android \
-              --profile production \
-              --local \
-              --non-interactive \
+            node scripts/expo-local-android-production-build.mjs \
               --output ../../release-artifacts/mobile/salary-hijacking-production-final.aab \
               > ../../release/eas-production-local-build.stdout.txt \
               2> ../../release/eas-production-local-build.stderr.txt

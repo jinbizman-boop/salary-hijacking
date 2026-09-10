@@ -354,7 +354,7 @@ describe("mobile Detox E2E contract", () => {
     expect(workflow).not.toContain("sync_env_var ADMOB_IOS_APP_ID");
     expect(workflow).toContain("admobIosAppIdRequired: false");
     expect(workflow).toContain("easFreePlanQuotaBlocked");
-    expect(workflow).toContain("--local");
+    expect(workflow).toContain("scripts/expo-local-android-production-build.mjs");
     expect(workflow).toContain("eas-local-fallback-after-remote-quota");
     expect(workflow).toContain("buildObjectKeyHashes");
     expect(workflow).toContain("keyHash: hash(nextPath)");
