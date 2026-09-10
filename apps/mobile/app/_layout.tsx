@@ -503,6 +503,8 @@ export default function MobileRootLayout(): unknown {
           "secure-session",
         )
       ) {
+        markRootPerfOnce("startup.p7.session_validation_complete", "cached");
+        markRootPerfOnce("startup.p8.readiness_decision_complete", "cached");
         setState((prev: RootState) => ({
           ...prev,
           payload: cachedAuthenticatedPayload(cachedSession),
@@ -532,6 +534,15 @@ export default function MobileRootLayout(): unknown {
       }));
     } catch (error) {
       if (error instanceof RootAuthExpiredError) {
+        markRootPerfOnce(
+          "startup.p7.session_validation_complete",
+          "auth-expired",
+        );
+        markRootPerfOnce(
+          "startup.p8.readiness_decision_complete",
+          "auth-expired",
+        );
+        markRootPerfOnce("startup.p9.destination_resolved", "auth-expired");
         setState((prev: RootState) => ({
           ...prev,
           payload: { ...prev.payload, session: fallbackSession },
@@ -547,6 +558,12 @@ export default function MobileRootLayout(): unknown {
       }
       const cached = await readCachedSessionStatus();
       const cachedStatus = offlineStatusFromCachedSession(cached, isPublic);
+      markRootPerfOnce("startup.p7.session_validation_complete", "offline");
+      markRootPerfOnce(
+        "startup.p8.readiness_decision_complete",
+        cachedStatus,
+      );
+      markRootPerfOnce("startup.p9.destination_resolved", cachedStatus);
       setState((prev: RootState) => ({
         ...prev,
         payload: { ...prev.payload, session: cached },

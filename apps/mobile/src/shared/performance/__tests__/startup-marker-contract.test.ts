@@ -49,6 +49,27 @@ describe("release startup performance marker contract", () => {
     }
   });
 
+  it("emits validation and readiness markers before cached-session route resolution", () => {
+    const rootLayoutSource = source("app/_layout.tsx");
+    const secureSessionIndex = rootLayoutSource.indexOf(
+      'canUseCachedAuthenticatedLaunch(\n          cachedSession,\n          currentRouteKey,\n          "secure-session",',
+    );
+    const cachedValidationIndex = rootLayoutSource.indexOf(
+      'markRootPerfOnce("startup.p7.session_validation_complete", "cached")',
+    );
+    const cachedReadinessIndex = rootLayoutSource.indexOf(
+      'markRootPerfOnce("startup.p8.readiness_decision_complete", "cached")',
+    );
+    const cachedReadyStateIndex = rootLayoutSource.indexOf(
+      "payload: cachedAuthenticatedPayload(cachedSession)",
+    );
+
+    expect(secureSessionIndex).toBeGreaterThanOrEqual(0);
+    expect(cachedValidationIndex).toBeGreaterThan(secureSessionIndex);
+    expect(cachedReadinessIndex).toBeGreaterThan(cachedValidationIndex);
+    expect(cachedReadyStateIndex).toBeGreaterThan(cachedReadinessIndex);
+  });
+
   it("emits canonical Android Activity startup markers before JS handoff", () => {
     const mainActivitySource = source(
       "android/app/src/main/java/com/salaryhijacking/mobile/MainActivity.kt",
