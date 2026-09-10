@@ -15,6 +15,7 @@ import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    markStartupPerf("startup.n1.application_on_create_entry")
     markStartupPerf("startup.n2.activity_on_create_entry")
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.

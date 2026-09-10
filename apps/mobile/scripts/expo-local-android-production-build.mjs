@@ -211,6 +211,12 @@ const ensureMainActivityReleasePerfMarkers = ({ mobileRootDir }) => {
     "import com.facebook.react.ReactRootView",
   );
 
+  if (!nextSource.includes("startup.n1.application_on_create_entry")) {
+    nextSource = nextSource.replace(
+      /(override\s+fun\s+onCreate\s*\([^)]*\)\s*\{\s*\r?\n)/u,
+      '$1    markStartupPerf("startup.n1.application_on_create_entry")\n',
+    );
+  }
   if (!nextSource.includes("startup.n2.activity_on_create_entry")) {
     nextSource = nextSource.replace(
       /(override\s+fun\s+onCreate\s*\([^)]*\)\s*\{\s*\r?\n)/u,
