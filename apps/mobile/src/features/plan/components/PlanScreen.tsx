@@ -2,6 +2,7 @@ import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import * as SecureStore from "expo-secure-store";
 import {
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -215,6 +216,22 @@ export function PlanScreen({
       mounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "android" || openSection === null) return undefined;
+
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        setOpenSection(null);
+        setEditingId(null);
+        setDraft({ amount: "", category: "", content: "", day: "" });
+        return true;
+      },
+    );
+
+    return () => subscription.remove();
+  }, [openSection]);
 
   function sync(next: ReturnType<typeof getPayrollReminderState>): void {
     setState(next);
