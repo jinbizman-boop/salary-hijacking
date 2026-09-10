@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "observedAt": "2026-09-10T17:21:16.394Z",
-  "source": "Generated from no-secret Android production AAB proof for current Final RC candidate 09e5aafe. Raw EAS tokens, store credentials, artifact URLs or paths, private keys, reviewer passwords, provider payloads, and logs are not stored.",
+  "observedAt": "2026-09-10T18:41:22.6703471Z",
+  "source": "Generated from no-secret Android production AAB proof for current Final RC candidate ace00475. Raw EAS tokens, store credentials, artifact URLs or paths, private keys, reviewer passwords, provider payloads, and logs are not stored.",
   "secretsRedacted": true,
   "containsSecretValues": false,
   "appIdentity": {
@@ -15,13 +15,26 @@
     "productionBuildVerified": true,
     "productionBuildProfile": "production",
     "productionArtifactType": "aab",
-    "productionBuildGitCommit": "09e5aafe3fb18d7d118f7faec4d61bd7cac3b906",
-    "productionArtifactSha256": "9F6EA3BF1DC489AA52AF385C774091694D204AA82FA486F43C7D6A30B124E6AC",
+    "productionBuildGitCommit": "ace00475aa8bcbf0c52e7eae93edde27000f336f",
+    "productionArtifactSha256": "339D370B3BC0947E622C57E76B3B998D930683FDBC469463475A5297ECC6B7AE",
+    "productionArtifactBytes": 33840417,
+    "productionBuildMode": "eas-local-fallback-after-remote-quota",
+    "productionPreflight": {
+      "requiredProductionBuildSecretsPresent": true,
+      "expoTokenPresent": true,
+      "easProjectIdPresent": true,
+      "easProjectIdValidUuid": true,
+      "admobAndroidAppIdPresent": true,
+      "admobIosAppIdRequired": false,
+      "googleServicesJsonPrepared": true,
+      "googleServicesJsonValid": true,
+      "googleServicesAndroidPackageMatched": true
+    },
     "storeSubmitDryRunVerified": true,
     "storeSubmitEvidenceType": "google-play-console-ready",
     "nativeE2eVerified": true,
-    "nativeE2eConfiguration": "android-galaxy-final-rc-pending-user-return-with-same-rc-static-proof",
-    "note": "Android production AAB proof is linked to no-secret final-rc-09e5aafe artifact evidence for 09e5aafe3fb18d7d118f7faec4d61bd7cac3b906. Google Play console-ready release files and Android native evidence are recorded without storing EAS tokens, store credentials, artifact URLs, artifact paths, signing keys, reviewer passwords, provider payloads, or logs. Galaxy final runtime remains PENDING_USER_RETURN."
+    "nativeE2eConfiguration": "android-galaxy-final-rc-current-ace00475-with-same-rc-static-proof-and-partial-physical-evidence",
+    "note": "Android production AAB proof is linked to no-secret final-rc-ace00475 artifact evidence for ace00475aa8bcbf0c52e7eae93edde27000f336f. Galaxy final runtime is partially complete; FCM dispatch and Social Auth physical remain pending safe/user interaction boundaries."
   },
   "ios": {
     "productionBuildVerified": false,
