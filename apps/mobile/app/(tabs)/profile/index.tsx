@@ -21,8 +21,8 @@ const PROFILE_WITHDRAWAL_REQUEST_ENDPOINT =
 const AUTH_LOGOUT_ENDPOINT = "/api/v1/auth/logout";
 
 const profileMenuRoutes: Readonly<Record<ProfileMenuKey, string>> = {
-  PROFILE: "/profile/account",
-  ACCOUNT_SECURITY: "/profile/settings",
+  PROFILE: "/profile/settings",
+  ACCOUNT_SECURITY: "/profile/account",
   MY_POSTS: "/profile/community",
   MY_LEVEL: "/profile/level",
   NOTIFICATION_SETTINGS: "/profile/notifications",
