@@ -604,10 +604,20 @@ export const ensureLocalMetroEntryFile = ({
 }) => {
   const entryFilePath = path.join(mobileRootDir, "index.android.js");
   const normalizedEntry = normalizeAndroidEntry(androidEntry);
+  const releasePerfRouterEntry = `/* global require */
+require("react-native-gesture-handler");
+
+const timestampMs = Math.round(Date.now());
+console.info(
+  \`[SH_RELEASE_PERF] marker=startup.p3.js_bundle_start t=\${timestampMs} route=bootstrap\`,
+);
+
+require("expo-router/entry");
+`;
   const source =
     normalizedEntry === "direct"
       ? 'import "./src/android-direct-entry";\n'
-      : 'import "react-native-gesture-handler";\nimport "expo-router/entry";\n';
+      : releasePerfRouterEntry;
   if (!fs.existsSync(entryFilePath)) {
     fs.writeFileSync(entryFilePath, source, "utf8");
     return;
@@ -1886,6 +1896,89 @@ const patchAndroidPostSplashWindowBackground = ({ mobileRootDir }) => {
   }
 };
 
+const ensureKotlinImport = (source, importLine) => {
+  if (source.includes(importLine)) return source;
+  if (/^import\s+/mu.test(source)) {
+    return source.replace(/(^import\s+[^\r\n]+\r?\n)/mu, `$1${importLine}\n`);
+  }
+  return source.replace(/^package\s+[^\r\n]+\r?\n/mu, `$&\n${importLine}\n`);
+};
+
+const ensureMainActivityReleasePerfMarkers = ({ mobileRootDir }) => {
+  const mainActivityPath = path.join(
+    mobileRootDir,
+    "android",
+    "app",
+    "src",
+    "main",
+    "java",
+    "com",
+    "salaryhijacking",
+    "mobile",
+    "MainActivity.kt",
+  );
+  if (!fs.existsSync(mainActivityPath)) return;
+
+  const source = fs.readFileSync(mainActivityPath, "utf8");
+  let nextSource = source;
+  nextSource = ensureKotlinImport(nextSource, "import android.os.SystemClock");
+  nextSource = ensureKotlinImport(nextSource, "import android.util.Log");
+  nextSource = ensureKotlinImport(
+    nextSource,
+    "import com.facebook.react.ReactRootView",
+  );
+
+  if (!nextSource.includes("startup.n2.activity_on_create_entry")) {
+    nextSource = nextSource.replace(
+      /(override\s+fun\s+onCreate\s*\([^)]*\)\s*\{\s*\r?\n)/u,
+      '$1    markStartupPerf("startup.n2.activity_on_create_entry")\n',
+    );
+  }
+  if (!nextSource.includes("startup.n3.activity_super_on_create_complete")) {
+    nextSource = nextSource.replace(
+      /^(\s*super\.onCreate\([^)]*\)\s*)$/mu,
+      '$1\n    markStartupPerf("startup.n3.activity_super_on_create_complete")',
+    );
+  }
+  if (
+    nextSource.includes("override fun createRootView()") &&
+    !nextSource.includes("startup.n4.react_root_view_create_start")
+  ) {
+    nextSource = nextSource.replace(
+      /(override\s+fun\s+createRootView\(\):\s*ReactRootView\s*\{\s*\r?\n)/u,
+      '$1              markStartupPerf("startup.n4.react_root_view_create_start")\n',
+    );
+  }
+  if (
+    nextSource.includes("override fun createRootView()") &&
+    !nextSource.includes("startup.n5.native_first_frame_ready")
+  ) {
+    nextSource = nextSource.replace(
+      /(setBackgroundResource\(R\.drawable\.ic_launcher_background\)\s*)/u,
+      '$1\n                markStartupPerf("startup.n5.native_first_frame_ready")',
+    );
+  }
+  if (!nextSource.includes("private fun markStartupPerf(marker: String)")) {
+    nextSource = nextSource.replace(
+      /\n\}\s*$/u,
+      `
+
+  private fun markStartupPerf(marker: String) {
+    Log.i(
+      "SH_RELEASE_PERF",
+      "[SH_RELEASE_PERF] marker=$marker t=\${System.currentTimeMillis()} elapsed_ms=\${SystemClock.elapsedRealtime()} route=bootstrap",
+    )
+  }
+}
+`,
+    );
+  }
+
+  if (nextSource !== source) {
+    writeGeneratedFileAtomic(mainActivityPath, nextSource);
+  }
+};
+
 const patchAndroidDebugDeveloperSupport = ({ mobileRootDir }) => {
   const mainApplicationPath = path.join(
     mobileRootDir,
@@ -3004,6 +3097,7 @@ export const runExpoLocalAndroidDebugBuild = ({
   ensureAndroidManifestBackupDisabled({ mobileRootDir });
   patchAndroidExpoEntrypoints({ mobileRootDir });
   patchAndroidPostSplashWindowBackground({ mobileRootDir });
+  ensureMainActivityReleasePerfMarkers({ mobileRootDir });
   patchAndroidDebugDeveloperSupport({ mobileRootDir });
   ensureAndroidDebugNdkAbiFilters({ architecture, mobileRootDir });
   ensureAndroidDebugQaApplicationConfig({ mobileRootDir });

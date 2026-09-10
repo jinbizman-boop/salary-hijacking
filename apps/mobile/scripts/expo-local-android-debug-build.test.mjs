@@ -2346,9 +2346,13 @@ test("direct phone APK build restores the repository Android entry to safe start
   });
 
   assert.equal(result.status, 0, result.failures.join("\n"));
-  assert.equal(
+  assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
+    /startup\.p3\.js_bundle_start/u,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
   );
   assert.equal(
     fs.readFileSync(
@@ -2778,9 +2782,13 @@ test("Android debug bundle entry can switch between router and direct startup ro
   const rootDir = makeWorkspace();
 
   ensureLocalMetroEntryFile({ mobileRootDir: rootDir });
-  assert.equal(
+  assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
+    /startup\.p3\.js_bundle_start/u,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
   );
 
   ensureLocalMetroEntryFile({ androidEntry: "direct", mobileRootDir: rootDir });
@@ -2790,9 +2798,13 @@ test("Android debug bundle entry can switch between router and direct startup ro
   );
 
   ensureLocalMetroEntryFile({ androidEntry: "router", mobileRootDir: rootDir });
-  assert.equal(
+  assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
+    /startup\.p3\.js_bundle_start/u,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
   );
 
   assert.throws(
@@ -2826,9 +2838,13 @@ test("Android debug bundle entry is restored to router entry on termination sign
 
   handlers.get("SIGTERM")();
 
-  assert.equal(
+  assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
+    /startup\.p3\.js_bundle_start/u,
+  );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
   );
   assert.deepEqual(exits, [143]);
 });
@@ -2938,11 +2954,23 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
           ),
           [
             "package com.salaryhijacking.mobile",
+            "import android.os.Bundle",
+            "import com.facebook.react.ReactActivity",
+            "import com.facebook.react.ReactActivityDelegate",
+            "import com.facebook.react.defaults.DefaultReactActivityDelegate",
             "import expo.modules.splashscreen.SplashScreenManager",
-            "class MainActivity {",
-            "  fun onCreate() {",
+            "class MainActivity : ReactActivity() {",
+            "  override fun onCreate(savedInstanceState: Bundle?) {",
             "    // setTheme(R.style.AppTheme);",
             "    SplashScreenManager.registerOnActivity(this)",
+            "    super.onCreate(null)",
+            "  }",
+            "  override fun createReactActivityDelegate(): ReactActivityDelegate {",
+            "    return object : DefaultReactActivityDelegate(",
+            "      this,",
+            "      mainComponentName,",
+            "      false",
+            "    ) {}",
             "  }",
             "}",
             "",
@@ -3297,10 +3325,32 @@ test("runner executes prebuild before Gradle and copies a verified APK to the De
     ),
     /debuggableVariant\.set\(true\)/,
   );
-  assert.equal(
+  assert.match(
     fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
-    'import "react-native-gesture-handler";\nimport "expo-router/entry";\n',
+    /startup\.p3\.js_bundle_start/u,
   );
+  assert.match(
+    fs.readFileSync(path.join(rootDir, "index.android.js"), "utf8"),
+    /expo-router\/entry/u,
+  );
+  const mainActivitySource = fs.readFileSync(
+    path.join(
+      rootDir,
+      "android",
+      "app",
+      "src",
+      "main",
+      "java",
+      "com",
+      "salaryhijacking",
+      "mobile",
+      "MainActivity.kt",
+    ),
+    "utf8",
+  );
+  assert.match(mainActivitySource, /SH_RELEASE_PERF/u);
+  assert.match(mainActivitySource, /startup\.n2\.activity_on_create_entry/u);
+  assert.match(mainActivitySource, /startup\.n5\.native_first_frame_ready/u);
   assert.equal(
     fs.readFileSync(
       path.join(rootDir, "apps", "mobile", "index.android.js"),

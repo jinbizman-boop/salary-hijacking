@@ -186,6 +186,44 @@ test("production AAB runner copies only a verified AAB archive to the release pa
           path.join(rootDir, "android", "app", "build.gradle"),
           `react {\n    entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())\n}\n`,
         );
+        touch(
+          path.join(
+            rootDir,
+            "android",
+            "app",
+            "src",
+            "main",
+            "java",
+            "com",
+            "salaryhijacking",
+            "mobile",
+            "MainActivity.kt",
+          ),
+          [
+            "package com.salaryhijacking.mobile",
+            "",
+            "import android.os.Bundle",
+            "import com.facebook.react.ReactActivity",
+            "import com.facebook.react.ReactActivityDelegate",
+            "import com.facebook.react.defaults.DefaultReactActivityDelegate",
+            "",
+            "class MainActivity : ReactActivity() {",
+            "  override fun onCreate(savedInstanceState: Bundle?) {",
+            "    setTheme(R.style.AppTheme);",
+            "    super.onCreate(null)",
+            "  }",
+            "",
+            "  override fun createReactActivityDelegate(): ReactActivityDelegate {",
+            "    return object : DefaultReactActivityDelegate(",
+            "      this,",
+            "      mainComponentName,",
+            "      false",
+            "    ) {}",
+            "  }",
+            "}",
+            "",
+          ].join("\n"),
+        );
       }
       if (
         commandName.includes("gradlew") &&
@@ -256,8 +294,28 @@ test("production AAB runner copies only a verified AAB archive to the release pa
   );
   assert.match(androidEntry, /react-native-gesture-handler/u);
   assert.match(androidEntry, /expo-router\/entry/u);
+  assert.match(androidEntry, /SH_RELEASE_PERF/u);
+  assert.match(androidEntry, /startup\.p3\.js_bundle_start/u);
   assert.doesNotMatch(androidEntry, /android-safe-entry/u);
   assert.doesNotMatch(androidEntry, /android-direct-entry/u);
+  const mainActivitySource = fs.readFileSync(
+    path.join(
+      rootDir,
+      "android",
+      "app",
+      "src",
+      "main",
+      "java",
+      "com",
+      "salaryhijacking",
+      "mobile",
+      "MainActivity.kt",
+    ),
+    "utf8",
+  );
+  assert.match(mainActivitySource, /SH_RELEASE_PERF/u);
+  assert.match(mainActivitySource, /startup\.n2\.activity_on_create_entry/u);
+  assert.match(mainActivitySource, /startup\.n5\.native_first_frame_ready/u);
   assert.match(
     fs.readFileSync(
       path.join(rootDir, "android", "app", "build.gradle"),
