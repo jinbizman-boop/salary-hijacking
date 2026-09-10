@@ -24,6 +24,7 @@ describe("release startup performance marker contract", () => {
   ] as const;
 
   const nativeStartupMarkers = [
+    "startup.n1.application_on_create_entry",
     "startup.n2.activity_on_create_entry",
     "startup.n3.activity_super_on_create_complete",
     "startup.n4.react_root_view_create_start",

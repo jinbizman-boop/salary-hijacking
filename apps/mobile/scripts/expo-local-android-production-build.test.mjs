@@ -314,6 +314,7 @@ test("production AAB runner copies only a verified AAB archive to the release pa
     "utf8",
   );
   assert.match(mainActivitySource, /SH_RELEASE_PERF/u);
+  assert.match(mainActivitySource, /startup\.n1\.application_on_create_entry/u);
   assert.match(mainActivitySource, /startup\.n2\.activity_on_create_entry/u);
   assert.match(mainActivitySource, /startup\.n5\.native_first_frame_ready/u);
   assert.match(

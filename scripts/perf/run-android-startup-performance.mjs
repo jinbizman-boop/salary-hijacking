@@ -209,11 +209,11 @@ for (let run = 1; run <= runs; run += 1) {
     points,
     segProcessActivityMs: delta(points.n0, points.n2),
     segNativeActivityInitMs: delta(points.n2, points.n3),
-    segRnRootCreateMs: delta(points.n3, points.n5),
+    segRnRootCreateMs: delta(points.n4, points.n5),
     segNativeToJsMs: delta(points.n5, points.p3),
     segJsStartMs: delta(points.p3, points.p4),
     segAuthBootstrapMs: delta(points.p5, points.p8),
-    segRouteDecisionMs: delta(points.p8, points.p11),
+    segRouteDecisionMs: delta(points.p5, points.p9),
     segSplashHideMs:
       Number.isFinite(points.p11) && Number.isFinite(points.p13)
         ? Math.max(0, points.p13 - points.p11)
@@ -283,6 +283,17 @@ const markerCoverage = Object.fromEntries(
     rows.filter((row) => row.markersSeen.includes(marker)).length,
   ]),
 );
+const missingCanonicalMarkers = markerNames.filter(
+  (marker) => markerCoverage[marker] !== rows.length,
+);
+const markerCoverageGate =
+  rows.length > 0 && missingCanonicalMarkers.length === 0 ? "PASS" : "FAIL";
+const negativeSegmentKeys = segmentKeys
+  .filter((key) => !key.startsWith("total") && key !== "activityTotalMs")
+  .filter((key) =>
+    rows.some((row) => Number.isFinite(row[key]) && row[key] < 0),
+  );
+const negativeSegmentGate = negativeSegmentKeys.length === 0 ? "PASS" : "FAIL";
 
 const hostFreeRamValues = rows.flatMap((row) => [
   row.hostBefore.freeRamGb,
@@ -308,13 +319,16 @@ const summary = {
       "ActivityTaskManager launch TotalTime completion, before JS splash-hide promise completion in this harness.",
     n0SemanticBoundary:
       "External harness marker emitted in the same device shell immediately before am start -W.",
-    p13SemanticBoundary:
-      "JS SplashScreen.hideAsync promise resolved.",
+    p13SemanticBoundary: "JS SplashScreen.hideAsync promise resolved.",
     stableRouteVisibleBoundary:
       "Run-level max(P11 route_first_commit, P13 splash_hide_completed); this is the first point where both the route has committed and the native splash is no longer covering it.",
   },
   rows,
   markerCoverage,
+  missingCanonicalMarkers,
+  markerCoverageGate,
+  negativeSegmentKeys,
+  negativeSegmentGate,
   hostSummary: {
     freeRamP50Gb: percentile(hostFreeRamValues, 50),
     freeRamMinGb: Math.min(...hostFreeRamValues),
@@ -334,15 +348,20 @@ console.log(
     {
       outputPath,
       markerCoverage,
+      markerCoverageGate,
+      missingCanonicalMarkers,
+      negativeSegmentGate,
+      negativeSegmentKeys,
       startupOverallP95DominantSegment:
         summary.startupOverallP95DominantSegment,
-      startupOverallP95DominantP95Ms:
-        summary.startupOverallP95DominantP95Ms,
+      startupOverallP95DominantP95Ms: summary.startupOverallP95DominantP95Ms,
       activityTotalP95Ms: segmentSummary.activityTotalMs.p95Ms,
-      stableRouteVisibleP95Ms:
-        segmentSummary.totalStableRouteVisibleMs.p95Ms,
+      stableRouteVisibleP95Ms: segmentSummary.totalStableRouteVisibleMs.p95Ms,
     },
     null,
     2,
   ),
 );
+if (markerCoverageGate !== "PASS" || negativeSegmentGate !== "PASS") {
+  process.exitCode = 1;
+}
