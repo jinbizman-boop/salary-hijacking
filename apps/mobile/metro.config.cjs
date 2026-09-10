@@ -35,6 +35,14 @@ function appendUniquePath(paths, nextPath) {
   return [...paths, nextPath];
 }
 
+function realpathIfExists(filePath) {
+  try {
+    return fs.realpathSync.native(filePath);
+  } catch {
+    return null;
+  }
+}
+
 function shouldAppendCanonicalNodeModules(
   aliasWorkspaceRoot,
   canonicalWorkspaceRoot,
@@ -49,6 +57,11 @@ function shouldAppendCanonicalNodeModules(
 
 const workspaceNodeModules = path.join(workspaceRoot, "node_modules");
 const realWorkspaceNodeModules = path.join(realWorkspaceRoot, "node_modules");
+const actualWorkspaceNodeModules =
+  realpathIfExists(workspaceNodeModules) ?? workspaceNodeModules;
+const projectNodeModules = path.join(projectRoot, "node_modules");
+const actualProjectNodeModules =
+  realpathIfExists(projectNodeModules) ?? projectNodeModules;
 const shouldUseCanonicalWorkspaceRoot =
   !substAliasRoot ||
   shouldAppendCanonicalNodeModules(
@@ -88,6 +101,22 @@ if (shouldUseCanonicalWorkspaceRoot) {
   config.resolver.nodeModulesPaths = appendUniquePath(
     config.resolver.nodeModulesPaths ?? [],
     realWorkspaceNodeModules,
+  );
+  config.watchFolders = appendUniquePath(
+    config.watchFolders ?? [],
+    actualWorkspaceNodeModules,
+  );
+  config.resolver.nodeModulesPaths = appendUniquePath(
+    config.resolver.nodeModulesPaths ?? [],
+    actualWorkspaceNodeModules,
+  );
+  config.watchFolders = appendUniquePath(
+    config.watchFolders ?? [],
+    actualProjectNodeModules,
+  );
+  config.resolver.nodeModulesPaths = appendUniquePath(
+    config.resolver.nodeModulesPaths ?? [],
+    actualProjectNodeModules,
   );
 }
 
@@ -587,13 +616,24 @@ function tryResolveRelativeWorkspaceSource(
   const workspaceRoots = [workspaceRoot, realWorkspaceRoot].map((root) =>
     normalizeForPrefix(root),
   );
+  const workspaceDependencyRoots = [
+    workspaceNodeModules,
+    realWorkspaceNodeModules,
+    actualWorkspaceNodeModules,
+    actualProjectNodeModules,
+  ].map((root) => normalizeForPrefix(root));
   const isInsideWorkspace = workspaceRoots.some(
     (root) =>
       normalizedCandidateBase === root ||
       normalizedCandidateBase.startsWith(`${root}${path.sep}`),
   );
+  const isInsideWorkspaceDependency = workspaceDependencyRoots.some(
+    (root) =>
+      normalizedCandidateBase === root ||
+      normalizedCandidateBase.startsWith(`${root}${path.sep}`),
+  );
 
-  if (!isInsideWorkspace) return null;
+  if (!isInsideWorkspace && !isInsideWorkspaceDependency) return null;
 
   const sourceExts = config.resolver.sourceExts ?? [];
   const sourceExtSet = new Set(sourceExts.map((extension) => `.${extension}`));
@@ -746,7 +786,14 @@ function tryResolveAndroidReleaseRuntimeStub(moduleName, platform) {
 function isWorkspaceAbsoluteModuleRequest(moduleName) {
   if (!path.isAbsolute(moduleName)) return false;
   const normalizedModuleName = normalizeForPrefix(moduleName);
-  return [workspaceRoot, realWorkspaceRoot].some((root) => {
+  return [
+    workspaceRoot,
+    realWorkspaceRoot,
+    workspaceNodeModules,
+    realWorkspaceNodeModules,
+    actualWorkspaceNodeModules,
+    actualProjectNodeModules,
+  ].some((root) => {
     const normalizedRoot = normalizeForPrefix(root);
     return (
       normalizedModuleName === normalizedRoot ||

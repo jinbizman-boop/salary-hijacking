@@ -2,6 +2,17 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 describe("notifications screen wiring", () => {
+  it("wires native FCM notification responses into root routing", () => {
+    const rootLayoutSource = readFileSync(
+      join(__dirname, "..", "..", "..", "..", "app", "_layout.tsx"),
+      "utf8",
+    );
+
+    expect(rootLayoutSource).toContain("createNativeNotificationRouting");
+    expect(rootLayoutSource).toContain("expo-notifications");
+    expect(rootLayoutSource).toContain("replayLastResponse");
+  });
+
   it("uses the Stitch notification layout inside the Salary tab stack with tappable deep links", () => {
     const routeSource = readFileSync(
       join(

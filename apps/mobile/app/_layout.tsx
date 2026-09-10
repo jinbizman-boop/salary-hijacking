@@ -7,6 +7,7 @@ import {
   subscribeAuthSessionChange,
   type AuthSessionChangeEvent,
 } from "../src/features/auth/navigation";
+import { createNativeNotificationRouting } from "../src/features/notifications/native-notification-routing";
 import {
   componentColors,
   salaryHijackingDesignSystem,
@@ -96,6 +97,15 @@ type SplashScreenRuntime = Readonly<{
 }>;
 type LinkingRuntime = Readonly<{
   getInitialURL: () => Promise<string | null>;
+}>;
+type NativeNotificationsRuntime = Readonly<{
+  setNotificationHandler?: (handler: {
+    readonly handleNotification: () => Promise<Readonly<Record<string, boolean>>>;
+  }) => void;
+  addNotificationResponseReceivedListener?: (
+    listener: (response: unknown) => void,
+  ) => { readonly remove?: () => void };
+  getLastNotificationResponseAsync?: () => Promise<unknown>;
 }>;
 type SecureStoreRuntime = Readonly<{
   getItemAsync: (key: string) => Promise<string | null>;
@@ -599,6 +609,14 @@ export default function MobileRootLayout(): unknown {
       }),
     [applyAuthenticatedSessionChange, bootstrap],
   );
+
+  ReactRuntimeRef.useEffect((): (() => void) => {
+    const notifications = loadNativeNotificationsRuntime();
+    if (!notifications) return (): void => undefined;
+    const routing = createNativeNotificationRouting({ notifications, router });
+    void routing.replayLastResponse();
+    return routing.remove;
+  }, [router]);
 
   ReactRuntimeRef.useEffect((): (() => void) => {
     const timer = setTimeout(
@@ -1559,6 +1577,17 @@ function getSplashScreenRuntime(): SplashScreenRuntime {
   return cachedSplashScreenRuntime;
 }
 
+function loadNativeNotificationsRuntime(): NativeNotificationsRuntime | null {
+  if (NativeRuntimeRef.Platform.OS === "web") return null;
+  const mod = loadModule(
+    "expo-notifications",
+  ) as Partial<NativeNotificationsRuntime>;
+  return typeof mod.setNotificationHandler === "function" ||
+    typeof mod.addNotificationResponseReceivedListener === "function"
+    ? mod
+    : null;
+}
+
 async function attachRootMobileBearerToken(headers: Headers): Promise<Headers> {
   const token = normalizeBearerToken(
     await getSecureStoreRuntime().getItemAsync(MOBILE_ACCESS_TOKEN_KEY),
@@ -1730,6 +1759,8 @@ function loadModule(moduleName: string): unknown {
         return require("expo-splash-screen");
       case "expo-linking":
         return require("expo-linking");
+      case "expo-notifications":
+        return require("expo-notifications");
       case "expo-constants":
         return require("expo-constants");
       case "expo-secure-store":

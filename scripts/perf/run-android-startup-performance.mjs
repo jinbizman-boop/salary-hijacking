@@ -2,6 +2,12 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { freemem, loadavg, platform, totalmem } from "node:os";
 import { join, resolve } from "node:path";
+import {
+  evaluateStartupPerformanceRows,
+  markerNames,
+  percentile,
+  segmentKeys,
+} from "./startup-performance-evaluator.mjs";
 
 const args = new Map();
 for (let index = 2; index < process.argv.length; index += 2) {
@@ -20,11 +26,15 @@ const outDir = resolve(
 );
 const runs = Number(args.get("--runs") ?? "20");
 const installMode = args.get("--install") ?? "reinstall";
+const dataResetMode = args.get("--data-reset") ?? "clear";
 const launchTimeoutMs = Number(args.get("--launch-timeout-ms") ?? "15000");
 const sampleLabel = args.get("--sample-label") ?? "startup";
 
 if (!apkPath || !existsSync(apkPath)) {
   throw new Error(`APK not found: ${apkPath ?? "<missing>"}`);
+}
+if (!["clear", "preserve"].includes(dataResetMode)) {
+  throw new Error(`Unsupported --data-reset value: ${dataResetMode}`);
 }
 mkdirSync(outDir, { recursive: true });
 
@@ -38,50 +48,6 @@ function adb(adbArgs, options = {}) {
 
 function sleep(ms) {
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
-}
-
-function percentile(values, percentileValue) {
-  const sorted = values
-    .filter((value) => Number.isFinite(value))
-    .slice()
-    .sort((left, right) => left - right);
-  if (sorted.length === 0) return null;
-  const index = Math.min(
-    sorted.length - 1,
-    Math.ceil((percentileValue / 100) * sorted.length) - 1,
-  );
-  return sorted[index];
-}
-
-function summarize(rows, key) {
-  const values = rows
-    .map((row) => row[key])
-    .filter((value) => Number.isFinite(value));
-  if (values.length === 0) {
-    return {
-      runs: rows.length,
-      samples: 0,
-      minMs: null,
-      p50Ms: null,
-      p90Ms: null,
-      p95Ms: null,
-      maxMs: null,
-      stdevMs: null,
-    };
-  }
-  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const variance =
-    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
-  return {
-    runs: rows.length,
-    samples: values.length,
-    minMs: Math.round(Math.min(...values)),
-    p50Ms: Math.round(percentile(values, 50)),
-    p90Ms: Math.round(percentile(values, 90)),
-    p95Ms: Math.round(percentile(values, 95)),
-    maxMs: Math.round(Math.max(...values)),
-    stdevMs: Math.round(Math.sqrt(variance)),
-  };
 }
 
 function parseEpochMs(line) {
@@ -167,7 +133,9 @@ const rows = [];
 for (let run = 1; run <= runs; run += 1) {
   const runId = `${sampleLabel}-${String(run).padStart(2, "0")}`;
   const hostBefore = hostPrecheck();
-  adb(["shell", "pm", "clear", packageName], { stdio: "ignore" });
+  if (dataResetMode === "clear") {
+    adb(["shell", "pm", "clear", packageName], { stdio: "ignore" });
+  }
   adb(["shell", "am", "force-stop", packageName], { stdio: "ignore" });
   adb(["logcat", "-c"], { stdio: "ignore" });
   sleep(350);
@@ -234,67 +202,23 @@ for (let run = 1; run <= runs; run += 1) {
   );
 }
 
-const segmentKeys = [
-  "segProcessActivityMs",
-  "segNativeActivityInitMs",
-  "segRnRootCreateMs",
-  "segNativeToJsMs",
-  "segJsStartMs",
-  "segAuthBootstrapMs",
-  "segRouteDecisionMs",
-  "segSplashHideMs",
-  "segInteractiveMs",
-  "totalSplashRawP13Ms",
-  "totalStableRouteVisibleMs",
-  "totalInteractiveMs",
-  "activityTotalMs",
-];
-const segmentSummary = Object.fromEntries(
-  segmentKeys.map((key) => [key, summarize(rows, key)]),
-);
+const evaluation = evaluateStartupPerformanceRows(rows);
+const {
+  invalidRunCount,
+  markerCoverage,
+  markerCoverageGate,
+  missingCanonicalMarkers,
+  negativeSegmentGate,
+  negativeSegmentKeys,
+  segmentSummary,
+  validRunCount,
+  validRunCountGate,
+} = evaluation;
 const candidates = segmentKeys
   .filter((key) => !key.startsWith("total") && key !== "activityTotalMs")
   .map((key) => [key, segmentSummary[key].p95Ms])
   .filter((entry) => Number.isFinite(entry[1]))
   .sort((left, right) => right[1] - left[1]);
-const markerNames = [
-  "startup.n0.launch_requested",
-  "startup.n1.application_on_create_entry",
-  "startup.n2.activity_on_create_entry",
-  "startup.n3.activity_super_on_create_complete",
-  "startup.n4.react_root_view_create_start",
-  "startup.n5.native_first_frame_ready",
-  "startup.p3.js_bundle_start",
-  "startup.p4.root_module_evaluated",
-  "startup.p5.auth_bootstrap_start",
-  "startup.p6.secure_storage_read_complete",
-  "startup.p7.session_validation_complete",
-  "startup.p8.readiness_decision_complete",
-  "startup.p9.destination_resolved",
-  "startup.p10.route_component_mount_start",
-  "startup.p11.route_first_commit",
-  "startup.p12.splash_hide_requested",
-  "startup.p13.splash_hide_completed",
-  "startup.p14.route_interactive",
-];
-const markerCoverage = Object.fromEntries(
-  markerNames.map((marker) => [
-    marker,
-    rows.filter((row) => row.markersSeen.includes(marker)).length,
-  ]),
-);
-const missingCanonicalMarkers = markerNames.filter(
-  (marker) => markerCoverage[marker] !== rows.length,
-);
-const markerCoverageGate =
-  rows.length > 0 && missingCanonicalMarkers.length === 0 ? "PASS" : "FAIL";
-const negativeSegmentKeys = segmentKeys
-  .filter((key) => !key.startsWith("total") && key !== "activityTotalMs")
-  .filter((key) =>
-    rows.some((row) => Number.isFinite(row[key]) && row[key] < 0),
-  );
-const negativeSegmentGate = negativeSegmentKeys.length === 0 ? "PASS" : "FAIL";
-
 const hostFreeRamValues = rows.flatMap((row) => [
   row.hostBefore.freeRamGb,
   row.hostAfter.freeRamGb,
@@ -310,6 +234,7 @@ const summary = {
   apkSha,
   packageName,
   activityName,
+  dataResetMode,
   markerClockSynchronizationMethod:
     "MARKER_DEVICE_WALL_CLOCK_T_FIELD_FOR_CROSS_NATIVE_JS_SEGMENTS; LOGCAT_EPOCH_RETAINED_AS_COLLECTION_CLOCK",
   measurementBoundaries: {
@@ -329,6 +254,9 @@ const summary = {
   markerCoverageGate,
   negativeSegmentKeys,
   negativeSegmentGate,
+  invalidRunCount,
+  validRunCount,
+  validRunCountGate,
   hostSummary: {
     freeRamP50Gb: percentile(hostFreeRamValues, 50),
     freeRamMinGb: Math.min(...hostFreeRamValues),
@@ -352,6 +280,10 @@ console.log(
       missingCanonicalMarkers,
       negativeSegmentGate,
       negativeSegmentKeys,
+      dataResetMode,
+      invalidRunCount,
+      validRunCount,
+      validRunCountGate,
       startupOverallP95DominantSegment:
         summary.startupOverallP95DominantSegment,
       startupOverallP95DominantP95Ms: summary.startupOverallP95DominantP95Ms,
@@ -362,6 +294,10 @@ console.log(
     2,
   ),
 );
-if (markerCoverageGate !== "PASS" || negativeSegmentGate !== "PASS") {
+if (
+  markerCoverageGate !== "PASS" ||
+  negativeSegmentGate !== "PASS" ||
+  validRunCountGate !== "PASS"
+) {
   process.exitCode = 1;
 }
