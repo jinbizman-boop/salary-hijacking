@@ -1,4 +1,5 @@
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
+import { BackHandler, Platform } from "react-native";
 
 import type { VariableExpenseRecord } from "../../budget/types";
 import type {
@@ -49,6 +50,44 @@ describe("plan reference screen interactions", () => {
 
     expect(screen.getByText("ChatGPT Plus")).toBeTruthy();
     expect(screen.getAllByText(/33,000/u).length).toBeGreaterThan(0);
+  });
+
+  it("keeps Android Back inside the Plan tab when section settings are open", () => {
+    const originalPlatform = Platform.OS;
+    Object.defineProperty(Platform, "OS", {
+      configurable: true,
+      value: "android",
+    });
+    const backHandlers: Array<() => boolean | null | undefined> = [];
+    const remove = jest.fn();
+    const addEventListener = jest
+      .spyOn(BackHandler, "addEventListener")
+      .mockImplementation((_event, handler) => {
+        backHandlers.push(handler);
+        return { remove };
+      });
+
+    try {
+      const screen = render(<PlanScreen />);
+
+      fireEvent.press(screen.getByTestId("payroll-section-settings-button"));
+      expect(screen.getByLabelText("payroll-payday-input")).toBeTruthy();
+
+      expect(backHandlers.length).toBeGreaterThan(0);
+      let handled = false;
+      act(() => {
+        handled = backHandlers.at(-1)?.() ?? false;
+      });
+      expect(handled).toBe(true);
+      expect(screen.queryByLabelText("payroll-payday-input")).toBeNull();
+      expect(screen.getByText("급여 계획")).toBeTruthy();
+    } finally {
+      addEventListener.mockRestore();
+      Object.defineProperty(Platform, "OS", {
+        configurable: true,
+        value: originalPlatform,
+      });
+    }
   });
 
   it("submits new fixed expense rows to the server-authoritative plan API before local preview sync", async () => {
