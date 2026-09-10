@@ -323,8 +323,8 @@ describe("mobile app screen API and route contracts", () => {
 
     expect(profileSource).toContain("ProfileScreen");
     expect(profileSource).toContain("/api/v1/users/me/my-page-summary");
-    expect(profileSource).toContain('PROFILE: "/profile/account"');
-    expect(profileSource).toContain('ACCOUNT_SECURITY: "/profile/settings"');
+    expect(profileSource).toContain('PROFILE: "/profile/settings"');
+    expect(profileSource).toContain('ACCOUNT_SECURITY: "/profile/account"');
     expect(profileSource).toContain(
       'NOTIFICATION_SETTINGS: "/profile/notifications"',
     );

@@ -67,4 +67,11 @@ describe("MY tab navigation architecture", () => {
     expect(profileIndexSource).toContain("router.push(profileMenuRoutes[key]");
     expect(allProfileSources).not.toMatch(/router\.replace\(\s*["']\/salary/u);
   });
+
+  it("routes MY profile and account/security menu items to their matching detail screens", () => {
+    const profileIndexSource = readFileSync(join(profileTabRoot, "index.tsx"), "utf8");
+
+    expect(profileIndexSource).toContain('PROFILE: "/profile/settings"');
+    expect(profileIndexSource).toContain('ACCOUNT_SECURITY: "/profile/account"');
+  });
 });
