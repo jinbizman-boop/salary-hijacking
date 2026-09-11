@@ -59,6 +59,7 @@ test('production worker lets official static web routes serve from apps/web asse
   const runWorkerFirstBlock = wrangler.match(/run_worker_first\s*=\s*\[(?<routes>[\s\S]*?)\]/u)?.groups?.routes ?? '';
   const workerFirstRoutes = Array.from(runWorkerFirstBlock.matchAll(/"([^"]+)"/gu)).map((match) => match[1]);
 
+  assert.match(wrangler, /\[assets\][\s\S]*\bbinding\s*=\s*"ASSETS"/u);
   assert.equal(workerFirstRoutes.includes('/api/*'), true);
   assert.equal(workerFirstRoutes.includes('/.well-known/assetlinks.json'), true);
   for (const staticRoute of ['/', '/privacy', '/support', '/terms']) {
