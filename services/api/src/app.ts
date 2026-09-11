@@ -241,6 +241,13 @@ const LEGAL_PAGE_PATHS = [
   "/contact",
   "/affiliate",
 ] as const;
+const OFFICIAL_STATIC_WEB_ASSET_PATHS = new Set([
+  "/",
+  "/index.html",
+  "/privacy",
+  "/support",
+  "/terms",
+]);
 const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
 const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
 const LEGAL_LAST_UPDATED = "2026-07-01";
@@ -249,6 +256,10 @@ const PUBLIC_HTML_CSP =
 
 interface PublicInquiryQueue {
   readonly send: (message: unknown) => Promise<void>;
+}
+
+interface StaticAssetsBinding {
+  readonly fetch: (request: Request) => Response | Promise<Response>;
 }
 
 export interface WaitUntilCapable {
@@ -655,6 +666,40 @@ function requestIdFromHeaders(request: Request): string {
   if (direct && /^[a-zA-Z0-9._:\-/]{8,160}$/.test(direct))
     return direct.slice(0, 160);
   return globalThis.crypto?.randomUUID?.() ?? `req_${Date.now().toString(36)}`;
+}
+
+function staticAssetsBinding(env: unknown): StaticAssetsBinding | null {
+  if (!env || typeof env !== "object") return null;
+  const assets = (env as Record<string, unknown>).ASSETS;
+  if (!assets || typeof assets !== "object") return null;
+  const fetch = (assets as { readonly fetch?: unknown }).fetch;
+  return typeof fetch === "function"
+    ? { fetch: fetch.bind(assets) as StaticAssetsBinding["fetch"] }
+    : null;
+}
+
+function shouldServeOfficialStaticWebAsset(
+  path: string,
+  method: string,
+): boolean {
+  return (
+    (method === "GET" || method === "HEAD") &&
+    OFFICIAL_STATIC_WEB_ASSET_PATHS.has(path)
+  );
+}
+
+async function officialStaticWebAssetResponse<TEnv>(
+  request: Request,
+  env: TEnv,
+  path: string,
+  method: string,
+): Promise<Response | null> {
+  if (!shouldServeOfficialStaticWebAsset(path, method)) return null;
+  const assets = staticAssetsBinding(env);
+  if (!assets) return null;
+
+  const response = await assets.fetch(request);
+  return response.status === 404 ? null : response;
 }
 
 function json(
@@ -2154,6 +2199,14 @@ async function coreDispatch<TEnv>(
   };
 
   assertSafePath(path);
+
+  const officialStaticAsset = await officialStaticWebAssetResponse(
+    request,
+    env,
+    path,
+    method,
+  );
+  if (officialStaticAsset) return officialStaticAsset;
 
   if (path === "/" && (method === "GET" || method === "HEAD")) {
     return publicLandingResponse(runtime);

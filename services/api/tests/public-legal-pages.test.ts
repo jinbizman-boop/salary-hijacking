@@ -6,6 +6,40 @@ const testContext = Object.freeze({
 });
 
 describe("public legal pages", () => {
+  it("delegates official static web routes to the Workers assets binding when available", async () => {
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+    });
+    const requestedPaths: string[] = [];
+    const assets = {
+      fetch: async (request: Request) => {
+        requestedPaths.push(new URL(request.url).pathname);
+        return new Response("official static web asset", {
+          headers: { "content-type": "text/html; charset=utf-8" },
+          status: 200,
+        });
+      },
+    };
+
+    for (const path of ["/", "/privacy", "/support", "/terms"]) {
+      const response = await app.fetch(
+        new Request(`https://salaryhijacking.com${path}`),
+        {
+          APP_ENV: "production",
+          APP_PUBLIC_BASE_URL: "https://salaryhijacking.com",
+          ASSETS: assets,
+        },
+        testContext,
+      );
+
+      expect(response.status).toBe(200);
+      expect(await response.text()).toBe("official static web asset");
+    }
+
+    expect(requestedPaths).toEqual(["/", "/privacy", "/support", "/terms"]);
+  });
+
   it("serves the public app landing page for the store marketing URL", async () => {
     const app = createApp({
       enableAuditGate: false,
