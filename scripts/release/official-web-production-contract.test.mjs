@@ -7,6 +7,7 @@ import test from 'node:test';
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const webRoot = path.join(repoRoot, 'apps', 'web');
 const indexPath = path.join(webRoot, 'index.html');
+const headersPath = path.join(webRoot, '_headers');
 const siteJsPath = path.join(webRoot, 'assets', 'js', 'site.js');
 const logoPath = path.join(webRoot, 'assets', 'images', 'brand', 'salary-hijacking-logo.png');
 const apiWranglerPath = path.join(repoRoot, 'services', 'api', 'wrangler.toml');
@@ -65,6 +66,25 @@ test('production worker lets official static web routes serve from apps/web asse
   for (const staticRoute of ['/', '/privacy', '/support', '/terms']) {
     assert.equal(workerFirstRoutes.includes(staticRoute), false, `${staticRoute} must be served by apps/web assets`);
   }
+});
+
+test('official static web assets carry production security headers', async () => {
+  const headers = await read(headersPath);
+  for (const requiredHeader of [
+    'Content-Security-Policy:',
+    'Strict-Transport-Security:',
+    'X-Content-Type-Options: nosniff',
+    'Referrer-Policy:',
+    'Permissions-Policy:',
+    'Cross-Origin-Opener-Policy: same-origin',
+    'Cross-Origin-Resource-Policy: same-site',
+  ]) {
+    assert.match(headers, new RegExp(requiredHeader.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'u'));
+  }
+  assert.match(headers, /frame-ancestors 'none'/u);
+  assert.match(headers, /object-src 'none'/u);
+  assert.match(headers, /base-uri 'self'/u);
+  assert.match(headers, /form-action 'self'/u);
 });
 
 test('official web does not contain stale prototype/local browser storage copy', async () => {
