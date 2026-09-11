@@ -248,6 +248,12 @@ const OFFICIAL_STATIC_WEB_ASSET_PATHS = new Set([
   "/support",
   "/terms",
 ]);
+const SERVICE_TOKEN_SHA256_ENV_KEYS = [
+  "API_INTERNAL_SERVICE_TOKEN_SHA256",
+  "AUTH_SERVICE_TOKEN_SHA256",
+  "SERVICE_TOKEN_SHA256",
+  "OPERATION_WEBHOOK_TOKEN_SHA256",
+] as const;
 const LEGAL_SUPPORT_EMAIL = "support@salaryhijacking.com";
 const LEGAL_PRIVACY_EMAIL = "privacy@salaryhijacking.com";
 const LEGAL_LAST_UPDATED = "2026-07-01";
@@ -700,6 +706,12 @@ async function officialStaticWebAssetResponse<TEnv>(
 
   const response = await assets.fetch(request);
   return response.status === 404 ? null : response;
+}
+
+function serviceTokenSha256Hashes<TEnv>(env: TEnv): readonly string[] {
+  return SERVICE_TOKEN_SHA256_ENV_KEYS.map((key) => envString(env, key)).filter(
+    (value): value is string => Boolean(value),
+  );
 }
 
 function json(
@@ -2652,6 +2664,7 @@ function buildAuthOptions<TEnv>(
     jwtSecret: (env) =>
       envString(env, "JWT_SECRET") ?? envString(env, "AUTH_JWT_SECRET"),
     jwtPublicKeysByKid: parsePublicKeysByKid,
+    serviceTokenSha256Hashes,
     resolveSession: (principal, runtime, env) =>
       shouldUseNeonAuthRepository(env)
         ? dbSessionResolver(principal, runtime, env)

@@ -117,4 +117,37 @@ describe("release-test notification dispatch route", () => {
     });
     expect(serialized).not.toMatch(/fcm|ExponentPushToken|accessToken|refreshToken/i);
   });
+
+  it("accepts service-token hashes from runtime env bindings", async () => {
+    const repository = createRepository();
+    const app = createApp({
+      enableAuditGate: false,
+      enableRateLimit: false,
+      notificationsRoutesOptions: { repository },
+    });
+
+    const response = await app.fetch(
+      new Request(
+        "https://api.test/api/v1/internal/notifications/release-test-dispatch",
+        {
+          body: JSON.stringify({ appVersion: "1.0.0" }),
+          headers: {
+            "content-type": "application/json",
+            "x-service-token": "local-service-token",
+          },
+          method: "POST",
+        },
+      ),
+      {
+        API_INTERNAL_SERVICE_TOKEN_SHA256: serviceTokenHash("local-service-token"),
+        APP_ENV: "staging",
+      },
+      context,
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(response.status).toBe(200);
+    expect(repository.releaseTestDispatchLatestActiveDevice).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(body)).not.toMatch(/fcm|ExponentPushToken|accessToken|refreshToken/i);
+  });
 });
