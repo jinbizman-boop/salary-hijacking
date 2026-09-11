@@ -21,15 +21,9 @@ keep_vars = true
 [assets]
 directory = "../../apps/web"
 run_worker_first = [
-  "/",
-  "/privacy",
-  "/support",
-  "/terms",
   "/partners",
   "/contact",
   "/affiliate",
-  "/robots.txt",
-  "/sitemap.xml",
   "/.well-known/assetlinks.json",
   "/api/*",
 ]

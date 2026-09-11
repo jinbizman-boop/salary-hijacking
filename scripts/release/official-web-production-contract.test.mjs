@@ -9,6 +9,7 @@ const webRoot = path.join(repoRoot, 'apps', 'web');
 const indexPath = path.join(webRoot, 'index.html');
 const siteJsPath = path.join(webRoot, 'assets', 'js', 'site.js');
 const logoPath = path.join(webRoot, 'assets', 'images', 'brand', 'salary-hijacking-logo.png');
+const apiWranglerPath = path.join(repoRoot, 'services', 'api', 'wrangler.toml');
 const expectedOfficialLogoSha256 = '81942C431CED2CC524C193743D98041074C8104A1AC7A46D53DC48681BBF5D43';
 const policyPaths = [
   path.join(webRoot, 'privacy.html'),
@@ -51,6 +52,18 @@ async function sha256(pathname) {
 
 test('official web uses the approved brand logo asset', async () => {
   assert.equal(await sha256(logoPath), expectedOfficialLogoSha256);
+});
+
+test('production worker lets official static web routes serve from apps/web assets', async () => {
+  const wrangler = await read(apiWranglerPath);
+  const runWorkerFirstBlock = wrangler.match(/run_worker_first\s*=\s*\[(?<routes>[\s\S]*?)\]/u)?.groups?.routes ?? '';
+  const workerFirstRoutes = Array.from(runWorkerFirstBlock.matchAll(/"([^"]+)"/gu)).map((match) => match[1]);
+
+  assert.equal(workerFirstRoutes.includes('/api/*'), true);
+  assert.equal(workerFirstRoutes.includes('/.well-known/assetlinks.json'), true);
+  for (const staticRoute of ['/', '/privacy', '/support', '/terms']) {
+    assert.equal(workerFirstRoutes.includes(staticRoute), false, `${staticRoute} must be served by apps/web assets`);
+  }
 });
 
 test('official web does not contain stale prototype/local browser storage copy', async () => {
