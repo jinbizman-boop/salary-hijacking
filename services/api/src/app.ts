@@ -189,6 +189,7 @@ const REQUEST_ID_HEADER = "x-request-id";
 const MAX_ROUTE_PATH_LENGTH = 2_048;
 const MOBILE_BOOTSTRAP_PATH = `${API_PREFIX}/mobile/bootstrap`;
 const PUBLIC_SERVER_AUTHORITY_SMOKE_PATH = `${API_PREFIX}/public/server-authority-smoke`;
+const INTERNAL_RELEASE_TEST_NOTIFICATION_DISPATCH_PATH = `${API_PREFIX}/internal/notifications/release-test-dispatch`;
 const MOBILE_DEFAULT_ROUTE = "/salary";
 const BOOTSTRAP_ROLES = [
   "USER",
@@ -1841,6 +1842,99 @@ function publicServerAuthoritySmoke<TEnv>(runtime: AppRuntime<TEnv>): Response {
   });
 }
 
+async function releaseTestNotificationDispatch<TEnv>(
+  runtime: AppRuntime<TEnv>,
+  options: AppOptions<TEnv>,
+): Promise<Response> {
+  if (runtime.method !== "POST") {
+    return json(405, runtime, {
+      error: {
+        code: "METHOD_NOT_ALLOWED",
+        message: "Unsupported method for release test notification dispatch.",
+      },
+    });
+  }
+
+  const parsed = (await runtime.request.json().catch(() => ({}))) as unknown;
+  const body =
+    parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : {};
+  const appVersion =
+    typeof body.appVersion === "string" && body.appVersion.trim()
+      ? body.appVersion.trim().slice(0, 80)
+      : null;
+  const idempotencyKey =
+    headerText(runtime.request.headers, "x-idempotency-key") ??
+    `release-test-fcm:${runtime.requestId}`;
+  const repositoryOption =
+    options.notificationsRoutesOptions?.repository ??
+    ((routeEnv: TEnv) =>
+      shouldUseNeonNotificationsRepository(routeEnv)
+        ? createNeonNotificationsRepository<TEnv>()
+        : undefined);
+  const repository =
+    typeof repositoryOption === "function"
+      ? repositoryOption(runtime.env)
+      : repositoryOption;
+
+  if (!repository?.releaseTestDispatchLatestActiveDevice) {
+    return json(500, runtime, {
+      error: {
+        code: "NOTIFICATION_RELEASE_TEST_DISPATCH_UNAVAILABLE",
+        message: "Release test notification dispatch is unavailable.",
+      },
+    });
+  }
+
+  const data = await repository.releaseTestDispatchLatestActiveDevice(
+    {
+      type: "NOTICE",
+      title: "FCM physical release probe",
+      message: "Release notification test",
+      priority: "HIGH",
+      channels: ["PUSH"],
+      deeplink: "salaryhijacking://notifications",
+      scheduledAt: null,
+      expiresAt: null,
+      metadata: {
+        idempotencyKey,
+        releaseTest: true,
+        targetScreen: "notifications",
+        ...(appVersion ? { appVersion } : {}),
+      },
+    },
+    {
+      request: runtime.request,
+      env: runtime.env,
+      execution: runtime.context,
+      url: runtime.url,
+      path: runtime.path,
+      relativePath: "/release-test-dispatch",
+      method: runtime.method,
+      requestId: runtime.requestId,
+      now: runtime.now,
+      principal: {
+        userId: "00000000-0000-4000-8000-000000000000",
+        roles: ["SYSTEM"],
+        permissions: ["notification:write"],
+        policyId: "internal-release-test-dispatch",
+      },
+      repository,
+    },
+  );
+
+  return json(200, runtime, {
+    data: {
+      ...data,
+      releaseTestDispatch: true,
+      rawPushTokenExposed: false,
+      rawFinancialDataExposed: false,
+      rawPersonalDataExposed: false,
+    },
+  });
+}
+
 function headerText(headers: Headers, name: string): string | null {
   const value = headers.get(name)?.trim();
   return value ? value : null;
@@ -2172,6 +2266,10 @@ async function coreDispatch<TEnv>(
 
   if (path === `${API_PREFIX}/manifest` || path === "/manifest") {
     return json(200, runtime, { data: appManifest });
+  }
+
+  if (path === INTERNAL_RELEASE_TEST_NOTIFICATION_DISPATCH_PATH) {
+    return releaseTestNotificationDispatch(runtime, options);
   }
 
   const route = selectRoute(path);

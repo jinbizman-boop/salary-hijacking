@@ -210,6 +210,10 @@ export interface NotificationsRepository<TEnv = unknown> {
     input: NotificationCreateInput,
     runtime: NotificationsRouteRuntime<TEnv>,
   ): Promise<JsonRecord>;
+  releaseTestDispatchLatestActiveDevice?(
+    input: NotificationCreateInput,
+    runtime: NotificationsRouteRuntime<TEnv>,
+  ): Promise<JsonRecord>;
   previewRules(
     input: NotificationRulePreviewInput,
     runtime: NotificationsRouteRuntime<TEnv>,

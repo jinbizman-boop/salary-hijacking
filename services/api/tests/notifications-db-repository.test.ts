@@ -1102,4 +1102,151 @@ describe("Neon notifications repository", () => {
     expect(calls[0]?.sqlText).toContain("deleted_at = coalesce");
     expect(calls[0]?.sqlText).not.toContain("cancelled_at = coalesce");
   });
+
+  it("dispatches a release-test push to the latest active Android FCM device without exposing raw tokens", async () => {
+    const sendRuntime = createRuntime(
+      "/api/v1/internal/notifications/release-test-dispatch",
+      {
+        ...securityEnv,
+        APP_ENV: "staging",
+        NOTIFICATIONS_WORKER_URL: "https://notifications.test",
+        NOTIFICATIONS_SERVICE_TOKEN: "test-service-token",
+      },
+      "release-test-fcm-dispatch-request",
+    );
+    const tokenSecretRef = "notifications:push-token:fcm:release-test";
+    const encryptedToken = await encryptString(
+      "fcm_native_release_test_token_abcdef123456",
+      {
+        keyRing: createSecurityKeyRingFromEnv(securityEnv),
+        context: {
+          purpose: "notification.push-token",
+          dataClass: "device",
+          userId,
+          subjectId: tokenSecretRef,
+          fieldName: "pushToken",
+          runtime: "edge",
+        },
+        nowIso: sendRuntime.now.toISOString(),
+      },
+    );
+    const calls: Array<{
+      readonly operationName: string;
+      readonly params: readonly unknown[];
+    }> = [];
+    const fetcher = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            status: "SENT",
+            tokenHash: "hash-only",
+            provider: "FCM",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+    const repository = createNeonNotificationsRepository({
+      query: async (_sqlText, params, options) => {
+        calls.push({ operationName: options.operationName, params });
+        if (
+          options.operationName ===
+          "notifications.releaseTestLatestActiveFcmDevice"
+        ) {
+          return {
+            rows: [
+              {
+                user_id: userId,
+                app_version: "1.0.0",
+                eligible_device_count: 1,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        if (options.operationName === "notifications.create.dedupeLookup") {
+          return { rows: [], rowCount: 0 };
+        }
+        if (options.operationName === "notifications.listActivePushTokenSecrets") {
+          return {
+            rows: [
+              {
+                device_id: "33333333-3333-4333-8333-333333333333",
+                provider: "FCM",
+                push_token_id: "44444444-4444-4444-8444-444444444444",
+                token_ciphertext: encryptedToken,
+                token_hash: "hash-only",
+                token_secret_ref: tokenSecretRef,
+              },
+            ],
+            rowCount: 1,
+          };
+        }
+        return {
+          rows: [
+            notificationRow({
+              dedupe_key: "RELEASE_TEST_FCM:111",
+              dedupe_request_hash: String(params.at(-1)),
+              notification_id: notificationId,
+              type: "NOTICE",
+            }),
+          ],
+          rowCount: 1,
+        };
+      },
+    });
+
+    try {
+      const result = await repository.releaseTestDispatchLatestActiveDevice?.(
+        {
+          type: "NOTICE",
+          title: "FCM physical release probe",
+          message: "Release notification test",
+          priority: "HIGH",
+          channels: ["PUSH"],
+          deeplink: "salaryhijacking://notifications",
+          scheduledAt: null,
+          expiresAt: null,
+          metadata: {
+            appVersion: "1.0.0",
+            idempotencyKey: "RELEASE_TEST_FCM:111",
+          },
+        },
+        sendRuntime,
+      );
+
+      expect(result).toMatchObject({
+        attempted: true,
+        eligibleDeviceCount: 1,
+        selectedAppVersion: "1.0.0",
+        rawPushTokenExposed: false,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
+        pushDelivery: {
+          sentCount: 1,
+          failureCount: 0,
+        },
+      });
+      expect(fetcher).toHaveBeenCalledTimes(1);
+      const serialized = JSON.stringify(result);
+      expect(serialized).not.toContain("fcm_native_release_test_token");
+      expect(serialized).not.toContain("test-service-token");
+      expect(calls.map((call) => call.operationName)).toEqual(
+        expect.arrayContaining([
+          "notifications.releaseTestLatestActiveFcmDevice",
+          "notifications.listActivePushTokenSecrets",
+        ]),
+      );
+      expect(
+        calls.find(
+          (call) =>
+            call.operationName ===
+            "notifications.releaseTestLatestActiveFcmDevice",
+        )?.params,
+      ).toEqual(["1.0.0"]);
+    } finally {
+      fetcher.mockRestore();
+    }
+  });
 });

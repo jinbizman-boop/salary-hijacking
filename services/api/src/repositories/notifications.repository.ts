@@ -246,6 +246,21 @@ function notificationsServiceToken<TEnv>(env: TEnv): string | null {
   );
 }
 
+function runtimeEnvironment<TEnv>(env: TEnv): string {
+  return (
+    envText(env, "APP_ENV") ??
+    envText(env, "ENVIRONMENT") ??
+    envText(env, "NODE_ENV") ??
+    "production"
+  ).toLowerCase();
+}
+
+function releaseTestDispatchAllowed<TEnv>(env: TEnv): boolean {
+  const environment = runtimeEnvironment(env);
+  if (environment === "staging") return true;
+  return envText(env, "RELEASE_TEST_PUSH_DISPATCH_ENABLED") === "true";
+}
+
 function notificationWorkerType(type: NotificationType): string {
   if (type === "PAYMENT_DUE") return "FIXED_PAYMENT_DUE";
   if (type === "BUDGET_WARNING") return "BUDGET_REMAINING";
@@ -1774,6 +1789,85 @@ export function createNeonNotificationsRepository<TEnv = unknown>(
         notification,
         pushDelivery,
         dryRun: false,
+        ...privacyFlags(),
+      };
+    },
+    async releaseTestDispatchLatestActiveDevice(input, runtime) {
+      if (!releaseTestDispatchAllowed(runtime.env)) {
+        throw new NotificationRepositoryError(
+          403,
+          "NOTIFICATION_RELEASE_TEST_DISPATCH_DISABLED",
+          "Release test push dispatch is not enabled for this environment.",
+        );
+      }
+
+      const appVersion =
+        typeof input.metadata.appVersion === "string" &&
+        input.metadata.appVersion.trim()
+          ? input.metadata.appVersion.trim()
+          : null;
+      const result = await queryText(
+        repositoryQuery,
+        runtime,
+        "notifications.releaseTestLatestActiveFcmDevice",
+        `
+          select
+            user_id,
+            app_version,
+            count(*) over()::int as eligible_device_count
+          from public.notification_push_tokens
+          where status = 'ACTIVE'
+            and provider = 'FCM'
+            and platform = 'ANDROID'
+            and token_ciphertext is not null
+            and ($1::text is null or app_version = $1::text)
+          order by last_seen_at desc nulls last, created_at desc
+          limit 1
+        `,
+        [appVersion],
+      );
+      const selected = result.rows[0] ?? null;
+      const selectedUserId = toText(selected?.user_id);
+      if (!selectedUserId || !uuidPattern.test(selectedUserId)) {
+        return {
+          attempted: false,
+          reason: "NO_ACTIVE_RELEASE_TEST_ANDROID_FCM_DEVICE",
+          eligibleDeviceCount: 0,
+          rawPushTokenExposed: false,
+          rawFinancialDataExposed: false,
+        };
+      }
+
+      const dispatchRuntime: NotificationsRouteRuntime<TEnv> = {
+        ...runtime,
+        principal: {
+          userId: selectedUserId,
+          roles: ["USER"],
+          permissions: ["notification:read", "notification:write"],
+          policyId: "release-test-dispatch-selected-device",
+        },
+      };
+      const notification = await this.create(
+        { ...input, title: `[RELEASE TEST] ${input.title}` },
+        dispatchRuntime,
+      );
+      const pushDelivery = await dispatchPushToRegisteredDevices(
+        repositoryQuery,
+        dispatchRuntime,
+        input,
+        notification,
+      );
+      const delivery = sanitizeRecord(pushDelivery);
+      return {
+        attempted: true,
+        eligibleDeviceCount: toNumber(selected?.eligible_device_count),
+        selectedAppVersion: toText(selected?.app_version),
+        notificationCreated: notification.notificationId !== null,
+        notificationIdPresent: typeof notification.notificationId === "string",
+        pushDelivery: delivery,
+        rawPushTokenExposed: false,
+        rawFinancialDataExposed: false,
+        rawPersonalDataExposed: false,
         ...privacyFlags(),
       };
     },
