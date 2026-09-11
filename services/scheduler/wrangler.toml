@@ -15,7 +15,7 @@ compatibility_date = "2026-06-15"
 workers_dev = true
 minify = true
 upload_source_maps = true
-keep_vars = true
+keep_vars = false
 
 [observability]
 enabled = true
