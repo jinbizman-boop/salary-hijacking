@@ -264,7 +264,7 @@
               <div><span>문의 이메일</span><a href="mailto:support@salaryhijacking.com">support@salaryhijacking.com</a></div>
               <div><span>운영사</span><strong>진비즈 매니지먼트</strong></div>
             </div>
-            <p class="prototype-note">현재 파일은 정적 홈페이지 시안입니다. 아래 내용은 서버로 전송되지 않고 이 브라우저에만 임시 저장됩니다.</p>
+            <p class="consent-note">문의 내용은 운영 서버의 제휴 문의 접수 경로로 전송되며, 회신과 협업 검토 목적에 필요한 범위에서만 처리됩니다.</p>
           </div>
 
           <form class="inquiry-form" id="partnerInquiryForm" novalidate>
@@ -296,14 +296,15 @@
               <label for="inquiryType">문의 유형 <span aria-hidden="true">*</span></label>
               <select id="inquiryType" name="inquiryType" required>
                 <option value="">선택해주세요</option>
-                <option value="advertising">광고·캠페인</option>
+                <option value="campaign">광고·캠페인</option>
                 <option value="benefit">제휴 혜택</option>
                 <option value="content">LV UP 콘텐츠</option>
-                <option value="welfare">기업 복지·B2B</option>
-                <option value="other">기타 협업</option>
+                <option value="brand">브랜드 협업</option>
+                <option value="support">기타 협업·지원</option>
               </select>
               <small class="field-error" data-error-for="inquiryType"></small>
             </div>
+            <input type="text" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" hidden>
             <div class="field">
               <label for="inquiryMessage">제안 내용 <span aria-hidden="true">*</span></label>
               <textarea id="inquiryMessage" name="inquiryMessage" rows="6" required minlength="10" maxlength="2000" placeholder="제휴 목적, 제안 내용, 희망 일정 등을 자유롭게 작성해주세요."></textarea>
@@ -314,7 +315,7 @@
               <span>문의 처리를 위한 개인정보 수집·이용 안내를 확인하고 동의합니다. <a href="privacy.html">내용 보기</a></span>
             </label>
             <small class="field-error consent-error" data-error-for="privacyConsent"></small>
-            <button class="button button-submit" type="submit">제휴 문의 임시 저장</button>
+            <button class="button button-submit" type="submit">제휴 문의 접수</button>
             <div class="form-result" data-form-result role="status" aria-live="polite" hidden></div>
           </form>
         </div>
@@ -356,7 +357,7 @@
     </div>
     <div class="container footer-bottom">
       <p>© 2026 JinBiz Management. All rights reserved.</p>
-      <p>본 페이지는 급여납치 서비스 소개용 정적 홈페이지 시안입니다.</p>
+      <p>본 페이지는 급여납치 공식 서비스 안내와 제휴 문의 접수용 홈페이지입니다.</p>
     </div>
   </footer>
 

@@ -415,12 +415,12 @@ em { color: var(--green-600); font-style: normal; }
   box-shadow: var(--shadow-lg);
 }
 .inquiry-copy h2 { color: #fff; font-size: clamp(2rem, 3.1vw, 3.25rem); }
-.inquiry-copy > p:not(.eyebrow):not(.prototype-note) { margin-top: 24px; color: rgba(255,255,255,.68); }
+.inquiry-copy > p:not(.eyebrow):not(.consent-note) { margin-top: 24px; color: rgba(255,255,255,.68); }
 .inquiry-info { margin-top: 40px; display: flex; flex-direction: column; gap: 16px; }
 .inquiry-info div { padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,.12); }
 .inquiry-info span { display: block; color: rgba(255,255,255,.48); font-size: .72rem; font-weight: 800; }
 .inquiry-info a, .inquiry-info strong { display: block; margin-top: 5px; color: #fff; font-size: 1.02rem; }
-.prototype-note { margin: 34px 0 0; padding: 14px 16px; border: 1px solid rgba(255,216,77,.24); border-radius: 14px; color: rgba(255,255,255,.67); background: rgba(255,216,77,.08); font-size: .8rem; line-height: 1.58; }
+.consent-note { margin: 34px 0 0; padding: 14px 16px; border: 1px solid rgba(255,216,77,.24); border-radius: 14px; color: rgba(255,255,255,.67); background: rgba(255,216,77,.08); font-size: .8rem; line-height: 1.58; }
 .inquiry-form { padding: 34px; border-radius: 28px; color: var(--ink); background: #fff; box-shadow: 0 25px 65px rgba(0,0,0,.2); }
 .field-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .field { margin-bottom: 16px; }

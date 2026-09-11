@@ -1,7 +1,7 @@
 (function (globalScope) {
   'use strict';
 
-  const STORAGE_KEY = 'salaryHijackingPartnerInquiriesV1';
+  const INQUIRY_ENDPOINT = '/api/v1/public/partnership-inquiries';
   const FEATURE_CONTENT = {
     salary: {
       src: 'assets/images/screens/plan-home.webp',
@@ -94,53 +94,17 @@
     };
   }
 
-  function generateInquiryId(date = new Date(), randomValue = Math.random()) {
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const suffix = Math.floor(Math.max(0, Math.min(0.999999, Number(randomValue) || 0)) * 1000000)
-      .toString()
-      .padStart(6, '0');
-    return `SH-${yyyy}${mm}${dd}-${suffix}`;
-  }
-
-  function safeJSONParse(raw, fallback) {
-    try {
-      const parsed = JSON.parse(String(raw || ''));
-      return parsed == null ? fallback : parsed;
-    } catch (_error) {
-      return fallback;
-    }
-  }
-
-  function saveInquiry(storage, data, now = new Date()) {
-    const item = {
-      id: generateInquiryId(now),
-      ...data,
-      createdAt: now.toISOString(),
-      storageMode: 'browser-local-prototype',
+  function apiPayload(data, website = '') {
+    return {
+      company: data.companyName,
+      name: data.contactName,
+      email: data.contactEmail,
+      phone: data.contactPhone,
+      type: data.inquiryType,
+      message: data.inquiryMessage,
+      privacyConsent: data.privacyConsent,
+      website: normalizeText(website, 120),
     };
-    const current = safeJSONParse(storage.getItem(STORAGE_KEY), []);
-    const list = Array.isArray(current) ? current.slice(-19) : [];
-    list.push(item);
-    storage.setItem(STORAGE_KEY, JSON.stringify(list));
-    return item;
-  }
-
-  function getStorage() {
-    try {
-      const testKey = '__salary_hijacking_storage_test__';
-      globalScope.localStorage.setItem(testKey, '1');
-      globalScope.localStorage.removeItem(testKey);
-      return globalScope.localStorage;
-    } catch (_error) {
-      const memory = new Map();
-      return {
-        getItem(key) { return memory.has(key) ? memory.get(key) : null; },
-        setItem(key, value) { memory.set(key, String(value)); },
-        removeItem(key) { memory.delete(key); },
-      };
-    }
   }
 
   function showToast(message) {
@@ -281,7 +245,6 @@
     const message = form.elements.namedItem('inquiryMessage');
     const counter = form.querySelector('[data-message-count]');
     const resultBox = form.querySelector('[data-form-result]');
-    const storage = getStorage();
 
     const updateCount = () => {
       if (counter && message) counter.textContent = String(String(message.value || '').length);
@@ -295,7 +258,15 @@
       element.addEventListener('change', () => setFieldError(form, element.name, ''));
     });
 
-    form.addEventListener('submit', (event) => {
+    const setSubmitting = (submitting) => {
+      const submit = form.querySelector('[type="submit"]');
+      if (submit) {
+        submit.disabled = submitting;
+        submit.textContent = submitting ? '접수 중입니다' : '제휴 문의 접수';
+      }
+    };
+
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
       const values = Object.fromEntries(new FormData(form).entries());
       values.privacyConsent = Boolean(form.elements.namedItem('privacyConsent')?.checked);
@@ -309,29 +280,47 @@
         if (resultBox) {
           resultBox.hidden = false;
           resultBox.classList.add('is-error');
-          resultBox.textContent = '입력 내용을 확인해주세요. 표시된 항목을 수정하면 임시 저장할 수 있습니다.';
+          resultBox.textContent = '입력 내용을 확인해주세요. 표시된 항목을 수정하면 문의를 접수할 수 있습니다.';
         }
         showToast('문의 양식의 필수 항목을 확인해주세요.');
         return;
       }
 
+      setSubmitting(true);
       try {
-        const saved = saveInquiry(storage, validation.data);
+        const response = await fetch(INQUIRY_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(apiPayload(validation.data, form.elements.namedItem('website')?.value)),
+        });
+        const body = await response.json().catch(() => ({}));
+        const requestId = normalizeText(body?.data?.requestId, 80);
+        if (!response.ok || response.status !== 202 || body?.data?.accepted !== true) {
+          const code = normalizeText(body?.error?.code, 80);
+          throw new Error(code || 'PUBLIC_CONTACT_SUBMIT_FAILED');
+        }
         form.reset();
         updateCount();
         if (resultBox) {
           resultBox.hidden = false;
           resultBox.classList.remove('is-error');
-          resultBox.textContent = `문의 시안이 이 브라우저에 임시 저장되었습니다. 접수 예시번호는 ${saved.id}입니다. 실제 발송은 운영 API 연결 후 동작합니다.`;
+          resultBox.textContent = requestId
+            ? `문의가 정상적으로 접수되었습니다. 접수번호는 ${requestId}입니다.`
+            : '문의가 정상적으로 접수되었습니다.';
         }
-        showToast('제휴 문의 시안이 브라우저에 임시 저장되었습니다.');
+        showToast('문의가 정상적으로 접수되었습니다.');
       } catch (_error) {
         if (resultBox) {
           resultBox.hidden = false;
           resultBox.classList.add('is-error');
-          resultBox.textContent = '브라우저 저장소를 사용할 수 없어 내용을 저장하지 못했습니다. support@salaryhijacking.com으로 문의해주세요.';
+          resultBox.textContent = '현재 문의 접수 경로를 사용할 수 없습니다. 잠시 후 다시 시도하거나 support@salaryhijacking.com으로 문의해주세요.';
         }
-        showToast('임시 저장에 실패했습니다.');
+        showToast('문의 접수에 실패했습니다.');
+      } finally {
+        setSubmitting(false);
       }
     });
   }
@@ -360,13 +349,11 @@
   }
 
   const api = {
-    STORAGE_KEY,
+    INQUIRY_ENDPOINT,
     normalizeText,
     isValidEmail,
     validateInquiry,
-    generateInquiryId,
-    safeJSONParse,
-    saveInquiry,
+    apiPayload,
     formatWon,
   };
 
