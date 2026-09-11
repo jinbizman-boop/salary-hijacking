@@ -192,9 +192,7 @@ SERVER_AUTHORITY_SCHEDULER = "true"
 TOKEN_HASH_ONLY = "true"
 
 [env.staging.triggers]
-crons = [
-  "0 23 * * *"
-]
+crons = []
 
 [[env.staging.queues.producers]]
 binding = "SCHEDULER_OPERATION_QUEUE"
