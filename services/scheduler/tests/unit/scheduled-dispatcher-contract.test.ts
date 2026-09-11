@@ -60,6 +60,18 @@ describe("Scheduler Worker scheduled dispatcher contract", () => {
     expect(jobSources).toContain("duplicate_close_prevention");
   });
 
+  it("sends the API internal token using the API service-token header contract", () => {
+    const apiClientSource = source.slice(
+      source.indexOf("function createApiClient"),
+      source.indexOf("function createDataRetentionRepository"),
+    );
+
+    expect(apiClientSource).toContain('headers.set("x-service-token", token)');
+    expect(apiClientSource).not.toContain(
+      'headers.set("authorization", `Bearer ${token}`)',
+    );
+  });
+
   it("retries malformed queue jobs instead of acknowledging them", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const retry = vi.fn();

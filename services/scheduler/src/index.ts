@@ -505,7 +505,7 @@ function createApiClient(env: SchedulerEnv): SchedulerApiClient {
         );
       const headers = jsonHeaders(requestId);
       const token = envText(env, "API_INTERNAL_SERVICE_TOKEN");
-      if (token) headers.set("authorization", `Bearer ${token}`);
+      if (token) headers.set("x-service-token", token);
       const response = await globalThis.fetch(`${baseUrl}${path}`, {
         method: "POST",
         headers,
