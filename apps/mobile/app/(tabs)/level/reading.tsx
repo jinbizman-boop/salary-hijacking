@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text } from "react-native";
 
 import {
   AppHeader,
   AppShell,
+  componentColors,
   EmptyState,
   ErrorState,
   LoadingSkeleton,
+  salaryHijackingDesignSystem,
 } from "../../../src/shared/components";
 import { createMobileGrowthApi } from "../../../src/shared/api/mobile-api";
 import {
@@ -20,6 +23,9 @@ import {
 } from "../../../src/features/level/controller";
 import type { GrowthContentItem } from "../../../src/features/level/types";
 import { useLogicalBack } from "../../../src/shared/navigation/useLogicalBack";
+import { ShareBottomSheet } from "../../../src/shared/ui/sheets/ShareBottomSheet";
+
+const designSystem = salaryHijackingDesignSystem;
 
 const readingHistory = [
   {
@@ -47,6 +53,7 @@ export default function ReadingScreen(): React.ReactElement {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [earnedXp, setEarnedXp] = useState<number | null>(null);
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -146,6 +153,20 @@ export default function ReadingScreen(): React.ReactElement {
       {earnedXp !== null ? (
         <XpRewardToast earnedXp={earnedXp} rewardSource="독서 기록 완료" />
       ) : null}
+      <Pressable
+        accessibilityLabel="독서 인증 공유 옵션"
+        accessibilityRole="button"
+        onPress={() => setShareSheetOpen(true)}
+        style={styles.shareButton}
+      >
+        <Text style={styles.shareButtonText}>독서 인증 공유</Text>
+      </Pressable>
+      {shareSheetOpen ? (
+        <ShareBottomSheet
+          onClose={() => setShareSheetOpen(false)}
+          onSelect={() => setShareSheetOpen(false)}
+        />
+      ) : null}
     </AppShell>
   );
 }
@@ -164,3 +185,21 @@ export const readingScreenProductContract = [
   "Google Books",
   "NAVER_BOOK_API_USAGE_COUNT=0",
 ] as const;
+
+const styles = StyleSheet.create({
+  shareButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[3],
+  },
+  shareButtonText: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
+  },
+});

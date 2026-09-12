@@ -35,6 +35,7 @@ import {
 } from "../../../shared/components/tokens";
 import { AdBannerSlot } from "../../../shared/components/AdBannerSlot";
 import { RootTabHeader } from "../../../shared/components/RootTabHeader";
+import { SelectionBottomSheet } from "../../../shared/ui/sheets/SelectionBottomSheet";
 import {
   createMobileBudgetApi,
   createMobilePlanCommitmentsApi,
@@ -104,10 +105,33 @@ const salaryScreenElevation = designSystem.elevation;
 const HOME_HORIZONTAL_GUTTER = componentSpacing.md;
 const HOME_MAJOR_SECTION_GAP = componentSpacing.md;
 const HOME_RELATED_CONTENT_GAP = componentSpacing.sm;
+const expenseCategoryActions = [
+  { key: "음식", label: "음식", description: "식사와 장보기" },
+  { key: "카페", label: "카페", description: "커피와 디저트" },
+  { key: "교통", label: "교통", description: "대중교통과 이동" },
+  { key: "구독", label: "구독", description: "정기 결제" },
+  { key: "기타", label: "기타", description: "직접 입력 전 기본값" },
+] as const;
+const expenseInvalidationActions = [
+  {
+    key: "mistake",
+    label: "잘못 입력",
+    description: "금액 또는 내용을 수정해야 함",
+  },
+  {
+    key: "duplicate",
+    label: "중복 등록",
+    description: "같은 지출이 이미 있음",
+  },
+  {
+    key: "cancelled",
+    label: "결제 취소",
+    description: "실제 지출이 발생하지 않음",
+  },
+] as const;
 const salaryCoinsIcon =
   require("../../../../assets/runtime-icons/money/coins.png") as ImageSourcePropType;
-const SALARY_SAVE_ERROR =
-  "서버 저장이 실패해 지출을 반영하지 않았습니다.";
+const SALARY_SAVE_ERROR = "서버 저장이 실패해 지출을 반영하지 않았습니다.";
 let salaryHomeShellMarkerEmitted = false;
 let cachedPayrollReminderSecureStore: ReturnType<
   typeof createSecureStoreRuntime
@@ -196,6 +220,11 @@ export function SalaryHomeScreen({
     category: "",
     content: "",
   });
+  const [activeBottomSheet, setActiveBottomSheet] = useState<
+    "expense-category" | "expense-invalidation" | null
+  >(null);
+  const [pendingDeleteVariableExpense, setPendingDeleteVariableExpense] =
+    useState<VariableExpenseItem | null>(null);
   const [variableSavePending, setVariableSavePending] = useState(false);
   const [salaryError, setSalaryError] = useState<string | null>(null);
   const serverVariableExpenseApi = useMemo(
@@ -671,6 +700,11 @@ export function SalaryHomeScreen({
     sync(removeVariableExpense(item.id));
   }
 
+  function requestVariableExpenseDelete(item: VariableExpenseItem): void {
+    setPendingDeleteVariableExpense(item);
+    setActiveBottomSheet("expense-invalidation");
+  }
+
   function closeVariableForm(): void {
     setVariableDraft({ amount: "", category: "", content: "" });
     setEditingVariableId(null);
@@ -954,6 +988,21 @@ export function SalaryHomeScreen({
               <Text allowFontScaling={false} style={styles.formCaption}>
                 금일 사용한 변동 지출을 바로 저장합니다
               </Text>
+              <Pressable
+                accessibilityLabel="변동 지출 카테고리 선택"
+                accessibilityRole="button"
+                onPress={() => setActiveBottomSheet("expense-category")}
+                style={styles.sheetTriggerButton}
+              >
+                <Text
+                  allowFontScaling={false}
+                  style={styles.sheetTriggerButtonText}
+                >
+                  {variableDraft.category
+                    ? `카테고리: ${variableDraft.category}`
+                    : "카테고리 선택"}
+                </Text>
+              </Pressable>
               <TextInput
                 accessibilityLabel="변동 지출 항목 입력"
                 onChangeText={(category) =>
@@ -1008,7 +1057,7 @@ export function SalaryHomeScreen({
             </View>
           ) : null}
           <VariableExpenseList
-            onDelete={deleteVariableExpense}
+            onDelete={requestVariableExpenseDelete}
             onEdit={openVariableEditor}
             rows={state.variableExpenses}
           />
@@ -1038,6 +1087,33 @@ export function SalaryHomeScreen({
           protectedAmount={currentHijacked}
           variableTotal={variableTotal}
         />
+        {activeBottomSheet === "expense-category" ? (
+          <SelectionBottomSheet
+            actions={expenseCategoryActions}
+            onClose={() => setActiveBottomSheet(null)}
+            onSelect={(category) => {
+              setVariableDraft((previous) => ({ ...previous, category }));
+              setActiveBottomSheet(null);
+            }}
+            title="지출 카테고리"
+          />
+        ) : null}
+        {activeBottomSheet === "expense-invalidation" ? (
+          <SelectionBottomSheet
+            actions={expenseInvalidationActions}
+            onClose={() => {
+              setPendingDeleteVariableExpense(null);
+              setActiveBottomSheet(null);
+            }}
+            onSelect={() => {
+              const item = pendingDeleteVariableExpense;
+              setPendingDeleteVariableExpense(null);
+              setActiveBottomSheet(null);
+              if (item) void deleteVariableExpense(item);
+            }}
+            title="지출 무효 처리 사유"
+          />
+        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -2210,6 +2286,21 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: salaryScreenColors.inverse,
+    fontSize: salaryScreenTypography.labelM.fontSize,
+    fontWeight: salaryScreenTypography.labelM.fontWeight,
+  },
+  sheetTriggerButton: {
+    alignItems: "center",
+    backgroundColor: salaryScreenColors.brandSoft,
+    borderColor: salaryScreenColors.brandSurface,
+    borderRadius: salaryScreenRadius.sm,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: salaryScreenSpacing[3],
+  },
+  sheetTriggerButtonText: {
+    color: salaryScreenColors.brand,
     fontSize: salaryScreenTypography.labelM.fontSize,
     fontWeight: salaryScreenTypography.labelM.fontWeight,
   },

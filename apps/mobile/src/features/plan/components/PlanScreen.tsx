@@ -39,6 +39,9 @@ import {
   createMobilePayrollApi,
   createMobilePlanCommitmentsApi,
 } from "../../../shared/api/mobile-api";
+import { DateSelectionBottomSheet } from "../../../shared/ui/sheets/DateSelectionBottomSheet";
+import { RecurrenceBottomSheet } from "../../../shared/ui/sheets/RecurrenceBottomSheet";
+import { SelectionBottomSheet } from "../../../shared/ui/sheets/SelectionBottomSheet";
 import { salaryHijackingDesignSystem } from "../../../shared/components";
 import { RootTabHeader } from "../../../shared/components/RootTabHeader";
 import { markReleaseInteractionPerf } from "../../../shared/performance/release-perf";
@@ -81,6 +84,13 @@ const planScreenRadius = designSystem.radius;
 const planScreenTypography = designSystem.typography;
 const planScreenElevation = designSystem.elevation;
 const PLAN_SAVE_ERROR = "서버 저장이 실패해 계획을 반영하지 않았습니다.";
+const planCategoryActions = [
+  { key: "구독", label: "구독", description: "정기 결제" },
+  { key: "대출", label: "대출", description: "월 상환" },
+  { key: "교통", label: "교통", description: "정기 이동" },
+  { key: "적금", label: "적금", description: "고정 저축" },
+  { key: "기타", label: "기타", description: "직접 입력 전 기본값" },
+] as const;
 const payrollReminderSecureStore = createSecureStoreRuntime(
   Platform.OS,
   SecureStore,
@@ -163,6 +173,9 @@ export function PlanScreen({
     content: "",
     day: "",
   });
+  const [activeBottomSheet, setActiveBottomSheet] = useState<
+    "category" | "day" | "recurrence" | null
+  >(null);
   const [planError, setPlanError] = useState<string | null>(null);
   const [planItemSavePending, setPlanItemSavePending] = useState(false);
   const planItemSaveInFlightRef = React.useRef(false);
@@ -783,6 +796,9 @@ export function PlanScreen({
           savePending={planItemSavePending}
           draft={draft}
           setDraft={setDraft}
+          onOpenCategory={() => setActiveBottomSheet("category")}
+          onOpenDay={() => setActiveBottomSheet("day")}
+          onOpenRecurrence={() => setActiveBottomSheet("recurrence")}
         />
 
         <EditablePlanSection
@@ -798,6 +814,9 @@ export function PlanScreen({
           savePending={planItemSavePending}
           draft={draft}
           setDraft={setDraft}
+          onOpenCategory={() => setActiveBottomSheet("category")}
+          onOpenDay={() => setActiveBottomSheet("day")}
+          onOpenRecurrence={() => setActiveBottomSheet("recurrence")}
         />
 
         <MobilePlanSection
@@ -888,10 +907,46 @@ export function PlanScreen({
               onSave={saveLivingItem}
               onDelete={editingId ? deleteEditingItem : undefined}
               savePending={livingItemSavePending}
+              onOpenCategory={() => setActiveBottomSheet("category")}
+              onOpenDay={() => setActiveBottomSheet("day")}
+              onOpenRecurrence={() => setActiveBottomSheet("recurrence")}
             />
           ) : null}
         </MobilePlanSection>
       </ScrollView>
+      {activeBottomSheet === "category" ? (
+        <SelectionBottomSheet
+          actions={planCategoryActions}
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={(category) => {
+            setDraft((previous) => ({ ...previous, category }));
+            setActiveBottomSheet(null);
+          }}
+          title="계획 카테고리"
+        />
+      ) : null}
+      {activeBottomSheet === "day" ? (
+        <DateSelectionBottomSheet
+          selectedDay={clamp(parseKrwInput(draft.day) || 25, 1, 31)}
+          onClose={() => setActiveBottomSheet(null)}
+          onSelectDay={(day) => {
+            setDraft((previous) => ({ ...previous, day: String(day) }));
+            setActiveBottomSheet(null);
+          }}
+        />
+      ) : null}
+      {activeBottomSheet === "recurrence" ? (
+        <RecurrenceBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={(value) => {
+            setDraft((previous) => ({
+              ...previous,
+              day: value === "monthly" ? previous.day || "25" : "1",
+            }));
+            setActiveBottomSheet(null);
+          }}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -1214,6 +1269,9 @@ function EditablePlanSection({
   editingId,
   items,
   onDelete,
+  onOpenCategory,
+  onOpenDay,
+  onOpenRecurrence,
   onOpenEditor,
   onSave,
   open,
@@ -1227,6 +1285,9 @@ function EditablePlanSection({
   editingId: string | null;
   items: readonly PlanItem[];
   onDelete: () => void;
+  onOpenCategory: () => void;
+  onOpenDay: () => void;
+  onOpenRecurrence: () => void;
   onOpenEditor: (section: SectionKey, item?: PlanItem) => void;
   onSave: () => void;
   open: boolean;
@@ -1292,6 +1353,9 @@ function EditablePlanSection({
           onSave={onSave}
           savePending={savePending}
           onDelete={editingId ? onDelete : undefined}
+          onOpenCategory={onOpenCategory}
+          onOpenDay={onOpenDay}
+          onOpenRecurrence={onOpenRecurrence}
         />
       ) : null}
     </MobilePlanSection>
@@ -1419,18 +1483,56 @@ function PlanCommitmentList({
 function PlanItemForm({
   draft,
   onDelete,
+  onOpenCategory,
+  onOpenDay,
+  onOpenRecurrence,
   onSave,
   savePending = false,
   setDraft,
 }: Readonly<{
   draft: Draft;
   onDelete?: (() => void) | undefined;
+  onOpenCategory: () => void;
+  onOpenDay: () => void;
+  onOpenRecurrence: () => void;
   onSave: () => Promise<void> | void;
   savePending?: boolean;
   setDraft: (draft: Draft) => void;
 }>) {
   return (
     <View style={styles.inlineForm}>
+      <View style={styles.sheetTriggerRow}>
+        <Pressable
+          accessibilityLabel="계획 항목 카테고리 선택"
+          accessibilityRole="button"
+          onPress={onOpenCategory}
+          style={styles.sheetTriggerButton}
+        >
+          <Text allowFontScaling={false} style={styles.sheetTriggerButtonText}>
+            {draft.category ? `카테고리: ${draft.category}` : "카테고리"}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityLabel="계획 항목 일자 선택"
+          accessibilityRole="button"
+          onPress={onOpenDay}
+          style={styles.sheetTriggerButton}
+        >
+          <Text allowFontScaling={false} style={styles.sheetTriggerButtonText}>
+            {draft.day ? `${draft.day}일` : "일자"}
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityLabel="계획 항목 반복 선택"
+          accessibilityRole="button"
+          onPress={onOpenRecurrence}
+          style={styles.sheetTriggerButton}
+        >
+          <Text allowFontScaling={false} style={styles.sheetTriggerButtonText}>
+            반복
+          </Text>
+        </Pressable>
+      </View>
       <TextInput
         accessibilityLabel="계획 항목 카테고리"
         onChangeText={(category) => setDraft({ ...draft, category })}
@@ -1740,6 +1842,26 @@ const styles = StyleSheet.create({
     gap: planScreenSpacing[2],
     justifyContent: "space-between",
     marginBottom: planScreenSpacing[2],
+  },
+  sheetTriggerButton: {
+    alignItems: "center",
+    backgroundColor: planScreenColors.brandSoft,
+    borderColor: planScreenColors.line,
+    borderRadius: planScreenRadius.sm,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: planScreenSpacing[2],
+  },
+  sheetTriggerButtonText: {
+    color: planScreenColors.brandDark,
+    fontSize: planScreenTypography.labelS.fontSize,
+    fontWeight: planScreenTypography.labelS.fontWeight,
+  },
+  sheetTriggerRow: {
+    flexDirection: "row",
+    gap: planScreenSpacing[2],
   },
   sectionTitleCluster: {
     alignItems: "center",

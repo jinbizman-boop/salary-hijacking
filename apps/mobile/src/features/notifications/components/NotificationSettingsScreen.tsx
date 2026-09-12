@@ -9,6 +9,7 @@ import {
   componentColors,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { DevicePermissionBottomSheet } from "../../../shared/ui/sheets/DevicePermissionBottomSheet";
 import type { NotificationPreferenceState } from "../controller";
 
 const designSystem = salaryHijackingDesignSystem;
@@ -70,6 +71,7 @@ export function NotificationSettingsScreen({
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle",
   );
+  const [permissionGuideOpen, setPermissionGuideOpen] = useState(false);
   const preferences = serverPreferences ?? localPreferences;
 
   function toggle(key: PreferenceKey): void {
@@ -141,42 +143,49 @@ export function NotificationSettingsScreen({
           <PreferenceRow
             description="앱 밖에서도 중요한 알림을 받습니다."
             enabled={preferences.push}
+            preferenceKey="push"
             label="푸시 알림"
             onToggle={() => toggle("push")}
           />
           <PreferenceRow
             description="급여일, 누적 납치금액, 목표 달성 알림"
             enabled={preferences.salary}
+            preferenceKey="salary"
             label="급여/납치금액"
             onToggle={() => toggle("salary")}
           />
           <PreferenceRow
             description="일일 예산 임박, 예산 초과, 사용 예정 알림"
             enabled={preferences.budget}
+            preferenceKey="budget"
             label="예산/지출"
             onToggle={() => toggle("budget")}
           />
           <PreferenceRow
             description="독서, 뉴스, 영어, 건강 미션과 XP 알림"
             enabled={preferences.level}
+            preferenceKey="level"
             label="LV UP"
             onToggle={() => toggle("level")}
           />
           <PreferenceRow
             description="댓글, 좋아요, 신고 처리, 공지 알림"
             enabled={preferences.community}
+            preferenceKey="community"
             label="커뮤니티"
             onToggle={() => toggle("community")}
           />
           <PreferenceRow
             description="이벤트와 제휴 혜택. 금융 원문 기반 타겟팅은 금지합니다."
             enabled={preferences.marketing}
+            preferenceKey="marketing"
             label="이벤트 마케팅"
             onToggle={() => toggle("marketing")}
           />
           <PreferenceRow
             description="밤 시간대에는 긴급하지 않은 알림을 조용하게 합니다."
             enabled={preferences.quietHours}
+            preferenceKey="quietHours"
             label="방해 금지 시간"
             onToggle={() => toggle("quietHours")}
           />
@@ -195,6 +204,24 @@ export function NotificationSettingsScreen({
             {notificationDeviceMessage ??
               notificationDeviceStatusMessage(notificationDeviceStatus)}
           </Text>
+          {notificationDeviceStatus === "denied" ? (
+            <Pressable
+              accessibilityLabel="알림 권한 안내"
+              accessibilityRole="button"
+              onPress={() => setPermissionGuideOpen(true)}
+              style={({ pressed }) => [
+                styles.permissionGuideButton,
+                pressed && styles.pressed,
+              ]}
+            >
+              <Text
+                allowFontScaling={false}
+                style={styles.permissionGuideButtonText}
+              >
+                권한 안내
+              </Text>
+            </Pressable>
+          ) : null}
           <PrimaryButton
             accessibilityLabel={
               notificationDeviceCount > 0
@@ -253,6 +280,17 @@ export function NotificationSettingsScreen({
             </Text>
           </Pressable>
         </View>
+
+        {permissionGuideOpen ? (
+          <DevicePermissionBottomSheet
+            permissionName="알림"
+            onClose={() => setPermissionGuideOpen(false)}
+            onOpenSettings={() => {
+              setPermissionGuideOpen(false);
+              onOpenSystemSettings?.();
+            }}
+          />
+        ) : null}
       </View>
     </AppShell>
   );
@@ -283,14 +321,23 @@ function PreferenceRow({
   enabled,
   label,
   onToggle,
+  preferenceKey,
 }: Readonly<{
   description: string;
   enabled: boolean;
   label: string;
   onToggle: () => void;
+  preferenceKey: PreferenceKey;
 }>): React.ReactElement {
   return (
-    <View style={styles.preferenceRow}>
+    <Pressable
+      accessibilityLabel={`${label} 행 ${enabled ? "켜짐" : "꺼짐"}`}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: enabled }}
+      onPress={onToggle}
+      style={({ pressed }) => [styles.preferenceRow, pressed && styles.pressed]}
+      testID={`notification-preference-row-${preferenceKey}`}
+    >
       <View style={styles.preferenceCopy}>
         <Text allowFontScaling={false} style={styles.preferenceLabel}>
           {label}
@@ -307,7 +354,7 @@ function PreferenceRow({
         }}
         value={enabled}
       />
-    </View>
+    </Pressable>
   );
 }
 
@@ -357,8 +404,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     gap: designSystem.spacing[3],
+    minWidth: designSystem.layout.touchTarget,
     minHeight: designSystem.layout.touchTarget + designSystem.spacing[8],
     paddingVertical: designSystem.spacing[3],
+  },
+  permissionGuideButton: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderRadius: designSystem.radius.md,
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[3],
+  },
+  permissionGuideButtonText: {
+    color: componentColors.primaryGreen,
+    ...designSystem.typography.labelM,
   },
   pressed: {
     opacity: 0.82,

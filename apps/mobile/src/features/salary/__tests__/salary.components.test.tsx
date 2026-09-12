@@ -30,7 +30,9 @@ describe("salary reference screen interactions", () => {
     const displayName = "\uAE40\uD14C\uC2A4\uD2B8";
     const screen = render(<SalaryHomeScreen displayName={displayName} />);
 
-    expect(screen.getByText(`${displayName}님, 오늘도 지켜냈어요`)).toBeTruthy();
+    expect(
+      screen.getByText(`${displayName}님, 오늘도 지켜냈어요`),
+    ).toBeTruthy();
     expect(screen.getByText("이번 급여에서 지켜낸 돈")).toBeTruthy();
     expect(screen.getByText("오늘 내가 쓸 수 있는 돈")).toBeTruthy();
     expect(screen.getByText("오늘 예정 지출/저축")).toBeTruthy();
@@ -665,6 +667,12 @@ describe("salary reference screen interactions", () => {
     expect(screen.getByText("폴드센스 파스콘 구입")).toBeTruthy();
     fireEvent.press(
       screen.getByTestId("variable-expense-delete-variable-game"),
+    );
+    expect(screen.getByLabelText("지출 무효 처리 사유 바텀시트")).toBeTruthy();
+    fireEvent.press(
+      screen.getByRole("button", {
+        name: "잘못 입력 금액 또는 내용을 수정해야 함",
+      }),
     );
 
     await waitFor(() => expect(deleteVariableExpense).toHaveBeenCalledTimes(1));

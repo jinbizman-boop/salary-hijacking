@@ -1,12 +1,14 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { AppHeader, AppShell } from "../../../src/shared/components";
 import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
 import { CommunityAttachmentList } from "../../../src/features/community/components/CommunityAttachmentList";
 import { CommunityCommentItem } from "../../../src/features/community/components/CommunityCommentItem";
 import { CommunityPostCard } from "../../../src/features/community/components/CommunityPostCard";
+import { PostMenuBottomSheet } from "../../../src/features/community/components/PostMenuBottomSheet";
+import { ReportReasonBottomSheet } from "../../../src/features/community/components/ReportReasonBottomSheet";
 import { useCommunityPost } from "../../../src/features/community/hooks/useCommunityPost";
 import { createMobileCommunityService } from "../../../src/shared/api/mobile-api";
 import { salaryHijackingDesignSystem } from "../../../src/shared/components/tokens";
@@ -42,6 +44,9 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
   const state = useCommunityPost(communityPostService, postId);
   const detail = state.detail;
   const comments = state.comments;
+  const [activeBottomSheet, setActiveBottomSheet] = React.useState<
+    "post-menu" | "report-reason" | null
+  >(null);
 
   return (
     <AppShell
@@ -54,6 +59,14 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
         />
       }
     >
+      <Pressable
+        accessibilityLabel="게시글 메뉴 열기"
+        accessibilityRole="button"
+        onPress={() => setActiveBottomSheet("post-menu")}
+        style={styles.menuButton}
+      >
+        <Text style={styles.menuButtonText}>게시글 메뉴</Text>
+      </Pressable>
       {detail ? (
         <>
           <CommunityPostCard post={detail.post} />
@@ -79,7 +92,7 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
                 <CommunityCommentItem
                   comment={comment}
                   key={comment.id}
-                  onReport={() => undefined}
+                  onReport={() => setActiveBottomSheet("report-reason")}
                 />
               ))
             ) : (
@@ -102,6 +115,21 @@ export default function CommunityPostDetailScreen(): React.ReactElement {
         <Text accessibilityRole="alert" style={styles.error}>
           {state.error}
         </Text>
+      ) : null}
+      {activeBottomSheet === "post-menu" ? (
+        <PostMenuBottomSheet
+          mine={false}
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={(action) => {
+            setActiveBottomSheet(action === "report" ? "report-reason" : null);
+          }}
+        />
+      ) : null}
+      {activeBottomSheet === "report-reason" ? (
+        <ReportReasonBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={() => setActiveBottomSheet(null)}
+        />
       ) : null}
     </AppShell>
   );
@@ -143,6 +171,21 @@ const styles = StyleSheet.create({
   meta: {
     ...designSystem.typography.labelS,
     color: designSystem.colors.text.secondary,
+  },
+  menuButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: designSystem.colors.brand.primarySoft,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[3],
+  },
+  menuButtonText: {
+    ...designSystem.typography.labelM,
+    color: designSystem.colors.brand.primary,
   },
   section: {
     gap: designSystem.spacing[3],

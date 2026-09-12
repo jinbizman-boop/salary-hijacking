@@ -71,6 +71,10 @@ export default function CommunityIndexScreen(): React.ReactElement {
   const [selectedBoard, setSelectedBoard] =
     useState<CommunityBoardType>("FREE");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [composeSheetOpen, setComposeSheetOpen] = useState(false);
+  const [composeDraft, setComposeDraft] =
+    useState<CommunityPostDraft>(closedDraft);
   const communityService = useMemo(() => createMobileCommunityService(), []);
   const feed = useCommunityFeed(communityService, {
     boardType: selectedBoard,
@@ -124,9 +128,15 @@ export default function CommunityIndexScreen(): React.ReactElement {
         onSelect={setSelectedBoard}
       />
       <PrimaryButton
-        accessibilityLabel="글쓰기 화면으로 이동"
+        accessibilityLabel="커뮤니티 정렬 필터"
+        label="정렬"
+        onPress={() => setSortSheetOpen(true)}
+        variant="secondary"
+      />
+      <PrimaryButton
+        accessibilityLabel="글쓰기 바텀시트 열기"
         label="글쓰기"
-        onPress={() => router.push("/community/write" as never)}
+        onPress={() => setComposeSheetOpen(true)}
       />
       {feed.status === "loading" ? (
         <LoadingSkeleton label="커뮤니티 게시글을 불러오는 중" />
@@ -188,14 +198,20 @@ export default function CommunityIndexScreen(): React.ReactElement {
         </>
       )}
       <ComposeBottomSheet
-        draft={closedDraft}
-        open={false}
+        draft={composeDraft}
+        open={composeSheetOpen}
         submitting={false}
         validation={safeValidation}
-        onChange={() => undefined}
-        onClose={() => undefined}
+        onChange={setComposeDraft}
+        onClose={() => setComposeSheetOpen(false)}
         onSubmit={() => router.push("/community/write" as never)}
       />
+      {sortSheetOpen ? (
+        <SortFilterBottomSheet
+          onClose={() => setSortSheetOpen(false)}
+          onSelect={() => setSortSheetOpen(false)}
+        />
+      ) : null}
     </AppShell>
   );
 }

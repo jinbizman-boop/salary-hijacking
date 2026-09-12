@@ -32,6 +32,7 @@ import {
   loadGrowthDashboardSnapshot,
   loadGrowthSummarySnapshot,
 } from "../../../src/features/level/controller";
+import { ShareBottomSheet } from "../../../src/shared/ui/sheets/ShareBottomSheet";
 export { normalizeGrowthDashboardForLevel as normalizeGrowthDashboardForTest } from "../../../src/features/level/dashboard-normalization";
 import type {
   GrowthContentItem,
@@ -140,6 +141,7 @@ export default function LevelIndexScreen(): React.ReactElement {
   const [quickCompleteDomain, setQuickCompleteDomain] = useState<string | null>(
     null,
   );
+  const [shareSheetOpen, setShareSheetOpen] = useState(false);
 
   const goals = useMemo(() => buildGrowthGoalCards(), []);
   const snapshot = useMemo(
@@ -311,6 +313,15 @@ export default function LevelIndexScreen(): React.ReactElement {
 
       <GrowthResultPanel {...snapshot.result} />
 
+      <Pressable
+        accessibilityLabel="LV UP 공유 옵션"
+        accessibilityRole="button"
+        onPress={() => setShareSheetOpen(true)}
+        style={styles.shareButton}
+      >
+        <Text style={styles.shareButtonText}>LV UP 공유</Text>
+      </Pressable>
+
       <SurfaceCard accessibilityLabel="목표 관리 진입">
         <Text style={styles.sectionTitle}>목표 관리</Text>
         <Text style={styles.body}>
@@ -337,6 +348,12 @@ export default function LevelIndexScreen(): React.ReactElement {
         <XpRewardToast
           earnedXp={12}
           rewardSource={`${quickCompleteDomain} 완료`}
+        />
+      ) : null}
+      {shareSheetOpen ? (
+        <ShareBottomSheet
+          onClose={() => setShareSheetOpen(false)}
+          onSelect={() => setShareSheetOpen(false)}
         />
       ) : null}
     </AppShell>
@@ -406,6 +423,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: componentColors.textPrimary,
     ...designSystem.typography.titleM,
+  },
+  shareButton: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[3],
+  },
+  shareButtonText: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
   },
   weekDot: {
     height: 12,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "expo-router";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import * as SecureStore from "expo-secure-store";
 
 import { AppHeader, AppShell } from "../../../src/shared/components";
@@ -14,6 +14,7 @@ import { ConfirmDialog } from "../../../src/shared/components/ConfirmDialog";
 import { XpToast } from "../../../src/shared/components/XpToast";
 import { AttachmentBottomSheet } from "../../../src/shared/ui/sheets/AttachmentBottomSheet";
 import { VisibilityBottomSheet } from "../../../src/shared/ui/sheets/VisibilityBottomSheet";
+import { DraftExitBottomSheet } from "../../../src/features/community/components/DraftExitBottomSheet";
 
 const SCREEN_VERSION = "4.2.1-server-backed-community-write";
 const COMMUNITY_POSTS_ENDPOINT = "/api/v1/community/posts";
@@ -60,6 +61,9 @@ function parseCommunityDraft(value: string | null): CommunityPostDraft | null {
 export default function CommunityWriteScreen(): React.ReactElement {
   const router = useRouter();
   const [publishedTitle, setPublishedTitle] = useState<string | null>(null);
+  const [activeBottomSheet, setActiveBottomSheet] = useState<
+    "attachment" | "draft-exit" | "visibility" | null
+  >(null);
   const communityWriteService = useMemo(
     () => createMobileCommunityService(),
     [],
@@ -101,8 +105,30 @@ export default function CommunityWriteScreen(): React.ReactElement {
     >
       <View style={styles.notice}>
         <View style={styles.toolbar}>
-          <Text style={styles.iconText}>첨부 · 카메라 · 이미지 · 파일</Text>
-          <Text style={styles.optionText}>질문 · 익명 · 게시판</Text>
+          <Pressable
+            accessibilityLabel="첨부 방식 선택"
+            accessibilityRole="button"
+            onPress={() => setActiveBottomSheet("attachment")}
+            style={styles.toolbarButton}
+          >
+            <Text style={styles.iconText}>첨부</Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel="공개 범위 선택"
+            accessibilityRole="button"
+            onPress={() => setActiveBottomSheet("visibility")}
+            style={styles.toolbarButton}
+          >
+            <Text style={styles.optionText}>공개 범위</Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel="작성 중 나가기 옵션"
+            accessibilityRole="button"
+            onPress={() => setActiveBottomSheet("draft-exit")}
+            style={styles.toolbarButton}
+          >
+            <Text style={styles.optionText}>나가기</Text>
+          </Pressable>
         </View>
         <Text style={styles.noticeTitle}>
           커뮤니티에 남길 이야기를 정리해요
@@ -132,6 +158,33 @@ export default function CommunityWriteScreen(): React.ReactElement {
         <Text accessibilityRole="summary" style={styles.success}>
           완료: {publishedTitle}
         </Text>
+      ) : null}
+      {activeBottomSheet === "attachment" ? (
+        <AttachmentBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={() => setActiveBottomSheet(null)}
+        />
+      ) : null}
+      {activeBottomSheet === "visibility" ? (
+        <VisibilityBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={(value) => {
+            controller.setDraft({
+              ...controller.draft,
+              anonymous: value !== "public",
+            });
+            setActiveBottomSheet(null);
+          }}
+        />
+      ) : null}
+      {activeBottomSheet === "draft-exit" ? (
+        <DraftExitBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={(action) => {
+            setActiveBottomSheet(null);
+            if (action === "discard") router.back();
+          }}
+        />
       ) : null}
     </AppShell>
   );
@@ -210,5 +263,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: designSystem.spacing[2],
+  },
+  toolbarButton: {
+    alignItems: "center",
+    backgroundColor: designSystem.colors.surface.default,
+    borderColor: designSystem.colors.border.default,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[2],
   },
 });

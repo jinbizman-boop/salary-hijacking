@@ -201,26 +201,30 @@ export function buildGrowthProductSnapshot({
       weekSummary?.recentActivities.length ||
       monthSummary?.recentActivities.length
         ? [
-            ...(weekSummary?.recentActivities ?? []),
-            ...(monthSummary?.recentActivities ?? []),
+            ...(weekSummary?.recentActivities ?? []).map((activity) => ({
+              ...activity,
+              id: `week-${activity.id}`,
+            })),
+            ...(monthSummary?.recentActivities ?? []).map((activity) => ({
+              ...activity,
+              id: `month-${activity.id}`,
+            })),
           ]
             .slice(0, 3)
             .map((item) =>
               withHistoryIcon(item, goalByDomain.get(item.domain)?.userIcon),
             )
-        : domainOrder
-            .slice(0, 3)
-            .map((domain) =>
-              withHistoryIcon(
-                {
-                  id: `recent-${domain.toLowerCase()}`,
-                  label: `최근 · ${domainFallbacks[domain].title}`,
-                  title: fallbackActivityTitle(domain),
-                  xp: "+0 XP",
-                },
-                goalByDomain.get(domain)?.userIcon,
-              ),
+        : domainOrder.slice(0, 3).map((domain) =>
+            withHistoryIcon(
+              {
+                id: `recent-${domain.toLowerCase()}`,
+                label: `최근 · ${domainFallbacks[domain].title}`,
+                title: fallbackActivityTitle(domain),
+                xp: "+0 XP",
+              },
+              goalByDomain.get(domain)?.userIcon,
             ),
+          ),
     result: {
       level: `LV ${monthSummary?.level ?? dashboard.profile.level}`,
       nextLevel: "다음 레벨까지 서버 기준 계산",

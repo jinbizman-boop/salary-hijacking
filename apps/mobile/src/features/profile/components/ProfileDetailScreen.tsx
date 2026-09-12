@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import {
   AppHeader,
@@ -11,10 +11,18 @@ import {
   componentColors,
   salaryHijackingDesignSystem,
 } from "../../../shared/components";
+import { SelectionBottomSheet } from "../../../shared/ui/sheets/SelectionBottomSheet";
+import { ShareBottomSheet } from "../../../shared/ui/sheets/ShareBottomSheet";
+import { VisibilityBottomSheet } from "../../../shared/ui/sheets/VisibilityBottomSheet";
 import { ProfileHeader } from "./ProfileHeader";
 import { ProfileStatGrid } from "./ProfileStatGrid";
 
 const designSystem = salaryHijackingDesignSystem;
+const jobSelectionActions = [
+  { key: "office", label: "직장인", description: "급여 기반 예산 관리" },
+  { key: "freelance", label: "프리랜서", description: "불규칙 수입 관리" },
+  { key: "student", label: "학생", description: "생활비 중심 관리" },
+] as const;
 
 export type ProfileDetailVariant =
   | "settings"
@@ -36,8 +44,7 @@ type ProfileDetailContent = Readonly<{
 const contentByVariant: Record<ProfileDetailVariant, ProfileDetailContent> = {
   account: {
     actionLabel: "계정 보안 확인",
-    description:
-      "세션, MFA, 알림 동의, 계정 탈퇴 요청을 안전하게 확인합니다.",
+    description: "세션, MFA, 알림 동의, 계정 탈퇴 요청을 안전하게 확인합니다.",
     endpoint: "/api/v1/users/me/account",
     rows: [
       "활성 세션은 토큰 원문 없이 기기 종류와 최근 사용 시각만 표시",
@@ -49,8 +56,7 @@ const contentByVariant: Record<ProfileDetailVariant, ProfileDetailContent> = {
   },
   community: {
     actionLabel: "내 활동 새로고침",
-    description:
-      "내 게시글과 댓글은 안전하게 정리된 정보만 보여줍니다.",
+    description: "내 게시글과 댓글은 안전하게 정리된 정보만 보여줍니다.",
     endpoint: "/api/v1/community/users/me/posts",
     rows: [
       "게시글 원문에 계좌, 연락처, 급여 금액이 있으면 서버 검수에서 숨김",
@@ -62,8 +68,7 @@ const contentByVariant: Record<ProfileDetailVariant, ProfileDetailContent> = {
   },
   level: {
     actionLabel: "LV UP 기록 확인",
-    description:
-      "레벨, XP, 미션 완료 여부를 성장 기록 기준으로 보여줍니다.",
+    description: "레벨, XP, 미션 완료 여부를 성장 기록 기준으로 보여줍니다.",
     endpoint: "/api/v1/growth/users/me/level-progress",
     rows: [
       "중복 완료는 일일 XP 한도와 중복 방지 규칙으로 차단",
@@ -125,6 +130,9 @@ export function ProfileDetailScreen({
 }: ProfileDetailScreenProps): React.ReactElement {
   const content = contentByVariant[variant];
   const [actionNoticeVisible, setActionNoticeVisible] = useState(false);
+  const [activeBottomSheet, setActiveBottomSheet] = useState<
+    "job" | "share" | "visibility" | null
+  >(null);
   const showActionNotice = (): void => {
     setActionNoticeVisible(true);
   };
@@ -178,6 +186,36 @@ export function ProfileDetailScreen({
           label={content.actionLabel}
           onPress={showActionNotice}
         />
+        {variant === "settings" ? (
+          <View style={styles.sheetActions}>
+            <Pressable
+              accessibilityLabel="프로필 공개 범위 선택"
+              accessibilityRole="button"
+              onPress={() => setActiveBottomSheet("visibility")}
+              style={styles.sheetActionButton}
+            >
+              <Text style={styles.sheetActionText}>공개 범위</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel="직업 선택"
+              accessibilityRole="button"
+              onPress={() => setActiveBottomSheet("job")}
+              style={styles.sheetActionButton}
+            >
+              <Text style={styles.sheetActionText}>직업</Text>
+            </Pressable>
+          </View>
+        ) : null}
+        {variant === "community" ? (
+          <Pressable
+            accessibilityLabel="인증 공유 옵션"
+            accessibilityRole="button"
+            onPress={() => setActiveBottomSheet("share")}
+            style={styles.sheetActionButton}
+          >
+            <Text style={styles.sheetActionText}>인증 공유</Text>
+          </Pressable>
+        ) : null}
       </SurfaceCard>
 
       {variant === "level" ? (
@@ -199,6 +237,26 @@ export function ProfileDetailScreen({
           onCancel={hideActionNotice}
           onConfirm={hideActionNotice}
           title="처리 안내"
+        />
+      ) : null}
+      {activeBottomSheet === "visibility" ? (
+        <VisibilityBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={() => setActiveBottomSheet(null)}
+        />
+      ) : null}
+      {activeBottomSheet === "job" ? (
+        <SelectionBottomSheet
+          actions={jobSelectionActions}
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={() => setActiveBottomSheet(null)}
+          title="직업 선택"
+        />
+      ) : null}
+      {activeBottomSheet === "share" ? (
+        <ShareBottomSheet
+          onClose={() => setActiveBottomSheet(null)}
+          onSelect={() => setActiveBottomSheet(null)}
         />
       ) : null}
     </AppShell>
@@ -236,6 +294,24 @@ const styles = StyleSheet.create({
     ...designSystem.typography.bodyS,
   },
   rows: {
+    gap: designSystem.spacing[2],
+  },
+  sheetActionButton: {
+    alignItems: "center",
+    backgroundColor: componentColors.primaryGreenSoft,
+    borderColor: componentColors.line,
+    borderRadius: designSystem.radius.md,
+    borderWidth: 1,
+    justifyContent: "center",
+    minHeight: designSystem.layout.touchTarget,
+    paddingHorizontal: designSystem.spacing[3],
+  },
+  sheetActionText: {
+    color: componentColors.primaryGreenDark,
+    ...designSystem.typography.labelM,
+  },
+  sheetActions: {
+    flexDirection: "row",
     gap: designSystem.spacing[2],
   },
 });
