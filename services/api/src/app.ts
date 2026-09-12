@@ -1042,7 +1042,7 @@ function partnerBenefitsResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
           <p>민감 금융정보를 광고 세그먼트에 사용하지 않습니다. 제휴사는 실제로 확정된 경우에만 공개하며, 현재 페이지는 제휴 원칙과 문의 경로를 안내합니다.</p>
         </div>
         <div class="steps">
-          <article class="step"><span class="num">1</span><div><h3>생활비 절감</h3><p>구독, 교육, 건강, 생활 서비스처럼 사용자의 지출 결정을 돕는 혜택을 우선합니다.</p></div></article>
+          <article class="step"><span class="num">1</span><div><h3>생활비 절감</h3><p>정기요금, 교육, 건강, 생활 서비스처럼 사용자의 지출 결정을 돕는 혜택을 우선합니다.</p></div></article>
           <article class="step"><span class="num">2</span><div><h3>자기관리 연계</h3><p>독서, 뉴스, 외국어, 운동 루틴과 자연스럽게 이어지는 파트너십을 검토합니다.</p></div></article>
           <article class="step"><span class="num">3</span><div><h3>명확한 표시</h3><p>광고와 제휴 콘텐츠는 Sponsored 또는 제휴 혜택으로 분명하게 표시합니다.</p></div></article>
         </div>
@@ -1092,7 +1092,7 @@ function publicLandingResponse<TEnv>(runtime: AppRuntime<TEnv>): Response {
     ),
     sectionFeature(
       "고정지출",
-      "월세, 통신비, 구독료처럼 반복되는 지출을 예정과 완료로 관리합니다.",
+      "월세, 통신비, 정기요금처럼 반복되는 지출을 예정과 완료로 관리합니다.",
       "F",
     ),
     sectionFeature(
